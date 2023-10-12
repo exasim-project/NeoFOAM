@@ -4,7 +4,7 @@ run-name: Spell Check
 
 jobs:
   run:
-    name: Spell Check with Typos
+    name: Format check with foam-format
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -19,5 +19,5 @@ jobs:
         pip3 install -e . --user
     - name: Run format check
       run: |
-        foam-format src
+        foam-format --target=src
 
