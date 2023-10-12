@@ -1,6 +1,6 @@
 name: Test GitHub Action
 on: [pull_request]
-run-name: Spell Check
+run-name: Format Check
 
 jobs:
   run:
@@ -16,7 +16,7 @@ jobs:
       run: |
         git clone https://github.com/exasim-project/foam-format
         cd foam-format
-        pip3 install -e . --user
+        pip3 install --user .
     - name: Run format check
       run: |
         foam-format --target=src
