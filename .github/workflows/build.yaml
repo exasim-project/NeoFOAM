@@ -1,0 +1,38 @@
+name: Build NeoFOAM
+run-name: 'Build and integration'
+
+on:
+  push:
+    branches: 
+      - dev
+      - main
+  pull_request:
+    types: synchronize
+  schedule:
+    - cron: "* 0 * * 0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+    runs-on: ubuntu-latest
+    name: build NeoFOAM
+    strategy:
+      fail-fast: false
+    steps:
+     - name: Checkout to repository
+       uses: actions/checkout@v3
+     - uses: BSFishy/meson-build@v1.0.3
+       with:
+         action: test
+         directory: build
+         setup-options: -Db_coverage=true
+         options: --verbose
+         meson-version: 0.53.2
+         ninja-version: 1.9.0.post1
+         gcovr-version: 4.2
+     - run: |
+         meson setup builddir && cd builddir
+         meson compile
+         meson test
