@@ -24,10 +24,11 @@ jobs:
     steps:
      - name: Checkout to repository
        uses: actions/checkout@v3
-     - run : |
-       apt install python3 python3-pip python3-setuptools \
-                       python3-wheel ninja-build
-     - run: |
+     - name: Install meson
+       run: |
+        apt install python3 python3-pip python3-setuptools python3-wheel ninja-build
+     - name: build NeoFOAM
+       run: |
          meson setup builddir && cd builddir
          meson compile
          meson test
