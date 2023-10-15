@@ -2,7 +2,7 @@
 title: Release notes 0.01
 tags: [getting_started]
 sidebar: doc_sidebar
-permalink: doc_release_notes.html
+permalink: doc_release_notes_01.html
 folder: doc
 ---
 

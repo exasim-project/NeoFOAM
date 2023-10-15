@@ -3,7 +3,7 @@ title: "NeoFOAM"
 keywords: sample homepage
 sidebar: doc_sidebar
 permalink: index.html
-summary: NeoFOAM with testsuite and documenation
+summary: NeoFOAM
 ---
 
 # Installation
