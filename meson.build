@@ -3,6 +3,9 @@ project('NeoFOAM', 'cpp',
   license: 'GPL-3.0-or-later'
   )
 
+of_thirdparty_proj = subproject('openfoam-thirdparty')
+openfoam_proj = subproject('openfoam')
+
 inc = include_directories('include')
 
 subdir('include')
