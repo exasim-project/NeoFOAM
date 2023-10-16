@@ -24,19 +24,22 @@ jobs:
     steps:
      - name: Checkout to repository
        uses: actions/checkout@v3
+
      - name: Install meson
        run: |
-        sudo apt install -y python3 python3-pip python3-setuptools python3-wheel ninja-build
+        sudo apt install -y python3 python3-pip python3-setuptools python3-wheel ninja-build iwyu
         pip3 install --user meson
-     - name: build NeoFOAM
+
+     - name: Build NeoFOAM
        run: |
          meson setup builddir && cd builddir
          meson compile
+
+     - name: Execute unit tests
+       run: |
+         cd builddir
          meson test
 
-     - name: Run Include What You Use
-       uses: EmilGedda/include-what-you-use-action@fb65cd78dc3f5cb29785f784a017817d922fb858
-       with:
-         compilation-database-path: 'builddir'
-         output-format: 'iwyu' # Or 'clang'
-         no-error: 'false'
+     - name: Execute iwyu
+       run: |
+         iwyu-tool.py -p builddir
