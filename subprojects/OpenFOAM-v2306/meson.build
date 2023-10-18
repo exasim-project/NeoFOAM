@@ -43,12 +43,10 @@ openfoam_dep = declare_dependency(
   include_directories : [of_path + 'src/OSspecific/POSIX/lnInclude', of_path + 'src/OpenFOAM/lnInclude' ]
 )
 finiteVolume_dep = declare_dependency(
-  compile_args: comp_args,
   dependencies : [finiteVolume],
   include_directories : [of_path + 'src/finiteVolume/lnInclude' ]
 )
 meshTools_dep = declare_dependency(
-  compile_args: comp_args,
   dependencies : [meshTools],
   include_directories : [of_path + 'src/meshTools/lnInclude' ]
 )
