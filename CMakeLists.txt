@@ -3,11 +3,10 @@ cmake_minimum_required(VERSION 3.28.0)
 project(
   NeoFOAM
   LANGUAGES C CXX
-  DESCRIPTION
-  "A prototype implementation of OpenFOAM in C++ 20")
+  DESCRIPTION "A prototype implementation of OpenFOAM in C++ 20")
 
-option(NeoFOAM "double precission scalar" TRUE)
-option(NeoFOAM "double precission label" TRUE)
+option(NeoFOAM "double precision scalar" TRUE)
+option(NeoFOAM "double precision label" TRUE)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 23)
