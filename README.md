@@ -4,5 +4,5 @@
 
 NeoFOAM has the following requirements
 
-*  _cmake 3.26+_
-*  _clang 16_ 
+*  _cmake 3.28+_
+*  _clang 17+_ 

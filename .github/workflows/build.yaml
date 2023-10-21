@@ -17,7 +17,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: alpine-latest
+    container: greole/neofoam
     name: build NeoFOAM
     strategy:
       fail-fast: false
@@ -29,19 +30,13 @@ jobs:
        run: |
         sudo apt install -y \
           python3 python3-pip python3-setuptools python3-wheel \
-          ninja-build \
           iwyu
-        pip3 install --user meson
 
      - name: Build NeoFOAM
        run: |
-         meson setup builddir && cd builddir
-         meson compile
-
-     - name: Execute unit tests
-       run: |
-         cd builddir
-         meson test
+         mkdir build && cd build
+         cmake -G Ninja ..
+         cmake --build .
 
      - name: Execute iwyu
        run: |
