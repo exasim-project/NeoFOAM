@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 AUTHOR,AFFILIATION
+    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,24 +25,87 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    testof
+    matrixAssembly
+
 
 Description
+
 
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "profiling.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
-    #include "setRootCase.H"
+
+    #include "addProfilingOption.H"
+    #include "addCheckCaseOptions.H"
+    #include "setRootCaseLists.H"
     #include "createTime.H"
+    #include "createMesh.H"
+
+
+    #include "createFields.H"
+    runTime.setDeltaT(1.0);
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    Info<< nl;
+    ++runTime;
+
+    Info<< "Time = " << runTime.timeName() << nl << endl;
+    
+    {
+        addProfiling(fvScalarMatrix, "TEqnTemporalOperator");
+        fvScalarMatrix TEqnTemporalOperator
+        (
+            fvm::ddt(T)
+        );
+    }
+
+
+    {
+        addProfiling(fvScalarMatrix, "TEqnDiffusionOperator");
+        fvScalarMatrix TEqnDiffusionOperator
+        (
+            fvm::laplacian(Gamma, T)
+        );
+    }
+
+    {
+        addProfiling(fvScalarMatrix, "TEqnConvectionOperator");
+        fvScalarMatrix TEqnConvectionOperator
+        (
+            fvm::div(phi, T)
+        );
+    }
+
+
+    {
+        addProfiling(fvScalarMatrix, "EnergyEquation");
+        fvScalarMatrix EnergyEquation
+        (
+            fvm::ddt(rho, T)
+            + fvm::div(phi, T)
+            - fvm::laplacian(Gamma, T)
+        );
+    }
+
+    {
+        addProfiling(fvScalarMatrix, "NSE");
+        fvVectorMatrix NSE
+        (
+            fvm::ddt(rho, U)
+            + fvm::div(phi, U)
+            - fvm::laplacian(mu, U)
+        );
+    }
+
+    profiling::writeNow();
+    
     runTime.printExecutionTime(Info);
 
     Info<< "End\n" << endl;

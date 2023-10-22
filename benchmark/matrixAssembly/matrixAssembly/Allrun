@@ -1,0 +1,30 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+restore0Dir
+
+nProcs=$1
+mesh=$2
+
+runApplication blockMesh
+
+runApplication decomposePar
+
+for jsonFile in case_*.json;
+do
+    basename=$(basename "$jsonFile")
+    basename=${basename%.*}
+    echo $jsonFile
+    echo $basename
+    python setParameters.py $jsonFile
+    runParallel -s $basename matrixAssembly
+    python getProfiling.py $basename.csv
+done
+
+
+python concatCsvFile.py $nProcs $mesh
+
+
+#------------------------------------------------------------------------------

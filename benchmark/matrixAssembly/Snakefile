@@ -1,0 +1,71 @@
+import subprocess
+import json
+import itertools
+import shutil
+import pandas as pd
+mesh_values = ["hex_100", "hex_200", "hex_300", "hex_500", "hex_1000"]
+procs_values = ["2", "4", "6"]
+no = itertools.product(["Gauss linear", "leastSquares"],["Gauss linear uncorrected", "Gauss linear corrected"])
+# %%
+elements = [{"GRADSCHEME": i[0],"LAPSCHEME": i[1]}for i in no]
+case_no = [str(i) for i in range(0,len(elements))]
+
+rule all:
+    input:
+        "results/benchmark.csv"
+
+rule aggregate_results:
+    input:
+        expand("ofcase/{mesh}/{procs}/results.csv", mesh=mesh_values, procs=procs_values)
+    output:
+        "results/benchmark.csv"
+    run:
+        csvData = []
+        for i in input:
+            tmpdf = pd.read_csv(i)
+            csvData.append(tmpdf)
+        df = pd.concat(csvData)
+        df.to_csv("results/benchmark.csv",index=False)
+
+rule of_cases:
+    output:
+        "ofcase/{mesh}/{procs}/results.csv"
+    input:
+        "ofcase/{mesh}/{procs}/case.json"
+    run:
+        mesh = wildcards.mesh
+        procs = wildcards.procs
+        Nx = mesh.split("_")[1]
+        subprocess.run(["foamDictionary", f"ofcase/{mesh}/{procs}/system/decomposeParDict ", "-entry", "numberOfSubdomains", "-set", f"{procs}"])
+        subprocess.run(["foamDictionary", f"ofcase/{mesh}/{procs}/system/simulationParameters ", "-entry", "NX", "-set", f"{Nx}"])
+
+        subprocess.run([f"./ofcase/{mesh}/{procs}/Allrun",procs,mesh])
+
+rule create_cases:
+    input:
+        expand("parameters/case_{no}.json", no=case_no)
+    output:
+        "ofcase/{mesh}/{procs}/case.json"
+    run:
+        mesh = wildcards.mesh
+        procs = wildcards.procs
+        shutil.copytree("matrixAssembly",f"ofcase/{mesh}/{procs}", dirs_exist_ok=True)
+        for i in input:
+            shutil.copy(i, f"ofcase/{mesh}/{procs}")
+
+        with open(f"ofcase/{mesh}/{procs}/case.json", "w") as json_file:
+            json_file.write("test")
+
+
+rule parameters:
+    params:
+        case = elements
+    output:
+        "parameters/case_{no}.json"
+    run:
+        variation = params.case
+        case_no = wildcards.no
+
+
+        with open(f"parameters/case_{case_no}.json", "w") as json_file:
+            json.dump(variation[int(case_no)], json_file,indent=4)
