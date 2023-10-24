@@ -18,6 +18,8 @@ int main(int argc, char *argv[])
 //   #include "setRootCase.H"
      #include "createTime.H"
      std::cout << time << "\n";
+
+     std::cout << NeoFOAM::hello_world() << "\n";
 //
 //
 //   Info<< nl;
