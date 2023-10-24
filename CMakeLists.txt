@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 cmake_minimum_required(VERSION 3.28.0)
 
 project(
