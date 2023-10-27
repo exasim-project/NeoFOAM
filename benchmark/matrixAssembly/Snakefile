@@ -3,7 +3,7 @@ import json
 import itertools
 import shutil
 import pandas as pd
-mesh_values = ["hex_100", "hex_200", "hex_300", "hex_500", "hex_1000"]
+mesh_values = ["hex_100", "hex_200", "hex_300", "hex_400", "hex_500", "hex_600", "hex_700", "hex_800", "hex_900", "hex_1000"]
 procs_values = ["2", "4", "6"]
 no = itertools.product(["Gauss linear", "leastSquares"],["Gauss linear uncorrected", "Gauss linear corrected"])
 # %%
@@ -20,6 +20,7 @@ rule aggregate_results:
     output:
         "results/benchmark.csv"
     run:
+        # loop over files and aggregate the results into a single file
         csvData = []
         for i in input:
             tmpdf = pd.read_csv(i)
