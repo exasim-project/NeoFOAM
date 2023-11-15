@@ -5,27 +5,29 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 \*---------------------------------------------------------------------------*/
 #include <iostream>
 
-import NeoFOAM;
-
+#include "NeoFOAM/NeoFOAM.hpp"
 
 int main(int argc, char *argv[])
 {
-//   #include "setRootCase.H"
+     #include "setRootCase.H"
      #include "createTime.H"
-     std::cout << time << "\n";
 
-     std::cout << NeoFOAM::hello_world() << "\n";
-//
-//
-//   Info<< nl;
+	Info<< "\nStarting time loop\n" << endl;
+
+    while (runTime.loop())
+    {
+	    Info<< "Time = " << runTime.timeName() << nl << endl;
+    }
+
+     Info<< nl;
 //   runTime.printExecutionTime(Info);
 //
-//   Info<< "End\n" << endl;
+     Info<< "End\n" << endl;
 
     return 0;
 }

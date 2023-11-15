@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-cmake_minimum_required(VERSION 3.28.0)
+cmake_minimum_required(VERSION 3.26.0)
 
 project(
   NeoFOAM
   LANGUAGES C CXX
-  DESCRIPTION "A prototype implementation of OpenFOAM in C++ 20")
+  DESCRIPTION "An implementation of FOAM")
 
 option(NeoFOAM "double precision scalar" TRUE)
 option(NeoFOAM "double precision label" TRUE)

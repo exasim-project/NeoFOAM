@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 add_executable(minimalFoam 
@@ -7,5 +7,5 @@ add_executable(minimalFoam
 
 target_link_libraries(
 	minimalFoam
-	PRIVATE NeoFOAM
+	PRIVATE NeoFOAM::NeoFOAM
 )

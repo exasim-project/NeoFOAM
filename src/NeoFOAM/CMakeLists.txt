@@ -1,10 +1,13 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 add_library(NeoFOAM)
+add_library(NeoFOAM::NeoFOAM ALIAS NeoFOAM)
+
+target_include_directories(NeoFOAM PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 target_sources(NeoFOAM
   PUBLIC
-    FILE_SET cxx_modules TYPE CXX_MODULES FILES
-    "hello_world.cxx"
+    "core/Time.cpp"
+    "core/Error.cpp"
 )
