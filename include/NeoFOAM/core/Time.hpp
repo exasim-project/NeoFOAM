@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 
 const std::string nl = "\n";
 
@@ -35,6 +36,7 @@ namespace NeoFOAM {
 
 		[[nodiscard]] bool loop() { time_ += 1.; return 10.0 >= time_; };
 
+		std::ostream& printExecutionTime(std::ostream& os) const {return os;};
 
 		private:
 

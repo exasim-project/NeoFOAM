@@ -25,11 +25,9 @@ int main(int argc, char* argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
     }
 
-    Info<< nl;
-    //   runTime.printExecutionTime(Info);
-    //
-    Info<< "End\n"
-        << endl;
+    runTime.printExecutionTime(Info);
+
+    Info<< "End\n"<< endl;
 
     return 0;
 }
