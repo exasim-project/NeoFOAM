@@ -4,8 +4,9 @@
 #include "gtest/gtest.h"
 #include "NeoFOAM/NeoFOAM.hpp"
 
-TEST(HelloWord, check_return_value){
+TEST(HelloWord, check_return_value)
+{
 
-        NeoFOAM::Time time {};
-	EXPECT_EQ(time.timeName(), "0.000000");
+    NeoFOAM::Time time {};
+    EXPECT_EQ(time.timeName(), "0.000000");
 }

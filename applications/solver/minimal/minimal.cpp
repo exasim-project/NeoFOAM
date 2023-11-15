@@ -12,22 +12,24 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-     #include "setRootCase.H"
-     #include "createTime.H"
+#include "setRootCase.H"
+#include "createTime.H"
 
-	Info<< "\nStarting time loop\n" << endl;
+    Info<< "\nStarting time loop\n"
+        << endl;
 
     while (runTime.loop())
     {
-	    Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.timeName() << nl << endl;
     }
 
-     Info<< nl;
-//   runTime.printExecutionTime(Info);
-//
-     Info<< "End\n" << endl;
+    Info<< nl;
+    //   runTime.printExecutionTime(Info);
+    //
+    Info<< "End\n"
+        << endl;
 
     return 0;
 }
