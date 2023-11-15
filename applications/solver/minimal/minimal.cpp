@@ -1,13 +1,5 @@
-/*---------------------------------------------------------------------------*\
-  =========                 |
-  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | www.openfoam.com
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
-\*---------------------------------------------------------------------------*/
 #include <iostream>
 
 #include "NeoFOAM/NeoFOAM.hpp"
