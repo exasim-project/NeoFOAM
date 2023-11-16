@@ -7,10 +7,12 @@ jobs:
   check-spdx-headers:
     runs-on: ubuntu-latest
     steps:
-    - name: install reuse linter 
-      run: |
-        pip3 install reuse
+      - name: Checkout to repository
+        uses: actions/checkout@v3
+      - name: install reuse linter 
+        run: |
+          pip3 install reuse
 
-    - name: Execute reuse linter 
-      run: |
-        reuse lint
+      - name: Execute reuse linter 
+        run: |
+          reuse lint
