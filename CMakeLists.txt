@@ -57,7 +57,10 @@ if(NEOFOAM_BUILD_APPS)
   add_subdirectory(applications)
 endif()
 
-add_custom_target(cmake-format command )
+add_custom_target(
+  cmake-format
+  COMMAND find . -name CMakeLists.txt -exec cmake-format -i {} +
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 include(cmake/install_helpers.cmake)
 neofoam_install()

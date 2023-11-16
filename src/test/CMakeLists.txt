@@ -1,5 +1,4 @@
-# SPDX-License-Identifier: MPL-2.0
-# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+# SPDX-License-Identifier: MPL-2.0 SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 include(FetchContent)
 FetchContent_Declare(
@@ -9,15 +8,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 include_directories(${googletest_SOURCE_DIR}/googletest/include)
 enable_testing()
-add_executable(
-  core_test
-  "test_time.cpp"
-)
+add_executable(core_test "test_time.cpp")
 
-target_link_libraries(
-  core_test
-  GTest::gtest_main NeoFOAM
-)
+target_link_libraries(core_test GTest::gtest_main NeoFOAM)
 
 include(GoogleTest)
 gtest_discover_tests(core_test)
