@@ -16,6 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  compiler_matrix:
+    strategy:
+      matrix: 
+        compiler: [clang++, g++]
   build:
     runs-on: ubuntu-latest
     container: greole/neofoam
@@ -35,9 +39,5 @@ jobs:
      - name: Build NeoFOAM
        run: |
          mkdir build && cd build
-         CC=clang CXX=clang++ cmake -GNinja ..
+         CXX=${{matrix.compiler}} cmake -GNinja ..
          cmake --build .
-
-         #    - name: Execute iwyu
-         #      run: |
-         #        iwyu_tool -p builddir || true # don't fail for now
