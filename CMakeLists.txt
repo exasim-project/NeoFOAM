@@ -61,7 +61,7 @@ endif()
 
 add_custom_target(
   cmake-format
-  COMMAND find . -name CMakeLists.txt -exec cmake-format --first-comment-is-literal -i {} +
+  COMMAND find . -name CMakeLists.txt -exec cmake-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 include(cmake/install_helpers.cmake)
