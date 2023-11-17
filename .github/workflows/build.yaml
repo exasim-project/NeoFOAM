@@ -1,0 +1,41 @@
+name: Build NeoFOAM
+run-name: 'Build workflow'
+
+on:
+  push:
+    branches: 
+      - dev
+      - main
+  pull_request:
+    types: synchronize
+  schedule:
+    - cron: "* 0 * * 0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build NeoFOAM
+    strategy:
+      fail-fast: false
+      matrix: 
+        compiler: [clang++, g++]
+    runs-on: ubuntu-latest
+    container: greole/neofoam
+    steps:
+     - name: Checkout to repository
+       uses: actions/checkout@v3
+
+     - name: Get versions
+       run: |
+         clang --version
+         ninja --version
+         cmake --version
+
+     - name: Build NeoFOAM
+       run: |
+         mkdir build && cd build
+         CXX=${{matrix.compiler}} cmake -GNinja ..
+         cmake --build .
