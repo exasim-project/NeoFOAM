@@ -1,4 +1,6 @@
-# SPDX-License-Identifier: MPL-2.0 SPDX-FileCopyrightText: 2023 NeoFOAM authors
+# SPDX-License-Identifier: Unlicense
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 cmake_minimum_required(VERSION 3.26.0)
 
 project(
@@ -59,7 +61,7 @@ endif()
 
 add_custom_target(
   cmake-format
-  COMMAND find . -name CMakeLists.txt -exec cmake-format -i {} +
+  COMMAND find . -name CMakeLists.txt -exec cmake-format --first-comment-is-literal -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 include(cmake/install_helpers.cmake)

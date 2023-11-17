@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: MPL-2.0 SPDX-FileCopyrightText: 2023 NeoFOAM authors
+# SPDX-License-Identifier: Unlicense
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_CXX_STANDARD 23)

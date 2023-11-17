@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 Jason Turner
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+##############################################################################
+# This function will enable static analyzers                                 #
+# from here                                                                  #
+# https://github.com/cpp-best-practices/cmake_template                       #
+##############################################################################
 macro(myproject_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
   find_program(CPPCHECK cppcheck)
   if(CPPCHECK)

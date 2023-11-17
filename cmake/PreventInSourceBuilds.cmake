@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 Jason Turner
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-#
-# This function will prevent in-source builds
-#
+##############################################################################
+# This function will prevent in-source builds                                #
+# from here                                                                  #
+# https://github.com/cpp-best-practices/cmake_template                       #
+##############################################################################
+
 function(myproject_assure_out_of_source_builds)
   # make sure the user doesn't play dirty with symlinks
   get_filename_component(srcdir "${CMAKE_SOURCE_DIR}" REALPATH)
