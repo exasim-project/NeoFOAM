@@ -10,7 +10,8 @@ NeoFOAM has the following requirements
 *  _clang 17+_ 
 
 ## Compilation
-![build](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yml/badge.svg)
+
+[![Build NeoFOAM](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yaml/badge.svg)](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yaml)
 
 NeoFOAM uses cmake to build, thus the standard cmake procedure should work 
 
