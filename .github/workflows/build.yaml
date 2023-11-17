@@ -1,5 +1,5 @@
 name: Build NeoFOAM
-run-name: 'Build and integration'
+run-name: 'Build workflow'
 
 on:
   push:
@@ -16,11 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  compiler_matrix:
+  build:
     strategy:
       matrix: 
         compiler: [clang++, g++]
-  build:
     runs-on: ubuntu-latest
     container: greole/neofoam
     name: build NeoFOAM
