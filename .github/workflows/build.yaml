@@ -18,13 +18,12 @@ concurrency:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix: 
         compiler: [clang++, g++]
     runs-on: ubuntu-latest
     container: greole/neofoam
     name: build NeoFOAM
-    strategy:
-      fail-fast: false
     steps:
      - name: Checkout to repository
        uses: actions/checkout@v3
