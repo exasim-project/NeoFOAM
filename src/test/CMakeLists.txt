@@ -15,3 +15,19 @@ target_link_libraries(core_test GTest::gtest_main NeoFOAM)
 
 include(GoogleTest)
 gtest_discover_tests(core_test)
+
+# add_executable(dsl_test "test_DSL.cpp")
+
+# target_link_libraries(dsl_test GTest::gtest_main NeoFOAM DSL)
+
+# include(GoogleTest)
+# gtest_discover_tests(dsl_test)
+
+
+find_package(Kokkos REQUIRED)
+
+add_executable(test_blas "test_blas_main.cpp")
+
+target_link_libraries(test_blas NeoFOAM GTest::gtest_main  Kokkos::kokkos)
+include(GoogleTest)
+gtest_discover_tests(test_blas)

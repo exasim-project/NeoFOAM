@@ -59,15 +59,14 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
   neofoam_enable_clang_tidy(FALSE "")
 endif()
 
-
 add_subdirectory(src)
 if(NEOFOAM_BUILD_WITH_APPS)
   add_subdirectory(applications)
 endif()
 
 if(NEOFOAM_BUILD_DOC)
-    include(cmake/Docs.cmake)
-    neofoam_build_docs()
+  include(cmake/Docs.cmake)
+  neofoam_build_docs()
 endif()
 
 add_custom_target(
