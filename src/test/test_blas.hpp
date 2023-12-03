@@ -69,27 +69,27 @@ void test_vector(int N)
 
     NeoFOAM::vectorField a("a", N);
 
-    fill_field(a, vector(1.0, 1.0, 1.0));
+    fill_field(a, NeoFOAM::vector(1.0, 1.0, 1.0));
 
-    copy_and_check_EQ(a, vector(1.0, 1.0, 1.0));
+    copy_and_check_EQ(a, NeoFOAM::vector(1.0, 1.0, 1.0));
 
     NeoFOAM::vectorField b("b", N);
 
-    fill_field(b, vector(2.0, 2.0, 2.0));
+    fill_field(b, NeoFOAM::vector(2.0, 2.0, 2.0));
 
-    copy_and_check_EQ(b, vector(2.0, 2.0, 2.0));
+    copy_and_check_EQ(b, NeoFOAM::vector(2.0, 2.0, 2.0));
 
     auto c = a + b;
 
-    copy_and_check_EQ(c, vector(3.0, 3.0, 3.0));
+    copy_and_check_EQ(c, NeoFOAM::vector(3.0, 3.0, 3.0));
 
     c = c - b;
 
-    copy_and_check_EQ(c, vector(1.0, 1.0, 1.0));
+    copy_and_check_EQ(c, NeoFOAM::vector(1.0, 1.0, 1.0));
 
     c = c * 2;
 
-    copy_and_check_EQ(c, vector(2.0, 2.0, 2.0));
+    copy_and_check_EQ(c, NeoFOAM::vector(2.0, 2.0, 2.0));
 
     NeoFOAM::scalarField scale("scalar_a", N);
 
@@ -97,7 +97,7 @@ void test_vector(int N)
 
     c = c * scale;
 
-    copy_and_check_EQ(c, vector(0.0, 0.0, 0.0));
+    copy_and_check_EQ(c, NeoFOAM::vector(0.0, 0.0, 0.0));
 }
 
 TEST(BLAS, scalar_ops)
