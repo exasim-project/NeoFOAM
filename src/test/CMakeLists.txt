@@ -28,6 +28,6 @@ find_package(Kokkos REQUIRED)
 
 add_executable(test_blas "test_blas_main.cpp")
 
-target_link_libraries(test_blas NeoFOAM GTest::gtest_main  Kokkos::kokkos)
+target_link_libraries(test_blas GTest::gtest_main  Kokkos::kokkos NeoFOAM)
 include(GoogleTest)
 gtest_discover_tests(test_blas)

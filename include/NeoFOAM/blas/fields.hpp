@@ -2,15 +2,17 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "primitives/scalar.hpp"
+#include "primitives/vector.hpp"
 #include "deviceField.hpp"
 
 namespace NeoFOAM
 {
 
-using labelField = NeoFOAM::deviceField<int32_t, 1>;
+using labelField = NeoFOAM::deviceField<int32_t>;
 
-using scalarField = NeoFOAM::deviceField<double, 1>;
-using vectorField = NeoFOAM::deviceField<double, 3>;
+using scalarField = NeoFOAM::deviceField<scalar>;
+using vectorField = NeoFOAM::deviceField<vector>;
 
 
 

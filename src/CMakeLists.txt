@@ -8,4 +8,4 @@ if(NEOFOAM_BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
-add_subdirectory(benchmarks)
+#add_subdirectory(benchmarks)
