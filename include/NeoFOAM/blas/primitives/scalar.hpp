@@ -2,4 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-typedef double scalar;
+namespace NeoFOAM {
+    typedef double scalar;
+}
