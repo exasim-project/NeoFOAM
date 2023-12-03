@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 #include "NeoFOAM/blas/fields.hpp"
 
-static void serial_vector_addition(benchmark::State &state)
+static void serial_scalarField_addition(benchmark::State &state)
 {
 
     int N = state.range(0);
@@ -41,7 +41,7 @@ static void scalarField_add(benchmark::State &state)
 }
 
 // Register the function as a benchmark
-BENCHMARK(serial_vector_addition)->RangeMultiplier(8)->Range(8, 1 << 20); // from 8 to 2^20 elements
+BENCHMARK(serial_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20); // from 8 to 2^20 elements
 BENCHMARK(scalarField_add)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
 
 int main(int argc, char **argv)
