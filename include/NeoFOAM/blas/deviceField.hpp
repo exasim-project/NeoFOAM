@@ -4,131 +4,87 @@
 
 #include <Kokkos_Core.hpp>
 #include <iostream>
+#include "primitives/scalar.hpp"
 
 namespace NeoFOAM
 {
-    template <typename T, int dims>
+    template <typename T>
     class deviceField
     {
     public:
-        deviceField(const deviceField<T, dims> &rhs)
-            : name_(rhs.name_), size_(rhs.size_), field_(rhs.field_)
+        KOKKOS_FUNCTION
+        deviceField(const deviceField<T> &rhs)
+            : size_(rhs.size_), field_(rhs.field_)
         {
         }
 
-        deviceField(deviceField<T, dims> &&rhs)
-            : name_(std::move(rhs.name_)), size_(rhs.size_), field_(std::move(rhs.field_))
+        deviceField(const std::string &name, const int size)
+            : size_(size), field_(Kokkos::View<T *>(name, size))
         {
-            // Reset rhs to default state
-            rhs.size_ = 0;
-            rhs.name_ = "";
         }
 
-        deviceField(const std::string &name, const int size, const bool init = true)
-            : name_(name), size_(size)
+        KOKKOS_FUNCTION
+        T &operator()(const int i) const
         {
-            if (init)
-            {
-                field_ = Kokkos::View<T *[dims]>(name, size);
-                Kokkos::parallel_for(
-                    size, KOKKOS_LAMBDA(const int i) {
-                        for (int j = 0; j < dims; ++j)
-                        {
-                            field_(i, j) = 0;
-                        }
-                    });
-            }
-            else
-            {
-                field_ = Kokkos::View<T *[dims]>(name, size);
-            }
+            return field_(i);
         }
 
-        KOKKOS_FORCEINLINE_FUNCTION
-        double &operator()(const int i) const
-        {
-            return field_(i, 0);
-        }
-
-        KOKKOS_FORCEINLINE_FUNCTION
-        double &operator()(const int i, const int j) const
-        {
-            return field_(i, j);
-        }
-
-        void operator=(const deviceField<T, dims> &rhs)
+        void operator=(const deviceField<T> &rhs)
         {
             Kokkos::parallel_for(
-                size_, KOKKOS_LAMBDA(const int i) {
-                    for (int j = 0; j < dims; ++j)
-                    {
-                        field_(i, j) = rhs(i, j);
-                    }
+                size_, KOKKOS_CLASS_LAMBDA(const int i) {
+                    field_(i) = rhs(i);
                 });
             size_ = rhs.size_;
-            name_ = rhs.name_;
         }
 
         // move assignment operator
-        deviceField<T, dims> &operator=(deviceField<T, dims> &&rhs)
+        deviceField<T> &operator=(deviceField<T> &&rhs)
         {
             if (this != &rhs)
             {
                 field_ = std::move(rhs.field_);
                 size_ = rhs.size_;
-                name_ = rhs.name_;
             }
             return *this;
         }
 
-        deviceField<T, dims> operator+(const deviceField<T, dims> &rhs)
+        deviceField<T> operator+(const deviceField<T> &rhs)
         {
-            deviceField<T, dims> result("result", size_, false);
+            deviceField<T> result("result", size_);
             Kokkos::parallel_for(
-                size_, KOKKOS_LAMBDA(const int i) {
-                    for (int j = 0; j < dims; ++j)
-                    {
-                        result(i, j) = field_(i, j) + rhs(i, j);
-                    }
+                size_, KOKKOS_CLASS_LAMBDA(const int i) {
+                    result(i) = field_(i) + rhs(i);
                 });
             return result;
         }
 
-        deviceField<T, dims> operator-(const deviceField<T, dims> &rhs)
+        deviceField<T> operator-(const deviceField<T> &rhs)
         {
-            deviceField<T, dims> result("result", size_, false);
+            deviceField<T> result("result", size_);
             Kokkos::parallel_for(
-                size_, KOKKOS_LAMBDA(const int i) {
-                    for (int j = 0; j < dims; ++j)
-                    {
-                        result(i, j) = field_(i, j) - rhs(i, j);
-                    }
+                size_, KOKKOS_CLASS_LAMBDA(const int i) {
+                    result(i) = field_(i) - rhs(i);
                 });
             return result;
         }
 
-        deviceField<T, dims> operator*(const deviceField<T, 1> &rhs)
+        deviceField<T> operator*(const deviceField<scalar> &rhs)
         {
-            deviceField<T, dims> result("result", size_, false);
+            deviceField<T> result("result", size_);
             Kokkos::parallel_for(
-                size_, KOKKOS_LAMBDA(const int i) {
-                    for (int j = 0; j < dims; ++j)
-                    {
-                        result(i, j) = field_(i, j) * rhs(i);
-                    }
+                size_, KOKKOS_CLASS_LAMBDA(const int i) {
+                    result(i) = field_(i) * rhs(i);
                 });
             return result;
         }
 
-        deviceField<T, dims> operator*(const double rhs)
+        deviceField<T> operator*(const double rhs)
         {
-            deviceField<T, dims> result("result", size_, false);
+            deviceField<T> result("result", size_);
             Kokkos::parallel_for(
-                size_, KOKKOS_LAMBDA(const int i) {
-                    for (int j = 0; j < dims; ++j)
-                    {
-                        result(i, j) = field_(i, j) * rhs;
-                    }
+                size_, KOKKOS_CLASS_LAMBDA(const int i) {
+                    result(i) = field_(i) * rhs;
                 });
             return result;
         }
@@ -137,11 +93,8 @@ namespace NeoFOAM
         void apply(func f)
         {
             Kokkos::parallel_for(
-                size_, KOKKOS_LAMBDA(const int i) {
-                    for (int j = 0; j < dims; ++j)
-                    {
-                        field_(i, j) = f(i, j);
-                    }
+                size_, KOKKOS_CLASS_LAMBDA(const int i) {
+                    field_(i) = f(i);
                 });
         }
 
@@ -149,10 +102,23 @@ namespace NeoFOAM
         {
             return field_.data();
         }
-        Kokkos::View<T *[dims]> field_;
+
+        std::string name()
+        {
+            return field_.name();
+        }
+
+        auto field()
+        {
+            return field_;
+        }
+        int size()
+        {
+            return size_;
+        }
+
     private:
-        
-        std::string name_;
+        Kokkos::View<T *> field_;
         int size_;
     };
 } // namespace NeoFOAM
