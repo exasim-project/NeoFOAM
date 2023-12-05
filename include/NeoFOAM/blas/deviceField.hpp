@@ -18,9 +18,17 @@ namespace NeoFOAM
         {
         }
 
+        KOKKOS_FUNCTION
+        deviceField(const Kokkos::View<T *> &field)
+            : size_(field.size()), field_(field)
+        {
+
+        }
+
         deviceField(const std::string &name, const int size)
             : size_(size), field_(Kokkos::View<T *>(name, size))
         {
+
         }
 
         KOKKOS_FUNCTION
