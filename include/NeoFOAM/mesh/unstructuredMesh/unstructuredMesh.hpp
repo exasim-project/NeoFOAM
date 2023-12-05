@@ -4,26 +4,32 @@
 
 #include "NeoFOAM/blas/fields.hpp"
 
-
-
 namespace NeoFOAM
 {
 
-struct unstructuredMesh
-{
+    struct unstructuredMesh
+    {
 
-    vectorField Sf_;  // area vector
+        unstructuredMesh(NeoFOAM::vectorField Sf, NeoFOAM::labelField owner, NeoFOAM::labelField neighbour, NeoFOAM::scalarField V, int32_t nCells, int32_t nInternalFaces)
+            : Sf_(Sf)
+            , owner_(owner)
+            , neighbour_(neighbour)
+            , V_(V)
+            , nCells_(nCells)
+            , nInternalFaces_(nInternalFaces){
 
-    labelField owner_;  // owner cell
-    labelField neighbour_;  // neighbour cell
+            };
 
-    scalarField V_;  // cell volume
+        vectorField Sf_; // area vector
 
-    int32_t nCells_;  // number of cells
-    
-    int32_t nInternalFaces_;  // number of internal faces
+        labelField owner_;     // owner cell
+        labelField neighbour_; // neighbour cell
 
+        scalarField V_; // cell volume
 
-};
+        int32_t nCells_; // number of cells
 
-}  // namespace NeoFOAM
+        int32_t nInternalFaces_; // number of internal faces
+    };
+
+} // namespace NeoFOAM
