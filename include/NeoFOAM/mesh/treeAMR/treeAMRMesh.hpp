@@ -25,7 +25,15 @@ namespace NeoFOAM
      * @param maxLevel_ The maximum level of refinement for the mesh.
      */
     treeAMRMesh(std::unique_ptr<treeAMRMeshModifier> meshModifier)
-        : meshModifier_(std::move(meshModifier)), initialLevel_(meshModifier_->initialLevel()), maxLevel_(meshModifier_->maxLevel()), nElements_(meshModifier_->nElements())
+        : meshModifier_(std::move(meshModifier))
+        , initialLevel_(meshModifier_->initialLevel())
+        , maxLevel_(meshModifier_->maxLevel())
+        , nElements_(meshModifier_->nElements())
+        , V_("V", nElements_)
+        , Cx_("Cx", nElements_)
+        , Cy_("Cy", nElements_)
+        , Cz_("Cz", nElements_)
+        , level_("level", nElements_)
     {
     }
 
@@ -36,7 +44,8 @@ namespace NeoFOAM
 
     /**
      * @brief Refines the mesh.
-     * @return True if the mesh was successfully refined, false otherwise.
+     * @return True if the mesh was successfully refined
+     * , false otherwise.
      */
     bool refine()
     {
@@ -84,12 +93,12 @@ namespace NeoFOAM
     int32_t maxLevel_;     ///< The maximum level of refinement for the mesh.
     int32_t nElements_;    ///< The number of elements in the mesh.
 
-    // scalarField V_;  // The volume of each cell in the mesh.
-    // scalarField Cx_; // The x-coordinate of the centroid of each cell in the mesh.
-    // scalarField Cy_; // The y-coordinate of the centroid of each cell in the mesh.
-    // scalarField Cz_; // The z-coordinate of the centroid of each cell in the mesh.
+    scalarField V_;  // The volume of each cell in the mesh.
+    scalarField Cx_; // The x-coordinate of the centroid of each cell in the mesh.
+    scalarField Cy_; // The y-coordinate of the centroid of each cell in the mesh.
+    scalarField Cz_; // The z-coordinate of the centroid of each cell in the mesh.
 
-    // scalarField level_; // The level of refinement of each cell in the mesh.
+    scalarField level_; // The level of refinement of each cell in the mesh.
   };
 
 } // namespace NeoFOAM

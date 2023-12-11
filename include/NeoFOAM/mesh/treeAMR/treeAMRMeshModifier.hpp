@@ -16,7 +16,21 @@ namespace NeoFOAM
      * @param maxLevel_ The maximum level of refinement for the mesh.
      */
     treeAMRMeshModifier(int32_t initialLevel_, int32_t maxLevel_)
-    : initialLevel_(initialLevel_), maxLevel_(maxLevel_), nElements_(-1)
+    : initialLevel_(initialLevel_)
+    , maxLevel_(maxLevel_)
+    , nElements_(-1)
+    , V_()
+    , Cx_()
+    , Cy_()
+    , Cz_()
+    , Cfx_()
+    , Cfy_()
+    , Cfz_()
+    , Ax_()
+    , Ay_()
+    , Az_()
+    , owner_()
+    , neigbour_()
     {
     };
 
@@ -67,6 +81,27 @@ namespace NeoFOAM
       int32_t initialLevel_; ///< The initial level of refinement for the mesh.
       int32_t maxLevel_;     ///< The maximum level of refinement for the mesh.
       int32_t nElements_;    ///< The number of elements in the mesh.
+
+      std::vector<double> V_;
+      std::vector<double> level_;
+
+      // centroid
+      std::vector<double> Cx_;
+      std::vector<double> Cy_;
+      std::vector<double> Cz_;
+
+      // face centroid      
+      std::vector<double> Cfx_;
+      std::vector<double> Cfy_;
+      std::vector<double> Cfz_;
+
+      // face area
+      std::vector<double> Ax_;
+      std::vector<double> Ay_;
+      std::vector<double> Az_;
+
+      std::vector<int32_t> owner_; // face: cell index owning the face outwards normal
+      std::vector<int32_t> neigbour_; // face: cell index not-owning the face inwards normal
   };
 
 } // namespace NeoFOAM
