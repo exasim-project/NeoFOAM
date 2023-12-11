@@ -31,7 +31,7 @@ namespace NeoFOAM
 
         }
 
-        KOKKOS_FUNCTION
+        KOKKOS_INLINE_FUNCTION
         T &operator()(const int i) const
         {
             return field_(i);
