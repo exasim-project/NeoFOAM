@@ -4,6 +4,7 @@
 #pragma once
 
 #include <gtest/gtest.h>
+#include "NeoFOAM/blas/deviceAdjacency.hpp"
 #include "NeoFOAM/blas/fields.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -112,4 +113,8 @@ TEST(BLAS, vector_ops)
     int N = 10;
 
     test_vector(N);
+}
+
+TEST(BLAS, deviceAdjacency_name) {
+    EXPECT_TRUE(false);
 }

@@ -35,7 +35,6 @@ namespace NeoFOAM
 
         }
 
-
         [[nodiscard]] inline auto data()
         {
             return {adjacency_.data(), offset_.data()};
@@ -50,17 +49,18 @@ namespace NeoFOAM
         {
             return offset_.size();
         }
-    
+
+        [[nodiscard]] void insert(Kokkos::pair<Tlabel, Tlabel> connect);
+        {
+            std::cout<<"not-implemented"<<std::endl;
+            exit(1);
+        }
+
         [[nodiscard]] inline std::span<const Tlabel> at(const Tlabel& index) const {
             return (*this)[index];
         }
 
         [[nodiscard]] inline std::span<const Tlabel> operator[](const Tlabel& index) const {
-            return {adjacency_.begin() + static_cast<Tlabel>(offset_[index]),
-                    offset_[index + 1] - offset_[index]};
-        }
-
-        [[nodiscard]] inline std::span<Tlabel> operator[](const Tlabel& index) {
             return {adjacency_.begin() + static_cast<Tlabel>(offset_[index]),
                     offset_[index + 1] - offset_[index]};
         }
