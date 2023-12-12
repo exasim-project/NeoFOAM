@@ -24,7 +24,7 @@ namespace NeoFOAM
 
         KOKKOS_FUNCTION
         deviceAdjacency(const Kokkos::View<Tlabel *> &adjacency, const Kokkos::View<Tlabel *> &offset)
-            : size_(field.size()), adjacency_(adjacency_), offset_(rhs.offset)
+            : size_(offset.size()), adjacency_(adjacency), offset_(offset)
         {
 
         }
@@ -50,9 +50,9 @@ namespace NeoFOAM
             return offset_.size();
         }
 
-        [[nodiscard]] void insert(Kokkos::pair<Tlabel, Tlabel> connect);
+        void insert(Kokkos::pair<Tlabel, Tlabel> connect)
         {
-            std::cout<<"not-implemented"<<std::endl;
+            std::cout<<"not-implemented => deviceAdjacency::insert"<<std::endl;
             exit(1);
         }
 
