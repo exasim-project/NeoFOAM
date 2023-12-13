@@ -23,6 +23,15 @@ namespace NeoFOAM
         {
         }
 
+        // mainly for testing.
+        deviceField(const std::string &name, const std::initializer_list<T>& values)
+            : size_(values.size()), field_(Kokkos::View<T *>(name, values.size()))
+        {
+            Kokkos::parallel_for("init adjacency_", values.size(), KOKKOS_LAMBDA (const int& i) {
+                        field_(i) = *(values.begin() + i);
+                        });
+        }
+
         KOKKOS_FUNCTION
         T &operator()(const int i) const
         {
@@ -105,14 +114,15 @@ namespace NeoFOAM
 
         std::string name()
         {
-            return field_.name();
+            return field_.label();
         }
 
         auto field()
         {
             return field_;
         }
-        int size()
+
+        int size() const noexcept
         {
             return size_;
         }

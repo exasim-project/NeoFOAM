@@ -4,9 +4,10 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include "NeoFOAM/blas/deviceAdjacency.hpp"
-#include "NeoFOAM/blas/fields.hpp"
 #include <Kokkos_Core.hpp>
+
+#include "NeoFOAM/blas/adjacency.hpp"
+#include "NeoFOAM/blas/fields.hpp"
 
 template <typename T, typename primitive>
 void fill_field(T &a, primitive value)
@@ -115,6 +116,26 @@ TEST(BLAS, vector_ops)
     test_vector(N);
 }
 
+TEST(BLAS, field_constructor_initialiser_list)
+{
+    std::string name = "test";
+    NeoFOAM::scalarField field(name, {1.0, 2.0, 3.0});
+
+    EXPECT_EQ(field(0), 1.0);
+    EXPECT_EQ(field(1), 2.0);
+    EXPECT_EQ(field(2), 3.0);
+    EXPECT_EQ(field.name(), name);
+}
+
+
 TEST(BLAS, deviceAdjacency_name) {
+
+    std::string name = "test";
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
+    NeoFOAM::localAdjacency test_adjacency(name, adjacency, offset);
+      
+    std::cout<<"\n"<<test_adjacency(0)(0);
+    std::cout<<"\n"<<test_adjacency(0)(1);
     EXPECT_TRUE(false);
 }
