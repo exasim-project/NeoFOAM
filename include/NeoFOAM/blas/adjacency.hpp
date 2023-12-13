@@ -8,7 +8,10 @@
 namespace NeoFOAM
 {
 
-using localAdjacency = NeoFOAM::deviceAdjacency<localIdx>;
-using globalAdjacency = NeoFOAM::deviceAdjacency<globalIdx>;
+template <bool directed>
+using localAdjacency = NeoFOAM::deviceAdjacency<localIdx, directed>;
+
+template <bool directed>
+using globalAdjacency = NeoFOAM::deviceAdjacency<globalIdx, directed>;
 
 } // namespace NeoFOAM

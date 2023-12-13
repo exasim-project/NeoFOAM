@@ -133,9 +133,12 @@ TEST(BLAS, deviceAdjacency_name) {
     std::string name = "test";
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
     NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
-    NeoFOAM::localAdjacency test_adjacency(name, adjacency, offset);
+    NeoFOAM::localAdjacency<false> test_adjacency(name, adjacency, offset);
       
     std::cout<<"\n"<<test_adjacency(0)(0);
     std::cout<<"\n"<<test_adjacency(0)(1);
+
+    test_adjacency.insert(Kokkos::pair(0, 2));
+
     EXPECT_TRUE(false);
 }
