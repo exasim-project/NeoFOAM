@@ -74,7 +74,7 @@ namespace NeoFOAM
             deviceField<T> result("result", size_);
             Kokkos::parallel_for(
                 size_, KOKKOS_CLASS_LAMBDA(const int i) {
-                    result(i) = field_(i) * rhs(i);
+                    result(i) = rhs(i) * field_(i);
                 });
             return result;
         }
@@ -84,7 +84,7 @@ namespace NeoFOAM
             deviceField<T> result("result", size_);
             Kokkos::parallel_for(
                 size_, KOKKOS_CLASS_LAMBDA(const int i) {
-                    result(i) = field_(i) * rhs;
+                    result(i) =  rhs * field_(i);
                 });
             return result;
         }
