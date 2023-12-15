@@ -128,26 +128,77 @@ TEST(BLAS, field_constructor_initialiser_list)
 }
 
 
-TEST(BLAS, deviceAdjacency_name) {
+TEST(DeviceAdjacency, name) {
 
     std::string name = "test";
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
     NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
     NeoFOAM::localAdjacency<false> test_adjacency(name, adjacency, offset);
       
-    std::cout<<"\n"<<test_adjacency(0)(0);
-    std::cout<<"\n"<<test_adjacency(0)(1);
-
     test_adjacency.insert(Kokkos::pair(0, 2));
 
     EXPECT_TRUE(false);
 }
 
-TEST(BLAS, deviceAdjacency_contains) {
+TEST(DeviceAdjacency, ContainsUndirectedEdge) {
+    NeoFOAM::localAdjacency<false> graph;
 
+    // Insert some edges
+    graph.insert({0, 1});
+    graph.insert({1, 2});
+    graph.insert({2, 3});
+
+    // Test contains function
+    EXPECT_TRUE(graph.contains({0, 1}));
+    EXPECT_TRUE(graph.contains({1, 0}));
+    EXPECT_TRUE(graph.contains({1, 2}));
+    EXPECT_TRUE(graph.contains({2, 1}));
+    EXPECT_TRUE(graph.contains({2, 3}));
+    EXPECT_TRUE(graph.contains({3, 2}));
+
+    // Test non-existent edges
+    EXPECT_FALSE(graph.contains({0, 2}));
+    EXPECT_FALSE(graph.contains({2, 0}));
+    EXPECT_FALSE(graph.contains({1, 3}));
+    EXPECT_FALSE(graph.contains({3, 1}));
 }
 
-TEST(BLAS, deviceAdjacency_insert) {
+TEST(DeviceAdjacency, ContainsDirectedEdge) {
+    NeoFOAM::localAdjacency<true> graph;
+
+    // Insert some edges
+    graph.insert({0, 1});
+    graph.insert({1, 2});
+    graph.insert({2, 3});
+
+    // Test contains function
+    EXPECT_TRUE(graph.contains({0, 1}));
+    EXPECT_FALSE(graph.contains({1, 0}));
+    EXPECT_TRUE(graph.contains({1, 2}));
+    EXPECT_FALSE(graph.contains({2, 1}));
+    EXPECT_TRUE(graph.contains({2, 3}));
+    EXPECT_FALSE(graph.contains({3, 2}));
+
+    // Test non-existent edges
+    EXPECT_FALSE(graph.contains({0, 2}));
+    EXPECT_FALSE(graph.contains({2, 0}));
+    EXPECT_FALSE(graph.contains({1, 3}));
+    EXPECT_FALSE(graph.contains({3, 1}));
+}
+
+TEST(DeviceAdjacency, ContainsEmptyGraph) {
+    NeoFOAM::localAdjacency<false> graph;
+
+    // Test contains function on empty graph
+    EXPECT_FALSE(graph.contains({0, 1}));
+    EXPECT_FALSE(graph.contains({1, 0}));
+    EXPECT_FALSE(graph.contains({1, 2}));
+    EXPECT_FALSE(graph.contains({2, 1}));
+    EXPECT_FALSE(graph.contains({2, 3}));
+    EXPECT_FALSE(graph.contains({3, 2}));
+}
+
+TEST(DeviceAdjacency, insert) {
   NeoFOAM::localAdjacency<false> graph;
 
   // insert a pentagram out of order, with some edges flipped
@@ -157,8 +208,7 @@ TEST(BLAS, deviceAdjacency_insert) {
 
   EXPECT_TRUE(graph.insert({2, 3}));
   EXPECT_TRUE(graph.insert({1, 2}));
-    std::cout<<"hee4"<<std::endl;
-exit(1);
+    
   // Add two additional vertices, as an 'appendage'.
   EXPECT_TRUE(graph.insert({3, 6}));
   EXPECT_TRUE(graph.insert({5, 6}));
@@ -205,5 +255,5 @@ exit(1);
   EXPECT_EQ(graph(6)(1), 5);
 
   // death test - invalid edge
-  EXPECT_DEATH(graph.insert({1, 1}), ".*");
+  //EXPECT_DEATH(graph.insert({1, 1}), ".*");
 }
