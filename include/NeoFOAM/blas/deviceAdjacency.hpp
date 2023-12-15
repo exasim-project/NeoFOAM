@@ -13,9 +13,12 @@
 namespace NeoFOAM {
 
     template<typename Tlabel>
-    constexpr Kokkos::pair<const Tlabel&, const Tlabel&> order_edge_vertex(const Kokkos::pair<Tlabel, Tlabel>* edge) {
-        return edge->first < edge->second ? Kokkos::pair<const Tlabel&, const Tlabel&>({edge->first, edge->second})
-                                          : Kokkos::pair<const Tlabel&, const Tlabel&>({edge->second, edge->first});
+    using connection = Kokkos::pair<Tlabel, Tlabel>;
+
+    template<typename Tlabel>
+    constexpr connection<const Tlabel&> order_connection(const connection<Tlabel>* connect) {
+        return connect->first < connect->second ? connection<const Tlabel&>({connect->first, connect->second})
+                                                : connection<const Tlabel&>({connect->second, connect->first});
     }
 
     // Basically a CSR approach to connectivity - avoids 'vector of vectors' memory layout for connectivity.
@@ -83,6 +86,7 @@ namespace NeoFOAM {
             return name_; 
         }
 
+        
         void resize(Tlabel size) {
 
             // Branch based on expansion or contraction of the graph.
@@ -124,64 +128,36 @@ namespace NeoFOAM {
             return offset_.size() > 0 ? offset_.size() - 1 : 0; 
         }
 
-        [[nodiscard]] bool contains(Kokkos::pair<Tlabel, Tlabel> connect) const {
+        [[nodiscard]] bool contains(const connection<Tlabel>& connect) const {
             if(!directed) {
-                const auto ordered_edge = order_edge_vertex(&connect);
+                const auto ordered_edge = order_connection(&connect);
                 if(ordered_edge.second >= size() || empty()) return false;
                 auto adjacency = (*this)(ordered_edge.first);
                 for(auto index = 0; index < adjacency.size(); ++index) {
                     if(ordered_edge.second == adjacency(index)) return true;
                 }
-                return false;
             }
+            return false;
         }
 
-        bool insert(Kokkos::pair<Tlabel, Tlabel> connect) {
-            
-            std::cout<<"\n----------------";
- 
-
-            // Preliminaries check if the edge exists, then determine if we need to resize.
+        bool insert(const connection<Tlabel>& connect) {
+           
+            // Do we need to resize the graph (offset_ container)?
             if(contains(connect)) return false;            
-            const auto& [i_lower_vertex, i_upper_vertex] = order_edge_vertex(&connect);
-            const bool is_insert_lower = !directed || i_lower_vertex == connect.first;
-            const bool is_insert_upper = !directed || i_upper_vertex == connect.first; 
-            if(i_upper_vertex >= size()) resize(i_upper_vertex + 1);
+            if(directed && connect.first >= size()) resize(connect.first + 1);
+            if(!directed && std::max(connect.first, connect.second) >= size()) 
+                resize(std::max(connect.first, connect.second) + 1);
 
-            std::cout<<"\n"<<offset_.size()<<"\n";
-            for(auto i = 0; i < offset_.size(); ++i){
-                std::cout<<offset_(i)<<", ";
-            }
-            std::cout<<"\n"<<adjacency_.size()<<"\n";
-            for(auto i = 0; i < adjacency_.size(); ++i){
-                std::cout<<adjacency_(i)<<", ";
-            }
-
-            std::cout<<"\n...";
+            // Updated adjacency and offset.
             insertAdjacency(connect);
-            std::cout<<"\n...";
-
-            // Insert lower vertex.
-             //   insert_vertex_adjacent_list(i_lower_vertex, i_upper_vertex);
             Kokkos::parallel_for("lower_offset_update", offset_.size(), 
                                   KOKKOS_LAMBDA(const Tlabel i) {
-                                  offset_(i) += static_cast<Tlabel>(i > i_lower_vertex) + static_cast<Tlabel>(i > i_upper_vertex);
+                                  offset_(i) += static_cast<Tlabel>(i > connect.first) 
+                                                + static_cast<Tlabel>((i > connect.second)*(!directed));
                                         });
-            std::cout<<"\n"<<offset_.size()<<"\n";
-            for(auto i = 0; i < offset_.size(); ++i){
-                std::cout<<offset_(i)<<", ";
-            }
-            std::cout<<"\n"<<adjacency_.size()<<"\n";
-            for(auto i = 0; i < adjacency_.size(); ++i){
-                std::cout<<adjacency_(i)<<", ";
-            }
             return true;
 
         }
-
-//        [[nodiscard]] inline std::span<const Tlabel> at(const Tlabel& index) const {
-//            return (*this)[index];
-//        }
 
         [[nodiscard]] inline Kokkos::View<const Tlabel *> operator()(const Tlabel& index) const {
             return Kokkos::View<const Tlabel *>(adjacency_, Kokkos::make_pair(offset_(index), offset_(index + 1)));
@@ -193,19 +169,20 @@ namespace NeoFOAM {
     Kokkos::View<Tlabel *> offset_;  // is one greater than size
     std::string name_;
 
-    // offsets must be correct, will be incorrect after return - assumes the connection does not exist
-    void insertAdjacency(const Kokkos::pair<Tlabel, Tlabel>& connect) 
+    // Condition of the offset_ veiw, must be sized correctly for the new vertices but containd the old offset data,
+    // this can be achieved using the resize function before calling this function
+    // 0, will be incorrect after return - assumes the connection does not exist
+    void insertAdjacency(const connection<Tlabel>& connect) 
     {
-        // assert !contains(connection)
+        const auto ordered_edge = order_connection(&connect);
         const bool is_adjacency_empty = adjacency_.size() == 0;
         Kokkos::pair<Tlabel, Tlabel> index_insert = {0, 0};
-        
+       
         if(!is_adjacency_empty)
             for(int i_connection = 0; i_connection < 2; ++i_connection) {
                     const Tlabel& connect_0 = i_connection == 0 ? connect.first : connect.second; 
                     const Tlabel& connect_1 = i_connection == 0 ? connect.second : connect.first; 
                     Tlabel& insert = i_connection == 0 ? index_insert.first : index_insert.second; 
-                    std::cout<<"\nis_row_empty: "<<(offset_(connect_0) == offset_(connect_0 + 1));
                     
                     // Determine offsets, different if the row is empty.
                     if(offset_(connect_0) == offset_(connect_0 + 1)) insert = offset_(connect_0);
@@ -213,7 +190,6 @@ namespace NeoFOAM {
                         insert = offset_(connect_0 + 1);
                         for(auto i_offset = offset_(connect_0); i_offset < offset_(connect_0 + 1); ++i_offset)
                         {
-                             std::cout<<"\nchecking "<<connect_1<<" against connection: "<<connect_0<<" - "<<adjacency_(i_offset);
                             if(adjacency_(i_offset) > connect_1) {
                                 insert = i_offset;
                                 break;
@@ -221,13 +197,8 @@ namespace NeoFOAM {
                         }   
                 if(directed) break;
             }
-        
 
-        std::cout<<"\nadjacency_empty: "<<is_adjacency_empty;
-        std::cout<<"\n0: "<<connect.first;
-        std::cout<<"\n1: "<<connect.second;
-        std::cout<<"\ni_0: "<<index_insert.first;
-        std::cout<<"\ni_1: "<<index_insert.second;
+
         Kokkos::View<Tlabel *> temp(adjacency_.label(), adjacency_.size());
         Kokkos::deep_copy(temp, adjacency_);
         Kokkos::resize(adjacency_, adjacency_.size() + 1 + offset_shift());
