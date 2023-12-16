@@ -30,7 +30,7 @@ namespace NeoFOAM
     , Ay_()
     , Az_()
     , owner_()
-    , neigbour_()
+    , neighbour_()
     {
     };
 
@@ -76,6 +76,72 @@ namespace NeoFOAM
     {
       return maxLevel_;
     }
+
+    // const getters to protected members
+    const std::vector<double>& V() const
+    {
+      return V_;
+    }
+
+    const std::vector<double>& level() const
+    {
+      return level_;
+    } 
+
+    const std::vector<double>& Cx() const
+    {
+      return Cx_;
+    } 
+
+    const std::vector<double>& Cy() const
+    {
+      return Cy_;
+    }
+
+    const std::vector<double>& Cz() const
+    {
+      return Cz_;
+    }
+
+    const std::vector<double>& Cfx() const
+    {
+      return Cfx_;
+    }
+
+    const std::vector<double>& Cfy() const
+    {
+      return Cfy_;
+    }
+
+    const std::vector<double>& Cfz() const
+    {
+      return Cfz_;
+    }
+
+    const std::vector<double>& Ax() const
+    {
+      return Ax_;
+    }
+
+    const std::vector<double>& Ay() const
+    {
+      return Ay_;
+    }
+
+    const std::vector<double>& Az() const
+    {
+      return Az_;
+    }
+
+    const std::vector<int32_t>& owner() const
+    {
+      return owner_;
+    }
+
+    const std::vector<int32_t>& neighbour() const
+    {
+      return neighbour_;
+    }
     
     protected:
       int32_t initialLevel_; ///< The initial level of refinement for the mesh.
@@ -101,7 +167,7 @@ namespace NeoFOAM
       std::vector<double> Az_;
 
       std::vector<int32_t> owner_; // face: cell index owning the face outwards normal
-      std::vector<int32_t> neigbour_; // face: cell index not-owning the face inwards normal
+      std::vector<int32_t> neighbour_; // face: cell index not-owning the face inwards normal
   };
 
 } // namespace NeoFOAM

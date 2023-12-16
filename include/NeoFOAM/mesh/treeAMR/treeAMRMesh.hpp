@@ -87,6 +87,12 @@ namespace NeoFOAM
       return nElements_;
     }
 
+    const treeAMRMeshModifier& meshModifier() const
+    {
+      return *meshModifier_;
+    }
+    
+
   private:
     std::unique_ptr<treeAMRMeshModifier> meshModifier_;
     int32_t initialLevel_; ///< The initial level of refinement for the mesh.
