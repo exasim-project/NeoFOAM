@@ -27,3 +27,16 @@ NeoFOAM uses cmake to build, thus the standard cmake procedure should work
 ```bash 
     build.sh
 ```
+
+# build documentation
+
+```bash 
+    #assume python and doxygen is installed
+    pip install sphinx
+    pip install sphinx-rtd-theme
+    pip install breathe
+    pip3 install sphinx-sitemap
+    # 
+    ./build_docs.sh
+    firefox docs/_build/html/index.html # open index page in firefox
+```
