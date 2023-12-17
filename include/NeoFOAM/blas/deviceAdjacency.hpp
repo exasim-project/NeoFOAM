@@ -96,29 +96,42 @@ namespace NeoFOAM {
                 Kokkos::parallel_for(offset_.size(), KOKKOS_LAMBDA(const Tlabel i){
                     offset_(i) = i >= oldsize ? offset_(oldsize - 1) : offset_(i);
                     });
-                
-                
-                //offset_.size() == 0 ? 0 : offset_(offset_.size() - 1)
             }
             else {
 
-                // Resize the containers.
-                // offset.resize(size + 1);
-                // vertex_adjacent_list.resize(offset.back());
+                Kokkos::resize(offset_, size + 1);
+                Kokkos::resize(adjacency_, offset_(offset_.size() - 1));
+                if(directed) return;
 
-                // Loop over remaining vertices, looking for edges which no longer exist.
-                // std::size_t offset_carry = 0;
-                // FOR(i_vertex, size_vertex()) {
-                // auto [adjacency_begin, adjacency_end] = vertex_adjacency_iter(i_vertex);
-                // const auto erase_iter = std::lower_bound(adjacency_begin, adjacency_end, size);
-                // if(erase_iter != adjacency_end) {
-                //     const auto offset_current = std::distance(erase_iter, adjacency_end);
-                //     vertex_adjacent_list.erase(erase_iter, adjacency_end);
-                //     offset[i_vertex + 1] -= offset_current;
-                //     offset_carry += offset_current;
-                // }
-                // offset[i_vertex + 2] -= offset_carry;
-                // }
+                // Remove any connections to the removed vertices.
+
+                Kokkos::View<Tlabel*> temp_offset(offset_.label(), offset_.size());
+                Kokkos::deep_copy(temp_offset, offset_);
+
+                Tlabel total_offset = 0;
+                Kokkos::parallel_scan("Loop1", offset_.size() - 1,
+                    KOKKOS_LAMBDA(Tlabel i_node, Tlabel& partial_sum, bool is_final) {
+                        for(auto i_offset = temp_offset(i_node); i_offset < temp_offset(i_node + 1); ++i_offset) {
+                            if(adjacency_(i_offset) < size) partial_sum += 1;
+                        }               
+                        if(is_final) offset_(i_node) = partial_sum;
+                    }, total_offset);
+
+                Kokkos::View<Tlabel*> temp_adjacency("",adjacency_.size());
+                Kokkos::deep_copy(temp_adjacency, adjacency_);         
+                Kokkos::resize(adjacency_, total_offset);
+
+                Kokkos::parallel_for("Loop2", offset_.size() - 1,
+                    KOKKOS_LAMBDA(Tlabel i_node) {
+                        Tlabel i_offset = 0;
+                        for(auto i_adjacency = temp_offset(i_node); i_adjacency < temp_offset(i_node + 1); ++i_adjacency) {
+                            if(temp_adjacency(i_adjacency) < size) {
+                                adjacency_(i_offset) = temp_adjacency(i_adjacency);
+                                i_offset += 1;
+                            }
+                        }              
+                    });
+                           
             }
         }
 
@@ -156,7 +169,6 @@ namespace NeoFOAM {
                                                 + static_cast<Tlabel>((i > connect.second)*(!directed));
                                         });
             return true;
-
         }
 
         [[nodiscard]] inline Kokkos::View<const Tlabel *> operator()(const Tlabel& index) const {
