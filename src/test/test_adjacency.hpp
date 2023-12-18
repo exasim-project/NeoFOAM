@@ -6,6 +6,30 @@
 
 #include "NeoFOAM/blas/adjacency.hpp"
 
+TEST(DeviceAdjacency, DefaultConstructor) {
+    NeoFOAM::localAdjacency<true> graph;
+    EXPECT_TRUE(graph.empty());
+    EXPECT_EQ(graph.size(), 0);
+}
+
+TEST(DeviceAdjacency, NameConstructor) {
+    std::string name = "test_graph";
+    NeoFOAM::localAdjacency<true> graph(name);
+    EXPECT_TRUE(graph.empty());
+    EXPECT_EQ(graph.size(), 0);
+    EXPECT_EQ(graph.name(), name);
+}
+
+TEST(DeviceAdjacency, CopyConstructor) {
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
+    NeoFOAM::localAdjacency<true> graph1("test_graph_1", adjacency, offset);
+    NeoFOAM::localAdjacency<true> graph2(graph1);
+    EXPECT_EQ(graph2.size(), graph1.size());
+    EXPECT_EQ(graph2.name(), graph1.name());
+    // TODO: Add more assertions to compare the adjacency and offset data
+}
+
 TEST(DeviceAdjacency, name) {
 
     std::string name = "test";
@@ -13,6 +37,40 @@ TEST(DeviceAdjacency, name) {
     NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
     NeoFOAM::localAdjacency<false> test_adjacency(name);
     EXPECT_STREQ(test_adjacency.name().c_str(), name.c_str());
+}
+
+TEST(DeviceAdjacency, EmptyGraph) {
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {});
+    NeoFOAM::localAdjacency<true> graph("test_graph", adjacency, offset);
+
+    // Check if the graph is empty
+    EXPECT_TRUE(graph.empty());
+}
+
+TEST(DeviceAdjacency, NonEmptyGraph) {
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
+    NeoFOAM::localAdjacency<true> graph("test_graph", adjacency, offset);
+
+    // Check if the graph is not empty
+    EXPECT_FALSE(graph.empty());
+}
+
+TEST(DeviceAdjacency, SizeNonEmpty) {
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {10, 10, 20, 30, 40});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 1, 3, 4, 5});
+    NeoFOAM::localAdjacency<true> graph("test_graph",adjacency, offset);
+
+    // Check the size of the graph
+    EXPECT_EQ(graph.size(), 4);
+}
+
+TEST(DeviceAdjacency, SizeEmpty) {
+    NeoFOAM::localAdjacency<true> graph("test_graph");
+
+    // Check the size of the graph
+    EXPECT_EQ(graph.size(), 0);
 }
 
 TEST(DeviceAdjacency, InsertPentagonGraph_Directed) {

@@ -39,7 +39,7 @@ class deviceAdjacency
 
     KOKKOS_FUNCTION
     deviceAdjacency(const deviceAdjacency<Tlabel, directed> &other)
-        : adjacency_(other.adjacency_), offset_(other.offset_) {}
+        : adjacency_(other.adjacency_), offset_(other.offset_), name_(other.name_) {}
 
     KOKKOS_FUNCTION
     deviceAdjacency(const Kokkos::View<Tlabel* > &adjacency, const Kokkos::View<Tlabel *> &offset)
@@ -72,12 +72,22 @@ class deviceAdjacency
     // Assignement Operator
     // ----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * @brief Move Assignment operator for deviceAdjacency. 
+     * @tparam Tlabel The type of the labels in the adjacency matrix.
+     * @tparam directed A boolean value indicating whether the adjacency matrix is directed or not.
+     * @param[in] other The deviceAdjacency object to be assigned.
+     * @return A reference to this deviceAdjacency object.
+     * 
+     * @details This operator assigns the contents of another deviceAdjacency object to this object.
+     */     
     deviceAdjacency<Tlabel, directed> &operator=(deviceAdjacency<Tlabel, directed> &&other)
     {
-        if (this != &other)
+        if(this != &other)
         {
-            adjacency_ = std::move(other.field_);
-            offset_ = std::move(other.field_);
+            adjacency_ = std::move(other.adjacency_);
+            offset_ = std::move(other.offset_);
+            name_ = std::move(other.name_);
         }
         return *this;
     }
@@ -86,8 +96,17 @@ class deviceAdjacency
     // Capacity
     // ----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * @brief Checks if the deviceAdjacency is empty.
+     * @return True if the deviceAdjacency is empty, false otherwise.
+     */
     [[nodiscard]] constexpr bool empty() const { return offset_.size() < 2; }
 
+    /**
+     * @brief Returns the size of the adjacency list.
+     * 
+     * @return The size of the adjacency list.
+     */
     [[nodiscard]] inline Tlabel size() const noexcept 
     {
         return offset_.size() > 0 ? offset_.size() - 1 : 0; 
@@ -183,7 +202,6 @@ class deviceAdjacency
 
     /**
      * @brief Checks if the adjacency list contains a specific connection.
-     *
      * @param[in] check_edge The edge to check for in the graph.
      * @return True if the edge is found, false otherwise.
      *
