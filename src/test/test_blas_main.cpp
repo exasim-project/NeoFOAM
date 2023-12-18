@@ -4,7 +4,8 @@
 #include <gtest/gtest.h>
 #include <Kokkos_Core.hpp>
 
-#include "test_blas.hpp"
+#include "test_adjacency.hpp"
+#include "test_field.hpp"
 
 int main(int argc, char **argv) {
   Kokkos::initialize(argc, argv);
