@@ -13,12 +13,12 @@
 namespace NeoFOAM {
 
 template<typename Tlabel>
-using connection = Kokkos::pair<Tlabel, Tlabel>;
+using edge = Kokkos::pair<Tlabel, Tlabel>;
 
 template<typename Tlabel>
-constexpr connection<const Tlabel&> order_connection(const connection<Tlabel>* connect) {
-    return connect->first < connect->second ? connection<const Tlabel&>({connect->first, connect->second})
-                                            : connection<const Tlabel&>({connect->second, connect->first});
+constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* connect) {
+    return connect->first < connect->second ? edge<const Tlabel&>({connect->first, connect->second})
+                                            : edge<const Tlabel&>({connect->second, connect->first});
 }
 
 // Basically a CSR approach to connectivity - avoids 'vector of vectors' memory layout for connectivity.
@@ -111,20 +111,20 @@ class deviceAdjacency
     // Modifiers
     // ----------------------------------------------------------------------------------------------------------------
 
-    bool insert(const connection<Tlabel>& connect) {
+    bool insert(const edge<Tlabel>& edge) {
         
         // Do we need to resize the graph (offset_ container)?
-        if(contains(connect)) return false;            
-        if(directed && connect.first >= size()) resize(connect.first + 1);
-        if(!directed && std::max(connect.first, connect.second) >= size()) 
-            resize(std::max(connect.first, connect.second) + 1);
+        if(contains(edge)) return false;            
+        if(directed && edge.first >= size()) resize(edge.first + 1);
+        if(!directed && std::max(edge.first, edge.second) >= size()) 
+            resize(std::max(edge.first, edge.second) + 1);
 
         // Updated adjacency and offset.
-        insertAdjacency(connect);
+        insertAdjacency(edge);
         Kokkos::parallel_for("lower_offset_update", offset_.size(), 
                                 KOKKOS_LAMBDA(const Tlabel i) {
-                                offset_(i) += static_cast<Tlabel>(i > connect.first) 
-                                            + static_cast<Tlabel>((i > connect.second)*(!directed));
+                                offset_(i) += static_cast<Tlabel>(i > edge.first) 
+                                            + static_cast<Tlabel>((i > edge.second)*(!directed));
                                     });
         return true;
     }
@@ -184,8 +184,8 @@ class deviceAdjacency
     /**
      * @brief Checks if the adjacency list contains a specific connection.
      *
-     * @param connect The connection to check for.
-     * @return True if the connection is found, false otherwise.
+     * @param[in] check_edge The edge to check for in the graph.
+     * @return True if the edge is found, false otherwise.
      *
      * @details This function checks if the adjacency list contains a specific connection.
      * It returns true if the connection is found, and false otherwise.
@@ -194,26 +194,17 @@ class deviceAdjacency
      * 
      * @note This function assumes that the adjacency list is properly initialized.
      */
-    [[nodiscard]] bool contains(const connection<Tlabel>& connect) const 
-    {
-        if(!directed) 
+    [[nodiscard]] bool contains(const edge<Tlabel>& check_edge) const 
+    {   
+        if(empty()) return false;
+        const auto& ordered_edge = !directed ? order_edge(&check_edge) 
+                                             : edge<const Tlabel&>({check_edge.first, check_edge.second});
+        if((!directed ? ordered_edge.second : ordered_edge.first) >= size()) return false;
+        const auto& adjacency = (*this)(ordered_edge.first);
+        for(auto index = 0; index < adjacency.size(); ++index) 
         {
-            const auto ordered_edge = order_connection(&connect);
-            if(ordered_edge.second >= size() || empty()) return false;
-            auto adjacency = (*this)(ordered_edge.first);
-            for(auto index = 0; index < adjacency.size(); ++index) 
-            {
-                if(ordered_edge.second == adjacency(index)) return true;
-            }
-        }
-        else 
-        {
-            if(connect.first >= size() || empty()) return false;
-            auto adjacency = (*this)(connect.first);
-            for(auto index = 0; index < adjacency.size(); ++index) 
-            {
-                if(connect.second == adjacency(index)) return true;
-            }
+            if(adjacency(index) == ordered_edge.second) return true;
+            if(adjacency(index) > ordered_edge.second) return false;
         }
         return false;
     }
@@ -232,17 +223,17 @@ class deviceAdjacency
     // Condition of the offset_ veiw, must be sized correctly for the new vertices but containd the old offset data,
     // this can be achieved using the resize function before calling this function
     // 0, will be incorrect after return - assumes the connection does not exist
-    void insertAdjacency(const connection<Tlabel>& connect) 
+    void insertAdjacency(const edge<Tlabel>& edge) 
     {
-        const auto ordered_edge = order_connection(&connect);
+        const auto ordered_edge = order_edge(&edge);
         const bool is_adjacency_empty = adjacency_.size() == 0;
         Kokkos::pair<Tlabel, Tlabel> index_insert = {0, 0};
        
         if(!is_adjacency_empty)
             for(int i_connection = 0; i_connection < 2; ++i_connection) 
             {
-                const Tlabel& connect_0 = i_connection == 0 ? connect.first : connect.second; 
-                const Tlabel& connect_1 = i_connection == 0 ? connect.second : connect.first; 
+                const Tlabel& connect_0 = i_connection == 0 ? edge.first : edge.second; 
+                const Tlabel& connect_1 = i_connection == 0 ? edge.second : edge.first; 
                 Tlabel& insert = i_connection == 0 ? index_insert.first : index_insert.second; 
                 
                 // Determine offsets, different if the row is empty.
@@ -267,10 +258,10 @@ class deviceAdjacency
                              KOKKOS_LAMBDA(const Tlabel i) 
                              {
                                 if(i < index_insert.first) adjacency_(i) = is_adjacency_empty ? 0 : temp(i);
-                                else if(i == index_insert.first) adjacency_(i) = connect.second;
+                                else if(i == index_insert.first) adjacency_(i) = edge.second;
                                 else if(index_insert.first < i && i < index_insert.second + 1) 
                                     adjacency_(i) = is_adjacency_empty ? 0 : temp(i - 1);
-                                else if(!directed && i == index_insert.second + 1) adjacency_(i) = connect.first;
+                                else if(!directed && i == index_insert.second + 1) adjacency_(i) = edge.first;
                                 else adjacency_(i) = is_adjacency_empty ? 0 : temp(i - 1 - offset_shift());
                             });
        
