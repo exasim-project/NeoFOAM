@@ -138,7 +138,6 @@ class deviceAdjacency
 
     /**
      * @brief Returns the size of the adjacency list.
-     * 
      * @return The size of the adjacency list.
      */
     [[nodiscard]] inline Tlabel size() const noexcept 
@@ -170,7 +169,6 @@ class deviceAdjacency
 
     /**
      * @brief Returns a pair of pointers to the data stored in the private adjacency and offset arrays.
-     * 
      * @return A pair of pointers to the adjacency and offset data.
      */
     [[nodiscard]] inline auto data() const
@@ -230,8 +228,8 @@ class deviceAdjacency
                 offset_(i) = i >= oldsize ? offset_(oldsize - 1) : offset_(i);
                 });
         }
-        else {
-
+        else 
+        {
             Kokkos::resize(offset_, size + 1);
             Kokkos::resize(adjacency_, offset_(offset_.size() - 1));
             if(directed) return;
