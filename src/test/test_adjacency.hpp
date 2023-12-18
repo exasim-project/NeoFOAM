@@ -11,11 +11,8 @@ TEST(DeviceAdjacency, name) {
     std::string name = "test";
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
     NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
-    NeoFOAM::localAdjacency<false> test_adjacency(name, adjacency, offset);
-      
-    test_adjacency.insert(Kokkos::pair(0, 2));
-
-    EXPECT_TRUE(false);
+    NeoFOAM::localAdjacency<false> test_adjacency(name);
+    EXPECT_STREQ(test_adjacency.name().c_str(), name.c_str());
 }
 
 TEST(DeviceAdjacency, ContainsUndirectedEdge) {
@@ -42,12 +39,10 @@ TEST(DeviceAdjacency, ContainsUndirectedEdge) {
 }
 
 TEST(DeviceAdjacency, ContainsDirectedEdge) {
-    NeoFOAM::localAdjacency<true> graph;
-
-    // Insert some edges
-    graph.insert({0, 1});
-    graph.insert({1, 2});
-    graph.insert({2, 3});
+    // connection 0 -> 1, 1 -> 2, 2 -> 3
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {1, 2, 3});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 1, 2, 3});
+    NeoFOAM::localAdjacency<true> graph("test_graph", adjacency, offset);
 
     // Test contains function
     EXPECT_TRUE(graph.contains({0, 1}));
@@ -136,15 +131,10 @@ TEST(DeviceAdjacency, InsertPentagonGraph_Undirected) {
     EXPECT_EQ(graph(4)(1), 3);
 }
 
-TEST(DeviceAdjacency, ResizeGraph) {
-    NeoFOAM::localAdjacency<true> graph;
-
-    // Insert the edges of the 'pentagon' graph
-    EXPECT_TRUE(graph.insert({0, 1}));
-    EXPECT_TRUE(graph.insert({1, 2}));
-    EXPECT_TRUE(graph.insert({2, 3}));
-    EXPECT_TRUE(graph.insert({3, 4}));
-    EXPECT_TRUE(graph.insert({0, 4}));
+TEST(DeviceAdjacency, ResizeGraph_Directed) {
+    NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {10, 10, 20, 30, 40});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 1, 3, 4, 5});
+    NeoFOAM::localAdjacency<true> graph("test_graph", adjacency, offset);
 
     // Resize the graph to a larger size
     graph.resize(10);
@@ -154,10 +144,10 @@ TEST(DeviceAdjacency, ResizeGraph) {
 
     // Check the adjacency of each vertex
     EXPECT_EQ(graph(0).size(), 1);
-    EXPECT_EQ(graph(1).size(), 1);
+    EXPECT_EQ(graph(1).size(), 2);
     EXPECT_EQ(graph(2).size(), 1);
     EXPECT_EQ(graph(3).size(), 1);
-    EXPECT_EQ(graph(4).size(), 1);
+    EXPECT_EQ(graph(4).size(), 0);
     EXPECT_EQ(graph(5).size(), 0);
     EXPECT_EQ(graph(6).size(), 0);
     EXPECT_EQ(graph(7).size(), 0);
@@ -165,27 +155,26 @@ TEST(DeviceAdjacency, ResizeGraph) {
     EXPECT_EQ(graph(9).size(), 0);
 
     // Check the connections of each vertex
-    EXPECT_EQ(graph(0)(0), 1);
-    EXPECT_EQ(graph(1)(0), 2);
-    EXPECT_EQ(graph(2)(0), 3);
-    EXPECT_EQ(graph(3)(0), 4);
-    EXPECT_EQ(graph(4)(0), 0);
+    EXPECT_EQ(graph(0)(0), 10);
+    EXPECT_EQ(graph(1)(0), 10);
+    EXPECT_EQ(graph(1)(1), 20);
+    EXPECT_EQ(graph(2)(0), 30);
+    EXPECT_EQ(graph(3)(0), 40);
 
     // Resize the graph to a smaller size
-    graph.resize(3);
+    graph.resize(2);
 
     // Check the size of the graph
-    EXPECT_EQ(graph.size(), 3);
+    EXPECT_EQ(graph.size(), 2);
 
     // Check the adjacency of each vertex
     EXPECT_EQ(graph(0).size(), 1);
-    EXPECT_EQ(graph(1).size(), 1);
-    EXPECT_EQ(graph(2).size(), 1);
+    EXPECT_EQ(graph(1).size(), 2);
 
     // Check the connections of each vertex
-    EXPECT_EQ(graph(0)(0), 1);
-    EXPECT_EQ(graph(1)(0), 2);
-    EXPECT_EQ(graph(2)(0), 0);
+    EXPECT_EQ(graph(0)(0), 10);
+    EXPECT_EQ(graph(1)(0), 10);
+    EXPECT_EQ(graph(1)(1), 20);
 }
 
 TEST(DeviceAdjacency, insert) {

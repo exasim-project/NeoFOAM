@@ -150,6 +150,13 @@ namespace NeoFOAM {
                     if(ordered_edge.second == adjacency(index)) return true;
                 }
             }
+            else {
+                if(connect.first >= size() || empty()) return false;
+                auto adjacency = (*this)(connect.first);
+                for(auto index = 0; index < adjacency.size(); ++index) {
+                    if(connect.second == adjacency(index)) return true;
+                }
+            }
             return false;
         }
 
