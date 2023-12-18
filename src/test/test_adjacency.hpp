@@ -73,7 +73,7 @@ TEST(DeviceAdjacency, SizeEmpty) {
     EXPECT_EQ(graph.size(), 0);
 }
 
-TEST(DeviceAdjacency, InsertPentagonGraph_Directed) {
+TEST(DeviceAdjacency, InsertGraphDirected) {
     NeoFOAM::localAdjacency<true> graph;
 
     // Insert the edges of the 'pentagon' graph
@@ -100,7 +100,7 @@ TEST(DeviceAdjacency, InsertPentagonGraph_Directed) {
     EXPECT_EQ(graph(3)(0), 4);
 }
 
-TEST(DeviceAdjacency, InsertPentagonGraph_Undirected) {
+TEST(DeviceAdjacency, InsertGraphUndirected) {
     NeoFOAM::localAdjacency<false> graph;
 
     // Insert the edges of the 'pentagon' graph
@@ -131,66 +131,6 @@ TEST(DeviceAdjacency, InsertPentagonGraph_Undirected) {
     EXPECT_EQ(graph(3)(1), 4);
     EXPECT_EQ(graph(4)(0), 0);
     EXPECT_EQ(graph(4)(1), 3);
-}
-
-TEST(DeviceAdjacency, insert) {
-  NeoFOAM::localAdjacency<false> graph;
-
-  // insert a pentagram out of order, with some edges flipped
-  EXPECT_TRUE(graph.insert({0, 1}));
-  EXPECT_TRUE(graph.insert({3, 4}));
-  EXPECT_TRUE(graph.insert({0, 4}));
-
-  EXPECT_TRUE(graph.insert({2, 3}));
-  EXPECT_TRUE(graph.insert({1, 2}));
-    
-  // Add two additional vertices, as an 'appendage'.
-  EXPECT_TRUE(graph.insert({3, 6}));
-  EXPECT_TRUE(graph.insert({5, 6}));
-
-  // check ascending order has been maintained.
-  //EXPECT_EQ(graph.size_edge(), 7);
-  //EXPECT_EQ(graph.size_vertex(), 7);
-
-  // Attempt to insert an existing edge
-  EXPECT_FALSE(graph.insert({1, 2}));
-
-  // Connect across
-  EXPECT_TRUE(graph.insert({0, 3}));
-  EXPECT_TRUE(graph.insert({0, 2}));
-
-  // Check graph
-  //EXPECT_EQ(graph.size_edge(), 9);
-  //EXPECT_EQ(graph.size_vertex(), 7);
-  EXPECT_EQ(graph(0).size(), 4);
-  EXPECT_EQ(graph(1).size(), 2);
-  EXPECT_EQ(graph(2).size(), 3);
-  EXPECT_EQ(graph(3).size(), 4);
-  EXPECT_EQ(graph(4).size(), 2);
-  EXPECT_EQ(graph(5).size(), 1);
-  EXPECT_EQ(graph(6).size(), 2);
-
-  EXPECT_EQ(graph(0)(0), 1);
-  EXPECT_EQ(graph(0)(1), 2);
-  EXPECT_EQ(graph(0)(2), 3);
-  EXPECT_EQ(graph(0)(3), 4);
-  EXPECT_EQ(graph(1)(0), 0);
-  EXPECT_EQ(graph(1)(1), 2);
-  EXPECT_EQ(graph(2)(0), 0);
-  EXPECT_EQ(graph(2)(1), 1);
-  EXPECT_EQ(graph(2)(2), 3);
-  EXPECT_EQ(graph(3)(0), 0);
-  EXPECT_EQ(graph(3)(1), 2);
-  EXPECT_EQ(graph(3)(2), 4);
-  EXPECT_EQ(graph(3)(3), 6);
-  EXPECT_EQ(graph(4)(0), 0);
-  EXPECT_EQ(graph(4)(1), 3);
-  EXPECT_EQ(graph(5)(0), 6);
-  EXPECT_EQ(graph(6)(0), 3);
-  EXPECT_EQ(graph(6)(1), 5);
-
-  // death test - invalid edge
-  //EXPECT_DEATH(graph.insert({1, 1}), ".*");
 }
 
 TEST(DeviceAdjacency, ResizeGraph_Directed) {

@@ -13,15 +13,49 @@
 namespace NeoFOAM {
 
 template<typename Tlabel>
-using edge = Kokkos::pair<Tlabel, Tlabel>;
+using edge = Kokkos::pair<Tlabel, Tlabel>;  //!< A pair of labels representing an the 0 and 1 nodes of an edge. In the case of directed edge, the 0 node is the source and the 1 node is the target.
 
 template<typename Tlabel>
-constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* connect) {
-    return connect->first < connect->second ? edge<const Tlabel&>({connect->first, connect->second})
-                                            : edge<const Tlabel&>({connect->second, connect->first});
+/**
+ * @brief Orders an unordered edge in accending order.
+ * @param[in] unorderedEdge Pointer to the unordered edge.
+ * @return The ordered edge, where the 0 node points to the 1 node.
+ */
+constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* unorderedEdge) {
+    return unorderedEdge->first < unorderedEdge->second 
+            ? edge<const Tlabel&>({unorderedEdge->first, unorderedEdge->second})
+            : edge<const Tlabel&>({unorderedEdge->second, unorderedEdge->first});
 }
 
-// Basically a CSR approach to connectivity - avoids 'vector of vectors' memory layout for connectivity.
+/**
+ * @brief Represents an adjacency graph, for both directed and undirected variants.
+ * 
+ * @tparam Tlabel The type of the labels in the adjacency matrix.
+ * @tparam directed A boolean value indicating whether the adjacency matrix is directed or not.
+ * 
+ * @details The `deviceAdjacency` class represents an adjacency graph, which records the connectivity relationship 
+ * between nodes through edges. The graph stores specifically the connectivity between nodes in the graph. The template
+ * parameter `Tlabel` specifies the type of the labels int, uint32, etc. The `directed` parameter indicates whether the 
+ * graph is directed or undirected. In the undirected variant the graph edges are considered to connect both nodes (of
+ * the edge), and therefor no distiction is made interms of direction between the 0 and 1 node of the edge. Thus the
+ * graph is symmetric, for example, if node 10 is connected to node 20 then node 20 is connected to 10. In the directed 
+ * variant, an edge connects the 0 node to the 1 node, and therefor the graph is not symmetric. For example, if node 10
+ * is connected to node 20, the reverse is not true. 
+ * 
+ * A word no memory layout: To optimise memory access the data in the class is stored 'flat' with an adjacency View and
+ * an offset View. The former contains the connections of the graph while the later stores the start and end position 
+ * (offset to) of each nodes' connectivity in the adjacency container. Within each node's connectivity the connections 
+ * are sorted in accending order. Finally, the offset container is one greater than the size of the adjacency container,
+ * to faciliate slightly more lazy programing - since the first element will always be zero.
+ * 
+ * @note An directed graph can therefor be used to represent the connection between two different 'types/classes' of 
+ * nodes rather than the same. For example, a graph could be used to represent the connection between cells and faces. 
+ *
+ * @todo Nice to have functions/operators operator+ (graph unition), operator-(graph intersection), remove to an edge.
+ * @todo Batch insert for improved performance.
+ * @todo Optimise undirected memory layout - currently data is duplicated.
+ * @todo Add further 'stl like functions'
+ */
 template <typename Tlabel, bool directed>
 class deviceAdjacency
 {
@@ -113,14 +147,32 @@ class deviceAdjacency
     }
 
     // ----------------------------------------------------------------------------------------------------------------
-    // ELement Access
+    // Element Access
     // ----------------------------------------------------------------------------------------------------------------
 
-    [[nodiscard]] inline Kokkos::View<const Tlabel *> operator()(const Tlabel& index) const 
+    /**
+     * @brief Returns a Kokkos::View object containing the connection for the parsed node index. 
+     * @param[in] i_node The index for which the adjacency information is requested.
+     * @return A Kokkos::View object containing the adjacency information.
+     * 
+     * @details This function returns a Kokkos::View object that provides a const pointer to Tlabel.
+     * The view is created using the adjacency_ array and the offset_ array, with the range
+     * specified by the index and index + 1. The resulting view represents the adjacency
+     * information for the given index.
+     * 
+     * @warning The node index must be in the rage [0: size()].
+     */
+    [[nodiscard]] inline Kokkos::View<const Tlabel *> operator()(const Tlabel& i_node) const 
     {
-        return Kokkos::View<const Tlabel *>(adjacency_, Kokkos::make_pair(offset_(index), offset_(index + 1)));
+        //todo: Error handling - range check. 
+        return Kokkos::View<const Tlabel *>(adjacency_, Kokkos::make_pair(offset_(i_node), offset_(i_node + 1)));
     }
 
+    /**
+     * @brief Returns a pair of pointers to the data stored in the private adjacency and offset arrays.
+     * 
+     * @return A pair of pointers to the adjacency and offset data.
+     */
     [[nodiscard]] inline auto data() const
     {
         return {adjacency_.data(), offset_.data()};
@@ -130,13 +182,23 @@ class deviceAdjacency
     // Modifiers
     // ----------------------------------------------------------------------------------------------------------------
 
+    /**
+     * @brief Inserts an edge connection into the graph.
+     * @param[in] edge The edge connection to add.
+     * @return True if the edge was successfully inserted, false otherwise (because it already exists in the graph).
+ 
+     * @details This function inserts the specified edge connection into the graph. In the case of an undirected graph
+     * both the connectivity of the first and second node are updated. In the case of a directed graph only the edge is
+     * interpreted as first -> second and therefore only the connectivity of the first node is updated.
+     * 
+     * @note The graph will be resized to accomodate the new edge if necessary. 
+     */
     bool insert(const edge<Tlabel>& edge) {
         
         // Do we need to resize the graph (offset_ container)?
         if(contains(edge)) return false;            
         if(directed && edge.first >= size()) resize(edge.first + 1);
-        if(!directed && std::max(edge.first, edge.second) >= size()) 
-            resize(std::max(edge.first, edge.second) + 1);
+        if(!directed && std::max(edge.first, edge.second) >= size()) resize(std::max(edge.first, edge.second) + 1);
 
         // Updated adjacency and offset.
         insertAdjacency(edge);
@@ -148,7 +210,17 @@ class deviceAdjacency
         return true;
     }
 
-    void resize(Tlabel size) {
+    /**
+     * @brief Resizes the adjacency container to accomodate more nodes.
+     * @param[in] size The new size of the container.
+     *
+     * @details This function resizes the adjacency container to accommodate the specified size. It may allocate 
+     * additional memory or deallocate existing memory as necessary. New nodes are have no connections.
+     * 
+     * @note When sizing down the interprentation is that 'nodes' are being lost. Therefor remaining nodes which are
+     * connected to the lost nodes will have their connectivity updated to reflect the loss of the node.
+     */
+    void resize(const Tlabel& size) {
 
         // Branch based on expansion or contraction of the graph.
         if(offset_.size() < (size + 1)) {
@@ -165,12 +237,11 @@ class deviceAdjacency
             if(directed) return;
 
             // Remove any connections to the removed vertices.
-
             Kokkos::View<Tlabel*> temp_offset(offset_.label(), offset_.size());
             Kokkos::deep_copy(temp_offset, offset_);
 
             Tlabel total_offset = 0;
-            Kokkos::parallel_scan("Loop1", offset_.size() - 1,
+            Kokkos::parallel_scan("determine_new_offsets", offset_.size() - 1,
                 KOKKOS_LAMBDA(Tlabel i_node, Tlabel& partial_sum, bool is_final) {
                     for(auto i_offset = temp_offset(i_node); i_offset < temp_offset(i_node + 1); ++i_offset) {
                         if(adjacency_(i_offset) < size) partial_sum += 1;
@@ -182,7 +253,7 @@ class deviceAdjacency
             Kokkos::deep_copy(temp_adjacency, adjacency_);         
             Kokkos::resize(adjacency_, total_offset);
 
-            Kokkos::parallel_for("Loop2", offset_.size() - 1,
+            Kokkos::parallel_for("update_adjacency", offset_.size() - 1,
                 KOKKOS_LAMBDA(Tlabel i_node) {
                     Tlabel i_offset = 0;
                     for(auto i_adjacency = temp_offset(i_node); i_adjacency < temp_offset(i_node + 1); ++i_adjacency) {
@@ -227,20 +298,37 @@ class deviceAdjacency
         return false;
     }
 
-    [[nodiscard]] inline std::string name() const noexcept
+    /**
+     * @brief Returns the name of the object.
+     * @return The name of the object.
+     */
+    [[nodiscard]] constexpr std::string name() const noexcept
     {
         return name_; 
     }
 
     private:
 
-    Kokkos::View<Tlabel *> adjacency_;
-    Kokkos::View<Tlabel *> offset_;  // is one greater than size
-    std::string name_;
+    Kokkos::View<Tlabel *> adjacency_;  //!< Stores adjacency information for the nodes of the graph.
+    Kokkos::View<Tlabel *> offset_;     //!< One greater than size, stores offset positions of the adjaceny for each node.
+    std::string name_;                  //!< Name of the object.
 
-    // Condition of the offset_ veiw, must be sized correctly for the new vertices but containd the old offset data,
-    // this can be achieved using the resize function before calling this function
-    // 0, will be incorrect after return - assumes the connection does not exist
+    /**
+     * @brief Inserts an adjacency edge into the adjacency list.
+     * @param[in] edge The edge to be used to inserted further adjacency.
+     * 
+     * @details This function inserts an adjacency edge into the adjacency list. It determines the correct position to
+     * insert the edge based on the existing connections of the parse edge. Where correct position refers to the class
+     * storage of connections being sorted in an ascending fashion for each node.
+     * 
+     * @note This function assumes that the adjacency list is already sorted in ascending order.
+     * 
+     * @warning The offset_ view must already be resized to accomodate the new edge, but must contain the old offset 
+     * data.
+     * @warning The offset_ veiw is not updated, it is of the caller to update the offset_ view post this call.
+     * @warning This function does not perform any checks for duplicate edges. It is the responsibility of the caller 
+     * to ensure that duplicate edges are not inserted. The graph will be in an undefined state if duplicate are added.
+     */
     void insertAdjacency(const edge<Tlabel>& edge) 
     {
         const auto ordered_edge = order_edge(&edge);
@@ -268,7 +356,6 @@ class deviceAdjacency
                 if(directed) break;
             }
 
-
         Kokkos::View<Tlabel *> temp(adjacency_.label(), adjacency_.size());
         Kokkos::deep_copy(temp, adjacency_);
         Kokkos::resize(adjacency_, adjacency_.size() + 1 + offset_shift());
@@ -285,6 +372,10 @@ class deviceAdjacency
        
     }
 
+    /**
+     * @brief Returns an offset shift value, determined by being a directed or undirected graph.
+     * @return The offset shift value.
+     */
     constexpr size_t offset_shift() const noexcept {return static_cast<size_t>(!directed);}
 
     };
