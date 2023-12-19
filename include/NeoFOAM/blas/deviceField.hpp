@@ -117,7 +117,7 @@ namespace NeoFOAM
             return field_.label();
         }
 
-        auto field()
+        constexpr auto field() const
         {
             return field_;
         }

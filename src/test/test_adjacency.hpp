@@ -22,7 +22,7 @@ TEST(DeviceAdjacency, NameConstructor) {
 
 TEST(DeviceAdjacency, CopyConstructor) {
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
-    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 3});
     NeoFOAM::localAdjacency<true> graph1("test_graph_1", adjacency, offset);
     NeoFOAM::localAdjacency<true> graph2(graph1);
     EXPECT_EQ(graph2.size(), graph1.size());
@@ -31,10 +31,9 @@ TEST(DeviceAdjacency, CopyConstructor) {
 }
 
 TEST(DeviceAdjacency, name) {
-
     std::string name = "test";
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
-    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 3});
     NeoFOAM::localAdjacency<false> test_adjacency(name);
     EXPECT_STREQ(test_adjacency.name().c_str(), name.c_str());
 }
@@ -50,7 +49,7 @@ TEST(DeviceAdjacency, EmptyGraph) {
 
 TEST(DeviceAdjacency, NonEmptyGraph) {
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {0, 1, 2});
-    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 2});
+    NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 3});
     NeoFOAM::localAdjacency<true> graph("test_graph", adjacency, offset);
 
     // Check if the graph is not empty
@@ -134,6 +133,7 @@ TEST(DeviceAdjacency, InsertGraphUndirected) {
 }
 
 TEST(DeviceAdjacency, ResizeGraph_Directed) {
+    // 0 -> 10, 1 -> 10, 1 -> 20, 2 -> 30, 3 -> 40 
     NeoFOAM::deviceField<NeoFOAM::localIdx> adjacency("adjacency", {10, 10, 20, 30, 40});
     NeoFOAM::deviceField<NeoFOAM::localIdx> offset("offset", {0, 1, 3, 4, 5});
     NeoFOAM::localAdjacency<true> graph("test_graph", adjacency, offset);

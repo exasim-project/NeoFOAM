@@ -50,6 +50,8 @@ constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* unorderedEdge) {
  * 
  * @note An directed graph can therefor be used to represent the connection between two different 'types/classes' of 
  * nodes rather than the same. For example, a graph could be used to represent the connection between cells and faces. 
+ * 
+ * @note The undirected graphs allow for nodes to be self referenced/connected.
  *
  * @todo Nice to have functions/operators operator+ (graph unition), operator-(graph intersection), remove to an edge.
  * @todo Batch insert for improved performance.
@@ -58,7 +60,10 @@ constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* unorderedEdge) {
  */
 template <typename Tlabel, bool directed>
 class deviceAdjacency
-{
+{   
+    using LabelField = deviceField<NeoFOAM::localIdx>;
+    using View = Kokkos::View<Tlabel*>;
+    
     public:
  
     // ----------------------------------------------------------------------------------------------------------------
@@ -69,37 +74,50 @@ class deviceAdjacency
     deviceAdjacency() = default;
 
     KOKKOS_FUNCTION
-    deviceAdjacency(const std::string& name) : name_(name) {}
+    deviceAdjacency(const std::string& name) : name_(name) {
+        viewDataInit({}, {});
+    }
 
     KOKKOS_FUNCTION
     deviceAdjacency(const deviceAdjacency<Tlabel, directed> &other)
-        : adjacency_(other.adjacency_), offset_(other.offset_), name_(other.name_) {}
+    : name_(other.name_),  adjacency_(other.adjacency_), offset_(other.offset_) {}
 
     KOKKOS_FUNCTION
-    deviceAdjacency(const Kokkos::View<Tlabel* > &adjacency, const Kokkos::View<Tlabel *> &offset)
-        : adjacency_(adjacency), offset_(offset) {}
-
-    KOKKOS_FUNCTION
-    deviceAdjacency(const std::string& name, const int size)
-        : name_(name), offset_(Kokkos::View<Tlabel* >(name + offset_.name(), size)) {} // note adjacency not sized
+    deviceAdjacency(const std::string& name, const int size) : name_(name), offset_(View(name + offset_.name(), size + 1)) {
+        Kokkos::deep_copy(offset_, 0);
+    } 
     
     KOKKOS_FUNCTION
-    deviceAdjacency(const std::string& name, const deviceField<Tlabel>& adjacency,
-                    const deviceField<Tlabel>& offset) 
-                    : name_(name)
+    deviceAdjacency(const std::string& name, const View& adjacency, const View& offset) 
+    : name_(name), adjacency_(adjacency), offset_(offset)
+    {
+        viewDataInit(adjacency, offset);
+        check_consitency();
+        parallelInit();
+    }
+
+    KOKKOS_FUNCTION
+    deviceAdjacency(const View& adjacency, const View& offset) : adjacency_(adjacency), offset_(offset)
+    {
+        viewDataInit(adjacency, offset);
+        check_consitency();
+        parallelInit();
+    }
+
+    KOKKOS_FUNCTION
+    deviceAdjacency(const std::string& name, const LabelField& adjacency, const LabelField& offset) : name_(name)
     {   
-        Kokkos::resize(Kokkos::WithoutInitializing, adjacency_, adjacency.size());
-        Kokkos::resize(Kokkos::WithoutInitializing, offset_, offset.size());
+        viewDataInit(adjacency.field(), offset.field());
+        check_consitency();
+        parallelInit();
+    }
 
-        Kokkos::parallel_for("init adjacency_", adjacency_.size(),
-                        KOKKOS_CLASS_LAMBDA (const int& i) {
-                    adjacency_(i) = adjacency(i);
-                    });
-
-        Kokkos::parallel_for("init offset", offset_.size(),
-                        KOKKOS_CLASS_LAMBDA (const int& i) {
-                    offset_(i) = offset(i);
-                    });
+    KOKKOS_FUNCTION
+    deviceAdjacency(const LabelField& adjacency, const LabelField& offset)
+    {   
+        viewDataInit(adjacency.field(), offset.field());
+        check_consitency();
+        parallelInit();
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -235,7 +253,7 @@ class deviceAdjacency
             if(directed) return;
 
             // Remove any connections to the removed vertices.
-            Kokkos::View<Tlabel*> temp_offset(offset_.label(), offset_.size());
+            View temp_offset(offset_.label(), offset_.size());
             Kokkos::deep_copy(temp_offset, offset_);
 
             Tlabel total_offset = 0;
@@ -247,7 +265,7 @@ class deviceAdjacency
                     if(is_final) offset_(i_node) = partial_sum;
                 }, total_offset);
 
-            Kokkos::View<Tlabel*> temp_adjacency("",adjacency_.size());
+            View temp_adjacency("",adjacency_.size());
             Kokkos::deep_copy(temp_adjacency, adjacency_);         
             Kokkos::resize(adjacency_, total_offset);
 
@@ -260,8 +278,7 @@ class deviceAdjacency
                             i_offset += 1;
                         }
                     }              
-                });
-                        
+                });                        
         }
     }
 
@@ -305,12 +322,124 @@ class deviceAdjacency
         return name_; 
     }
 
+    // ----------------------------------------------------------------------------------------------------------------
+    // Private Members
+    // ----------------------------------------------------------------------------------------------------------------
     private:
 
-    Kokkos::View<Tlabel *> adjacency_;  //!< Stores adjacency information for the nodes of the graph.
-    Kokkos::View<Tlabel *> offset_;     //!< One greater than size, stores offset positions of the adjaceny for each node.
-    std::string name_;                  //!< Name of the object.
+    View adjacency_;        //!< Stores adjacency information for the nodes of the graph.
+    View offset_;           //!< One greater than size, stores offset positions of the adjaceny for each node.
+    std::string name_;      //!< Name of the object.
 
+    // ----------------------------------------------------------------------------------------------------------------
+    // Initialisation and Consistency Checks
+    // ----------------------------------------------------------------------------------------------------------------
+    
+    /**
+     * @brief Initializes the member view's data for adjacency and offset.
+     * @param[in] adjacency The view for adjacency of the graph.
+     * @param[in] offset The view for offset of the graph.
+     * 
+     * @details The view members of this class are populated via a deep copy of the parsed data and have their 'names' 
+     * set, there is no checking of consitency or correctness of the data parsed in. This responsibility is left to the
+     * caller (other functions).
+     */
+    inline void viewDataInit(const View& adjacency, const View& offset) 
+    {
+        adjacency_ = View(name_ + "_adjaceny", adjacency.size());
+        offset_ = View(name_ + "_offset", offset.size());
+        Kokkos::deep_copy(adjacency_, adjacency);
+        Kokkos::deep_copy(offset_, offset);
+    }
+
+    /**
+     * @brief Initializes the adjacency list by ensuring/sorting the connections per node are in acending order.
+     *
+     * @details For non-empty adjacency lists, this function loops over all nodes (rows) and brute forces sorces the 
+     * connections in acending order. Due to the percieved infrequency of the call and the small size of the adjacency
+     * no optimisation of the sorting approach was considered.
+     * 
+     * @throws std::runtime_error if the adjacency list could not be sorted.
+     */
+    void parallelInit() 
+    {        
+        if(offset_.size() == 0) return;
+        Kokkos::parallel_for("check_correct_acending", offset_.size() - 1, 
+                            KOKKOS_LAMBDA(const Tlabel i_node) {
+                                bool is_sorted = true;
+                                const int offset_size = offset_(i_node + 1) - offset_(i_node);
+                                if(offset_size < 2) return; // nothing to sort
+                                for(auto i_check = 0; i_check < (offset_size + 1); ++i_check)
+                                {
+                                    is_sorted = true;                                    
+                                    for(auto i_offset = offset_(i_node); i_offset < offset_(i_node + 1); ++i_offset)
+                                    {
+                                        if(adjacency_(i_offset) > adjacency_(i_offset + 1)) 
+                                        {
+                                            std::swap(adjacency_(i_offset), adjacency_(i_offset + 1));
+                                            is_sorted = false;
+                                        }
+                                        if(is_sorted) break;
+                                    }
+                                    if(is_sorted) break;
+                                }
+                                if(!is_sorted) throw std::runtime_error("Adjacency list could not be sorted.");
+                            });
+    }
+
+    /**
+     * @brief Checks the consistency of the adjacency.
+     * 
+     * @details Checks the consistency of the adjacency and offset contains, to ensure a valid graph initialisation. 
+     * the containers must be populated with the offset view correctly initialised, no sorting is required for the 
+     * adjacency view.
+     * 
+     * @throws std::runtime_error if offest container is of size 1.
+     * @throws std::runtime_error if the first value of a non-zero sized offset container is non-zero.
+     * @throws std::runtime_error if the last entry's value of a non-zero sized offset container is not adjacency.size().
+     * @throws std::runtime_error if an undirected adjacency list is not symmetric (degenerate).
+     * @throws std::runtime_error if an undirected adjacency list contains nodes with indicies higher than size().
+     */
+    void check_consitency() 
+    {
+        // check offset
+        if(offset_.size() == 1) throw std::runtime_error("Offset container must be 0 or greater than 1.");
+        if(offset_.size() != 0 && offset_(0) != 0) 
+            throw std::runtime_error("Offset container's first entry must be 0.");
+        if(offset_(offset_.size() - 1) != adjacency_.size())
+             throw std::runtime_error("Offset container is not consistent with adjacency container.");
+        
+        // check undirected graph adjacency.
+        if(!directed)
+        {
+            Kokkos::parallel_for("check_symmetry", offset_.size() - 1, 
+                            KOKKOS_LAMBDA(const Tlabel i_node) 
+                            {
+                                for(auto i_offset = offset_(i_node); i_offset < offset_(i_node + 1); ++i_offset)
+                                {
+                                    const auto& other_node = adjacency_(i_offset);
+                                    if(other_node <= i_node) break; // no need to check (checked on other side).
+                                    if(other_node > offset_.size() - 1) 
+                                        throw std::runtime_error("Undirected Adjacency list contains invalid node index, greater than size.");
+                                    bool is_found = false;
+                                    for(auto i_adj_offset = offset_(other_node); i_adj_offset < offset_(other_node + 1); ++i_adj_offset)
+                                    {
+                                        if(adjacency_(i_adj_offset) == i_node) 
+                                        {
+                                            is_found = true;
+                                            break;
+                                        }
+                                    }
+                                    if(!is_found) throw std::runtime_error("Undirected Adjacency list is not symmetric (degenerate).");
+                                }
+                            });
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // General Helper Functions
+    // ----------------------------------------------------------------------------------------------------------------
+    
     /**
      * @brief Inserts an adjacency edge into the adjacency list.
      * @param[in] edge The edge to be used to inserted further adjacency.
@@ -354,7 +483,7 @@ class deviceAdjacency
                 if(directed) break;
             }
 
-        Kokkos::View<Tlabel *> temp(adjacency_.label(), adjacency_.size());
+        View temp(adjacency_.label(), adjacency_.size());
         Kokkos::deep_copy(temp, adjacency_);
         Kokkos::resize(adjacency_, adjacency_.size() + 1 + offset_shift());
         Kokkos::parallel_for("adjacency_insert", adjacency_.size(), 
