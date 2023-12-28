@@ -2,10 +2,15 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <array>
+#include <vector>
+
 #include "NeoFOAM/blas/fields.hpp"
 
 namespace NeoFOAM
 {
+
+class Stencil<int8_t>; // 0 is dynamic
 
     struct unstructuredMesh
     {
@@ -28,7 +33,6 @@ namespace NeoFOAM
         scalarField V_; // cell volume
 
         int32_t nCells_; // number of cells
-
         int32_t nInternalFaces_; // number of internal faces
     };
 

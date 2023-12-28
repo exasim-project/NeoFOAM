@@ -31,6 +31,24 @@ namespace NeoFOAM
 
         }
 
+        // mainly for testing.
+        deviceField(const std::string &name, const std::initializer_list<T>& values)
+            : size_(values.size()), field_(Kokkos::View<T *>(name, values.size()))
+        {
+            Kokkos::parallel_for("init adjacency_", values.size(), KOKKOS_LAMBDA (const int& i) {
+                        field_(i) = *(values.begin() + i);
+                        });
+        }
+
+        // mainly for testing.
+        deviceField(const std::string &name, const std::initializer_list<T>& values)
+            : size_(values.size()), field_(Kokkos::View<T *>(name, values.size()))
+        {
+            Kokkos::parallel_for("init adjacency_", values.size(), KOKKOS_LAMBDA (const int& i) {
+                        field_(i) = *(values.begin() + i);
+                        });
+        }
+
         KOKKOS_INLINE_FUNCTION
         T &operator()(const int i) const
         {
@@ -82,7 +100,7 @@ namespace NeoFOAM
             deviceField<T> result("result", size_);
             Kokkos::parallel_for(
                 size_, KOKKOS_CLASS_LAMBDA(const int i) {
-                    result(i) = field_(i) * rhs(i);
+                    result(i) = rhs(i) * field_(i);
                 });
             return result;
         }
@@ -92,7 +110,7 @@ namespace NeoFOAM
             deviceField<T> result("result", size_);
             Kokkos::parallel_for(
                 size_, KOKKOS_CLASS_LAMBDA(const int i) {
-                    result(i) = field_(i) * rhs;
+                    result(i) =  rhs * field_(i);
                 });
             return result;
         }
@@ -113,14 +131,15 @@ namespace NeoFOAM
 
         std::string name()
         {
-            return field_.name();
+            return field_.label();
         }
 
-        auto field()
+        constexpr auto field() const
         {
             return field_;
         }
-        int size()
+
+        int size() const noexcept
         {
             return size_;
         }

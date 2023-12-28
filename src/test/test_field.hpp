@@ -4,8 +4,9 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include "NeoFOAM/blas/fields.hpp"
 #include <Kokkos_Core.hpp>
+
+#include "NeoFOAM/blas/field.hpp"
 
 template <typename T, typename primitive>
 void fill_field(T &a, primitive value)
@@ -112,4 +113,15 @@ TEST(BLAS, vector_ops)
     int N = 10;
 
     test_vector(N);
+}
+
+TEST(BLAS, field_constructor_initialiser_list)
+{
+    std::string name = "test";
+    NeoFOAM::scalarField field(name, {1.0, 2.0, 3.0});
+
+    EXPECT_EQ(field(0), 1.0);
+    EXPECT_EQ(field(1), 2.0);
+    EXPECT_EQ(field(2), 3.0);
+    EXPECT_EQ(field.name(), name);
 }
