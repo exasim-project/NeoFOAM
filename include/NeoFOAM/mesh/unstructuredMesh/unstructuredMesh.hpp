@@ -5,12 +5,10 @@
 #include <array>
 #include <vector>
 
-#include "NeoFOAM/blas/fields.hpp"
+#include "NeoFOAM/blas/field.hpp"
 
 namespace NeoFOAM
 {
-
-class Stencil<int8_t>; // 0 is dynamic
 
     struct unstructuredMesh
     {

@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <array>
 #include <Kokkos_Core.hpp>
 
 #include "scalar.hpp"
@@ -13,22 +12,32 @@ namespace NeoFOAM
     {
     public:
         KOKKOS_INLINE_FUNCTION
-        vector() {}
-
-        KOKKOS_INLINE_FUNCTION
-        vector(scalar x, scalar y, scalar z) : cmpts_({x, y, z}) {}
-
-        KOKKOS_INLINE_FUNCTION
-        std::array<scalar, 3>::const_iterator begin() const noexcept
+        vector()
         {
-            return cmpts_.begin();
+            cmpts_[0] = 0.0;
+            cmpts_[1] = 0.0;
+            cmpts_[2] = 0.0;
         }
 
         KOKKOS_INLINE_FUNCTION
-        std::array<scalar, 3>::const_iterator end() const noexcept
+        vector(scalar x, scalar y, scalar z)
         {
-            return cmpts_.end();
+            cmpts_[0] = x;
+            cmpts_[1] = y;
+            cmpts_[2] = z;
         }
+
+        // KOKKOS_INLINE_FUNCTION
+        // std::array<scalar, 3>::const_iterator begin() const noexcept
+        // {
+        //     return cmpts_.begin();
+        // }
+
+        // KOKKOS_INLINE_FUNCTION
+        // std::array<scalar, 3>::const_iterator end() const noexcept
+        // {
+        //     return cmpts_.end();
+        // }
 
         KOKKOS_INLINE_FUNCTION
         scalar& operator()(const int i)
@@ -43,16 +52,22 @@ namespace NeoFOAM
         }
 
         KOKKOS_INLINE_FUNCTION
+        bool operator==(const vector &rhs) const
+        {
+            return cmpts_[0] == rhs(0) && cmpts_[1] == rhs(1) && cmpts_[2] == rhs(2);
+        }
+
+        KOKKOS_INLINE_FUNCTION
         vector& operator+=(const vector& other)
         {
-            for(auto i = 0; i < cmpts_.size(); ++i) cmpts_[i] += other.cmpts_[i]; 
+            for(auto i = 0; i < 3; ++i) cmpts_[i] += other.cmpts_[i]; 
             return *this;
         }
 
         KOKKOS_INLINE_FUNCTION
         vector& operator-=(const vector& other)
         {
-            for(auto i = 0; i < cmpts_.size(); ++i) cmpts_[i] -= other.cmpts_[i]; 
+            for(auto i = 0; i < 3; ++i) cmpts_[i] -= other.cmpts_[i]; 
             return *this;
         }
 
@@ -64,15 +79,9 @@ namespace NeoFOAM
         }
 
     private:
-        std::array<scalar, 3> cmpts_ = {0.0, 0.0, 0.0};
+        scalar cmpts_[3];
     };
 
-
-KOKKOS_INLINE_FUNCTION
-bool operator==(const vector& lhs, const vector& rhs)
-{
-    return std::equal(lhs.begin(), lhs.end(), rhs.begin());
-}
 
 KOKKOS_INLINE_FUNCTION
 vector operator+(vector lhs, const vector& rhs)
@@ -94,4 +103,12 @@ vector operator*(const scalar &sclr, vector rhs)
     rhs *= sclr;
     return rhs;
 }
+
+KOKKOS_INLINE_FUNCTION
+vector operator*(vector rhs, const scalar &sclr)
+{   
+    rhs *= sclr;
+    return rhs;
+}
+
 } // namespace NeoFOAM

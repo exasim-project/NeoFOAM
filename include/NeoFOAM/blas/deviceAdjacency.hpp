@@ -317,7 +317,7 @@ class deviceAdjacency
      * @brief Returns the name of the object.
      * @return The name of the object.
      */
-    [[nodiscard]] constexpr std::string name() const noexcept
+    [[nodiscard]] std::string name() const noexcept
     {
         return name_; 
     }
@@ -363,9 +363,12 @@ class deviceAdjacency
      */
     void parallelInit() 
     {        
-        if(offset_.size() == 0) return;
+        if(offset_.size() == 0) {
+            return;
+        } 
+
         Kokkos::parallel_for("check_correct_acending", offset_.size() - 1, 
-                            KOKKOS_LAMBDA(const Tlabel i_node) {
+                            KOKKOS_CLASS_LAMBDA(const Tlabel i_node) {
                                 bool is_sorted = true;
                                 const int offset_size = offset_(i_node + 1) - offset_(i_node);
                                 if(offset_size < 2) return; // nothing to sort
@@ -487,7 +490,7 @@ class deviceAdjacency
         Kokkos::deep_copy(temp, adjacency_);
         Kokkos::resize(adjacency_, adjacency_.size() + 1 + offset_shift());
         Kokkos::parallel_for("adjacency_insert", adjacency_.size(), 
-                             KOKKOS_LAMBDA(const Tlabel i) 
+                             KOKKOS_CLASS_LAMBDA(const Tlabel i) 
                              {
                                 if(i < index_insert.first) adjacency_(i) = is_adjacency_empty ? 0 : temp(i);
                                 else if(i == index_insert.first) adjacency_(i) = edge.second;
