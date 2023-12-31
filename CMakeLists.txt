@@ -12,19 +12,24 @@ project(
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/StandardProjectSettings.cmake)
 
-option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
-option(NEOFOAM_DP_LABELS "double precision label" TRUE)
-option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
-option(NEOFOAM_BUILD_TESTS "Build the unit tests" TRUE)
+option(BUILD_NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
+option(BUILD_NEOFOAM_DP_LABELS "double precision label" TRUE)
+option(BUILD_NEOFOAM_WITH_APPS "Build the applications folder" TRUE)
+option(BUILD_NEOFOAM_ENABLE_CUDA "Build with CUDA GPU support" TRUE)
+option(BUILD_NEOFOAM_WITH_TESTS "Build the unit tests" TRUE)
+option(BUILD_NEOFOAM_WITH_SYSTEM_KOKKOS "Rely on find_package to use pre-installed Kokkos, otherwise kokkos is build from source" FALSE)
 
-option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_UB "Enable undefined behaviour sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_THREAD "Enable thread sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
-option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
-option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
-option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
+option(BUILD_NEOFOAM_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
+option(BUILD_NEOFOAM_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
+option(BUILD_NEOFOAM_SANITIZE_UB "Enable undefined behaviour sanitizer" FALSE)
+option(BUILD_NEOFOAM_SANITIZE_THREAD "Enable thread sanitizer" FALSE)
+option(BUILD_NEOFOAM_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
+option(BUILD_NEOFOAM_CPP_CHECK "Enable cpp check static analyzer" FALSE)
+option(BUILD_NEOFOAM_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
+option(BUILD_NEOFOAM_PCH "Enable precompiled header" FALSE)
+
+include(cmake/kokkos.cmake)
+
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 23)
@@ -45,6 +50,8 @@ if(NEOFOAM_ENABLE_PCH)
   target_precompile_headers(project_options INTERFACE <vector> <string>
                             <utility>)
 endif()
+
+include(cmake/Sanitizer.cmake)
 
 include(cmake/StaticAnalyzers.cmake)
 if(NEOFOAM_ENABLE_CPP_CHECK)
