@@ -19,14 +19,14 @@ option(BUILD_NEOFOAM_WITH_TESTS "Build the unit tests" TRUE)
 option(FORCE_NEOFOAM_BUILD_KOKKOS
        "Forces NeoFOAM to build kokkos even if already present" FALSE)
 
-option(BUILD_NEOFOAM_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
-option(BUILD_NEOFOAM_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
-option(BUILD_NEOFOAM_SANITIZE_UB "Enable undefined behaviour sanitizer" FALSE)
-option(BUILD_NEOFOAM_SANITIZE_THREAD "Enable thread sanitizer" FALSE)
-option(BUILD_NEOFOAM_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
-option(BUILD_NEOFOAM_CPP_CHECK "Enable cpp check static analyzer" FALSE)
-option(BUILD_NEOFOAM_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
-option(BUILD_NEOFOAM_PCH "Enable precompiled header" FALSE)
+option(ENABLE_NEOFOAM_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
+option(ENABLE_NEOFOAM_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
+option(ENABLE_NEOFOAM_SANITIZE_UB "Enable undefined behaviour sanitizer" FALSE)
+option(ENABLE_NEOFOAM_SANITIZE_THREAD "Enable thread sanitizer" FALSE)
+option(ENABLE_NEOFOAM_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
+option(ENABLE_NEOFOAM_CPP_CHECK "Enable cpp check static analyzer" FALSE)
+option(ENABLE_NEOFOAM_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
+option(ENABLE_NEOFOAM_PCH "Enable precompiled header" FALSE)
 
 include(cmake/kokkos.cmake)
 
@@ -39,13 +39,7 @@ add_library(project_warnings INTERFACE)
 myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS}
                                FALSE "" "" "")
 
-include(cmake/Sanitizer.cmake)
-enable_sanitizers(
-  project_options NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK
-  NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
-  NEOFOAM_ENABLE_SANITIZE_MEMORY)
-
-if(NEOFOAM_ENABLE_PCH)
+if(BUILD_NEOFOAM_PCH)
   target_precompile_headers(project_options INTERFACE <vector> <string>
                             <utility>)
 endif()
@@ -53,11 +47,11 @@ endif()
 include(cmake/Sanitizer.cmake)
 
 include(cmake/StaticAnalyzers.cmake)
-if(BUILD_NEOFOAM_CPP_CHECK)
-	NeoFOAM_enable_cppcheck(FALSE "")
+if(ENABLE_NEOFOAM_CPP_CHECK)
+  neofoam_enable_cppcheck(FALSE "")
 endif()
-if(BUILD_NEOFOAM_CLANG_TIDY)
-	NeoFOAM_enable_clang_tidy(FALSE "")
+if(ENABLE_NEOFOAM_CLANG_TIDY)
+  neofoam_enable_clang_tidy(FALSE "")
 endif()
 
 add_subdirectory(src)

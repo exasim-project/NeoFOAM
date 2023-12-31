@@ -11,4 +11,10 @@ target_include_directories(
 
 target_sources(NeoFOAM PRIVATE "core/Time.cpp" "core/Error.cpp")
 
+include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
+enable_sanitizers(
+  NeoFOAM ENABLE_NEOFOAM_SANITIZE_ADDRESS ENABLE_NEOFOAM_SANITIZE_LEAK
+  ENABLE_NEOFOAM_SANITIZE_UB ENABLE_NEOFOAM_SANITIZE_THREAD
+  ENABLE_NEOFOAM_SANITIZE_MEMORY)
+
 target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos)
