@@ -17,10 +17,8 @@ option(BUILD_NEOFOAM_DP_LABELS "double precision label" TRUE)
 option(BUILD_NEOFOAM_WITH_APPS "Build the applications folder" TRUE)
 option(BUILD_NEOFOAM_ENABLE_CUDA "Build with CUDA GPU support" TRUE)
 option(BUILD_NEOFOAM_WITH_TESTS "Build the unit tests" TRUE)
-option(
-  BUILD_NEOFOAM_WITH_SYSTEM_KOKKOS
-  "Rely on find_package to use pre-installed Kokkos, otherwise kokkos is build from source"
-  FALSE)
+option(FORCE_NEOFOAM_BUILD_KOKKOS
+       "Forces NeoFOAM to build kokkos even if already present" FALSE)
 
 option(BUILD_NEOFOAM_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
 option(BUILD_NEOFOAM_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
