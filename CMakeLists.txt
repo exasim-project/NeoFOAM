@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-cmake_minimum_required(VERSION 3.26.0)
+cmake_minimum_required(VERSION 3.22.0)
 
 project(
   NeoFOAM
