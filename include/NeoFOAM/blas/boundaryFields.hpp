@@ -6,20 +6,17 @@
 #include <iostream>
 #include "primitives/scalar.hpp"
 #include "primitives/label.hpp"
+#include "deviceField.hpp"
 
 namespace NeoFOAM
 {
     // enum class boundaryType used in a kokkos view to categorize boundary
     // types
-    enum class boundaryType
-    {
-        Dirichlet,
-        Neumann,
-        Robin
-    };
+
 
     template <typename T>
     class boundaryFields
+    {
     /**
      * @class boundaryFields
      * @brief Represents the boundary fields for a computational domain.
@@ -28,8 +25,16 @@ namespace NeoFOAM
      * It provides access to the computed values, reference values, value fractions, reference gradients, boundary types,
      * offsets, and the number of boundaries and boundary faces.
      */
-    class boundaryFields {
+    
     public:
+
+        KOKKOS_FUNCTION
+        enum class boundaryTypes: int
+        {
+            Dirichlet,
+            Neumann,
+            Robin
+        };
         /**
          * @brief Copy constructor.
          * @param rhs The boundaryFields object to be copied.
@@ -40,41 +45,23 @@ namespace NeoFOAM
                refValue_(rhs.refValue_),
                valueFraction_(rhs.valueFraction_),
                refGrad_(rhs.refGrad_),
-               boundaryType_(rhs.boundaryType_),
+               boundaryTypes_(rhs.boundaryTypes_),
                offset_(rhs.offset_),
                nBoundaries_(rhs.nBoundaries_),
                nBoundaryFaces_(rhs.nBoundaryFaces_)
         {
         }
 
-        /**
-         * @brief Constructor that initializes the boundaryFields object with the given components.
-         * @param value The view storing the computed values from the boundary condition.
-         * @param refValue The view storing the Dirichlet boundary values.
-         * @param valueFraction The view storing the fraction of the boundary value.
-         * @param refGrad The view storing the Neumann boundary values.
-         * @param boundaryType The view storing the boundary types.
-         * @param offset The view storing the offsets of each boundary.
-         * @param nBoundaries The number of boundaries.
-         * @param nBoundaryFaces The number of boundary faces.
-         */
-        KOKKOS_FUNCTION
-        boundaryFields(const Kokkos::View<T *> &value,
-                      const Kokkos::View<T *> &refValue,
-                      const Kokkos::View<scalar *> &valueFraction,
-                      const Kokkos::View<T *> &refGrad,
-                      const Kokkos::View<boundaryType *> &boundaryType,
-                      const Kokkos::View<localIdx *> &offset,
-                      const int nBoundaries,
-                      const int nBoundaryFaces)
-            : value_(value),
-              refValue_(refValue),
-              valueFraction_(valueFraction),
-              refGrad_(refGrad),
-              boundaryType_(boundaryType),
-              offset_(offset),
-              nBoundaries_(nBoundaries),
-              nBoundaryFaces_(nBoundaryFaces)
+        
+        boundaryFields(int nBoundaryFaces,int nBoundaries)
+            :  value_("value", nBoundaryFaces),
+               refValue_("refValue", nBoundaryFaces),
+               valueFraction_("valueFraction", nBoundaryFaces),
+               refGrad_("refGrad", nBoundaryFaces),
+               boundaryTypes_("boundaryType", nBoundaries),
+               offset_("offset", nBoundaries + 1),
+               nBoundaries_(nBoundaries),
+               nBoundaryFaces_(nBoundaryFaces)
         {
         }
 
@@ -82,7 +69,12 @@ namespace NeoFOAM
          * @brief Get the view storing the computed values from the boundary condition.
          * @return The view storing the computed values.
          */
-        Kokkos::View<T *> value()
+        const NeoFOAM::deviceField<T>&  value() const
+        {
+            return value_;
+        }
+
+        NeoFOAM::deviceField<T>&  value()
         {
             return value_;
         }
@@ -91,7 +83,12 @@ namespace NeoFOAM
          * @brief Get the view storing the Dirichlet boundary values.
          * @return The view storing the Dirichlet boundary values.
          */
-        Kokkos::View<T *> refValue()
+        const NeoFOAM::deviceField<T>&  refValue() const
+        {
+            return refValue_;
+        }
+
+        NeoFOAM::deviceField<T>&  refValue()
         {
             return refValue_;
         }
@@ -100,16 +97,26 @@ namespace NeoFOAM
          * @brief Get the view storing the fraction of the boundary value.
          * @return The view storing the fraction of the boundary value.
          */
-        Kokkos::View<scalar *> valueFraction()
+        const NeoFOAM::deviceField<scalar>& valueFraction() const
         {
             return valueFraction_;
+        }
+
+        NeoFOAM::deviceField<scalar>&  valueFraction()
+        {
+            return refValue_;
         }
 
         /**
          * @brief Get the view storing the Neumann boundary values.
          * @return The view storing the Neumann boundary values.
          */
-        Kokkos::View<T *> refGrad()
+        const NeoFOAM::deviceField<T>& refGrad() const
+        {
+            return refGrad_;
+        }
+
+        NeoFOAM::deviceField<T>& refGrad()
         {
             return refGrad_;
         }
@@ -118,16 +125,16 @@ namespace NeoFOAM
          * @brief Get the view storing the boundary types.
          * @return The view storing the boundary types.
          */
-        Kokkos::View<boundaryType *> boundaryType()
+        const NeoFOAM::deviceField<int >&  boundaryTypes() const
         {
-            return boundaryType_;
+            return boundaryTypes_;
         }
 
         /**
          * @brief Get the view storing the offsets of each boundary.
          * @return The view storing the offsets of each boundary.
          */
-        Kokkos::View<localIdx *> offset()
+        const NeoFOAM::deviceField<localIdx>& offset() const
         {
             return offset_;
         }
@@ -136,7 +143,7 @@ namespace NeoFOAM
          * @brief Get the number of boundaries.
          * @return The number of boundaries.
          */
-        int nBoundaries()
+        int nBoundaries() 
         {
             return nBoundaries_;
         }
@@ -151,12 +158,12 @@ namespace NeoFOAM
         }
 
     private:
-        Kokkos::View<T *> value_;                   ///< The view storing the computed values from the boundary condition.
-        Kokkos::View<T *> refValue_;                ///< The view storing the Dirichlet boundary values.
-        Kokkos::View<scalar *> valueFraction_;      ///< The view storing the fraction of the boundary value.
-        Kokkos::View<T *> refGrad_;                 ///< The view storing the Neumann boundary values.
-        Kokkos::View<boundaryType *> boundaryType_; ///< The view storing the boundary types.
-        Kokkos::View<localIdx *> offset_;           ///< The view storing the offsets of each boundary.
+        NeoFOAM::deviceField<T > value_;                   ///< The view storing the computed values from the boundary condition.
+        NeoFOAM::deviceField<T> refValue_;                ///< The view storing the Dirichlet boundary values.
+        NeoFOAM::deviceField<scalar> valueFraction_;      ///< The view storing the fraction of the boundary value.
+        NeoFOAM::deviceField<T> refGrad_;                 ///< The view storing the Neumann boundary values.
+        NeoFOAM::deviceField<int > boundaryTypes_; ///< The view storing the boundary types.
+        NeoFOAM::deviceField<localIdx> offset_;           ///< The view storing the offsets of each boundary.
         int nBoundaries_;                           ///< The number of boundaries.
         int nBoundaryFaces_;                        ///< The number of boundary faces.
     };
