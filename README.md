@@ -1,5 +1,6 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
+**[Documentation](https://exasim-project.com/NeoFOAM/)** |
 # NeoFOAM
 
 ## Requirements
