@@ -1,13 +1,12 @@
 name: Docs
 
 on:
-  #push:
-  #  branches-ignore:
-  #    - '**'  
   push:
-    branches: [ master ]
+    branches: 
+      - dev
+      - main
   pull_request:
-    branches: [ master ]
+    types: synchronize
   
 jobs:
   build:
@@ -22,17 +21,17 @@ jobs:
         && pip3 install breathe
         && pip3 install sphinx-sitemap
     - name: Checkout repo
-      uses: actions/checkout@1.0.0
+      uses: actions/checkout@v3
     - name: Build docs
       run: |
-        mkdir docs
         sphinx-quickstart . -q -p NeoFOAM -a "The NeoFOAM authors" -v "0.0.1" -l "en"
         make html
+        pwd
         cd _build/html
         touch .nojekyll
     - name: Deploy
-      uses: JamesIves/github-pages-deploy-action@releases/v3
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         BRANCH: gh-pages # The branch the action should deploy to.
-        FOLDER: docs_sphinx/_build/html # The folder the action should deploy.
+        FOLDER: _build/html # The folder the action should deploy.
