@@ -17,6 +17,7 @@ target_sources(NeoFOAM
                PRIVATE
                "core/Time.cpp"
                "core/Error.cpp"
+               "mesh/unstructuredMesh/unstructuredMesh.cpp"
                "cellCentredFiniteVolume/bcFields/scalar/fvccScalarFixedValueBoundaryField.cpp"
                "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp")
 

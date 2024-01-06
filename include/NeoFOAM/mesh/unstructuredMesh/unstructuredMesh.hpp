@@ -13,15 +13,7 @@ namespace NeoFOAM
     struct unstructuredMesh
     {
 
-        unstructuredMesh(NeoFOAM::vectorField Sf, NeoFOAM::labelField owner, NeoFOAM::labelField neighbour, NeoFOAM::scalarField V, int32_t nCells, int32_t nInternalFaces)
-            : Sf_(Sf)
-            , owner_(owner)
-            , neighbour_(neighbour)
-            , V_(V)
-            , nCells_(nCells)
-            , nInternalFaces_(nInternalFaces){
-
-            };
+        unstructuredMesh(NeoFOAM::vectorField Sf, NeoFOAM::labelField owner, NeoFOAM::labelField neighbour, NeoFOAM::scalarField V, int32_t nCells, int32_t nInternalFaces);
 
         vectorField Sf_; // area vector
 
@@ -32,6 +24,11 @@ namespace NeoFOAM
 
         int32_t nCells_; // number of cells
         int32_t nInternalFaces_; // number of internal faces
+
+        int32_t nBoundaryFaces_; // number of faces
+        int32_t nBoundaryPatches_; // number of patches
+
+        std::vector<int32_t> boundaryStartFace_; // start face of boundary patch
     };
 
 } // namespace NeoFOAM
