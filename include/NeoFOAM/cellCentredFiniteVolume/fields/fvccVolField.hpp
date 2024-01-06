@@ -30,9 +30,9 @@ namespace NeoFOAM
              * @param nBoundaryFaces The number of boundary faces in the field.
              * @param nBoundaries The number of boundaries in the field.
              */
-            fvccVolField(int nCells, int nBoundaryFaces, int nBoundaries)
+            fvccVolField(int nCells, int nBoundaryFaces, int nBoundaries, std::vector<std::unique_ptr<fvccBoundaryField<T> > > &&boundaryConditions)
                 :  field_(nCells, nBoundaryFaces, nBoundaries),
-                   boundaryConditions_(nBoundaries)
+                   boundaryConditions_(std::move(boundaryConditions))
             {
                 
             };

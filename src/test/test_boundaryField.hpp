@@ -40,17 +40,21 @@ TEST(BoundaryField, init)
 
     copy_and_check_EQ(aIn, 2.0);
 
-    NeoFOAM::fvccVolField<NeoFOAM::scalar> volField(1000,20,2);
+    std::vector<std::unique_ptr<NeoFOAM::fvccBoundaryField<double> > > bcs;
+    bcs.push_back(std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(0, 10, 1.0));
+    bcs.push_back(std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(10, 20, 2.0));
+
+    NeoFOAM::fvccVolField<NeoFOAM::scalar> volField
+    (
+        1000,
+        20,
+        2,
+        std::move(bcs)
+    );
 
     NeoFOAM::boundaryFields<NeoFOAM::scalar>& bField = volField.boundaryField();
 
-    std::unique_ptr<NeoFOAM::fvccBoundaryField<NeoFOAM::scalar>> fixedUniformBC1 = std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(0, 10, 1.0);
-    std::unique_ptr<NeoFOAM::fvccBoundaryField<NeoFOAM::scalar>> fixedUniformBC2 = std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(10, 20, 2.0);
-
     auto& volBCs = volField.boundaryConditions();
-
-    volBCs[0] = std::move(fixedUniformBC1);
-    volBCs[1] = std::move(fixedUniformBC2);
 
     std::cout << "volBCs.size(): " << volBCs.size() << std::endl;
 
