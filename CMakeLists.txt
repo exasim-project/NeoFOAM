@@ -66,7 +66,7 @@ if(NEOFOAM_BUILD_APPS)
 endif()
 
 if(BUILD_NEOFOAM_DOC)
-    include(cmake/docs.cmake)
+    include(cmake/Docs.cmake)
     neofoam_build_docs()
 endif()
 
@@ -76,5 +76,5 @@ add_custom_target(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 
-include(cmake/install_helpers.cmake)
+include(cmake/InstallHelpers.cmake)
 neofoam_install()
