@@ -3,22 +3,21 @@ on: [pull_request]
 run-name: Format Check
 
 jobs:
-  run:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path:
+          - 'src'
+          - 'applications'
+          - 'include'
     name: Format check with foam-format
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install pip
-      run: |
-       sudo apt install -y python3 python3-pip python3-setuptools python3-wheel ninja-build
-       pip3 install click tqdm 
-    - name: fetch foam-format
-      run: |
-        git clone https://github.com/exasim-project/foam-format
-        cd foam-format
-        pip3 install --user .
-        cp src/foam_format/clang_format.body /home/runner/.local/lib/python3.10/site-packages/foam_format/clang_format.body
-    - name: Run format check
-      run: |
-        foam-format --target=src
-
+    - name: Run clang-format style check for C/C++/Protobuf programs.
+      uses: jidicula/clang-format-action@v4.11.0
+      with:
+        clang-format-version: '17'
+        check-path: '${{ matrix.path }}'
