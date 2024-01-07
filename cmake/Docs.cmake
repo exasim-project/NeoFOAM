@@ -41,6 +41,7 @@ add_custom_target(sphinx ALL
                   -Dbreathe_projects.NeoFOAM=${DOXYGEN_OUTPUT_DIR}
                   ${SPHINX_SOURCE} ${SPHINX_BUILD}
                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                  DEPENDS doxygen
                   COMMENT "Generating documentation with Sphinx")
 
 # add one target to build both doxygen and sphinx
