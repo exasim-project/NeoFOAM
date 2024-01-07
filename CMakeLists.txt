@@ -80,5 +80,5 @@ add_custom_target(
   COMMAND find src applications -name "*.[c,h]*pp" -exec clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-include(cmake/install_helpers.cmake)
+include(cmake/InstallHelpers.cmake)
 neofoam_install()
