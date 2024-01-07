@@ -43,5 +43,8 @@ add_custom_target(sphinx ALL
                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                   COMMENT "Generating documentation with Sphinx")
 
+# add one target to build both doxygen and sphinx
+add_custom_target(doc)
+add_dependencies(doc doxygen sphinx)
 
 endmacro()
