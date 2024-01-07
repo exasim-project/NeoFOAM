@@ -1,5 +1,6 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
+**[Documentation](https://exasim-project.com/NeoFOAM/)** |
 # NeoFOAM
 
 ## Requirements
@@ -8,6 +9,9 @@ NeoFOAM has the following requirements
 
 *  _cmake 3.28+_
 *  _clang 17+_ 
+
+For building the documentation further dependencies like doxygen and sphinx are requirement. The list of requirements can be found [here](https://github.com/exasim-project/NeoFOAM/actions/workflows/doc.yml)
+
 
 ## Compilation
 
