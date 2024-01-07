@@ -7,15 +7,15 @@
 
 namespace NeoFOAM {
 
-    void grad_atmoic(NeoFOAM::vectorField &gradPhi, const NeoFOAM::unstructuredMesh &mesh_, const NeoFOAM::scalarField &phi)
+    void grad_atmoic(NeoFOAM::vectorField &gradPhi, const NeoFOAM::unstructuredMesh &mesh, const NeoFOAM::scalarField &phi)
     {
-        const NeoFOAM::labelField &owner = mesh_.owner_;
-        const NeoFOAM::labelField &neighbour = mesh_.neighbour_;
-        const NeoFOAM::vectorField &Sf = mesh_.Sf_;
-        const NeoFOAM::scalarField &V = mesh_.V_;
+        const NeoFOAM::labelField &owner = mesh.faceOwner();
+        const NeoFOAM::labelField &neighbour = mesh.faceNeighbour();
+        const NeoFOAM::vectorField &Sf = mesh.faceAreas();
+        const NeoFOAM::scalarField &V = mesh.cellVolumes();
 
         Kokkos::parallel_for(
-            "gaussGreenGrad", mesh_.nInternalFaces_, KOKKOS_LAMBDA(const int i) {
+            "gaussGreenGrad", mesh.nInternalFaces(), KOKKOS_LAMBDA(const int i) {
                 int32_t own = owner(i);
                 int32_t nei = neighbour(i);
                 NeoFOAM::scalar phif = 0.5 * (phi(nei) + phi(own));
@@ -26,15 +26,15 @@ namespace NeoFOAM {
             });
     }
 
-    void grad_not_atmoic(NeoFOAM::vectorField &gradPhi, const NeoFOAM::unstructuredMesh &mesh_, const NeoFOAM::scalarField &phi)
+    void grad_not_atmoic(NeoFOAM::vectorField &gradPhi, const NeoFOAM::unstructuredMesh &mesh, const NeoFOAM::scalarField &phi)
     {
-        const NeoFOAM::labelField &owner = mesh_.owner_;
-        const NeoFOAM::labelField &neighbour = mesh_.neighbour_;
-        const NeoFOAM::vectorField &Sf = mesh_.Sf_;
-        const NeoFOAM::scalarField &V = mesh_.V_;
+        const NeoFOAM::labelField &owner = mesh.faceOwner();
+        const NeoFOAM::labelField &neighbour = mesh.faceNeighbour();
+        const NeoFOAM::vectorField &Sf = mesh.faceAreas();
+        const NeoFOAM::scalarField &V = mesh.cellVolumes();
 
         Kokkos::parallel_for(
-            "gaussGreenGrad", mesh_.nInternalFaces_, KOKKOS_LAMBDA(const int i) {
+            "gaussGreenGrad", mesh.nInternalFaces(), KOKKOS_LAMBDA(const int i) {
                 int32_t own = owner(i);
                 int32_t nei = neighbour(i);
                 NeoFOAM::scalar phif = 0.5 * (phi(nei) + phi(own));
@@ -53,7 +53,7 @@ namespace NeoFOAM {
         return gradPhi;
     }
 
-    gaussGreenGrad::gaussGreenGrad(const unstructuredMesh &mesh) : mesh_(mesh), gradPhi_("gradPhi", mesh.nCells_)
+    gaussGreenGrad::gaussGreenGrad(const unstructuredMesh &mesh) : mesh_(mesh), gradPhi_("gradPhi", mesh.nCells())
     {
     };
 
@@ -82,13 +82,13 @@ namespace NeoFOAM {
         // vectorField gradPhi = create_gradField(mesh_.nCells_);
 
         // loop(gradPhi, mesh_, phi);
-        const labelField &owner = mesh_.owner_;
-        const labelField &neighbour = mesh_.neighbour_;
-        const vectorField &Sf = mesh_.Sf_;
-        const scalarField &V = mesh_.V_;
+        const NeoFOAM::labelField &owner = mesh_.faceOwner();
+        const NeoFOAM::labelField &neighbour = mesh_.faceNeighbour();
+        const NeoFOAM::vectorField &Sf = mesh_.faceAreas();
+        const NeoFOAM::scalarField &V = mesh_.cellVolumes();
 
         Kokkos::parallel_for(
-            "gaussGreenGrad", mesh_.nInternalFaces_, KOKKOS_CLASS_LAMBDA(const int i) {
+            "gaussGreenGrad", mesh_.nInternalFaces(), KOKKOS_CLASS_LAMBDA(const int i) {
                 int32_t own = owner(i);
                 int32_t nei = neighbour(i);
                 scalar phif = 0.5 * (phi(nei) + phi(own));
@@ -108,13 +108,13 @@ namespace NeoFOAM {
         // vectorField gradPhi = create_gradField(mesh_.nCells_);
 
         // loop(gradPhi, mesh_, phi);
-        const labelField &owner = mesh_.owner_;
-        const labelField &neighbour = mesh_.neighbour_;
-        const vectorField &Sf = mesh_.Sf_;
-        const scalarField &V = mesh_.V_;
+        const NeoFOAM::labelField &owner = mesh_.faceOwner();
+        const NeoFOAM::labelField &neighbour = mesh_.faceNeighbour();
+        const NeoFOAM::vectorField &Sf = mesh_.faceAreas();
+        const NeoFOAM::scalarField &V = mesh_.cellVolumes();
 
         Kokkos::parallel_for(
-            "gaussGreenGrad", mesh_.nInternalFaces_, KOKKOS_CLASS_LAMBDA(const int i) {
+            "gaussGreenGrad", mesh_.nInternalFaces(), KOKKOS_CLASS_LAMBDA(const int i) {
                 int32_t own = owner(i);
                 int32_t nei = neighbour(i);
                 scalar phif = 0.5 * (phi(nei) + phi(own));
@@ -131,13 +131,13 @@ namespace NeoFOAM {
         // vectorField gradPhi = create_gradField(mesh_.nCells_);
 
         // loop(gradPhi, mesh_, phi);
-        const labelField &owner = mesh_.owner_;
-        const labelField &neighbour = mesh_.neighbour_;
-        const vectorField &Sf = mesh_.Sf_;
-        const scalarField &V = mesh_.V_;
+        const NeoFOAM::labelField &owner = mesh_.faceOwner();
+        const NeoFOAM::labelField &neighbour = mesh_.faceNeighbour();
+        const NeoFOAM::vectorField &Sf = mesh_.faceAreas();
+        const NeoFOAM::scalarField &V = mesh_.cellVolumes();
 
         Kokkos::parallel_for(
-            "gaussGreenGrad", mesh_.nInternalFaces_, KOKKOS_LAMBDA(const int i) {
+            "gaussGreenGrad", mesh_.nInternalFaces(), KOKKOS_LAMBDA(const int i) {
                 int32_t own = owner(i);
                 int32_t nei = neighbour(i);
                 scalar phif = 0.5 * (phi(nei) + phi(own));
@@ -156,13 +156,13 @@ namespace NeoFOAM {
         // vectorField gradPhi = create_gradField(mesh_.nCells_);
 
         // loop(gradPhi, mesh_, phi);
-        const labelField &owner = mesh_.owner_;
-        const labelField &neighbour = mesh_.neighbour_;
-        const vectorField &Sf = mesh_.Sf_;
-        const scalarField &V = mesh_.V_;
+        const NeoFOAM::labelField &owner = mesh_.faceOwner();
+        const NeoFOAM::labelField &neighbour = mesh_.faceNeighbour();
+        const NeoFOAM::vectorField &Sf = mesh_.faceAreas();
+        const NeoFOAM::scalarField &V = mesh_.cellVolumes();
 
         Kokkos::parallel_for(
-            "gaussGreenGrad", mesh_.nInternalFaces_, KOKKOS_LAMBDA(const int i) {
+            "gaussGreenGrad", mesh_.nInternalFaces(), KOKKOS_LAMBDA(const int i) {
                 int32_t own = owner(i);
                 int32_t nei = neighbour(i);
                 scalar phif = 0.5 * (phi(nei) + phi(own));

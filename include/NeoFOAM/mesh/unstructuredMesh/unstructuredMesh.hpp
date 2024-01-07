@@ -10,25 +10,65 @@
 namespace NeoFOAM
 {
 
-    struct unstructuredMesh
+    class unstructuredMesh
     {
+    public:
 
-        unstructuredMesh(NeoFOAM::vectorField Sf, NeoFOAM::labelField owner, NeoFOAM::labelField neighbour, NeoFOAM::scalarField V, int32_t nCells, int32_t nInternalFaces);
+        unstructuredMesh
+        (
+            vectorField points,
+            scalarField cellVolumes,
+            vectorField cellCentres,
+            vectorField faceAreas,
+            vectorField faceCentres,
+            scalarField magFaceAreas,
+            labelField faceOwner,
+            labelField faceNeighbour,
+            int32_t nCells,
+            int32_t nInternalFaces
+        );
 
-        vectorField Sf_; // area vector
+        const vectorField &points() const;
 
-        labelField owner_;     // owner cell
-        labelField neighbour_; // neighbour cell
+        const vectorField &cellCentres() const;
 
-        scalarField V_; // cell volume
+        const scalarField &cellVolumes() const;
 
-        int32_t nCells_; // number of cells
+        const vectorField &faceCentres() const;
+
+        const vectorField &faceAreas() const;
+
+        const scalarField &magFaceAreas() const;
+
+        const labelField &faceOwner() const;
+
+        const labelField &faceNeighbour() const;
+
+        int32_t nCells() const;
+
+        int32_t nInternalFaces() const;
+        
+
+    private:
+        vectorField points_; // points
+
+        scalarField cellVolumes_; // cell volume
+        vectorField cellCentres_; // cell centre
+
+        vectorField faceAreas_;    // face area vector
+        vectorField faceCentres_;  // face centre vector
+        scalarField magFaceAreas_; // face area
+
+        labelField faceOwner_;     // owner cell
+        labelField faceNeighbour_; // neighbour cell
+
+        int32_t nCells_;         // number of cells
         int32_t nInternalFaces_; // number of internal faces
 
-        int32_t nBoundaryFaces_; // number of faces
-        int32_t nBoundaryPatches_; // number of patches
+        // int32_t nBoundaryFaces_;   // number of faces
+        // int32_t nBoundaryPatches_; // number of patches
 
-        std::vector<int32_t> boundaryStartFace_; // start face of boundary patch
+        // std::vector<int32_t> boundaryStartFace_; // start face of boundary patch
     };
 
 } // namespace NeoFOAM
