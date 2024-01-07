@@ -38,7 +38,7 @@ add_custom_target(sphinx ALL
                   COMMAND
                   ${SPHINX_EXECUTABLE} -b html
                   # Tell Breathe where to find the Doxygen output
-                  -Dbreathe_projects.CatCutifier=${DOXYGEN_OUTPUT_DIR}
+                  -Dbreathe_projects.NeoFOAM=${DOXYGEN_OUTPUT_DIR}
                   ${SPHINX_SOURCE} ${SPHINX_BUILD}
                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                   COMMENT "Generating documentation with Sphinx")
