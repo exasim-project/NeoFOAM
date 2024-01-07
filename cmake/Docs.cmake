@@ -7,10 +7,10 @@ macro(neofoam_build_docs)
 
 # Find all the public headers
 get_target_property(NEOFOAM_PUBLIC_HEADER_DIR NeoFOAM INTERFACE_INCLUDE_DIRECTORIES)
-file(GLOB_RECURSE NEOFOAM_PUBLIC_HEADERS ${NEOFOAM_PUBLIC_HEADER_DIR}/*.h)
+file(GLOB_RECURSE NEOFOAM_PUBLIC_HEADERS ${NEOFOAM_PUBLIC_HEADER_DIR}/*.hpp)
 
 #This will be the main output of our command
-set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/include)
+set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/include/NeoFOAM)
 set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen)
 set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
 set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in)
