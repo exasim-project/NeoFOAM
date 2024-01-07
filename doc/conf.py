@@ -63,7 +63,8 @@ html_theme_options = {
 html_static_path = ['_static']
 
 breathe_projects = {
-	"NeoFOAM": "_build/xml/"
+    "NeoFOAM": "_build/xml/"
 }
+html_baseurl = "https://exasim-project.com/NeoFOAM/"
 breathe_default_project = "NeoFOAM"
 breathe_default_members = ('members', 'undoc-members')
