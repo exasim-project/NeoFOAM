@@ -8,8 +8,8 @@ project(
   VERSION 0.1.0
   DESCRIPTION "An implementation of FOAM")
 
-# include kokkos.cmake before setting the project standard
-# to avoid issues with nvcc not supporting c++20 standard
+# include kokkos.cmake before setting the project standard to avoid issues with
+# nvcc not supporting c++20 standard
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17)
@@ -29,7 +29,6 @@ option(NEOFOAM_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
 option(NEOFOAM_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_PCH "Enable precompiled header" FALSE)
-
 
 include(cmake/kokkos.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
