@@ -39,8 +39,6 @@ configure_file(cmake/NeoFOAMConfig.cmake
   COPYONLY
 )
 
-install(TARGETS kokkos kokkoscore kokkoscontainers kokkosalgorithms kokkossimd LIBDL EXPORT NeoFOAMTargets)
-
 set(ConfigPackageLocation lib/cmake/NeoFOAM)
 install(EXPORT NeoFOAMTargets
   FILE
