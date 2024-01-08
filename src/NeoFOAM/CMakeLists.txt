@@ -29,3 +29,8 @@ if (${NEOFOAM_CUDA})
 	find_package(CUDAToolkit REQUIRED)
 	target_include_directories(NeoFOAM PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 endif()
+
+if (${NEOFOAM_OMP})
+	find_package(OpenMP)
+	target_link_libraries(NeoFOAM PUBLIC OpenMP::OpenMP_CXX)
+endif()
