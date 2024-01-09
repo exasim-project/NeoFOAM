@@ -41,7 +41,7 @@ configure_file(cmake/NeoFOAMConfig.cmake
 
 if (NOT ${Kokkos_FOUND} OR ${FORCE_NEOFOAM_BUILD_KOKKOS})
 	install(TARGETS kokkos kokkoscore kokkoscontainers kokkosalgorithms kokkossimd LIBDL EXPORT NeoFOAMTargets)
-	if (NOT ${Kokkos_ENABLE_CUDA} )
+	if ( ${Kokkos_ENABLE_CUDA} )
 		install(TARGETS CUDA EXPORT NeoFOAMTargets)
 	endif()
 endif()
