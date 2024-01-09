@@ -14,8 +14,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(FORCE_NEOFOAM_BUILD_KOKKOS
        "Forces NeoFOAM to build kokkos even if already present" FALSE)
 
-option(NEOFOAM_BUILD_DP_SCALAR "double precision scalar" TRUE)
-option(NEOFOAM_BUILD_DP_LABELS "double precision label" TRUE)
+option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
+option(NEOFOAM_DP_LABELS "double precision label" TRUE)
 option(NEOFOAM_BUILD_WITH_APPS "Build the applications folder" TRUE)
 option(NEOFOAM_BUILD_WITH_TESTS "Build the unit tests" TRUE)
 
