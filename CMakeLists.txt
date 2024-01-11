@@ -53,7 +53,7 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
 endif()
 
 add_subdirectory(src)
-if(NEOFOAM_BUILD_APPS)
+if(NEOFOAM_BUILD_WITH_APPS)
   add_subdirectory(applications)
 endif()
 
