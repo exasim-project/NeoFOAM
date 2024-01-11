@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/NeoFOAM.hpp"
 #include "gtest/gtest.h"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 TEST(HelloWord, check_return_value) {
   NeoFOAM::Time time{};
