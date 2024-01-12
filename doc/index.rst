@@ -5,7 +5,7 @@
 Welcome to NeoFOAM's!
 ===================================
 
-NeoFOAM aims to be a drop in replacement prototype for OpenFOAMs core libraries libfiniteVolume.so and libOpenFOAM.so.
+NeoFOAM aims to be a drop in replacement prototype for OpenFOAMs core libraries `libfiniteVolume.so` and `libOpenFOAM.so`.
 
 The NeoFOAM project has the following goals:
 
@@ -13,8 +13,8 @@ The NeoFOAM project has the following goals:
 * Unit tests
 * GPU ready
 * Modular:
-** Add legacy code as plugins
-** Allow external plugins
+* Add legacy code as plugins
+* Allow external plugins
 
 
 .. toctree::
