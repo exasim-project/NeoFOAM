@@ -3,6 +3,6 @@
 
 add_subdirectory(NeoFOAM)
 
-if(NEOFOAM_BUILD_TESTS)
+if(NEOFOAM_BUILD_WITH_TESTS)
   add_subdirectory(test)
 endif()
