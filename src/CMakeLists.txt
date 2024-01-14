@@ -4,7 +4,7 @@
 add_subdirectory(NeoFOAM)
 # add_subdirectory(DSL)
 
-if(NEOFOAM_BUILD_TESTS)
+if(NEOFOAM_BUILD_WITH_TESTS)
   add_subdirectory(test)
 endif()
 

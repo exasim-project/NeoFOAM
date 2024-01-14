@@ -8,7 +8,7 @@ NeoFOAM has the following requirements
 
 *  _cmake 3.28+_
 *  _clang 17+_ 
-* cuda
+*  _Kokkos 4.2.0_ (Preferably preinstalled, otherwise cloned and build at compile time) 
 
 ## Compilation
 

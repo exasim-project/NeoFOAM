@@ -6,7 +6,7 @@
 # from here                                                                  #
 # https://github.com/cpp-best-practices/cmake_template                       #
 ##############################################################################
-macro(myproject_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
+macro(NeoFOAM_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
   find_program(CPPCHECK cppcheck)
   if(CPPCHECK)
 
@@ -50,12 +50,11 @@ macro(myproject_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
       list(APPEND CMAKE_CXX_CPPCHECK --error-exitcode=2)
     endif()
   else()
-    message(${WARNING_MESSAGE} "cppcheck requested but executable not found")
+	  message(FATAL_ERROR "cppcheck requested but executable not found")
   endif()
 endmacro()
 
-macro(myproject_enable_clang_tidy target WARNINGS_AS_ERRORS)
-
+macro(NeoFOAM_enable_clang_tidy target WARNINGS_AS_ERRORS)
   find_program(CLANGTIDY clang-tidy)
   if(CLANGTIDY)
     if(NOT
@@ -103,7 +102,7 @@ macro(myproject_enable_clang_tidy target WARNINGS_AS_ERRORS)
     message("Also setting clang-tidy globally")
     set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_OPTIONS})
   else()
-    message(${WARNING_MESSAGE} "clang-tidy requested but executable not found")
+	  message(FATAL_ERROR "clang-tidy requested but executable not found")
   endif()
 endmacro()
 
