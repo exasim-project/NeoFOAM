@@ -1,6 +1,30 @@
 #include <benchmark/benchmark.h>
 #include "NeoFOAM/blas/field.hpp"
 
+class addFunctor
+{
+public:
+    addFunctor(Kokkos::View<double *, Kokkos::HostSpace> a,
+               Kokkos::View<double *, Kokkos::HostSpace>b,
+               Kokkos::View<double *, Kokkos::HostSpace> c
+               )
+               : a_(a)
+               , b_(b)
+               , c_(c) {}
+
+    KOKKOS_INLINE_FUNCTION
+    void operator()(const int i) const
+    {
+        c_[i] = a_[i] + b_[i];
+    }
+
+    private:
+
+    Kokkos::View<double *, Kokkos::HostSpace> a_;
+    Kokkos::View<double *, Kokkos::HostSpace> b_;
+    Kokkos::View<double *, Kokkos::HostSpace> c_;
+};
+
 static void serial_scalarField_addition(benchmark::State &state)
 {
 
@@ -19,7 +43,76 @@ static void serial_scalarField_addition(benchmark::State &state)
     }
 }
 
-static void scalarField_add(benchmark::State &state)
+static void KokkosOpenMP_scalarField_addition(benchmark::State &state)
+{
+    int N = state.range(0);
+    Kokkos::View<double *, Kokkos::HostSpace> a("a",N);
+    Kokkos::parallel_for(
+        Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
+        [&](const int i) {
+            a(i) = 1;
+        });
+    Kokkos::View<double *, Kokkos::HostSpace> b("b",N);
+    Kokkos::parallel_for(
+        Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
+        [&](const int i) {
+            b(i) = 2;
+        });
+    Kokkos::View<double *, Kokkos::HostSpace> c("c",N);
+
+    // addFunctor add(a,b,c);
+        // add a + b to c
+    for (auto _ : state)
+    {
+        Kokkos::parallel_for(
+            Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
+            [&](const int i) {
+                c(i) = a(i) + b(i);
+            });
+        // Kokkos::parallel_for(
+        //     Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
+        //     add);
+    }
+}
+
+
+
+static void KokkosSerial_scalarField_addition(benchmark::State &state)
+{
+    int N = state.range(0);
+    Kokkos::View<double *, Kokkos::HostSpace> a("a",N);
+    Kokkos::parallel_for(
+        Kokkos::RangePolicy<Kokkos::Serial>(0, N),
+        [&](const int i) {
+            a(i) = 1;
+        });
+    Kokkos::View<double *, Kokkos::HostSpace> b("b",N);
+    Kokkos::parallel_for(
+        Kokkos::RangePolicy<Kokkos::Serial>(0, N),
+        [&](const int i) {
+            b(i) = 2;
+        });
+    Kokkos::View<double *, Kokkos::HostSpace> c("c",N);
+
+    // addFunctor add(a,b,c);
+        // add a + b to c
+    for (auto _ : state)
+    {
+
+        Kokkos::parallel_for(
+            Kokkos::RangePolicy<Kokkos::Serial>(0, N),
+            [&](const int i) {
+                c(i) = a(i) + b(i);
+            });
+        // Kokkos::parallel_for(
+        //     Kokkos::RangePolicy<Kokkos::Serial>(0, N),
+        //     add);
+    }
+}
+
+
+
+static void GPU_scalarField_add(benchmark::State &state)
 {
     int N = state.range(0);
     NeoFOAM::scalarField a("a", N);
@@ -42,7 +135,9 @@ static void scalarField_add(benchmark::State &state)
 
 // Register the function as a benchmark
 BENCHMARK(serial_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20); // from 8 to 2^20 elements
-BENCHMARK(scalarField_add)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
+BENCHMARK(KokkosSerial_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
+BENCHMARK(KokkosOpenMP_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
+BENCHMARK(GPU_scalarField_add)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
 
 int main(int argc, char **argv)
 {
