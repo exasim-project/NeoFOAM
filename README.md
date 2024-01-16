@@ -7,8 +7,8 @@
 
 NeoFOAM has the following requirements
 
-*  _cmake 3.28+_
-*  _clang 17+_ 
+*  _cmake > 3.22_
+*  _gcc_ > 8.5 or _clang > 14_
 *  _Kokkos 4.2.0_ (Preferably preinstalled, otherwise cloned and build at compile time) 
 
 For building the documentation further dependencies like doxygen and sphinx are requirement. The list of requirements can be found [here](https://github.com/exasim-project/NeoFOAM/actions/workflows/doc.yml)
