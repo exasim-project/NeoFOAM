@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 cmake_minimum_required(VERSION 3.22.0)
 
 project(
@@ -14,10 +15,16 @@ set(CMAKE_CXX_STANDARD 17)
 option(FORCE_NEOFOAM_BUILD_KOKKOS
        "Forces NeoFOAM to build kokkos even if already present" FALSE)
 
+# Add the cmake folder so the find_package command finds custom packages
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" TRUE)
 option(NEOFOAM_BUILD_WITH_APPS "Build the applications folder" TRUE)
 option(NEOFOAM_BUILD_WITH_TESTS "Build the unit tests" TRUE)
+option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
+option(NEOFOAM_BUILD_TESTS "Build the unit tests" TRUE)
+option(NEOFOAM_BUILD_DOC "Build documentation" FALSE)
 
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
 option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
@@ -52,9 +59,15 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
   neofoam_enable_clang_tidy(FALSE "")
 endif()
 
+
 add_subdirectory(src)
 if(NEOFOAM_BUILD_WITH_APPS)
   add_subdirectory(applications)
+endif()
+
+if(NEOFOAM_BUILD_DOC)
+    include(cmake/Docs.cmake)
+    neofoam_build_docs()
 endif()
 
 add_custom_target(
@@ -67,5 +80,5 @@ add_custom_target(
   COMMAND find src applications -name "*.[c,h]*pp" -exec clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-include(cmake/install_helpers.cmake)
+include(cmake/InstallHelpers.cmake)
 neofoam_install()
