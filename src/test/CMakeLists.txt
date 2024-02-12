@@ -24,7 +24,6 @@ gtest_discover_tests(core_test)
 # gtest_discover_tests(dsl_test)
 
 
-find_package(Kokkos REQUIRED)
 
 add_executable(test_blas "test_blas_main.cpp")
 

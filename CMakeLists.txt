@@ -10,7 +10,7 @@ project(
   DESCRIPTION "An implementation of FOAM")
 
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 option(FORCE_NEOFOAM_BUILD_KOKKOS
        "Forces NeoFOAM to build kokkos even if already present" FALSE)

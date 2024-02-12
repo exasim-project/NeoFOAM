@@ -7,6 +7,11 @@
 #include "NeoFOAM/blas/fields.hpp"
 #include <Kokkos_Core.hpp>
 
+#include "NeoFOAM/blas/fields.hpp"
+#include "NeoFOAM/blas/Field.hpp"
+#include "NeoFOAM/blas/FieldOperations.hpp"
+
+
 template <typename T, typename primitive>
 void fill_field(T &a, primitive value)
 {
@@ -25,6 +30,71 @@ void copy_and_check_EQ(T &a, primitive value)
         Kokkos::RangePolicy<Kokkos::OpenMP>(0, a.size()), KOKKOS_LAMBDA(const int i) {
             EXPECT_EQ(testview(i), value);
         });
+}
+
+
+void test_Field(int N)
+{
+    NeoFOAM::CPUExecutor cpuExec{};
+    NeoFOAM::GPUExecutor GPUExec{};
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> a(N, cpuExec);
+        auto s_a = a.field();
+        NeoFOAM::fill(a, 5.0);
+
+        for (int i = 0; i < N; i++){
+            EXPECT_EQ(s_a[i], 5.0);
+        }
+        NeoFOAM::Field<NeoFOAM::scalar> b(N+2, cpuExec);
+        auto s_b = a.field();
+        NeoFOAM::fill(b, 10.0);
+        // setField(a, b);
+        // s_a = a.field();
+        a = b;
+        EXPECT_EQ(a.field().size(), N+2);
+
+        for (int i = 0; i < N+2; i++){
+            EXPECT_EQ(a.field()[i], 10.0);
+        }
+
+        add(a, b);
+        EXPECT_EQ(a.field().size(), N+2);
+
+        for (int i = 0; i < N+2; i++){
+            EXPECT_EQ(a.field()[i], 20.0);
+        }
+
+        a = a + b;
+
+        for (int i = 0; i < N+2; i++){
+            EXPECT_EQ(a.field()[i], 30.0);
+        }
+
+        a = a - b;
+
+        for (int i = 0; i < N+2; i++){
+            EXPECT_EQ(a.field()[i], 20.0);
+        }
+
+        a = a * 0.1;
+
+        for (int i = 0; i < N+2; i++){
+            EXPECT_EQ(a.field()[i], 2.0);
+        }
+
+        a = a * b;
+
+        for (int i = 0; i < N+2; i++){
+            EXPECT_EQ(a.field()[i], 20.0);
+        }
+    }
+
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> c(N, GPUExec);
+    }
+
+    NeoFOAM::Field<NeoFOAM::scalar> b(N, GPUExec);
+    NeoFOAM::fill(b, 5.0);
 }
 
 void test_scalar(int N)
@@ -98,6 +168,13 @@ void test_vector(int N)
     c = c * scale;
 
     copy_and_check_EQ(c, NeoFOAM::vector(0.0, 0.0, 0.0));
+}
+
+TEST(BLAS, field_ops)
+{
+    int N = 10;
+
+    test_Field(N);
 }
 
 TEST(BLAS, scalar_ops)
