@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['time_2',['Time',['../classNeoFOAM_1_1Time.html',1,'NeoFOAM']]]
+  ['error_2',['error',['../classNeoFOAM_1_1error.html',1,'NeoFOAM']]]
 ];
