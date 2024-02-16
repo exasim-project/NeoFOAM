@@ -6,7 +6,8 @@
 
 #include <vector>
 #include "NeoFOAM/blas/fields.hpp"
-
+#include "NeoFOAM/blas/Field.hpp"
+#include "NeoFOAM/blas/FieldOperations.hpp"
 
 #include <catch2/reporters/catch_reporter_streaming_base.hpp>
 #include <catch2/catch_test_case_info.hpp>
@@ -61,7 +62,7 @@ TEST_CASE("Vector addition [benchmark]") {
             std::vector<double> CPUb(N, 2.0);
             std::vector<double> CPUc(N, 0.0);
             
-            BENCHMARK("Serial vector addition") {
+            BENCHMARK("std::vector addition no allocation") {
                 return serial_scalarField_addition(CPUa, CPUb, CPUc);
             };
         }
@@ -79,9 +80,54 @@ TEST_CASE("Vector addition [benchmark]") {
                 });
             NeoFOAM::scalarField GPUc("c", N);
 
-            BENCHMARK("GPU vector addition") {
+            BENCHMARK("GPU vector addition no allocation") {
                 return GPU_scalarField_addition(GPUa, GPUb, GPUc);
             };
         }
+
+        {
+            NeoFOAM::CPUExecutor cpuExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> CPUa(N, cpuExec);
+            NeoFOAM::fill(CPUa, 1.0);
+            NeoFOAM::Field<NeoFOAM::scalar> CPUb(N, cpuExec);
+            NeoFOAM::fill(CPUb, 2.0);
+            NeoFOAM::Field<NeoFOAM::scalar> CPUc(N, cpuExec);
+            NeoFOAM::fill(CPUc, 0.0);
+
+            
+            BENCHMARK("Field<CPU> addition") {
+                return (CPUc = CPUa + CPUb);
+            };
+        }
+
+        {
+            NeoFOAM::ompExecutor ompExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> ompa(N, ompExec);
+            NeoFOAM::fill(ompa, 1.0);
+            NeoFOAM::Field<NeoFOAM::scalar> ompb(N, ompExec);
+            NeoFOAM::fill(ompb, 2.0);
+            NeoFOAM::Field<NeoFOAM::scalar> ompc(N, ompExec);
+            NeoFOAM::fill(ompc, 0.0);
+
+            BENCHMARK("Field<omp> addition") {
+                return (ompc = ompa + ompb);
+            };
+        }
+
+        {
+            NeoFOAM::GPUExecutor GPUExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, GPUExec);
+            NeoFOAM::fill(GPUa, 1.0);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUb(N, GPUExec);
+            NeoFOAM::fill(GPUb, 2.0);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUc(N, GPUExec);
+            NeoFOAM::fill(GPUc, 0.0);
+
+            
+            BENCHMARK("Field<GPU> addition") {
+                return (GPUc = GPUa + GPUb);
+            };
+        }
+
     };
 }

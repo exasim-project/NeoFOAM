@@ -118,6 +118,23 @@ namespace NeoFOAM
         //         });
         // }
 
+
+        Field<T> copyToHost()
+        {
+            Field<T> result(size_, CPUExecutor{});
+            if (!std::holds_alternative<GPUExecutor>(exec_))
+            {
+                result = *this;
+            }
+            else
+            {
+                Kokkos::View<T *, Kokkos::Cuda, Kokkos::MemoryUnmanaged> GPU_view(data_,size_);
+                Kokkos::View<T *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(result.data(),size_);
+                Kokkos::deep_copy(result_view, GPU_view);
+            }
+            return result;
+        }
+
         T* data()
         {
             return data_;
