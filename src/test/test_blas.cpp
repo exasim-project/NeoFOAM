@@ -81,6 +81,13 @@ TEST_CASE("Field Operations") {
             REQUIRE(a.field()[i] == 20.0);
         }
 
+        auto s_b = b.field();
+        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
+
+        for (int i = 0; i < N+2; i++){
+            REQUIRE(a.field()[i] == 20.0);
+        }
+
     
     };
 
@@ -131,6 +138,14 @@ TEST_CASE("Field Operations") {
         }
 
         a = a * b;
+
+        for (int i = 0; i < N+2; i++){
+            REQUIRE(a.field()[i] == 20.0);
+        }
+
+
+        auto s_b = b.field();
+        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
 
         for (int i = 0; i < N+2; i++){
             REQUIRE(a.field()[i] == 20.0);
@@ -198,6 +213,13 @@ TEST_CASE("Field Operations") {
         }
 
         a = a * b;
+
+        for (int i = 0; i < N+2; i++){
+            REQUIRE(a.copyToHost().field()[i] == 20.0);
+        }
+
+        auto s_b = b.field();
+        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
 
         for (int i = 0; i < N+2; i++){
             REQUIRE(a.copyToHost().field()[i] == 20.0);

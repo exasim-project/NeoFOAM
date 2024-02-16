@@ -125,7 +125,42 @@ TEST_CASE("Vector addition [benchmark]") {
 
             
             BENCHMARK("Field<GPU> addition") {
-                return (GPUc = GPUa + GPUb);
+                GPUc = GPUa + GPUb;
+                return Kokkos::fence();
+            };
+        }
+
+        {
+            NeoFOAM::GPUExecutor GPUExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, GPUExec);
+            NeoFOAM::fill(GPUa, 1.0);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUb(N, GPUExec);
+            NeoFOAM::fill(GPUb, 2.0);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUc(N, GPUExec);
+            NeoFOAM::fill(GPUc, 0.0);
+
+            auto s_GPUb = GPUb.field();
+            auto s_GPUc = GPUc.field();
+            BENCHMARK("Field<GPU> addition no allocation") {
+                GPUa.apply(KOKKOS_LAMBDA(const int i) { return s_GPUb[i] + s_GPUc[i]; });
+                return Kokkos::fence();
+                // return GPUa;
+            };
+        }
+
+        {
+            NeoFOAM::ompExecutor OMPExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> OMPa(N, OMPExec);
+            NeoFOAM::fill(OMPa, 1.0);
+            NeoFOAM::Field<NeoFOAM::scalar> OMPb(N, OMPExec);
+            NeoFOAM::fill(OMPb, 2.0);
+            NeoFOAM::Field<NeoFOAM::scalar> OMPc(N, OMPExec);
+            NeoFOAM::fill(OMPc, 0.0);
+
+            auto s_OMPb = OMPb.field();
+            auto s_OMPc = OMPc.field();
+            BENCHMARK("Field<OMP> addition no allocation") {
+                OMPa.apply(KOKKOS_LAMBDA(const int i) { return s_OMPb[i] + s_OMPc[i]; });
             };
         }
 

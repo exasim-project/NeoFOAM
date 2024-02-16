@@ -8,6 +8,42 @@ namespace NeoFOAM
 {
 
     template <typename T>
+    struct ApplyOp
+    {
+
+        template <typename Executor,typename Func>
+        void operator()(const Executor &exec, Field<T> &f, Func function_)
+        {
+            using executor = typename Executor::exec;
+            auto s_f = f.field();
+            Kokkos::parallel_for(
+                Kokkos::RangePolicy<executor>(0, s_f.size()), KOKKOS_CLASS_LAMBDA(const int i) {
+                    s_f[i] = function_(i);
+                });
+        }
+
+        template <typename Executor,typename Func>
+        void operator()(const CPUExecutor& exec, Field<T>& f, Func function_)
+        {
+            auto s_f = f.field();
+            for (int i = 0; i < s_f.size(); i++)
+            {
+                s_f[i] = function_(i);
+            }
+        }
+
+    };
+
+    template< typename T,typename Func>
+    void map(Field< T >& f, Func func)
+    {
+        ApplyOp<T> func_;
+        std::visit([&](const auto &exec) {
+                func_(exec, f,func);
+            }, f.exec());
+    }
+
+    template <typename T>
     struct fillOp
     {
         T fillValue_;

@@ -109,15 +109,12 @@ namespace NeoFOAM
             return result;
         }
 
-        // template <typename func>
-        // void apply(func f)
-        // {
-        //     Kokkos::parallel_for(
-        //         size_, KOKKOS_CLASS_LAMBDA(const int i) {
-        //             field_(i) = f(i);
-        //         });
-        // }
-
+        template <typename func>
+        void apply(func f)
+        {
+            map(*this, f);
+        }
+        
         
         Field<T> copyToHost()
         {
