@@ -1,4 +1,7 @@
-    #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create a custom main
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+#define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create a custom main
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/benchmark/catch_benchmark.hpp>
