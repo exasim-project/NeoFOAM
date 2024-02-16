@@ -118,7 +118,7 @@ namespace NeoFOAM
         //         });
         // }
 
-
+        
         Field<T> copyToHost()
         {
             Field<T> result(size_, CPUExecutor{});
@@ -147,7 +147,7 @@ namespace NeoFOAM
 
         private:
             size_t size_;
-            const executor& exec_;
+            const executor exec_;
             T* data_;
     };
 
