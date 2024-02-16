@@ -14,50 +14,6 @@
 
 #include <iostream>
 
-class PartialReporter : public Catch::StreamingReporterBase {
-public:
-    using StreamingReporterBase::StreamingReporterBase;
-
-    static std::string getDescription() {
-        return "Reporter for testing TestCasePartialStarting/Ended events";
-    }
-
-    void testCasePartialStarting(Catch::TestCaseInfo const& testInfo,
-                                 uint64_t partNumber) override {
-        m_stream << "TestCaseStartingPartial: " << testInfo.name << '#' << partNumber << '\n';
-    }
-
-    void testCasePartialEnded(Catch::TestCaseStats const& testCaseStats,
-                              uint64_t partNumber) override {
-        m_stream << "TestCasePartialEnded: " << testCaseStats.testInfo->name << '#' << partNumber << '\n';
-    }
-
-    void sectionStarting( Catch::SectionInfo const& sectionInfo ) override {
-        m_stream << "SectionStarting: " << sectionInfo.name << '\n';
-    }
-
-    void sectionEnded( Catch::SectionStats const& sectionStats ) override {
-        m_stream << "SectionEnded: " << sectionStats.sectionInfo.name << '\n';
-    }
-
-    void benchmarkStarting(Catch::BenchmarkInfo const& bInfo) override { 
-        m_stream << "BenchmarkStarting: " << bInfo.name << '\n';
-    };
-
-
-    void benchmarkEnded(Catch::BenchmarkStats<> const& bStats) override{
-        m_stream << "BenchmarkEnded: " << bStats.mean.point.count() << '\n';
-
-            // .writeAttribute("value"_sr, benchmarkStats.mean.point.count())
-            // .writeAttribute("lowerBound"_sr, benchmarkStats.mean.lower_bound.count())
-            // .writeAttribute("upperBound"_sr, benchmarkStats.mean.upper_bound.count())
-    }
-};
-
-
-CATCH_REGISTER_REPORTER("partial", PartialReporter)
-
-
 int main(int argc, char* argv[]) {
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
