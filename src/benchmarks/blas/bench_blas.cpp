@@ -1,62 +1,131 @@
-#include <benchmark/benchmark.h>
+    #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create a custom main
+#include <catch2/catch_session.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
+
+#include <vector>
 #include "NeoFOAM/blas/fields.hpp"
 
-static void serial_scalarField_addition(benchmark::State &state)
-{
 
-    int N = state.range(0);
-    std::vector<double> a(N, 1.0);
-    std::vector<double> b(N, 2.0);
-    std::vector<double> c(N, 0.0);
+#include <catch2/reporters/catch_reporter_streaming_base.hpp>
+#include <catch2/catch_test_case_info.hpp>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
 
-    // add a + b to c
-    for (auto _ : state)
-    {
-        for (int i = 0; i < N; ++i)
-        {
-            c[i] = a[i] + b[i];
-        }
+#include <iostream>
+
+class PartialReporter : public Catch::StreamingReporterBase {
+public:
+    using StreamingReporterBase::StreamingReporterBase;
+
+    static std::string getDescription() {
+        return "Reporter for testing TestCasePartialStarting/Ended events";
     }
-}
 
-static void scalarField_add(benchmark::State &state)
-{
-    int N = state.range(0);
-    NeoFOAM::scalarField a("a", N);
-    Kokkos::parallel_for(
-        N, KOKKOS_LAMBDA(const int i) {
-            a(i) = 1;
-        });
-    NeoFOAM::scalarField b("b", N);
-    Kokkos::parallel_for(
-        N, KOKKOS_LAMBDA(const int i) {
-            b(i) = 2;
-        });
-    NeoFOAM::scalarField c("c", N); // preallocate does not help only with apply
-    for (auto _ : state)
-    {
-        // NeoFOAM::scalarField c = a + b; // needs two allocations: + and = operators
-        c.apply(KOKKOS_LAMBDA(int i) { return a(i) + b(i); }); // no allocations 3 times faster
+    void testCasePartialStarting(Catch::TestCaseInfo const& testInfo,
+                                 uint64_t partNumber) override {
+        m_stream << "TestCaseStartingPartial: " << testInfo.name << '#' << partNumber << '\n';
     }
-}
 
-// Register the function as a benchmark
-BENCHMARK(serial_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20); // from 8 to 2^20 elements
-BENCHMARK(scalarField_add)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
+    void testCasePartialEnded(Catch::TestCaseStats const& testCaseStats,
+                              uint64_t partNumber) override {
+        m_stream << "TestCasePartialEnded: " << testCaseStats.testInfo->name << '#' << partNumber << '\n';
+    }
 
-int main(int argc, char **argv)
-{
+    void sectionStarting( Catch::SectionInfo const& sectionInfo ) override {
+        m_stream << "SectionStarting: " << sectionInfo.name << '\n';
+    }
+
+    void sectionEnded( Catch::SectionStats const& sectionStats ) override {
+        m_stream << "SectionEnded: " << sectionStats.sectionInfo.name << '\n';
+    }
+
+    void benchmarkStarting(Catch::BenchmarkInfo const& bInfo) override { 
+        m_stream << "BenchmarkStarting: " << bInfo.name << '\n';
+    };
+
+
+    void benchmarkEnded(Catch::BenchmarkStats<> const& bStats) override{
+        m_stream << "BenchmarkEnded: " << bStats.mean.point.count() << '\n';
+
+            // .writeAttribute("value"_sr, benchmarkStats.mean.point.count())
+            // .writeAttribute("lowerBound"_sr, benchmarkStats.mean.lower_bound.count())
+            // .writeAttribute("upperBound"_sr, benchmarkStats.mean.upper_bound.count())
+    }
+};
+
+
+CATCH_REGISTER_REPORTER("partial", PartialReporter)
+
+
+int main(int argc, char* argv[]) {
+    // Initialize Catch2
     Kokkos::initialize(argc, argv);
+    Catch::Session session;
 
-    ::benchmark::Initialize(&argc, argv);
-    if (::benchmark::ReportUnrecognizedArguments(argc, argv))
-        return 1;
+    // Specify command line options
+    int returnCode = session.applyCommandLine(argc, argv);
+    if (returnCode != 0) // Indicates a command line error
+        return returnCode;
 
-    // Run the benchmarks
-    ::benchmark::RunSpecifiedBenchmarks();
+    int result = session.run();
 
-    // Custom teardown (if needed)
+
+    // Run benchmarks if there are any
     Kokkos::finalize();
+    
+    return result;
+}
 
-    return 0;
+
+void serial_scalarField_addition(std::vector<double>& a, std::vector<double>& b, std::vector<double>& c)
+{
+    for (int i = 0; i < a.size(); ++i)
+    {
+        c[i] = a[i] + b[i];
+    }
+}
+
+void GPU_scalarField_addition(NeoFOAM::scalarField& a, NeoFOAM::scalarField& b, NeoFOAM::scalarField& c)
+{
+    c.apply(KOKKOS_LAMBDA(int i) { return a(i) + b(i); });
+    Kokkos::fence();
+}
+
+TEST_CASE("Vector addition [benchmark]") {
+
+    auto N = GENERATE(8, 64, 512, 4096, 32768, 262144, 1048576, 1048576*4, 1048576*16, 1048576*64);
+
+    CAPTURE(N);  // Capture the value of N
+    
+    // capture the value of N as section name
+    DYNAMIC_SECTION( "" << N ) {
+        {
+            std::vector<double> CPUa(N, 1.0);
+            std::vector<double> CPUb(N, 2.0);
+            std::vector<double> CPUc(N, 0.0);
+            
+            BENCHMARK("Serial vector addition") {
+                return serial_scalarField_addition(CPUa, CPUb, CPUc);
+            };
+        }
+
+        {
+            NeoFOAM::scalarField GPUa("a", N);
+            Kokkos::parallel_for(
+                N, KOKKOS_LAMBDA(const int i) {
+                    GPUa(i) = 1;
+                });
+            NeoFOAM::scalarField GPUb("b", N);
+            Kokkos::parallel_for(
+                N, KOKKOS_LAMBDA(const int i) {
+                    GPUb(i) = 2;
+                });
+            NeoFOAM::scalarField GPUc("c", N);
+
+            BENCHMARK("GPU vector addition") {
+                return GPU_scalarField_addition(GPUa, GPUb, GPUc);
+            };
+        }
+    };
 }
