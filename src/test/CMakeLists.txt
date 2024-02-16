@@ -23,8 +23,6 @@ gtest_discover_tests(core_test)
 # include(GoogleTest)
 # gtest_discover_tests(dsl_test)
 
-
-
 add_executable(test_blas "test_blas_main.cpp")
 
 target_link_libraries(test_blas GTest::gtest_main Kokkos::kokkos NeoFOAM)

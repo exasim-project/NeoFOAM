@@ -1,130 +1,87 @@
-#include <benchmark/benchmark.h>
+    #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create a custom main
+#include <catch2/catch_session.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
+
+#include <vector>
 #include "NeoFOAM/blas/fields.hpp"
 
-static void serial_scalarField_addition(benchmark::State &state)
-{
 
-    int N = state.range(0);
-    std::vector<double> a(N, 1.0);
-    std::vector<double> b(N, 2.0);
-    std::vector<double> c(N, 0.0);
+#include <catch2/reporters/catch_reporter_streaming_base.hpp>
+#include <catch2/catch_test_case_info.hpp>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
 
-    // add a + b to c
-    for (auto _ : state)
-    {
-        for (int i = 0; i < N; ++i)
-        {
-            c[i] = a[i] + b[i];
-        }
-    }
-}
+#include <iostream>
 
-static void KokkosOpenMP_scalarField_addition(benchmark::State &state)
-{
-    int N = state.range(0);
-    Kokkos::View<double *, Kokkos::HostSpace> a("a",N);
-    Kokkos::parallel_for(
-        Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
-        [&](const int i) {
-            a(i) = 1;
-        });
-    Kokkos::View<double *, Kokkos::HostSpace> b("b",N);
-    Kokkos::parallel_for(
-        Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
-        [&](const int i) {
-            b(i) = 2;
-        });
-    Kokkos::View<double *, Kokkos::HostSpace> c("c",N);
-
-    // addFunctor add(a,b,c);
-        // add a + b to c
-    for (auto _ : state)
-    {
-        Kokkos::parallel_for(
-            Kokkos::RangePolicy<Kokkos::OpenMP>(0, N),
-            [&](const int i) {
-                c(i) = a(i) + b(i);
-            });
-    }
-}
-
-
-
-static void KokkosSerial_scalarField_addition(benchmark::State &state)
-{
-    int N = state.range(0);
-    Kokkos::View<double *, Kokkos::HostSpace> a("a",N);
-    Kokkos::parallel_for(
-        Kokkos::RangePolicy<Kokkos::Serial>(0, N),
-        [&](const int i) {
-            a(i) = 1;
-        });
-    Kokkos::View<double *, Kokkos::HostSpace> b("b",N);
-    Kokkos::parallel_for(
-        Kokkos::RangePolicy<Kokkos::Serial>(0, N),
-        [&](const int i) {
-            b(i) = 2;
-        });
-    Kokkos::View<double *, Kokkos::HostSpace> c("c",N);
-
-    // addFunctor add(a,b,c);
-        // add a + b to c
-    for (auto _ : state)
-    {
-
-        Kokkos::parallel_for(
-            Kokkos::RangePolicy<Kokkos::Serial>(0, N),
-            [&](const int i) {
-                c(i) = a(i) + b(i);
-            });
-        // Kokkos::parallel_for(
-        //     Kokkos::RangePolicy<Kokkos::Serial>(0, N),
-        //     add);
-    }
-}
-
-
-
-static void GPU_scalarField_add(benchmark::State &state)
-{
-    int N = state.range(0);
-    NeoFOAM::scalarField a("a", N);
-    Kokkos::parallel_for(
-        N, KOKKOS_LAMBDA(const int i) {
-            a(i) = 1;
-        });
-    NeoFOAM::scalarField b("b", N);
-    Kokkos::parallel_for(
-        N, KOKKOS_LAMBDA(const int i) {
-            b(i) = 2;
-        });
-    NeoFOAM::scalarField c("c", N); // preallocate does not help only with apply
-    for (auto _ : state)
-    {
-        // NeoFOAM::scalarField c = a + b; // needs two allocations: + and = operators
-        c.apply(KOKKOS_LAMBDA(int i) { return a(i) + b(i); }); // no allocations 3 times faster
-    }
-}
-
-// Register the function as a benchmark
-BENCHMARK(serial_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20); // from 8 to 2^20 elements
-BENCHMARK(KokkosSerial_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
-BENCHMARK(KokkosOpenMP_scalarField_addition)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
-BENCHMARK(GPU_scalarField_add)->RangeMultiplier(8)->Range(8, 1 << 20);        // from 8 to 2^20 elements
-
-int main(int argc, char **argv)
-{
+int main(int argc, char* argv[]) {
+    // Initialize Catch2
     Kokkos::initialize(argc, argv);
+    Catch::Session session;
 
-    ::benchmark::Initialize(&argc, argv);
-    if (::benchmark::ReportUnrecognizedArguments(argc, argv))
-        return 1;
+    // Specify command line options
+    int returnCode = session.applyCommandLine(argc, argv);
+    if (returnCode != 0) // Indicates a command line error
+        return returnCode;
 
-    // Run the benchmarks
-    ::benchmark::RunSpecifiedBenchmarks();
+    int result = session.run();
 
-    // Custom teardown (if needed)
+
+    // Run benchmarks if there are any
     Kokkos::finalize();
+    
+    return result;
+}
 
-    return 0;
+
+void serial_scalarField_addition(std::vector<double>& a, std::vector<double>& b, std::vector<double>& c)
+{
+    for (int i = 0; i < a.size(); ++i)
+    {
+        c[i] = a[i] + b[i];
+    }
+}
+
+void GPU_scalarField_addition(NeoFOAM::scalarField& a, NeoFOAM::scalarField& b, NeoFOAM::scalarField& c)
+{
+    c.apply(KOKKOS_LAMBDA(int i) { return a(i) + b(i); });
+    Kokkos::fence();
+}
+
+TEST_CASE("Vector addition [benchmark]") {
+
+    auto N = GENERATE(8, 64, 512, 4096, 32768, 262144, 1048576, 1048576*4, 1048576*16, 1048576*64);
+
+    CAPTURE(N);  // Capture the value of N
+    
+    // capture the value of N as section name
+    DYNAMIC_SECTION( "" << N ) {
+        {
+            std::vector<double> CPUa(N, 1.0);
+            std::vector<double> CPUb(N, 2.0);
+            std::vector<double> CPUc(N, 0.0);
+            
+            BENCHMARK("Serial vector addition") {
+                return serial_scalarField_addition(CPUa, CPUb, CPUc);
+            };
+        }
+
+        {
+            NeoFOAM::scalarField GPUa("a", N);
+            Kokkos::parallel_for(
+                N, KOKKOS_LAMBDA(const int i) {
+                    GPUa(i) = 1;
+                });
+            NeoFOAM::scalarField GPUb("b", N);
+            Kokkos::parallel_for(
+                N, KOKKOS_LAMBDA(const int i) {
+                    GPUb(i) = 2;
+                });
+            NeoFOAM::scalarField GPUc("c", N);
+
+            BENCHMARK("GPU vector addition") {
+                return GPU_scalarField_addition(GPUa, GPUb, GPUc);
+            };
+        }
+    };
 }
