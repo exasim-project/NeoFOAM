@@ -9,5 +9,6 @@ cmake -S . -B build \
  -DKokkos_ENABLE_OPENMP=ON \
  -DKokkos_ENABLE_CUDA=ON
 
+
 # Build the project using make
-cmake --build build
+cmake --build build -j
