@@ -5,6 +5,7 @@
 #include "NeoFOAM/blas/domainField.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include <vector>
+#include "NeoFOAM/blas/executor/executor.hpp"
 
 namespace NeoFOAM
 {
@@ -30,8 +31,15 @@ namespace NeoFOAM
              * @param nBoundaryFaces The number of boundary faces in the field.
              * @param nBoundaries The number of boundaries in the field.
              */
-            fvccVolField(int nCells, int nBoundaryFaces, int nBoundaries, std::vector<std::unique_ptr<fvccBoundaryField<T> > > &&boundaryConditions)
-                :  field_(nCells, nBoundaryFaces, nBoundaries),
+            fvccVolField
+            (
+                int nCells,
+                int nBoundaryFaces,
+                int nBoundaries,
+                std::vector<std::unique_ptr<fvccBoundaryField<T> > > &&boundaryConditions,
+                const executor& exec
+            )
+                :  field_(nCells, nBoundaryFaces, nBoundaries,exec),
                    boundaryConditions_(std::move(boundaryConditions))
             {
                 
@@ -71,8 +79,13 @@ namespace NeoFOAM
                 return boundaryConditions_;
             };
 
-        private:
+            const executor &exec() const
+            {
+                return exec_;
+            };
 
+        private:
+            executor exec_;
             domainField<T> field_;
             std::vector<std::unique_ptr<fvccBoundaryField<T> > > boundaryConditions_;
 

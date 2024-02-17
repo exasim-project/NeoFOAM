@@ -9,6 +9,9 @@
 #include "deviceField.hpp"
 #include "boundaryFields.hpp"
 
+#include "NeoFOAM/blas/executor/executor.hpp"
+#include "NeoFOAM/blas/span.hpp"
+
 namespace NeoFOAM
 {
     
@@ -25,28 +28,31 @@ namespace NeoFOAM
      */
         public:
 
-            domainField(int nCells, int nBoundaryFaces, int nBoundaries)
-                :  internalField_("internalField", nCells),
-                   boundaryFields_(nBoundaryFaces, nBoundaries)
+            domainField(int nCells, int nBoundaryFaces, int nBoundaries, const executor& exec)
+                :  exec_(exec),
+                   internalField_(nCells,exec),
+                   boundaryFields_(nBoundaryFaces, nBoundaries,exec)
             {
             }
 
 
-            KOKKOS_FUNCTION
+            
             domainField(const domainField<T> &rhs)
-                :  internalField_(rhs.internalField_),
+                :  exec_(rhs.exec_),
+                   internalField_(rhs.internalField_),
                    boundaryFields_(rhs.boundaryFields_)
             {
             }
 
-            KOKKOS_FUNCTION
+            
             domainField(domainField<T> &&rhs)
-                :  internalField_(std::move(rhs.internalField_)),
+                :  exec_(std::move(rhs.exec_)),
+                   internalField_(std::move(rhs.internalField_)),
                    boundaryFields_(std::move(rhs.boundaryFields_))
             {
             }
 
-            KOKKOS_FUNCTION
+            
             domainField<T> &operator=(const domainField<T> &rhs)
             {
                 internalField_ = rhs.internalField_;
@@ -54,7 +60,7 @@ namespace NeoFOAM
                 return *this;
             }
 
-            KOKKOS_FUNCTION
+            
             domainField<T> &operator=(domainField<T> &&rhs)
             {
                 internalField_ = std::move(rhs.internalField_);
@@ -62,33 +68,33 @@ namespace NeoFOAM
                 return *this;
             }
 
-            KOKKOS_FUNCTION
-            const deviceField< T>& internalField() const
+            
+            const Field< T>& internalField() const
             {
                 return internalField_;
             }
 
-            KOKKOS_FUNCTION
-            deviceField< T>& internalField()
+            
+            Field< T>& internalField()
             {
                 return internalField_;
             }
 
-            KOKKOS_FUNCTION
+            
             const boundaryFields< T>& boundaryField() const
             {
                 return boundaryFields_;
             }
 
-            KOKKOS_FUNCTION
+            
             boundaryFields< T>& boundaryField()
             {
                 return boundaryFields_;
             }
 
         private:
-
-            deviceField<T > internalField_; 
+            executor exec_;
+            Field<T > internalField_; 
             boundaryFields<T > boundaryFields_;
 
     };

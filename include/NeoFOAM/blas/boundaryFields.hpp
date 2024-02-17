@@ -6,7 +6,10 @@
 #include <iostream>
 #include "primitives/scalar.hpp"
 #include "primitives/label.hpp"
-#include "deviceField.hpp"
+#include "Field.hpp"
+
+#include "NeoFOAM/blas/executor/executor.hpp"
+#include "NeoFOAM/blas/span.hpp"
 
 namespace NeoFOAM
 {
@@ -28,20 +31,21 @@ namespace NeoFOAM
     
     public:
 
-        KOKKOS_FUNCTION
-        enum class boundaryTypes: int
-        {
-            Dirichlet,
-            Neumann,
-            Robin
-        };
+        // 
+        // enum class boundaryTypes: int
+        // {
+        //     Dirichlet,
+        //     Neumann,
+        //     Robin
+        // };
         /**
          * @brief Copy constructor.
          * @param rhs The boundaryFields object to be copied.
          */
-        KOKKOS_FUNCTION
+        
         boundaryFields(const boundaryFields<T> &rhs)
-            :  value_(rhs.value_),
+            :  exec_(rhs.exec_),
+               value_(rhs.value_),
                refValue_(rhs.refValue_),
                valueFraction_(rhs.valueFraction_),
                refGrad_(rhs.refGrad_),
@@ -53,13 +57,14 @@ namespace NeoFOAM
         }
 
         
-        boundaryFields(int nBoundaryFaces,int nBoundaries)
-            :  value_("value", nBoundaryFaces),
-               refValue_("refValue", nBoundaryFaces),
-               valueFraction_("valueFraction", nBoundaryFaces),
-               refGrad_("refGrad", nBoundaryFaces),
-               boundaryTypes_("boundaryType", nBoundaries),
-               offset_("offset", nBoundaries + 1),
+        boundaryFields(int nBoundaryFaces,int nBoundaries, const executor& exec)
+            :  exec_(exec),        
+               value_(nBoundaryFaces,exec),
+               refValue_(nBoundaryFaces,exec),
+               valueFraction_(nBoundaryFaces,exec),
+               refGrad_(nBoundaryFaces,exec),
+               boundaryTypes_(nBoundaries,exec),
+               offset_(nBoundaries + 1,exec),
                nBoundaries_(nBoundaries),
                nBoundaryFaces_(nBoundaryFaces)
         {
@@ -69,12 +74,12 @@ namespace NeoFOAM
          * @brief Get the view storing the computed values from the boundary condition.
          * @return The view storing the computed values.
          */
-        const NeoFOAM::deviceField<T>&  value() const
+        const NeoFOAM::Field<T>&  value() const
         {
             return value_;
         }
 
-        NeoFOAM::deviceField<T>&  value()
+        NeoFOAM::Field<T>&  value()
         {
             return value_;
         }
@@ -83,12 +88,12 @@ namespace NeoFOAM
          * @brief Get the view storing the Dirichlet boundary values.
          * @return The view storing the Dirichlet boundary values.
          */
-        const NeoFOAM::deviceField<T>&  refValue() const
+        const NeoFOAM::Field<T>&  refValue() const
         {
             return refValue_;
         }
 
-        NeoFOAM::deviceField<T>&  refValue()
+        NeoFOAM::Field<T>&  refValue()
         {
             return refValue_;
         }
@@ -97,12 +102,12 @@ namespace NeoFOAM
          * @brief Get the view storing the fraction of the boundary value.
          * @return The view storing the fraction of the boundary value.
          */
-        const NeoFOAM::deviceField<scalar>& valueFraction() const
+        const NeoFOAM::Field<scalar>& valueFraction() const
         {
             return valueFraction_;
         }
 
-        NeoFOAM::deviceField<scalar>&  valueFraction()
+        NeoFOAM::Field<scalar>&  valueFraction()
         {
             return refValue_;
         }
@@ -111,12 +116,12 @@ namespace NeoFOAM
          * @brief Get the view storing the Neumann boundary values.
          * @return The view storing the Neumann boundary values.
          */
-        const NeoFOAM::deviceField<T>& refGrad() const
+        const NeoFOAM::Field<T>& refGrad() const
         {
             return refGrad_;
         }
 
-        NeoFOAM::deviceField<T>& refGrad()
+        NeoFOAM::Field<T>& refGrad()
         {
             return refGrad_;
         }
@@ -125,7 +130,7 @@ namespace NeoFOAM
          * @brief Get the view storing the boundary types.
          * @return The view storing the boundary types.
          */
-        const NeoFOAM::deviceField<int >&  boundaryTypes() const
+        const NeoFOAM::Field<int >&  boundaryTypes() const
         {
             return boundaryTypes_;
         }
@@ -134,7 +139,7 @@ namespace NeoFOAM
          * @brief Get the view storing the offsets of each boundary.
          * @return The view storing the offsets of each boundary.
          */
-        const NeoFOAM::deviceField<localIdx>& offset() const
+        const NeoFOAM::Field<localIdx>& offset() const
         {
             return offset_;
         }
@@ -157,15 +162,21 @@ namespace NeoFOAM
             return nBoundaryFaces_;
         }
 
+        const executor& exec()
+        {
+            return exec_;
+        }
+
     private:
-        NeoFOAM::deviceField<T > value_;                   ///< The view storing the computed values from the boundary condition.
-        NeoFOAM::deviceField<T> refValue_;                ///< The view storing the Dirichlet boundary values.
-        NeoFOAM::deviceField<scalar> valueFraction_;      ///< The view storing the fraction of the boundary value.
-        NeoFOAM::deviceField<T> refGrad_;                 ///< The view storing the Neumann boundary values.
-        NeoFOAM::deviceField<int > boundaryTypes_; ///< The view storing the boundary types.
-        NeoFOAM::deviceField<localIdx> offset_;           ///< The view storing the offsets of each boundary.
-        int nBoundaries_;                           ///< The number of boundaries.
-        int nBoundaryFaces_;                        ///< The number of boundary faces.
+        executor exec_;
+        NeoFOAM::Field<T > value_;                   ///< The view storing the computed values from the boundary condition.
+        NeoFOAM::Field<T> refValue_;                 ///< The view storing the Dirichlet boundary values.
+        NeoFOAM::Field<scalar> valueFraction_;       ///< The view storing the fraction of the boundary value.
+        NeoFOAM::Field<T> refGrad_;                  ///< The view storing the Neumann boundary values.
+        NeoFOAM::Field<int > boundaryTypes_;         ///< The view storing the boundary types.
+        NeoFOAM::Field<localIdx> offset_;            ///< The view storing the offsets of each boundary.
+        int nBoundaries_;                            ///< The number of boundaries.
+        int nBoundaryFaces_;                         ///< The number of boundary faces.
     };
          
 } // namespace NeoFOAM

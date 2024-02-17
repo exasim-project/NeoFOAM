@@ -5,9 +5,24 @@
 #include "NeoFOAM/blas/primitives/scalar.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include "Kokkos_Core.hpp"
+#include "NeoFOAM/blas/executor/executor.hpp"
 
 namespace NeoFOAM
 {
+    struct fixedValueBCKernel
+    {
+        scalar uniformValue_;
+        int start_;
+        int end_;
+
+        void operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField);
+
+        void operator()(const ompExecutor& exec, boundaryFields<scalar>& bField);
+
+        void operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField);
+
+    };
+
     class fvccScalarFixedValueBoundaryField : public fvccBoundaryField<scalar>
     {
         public:
@@ -17,5 +32,7 @@ namespace NeoFOAM
 
         private:
             scalar uniformValue_;
+
+
     };
 };

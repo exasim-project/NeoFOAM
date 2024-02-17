@@ -10,13 +10,50 @@ namespace NeoFOAM
 
     void fvccScalarFixedValueBoundaryField::correctBoundaryConditions(boundaryFields<scalar> &field)
     {
-        scalarField& value = field.value();
-        scalarField& refValue = field.refValue();
+        fixedValueBCKernel kernel_(uniformValue_, start_, end_);
+        std::visit([&](const auto &exec) {
+                kernel_(exec, field);
+            }, field.exec());
+    }
+
+    void fixedValueBCKernel::operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField)
+    {
+        using executor = typename GPUExecutor::exec;
+        auto s_value = bField.value().field();
+        auto s_refValue = bField.refValue().field();
         scalar uniformValue = uniformValue_;
-        Kokkos::parallel_for("fvccScalarFixedValueBoundaryField", Kokkos::RangePolicy<>(start_, end_), KOKKOS_LAMBDA (const int i)
+        Kokkos::parallel_for("fvccScalarFixedValueBoundaryField", Kokkos::RangePolicy<executor>(start_, end_), KOKKOS_LAMBDA (const int i)
         {
-            value(i) = uniformValue;
-            refValue(i) = uniformValue;
+            s_value[i] = uniformValue;
+            s_refValue[i] = uniformValue;
         });
     }
+
+    void fixedValueBCKernel::operator()(const ompExecutor& exec, boundaryFields<scalar>& bField)
+    {
+        using executor = typename ompExecutor::exec;
+        auto s_value = bField.value().field();
+        auto s_refValue = bField.refValue().field();
+        scalar uniformValue = uniformValue_;
+        Kokkos::parallel_for("fvccScalarFixedValueBoundaryField", Kokkos::RangePolicy<executor>(start_, end_), KOKKOS_LAMBDA (const int i)
+        {
+            s_value[i] = uniformValue;
+            s_refValue[i] = uniformValue;
+        });
+    }
+
+    void fixedValueBCKernel::operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField)
+    {
+        using executor = typename CPUExecutor::exec;
+        auto s_value = bField.value().field();
+        auto s_refValue = bField.refValue().field();
+        scalar uniformValue = uniformValue_;
+        
+        for (int i = start_; i < end_; ++i)
+        {
+            s_value[i] = uniformValue;
+            s_refValue[i] = uniformValue;
+        }
+    }
+
 }
