@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['devicefield_21',['deviceField',['../classNeoFOAM_1_1deviceField.html',1,'NeoFOAM']]]
+  ['cpuexecutor_65',['CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html',1,'NeoFOAM']]]
 ];

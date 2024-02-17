@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['tensor_31',['tensor',['../classtensor.html',1,'']]],
-  ['time_32',['Time',['../classNeoFOAM_1_1Time.html',1,'NeoFOAM']]]
+  ['setfieldop_85',['setFieldOp',['../structNeoFOAM_1_1setFieldOp.html',1,'NeoFOAM']]],
+  ['span_86',['span',['../classNeoFOAM_1_1span.html',1,'NeoFOAM']]],
+  ['subop_87',['subOp',['../structNeoFOAM_1_1subOp.html',1,'NeoFOAM']]]
 ];

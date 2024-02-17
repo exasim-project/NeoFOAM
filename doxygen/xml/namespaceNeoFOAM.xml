@@ -2,7 +2,10 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM" kind="namespace" language="C++">
     <compoundname>NeoFOAM</compoundname>
+    <innerclass refid="classNeoFOAM_1_1boundaryFields" prot="public">NeoFOAM::boundaryFields</innerclass>
+    <innerclass refid="classNeoFOAM_1_1deviceAdjacency" prot="public">NeoFOAM::deviceAdjacency</innerclass>
     <innerclass refid="classNeoFOAM_1_1deviceField" prot="public">NeoFOAM::deviceField</innerclass>
+    <innerclass refid="classNeoFOAM_1_1domainField" prot="public">NeoFOAM::domainField</innerclass>
     <innerclass refid="classNeoFOAM_1_1CPUExecutor" prot="public">NeoFOAM::CPUExecutor</innerclass>
     <innerclass refid="classNeoFOAM_1_1GPUExecutor" prot="public">NeoFOAM::GPUExecutor</innerclass>
     <innerclass refid="classNeoFOAM_1_1ompExecutor" prot="public">NeoFOAM::ompExecutor</innerclass>
@@ -15,10 +18,76 @@
     <innerclass refid="structNeoFOAM_1_1mulOp" prot="public">NeoFOAM::mulOp</innerclass>
     <innerclass refid="classNeoFOAM_1_1vector" prot="public">NeoFOAM::vector</innerclass>
     <innerclass refid="classNeoFOAM_1_1span" prot="public">NeoFOAM::span</innerclass>
+    <innerclass refid="classNeoFOAM_1_1fvccBoundaryField" prot="public">NeoFOAM::fvccBoundaryField</innerclass>
+    <innerclass refid="classNeoFOAM_1_1fvccScalarFixedValueBoundaryField" prot="public">NeoFOAM::fvccScalarFixedValueBoundaryField</innerclass>
+    <innerclass refid="classNeoFOAM_1_1fvccVolField" prot="public">NeoFOAM::fvccVolField</innerclass>
+    <innerclass refid="classNeoFOAM_1_1gaussGreenGrad" prot="public">NeoFOAM::gaussGreenGrad</innerclass>
     <innerclass refid="classNeoFOAM_1_1error" prot="public">NeoFOAM::error</innerclass>
     <innerclass refid="classNeoFOAM_1_1argList" prot="public">NeoFOAM::argList</innerclass>
     <innerclass refid="classNeoFOAM_1_1Time" prot="public">NeoFOAM::Time</innerclass>
+    <innerclass refid="classNeoFOAM_1_1treeAMRMesh" prot="public">NeoFOAM::treeAMRMesh</innerclass>
+    <innerclass refid="classNeoFOAM_1_1treeAMRMeshModifier" prot="public">NeoFOAM::treeAMRMeshModifier</innerclass>
+    <innerclass refid="classNeoFOAM_1_1unstructuredMesh" prot="public">NeoFOAM::unstructuredMesh</innerclass>
       <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="adjacency_8hpp_1a40a0cbce1b2cf12233ca86d82ca53643" prot="public" static="no">
+        <templateparamlist>
+          <param>
+            <type>bool</type>
+            <declname>directed</declname>
+            <defname>directed</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classNeoFOAM_1_1deviceAdjacency" kindref="compound">NeoFOAM::deviceAdjacency</ref>&lt; localIdx, directed &gt;</type>
+        <definition>using NeoFOAM::localAdjacency = typedef NeoFOAM::deviceAdjacency&lt;localIdx, directed&gt;</definition>
+        <argsstring></argsstring>
+        <name>localAdjacency</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/adjacency.hpp" line="12" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/adjacency.hpp" bodystart="12" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="adjacency_8hpp_1a05a2e2f10c67ac1a8c12eb033070a5b0" prot="public" static="no">
+        <templateparamlist>
+          <param>
+            <type>bool</type>
+            <declname>directed</declname>
+            <defname>directed</defname>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classNeoFOAM_1_1deviceAdjacency" kindref="compound">NeoFOAM::deviceAdjacency</ref>&lt; globalIdx, directed &gt;</type>
+        <definition>using NeoFOAM::globalAdjacency = typedef NeoFOAM::deviceAdjacency&lt;globalIdx, directed&gt;</definition>
+        <argsstring></argsstring>
+        <name>globalAdjacency</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/adjacency.hpp" line="15" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/adjacency.hpp" bodystart="15" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="deviceAdjacency_8hpp_1a8beffa8a76ee52baf7eca17e81c243a2" prot="public" static="no">
+        <templateparamlist>
+          <param>
+            <type>typename Tlabel</type>
+          </param>
+        </templateparamlist>
+        <type>Kokkos::pair&lt; Tlabel, Tlabel &gt;</type>
+        <definition>using NeoFOAM::edge = typedef Kokkos::pair&lt;Tlabel, Tlabel&gt;</definition>
+        <argsstring></argsstring>
+        <name>edge</name>
+        <briefdescription>
+<para>A pair of labels representing an the 0 and 1 nodes of an edge. In the case of directed edge, the 0 node is the source and the 1 node is the target. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/deviceAdjacency.hpp" line="16" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/deviceAdjacency.hpp" bodystart="16" bodyend="-1"/>
+      </memberdef>
       <memberdef kind="typedef" id="executor_8hpp_1a3d2f6af2dca9d590995a76f07cf1921a" prot="public" static="no">
         <type>std::variant&lt; <ref refid="classNeoFOAM_1_1ompExecutor" kindref="compound">ompExecutor</ref>, <ref refid="classNeoFOAM_1_1GPUExecutor" kindref="compound">GPUExecutor</ref>, <ref refid="classNeoFOAM_1_1CPUExecutor" kindref="compound">CPUExecutor</ref> &gt;</type>
         <definition>using NeoFOAM::executor = typedef std::variant&lt;ompExecutor, GPUExecutor, CPUExecutor&gt;</definition>
@@ -32,9 +101,9 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/executor/executor.hpp" line="13" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/executor/executor.hpp" bodystart="13" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="typedef" id="fields_8hpp_1a45b5cefc27be792ab90d99f8b198e7dd" prot="public" static="no">
-        <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::deviceField</ref>&lt; int32_t &gt;</type>
-        <definition>using NeoFOAM::labelField = typedef NeoFOAM::deviceField&lt;int32_t&gt;</definition>
+      <memberdef kind="typedef" id="field_8hpp_1aba81253ad7ae31e09e9d3283cc9e4103" prot="public" static="no">
+        <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::deviceField</ref>&lt; label &gt;</type>
+        <definition>typedef NeoFOAM::deviceField&lt; int32_t &gt; NeoFOAM::labelField</definition>
         <argsstring></argsstring>
         <name>labelField</name>
         <briefdescription>
@@ -43,11 +112,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/fields.hpp" line="12" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/fields.hpp" bodystart="12" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/field.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/field.hpp" bodystart="13" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="typedef" id="fields_8hpp_1a090ca6725069cf0eb70f0f8177fe34f1" prot="public" static="no">
+      <memberdef kind="typedef" id="field_8hpp_1af11f1df135663c2f923fcbf79d354a22" prot="public" static="no">
         <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::deviceField</ref>&lt; scalar &gt;</type>
-        <definition>using NeoFOAM::scalarField = typedef NeoFOAM::deviceField&lt;scalar&gt;</definition>
+        <definition>typedef NeoFOAM::deviceField&lt; scalar &gt; NeoFOAM::scalarField</definition>
         <argsstring></argsstring>
         <name>scalarField</name>
         <briefdescription>
@@ -56,11 +125,11 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/fields.hpp" line="14" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/fields.hpp" bodystart="14" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/field.hpp" line="15" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/field.hpp" bodystart="15" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="typedef" id="fields_8hpp_1a4b8fe7a37103a3c2e9193c70f055b77c" prot="public" static="no">
+      <memberdef kind="typedef" id="field_8hpp_1ae9f21d3632e3d83bcec84558993fabd5" prot="public" static="no">
         <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::deviceField</ref>&lt; <ref refid="classNeoFOAM_1_1vector" kindref="compound">vector</ref> &gt;</type>
-        <definition>using NeoFOAM::vectorField = typedef NeoFOAM::deviceField&lt;vector&gt;</definition>
+        <definition>typedef NeoFOAM::deviceField&lt; vector &gt; NeoFOAM::vectorField</definition>
         <argsstring></argsstring>
         <name>vectorField</name>
         <briefdescription>
@@ -69,7 +138,59 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/fields.hpp" line="15" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/fields.hpp" bodystart="15" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/field.hpp" line="16" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/field.hpp" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="index_8hpp_1ae2a3ddabbe2bbcede3a9e34b16c3bb25" prot="public" static="no">
+        <type>uint16_t</type>
+        <definition>typedef uint16_t NeoFOAM::index</definition>
+        <argsstring></argsstring>
+        <name>index</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/index.hpp" line="8" column="22" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/index.hpp" bodystart="8" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="label_8hpp_1a4c4dfbdb2d46d14b17daf8c5488cc8b8" prot="public" static="no">
+        <type>int32_t</type>
+        <definition>typedef int32_t NeoFOAM::label</definition>
+        <argsstring></argsstring>
+        <name>label</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/label.hpp" line="6" column="21" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/label.hpp" bodystart="6" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="label_8hpp_1af5174f80092d05e06e3c0dde4e0617d2" prot="public" static="no">
+        <type>uint32_t</type>
+        <definition>typedef uint32_t NeoFOAM::localIdx</definition>
+        <argsstring></argsstring>
+        <name>localIdx</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/label.hpp" line="7" column="22" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/label.hpp" bodystart="7" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="label_8hpp_1aabb5fe1abea2676399d1be48d89a647c" prot="public" static="no">
+        <type>uint64_t</type>
+        <definition>typedef uint64_t NeoFOAM::globalIdx</definition>
+        <argsstring></argsstring>
+        <name>globalIdx</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/label.hpp" line="8" column="22" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/primitives/label.hpp" bodystart="8" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="scalar_8hpp_1a03eba15c79160376393af407daa0fd7b" prot="public" static="no">
         <type>double</type>
@@ -114,6 +235,41 @@
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
+      <memberdef kind="function" id="deviceAdjacency_8hpp_1ac42bcab3820ab276a62bdd480961797c" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Tlabel</type>
+          </param>
+        </templateparamlist>
+        <type>constexpr edge&lt; const Tlabel &amp; &gt;</type>
+        <definition>constexpr edge&lt;const Tlabel&amp;&gt; NeoFOAM::order_edge</definition>
+        <argsstring>(const edge&lt; Tlabel &gt; *unorderedEdge)</argsstring>
+        <name>order_edge</name>
+        <param>
+          <type>const edge&lt; Tlabel &gt; *</type>
+          <declname>unorderedEdge</declname>
+        </param>
+        <briefdescription>
+<para>Orders an unordered edge in accending order. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">unorderedEdge</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Pointer to the unordered edge. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>The ordered edge, where the 0 node points to the 1 node. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/deviceAdjacency.hpp" line="24" column="16" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/deviceAdjacency.hpp" bodystart="24" bodyend="28"/>
+      </memberdef>
       <memberdef kind="function" id="FieldOperations_8hpp_1a1939e832a41eef332f9864aab14f4cf3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
@@ -299,11 +455,78 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/FieldOperations.hpp" line="266" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/FieldOperations.hpp" bodystart="266" bodyend="272"/>
       </memberdef>
+      <memberdef kind="function" id="gaussGreenGrad_8hpp_1a1251af102b4f642eb8b29101b0b613af" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::grad_atmoic</definition>
+        <argsstring>(NeoFOAM::vectorField &amp;gradPhi, const NeoFOAM::unstructuredMesh &amp;mesh_, const NeoFOAM::scalarField &amp;phi)</argsstring>
+        <name>grad_atmoic</name>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::vectorField</ref> &amp;</type>
+          <declname>gradPhi</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1unstructuredMesh" kindref="compound">NeoFOAM::unstructuredMesh</ref> &amp;</type>
+          <declname>mesh_</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::scalarField</ref> &amp;</type>
+          <declname>phi</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp" line="14" column="10" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp" declline="14" declcolumn="10"/>
+      </memberdef>
+      <memberdef kind="function" id="gaussGreenGrad_8hpp_1ac57e293b5c2824c1eef6c448ee4b0122" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::grad_not_atmoic</definition>
+        <argsstring>(NeoFOAM::vectorField &amp;gradPhi, const NeoFOAM::unstructuredMesh &amp;mesh_, const NeoFOAM::scalarField &amp;phi)</argsstring>
+        <name>grad_not_atmoic</name>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::vectorField</ref> &amp;</type>
+          <declname>gradPhi</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1unstructuredMesh" kindref="compound">NeoFOAM::unstructuredMesh</ref> &amp;</type>
+          <declname>mesh_</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1deviceField" kindref="compound">NeoFOAM::scalarField</ref> &amp;</type>
+          <declname>phi</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp" line="16" column="10" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp" declline="16" declcolumn="10"/>
+      </memberdef>
+      <memberdef kind="function" id="gaussGreenGrad_8hpp_1a4f3f3e27888f81f24ef4ef58ad82cbd9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1deviceField" kindref="compound">vectorField</ref></type>
+        <definition>vectorField NeoFOAM::create_gradField</definition>
+        <argsstring>(int nCells)</argsstring>
+        <name>create_gradField</name>
+        <param>
+          <type>int</type>
+          <declname>nCells</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp" line="18" column="17" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp" declline="18" declcolumn="17"/>
+      </memberdef>
       </sectiondef>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/deviceField.hpp" line="9" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/adjacency.hpp" line="8" column="1"/>
   </compounddef>
 </doxygen>
