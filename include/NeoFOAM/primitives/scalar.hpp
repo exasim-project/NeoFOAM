@@ -11,8 +11,8 @@ typedef float scalar;
 #endif
 
 #ifdef NEOFOAM_DP_LABEL
-typedef double scalar;
+typedef long label;
 #else
-typedef float scalar;
+typedef int label;
 #endif
 } // namespace NeoFOAM
