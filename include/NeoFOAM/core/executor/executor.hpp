@@ -2,14 +2,13 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/core/executor/CPUExecutor.hpp"
+#include "NeoFOAM/core/executor/GPUExecutor.hpp"
+#include "NeoFOAM/core/executor/OMPExecutor.hpp"
 #include <variant>
-#include "NeoFOAM/blas/executor/ompExecutor.hpp"
-#include "NeoFOAM/blas/executor/GPUExecutor.hpp"
-#include "NeoFOAM/blas/executor/CPUExecutor.hpp"
 
-namespace NeoFOAM
-{
+namespace NeoFOAM {
 
-    using executor = std::variant<ompExecutor, GPUExecutor, CPUExecutor>;
+using executor = std::variant<ompExecutor, GPUExecutor, CPUExecutor>;
 
 } // namespace NeoFOAM

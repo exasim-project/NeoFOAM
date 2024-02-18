@@ -1,233 +1,227 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create a custom main
+#define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
+                            // a custom main
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "NeoFOAM/blas/fields.hpp"
-#include "NeoFOAM/blas/Field.hpp"
-#include "NeoFOAM/blas/FieldOperations.hpp"
+#include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/FieldOperations.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 
+int main(int argc, char *argv[]) {
 
-int main(int argc, char* argv[]) {
+  // Initialize Catch2
+  Kokkos::initialize(argc, argv);
+  Catch::Session session;
 
-    // Initialize Catch2
-    Kokkos::initialize(argc, argv);
-    Catch::Session session;
+  // Specify command line options
+  int returnCode = session.applyCommandLine(argc, argv);
+  if (returnCode != 0) // Indicates a command line error
+    return returnCode;
 
-    // Specify command line options
-    int returnCode = session.applyCommandLine(argc, argv);
-    if (returnCode != 0) // Indicates a command line error
-        return returnCode;
+  int result = session.run();
 
-    int result = session.run();
+  // Run benchmarks if there are any
+  Kokkos::finalize();
 
-
-    // Run benchmarks if there are any
-    Kokkos::finalize();
-    
-    return result;
+  return result;
 }
 
 TEST_CASE("Field Operations") {
-    
-    SECTION("CPU") {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec{};
 
-        NeoFOAM::Field<NeoFOAM::scalar> a(N, cpuExec);
-        auto s_a = a.field();
-        NeoFOAM::fill(a, 5.0);
+  SECTION("CPU") {
+    int N = 10;
+    NeoFOAM::CPUExecutor cpuExec{};
 
-        for (int i = 0; i < N; i++){
-            REQUIRE(s_a[i] == 5.0);
-        }
-        NeoFOAM::Field<NeoFOAM::scalar> b(N+2, cpuExec);
-        NeoFOAM::fill(b, 10.0);
+    NeoFOAM::Field<NeoFOAM::scalar> a(N, cpuExec);
+    auto s_a = a.field();
+    NeoFOAM::fill(a, 5.0);
 
-        a = b;
-        REQUIRE(a.field().size() == N+2);;
+    for (int i = 0; i < N; i++) {
+      REQUIRE(s_a[i] == 5.0);
+    }
+    NeoFOAM::Field<NeoFOAM::scalar> b(N + 2, cpuExec);
+    NeoFOAM::fill(b, 10.0);
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 10.0);
-        }
+    a = b;
+    REQUIRE(a.field().size() == N + 2);
+    ;
 
-        add(a, b);
-        REQUIRE(a.field().size() == N+2);
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 10.0);
+    }
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    add(a, b);
+    REQUIRE(a.field().size() == N + 2);
 
-        a = a + b;
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 30.0);
-        }
+    a = a + b;
 
-        a = a - b;
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 30.0);
+    }
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    a = a - b;
 
-        a = a * 0.1;
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 2.0);
-        }
+    a = a * 0.1;
 
-        a = a * b;
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 2.0);
+    }
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    a = a * b;
 
-        auto s_b = b.field();
-        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    auto s_b = b.field();
+    a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
 
-    
-    };
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
+  };
 
-    SECTION("OpenMP") {
-        int N = 10;
-        NeoFOAM::ompExecutor ompExec{};
+  SECTION("OpenMP") {
+    int N = 10;
+    NeoFOAM::ompExecutor ompExec{};
 
-        NeoFOAM::Field<NeoFOAM::scalar> a(N, ompExec);
-        auto s_a = a.field();
-        NeoFOAM::fill(a, 5.0);
+    NeoFOAM::Field<NeoFOAM::scalar> a(N, ompExec);
+    auto s_a = a.field();
+    NeoFOAM::fill(a, 5.0);
 
-        for (int i = 0; i < N; i++){
-            REQUIRE(s_a[i] == 5.0);
-        }
-        NeoFOAM::Field<NeoFOAM::scalar> b(N+2, ompExec);
-        NeoFOAM::fill(b, 10.0);
+    for (int i = 0; i < N; i++) {
+      REQUIRE(s_a[i] == 5.0);
+    }
+    NeoFOAM::Field<NeoFOAM::scalar> b(N + 2, ompExec);
+    NeoFOAM::fill(b, 10.0);
 
-        a = b;
-        REQUIRE(a.field().size() == N+2);;
+    a = b;
+    REQUIRE(a.field().size() == N + 2);
+    ;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 10.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 10.0);
+    }
 
-        add(a, b);
-        REQUIRE(a.field().size() == N+2);
+    add(a, b);
+    REQUIRE(a.field().size() == N + 2);
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
 
-        a = a + b;
+    a = a + b;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 30.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 30.0);
+    }
 
-        a = a - b;
+    a = a - b;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
 
-        a = a * 0.1;
+    a = a * 0.1;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 2.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 2.0);
+    }
 
-        a = a * b;
+    a = a * b;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
 
+    auto s_b = b.field();
+    a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
 
-        auto s_b = b.field();
-        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.field()[i] == 20.0);
+    }
+  };
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.field()[i] == 20.0);
-        }
+  SECTION("GPU") {
+    int N = 10;
+    NeoFOAM::GPUExecutor gpuExec{};
+    NeoFOAM::CPUExecutor cpuExec{};
 
-    
-    };
+    NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, gpuExec);
+    NeoFOAM::fill(GPUa, 5.0);
 
-    SECTION("GPU") {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec{};
-        NeoFOAM::CPUExecutor cpuExec{};
+    NeoFOAM::Field<NeoFOAM::scalar> CPUa(N, cpuExec);
+    NeoFOAM::fill(CPUa, 10.0);
+    for (int i = 0; i < N; i++) {
+      REQUIRE(CPUa.field()[i] == 10.0);
+    }
+    CPUa = GPUa.copyToHost();
 
-        NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, gpuExec);
-        NeoFOAM::fill(GPUa, 5.0);
+    for (int i = 0; i < N; i++) {
+      REQUIRE(CPUa.field()[i] == 5.0);
+    }
 
-        NeoFOAM::Field<NeoFOAM::scalar> CPUa(N, cpuExec);
-        NeoFOAM::fill(CPUa, 10.0);
-        for (int i = 0; i < N; i++){
-            REQUIRE(CPUa.field()[i] == 10.0);
-        }
-        CPUa = GPUa.copyToHost();
+    NeoFOAM::Field<NeoFOAM::scalar> a(N, gpuExec);
+    auto s_a = a.field();
+    NeoFOAM::fill(a, 5.0);
 
-        for (int i = 0; i < N; i++){
-            REQUIRE(CPUa.field()[i] == 5.0);
-        }
+    NeoFOAM::Field<NeoFOAM::scalar> b(N + 2, gpuExec);
+    NeoFOAM::fill(b, 10.0);
 
-        NeoFOAM::Field<NeoFOAM::scalar> a(N, gpuExec);
-        auto s_a = a.field();
-        NeoFOAM::fill(a, 5.0);
+    a = b;
+    REQUIRE(a.field().size() == N + 2);
 
-        NeoFOAM::Field<NeoFOAM::scalar> b(N+2, gpuExec);
-        NeoFOAM::fill(b, 10.0);
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 10.0);
+    }
 
-        a = b;
-        REQUIRE(a.field().size() == N+2);
+    add(a, b);
+    REQUIRE(a.field().size() == N + 2);
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 10.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 20.0);
+    }
 
-        add(a, b);
-        REQUIRE(a.field().size() == N+2);
+    a = a + b;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 20.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 30.0);
+    }
 
-        a = a + b;
+    a = a - b;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 30.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 20.0);
+    }
 
-        a = a - b;
+    a = a * 0.1;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 20.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 2.0);
+    }
 
-        a = a * 0.1;
+    a = a * b;
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 2.0);
-        }
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 20.0);
+    }
 
-        a = a * b;
+    auto s_b = b.field();
+    a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
 
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 20.0);
-        }
-
-        auto s_b = b.field();
-        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
-
-        for (int i = 0; i < N+2; i++){
-            REQUIRE(a.copyToHost().field()[i] == 20.0);
-        }
-
-
-    };
+    for (int i = 0; i < N + 2; i++) {
+      REQUIRE(a.copyToHost().field()[i] == 20.0);
+    }
+  };
 }
