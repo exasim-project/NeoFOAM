@@ -9,14 +9,11 @@ target_include_directories(
   NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
                  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 
-target_sources(NeoFOAM
-               PRIVATE
-               "core/Time.cpp"
-               "core/Error.cpp"
-               "core/Kokkos.cpp"
-               "blas/executor/ompExecutor.cpp"
-               "blas/executor/GPUExecutor.cpp"
-               "blas/executor/CPUExecutor.cpp")
+target_sources(
+  NeoFOAM
+  PRIVATE "core/Time.cpp" "core/Error.cpp" "core/Kokkos.cpp"
+          "blas/executor/OMPExecutor.cpp" "blas/executor/GPUExecutor.cpp"
+          "blas/executor/CPUExecutor.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
