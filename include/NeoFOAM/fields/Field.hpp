@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "primitives/scalar.hpp"
 #include <Kokkos_Core.hpp>
 #include <iostream>
 
-#include "NeoFOAM/blas/executor/executor.hpp"
 #include "NeoFOAM/blas/span.hpp"
+#include "NeoFOAM/core/executor/executor.hpp"
+#include "NeoFOAM/primitives/scalar.hpp"
 
 namespace NeoFOAM {
 
@@ -55,14 +55,9 @@ public:
    * @param a field to store the copied data
    * @returns a field on the host with the copied data
    * */
-  [[nodiscard]] void copyToHost(Field<T> result) {
+  void copyToHost(Field<T> result) {
     if (!std::holds_alternative<GPUExecutor>(exec_)) {
-      // TODO how does that work? It also not clear to me if the outparam or the
-      // return type should be used
       result = *this;
-      // TODO should we have a
-      //  return result;
-      //  here for symmetry
     } else {
       Kokkos::View<T *, Kokkos::Cuda, Kokkos::MemoryUnmanaged> GPU_view(data_,
                                                                         size_);
