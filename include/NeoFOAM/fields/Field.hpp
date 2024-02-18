@@ -43,11 +43,26 @@ public:
 
   /* Forces a copy back to the host
    *
+   * @returns a field on the host with the copied data
    * */
-  Field<T> copyToHost() {
+  [[nodiscard]] Field<T> copyToHost() {
     Field<T> result(size_, CPUExecutor{});
+    return this->copyToHost(result);
+  }
+
+  /* Forces a copy back to the host
+   *
+   * @param a field to store the copied data
+   * @returns a field on the host with the copied data
+   * */
+  [[nodiscard]] void copyToHost(Field<T> result) {
     if (!std::holds_alternative<GPUExecutor>(exec_)) {
+      // TODO how does that work? It also not clear to me if the outparam or the
+      // return type should be used
       result = *this;
+      // TODO should we have a
+      //  return result;
+      //  here for symmetry
     } else {
       Kokkos::View<T *, Kokkos::Cuda, Kokkos::MemoryUnmanaged> GPU_view(data_,
                                                                         size_);
@@ -55,7 +70,6 @@ public:
           result.data(), size_);
       Kokkos::deep_copy(result_view, GPU_view);
     }
-    return result;
   }
 
   // // move assignment operator
@@ -69,10 +83,16 @@ public:
   //     return *this;
   // }
 
-  // TODO add a fill like operation
+  /* Copies the content of the rhs field*/
   void operator=(const Field<T> &rhs) {
     // set the field from the rhs field and resize if necessary
     setField(*this, rhs);
+  }
+
+  /* Fills the field data with the given rhs value*/
+  void operator=(const T &rhs) {
+    // set the field from the rhs field and resize if necessary
+    fill(*this, rhs);
   }
 
   // arithmetic operator
@@ -80,7 +100,7 @@ public:
   /* A piecewise addition operation.
   **
   */
-  Field<T> operator+(const Field<T> &rhs) {
+  [[nodiscard]] Field<T> operator+(const Field<T> &rhs) {
     Field<T> result(size_, exec_);
     result = *this;
     add(result, rhs);
@@ -90,7 +110,7 @@ public:
   /* A piecewise subtraction operation.
   **
   */
-  Field<T> operator-(const Field<T> &rhs) {
+  [[nodiscard]] Field<T> operator-(const Field<T> &rhs) {
     Field<T> result(size_, exec_);
     result = *this;
     sub(result, rhs);
@@ -100,7 +120,7 @@ public:
   /* A piecewise multiplication operation.
   **
   */
-  Field<T> operator*(const Field<scalar> &rhs) {
+  [[nodiscard]] Field<T> operator*(const Field<scalar> &rhs) {
     Field<T> result(size_, exec_);
     result = *this;
     mul(result, rhs);
@@ -110,7 +130,7 @@ public:
   /* A scalar multiplication operation.
   **
   */
-  Field<T> operator*(const scalar rhs) {
+  [[nodiscard]] Field<T> operator*(const scalar rhs) {
     Field<T> result(size_, exec_);
     result = *this;
     mul(result, rhs);
