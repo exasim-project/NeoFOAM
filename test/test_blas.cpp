@@ -42,15 +42,11 @@ TEST_CASE("Field Operations") {
     for (int i = 0; i < N; i++) {
       REQUIRE(s_a[i] == 5.0);
     }
-    NeoFOAM::Field<NeoFOAM::scalar> b(
-		    cpuExec,
-		    N + 2
-		    );
+    NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec,N + 2);
     NeoFOAM::fill(b, 10.0);
 
     a = b;
     REQUIRE(a.field().size() == N + 2);
-    ;
 
     for (int i = 0; i < N + 2; i++) {
       REQUIRE(a.field()[i] == 10.0);
