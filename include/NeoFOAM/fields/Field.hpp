@@ -31,6 +31,11 @@ public:
     data_ = static_cast<T *>(ptr);
   };
 
+  // TODO implement this
+  deviceField(const std::string &name, const int size)
+      : size_(size) 
+{ };
+
   ~Field() {
     std::visit([this](const auto &exec) { exec.free(data_); }, exec_);
   };
@@ -46,8 +51,9 @@ public:
    * @returns a field on the host with the copied data
    * */
   [[nodiscard]] Field<T> copyToHost() {
-    Field<T> result(size_, CPUExecutor{});
-    return this->copyToHost(result);
+    Field<T> result(CPUExecutor{}, size_);
+     this->copyToHost(result);
+     return result;
   }
 
   /* Forces a copy back to the host
@@ -77,12 +83,27 @@ public:
   //     }
   //     return *this;
   // }
+  //
+
+  KOKKOS_FUNCTION
+  T &operator()(const int i)
+  {
+      // TODO not implemented
+  }
+
+  KOKKOS_FUNCTION
+  const T &operator()(const int i) const
+  {
+      // TODO not implemented
+  }
+
 
   /* Copies the content of the rhs field*/
   void operator=(const Field<T> &rhs) {
     // set the field from the rhs field and resize if necessary
     setField(*this, rhs);
   }
+
 
   /* Fills the field data with the given rhs value*/
   void operator=(const T &rhs) {
@@ -96,7 +117,7 @@ public:
   **
   */
   [[nodiscard]] Field<T> operator+(const Field<T> &rhs) {
-    Field<T> result(size_, exec_);
+    Field<T> result(exec_, size_);
     result = *this;
     add(result, rhs);
     return result;
@@ -106,7 +127,7 @@ public:
   **
   */
   [[nodiscard]] Field<T> operator-(const Field<T> &rhs) {
-    Field<T> result(size_, exec_);
+    Field<T> result(exec_, size_);
     result = *this;
     sub(result, rhs);
     return result;
@@ -116,7 +137,7 @@ public:
   **
   */
   [[nodiscard]] Field<T> operator*(const Field<scalar> &rhs) {
-    Field<T> result(size_, exec_);
+    Field<T> result(exec_, size_);
     result = *this;
     mul(result, rhs);
     return result;
@@ -126,7 +147,7 @@ public:
   **
   */
   [[nodiscard]] Field<T> operator*(const scalar rhs) {
-    Field<T> result(size_, exec_);
+    Field<T> result(exec_, size_);
     result = *this;
     mul(result, rhs);
     return result;
