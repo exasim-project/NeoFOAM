@@ -35,14 +35,17 @@ TEST_CASE("Field Operations") {
     int N = 10;
     NeoFOAM::CPUExecutor cpuExec{};
 
-    NeoFOAM::Field<NeoFOAM::scalar> a(N, cpuExec);
+    NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
     auto s_a = a.field();
     NeoFOAM::fill(a, 5.0);
 
     for (int i = 0; i < N; i++) {
       REQUIRE(s_a[i] == 5.0);
     }
-    NeoFOAM::Field<NeoFOAM::scalar> b(N + 2, cpuExec);
+    NeoFOAM::Field<NeoFOAM::scalar> b(
+		    cpuExec,
+		    N + 2
+		    );
     NeoFOAM::fill(b, 10.0);
 
     a = b;
@@ -94,16 +97,19 @@ TEST_CASE("Field Operations") {
 
   SECTION("OpenMP") {
     int N = 10;
-    NeoFOAM::ompExecutor ompExec{};
+    NeoFOAM::OMPExecutor OMPExec{};
 
-    NeoFOAM::Field<NeoFOAM::scalar> a(N, ompExec);
+    NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
     auto s_a = a.field();
     NeoFOAM::fill(a, 5.0);
 
     for (int i = 0; i < N; i++) {
       REQUIRE(s_a[i] == 5.0);
     }
-    NeoFOAM::Field<NeoFOAM::scalar> b(N + 2, ompExec);
+    NeoFOAM::Field<NeoFOAM::scalar> b(
+		    OMPExec,
+		    N + 2
+		    );
     NeoFOAM::fill(b, 10.0);
 
     a = b;
@@ -158,10 +164,10 @@ TEST_CASE("Field Operations") {
     NeoFOAM::GPUExecutor gpuExec{};
     NeoFOAM::CPUExecutor cpuExec{};
 
-    NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, gpuExec);
+    NeoFOAM::Field<NeoFOAM::scalar> GPUa(gpuExec, N);
     NeoFOAM::fill(GPUa, 5.0);
 
-    NeoFOAM::Field<NeoFOAM::scalar> CPUa(N, cpuExec);
+    NeoFOAM::Field<NeoFOAM::scalar> CPUa(cpuExec, N);
     NeoFOAM::fill(CPUa, 10.0);
     for (int i = 0; i < N; i++) {
       REQUIRE(CPUa.field()[i] == 10.0);
@@ -172,11 +178,14 @@ TEST_CASE("Field Operations") {
       REQUIRE(CPUa.field()[i] == 5.0);
     }
 
-    NeoFOAM::Field<NeoFOAM::scalar> a(N, gpuExec);
+    NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
     auto s_a = a.field();
     NeoFOAM::fill(a, 5.0);
 
-    NeoFOAM::Field<NeoFOAM::scalar> b(N + 2, gpuExec);
+    NeoFOAM::Field<NeoFOAM::scalar> b(
+		    gpuExec,
+		    N + 2
+		    );
     NeoFOAM::fill(b, 10.0);
 
     a = b;

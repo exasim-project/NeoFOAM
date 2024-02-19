@@ -90,11 +90,11 @@ TEST_CASE("Vector addition [benchmark]") {
 
         {
             NeoFOAM::CPUExecutor cpuExec{};
-            NeoFOAM::Field<NeoFOAM::scalar> CPUa(N, cpuExec);
+            NeoFOAM::Field<NeoFOAM::scalar> CPUa(cpuExec, N);
             NeoFOAM::fill(CPUa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> CPUb(N, cpuExec);
+            NeoFOAM::Field<NeoFOAM::scalar> CPUb(cpuExec, N);
             NeoFOAM::fill(CPUb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> CPUc(N, cpuExec);
+            NeoFOAM::Field<NeoFOAM::scalar> CPUc(cpuExec, N);
             NeoFOAM::fill(CPUc, 0.0);
 
             
@@ -104,12 +104,12 @@ TEST_CASE("Vector addition [benchmark]") {
         }
 
         {
-            NeoFOAM::ompExecutor ompExec{};
-            NeoFOAM::Field<NeoFOAM::scalar> ompa(N, ompExec);
+            NeoFOAM::OMPExecutor ompExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> ompa(ompExec, N);
             NeoFOAM::fill(ompa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> ompb(N, ompExec);
+            NeoFOAM::Field<NeoFOAM::scalar> ompb(ompExec, N);
             NeoFOAM::fill(ompb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> ompc(N, ompExec);
+            NeoFOAM::Field<NeoFOAM::scalar> ompc(ompExec, N);
             NeoFOAM::fill(ompc, 0.0);
 
             BENCHMARK("Field<omp> addition") {
@@ -119,11 +119,11 @@ TEST_CASE("Vector addition [benchmark]") {
 
         {
             NeoFOAM::GPUExecutor GPUExec{};
-            NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, GPUExec);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUa(GPUExec, N);
             NeoFOAM::fill(GPUa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> GPUb(N, GPUExec);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUb(GPUExec, N);
             NeoFOAM::fill(GPUb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> GPUc(N, GPUExec);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUc(GPUExec, N);
             NeoFOAM::fill(GPUc, 0.0);
 
             
@@ -135,11 +135,11 @@ TEST_CASE("Vector addition [benchmark]") {
 
         {
             NeoFOAM::GPUExecutor GPUExec{};
-            NeoFOAM::Field<NeoFOAM::scalar> GPUa(N, GPUExec);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUa(GPUExec, N);
             NeoFOAM::fill(GPUa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> GPUb(N, GPUExec);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUb(GPUExec, N);
             NeoFOAM::fill(GPUb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> GPUc(N, GPUExec);
+            NeoFOAM::Field<NeoFOAM::scalar> GPUc(GPUExec, N);
             NeoFOAM::fill(GPUc, 0.0);
 
             auto s_GPUb = GPUb.field();
