@@ -32,4 +32,4 @@ NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From
 Additionally, we provide several Cmake presets to set commmonly required flags if you compile NeoFoam in combination with Kokkos.
 
     cmake --list-presets # To list existing presets
-    cmake --preset ninja-cuda # To compile with cuda and ninja
+    cmake --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
