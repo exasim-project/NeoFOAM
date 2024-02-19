@@ -60,7 +60,7 @@ public:
     if (!std::holds_alternative<GPUExecutor>(exec_)) {
       result = *this;
     } else {
-      Kokkos::View<T *, Kokkos::Cuda, Kokkos::MemoryUnmanaged> GPU_view(data_,
+      Kokkos::View<T *, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> GPU_view(data_,
                                                                         size_);
       Kokkos::View<T *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
           result.data(), size_);
