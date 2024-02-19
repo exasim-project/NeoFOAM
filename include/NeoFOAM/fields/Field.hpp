@@ -56,7 +56,7 @@ public:
    * @param a field to store the copied data
    * @returns a field on the host with the copied data
    * */
-  void copyToHost(Field<T> result) {
+  void copyToHost(Field<T>& result) {
     if (!std::holds_alternative<GPUExecutor>(exec_)) {
       result = *this;
     } else {
