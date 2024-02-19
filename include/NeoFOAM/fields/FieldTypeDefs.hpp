@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "Field.hpp"
-#include "primitives/scalar.hpp"
-#include "primitives/vector.hpp"
+#include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/primitives/scalar.hpp"
+#include "NeoFOAM/primitives/vector.hpp"
 
 namespace NeoFOAM {
 
