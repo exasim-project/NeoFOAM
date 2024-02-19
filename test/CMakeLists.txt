@@ -10,5 +10,5 @@ if(NEOFOAM_BUILD_WITH_TESTS)
   FetchContent_MakeAvailable(Catch2)
 endif()
 
-add_executable(test_blas "test_blas.cpp")
+add_executable(test_blas "test_Field.cpp")
 target_link_libraries(test_blas PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos)
