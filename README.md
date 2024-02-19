@@ -19,19 +19,17 @@ For building the documentation further dependencies like doxygen and sphinx are 
 
 ## Compilation
 
-to install and download kokkos execute:
-
-```bash 
-    install_kokkos.sh
-```
-
-
 
 [![Build NeoFOAM](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yaml/badge.svg)](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yaml)
 [![Gitter](https://img.shields.io/badge/Gitter-8A2BE2)](https://matrix.to/#/#NeoFOAM:gitter.im)
 
-NeoFOAM uses cmake to build, thus the standard cmake procedure should work 
+NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From a build directory you can execute 
 
-```bash 
-    build.sh
-```
+    cmake <DesiredBuildFlags> ..
+    cmake --build .
+    cmake --install .
+
+Additionally, we provide several Cmake presets to set commmonly required flags if you compile NeoFoam in combination with Kokkos.
+
+    cmake --list-presets # To list existing presets
+    cmake --preset ninja-cuda # To compile with cuda and ninja
