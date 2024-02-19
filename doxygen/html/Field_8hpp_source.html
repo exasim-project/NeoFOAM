@@ -128,11 +128,11 @@ $(function() {
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="comment">   * @param a field to store the copied data</span></div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="comment">   * @returns a field on the host with the copied data</span></div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="comment">   * */</span></div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;  <span class="keywordtype">void</span> copyToHost(<a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result) {</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;  <span class="keywordtype">void</span> copyToHost(<a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; result) {</div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="keywordflow">if</span> (!std::holds_alternative&lt;GPUExecutor&gt;(exec_)) {</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;      result = *<span class="keyword">this</span>;</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;      Kokkos::View&lt;T *, Kokkos::Cuda, Kokkos::MemoryUnmanaged&gt; GPU_view(data_,</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;      Kokkos::View&lt;T *, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged&gt; GPU_view(data_,</div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;                                                                        size_);</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;      Kokkos::View&lt;T *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged&gt; result_view(</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;          result.data(), size_);</div>
