@@ -37,19 +37,6 @@ int main(int argc, char *argv[]) {
   return result;
 }
 
-void serial_scalarField_addition(std::vector<double> &a, std::vector<double> &b,
-                                 std::vector<double> &c) {
-  for (int i = 0; i < a.size(); ++i) {
-    c[i] = a[i] + b[i];
-  }
-}
-
-void GPU_scalarField_addition(NeoFOAM::scalarField &a, NeoFOAM::scalarField &b,
-                              NeoFOAM::scalarField &c) {
-  c.apply(KOKKOS_LAMBDA(int i) { return a(i) + b(i); });
-  Kokkos::fence();
-}
-
 TEST_CASE("Vector addition [benchmark]") {
 
     auto N = GENERATE(8, 64, 512, 4096, 32768, 262144, 1048576, 1048576*4,
@@ -59,34 +46,6 @@ TEST_CASE("Vector addition [benchmark]") {
 
     // capture the value of N as section name
     DYNAMIC_SECTION( "" << N ) {
-        {
-            std::vector<double> CPUa(N, 1.0);
-            std::vector<double> CPUb(N, 2.0);
-            std::vector<double> CPUc(N, 0.0);
-
-            BENCHMARK("std::vector addition no allocation") {
-                return serial_scalarField_addition(CPUa, CPUb, CPUc);
-            };
-        }
-
-        {
-            NeoFOAM::scalarField GPUa("a", N);
-            Kokkos::parallel_for(
-                N, KOKKOS_LAMBDA(const int i) {
-                    GPUa(i) = 1;
-                });
-            NeoFOAM::scalarField GPUb("b", N);
-            Kokkos::parallel_for(
-                N, KOKKOS_LAMBDA(const int i) {
-                    GPUb(i) = 2;
-                });
-            NeoFOAM::scalarField GPUc("c", N);
-
-            BENCHMARK("GPU vector addition no allocation") {
-                return GPU_scalarField_addition(GPUa, GPUb, GPUc);
-            };
-        }
-
         {
             NeoFOAM::CPUExecutor cpuExec{};
             NeoFOAM::Field<NeoFOAM::scalar> CPUa(cpuExec, N);
@@ -149,12 +108,12 @@ TEST_CASE("Vector addition [benchmark]") {
         }
 
         {
-            NeoFOAM::ompExecutor OMPExec{};
-            NeoFOAM::Field<NeoFOAM::scalar> OMPa(N, OMPExec);
+            NeoFOAM::OMPExecutor OMPExec{};
+            NeoFOAM::Field<NeoFOAM::scalar> OMPa(OMPExec, N);
             NeoFOAM::fill(OMPa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> OMPb(N, OMPExec);
+            NeoFOAM::Field<NeoFOAM::scalar> OMPb(OMPExec, N);
             NeoFOAM::fill(OMPb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> OMPc(N, OMPExec);
+            NeoFOAM::Field<NeoFOAM::scalar> OMPc(OMPExec, N);
             NeoFOAM::fill(OMPc, 0.0);
 
             auto s_OMPb = OMPb.field();

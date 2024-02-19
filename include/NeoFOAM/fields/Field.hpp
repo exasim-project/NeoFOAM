@@ -31,11 +31,6 @@ public:
     data_ = static_cast<T *>(ptr);
   };
 
-  // TODO implement this
-  deviceField(const std::string &name, const int size)
-      : size_(size) 
-{ };
-
   ~Field() {
     std::visit([this](const auto &exec) { exec.free(data_); }, exec_);
   };
