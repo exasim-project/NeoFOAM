@@ -9,6 +9,6 @@
 
 namespace NeoFOAM {
 
-using executor = std::variant<ompExecutor, GPUExecutor, CPUExecutor>;
+using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
 
 } // namespace NeoFOAM

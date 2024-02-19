@@ -8,11 +8,11 @@
 namespace NeoFOAM
 {
 
-    class ompExecutor
+    class OMPExecutor
     {
     public:
-        ompExecutor();
-        ~ompExecutor();
+        OMPExecutor();
+        ~OMPExecutor();
 
         using exec = Kokkos::OpenMP;
 
