@@ -99,7 +99,7 @@ add_custom_target(
 
 add_custom_target(
   format
-  COMMAND find src applications test benchmarks -name "*.[c,h]*pp" -exec
+  COMMAND find  include src applications test benchmarks -name "*.[c,h]*pp" -exec
           clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
