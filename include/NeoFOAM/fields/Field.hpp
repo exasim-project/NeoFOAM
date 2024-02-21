@@ -245,7 +245,7 @@ public:
 
 private:
   size_t size_;           //!< Size of the field.
-  T *data_;               //!< Size of the field.
+  T *data_;               //!< Pointer to the field data.
   const executor exec_;   //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
