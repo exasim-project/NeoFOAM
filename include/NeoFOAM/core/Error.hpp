@@ -2,28 +2,27 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <source_location>
 #include <iostream>
+#include <source_location>
 #include <string>
 
 namespace NeoFOAM {
 
-	class error {
-		public:	
+class error {
+public:
+  /**
+   * @brief Exit the program with an error message.
+   *
+   * @param errNo The error number to exit with.
+   * @param location Default argument for the location of the error.
+   */
+  void exit(const int errNo = 1) {
+    std::cout << "Error: " << errNo << '\n';
+    std::exit(errNo);
+  };
 
-		/**
-		 * @brief Exit the program with an error message.
-		 * 
-		 * @param errNo The error number to exit with.
-		 * @param location Default argument for the location of the error.
-		 */
-		void exit(const int errNo = 1) {
-			std::cout << "Error: " << errNo << '\n';
-				std::exit(errNo);
-			};
+  error(std::string){};
+};
 
-			error(std::string){};
-	};
-
-	extern error FatalError;
-}
+extern error FatalError;
+} // namespace NeoFOAM

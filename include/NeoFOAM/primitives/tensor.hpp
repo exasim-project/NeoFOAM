@@ -2,13 +2,9 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-
 #include <scalar.hpp>
 
-class tensor
-{
+class tensor {
 public:
-
 private:
 };
-
