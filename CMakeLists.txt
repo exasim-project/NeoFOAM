@@ -36,6 +36,11 @@ option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Setting build type to 'Release' as none was specified.")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+endif()
+
 include(cmake/Kokkos.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/StandardProjectSettings.cmake)
@@ -61,8 +66,13 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
 endif()
 
 add_subdirectory(src)
+if(NEOFOAM_BUILD_TESTS)
 add_subdirectory(test)
+endif()
+
+if(NEOFOAM_BUILD_BENCHMARKS)
 add_subdirectory(benchmarks)
+endif()
 
 if(${NEOFOAM_DP_SCALAR})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)

@@ -5,8 +5,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-# Path to the XML file
-xml_file = "blas.xml"
+import sys
 
 # Parse the XML file
 tree = ET.parse(xml_file)
@@ -83,17 +82,22 @@ def extract_benchmarks(xml_file, csv_file):
     with open(csv_file, "w") as f:
         process_element(f,root,testcase_name,section_names)
 
-extract_benchmarks(xml_file,"bench_blas.csv")
+def main(xml_file):
+    extract_benchmarks(xml_file,"bench_blas.csv")
 
-df  = pd.read_csv("bench_blas.csv", names=["Testcase","Vector Elements","Benchmark","runTime [ms]","lowerBound","upperBound"])
-print(df)
-df["Vector Elements"] = pd.to_numeric(df["Vector Elements"], errors='coerce')
-df["runTime [ms]"] /= 1e6
+    df  = pd.read_csv("bench_blas.csv", names=["Testcase","Vector Elements","Benchmark","runTime [ms]","lowerBound","upperBound"])
+    print(df)
+    df["Vector Elements"] = pd.to_numeric(df["Vector Elements"], errors='coerce')
+    df["runTime [ms]"] /= 1e6
 
-sns.lineplot(data=df, x="Vector Elements", y="runTime [ms]", hue="Benchmark", style="Benchmark",markers=True)
-plt.xscale("log")
-plt.yscale("log")
-plt.savefig("blas.png")
-plt.tight_layout()
-plt.show()
-# %%
+    sns.lineplot(data=df, x="Vector Elements", y="runTime [ms]", hue="Benchmark", style="Benchmark",markers=True)
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig("fields.png")
+    plt.tight_layout()
+    plt.show()
+    # %%
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+
