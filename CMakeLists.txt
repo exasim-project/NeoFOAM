@@ -37,8 +37,10 @@ option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 
 if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Setting build type to 'Release' as none was specified.")
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE
+      Release
+      CACHE STRING "Choose the type of build." FORCE)
 endif()
 
 include(cmake/Kokkos.cmake)
@@ -67,11 +69,11 @@ endif()
 
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
-add_subdirectory(test)
+  add_subdirectory(test)
 endif()
 
 if(NEOFOAM_BUILD_BENCHMARKS)
-add_subdirectory(benchmarks)
+  add_subdirectory(benchmarks)
 endif()
 
 if(${NEOFOAM_DP_SCALAR})
@@ -97,7 +99,8 @@ add_custom_target(
 
 add_custom_target(
   format
-  COMMAND find src applications test benchmarks -name "*.[c,h]*pp" -exec clang-format -i {} +
+  COMMAND find src applications test benchmarks -name "*.[c,h]*pp" -exec
+          clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 include(cmake/InstallHelpers.cmake)
