@@ -4,7 +4,8 @@
 
 #include <scalar.hpp>
 
-class tensor {
+class tensor
+{
 public:
 private:
 };

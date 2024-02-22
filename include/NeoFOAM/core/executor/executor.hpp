@@ -7,7 +7,8 @@
 #include "NeoFOAM/core/executor/OMPExecutor.hpp"
 #include <variant>
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
 using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
 

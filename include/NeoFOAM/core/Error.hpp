@@ -6,22 +6,26 @@
 #include <source_location>
 #include <string>
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
-class error {
+class error
+{
 public:
-  /**
-   * @brief Exit the program with an error message.
-   *
-   * @param errNo The error number to exit with.
-   * @param location Default argument for the location of the error.
-   */
-  void exit(const int errNo = 1) {
-    std::cout << "Error: " << errNo << '\n';
-    std::exit(errNo);
-  };
 
-  error(std::string){};
+    /**
+     * @brief Exit the program with an error message.
+     *
+     * @param errNo The error number to exit with.
+     * @param location Default argument for the location of the error.
+     */
+    void exit(const int errNo = 1)
+    {
+        std::cout << "Error: " << errNo << '\n';
+        std::exit(errNo);
+    };
+
+    error(std::string) {};
 };
 
 extern error FatalError;

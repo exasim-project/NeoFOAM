@@ -7,38 +7,45 @@
 
 const std::string nl = "\n";
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
 using scalar = float;
 using word = std::string;
 
-class argList {
+class argList
+{
 
 public:
-  argList(int argc, char *argv[]){};
 
-  [[nodiscard]] bool checkRootCase() const { return true; };
+    argList(int argc, char* argv[]) {};
+
+    [[nodiscard]] bool checkRootCase() const { return true; };
 };
 
-class Time {
+class Time
+{
 public:
-  const static word controlDictName;
 
-  Time() : time_(0.){};
+    const static word controlDictName;
 
-  Time(const word, const argList) : time_(0.){};
+    Time() : time_(0.) {};
 
-  [[nodiscard]] word timeName() { return std::to_string(time_); }
+    Time(const word, const argList) : time_(0.) {};
 
-  [[nodiscard]] bool loop() {
-    time_ += 1.;
-    return 10.0 >= time_;
-  };
+    [[nodiscard]] word timeName() { return std::to_string(time_); }
 
-  std::ostream &printExecutionTime(std::ostream &os) const { return os; };
+    [[nodiscard]] bool loop()
+    {
+        time_ += 1.;
+        return 10.0 >= time_;
+    };
+
+    std::ostream& printExecutionTime(std::ostream& os) const { return os; };
 
 private:
-  scalar time_;
+
+    scalar time_;
 };
 
 const word Time::controlDictName = "system/controlDict";

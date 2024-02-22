@@ -6,7 +6,8 @@
 #include "NeoFOAM/primitives/scalar.hpp"
 #include "NeoFOAM/primitives/vector.hpp"
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
 using labelField = NeoFOAM::Field<label>;
 using scalarField = NeoFOAM::Field<scalar>;

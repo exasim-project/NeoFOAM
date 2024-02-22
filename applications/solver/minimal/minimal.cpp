@@ -4,19 +4,23 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[])
+{
 #include "setRootCase.H"
 #include "createTime.H"
 
-  Info << "\nStarting time loop\n" << endl;
+    Info << "\nStarting time loop\n"
+         << endl;
 
-  while (runTime.loop()) {
-    Info << "Time = " << runTime.timeName() << nl << endl;
-  }
+    while (runTime.loop())
+    {
+        Info << "Time = " << runTime.timeName() << nl << endl;
+    }
 
-  runTime.printExecutionTime(Info);
+    runTime.printExecutionTime(Info);
 
-  Info << "End\n" << endl;
+    Info << "End\n"
+         << endl;
 
-  return 0;
+    return 0;
 }

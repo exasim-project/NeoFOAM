@@ -3,6 +3,6 @@
 
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
 
-NeoFOAM::GPUExecutor::GPUExecutor(){};
+NeoFOAM::GPUExecutor::GPUExecutor() {};
 
-NeoFOAM::GPUExecutor::~GPUExecutor(){};
+NeoFOAM::GPUExecutor::~GPUExecutor() {};

@@ -5,36 +5,47 @@
 #include <Kokkos_Core.hpp>
 #include <iostream>
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
-class GPUExecutor {
+class GPUExecutor
+{
 public:
-  GPUExecutor();
-  ~GPUExecutor();
 
-  using exec = Kokkos::DefaultExecutionSpace;
+    GPUExecutor();
+    ~GPUExecutor();
 
-  template <typename T> T *alloc(size_t size) const {
-    return static_cast<T *>(
-        Kokkos::kokkos_malloc<exec>("Field", size * sizeof(T)));
-  }
+    using exec = Kokkos::DefaultExecutionSpace;
 
-  template <typename T> T *realloc(void *ptr, size_t new_size) const {
-    return static_cast<T *>(
-        Kokkos::kokkos_realloc<exec>(ptr, new_size * sizeof(T)));
-  }
+    template<typename T>
+    T* alloc(size_t size) const
+    {
+        return static_cast<T*>(
+            Kokkos::kokkos_malloc<exec>("Field", size * sizeof(T))
+        );
+    }
 
-  void *alloc(size_t size) const {
-    return Kokkos::kokkos_malloc<exec>("Field", size);
-  }
+    template<typename T>
+    T* realloc(void* ptr, size_t new_size) const
+    {
+        return static_cast<T*>(
+            Kokkos::kokkos_realloc<exec>(ptr, new_size * sizeof(T))
+        );
+    }
 
-  void *realloc(void *ptr, size_t new_size) const {
-    return Kokkos::kokkos_realloc<exec>(ptr, new_size);
-  }
+    void* alloc(size_t size) const
+    {
+        return Kokkos::kokkos_malloc<exec>("Field", size);
+    }
 
-  std::string print() const { return std::string(exec().name()); }
+    void* realloc(void* ptr, size_t new_size) const
+    {
+        return Kokkos::kokkos_realloc<exec>(ptr, new_size);
+    }
 
-  void free(void *ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); }
+    std::string print() const { return std::string(exec().name()); }
+
+    void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); }
 };
 
 } // namespace NeoFOAM

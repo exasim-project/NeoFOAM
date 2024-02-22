@@ -4,6 +4,6 @@
 #include "NeoFOAM/core/executor/OMPExecutor.hpp"
 #include <Kokkos_Core.hpp>
 
-NeoFOAM::OMPExecutor::OMPExecutor(){};
+NeoFOAM::OMPExecutor::OMPExecutor() {};
 
-NeoFOAM::OMPExecutor::~OMPExecutor(){};
+NeoFOAM::OMPExecutor::~OMPExecutor() {};
