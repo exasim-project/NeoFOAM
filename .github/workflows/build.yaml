@@ -36,6 +36,5 @@ jobs:
 
      - name: Build NeoFOAM
        run: |
-         mkdir build && cd build
-         CXX=${{matrix.compiler}} cmake -GNinja ..
-         cmake --build .
+         CXX=${{matrix.compiler}} cmake --preset default
+         cmake --build build/default
