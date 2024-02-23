@@ -3,11 +3,13 @@
 
 #include <Kokkos_Core.hpp>
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
-struct hello_world {
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const int i) const { printf("Hello from i = %i\n", i); }
+struct hello_world
+{
+    KOKKOS_INLINE_FUNCTION
+    void operator()(const int i) const { printf("Hello from i = %i\n", i); }
 };
 
 void foo() { Kokkos::parallel_for("HelloWorld", 15, hello_world()); }

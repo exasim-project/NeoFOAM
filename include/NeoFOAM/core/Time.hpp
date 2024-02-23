@@ -2,50 +2,52 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <string>
 #include <iostream>
+#include <string>
 
 const std::string nl = "\n";
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
-	using scalar = float;
-	using word = std::string;
+using scalar = float;
+using word = std::string;
 
+class argList
+{
 
-	class argList {
+public:
 
-		public:
-		argList (int argc, char * argv[]) {};
+    argList(int argc, char* argv[]) {};
 
-		[[nodiscard]] bool checkRootCase() const {return true;};
+    [[nodiscard]] bool checkRootCase() const { return true; };
+};
 
-	};
+class Time
+{
+public:
 
+    const static word controlDictName;
 
-	class Time {
-		public:
+    Time() : time_(0.) {};
 
-		const static word controlDictName;
+    Time(const word, const argList) : time_(0.) {};
 
-		Time() : time_(0.) {};
+    [[nodiscard]] word timeName() { return std::to_string(time_); }
 
-		Time(const word, const argList ) : time_(0.) {};
+    [[nodiscard]] bool loop()
+    {
+        time_ += 1.;
+        return 10.0 >= time_;
+    };
 
-		[[nodiscard]] word timeName() { return std::to_string(time_);}  
+    std::ostream& printExecutionTime(std::ostream& os) const { return os; };
 
-		[[nodiscard]] bool loop() { time_ += 1.; return 10.0 >= time_; };
+private:
 
-		std::ostream& printExecutionTime(std::ostream& os) const {return os;};
+    scalar time_;
+};
 
-		private:
+const word Time::controlDictName = "system/controlDict";
 
-			scalar time_;
-
-	};
-
-	const word Time::controlDictName ="system/controlDict";
-
-}
-
-
+} // namespace NeoFOAM

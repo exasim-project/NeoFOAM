@@ -1,0 +1,39 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build using Ninja generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/default",
+      "cacheVariables": {
+        "Kokkos_ENABLE_SERIAL": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "Kokkos_ENABLE_OPENMP": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "ninja-kokkos-cuda",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "Kokkos_ENABLE_CUDA": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+    }
+}]
+}
