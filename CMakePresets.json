@@ -10,7 +10,6 @@
       "name": "default",
       "displayName": "Default Config",
       "description": "Default build using Ninja generator",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/Release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -25,11 +24,24 @@
       }
     },
     {
+      "name": "ninja-cpuonly-test",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ReleaseWithTests",
+      "cacheVariables": {
+        "NEOFOAM_ENABLE_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+    },
+    {
       "name": "ninja-kokkos-cuda",
       "inherits": "default",
       "displayName": "Ninja Multi-Config",
       "description": "Default build using Ninja Multi-Config generator",
-      "generator": "Ninja Multi-Config",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/Release-cuda",
       "cacheVariables": {
         "Kokkos_ENABLE_CUDA": {
