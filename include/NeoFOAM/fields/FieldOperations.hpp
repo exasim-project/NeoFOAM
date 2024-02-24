@@ -77,7 +77,7 @@ struct fillOp
 template<typename T>
 void fill(Field<T>& f, const T value)
 {
-    fillOp<T> fill_(value);
+    fillOp<T> fill_ {value};
     std::visit([&](const auto& exec)
                { fill_(exec, f); },
                f.exec());
