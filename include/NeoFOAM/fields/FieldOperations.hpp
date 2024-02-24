@@ -119,7 +119,7 @@ void setField(Field<T>& f, const Field<T>& rhsField_)
     {
         f.setSize(rhsField_.size());
     }
-    setFieldOp<T> setField_(rhsField_);
+    setFieldOp<T> setField_ {rhsField_};
     std::visit([&](const auto& exec)
                { setField_(exec, f); },
                f.exec());
