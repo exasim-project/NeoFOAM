@@ -8,7 +8,7 @@
 NeoFOAM has the following requirements
 
 *  _cmake > 3.22_
-*  _gcc > 8.5_ or  _clang > 14_ 
+*  _gcc >= 10_ or  _clang >= 16_ 
 *  _Kokkos 4.2.0_ (Preferably preinstalled, otherwise cloned and build at compile time) 
 
 For NVIDIA GPU support

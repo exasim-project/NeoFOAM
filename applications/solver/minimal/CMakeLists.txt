@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 project(minimal-example)
 
 # We only need to find NeoFOAM if we build this example stand-alone
-if(NOT NEOFOAM_BUILD_WITH_APPS)
+if(NOT NEOFOAM_BUILD_APPS)
   find_package(NeoFOAM CONFIG REQUIRED)
 endif()
 
