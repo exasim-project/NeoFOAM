@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
+include(${PROJECT_SOURCE_DIR}/cmake/Catch2.cmake)
+
 add_subdirectory(fields)
 
 add_custom_command(

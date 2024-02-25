@@ -22,7 +22,7 @@ option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" TRUE)
 option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
-option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" TRUE)
+option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" FALSE)
 option(NEOFOAM_BUILD_DOC "Build documentation" FALSE)
 
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
