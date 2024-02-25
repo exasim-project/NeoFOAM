@@ -67,3 +67,7 @@ jobs:
          CXX=${{matrix.compiler.CXX}} \
          cmake --preset ninja-cpuonly-all
          cmake --build build/ReleaseAll
+
+     - name: Execute unit tests NeoFOAM
+       run: |
+         ctest --test-dir build/ReleaseAll/test
