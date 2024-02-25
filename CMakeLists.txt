@@ -20,8 +20,6 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" TRUE)
-option(NEOFOAM_BUILD_WITH_APPS "Build the applications folder" TRUE)
-option(NEOFOAM_BUILD_WITH_TESTS "Build the unit tests" TRUE)
 option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" TRUE)
@@ -83,7 +81,7 @@ if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
 endif()
 
-if(NEOFOAM_BUILD_WITH_APPS)
+if(NEOFOAM_BUILD_APPS)
   add_subdirectory(applications)
 endif()
 
