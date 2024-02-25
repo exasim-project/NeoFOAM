@@ -2,4 +2,4 @@
 - Add basic field implementation, [PR #17](https://github.com/exasim-project/NeoFOAM/pull/17)
 - Check if Kokkos present or build it [PR #10](https://github.com/exasim-project/NeoFOAM/pull/10)
 - Build documentation via Sphinx and Doxygen [PR #11](https://github.com/exasim-project/NeoFOAM/pull/11)
-- Add basic cmake setup [PR #4](https://github.com/exasim-project/NeoFOAM/pull/4)
+- Add basic cmake setup [PR #4](https://github.com/exasim-project/NeoFOAM/pull/4), [PR #21](https://github.com/exasim-project/NeoFOAM/pull/21)
