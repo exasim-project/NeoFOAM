@@ -93,8 +93,7 @@ void GaussGreenKernel::operator()(const CPUExecutor& exec)
 
 
 gaussGreenGrad::gaussGreenGrad(const executor& exec, const unstructuredMesh& mesh)
-: mesh_(mesh)
-, gradPhi_(exec, mesh.nCells()) {};
+    : mesh_(mesh), gradPhi_(exec, mesh.nCells()) {};
 
 const vectorField& gaussGreenGrad::grad(const scalarField& phi)
 {
