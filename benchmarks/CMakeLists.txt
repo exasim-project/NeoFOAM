@@ -12,10 +12,7 @@ add_custom_command(
     XML > fields.xml
   COMMENT "Execute benchmarks")
 
-find_package(
-  Python
-  COMPONENTS Interpreter Development
-  Required)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/benchmarks/fields.png
