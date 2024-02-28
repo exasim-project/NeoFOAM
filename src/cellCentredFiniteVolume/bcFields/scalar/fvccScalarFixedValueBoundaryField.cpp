@@ -30,9 +30,9 @@ void fixedValueBCKernel::operator()(const GPUExecutor& exec, boundaryFields<scal
     );
 }
 
-void fixedValueBCKernel::operator()(const ompExecutor& exec, boundaryFields<scalar>& bField)
+void fixedValueBCKernel::operator()(const OMPExecutor& exec, boundaryFields<scalar>& bField)
 {
-    using executor = typename ompExecutor::exec;
+    using executor = typename OMPExecutor::exec;
     auto s_value = bField.value().field();
     auto s_refValue = bField.refValue().field();
     scalar uniformValue = uniformValue_;

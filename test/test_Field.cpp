@@ -286,7 +286,7 @@ TEST_CASE("Boundaries")
     SECTION("boundaryFields")
     {
 
-        NeoFOAM::boundaryFields<double> BCs(100, 10, exec);
+        NeoFOAM::boundaryFields<double> BCs(exec, 100, 10);
 
         NeoFOAM::fill(BCs.value(), 2.0);
 

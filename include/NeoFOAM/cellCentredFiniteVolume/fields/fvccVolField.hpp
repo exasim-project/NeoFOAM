@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/domainField.hpp"
+#include "NeoFOAM/fields/Field.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include <vector>
 #include "NeoFOAM/core/executor/executor.hpp"
@@ -51,12 +51,12 @@ public:
         }
     };
 
-    const deviceField<T>& internalField() const
+    const Field<T>& internalField() const
     {
         return field_.internalField();
     };
 
-    deviceField<T>& internalField()
+    Field<T>& internalField()
     {
         return field_.internalField();
     };

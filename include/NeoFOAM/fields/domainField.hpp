@@ -29,8 +29,8 @@ public:
 
     domainField(int nCells, int nBoundaryFaces, int nBoundaries, const executor& exec)
         : exec_(exec),
-          internalField_(nCells, exec),
-          boundaryFields_(nBoundaryFaces, nBoundaries, exec)
+          internalField_(exec, nCells),
+          boundaryFields_(exec, nBoundaryFaces, nBoundaries)
     {
     }
 

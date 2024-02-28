@@ -59,12 +59,12 @@ public:
 
     boundaryFields(const executor& exec, int nBoundaryFaces, int nBoundaries)
         : exec_(exec),
-          value_(nBoundaryFaces, exec),
-          refValue_(nBoundaryFaces, exec),
-          valueFraction_(nBoundaryFaces, exec),
-          refGrad_(nBoundaryFaces, exec),
-          boundaryTypes_(nBoundaries, exec),
-          offset_(nBoundaries + 1, exec),
+          value_(exec, nBoundaryFaces),
+          refValue_(exec, nBoundaryFaces),
+          valueFraction_(exec, nBoundaryFaces),
+          refGrad_(exec, nBoundaryFaces),
+          boundaryTypes_(exec, nBoundaries),
+          offset_(exec, nBoundaries + 1),
           nBoundaries_(nBoundaries),
           nBoundaryFaces_(nBoundaryFaces)
     {

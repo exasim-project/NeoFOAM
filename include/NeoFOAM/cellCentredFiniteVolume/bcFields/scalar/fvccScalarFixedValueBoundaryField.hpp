@@ -17,7 +17,7 @@ struct fixedValueBCKernel
 
     void operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField);
 
-    void operator()(const ompExecutor& exec, boundaryFields<scalar>& bField);
+    void operator()(const OMPExecutor& exec, boundaryFields<scalar>& bField);
 
     void operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField);
 };
