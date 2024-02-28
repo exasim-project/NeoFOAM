@@ -4,6 +4,7 @@
 
 #include <inttypes.h>
 
-namespace NeoFOAM {
-    typedef uint16_t index;
+namespace NeoFOAM
+{
+typedef uint16_t index;
 }

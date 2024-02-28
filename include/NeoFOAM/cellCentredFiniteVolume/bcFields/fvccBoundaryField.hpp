@@ -9,31 +9,29 @@
 namespace NeoFOAM
 {
 
-    template <typename T>
-    class fvccBoundaryField
-    {
+template<typename T>
+class fvccBoundaryField
+{
 
-        public:
+public:
 
-            fvccBoundaryField(int start, int end)
-                :  start_(start),
-                   end_(end),
-                   size_(end - start)
+    fvccBoundaryField(int start, int end)
+        : start_(start),
+          end_(end),
+          size_(end - start)
 
-            {
-                
-            };
+              {
 
-            virtual void correctBoundaryConditions(boundaryFields<T> &field)
-            {
-                
-            };
+              };
 
-        protected:
-            
-                int start_;
-                int end_;
-                int size_;
+    virtual void correctBoundaryConditions(boundaryFields<T>& field) {
 
     };
+
+protected:
+
+    int start_;
+    int end_;
+    int size_;
+};
 };

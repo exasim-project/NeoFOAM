@@ -17,7 +17,8 @@
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/scalar/fvccScalarFixedValueBoundaryField.hpp"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
 
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
@@ -259,65 +260,71 @@ TEST_CASE("Field Operations")
             REQUIRE(a.copyToHost().field()[i] == 20.0);
         }
     };
-
 }
 
-TEST_CASE("Boundaries") {
+TEST_CASE("Boundaries")
+{
 
     // NeoFOAM::CPUExecutor cpuExec{};
     // GENERATE(NeoFOAM::CPUExecutor{}, NeoFOAM::ompExecutor{}, NeoFOAM::GPUExecutor{});
-    NeoFOAM::executor exec = NeoFOAM::CPUExecutor{};
+    NeoFOAM::executor exec = NeoFOAM::CPUExecutor {};
 
-    SECTION("domainField") {
-        
-        NeoFOAM::domainField<double> a(1000,100,10,exec);
+    SECTION("domainField")
+    {
+
+        NeoFOAM::domainField<double> a(1000, 100, 10, exec);
         // auto& aIn = a.internalField();
 
         NeoFOAM::fill(a.internalField(), 2.0);
 
-        for (int i = 0; i < a.internalField().size(); i++){
+        for (int i = 0; i < a.internalField().size(); i++)
+        {
             REQUIRE(a.internalField().field()[i] == 2.0);
         }
     }
 
-    SECTION("boundaryFields") {
-        
-        NeoFOAM::boundaryFields<double> BCs(100,10,exec);
-        
+    SECTION("boundaryFields")
+    {
+
+        NeoFOAM::boundaryFields<double> BCs(100, 10, exec);
+
         NeoFOAM::fill(BCs.value(), 2.0);
 
-        for (int i = 0; i < BCs.value().size(); i++){
+        for (int i = 0; i < BCs.value().size(); i++)
+        {
             REQUIRE(BCs.value().field()[i] == 2.0);
         }
 
         NeoFOAM::fill(BCs.refValue(), 2.0);
 
-        for (int i = 0; i < BCs.refValue().size(); i++){
+        for (int i = 0; i < BCs.refValue().size(); i++)
+        {
             REQUIRE(BCs.refValue().field()[i] == 2.0);
         }
 
         NeoFOAM::fill(BCs.refGrad(), 2.0);
 
-        for (int i = 0; i < BCs.refGrad().size(); i++){
+        for (int i = 0; i < BCs.refGrad().size(); i++)
+        {
             REQUIRE(BCs.refGrad().field()[i] == 2.0);
         }
 
         NeoFOAM::fill(BCs.valueFraction(), 2.0);
 
-        for (int i = 0; i < BCs.valueFraction().size(); i++){
+        for (int i = 0; i < BCs.valueFraction().size(); i++)
+        {
             REQUIRE(BCs.valueFraction().field()[i] == 2.0);
         }
-
     }
 
-    SECTION("fvccBoundaryField") {
+    SECTION("fvccBoundaryField")
+    {
 
-        std::vector<std::unique_ptr<NeoFOAM::fvccBoundaryField<double> > > bcs;
+        std::vector<std::unique_ptr<NeoFOAM::fvccBoundaryField<double>>> bcs;
         bcs.push_back(std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(0, 10, 1.0));
         bcs.push_back(std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(10, 20, 2.0));
 
-        NeoFOAM::fvccVolField<NeoFOAM::scalar> volField
-        (
+        NeoFOAM::fvccVolField<NeoFOAM::scalar> volField(
             1000,
             20,
             2,
@@ -329,19 +336,21 @@ TEST_CASE("Boundaries") {
 
         auto& volBCs = volField.boundaryConditions();
 
-        REQUIRE(volBCs.size()  == 2.0);
+        REQUIRE(volBCs.size() == 2.0);
 
         volField.correctBoundaryConditions();
 
         auto& bIn = bField.value();
         auto& bRefIn = bField.refValue();
-        
-        for (int i = 0; i < 10; i++){
+
+        for (int i = 0; i < 10; i++)
+        {
             REQUIRE(bIn.field()[i] == 1.0);
             REQUIRE(bRefIn.field()[i] == 1.0);
         }
 
-        for (int i = 10; i < 20; i++){
+        for (int i = 10; i < 20; i++)
+        {
             REQUIRE(bIn.field()[i] == 2.0);
             REQUIRE(bRefIn.field()[i] == 2.0);
         }

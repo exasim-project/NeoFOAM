@@ -11,40 +11,43 @@
 namespace NeoFOAM
 {
 
-    void grad_atmoic(NeoFOAM::vectorField &gradPhi, const NeoFOAM::unstructuredMesh &mesh_, const NeoFOAM::scalarField &phi);
+void grad_atmoic(NeoFOAM::vectorField& gradPhi, const NeoFOAM::unstructuredMesh& mesh_, const NeoFOAM::scalarField& phi);
 
-    void grad_not_atmoic(NeoFOAM::vectorField &gradPhi, const NeoFOAM::unstructuredMesh &mesh_, const NeoFOAM::scalarField &phi);
+void grad_not_atmoic(NeoFOAM::vectorField& gradPhi, const NeoFOAM::unstructuredMesh& mesh_, const NeoFOAM::scalarField& phi);
 
-    vectorField create_gradField(int nCells);
+vectorField create_gradField(int nCells);
 
-    class gaussGreenGrad
+class gaussGreenGrad
+{
+public:
+
+    static inline std::map<std::string, std::function<void(NeoFOAM::vectorField&, const NeoFOAM::unstructuredMesh&, const scalarField&)>> algorithmMap_;
+
+    template<typename func>
+    static void registerAlgorithm(std::string name, func algorithm)
     {
-    public:
-        static inline std::map<std::string, std::function<void (NeoFOAM::vectorField &,const NeoFOAM::unstructuredMesh &,const scalarField &)>> algorithmMap_;
+        algorithmMap_[name] = algorithm;
+    }
 
-        template <typename func>
-        static void registerAlgorithm(std::string name, func algorithm)
-        {
-            algorithmMap_[name] = algorithm;
-        }
 
-        
-        gaussGreenGrad(const unstructuredMesh &mesh);
+    gaussGreenGrad(const unstructuredMesh& mesh);
 
-        const vectorField& grad(const scalarField &phi, std::string algorithm);
+    const vectorField& grad(const scalarField& phi, std::string algorithm);
 
-        const vectorField& grad(const scalarField &phi);
+    const vectorField& grad(const scalarField& phi);
 
-        void grad_allocate(const scalarField &phi);
+    void grad_allocate(const scalarField& phi);
 
-        void grad(vectorField& gradPhi, const scalarField &phi);
+    void grad(vectorField& gradPhi, const scalarField& phi);
 
-        void grad_atomic(vectorField& gradPhi, const scalarField &phi);
+    void grad_atomic(vectorField& gradPhi, const scalarField& phi);
 
     // Register functions in the map using a static data member
 
-    static struct RegisterFunctions {
-        RegisterFunctions() {
+    static struct RegisterFunctions
+    {
+        RegisterFunctions()
+        {
             // Register functions here
             registerAlgorithm("atomic", grad_atmoic);
             registerAlgorithm("not_atomic", grad_not_atmoic);
@@ -52,11 +55,10 @@ namespace NeoFOAM
     } registerFunctions; // Static data member that registers functions at compile time
 
 
-    private:
-        vectorField gradPhi_;
-        const unstructuredMesh &mesh_;
+private:
 
-
-    };
+    vectorField gradPhi_;
+    const unstructuredMesh& mesh_;
+};
 
 } // namespace NeoFOAM

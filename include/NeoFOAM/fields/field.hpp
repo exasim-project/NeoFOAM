@@ -16,5 +16,4 @@ using scalarField = NeoFOAM::Field<scalar>;
 using vectorField = NeoFOAM::Field<vector>;
 
 
-
 } // namespace NeoFOAM

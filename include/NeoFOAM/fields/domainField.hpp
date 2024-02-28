@@ -13,10 +13,10 @@
 
 namespace NeoFOAM
 {
-    
-    template <typename T>
-    class domainField
-    {
+
+template<typename T>
+class domainField
+{
     /**
      * @class domainField
      * @brief Represents the domain fields for a computational domain.
@@ -25,78 +25,77 @@ namespace NeoFOAM
      * It provides access to the computed values, reference values, value fractions, reference gradients, boundary types,
      * offsets, and the number of boundaries and boundary faces.
      */
-        public:
+public:
 
-            domainField(int nCells, int nBoundaryFaces, int nBoundaries, const executor& exec)
-                :  exec_(exec),
-                   internalField_(nCells,exec),
-                   boundaryFields_(nBoundaryFaces, nBoundaries,exec)
-            {
-            }
+    domainField(int nCells, int nBoundaryFaces, int nBoundaries, const executor& exec)
+        : exec_(exec),
+          internalField_(nCells, exec),
+          boundaryFields_(nBoundaryFaces, nBoundaries, exec)
+    {
+    }
 
 
-            
-            domainField(const domainField<T> &rhs)
-                :  exec_(rhs.exec_),
-                   internalField_(rhs.internalField_),
-                   boundaryFields_(rhs.boundaryFields_)
-            {
-            }
+    domainField(const domainField<T>& rhs)
+        : exec_(rhs.exec_),
+          internalField_(rhs.internalField_),
+          boundaryFields_(rhs.boundaryFields_)
+    {
+    }
 
-            
-            domainField(domainField<T> &&rhs)
-                :  exec_(std::move(rhs.exec_)),
-                   internalField_(std::move(rhs.internalField_)),
-                   boundaryFields_(std::move(rhs.boundaryFields_))
-            {
-            }
 
-            
-            domainField<T> &operator=(const domainField<T> &rhs)
-            {
-                internalField_ = rhs.internalField_;
-                boundaryFields_ = rhs.boundaryFields_;
-                return *this;
-            }
+    domainField(domainField<T>&& rhs)
+        : exec_(std::move(rhs.exec_)),
+          internalField_(std::move(rhs.internalField_)),
+          boundaryFields_(std::move(rhs.boundaryFields_))
+    {
+    }
 
-            
-            domainField<T> &operator=(domainField<T> &&rhs)
-            {
-                internalField_ = std::move(rhs.internalField_);
-                boundaryFields_ = std::move(rhs.boundaryFields_);
-                return *this;
-            }
 
-            
-            const Field< T>& internalField() const
-            {
-                return internalField_;
-            }
+    domainField<T>& operator=(const domainField<T>& rhs)
+    {
+        internalField_ = rhs.internalField_;
+        boundaryFields_ = rhs.boundaryFields_;
+        return *this;
+    }
 
-            
-            Field< T>& internalField()
-            {
-                return internalField_;
-            }
 
-            
-            const boundaryFields< T>& boundaryField() const
-            {
-                return boundaryFields_;
-            }
+    domainField<T>& operator=(domainField<T>&& rhs)
+    {
+        internalField_ = std::move(rhs.internalField_);
+        boundaryFields_ = std::move(rhs.boundaryFields_);
+        return *this;
+    }
 
-            
-            boundaryFields< T>& boundaryField()
-            {
-                return boundaryFields_;
-            }
 
-        private:
-            executor exec_;
-            Field<T > internalField_; 
-            boundaryFields<T > boundaryFields_;
+    const Field<T>& internalField() const
+    {
+        return internalField_;
+    }
 
-    };
 
-         
+    Field<T>& internalField()
+    {
+        return internalField_;
+    }
+
+
+    const boundaryFields<T>& boundaryField() const
+    {
+        return boundaryFields_;
+    }
+
+
+    boundaryFields<T>& boundaryField()
+    {
+        return boundaryFields_;
+    }
+
+private:
+
+    executor exec_;
+    Field<T> internalField_;
+    boundaryFields<T> boundaryFields_;
+};
+
+
 } // namespace NeoFOAM
