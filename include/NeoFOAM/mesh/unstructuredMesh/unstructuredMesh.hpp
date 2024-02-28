@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-#include "NeoFOAM/blas/field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM
 {

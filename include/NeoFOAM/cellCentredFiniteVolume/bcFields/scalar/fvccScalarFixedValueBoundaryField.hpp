@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/blas/primitives/scalar.hpp"
+#include "NeoFOAM/primitives/scalar.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include "Kokkos_Core.hpp"
-#include "NeoFOAM/blas/executor/executor.hpp"
+#include "NeoFOAM/core/executor/executor.hpp"
 
 namespace NeoFOAM
 {

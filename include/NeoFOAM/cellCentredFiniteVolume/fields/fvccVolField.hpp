@@ -2,10 +2,10 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/blas/domainField.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include <vector>
-#include "NeoFOAM/blas/executor/executor.hpp"
+#include "NeoFOAM/core/executor/executor.hpp"
 
 namespace NeoFOAM
 {

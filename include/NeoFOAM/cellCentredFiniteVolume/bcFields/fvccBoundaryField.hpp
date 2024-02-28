@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/blas/field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
-#include "NeoFOAM/blas/boundaryFields.hpp"
+#include "NeoFOAM/fields/boundaryFields.hpp"
 
 namespace NeoFOAM
 {

@@ -1,0 +1,95 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build using Ninja generator",
+      "binaryDir": "${sourceDir}/build/Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "Kokkos_ENABLE_SERIAL": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "Kokkos_ENABLE_OPENMP": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "ninja-cpuonly-test",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ReleaseWithTests",
+      "cacheVariables": {
+        "NEOFOAM_BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "ninja-cpuonly-all",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ReleaseAll",
+      "cacheVariables": {
+        "NEOFOAM_BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_BENCHMARKS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "ninja-kokkos-cuda",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Release-cuda",
+      "cacheVariables": {
+        "Kokkos_ENABLE_CUDA": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
+      "name": "ninja-kokkos-cuda-all",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Release-cuda",
+      "cacheVariables": {
+        "Kokkos_ENABLE_CUDA": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_BENCHMARKS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    }
+  ]
+}
