@@ -12,7 +12,7 @@ class treeAMRMeshModifier
 public:
 
     /**
-     * @brief abstract class that modfies for treeAMRMesh.
+     * @brief abstract class that modifies for treeAMRMesh.
      * @param initialLevel_ The initial level of refinement for the mesh.
      * @param maxLevel_ The maximum level of refinement for the mesh.
      */

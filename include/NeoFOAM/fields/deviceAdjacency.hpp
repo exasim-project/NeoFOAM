@@ -18,7 +18,7 @@ using edge = Kokkos::pair<Tlabel, Tlabel>; //!< A pair of labels representing an
 
 template<typename Tlabel>
 /**
- * @brief Orders an unordered edge in accending order.
+ * @brief Orders an unordered edge in ascending order.
  * @param[in] unorderedEdge Pointer to the unordered edge.
  * @return The ordered edge, where the 0 node points to the 1 node.
  */
@@ -39,7 +39,7 @@ constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* unorderedEdge)
  * between nodes through edges. The graph stores specifically the connectivity between nodes in the graph. The template
  * parameter `Tlabel` specifies the type of the labels int, uint32, etc. The `directed` parameter indicates whether the
  * graph is directed or undirected. In the undirected variant the graph edges are considered to connect both nodes (of
- * the edge), and therefor no distiction is made interms of direction between the 0 and 1 node of the edge. Thus the
+ * the edge), and therefor no distinction is made interms of direction between the 0 and 1 node of the edge. Thus the
  * graph is symmetric, for example, if node 10 is connected to node 20 then node 20 is connected to 10. In the directed
  * variant, an edge connects the 0 node to the 1 node, and therefor the graph is not symmetric. For example, if node 10
  * is connected to node 20, the reverse is not true.
@@ -47,8 +47,8 @@ constexpr edge<const Tlabel&> order_edge(const edge<Tlabel>* unorderedEdge)
  * A word no memory layout: To optimise memory access the data in the class is stored 'flat' with an adjacency View and
  * an offset View. The former contains the connections of the graph while the later stores the start and end position
  * (offset to) of each nodes' connectivity in the adjacency container. Within each node's connectivity the connections
- * are sorted in accending order. Finally, the offset container is one greater than the size of the adjacency container,
- * to faciliate slightly more lazy programing - since the first element will always be zero.
+ * are sorted in ascending order. Finally, the offset container is one greater than the size of the adjacency container,
+ * to facilitate slightly more lazy programing - since the first element will always be zero.
  *
  * @note An directed graph can therefor be used to represent the connection between two different 'types/classes' of
  * nodes rather than the same. For example, a graph could be used to represent the connection between cells and faces.
@@ -96,7 +96,7 @@ public:
         : name_(name), adjacency_(adjacency), offset_(offset)
     {
         viewDataInit(adjacency, offset);
-        check_consitency();
+        check_consistency();
         parallelInit();
     }
 
@@ -104,7 +104,7 @@ public:
     deviceAdjacency(const View& adjacency, const View& offset) : adjacency_(adjacency), offset_(offset)
     {
         viewDataInit(adjacency, offset);
-        check_consitency();
+        check_consistency();
         parallelInit();
     }
 
@@ -112,7 +112,7 @@ public:
     deviceAdjacency(const std::string& name, const LabelField& adjacency, const LabelField& offset) : name_(name)
     {
         viewDataInit(adjacency.field(), offset.field());
-        check_consitency();
+        check_consistency();
         parallelInit();
     }
 
@@ -120,12 +120,12 @@ public:
     deviceAdjacency(const LabelField& adjacency, const LabelField& offset)
     {
         viewDataInit(adjacency.field(), offset.field());
-        check_consitency();
+        check_consistency();
         parallelInit();
     }
 
     // ----------------------------------------------------------------------------------------------------------------
-    // Assignement Operator
+    // Assignment Operator
     // ----------------------------------------------------------------------------------------------------------------
 
     /**
@@ -211,7 +211,7 @@ public:
      * both the connectivity of the first and second node are updated. In the case of a directed graph only the edge is
      * interpreted as first -> second and therefore only the connectivity of the first node is updated.
      *
-     * @note The graph will be resized to accomodate the new edge if necessary.
+     * @note The graph will be resized to accommodate the new edge if necessary.
      */
     bool insert(const edge<Tlabel>& edge)
     {
@@ -233,7 +233,7 @@ public:
     }
 
     /**
-     * @brief Resizes the adjacency container to accomodate more nodes.
+     * @brief Resizes the adjacency container to accommodate more nodes.
      * @param[in] size The new size of the container.
      *
      * @details This function resizes the adjacency container to accommodate the specified size. It may allocate
@@ -357,7 +357,7 @@ private:
      * @param[in] offset The view for offset of the graph.
      *
      * @details The view members of this class are populated via a deep copy of the parsed data and have their 'names'
-     * set, there is no checking of consitency or correctness of the data parsed in. This responsibility is left to the
+     * set, there is no checking of consistency or correctness of the data parsed in. This responsibility is left to the
      * caller (other functions).
      */
     inline void viewDataInit(const View& adjacency, const View& offset)
@@ -372,7 +372,7 @@ private:
      * @brief Initializes the adjacency list by ensuring/sorting the connections per node are in acending order.
      *
      * @details For non-empty adjacency lists, this function loops over all nodes (rows) and brute forces sorces the
-     * connections in acending order. Due to the percieved infrequency of the call and the small size of the adjacency
+     * connections in acending order. Due to the perceived infrequency of the call and the small size of the adjacency
      * no optimisation of the sorting approach was considered.
      *
      * @throws std::runtime_error if the adjacency list could not be sorted.
@@ -415,13 +415,13 @@ private:
      * the containers must be populated with the offset view correctly initialised, no sorting is required for the
      * adjacency view.
      *
-     * @throws std::runtime_error if offest container is of size 1.
+     * @throws std::runtime_error if offset container is of size 1.
      * @throws std::runtime_error if the first value of a non-zero sized offset container is non-zero.
      * @throws std::runtime_error if the last entry's value of a non-zero sized offset container is not adjacency.size().
      * @throws std::runtime_error if an undirected adjacency list is not symmetric (degenerate).
-     * @throws std::runtime_error if an undirected adjacency list contains nodes with indicies higher than size().
+     * @throws std::runtime_error if an undirected adjacency list contains nodes with indices higher than size().
      */
-    void check_consitency()
+    void check_consistency()
     {
         // check offset
         if (offset_.size() == 1) throw std::runtime_error("Offset container must be 0 or greater than 1.");
@@ -471,9 +471,9 @@ private:
      *
      * @note This function assumes that the adjacency list is already sorted in ascending order.
      *
-     * @warning The offset_ view must already be resized to accomodate the new edge, but must contain the old offset
+     * @warning The offset_ view must already be resized to accommodate the new edge, but must contain the old offset
      * data.
-     * @warning The offset_ veiw is not updated, it is of the caller to update the offset_ view post this call.
+     * @warning The offset_ view is not updated, it is of the caller to update the offset_ view post this call.
      * @warning This function does not perform any checks for duplicate edges. It is the responsibility of the caller
      * to ensure that duplicate edges are not inserted. The graph will be in an undefined state if duplicate are added.
      */
