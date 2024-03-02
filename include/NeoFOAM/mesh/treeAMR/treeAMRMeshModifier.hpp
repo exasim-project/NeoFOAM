@@ -7,32 +7,17 @@
 namespace NeoFOAM
 {
 
-  class treeAMRMeshModifier
-  {
-  public:
+class treeAMRMeshModifier
+{
+public:
+
     /**
-     * @brief abstract class that modfies for treeAMRMesh.
+     * @brief abstract class that modifies for treeAMRMesh.
      * @param initialLevel_ The initial level of refinement for the mesh.
      * @param maxLevel_ The maximum level of refinement for the mesh.
      */
     treeAMRMeshModifier(int32_t initialLevel_, int32_t maxLevel_)
-    : initialLevel_(initialLevel_)
-    , maxLevel_(maxLevel_)
-    , nElements_(-1)
-    , V_()
-    , Cx_()
-    , Cy_()
-    , Cz_()
-    , Cfx_()
-    , Cfy_()
-    , Cfz_()
-    , Ax_()
-    , Ay_()
-    , Az_()
-    , owner_()
-    , neighbour_()
-    {
-    };
+        : initialLevel_(initialLevel_), maxLevel_(maxLevel_), nElements_(-1), V_(), Cx_(), Cy_(), Cz_(), Cfx_(), Cfy_(), Cfz_(), Ax_(), Ay_(), Az_(), owner_(), neighbour_() {};
 
     /**
      * @brief Destructor for treeAMRMesh.
@@ -64,111 +49,111 @@ namespace NeoFOAM
 
     virtual int32_t nElements() const
     {
-      return nElements_;
+        return nElements_;
     }
 
     virtual int32_t initialLevel() const
     {
-      return initialLevel_;
+        return initialLevel_;
     }
 
     virtual int32_t maxLevel() const
     {
-      return maxLevel_;
+        return maxLevel_;
     }
 
     // const getters to protected members
     const std::vector<double>& V() const
     {
-      return V_;
+        return V_;
     }
 
     const std::vector<double>& level() const
     {
-      return level_;
-    } 
+        return level_;
+    }
 
     const std::vector<double>& Cx() const
     {
-      return Cx_;
-    } 
+        return Cx_;
+    }
 
     const std::vector<double>& Cy() const
     {
-      return Cy_;
+        return Cy_;
     }
 
     const std::vector<double>& Cz() const
     {
-      return Cz_;
+        return Cz_;
     }
 
     const std::vector<double>& Cfx() const
     {
-      return Cfx_;
+        return Cfx_;
     }
 
     const std::vector<double>& Cfy() const
     {
-      return Cfy_;
+        return Cfy_;
     }
 
     const std::vector<double>& Cfz() const
     {
-      return Cfz_;
+        return Cfz_;
     }
 
     const std::vector<double>& Ax() const
     {
-      return Ax_;
+        return Ax_;
     }
 
     const std::vector<double>& Ay() const
     {
-      return Ay_;
+        return Ay_;
     }
 
     const std::vector<double>& Az() const
     {
-      return Az_;
+        return Az_;
     }
 
     const std::vector<int32_t>& owner() const
     {
-      return owner_;
+        return owner_;
     }
 
     const std::vector<int32_t>& neighbour() const
     {
-      return neighbour_;
+        return neighbour_;
     }
-    
-    protected:
-      int32_t initialLevel_; ///< The initial level of refinement for the mesh.
-      int32_t maxLevel_;     ///< The maximum level of refinement for the mesh.
-      int32_t nElements_;    ///< The number of elements in the mesh.
 
-      std::vector<double> V_;
-      std::vector<double> level_;
+protected:
 
-      // centroid
-      std::vector<double> Cx_;
-      std::vector<double> Cy_;
-      std::vector<double> Cz_;
+    int32_t initialLevel_; ///< The initial level of refinement for the mesh.
+    int32_t maxLevel_;     ///< The maximum level of refinement for the mesh.
+    int32_t nElements_;    ///< The number of elements in the mesh.
 
-      // face centroid      
-      std::vector<double> Cfx_;
-      std::vector<double> Cfy_;
-      std::vector<double> Cfz_;
+    std::vector<double> V_;
+    std::vector<double> level_;
 
-      // face area
-      std::vector<double> Ax_;
-      std::vector<double> Ay_;
-      std::vector<double> Az_;
+    // centroid
+    std::vector<double> Cx_;
+    std::vector<double> Cy_;
+    std::vector<double> Cz_;
 
-      std::vector<int32_t> owner_; // face: cell index owning the face outwards normal
-      std::vector<int32_t> neighbour_; // face: cell index not-owning the face inwards normal
-  };
+    // face centroid
+    std::vector<double> Cfx_;
+    std::vector<double> Cfy_;
+    std::vector<double> Cfz_;
+
+    // face area
+    std::vector<double> Ax_;
+    std::vector<double> Ay_;
+    std::vector<double> Az_;
+
+    std::vector<int32_t> owner_;     // face: cell index owning the face outwards normal
+    std::vector<int32_t> neighbour_; // face: cell index not-owning the face inwards normal
+};
 
 } // namespace NeoFOAM
-

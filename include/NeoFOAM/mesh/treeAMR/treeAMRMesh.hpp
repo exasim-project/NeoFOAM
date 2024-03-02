@@ -9,31 +9,24 @@
 
 namespace NeoFOAM
 {
-  /**
-   * @class treeAMRMesh
-   * @brief Represents a mesh for tree-based adaptive mesh refinement (AMR).
-   *
-   * The treeAMRMesh class provides functionality for refining, coarsening, balancing, and writing the mesh.
-   * It also provides information about the number of elements in the mesh.
-   */
-  class treeAMRMesh
-  {
-  public:
+/**
+ * @class treeAMRMesh
+ * @brief Represents a mesh for tree-based adaptive mesh refinement (AMR).
+ *
+ * The treeAMRMesh class provides functionality for refining, coarsening, balancing, and writing the mesh.
+ * It also provides information about the number of elements in the mesh.
+ */
+class treeAMRMesh
+{
+public:
+
     /**
      * @brief Constructor for treeAMRMesh.
      * @param initialLevel_ The initial level of refinement for the mesh.
      * @param maxLevel_ The maximum level of refinement for the mesh.
      */
     treeAMRMesh(std::unique_ptr<treeAMRMeshModifier> meshModifier)
-        : meshModifier_(std::move(meshModifier))
-        , initialLevel_(meshModifier_->initialLevel())
-        , maxLevel_(meshModifier_->maxLevel())
-        , nElements_(meshModifier_->nElements())
-        , V_("V", nElements_)
-        , Cx_("Cx", nElements_)
-        , Cy_("Cy", nElements_)
-        , Cz_("Cz", nElements_)
-        , level_("level", nElements_)
+        : meshModifier_(std::move(meshModifier)), initialLevel_(meshModifier_->initialLevel()), maxLevel_(meshModifier_->maxLevel()), nElements_(meshModifier_->nElements()), V_("V", nElements_), Cx_("Cx", nElements_), Cy_("Cy", nElements_), Cz_("Cz", nElements_), level_("level", nElements_)
     {
     }
 
@@ -49,7 +42,7 @@ namespace NeoFOAM
      */
     bool refine()
     {
-      return meshModifier_->refine();
+        return meshModifier_->refine();
     }
 
     /**
@@ -58,7 +51,7 @@ namespace NeoFOAM
      */
     bool coarsen()
     {
-      return meshModifier_->coarsen();
+        return meshModifier_->coarsen();
     }
 
     /**
@@ -67,7 +60,7 @@ namespace NeoFOAM
      */
     bool balance()
     {
-      return meshModifier_->balance();
+        return meshModifier_->balance();
     }
 
     /**
@@ -75,7 +68,7 @@ namespace NeoFOAM
      */
     void write()
     {
-      meshModifier_->write();
+        meshModifier_->write();
     }
 
     /**
@@ -84,16 +77,17 @@ namespace NeoFOAM
      */
     int32_t nElements() const
     {
-      return nElements_;
+        return nElements_;
     }
 
     const treeAMRMeshModifier& meshModifier() const
     {
-      return *meshModifier_;
+        return *meshModifier_;
     }
-    
 
-  private:
+
+private:
+
     std::unique_ptr<treeAMRMeshModifier> meshModifier_;
     int32_t initialLevel_; ///< The initial level of refinement for the mesh.
     int32_t maxLevel_;     ///< The maximum level of refinement for the mesh.
@@ -105,6 +99,6 @@ namespace NeoFOAM
     scalarField Cz_; // The z-coordinate of the centroid of each cell in the mesh.
 
     scalarField level_; // The level of refinement of each cell in the mesh.
-  };
+};
 
 } // namespace NeoFOAM

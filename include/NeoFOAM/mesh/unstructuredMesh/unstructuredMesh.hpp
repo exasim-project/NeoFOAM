@@ -5,70 +5,70 @@
 #include <array>
 #include <vector>
 
-#include "NeoFOAM/blas/field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM
 {
 
-    class unstructuredMesh
-    {
-    public:
+class unstructuredMesh
+{
+public:
 
-        unstructuredMesh
-        (
-            vectorField points,
-            scalarField cellVolumes,
-            vectorField cellCentres,
-            vectorField faceAreas,
-            vectorField faceCentres,
-            scalarField magFaceAreas,
-            labelField faceOwner,
-            labelField faceNeighbour,
-            int32_t nCells,
-            int32_t nInternalFaces
-        );
+    unstructuredMesh(
+        vectorField points,
+        scalarField cellVolumes,
+        vectorField cellCentres,
+        vectorField faceAreas,
+        vectorField faceCentres,
+        scalarField magFaceAreas,
+        labelField faceOwner,
+        labelField faceNeighbour,
+        int32_t nCells,
+        int32_t nInternalFaces
+    );
 
-        const vectorField &points() const;
+    const vectorField& points() const;
 
-        const vectorField &cellCentres() const;
+    const scalarField& cellVolumes() const;
 
-        const scalarField &cellVolumes() const;
+    const vectorField& cellCentres() const;
 
-        const vectorField &faceCentres() const;
+    const vectorField& faceCentres() const;
 
-        const vectorField &faceAreas() const;
+    const vectorField& faceAreas() const;
 
-        const scalarField &magFaceAreas() const;
+    const scalarField& magFaceAreas() const;
 
-        const labelField &faceOwner() const;
+    const labelField& faceOwner() const;
 
-        const labelField &faceNeighbour() const;
+    const labelField& faceNeighbour() const;
 
-        int32_t nCells() const;
+    int32_t nCells() const;
 
-        int32_t nInternalFaces() const;
-        
+    int32_t nInternalFaces() const;
 
-    private:
-        vectorField points_; // points
 
-        scalarField cellVolumes_; // cell volume
-        vectorField cellCentres_; // cell centre
+private:
 
-        vectorField faceAreas_;    // face area vector
-        vectorField faceCentres_;  // face centre vector
-        scalarField magFaceAreas_; // face area
+    vectorField points_; // points
 
-        labelField faceOwner_;     // owner cell
-        labelField faceNeighbour_; // neighbour cell
+    scalarField cellVolumes_; // cell volume
+    vectorField cellCentres_; // cell centre
 
-        int32_t nCells_;         // number of cells
-        int32_t nInternalFaces_; // number of internal faces
+    vectorField faceAreas_;    // face area vector
+    vectorField faceCentres_;  // face centre vector
+    scalarField magFaceAreas_; // face area
 
-        // int32_t nBoundaryFaces_;   // number of faces
-        // int32_t nBoundaryPatches_; // number of patches
+    labelField faceOwner_;     // owner cell
+    labelField faceNeighbour_; // neighbour cell
 
-        // std::vector<int32_t> boundaryStartFace_; // start face of boundary patch
-    };
+    int32_t nCells_;         // number of cells
+    int32_t nInternalFaces_; // number of internal faces
+
+    // int32_t nBoundaryFaces_;   // number of faces
+    // int32_t nBoundaryPatches_; // number of patches
+
+    // std::vector<int32_t> boundaryStartFace_; // start face of boundary patch
+};
 
 } // namespace NeoFOAM

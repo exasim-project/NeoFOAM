@@ -20,10 +20,9 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" TRUE)
-option(NEOFOAM_BUILD_WITH_APPS "Build the applications folder" TRUE)
-option(NEOFOAM_BUILD_WITH_TESTS "Build the unit tests" TRUE)
 option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
-option(NEOFOAM_BUILD_TESTS "Build the unit tests" TRUE)
+option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
+option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" FALSE)
 option(NEOFOAM_BUILD_DOC "Build documentation" FALSE)
 
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
@@ -34,6 +33,13 @@ option(NEOFOAM_ENABLE_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
 option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
+
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE
+      Release
+      CACHE STRING "Choose the type of build." FORCE)
+endif()
 
 include(cmake/Kokkos.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
@@ -60,7 +66,22 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
 endif()
 
 add_subdirectory(src)
-if(NEOFOAM_BUILD_WITH_APPS)
+if(NEOFOAM_BUILD_TESTS)
+  add_subdirectory(test)
+endif()
+
+if(NEOFOAM_BUILD_BENCHMARKS)
+  add_subdirectory(benchmarks)
+endif()
+
+if(${NEOFOAM_DP_SCALAR})
+  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)
+endif()
+if(${NEOFOAM_DP_LABEL})
+  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
+endif()
+
+if(NEOFOAM_BUILD_APPS)
   add_subdirectory(applications)
 endif()
 
@@ -76,7 +97,8 @@ add_custom_target(
 
 add_custom_target(
   format
-  COMMAND find src applications -name "*.[c,h]*pp" -exec clang-format -i {} +
+  COMMAND find  include src applications test benchmarks -name "*.[c,h]*pp" -exec
+          clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 include(cmake/InstallHelpers.cmake)

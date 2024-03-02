@@ -2,80 +2,91 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/blas/domainField.hpp"
+#include "NeoFOAM/fields/Field.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include <vector>
+#include "NeoFOAM/core/executor/executor.hpp"
 
 namespace NeoFOAM
 {
 
+/**
+ * @brief A class representing a cell-centered finite volume field.
+ *
+ * This class is used to store and manipulate cell-centered finite volume fields.
+ * It provides functionality for accessing and modifying the field values.
+ *
+ * @tparam T The type of the field values.
+ */
+template<typename T>
+class fvccVolField
+{
+
+public:
+
     /**
-     * @brief A class representing a cell-centered finite volume field.
-     * 
-     * This class is used to store and manipulate cell-centered finite volume fields.
-     * It provides functionality for accessing and modifying the field values.
-     * 
-     * @tparam T The type of the field values.
+     * @brief Constructor for fvccVolField.
+     *
+     * @param nCells The number of cells in the field.
+     * @param nBoundaryFaces The number of boundary faces in the field.
+     * @param nBoundaries The number of boundaries in the field.
      */
-    template <typename T>
-    class fvccVolField
+    fvccVolField(
+        int nCells,
+        int nBoundaryFaces,
+        int nBoundaries,
+        std::vector<std::unique_ptr<fvccBoundaryField<T>>>&& boundaryConditions,
+        const executor& exec
+    )
+        : field_(nCells, nBoundaryFaces, nBoundaries, exec),
+          boundaryConditions_(std::move(boundaryConditions)) {
+
+          };
+
+    void correctBoundaryConditions()
     {
-
-        public:
-
-            /**
-             * @brief Constructor for fvccVolField.
-             * 
-             * @param nCells The number of cells in the field.
-             * @param nBoundaryFaces The number of boundary faces in the field.
-             * @param nBoundaries The number of boundaries in the field.
-             */
-            fvccVolField(int nCells, int nBoundaryFaces, int nBoundaries, std::vector<std::unique_ptr<fvccBoundaryField<T> > > &&boundaryConditions)
-                :  field_(nCells, nBoundaryFaces, nBoundaries),
-                   boundaryConditions_(std::move(boundaryConditions))
-            {
-                
-            };
-
-            void correctBoundaryConditions()
-            {
-                for (auto &boundaryCondition : boundaryConditions_)
-                {
-                    boundaryCondition->correctBoundaryConditions(field_.boundaryField());
-                }
-            };
-
-            const deviceField<T> &internalField() const
-            {
-                return field_.internalField();
-            };
-            
-            deviceField<T> &internalField()
-            {
-                return field_.internalField();
-            };
-
-
-            const boundaryFields<T> &boundaryField() const
-            {
-                return field_.boundaryField();
-            };
-
-            boundaryFields<T> &boundaryField()
-            {
-                return field_.boundaryField();
-            };
-
-            std::vector<std::unique_ptr<fvccBoundaryField<T> > > &boundaryConditions()
-            {
-                return boundaryConditions_;
-            };
-
-        private:
-
-            domainField<T> field_;
-            std::vector<std::unique_ptr<fvccBoundaryField<T> > > boundaryConditions_;
-
+        for (auto& boundaryCondition : boundaryConditions_)
+        {
+            boundaryCondition->correctBoundaryConditions(field_.boundaryField());
+        }
     };
+
+    const Field<T>& internalField() const
+    {
+        return field_.internalField();
+    };
+
+    Field<T>& internalField()
+    {
+        return field_.internalField();
+    };
+
+
+    const boundaryFields<T>& boundaryField() const
+    {
+        return field_.boundaryField();
+    };
+
+    boundaryFields<T>& boundaryField()
+    {
+        return field_.boundaryField();
+    };
+
+    std::vector<std::unique_ptr<fvccBoundaryField<T>>>& boundaryConditions()
+    {
+        return boundaryConditions_;
+    };
+
+    const executor& exec() const
+    {
+        return exec_;
+    };
+
+private:
+
+    executor exec_;
+    domainField<T> field_;
+    std::vector<std::unique_ptr<fvccBoundaryField<T>>> boundaryConditions_;
+};
 
 } // namespace NeoFOAM

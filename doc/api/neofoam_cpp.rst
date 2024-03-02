@@ -3,14 +3,5 @@
 Fields
 ======
 
-.. doxygenfile:: NeoFOAM/blas/deviceField.hpp
-   :project: NeoFOAM
-
-.. doxygenfile:: NeoFOAM/blas/deviceAdjacency.hpp
-   :project: NeoFOAM
-
-.. doxygenfile:: NeoFOAM/blas/boundaryFields.hpp
-   :project: NeoFOAM
-
-.. doxygenfile:: NeoFOAM/blas/fields.hpp
+.. doxygenfile:: NeoFOAM/fields/Field.hpp
    :project: NeoFOAM
