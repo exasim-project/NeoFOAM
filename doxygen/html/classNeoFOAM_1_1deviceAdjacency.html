@@ -121,7 +121,7 @@ KOKKOS_FUNCTION&#160;</td><td class="memItemRight" valign="bottom"><b>deviceAdja
 <tr class="memdesc:a440b3223511b32b901bd87545283142a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts an edge connection into the graph.  <a href="classNeoFOAM_1_1deviceAdjacency.html#a440b3223511b32b901bd87545283142a">More...</a><br /></td></tr>
 <tr class="separator:a440b3223511b32b901bd87545283142a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac62f9af77de22b4613bff73ea90c682b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1deviceAdjacency.html#ac62f9af77de22b4613bff73ea90c682b">resize</a> (const Tlabel &amp;<a class="el" href="classNeoFOAM_1_1deviceAdjacency.html#afd82a02ab319bc1d0a5e055e2fd264d2">size</a>)</td></tr>
-<tr class="memdesc:ac62f9af77de22b4613bff73ea90c682b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes the adjacency container to accomodate more nodes.  <a href="classNeoFOAM_1_1deviceAdjacency.html#ac62f9af77de22b4613bff73ea90c682b">More...</a><br /></td></tr>
+<tr class="memdesc:ac62f9af77de22b4613bff73ea90c682b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes the adjacency container to accommodate more nodes.  <a href="classNeoFOAM_1_1deviceAdjacency.html#ac62f9af77de22b4613bff73ea90c682b">More...</a><br /></td></tr>
 <tr class="separator:ac62f9af77de22b4613bff73ea90c682b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24626e7c884e0dc25fde9b383aa232dc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1deviceAdjacency.html#a24626e7c884e0dc25fde9b383aa232dc">contains</a> (const edge&lt; Tlabel &gt; &amp;check_edge) const</td></tr>
 <tr class="memdesc:a24626e7c884e0dc25fde9b383aa232dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if the adjacency list contains a specific connection.  <a href="classNeoFOAM_1_1deviceAdjacency.html#a24626e7c884e0dc25fde9b383aa232dc">More...</a><br /></td></tr>
@@ -142,8 +142,8 @@ class NeoFOAM::deviceAdjacency&lt; Tlabel, directed &gt;</h3>
   </table>
   </dd>
 </dl>
-<p>The <code><a class="el" href="classNeoFOAM_1_1deviceAdjacency.html" title="Represents an adjacency graph, for both directed and undirected variants.">deviceAdjacency</a></code> class represents an adjacency graph, which records the connectivity relationship between nodes through edges. The graph stores specifically the connectivity between nodes in the graph. The template parameter <code>Tlabel</code> specifies the type of the labels int, uint32, etc. The <code>directed</code> parameter indicates whether the graph is directed or undirected. In the undirected variant the graph edges are considered to connect both nodes (of the edge), and therefor no distiction is made interms of direction between the 0 and 1 node of the edge. Thus the graph is symmetric, for example, if node 10 is connected to node 20 then node 20 is connected to 10. In the directed variant, an edge connects the 0 node to the 1 node, and therefor the graph is not symmetric. For example, if node 10 is connected to node 20, the reverse is not true.</p>
-<p>A word no memory layout: To optimise memory access the data in the class is stored 'flat' with an adjacency View and an offset View. The former contains the connections of the graph while the later stores the start and end position (offset to) of each nodes' connectivity in the adjacency container. Within each node's connectivity the connections are sorted in accending order. Finally, the offset container is one greater than the size of the adjacency container, to faciliate slightly more lazy programing - since the first element will always be zero.</p>
+<p>The <code><a class="el" href="classNeoFOAM_1_1deviceAdjacency.html" title="Represents an adjacency graph, for both directed and undirected variants.">deviceAdjacency</a></code> class represents an adjacency graph, which records the connectivity relationship between nodes through edges. The graph stores specifically the connectivity between nodes in the graph. The template parameter <code>Tlabel</code> specifies the type of the labels int, uint32, etc. The <code>directed</code> parameter indicates whether the graph is directed or undirected. In the undirected variant the graph edges are considered to connect both nodes (of the edge), and therefor no distinction is made interms of direction between the 0 and 1 node of the edge. Thus the graph is symmetric, for example, if node 10 is connected to node 20 then node 20 is connected to 10. In the directed variant, an edge connects the 0 node to the 1 node, and therefor the graph is not symmetric. For example, if node 10 is connected to node 20, the reverse is not true.</p>
+<p>A word no memory layout: To optimise memory access the data in the class is stored 'flat' with an adjacency View and an offset View. The former contains the connections of the graph while the later stores the start and end position (offset to) of each nodes' connectivity in the adjacency container. Within each node's connectivity the connections are sorted in ascending order. Finally, the offset container is one greater than the size of the adjacency container, to facilitate slightly more lazy programing - since the first element will always be zero.</p>
 <dl class="section note"><dt>Note</dt><dd>An directed graph can therefor be used to represent the connection between two different 'types/classes' of nodes rather than the same. For example, a graph could be used to represent the connection between cells and faces.</dd>
 <dd>
 The undirected graphs allow for nodes to be self referenced/connected.</dd></dl>
@@ -296,7 +296,7 @@ template&lt;typename Tlabel , bool directed&gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>True if the edge was successfully inserted, false otherwise (because it already exists in the graph).</dd></dl>
 <p>This function inserts the specified edge connection into the graph. In the case of an undirected graph both the connectivity of the first and second node are updated. In the case of a directed graph only the edge is interpreted as first -&gt; second and therefore only the connectivity of the first node is updated.</p>
-<dl class="section note"><dt>Note</dt><dd>The graph will be resized to accomodate the new edge if necessary. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The graph will be resized to accommodate the new edge if necessary. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="deviceAdjacency_8hpp_source.html#l00216">216</a> of file <a class="el" href="deviceAdjacency_8hpp_source.html">deviceAdjacency.hpp</a>.</p>
 
@@ -448,7 +448,7 @@ template&lt;typename Tlabel , bool directed&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Resizes the adjacency container to accomodate more nodes. </p>
+<p>Resizes the adjacency container to accommodate more nodes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>The new size of the container.</td></tr>

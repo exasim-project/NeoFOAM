@@ -46,7 +46,7 @@ auto \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency_aa2940e0b9971a30da050a94f5
 bool \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency_a440b3223511b32b901bd87545283142a}{insert}} (const edge$<$ Tlabel $>$ \&edge)
 \begin{DoxyCompactList}\small\item\em Inserts an edge connection into the graph. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency_ac62f9af77de22b4613bff73ea90c682b}{resize}} (const Tlabel \&\mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency_afd82a02ab319bc1d0a5e055e2fd264d2}{size}})
-\begin{DoxyCompactList}\small\item\em Resizes the adjacency container to accomodate more nodes. \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em Resizes the adjacency container to accommodate more nodes. \end{DoxyCompactList}\item 
 bool \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency_a24626e7c884e0dc25fde9b383aa232dc}{contains}} (const edge$<$ Tlabel $>$ \&check\+\_\+edge) const
 \begin{DoxyCompactList}\small\item\em Checks if the adjacency list contains a specific connection. \end{DoxyCompactList}\item 
 std\+::string \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency_a90c761c8b7788f302aae1a97cfdd0b02}{name}} () const noexcept
@@ -66,9 +66,9 @@ Represents an adjacency graph, for both directed and undirected variants.
 {\em directed} & A boolean value indicating whether the adjacency matrix is directed or not.\\
 \hline
 \end{DoxyTemplParams}
-The {\ttfamily \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency}{device\+Adjacency}}} class represents an adjacency graph, which records the connectivity relationship between nodes through edges. The graph stores specifically the connectivity between nodes in the graph. The template parameter {\ttfamily Tlabel} specifies the type of the labels int, uint32, etc. The {\ttfamily directed} parameter indicates whether the graph is directed or undirected. In the undirected variant the graph edges are considered to connect both nodes (of the edge), and therefor no distiction is made interms of direction between the 0 and 1 node of the edge. Thus the graph is symmetric, for example, if node 10 is connected to node 20 then node 20 is connected to 10. In the directed variant, an edge connects the 0 node to the 1 node, and therefor the graph is not symmetric. For example, if node 10 is connected to node 20, the reverse is not true.
+The {\ttfamily \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency}{device\+Adjacency}}} class represents an adjacency graph, which records the connectivity relationship between nodes through edges. The graph stores specifically the connectivity between nodes in the graph. The template parameter {\ttfamily Tlabel} specifies the type of the labels int, uint32, etc. The {\ttfamily directed} parameter indicates whether the graph is directed or undirected. In the undirected variant the graph edges are considered to connect both nodes (of the edge), and therefor no distinction is made interms of direction between the 0 and 1 node of the edge. Thus the graph is symmetric, for example, if node 10 is connected to node 20 then node 20 is connected to 10. In the directed variant, an edge connects the 0 node to the 1 node, and therefor the graph is not symmetric. For example, if node 10 is connected to node 20, the reverse is not true.
 
-A word no memory layout\+: To optimise memory access the data in the class is stored \textquotesingle{}flat\textquotesingle{} with an adjacency View and an offset View. The former contains the connections of the graph while the later stores the start and end position (offset to) of each nodes\textquotesingle{} connectivity in the adjacency container. Within each node\textquotesingle{}s connectivity the connections are sorted in accending order. Finally, the offset container is one greater than the size of the adjacency container, to faciliate slightly more lazy programing -\/ since the first element will always be zero.
+A word no memory layout\+: To optimise memory access the data in the class is stored \textquotesingle{}flat\textquotesingle{} with an adjacency View and an offset View. The former contains the connections of the graph while the later stores the start and end position (offset to) of each nodes\textquotesingle{} connectivity in the adjacency container. Within each node\textquotesingle{}s connectivity the connections are sorted in ascending order. Finally, the offset container is one greater than the size of the adjacency container, to facilitate slightly more lazy programing -\/ since the first element will always be zero.
 
 \begin{DoxyNote}{Note}
 An directed graph can therefor be used to represent the connection between two different \textquotesingle{}types/classes\textquotesingle{} of nodes rather than the same. For example, a graph could be used to represent the connection between cells and faces.
@@ -179,7 +179,7 @@ True if the edge was successfully inserted, false otherwise (because it already 
 This function inserts the specified edge connection into the graph. In the case of an undirected graph both the connectivity of the first and second node are updated. In the case of a directed graph only the edge is interpreted as first -\/$>$ second and therefore only the connectivity of the first node is updated.
 
 \begin{DoxyNote}{Note}
-The graph will be resized to accomodate the new edge if necessary. 
+The graph will be resized to accommodate the new edge if necessary. 
 \end{DoxyNote}
 
 
@@ -270,7 +270,7 @@ void \mbox{\hyperlink{classNeoFOAM_1_1deviceAdjacency}{Neo\+FOAM\+::device\+Adja
 
 
 
-Resizes the adjacency container to accomodate more nodes. 
+Resizes the adjacency container to accommodate more nodes. 
 
 
 \begin{DoxyParams}[1]{Parameters}
