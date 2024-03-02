@@ -6,6 +6,7 @@
 #include "NeoFOAM/primitives/vector.hpp"
 #include "NeoFOAM/primitives/label.hpp"
 #include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/FieldOperations.hpp"
 
 namespace NeoFOAM
 {

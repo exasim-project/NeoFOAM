@@ -36,14 +36,15 @@ const vectorField& unstructuredMesh::points() const
     return points_;
 }
 
-const vectorField& unstructuredMesh::cellCentres() const
-{
-    return cellCentres_;
-}
 
 const scalarField& unstructuredMesh::cellVolumes() const
 {
     return cellVolumes_;
+}
+
+const vectorField& unstructuredMesh::cellCentres() const
+{
+    return cellCentres_;
 }
 
 const vectorField& unstructuredMesh::faceCentres() const

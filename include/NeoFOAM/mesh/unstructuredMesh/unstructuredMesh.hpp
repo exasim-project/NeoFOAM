@@ -29,9 +29,9 @@ public:
 
     const vectorField& points() const;
 
-    const vectorField& cellCentres() const;
-
     const scalarField& cellVolumes() const;
+
+    const vectorField& cellCentres() const;
 
     const vectorField& faceCentres() const;
 

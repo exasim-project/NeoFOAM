@@ -28,13 +28,25 @@ public:
      * @param size  size of the matrix
      * */
     Field(const executor& exec, size_t size)
-        : size_(size), exec_(exec), data_(nullptr)
+        : size_(size), data_(nullptr), exec_(exec)
     {
         void* ptr = nullptr;
         std::visit([this, &ptr, size](const auto& exec)
                    { ptr = exec.alloc(size * sizeof(T)); },
                    exec_);
         data_ = static_cast<T*>(ptr);
+    };
+
+    Field(const Field<T>& rhs)
+        : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    {
+        void* ptr = nullptr;
+        auto size = rhs.size_;
+        std::visit([this, &ptr, size](const auto& exec)
+                   { ptr = exec.alloc(size * sizeof(T)); },
+                   exec_);
+        data_ = static_cast<T*>(ptr);
+        setField(*this, rhs);
     };
 
     /**
