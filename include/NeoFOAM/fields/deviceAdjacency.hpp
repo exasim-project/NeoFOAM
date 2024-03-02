@@ -369,10 +369,10 @@ private:
     }
 
     /**
-     * @brief Initializes the adjacency list by ensuring/sorting the connections per node are in acending order.
+     * @brief Initializes the adjacency list by ensuring/sorting the connections per node are in ascending order.
      *
      * @details For non-empty adjacency lists, this function loops over all nodes (rows) and brute forces sorces the
-     * connections in acending order. Due to the perceived infrequency of the call and the small size of the adjacency
+     * connections in ascending order. Due to the perceived infrequency of the call and the small size of the adjacency
      * no optimisation of the sorting approach was considered.
      *
      * @throws std::runtime_error if the adjacency list could not be sorted.
@@ -385,7 +385,7 @@ private:
         }
 
         Kokkos::parallel_for(
-            "check_correct_acending", offset_.size() - 1, KOKKOS_CLASS_LAMBDA(const Tlabel i_node) {
+            "check_correct_ascending", offset_.size() - 1, KOKKOS_CLASS_LAMBDA(const Tlabel i_node) {
                 bool is_sorted = true;
                 const int offset_size = offset_(i_node + 1) - offset_(i_node);
                 if (offset_size < 2) return; // nothing to sort
