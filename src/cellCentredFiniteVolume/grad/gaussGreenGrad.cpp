@@ -8,7 +8,10 @@ namespace NeoFOAM
 {
 
 GaussGreenKernel::GaussGreenKernel(const unstructuredMesh& mesh, const scalarField& phi, vectorField& gradPhi)
-    : mesh_(mesh), phi_(phi), gradPhi_(gradPhi) {};
+    : mesh_(mesh), phi_(phi), gradPhi_(gradPhi)
+     {
+        NeoFOAM::fill(gradPhi_, NeoFOAM::vector(0.0, 0.0, 0.0));
+     };
 
 void GaussGreenKernel::operator()(const GPUExecutor& exec)
 {
@@ -62,6 +65,7 @@ void GaussGreenKernel::operator()(const OMPExecutor& exec)
             Kokkos::atomic_sub(&s_gradPhi[nei], value_nei);
         }
     );
+
 }
 
 void GaussGreenKernel::operator()(const CPUExecutor& exec)
@@ -78,17 +82,16 @@ void GaussGreenKernel::operator()(const CPUExecutor& exec)
     auto s_Sf = Sf.field();
     auto s_V = V.field();
 
-    Kokkos::parallel_for(
-        "gaussGreenGrad", Kokkos::RangePolicy<executor>(0, mesh_.nInternalFaces()), KOKKOS_LAMBDA(const int i) {
+    for (int i = 0; i < mesh_.nInternalFaces(); i++)
+    {
             int32_t own = s_owner[i];
             int32_t nei = s_neighbour[i];
             NeoFOAM::scalar phif = 0.5 * (s_phi[nei] + s_phi[own]);
-            NeoFOAM::vector value_own = s_Sf[i] * (phif / s_V[own]);
-            NeoFOAM::vector value_nei = s_Sf[i] * (phif / s_V[nei]);
-            Kokkos::atomic_add(&s_gradPhi[own], value_own);
-            Kokkos::atomic_sub(&s_gradPhi[nei], value_nei);
-        }
-    );
+            NeoFOAM::vector value_own = (s_Sf[i] * (phif / s_V[own]));
+            NeoFOAM::vector value_nei = (s_Sf[i] * (phif / s_V[nei]));
+            s_gradPhi[own] += value_own;
+            s_gradPhi[nei] -= value_nei;
+    }
 }
 
 
