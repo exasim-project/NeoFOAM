@@ -90,7 +90,7 @@ $(function() {
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160; </div>
 <div class="line"><a name="l00030"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#aca838209b531f27aa2c353b007af9e53">   30</a></span>&#160;    <a class="code" href="classNeoFOAM_1_1Field.html#aca838209b531f27aa2c353b007af9e53">Field</a>(<span class="keyword">const</span> executor&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>, <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>)</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;        : size_(<a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>), exec_(<a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>), data_(nullptr)</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;        : size_(<a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>), data_(nullptr), exec_(<a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    {</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;        <span class="keywordtype">void</span>* ptr = <span class="keyword">nullptr</span>;</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        std::visit([<span class="keyword">this</span>, &amp;ptr, <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
@@ -99,174 +99,186 @@ $(function() {
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;        data_ = <span class="keyword">static_cast&lt;</span>T*<span class="keyword">&gt;</span>(ptr);</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    };</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
-<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2">   43</a></span>&#160;    <a class="code" href="classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2">~Field</a>()</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    {</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        std::visit([<span class="keyword">this</span>](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;                   { <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>.free(data_); },</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <a class="code" href="classNeoFOAM_1_1Field.html#aca838209b531f27aa2c353b007af9e53">Field</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs)</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    {</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        <span class="keywordtype">void</span>* ptr = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keyword">auto</span> <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a> = rhs.size_;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        std::visit([<span class="keyword">this</span>, &amp;ptr, <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;                   { ptr = <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>.alloc(<a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a> * <span class="keyword">sizeof</span>(T)); },</div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;                   exec_);</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        data_ = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    };</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160; </div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> func&gt;</div>
-<div class="line"><a name="l00057"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a4b48af93f77bdd8f94e13fc9baf1460a">   57</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#a4b48af93f77bdd8f94e13fc9baf1460a">apply</a>(func f)</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    {</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        map(*<span class="keyword">this</span>, f);</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    }</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160; </div>
-<div class="line"><a name="l00066"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">   66</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">copyToHost</a>()</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    {</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(<a class="code" href="classNeoFOAM_1_1CPUExecutor.html">CPUExecutor</a> {}, size_);</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        this-&gt;<a class="code" href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">copyToHost</a>(result);</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    }</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160; </div>
-<div class="line"><a name="l00080"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764">   80</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764">copyToHost</a>(<a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; result)</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    {</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="keywordflow">if</span> (!std::holds_alternative&lt;GPUExecutor&gt;(exec_))</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;        {</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;            result = *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        }</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        <span class="keywordflow">else</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        {</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;            <span class="keywordflow">if</span> (result.<a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>() != size_)</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;            {</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;                exit(1);</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;            }</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160; </div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            Kokkos::View&lt;T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged&gt;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                GPU_view(data_, size_);</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;            Kokkos::View&lt;T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged&gt; result_view(</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;                result.<a class="code" href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">data</a>(), size_</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;            );</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;            Kokkos::deep_copy(result_view, GPU_view);</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        }</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    }</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160; </div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    <span class="comment">// // move assignment operator</span></div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    <span class="comment">// Field&lt;T&gt; &amp;operator=(Field&lt;T&gt; &amp;&amp;rhs)</span></div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    <span class="comment">// {</span></div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    <span class="comment">//     if (this != &amp;rhs)</span></div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <span class="comment">//     {</span></div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <span class="comment">//         field_ = std::move(rhs.field_);</span></div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="comment">//         size_ = rhs.size_;</span></div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <span class="comment">//     }</span></div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="comment">//     return *this;</span></div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    <span class="comment">// }</span></div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        data_ = <span class="keyword">static_cast&lt;</span>T*<span class="keyword">&gt;</span>(ptr);</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        setField(*<span class="keyword">this</span>, rhs);</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    };</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160; </div>
+<div class="line"><a name="l00055"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2">   55</a></span>&#160;    <a class="code" href="classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2">~Field</a>()</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    {</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;        std::visit([<span class="keyword">this</span>](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;                   { <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>.free(data_); },</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;                   exec_);</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        data_ = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    };</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160; </div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> func&gt;</div>
+<div class="line"><a name="l00069"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a4b48af93f77bdd8f94e13fc9baf1460a">   69</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#a4b48af93f77bdd8f94e13fc9baf1460a">apply</a>(func f)</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    {</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        map(*<span class="keyword">this</span>, f);</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    }</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160; </div>
+<div class="line"><a name="l00078"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">   78</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">copyToHost</a>()</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    {</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(<a class="code" href="classNeoFOAM_1_1CPUExecutor.html">CPUExecutor</a> {}, size_);</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;        this-&gt;<a class="code" href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">copyToHost</a>(result);</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    }</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160; </div>
+<div class="line"><a name="l00092"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764">   92</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764">copyToHost</a>(<a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; result)</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    {</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        <span class="keywordflow">if</span> (!std::holds_alternative&lt;GPUExecutor&gt;(exec_))</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        {</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;            result = *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        }</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;        <span class="keywordflow">else</span></div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        {</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;            <span class="keywordflow">if</span> (result.<a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>() != size_)</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;            {</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;                exit(1);</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;            }</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160; </div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;            Kokkos::View&lt;T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged&gt;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;                GPU_view(data_, size_);</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;            Kokkos::View&lt;T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged&gt; result_view(</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;                result.<a class="code" href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">data</a>(), size_</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;            );</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;            Kokkos::deep_copy(result_view, GPU_view);</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;        }</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    }</div>
 <div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160; </div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;    KOKKOS_FUNCTION</div>
-<div class="line"><a name="l00122"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a91b13056964193200c9f4727144e693f">  122</a></span>&#160;    T&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a91b13056964193200c9f4727144e693f">operator()</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> i)</div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    {</div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;        <span class="comment">// TODO not implemented</span></div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Not implemented&quot;</span>);</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    }</div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160; </div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;    KOKKOS_FUNCTION</div>
-<div class="line"><a name="l00136"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a18c84caa713c1be36bea0a3fa8046afd">  136</a></span>&#160;    <span class="keyword">const</span> T&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a18c84caa713c1be36bea0a3fa8046afd">operator()</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> i)<span class="keyword"> const</span></div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;<span class="keyword">    </span>{</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;        <span class="comment">// TODO not implemented</span></div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;        exit(1);</div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;    }</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160; </div>
-<div class="line"><a name="l00149"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ad79606b5e55d41a4f2f5364f7e8a2809">  149</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#ad79606b5e55d41a4f2f5364f7e8a2809">operator=</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs) { setField(*<span class="keyword">this</span>, rhs); }</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160; </div>
-<div class="line"><a name="l00155"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#adf3268d3f015ed7d3ac499b8dd1e87ed">  155</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#adf3268d3f015ed7d3ac499b8dd1e87ed">operator=</a>(<span class="keyword">const</span> T&amp; rhs) { fill(*<span class="keyword">this</span>, rhs); }</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160; </div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    <span class="comment">// arithmetic operator</span></div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160; </div>
-<div class="line"><a name="l00164"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a89f7e7f81e84816dfee9894b47c7486e">  164</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a89f7e7f81e84816dfee9894b47c7486e">operator+</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs)</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;    {</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;        result = *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;        add(result, rhs);</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    }</div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160; </div>
-<div class="line"><a name="l00177"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a5e640195842ec6cb890e4a81dc8fb0b7">  177</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a5e640195842ec6cb890e4a81dc8fb0b7">operator-</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs)</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    {</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;        result = *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;        sub(result, rhs);</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;    }</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160; </div>
-<div class="line"><a name="l00190"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a9b1d3ba42d97feb27e0253172d563019">  190</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a9b1d3ba42d97feb27e0253172d563019">operator*</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;scalar&gt;</a>&amp; rhs)</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;    {</div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;        result = *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;        mul(result, rhs);</div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;    }</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160; </div>
-<div class="line"><a name="l00204"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a534418f401f1da6760464428cd7c8b14">  204</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a534418f401f1da6760464428cd7c8b14">operator*</a>(<span class="keyword">const</span> scalar rhs)</div>
-<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;    {</div>
-<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
-<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;        result = *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;        mul(result, rhs);</div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;        <span class="keywordflow">return</span> result;</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;    }</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160; </div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;    <span class="comment">// setter</span></div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160; </div>
-<div class="line"><a name="l00218"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757">  218</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757">setSize</a>(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>)</div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;    {</div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;        <span class="keywordtype">void</span>* ptr = <span class="keyword">nullptr</span>;</div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;        std::visit(</div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;            [<span class="keyword">this</span>, &amp;ptr, <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;            {</div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;                ptr = <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>.realloc(data_, <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a> * <span class="keyword">sizeof</span>(T));</div>
-<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;            },</div>
-<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;            exec_</div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;        );</div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;        data_ = <span class="keyword">static_cast&lt;</span>T*<span class="keyword">&gt;</span>(ptr);</div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;        size_ = <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>;</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;    }</div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160; </div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;    <span class="comment">// getter</span></div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160; </div>
-<div class="line"><a name="l00238"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">  238</a></span>&#160;    [[nodiscard]] T* <a class="code" href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">data</a>() { <span class="keywordflow">return</span> data_; }</div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160; </div>
-<div class="line"><a name="l00244"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191">  244</a></span>&#160;    [[nodiscard]] <span class="keyword">const</span> T* <a class="code" href="classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191">data</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> data_; }</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <span class="comment">// // move assignment operator</span></div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;    <span class="comment">// Field&lt;T&gt; &amp;operator=(Field&lt;T&gt; &amp;&amp;rhs)</span></div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    <span class="comment">// {</span></div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <span class="comment">//     if (this != &amp;rhs)</span></div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;    <span class="comment">//     {</span></div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;    <span class="comment">//         field_ = std::move(rhs.field_);</span></div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;    <span class="comment">//         size_ = rhs.size_;</span></div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;    <span class="comment">//     }</span></div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;    <span class="comment">//     return *this;</span></div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    <span class="comment">// }</span></div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160; </div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;    KOKKOS_FUNCTION</div>
+<div class="line"><a name="l00134"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a91b13056964193200c9f4727144e693f">  134</a></span>&#160;    T&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a91b13056964193200c9f4727144e693f">operator()</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> i)</div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;    {</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;        <span class="comment">// TODO not implemented</span></div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Not implemented&quot;</span>);</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;    }</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160; </div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;    KOKKOS_FUNCTION</div>
+<div class="line"><a name="l00148"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a18c84caa713c1be36bea0a3fa8046afd">  148</a></span>&#160;    <span class="keyword">const</span> T&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a18c84caa713c1be36bea0a3fa8046afd">operator()</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> i)<span class="keyword"> const</span></div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;<span class="keyword">    </span>{</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;        <span class="comment">// TODO not implemented</span></div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        exit(1);</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;    }</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160; </div>
+<div class="line"><a name="l00161"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ad79606b5e55d41a4f2f5364f7e8a2809">  161</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#ad79606b5e55d41a4f2f5364f7e8a2809">operator=</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs) { setField(*<span class="keyword">this</span>, rhs); }</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160; </div>
+<div class="line"><a name="l00167"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#adf3268d3f015ed7d3ac499b8dd1e87ed">  167</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#adf3268d3f015ed7d3ac499b8dd1e87ed">operator=</a>(<span class="keyword">const</span> T&amp; rhs) { fill(*<span class="keyword">this</span>, rhs); }</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160; </div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;    <span class="comment">// arithmetic operator</span></div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160; </div>
+<div class="line"><a name="l00176"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a89f7e7f81e84816dfee9894b47c7486e">  176</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a89f7e7f81e84816dfee9894b47c7486e">operator+</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs)</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;    {</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;        result = *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;        add(result, rhs);</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;    }</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160; </div>
+<div class="line"><a name="l00189"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a5e640195842ec6cb890e4a81dc8fb0b7">  189</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a5e640195842ec6cb890e4a81dc8fb0b7">operator-</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a>&amp; rhs)</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;    {</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;        result = *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;        sub(result, rhs);</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;    }</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160; </div>
+<div class="line"><a name="l00202"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a9b1d3ba42d97feb27e0253172d563019">  202</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a9b1d3ba42d97feb27e0253172d563019">operator*</a>(<span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;scalar&gt;</a>&amp; rhs)</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    {</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;        result = *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;        mul(result, rhs);</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;    }</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160; </div>
+<div class="line"><a name="l00216"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a534418f401f1da6760464428cd7c8b14">  216</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a534418f401f1da6760464428cd7c8b14">operator*</a>(<span class="keyword">const</span> scalar rhs)</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;    {</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;        <a class="code" href="classNeoFOAM_1_1Field.html">Field&lt;T&gt;</a> result(exec_, size_);</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;        result = *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;        mul(result, rhs);</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;        <span class="keywordflow">return</span> result;</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;    }</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160; </div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;    <span class="comment">// setter</span></div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160; </div>
+<div class="line"><a name="l00230"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757">  230</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757">setSize</a>(<span class="keyword">const</span> <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>)</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;    {</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;        <span class="keywordtype">void</span>* ptr = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;        std::visit(</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;            [<span class="keyword">this</span>, &amp;ptr, <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>)</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;            {</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;                ptr = <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>.realloc(data_, <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a> * <span class="keyword">sizeof</span>(T));</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;            },</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;            exec_</div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;        );</div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;        data_ = <span class="keyword">static_cast&lt;</span>T*<span class="keyword">&gt;</span>(ptr);</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;        size_ = <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>;</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;    }</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160; </div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;    <span class="comment">// getter</span></div>
 <div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160; </div>
-<div class="line"><a name="l00250"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">  250</a></span>&#160;    [[nodiscard]] <span class="keyword">const</span> executor&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>() { <span class="keywordflow">return</span> exec_; }</div>
+<div class="line"><a name="l00250"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">  250</a></span>&#160;    [[nodiscard]] T* <a class="code" href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">data</a>() { <span class="keywordflow">return</span> data_; }</div>
 <div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160; </div>
-<div class="line"><a name="l00256"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">  256</a></span>&#160;    [[nodiscard]] <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> size_; }</div>
+<div class="line"><a name="l00256"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191">  256</a></span>&#160;    [[nodiscard]] <span class="keyword">const</span> T* <a class="code" href="classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191">data</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> data_; }</div>
 <div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160; </div>
-<div class="line"><a name="l00262"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a26b8f30b64552bf11b60bc9b8d76b747">  262</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a26b8f30b64552bf11b60bc9b8d76b747">field</a>() { <span class="keywordflow">return</span> <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a>(data_, size_); }</div>
+<div class="line"><a name="l00262"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">  262</a></span>&#160;    [[nodiscard]] <span class="keyword">const</span> executor&amp; <a class="code" href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">exec</a>() { <span class="keywordflow">return</span> exec_; }</div>
 <div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160; </div>
-<div class="line"><a name="l00268"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a5c226fa9c3b2f5ab21d48b6c7902811a">  268</a></span>&#160;    [[nodiscard]] <span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a5c226fa9c3b2f5ab21d48b6c7902811a">field</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a>(data_, size_); }</div>
+<div class="line"><a name="l00268"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">  268</a></span>&#160;    [[nodiscard]] <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">size</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> size_; }</div>
 <div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160; </div>
-<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160; </div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;    <span class="keywordtype">size_t</span> size_; </div>
-<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;    T* data_;     </div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;    <span class="keyword">const</span> executor</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;        exec_; </div>
-<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;};</div>
-<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160; </div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a name="l00274"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a26b8f30b64552bf11b60bc9b8d76b747">  274</a></span>&#160;    [[nodiscard]] <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a26b8f30b64552bf11b60bc9b8d76b747">field</a>() { <span class="keywordflow">return</span> <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a>(data_, size_); }</div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160; </div>
+<div class="line"><a name="l00280"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Field.html#a5c226fa9c3b2f5ab21d48b6c7902811a">  280</a></span>&#160;    [[nodiscard]] <span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a> <a class="code" href="classNeoFOAM_1_1Field.html#a5c226fa9c3b2f5ab21d48b6c7902811a">field</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <a class="code" href="classNeoFOAM_1_1span.html">span&lt;T&gt;</a>(data_, size_); }</div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160; </div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160; </div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;    <span class="keywordtype">size_t</span> size_; </div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;    T* data_;     </div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;    <span class="keyword">const</span> executor</div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;        exec_; </div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;};</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160; </div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aclassNeoFOAM_1_1CPUExecutor_html"><div class="ttname"><a href="classNeoFOAM_1_1CPUExecutor.html">NeoFOAM::CPUExecutor</a></div><div class="ttdef"><b>Definition:</b> <a href="CPUExecutor_8hpp_source.html#l00011">CPUExecutor.hpp:12</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Field_html"><div class="ttname"><a href="classNeoFOAM_1_1Field.html">NeoFOAM::Field</a></div><div class="ttdoc">A class to contain the data and executors for a field and define some basic operations.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00021">Field.hpp:22</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a18c84caa713c1be36bea0a3fa8046afd"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a18c84caa713c1be36bea0a3fa8046afd">NeoFOAM::Field::operator()</a></div><div class="ttdeci">KOKKOS_FUNCTION const T &amp; operator()(const int i) const</div><div class="ttdoc">Function call operator.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00136">Field.hpp:136</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a26b8f30b64552bf11b60bc9b8d76b747"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a26b8f30b64552bf11b60bc9b8d76b747">NeoFOAM::Field::field</a></div><div class="ttdeci">span&lt; T &gt; field()</div><div class="ttdoc">Gets the field as a span.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00262">Field.hpp:262</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a47c422de47c8ac36edf73129ed4c9b75"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">NeoFOAM::Field::exec</a></div><div class="ttdeci">const executor &amp; exec()</div><div class="ttdoc">Gets the executor associated with the field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00250">Field.hpp:250</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a4b48af93f77bdd8f94e13fc9baf1460a"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a4b48af93f77bdd8f94e13fc9baf1460a">NeoFOAM::Field::apply</a></div><div class="ttdeci">void apply(func f)</div><div class="ttdoc">applies a functor, transformation, to the field</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00057">Field.hpp:57</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a534418f401f1da6760464428cd7c8b14"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a534418f401f1da6760464428cd7c8b14">NeoFOAM::Field::operator*</a></div><div class="ttdeci">Field&lt; T &gt; operator*(const scalar rhs)</div><div class="ttdoc">Arithmetic multiply operator, multiplies every cell in the field by a scalar.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00204">Field.hpp:204</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a5c226fa9c3b2f5ab21d48b6c7902811a"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a5c226fa9c3b2f5ab21d48b6c7902811a">NeoFOAM::Field::field</a></div><div class="ttdeci">const span&lt; T &gt; field() const</div><div class="ttdoc">Gets the field as a span.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00268">Field.hpp:268</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a5e640195842ec6cb890e4a81dc8fb0b7"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a5e640195842ec6cb890e4a81dc8fb0b7">NeoFOAM::Field::operator-</a></div><div class="ttdeci">Field&lt; T &gt; operator-(const Field&lt; T &gt; &amp;rhs)</div><div class="ttdoc">Arithmetic subtraction operator, subtraction by a second field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00177">Field.hpp:177</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a725bf35c7b92ee1d29c0f62cbf32ebe2"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2">NeoFOAM::Field::~Field</a></div><div class="ttdeci">~Field()</div><div class="ttdoc">Destroy the Field object.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00043">Field.hpp:43</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a89f7e7f81e84816dfee9894b47c7486e"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a89f7e7f81e84816dfee9894b47c7486e">NeoFOAM::Field::operator+</a></div><div class="ttdeci">Field&lt; T &gt; operator+(const Field&lt; T &gt; &amp;rhs)</div><div class="ttdoc">Arithmetic add operator, addition of a second field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00164">Field.hpp:164</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a91b13056964193200c9f4727144e693f"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a91b13056964193200c9f4727144e693f">NeoFOAM::Field::operator()</a></div><div class="ttdeci">KOKKOS_FUNCTION T &amp; operator()(const int i)</div><div class="ttdoc">Function call operator.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00122">Field.hpp:122</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a9b1d3ba42d97feb27e0253172d563019"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a9b1d3ba42d97feb27e0253172d563019">NeoFOAM::Field::operator*</a></div><div class="ttdeci">Field&lt; T &gt; operator*(const Field&lt; scalar &gt; &amp;rhs)</div><div class="ttdoc">Arithmetic subtraction operator, subtraction by a second field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00190">Field.hpp:190</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_abb08c811bfad17b79f99720d259f6757"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757">NeoFOAM::Field::setSize</a></div><div class="ttdeci">void setSize(const size_t size)</div><div class="ttdoc">Set the Size of the field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00218">Field.hpp:218</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ac7b4565be06efc111e443d7a74d2abd0"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">NeoFOAM::Field::copyToHost</a></div><div class="ttdeci">Field&lt; T &gt; copyToHost()</div><div class="ttdoc">Returns a copy of the field back to the host.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00066">Field.hpp:66</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a18c84caa713c1be36bea0a3fa8046afd"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a18c84caa713c1be36bea0a3fa8046afd">NeoFOAM::Field::operator()</a></div><div class="ttdeci">KOKKOS_FUNCTION const T &amp; operator()(const int i) const</div><div class="ttdoc">Function call operator.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00148">Field.hpp:148</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a26b8f30b64552bf11b60bc9b8d76b747"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a26b8f30b64552bf11b60bc9b8d76b747">NeoFOAM::Field::field</a></div><div class="ttdeci">span&lt; T &gt; field()</div><div class="ttdoc">Gets the field as a span.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00274">Field.hpp:274</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a47c422de47c8ac36edf73129ed4c9b75"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75">NeoFOAM::Field::exec</a></div><div class="ttdeci">const executor &amp; exec()</div><div class="ttdoc">Gets the executor associated with the field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00262">Field.hpp:262</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a4b48af93f77bdd8f94e13fc9baf1460a"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a4b48af93f77bdd8f94e13fc9baf1460a">NeoFOAM::Field::apply</a></div><div class="ttdeci">void apply(func f)</div><div class="ttdoc">applies a functor, transformation, to the field</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00069">Field.hpp:69</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a534418f401f1da6760464428cd7c8b14"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a534418f401f1da6760464428cd7c8b14">NeoFOAM::Field::operator*</a></div><div class="ttdeci">Field&lt; T &gt; operator*(const scalar rhs)</div><div class="ttdoc">Arithmetic multiply operator, multiplies every cell in the field by a scalar.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00216">Field.hpp:216</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a5c226fa9c3b2f5ab21d48b6c7902811a"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a5c226fa9c3b2f5ab21d48b6c7902811a">NeoFOAM::Field::field</a></div><div class="ttdeci">const span&lt; T &gt; field() const</div><div class="ttdoc">Gets the field as a span.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00280">Field.hpp:280</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a5e640195842ec6cb890e4a81dc8fb0b7"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a5e640195842ec6cb890e4a81dc8fb0b7">NeoFOAM::Field::operator-</a></div><div class="ttdeci">Field&lt; T &gt; operator-(const Field&lt; T &gt; &amp;rhs)</div><div class="ttdoc">Arithmetic subtraction operator, subtraction by a second field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00189">Field.hpp:189</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a725bf35c7b92ee1d29c0f62cbf32ebe2"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2">NeoFOAM::Field::~Field</a></div><div class="ttdeci">~Field()</div><div class="ttdoc">Destroy the Field object.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00055">Field.hpp:55</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a89f7e7f81e84816dfee9894b47c7486e"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a89f7e7f81e84816dfee9894b47c7486e">NeoFOAM::Field::operator+</a></div><div class="ttdeci">Field&lt; T &gt; operator+(const Field&lt; T &gt; &amp;rhs)</div><div class="ttdoc">Arithmetic add operator, addition of a second field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00176">Field.hpp:176</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a91b13056964193200c9f4727144e693f"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a91b13056964193200c9f4727144e693f">NeoFOAM::Field::operator()</a></div><div class="ttdeci">KOKKOS_FUNCTION T &amp; operator()(const int i)</div><div class="ttdoc">Function call operator.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00134">Field.hpp:134</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a9b1d3ba42d97feb27e0253172d563019"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a9b1d3ba42d97feb27e0253172d563019">NeoFOAM::Field::operator*</a></div><div class="ttdeci">Field&lt; T &gt; operator*(const Field&lt; scalar &gt; &amp;rhs)</div><div class="ttdoc">Arithmetic subtraction operator, subtraction by a second field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00202">Field.hpp:202</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_abb08c811bfad17b79f99720d259f6757"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757">NeoFOAM::Field::setSize</a></div><div class="ttdeci">void setSize(const size_t size)</div><div class="ttdoc">Set the Size of the field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00230">Field.hpp:230</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ac7b4565be06efc111e443d7a74d2abd0"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ac7b4565be06efc111e443d7a74d2abd0">NeoFOAM::Field::copyToHost</a></div><div class="ttdeci">Field&lt; T &gt; copyToHost()</div><div class="ttdoc">Returns a copy of the field back to the host.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00078">Field.hpp:78</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Field_html_aca838209b531f27aa2c353b007af9e53"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#aca838209b531f27aa2c353b007af9e53">NeoFOAM::Field::Field</a></div><div class="ttdeci">Field(const executor &amp;exec, size_t size)</div><div class="ttdoc">Create a Field with a given size on an executor.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00030">Field.hpp:30</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ad79606b5e55d41a4f2f5364f7e8a2809"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ad79606b5e55d41a4f2f5364f7e8a2809">NeoFOAM::Field::operator=</a></div><div class="ttdeci">void operator=(const Field&lt; T &gt; &amp;rhs)</div><div class="ttdoc">Assignment operator, Sets the field values to that of the parsed field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00149">Field.hpp:149</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_adb67919d7d63d790258680dce54e76fb"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">NeoFOAM::Field::size</a></div><div class="ttdeci">size_t size() const</div><div class="ttdoc">Gets the size of the field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00256">Field.hpp:256</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_adf3268d3f015ed7d3ac499b8dd1e87ed"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#adf3268d3f015ed7d3ac499b8dd1e87ed">NeoFOAM::Field::operator=</a></div><div class="ttdeci">void operator=(const T &amp;rhs)</div><div class="ttdoc">Assignment operator, Sets the field values to that of the value.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00155">Field.hpp:155</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ae7f813ea93842611ec32ce6af238a191"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191">NeoFOAM::Field::data</a></div><div class="ttdeci">const T * data() const</div><div class="ttdoc">Direct access to the underlying field data.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00244">Field.hpp:244</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ae9e36e3e8cb791083123ecd1c0bce764"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764">NeoFOAM::Field::copyToHost</a></div><div class="ttdeci">void copyToHost(Field&lt; T &gt; &amp;result)</div><div class="ttdoc">Copies the data (from anywhere) to a parsed host field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00080">Field.hpp:80</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_af51a828bc00b9af9570737f9776d36a8"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">NeoFOAM::Field::data</a></div><div class="ttdeci">T * data()</div><div class="ttdoc">Direct access to the underlying field data.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00238">Field.hpp:238</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ad79606b5e55d41a4f2f5364f7e8a2809"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ad79606b5e55d41a4f2f5364f7e8a2809">NeoFOAM::Field::operator=</a></div><div class="ttdeci">void operator=(const Field&lt; T &gt; &amp;rhs)</div><div class="ttdoc">Assignment operator, Sets the field values to that of the parsed field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00161">Field.hpp:161</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_adb67919d7d63d790258680dce54e76fb"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb">NeoFOAM::Field::size</a></div><div class="ttdeci">size_t size() const</div><div class="ttdoc">Gets the size of the field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00268">Field.hpp:268</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_adf3268d3f015ed7d3ac499b8dd1e87ed"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#adf3268d3f015ed7d3ac499b8dd1e87ed">NeoFOAM::Field::operator=</a></div><div class="ttdeci">void operator=(const T &amp;rhs)</div><div class="ttdoc">Assignment operator, Sets the field values to that of the value.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00167">Field.hpp:167</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ae7f813ea93842611ec32ce6af238a191"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191">NeoFOAM::Field::data</a></div><div class="ttdeci">const T * data() const</div><div class="ttdoc">Direct access to the underlying field data.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00256">Field.hpp:256</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_ae9e36e3e8cb791083123ecd1c0bce764"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764">NeoFOAM::Field::copyToHost</a></div><div class="ttdeci">void copyToHost(Field&lt; T &gt; &amp;result)</div><div class="ttdoc">Copies the data (from anywhere) to a parsed host field.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00092">Field.hpp:92</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_af51a828bc00b9af9570737f9776d36a8"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8">NeoFOAM::Field::data</a></div><div class="ttdeci">T * data()</div><div class="ttdoc">Direct access to the underlying field data.</div><div class="ttdef"><b>Definition:</b> <a href="Field_8hpp_source.html#l00250">Field.hpp:250</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1span_html"><div class="ttname"><a href="classNeoFOAM_1_1span.html">NeoFOAM::span</a></div><div class="ttdef"><b>Definition:</b> <a href="span_8hpp_source.html#l00009">span.hpp:10</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
