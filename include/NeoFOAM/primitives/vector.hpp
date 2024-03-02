@@ -77,7 +77,8 @@ public:
         cmpts_[2] *= rhs;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const vector& v) {
+    friend std::ostream& operator<<(std::ostream& os, const vector& v)
+    {
         os << "(" << v.cmpts_[0] << ", " << v.cmpts_[1] << ", " << v.cmpts_[2] << ")";
         return os;
     }
