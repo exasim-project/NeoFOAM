@@ -5,6 +5,8 @@
 Welcome to NeoFOAM!
 ===================================
 
+The NeoFOAM project has set itself the goal of bringing modern software development methods to the core libraries of OpenFOAM.
+
 NeoFOAM aims to be a drop in replacement prototype for OpenFOAMs core libraries `libfiniteVolume.so` and `libOpenFOAM.so`.
 
 The NeoFOAM project has the following goals:

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['cpuexecutor_76',['CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html',1,'NeoFOAM']]]
+  ['error_34',['error',['../classNeoFOAM_1_1error.html',1,'NeoFOAM']]]
 ];
