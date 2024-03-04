@@ -7,6 +7,14 @@ Welcome to NeoFOAM!
 
 The NeoFOAM project has set itself the goal of bringing modern software development methods to the core libraries of OpenFOAM.
 
+Table of Contents
+^^^^^^^^^^^^^^^^^
+.. toctree::
+   :maxdepth: 2
+   
+   self
+   api/index
+
 NeoFOAM aims to be a drop in replacement prototype for OpenFOAMs core libraries `libfiniteVolume.so` and `libOpenFOAM.so`.
 
 The NeoFOAM project has the following goals:
@@ -27,10 +35,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-Table of Contents
-^^^^^^^^^^^^^^^^^
-.. toctree::
-   :maxdepth: 2
-   
-   self
-   api/index
+
