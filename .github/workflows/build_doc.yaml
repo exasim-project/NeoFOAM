@@ -1,4 +1,4 @@
-name: Build test docs
+name: Build documentation
 
 on:
   pull_request:
@@ -18,9 +18,8 @@ jobs:
     - name: Build docs
       run: |
         mkdir build
-        mkdir -p build/test
-        cd build/test
-        cmake -DNEOFOAM_BUILD_DOC=On ../..
+        cd build
+        cmake -DNEOFOAM_BUILD_DOC=On ..
         cmake --build . -t doc
         cp -r docs/doxygen docs/sphinx
         cd docs/sphinx
@@ -30,3 +29,8 @@ jobs:
       with:
         folder: build/test/docs/sphinx
         target-folder: test_build
+    - name: Deploy Build
+      if: github.event.pull_request.merged == true && github.ref == 'refs/heads/main'
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: build/test/docs/sphinx
