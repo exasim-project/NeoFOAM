@@ -5,7 +5,7 @@
 
 > [!IMPORTANT]
 > The NeoFOAM project needs you!
-> If you're interested in contributing to NeoFOAM please open a PR! If you have any questions on where to start please contact here or on [gitter](https://matrix.to/#/#NeoFOAM:gitter.im)
+> If you're interested in contributing to NeoFOAM please open a PR! If you have any questions on where to start please contact us here or on [gitter](https://matrix.to/#/#NeoFOAM:gitter.im).
 
 ## Requirements
 
