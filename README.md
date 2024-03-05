@@ -1,7 +1,7 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
 **[Documentation](https://exasim-project.com/NeoFOAM/)** |
-# NeoFOA>
+# NeoFOAM
 
 > [!IMPORTANT]
 > The NeoFOAM project needs you!
