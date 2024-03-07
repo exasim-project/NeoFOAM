@@ -125,49 +125,56 @@ void setField(Field<T>& f, const Field<T>& rhsField_)
                f.exec());
 }
 
+
+/**
+ * @brief Functor to hold the plattform portable addition kernel
+ */
 template<typename T>
 struct addOp
 {
-    // const Field<T>& rhsField_;
-
     template<typename Executor>
-    void operator()(const Executor& exec, Field<T>& f, const Field<T>& rhsField)
+    void operator()(const Executor& exec, Field<T>& a, const Field<T>& b)
     {
         using executor = typename Executor::exec;
-        auto s_f = f.field();
-        auto s_rhsField = rhsField.field();
+        auto a_f = a.field();
+        auto b_f = b.field();
         Kokkos::parallel_for(
-            Kokkos::RangePolicy<executor>(0, s_f.size()),
-            KOKKOS_CLASS_LAMBDA(const int i) { s_f[i] = s_f[i] + s_rhsField[i]; }
+            Kokkos::RangePolicy<executor>(0, a_f.size()),
+            KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = a_f[i] + b_f[i]; }
         );
     }
 
+    // NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
+    // implementation?
     template<typename Executor>
-    void operator()(const CPUExecutor& exec, Field<T>& f, const Field<T>& rhsField)
+    void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b)
     {
-        auto s_f = f.field();
-        auto s_rhsField = rhsField.field();
-        for (int i = 0; i < s_f.size(); i++)
+        auto a_f = f.field();
+        const auto b_f = b.field();
+        for (int i = 0; i < a_f.size(); i++)
         {
-            s_f[i] = s_f[i] + s_rhsField[i];
+            a_f[i] += b_f[i];
         }
     }
 };
 
+/**
+ * @brief Arithmetic add function, performs addition of two fields
+ * @param a In-out parameter,
+ * @param b The second field
+ */
 template<typename T>
-void add(Field<T>& f, const Field<T>& rhsField)
+void add(Field<T>& a, const Field<T>& b)
 {
     addOp<T> addField_;
     std::visit([&](const auto& exec)
-               { addField_(exec, f, rhsField); },
-               f.exec());
+               { addField_(exec, a, b); },
+               a.exec());
 }
 
 template<typename T>
 struct subOp
 {
-    // const Field<T>& rhsField_;
-
     template<typename Executor>
     void operator()(const Executor& exec, Field<T>& f, const Field<T>& rhsField)
     {
