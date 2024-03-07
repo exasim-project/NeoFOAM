@@ -146,7 +146,15 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<T>& rhs) { setField(*this, rhs); }
+    void operator=(const Field<T>& rhs)
+    {
+
+        if (this->size() != rhs.size())
+        {
+            this->setSize(rhs.size());
+        }
+        setField(*this, rhs.field());
+    }
 
     /**
      * @brief Assignment operator, Sets the field values to that of the value.
@@ -205,7 +213,7 @@ public:
     {
         Field<T> result(exec_, size_);
         result = *this;
-        mul(result, rhs);
+        scalar_mul(result, rhs);
         return result;
     }
 
