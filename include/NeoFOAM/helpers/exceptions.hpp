@@ -15,32 +15,6 @@ namespace NeoFOAM
  * blocks, and a human-readable error description can be obtained by calling
  * the Error::what() method.
  *
- * As an example, trying to compute a matrix-vector product with arguments of
- * incompatible size will result in a DimensionMismatch error, which is
- * demonstrated in the following program.
- *
- * ```cpp
- * #include <ginkgo.h>
- * #include <iostream>
- *
- * using namespace gko;
- *
- * int main()
- * {
- *     auto omp = create<OmpExecutor>();
- *     auto A = randn_fill<matrix::Csr<float>>(5, 5, 0f, 1f, omp);
- *     auto x = fill<matrix::Dense<float>>(6, 1, 1f, omp);
- *     try {
- *         auto y = apply(A, x);
- *     } catch(Error e) {
- *         // an error occurred, write the message to screen and exit
- *         std::cout << e.what() << std::endl;
- *         return -1;
- *     }
- *     return 0;
- * }
- * ```
- *
  * @ingroup error
  */
 class Error : public std::exception
