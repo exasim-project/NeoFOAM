@@ -202,15 +202,44 @@
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like addition or subtraction of two fields, or scalar operations like multiplication of a field with a scalar.</p>
 <p>In the following, we will explain the implementation details of the field operations using the additions operator as example. The block of code below shows an example implementation of the addition operator.</p>
-<dl class="simple">
-<dt>Besides creating a temporary for the result it mainly calls the free standing <code class="docutils literal notranslate"><span class="pre">add</span></code> function which is implemented in <code class="docutils literal notranslate"><span class="pre">FieldOperations.hpp</span></code>. This in turn dispatches to the <code class="docutils literal notranslate"><span class="pre">addOp</span></code> functor, that holds the actual addition kernels. In the case of addition this is implemented as a  <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> function, see</dt><dd><p><a class="reference external" href="https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html">Kokkos documentation</a> for more details.</p>
+<dl>
+<dt><a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>c++</dt><dd><p>[[nodiscard]] Field&lt;T&gt; operator+(const Field&lt;T&gt;&amp; rhs)
+{</p>
+<blockquote>
+<div><p>Field&lt;T&gt; result(<a href="#id27"><span class="problematic" id="id28">exec_</span></a>, <a href="#id29"><span class="problematic" id="id30">size_</span></a>);
+result = <a href="#id5"><span class="problematic" id="id6">*</span></a>this;
+add(result, rhs);
+return result;</p>
+</div></blockquote>
+<p>}</p>
 </dd>
 </dl>
-<p>The code snippet also highlights another important aspect, the executor. The executor, here defines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy</span></code>, see  <a href="#id1"><span class="problematic" id="id2">`</span></a>Kokkos Programming Model &lt;
-<a class="reference external" href="https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md">https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md</a></p>
+<p><a href="#id7"><span class="problematic" id="id8">``</span></a><a href="#id9"><span class="problematic" id="id10">`</span></a></p>
+<p>Besides creating a temporary for the result it mainly calls the free standing <code class="docutils literal notranslate"><span class="pre">add</span></code> function which is implemented in <code class="docutils literal notranslate"><span class="pre">FieldOperations.hpp</span></code>. This in turn dispatches to the <code class="docutils literal notranslate"><span class="pre">addOp</span></code> functor, that holds the actual addition kernels. In the case of addition this is implemented as a  <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> function, see <a class="reference external" href="https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html">Kokkos documentation</a> for more details.</p>
+<dl>
+<dt><a href="#id11"><span class="problematic" id="id12">``</span></a><a href="#id13"><span class="problematic" id="id14">`</span></a>c++</dt><dd><p>using executor = typename Executor::exec;
+auto a_f = a.field();
+auto b_f = b.field();
+Kokkos::parallel_for(</p>
 <blockquote>
-<div><p>&gt;`_. Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory. A full example of using NeoFOAMs fields with a GPU executor could be implemented as</p>
+<div><p>Kokkos::RangePolicy&lt;executor&gt;(0, a_f.size()),
+KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = a_f[i] + b_f[i]; }</p>
 </div></blockquote>
+<p>);</p>
+</dd>
+</dl>
+<p><a href="#id15"><span class="problematic" id="id16">``</span></a><a href="#id17"><span class="problematic" id="id18">`</span></a></p>
+<p>The code snippet also highlights another important aspect, the executor. The executor, here defines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy</span></code>, see  <a class="reference external" href="https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md">Kokkos Programming Model</a>. Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory. A full example of using NeoFOAMs fields with a GPU executor could be implemented as</p>
+<dl class="simple">
+<dt><a href="#id19"><span class="problematic" id="id20">``</span></a><a href="#id21"><span class="problematic" id="id22">`</span></a>c++</dt><dd><p>NeoFOAM::GPUExecutor GPUExec {};
+NeoFOAM::Field&lt;NeoFOAM::scalar&gt; GPUa(GPUExec, N);
+NeoFOAM::fill(GPUa, 1.0);
+NeoFOAM::Field&lt;NeoFOAM::scalar&gt; GPUb(GPUExec, N);
+NeoFOAM::fill(GPUb, 2.0);
+auto GPUc = GPUa + GPUb;</p>
+</dd>
+</dl>
+<p><a href="#id23"><span class="problematic" id="id24">``</span></a><a href="#id25"><span class="problematic" id="id26">`</span></a></p>
 </section>
 <section id="interface">
 <h2>Interface<a class="headerlink" href="#interface" title="Link to this heading">#</a></h2>
