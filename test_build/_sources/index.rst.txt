@@ -13,7 +13,7 @@ By reimplementing the `libfiniteVolume` and `libOpenFOAM` we want to deliver a c
 * is plattform portable and GPU ready;
 * is highly extensible via Plugins 
 
-We aim for a high level of interoperability with OpenFOAM, however, if reasonable, NeoFOAM might deviate from the OpenFOAM API. 
+We aim for a high level of interoperability with OpenFOAM, however, if reasonable, NeoFOAM might deviate from the OpenFOAM API. NeoFOAM is a community driven project and we welcome contributions by everyone.
 
 Table of Contents
 ^^^^^^^^^^^^^^^^^
