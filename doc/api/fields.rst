@@ -7,6 +7,14 @@ Overview
 ^^^^^^^^
 The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like addition or subtraction of two fields, or scalar operations like multiplication of a field with a scalar.
 
+.. code-block:: cpp
+
+    Kokkos::parallel_for(name, policy, functor);
+    Kokkos::parallel_for(policy, functor);
+
+.. _text: ../policies/ExecutionPolicyConcept.html
+
+
 In the following, we will explain the implementation details of the field operations using the additions operator as example. The block of code below shows an example implementation of the addition operator.
 
 ```c++
