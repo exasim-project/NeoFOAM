@@ -37,6 +37,44 @@ struct ApplyOp
         }
     }
 };
+// NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
+// implementation?
+#define UNARY_OP(Name, Kernel_Impl)                                              \
+    template<typename T>                                                         \
+    struct Name##Op                                                              \
+    {                                                                            \
+        template<typename Executor>                                              \
+        void                                                                     \
+        operator()(const Executor& exec, Field<T>& a, const Field<T>& b)         \
+        {                                                                        \
+            using executor = typename Executor::exec;                            \
+            auto a_f = a.field();                                                \
+            auto b_f = b.field();                                                \
+            Kokkos::parallel_for(                                                \
+                Kokkos::RangePolicy<executor>(0, a_f.size()),                    \
+                KOKKOS_CLASS_LAMBDA(const int i) { Kernel_Impl; }                \
+            );                                                                   \
+        }                                                                        \
+                                                                                 \
+        template<typename Executor>                                              \
+        void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b) \
+        {                                                                        \
+            auto a_f = a.field();                                                \
+            const auto b_f = b.field();                                          \
+            for (int i = 0; i < a_f.size(); i++)                                 \
+            {                                                                    \
+                Kernel_Impl;                                                     \
+            }                                                                    \
+        }                                                                        \
+    };                                                                           \
+    template<typename T>                                                         \
+    void Name(Field<T>& a, const Field<T>& b)                                    \
+    {                                                                            \
+        Name##Op<T> field_;                                                      \
+        std::visit([&](const auto& exec) { field_(exec, a, b); }, a.exec());     \
+    }
+
+UNARY_OP();
 
 template<typename T, typename Func>
 void map(Field<T>& f, Func func)
@@ -125,88 +163,45 @@ void setField(Field<T>& f, const Field<T>& rhsField_)
                f.exec());
 }
 
-
-/**
- * @brief Functor to hold the plattform portable addition kernel
- */
-template<typename T>
-struct addOp
-{
-    template<typename Executor>
-    void operator()(const Executor& exec, Field<T>& a, const Field<T>& b)
-    {
-        using executor = typename Executor::exec;
-        auto a_f = a.field();
-        auto b_f = b.field();
-        Kokkos::parallel_for(
-            Kokkos::RangePolicy<executor>(0, a_f.size()),
-            KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = a_f[i] + b_f[i]; }
-        );
+// NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
+// implementation?
+#define BINARY_OP(Name, Kernel_Impl)                                             \
+    template<typename T>                                                         \
+    struct Name##Op                                                              \
+    {                                                                            \
+        template<typename Executor>                                              \
+        void                                                                     \
+        operator()(const Executor& exec, Field<T>& a, const Field<T>& b)         \
+        {                                                                        \
+            using executor = typename Executor::exec;                            \
+            auto a_f = a.field();                                                \
+            auto b_f = b.field();                                                \
+            Kokkos::parallel_for(                                                \
+                Kokkos::RangePolicy<executor>(0, a_f.size()),                    \
+                KOKKOS_CLASS_LAMBDA(const int i) { Kernel_Impl; }                \
+            );                                                                   \
+        }                                                                        \
+                                                                                 \
+        template<typename Executor>                                              \
+        void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b) \
+        {                                                                        \
+            auto a_f = a.field();                                                \
+            const auto b_f = b.field();                                          \
+            for (int i = 0; i < a_f.size(); i++)                                 \
+            {                                                                    \
+                Kernel_Impl;                                                     \
+            }                                                                    \
+        }                                                                        \
+    };                                                                           \
+    template<typename T>                                                         \
+    void Name(Field<T>& a, const Field<T>& b)                                    \
+    {                                                                            \
+        Name##Op<T> field_;                                                      \
+        std::visit([&](const auto& exec) { field_(exec, a, b); }, a.exec());     \
     }
 
-    // NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
-    // implementation?
-    template<typename Executor>
-    void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b)
-    {
-        auto a_f = a.field();
-        const auto b_f = b.field();
-        for (int i = 0; i < a_f.size(); i++)
-        {
-            a_f[i] += b_f[i];
-        }
-    }
-};
-
-/**
- * @brief Arithmetic add function, performs addition of two fields
- * @param a In-out parameter,
- * @param b The second field
- */
-template<typename T>
-void add(Field<T>& a, const Field<T>& b)
-{
-    addOp<T> addField_;
-    std::visit([&](const auto& exec)
-               { addField_(exec, a, b); },
-               a.exec());
-}
-
-template<typename T>
-struct subOp
-{
-    template<typename Executor>
-    void operator()(const Executor& exec, Field<T>& f, const Field<T>& rhsField)
-    {
-        using executor = typename Executor::exec;
-        auto s_f = f.field();
-        auto s_rhsField = rhsField.field();
-        Kokkos::parallel_for(
-            Kokkos::RangePolicy<executor>(0, s_f.size()),
-            KOKKOS_CLASS_LAMBDA(const int i) { s_f[i] = s_f[i] - s_rhsField[i]; }
-        );
-    }
-
-    template<typename Executor>
-    void operator()(const CPUExecutor& exec, Field<T>& f, const Field<T>& rhsField)
-    {
-        auto s_f = f.field();
-        auto s_rhsField = rhsField.field();
-        for (int i = 0; i < s_f.size(); i++)
-        {
-            s_f[i] = s_f[i] - s_rhsField[i];
-        }
-    }
-};
-
-template<typename T>
-void sub(Field<T>& f, const Field<T>& rhsField)
-{
-    subOp<T> subField_;
-    std::visit([&](const auto& exec)
-               { subField_(exec, f, rhsField); },
-               f.exec());
-}
+BINARY_OP(add, a_f[i] = a_f[i] + b_f[i]);
+BINARY_OP(sub, a_f[i] = a_f[i] - b_f[i]);
 
 template<typename T>
 struct mulOp
