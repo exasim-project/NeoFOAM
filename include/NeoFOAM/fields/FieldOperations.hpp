@@ -149,7 +149,7 @@ struct addOp
     template<typename Executor>
     void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b)
     {
-        auto a_f = f.field();
+        auto a_f = a.field();
         const auto b_f = b.field();
         for (int i = 0; i < a_f.size(); i++)
         {
