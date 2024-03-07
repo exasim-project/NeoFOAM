@@ -19,7 +19,7 @@ In the following, we will explain the implementation details of the field operat
     }
 ```
 
-Besides creating a temporary for the result it mainly calls the free standing ``add`` function which is implemented in ``FieldOperations.hpp``. This in turn dispatches to the ``addOp`` functor, that holds the actual addition kernels. In the case of addition this is implemented as a  ``Kokkos::parallel_for`` function, see `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html>`_ for more details.
+Besides creating a temporary for the result it mainly calls the free standing ``add`` function which is implemented in ``FieldOperations.hpp``. This in turn dispatches to the ``addOp`` functor, that holds the actual addition kernels. In the case of addition this is implemented as a  ``Kokkos::parallel_for`` function, see `Kokkos documentation  <https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html>`_ for more details.
 
 ```c++
    using executor = typename Executor::exec;
@@ -31,7 +31,7 @@ Besides creating a temporary for the result it mainly calls the free standing ``
    );
 ```
 
-The code snippet also highlights another important aspect, the executor. The executor, here defines the ``Kokkos::RangePolicy``, see  `Kokkos Programming Model <https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md>`_. Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory. A full example of using NeoFOAMs fields with a GPU executor could be implemented as
+The code snippet also highlights another important aspect, the executor. The executor, here defines the ``Kokkos::RangePolicy``, see  `Kokkos Programming Model  <https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md>`_. Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory. A full example of using NeoFOAMs fields with a GPU executor could be implemented as
 
 ```c++
     NeoFOAM::GPUExecutor GPUExec {};
