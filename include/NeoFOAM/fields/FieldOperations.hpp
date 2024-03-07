@@ -7,36 +7,6 @@
 namespace NeoFOAM
 {
 
-// /* A functor to implement the apply operation
-// **
-// */
-// template<typename T>
-// struct ApplyOp
-// {
-
-//     /* TODO can Funct be const
-//      *  */
-//     template<typename Executor, typename Func>
-//     void operator()(const Executor& exec, Field<T>& f, Func function_)
-//     {
-//         using executor = typename Executor::exec;
-//         auto s_f = f.field();
-//         Kokkos::parallel_for(
-//             Kokkos::RangePolicy<executor>(0, s_f.size()),
-//             KOKKOS_CLASS_LAMBDA(const int i) { s_f[i] = function_(i); }
-//         );
-//     }
-
-//     template<typename Executor, typename Func>
-//     void operator()(const CPUExecutor& exec, Field<T>& f, Func function_)
-//     {
-//         auto s_f = f.field();
-//         for (int i = 0; i < s_f.size(); i++)
-//         {
-//             s_f[i] = function_(i);
-//         }
-//     }
-// };
 
 // NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
 // implementation?
