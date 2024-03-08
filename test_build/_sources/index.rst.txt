@@ -13,7 +13,7 @@ By reimplementing the `libfiniteVolume` and `libOpenFOAM` we want to deliver a c
 * is plattform portable and GPU ready;
 * is highly extensible via Plugins 
 
-We aim for a high level of interoperability with OpenFOAM, however, if reasonable, NeoFOAM might deviate from the OpenFOAM API. NeoFOAM is a community driven project and we welcome contributions by everyone.
+We aim for a high level of interoperability with OpenFOAM, however, if reasonable, NeoFOAM might deviate from the OpenFOAM API. NeoFOAM is a community-driven project and we welcome contributions by everyone.
 
 Table of Contents
 ^^^^^^^^^^^^^^^^^
@@ -26,7 +26,7 @@ Table of Contents
 Compatability with OpenFOAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We are aimining for a high level of compatability with OpenFOAM. However, we don't expect binary or ABI compatability. This means you NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement of existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead we aim for source compatability, i.e. the posibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.   
+We are aiming for a high level of compatibility with OpenFOAM. However, we don't expect binary or ABI compatibility. This means you NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement for existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead we aim for source compatibility, i.e. the possibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.   
 
 Building OpenFoam Applications with NeoFOAM 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -34,7 +34,7 @@ Building OpenFoam Applications with NeoFOAM
 Currently, the support for building applications is very limited. The simplest way to build applications 
 with the NeoFOAM core is by adopting the CMake build procedure showcased in our `applications <https://github.com/exasim-project/NeoFOAM/tree/main/applications>`_
 folder. For now, we only have a `minimal <https://github.com/exasim-project/NeoFOAM/tree/main/applications/solver/minimal_>`_ example as we are still working on the basic implementations. But 
-we will gradually add example applications as we move along. Most likely we will initially work on porting solver applications, since pre- and postprocessing tools that work on a file level basis are trivially interoperable.
+we will gradually add example applications as we move along. Most likely we will initially work on porting solver applications, since pre- and postprocessing tools that work on a file-level basis are trivially interoperable.
 
 
 .. toctree::
