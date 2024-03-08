@@ -17,7 +17,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="69" column="23" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="69" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="43" column="23" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="43" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="public-func">
@@ -71,7 +71,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="57" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="57" bodyend="59"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="31" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="31" bodyend="33"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Error_1af83ca1338f3a80e3801a84d37351c924" prot="public" static="no" const="yes" explicit="no" inline="yes" noexcept="yes" virt="virtual">
         <type>const char *</type>
@@ -85,34 +85,13 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="65" column="24" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="65" bodyend="65"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="39" column="24" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="39" bodyend="39"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
-<para>The <ref refid="classNeoFOAM_1_1Error" kindref="compound">Error</ref> class is used to report exceptional behaviour in library functions. NeoFOAM uses C++ exception mechanism to this end, and the <ref refid="classNeoFOAM_1_1Error" kindref="compound">Error</ref> class represents a base class for all types of errors. The exact list of errors which could occur during the execution of a certain library routine is provided in the documentation of that routine, along with a short description of the situation when that error can occur. During runtime, these errors can be detected by using standard C++ try-catch blocks, and a human-readable error description can be obtained by calling the <ref refid="classNeoFOAM_1_1Error_1af83ca1338f3a80e3801a84d37351c924" kindref="member">Error::what()</ref> method.</para>
-<para>As an example, trying to compute a matrix-vector product with arguments of incompatible size will result in a <ref refid="classNeoFOAM_1_1DimensionMismatch" kindref="compound">DimensionMismatch</ref> error, which is demonstrated in the following program.</para>
-<para><programlisting filename=".cpp"><codeline><highlight class="preprocessor">#include<sp/>&lt;ginkgo.h&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;iostream&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline><highlight class="normal"></highlight></codeline>
-<codeline><highlight class="normal"></highlight><highlight class="keyword">using<sp/>namespace<sp/></highlight><highlight class="normal">gko;</highlight></codeline>
-<codeline><highlight class="normal"></highlight></codeline>
-<codeline><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>main()</highlight></codeline>
-<codeline><highlight class="normal">{</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>omp<sp/>=<sp/>create&lt;OmpExecutor&gt;();</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>A<sp/>=<sp/>randn_fill&lt;matrix::Csr&lt;float&gt;&gt;(5,<sp/>5,<sp/>0f,<sp/>1f,<sp/>omp);</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>x<sp/>=<sp/>fill&lt;matrix::Dense&lt;float&gt;&gt;(6,<sp/>1,<sp/>1f,<sp/>omp);</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">try</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>y<sp/>=<sp/>apply(A,<sp/>x);</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">catch</highlight><highlight class="normal">(<ref refid="classNeoFOAM_1_1Error_1a9df5b85d215b4e57ef3240e3500773c7" kindref="member">Error</ref><sp/>e)<sp/>{</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>an<sp/>error<sp/>occurred,<sp/>write<sp/>the<sp/>message<sp/>to<sp/>screen<sp/>and<sp/>exit</highlight><highlight class="normal"></highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>e.what()<sp/>&lt;&lt;<sp/>std::endl;</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>-1;</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
-<codeline><highlight class="normal">}</highlight></codeline>
-</programlisting> </para>
+<para>The <ref refid="classNeoFOAM_1_1Error" kindref="compound">Error</ref> class is used to report exceptional behaviour in library functions. NeoFOAM uses C++ exception mechanism to this end, and the <ref refid="classNeoFOAM_1_1Error" kindref="compound">Error</ref> class represents a base class for all types of errors. The exact list of errors which could occur during the execution of a certain library routine is provided in the documentation of that routine, along with a short description of the situation when that error can occur. During runtime, these errors can be detected by using standard C++ try-catch blocks, and a human-readable error description can be obtained by calling the <ref refid="classNeoFOAM_1_1Error_1af83ca1338f3a80e3801a84d37351c924" kindref="member">Error::what()</ref> method. </para>
     </detaileddescription>
     <inheritancegraph>
       <node id="3">
@@ -142,7 +121,7 @@
         <label>std::exception</label>
       </node>
     </collaborationgraph>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="46" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="47" bodyend="70"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" line="20" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/exceptions.hpp" bodystart="21" bodyend="44"/>
     <listofallmembers>
       <member refid="classNeoFOAM_1_1Error_1a9df5b85d215b4e57ef3240e3500773c7" prot="public" virt="non-virtual"><scope>NeoFOAM::Error</scope><name>Error</name></member>
       <member refid="classNeoFOAM_1_1Error_1af83ca1338f3a80e3801a84d37351c924" prot="public" virt="virtual"><scope>NeoFOAM::Error</scope><name>what</name></member>

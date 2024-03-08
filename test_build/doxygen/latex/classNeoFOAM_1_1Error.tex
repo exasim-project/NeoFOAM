@@ -20,36 +20,9 @@ virtual const char $\ast$ \mbox{\hyperlink{classNeoFOAM_1_1Error_af83ca1338f3a80
 
 
 \doxysubsection{Detailed Description}
-The \mbox{\hyperlink{classNeoFOAM_1_1Error}{Error}} class is used to report exceptional behaviour in library functions. Neo\+FOAM uses C++ exception mechanism to this end, and the \mbox{\hyperlink{classNeoFOAM_1_1Error}{Error}} class represents a base class for all types of errors. The exact list of errors which could occur during the execution of a certain library routine is provided in the documentation of that routine, along with a short description of the situation when that error can occur. During runtime, these errors can be detected by using standard C++ try-\/catch blocks, and a human-\/readable error description can be obtained by calling the \mbox{\hyperlink{classNeoFOAM_1_1Error_af83ca1338f3a80e3801a84d37351c924}{Error\+::what()}} method.
+The \mbox{\hyperlink{classNeoFOAM_1_1Error}{Error}} class is used to report exceptional behaviour in library functions. Neo\+FOAM uses C++ exception mechanism to this end, and the \mbox{\hyperlink{classNeoFOAM_1_1Error}{Error}} class represents a base class for all types of errors. The exact list of errors which could occur during the execution of a certain library routine is provided in the documentation of that routine, along with a short description of the situation when that error can occur. During runtime, these errors can be detected by using standard C++ try-\/catch blocks, and a human-\/readable error description can be obtained by calling the \mbox{\hyperlink{classNeoFOAM_1_1Error_af83ca1338f3a80e3801a84d37351c924}{Error\+::what()}} method. 
 
-As an example, trying to compute a matrix-\/vector product with arguments of incompatible size will result in a \mbox{\hyperlink{classNeoFOAM_1_1DimensionMismatch}{Dimension\+Mismatch}} error, which is demonstrated in the following program.
-
-
-\begin{DoxyCode}{0}
-\DoxyCodeLine{\textcolor{preprocessor}{\#include <ginkgo.h>}}
-\DoxyCodeLine{\textcolor{preprocessor}{\#include <iostream>}}
-\DoxyCodeLine{}
-\DoxyCodeLine{\textcolor{keyword}{using namespace }gko;}
-\DoxyCodeLine{}
-\DoxyCodeLine{\textcolor{keywordtype}{int} main()}
-\DoxyCodeLine{\{}
-\DoxyCodeLine{    \textcolor{keyword}{auto} omp = create<OmpExecutor>();}
-\DoxyCodeLine{    \textcolor{keyword}{auto} A = randn\_fill<matrix::Csr<float>>(5, 5, 0f, 1f, omp);}
-\DoxyCodeLine{    \textcolor{keyword}{auto} x = fill<matrix::Dense<float>>(6, 1, 1f, omp);}
-\DoxyCodeLine{    \textcolor{keywordflow}{try} \{}
-\DoxyCodeLine{        \textcolor{keyword}{auto} y = apply(A, x);}
-\DoxyCodeLine{    \} \textcolor{keywordflow}{catch}(\mbox{\hyperlink{classNeoFOAM_1_1Error_a9df5b85d215b4e57ef3240e3500773c7}{Error}} e) \{}
-\DoxyCodeLine{        \textcolor{comment}{// an error occurred, write the message to screen and exit}}
-\DoxyCodeLine{        std::cout << e.what() << std::endl;}
-\DoxyCodeLine{        \textcolor{keywordflow}{return} -\/1;}
-\DoxyCodeLine{    \}}
-\DoxyCodeLine{    \textcolor{keywordflow}{return} 0;}
-\DoxyCodeLine{\}}
-
-\end{DoxyCode}
- 
-
-Definition at line 46 of file exceptions.\+hpp.
+Definition at line 20 of file exceptions.\+hpp.
 
 
 
@@ -73,7 +46,7 @@ Initializes an error.
 \end{DoxyParams}
 
 
-Definition at line 57 of file exceptions.\+hpp.
+Definition at line 31 of file exceptions.\+hpp.
 
 
 
@@ -86,7 +59,7 @@ Definition at line 57 of file exceptions.\+hpp.
 
 Returns a human-\/readable string with a more detailed description of the error. 
 
-Definition at line 65 of file exceptions.\+hpp.
+Definition at line 39 of file exceptions.\+hpp.
 
 
 
