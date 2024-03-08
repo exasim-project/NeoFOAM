@@ -23,8 +23,13 @@ Table of Contents
    self
    api/index
 
+Compatability with OpenFOAM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We are aimining for a high level of compatability with OpenFOAM. However, we don't expect binary or ABI compatability. This means you NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement of existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead we aim for source compatability, i.e. the posibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.   
+
 Building OpenFoam Applications with NeoFOAM 
-=======
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Currently, the support for building applications is very limited. The simplest way to build applications 
 with the NeoFOAM core is by adopting the CMake build procedure showcased in our `applications <https://github.com/exasim-project/NeoFOAM/tree/main/applications>`_
