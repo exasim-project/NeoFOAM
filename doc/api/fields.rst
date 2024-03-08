@@ -5,9 +5,9 @@ Fields
 
 Overview
 ^^^^^^^^
-The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like addition or subtraction of two fields, or scalar operations like multiplication of a field with a scalar.
+The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
 
-In the following, we will explain the implementation details of the field operations using the additions operator as example. The block of code below shows an example implementation of the addition operator.
+In the following, we will explain the implementation details of the field operations using the additions operator as an example. The block of code below shows an example implementation of the addition operator.
 
 .. code-block:: cpp
 
@@ -20,7 +20,7 @@ In the following, we will explain the implementation details of the field operat
     }
 
 
-Besides creating a temporary for the result it mainly calls the free standing ``add`` function which is implemented in ``FieldOperations.hpp``. This in turn dispatches to the ``addOp`` functor, that holds the actual addition kernels. In the case of addition this is implemented as a  ``Kokkos::parallel_for`` function, see `Kokkos documentation  <https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html>`_ for more details.
+Besides creating a temporary for the result it mainly calls the free standing ``add`` function which is implemented in ``FieldOperations.hpp``. This, in turn, dispatches to the ``addOp`` functor, that holds the actual addition kernels. In the case of addition this is implemented as a  ``Kokkos::parallel_for`` function, see `Kokkos documentation  <https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html>`_ for more details.
 
 .. code-block:: cpp
 
