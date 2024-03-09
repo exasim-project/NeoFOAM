@@ -15,7 +15,7 @@ Navigate to the NeoFOAM directory:
 
       cd NeoFOAM
 
-NeoFOAM uses Cmake to build, thus the standard Cmake procedure should work, however, we recommend using one of the provided Cmake presets detailed below. From a build directory, you can execute:
+NeoFOAM uses Cmake to build, thus the standard Cmake procedure should work, however, we recommend using one of the provided Cmake presets detailed below `below <Building with Cmake Presets>`_. From a build directory, you can execute:
 
    .. code-block:: bash
 
@@ -66,7 +66,7 @@ To build NeoFOAM with Kokkos and CUDA support, you can use the following command
 
    .. code-block:: bash 
 
-    cmake --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
-    cmake --build build/Release-cuda # To compile with ninja and common kokkos flags for CUDA devices
+    cmake --preset ninja-kokkos-cuda # To configure with ninja and common kokkos flags for CUDA devices
+    cmake --build --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
 
 It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
