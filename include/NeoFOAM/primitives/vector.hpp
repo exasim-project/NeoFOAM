@@ -79,6 +79,14 @@ public:
         return Vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
     }
 
+
+    KOKKOS_INLINE_FUNCTION
+    Vector operator*(const label& rhs)
+    {
+        return Vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
+    }
+
+
     KOKKOS_INLINE_FUNCTION
     void operator*=(const scalar& rhs)
     {
@@ -91,4 +99,13 @@ private:
 
     scalar cmpts_[3];
 };
+
+
+KOKKOS_INLINE_FUNCTION
+Vector operator*(const scalar& sclr, Vector rhs)
+{
+    rhs *= sclr;
+    return rhs;
+}
+
 } // namespace NeoFOAM
