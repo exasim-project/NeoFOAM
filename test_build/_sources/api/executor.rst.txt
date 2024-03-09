@@ -33,7 +33,7 @@ The `Executor` is a std::variant
 
     using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
 
-and allows to switch between the different strategy for memory allocation and execution at runtime. We use `std::visit` to switch between the different strategies:
+and allows to switch between the different strategies for memory allocation and execution at runtime. We use `std::visit` to switch between the different strategies:
 
 .. code-block:: cpp
 
