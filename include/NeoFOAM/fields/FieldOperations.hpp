@@ -85,8 +85,8 @@ UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
     void Name(Field<T>& a, const Field<T>& b)                                    \
     {                                                                            \
         NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);                                       \
-        Name##Op<T> field_;                                                      \
-        std::visit([&](const auto& exec) { field_(exec, a, b); }, a.exec());     \
+        Name##Op<T> op_;                                                         \
+        std::visit([&](const auto& exec) { op_(exec, a, b); }, a.exec());        \
     }
 
 BINARY_FIELD_OP(add, a_f[i] += b_f[i]);
