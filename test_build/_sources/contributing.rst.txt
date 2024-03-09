@@ -1,6 +1,8 @@
 Contributing
 ^^^^^^^^^^^^
 
+Contributions are highly welcomed. Here are some information geting you started.
+
 Building the Documentation
 """"""""""""""""""""""""""
 
