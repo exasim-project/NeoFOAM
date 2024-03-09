@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vector_40',['vector',['../classNeoFOAM_1_1vector.html',1,'NeoFOAM']]]
+  ['vector_40',['Vector',['../classNeoFOAM_1_1Vector.html',1,'NeoFOAM']]]
 ];
