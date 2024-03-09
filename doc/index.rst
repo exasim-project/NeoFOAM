@@ -35,7 +35,7 @@ Building OpenFOAM Applications with NeoFOAM
 
 Currently, the support for building applications is very limited. The simplest way to build applications 
 with the NeoFOAM core is by adopting the CMake build procedure showcased in our `applications <https://github.com/exasim-project/NeoFOAM/tree/main/applications>`_
-folder. For now, we only have a `minimal <https://github.com/exasim-project/NeoFOAM/tree/main/applications/solver/minimal_>`_ example as we are still working on the basic implementations. But 
+folder. For now, we only have a `minimal <https://github.com/exasim-project/NeoFOAM/tree/main/applications/solver/minimal>`_ example as we are still working on the basic implementations. But 
 we will gradually add example applications as we move along. Most likely we will initially work on porting solver applications, since pre- and postprocessing tools that work on a file-level basis are trivially interoperable.
 
 
