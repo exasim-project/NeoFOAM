@@ -15,7 +15,7 @@ Navigate to the NeoFOAM directory:
 
       cd NeoFOAM
 
-NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From a build directory you can execute :
+NeoFOAM uses Cmake to build, thus the standard cmake procedure should work, however, we recomend to use one of the recomended Cmake presets detailed belowed . From a build directory you can execute:
 
    .. code-block:: bash
 
