@@ -1,10 +1,6 @@
-name: Docs
+name: Build documentation
 
 on:
-  push:
-    branches: 
-      - dev
-      - main
   pull_request:
     types: synchronize
   
@@ -18,7 +14,7 @@ jobs:
         && pip3 install breathe
         && pip3 install sphinx-sitemap
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Build docs
       run: |
         mkdir build
@@ -28,7 +24,13 @@ jobs:
         cp -r docs/doxygen docs/sphinx
         cd docs/sphinx
         touch .nojekyll
-    - name: Deploy
+    - name: Deploy Test Build
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: build/docs/sphinx
+        target-folder: test_build
+    - name: Deploy Build
+      if: github.event.pull_request.merged == true && github.ref == 'refs/heads/main'
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: build/test/docs/sphinx
