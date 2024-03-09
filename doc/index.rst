@@ -21,6 +21,8 @@ Table of Contents
    :maxdepth: 2
    
    self
+   installation
+   contributing
    api/index
 
 Compatability with OpenFOAM
