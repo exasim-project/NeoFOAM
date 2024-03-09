@@ -15,7 +15,7 @@ Navigate to the NeoFOAM directory:
 
       cd NeoFOAM
 
-NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From a build directory you can execute :
+NeoFOAM uses Cmake to build, thus the standard Cmake procedure should work, however, we recommend using one of the provided Cmake presets detailed below. From a build directory, you can execute:
 
    .. code-block:: bash
 
@@ -25,7 +25,7 @@ NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From
         cmake --build .
         cmake --install .
 
-The following can be chained with -D<DesiredBuildFlags>=<Value> to the cmake command most and most relevant build flags are: 
+The following can be chained with -D<DesiredBuildFlags>=<Value> to the Cmake command most and most relevant build flags are: 
 
 +---------------------------+-----------------------------------+---------+
 | Flag                      | Description                       | Default |
@@ -53,7 +53,10 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the cmake com
 
 By opening the the project with cmake-gui you can easily set these flags and configure the build.
 
-Additionally, we provide several Cmake presets to set commmonly required flags if you compile NeoFoam in combination with Kokkos.
+Building with Cmake Presets
+^^^^^^^^^^^^^^^^^^^^^
+
+Additionally, we provide several Cmake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.
 
    .. code-block:: bash
 
@@ -66,4 +69,4 @@ To build NeoFOAM with Kokkos and CUDA support, you can use the following command
     cmake --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
     cmake --build build/Release-cuda # To compile with ninja and common kokkos flags for CUDA devices
 
-It should be noted that the build direction changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
+It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
