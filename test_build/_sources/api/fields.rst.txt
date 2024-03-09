@@ -1,4 +1,4 @@
-.. _api_neofoam:
+.. _api_fields:
 
 Fields
 ======
