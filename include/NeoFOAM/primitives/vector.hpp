@@ -52,15 +52,39 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
+    void operator+=(const Vector& rhs)
+    {
+        cmpts_[0] += rhs(0);
+        cmpts_[1] += rhs(1);
+        cmpts_[2] += rhs(2);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     Vector operator-(const Vector& rhs)
     {
         return Vector(cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2));
     }
 
     KOKKOS_INLINE_FUNCTION
+    void operator-=(const Vector& rhs)
+    {
+        cmpts_[0] -= rhs(0);
+        cmpts_[1] -= rhs(1);
+        cmpts_[2] -= rhs(2);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     Vector operator*(const scalar& rhs)
     {
         return Vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void operator*=(const scalar& rhs)
+    {
+        cmpts_[0] *= rhs;
+        cmpts_[1] *= rhs;
+        cmpts_[2] *= rhs;
     }
 
 private:
