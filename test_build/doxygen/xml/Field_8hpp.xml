@@ -4,7 +4,7 @@
     <compoundname>Field.hpp</compoundname>
     <includes local="no">Kokkos_Core.hpp</includes>
     <includes local="no">iostream</includes>
-    <includes refid="span_8hpp" local="yes">NeoFOAM/blas/span.hpp</includes>
+    <includes local="no">span</includes>
     <includes refid="executor_8hpp" local="yes">NeoFOAM/core/executor/executor.hpp</includes>
     <includes refid="scalar_8hpp" local="yes">NeoFOAM/primitives/scalar.hpp</includes>
     <includedby refid="FieldTypeDefs_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldTypeDefs.hpp</includedby>
@@ -23,10 +23,6 @@
       <node id="10">
         <label>NeoFOAM/primitives/scalar.hpp</label>
         <link refid="scalar_8hpp_source"/>
-      </node>
-      <node id="4">
-        <label>NeoFOAM/blas/span.hpp</label>
-        <link refid="span_8hpp_source"/>
       </node>
       <node id="5">
         <label>NeoFOAM/core/executor/executor.hpp</label>
@@ -59,6 +55,9 @@
       </node>
       <node id="3">
         <label>iostream</label>
+      </node>
+      <node id="4">
+        <label>span</label>
       </node>
       <node id="7">
         <label>NeoFOAM/core/executor/GPUExecutor.hpp</label>
@@ -103,7 +102,7 @@
 <codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;Kokkos_Core.hpp&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;iostream&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="7"><highlight class="normal"></highlight></codeline>
-<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoFOAM/blas/span.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;span&gt;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoFOAM/core/executor/executor.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoFOAM/primitives/scalar.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="11"><highlight class="normal"></highlight></codeline>
@@ -201,7 +200,7 @@
 <codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>this-&gt;<ref refid="classNeoFOAM_1_1Field_1abb08c811bfad17b79f99720d259f6757" kindref="member">setSize</ref>(rhs.<ref refid="classNeoFOAM_1_1Field_1adb67919d7d63d790258680dce54e76fb" kindref="member">size</ref>());</highlight></codeline>
 <codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>setField(*</highlight><highlight class="keyword">this</highlight><highlight class="normal">,<sp/>rhs.<ref refid="classNeoFOAM_1_1Field_1a26b8f30b64552bf11b60bc9b8d76b747" kindref="member">field</ref>());</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>setField(*</highlight><highlight class="keyword">this</highlight><highlight class="normal">,<sp/>rhs.<ref refid="classNeoFOAM_1_1Field_1ae8bd761efb0fc18b91fe1f004f9bb25d" kindref="member">field</ref>());</highlight></codeline>
 <codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="158"><highlight class="normal"></highlight></codeline>
 <codeline lineno="163" refid="classNeoFOAM_1_1Field_1adf3268d3f015ed7d3ac499b8dd1e87ed" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field_1adf3268d3f015ed7d3ac499b8dd1e87ed" kindref="member">operator=</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>T&amp;<sp/>rhs)<sp/>{<sp/>fill(*</highlight><highlight class="keyword">this</highlight><highlight class="normal">,<sp/>rhs);<sp/>}</highlight></codeline>
@@ -266,20 +265,19 @@
 <codeline lineno="259"><highlight class="normal"></highlight></codeline>
 <codeline lineno="264" refid="classNeoFOAM_1_1Field_1adb67919d7d63d790258680dce54e76fb" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field_1adb67919d7d63d790258680dce54e76fb" kindref="member">size</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>size_;<sp/>}</highlight></codeline>
 <codeline lineno="265"><highlight class="normal"></highlight></codeline>
-<codeline lineno="270" refid="classNeoFOAM_1_1Field_1a26b8f30b64552bf11b60bc9b8d76b747" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1span" kindref="compound">span&lt;T&gt;</ref><sp/><ref refid="classNeoFOAM_1_1Field_1a26b8f30b64552bf11b60bc9b8d76b747" kindref="member">field</ref>()<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1span" kindref="compound">span&lt;T&gt;</ref>(data_,<sp/>size_);<sp/>}</highlight></codeline>
-<codeline lineno="271"><highlight class="normal"></highlight></codeline>
-<codeline lineno="276" refid="classNeoFOAM_1_1Field_1a5c226fa9c3b2f5ab21d48b6c7902811a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1span" kindref="compound">span&lt;T&gt;</ref><sp/><ref refid="classNeoFOAM_1_1Field_1a5c226fa9c3b2f5ab21d48b6c7902811a" kindref="member">field</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1span" kindref="compound">span&lt;T&gt;</ref>(data_,<sp/>size_);<sp/>}</highlight></codeline>
-<codeline lineno="277"><highlight class="normal"></highlight></codeline>
-<codeline lineno="278"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="279"><highlight class="normal"></highlight></codeline>
-<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>size_;<sp/></highlight></codeline>
-<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/>T*<sp/>data_;<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
-<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>executor</highlight></codeline>
-<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec_;<sp/></highlight></codeline>
-<codeline lineno="284"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="270" refid="classNeoFOAM_1_1Field_1ae8bd761efb0fc18b91fe1f004f9bb25d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::span&lt;T&gt;<sp/><ref refid="classNeoFOAM_1_1Field_1ae8bd761efb0fc18b91fe1f004f9bb25d" kindref="member">field</ref>()<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>std::span&lt;T&gt;(data_,<sp/>size_);<sp/>}</highlight></codeline>
+<codeline lineno="275" refid="classNeoFOAM_1_1Field_1a18c382d9692e5a8d34fc566a3fa27d0e" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::span&lt;T&gt;<sp/><ref refid="classNeoFOAM_1_1Field_1a18c382d9692e5a8d34fc566a3fa27d0e" kindref="member">field</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>std::span&lt;T&gt;(data_,<sp/>size_);<sp/>}</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"></highlight></codeline>
+<codeline lineno="277"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="278"><highlight class="normal"></highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>size_;<sp/></highlight></codeline>
+<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/>T*<sp/>data_;<sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>executor</highlight></codeline>
+<codeline lineno="282"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec_;<sp/></highlight></codeline>
+<codeline lineno="283"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="284"><highlight class="normal"></highlight></codeline>
 <codeline lineno="285"><highlight class="normal"></highlight></codeline>
-<codeline lineno="286"><highlight class="normal"></highlight></codeline>
-<codeline lineno="287"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="286"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/Field.hpp"/>
   </compounddef>
