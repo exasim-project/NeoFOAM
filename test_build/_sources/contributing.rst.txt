@@ -6,7 +6,7 @@ Contributions are highly welcomed. Here is some information getting you started.
 Building the Documentation
 """"""""""""""""""""""""""
 
-NeoFOAMs documentation can be found [online](https://exasim-project.com/NeoFOAM/). However, if you want to build the documentation locally you can do so, by executing the following steps. 
+NeoFOAMs documentation can be found `main <https://exasim-project.com/NeoFOAM/>`_  and `doxygen <https://exasim-project.com/NeoFOAM/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally you can do so, by executing the following steps. 
 First, make sure that Sphinx and Doxygen are installed on your system. Second, execute the following commands:
 
    .. code-block:: bash 
