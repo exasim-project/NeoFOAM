@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 #include <iostream>
 
-#include "NeoFOAM/blas/span.hpp"
+#include <span>
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/primitives/scalar.hpp"
 
@@ -259,13 +259,12 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] span<T> field() { return span<T>(data_, size_); }
-
+    [[nodiscard]] std::span<T> field() { return std::span<T>(data_, size_); }
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const span<T> field() const { return span<T>(data_, size_); }
+    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
 
 private:
 

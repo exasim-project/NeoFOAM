@@ -35,7 +35,8 @@
           "type": "BOOL",
           "value": "ON"
         }
-    }},
+      }
+    },
     {
       "name": "ninja-cpuonly-all",
       "inherits": "default",
@@ -52,7 +53,8 @@
           "type": "BOOL",
           "value": "ON"
         }
-    }},
+      }
+    },
     {
       "name": "ninja-kokkos-cuda",
       "inherits": "default",
@@ -64,7 +66,38 @@
         "Kokkos_ENABLE_CUDA": {
           "type": "BOOL",
           "value": "ON"
+        },
+        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+          "type": "BOOL",
+          "value": "ON"
         }
+      }
+    },
+    {
+      "name": "ninja-kokkos-cuda-all",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Release-cuda",
+      "cacheVariables": {
+        "Kokkos_ENABLE_CUDA": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_BENCHMARKS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
     }
-}]
+  ]
 }
