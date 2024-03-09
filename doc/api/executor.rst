@@ -15,7 +15,7 @@ NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space 
 Design
 ^^^^^^
 
-One of the design goals was the ability to quickly switch between the executor models at runtime as already discussed in the field implementation:
+One of the design goals is the ability to quickly switch between the executor models at runtime.
 
 
 .. code-block:: cpp
