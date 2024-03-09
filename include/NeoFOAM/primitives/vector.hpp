@@ -7,12 +7,18 @@
 
 namespace NeoFOAM
 {
-class vector
+
+
+/**
+ * @class Vector
+ * @brief A class for the representation of a 3D Vector
+ */
+class Vector
 {
 public:
 
     KOKKOS_INLINE_FUNCTION
-    vector()
+    Vector()
     {
         cmpts_[0] = 0.0;
         cmpts_[1] = 0.0;
@@ -20,7 +26,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    vector(scalar x, scalar y, scalar z)
+    Vector(scalar x, scalar y, scalar z)
     {
         cmpts_[0] = x;
         cmpts_[1] = y;
@@ -34,27 +40,27 @@ public:
     scalar operator()(const int i) const { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
-    bool operator==(const vector& rhs) const
+    bool operator==(const Vector& rhs) const
     {
         return cmpts_[0] == rhs(0) && cmpts_[1] == rhs(1) && cmpts_[2] == rhs(2);
     }
 
     KOKKOS_INLINE_FUNCTION
-    vector operator+(const vector& rhs)
+    Vector operator+(const Vector& rhs)
     {
-        return vector(cmpts_[0] + rhs(0), cmpts_[1] + rhs(1), cmpts_[2] + rhs(2));
+        return Vector(cmpts_[0] + rhs(0), cmpts_[1] + rhs(1), cmpts_[2] + rhs(2));
     }
 
     KOKKOS_INLINE_FUNCTION
-    vector operator-(const vector& rhs)
+    Vector operator-(const Vector& rhs)
     {
-        return vector(cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2));
+        return Vector(cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2));
     }
 
     KOKKOS_INLINE_FUNCTION
-    vector operator*(const scalar& rhs)
+    Vector operator*(const scalar& rhs)
     {
-        return vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
+        return Vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
     }
 
 private:
