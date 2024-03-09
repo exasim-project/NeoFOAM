@@ -157,8 +157,8 @@ $(function() {
 <div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;<span class="preprocessor">    void Name(Field&lt;T&gt;&amp; a, const Field&lt;T&gt;&amp; b)                                    \</span></div>
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="preprocessor">    {                                                                            \</span></div>
 <div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="preprocessor">        NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);                                       \</span></div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="preprocessor">        Name##Op&lt;T&gt; field_;                                                      \</span></div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="preprocessor">        std::visit([&amp;](const auto&amp; exec) { field_(exec, a, b); }, a.exec());     \</span></div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="preprocessor">        Name##Op&lt;T&gt; op_;                                                         \</span></div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="preprocessor">        std::visit([&amp;](const auto&amp; exec) { op_(exec, a, b); }, a.exec());        \</span></div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;<span class="preprocessor">    }</span></div>
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160; </div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;BINARY_FIELD_OP(add, a_f[i] += b_f[i]);</div>
