@@ -66,4 +66,4 @@ To build NeoFOAM with Kokkos and CUDA support, you can use the following command
     cmake --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
     cmake --build build/Release-cuda # To compile with ninja and common kokkos flags for CUDA devices
 
-It should be noted that the build direction changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
+It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
