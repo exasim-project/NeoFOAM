@@ -52,6 +52,8 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the cmake com
 +---------------------------+-----------------------------------+---------+
 
 By opening the the project with cmake-gui you can easily set these flags and configure the build.
+Building with Cmake Presets
+^^^^^^^^^^^^^^^^^^^^^
 
 Additionally, we provide several Cmake presets to set commmonly required flags if you compile NeoFoam in combination with Kokkos.
 
