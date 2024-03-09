@@ -10,10 +10,10 @@ By reimplementing the `libfiniteVolume` and `libOpenFOAM` we want to deliver a c
 
 * is compliant with modern C++20;
 * is extensively unit-tested;
-* is plattform portable and GPU ready;
+* is platform portable and GPU ready;
 * is highly extensible via Plugins 
 
-We aim for a high level of interoperability with OpenFOAM, however, if reasonable, NeoFOAM might deviate from the OpenFOAM API. NeoFOAM is a community-driven project and we welcome contributions by everyone.
+We aim for a high level of interoperability with OpenFOAM, however, if reasonable, NeoFOAM might deviate from the OpenFOAM API. NeoFOAM is a community-driven project and we welcome contributions from everyone.
 
 Table of Contents
 ^^^^^^^^^^^^^^^^^
@@ -25,12 +25,12 @@ Table of Contents
    contributing
    api/index
 
-Compatability with OpenFOAM
+Compatibility with OpenFOAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We are aiming for a high level of compatibility with OpenFOAM. However, we don't expect binary or ABI compatibility. This means you NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement for existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead we aim for source compatibility, i.e. the possibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.   
+We are aiming for a high level of compatibility with OpenFOAM. However, we don't expect binary or ABI compatibility. This means you NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement for existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead, we aim for source compatibility, i.e. the possibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.   
 
-Building OpenFoam Applications with NeoFOAM 
+Building OpenFOAM Applications with NeoFOAM 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Currently, the support for building applications is very limited. The simplest way to build applications 

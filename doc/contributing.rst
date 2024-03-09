@@ -1,10 +1,13 @@
 Contributing
 ^^^^^^^^^^^^
 
+Contributions are highly welcomed. Here is some information getting you started.
+
 Building the Documentation
 """"""""""""""""""""""""""
 
-The documentation is built using sphinx and doxygen that are required to be installed on your system. The documentation can be built using the following command:
+NeoFOAMs documentation can be found [online](https://exasim-project.com/NeoFOAM/). However, if you want to build the documentation locally you can do so, by executing the following steps. 
+First, make sure that Sphinx and Doxygen are installed on your system. Second, execute the following commands:
 
    .. code-block:: bash 
 
@@ -17,4 +20,4 @@ The documentation will be built in the `build/doc/sphinx` directory and can be v
 
     firefox build/docs/sphinx/index.html
 
-Alternatively, the documentation can be built by just adding the `-DNEOFOAM_BUILD_DOC=ON` to the configutation step of the build process and then building the documentation using the `sphinx` target.
+Alternatively, the documentation can be built by just adding the `-DNEOFOAM_BUILD_DOC=ON` to the configuration step of the build process and then building the documentation using the `sphinx` target.
