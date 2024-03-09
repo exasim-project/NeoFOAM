@@ -9,3 +9,4 @@ API
     :glob:
 
     fields.rst
+    executor.rst
