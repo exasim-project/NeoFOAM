@@ -9,9 +9,7 @@ namespace NeoFOAM
 {
 
 
-// NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
-// implementation?
-#define UNARY_FIELD_OP(Name, Kernel_Impl)                                     \
+#define DECLARE_UNARY_FIELD_OP(Name, Kernel_Impl)                             \
     template<typename T, typename Inner>                                      \
     struct Name##Op                                                           \
     {                                                                         \
@@ -44,16 +42,14 @@ namespace NeoFOAM
         std::visit([&](const auto& exec) { op_(exec, a, inner); }, a.exec()); \
     }
 
-UNARY_FIELD_OP(map, in(i));
-UNARY_FIELD_OP(fill, in);
-UNARY_FIELD_OP(setField, in[i]);
-UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
+DECLARE_UNARY_FIELD_OP(map, in(i));
+DECLARE_UNARY_FIELD_OP(fill, in);
+DECLARE_UNARY_FIELD_OP(setField, in[i]);
+DECLARE_UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
 
-#undef UNARY_FIELD_OP
+#undef DECLARE_UNARY_FIELD_OP
 
-// NOTE DONT MERGE do we need the CPU version of this here, should we call this a reference
-// implementation?
-#define BINARY_FIELD_OP(Name, Kernel_Impl)                                       \
+#define DECLARE_BINARY_FIELD_OP(Name, Kernel_Impl)                               \
     template<typename T>                                                         \
     struct Name##Op                                                              \
     {                                                                            \
@@ -66,7 +62,7 @@ UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
             auto b_f = b.field();                                                \
             Kokkos::parallel_for(                                                \
                 Kokkos::RangePolicy<executor>(0, a_f.size()),                    \
-                KOKKOS_CLASS_LAMBDA(const int i) { Kernel_Impl; }                \
+                KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = Kernel_Impl; }       \
             );                                                                   \
         }                                                                        \
                                                                                  \
@@ -77,7 +73,7 @@ UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
             const auto b_f = b.field();                                          \
             for (int i = 0; i < a_f.size(); i++)                                 \
             {                                                                    \
-                Kernel_Impl;                                                     \
+                a_f[i] = Kernel_Impl;                                            \
             }                                                                    \
         }                                                                        \
     };                                                                           \
@@ -89,11 +85,11 @@ UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
         std::visit([&](const auto& exec) { op_(exec, a, b); }, a.exec());        \
     }
 
-BINARY_FIELD_OP(add, a_f[i] += b_f[i]);
-BINARY_FIELD_OP(sub, a_f[i] -= b_f[i]);
-BINARY_FIELD_OP(mul, a_f[i] *= b_f[i]);
+DECLARE_BINARY_FIELD_OP(add, a_f[i] + b_f[i]);
+DECLARE_BINARY_FIELD_OP(sub, a_f[i] - b_f[i]);
+DECLARE_BINARY_FIELD_OP(mul, a_f[i] * b_f[i]);
 
-#undef FIELD_FIELD_OP
+#undef DECLARE_BINARY_FIELD_OP
 
 
 } // namespace NeoFOAM
