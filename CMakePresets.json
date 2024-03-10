@@ -40,7 +40,8 @@
           "type": "BOOL",
           "value": "ON"
         }
-    }},
+      }
+    },
     {
       "name": "ninja-cpuonly-all",
       "inherits": "default-ninja",
@@ -56,7 +57,8 @@
           "type": "BOOL",
           "value": "ON"
         }
-    }},
+      }
+    },
     {
       "name": "ninja-kokkos-cuda",
       "inherits": "default-ninja",
@@ -67,10 +69,41 @@
         "Kokkos_ENABLE_CUDA": {
           "type": "BOOL",
           "value": "ON"
+        },
+        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+          "type": "BOOL",
+          "value": "ON"
         }
+      }
+    },
+    {
+      "name": "ninja-kokkos-cuda-all",
+      "inherits": "default",
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Release-cuda",
+      "cacheVariables": {
+        "Kokkos_ENABLE_CUDA": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_BENCHMARKS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
     }
-    }],
-    "buildPresets": [
+  ],
+  "buildPresets": [
     {
       "name": "ninja-cpuonly-test",
       "displayName": "Build for CPUs only with unit tests enabled",
@@ -90,7 +123,13 @@
       "description": "Build for CPUs and CUDA GPUs",
       "configurePreset": "ninja-kokkos-cuda",
       "configuration": "ninja-kokkos-cuda"
+    },
+    {
+      "name": "ninja-kokkos-cuda-all",
+      "displayName": "Build for CPUs and CUDA GPUs",
+      "description": "Build for CPUs and CUDA GPUs",
+      "configurePreset": "ninja-kokkos-cuda-all",
+      "configuration": "ninja-kokkos-cuda-all"
     }
   ]
-
 }
