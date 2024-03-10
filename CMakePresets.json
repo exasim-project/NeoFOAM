@@ -29,6 +29,21 @@
       "generator": "Ninja"
     },
     {
+      "name": "default-ninja-all",
+      "hidden": true,
+      "inherits": "default-ninja",
+      "cacheVariables": {
+        "NEOFOAM_BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "NEOFOAM_BUILD_BENCHMARKS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
       "name": "ninja-cpuonly-test",
       "inherits": "default-ninja",
       "displayName": "Build for CPUs only with unit tests enabled",
@@ -44,20 +59,10 @@
     },
     {
       "name": "ninja-cpuonly-all",
-      "inherits": "default-ninja",
+      "inherits": "default-ninja-all",
       "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
       "description": "Build for CPUs only with unit tests building tests and benchmarks",
-      "binaryDir": "${sourceDir}/build/ReleaseAll",
-      "cacheVariables": {
-        "NEOFOAM_BUILD_TESTS": {
-          "type": "BOOL",
-          "value": "ON"
-        },
-        "NEOFOAM_BUILD_BENCHMARKS": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
+      "binaryDir": "${sourceDir}/build/ReleaseAll"
     },
     {
       "name": "ninja-kokkos-cuda",
@@ -78,25 +83,17 @@
     },
     {
       "name": "ninja-kokkos-cuda-all",
-      "inherits": "default",
+      "inherits": "default-ninja-all",
       "displayName": "Ninja Multi-Config",
       "description": "Default build using Ninja Multi-Config generator",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/Release-cuda",
+      "binaryDir": "${sourceDir}/build/ReleaseCudaAll",
       "cacheVariables": {
         "Kokkos_ENABLE_CUDA": {
           "type": "BOOL",
           "value": "ON"
         },
         "Kokkos_ENABLE_CUDA_CONSTEXPR": {
-          "type": "BOOL",
-          "value": "ON"
-        },
-        "NEOFOAM_BUILD_TESTS": {
-          "type": "BOOL",
-          "value": "ON"
-        },
-        "NEOFOAM_BUILD_BENCHMARKS": {
           "type": "BOOL",
           "value": "ON"
         }
