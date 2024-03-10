@@ -12,6 +12,7 @@ namespace NeoFOAM
 /**
  * @class Vector
  * @brief A class for the representation of a 3D Vector
+ * @ingroup primitives
  */
 class Vector
 {
