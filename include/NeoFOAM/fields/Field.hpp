@@ -16,6 +16,8 @@ namespace NeoFOAM
  * @class Field
  * @brief A class to contain the data and executors for a field and define some
  * basic operations.
+ *
+ * @ingroup Fields
  */
 template<typename T>
 class Field

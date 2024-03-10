@@ -8,6 +8,13 @@
 namespace NeoFOAM
 {
 
+/**
+ * @class OMPExecutor
+ * @brief Executor for handling OpenMP based parallelization.
+ *
+ *
+ * @ingroup Executor
+ */
 class OMPExecutor
 {
 public:

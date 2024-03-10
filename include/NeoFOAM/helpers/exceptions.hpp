@@ -5,6 +5,9 @@
 namespace NeoFOAM
 {
 /**
+ * @class Error
+ * @brief Base class for consistent error representation.
+ *
  * The Error class is used to report exceptional behaviour in library
  * functions. NeoFOAM uses C++ exception mechanism to this end, and the
  * Error class represents a base class for all types of errors. The exact list
@@ -15,7 +18,7 @@ namespace NeoFOAM
  * blocks, and a human-readable error description can be obtained by calling
  * the Error::what() method.
  *
- * @ingroup error
+ * @ingroup Error
  */
 class Error : public std::exception
 {
@@ -45,8 +48,12 @@ private:
 
 
 /**
+ * @class DimensionMismatch
+ * @brief Error for handling two containers of incompatible lengths.
+ *
  * DimensionMismatch is thrown if an operation is being applied to containers of
  * incompatible size.
+ * @ingroup Error
  */
 class DimensionMismatch : public Error
 {
