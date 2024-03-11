@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Executor" href="executor.html" /><link rel="prev" title="API" href="index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="API" href="index.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/api/fields.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
@@ -158,11 +158,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
 </ul>
 </li>
 </ul>
@@ -200,39 +197,13 @@
         </div>
         <article role="main">
           <section id="fields">
-<span id="api-fields"></span><h1>Fields<a class="headerlink" href="#fields" title="Link to this heading">#</a></h1>
+<span id="api-neofoam"></span><h1>Fields<a class="headerlink" href="#fields" title="Link to this heading">#</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.</p>
-<p>In the following, we will explain the implementation details of the field operations using the additions operator as an example. The block of code below shows an example implementation of the addition operator.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="w">    </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="p">(</span><span class="n">exec_</span><span class="p">,</span><span class="w"> </span><span class="n">size_</span><span class="p">);</span>
-<span class="w">    </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="k">this</span><span class="p">;</span>
-<span class="w">    </span><span class="n">add</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="n">rhs</span><span class="p">);</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>Besides creating a temporary for the result it mainly calls the free standing <code class="docutils literal notranslate"><span class="pre">add</span></code> function which is implemented in <code class="docutils literal notranslate"><span class="pre">FieldOperations.hpp</span></code>. This, in turn, dispatches to the <code class="docutils literal notranslate"><span class="pre">addOp</span></code> functor, that holds the actual addition kernels. In the case of addition this is implemented as a  <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> function, see <a class="reference external" href="https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html">Kokkos documentation</a> for more details.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">Executor</span><span class="o">::</span><span class="n">exec</span><span class="p">;</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">a_f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">b_f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
-<span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span>
-<span class="w">   </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">RangePolicy</span><span class="o">&lt;</span><span class="n">executor</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">a_f</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span>
-<span class="w">   </span><span class="n">KOKKOS_CLASS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">a_f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a_f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b_f</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">}</span>
-<span class="p">);</span>
-</pre></div>
-</div>
+<p>The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like addition or subtraction of two fields, or scalar operations like multiplication of a field with a scalar.</p>
+<p>In the following, we will explain the implementation details of the field operations using the additions operator as example. The block of code below shows an example implementation of the addition operator.</p>
+<p>Besides creating a temporary for the result it mainly calls the free standing <code class="docutils literal notranslate"><span class="pre">add</span></code> function which is implemented in <code class="docutils literal notranslate"><span class="pre">FieldOperations.hpp</span></code>. This in turn dispatches to the <code class="docutils literal notranslate"><span class="pre">addOp</span></code> functor, that holds the actual addition kernels. In the case of addition this is implemented as a  <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> function, see <a class="reference external" href="https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html">Kokkos documentation</a> for more details.</p>
 <p>The code snippet also highlights another important aspect, the executor. The executor, here defines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy</span></code>, see  <a class="reference external" href="https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md">Kokkos Programming Model</a>. Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory. A full example of using NeoFOAMs fields with a GPU executor could be implemented as</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">GPUExecutor</span><span class="w"> </span><span class="n">GPUExec</span><span class="w"> </span><span class="p">{};</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GPUa</span><span class="p">(</span><span class="n">GPUExec</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">GPUa</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GPUb</span><span class="p">(</span><span class="n">GPUExec</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">GPUb</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">);</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">GPUc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GPUa</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">GPUb</span><span class="p">;</span>
-</pre></div>
-</div>
 </section>
 <section id="interface">
 <h2>Interface<a class="headerlink" href="#interface" title="Link to this heading">#</a></h2>
@@ -483,7 +454,7 @@
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5fieldEv">
-<span id="_CPPv3N7NeoFOAM5Field5fieldEv"></span><span id="_CPPv2N7NeoFOAM5Field5fieldEv"></span><span id="NeoFOAM::Field::field"></span><span class="target" id="classNeoFOAM_1_1Field_1ae8bd761efb0fc18b91fe1f004f9bb25d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">field</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5fieldEv" title="Link to this definition">#</a><br /></dt>
+<span id="_CPPv3N7NeoFOAM5Field5fieldEv"></span><span id="_CPPv2N7NeoFOAM5Field5fieldEv"></span><span id="NeoFOAM::Field::field"></span><span class="target" id="classNeoFOAM_1_1Field_1a26b8f30b64552bf11b60bc9b8d76b747"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">field</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5fieldEv" title="Link to this definition">#</a><br /></dt>
 <dd><p>Gets the field as a span. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -494,7 +465,7 @@
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field5fieldEv">
-<span id="_CPPv3NK7NeoFOAM5Field5fieldEv"></span><span id="_CPPv2NK7NeoFOAM5Field5fieldEv"></span><span id="NeoFOAM::Field::fieldC"></span><span class="target" id="classNeoFOAM_1_1Field_1a18c382d9692e5a8d34fc566a3fa27d0e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">field</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field5fieldEv" title="Link to this definition">#</a><br /></dt>
+<span id="_CPPv3NK7NeoFOAM5Field5fieldEv"></span><span id="_CPPv2NK7NeoFOAM5Field5fieldEv"></span><span id="NeoFOAM::Field::fieldC"></span><span class="target" id="classNeoFOAM_1_1Field_1a5c226fa9c3b2f5ab21d48b6c7902811a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">field</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field5fieldEv" title="Link to this definition">#</a><br /></dt>
 <dd><p>Gets the field as a span. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -537,15 +508,7 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="executor.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">Executor</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
+          
           <a class="prev-page" href="index.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">

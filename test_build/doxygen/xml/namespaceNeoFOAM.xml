@@ -2,6 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM" kind="namespace" language="C++">
     <compoundname>NeoFOAM</compoundname>
+    <innerclass refid="classNeoFOAM_1_1span" prot="public">NeoFOAM::span</innerclass>
     <innerclass refid="classNeoFOAM_1_1error" prot="public">NeoFOAM::error</innerclass>
     <innerclass refid="classNeoFOAM_1_1CPUExecutor" prot="public">NeoFOAM::CPUExecutor</innerclass>
     <innerclass refid="classNeoFOAM_1_1GPUExecutor" prot="public">NeoFOAM::GPUExecutor</innerclass>
@@ -9,9 +10,13 @@
     <innerclass refid="classNeoFOAM_1_1argList" prot="public">NeoFOAM::argList</innerclass>
     <innerclass refid="classNeoFOAM_1_1Time" prot="public">NeoFOAM::Time</innerclass>
     <innerclass refid="classNeoFOAM_1_1Field" prot="public">NeoFOAM::Field</innerclass>
-    <innerclass refid="classNeoFOAM_1_1Error" prot="public">NeoFOAM::Error</innerclass>
-    <innerclass refid="classNeoFOAM_1_1DimensionMismatch" prot="public">NeoFOAM::DimensionMismatch</innerclass>
-    <innerclass refid="classNeoFOAM_1_1Vector" prot="public">NeoFOAM::Vector</innerclass>
+    <innerclass refid="structNeoFOAM_1_1ApplyOp" prot="public">NeoFOAM::ApplyOp</innerclass>
+    <innerclass refid="structNeoFOAM_1_1fillOp" prot="public">NeoFOAM::fillOp</innerclass>
+    <innerclass refid="structNeoFOAM_1_1setFieldOp" prot="public">NeoFOAM::setFieldOp</innerclass>
+    <innerclass refid="structNeoFOAM_1_1addOp" prot="public">NeoFOAM::addOp</innerclass>
+    <innerclass refid="structNeoFOAM_1_1subOp" prot="public">NeoFOAM::subOp</innerclass>
+    <innerclass refid="structNeoFOAM_1_1mulOp" prot="public">NeoFOAM::mulOp</innerclass>
+    <innerclass refid="classNeoFOAM_1_1vector" prot="public">NeoFOAM::vector</innerclass>
       <sectiondef kind="typedef">
       <memberdef kind="typedef" id="executor_8hpp_1ae4c14e29f8d05e557ea7f1c13bea6f65" prot="public" static="no">
         <type>std::variant&lt; <ref refid="classNeoFOAM_1_1OMPExecutor" kindref="compound">OMPExecutor</ref>, <ref refid="classNeoFOAM_1_1GPUExecutor" kindref="compound">GPUExecutor</ref>, <ref refid="classNeoFOAM_1_1CPUExecutor" kindref="compound">CPUExecutor</ref> &gt;</type>
@@ -78,9 +83,9 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldTypeDefs.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldTypeDefs.hpp" bodystart="13" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="typedef" id="FieldTypeDefs_8hpp_1a9a20b7f140d2b360241253a62b685754" prot="public" static="no">
-        <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt; <ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> &gt;</type>
-        <definition>using NeoFOAM::vectorField = typedef NeoFOAM::Field&lt;Vector&gt;</definition>
+      <memberdef kind="typedef" id="FieldTypeDefs_8hpp_1a945f7ecab490433e812368ef6691cf74" prot="public" static="no">
+        <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt; <ref refid="classNeoFOAM_1_1vector" kindref="compound">vector</ref> &gt;</type>
+        <definition>using NeoFOAM::vectorField = typedef NeoFOAM::Field&lt;vector&gt;</definition>
         <argsstring></argsstring>
         <name>vectorField</name>
         <briefdescription>
@@ -121,16 +126,26 @@
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="FieldOperations_8hpp_1a51d27618ea41c1186250d0c6c5873b29" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_UNARY_FIELD_OP</definition>
-        <argsstring>(map, in(i))</argsstring>
-        <name>DECLARE_UNARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1a1939e832a41eef332f9864aab14f4cf3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename Func</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::map</definition>
+        <argsstring>(Field&lt; T &gt; &amp;f, Func func)</argsstring>
+        <name>map</name>
         <param>
-          <type>map</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>f</declname>
         </param>
         <param>
-          <type>in(i)</type>
+          <type>Func</type>
+          <declname>func</declname>
         </param>
         <briefdescription>
         </briefdescription>
@@ -138,18 +153,25 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="45" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="45" declcolumn="1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="42" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="42" bodyend="48"/>
       </memberdef>
-      <memberdef kind="function" id="FieldOperations_8hpp_1a1cfa3896802af9016c5031cf879d0a1b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_UNARY_FIELD_OP</definition>
-        <argsstring>(fill, in)</argsstring>
-        <name>DECLARE_UNARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1a6545fb801786a83147058321a3b0413e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::fill</definition>
+        <argsstring>(Field&lt; T &gt; &amp;f, const T value)</argsstring>
+        <name>fill</name>
         <param>
-          <type>fill</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>f</declname>
         </param>
         <param>
-          <type>in</type>
+          <type>const T</type>
+          <declname>value</declname>
         </param>
         <briefdescription>
         </briefdescription>
@@ -157,19 +179,25 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="46" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="46" declcolumn="1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="78" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="78" bodyend="84"/>
       </memberdef>
-      <memberdef kind="function" id="FieldOperations_8hpp_1a845582db14f8589bc271aa45748f7443" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_UNARY_FIELD_OP</definition>
-        <argsstring>(setField, in[i])</argsstring>
-        <name>DECLARE_UNARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1a5d3263f570a0da680f1f408fb54e1030" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::setField</definition>
+        <argsstring>(Field&lt; T &gt; &amp;f, const Field&lt; T &gt; &amp;rhsField_)</argsstring>
+        <name>setField</name>
         <param>
-          <type>setField</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>f</declname>
         </param>
         <param>
-          <type>in</type>
-          <array>[i]</array>
+          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>rhsField_</declname>
         </param>
         <briefdescription>
         </briefdescription>
@@ -177,41 +205,70 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="47" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="47" declcolumn="1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="116" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="116" bodyend="126"/>
       </memberdef>
-      <memberdef kind="function" id="FieldOperations_8hpp_1ac38900afa52bced18c88b8f68ecd8c8e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_UNARY_FIELD_OP</definition>
-        <argsstring>(scalar_mul, a_f[i] *=in)</argsstring>
-        <name>DECLARE_UNARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1ad9c9a8840b70a3067b70d3018efa774d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::add</definition>
+        <argsstring>(Field&lt; T &gt; &amp;a, const Field&lt; T &gt; &amp;b)</argsstring>
+        <name>add</name>
         <param>
-          <type>scalar_mul</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>a</declname>
         </param>
         <param>
-          <type>a_f *</type>
-          <array>[i]</array>
-          <defval>in</defval>
+          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>b</declname>
         </param>
         <briefdescription>
+<para>Arithmetic add function, performs addition of two fields. </para>
         </briefdescription>
         <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>a</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>In-out parameter, </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>b</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The second field </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="48" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="48" declcolumn="1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="167" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="167" bodyend="173"/>
       </memberdef>
-      <memberdef kind="function" id="FieldOperations_8hpp_1a8356dd342fcc248d70f069c5d82bcb80" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_BINARY_FIELD_OP</definition>
-        <argsstring>(add, a_f[i]+b_f[i])</argsstring>
-        <name>DECLARE_BINARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1adb9c913dfead670ca0d91359aef71bcd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::sub</definition>
+        <argsstring>(Field&lt; T &gt; &amp;f, const Field&lt; T &gt; &amp;rhsField)</argsstring>
+        <name>sub</name>
         <param>
-          <type>add</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>f</declname>
         </param>
         <param>
-          <type>a_f+</type>
-          <declname>b_f</declname>
-          <array>[i][i]</array>
+          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>rhsField</declname>
         </param>
         <briefdescription>
         </briefdescription>
@@ -219,20 +276,25 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="88" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="88" declcolumn="1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="203" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="203" bodyend="209"/>
       </memberdef>
-      <memberdef kind="function" id="FieldOperations_8hpp_1a06a74ee3d3f02b484a54a94c1956579a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_BINARY_FIELD_OP</definition>
-        <argsstring>(sub, a_f[i] - b_f[i])</argsstring>
-        <name>DECLARE_BINARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1a9c789e5f49744b3a013131a02ca6fc38" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::mul</definition>
+        <argsstring>(Field&lt; T &gt; &amp;f, const Field&lt; T &gt; &amp;rhsField)</argsstring>
+        <name>mul</name>
         <param>
-          <type>sub</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>f</declname>
         </param>
         <param>
-          <type>a_f -</type>
-          <declname>b_f</declname>
-          <array>[i][i]</array>
+          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>rhsField</declname>
         </param>
         <briefdescription>
         </briefdescription>
@@ -240,41 +302,25 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="89" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="89" declcolumn="1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="262" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="262" bodyend="268"/>
       </memberdef>
-      <memberdef kind="function" id="FieldOperations_8hpp_1a0aa38393da8800ab62d4ef34555f036e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type></type>
-        <definition>NeoFOAM::DECLARE_BINARY_FIELD_OP</definition>
-        <argsstring>(mul, a_f[i] *b_f[i])</argsstring>
-        <name>DECLARE_BINARY_FIELD_OP</name>
+      <memberdef kind="function" id="FieldOperations_8hpp_1ae5de87018e5590f2cf63199ea5711882" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::mul</definition>
+        <argsstring>(Field&lt; T &gt; &amp;f, T s)</argsstring>
+        <name>mul</name>
         <param>
-          <type>mul</type>
+          <type><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; T &gt; &amp;</type>
+          <declname>f</declname>
         </param>
         <param>
-          <type>a_f *</type>
-          <declname>b_f</declname>
-          <array>[i][i]</array>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="90" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" declline="90" declcolumn="1"/>
-      </memberdef>
-      <memberdef kind="function" id="vector_8hpp_1ac48edf8d161ff1ee717e5fba3a93d770" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type>KOKKOS_INLINE_FUNCTION <ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref></type>
-        <definition>KOKKOS_INLINE_FUNCTION Vector NeoFOAM::operator*</definition>
-        <argsstring>(const scalar &amp;sclr, Vector rhs)</argsstring>
-        <name>operator*</name>
-        <param>
-          <type>const scalar &amp;</type>
-          <declname>sclr</declname>
-        </param>
-        <param>
-          <type><ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref></type>
-          <declname>rhs</declname>
+          <type>T</type>
+          <declname>s</declname>
         </param>
         <briefdescription>
         </briefdescription>
@@ -282,13 +328,13 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" line="106" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" bodystart="106" bodyend="110"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" line="271" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/FieldOperations.hpp" bodystart="271" bodyend="277"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Error.hpp" line="8" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/blas/span.hpp" line="6" column="1"/>
   </compounddef>
 </doxygen>
