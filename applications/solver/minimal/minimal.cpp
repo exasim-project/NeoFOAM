@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #include <iostream>
 
@@ -6,8 +6,8 @@
 
 int main(int argc, char* argv[])
 {
-#include "setRootCase.H"
-#include "createTime.H"
+
+    auto [runTime, mesh ] = initNeoFOAM(argc, argv);
 
     Info << "\nStarting time loop\n"
          << endl;
