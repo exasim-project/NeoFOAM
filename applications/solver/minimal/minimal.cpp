@@ -7,7 +7,8 @@
 int main(int argc, char* argv[])
 {
 
-    auto [runTime, mesh ] = initNeoFOAM(argc, argv);
+    #include "setRootCase.H"
+    #include "createTime.H"
 
     Info << "\nStarting time loop\n"
          << endl;
