@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 // Construct from (int argc, char* argv[]),
 // - use argList::argsMandatory() to decide on checking command arguments.
