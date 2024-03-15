@@ -7,25 +7,33 @@
 
 using scalar = double;
 using vector = std::array<scalar, 3>;
-using Field = std::vector<scalar>;
+using VoluField = std::vector<scalar>;
+using SurfaceField = std::vector<scalar>;
+using CoefficientMatrix = std::vector<std::vector<scalar> >;
 using face = int; // this is wrong
 // What are the class responsibilities?
 
 namespace NeoFOAM
 {
-    struct Term{
-        public:
-        Term() = default;
-        Term(const Term&) = default;
-        Term(Term&&) = default;
-        Term& operator=(const Term&) = default;
-        Term& operator=(Term&&) = default;
-        ~Term() = default;
+    enum class EqTermType {
+        temporalTerm,
+        implicitTerm,
+        explicitTerm
+    };
 
-        void evaluate(Field& target_field);
-    }; 
+    template<typename Type>
+    concept ExplicitTerm = requires(Type term) {
+        { term.evaluate(VoluField& target_field) } -> std::same_as<void>;
+    };
 
-    template<typename derived>
+    template<typename Type>
+    concept ImplicitTerm = requires(Type term) {
+        { term.evaluate(CoefficientMatrix& matrix, VoluField& RHS) } -> std::same_as<void>;
+    };
+
+
+
+    template<Term term>
     struct Expression{
         public:
         Expression() = default;
@@ -43,8 +51,8 @@ namespace NeoFOAM
         };
 
 
-        const Term& term_0; 
-        const Term& term_1;
+        const term& term_0; 
+        const term& term_1;
     };
 
     struct Equation{
@@ -66,7 +74,7 @@ namespace NeoFOAM
 
     namespace fv
     {
-        struct grad : public Term  // where this sit? -> multiple disc schemes may be an issue?
+        struct grad  // where this sit? -> multiple disc schemes may be an issue?
         {
 
             public:
@@ -79,12 +87,12 @@ namespace NeoFOAM
 
                 grad(const Field&);
 
-                void evaluate(Field& target_field) {
+                void evaluate(VoluField& target_field) {
 
                 };
         };
 
-        struct div : public Term  // where this sit? -> multiple disc schemes may be an issue?
+        struct div // where this sit? -> multiple disc schemes may be an issue?
         {
 
             public:
@@ -95,14 +103,20 @@ namespace NeoFOAM
                 div& operator=(div&&) = default;
                 ~div() = default;
 
-                div(const Field& phi, const Field& phi);
+                /**
+                 * @brief Construct a new div object
+                 * 
+                 * @param phi field being transported 
+                 * @param psi surface field fluxing the transported feild.
+                 */
+                div(const VoluField& phi, const SurfaceField& psi);
 
                 void evaluate(Field& target_field) {
 
                 };
         };
 
-        struct ddt : public Term  // where this sit? -> multiple disc schemes may be an issue?
+        struct ddt // where this sit? -> multiple disc schemes may be an issue?
         {
 
             public:
@@ -113,9 +127,9 @@ namespace NeoFOAM
                 ddt& operator=(ddt&&) = default;
                 ~grad() = default;
 
-                ddt(Field);
+                ddt(VoluField);
 
-                void evaluate(Field& target_field) {
+                void evaluate(VoluField& target_field) {
 
                 };
         };
