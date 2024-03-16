@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['exec_49',['exec',['../classNeoFOAM_1_1Field.html#a47c422de47c8ac36edf73129ed4c9b75',1,'NeoFOAM::Field']]],
-  ['exit_50',['exit',['../classNeoFOAM_1_1error.html#ae1710ed97fabc74e291ded409160b65b',1,'NeoFOAM::error']]]
+  ['data_113',['data',['../classNeoFOAM_1_1deviceAdjacency.html#aa2940e0b9971a30da050a94f50db9e1b',1,'NeoFOAM::deviceAdjacency::data()'],['../classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8',1,'NeoFOAM::Field::data()'],['../classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191',1,'NeoFOAM::Field::data() const']]]
 ];

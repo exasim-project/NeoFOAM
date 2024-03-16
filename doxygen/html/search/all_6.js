@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['mulop_14',['mulOp',['../structNeoFOAM_1_1mulOp.html',1,'NeoFOAM']]]
+  ['gaussgreengrad_31',['gaussGreenGrad',['../classNeoFOAM_1_1gaussGreenGrad.html',1,'NeoFOAM']]],
+  ['gaussgreenkernel_32',['GaussGreenKernel',['../structNeoFOAM_1_1GaussGreenKernel.html',1,'NeoFOAM']]],
+  ['gpuexecutor_33',['GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html',1,'NeoFOAM']]]
 ];
