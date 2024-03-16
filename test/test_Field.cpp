@@ -168,9 +168,8 @@ TEST_CASE("Field Operator+")
         NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, N);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::fill(b, 10.0);
-
+        
         c = a + b;
-
         for (int i = 0; i < N; i++)
         {
             REQUIRE(c.field()[i] == 15.0);

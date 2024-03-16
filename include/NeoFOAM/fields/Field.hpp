@@ -26,7 +26,7 @@ public:
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
-     * */
+     */
     Field(const executor& exec, size_t size)
         : size_(size), exec_(exec), data_(nullptr)
     {
@@ -36,6 +36,19 @@ public:
                    exec_);
         data_ = static_cast<T*>(ptr);
     };
+
+    /**
+     * @brief Create a Field with a given size on an executor
+     * @param exec  Executor associated to the matrix
+     * @param size  size of the matrix
+     */
+    Field(const Field& other)
+        : size_(other.size_), exec_(other.exec_)
+    {
+        // TODO CHECK IF EXECUTORS ARE THE SAME
+        setSize(other.size_);
+        setField(*this, other);
+    }
 
     /**
      * @brief Destroy the Field object.
@@ -152,6 +165,7 @@ public:
      */
     void operator=(const Field<T>& rhs)
     {
+         // TODO CHECK IF EXECUTORS ARE THE SAME
         setField(*this, rhs);
     }
 
@@ -190,19 +204,6 @@ public:
     //--------------------------------------------------------------------------------
     // arithmetic operator
     //--------------------------------------------------------------------------------
-
-    /**
-     * @brief Arithmetic add operator, addition of a second field.
-     * @param rhs The field to add with this field.
-     * @returns The result of the addition.
-     */
-    [[nodiscard]] Field<T> operator+(const Field<T>& rhs)
-    {
-        Field<T> result(exec_, size_);
-        result = *this;
-        add(result, rhs);
-        return result;
-    }
 
     /**
      * @brief Arithmetic subtraction operator, subtraction by a second field.
@@ -253,13 +254,24 @@ public:
     void setSize(const size_t size)
     {
         void* ptr = nullptr;
-        std::visit(
-            [this, &ptr, size](const auto& exec)
-            {
-                ptr = exec.realloc(data_, size * sizeof(T));
-            },
-            exec_
-        );
+        if (empty())
+            std::visit(
+                [this, &ptr, size](const auto& exec)
+                {
+                    ptr = exec.realloc(data_, size * sizeof(T));
+                },
+                exec_
+            );
+        else
+        {
+            std::visit(
+                [this, &ptr, size](const auto& exec)
+                {
+                    ptr = exec.alloc(size * sizeof(T));
+                },
+                exec_
+            );
+        }
         data_ = static_cast<T*>(ptr);
         size_ = size;
     }
@@ -282,13 +294,17 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const executor& exec() { return exec_; }
+    [[nodiscard]] const executor& exec() const { return exec_; }
 
     /**
      * @brief Gets the size of the field.
      * @return The size of the field.
      */
     [[nodiscard]] size_t size() const { return size_; }
+
+    // TODO
+    [[nodiscard]] bool empty() const { return size() == 0; }
+
 
     /**
      * @brief Gets the field as a span.
@@ -304,36 +320,37 @@ public:
 
 private:
 
-    size_t size_; //!< Size of the field.
-    T* data_;     //!< Pointer to the field data.
-    const executor
-        exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
+    size_t size_;        //!< Size of the field.
+    T* data_;      //!< Pointer to the field data.
+    const executor exec_;   //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
 //------------------------------------------------------------------------------------
 // arithmetic operator
 //------------------------------------------------------------------------------------
 
-// /**
-//  * @brief Arithmetic add operator, addition of a second field.
-//  * @param rhs The field to add with this field.
-//  * @returns The result of the addition.
-//  */
-// template<typename T>
-// [[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
-// {
-//     return lhs += rhs;
-// }
+/**
+ * @brief Arithmetic add operator, addition of a second field.
+ * @param rhs The field to add with this field.
+ * @returns The result of the addition.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
+{
+    lhs += rhs;
+    return lhs;
+}
 
-// /**
-//  * @brief Arithmetic add operator, addition of a second field.
-//  * @param rhs The field to add with this field.
-//  * @returns The result of the addition.
-//  */
-// template<typename T>
-// [[nodiscard]] Field<T> operator-(Field<T> lhs, const Field<T>& rhs)
-// {
-//     return lhs -= rhs;
-// }
+/**
+ * @brief Arithmetic add operator, addition of a second field.
+ * @param rhs The field to add with this field.
+ * @returns The result of the addition.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator-(Field<T> lhs, const Field<T>& rhs)
+{
+    lhs -= rhs;
+    return lhs;
+}
 
 } // namespace NeoFOAM
