@@ -140,7 +140,7 @@ public:
     }
 
     //--------------------------------------------------------------------------------
-    // Assignment operators
+    // Assignment Operators
     //--------------------------------------------------------------------------------
 
     /**
@@ -150,7 +150,10 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<T>& rhs) { setField(*this, rhs); }
+    void operator=(const Field<T>& rhs)
+    {
+        setField(*this, rhs);
+    }
 
     /**
      * @brief Assignment operator, Sets the field values to that of the value.
@@ -165,41 +168,24 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    Field<T>& operator+=(const Field<T>& rhs) { 
-        add(*this, rhs); 
-        return *this;
-    }   
-
-    /**
-     * @brief Assignment operator, Sets the field values to that of the value.
-     * @param rhs The value to set the field to.
-     */
-    Field<T>& operator+=(const T& rhs) { 
-        add(*this, rhs); 
+    Field<T>& operator+=(const Field<T>& rhs)
+    {
+        add(*this, rhs);
         return *this;
     }
 
-        /**
+    /**
      * @brief Assignment operator, Sets the field values to that of the parsed
      * field.
      * @param rhs The field to copy from.
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    Field<T>& operator+=(const Field<T>& rhs) { 
-        add(*this, rhs); 
-        return *this;
-    }   
-
-    /**
-     * @brief Assignment operator, Sets the field values to that of the value.
-     * @param rhs The value to set the field to.
-     */
-    Field<T>& operator+=(const T& rhs) { 
-        add(*this, rhs); 
+    Field<T>& operator-=(const Field<T>& rhs)
+    {
+        sub(*this, rhs);
         return *this;
     }
-
 
     //--------------------------------------------------------------------------------
     // arithmetic operator
@@ -328,38 +314,26 @@ private:
 // arithmetic operator
 //------------------------------------------------------------------------------------
 
-/**
- * @brief Arithmetic add operator, addition of a second field.
- * @param rhs The field to add with this field.
- * @returns The result of the addition.
- */
-template<typename T>
-[[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
-{
-    return lhs += rhs;
-}
+// /**
+//  * @brief Arithmetic add operator, addition of a second field.
+//  * @param rhs The field to add with this field.
+//  * @returns The result of the addition.
+//  */
+// template<typename T>
+// [[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
+// {
+//     return lhs += rhs;
+// }
 
-/**
- * @brief Arithmetic add operator, addition of a second field.
- * @param rhs The field to add with this field.
- * @returns The result of the addition.
- */
-template<typename T>
-[[nodiscard]] Field<T> operator+(Field<T> lhs, const T& rhs)
-{
-    return lhs += rhs;
-}
-
-/**
- * @brief Arithmetic add operator, addition of a second field.
- * @param rhs The field to add with this field.
- * @returns The result of the addition.
- */
-template<typename T>
-[[nodiscard]] Field<T> operator+(const T& lhs, Field<T> rhs)
-{
-    return rhs += lhs;
-}
-
+// /**
+//  * @brief Arithmetic add operator, addition of a second field.
+//  * @param rhs The field to add with this field.
+//  * @returns The result of the addition.
+//  */
+// template<typename T>
+// [[nodiscard]] Field<T> operator-(Field<T> lhs, const Field<T>& rhs)
+// {
+//     return lhs -= rhs;
+// }
 
 } // namespace NeoFOAM

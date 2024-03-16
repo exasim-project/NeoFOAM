@@ -30,9 +30,254 @@ int main(int argc, char* argv[])
     return result;
 }
 
-TEST_CASE("Field Operations")
-{
+//--------------------------------------------------------------------------------
+// Assignment Operators
+//--------------------------------------------------------------------------------
 
+TEST_CASE("Field Operator+=")
+{
+    SECTION("CPU")
+    {
+        int N = 10;
+        NeoFOAM::CPUExecutor cpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a += b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.field()[i] == 15.0);
+        }
+    };
+
+    SECTION("OpenMP")
+    {
+        int N = 10;
+        NeoFOAM::OMPExecutor OMPExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a += b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.field()[i] == 15.0);
+        }
+
+        NeoFOAM::scalar c = 5.0;
+    };
+
+    SECTION("GPU")
+    {
+        int N = 10;
+        NeoFOAM::GPUExecutor gpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a += b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.copyToHost().field()[i] == 15.0);
+        }
+    };
+}
+
+TEST_CASE("Field Operator-=")
+{
+    SECTION("CPU")
+    {
+        int N = 10;
+        NeoFOAM::CPUExecutor cpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a -= b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.field()[i] == -5.0);
+        }
+    };
+
+    SECTION("OpenMP")
+    {
+        int N = 10;
+        NeoFOAM::OMPExecutor OMPExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a -= b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.field()[i] == -5.0);
+        }
+
+        NeoFOAM::scalar c = 5.0;
+    };
+
+    SECTION("GPU")
+    {
+        int N = 10;
+        NeoFOAM::GPUExecutor gpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a -= b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.copyToHost().field()[i] == -5.0);
+        }
+    };
+}
+
+//--------------------------------------------------------------------------------
+// Arithmetic operator
+//--------------------------------------------------------------------------------
+
+TEST_CASE("Field Operator+")
+{
+    SECTION("CPU")
+    {
+        int N = 10;
+        NeoFOAM::CPUExecutor cpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a + b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.field()[i] == 15.0);
+        }
+    };
+
+    SECTION("OpenMP")
+    {
+        int N = 10;
+        NeoFOAM::OMPExecutor OMPExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(OMPExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a + b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.field()[i] == 15.0);
+        }
+    };
+
+    SECTION("GPU")
+    {
+        int N = 10;
+        NeoFOAM::GPUExecutor gpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(gpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a + b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.field()[i] == 15.0);
+        }
+    };
+}
+
+TEST_CASE("Field Operator-")
+{
+    SECTION("CPU")
+    {
+        int N = 10;
+        NeoFOAM::CPUExecutor cpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a - b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.field()[i] == -5.0);
+        }
+    };
+
+    SECTION("OpenMP")
+    {
+        int N = 10;
+        NeoFOAM::OMPExecutor OMPExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(OMPExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a - b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.field()[i] == -5.0);
+        }
+    };
+
+    SECTION("GPU")
+    {
+        int N = 10;
+        NeoFOAM::GPUExecutor gpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(gpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a - b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.field()[i] == -5.0);
+        }
+    };
+}
+
+TEST_CASE("Field Operations")
+{   
     SECTION("CPU")
     {
         int N = 10;
@@ -59,20 +304,6 @@ TEST_CASE("Field Operations")
 
         add(a, b);
         REQUIRE(a.field().size() == N + 2);
-
-        for (int i = 0; i < N + 2; i++)
-        {
-            REQUIRE(a.field()[i] == 20.0);
-        }
-
-        a = a + b;
-
-        for (int i = 0; i < N + 2; i++)
-        {
-            REQUIRE(a.field()[i] == 30.0);
-        }
-
-        a = a - b;
 
         for (int i = 0; i < N + 2; i++)
         {
@@ -120,7 +351,7 @@ TEST_CASE("Field Operations")
 
         a = b;
         REQUIRE(a.field().size() == N + 2);
-        ;
+        
 
         for (int i = 0; i < N + 2; i++)
         {
@@ -129,20 +360,6 @@ TEST_CASE("Field Operations")
 
         add(a, b);
         REQUIRE(a.field().size() == N + 2);
-
-        for (int i = 0; i < N + 2; i++)
-        {
-            REQUIRE(a.field()[i] == 20.0);
-        }
-
-        a = a + b;
-
-        for (int i = 0; i < N + 2; i++)
-        {
-            REQUIRE(a.field()[i] == 30.0);
-        }
-
-        a = a - b;
 
         for (int i = 0; i < N + 2; i++)
         {
@@ -211,20 +428,6 @@ TEST_CASE("Field Operations")
 
         add(a, b);
         REQUIRE(a.field().size() == N + 2);
-
-        for (int i = 0; i < N + 2; i++)
-        {
-            REQUIRE(a.copyToHost().field()[i] == 20.0);
-        }
-
-        a = a + b;
-
-        for (int i = 0; i < N + 2; i++)
-        {
-            REQUIRE(a.copyToHost().field()[i] == 30.0);
-        }
-
-        a = a - b;
 
         for (int i = 0; i < N + 2; i++)
         {
