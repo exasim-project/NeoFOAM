@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['error_79',['error',['../classNeoFOAM_1_1error.html',1,'NeoFOAM']]]
+  ['gpuexecutor_37',['GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html',1,'NeoFOAM']]]
 ];
