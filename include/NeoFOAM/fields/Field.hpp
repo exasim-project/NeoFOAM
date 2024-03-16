@@ -139,6 +139,10 @@ public:
         exit(1);
     }
 
+    //--------------------------------------------------------------------------------
+    // Assignment operators
+    //--------------------------------------------------------------------------------
+
     /**
      * @brief Assignment operator, Sets the field values to that of the parsed
      * field.
@@ -154,7 +158,52 @@ public:
      */
     void operator=(const T& rhs) { fill(*this, rhs); }
 
+    /**
+     * @brief Assignment operator, Sets the field values to that of the parsed
+     * field.
+     * @param rhs The field to copy from.
+     *
+     * @warning This field will be sized to the size of the parsed field.
+     */
+    Field<T>& operator+=(const Field<T>& rhs) { 
+        add(*this, rhs); 
+        return *this;
+    }   
+
+    /**
+     * @brief Assignment operator, Sets the field values to that of the value.
+     * @param rhs The value to set the field to.
+     */
+    Field<T>& operator+=(const T& rhs) { 
+        add(*this, rhs); 
+        return *this;
+    }
+
+        /**
+     * @brief Assignment operator, Sets the field values to that of the parsed
+     * field.
+     * @param rhs The field to copy from.
+     *
+     * @warning This field will be sized to the size of the parsed field.
+     */
+    Field<T>& operator+=(const Field<T>& rhs) { 
+        add(*this, rhs); 
+        return *this;
+    }   
+
+    /**
+     * @brief Assignment operator, Sets the field values to that of the value.
+     * @param rhs The value to set the field to.
+     */
+    Field<T>& operator+=(const T& rhs) { 
+        add(*this, rhs); 
+        return *this;
+    }
+
+
+    //--------------------------------------------------------------------------------
     // arithmetic operator
+    //--------------------------------------------------------------------------------
 
     /**
      * @brief Arithmetic add operator, addition of a second field.
@@ -274,5 +323,43 @@ private:
     const executor
         exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
+
+//------------------------------------------------------------------------------------
+// arithmetic operator
+//------------------------------------------------------------------------------------
+
+/**
+ * @brief Arithmetic add operator, addition of a second field.
+ * @param rhs The field to add with this field.
+ * @returns The result of the addition.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
+{
+    return lhs += rhs;
+}
+
+/**
+ * @brief Arithmetic add operator, addition of a second field.
+ * @param rhs The field to add with this field.
+ * @returns The result of the addition.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator+(Field<T> lhs, const T& rhs)
+{
+    return lhs += rhs;
+}
+
+/**
+ * @brief Arithmetic add operator, addition of a second field.
+ * @param rhs The field to add with this field.
+ * @returns The result of the addition.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator+(const T& lhs, Field<T> rhs)
+{
+    return rhs += lhs;
+}
+
 
 } // namespace NeoFOAM
