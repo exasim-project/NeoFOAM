@@ -22,6 +22,10 @@ class Field
 {
 public:
 
+    //--------------------------------------------------------------------------------
+    // Constructors and Destructors
+    //--------------------------------------------------------------------------------
+
     /**
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
@@ -38,12 +42,12 @@ public:
     };
 
     /**
-     * @brief Create a Field with a given size on an executor
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @brief Copy constructor, creates a new field with the same size and data
+     * as the parsed field.
+     * @param other The field to copy from.
      */
     Field(const Field& other)
-        : size_(other.size_), exec_(other.exec_)
+        : size_(other.size_), exec_(other.exec_), data_(data_)
     {
         // TODO CHECK IF EXECUTORS ARE THE SAME
         setSize(other.size_);
@@ -165,7 +169,7 @@ public:
      */
     void operator=(const Field<T>& rhs)
     {
-         // TODO CHECK IF EXECUTORS ARE THE SAME
+        // TODO CHECK IF EXECUTORS ARE THE SAME
         setField(*this, rhs);
     }
 
@@ -176,11 +180,10 @@ public:
     void operator=(const T& rhs) { fill(*this, rhs); }
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the parsed
+     * @brief Arithmetic addition assignment operator, adds a second field to this
      * field.
-     * @param rhs The field to copy from.
-     *
-     * @warning This field will be sized to the size of the parsed field.
+     * @param rhs The field to add to this field.
+     * @returns The result of the addition.
      */
     Field<T>& operator+=(const Field<T>& rhs)
     {
@@ -189,11 +192,10 @@ public:
     }
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the parsed
-     * field.
-     * @param rhs The field to copy from.
-     *
-     * @warning This field will be sized to the size of the parsed field.
+     * @brief Arithmetic subtraction assignment operator, subtracts a second field
+     * from this field.
+     * @param rhs The field to subtract from this field.
+     * @returns The result of the subtraction.
      */
     Field<T>& operator-=(const Field<T>& rhs)
     {
@@ -202,7 +204,7 @@ public:
     }
 
     //--------------------------------------------------------------------------------
-    // arithmetic operator
+    // Arithmetic Operator
     //--------------------------------------------------------------------------------
 
     /**
@@ -302,9 +304,11 @@ public:
      */
     [[nodiscard]] size_t size() const { return size_; }
 
-    // TODO
+    /**
+     * @brief Checks if the field is empty.
+     * @return True if the field is empty, false otherwise.
+     */
     [[nodiscard]] bool empty() const { return size() == 0; }
-
 
     /**
      * @brief Gets the field as a span.
@@ -320,9 +324,9 @@ public:
 
 private:
 
-    size_t size_;        //!< Size of the field.
-    T* data_;      //!< Pointer to the field data.
-    const executor exec_;   //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
+    size_t size_ {0};     //!< Size of the field.
+    T* data_ {nullptr};   //!< Pointer to the field data.
+    const executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
 //------------------------------------------------------------------------------------
@@ -330,7 +334,8 @@ private:
 //------------------------------------------------------------------------------------
 
 /**
- * @brief Arithmetic add operator, addition of a second field.
+ * @brief Arithmetic add operator, addition of two fields.
+ * @param lhs The field to add with this field.
  * @param rhs The field to add with this field.
  * @returns The result of the addition.
  */
@@ -342,9 +347,10 @@ template<typename T>
 }
 
 /**
- * @brief Arithmetic add operator, addition of a second field.
- * @param rhs The field to add with this field.
- * @returns The result of the addition.
+ * @brief Arithmetic subtraction operator, subtraction one field from another.
+ * @param lhs The field to subtract from.
+ * @param rhs The field to subtract by.
+ * @returns The result of the subtraction.
  */
 template<typename T>
 [[nodiscard]] Field<T> operator-(Field<T> lhs, const Field<T>& rhs)

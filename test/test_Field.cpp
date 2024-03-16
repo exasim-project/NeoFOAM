@@ -31,6 +31,67 @@ int main(int argc, char* argv[])
 }
 
 //--------------------------------------------------------------------------------
+// Constructors and Destructors
+//--------------------------------------------------------------------------------
+
+TEST_CASE("Field Copy Constructor")
+{
+    SECTION("CPU")
+    {
+        int N = 10;
+        NeoFOAM::CPUExecutor cpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+
+        NeoFOAM::Field<NeoFOAM::scalar> b(a);
+
+        REQUIRE(b.size() == N);
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(b.field()[i] == 5.0);
+        }
+    };
+
+    SECTION("OpenMP")
+    {
+        int N = 10;
+        NeoFOAM::OMPExecutor OMPExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
+        NeoFOAM::fill(a, 5.0);
+
+        NeoFOAM::Field<NeoFOAM::scalar> b(a);
+
+        REQUIRE(b.size() == N);
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(b.field()[i] == 5.0);
+        }
+    };
+
+    SECTION("GPU")
+    {
+        int N = 10;
+        NeoFOAM::GPUExecutor gpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
+        NeoFOAM::fill(a, 5.0);
+
+        NeoFOAM::Field<NeoFOAM::scalar> b(a);
+
+        REQUIRE(b.size() == N);
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(b.copyToHost().field()[i] == 5.0);
+        }
+    };
+}
+
+//--------------------------------------------------------------------------------
 // Assignment Operators
 //--------------------------------------------------------------------------------
 
@@ -168,7 +229,7 @@ TEST_CASE("Field Operator+")
         NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, N);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::fill(b, 10.0);
-        
+
         c = a + b;
         for (int i = 0; i < N; i++)
         {
@@ -275,8 +336,59 @@ TEST_CASE("Field Operator-")
     };
 }
 
+//--------------------------------------------------------------------------------
+// PLEASE PUT ME SOMEWHERE ELSE TESTS
+//--------------------------------------------------------------------------------
+
+TEST_CASE("Field empty and size")
+{
+    SECTION("CPU")
+    {
+        int N = 10;
+        NeoFOAM::CPUExecutor cpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, 0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
+        REQUIRE(a.empty() == true);
+        REQUIRE(a.size() == 0);
+        REQUIRE(b.empty() == false);
+        REQUIRE(b.size() == N);
+    };
+
+    SECTION("OpenMP")
+    {
+        int N = 10;
+        NeoFOAM::OMPExecutor OMPExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, 0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
+        REQUIRE(a.empty() == true);
+        REQUIRE(a.size() == 0);
+        REQUIRE(b.empty() == false);
+        REQUIRE(b.size() == N);
+    };
+
+    SECTION("GPU")
+    {
+        int N = 10;
+        NeoFOAM::GPUExecutor gpuExec {};
+
+        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, 0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
+        REQUIRE(a.empty() == true);
+        REQUIRE(a.size() == 0);
+        REQUIRE(b.empty() == false);
+        REQUIRE(b.size() == N);
+    };
+}
+
+//--------------------------------------------------------------------------------
+// Legacy Test
+//--------------------------------------------------------------------------------
+
+
 TEST_CASE("Field Operations")
-{   
+{
     SECTION("CPU")
     {
         int N = 10;
@@ -350,7 +462,7 @@ TEST_CASE("Field Operations")
 
         a = b;
         REQUIRE(a.field().size() == N + 2);
-        
+
 
         for (int i = 0; i < N + 2; i++)
         {
