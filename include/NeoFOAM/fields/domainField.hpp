@@ -9,7 +9,6 @@
 #include "boundaryFields.hpp"
 
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/blas/span.hpp"
 
 namespace NeoFOAM
 {

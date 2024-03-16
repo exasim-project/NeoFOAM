@@ -10,7 +10,7 @@ namespace NeoFOAM
 GaussGreenKernel::GaussGreenKernel(const unstructuredMesh& mesh, const scalarField& phi, vectorField& gradPhi)
     : mesh_(mesh), phi_(phi), gradPhi_(gradPhi)
 {
-    NeoFOAM::fill(gradPhi_, NeoFOAM::vector(0.0, 0.0, 0.0));
+    NeoFOAM::fill(gradPhi_, NeoFOAM::Vector(0.0, 0.0, 0.0));
 };
 
 void GaussGreenKernel::operator()(const GPUExecutor& exec)
@@ -32,8 +32,8 @@ void GaussGreenKernel::operator()(const GPUExecutor& exec)
             int32_t own = s_owner[i];
             int32_t nei = s_neighbour[i];
             NeoFOAM::scalar phif = 0.5 * (s_phi[nei] + s_phi[own]);
-            NeoFOAM::vector value_own = s_Sf[i] * (phif / s_V[own]);
-            NeoFOAM::vector value_nei = s_Sf[i] * (phif / s_V[nei]);
+            NeoFOAM::Vector value_own = s_Sf[i] * (phif / s_V[own]);
+            NeoFOAM::Vector value_nei = s_Sf[i] * (phif / s_V[nei]);
             Kokkos::atomic_add(&s_gradPhi[own], value_own);
             Kokkos::atomic_sub(&s_gradPhi[nei], value_nei);
         }
@@ -59,8 +59,8 @@ void GaussGreenKernel::operator()(const OMPExecutor& exec)
             int32_t own = s_owner[i];
             int32_t nei = s_neighbour[i];
             NeoFOAM::scalar phif = 0.5 * (s_phi[nei] + s_phi[own]);
-            NeoFOAM::vector value_own = s_Sf[i] * (phif / s_V[own]);
-            NeoFOAM::vector value_nei = s_Sf[i] * (phif / s_V[nei]);
+            NeoFOAM::Vector value_own = s_Sf[i] * (phif / s_V[own]);
+            NeoFOAM::Vector value_nei = s_Sf[i] * (phif / s_V[nei]);
             Kokkos::atomic_add(&s_gradPhi[own], value_own);
             Kokkos::atomic_sub(&s_gradPhi[nei], value_nei);
         }
@@ -86,8 +86,8 @@ void GaussGreenKernel::operator()(const CPUExecutor& exec)
         int32_t own = s_owner[i];
         int32_t nei = s_neighbour[i];
         NeoFOAM::scalar phif = 0.5 * (s_phi[nei] + s_phi[own]);
-        NeoFOAM::vector value_own = (s_Sf[i] * (phif / s_V[own]));
-        NeoFOAM::vector value_nei = (s_Sf[i] * (phif / s_V[nei]));
+        NeoFOAM::Vector value_own = (s_Sf[i] * (phif / s_V[own]));
+        NeoFOAM::Vector value_nei = (s_Sf[i] * (phif / s_V[nei]));
         s_gradPhi[own] += value_own;
         s_gradPhi[nei] -= value_nei;
     }

@@ -37,88 +37,6 @@ int main(int argc, char* argv[])
     return result;
 }
 
-TEST_CASE("Primitives")
-{
-    SECTION("Vector")
-    {
-        SECTION("CPU")
-        {
-            NeoFOAM::vector a(1.0, 2.0, 3.0);
-            REQUIRE(a(0) == 1.0);
-            REQUIRE(a(1) == 2.0);
-            REQUIRE(a(2) == 3.0);
-
-            NeoFOAM::vector b(1.0, 2.0, 3.0);
-            REQUIRE(a == b);
-
-            NeoFOAM::vector c(2.0, 4.0, 6.0);
-
-            REQUIRE(a + b == c);
-
-            REQUIRE((a - b) == NeoFOAM::vector(0.0, 0.0, 0.0));
-
-            a += b;
-            REQUIRE(a == c);
-
-            a -= b;
-            REQUIRE(a == b);
-            a *= 2;
-            REQUIRE(a == c);
-            a = b;
-
-            REQUIRE(a == b);
-
-            NeoFOAM::vector d(4.0, 8.0, 12.0);
-            REQUIRE((a + a + a + a) == d);
-            REQUIRE((4 * a) == d);
-            REQUIRE((a * 4) == d);
-            REQUIRE((a + 3 * a) == d);
-            REQUIRE((a + 2 * a + a) == d);
-        };
-    };
-};
-
-TEST_CASE("Primitives")
-{
-    SECTION("Vector")
-    {
-        SECTION("CPU")
-        {
-            NeoFOAM::Vector a(1.0, 2.0, 3.0);
-            REQUIRE(a(0) == 1.0);
-            REQUIRE(a(1) == 2.0);
-            REQUIRE(a(2) == 3.0);
-
-            NeoFOAM::Vector b(1.0, 2.0, 3.0);
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector c(2.0, 4.0, 6.0);
-
-            REQUIRE(a + b == c);
-
-            REQUIRE((a - b) == NeoFOAM::Vector(0.0, 0.0, 0.0));
-
-            a += b;
-            REQUIRE(a == c);
-
-            a -= b;
-            REQUIRE(a == b);
-            a *= 2;
-            REQUIRE(a == c);
-            a = b;
-
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector d(4.0, 8.0, 12.0);
-            REQUIRE((a + a + a + a) == d);
-            REQUIRE((4 * a) == d);
-            REQUIRE((a * 4) == d);
-            REQUIRE((a + 3 * a) == d);
-            REQUIRE((a + 2 * a + a) == d);
-        };
-    };
-};
-
 TEST_CASE("Field Operations")
 {
 
@@ -344,6 +262,47 @@ TEST_CASE("Field Operations")
     };
 }
 
+TEST_CASE("Primitives")
+{
+    SECTION("Vector")
+    {
+        SECTION("CPU")
+        {
+            NeoFOAM::Vector a(1.0, 2.0, 3.0);
+            REQUIRE(a(0) == 1.0);
+            REQUIRE(a(1) == 2.0);
+            REQUIRE(a(2) == 3.0);
+
+            NeoFOAM::Vector b(1.0, 2.0, 3.0);
+            REQUIRE(a == b);
+
+            NeoFOAM::Vector c(2.0, 4.0, 6.0);
+
+            REQUIRE(a + b == c);
+
+            REQUIRE((a - b) == NeoFOAM::Vector(0.0, 0.0, 0.0));
+
+            a += b;
+            REQUIRE(a == c);
+
+            a -= b;
+            REQUIRE(a == b);
+            a *= 2;
+            REQUIRE(a == c);
+            a = b;
+
+            REQUIRE(a == b);
+
+            NeoFOAM::Vector d(4.0, 8.0, 12.0);
+            REQUIRE((a + a + a + a) == d);
+            REQUIRE((4 * a) == d);
+            REQUIRE((a * 4) == d);
+            REQUIRE((a + 3 * a) == d);
+            REQUIRE((a + 2 * a + a) == d);
+        };
+    };
+};
+
 TEST_CASE("Boundaries")
 {
 
@@ -438,44 +397,3 @@ TEST_CASE("Boundaries")
         }
     }
 }
-
-TEST_CASE("Primitives")
-{
-    SECTION("Vector")
-    {
-        SECTION("CPU")
-        {
-            NeoFOAM::Vector a(1.0, 2.0, 3.0);
-            REQUIRE(a(0) == 1.0);
-            REQUIRE(a(1) == 2.0);
-            REQUIRE(a(2) == 3.0);
-
-            NeoFOAM::Vector b(1.0, 2.0, 3.0);
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector c(2.0, 4.0, 6.0);
-
-            REQUIRE(a + b == c);
-
-            REQUIRE((a - b) == NeoFOAM::Vector(0.0, 0.0, 0.0));
-
-            a += b;
-            REQUIRE(a == c);
-
-            a -= b;
-            REQUIRE(a == b);
-            a *= 2;
-            REQUIRE(a == c);
-            a = b;
-
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector d(4.0, 8.0, 12.0);
-            REQUIRE((a + a + a + a) == d);
-            REQUIRE((4 * a) == d);
-            REQUIRE((a * 4) == d);
-            REQUIRE((a + 3 * a) == d);
-            REQUIRE((a + 2 * a + a) == d);
-        };
-    };
-};

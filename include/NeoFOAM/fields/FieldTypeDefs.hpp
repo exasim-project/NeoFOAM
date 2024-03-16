@@ -3,6 +3,7 @@
 #pragma once
 
 #include "NeoFOAM/fields/Field.hpp"
+#include "FieldOperations.hpp"
 #include "NeoFOAM/primitives/scalar.hpp"
 #include "NeoFOAM/primitives/vector.hpp"
 

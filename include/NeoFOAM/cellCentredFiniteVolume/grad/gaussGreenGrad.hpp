@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
 #include "Kokkos_Core.hpp"

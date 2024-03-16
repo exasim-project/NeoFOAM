@@ -48,7 +48,7 @@ public:
                    { ptr = exec.alloc(size * sizeof(T)); },
                    exec_);
         data_ = static_cast<T*>(ptr);
-        setField(*this, rhs);
+        setField(*this, rhs.field());
     };
 
     /**
