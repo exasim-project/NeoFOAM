@@ -35,16 +35,10 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    scalar& operator()(const int i)
-    {
-        return cmpts_[i];
-    }
+    scalar& operator()(const int i) { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
-    scalar operator()(const int i) const
-    {
-        return cmpts_[i];
-    }
+    scalar operator()(const int i) const { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
     bool operator==(const Vector& rhs) const
@@ -53,7 +47,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    Vector operator+(const Vector& rhs)
+    Vector operator+(const Vector& rhs) const
     {
         return Vector(cmpts_[0] + rhs(0), cmpts_[1] + rhs(1), cmpts_[2] + rhs(2));
     }
@@ -67,7 +61,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    Vector operator-(const Vector& rhs)
+    Vector operator-(const Vector& rhs) const
     {
         return Vector(cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2));
     }
