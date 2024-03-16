@@ -9,8 +9,6 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/fields/Field.hpp"
-#include "NeoFOAM/fields/FieldOperations.hpp"
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include <vector>
 
 #include <catch2/catch_test_case_info.hpp>

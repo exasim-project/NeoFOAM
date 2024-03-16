@@ -276,3 +276,6 @@ private:
 };
 
 } // namespace NeoFOAM
+
+#include "FieldOperations.hpp"
+#include "FieldTypeDefs.hpp"
