@@ -360,3 +360,6 @@ template<typename T>
 }
 
 } // namespace NeoFOAM
+
+#include "FieldOperations.hpp"
+#include "FieldTypeDefs.hpp"

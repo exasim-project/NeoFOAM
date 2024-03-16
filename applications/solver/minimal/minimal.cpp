@@ -7,8 +7,8 @@
 int main(int argc, char* argv[])
 {
 
-    #include "setRootCase.H"
-    #include "createTime.H"
+#include "setRootCase.H"
+#include "createTime.H"
 
     Info << "\nStarting time loop\n"
          << endl;
