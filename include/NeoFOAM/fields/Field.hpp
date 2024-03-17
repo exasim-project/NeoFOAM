@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 #include <iostream>
 
-#include "NeoFOAM/blas/span.hpp"
+#include <span>
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/primitives/scalar.hpp"
 
@@ -16,6 +16,8 @@ namespace NeoFOAM
  * @class Field
  * @brief A class to contain the data and executors for a field and define some
  * basic operations.
+ *
+ * @ingroup Fields
  */
 template<typename T>
 class Field
@@ -146,7 +148,15 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<T>& rhs) { setField(*this, rhs); }
+    void operator=(const Field<T>& rhs)
+    {
+
+        if (this->size() != rhs.size())
+        {
+            this->setSize(rhs.size());
+        }
+        setField(*this, rhs.field());
+    }
 
     /**
      * @brief Assignment operator, Sets the field values to that of the value.
@@ -205,7 +215,7 @@ public:
     {
         Field<T> result(exec_, size_);
         result = *this;
-        mul(result, rhs);
+        scalar_mul(result, rhs);
         return result;
     }
 
@@ -259,13 +269,12 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] span<T> field() { return span<T>(data_, size_); }
-
+    [[nodiscard]] std::span<T> field() { return std::span<T>(data_, size_); }
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const span<T> field() const { return span<T>(data_, size_); }
+    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
 
 private:
 
@@ -274,6 +283,7 @@ private:
     const executor
         exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
+
 
 } // namespace NeoFOAM
 

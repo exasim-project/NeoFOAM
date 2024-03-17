@@ -10,6 +10,6 @@ namespace NeoFOAM
 
 using labelField = NeoFOAM::Field<label>;
 using scalarField = NeoFOAM::Field<scalar>;
-using vectorField = NeoFOAM::Field<vector>;
+using vectorField = NeoFOAM::Field<Vector>;
 
 } // namespace NeoFOAM

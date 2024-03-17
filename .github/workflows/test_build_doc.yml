@@ -1,10 +1,6 @@
-name: Docs
+name: Build test docs
 
 on:
-  push:
-    branches: 
-      - dev
-      - main
   pull_request:
     types: synchronize
   
@@ -18,17 +14,19 @@ jobs:
         && pip3 install breathe
         && pip3 install sphinx-sitemap
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Build docs
       run: |
         mkdir build
-        cd build
-        cmake -DNEOFOAM_BUILD_DOC=On ..
+        mkdir -p build/test
+        cd build/test
+        cmake -DNEOFOAM_BUILD_DOC=On ../..
         cmake --build . -t doc
         cp -r docs/doxygen docs/sphinx
         cd docs/sphinx
         touch .nojekyll
-    - name: Deploy
+    - name: Deploy Test Build
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: build/docs/sphinx
+        folder: build/test/docs/sphinx
+        target-folder: test_build
