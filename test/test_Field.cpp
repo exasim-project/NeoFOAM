@@ -7,8 +7,6 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "NeoFOAM/fields/Field.hpp"
-#include "NeoFOAM/fields/FieldOperations.hpp"
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 
 int main(int argc, char* argv[])
 {
