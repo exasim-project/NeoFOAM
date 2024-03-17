@@ -1,0 +1,36 @@
+name: Build documentation
+
+on:
+  pull_request:
+    types: synchronize
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Requirements
+      run: sudo apt install doxygen python3-sphinx 
+        && pip3 install furo
+        && pip3 install breathe
+        && pip3 install sphinx-sitemap
+    - name: Checkout repo
+      uses: actions/checkout@v4
+    - name: Build docs
+      run: |
+        mkdir build
+        cd build
+        cmake -DNEOFOAM_BUILD_DOC=On ..
+        cmake --build . -t doc
+        cp -r docs/doxygen docs/sphinx
+        cd docs/sphinx
+        touch .nojekyll
+    - name: Deploy Test Build
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: build/docs/sphinx
+        target-folder: test_build
+    - name: Deploy Build
+      if: github.event.pull_request.merged == true && github.ref == 'refs/heads/main'
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: build/test/docs/sphinx

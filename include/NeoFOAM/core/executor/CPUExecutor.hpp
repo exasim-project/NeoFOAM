@@ -8,6 +8,12 @@
 namespace NeoFOAM
 {
 
+/**
+ * @class CPUExecutor
+ * @brief Reference executor for serial CPU execution.
+ *
+ * @ingroup Executor
+ */
 class CPUExecutor
 {
 public:
