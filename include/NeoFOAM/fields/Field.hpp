@@ -50,7 +50,7 @@ public:
      */
     Field(const Field& other)
         : exec_(other.exec_), data_(data_)
-    {   
+    {
         // TODO CHECK IF EXECUTORS ARE THE SAME
         setSize(other.size_);
         setField(*this, other.field());
