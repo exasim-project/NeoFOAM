@@ -3,6 +3,10 @@
 **[Documentation](https://exasim-project.com/NeoFOAM/)** |
 # NeoFOAM
 
+> [!IMPORTANT]
+> The NeoFOAM project needs you!
+> If you're interested in contributing to NeoFOAM please open a PR! If you have any questions on where to start please contact us here or on [gitter](https://matrix.to/#/#NeoFOAM:gitter.im).
+
 ## Requirements
 
 NeoFOAM has the following requirements

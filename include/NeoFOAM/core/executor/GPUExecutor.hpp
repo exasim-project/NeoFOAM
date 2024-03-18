@@ -8,6 +8,12 @@
 namespace NeoFOAM
 {
 
+/**
+ * @class GPUExecutor
+ * @brief Executor for GPU offloading.
+ *
+ * @ingroup Executor
+ */
 class GPUExecutor
 {
 public:
