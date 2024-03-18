@@ -49,11 +49,11 @@ public:
      * @param other The field to copy from.
      */
     Field(const Field& other)
-        : size_(other.size_), exec_(other.exec_), data_(data_)
-    {
+        : exec_(other.exec_), data_(data_)
+    {   
         // TODO CHECK IF EXECUTORS ARE THE SAME
         setSize(other.size_);
-        setField(*this, other);
+        setField(*this, other.field());
     }
 
     /**
@@ -262,7 +262,8 @@ public:
     void setSize(const size_t size)
     {
         void* ptr = nullptr;
-        if (empty())
+        if (!empty())
+        {
             std::visit(
                 [this, &ptr, size](const auto& exec)
                 {
@@ -270,6 +271,7 @@ public:
                 },
                 exec_
             );
+        }
         else
         {
             std::visit(

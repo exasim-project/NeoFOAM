@@ -129,8 +129,6 @@ TEST_CASE("Field Operator+=")
         {
             REQUIRE(a.field()[i] == 15.0);
         }
-
-        NeoFOAM::scalar c = 5.0;
     };
 
     SECTION("GPU")
@@ -188,8 +186,6 @@ TEST_CASE("Field Operator-=")
         {
             REQUIRE(a.field()[i] == -5.0);
         }
-
-        NeoFOAM::scalar c = 5.0;
     };
 
     SECTION("GPU")
