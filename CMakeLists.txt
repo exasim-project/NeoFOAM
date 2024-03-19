@@ -81,6 +81,11 @@ if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
 endif()
 
+enable_sanitizers(
+  NeoFOAM ${NEOFOAM_ENABLE_SANITIZE_ADDRESS} ${NEOFOAM_ENABLE_SANITIZE_LEAK}
+  ${NEOFOAM_ENABLE_SANITIZE_UB} ${NEOFOAM_ENABLE_SANITIZE_THREAD}
+  ${NEOFOAM_ENABLE_SANITIZE_MEMORY})
+
 if(NEOFOAM_BUILD_APPS)
   add_subdirectory(applications)
 endif()
@@ -97,7 +102,7 @@ add_custom_target(
 
 add_custom_target(
   format
-  COMMAND find  include src applications test benchmarks -name "*.[c,h]*pp" -exec
+  COMMAND find include src applications test benchmarks -name "*.[c,h]*pp" -exec
           clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
