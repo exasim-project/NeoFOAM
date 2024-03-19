@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
 #include "NeoFOAM/fields/boundaryFields.hpp"
 
@@ -29,6 +29,10 @@ public:
     };
 
 protected:
+
+    int size() const {
+        return size_;
+    }
 
     int start_;
     int end_;

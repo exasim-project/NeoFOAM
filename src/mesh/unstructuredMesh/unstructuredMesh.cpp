@@ -16,7 +16,8 @@ unstructuredMesh::unstructuredMesh(
     labelField faceOwner,
     labelField faceNeighbour,
     int32_t nCells,
-    int32_t nInternalFaces
+    int32_t nInternalFaces,
+    BoundaryMesh boundaryMesh
 )
     : points_(points),
       cellVolumes_(cellVolumes),
@@ -27,7 +28,8 @@ unstructuredMesh::unstructuredMesh(
       faceOwner_(faceOwner),
       faceNeighbour_(faceNeighbour),
       nCells_(nCells),
-      nInternalFaces_(nInternalFaces) {
+      nInternalFaces_(nInternalFaces),
+      boundaryMesh_(boundaryMesh) {
 
       };
 
@@ -80,6 +82,11 @@ int32_t unstructuredMesh::nCells() const
 int32_t unstructuredMesh::nInternalFaces() const
 {
     return nInternalFaces_;
+}
+
+const BoundaryMesh& unstructuredMesh::boundaryMesh() const
+{
+    return boundaryMesh_;
 }
 
 } // namespace NeoFOAM

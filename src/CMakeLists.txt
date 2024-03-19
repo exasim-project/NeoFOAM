@@ -19,6 +19,7 @@ target_sources(
   "executor/GPUExecutor.cpp"
   "executor/CPUExecutor.cpp"
   "mesh/unstructuredMesh/unstructuredMesh.cpp"
+  "mesh/unstructuredMesh/BoundaryMesh.cpp"
   "cellCentredFiniteVolume/bcFields/scalar/fvccScalarFixedValueBoundaryField.cpp"
   "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp")
 

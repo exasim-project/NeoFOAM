@@ -5,7 +5,9 @@
 #include <array>
 #include <vector>
 
-#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
+#include "NeoFOAM/primitives/vector.hpp"
+#include "NeoFOAM/mesh/unstructuredMesh/BoundaryMesh.hpp"
 
 namespace NeoFOAM
 {
@@ -24,7 +26,8 @@ public:
         labelField faceOwner,
         labelField faceNeighbour,
         int32_t nCells,
-        int32_t nInternalFaces
+        int32_t nInternalFaces,
+        BoundaryMesh boundaryMesh
     );
 
     const vectorField& points() const;
@@ -47,6 +50,8 @@ public:
 
     int32_t nInternalFaces() const;
 
+    const BoundaryMesh& boundaryMesh() const;
+
 
 private:
 
@@ -65,10 +70,8 @@ private:
     int32_t nCells_;         // number of cells
     int32_t nInternalFaces_; // number of internal faces
 
-    // int32_t nBoundaryFaces_;   // number of faces
-    // int32_t nBoundaryPatches_; // number of patches
+    BoundaryMesh boundaryMesh_; // boundary mesh
 
-    // std::vector<int32_t> boundaryStartFace_; // start face of boundary patch
 };
 
 } // namespace NeoFOAM
