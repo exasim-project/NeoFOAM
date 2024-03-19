@@ -21,4 +21,7 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
   NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos)
+target_link_libraries(
+  NeoFOAM
+  PUBLIC spdlog::spdlog_header_only
+  PRIVATE Kokkos::kokkos)
