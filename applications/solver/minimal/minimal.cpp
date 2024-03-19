@@ -1,27 +1,20 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
-#include <iostream>
-
 #include "NeoFOAM/NeoFOAM.hpp"
 
 int main(int argc, char* argv[])
 {
-
-#include "setRootCase.H"
-#include "createTime.H"
-
-    Info << "\nStarting time loop\n"
-         << endl;
+    auto runTime = NeoFOAM::runTime::initialize(argc, argv);
+    auto log = runTime.getLogger();
 
     while (runTime.loop())
     {
-        Info << "Time = " << runTime.timeName() << nl << endl;
+        log.info("Time = {}", runTime.timeName());
     }
 
-    runTime.printExecutionTime(Info);
+    runTime.printExecutionTime();
 
-    Info << "End\n"
-         << endl;
+    runTime.finalize();
 
     return 0;
 }
