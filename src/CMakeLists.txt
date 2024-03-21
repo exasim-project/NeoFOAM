@@ -23,5 +23,9 @@ enable_sanitizers(
 
 target_link_libraries(
   NeoFOAM
-  PUBLIC spdlog::spdlog_header_only
-  PRIVATE Kokkos::kokkos)
+  PUBLIC
+    spdlog::spdlog_header_only
+  PRIVATE
+    cxxopts::cxxopts
+    Kokkos::kokkos
+  )

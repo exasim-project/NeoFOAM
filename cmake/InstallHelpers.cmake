@@ -46,7 +46,7 @@ function(neofoam_install)
     endif()
   endif()
 
-  install(TARGETS spdlog_header_only EXPORT NeoFOAMTargets)
+  install(TARGETS spdlog_header_only cxxopts EXPORT NeoFOAMTargets)
 
   set(ConfigPackageLocation lib/cmake/NeoFOAM)
   install(
