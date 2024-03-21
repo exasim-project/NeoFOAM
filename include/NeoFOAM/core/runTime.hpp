@@ -40,6 +40,10 @@ struct LoggerWrapper
 class runTime
 {
 
+private:
+
+        void handle_cli_args(int argc, char* argv[]);
+
 protected:
 
     runTime(int argc, char* argv[]) : deltaT_(1.0),
