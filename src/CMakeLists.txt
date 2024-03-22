@@ -28,4 +28,5 @@ target_link_libraries(
   PRIVATE
     cxxopts::cxxopts
     Kokkos::kokkos
+    nlohmann_json::nlohmann_json
   )

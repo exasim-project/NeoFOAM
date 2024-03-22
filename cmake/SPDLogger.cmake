@@ -19,3 +19,12 @@ FetchContent_Declare(
   GIT_TAG "v3.2.1")
 
 FetchContent_MakeAvailable(cxxopts)
+
+FetchContent_Declare(
+  json
+  QUITE
+  GIT_SHALLOW ON
+  GIT_REPOSITORY "https://github.com/nlohmann/json.git"
+  GIT_TAG "v3.11.3")
+
+FetchContent_MakeAvailable(json)
