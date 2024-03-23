@@ -27,6 +27,9 @@ public:
         labelField faceNeighbour,
         int32_t nCells,
         int32_t nInternalFaces,
+        int32_t nBoundaryFaces,
+        int32_t nBoundaries,
+        int32_t nFaces,
         BoundaryMesh boundaryMesh
     );
 
@@ -50,6 +53,12 @@ public:
 
     int32_t nInternalFaces() const;
 
+    int32_t nBoundaryFaces() const;
+
+    int32_t nBoundaries() const;
+
+    int32_t nFaces() const;
+
     const BoundaryMesh& boundaryMesh() const;
 
 
@@ -69,6 +78,10 @@ private:
 
     int32_t nCells_;         // number of cells
     int32_t nInternalFaces_; // number of internal faces
+    int32_t nBoundaryFaces_; // number of boundary faces
+    int32_t nBoundaries_;    // number of boundaries
+    int32_t nFaces_;         // number of faces
+
 
     BoundaryMesh boundaryMesh_; // boundary mesh
 

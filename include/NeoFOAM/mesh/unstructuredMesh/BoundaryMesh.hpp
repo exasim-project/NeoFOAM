@@ -32,39 +32,39 @@ public:
 
     const labelField& faceCells() const;
 
-    std::span<label> faceCells(const int i) const;
+    std::span<const label> faceCells(const int i) const;
 
     const vectorField& Cf() const;
 
-    std::span<Vector> Cf(const int i) const;
+    std::span<const Vector> Cf(const int i) const;
 
     const vectorField& Cn() const;
 
-    std::span<Vector> Cn(const int i) const;
+    std::span<const Vector> Cn(const int i) const;
 
     const vectorField& Sf() const;
 
-    std::span<Vector> Sf(const int i) const;
+    std::span<const Vector> Sf(const int i) const;
 
     const scalarField& magSf() const;
 
-    std::span<scalar> magSf(const int i) const;
+    std::span<const scalar> magSf(const int i) const;
 
     const vectorField& nf() const;
 
-    std::span<Vector> nf(const int i) const;
+    std::span<const Vector> nf(const int i) const;
 
     const vectorField& delta() const;
 
-    std::span<Vector> delta(const int i) const;
+    std::span<const Vector> delta(const int i) const;
 
     const scalarField& weights() const;
 
-    std::span<scalar> weights(const int i) const;
+    std::span<const scalar> weights(const int i) const;
 
     const scalarField& deltaCoeffs() const;
 
-    std::span<scalar> deltaCoeffs(const int i) const;
+    std::span<const scalar> deltaCoeffs(const int i) const;
 
     const std::vector<localIdx>& offset() const;
 

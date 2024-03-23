@@ -39,7 +39,7 @@ const labelField& BoundaryMesh::faceCells() const
     return faceCells_;
 }
 
-std::span<label> BoundaryMesh::faceCells(const int i) const
+std::span<const label> BoundaryMesh::faceCells(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -51,7 +51,7 @@ const vectorField& BoundaryMesh::Cf() const
     return Cf_;
 }
 
-std::span<Vector> BoundaryMesh::Cf(const int i) const
+std::span<const Vector> BoundaryMesh::Cf(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -63,7 +63,7 @@ const vectorField& BoundaryMesh::Cn() const
     return Cn_;
 }
 
-std::span<Vector> BoundaryMesh::Cn(const int i) const
+std::span<const Vector> BoundaryMesh::Cn(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -75,7 +75,7 @@ const vectorField& BoundaryMesh::Sf() const
     return Sf_;
 }
 
-std::span<Vector> BoundaryMesh::Sf(const int i) const
+std::span<const Vector> BoundaryMesh::Sf(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -87,7 +87,7 @@ const scalarField& BoundaryMesh::magSf() const
     return magSf_;
 }
 
-std::span<scalar> BoundaryMesh::magSf(const int i) const
+std::span<const scalar> BoundaryMesh::magSf(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -99,7 +99,7 @@ const vectorField& BoundaryMesh::nf() const
     return nf_;
 }
 
-std::span<Vector> BoundaryMesh::nf(const int i) const
+std::span<const Vector> BoundaryMesh::nf(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -111,7 +111,7 @@ const vectorField& BoundaryMesh::delta() const
     return delta_;
 }
 
-std::span<Vector> BoundaryMesh::delta(const int i) const
+std::span<const Vector> BoundaryMesh::delta(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -123,7 +123,7 @@ const scalarField& BoundaryMesh::weights() const
     return weights_;
 }
 
-std::span<scalar> BoundaryMesh::weights(const int i) const
+std::span<const scalar> BoundaryMesh::weights(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
@@ -135,7 +135,7 @@ const scalarField& BoundaryMesh::deltaCoeffs() const
     return deltaCoeffs_;
 }
 
-std::span<scalar> BoundaryMesh::deltaCoeffs(const int i) const
+std::span<const scalar> BoundaryMesh::deltaCoeffs(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];

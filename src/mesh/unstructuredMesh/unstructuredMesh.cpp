@@ -17,6 +17,9 @@ unstructuredMesh::unstructuredMesh(
     labelField faceNeighbour,
     int32_t nCells,
     int32_t nInternalFaces,
+    int32_t nBoundaryFaces,
+    int32_t nBoundaries,
+    int32_t nFaces,
     BoundaryMesh boundaryMesh
 )
     : points_(points),
@@ -29,6 +32,9 @@ unstructuredMesh::unstructuredMesh(
       faceNeighbour_(faceNeighbour),
       nCells_(nCells),
       nInternalFaces_(nInternalFaces),
+      nBoundaryFaces_(nBoundaryFaces),
+      nBoundaries_(nBoundaries),
+      nFaces_(nFaces),
       boundaryMesh_(boundaryMesh) {
 
       };
@@ -82,6 +88,21 @@ int32_t unstructuredMesh::nCells() const
 int32_t unstructuredMesh::nInternalFaces() const
 {
     return nInternalFaces_;
+}
+
+int32_t unstructuredMesh::nBoundaryFaces() const
+{
+    return nBoundaryFaces_;
+}
+
+int32_t unstructuredMesh::nBoundaries() const
+{
+    return nBoundaries_;
+}
+
+int32_t unstructuredMesh::nFaces() const
+{
+    return nFaces_;
 }
 
 const BoundaryMesh& unstructuredMesh::boundaryMesh() const
