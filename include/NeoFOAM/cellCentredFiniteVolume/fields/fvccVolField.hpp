@@ -3,6 +3,7 @@
 #pragma once
 
 #include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
 #include <vector>
 #include "NeoFOAM/core/executor/executor.hpp"
@@ -32,13 +33,13 @@ public:
      * @param nBoundaries The number of boundaries in the field.
      */
     fvccVolField(
-        int nCells,
-        int nBoundaryFaces,
-        int nBoundaries,
-        std::vector<std::unique_ptr<fvccBoundaryField<T>>>&& boundaryConditions,
-        const executor& exec
+        const executor& exec,
+        const unstructuredMesh& mesh,
+        std::vector<std::unique_ptr<fvccBoundaryField<T>>>&& boundaryConditions
     )
-        : field_(nCells, nBoundaryFaces, nBoundaries, exec),
+        : exec_(exec),
+          mesh_(mesh),
+          field_(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries()),
           boundaryConditions_(std::move(boundaryConditions)) {
 
           };
@@ -47,7 +48,7 @@ public:
     {
         for (auto& boundaryCondition : boundaryConditions_)
         {
-            boundaryCondition->correctBoundaryConditions(field_.boundaryField());
+            boundaryCondition->correctBoundaryConditions(field_.boundaryField(), field_.internalField());
         }
     };
 
@@ -85,6 +86,7 @@ public:
 private:
 
     executor exec_;
+    const unstructuredMesh& mesh_;
     domainField<T> field_;
     std::vector<std::unique_ptr<fvccBoundaryField<T>>> boundaryConditions_;
 };

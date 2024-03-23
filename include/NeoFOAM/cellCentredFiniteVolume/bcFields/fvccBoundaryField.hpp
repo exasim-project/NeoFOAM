@@ -15,25 +15,28 @@ class fvccBoundaryField
 
 public:
 
-    fvccBoundaryField(int start, int end)
-        : start_(start),
-          end_(end),
-          size_(end - start)
-
+    fvccBoundaryField(const unstructuredMesh& mesh, int patchID)
+        : mesh_(mesh),
+          patchID_(patchID),
+          start_(mesh.boundaryMesh().offset()[patchID_]), 
+          end_(mesh.boundaryMesh().offset()[patchID_ + 1]),
+          size_(end_ - start_)
               {
 
               };
 
-    virtual void correctBoundaryConditions(boundaryFields<T>& field) {
+    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField) {
 
     };
-
-protected:
 
     int size() const {
         return size_;
     }
 
+protected:
+
+    const unstructuredMesh& mesh_;
+    int patchID_;
     int start_;
     int end_;
     int size_;

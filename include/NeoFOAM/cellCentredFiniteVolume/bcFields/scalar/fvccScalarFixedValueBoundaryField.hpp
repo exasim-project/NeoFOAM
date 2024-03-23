@@ -12,24 +12,26 @@ namespace NeoFOAM
 {
 struct fixedValueBCKernel
 {
-    scalar uniformValue_;
+    const unstructuredMesh& mesh_;
+    int patchID_;
     int start_;
     int end_;
+    scalar uniformValue_;
 
-    void operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField, const unstructuredMesh& mesh);
+    void operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField, const Field<scalar>& internalField);
 
-    void operator()(const OMPExecutor& exec, boundaryFields<scalar>& bField, const unstructuredMesh& mesh);
+    void operator()(const OMPExecutor& exec, boundaryFields<scalar>& bField, const Field<scalar>& internalField);
 
-    void operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField, const unstructuredMesh& mesh);
+    void operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField, const Field<scalar>& internalField);
 };
 
 class fvccScalarFixedValueBoundaryField : public fvccBoundaryField<scalar>
 {
 public:
 
-    fvccScalarFixedValueBoundaryField(int start, int end, scalar uniformValue);
+    fvccScalarFixedValueBoundaryField(const unstructuredMesh& mesh, int patchID, scalar uniformValue);
 
-    void correctBoundaryConditions(boundaryFields<scalar>& field);
+    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField);
 
 private:
 

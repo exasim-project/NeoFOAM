@@ -11,26 +11,26 @@ namespace NeoFOAM
 {
 struct ZeroGradientBCKernel
 {
+    const unstructuredMesh& mesh_;
+    int patchID_;
     int start_;
     int end_;
-    
 
-    void operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField);
+    void operator()(const GPUExecutor& exec, boundaryFields<scalar>& bField, const Field<scalar>& internalField);
 
-    void operator()(const OMPExecutor& exec, boundaryFields<scalar>& bField);
+    void operator()(const OMPExecutor& exec, boundaryFields<scalar>& bField, const Field<scalar>& internalField);
 
-    void operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField);
+    void operator()(const CPUExecutor& exec, boundaryFields<scalar>& bField, const Field<scalar>& internalField);
 };
 
 class fvccScalarZeroGradientBoundaryField : public fvccBoundaryField<scalar>
 {
 public:
 
-    fvccScalarZeroGradientBoundaryField(int start, int end, scalar uniformValue);
+    fvccScalarZeroGradientBoundaryField(const unstructuredMesh& mesh, int patchID);
 
-    void correctBoundaryConditions(boundaryFields<scalar>& field);
+    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField);
 
 private:
-
 };
 };

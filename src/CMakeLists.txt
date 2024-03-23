@@ -21,6 +21,8 @@ target_sources(
   "mesh/unstructuredMesh/unstructuredMesh.cpp"
   "mesh/unstructuredMesh/BoundaryMesh.cpp"
   "cellCentredFiniteVolume/bcFields/scalar/fvccScalarFixedValueBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarZeroGradientBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarEmptyBoundaryField.cpp"
   "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
