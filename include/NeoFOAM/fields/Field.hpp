@@ -269,7 +269,7 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const executor& exec() { return exec_; }
+    [[nodiscard]] const executor& exec() const { return exec_; }
 
     /**
      * @brief Gets the size of the field.
@@ -286,7 +286,7 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
+    [[nodiscard]] const std::span<const T> field() const { return std::span<const T>(data_, size_); }
 
 private:
 
