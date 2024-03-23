@@ -26,7 +26,7 @@ class domainField
      */
 public:
 
-    domainField(int nCells, int nBoundaryFaces, int nBoundaries, const executor& exec)
+    domainField(const executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
         : exec_(exec),
           internalField_(exec, nCells),
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
