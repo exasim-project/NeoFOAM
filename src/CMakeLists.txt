@@ -23,6 +23,9 @@ target_sources(
   "cellCentredFiniteVolume/bcFields/scalar/fvccScalarFixedValueBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/scalar/fvccScalarZeroGradientBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/scalar/fvccScalarEmptyBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarCalculatedBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/fvsPatch/scalar/fvccSurfaceScalarEmptyBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/fvsPatch/scalar/fvccSurfaceScalarCalculatedBoundaryField.cpp"
   "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
