@@ -30,7 +30,7 @@ public:
     template<typename T>
     const T& get(const std::string& key) const
     {
-        return std::any_cast<T&>(data_.at(key));
+        return std::any_cast<const T&>(data_.at(key));
     }
 
     Dictionary& subDict(const std::string& key);
