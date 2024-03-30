@@ -13,6 +13,7 @@ target_sources(
   NeoFOAM
   PRIVATE 
   "core/Time.cpp"
+  "core/Dictionary.cpp"
   "core/Error.cpp"
   "core/Kokkos.cpp"
   "executor/OMPExecutor.cpp"

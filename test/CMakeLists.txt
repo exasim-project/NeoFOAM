@@ -12,3 +12,8 @@ include(CTest)
 include(Catch)
 enable_testing()
 add_test(NAME field_test COMMAND test_field)
+
+
+add_executable(test_dictionary "test_dictionary.cpp")
+target_link_libraries(test_dictionary PRIVATE Catch2::Catch2WithMain NeoFOAM)
+add_test(NAME dictionary_test COMMAND test_dictionary)
