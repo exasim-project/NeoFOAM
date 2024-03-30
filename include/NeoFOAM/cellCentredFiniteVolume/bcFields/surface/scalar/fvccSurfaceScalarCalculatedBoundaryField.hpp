@@ -3,7 +3,7 @@
 #pragma once
 
 #include "NeoFOAM/primitives/scalar.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvsPatch/fvccSurfaceBoundaryField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccSurfaceBoundaryField.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
 #include "Kokkos_Core.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"

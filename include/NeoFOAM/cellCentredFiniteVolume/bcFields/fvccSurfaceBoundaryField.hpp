@@ -10,12 +10,12 @@ namespace NeoFOAM
 {
 
 template<typename T>
-class fvccBoundaryField
+class fvccSurfaceBoundaryField
 {
 
 public:
 
-    fvccBoundaryField(const unstructuredMesh& mesh, int patchID)
+    fvccSurfaceBoundaryField(const unstructuredMesh& mesh, int patchID)
         : mesh_(mesh),
           patchID_(patchID),
           start_(mesh.boundaryMesh().offset()[patchID_]), 
@@ -25,7 +25,7 @@ public:
 
               };
 
-    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField) {
+    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, Field<scalar>& internalField) {
 
     };
 
@@ -41,4 +41,5 @@ protected:
     int end_;
     int size_;
 };
+
 };

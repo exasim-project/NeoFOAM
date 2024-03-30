@@ -21,12 +21,17 @@ target_sources(
   "executor/CPUExecutor.cpp"
   "mesh/unstructuredMesh/unstructuredMesh.cpp"
   "mesh/unstructuredMesh/BoundaryMesh.cpp"
-  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarFixedValueBoundaryField.cpp"
-  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarZeroGradientBoundaryField.cpp"
-  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarEmptyBoundaryField.cpp"
-  "cellCentredFiniteVolume/bcFields/scalar/fvccScalarCalculatedBoundaryField.cpp"
-  "cellCentredFiniteVolume/bcFields/fvsPatch/scalar/fvccSurfaceScalarEmptyBoundaryField.cpp"
-  "cellCentredFiniteVolume/bcFields/fvsPatch/scalar/fvccSurfaceScalarCalculatedBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarFixedValueBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarZeroGradientBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarEmptyBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarCalculatedBoundaryField.cpp"
+
+  "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorFixedValueBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorZeroGradientBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorEmptyBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorCalculatedBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarEmptyBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarCalculatedBoundaryField.cpp"
   "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)

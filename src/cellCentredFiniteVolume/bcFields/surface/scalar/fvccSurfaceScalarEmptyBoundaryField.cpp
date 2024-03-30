@@ -1,4 +1,4 @@
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/scalar/fvccScalarEmptyBoundaryField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarEmptyBoundaryField.hpp"
 
 namespace NeoFOAM
 {

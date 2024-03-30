@@ -25,7 +25,7 @@ public:
 
               };
 
-    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField) {
+    virtual void correctBoundaryConditions(boundaryFields<T>& bfield, const Field<T>& internalField) {
 
     };
 

@@ -11,13 +11,13 @@
 namespace NeoFOAM
 {
 
-class fvccScalarCalculatedBoundaryField : public fvccBoundaryField<scalar>
+class fvccVectorCalculatedBoundaryField : public fvccBoundaryField<Vector>
 {
 public:
 
-    fvccScalarCalculatedBoundaryField(const unstructuredMesh& mesh,int start, int end, scalar uniformValue);
+    fvccVectorCalculatedBoundaryField(const unstructuredMesh& mesh, int patchID);
 
-    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField);
+    virtual void correctBoundaryConditions(boundaryFields<Vector>& bfield, const Field<Vector>& internalField);
 
 private:
 
