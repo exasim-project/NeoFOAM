@@ -4,7 +4,7 @@
 
 #include "NeoFOAM/fields/Field.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccSurfaceBoundaryField.hpp"
 #include <vector>
 #include "NeoFOAM/core/executor/executor.hpp"
 
@@ -35,7 +35,7 @@ public:
     fvccSurfaceField(
         const executor& exec,
         const unstructuredMesh& mesh,
-        std::vector<std::unique_ptr<fvccBoundaryField<T>>>&& boundaryConditions
+        std::vector<std::unique_ptr<fvccSurfaceBoundaryField<T>>>&& boundaryConditions
     )
         : exec_(exec),
           mesh_(mesh),
@@ -73,7 +73,7 @@ public:
         return field_.boundaryField();
     };
 
-    std::vector<std::unique_ptr<fvccBoundaryField<T>>>& boundaryConditions()
+    std::vector<std::unique_ptr<fvccSurfaceBoundaryField<T>>>& boundaryConditions()
     {
         return boundaryConditions_;
     };
@@ -88,7 +88,7 @@ private:
     executor exec_;
     const unstructuredMesh& mesh_;
     domainField<T> field_;
-    std::vector<std::unique_ptr<fvccBoundaryField<T>>> boundaryConditions_;
+    std::vector<std::unique_ptr<fvccSurfaceBoundaryField<T>>> boundaryConditions_;
 };
 
 } // namespace NeoFOAM

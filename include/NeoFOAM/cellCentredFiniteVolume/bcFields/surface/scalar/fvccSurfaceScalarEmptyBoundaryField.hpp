@@ -3,20 +3,20 @@
 #pragma once
 
 #include "NeoFOAM/primitives/scalar.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvsPatch/fvccSurfaceBoundaryField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccSurfaceBoundaryField.hpp"
 #include "Kokkos_Core.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 
 namespace NeoFOAM
 {
 
-class fvccScalarEmptyBoundaryField : public fvccSurfaceBoundaryField<scalar>
+class fvccSurfaceScalarEmptyBoundaryField : public fvccSurfaceBoundaryField<scalar>
 {
 public:
 
-    fvccScalarEmptyBoundaryField(const unstructuredMesh& mesh, int patchID);
+    fvccSurfaceScalarEmptyBoundaryField(const unstructuredMesh& mesh, int patchID);
 
-    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField);
+    virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, Field<scalar>& internalField);
 
 private:
 };

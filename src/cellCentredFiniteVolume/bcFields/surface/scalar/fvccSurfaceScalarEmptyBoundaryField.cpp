@@ -1,13 +1,13 @@
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarEmptyBoundaryField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarEmptyBoundaryField.hpp"
 
 namespace NeoFOAM
 {
-fvccScalarEmptyBoundaryField::fvccScalarEmptyBoundaryField(const unstructuredMesh& mesh, int patchID)
-    : fvccBoundaryField<scalar>(mesh, patchID)
+fvccSurfaceScalarEmptyBoundaryField::fvccSurfaceScalarEmptyBoundaryField(const unstructuredMesh& mesh, int patchID)
+    : fvccSurfaceBoundaryField<scalar>(mesh, patchID)
 {
 }
 
-void fvccScalarEmptyBoundaryField::correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField)
+void fvccSurfaceScalarEmptyBoundaryField::correctBoundaryConditions(boundaryFields<scalar>& bfield, Field<scalar>& internalField)
 {
     // do nothing
 }
