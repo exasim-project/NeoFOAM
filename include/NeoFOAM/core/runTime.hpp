@@ -42,14 +42,16 @@ class runTime
 
 private:
 
-        void handle_cli_args(int argc, char* argv[]);
+    void handle_cli_args(int argc, char* argv[], std::string program_name, std::string one_line_description);
 
 protected:
 
-    runTime(int argc, char* argv[]) : deltaT_(1.0),
-                                      timeCtr_(0),
-                                      time_(0) {
-                                      };
+    runTime(int argc, char* argv[], std::string program_name, std::string one_line_description) : deltaT_(1.0),
+                                                                                                  timeCtr_(0),
+                                                                                                  time_(0)
+    {
+        handle_cli_args(argc, argv, program_name, one_line_description);
+    };
 
 public:
 
@@ -57,10 +59,10 @@ public:
     [[nodiscard]] bool checkRootCase() const { return true; };
 
     [[nodiscard]] static runTime initialize(
-        int argc, char* argv[]
+        int argc, char* argv[], std::string program_name, std::string one_line_description
     )
     {
-        return runTime(argc, argv);
+        return runTime(argc, argv, program_name, one_line_description);
     };
 
     bool loop()

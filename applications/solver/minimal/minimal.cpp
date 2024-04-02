@@ -4,7 +4,7 @@
 
 int main(int argc, char* argv[])
 {
-    auto runTime = NeoFOAM::runTime::initialize(argc, argv);
+    auto runTime = NeoFOAM::runTime::initialize(argc, argv, "minimalFoam", "A minimal example of a NeoFOAM application");
     auto log = runTime.getLogger();
 
     while (runTime.loop())
