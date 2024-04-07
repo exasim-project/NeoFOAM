@@ -41,7 +41,7 @@ if(NOT CMAKE_BUILD_TYPE)
       CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-include(cmake/Kokkos.cmake)
+include(cmake/CxxThirdParty.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/StandardProjectSettings.cmake)
 include(cmake/CompilerWarnings.cmake)
@@ -101,5 +101,5 @@ add_custom_target(
           clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-include(cmake/InstallHelpers.cmake)
-neofoam_install()
+#include(cmake/InstallHelpers.cmake)
+#neofoam_install()
