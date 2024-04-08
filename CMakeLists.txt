@@ -63,6 +63,7 @@ endif()
 if(NEOFOAM_ENABLE_CPP_CHECK)
   neofoam_enable_cppcheck(FALSE "")
 endif()
+
 if(NEOFOAM_ENABLE_CLANG_TIDY)
   neofoam_enable_clang_tidy(FALSE "")
 endif()
@@ -93,12 +94,8 @@ if(NEOFOAM_BUILD_DOC)
 endif()
 
 add_custom_target(
-  cmake-format
-  COMMAND find . -name CMakeLists.txt -exec cmake-format -i {} +
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-
-add_custom_target(
   format
+  COMMENT "Run clang-format over all files"
   COMMAND find include src applications test benchmarks -name "*.[c,h]*pp" -exec
           clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
