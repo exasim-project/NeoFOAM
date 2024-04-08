@@ -18,7 +18,7 @@ NeoFOAM has the following requirements
 For NVIDIA GPU support
 * cuda
 
-For development it is recommended to use [pre-commit](https://pre-commit.com/)
+For development it is required to use [pre-commit](https://pre-commit.com/).
 
 ### C++ dependencies
 

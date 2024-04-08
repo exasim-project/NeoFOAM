@@ -131,7 +131,7 @@ if(NEOFOAM_DEVEL_TOOLS)
   endif()
 
   add_custom_target(
-    format
+    pre-commit
     COMMENT "execute precommit"
     COMMAND bash -c "${PRE_COMMIT} run"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
