@@ -20,7 +20,7 @@ For NVIDIA GPU support
 
 ### C++ dependencies
 
-The cmake build process will prefer system wide installed C++ dependencies like Kokkos, cxxopts, etc. If you prefer to clone, configure and build dependencies your self consider setting `-DCPM_USE_LOCAL_PACKAGES = OFF`.
+The cmake build process will prefer system wide installed C++ dependencies like Kokkos, cxxopts, etc. If you prefer to clone, configure and build dependencies your self consider setting `-DCPM_USE_LOCAL_PACKAGES = OFF`, see [CPM](https://github.com/cpm-cmake/CPM.cmake) for more details.
 
 ### Documentation build
 

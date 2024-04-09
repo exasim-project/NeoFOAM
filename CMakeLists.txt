@@ -12,9 +12,6 @@ project(
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 
-option(FORCE_NEOFOAM_BUILD_KOKKOS
-       "Forces NeoFOAM to build kokkos even if already present" FALSE)
-
 # Add the cmake folder so the find_package command finds custom packages
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -34,7 +31,10 @@ option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 
-option(CPM_USE_LOCAL_PACKAGES "Try `find_package` before downloading dependencies" ON)
+if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
+    message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
+    set(CPM_USE_LOCAL_PACKAGES ON)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Setting build type to 'Release' as none was specified.")
