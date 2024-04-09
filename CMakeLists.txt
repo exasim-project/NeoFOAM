@@ -34,6 +34,8 @@ option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 
+option(CPM_USE_LOCAL_PACKAGES "Try `find_package` before downloading dependencies" ON)
+
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Setting build type to 'Release' as none was specified.")
   set(CMAKE_BUILD_TYPE
@@ -97,9 +99,8 @@ add_custom_target(
 
 add_custom_target(
   format
-  COMMAND find  include src applications test benchmarks -name "*.[c,h]*pp" -exec
+  COMMAND find include src applications test benchmarks -name "*.[c,h]*pp" -exec
           clang-format -i {} +
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-#include(cmake/InstallHelpers.cmake)
-#neofoam_install()
+# include(cmake/InstallHelpers.cmake) neofoam_install()
