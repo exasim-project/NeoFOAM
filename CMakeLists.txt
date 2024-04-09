@@ -33,8 +33,8 @@ option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
-    message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
-    set(CPM_USE_LOCAL_PACKAGES ON)
+  message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
+  set(CPM_USE_LOCAL_PACKAGES ON)
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -99,8 +99,8 @@ if(NEOFOAM_DEVEL_TOOLS)
   if(NOT PRE_COMMIT)
     message(
       FATAL_ERROR
-        "The pre-commit command was not found."
-        "It is necessary if you want to commit changes to NeoFOAM."
+        "The pre-commit command was not found. "
+        "It is necessary if you want to commit changes to NeoFOAM. "
         "If that is not the case, set NEOFOAM_DEVEL_TOOLS=OFF. "
         "Otherwise install pre-commit via pipx (or pip) using:\n"
         "    pipx install pre-commit")
