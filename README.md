@@ -16,7 +16,9 @@ NeoFOAM has the following requirements
 *  _Kokkos 4.3.0_ 
 
 For NVIDIA GPU support
-* cuda 
+* cuda
+
+For development it is required to use [pre-commit](https://pre-commit.com/).
 
 ### C++ dependencies
 
@@ -31,7 +33,7 @@ For building the documentation further dependencies like doxygen and sphinx are 
 [![Build NeoFOAM](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yaml/badge.svg)](https://github.com/exasim-project/NeoFOAM/actions/workflows/build.yaml)
 [![Gitter](https://img.shields.io/badge/Gitter-8A2BE2)](https://matrix.to/#/#NeoFOAM:gitter.im)
 
-NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From a build directory you can execute 
+NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From a build directory you can execute
 
     cmake <DesiredBuildFlags> ..
     cmake --build .
