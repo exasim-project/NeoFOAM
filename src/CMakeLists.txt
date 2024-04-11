@@ -11,8 +11,12 @@ target_include_directories(
 
 target_sources(
   NeoFOAM
-  PRIVATE "core/Time.cpp" "core/Error.cpp" "core/Kokkos.cpp"
-          "executor/OMPExecutor.cpp" "executor/GPUExecutor.cpp"
+  PRIVATE "core/Time.cpp"
+          "core/Error.cpp"
+          "core/Kokkos.cpp"
+          "core/runTime.cpp"
+          "executor/OMPExecutor.cpp"
+          "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
@@ -21,4 +25,7 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
   NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos)
+target_link_libraries(
+  NeoFOAM
+  PUBLIC spdlog::spdlog_header_only
+  PRIVATE cxxopts::cxxopts Kokkos::kokkos nlohmann_json::nlohmann_json)
