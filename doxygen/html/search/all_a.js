@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vector_31',['vector',['../classNeoFOAM_1_1vector.html',1,'NeoFOAM']]]
+  ['what_25',['what',['../classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924',1,'NeoFOAM::Error']]]
 ];
