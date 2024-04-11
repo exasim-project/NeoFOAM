@@ -1,15 +1,17 @@
 name: Build documentation
 
 on:
-  pull_request:
-    types: synchronize
-  
+ pull_request:
+    branches:
+      - main
+    types: [closed, synchronize]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - name: Requirements
-      run: sudo apt install doxygen python3-sphinx 
+      run: sudo apt install doxygen python3-sphinx
         && pip3 install furo
         && pip3 install breathe
         && pip3 install sphinx-sitemap
@@ -30,7 +32,7 @@ jobs:
         folder: build/docs/sphinx
         target-folder: test_build
     - name: Deploy Build
-      if: github.event.pull_request.merged == true && github.ref == 'refs/heads/main'
+      if: ${{ github.event.pull_request.merged }}
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: build/test/docs/sphinx
+        folder: build/docs/sphinx
