@@ -44,6 +44,17 @@ public:
 
           };
 
+    fvccSurfaceField(const fvccSurfaceField& sField)
+        : exec_(sField.exec_),
+          mesh_(sField.mesh_),
+          field_(sField.field_),
+          boundaryConditions_(sField.boundaryConditions_.size()) {
+              // for( const auto&: sField.boundaryConditions_)
+              // {
+              //     boundaryConditions_.push_back(std::make_unique<BoundaryConditionsType>(*sField.boundaryConditions_))
+              // }
+          };
+
     void correctBoundaryConditions()
     {
         for (auto& boundaryCondition : boundaryConditions_)
@@ -81,6 +92,11 @@ public:
     const executor& exec() const
     {
         return exec_;
+    };
+
+    const unstructuredMesh& mesh() const
+    {
+        return mesh_;
     };
 
 private:
