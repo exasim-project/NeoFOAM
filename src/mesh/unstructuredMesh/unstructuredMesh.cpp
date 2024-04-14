@@ -113,7 +113,7 @@ const BoundaryMesh& unstructuredMesh::boundaryMesh() const
     return boundaryMesh_;
 }
 
-StencilDataBase& unstructuredMesh::stencilDB()
+StencilDataBase& unstructuredMesh::stencilDB() const
 {
     return stencilDataBase_;
 }

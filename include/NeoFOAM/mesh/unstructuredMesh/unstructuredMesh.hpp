@@ -62,7 +62,7 @@ public:
 
     const BoundaryMesh& boundaryMesh() const;
 
-    StencilDataBase& stencilDB();
+    StencilDataBase& stencilDB() const;
 
     const executor& exec() const;
 
@@ -91,7 +91,7 @@ private:
 
     BoundaryMesh boundaryMesh_; // boundary mesh
 
-    StencilDataBase stencilDataBase_;
+    mutable StencilDataBase stencilDataBase_;
 };
 
 } // namespace NeoFOAM

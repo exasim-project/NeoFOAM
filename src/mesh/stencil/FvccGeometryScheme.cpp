@@ -18,9 +18,7 @@ FvccGeometrySchemeKernel::FvccGeometrySchemeKernel(
 
 const std::shared_ptr<FvccGeometryScheme> FvccGeometryScheme::readOrCreate(const unstructuredMesh& uMesh)
 {
-    // cast const away
-    // TODO come up with a better design
-    StencilDataBase& stencil_db = const_cast<unstructuredMesh&>(uMesh).stencilDB();
+    StencilDataBase& stencil_db = uMesh.stencilDB();
     if (!stencil_db.contains("FvccGeometryScheme"))
     {
         stencil_db.insert(std::string("FvccGeometryScheme"), std::make_shared<FvccGeometryScheme>(uMesh));
