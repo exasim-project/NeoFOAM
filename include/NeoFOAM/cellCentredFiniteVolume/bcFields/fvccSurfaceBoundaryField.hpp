@@ -18,18 +18,18 @@ public:
     fvccSurfaceBoundaryField(const unstructuredMesh& mesh, int patchID)
         : mesh_(mesh),
           patchID_(patchID),
-          start_(mesh.boundaryMesh().offset()[patchID_]), 
+          start_(mesh.boundaryMesh().offset()[patchID_]),
           end_(mesh.boundaryMesh().offset()[patchID_ + 1]),
-          size_(end_ - start_)
-              {
+          size_(end_ - start_) {
 
-              };
+          };
 
     virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, Field<scalar>& internalField) {
 
     };
 
-    int size() const {
+    int size() const
+    {
         return size_;
     }
 

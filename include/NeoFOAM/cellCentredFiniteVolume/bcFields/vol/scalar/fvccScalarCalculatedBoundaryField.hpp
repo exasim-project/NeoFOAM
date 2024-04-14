@@ -20,6 +20,5 @@ public:
     virtual void correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField);
 
 private:
-
 };
 };

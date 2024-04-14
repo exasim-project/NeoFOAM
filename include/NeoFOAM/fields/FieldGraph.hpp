@@ -62,8 +62,8 @@ public:
 private:
 
     executor exec_;
-    NeoFOAM::Field<T> value_;              ///< The view storing the computed values from the boundary condition
-    NeoFOAM::Field<localIdx> offset_;      ///< The view storing the offsets
+    NeoFOAM::Field<T> value_;         ///< The view storing the computed values from the boundary condition
+    NeoFOAM::Field<localIdx> offset_; ///< The view storing the offsets
 };
 
 } // namespace NeoFOAM

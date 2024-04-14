@@ -38,19 +38,20 @@ public:
     }
 
 
-    template <typename T>
+    template<typename T>
     static std::size_t registerClass(const std::string className, T classMapFunction)
     {
         auto const index = classMap.size();
-        classMap.insert({className,classMapFunction});
+        classMap.insert({className, classMapFunction});
         return index;
     }
-private:
-    static std::unordered_map<std::string, factoryFunction> classMap;
 
+private:
+
+    static std::unordered_map<std::string, factoryFunction> classMap;
 };
 
-inline std::unordered_map<std::string, surfaceInterpolationFactory::factoryFunction>  surfaceInterpolationFactory::classMap;
+inline std::unordered_map<std::string, surfaceInterpolationFactory::factoryFunction> surfaceInterpolationFactory::classMap;
 
 
 } // namespace NeoFOAM

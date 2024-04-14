@@ -69,7 +69,6 @@ public:
     const std::vector<localIdx>& offset() const;
 
 
-
 private:
 
     const executor exec_;

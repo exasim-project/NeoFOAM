@@ -20,7 +20,7 @@ class upwind :
 public:
 
     upwind(const executor& exec, const unstructuredMesh& mesh)
-        : surfaceInterpolationKernel(exec,mesh) {};
+        : surfaceInterpolationKernel(exec, mesh) {};
 
     void operator()(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
     {
