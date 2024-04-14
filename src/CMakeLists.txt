@@ -44,7 +44,9 @@ target_sources(
 
   "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp"
   # "cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationFactory.cpp"
-  "cellCentredFiniteVolume/surfaceInterpolation/linear.cpp")
+  "cellCentredFiniteVolume/surfaceInterpolation/linear.cpp"
+  
+  "cellCentredFiniteVolume/div/gaussGreenDiv.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(

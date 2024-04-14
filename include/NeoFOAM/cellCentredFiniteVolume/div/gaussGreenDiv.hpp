@@ -5,9 +5,15 @@
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccVolField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccSurfaceField.hpp"
+
 #include "Kokkos_Core.hpp"
 #include <functional>
 
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/linear.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/upwind.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
 
 namespace NeoFOAM
 {
@@ -15,16 +21,15 @@ namespace NeoFOAM
 struct GaussGreenDivKernel
 {
     const unstructuredMesh& mesh_;
-    const scalarField& phi_;
-    vectorField& gradPhi_;
+    const NeoFOAM::surfaceInterpolation& surfaceInterpolation_;
 
-    GaussGreenDivKernel(const unstructuredMesh& mesh, const scalarField& phi, vectorField& gradPhi);
+    GaussGreenDivKernel(const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp);
 
-    void operator()(const GPUExecutor& exec);
+    void operator()(const GPUExecutor& exec, fvccVolField<scalar>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
 
-    void operator()(const OMPExecutor& exec);
+    void operator()(const OMPExecutor& exec, fvccVolField<scalar>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
 
-    void operator()(const CPUExecutor& exec);
+    void operator()(const CPUExecutor& exec, fvccVolField<scalar>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
 };
 
 
@@ -34,14 +39,14 @@ public:
 
     gaussGreenDiv(const executor& exec, const unstructuredMesh& mesh);
 
-    const vectorField& grad(const scalarField& phi);
+    // fvccVolField<scalar> grad(const fvccVolField<scalar>& phi);
 
-    void grad(vectorField& gradPhi, const scalarField& phi);
+    void grad(fvccVolField<Vector>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, fvccVolField<scalar>& phi);
 
 private:
 
-    vectorField gradPhi_;
     const unstructuredMesh& mesh_;
+    surfaceInterpolation surfaceInterpolation_;
 };
 
 } // namespace NeoFOAM
