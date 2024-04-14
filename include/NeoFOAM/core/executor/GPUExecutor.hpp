@@ -18,10 +18,11 @@ class GPUExecutor
 {
 public:
 
+    using exec = Kokkos::DefaultExecutionSpace;
+    exec exec_instance;
+
     GPUExecutor();
     ~GPUExecutor();
-
-    using exec = Kokkos::DefaultExecutionSpace;
 
     template<typename T>
     T* alloc(size_t size) const
@@ -49,7 +50,7 @@ public:
         return Kokkos::kokkos_realloc<exec>(ptr, new_size);
     }
 
-    std::string print() const { return std::string(exec().name()); }
+    std::string print() const { return std::string(exec_instance.name()); }
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); }
 };
