@@ -1,17 +1,6 @@
 #include "NeoFOAM/core/Dictionary.hpp"
 
 
-
-// NeoFOAM::Dictionary::Dictionary(std::unordered_map<std::string, std::any> data)
-//     : data_(data)
-// {
-// }
-
-// NeoFOAM::Dictionary::Dictionary(NeoFOAM::Dictionary& other)
-//     : data_(other.data_)
-// {
-// }
-
 void NeoFOAM::Dictionary::insert(const std::string& key, const std::any& value)
 {
     data_[key] = value;
