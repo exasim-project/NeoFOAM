@@ -85,14 +85,14 @@ $(function() {
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="keyword">using</span> executor = std::variant&lt;OMPExecutor, GPUExecutor, CPUExecutor&gt;;</div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160; </div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;[[nodiscard]] constexpr <span class="keywordtype">bool</span> operator==(<span class="keyword">const</span> executor&amp; lhs, <span class="keyword">const</span> executor&amp; rhs)</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;[[nodiscard]] <span class="keywordtype">bool</span> operator==(<span class="keyword">const</span> executor&amp; lhs, <span class="keyword">const</span> executor&amp; rhs)</div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;{</div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    <span class="keywordflow">return</span> std::visit(overload {[](<span class="keyword">const</span> OMPExecutor&amp; lhs, <span class="keyword">const</span> OMPExecutor&amp; rhs)</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;                                { <span class="keywordflow">return</span> lhs == rhs; },</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;                                { <span class="keywordflow">return</span> lhs.exec_instance == rhs.exec_instance; },</div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;                                [](<span class="keyword">const</span> GPUExecutor&amp; lhs, <span class="keyword">const</span> GPUExecutor&amp; rhs)</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;                                { <span class="keywordflow">return</span> lhs == rhs; },</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;                                { <span class="keywordflow">return</span> lhs.exec_instance == rhs.exec_instance; },</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;                                [](<span class="keyword">const</span> CPUExecutor&amp; lhs, <span class="keyword">const</span> CPUExecutor&amp; rhs)</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;                                { <span class="keywordflow">return</span> lhs == rhs; },</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;                                { <span class="keywordflow">return</span> lhs.exec_instance == rhs.exec_instance; },</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;                                [](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; lhs, <span class="keyword">const</span> <span class="keyword">auto</span>&amp; rhs)</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;                                { <span class="keywordflow">return</span> <span class="keyword">false</span>; }},</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;                      lhs,</div>
