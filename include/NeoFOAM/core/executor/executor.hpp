@@ -5,6 +5,7 @@
 #include "NeoFOAM/core/executor/CPUExecutor.hpp"
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
 #include "NeoFOAM/core/executor/OMPExecutor.hpp"
+#include "NeoFOAM/core/stl_extention/variant.hpp"
 #include <variant>
 
 namespace NeoFOAM
@@ -20,7 +21,16 @@ using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  */
 [[nodiscard]] constexpr bool operator==(const executor& lhs, const executor& rhs)
 {
-    return lhs.index() == rhs.index();
+    return std::visit(overload {[](const OMPExecutor& lhs, const OMPExecutor& rhs)
+                                { return lhs == rhs; },
+                                [](const GPUExecutor& lhs, const GPUExecutor& rhs)
+                                { return lhs == rhs; },
+                                [](const CPUExecutor& lhs, const CPUExecutor& rhs)
+                                { return lhs == rhs; },
+                                [](const auto& lhs, const auto& rhs)
+                                { return false; }},
+                      lhs,
+                      rhs);
 };
 
 /**
@@ -29,7 +39,7 @@ using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  * @param rhs The second executor.
  * @return True if the executors not are equal, false otherwise.
  */
-[[nodiscard]] constexpr bool operator!=(const executor& lhs, const executor& rhs)
+[[nodiscard]] bool operator!=(const executor& lhs, const executor& rhs)
 {
     return !(lhs == rhs);
 };
