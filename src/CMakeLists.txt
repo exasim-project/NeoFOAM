@@ -21,6 +21,9 @@ target_sources(
   "executor/CPUExecutor.cpp"
   "mesh/unstructuredMesh/unstructuredMesh.cpp"
   "mesh/unstructuredMesh/BoundaryMesh.cpp"
+  "mesh/stencil/StencilDataBase.cpp"
+  "mesh/stencil/FvccGeometryScheme.cpp"
+  "mesh/stencil/BasicFvccGeometryScheme.cpp"
   
   "cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.cpp"
   "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarFixedValueBoundaryField.cpp"
