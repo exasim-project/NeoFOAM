@@ -8,6 +8,7 @@
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/primitives/vector.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/BoundaryMesh.hpp"
+#include "NeoFOAM/mesh/stencil/StencilDataBase.hpp"
 
 namespace NeoFOAM
 {
@@ -61,8 +62,13 @@ public:
 
     const BoundaryMesh& boundaryMesh() const;
 
+    StencilDataBase& stencilDB();
+
+    const executor& exec() const;
 
 private:
+
+    const executor exec_;
 
     vectorField points_; // points
 
@@ -85,6 +91,7 @@ private:
 
     BoundaryMesh boundaryMesh_; // boundary mesh
 
+    StencilDataBase stencilDataBase_;
 };
 
 } // namespace NeoFOAM

@@ -22,7 +22,8 @@ unstructuredMesh::unstructuredMesh(
     int32_t nFaces,
     BoundaryMesh boundaryMesh
 )
-    : points_(points),
+    : exec_(points.exec()),
+      points_(points),
       cellVolumes_(cellVolumes),
       cellCentres_(cellCentres),
       faceAreas_(faceAreas),
@@ -35,7 +36,9 @@ unstructuredMesh::unstructuredMesh(
       nBoundaryFaces_(nBoundaryFaces),
       nBoundaries_(nBoundaries),
       nFaces_(nFaces),
-      boundaryMesh_(boundaryMesh) {
+      boundaryMesh_(boundaryMesh),
+      stencilDataBase_()
+      {
 
       };
 
@@ -108,6 +111,16 @@ int32_t unstructuredMesh::nFaces() const
 const BoundaryMesh& unstructuredMesh::boundaryMesh() const
 {
     return boundaryMesh_;
+}
+
+StencilDataBase& unstructuredMesh::stencilDB()
+{
+    return stencilDataBase_;
+}
+
+const executor& unstructuredMesh::exec() const
+{
+    return exec_;
 }
 
 } // namespace NeoFOAM
