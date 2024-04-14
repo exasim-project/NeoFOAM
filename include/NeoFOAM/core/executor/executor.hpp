@@ -19,14 +19,14 @@ using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  * @param rhs The second executor.
  * @return True if the executors are equal, false otherwise.
  */
-[[nodiscard]] constexpr bool operator==(const executor& lhs, const executor& rhs)
+[[nodiscard]] bool operator==(const executor& lhs, const executor& rhs)
 {
     return std::visit(overload {[](const OMPExecutor& lhs, const OMPExecutor& rhs)
-                                { return lhs == rhs; },
+                                { return lhs.exec_instance == rhs.exec_instance; },
                                 [](const GPUExecutor& lhs, const GPUExecutor& rhs)
-                                { return lhs == rhs; },
+                                { return lhs.exec_instance == rhs.exec_instance; },
                                 [](const CPUExecutor& lhs, const CPUExecutor& rhs)
-                                { return lhs == rhs; },
+                                { return lhs.exec_instance == rhs.exec_instance; },
                                 [](const auto& lhs, const auto& rhs)
                                 { return false; }},
                       lhs,

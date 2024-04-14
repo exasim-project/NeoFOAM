@@ -5,6 +5,7 @@
                             // a custom main
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators_adapters.hpp>
 
 #include "NeoFOAM/core/executor/executor.hpp"
 
@@ -30,22 +31,17 @@ int main(int argc, char* argv[])
 
 TEST_CASE("Executor Equality")
 {
-    NeoFOAM::GPUExecutor gpuExec {};
-    NeoFOAM::CPUExecutor cpuExec {};
-    NeoFOAM::OMPExecutor ompExec {};
-    NeoFOAM::executor exec_gpu = gpuExec;
-    NeoFOAM::executor exec_cpu = cpuExec;
-    NeoFOAM::executor exec_omp = ompExec;
+    NeoFOAM::executor exec_0 = GENERATE(
+        NeoFOAM::executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::executor(NeoFOAM::GPUExecutor {})
+    );
 
-    REQUIRE(exec_gpu == gpuExec);
-    REQUIRE(exec_gpu != cpuExec);
-    REQUIRE(exec_gpu != ompExec);
+    NeoFOAM::executor exec_1 = GENERATE(
+        NeoFOAM::executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::executor(NeoFOAM::GPUExecutor {})
+    );
 
-    REQUIRE(exec_cpu != gpuExec);
-    REQUIRE(exec_cpu == cpuExec);
-    REQUIRE(exec_cpu != ompExec);
-
-    REQUIRE(exec_omp != gpuExec);
-    REQUIRE(exec_omp != cpuExec);
-    REQUIRE(exec_omp == ompExec);
+    REQUIRE((exec_0.index() == exec_1.index() ? exec_0 == exec_1 : exec_0 != exec_1));
 }
