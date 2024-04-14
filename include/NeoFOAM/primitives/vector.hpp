@@ -115,4 +115,17 @@ Vector operator*(const scalar& sclr, Vector rhs)
     return rhs;
 }
 
+KOKKOS_INLINE_FUNCTION
+Vector operator&(const Vector& lhs, Vector rhs)
+{
+    return Vector(rhs[0]*lhs[0], rhs[1]*lhs[1], rhs[2]*lhs[2]);
+}
+
+KOKKOS_INLINE_FUNCTION
+scalar mag(const Vector& vec)
+{
+    return sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+}
+
+
 } // namespace NeoFOAM
