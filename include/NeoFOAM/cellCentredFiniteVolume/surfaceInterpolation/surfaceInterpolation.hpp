@@ -44,7 +44,7 @@ public:
     void interpolate(fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
     {
         std::visit([&](const auto& exec)
-                   { interpolationKernel_->operator()(exec,surfaceField,volField); },
+                   { interpolationKernel_->operator()(exec, surfaceField, volField); },
                    exec_);
     }
 
