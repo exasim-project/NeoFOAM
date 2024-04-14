@@ -77,10 +77,27 @@ public:
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<T> copyToHost()
+    [[nodiscard]] Field<T> copyToHost() const
     {
         Field<T> result(CPUExecutor {}, size_);
-        this->copyToHost(result);
+        if (!std::holds_alternative<GPUExecutor>(exec_))
+        {
+            result = *this;
+        }
+        else
+        {
+            if (result.size() != size_)
+            {
+                exit(1);
+            }
+
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
+                GPU_view(data_, size_);
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
+                result.data(), size_
+            );
+            Kokkos::deep_copy(result_view, GPU_view);
+        }
         return result;
     }
 
