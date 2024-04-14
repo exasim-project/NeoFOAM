@@ -16,6 +16,9 @@ target_sources(
   "core/Dictionary.cpp"
   "core/Error.cpp"
   "core/Kokkos.cpp"
+
+  "primitives/vector.cpp"
+  
   "executor/OMPExecutor.cpp"
   "executor/GPUExecutor.cpp"
   "executor/CPUExecutor.cpp"

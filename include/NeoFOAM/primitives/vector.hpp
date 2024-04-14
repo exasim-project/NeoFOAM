@@ -127,5 +127,7 @@ scalar mag(const Vector& vec)
     return sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 }
 
+std::ostream& operator<<(std::ostream& os, const Vector& vec);
+
 
 } // namespace NeoFOAM
