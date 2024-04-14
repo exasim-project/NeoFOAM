@@ -22,6 +22,7 @@ option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" FALSE)
 option(NEOFOAM_BUILD_DOC "Build documentation" FALSE)
+option(NEOFOAM_BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
 option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
@@ -92,6 +93,10 @@ endif()
 if(NEOFOAM_BUILD_DOC)
   include(cmake/Docs.cmake)
   neofoam_build_docs()
+endif()
+
+if(NEOFOAM_BUILD_PYTHON_BINDINGS)
+  add_subdirectory(bindings)
 endif()
 
 if(NEOFOAM_DEVEL_TOOLS)
