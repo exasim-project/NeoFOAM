@@ -9,19 +9,11 @@
 namespace NeoFOAM
 {
 
-// std::size_t linear::_index = surfaceInterpolationFactory::registerClass("linear", [](const executor& exec, const unstructuredMesh& mesh)
-//                                                                         { return std::make_unique<linear>(exec, mesh); });
-
 linear::linear(const executor& exec, const unstructuredMesh& mesh)
     : surfaceInterpolationKernel(exec, mesh),
       mesh_(mesh),
-    //   geometryScheme_(std::make_shared<FvccGeometryScheme>(mesh))
       geometryScheme_(FvccGeometryScheme::readOrCreate(mesh))
 {
-    // if (geometryScheme_ == nullptr)
-    // {
-    //     error("geometryScheme_ is not initialized").exit();
-    // }
 
 };
 
