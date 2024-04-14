@@ -5,8 +5,15 @@
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
+
+#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccVolField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccSurfaceField.hpp"
+
 #include "Kokkos_Core.hpp"
 #include <functional>
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/linear.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/upwind.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
 
 
 namespace NeoFOAM
@@ -15,16 +22,15 @@ namespace NeoFOAM
 struct GaussGreenKernel
 {
     const unstructuredMesh& mesh_;
-    const scalarField& phi_;
-    vectorField& gradPhi_;
+    const NeoFOAM::surfaceInterpolation& surfaceInterpolation_;
 
-    GaussGreenKernel(const unstructuredMesh& mesh, const scalarField& phi, vectorField& gradPhi);
+    GaussGreenKernel(const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp);
 
-    void operator()(const GPUExecutor& exec);
+    void operator()(const GPUExecutor& exec, fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi);
 
-    void operator()(const OMPExecutor& exec);
+    void operator()(const OMPExecutor& exec, fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi);
 
-    void operator()(const CPUExecutor& exec);
+    void operator()(const CPUExecutor& exec, fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi);
 };
 
 
@@ -34,13 +40,13 @@ public:
 
     gaussGreenGrad(const executor& exec, const unstructuredMesh& mesh);
 
-    const vectorField& grad(const scalarField& phi);
+    // fvccVolField<Vector> grad(const fvccVolField<scalar>& phi);
 
-    void grad(vectorField& gradPhi, const scalarField& phi);
+    void grad(fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi);
 
 private:
 
-    vectorField gradPhi_;
+    NeoFOAM::surfaceInterpolation surfaceInterpolation_;
     const unstructuredMesh& mesh_;
 };
 

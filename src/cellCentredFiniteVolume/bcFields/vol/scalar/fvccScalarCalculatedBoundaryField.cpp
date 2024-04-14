@@ -1,13 +1,13 @@
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarZeroGradientBoundaryField.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarCalculatedBoundaryField.hpp"
 
 namespace NeoFOAM
 {
-fvccScalarZeroGradientBoundaryField::fvccScalarZeroGradientBoundaryField(const unstructuredMesh& mesh, int patchID)
+fvccScalarCalculatedBoundaryField::fvccScalarCalculatedBoundaryField(const unstructuredMesh& mesh, int patchID)
     : fvccBoundaryField<scalar>(mesh, patchID)
 {
 }
 
-void fvccScalarZeroGradientBoundaryField::correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField)
+void fvccScalarCalculatedBoundaryField::correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField)
 {
 
 }

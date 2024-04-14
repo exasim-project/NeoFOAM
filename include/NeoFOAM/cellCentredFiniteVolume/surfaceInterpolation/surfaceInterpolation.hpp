@@ -41,7 +41,7 @@ public:
 
     // virtual ~surfaceInterpolationKernel() {}; // Virtual destructor
 
-    void interpolate(fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
+    void interpolate(fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField) const
     {
         std::visit([&](const auto& exec)
                    { interpolationKernel_->operator()(exec, surfaceField, volField); },

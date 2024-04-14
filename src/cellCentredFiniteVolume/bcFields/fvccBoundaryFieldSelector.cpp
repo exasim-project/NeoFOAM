@@ -22,6 +22,10 @@ std::unique_ptr<fvccBoundaryField<scalar>> getBC(const unstructuredMesh& mesh, i
     {
         return std::make_unique<fvccScalarEmptyBoundaryField>(mesh, patchID);
     }
+    else if(type == "calculated")
+    {
+        return std::make_unique<fvccScalarCalculatedBoundaryField>(mesh, patchID);
+    }
     else
     {
         std::cout << "keyword not found" << std::endl;
@@ -43,6 +47,15 @@ std::unique_ptr<fvccBoundaryField<Vector>> getBC(const unstructuredMesh& mesh, i
     else if (type == "empty")
     {
         return std::make_unique<fvccVectorEmptyBoundaryField>(mesh, patchID);
+    }
+    else if(type == "extrapolatedCalculated")
+    {
+        // TODO create extrapolatedCalculated boundary condition
+        return std::make_unique<fvccVectorCalculatedBoundaryField>(mesh, patchID);
+    }
+    else if(type == "calculated")
+    {
+        return std::make_unique<fvccVectorCalculatedBoundaryField>(mesh, patchID);
     }
     else
     {

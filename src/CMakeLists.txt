@@ -28,16 +28,17 @@ target_sources(
   "mesh/stencil/FvccGeometryScheme.cpp"
   "mesh/stencil/BasicFvccGeometryScheme.cpp"
   
-  "cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.cpp"
   "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarFixedValueBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarZeroGradientBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarEmptyBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarCalculatedBoundaryField.cpp"
-
+  
   "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorFixedValueBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorZeroGradientBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorEmptyBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorCalculatedBoundaryField.cpp"
+  "cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.cpp"
+  
   "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarEmptyBoundaryField.cpp"
   "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarCalculatedBoundaryField.cpp"
 
