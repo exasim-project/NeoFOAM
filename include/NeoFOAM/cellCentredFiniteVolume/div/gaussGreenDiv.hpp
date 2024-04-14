@@ -25,11 +25,11 @@ struct GaussGreenDivKernel
 
     GaussGreenDivKernel(const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp);
 
-    void operator()(const GPUExecutor& exec, fvccVolField<scalar>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
+    void operator()(const GPUExecutor& exec, fvccVolField<scalar>& divPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
 
-    void operator()(const OMPExecutor& exec, fvccVolField<scalar>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
+    void operator()(const OMPExecutor& exec, fvccVolField<scalar>& divPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
 
-    void operator()(const CPUExecutor& exec, fvccVolField<scalar>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
+    void operator()(const CPUExecutor& exec, fvccVolField<scalar>& divPhi, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& phi);
 };
 
 
@@ -41,7 +41,7 @@ public:
 
     // fvccVolField<scalar> grad(const fvccVolField<scalar>& phi);
 
-    void grad(fvccVolField<Vector>& gradPhi, const fvccSurfaceField<scalar>& faceFlux, fvccVolField<scalar>& phi);
+    void div(fvccVolField<scalar>& divPhi, const fvccSurfaceField<scalar>& faceFlux, fvccVolField<scalar>& phi);
 
 private:
 
