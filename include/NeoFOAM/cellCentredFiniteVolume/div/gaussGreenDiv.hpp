@@ -37,7 +37,7 @@ class gaussGreenDiv
 {
 public:
 
-    gaussGreenDiv(const executor& exec, const unstructuredMesh& mesh);
+    gaussGreenDiv(const executor& exec, const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp);
 
     // fvccVolField<scalar> grad(const fvccVolField<scalar>& phi);
 
