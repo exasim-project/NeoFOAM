@@ -9,39 +9,25 @@
 
 #include "NeoFOAM/core/executor/executor.hpp"
 
-int main(int argc, char* argv[])
-{
-
-    // Initialize Catch2
-    Kokkos::initialize(argc, argv);
-    Catch::Session session;
-
-    // Specify command line options
-    int returnCode = session.applyCommandLine(argc, argv);
-    if (returnCode != 0) // Indicates a command line error
-        return returnCode;
-
-    int result = session.run();
-
-    // Run benchmarks if there are any
-    Kokkos::finalize();
-
-    return result;
-}
-
 TEST_CASE("Executor Equality")
 {
-    NeoFOAM::executor exec_0 = GENERATE(
-        NeoFOAM::executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
-        NeoFOAM::executor(NeoFOAM::GPUExecutor {})
-    );
+    NeoFOAM::executor cpu_exec_0(NeoFOAM::CPUExecutor {});
+    NeoFOAM::executor omp_exec_0(NeoFOAM::OMPExecutor {});
+    NeoFOAM::executor gpu_exec_0(NeoFOAM::GPUExecutor {});
 
-    NeoFOAM::executor exec_1 = GENERATE(
-        NeoFOAM::executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
-        NeoFOAM::executor(NeoFOAM::GPUExecutor {})
-    );
+    NeoFOAM::executor cpu_exec_1(NeoFOAM::CPUExecutor {});
+    NeoFOAM::executor omp_exec_1(NeoFOAM::OMPExecutor {});
+    NeoFOAM::executor gpu_exec_1(NeoFOAM::GPUExecutor {});
 
-    REQUIRE((exec_0.index() == exec_1.index() ? exec_0 == exec_1 : exec_0 != exec_1));
+    REQUIRE(cpu_exec_0 == cpu_exec_1);
+    REQUIRE(cpu_exec_0 != omp_exec_1);
+    REQUIRE(cpu_exec_0 != gpu_exec_1);
+
+    REQUIRE(omp_exec_0 != cpu_exec_1);
+    REQUIRE(omp_exec_0 == omp_exec_1);
+    REQUIRE(omp_exec_0 != gpu_exec_1);
+
+    REQUIRE(gpu_exec_0 != cpu_exec_1);
+    REQUIRE(gpu_exec_0 != omp_exec_1);
+    REQUIRE(gpu_exec_0 == gpu_exec_1);
 }
