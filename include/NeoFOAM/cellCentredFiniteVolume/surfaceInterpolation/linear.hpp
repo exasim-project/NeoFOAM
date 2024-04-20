@@ -22,9 +22,15 @@ public:
 
     linear(const executor& exec, const unstructuredMesh& mesh);
 
-    void operator()(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
-    void operator()(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
-    void operator()(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
+    void interpolate(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
+    void interpolate(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
+    void interpolate(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
+
+    void interpolate(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField);
+    void interpolate(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField);
+    void interpolate(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField);
+
+    std::unique_ptr<surfaceInterpolationKernel> clone() const override;
 
 private:
 

@@ -1,44 +1,159 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
-#pragma once
 
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
-#include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
-#include "Kokkos_Core.hpp"
-#include <functional>
-
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/upwind.hpp"
+#include <memory>
+#include "NeoFOAM/core/Error.hpp"
 
 namespace NeoFOAM
 {
 
-class upwind :
-    public surfaceInterpolationKernel
+upwind::upwind(const executor& exec, const unstructuredMesh& mesh)
+    : surfaceInterpolationKernel(exec, mesh),
+      mesh_(mesh),
+      geometryScheme_(FvccGeometryScheme::readOrCreate(mesh))
 {
 
-public:
-
-    upwind(const executor& exec, const unstructuredMesh& mesh)
-        : surfaceInterpolationKernel(exec,mesh) {};
-
-    void operator()(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
-    {
-        std::cout << "upwind GPU" << std::endl;
-    }
-
-    void operator()(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
-    {
-        std::cout << "upwind OMP" << std::endl;
-    }
-
-    void operator()(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
-    {
-        std::cout << "upwind CPU" << std::endl;
-    }
-
-private:
 };
 
+
+void upwind::interpolate(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
+{
+    error("limited scheme require a faceFlux").exit();
+}
+
+void upwind::interpolate(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
+{
+    error("limited scheme require a faceFlux").exit();
+}
+
+void upwind::interpolate(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
+{
+    error("limited scheme require a faceFlux").exit();
+}
+
+void upwind::interpolate(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField)
+{
+    using executor = typename GPUExecutor::exec;
+    auto sfield = surfaceField.internalField().field();
+    const NeoFOAM::labelField& owner = mesh_.faceOwner();
+    const NeoFOAM::labelField& neighbour = mesh_.faceNeighbour();
+
+    const auto s_weight = geometryScheme_->weights().internalField().field();
+    const auto s_faceFlux = faceFlux.internalField().field(); 
+    const auto s_volField = volField.internalField().field();
+    const auto s_bField = volField.boundaryField().value().field();
+    const auto s_owner = owner.field();
+    const auto s_neighbour = neighbour.field();
+    int nInternalFaces = mesh_.nInternalFaces();
+    Kokkos::parallel_for(
+        "gaussGreenGrad", Kokkos::RangePolicy<executor>(0, sfield.size()), KOKKOS_LAMBDA(const int facei) {
+            int32_t own = s_owner[facei];
+            int32_t nei = s_neighbour[facei];
+            if (facei < nInternalFaces)
+            {
+                if (s_faceFlux[facei] >= 0)
+                {
+                    sfield[facei] = s_volField[own];
+                }
+                else
+                {
+                    sfield[facei] = s_volField[nei];
+                }
+            }
+            else
+            {
+                int pfacei = facei - nInternalFaces;
+                sfield[facei] = s_weight[facei]*s_bField[pfacei];
+            }
+        }
+    );
+}
+
+
+void upwind::interpolate(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField)
+{
+    using executor = typename OMPExecutor::exec;
+    auto sfield = surfaceField.internalField().field();
+    const NeoFOAM::labelField& owner = mesh_.faceOwner();
+    const NeoFOAM::labelField& neighbour = mesh_.faceNeighbour();
+
+    const auto s_weight = geometryScheme_->weights().internalField().field();
+    const auto s_faceFlux = faceFlux.internalField().field(); 
+    const auto s_volField = volField.internalField().field();
+    const auto s_bField = volField.boundaryField().value().field();
+    const auto s_owner = owner.field();
+    const auto s_neighbour = neighbour.field();
+    int nInternalFaces = mesh_.nInternalFaces();
+    Kokkos::parallel_for(
+        "gaussGreenGrad", Kokkos::RangePolicy<executor>(0, sfield.size()), KOKKOS_LAMBDA(const int facei) {
+            int32_t own = s_owner[facei];
+            int32_t nei = s_neighbour[facei];
+            if (facei < nInternalFaces)
+            {
+                if (s_faceFlux[facei] >= 0)
+                {
+                    sfield[facei] = s_volField[own];
+                }
+                else
+                {
+                    sfield[facei] = s_volField[nei];
+                }
+            }
+            else
+            {
+                int pfacei = facei - nInternalFaces;
+                sfield[facei] = s_weight[facei]*s_bField[pfacei];
+            }
+        }
+    );
+}
+
+void upwind::interpolate(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField)
+{
+    using executor = typename CPUExecutor::exec;
+    auto sfield = surfaceField.internalField().field();
+    const NeoFOAM::labelField& owner = mesh_.faceOwner();
+    const NeoFOAM::labelField& neighbour = mesh_.faceNeighbour();
+    const auto s_weight = geometryScheme_->weights().internalField().field();
+    const auto s_faceFlux = faceFlux.internalField().field(); 
+    const auto s_volField = volField.internalField().field();
+    const auto s_bField = volField.boundaryField().value().field();
+    const auto s_owner = owner.field();
+    const auto s_neighbour = neighbour.field();
+    int nInternalFaces = mesh_.nInternalFaces();
+    Kokkos::parallel_for(
+        "gaussGreenGrad", Kokkos::RangePolicy<executor>(0, sfield.size()), KOKKOS_LAMBDA(const int facei) {
+            int32_t own = s_owner[facei];
+            int32_t nei = s_neighbour[facei];
+            if (facei < nInternalFaces)
+            {
+                if (s_faceFlux[facei] >= 0)
+                {
+                    sfield[facei] = s_volField[own];
+                }
+                else
+                {
+                    sfield[facei] = s_volField[nei];
+                }
+            }
+            else
+            {
+                int pfacei = facei - nInternalFaces;
+                sfield[facei] = s_weight[facei]*s_bField[pfacei];
+            }
+        }
+    );
+}
+
+
+std::unique_ptr<surfaceInterpolationKernel> upwind::clone() const
+{
+    return std::make_unique<upwind>(exec_,mesh_);
+}
+
+// surfaceInterpolationFactory::registerClass("upwind", [](const NeoFOAM::executor& exec, const NeoFOAM::unstructuredMesh& mesh) {
+//     return std::make_unique<NeoFOAM::upwind>(exec, mesh);
+// });
 
 } // namespace NeoFOAM

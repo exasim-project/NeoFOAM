@@ -43,8 +43,9 @@ target_sources(
   "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarCalculatedBoundaryField.cpp"
 
   "cellCentredFiniteVolume/grad/gaussGreenGrad.cpp"
-  # "cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationFactory.cpp"
+  "cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationSelector.cpp"
   "cellCentredFiniteVolume/surfaceInterpolation/linear.cpp"
+  "cellCentredFiniteVolume/surfaceInterpolation/upwind.cpp"
   
   "cellCentredFiniteVolume/div/gaussGreenDiv.cpp")
 

@@ -6,9 +6,9 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
+#include "NeoFOAM/mesh/stencil/FvccGeometryScheme.hpp"
 #include "Kokkos_Core.hpp"
 #include <functional>
-
 
 namespace NeoFOAM
 {
@@ -19,25 +19,23 @@ class upwind :
 
 public:
 
-    upwind(const executor& exec, const unstructuredMesh& mesh)
-        : surfaceInterpolationKernel(exec, mesh) {};
+    upwind(const executor& exec, const unstructuredMesh& mesh);
 
-    void operator()(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
-    {
-        std::cout << "upwind GPU" << std::endl;
-    }
+    void interpolate(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
+    void interpolate(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
+    void interpolate(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField);
 
-    void operator()(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
-    {
-        std::cout << "upwind OMP" << std::endl;
-    }
+    void interpolate(const GPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField);
+    void interpolate(const OMPExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField);
+    void interpolate(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccSurfaceField<scalar>& faceFlux, const fvccVolField<scalar>& volField);
 
-    void operator()(const CPUExecutor& exec, fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
-    {
-        std::cout << "upwind CPU" << std::endl;
-    }
+    std::unique_ptr<surfaceInterpolationKernel> clone() const override;
 
 private:
+
+    const unstructuredMesh& mesh_;
+    // const FvccGeometryScheme geometryScheme_;
+    const std::shared_ptr<FvccGeometryScheme> geometryScheme_;
 };
 
 
