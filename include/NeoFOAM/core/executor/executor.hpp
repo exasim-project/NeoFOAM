@@ -5,7 +5,6 @@
 #include "NeoFOAM/core/executor/CPUExecutor.hpp"
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
 #include "NeoFOAM/core/executor/OMPExecutor.hpp"
-#include "NeoFOAM/core/stl_extention/variant.hpp"
 #include <variant>
 
 namespace NeoFOAM
@@ -19,16 +18,15 @@ using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  * @param rhs The second executor.
  * @return True if the executors are equal, false otherwise.
  */
-[[nodiscard]] bool operator==(const executor& lhs, const executor& rhs)
+[[nodiscard]] inline bool operator==(const executor& lhs, const executor& rhs)
 {
-    return std::visit(overload {[](const OMPExecutor& lhs, const OMPExecutor& rhs)
-                                { return lhs.exec_instance == rhs.exec_instance; },
-                                [](const GPUExecutor& lhs, const GPUExecutor& rhs)
-                                { return lhs.exec_instance == rhs.exec_instance; },
-                                [](const CPUExecutor& lhs, const CPUExecutor& rhs)
-                                { return lhs.exec_instance == rhs.exec_instance; },
-                                [](const auto& lhs, const auto& rhs)
-                                { return false; }},
+    return std::visit([]<typename ExecLhs, typename ExecRhs>([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&)
+                      {
+                         if constexpr (std::is_same_v<ExecLhs, ExecRhs>) {
+                                        return typename ExecLhs::exec() == typename ExecRhs::exec();
+                                    } else {
+                                        return false;
+                                    } },
                       lhs,
                       rhs);
 };
@@ -39,7 +37,7 @@ using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  * @param rhs The second executor.
  * @return True if the executors not are equal, false otherwise.
  */
-[[nodiscard]] bool operator!=(const executor& lhs, const executor& rhs)
+[[nodiscard]] inline bool operator!=(const executor& lhs, const executor& rhs)
 {
     return !(lhs == rhs);
 };

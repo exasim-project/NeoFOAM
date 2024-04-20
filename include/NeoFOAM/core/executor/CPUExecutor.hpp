@@ -19,7 +19,6 @@ class CPUExecutor
 public:
 
     using exec = Kokkos::Serial;
-    exec exec_instance;
 
     CPUExecutor();
     ~CPUExecutor();
@@ -50,7 +49,7 @@ public:
         return Kokkos::kokkos_realloc<exec>(ptr, new_size);
     }
 
-    std::string print() const { return std::string(exec_instance.name()); }
+    std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept
     {
