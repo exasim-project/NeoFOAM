@@ -6,11 +6,11 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Fields" href="fields.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/api/executor.html" />
 
-    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.01.29 -->
         <title>Executor - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
-    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
     
     
@@ -200,9 +200,9 @@
         </div>
         <article role="main">
           <section id="executor">
-<span id="api-executor"></span><h1>Executor<a class="headerlink" href="#executor" title="Link to this heading">#</a></h1>
+<span id="api-executor"></span><h1>Executor<a class="headerlink" href="#executor" title="Link to this heading">¶</a></h1>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for parallelism. The <cite>Executor</cite> class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:</p>
 <ul class="simple">
 <li><p><cite>CPUExecutor</cite>: run on the CPU with MPI</p></li>
@@ -211,7 +211,7 @@
 </ul>
 </section>
 <section id="design">
-<h2>Design<a class="headerlink" href="#design" title="Link to this heading">#</a></h2>
+<h2>Design<a class="headerlink" href="#design" title="Link to this heading">¶</a></h2>
 <p>One of the design goals is the ability to quickly switch between the executor models at runtime.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">GPUExecutor</span><span class="w"> </span><span class="n">gpuExec</span><span class="w"> </span><span class="p">{};</span>
 <span class="n">NeoFOAM</span><span class="o">::</span><span class="n">CPUExecutor</span><span class="w"> </span><span class="n">cpuExec</span><span class="w"> </span><span class="p">{};</span>
@@ -252,6 +252,7 @@
 </pre></div>
 </div>
 <p>The visit pattern with the above functor would print different messages depending on the executor type. To extend the library with the additional features the above functor design should be used for the different implementations.</p>
+<p>One can check that two operators are ‘of the same type’, i.e. execute in the same execution space using the equality operators <cite>==</cite> and <cite>!=</cite>.</p>
 </section>
 </section>
 
@@ -317,7 +318,7 @@
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
     </body>
