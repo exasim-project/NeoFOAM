@@ -8,26 +8,6 @@
 
 #include "NeoFOAM/fields/Field.hpp"
 
-int main(int argc, char* argv[])
-{
-
-    // Initialize Catch2
-    Kokkos::initialize(argc, argv);
-    Catch::Session session;
-
-    // Specify command line options
-    int returnCode = session.applyCommandLine(argc, argv);
-    if (returnCode != 0) // Indicates a command line error
-        return returnCode;
-
-    int result = session.run();
-
-    // Run benchmarks if there are any
-    Kokkos::finalize();
-
-    return result;
-}
-
 TEST_CASE("Field Operations")
 {
 

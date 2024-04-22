@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- Added equality operators for executors [#45](https://github.com/exasim-project/NeoFOAM/pull/45)
 - Added pre-commit hooks, see [PR #38](https://github.com/exasim-project/NeoFOAM/pull/38)
 - Added CPM package manager [PR #37](https://github.com/exasim-project/NeoFOAM/pull/37)
 - Corrected/streamlined includes for Field.hpp. [PR #33](https://github.com/exasim-project/NeoFOAM/pull/33)
