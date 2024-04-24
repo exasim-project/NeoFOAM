@@ -18,10 +18,10 @@ class CPUExecutor
 {
 public:
 
+    using exec = Kokkos::Serial;
+
     CPUExecutor();
     ~CPUExecutor();
-
-    using exec = Kokkos::Serial;
 
     template<typename T>
     T* alloc(size_t size) const
@@ -49,11 +49,11 @@ public:
         return Kokkos::kokkos_realloc<exec>(ptr, new_size);
     }
 
-    std::string print() const { return std::string(exec().name()); }
+    std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept
     {
-        Kokkos::kokkos_free<Kokkos::Serial>(ptr);
+        Kokkos::kokkos_free<exec>(ptr);
     };
 };
 
