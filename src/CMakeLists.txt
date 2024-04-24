@@ -6,8 +6,10 @@ add_library(NeoFOAM)
 include(GNUInstallDirs)
 
 target_include_directories(
-  NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-                 "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
+  NeoFOAM
+  PUBLIC "/usr/local/include"
+         "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+         "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 
 target_sources(
   NeoFOAM
@@ -21,4 +23,6 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
   NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos)
+find_package(OpenMP REQUIRED)
+
+target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos OpenMP::OpenMP_CXX)
