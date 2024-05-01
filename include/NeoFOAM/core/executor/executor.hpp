@@ -18,17 +18,25 @@ using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  * @param rhs The second executor.
  * @return True if the executors are equal, false otherwise.
  */
+struct Visitor
+{
+    template<typename ExecLhs, typename ExecRhs>
+    [[nodiscard]] inline bool operator()([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&) const
+    {
+        if constexpr (std::is_same_v<ExecLhs, ExecRhs>)
+        {
+            return typename ExecLhs::exec() == typename ExecRhs::exec();
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+
 [[nodiscard]] inline bool operator==(const executor& lhs, const executor& rhs)
 {
-    return std::visit([]<typename ExecLhs, typename ExecRhs>([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&)
-                      {
-                         if constexpr (std::is_same_v<ExecLhs, ExecRhs>) {
-                                        return typename ExecLhs::exec() == typename ExecRhs::exec();
-                                    } else {
-                                        return false;
-                                    } },
-                      lhs,
-                      rhs);
+    return std::visit(Visitor {}, lhs, rhs);
 };
 
 /**
