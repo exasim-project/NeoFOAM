@@ -44,6 +44,7 @@ if(NOT CMAKE_BUILD_TYPE)
       CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+include(cmake/Kokkos.cmake)
 include(cmake/CxxThirdParty.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/StandardProjectSettings.cmake)
