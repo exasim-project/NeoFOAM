@@ -3,8 +3,15 @@
 
 include(cmake/CPM.cmake)
 
-# CPMAddPackage( NAME Kokkos GITHUB_REPOSITORY kokkos/kokkos VERSION 4.3.00
-# GIT_TAG 4.3.00 )
+cpmaddpackage(
+  NAME
+  amrex_code
+  GITHUB_REPOSITORY
+  AMReX-Codes/amrex
+  VERSION
+  24.04
+  GIT_TAG
+  24.04)
 
 cpmaddpackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json VERSION 3.11.3)
 

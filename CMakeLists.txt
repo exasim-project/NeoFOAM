@@ -44,6 +44,8 @@ if(NOT CMAKE_BUILD_TYPE)
       CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+set(AMReX_SPACEDIM "2;3")
+
 include(cmake/Kokkos.cmake)
 include(cmake/CxxThirdParty.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
