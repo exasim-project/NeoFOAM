@@ -9,8 +9,9 @@ target_link_libraries(test_executor PRIVATE Catch2::Catch2 NeoFOAM
                                             Kokkos::kokkos)
 
 add_executable(test_amrex "test_amrex.cpp")
-# these are required to build test_amrex with cuda support enable_language(CUDA)
-# setup_target_for_cuda_compilation(test_amrex)
+# these are required to build test_amrex with cuda support
+enable_language(CUDA)
+setup_target_for_cuda_compilation(test_amrex)
 
 target_link_libraries(test_amrex PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos
                                          AMReX::amrex_2d)

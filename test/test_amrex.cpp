@@ -81,7 +81,13 @@ TEST_CASE("Executor Equality")
         amrex::DistributionMapping dm(ba);
 
         // Define MuliFab
-        amrex::MultiFab mf(ba, dm, ncomp, ngrow);
+        amrex::MultiFab mf(ba, dm, ncomp, ngrow, amrex::MFInfo().SetArena(amrex::The_Pinned_Arena()));
+
+        amrex::Arena* arena = mf.arena();
+        std::cout << "Arena isDeviceAccessible: " << arena->isDeviceAccessible() << std::endl;
+        std::cout << "Arena isHostAccessible: " << arena->isHostAccessible() << std::endl;
+        std::cout << "Arena isManaged : " << arena->isManaged() << std::endl;
+        std::cout << "Arena isDevice : " << arena->isDevice() << std::endl;
 
         // Geometry -- Physical Properties for data on our domain
         //  amrex::RealBox real_box ({0., 0., 0.}, {1. , 1., 1.});
@@ -99,7 +105,7 @@ TEST_CASE("Executor Equality")
         // At the time of writing this is still the most commonly seen
         // method.
 
-        for (int n = 0; n < 1000; ++n)
+        for (int n = 0; n < 10000; ++n)
         {
 #pragma omp parallel
             {
@@ -108,8 +114,8 @@ TEST_CASE("Executor Equality")
                     const amrex::Box& bx = mfi.validbox();
                     const amrex::Array4<amrex::Real>& mf_array = mf.array(mfi);
 
-                    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k)
-                                       {
+                    amrex::LoopOnCpu(bx, [&](int i, int j, int k)
+                                     {
                                            amrex::Real x = (i + 0.5) * dx[0];
                                            amrex::Real y = (j + 0.5) * dx[1];
                                            amrex::Real z = (k + 0.5) * dx[2];
