@@ -44,6 +44,8 @@ if(NOT CMAKE_BUILD_TYPE)
       CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+set(AMReX_SPACEDIM "2;3")
+
 if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
   message(STATUS "Enabling generation of compilation database.")
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

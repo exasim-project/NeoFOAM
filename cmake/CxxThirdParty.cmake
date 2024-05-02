@@ -24,6 +24,15 @@ include(cmake/CPM.cmake)
 
 cpmaddpackage(NAME cpptrace GITHUB_REPOSITORY jeremy-rifkin/cpptrace VERSION
               0.5.4)
+cpmaddpackage(
+  NAME
+  amrex_code
+  GITHUB_REPOSITORY
+  AMReX-Codes/amrex
+  VERSION
+  24.04
+  GIT_TAG
+  24.04)
 
 cpmaddpackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json VERSION 3.11.3)
 
