@@ -18,8 +18,17 @@
     <innerclass refid="classNeoFOAM_1_1fvccVectorFixedValueBoundaryField" prot="public">NeoFOAM::fvccVectorFixedValueBoundaryField</innerclass>
     <innerclass refid="structNeoFOAM_1_1ZeroGradientVectorBCKernel" prot="public">NeoFOAM::ZeroGradientVectorBCKernel</innerclass>
     <innerclass refid="classNeoFOAM_1_1fvccVectorZeroGradientBoundaryField" prot="public">NeoFOAM::fvccVectorZeroGradientBoundaryField</innerclass>
+    <innerclass refid="structNeoFOAM_1_1GaussGreenDivKernel" prot="public">NeoFOAM::GaussGreenDivKernel</innerclass>
+    <innerclass refid="classNeoFOAM_1_1gaussGreenDiv" prot="public">NeoFOAM::gaussGreenDiv</innerclass>
     <innerclass refid="classNeoFOAM_1_1fvccSurfaceField" prot="public">NeoFOAM::fvccSurfaceField</innerclass>
     <innerclass refid="classNeoFOAM_1_1fvccVolField" prot="public">NeoFOAM::fvccVolField</innerclass>
+    <innerclass refid="structNeoFOAM_1_1GaussGreenKernel" prot="public">NeoFOAM::GaussGreenKernel</innerclass>
+    <innerclass refid="classNeoFOAM_1_1gaussGreenGrad" prot="public">NeoFOAM::gaussGreenGrad</innerclass>
+    <innerclass refid="classNeoFOAM_1_1linear" prot="public">NeoFOAM::linear</innerclass>
+    <innerclass refid="classNeoFOAM_1_1surfaceInterpolationKernel" prot="public">NeoFOAM::surfaceInterpolationKernel</innerclass>
+    <innerclass refid="classNeoFOAM_1_1surfaceInterpolation" prot="public">NeoFOAM::surfaceInterpolation</innerclass>
+    <innerclass refid="classNeoFOAM_1_1CompressionMethodFactory" prot="public">NeoFOAM::CompressionMethodFactory</innerclass>
+    <innerclass refid="classNeoFOAM_1_1upwind" prot="public">NeoFOAM::upwind</innerclass>
     <innerclass refid="classNeoFOAM_1_1Dictionary" prot="public">NeoFOAM::Dictionary</innerclass>
     <innerclass refid="classNeoFOAM_1_1error" prot="public">NeoFOAM::error</innerclass>
     <innerclass refid="classNeoFOAM_1_1CPUExecutor" prot="public">NeoFOAM::CPUExecutor</innerclass>
@@ -33,6 +42,9 @@
     <innerclass refid="structNeoFOAM_1_1SumKernel" prot="public">NeoFOAM::SumKernel</innerclass>
     <innerclass refid="classNeoFOAM_1_1Error" prot="public">NeoFOAM::Error</innerclass>
     <innerclass refid="classNeoFOAM_1_1DimensionMismatch" prot="public">NeoFOAM::DimensionMismatch</innerclass>
+    <innerclass refid="classNeoFOAM_1_1BasicFvccGeometryScheme" prot="public">NeoFOAM::BasicFvccGeometryScheme</innerclass>
+    <innerclass refid="classNeoFOAM_1_1FvccGeometrySchemeKernel" prot="public">NeoFOAM::FvccGeometrySchemeKernel</innerclass>
+    <innerclass refid="classNeoFOAM_1_1FvccGeometryScheme" prot="public">NeoFOAM::FvccGeometryScheme</innerclass>
     <innerclass refid="classNeoFOAM_1_1StencilDataBase" prot="public">NeoFOAM::StencilDataBase</innerclass>
     <innerclass refid="classNeoFOAM_1_1BoundaryMesh" prot="public">NeoFOAM::BoundaryMesh</innerclass>
     <innerclass refid="classNeoFOAM_1_1unstructuredMesh" prot="public">NeoFOAM::unstructuredMesh</innerclass>
@@ -169,6 +181,20 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Error.hpp" line="30" column="14" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Error.hpp" declline="30" declcolumn="14"/>
+      </memberdef>
+      <memberdef kind="variable" id="scalar_8hpp_1a381b6aacc63a05d1c0aa0774afff68f1" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr scalar</type>
+        <definition>constexpr scalar NeoFOAM::ROOTVSMALL</definition>
+        <argsstring></argsstring>
+        <name>ROOTVSMALL</name>
+        <initializer>= 1e-18</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/scalar.hpp" line="20" column="18" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/scalar.hpp" bodystart="20" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
@@ -326,6 +352,31 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.hpp" line="62" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.hpp" bodystart="57" bodyend="59" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.hpp" declline="62" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="surfaceInterpolationSelector_8hpp_1a38349d408c6af0a4ea955899d7c16c43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1surfaceInterpolation" kindref="compound">surfaceInterpolation</ref></type>
+        <definition>surfaceInterpolation NeoFOAM::surfaceInterpolationSelector</definition>
+        <argsstring>(std::string interPolMethodName, const executor &amp;exec, const unstructuredMesh &amp;mesh)</argsstring>
+        <name>surfaceInterpolationSelector</name>
+        <param>
+          <type>std::string</type>
+          <declname>interPolMethodName</declname>
+        </param>
+        <param>
+          <type>const executor &amp;</type>
+          <declname>exec</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1unstructuredMesh" kindref="compound">unstructuredMesh</ref> &amp;</type>
+          <declname>mesh</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationSelector.hpp" line="18" column="22" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationSelector.hpp" declline="18" declcolumn="22"/>
       </memberdef>
       <memberdef kind="function" id="executor_8hpp_1a854eacda36fd711f315da1882a68cf0a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
@@ -691,7 +742,66 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" line="106" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" bodystart="106" bodyend="110"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" line="112" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" bodystart="112" bodyend="116"/>
+      </memberdef>
+      <memberdef kind="function" id="vector_8hpp_1ae0612f5f17d093a87670be33b3d0608f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>KOKKOS_INLINE_FUNCTION <ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref></type>
+        <definition>KOKKOS_INLINE_FUNCTION Vector NeoFOAM::operator&amp;</definition>
+        <argsstring>(const Vector &amp;lhs, Vector rhs)</argsstring>
+        <name>operator&amp;</name>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref></type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" line="119" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" bodystart="119" bodyend="122"/>
+      </memberdef>
+      <memberdef kind="function" id="vector_8hpp_1a30753699ca02c237b4081286380cabd6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>KOKKOS_INLINE_FUNCTION scalar</type>
+        <definition>KOKKOS_INLINE_FUNCTION scalar NeoFOAM::mag</definition>
+        <argsstring>(const Vector &amp;vec)</argsstring>
+        <name>mag</name>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> &amp;</type>
+          <declname>vec</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" line="125" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" bodystart="125" bodyend="128"/>
+      </memberdef>
+      <memberdef kind="function" id="vector_8hpp_1a2238f78222a248fea131225868ac3289" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::ostream &amp;</type>
+        <definition>std::ostream&amp; NeoFOAM::operator&lt;&lt;</definition>
+        <argsstring>(std::ostream &amp;os, const Vector &amp;vec)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <param>
+          <type>std::ostream &amp;</type>
+          <declname>os</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> &amp;</type>
+          <declname>vec</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" line="130" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/vector.hpp" declline="130" declcolumn="1"/>
       </memberdef>
       </sectiondef>
     <briefdescription>

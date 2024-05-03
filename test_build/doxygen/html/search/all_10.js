@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['_7efield_67',['~Field',['../classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2',1,'NeoFOAM::Field']]]
+  ['zerogradientbckernel_79',['ZeroGradientBCKernel',['../structNeoFOAM_1_1ZeroGradientBCKernel.html',1,'NeoFOAM']]],
+  ['zerogradientvectorbckernel_80',['ZeroGradientVectorBCKernel',['../structNeoFOAM_1_1ZeroGradientVectorBCKernel.html',1,'NeoFOAM']]]
 ];

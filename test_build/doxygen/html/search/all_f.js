@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['zerogradientbckernel_65',['ZeroGradientBCKernel',['../structNeoFOAM_1_1ZeroGradientBCKernel.html',1,'NeoFOAM']]],
-  ['zerogradientvectorbckernel_66',['ZeroGradientVectorBCKernel',['../structNeoFOAM_1_1ZeroGradientVectorBCKernel.html',1,'NeoFOAM']]]
+  ['what_78',['what',['../classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924',1,'NeoFOAM::Error']]]
 ];
