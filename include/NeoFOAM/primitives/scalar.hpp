@@ -16,4 +16,7 @@ typedef long label;
 #else
 typedef int label;
 #endif
+
+constexpr scalar ROOTVSMALL = 1e-18;
+
 } // namespace NeoFOAM
