@@ -27,7 +27,7 @@ with section("format"):
   disable = False
 
   # How wide to allow formatted cmake files
-  line_width = 80
+  line_width = 100
 
   # How many spaces to tab for indent
   tab_size = 2
@@ -240,4 +240,3 @@ with section("misc"):
   # A dictionary containing any per-command configuration overrides. Currently
   # only `command_case` is supported.
   per_command = {}
-
