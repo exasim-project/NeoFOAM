@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/fields/Field.hpp"
 #include "NeoFOAM/primitives/scalar.hpp"
 #include "NeoFOAM/primitives/vector.hpp"
 
