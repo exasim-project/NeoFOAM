@@ -17,7 +17,10 @@ target_sources(
           "core/Kokkos.cpp"
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
-          "executor/CPUExecutor.cpp")
+          "executor/CPUExecutor.cpp"
+          "mesh/unstructuredMesh/unstructuredMesh.cpp"
+          "mesh/unstructuredMesh/BoundaryMesh.cpp"
+          "mesh/stencil/StencilDataBase.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
