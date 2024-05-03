@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['error_30',['error',['../classNeoFOAM_1_1error.html',1,'NeoFOAM']]],
-  ['error_31',['Error',['../classNeoFOAM_1_1Error.html',1,'NeoFOAM']]]
+  ['dictionary_38',['Dictionary',['../classNeoFOAM_1_1Dictionary.html',1,'NeoFOAM']]],
+  ['dimensionmismatch_39',['DimensionMismatch',['../classNeoFOAM_1_1DimensionMismatch.html',1,'NeoFOAM']]]
 ];
