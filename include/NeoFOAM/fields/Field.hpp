@@ -30,13 +30,25 @@ public:
      * @param size  size of the matrix
      * */
     Field(const executor& exec, size_t size)
-        : size_(size), exec_(exec), data_(nullptr)
+        : size_(size), data_(nullptr), exec_(exec)
     {
         void* ptr = nullptr;
         std::visit([this, &ptr, size](const auto& exec)
                    { ptr = exec.alloc(size * sizeof(T)); },
                    exec_);
         data_ = static_cast<T*>(ptr);
+    };
+
+    Field(const Field<T>& rhs)
+        : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    {
+        void* ptr = nullptr;
+        auto size = rhs.size_;
+        std::visit([this, &ptr, size](const auto& exec)
+                   { ptr = exec.alloc(size * sizeof(T)); },
+                   exec_);
+        data_ = static_cast<T*>(ptr);
+        setField(*this, rhs.field());
     };
 
     /**
@@ -65,10 +77,27 @@ public:
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<T> copyToHost()
+    [[nodiscard]] Field<T> copyToHost() const
     {
         Field<T> result(CPUExecutor {}, size_);
-        this->copyToHost(result);
+        if (!std::holds_alternative<GPUExecutor>(exec_))
+        {
+            result = *this;
+        }
+        else
+        {
+            if (result.size() != size_)
+            {
+                exit(1);
+            }
+
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
+                GPU_view(data_, size_);
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
+                result.data(), size_
+            );
+            Kokkos::deep_copy(result_view, GPU_view);
+        }
         return result;
     }
 
@@ -257,7 +286,7 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const executor& exec() { return exec_; }
+    [[nodiscard]] const executor& exec() const { return exec_; }
 
     /**
      * @brief Gets the size of the field.
@@ -274,7 +303,7 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
+    [[nodiscard]] const std::span<const T> field() const { return std::span<const T>(data_, size_); }
 
 private:
 

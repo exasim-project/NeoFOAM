@@ -41,13 +41,19 @@ public:
     scalar operator()(const int i) const { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
+    scalar& operator[](const int i) { return cmpts_[i]; }
+
+    KOKKOS_INLINE_FUNCTION
+    scalar operator[](const int i) const { return cmpts_[i]; }
+
+    KOKKOS_INLINE_FUNCTION
     bool operator==(const Vector& rhs) const
     {
         return cmpts_[0] == rhs(0) && cmpts_[1] == rhs(1) && cmpts_[2] == rhs(2);
     }
 
     KOKKOS_INLINE_FUNCTION
-    Vector operator+(const Vector& rhs)
+    Vector operator+(const Vector& rhs) const
     {
         return Vector(cmpts_[0] + rhs(0), cmpts_[1] + rhs(1), cmpts_[2] + rhs(2));
     }
@@ -61,7 +67,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    Vector operator-(const Vector& rhs)
+    Vector operator-(const Vector& rhs) const
     {
         return Vector(cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2));
     }
@@ -75,14 +81,14 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    Vector operator*(const scalar& rhs)
+    Vector operator*(const scalar& rhs) const
     {
         return Vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
     }
 
 
     KOKKOS_INLINE_FUNCTION
-    Vector operator*(const label& rhs)
+    Vector operator*(const label& rhs) const
     {
         return Vector(cmpts_[0] * rhs, cmpts_[1] * rhs, cmpts_[2] * rhs);
     }
@@ -108,5 +114,20 @@ Vector operator*(const scalar& sclr, Vector rhs)
     rhs *= sclr;
     return rhs;
 }
+
+KOKKOS_INLINE_FUNCTION
+Vector operator&(const Vector& lhs, Vector rhs)
+{
+    return Vector(rhs[0] * lhs[0], rhs[1] * lhs[1], rhs[2] * lhs[2]);
+}
+
+KOKKOS_INLINE_FUNCTION
+scalar mag(const Vector& vec)
+{
+    return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+}
+
+std::ostream& operator<<(std::ostream& os, const Vector& vec);
+
 
 } // namespace NeoFOAM

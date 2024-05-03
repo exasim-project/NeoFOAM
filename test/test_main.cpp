@@ -4,7 +4,7 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
-#include "NeoFOAM/core/executor/executor.hpp"
+#include <Kokkos_Core.hpp>
 
 int main(int argc, char* argv[])
 {
