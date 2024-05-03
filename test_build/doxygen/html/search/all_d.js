@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7efield_34',['~Field',['../classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2',1,'NeoFOAM::Field']]]
+  ['what_38',['what',['../classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924',1,'NeoFOAM::Error']]]
 ];

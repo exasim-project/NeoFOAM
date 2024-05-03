@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['setsize_67',['setSize',['../classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757',1,'NeoFOAM::Field']]],
-  ['size_68',['size',['../classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb',1,'NeoFOAM::Field']]]
+  ['nboundaries_68',['nBoundaries',['../classNeoFOAM_1_1boundaryFields.html#a01fc26cddcb4f50fa1c5cc03130cff93',1,'NeoFOAM::boundaryFields']]],
+  ['nboundaryfaces_69',['nBoundaryFaces',['../classNeoFOAM_1_1boundaryFields.html#aaa420da9585232b75072964994c0e90f',1,'NeoFOAM::boundaryFields']]]
 ];

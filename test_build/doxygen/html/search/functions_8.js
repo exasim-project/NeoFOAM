@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['_7efield_70',['~Field',['../classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2',1,'NeoFOAM::Field']]]
+  ['refgrad_76',['refGrad',['../classNeoFOAM_1_1boundaryFields.html#ad0e151c8a22d9c6eed078008409a694d',1,'NeoFOAM::boundaryFields']]],
+  ['refvalue_77',['refValue',['../classNeoFOAM_1_1boundaryFields.html#a996cbfe7d054995d5a90a294fd2b3cc6',1,'NeoFOAM::boundaryFields']]]
 ];
