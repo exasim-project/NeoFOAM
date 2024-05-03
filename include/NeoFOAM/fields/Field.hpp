@@ -41,13 +41,14 @@ public:
         data_ = static_cast<T*>(ptr);
     };
 
-    Field(const Field<T>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    Field(const Field<T>& rhs)
+        : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
     {
         void* ptr = nullptr;
         auto size = rhs.size_;
-        std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
-        );
+        std::visit([this, &ptr, size](const auto& exec)
+                   { ptr = exec.alloc(size * sizeof(T)); },
+                   exec_);
         data_ = static_cast<T*>(ptr);
         setField(*this, rhs.field());
     };
@@ -79,6 +80,36 @@ public:
     [[nodiscard]] Field<T> copyToHost() const
     {
         Field<T> result(CPUExecutor {}, size_);
+        if (!std::holds_alternative<GPUExecutor>(exec_))
+        {
+            result = *this;
+        }
+        else
+        {
+            if (result.size() != size_)
+            {
+                exit(1);
+            }
+
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
+                GPU_view(data_, size_);
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
+                result.data(), size_
+            );
+            Kokkos::deep_copy(result_view, GPU_view);
+        }
+        return result;
+    }
+
+    /**
+     * @brief Copies the data (from anywhere) to a parsed host field.
+     * @param result The field into which the data must be copied. Must be sized.
+     *
+     * @warning exits if the size of the result field is not the same as the
+     * source field.
+     */
+    void copyToHost(Field<T>& result)
+    {
         if (!std::holds_alternative<GPUExecutor>(exec_))
         {
             result = *this;
@@ -297,7 +328,7 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
+    [[nodiscard]] const std::span<const T> field() const { return std::span<const T>(data_, size_); }
 
 private:
 
