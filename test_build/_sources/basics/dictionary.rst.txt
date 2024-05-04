@@ -3,7 +3,7 @@
 Dictionary
 ==========
 
-The Dictionary class is a tree-like data structure that can store any type of data similar to json, yaml or toml format. It is used to store the input data for the simulation. The Dictionary class is a wrapper around std::unorderd_map<std::string, std::any> and provides a simple interface to insert, retrieve and modify values.
+The Dictionary class is a tree-like data structure that can store any type of data similar to json, yaml or toml format. It is used to store the input data for the simulation. The Dictionary class is a wrapper around std::unordered_map<std::string, std::any> and provides a simple interface to insert, retrieve and modify values.
 
 This generic interface allows to deliver complex input data to the simulation code without the need to define a specific data structure. It can be used as followed (more details see test_Dictionary.cpp):
 
