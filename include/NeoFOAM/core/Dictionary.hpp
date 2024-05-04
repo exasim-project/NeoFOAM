@@ -37,21 +37,30 @@ public:
      * @param key The key to check.
      * @return True if the key is present, false otherwise.
      */
-    bool found(const std::string& key) const;
+    [[nodiscard]] bool found(const std::string& key) const;
+
+    /**
+     * @brief Removes an entry from the dictionary based on the specified key.
+     *
+     * This function removes the entry with the specified key from the dictionary.
+     *
+     * @param key The key of the entry to be removed.
+     */
+    void remove(const std::string& key);
 
     /**
      * @brief Accesses the value associated with the given key.
      * @param key The key to access.
      * @return A reference to the value associated with the key.
      */
-    std::any& operator[](const std::string& key);
+    [[nodiscard]] std::any& operator[](const std::string& key);
 
     /**
      * @brief Accesses the value associated with the given key.
      * @param key The key to access.
      * @return A const reference to the value associated with the key.
      */
-    const std::any& operator[](const std::string& key) const;
+    [[nodiscard]] const std::any& operator[](const std::string& key) const;
 
     /**
      * @brief Retrieves the value associated with the given key, casting it to the specified type.
@@ -60,7 +69,7 @@ public:
      * @return A reference to the value associated with the key, casted to type T.
      */
     template<typename T>
-    T& get(const std::string& key)
+    [[nodiscard]] T& get(const std::string& key)
     {
         return std::any_cast<T&>(data_.at(key));
     }
@@ -72,7 +81,7 @@ public:
      * @return A const reference to the value associated with the key, casted to type T.
      */
     template<typename T>
-    const T& get(const std::string& key) const
+    [[nodiscard]] const T& get(const std::string& key) const
     {
         return std::any_cast<const T&>(data_.at(key));
     }
@@ -83,6 +92,18 @@ public:
      * @return A reference to the sub-dictionary associated with the key.
      */
     Dictionary& subDict(const std::string& key);
+
+    /**
+     * @brief Retrieves the underlying unordered map of the dictionary.
+     * @return A reference to the underlying unordered map.
+     */
+    std::unordered_map<std::string, std::any>& getMap();
+
+    /**
+     * @brief Retrieves the underlying unordered map of the dictionary.
+     * @return A const reference to the underlying unordered map.
+     */
+    const std::unordered_map<std::string, std::any>& getMap() const;
 
 private:
 

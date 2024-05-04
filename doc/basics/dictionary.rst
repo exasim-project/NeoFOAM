@@ -42,6 +42,17 @@ To check if a key exists, the found method can be used:
     dict.insert("key", 42);
     dict.found("key") == true;
 
+Dictionary provides a method to remove a key:
+
+.. code-block:: cpp
+
+    NeoFOAM::Dictionary dict;
+    dict.insert("key", 42);
+    dict["key"] = 43;
+    dict.remove("key");
+
+    dict.found("key") == false;
+
 The Dictionary class also provides a method to access a sub-dictionary. This is useful to group related data together:
 
 .. code-block:: cpp

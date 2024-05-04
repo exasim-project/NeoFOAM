@@ -35,6 +35,15 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         REQUIRE(dict.get<int>("key") == 43);
     }
 
+    SECTION("remove values")
+    {
+        dict.insert("key", 42);
+        dict["key"] = 43;
+        dict.remove("key");
+
+        REQUIRE(!dict.found("key"));
+    }
+
     SECTION("Access non-existent key")
     {
         REQUIRE_THROWS_AS(dict["non_existent_key"], std::out_of_range);
