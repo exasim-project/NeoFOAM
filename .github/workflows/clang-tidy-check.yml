@@ -1,0 +1,59 @@
+name: Check clang-tidy
+run-name: Check clang-tidy
+
+on: push
+jobs:
+  clang-tidy-check:
+    name: Clang-tidy Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add clang repo
+      run: |
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main'
+        wget https://apt.llvm.org/llvm-snapshot.gpg.key
+        sudo apt-key add llvm-snapshot.gpg.key
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install \
+           ninja-build \
+           clang-16 \
+           clang-tidy-16 \
+           libomp-16-dev
+
+    - name: Create Compilation Database
+      run: |
+        cmake -S . -B build -G Ninja \
+              -DCMAKE_CXX_COMPILER=clang++-16 \
+              -DKokkos_ENABLE_SERIAL=ON \
+              -DKokkos_ENABLE_OPENMP=ON \
+              -DNEOFOAM_DEVEL_TOOLS=OFF \
+              -DNEOFOAM_BUILD_TESTS=ON \
+              -DNEOFOAM_BUILD_BENCHMARKS=ON \
+              -DNEOFOAM_BUILD_APPS=ON \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    - name: Run clang-tidy
+      run: |
+        # Create list of .cpp files belonging to this repository
+        git ls-files | grep -E "\.(cpp)" > pattern
+        # Create list of .cpp files that are in this repository and part of the
+        # compilation database
+        # also filters out " at the begin and end of the filename
+        jq ".[] | .file" build/compile_commands.json \
+          | sed 's/^"\(.*\)"$/\1/' \
+          | grep -F -f pattern - > files
+        # run clang-tidy on all specified files
+        clang-tidy-16 --fix --extra-arg=-w -p build $(cat files)
+
+    - name: Check for fixes
+      run: |
+        if [[ $(git ls-files -m | wc -l) -eq 0 ]]; then
+          exit 0
+        fi
+        echo "There are fixes available from clang-tidy."
+        echo "Please use your local clang-tidy or apply the following patch:"
+        git diff -p
+        exit 1
