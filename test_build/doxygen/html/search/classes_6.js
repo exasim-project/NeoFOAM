@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ompexecutor_43',['OMPExecutor',['../classNeoFOAM_1_1OMPExecutor.html',1,'NeoFOAM']]]
+  ['gpuexecutor_46',['GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html',1,'NeoFOAM']]]
 ];
