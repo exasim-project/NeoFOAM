@@ -15,5 +15,5 @@ const std::any& NeoFOAM::StencilDataBase::operator[](const std::string& key) con
 
 bool NeoFOAM::StencilDataBase::contains(const std::string& key) const
 {
-    return stencilDB_.find(key) != stencilDB_.end();
+    return stencilDB_.contains(key);
 }
