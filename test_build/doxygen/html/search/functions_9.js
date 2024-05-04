@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['setsize_163',['setSize',['../classNeoFOAM_1_1Field.html#abb08c811bfad17b79f99720d259f6757',1,'NeoFOAM::Field']]],
-  ['size_164',['size',['../classNeoFOAM_1_1Field.html#adb67919d7d63d790258680dce54e76fb',1,'NeoFOAM::Field']]]
+  ['what_67',['what',['../classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924',1,'NeoFOAM::Error']]]
 ];

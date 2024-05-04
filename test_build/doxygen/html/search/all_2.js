@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['compressionmethodfactory_6',['CompressionMethodFactory',['../classNeoFOAM_1_1CompressionMethodFactory.html',1,'NeoFOAM']]],
-  ['copytohost_7',['copyToHost',['../classNeoFOAM_1_1Field.html#a9aaf36bb0542a1511af8d3309caa7433',1,'NeoFOAM::Field::copyToHost() const'],['../classNeoFOAM_1_1Field.html#ae9e36e3e8cb791083123ecd1c0bce764',1,'NeoFOAM::Field::copyToHost(Field&lt; T &gt; &amp;result)']]],
-  ['cpuexecutor_8',['CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html',1,'NeoFOAM']]]
+  ['data_4',['data',['../classNeoFOAM_1_1Field.html#af51a828bc00b9af9570737f9776d36a8',1,'NeoFOAM::Field::data()'],['../classNeoFOAM_1_1Field.html#ae7f813ea93842611ec32ce6af238a191',1,'NeoFOAM::Field::data() const']]],
+  ['dictionary_5',['Dictionary',['../classNeoFOAM_1_1Dictionary.html',1,'NeoFOAM']]],
+  ['dimensionmismatch_6',['DimensionMismatch',['../classNeoFOAM_1_1DimensionMismatch.html#a3d59d7d807cdd22bb2477b98da3d59f5',1,'NeoFOAM::DimensionMismatch::DimensionMismatch()'],['../classNeoFOAM_1_1DimensionMismatch.html',1,'NeoFOAM::DimensionMismatch']]]
 ];

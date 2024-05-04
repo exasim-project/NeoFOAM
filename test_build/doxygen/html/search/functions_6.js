@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['nboundaries_153',['nBoundaries',['../classNeoFOAM_1_1boundaryFields.html#a01fc26cddcb4f50fa1c5cc03130cff93',1,'NeoFOAM::boundaryFields']]],
-  ['nboundaryfaces_154',['nBoundaryFaces',['../classNeoFOAM_1_1boundaryFields.html#aaa420da9585232b75072964994c0e90f',1,'NeoFOAM::boundaryFields']]]
+  ['insert_57',['insert',['../classNeoFOAM_1_1Dictionary.html#a0f7b7b11512ff4720caaa96bc64f6d5f',1,'NeoFOAM::Dictionary']]]
 ];
