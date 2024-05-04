@@ -29,9 +29,7 @@ BoundaryMesh::BoundaryMesh(
       delta_(delta),
       weights_(weights),
       deltaCoeffs_(deltaCoeffs),
-      offset_(offset) {
-
-      };
+      offset_(offset) {};
 
 // Accessor methods
 const labelField& BoundaryMesh::faceCells() const
