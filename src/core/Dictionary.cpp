@@ -8,6 +8,11 @@ void NeoFOAM::Dictionary::insert(const std::string& key, const std::any& value)
     data_[key] = value;
 }
 
+bool NeoFOAM::Dictionary::found(const std::string& key) const
+{
+    return data_.find(key) != data_.end();
+}
+
 std::any& NeoFOAM::Dictionary::operator[](const std::string& key)
 {
     return data_.at(key);

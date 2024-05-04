@@ -19,6 +19,14 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         REQUIRE(dict.get<std::string>("key2") == "Hello");
     }
 
+    SECTION("check values")
+    {
+        dict.insert("key", 42);
+        dict["key"] = 43;
+
+        REQUIRE(dict.found("key"));
+    }
+
     SECTION("Modify values")
     {
         dict.insert("key", 42);
