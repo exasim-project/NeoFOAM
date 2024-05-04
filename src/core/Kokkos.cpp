@@ -6,7 +6,7 @@
 namespace NeoFOAM
 {
 
-struct hello_world
+struct helloWorld
 {
     KOKKOS_INLINE_FUNCTION
     void operator()(const int i) const { printf("Hello from i = %i\n", i); }
