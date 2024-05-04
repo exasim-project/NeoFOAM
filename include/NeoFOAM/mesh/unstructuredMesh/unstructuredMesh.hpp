@@ -50,7 +50,7 @@ public:
 
     const labelField& faceNeighbour() const;
 
-    int32_t nCells() const;
+    label nCells() const;
 
     int32_t nInternalFaces() const;
 
