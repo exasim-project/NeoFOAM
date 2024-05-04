@@ -37,7 +37,7 @@ const labelField& BoundaryMesh::faceCells() const
     return faceCells_;
 }
 
-std::span<const label> BoundaryMesh::faceCells(const int i) const
+std::span<const label> BoundaryMesh::faceCells(label i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
