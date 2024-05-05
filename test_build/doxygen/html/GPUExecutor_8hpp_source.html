@@ -98,10 +98,10 @@ $(function() {
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    }</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    T* realloc(<span class="keywordtype">void</span>* ptr, <span class="keywordtype">size_t</span> newSize)<span class="keyword"> const</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    T* realloc(<span class="keywordtype">void</span>* ptr, <span class="keywordtype">size_t</span> new_size)<span class="keyword"> const</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="keyword">    </span>{</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;        <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>T*<span class="keyword">&gt;</span>(</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;            Kokkos::kokkos_realloc&lt;exec&gt;(ptr, newSize * <span class="keyword">sizeof</span>(T))</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;            Kokkos::kokkos_realloc&lt;exec&gt;(ptr, new_size * <span class="keyword">sizeof</span>(T))</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        );</div>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    }</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160; </div>
@@ -110,19 +110,17 @@ $(function() {
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keywordflow">return</span> Kokkos::kokkos_malloc&lt;exec&gt;(<span class="stringliteral">&quot;Field&quot;</span>, size);</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    }</div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160; </div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keywordtype">void</span>* realloc(<span class="keywordtype">void</span>* ptr, <span class="keywordtype">size_t</span> newSize)<span class="keyword"> const</span></div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keywordtype">void</span>* realloc(<span class="keywordtype">void</span>* ptr, <span class="keywordtype">size_t</span> new_size)<span class="keyword"> const</span></div>
 <div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="keyword">    </span>{</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        <span class="keywordflow">return</span> Kokkos::kokkos_realloc&lt;exec&gt;(ptr, newSize);</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        <span class="keywordflow">return</span> Kokkos::kokkos_realloc&lt;exec&gt;(ptr, new_size);</div>
 <div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    }</div>
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160; </div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    std::string print()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> std::string(exec::name()); }</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160; </div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    <span class="keywordtype">void</span> free(<span class="keywordtype">void</span>* ptr) <span class="keyword">const</span> noexcept { Kokkos::kokkos_free&lt;exec&gt;(ptr); }</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160; </div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    std::string name()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <span class="stringliteral">&quot;GPUExecutor&quot;</span>; };</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;};</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160; </div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;};</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160; </div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aclassNeoFOAM_1_1GPUExecutor_html"><div class="ttname"><a href="classNeoFOAM_1_1GPUExecutor.html">NeoFOAM::GPUExecutor</a></div><div class="ttdoc">Executor for GPU offloading.</div><div class="ttdef"><b>Definition:</b> <a href="GPUExecutor_8hpp_source.html#l00017">GPUExecutor.hpp:18</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
