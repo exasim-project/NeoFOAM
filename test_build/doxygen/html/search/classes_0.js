@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['arglist_35',['argList',['../classNeoFOAM_1_1argList.html',1,'NeoFOAM']]]
+  ['arglist_26',['ArgList',['../classNeoFOAM_1_1ArgList.html',1,'NeoFOAM']]]
 ];

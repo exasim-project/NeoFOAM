@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['remove_66',['remove',['../classNeoFOAM_1_1Dictionary.html#a1845fb9b7f58fb161f10fad774c82176',1,'NeoFOAM::Dictionary']]]
+  ['_7efield_53',['~Field',['../classNeoFOAM_1_1Field.html#a725bf35c7b92ee1d29c0f62cbf32ebe2',1,'NeoFOAM::Field']]]
 ];
