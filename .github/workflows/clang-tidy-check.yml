@@ -26,27 +26,10 @@ jobs:
 
     - name: Create Compilation Database
       run: |
-        cmake -S . -B build -G Ninja \
-              -DCMAKE_CXX_COMPILER=clang++-16 \
-              -DKokkos_ENABLE_SERIAL=ON \
-              -DKokkos_ENABLE_OPENMP=ON \
-              -DNEOFOAM_DEVEL_TOOLS=OFF \
-              -DNEOFOAM_BUILD_TESTS=ON \
-              -DNEOFOAM_BUILD_BENCHMARKS=ON \
-              -DNEOFOAM_BUILD_APPS=ON \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake --preset ninja-cpuonly-all -DNEOFOAM_DEVEL_TOOLS=OFF
     - name: Run clang-tidy
       run: |
-        # Create list of .cpp files belonging to this repository
-        git ls-files | grep -E "\.(cpp)" > pattern
-        # Create list of .cpp files that are in this repository and part of the
-        # compilation database
-        # also filters out " at the begin and end of the filename
-        jq ".[] | .file" build/compile_commands.json \
-          | sed 's/^"\(.*\)"$/\1/' \
-          | grep -F -f pattern - > files
-        # run clang-tidy on all specified files
-        clang-tidy-16 --fix --extra-arg=-w -p build $(cat files)
+         run-clang-tidy-16 -p build/ReleaseAll/ -fix
 
     - name: Check for fixes
       run: |
