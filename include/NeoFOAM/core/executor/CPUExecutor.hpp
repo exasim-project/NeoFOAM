@@ -55,6 +55,8 @@ public:
     {
         Kokkos::kokkos_free<exec>(ptr);
     };
+
+    std::word name() const { return "CPUExecutor"; };
 };
 
 } // namespace NeoFOAM

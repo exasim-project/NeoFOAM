@@ -52,6 +52,8 @@ public:
     std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); }
+
+    std::word name() const { return "GPUExecutor"; };
 };
 
 } // namespace NeoFOAM
