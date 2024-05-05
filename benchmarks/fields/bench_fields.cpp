@@ -43,63 +43,82 @@ TEST_CASE("Vector addition [benchmark]")
 
     CAPTURE(size); // Capture the value of size
 
-    auto runAdditionBenchmark = [](Executor exec, int size)
-    {
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, size);
-        NeoFOAM::fill(a, 1.0);
-        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, size);
-        NeoFOAM::fill(b, 2.0);
-        NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, size);
-        NeoFOAM::fill(c, 0.0);
-
-        BENCHMARK("Addition " + exec.name())
-        {
-            c = a + b;
-            return Kokkos::fence();
-        };
-    }
     // capture the value of size as section name
-    DYNAMIC_SECTION("" << size)
+    DYNAMIC_SECTION("" << size) {
+        {NeoFOAM::CPUExecutor cpuExec {};
+    NeoFOAM::Field<NeoFOAM::scalar> cpuA(cpuExec, size);
+    NeoFOAM::fill(cpuA, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> cpuB(cpuExec, size);
+    NeoFOAM::fill(cpuB, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> cpuC(cpuExec, size);
+    NeoFOAM::fill(cpuC, 0.0);
+
+    BENCHMARK("Field<CPU> addition") { return (cpuC = cpuA + cpuB); };
+}
+
+{
+    NeoFOAM::OMPExecutor ompExec {};
+    NeoFOAM::Field<NeoFOAM::scalar> ompA(ompExec, size);
+    NeoFOAM::fill(ompA, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> ompB(ompExec, size);
+    NeoFOAM::fill(ompB, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> ompC(ompExec, size);
+    NeoFOAM::fill(ompC, 0.0);
+
+    BENCHMARK("Field<omp> addition") { return (ompC = ompA + ompB); };
+}
+
+{
+    NeoFOAM::GPUExecutor gpuExec {};
+    NeoFOAM::Field<NeoFOAM::scalar> gpuA(gpuExec, size);
+    NeoFOAM::fill(gpuA, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> gpuB(gpuExec, size);
+    NeoFOAM::fill(gpuB, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> gpuC(gpuExec, size);
+    NeoFOAM::fill(gpuC, 0.0);
+
+    BENCHMARK("Field<GPU> addition")
     {
-        runAdditionBenchmark(NeoFOAM::CPUExecutor {}, size);
-
-        runAdditionBenchmark(NeoFOAM::OMPExecutor {}, size);
-
-        runAdditionBenchmark(NeoFOAM::GPUExecutor {}, size);
-
-        {
-            NeoFOAM::GPUExecutor execGPU {};
-            NeoFOAM::Field<NeoFOAM::scalar> a(execGPU, size);
-            NeoFOAM::fill(GPUa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> b(execGPU, size);
-            NeoFOAM::fill(GPUb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> c(execGPU, size);
-            NeoFOAM::fill(GPUc, 0.0);
-
-            auto sGPUb = b.field();
-            auto sGPUc = c.field();
-            BENCHMARK("Field<GPU> addition no allocation")
-            {
-                GPUa.apply(KOKKOS_LAMBDA(const int i) { return sGPUb[i] + sGPUc[i]; });
-                return Kokkos::fence();
-            };
-        }
-
-        {
-            NeoFOAM::OMPExecutor OMPExec {};
-            NeoFOAM::Field<NeoFOAM::scalar> OMPa(OMPExec, size);
-            NeoFOAM::fill(OMPa, 1.0);
-            NeoFOAM::Field<NeoFOAM::scalar> OMPb(OMPExec, size);
-            NeoFOAM::fill(OMPb, 2.0);
-            NeoFOAM::Field<NeoFOAM::scalar> OMPc(OMPExec, size);
-            NeoFOAM::fill(OMPc, 0.0);
-
-            auto sOMPb = OMPb.field();
-            auto sOMPc = OMPc.field();
-            BENCHMARK("Field<OMP> addition no allocation")
-            {
-                OMPa.apply(KOKKOS_LAMBDA(const int i) { return sOMPb[i] + sOMPc[i]; });
-            };
-        }
+        gpuC = gpuA + gpuB;
+        return Kokkos::fence();
     };
+}
+
+{
+    NeoFOAM::GPUExecutor gpuExec {};
+    NeoFOAM::Field<NeoFOAM::scalar> gpuA(gpuExec, size);
+    NeoFOAM::fill(gpuA, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> gpuB(gpuExec, size);
+    NeoFOAM::fill(gpuB, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> gpuC(gpuExec, size);
+    NeoFOAM::fill(gpuC, 0.0);
+
+    auto sGpuB = gpuB.field();
+    auto sGpuC = gpuC.field();
+    BENCHMARK("Field<GPU> addition no allocation")
+    {
+        gpuA.apply(KOKKOS_LAMBDA(const int i) { return sGpuB[i] + sGpuC[i]; });
+        return Kokkos::fence();
+        // return GPUa;
+    };
+}
+
+{
+    NeoFOAM::OMPExecutor ompExec {};
+    NeoFOAM::Field<NeoFOAM::scalar> ompA(ompExec, size);
+    NeoFOAM::fill(ompA, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> ompB(ompExec, size);
+    NeoFOAM::fill(ompB, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> ompC(ompExec, size);
+    NeoFOAM::fill(ompC, 0.0);
+
+    auto sompB = ompB.field();
+    auto sompC = ompC.field();
+    BENCHMARK("Field<OMP> addition no allocation")
+    {
+        ompA.apply(KOKKOS_LAMBDA(const int i) { return sompB[i] + sompC[i]; });
+    };
+}
+}
+;
 }

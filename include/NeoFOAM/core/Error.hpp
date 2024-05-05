@@ -8,7 +8,7 @@
 namespace NeoFOAM
 {
 
-class error
+class Error
 {
 public:
 
@@ -24,8 +24,7 @@ public:
         std::exit(errNo);
     };
 
-    error(std::string) {};
+    Error(std::string) {};
 };
 
-extern error FatalError;
 } // namespace NeoFOAM

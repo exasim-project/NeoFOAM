@@ -6,11 +6,11 @@
 namespace NeoFOAM
 {
 
-struct helloWorld
+struct HelloWorld
 {
     KOKKOS_INLINE_FUNCTION
     void operator()(const int i) const { printf("Hello from i = %i\n", i); }
 };
 
-void foo() { Kokkos::parallel_for("HelloWorld", 15, hello_world()); }
+void foo() { Kokkos::parallel_for("HelloWorld", 15, HelloWorld()); }
 } // namespace NeoFOAM
