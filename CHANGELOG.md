@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- applied changes proposed by clang-tidy [#57](https://github.com/exasim-project/NeoFOAM/pull/57)
 - Use clang-tidy check to enforce consistent naming scheme [#46](https://github.com/exasim-project/NeoFOAM/pull/46)
 - Added equality operators for executors [#45](https://github.com/exasim-project/NeoFOAM/pull/45)
 - Added pre-commit hooks, see [PR #38](https://github.com/exasim-project/NeoFOAM/pull/38)
