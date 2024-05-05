@@ -92,7 +92,7 @@ endif()
 
 if(NEOFOAM_BUILD_DOC)
   include(cmake/Docs.cmake)
-  neofam_build_docs()
+  neofoam_build_docs()
 endif()
 
 if(NEOFOAM_DEVEL_TOOLS)
