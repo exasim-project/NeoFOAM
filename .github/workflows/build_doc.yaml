@@ -19,20 +19,16 @@ jobs:
       uses: actions/checkout@v4
     - name: Build docs
       run: |
-        mkdir build
-        cd build
-        cmake -DNEOFOAM_BUILD_DOC=On ..
-        cmake --build . -t doc
-        cp -r docs/doxygen docs/sphinx
-        cd docs/sphinx
+        sphinx-build -b html ./doc ./docs_build/
+        cd docs
         touch .nojekyll
     - name: Deploy Test Build
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: build/docs/sphinx
+        folder: docs_build
         target-folder: test_build
     - name: Deploy Build
       if: ${{ github.event.pull_request.merged }}
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: build/docs/sphinx
+        folder: docs_build
