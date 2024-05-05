@@ -90,6 +90,12 @@ Inheritance diagram for NeoFOAM::Error:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a7419fc4074166242ac48d4c840d96a92"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Error.html#a7419fc4074166242ac48d4c840d96a92">exit</a> (const int errNo=1)</td></tr>
+<tr class="memdesc:a7419fc4074166242ac48d4c840d96a92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exit the program with an error message.  <a href="classNeoFOAM_1_1Error.html#a7419fc4074166242ac48d4c840d96a92">More...</a><br /></td></tr>
+<tr class="separator:a7419fc4074166242ac48d4c840d96a92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b72863105cec68504afb0e540d61052"><td class="memItemLeft" align="right" valign="top"><a id="a8b72863105cec68504afb0e540d61052"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Error</b> (std::string)</td></tr>
+<tr class="separator:a8b72863105cec68504afb0e540d61052"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9df5b85d215b4e57ef3240e3500773c7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Error.html#a9df5b85d215b4e57ef3240e3500773c7">Error</a> (const std::string &amp;file, int line, const std::string &amp;<a class="el" href="classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924">what</a>)</td></tr>
 <tr class="separator:a9df5b85d215b4e57ef3240e3500773c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af83ca1338f3a80e3801a84d37351c924"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924">what</a> () const noexcept override</td></tr>
@@ -99,7 +105,7 @@ Public Member Functions</h2></td></tr>
 <div class="textblock"><p>Base class for consistent error representation. </p>
 <p>The <a class="el" href="classNeoFOAM_1_1Error.html" title="Base class for consistent error representation.">Error</a> class is used to report exceptional behaviour in library functions. NeoFOAM uses C++ exception mechanism to this end, and the <a class="el" href="classNeoFOAM_1_1Error.html" title="Base class for consistent error representation.">Error</a> class represents a base class for all types of errors. The exact list of errors which could occur during the execution of a certain library routine is provided in the documentation of that routine, along with a short description of the situation when that error can occur. During runtime, these errors can be detected by using standard C++ try-catch blocks, and a human-readable error description can be obtained by calling the <a class="el" href="classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924">Error::what()</a> method. </p>
 
-<p class="definition">Definition at line <a class="el" href="exceptions_8hpp_source.html#l00023">23</a> of file <a class="el" href="exceptions_8hpp_source.html">exceptions.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Error_8hpp_source.html#l00011">11</a> of file <a class="el" href="Error_8hpp_source.html">Error.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9df5b85d215b4e57ef3240e3500773c7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9df5b85d215b4e57ef3240e3500773c7">&#9670;&nbsp;</a></span>Error()</h2>
@@ -155,6 +161,43 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a7419fc4074166242ac48d4c840d96a92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7419fc4074166242ac48d4c840d96a92">&#9670;&nbsp;</a></span>exit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::Error::exit </td>
+          <td>(</td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>errNo</em> = <code>1</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Exit the program with an error message. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">errNo</td><td>The error number to exit with. </td></tr>
+    <tr><td class="paramname">location</td><td>Default argument for the location of the error. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="Error_8hpp_source.html#l00021">21</a> of file <a class="el" href="Error_8hpp_source.html">Error.hpp</a>.</p>
+
+</div>
+</div>
 <a id="af83ca1338f3a80e3801a84d37351c924"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af83ca1338f3a80e3801a84d37351c924">&#9670;&nbsp;</a></span>what()</h2>
 
@@ -183,7 +226,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following files:<ul>
+<li>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/<a class="el" href="Error_8hpp_source.html">Error.hpp</a></li>
 <li>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/helpers/<a class="el" href="exceptions_8hpp_source.html">exceptions.hpp</a></li>
 </ul>
 </div><!-- contents -->
