@@ -71,6 +71,7 @@ endif()
 
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(test)
 endif()
 
