@@ -61,10 +61,10 @@ TEST_CASE("Executor Equality")
         // BoxArray -- Abstract Domain Setup
 
 
-        // integer vector indicating the lower coordindate bounds
+        // integer vector indicating the lower coordinate bounds
         // amrex::IntVect dom_lo(0,0,0);
         amrex::IntVect dom_lo(0, 0);
-        // integer vector indicating the upper coordindate bounds
+        // integer vector indicating the upper coordinate bounds
         // amrex::IntVect dom_hi(n_cell-1, n_cell-1, n_cell-1);
         amrex::IntVect dom_hi(n_cell - 1, n_cell - 1);
         // box containing the coordinates of this domain
@@ -72,16 +72,16 @@ TEST_CASE("Executor Equality")
 
 
         // will contain a list of boxes describing the problem domain
-        amrex::BoxArray ba(domain);
+        amrex::BoxArray bArray(domain);
 
         // chop the single grid into many small boxes
-        ba.maxSize(max_grid_size);
+        bArray.maxSize(max_grid_size);
 
         // Distribution Mapping
-        amrex::DistributionMapping dm(ba);
+        amrex::DistributionMapping dm(bArray);
 
         // Define MuliFab
-        amrex::MultiFab mf(ba, dm, ncomp, ngrow, amrex::MFInfo().SetArena(amrex::The_Pinned_Arena()));
+        amrex::MultiFab mf(bArray, dm, ncomp, ngrow, amrex::MFInfo().SetArena(amrex::The_Pinned_Arena()));
 
         amrex::Arena* arena = mf.arena();
         std::cout << "Arena isDeviceAccessible: " << arena->isDeviceAccessible() << std::endl;
