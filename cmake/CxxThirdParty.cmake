@@ -1,10 +1,26 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-include(cmake/CPM.cmake)
+set(KOKKOS_CHECKOUT_VERSION
+    "4.3.00"
+    CACHE STRING "Use specific version of Kokkos")
 
-# CPMAddPackage( NAME Kokkos GITHUB_REPOSITORY kokkos/kokkos VERSION 4.3.00
-# GIT_TAG 4.3.00 )
+find_package(Kokkos ${KOKKOS_CHECKOUT_VERSION} QUIET)
+
+if(NOT ${Kokkos_FOUND})
+  include(FetchContent)
+
+  FetchContent_Declare(
+    kokkos
+    QUITE
+    GIT_SHALLOW ON
+    GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
+    GIT_TAG ${KOKKOS_CHECKOUT_VERSION})
+
+  FetchContent_MakeAvailable(Kokkos)
+endif()
+
+include(cmake/CPM.cmake)
 
 cpmaddpackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json VERSION 3.11.3)
 
