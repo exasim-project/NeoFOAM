@@ -70,9 +70,9 @@ public:
      * @param clarification  An additional message describing the error further
      */
     DimensionMismatch(
-        const std::string& file, int line, const std::string& func, size_t length_a, size_t length_b, const std::string& clarification
+        const std::string& file, int line, const std::string& func, size_t lengthA, size_t lengthB, const std::string& clarification
     )
-        : Error(file, line, func + ": Trying to perform binary operation " + " " + std::to_string(length_a) + ", " + std::to_string(length_b) + " " + clarification)
+        : Error(file, line, func + ": Trying to perform binary operation " + " " + std::to_string(lengthA) + ", " + std::to_string(lengthB) + " " + clarification)
     {}
 };
 
