@@ -161,8 +161,6 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#workflow-with-vscode">Workflow with vscode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/fields.html">Fields</a></li>
@@ -300,48 +298,6 @@ cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class=
 <p>It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.</p>
 </section>
 </section>
-<section id="prerequisites">
-<h1>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h1>
-<p>The following tools are used in the development of this project:</p>
-<p>required tools for documentation:
-.. code-block:: bash</p>
-<blockquote>
-<div><p>sudo apt install doxygen
-pip install pre-commit sphinx furo breathe sphinx-sitemap</p>
-</div></blockquote>
-<p>required tools for compilation (ubuntu latest 24.04):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
-sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
-ninja-build<span class="w"> </span><span class="se">\</span>
-clang-16<span class="w"> </span><span class="se">\</span>
-gcc-10<span class="w"> </span><span class="se">\</span>
-libomp-16-dev<span class="w"> </span><span class="se">\</span>
-python3<span class="w"> </span><span class="se">\</span>
-python3-dev<span class="w"> </span><span class="se">\</span>
-build-essential
-<span class="c1"># installation of clang is optional</span>
-sudo<span class="w"> </span>apt<span class="w"> </span>remove<span class="w"> </span>clang-14
-sudo<span class="w"> </span>rm<span class="w"> </span>/usr/bin/clang
-sudo<span class="w"> </span>rm<span class="w"> </span>/usr/bin/clang++
-sudo<span class="w"> </span>ln<span class="w"> </span>-s<span class="w"> </span>/usr/bin/clang-16<span class="w"> </span>/usr/bin/clang
-sudo<span class="w"> </span>ln<span class="w"> </span>-s<span class="w"> </span>/usr/bin/clang++-16<span class="w"> </span>/usr/bin/clang++
-</pre></div>
-</div>
-</section>
-<section id="workflow-with-vscode">
-<h1>Workflow with vscode<a class="headerlink" href="#workflow-with-vscode" title="Link to this heading">¶</a></h1>
-<p>install the following extensions:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ms-vscode.cpptools
-ms-vscode.cmake-tools
-</pre></div>
-</div>
-<p>After installation, you can open the NeoFOAM directory with vscode and configure the build with cmake presets with the cmake extension as shown below:</p>
-<figure class="align-center">
-<img alt="configure the build with cmake presets" src="_images/cmakePresets.gif" />
-</figure>
-<p>After configuring the build, you can build the project with the build button or test in “testing” tab (flask icon).</p>
-<p>To create the documentation, you can use the ‘Build Sphinx Documentation’ task in the vscode task menu. Type <cite>Ctrl+P</cite> and type <cite>task</cite> and press space and the build documentation and press enter. The documentation will be created in the <cite>docs_build</cite> directory.</p>
-</section>
 
         </article>
       </div>
@@ -402,8 +358,6 @@ ms-vscode.cmake-tools
 <li><a class="reference internal" href="#building-with-cmake-presets">Building with Cmake Presets</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li><a class="reference internal" href="#workflow-with-vscode">Workflow with vscode</a></li>
 </ul>
 
           </div>
