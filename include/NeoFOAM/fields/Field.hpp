@@ -29,7 +29,7 @@ public:
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
      * */
-    Field(const executor& exec, size_t size)
+    Field(const Executor& exec, size_t size)
         : size_(size), exec_(exec), data_(nullptr)
     {
         void* ptr = nullptr;
@@ -93,11 +93,11 @@ public:
             }
 
             Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                GPU_view(data_, size_);
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
+                gpuView(data_, size_);
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
                 result.data(), size_
             );
-            Kokkos::deep_copy(result_view, GPU_view);
+            Kokkos::deep_copy(resultView, gpuView);
         }
     }
 
@@ -257,7 +257,7 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const executor& exec() { return exec_; }
+    [[nodiscard]] const Executor& exec() { return exec_; }
 
     /**
      * @brief Gets the size of the field.
@@ -280,7 +280,7 @@ private:
 
     size_t size_; //!< Size of the field.
     T* data_;     //!< Pointer to the field data.
-    const executor
+    const Executor
         exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 

@@ -32,10 +32,10 @@ public:
     }
 
     template<typename T>
-    T* realloc(void* ptr, size_t new_size) const
+    T* realloc(void* ptr, size_t newSize) const
     {
         return static_cast<T*>(
-            Kokkos::kokkos_realloc<exec>(ptr, new_size * sizeof(T))
+            Kokkos::kokkos_realloc<exec>(ptr, newSize * sizeof(T))
         );
     }
 
@@ -44,14 +44,16 @@ public:
         return Kokkos::kokkos_malloc<exec>("Field", size);
     }
 
-    void* realloc(void* ptr, size_t new_size) const
+    void* realloc(void* ptr, size_t newSize) const
     {
-        return Kokkos::kokkos_realloc<exec>(ptr, new_size);
+        return Kokkos::kokkos_realloc<exec>(ptr, newSize);
     }
 
     std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); }
+
+    std::string name() const { return "GPUExecutor"; };
 };
 
 } // namespace NeoFOAM

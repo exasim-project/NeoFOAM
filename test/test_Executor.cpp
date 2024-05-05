@@ -11,23 +11,23 @@
 
 TEST_CASE("Executor Equality")
 {
-    NeoFOAM::executor cpu_exec_0(NeoFOAM::CPUExecutor {});
-    NeoFOAM::executor omp_exec_0(NeoFOAM::OMPExecutor {});
-    NeoFOAM::executor gpu_exec_0(NeoFOAM::GPUExecutor {});
+    NeoFOAM::Executor cpuExec0(NeoFOAM::CPUExecutor {});
+    NeoFOAM::Executor ompExec0(NeoFOAM::OMPExecutor {});
+    NeoFOAM::Executor gpuExec0(NeoFOAM::GPUExecutor {});
 
-    NeoFOAM::executor cpu_exec_1(NeoFOAM::CPUExecutor {});
-    NeoFOAM::executor omp_exec_1(NeoFOAM::OMPExecutor {});
-    NeoFOAM::executor gpu_exec_1(NeoFOAM::GPUExecutor {});
+    NeoFOAM::Executor cpuExec1(NeoFOAM::CPUExecutor {});
+    NeoFOAM::Executor ompExec1(NeoFOAM::OMPExecutor {});
+    NeoFOAM::Executor gpuExec1(NeoFOAM::GPUExecutor {});
 
-    REQUIRE(cpu_exec_0 == cpu_exec_1);
-    REQUIRE(cpu_exec_0 != omp_exec_1);
-    REQUIRE(cpu_exec_0 != gpu_exec_1);
+    REQUIRE(cpuExec0 == cpuExec1);
+    REQUIRE(cpuExec0 != ompExec1);
+    REQUIRE(cpuExec0 != gpuExec1);
 
-    REQUIRE(omp_exec_0 != cpu_exec_1);
-    REQUIRE(omp_exec_0 == omp_exec_1);
-    REQUIRE(omp_exec_0 != gpu_exec_1);
+    REQUIRE(ompExec0 != cpuExec1);
+    REQUIRE(ompExec0 == ompExec1);
+    REQUIRE(ompExec0 != gpuExec1);
 
-    REQUIRE(gpu_exec_0 != cpu_exec_1);
-    REQUIRE(gpu_exec_0 != omp_exec_1);
-    REQUIRE(gpu_exec_0 == gpu_exec_1);
+    REQUIRE(gpuExec0 != cpuExec1);
+    REQUIRE(gpuExec0 != ompExec1);
+    REQUIRE(gpuExec0 == gpuExec1);
 }
