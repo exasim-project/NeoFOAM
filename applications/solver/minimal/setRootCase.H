@@ -4,10 +4,10 @@
 // - use argList::argsMandatory() to decide on checking command arguments.
 // - check validity of the options
 
-NeoFOAM::argList args(argc, argv);
+NeoFOAM::ArgList args(argc, argv);
 if (!args.checkRootCase())
 {
-    NeoFOAM::FatalError.exit();
+    NeoFOAM::Error("--> FOAM FATAL ERROR: ").exit();
 }
 
 // User can also perform checks on otherwise optional arguments.

@@ -44,6 +44,11 @@ if(NOT CMAKE_BUILD_TYPE)
       CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
+  message(STATUS "Enabling generation of compilation database.")
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
+
 include(cmake/CxxThirdParty.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/StandardProjectSettings.cmake)

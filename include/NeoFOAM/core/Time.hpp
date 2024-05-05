@@ -13,12 +13,12 @@ namespace NeoFOAM
 using scalar = float;
 using word = std::string;
 
-class argList
+class ArgList
 {
 
 public:
 
-    argList(int argc, char* argv[]) {};
+    ArgList(int argc, char* argv[]) {};
 
     [[nodiscard]] bool checkRootCase() const { return true; };
 };
@@ -31,7 +31,7 @@ public:
 
     Time() : time_(0.) {};
 
-    Time(const word, const argList) : time_(0.) {};
+    Time(const word, const ArgList) : time_(0.) {};
 
     [[nodiscard]] word timeName() { return std::to_string(time_); }
 
