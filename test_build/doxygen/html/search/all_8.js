@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['tensor_21',['tensor',['../classtensor.html',1,'']]],
-  ['time_22',['Time',['../classNeoFOAM_1_1Time.html',1,'NeoFOAM']]]
+  ['remove_26',['remove',['../classNeoFOAM_1_1Dictionary.html#a1845fb9b7f58fb161f10fad774c82176',1,'NeoFOAM::Dictionary']]]
 ];

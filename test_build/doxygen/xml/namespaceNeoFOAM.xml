@@ -2,21 +2,23 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM" kind="namespace" language="C++">
     <compoundname>NeoFOAM</compoundname>
-    <innerclass refid="classNeoFOAM_1_1Error" prot="public">NeoFOAM::Error</innerclass>
+    <innerclass refid="classNeoFOAM_1_1Dictionary" prot="public">NeoFOAM::Dictionary</innerclass>
+    <innerclass refid="classNeoFOAM_1_1error" prot="public">NeoFOAM::error</innerclass>
     <innerclass refid="classNeoFOAM_1_1CPUExecutor" prot="public">NeoFOAM::CPUExecutor</innerclass>
     <innerclass refid="classNeoFOAM_1_1GPUExecutor" prot="public">NeoFOAM::GPUExecutor</innerclass>
     <innerclass refid="classNeoFOAM_1_1OMPExecutor" prot="public">NeoFOAM::OMPExecutor</innerclass>
-    <innerclass refid="classNeoFOAM_1_1ArgList" prot="public">NeoFOAM::ArgList</innerclass>
+    <innerclass refid="classNeoFOAM_1_1argList" prot="public">NeoFOAM::argList</innerclass>
     <innerclass refid="classNeoFOAM_1_1Time" prot="public">NeoFOAM::Time</innerclass>
     <innerclass refid="classNeoFOAM_1_1Field" prot="public">NeoFOAM::Field</innerclass>
+    <innerclass refid="classNeoFOAM_1_1Error" prot="public">NeoFOAM::Error</innerclass>
     <innerclass refid="classNeoFOAM_1_1DimensionMismatch" prot="public">NeoFOAM::DimensionMismatch</innerclass>
     <innerclass refid="classNeoFOAM_1_1Vector" prot="public">NeoFOAM::Vector</innerclass>
       <sectiondef kind="typedef">
-      <memberdef kind="typedef" id="executor_8hpp_1a8dd6308ef5083b9e30bdb7a594fbb4b7" prot="public" static="no">
+      <memberdef kind="typedef" id="executor_8hpp_1ae4c14e29f8d05e557ea7f1c13bea6f65" prot="public" static="no">
         <type>std::variant&lt; <ref refid="classNeoFOAM_1_1OMPExecutor" kindref="compound">OMPExecutor</ref>, <ref refid="classNeoFOAM_1_1GPUExecutor" kindref="compound">GPUExecutor</ref>, <ref refid="classNeoFOAM_1_1CPUExecutor" kindref="compound">CPUExecutor</ref> &gt;</type>
-        <definition>using NeoFOAM::Executor = typedef std::variant&lt;OMPExecutor, GPUExecutor, CPUExecutor&gt;</definition>
+        <definition>using NeoFOAM::executor = typedef std::variant&lt;OMPExecutor, GPUExecutor, CPUExecutor&gt;</definition>
         <argsstring></argsstring>
-        <name>Executor</name>
+        <name>executor</name>
         <briefdescription>
         </briefdescription>
         <detaileddescription>
@@ -104,18 +106,33 @@
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/scalar.hpp" line="17" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/primitives/scalar.hpp" bodystart="17" bodyend="-1"/>
       </memberdef>
       </sectiondef>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="Error_8hpp_1ac86e8f1f9e6ca5e6ba733c0be37d337e" prot="public" static="no" mutable="no">
+        <type><ref refid="classNeoFOAM_1_1error" kindref="compound">error</ref></type>
+        <definition>error NeoFOAM::FatalError</definition>
+        <argsstring></argsstring>
+        <name>FatalError</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Error.hpp" line="30" column="14" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Error.hpp" declline="30" declcolumn="14"/>
+      </memberdef>
+      </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="executor_8hpp_1ace895d0abfec1573f663b84e098f7a03" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+      <memberdef kind="function" id="executor_8hpp_1a854eacda36fd711f315da1882a68cf0a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
         <definition>bool NeoFOAM::operator==</definition>
-        <argsstring>(const Executor &amp;lhs, const Executor &amp;rhs)</argsstring>
+        <argsstring>(const executor &amp;lhs, const executor &amp;rhs)</argsstring>
         <name>operator==</name>
         <param>
-          <type>const Executor &amp;</type>
+          <type>const executor &amp;</type>
           <declname>lhs</declname>
         </param>
         <param>
-          <type>const Executor &amp;</type>
+          <type>const executor &amp;</type>
           <declname>rhs</declname>
         </param>
         <briefdescription>
@@ -147,17 +164,17 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="21" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="21" bodyend="32"/>
       </memberdef>
-      <memberdef kind="function" id="executor_8hpp_1a4354d14390c6cd1d3a813869a7aff63b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+      <memberdef kind="function" id="executor_8hpp_1ac6bc31149226d33dfe9778abd8e5f6a8" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
         <definition>bool NeoFOAM::operator!=</definition>
-        <argsstring>(const Executor &amp;lhs, const Executor &amp;rhs)</argsstring>
+        <argsstring>(const executor &amp;lhs, const executor &amp;rhs)</argsstring>
         <name>operator!=</name>
         <param>
-          <type>const Executor &amp;</type>
+          <type>const executor &amp;</type>
           <declname>lhs</declname>
         </param>
         <param>
-          <type>const Executor &amp;</type>
+          <type>const executor &amp;</type>
           <declname>rhs</declname>
         </param>
         <briefdescription>
@@ -357,6 +374,6 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Error.hpp" line="8" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/Dictionary.hpp" line="9" column="1"/>
   </compounddef>
 </doxygen>
