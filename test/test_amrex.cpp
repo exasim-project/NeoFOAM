@@ -10,7 +10,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_MultiFab.H>      //For the method most common at time of writing
 #include <AMReX_MFParallelFor.H> //For the second newer method
-#include <AMReX_PlotFileUtil.H>  //For ploting the MultiFab
+#include <AMReX_PlotFileUtil.H>  //For plotting the MultiFab
 #include <AMReX_MFParallelFor.H>
 
 int main(int argc, char* argv[])
