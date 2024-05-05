@@ -10,7 +10,7 @@
 namespace NeoFOAM
 {
 
-using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
+using Executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
 
 /**
  * @brief Checks if two executors are equal, i.e. they are of the same type.
@@ -34,7 +34,7 @@ struct Visitor
     }
 };
 
-[[nodiscard]] inline bool operator==(const executor& lhs, const executor& rhs)
+[[nodiscard]] inline bool operator==(const Executor& lhs, const Executor& rhs)
 {
     return std::visit(Visitor {}, lhs, rhs);
 };
@@ -45,7 +45,7 @@ struct Visitor
  * @param rhs The second executor.
  * @return True if the executors not are equal, false otherwise.
  */
-[[nodiscard]] inline bool operator!=(const executor& lhs, const executor& rhs)
+[[nodiscard]] inline bool operator!=(const Executor& lhs, const Executor& rhs)
 {
     return !(lhs == rhs);
 };
