@@ -17,20 +17,20 @@
 
 TEST_CASE("Field Operations")
 {
-    NeoFOAM::executor exec = GENERATE(
-        NeoFOAM::executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
-        NeoFOAM::executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
-    std::string exec_name = std::visit([](auto e)
-                                       { return e.print(); },
-                                       exec);
+    std::string execName = std::visit([](auto e)
+                                      { return e.print(); },
+                                      exec);
 
-    SECTION("Field_" + exec_name)
+    SECTION("Field_" + execName)
     {
-        int N = 10;
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
-        auto s_a = a.field();
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        auto sA = a.field();
         NeoFOAM::fill(a, 5.0);
 
         REQUIRE(compare(a, 5.0));
@@ -108,40 +108,40 @@ TEST_CASE("Primitives")
 TEST_CASE("Boundaries")
 {
 
-    NeoFOAM::executor exec = GENERATE(
-        NeoFOAM::executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
-        NeoFOAM::executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string exec_name = std::visit([](auto e)
-                                       { return e.print(); },
-                                       exec);
-    SECTION("domainField_" + exec_name)
+    std::string execName = std::visit([](auto e)
+                                      { return e.print(); },
+                                      exec);
+    SECTION("domainField_" + execName)
     {
 
-        NeoFOAM::domainField<double> a(exec, 1000, 100, 10);
+        NeoFOAM::DomainField<double> a(exec, 1000, 100, 10);
 
         NeoFOAM::fill(a.internalField(), 2.0);
         REQUIRE(compare(a.internalField(), 2.0));
     }
 
-    SECTION("boundaryFields_" + exec_name)
+    SECTION("boundaryFields_" + execName)
     {
 
-        NeoFOAM::boundaryFields<double> BCs(exec, 100, 10);
+        NeoFOAM::BoundaryFields<double> bCs(exec, 100, 10);
 
-        NeoFOAM::fill(BCs.value(), 2.0);
-        REQUIRE(compare(BCs.value(), 2.0));
+        NeoFOAM::fill(bCs.value(), 2.0);
+        REQUIRE(compare(bCs.value(), 2.0));
 
-        NeoFOAM::fill(BCs.refValue(), 2.0);
-        REQUIRE(compare(BCs.refValue(), 2.0));
+        NeoFOAM::fill(bCs.refValue(), 2.0);
+        REQUIRE(compare(bCs.refValue(), 2.0));
 
-        NeoFOAM::fill(BCs.refGrad(), 2.0);
-        REQUIRE(compare(BCs.refGrad(), 2.0));
+        NeoFOAM::fill(bCs.refGrad(), 2.0);
+        REQUIRE(compare(bCs.refGrad(), 2.0));
 
-        NeoFOAM::fill(BCs.valueFraction(), 2.0);
-        REQUIRE(compare(BCs.valueFraction(), 2.0));
+        NeoFOAM::fill(bCs.valueFraction(), 2.0);
+        REQUIRE(compare(bCs.valueFraction(), 2.0));
     }
 
     // SECTION("fvccBoundaryField")

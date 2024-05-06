@@ -14,7 +14,7 @@ namespace NeoFOAM
 {
 
 template<typename T>
-class domainField
+class DomainField
 {
     /**
      * @class domainField
@@ -26,7 +26,7 @@ class domainField
      */
 public:
 
-    domainField(const executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
+    DomainField(const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
         : exec_(exec),
           internalField_(exec, nCells),
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
@@ -34,7 +34,7 @@ public:
     }
 
 
-    domainField(const domainField<T>& rhs)
+    DomainField(const ::NeoFOAM::DomainField<T>& rhs)
         : exec_(rhs.exec_),
           internalField_(rhs.internalField_),
           boundaryFields_(rhs.boundaryFields_)
@@ -42,7 +42,7 @@ public:
     }
 
 
-    domainField(domainField<T>&& rhs)
+    DomainField(DomainField<T>&& rhs)
         : exec_(std::move(rhs.exec_)),
           internalField_(std::move(rhs.internalField_)),
           boundaryFields_(std::move(rhs.boundaryFields_))
@@ -50,7 +50,7 @@ public:
     }
 
 
-    domainField<T>& operator=(const domainField<T>& rhs)
+    DomainField<T>& operator=(const ::NeoFOAM::DomainField<T>& rhs)
     {
         internalField_ = rhs.internalField_;
         boundaryFields_ = rhs.boundaryFields_;
@@ -58,7 +58,7 @@ public:
     }
 
 
-    domainField<T>& operator=(domainField<T>&& rhs)
+    DomainField<T>& operator=(DomainField<T>&& rhs)
     {
         internalField_ = std::move(rhs.internalField_);
         boundaryFields_ = std::move(rhs.boundaryFields_);
@@ -78,22 +78,22 @@ public:
     }
 
 
-    const boundaryFields<T>& boundaryField() const
+    const BoundaryFields<T>& boundaryField() const
     {
         return boundaryFields_;
     }
 
 
-    boundaryFields<T>& boundaryField()
+    BoundaryFields<T>& boundaryField()
     {
         return boundaryFields_;
     }
 
 private:
 
-    executor exec_;
+    Executor exec_;
     Field<T> internalField_;
-    boundaryFields<T> boundaryFields_;
+    BoundaryFields<T> boundaryFields_;
 };
 
 

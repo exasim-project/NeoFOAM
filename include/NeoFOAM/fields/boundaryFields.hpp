@@ -17,7 +17,7 @@ namespace NeoFOAM
 
 
 template<typename T>
-class boundaryFields
+class BoundaryFields
 {
     /**
      * @class boundaryFields
@@ -42,7 +42,7 @@ public:
      * @param rhs The boundaryFields object to be copied.
      */
 
-    boundaryFields(const boundaryFields<T>& rhs)
+    BoundaryFields(const BoundaryFields<T>& rhs)
         : exec_(rhs.exec_),
           value_(rhs.value_),
           refValue_(rhs.refValue_),
@@ -56,7 +56,7 @@ public:
     }
 
 
-    boundaryFields(const executor& exec, int nBoundaryFaces, int nBoundaries)
+    BoundaryFields(const Executor& exec, int nBoundaryFaces, int nBoundaries)
         : exec_(exec),
           value_(exec, nBoundaryFaces),
           refValue_(exec, nBoundaryFaces),
@@ -161,14 +161,14 @@ public:
         return nBoundaryFaces_;
     }
 
-    const executor& exec()
+    const Executor& exec()
     {
         return exec_;
     }
 
 private:
 
-    executor exec_;
+    Executor exec_;
     NeoFOAM::Field<T> value_;              ///< The view storing the computed values from the boundary condition.
     NeoFOAM::Field<T> refValue_;           ///< The view storing the Dirichlet boundary values.
     NeoFOAM::Field<scalar> valueFraction_; ///< The view storing the fraction of the boundary value.
