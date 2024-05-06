@@ -33,9 +33,11 @@ public:
         : size_(size), exec_(exec), data_(nullptr)
     {
         void* ptr = nullptr;
-        std::visit([this, &ptr, size](const auto& exec)
-                   { ptr = exec.alloc(size * sizeof(T)); },
-                   exec_);
+        std::visit(
+            [this, &ptr, size](const auto& exec)
+            { ptr = exec.alloc(size * sizeof(T)); },
+            exec_
+        );
         data_ = static_cast<T*>(ptr);
     };
 
@@ -44,9 +46,7 @@ public:
      */
     ~Field()
     {
-        std::visit([this](const auto& exec)
-                   { exec.free(data_); },
-                   exec_);
+        std::visit([this](const auto& exec) { exec.free(data_); }, exec_);
         data_ = nullptr;
     };
 
@@ -74,7 +74,8 @@ public:
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
-     * @param result The field into which the data must be copied. Must be sized.
+     * @param result The field into which the data must be copied. Must be
+     * sized.
      *
      * @warning exits if the size of the result field is not the same as the
      * source field.
@@ -92,11 +93,11 @@ public:
                 exit(1);
             }
 
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                gpuView(data_, size_);
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
-                result.data(), size_
-            );
+            Kokkos::
+                View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
+                    gpuView(data_, size_);
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
+                resultView(result.data(), size_);
             Kokkos::deep_copy(resultView, gpuView);
         }
     }
@@ -206,8 +207,8 @@ public:
     }
 
     /**
-     * @brief Arithmetic multiply operator, multiplies every cell in the field by
-     * a scalar.
+     * @brief Arithmetic multiply operator, multiplies every cell in the field
+     * by a scalar.
      * @param rhs The scalar to multiply with the field.
      * @returns The result of the multiplication.
      */
@@ -230,9 +231,7 @@ public:
         void* ptr = nullptr;
         std::visit(
             [this, &ptr, size](const auto& exec)
-            {
-                ptr = exec.realloc(data_, size * sizeof(T));
-            },
+            { ptr = exec.realloc(data_, size * sizeof(T)); },
             exec_
         );
         data_ = static_cast<T*>(ptr);
@@ -274,7 +273,10 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
+    [[nodiscard]] const std::span<T> field() const
+    {
+        return std::span<T>(data_, size_);
+    }
 
 private:
 

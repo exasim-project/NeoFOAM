@@ -8,10 +8,7 @@ void NeoFOAM::Dictionary::insert(const std::string& key, const std::any& value)
     data_[key] = value;
 }
 
-void NeoFOAM::Dictionary::remove(const std::string& key)
-{
-    data_.erase(key);
-}
+void NeoFOAM::Dictionary::remove(const std::string& key) { data_.erase(key); }
 
 bool NeoFOAM::Dictionary::found(const std::string& key) const
 {
@@ -38,7 +35,8 @@ std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap()
     return data_;
 }
 
-const std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap() const
+const std::unordered_map<std::string, std::any>&
+NeoFOAM::Dictionary::getMap() const
 {
     return data_;
 }
