@@ -3,8 +3,8 @@ run-name: Check clang-tidy
 
 on: push
 jobs:
-  clang-tidy-check:
-    name: Clang-tidy Check
+  build-compilation-db:
+    name: Build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -21,20 +21,45 @@ jobs:
         sudo apt install \
            ninja-build \
            clang-16 \
-           clang-tidy-16 \
            libomp-16-dev
 
     - name: Create Compilation Database
       run: |
-        cmake -S . -B build -G Ninja \
-              -DCMAKE_CXX_COMPILER=clang++-16 \
-              -DKokkos_ENABLE_SERIAL=ON \
-              -DKokkos_ENABLE_OPENMP=ON \
-              -DNEOFOAM_DEVEL_TOOLS=OFF \
-              -DNEOFOAM_BUILD_TESTS=ON \
-              -DNEOFOAM_BUILD_BENCHMARKS=ON \
-              -DNEOFOAM_BUILD_APPS=ON \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake --preset ninja-cpuonly-all \
+          -DNEOFOAM_DEVEL_TOOLS=OFF \
+          -DCMAKE_CXX_COMPILER=clang++-16 \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake --build --preset ninja-cpuonly-all
+        ls build/ReleaseAll
+    - uses: actions/upload-artifact@v4
+      with:
+        name: build-artifact
+        path: build
+
+  clang-tidy-check:
+    name: Clang-tidy Check
+    runs-on: ubuntu-latest
+    needs: [build-compilation-db]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add clang repo
+      run: |
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main'
+        wget https://apt.llvm.org/llvm-snapshot.gpg.key
+        sudo apt-key add llvm-snapshot.gpg.key
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install \
+           clang-tidy-16
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: build-artifact
+        path: build
+
     - name: Run clang-tidy
       run: |
         # Create list of .cpp files belonging to this repository
@@ -46,7 +71,7 @@ jobs:
           | sed 's/^"\(.*\)"$/\1/' \
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
-        clang-tidy-16 --fix --extra-arg=-w -p build $(cat files)
+        clang-tidy-16 --fix --extra-arg=-w -p build/ReleaseAll $(cat files)
 
     - name: Check for fixes
       run: |
@@ -57,3 +82,20 @@ jobs:
         echo "Please use your local clang-tidy or apply the following patch:"
         git diff -p
         exit 1
+  iwyu-check:
+    name: Include what you use check
+    runs-on: ubuntu-latest
+    needs: [build-compilation-db]
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        name: build-artifact
+        path: build
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install \
+           iwyu \
+    - name: Run iwyu
+      run: iwyu_tool -p build/ReleaseAll
