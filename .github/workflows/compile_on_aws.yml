@@ -1,0 +1,104 @@
+name: Compile on AWS
+run-name: Compile on AWS
+on:
+  # enable to manually trigger the tests
+  workflow_dispatch:
+jobs:
+  start-runner:
+    name: Start self-hosted EC2 runner
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::308634587211:role/Github-OIDC-Role-29bocUD8VBZr
+          aws-region: us-east-1
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: HendriceH/ec2-github-runner@v1.10  # Starts 60GB Root + 30 GB Share volume
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-03af087024bfdbbee # Deep learning AMI
+          ec2-instance-type: g4dn.xlarge
+          iam-role-name: Role4Github
+          subnet-id: subnet-b5d2adbb
+          security-group-id: sg-559f8967
+          aws-resource-tags: > # optional, requires additional permissions
+            [
+              {"Key": "ucfd-project", "Value": "BMBF_2022_EXASIM"},
+              {"Key": "ucfd-client", "Value": "UCFD-RD"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
+            ]
+          pre-runner-script: |
+                 #!/bin/bash
+                 sudo yum update -y && \
+                 sudo yum install docker git libicu ninja-build libasan10 -y
+                 sudo amazon-linux-extras install epel -y
+                 sudo yum install Lmod -y
+                 sudo systemctl enable docker
+                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                 sudo mkfs -t xfs /dev/sda1
+                 sudo mkdir -p /share
+                 sudo mount /dev/sda1 /share
+                 aws s3 cp s3://ucfd-share/pcluster/3.x/alinux2/x86_64/postinstall_github .
+                 chmod +x postinstall_github
+                 sudo ./postinstall_github > ~/install.log
+                 ln -s /share/software/cmake/3.22.6/share/cmake-3.22 /usr/share/cmake-3.22
+                 mkdir -p /share/ec2-user
+                 export USER=ec2-user
+  do-the-job:
+    name: Do the job on the runner
+    needs: start-runner # required to start the main job when the runner is ready
+    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    steps:
+      - name: Checkout NeoFOAM
+        uses: actions/checkout@v4
+      - name: Build NeoFOAM
+        if: always()
+        shell: bash -o pipefail -i {0}
+        run: |
+          export HOME=/share/ec2-user
+          module load gnu/10
+          module load libfabric-aws
+          module load cmake
+          cmake --preset ninja-cpuonly-all -DNEOFOAM_DEVEL_TOOLS=OFF
+          cmake --build  --preset ninja-cpuonly-all
+      - name: Build NeoFOAM
+        if: always()
+        shell: bash -o pipefail -i {0}
+        run: |
+          export HOME=/share/ec2-user
+          module load gnu/10
+          module load libfabric-aws
+          module load cmake
+          ctest --test-dir build/ReleaseAll/test
+  stop-runner:
+    name: Stop self-hosted EC2 runner
+    needs:
+      - start-runner # required to get output from the start-runner job
+      - do-the-job # required to wait when the main job is done
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::308634587211:role/Github-OIDC-Role-29bocUD8VBZr
+          aws-region: us-east-1
+      - name: Stop EC2 runner
+        uses: HendriceH/ec2-github-runner@v1.10
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
