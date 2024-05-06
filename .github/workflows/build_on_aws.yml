@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   start-runner:
+    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
     name: Start self-hosted EC2 runner
     runs-on: ubuntu-latest
     permissions:
@@ -70,7 +71,7 @@ jobs:
           module load gnu/10
           module load libfabric-aws
           module load cmake
-          cmake --preset ninja-cpuonly-all -DNEOFOAM_DEVEL_TOOLS=OFF
+          cmake --preset ninja-kokkos-cuda-all -DNEOFOAM_DEVEL_TOOLS=OFF
           cmake --build  --preset ninja-cpuonly-all
       - name: Build NeoFOAM
         if: always()
