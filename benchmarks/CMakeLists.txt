@@ -11,9 +11,9 @@ add_custom_command(
   COMMENT "Execute benchmarks")
 
 find_package(
-  Python
+  Python3
   COMPONENTS Interpreter Development
-  Required)
+  REQUIRED)
 
 add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/benchmarks/fields.png
@@ -21,7 +21,11 @@ add_custom_command(
           /benchmarks/fields/${CMAKE_BUILD_TYPE}/fields.xml
   COMMENT "Plot benchmark results")
 
-add_custom_target(execute_benchmarks
-                  DEPENDS ${PROJECT_BINARY_DIR}/benchmarks/fields.xml)
-add_custom_target(execute_plot_benchmark
-                  DEPENDS ${PROJECT_BINARY_DIR}/benchmarks/fields.png)
+add_custom_target(
+  execute_benchmarks
+  DEPENDS ${PROJECT_BINARY_DIR}/benchmarks/fields.xml
+  COMMENT "execute benchmarks")
+add_custom_target(
+  execute_plot_benchmark
+  DEPENDS ${PROJECT_BINARY_DIR}/benchmarks/fields.png
+  COMMENT "plot benchmark results")

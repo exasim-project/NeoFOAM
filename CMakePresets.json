@@ -1,142 +1,182 @@
 {
-  "version": 3,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 22,
-    "patch": 0
-  },
-  "configurePresets": [
-    {
-      "name": "devel",
-      "hidden": true,
-      "cacheVariables": {
-        "NEOFOAM_DEVEL_TOOLS": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 22,
+        "patch": 0
     },
-    {
-      "name": "default",
-      "hidden": true,
-      "binaryDir": "${sourceDir}/build/Release",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "Kokkos_ENABLE_SERIAL": {
-          "type": "BOOL",
-          "value": "ON"
+    "configurePresets": [
+        {
+            "name": "devel",
+            "hidden": true,
+            "cacheVariables": {
+                "NEOFOAM_DEVEL_TOOLS": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
         },
-        "Kokkos_ENABLE_OPENMP": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
-    },
-    {
-      "name": "default-ninja",
-      "hidden": true,
-      "inherits": "default",
-      "generator": "Ninja"
-    },
-    {
-      "name": "default-ninja-all",
-      "hidden": true,
-      "inherits": "default-ninja",
-      "cacheVariables": {
-        "NEOFOAM_BUILD_TESTS": {
-          "type": "BOOL",
-          "value": "ON"
+        {
+            "name": "default",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "Kokkos_ENABLE_SERIAL": {
+                    "type": "BOOL",
+                    "value": "ON"
+                },
+                "Kokkos_ENABLE_OPENMP": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
         },
-        "NEOFOAM_BUILD_BENCHMARKS": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
-    },
-    {
-      "name": "ninja-cpuonly-test",
-      "inherits": ["default-ninja"],
-      "displayName": "Build for CPUs only with unit tests enabled",
-      "description": "Build for CPUs only with unit tests enabled",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/ReleaseWithTests",
-      "cacheVariables": {
-        "NEOFOAM_BUILD_TESTS": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
-    },
-    {
-      "name": "ninja-cpuonly-all",
-      "inherits": ["default-ninja-all", "devel"],
-      "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
-      "description": "Build for CPUs only with unit tests building tests and benchmarks",
-      "binaryDir": "${sourceDir}/build/ReleaseAll"
-    },
-    {
-      "name": "ninja-kokkos-cuda",
-      "inherits": ["default-ninja", "devel"],
-      "displayName": "Build for CPUs and CUDA GPUs",
-      "description": "Build for CPUs and CUDA GPUs",
-      "binaryDir": "${sourceDir}/build/ReleaseCUDA",
-      "cacheVariables": {
-        "Kokkos_ENABLE_CUDA": {
-          "type": "BOOL",
-          "value": "ON"
+        {
+            "name": "default-ninja",
+            "hidden": true,
+            "inherits": "default",
+            "generator": "Ninja"
         },
-        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
-    },
-    {
-      "name": "ninja-kokkos-cuda-all",
-      "inherits": ["default-ninja-all", "devel"],
-      "displayName": "Ninja Multi-Config",
-      "description": "Default build using Ninja Multi-Config generator",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/ReleaseCudaAll",
-      "cacheVariables": {
-        "Kokkos_ENABLE_CUDA": {
-          "type": "BOOL",
-          "value": "ON"
+        {
+            "name": "default-ninja-all",
+            "hidden": true,
+            "inherits": "default-ninja",
+            "cacheVariables": {
+                "NEOFOAM_BUILD_TESTS": {
+                    "type": "BOOL",
+                    "value": "ON"
+                },
+                "NEOFOAM_BUILD_BENCHMARKS": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
         },
-        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
-          "type": "BOOL",
-          "value": "ON"
+        {
+            "name": "ninja-cpuonly-test",
+            "inherits": [
+                "default-ninja"
+            ],
+            "displayName": "Build for CPUs only with unit tests enabled",
+            "description": "Build for CPUs only with unit tests enabled",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/ReleaseWithTests",
+            "cacheVariables": {
+                "NEOFOAM_BUILD_TESTS": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
+        },
+        {
+            "name": "ninja-cpuonly-all",
+            "inherits": [
+                "default-ninja-all",
+                "devel"
+            ],
+            "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
+            "description": "Build for CPUs only with unit tests building tests and benchmarks",
+            "binaryDir": "${sourceDir}/build/ReleaseAll"
+        },
+        {
+            "name": "ninja-kokkos-cuda",
+            "inherits": [
+                "default-ninja",
+                "devel"
+            ],
+            "displayName": "Build for CPUs and CUDA GPUs",
+            "description": "Build for CPUs and CUDA GPUs",
+            "binaryDir": "${sourceDir}/build/ReleaseCUDA",
+            "cacheVariables": {
+                "Kokkos_ENABLE_CUDA": {
+                    "type": "BOOL",
+                    "value": "ON"
+                },
+                "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
+        },
+        {
+            "name": "ninja-kokkos-cuda-all",
+            "inherits": [
+                "default-ninja-all",
+                "devel"
+            ],
+            "displayName": "Build for CPUs and CUDA GPUs w tests and benchmarks",
+            "description": "Build for CPUs and CUDA GPUs w tests and benchmarks",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/ReleaseCudaAll",
+            "cacheVariables": {
+                "Kokkos_ENABLE_CUDA": {
+                    "type": "BOOL",
+                    "value": "ON"
+                },
+                "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+                    "type": "BOOL",
+                    "value": "ON"
+                }
+            }
         }
-      }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "ninja-cpuonly-test",
-      "displayName": "Build for CPUs only with unit tests enabled",
-      "configurePreset": "ninja-cpuonly-test",
-      "configuration": "ninja-cpuonly-test"
-    },
-    {
-      "name": "ninja-cpuonly-all",
-      "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
-      "description": "Build for CPUs only with unit tests building tests and benchmarks",
-      "configurePreset": "ninja-cpuonly-all",
-      "configuration": "ninja-cpuonly-all"
-    },
-    {
-      "name": "ninja-kokkos-cuda",
-      "displayName": "Build for CPUs and CUDA GPUs",
-      "description": "Build for CPUs and CUDA GPUs",
-      "configurePreset": "ninja-kokkos-cuda",
-      "configuration": "ninja-kokkos-cuda"
-    },
-    {
-      "name": "ninja-kokkos-cuda-all",
-      "displayName": "Build for CPUs and CUDA GPUs",
-      "description": "Build for CPUs and CUDA GPUs",
-      "configurePreset": "ninja-kokkos-cuda-all",
-      "configuration": "ninja-kokkos-cuda-all"
-    }
-  ]
+    ],
+    "buildPresets": [
+        {
+            "name": "ninja-cpuonly-test",
+            "displayName": "Build for CPUs only with unit tests enabled",
+            "configurePreset": "ninja-cpuonly-test",
+            "configuration": "ninja-cpuonly-test"
+        },
+        {
+            "name": "ninja-cpuonly-all",
+            "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
+            "description": "Build for CPUs only with unit tests building tests and benchmarks",
+            "configurePreset": "ninja-cpuonly-all",
+            "configuration": "ninja-cpuonly-all"
+        },
+        {
+            "name": "ninja-kokkos-cuda",
+            "displayName": "Build for CPUs and CUDA GPUs",
+            "description": "Build for CPUs and CUDA GPUs",
+            "configurePreset": "ninja-kokkos-cuda",
+            "configuration": "ninja-kokkos-cuda"
+        },
+        {
+            "name": "ninja-kokkos-cuda-all",
+            "displayName": "Build for CPUs and CUDA GPUs w tests and benchmarks",
+            "description": "Build for CPUs and CUDA GPUs with unit tests building tests and benchmarks",
+            "configurePreset": "ninja-kokkos-cuda-all",
+            "configuration": "ninja-kokkos-cuda-all"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "ninja-cpuonly-test",
+            "displayName": "Build for CPUs only with unit tests enabled",
+            "configurePreset": "ninja-cpuonly-test",
+            "configuration": "ninja-cpuonly-test"
+        },
+        {
+            "name": "ninja-cpuonly-all",
+            "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
+            "description": "Build for CPUs only with unit tests building tests and benchmarks",
+            "configurePreset": "ninja-cpuonly-all",
+            "configuration": "ninja-cpuonly-all"
+        },
+        {
+            "name": "ninja-kokkos-cuda",
+            "displayName": "Build for CPUs and CUDA GPUs",
+            "description": "Build for CPUs and CUDA GPUs",
+            "configurePreset": "ninja-kokkos-cuda",
+            "configuration": "ninja-kokkos-cuda"
+        },
+        {
+            "name": "ninja-kokkos-cuda-all",
+            "displayName": "Build for CPUs and CUDA GPUs w tests and benchmarks",
+            "description": "Build for CPUs and CUDA GPUs with unit tests building tests and benchmarks",
+            "configurePreset": "ninja-kokkos-cuda-all",
+            "configuration": "ninja-kokkos-cuda-all"
+        }
+    ]
 }
