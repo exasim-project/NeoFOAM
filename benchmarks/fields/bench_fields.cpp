@@ -39,13 +39,23 @@ int main(int argc, char* argv[])
 TEST_CASE("Vector addition [benchmark]")
 {
 
-    auto size = GENERATE(8, 64, 512, 4096, 32768, 262144, 1048576, 1048576 * 4, 1048576 * 16, 1048576 * 64);
+    auto size = GENERATE(
+        8,
+        64,
+        512,
+        4096,
+        32768,
+        262144,
+        1048576,
+        1048576 * 4,
+        1048576 * 16,
+        1048576 * 64
+    );
 
     CAPTURE(size); // Capture the value of size
 
     // capture the value of size as section name
-    DYNAMIC_SECTION("" << size) {
-        {NeoFOAM::CPUExecutor cpuExec {};
+    DYNAMIC_SECTION("" << size) {{NeoFOAM::CPUExecutor cpuExec {};
     NeoFOAM::Field<NeoFOAM::scalar> cpuA(cpuExec, size);
     NeoFOAM::fill(cpuA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> cpuB(cpuExec, size);
