@@ -71,10 +71,10 @@ jobs:
           module load gnu/10
           module load libfabric-aws
           module load cmake
+          cmake --version
           cmake --preset ninja-kokkos-cuda-all -DNEOFOAM_DEVEL_TOOLS=OFF
           cmake --build  --preset ninja-cpuonly-all
       - name: Build NeoFOAM
-        if: always()
         shell: bash -o pipefail -i {0}
         run: |
           export HOME=/share/ec2-user
