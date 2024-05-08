@@ -3,4 +3,4 @@
 
 #include "NeoFOAM/core/Error.hpp"
 
-NeoFOAM::error NeoFOAM::FatalError("--> FOAM FATAL ERROR: ");
+// NeoFOAM::Error NeoFOAM::error("--> FOAM FATAL ERROR: ");

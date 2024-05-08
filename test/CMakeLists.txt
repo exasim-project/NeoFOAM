@@ -14,8 +14,6 @@ target_link_libraries(test_dictionary PRIVATE Catch2::Catch2 NeoFOAM
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 
-include(CTest)
-enable_testing()
 add_test(NAME field_test COMMAND test_field)
 add_test(NAME executor_test COMMAND test_executor)
 add_test(NAME dictionary_test COMMAND test_dictionary)
