@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 Welcome to NeoFOAM!
-===================================
+===================
 
 The NeoFOAM project has set itself the goal of bringing modern software development methods to the core libraries of OpenFOAM.
 By reimplementing the `libfiniteVolume` and `libOpenFOAM` we want to deliver a code that:
