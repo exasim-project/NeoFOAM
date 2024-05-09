@@ -68,7 +68,7 @@ Following other operations such as summation, min, max etc are listed below
 FieldGraph
 ^^^^^^^^^^
 
-The Field can now be used to compose more complex types to represent more complex data structures. To solve PDE's, information about the neibours is required. This is ususally with the following approach:
+The Field can now be used to compose more complex types to represent more complex data structures. To solve PDE's, information about the neibours is required. This is usually with the following approach:
 
 
 .. code-block:: cpp
@@ -90,7 +90,7 @@ The Field can now be used to compose more complex types to represent more comple
      }
 
 
-Now we can loop over each cell and access the neibours with a nested for loop. However, this approach is not suited for a GPUs. Instead of the a vector of vector, the information layed out with two fields (described with std::vector to simplify the example):
+Now we can loop over each cell and access the neibours with a nested for loop. However, this approach is not suited for a GPUs. Instead of the a vector of vector, the information laid out with two fields (described with std::vector to simplify the example):
 
 .. code-block:: cpp
 
