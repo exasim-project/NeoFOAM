@@ -11,20 +11,19 @@
 namespace NeoFOAM
 {
 
+/**
+ * @class BoundaryMesh
+ * @brief Represents a boundary mesh in an unstructured mesh.
+ *
+ * The BoundaryMesh class stores information about the boundary faces and their properties in an unstructured mesh.
+ * It provides access to various fields such as face cells, face centres, face normals, face areas normals, magnitudes of face areas normals,
+ * delta vectors, weights, delta coefficients, and offsets.
+ *
+ * The class also provides getter methods to access the individual fields and their components.
+ *
+ * @tparam Executor The type of the executor used for computations.
+ */
 class BoundaryMesh
-    /**
-     * @class BoundaryMesh
-     * @brief Represents a boundary mesh in an unstructured mesh.
-     *
-     * The BoundaryMesh class stores information about the boundary faces and their properties in an unstructured mesh.
-     * It provides access to various fields such as face cells, face centres, face normals, face areas normals, magnitudes of face areas normals,
-     * delta vectors, weights, delta coefficients, and offsets.
-     *
-     * The class also provides getter methods to access the individual fields and their components.
-     *
-     * @tparam Executor The type of the executor used for computations.
-     */
-    class BoundaryMesh
 {
 public:
 

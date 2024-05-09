@@ -117,7 +117,7 @@ StencilDataBase& UnstructuredMesh::stencilDB() const
     return stencilDataBase_;
 }
 
-const executor& UnstructuredMesh::exec() const
+const Executor& UnstructuredMesh::exec() const
 {
     return exec_;
 }

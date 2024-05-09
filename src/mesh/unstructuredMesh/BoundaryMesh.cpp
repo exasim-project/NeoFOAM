@@ -7,7 +7,7 @@ namespace NeoFOAM
 {
 
 BoundaryMesh::BoundaryMesh(
-    const executor& exec,
+    const Executor& exec,
     labelField faceCells,
     vectorField Cf,
     vectorField Cn,

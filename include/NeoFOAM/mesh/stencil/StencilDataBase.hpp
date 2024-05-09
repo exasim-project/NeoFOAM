@@ -13,16 +13,9 @@ namespace NeoFOAM
  * @class StencilDataBase
  * @brief A class that represents a stencil database.
  *
- * The StencilDataBase class provides a container for storing stencil data. It allows to register and retrieve stencil data
+ * The StencilDataBase class provides a container for storing stencil data. It allows insertion, retrieval, and checking of stencil data using string keys.
  */
 class StencilDataBase
-    /**
-     * @class StencilDataBase
-     * @brief A class that represents a stencil database.
-     *
-     * The StencilDataBase class provides a container for storing stencil data. It allows insertion, retrieval, and checking of stencil data using string keys.
-     */
-    class StencilDataBase
 {
 public:
 
