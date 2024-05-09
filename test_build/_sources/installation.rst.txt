@@ -54,7 +54,7 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the Cmake com
 By opening the the project with cmake-gui you can easily set these flags and configure the build.
 
 Building with Cmake Presets
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Additionally, we provide several Cmake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.
 
@@ -72,7 +72,7 @@ To build NeoFOAM with Kokkos and CUDA support, you can use the following command
 It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
 
 Prerequisites
-=============
+^^^^^^^^^^^^^
 
 The following tools are used in the development of this project:
 
@@ -106,7 +106,7 @@ required tools for compilation (ubuntu latest 24.04):
 
 
 Workflow with vscode
-====================
+^^^^^^^^^^^^^^^^^^^^
 
 install the following extensions:
 
