@@ -24,6 +24,7 @@ Table of Contents
    installation
    contributing
    basics/index
+   fvcc/index
    api/index
 
 Compatibility with OpenFOAM
