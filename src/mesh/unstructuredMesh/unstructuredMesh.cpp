@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
+#include "NeoFOAM/mesh/unstructuredMesh/UnstructuredMesh.hpp"
 
 namespace NeoFOAM
 {
 
-unstructuredMesh::unstructuredMesh(
+UnstructuredMesh::UnstructuredMesh(
     vectorField points,
     scalarField cellVolumes,
     vectorField cellCentres,
@@ -41,83 +41,83 @@ unstructuredMesh::unstructuredMesh(
 
       };
 
-const vectorField& unstructuredMesh::points() const
+const vectorField& UnstructuredMesh::points() const
 {
     return points_;
 }
 
 
-const scalarField& unstructuredMesh::cellVolumes() const
+const scalarField& UnstructuredMesh::cellVolumes() const
 {
     return cellVolumes_;
 }
 
-const vectorField& unstructuredMesh::cellCentres() const
+const vectorField& UnstructuredMesh::cellCentres() const
 {
     return cellCentres_;
 }
 
-const vectorField& unstructuredMesh::faceCentres() const
+const vectorField& UnstructuredMesh::faceCentres() const
 {
     return faceCentres_;
 }
 
-const vectorField& unstructuredMesh::faceAreas() const
+const vectorField& UnstructuredMesh::faceAreas() const
 {
     return faceAreas_;
 }
 
-const scalarField& unstructuredMesh::magFaceAreas() const
+const scalarField& UnstructuredMesh::magFaceAreas() const
 {
     return magFaceAreas_;
 }
 
-const labelField& unstructuredMesh::faceOwner() const
+const labelField& UnstructuredMesh::faceOwner() const
 {
     return faceOwner_;
 }
 
-const labelField& unstructuredMesh::faceNeighbour() const
+const labelField& UnstructuredMesh::faceNeighbour() const
 {
     return faceNeighbour_;
 }
 
-int32_t unstructuredMesh::nCells() const
+int32_t UnstructuredMesh::nCells() const
 {
     return nCells_;
 }
 
-int32_t unstructuredMesh::nInternalFaces() const
+int32_t UnstructuredMesh::nInternalFaces() const
 {
     return nInternalFaces_;
 }
 
-int32_t unstructuredMesh::nBoundaryFaces() const
+int32_t UnstructuredMesh::nBoundaryFaces() const
 {
     return nBoundaryFaces_;
 }
 
-int32_t unstructuredMesh::nBoundaries() const
+int32_t UnstructuredMesh::nBoundaries() const
 {
     return nBoundaries_;
 }
 
-int32_t unstructuredMesh::nFaces() const
+int32_t UnstructuredMesh::nFaces() const
 {
     return nFaces_;
 }
 
-const BoundaryMesh& unstructuredMesh::boundaryMesh() const
+const BoundaryMesh& UnstructuredMesh::boundaryMesh() const
 {
     return boundaryMesh_;
 }
 
-StencilDataBase& unstructuredMesh::stencilDB() const
+StencilDataBase& UnstructuredMesh::stencilDB() const
 {
     return stencilDataBase_;
 }
 
-const executor& unstructuredMesh::exec() const
+const executor& UnstructuredMesh::exec() const
 {
     return exec_;
 }
