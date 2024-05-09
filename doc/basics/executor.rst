@@ -28,7 +28,7 @@ One of the design goals is the ability to easily switch between different execut
         NeoFOAM::Field<NeoFOAM::scalar> CPUField(cpuExec, 10);
 
 
-The `Executor` is a std::variant
+The `Executor` is a `std::variant <https://en.cppreference.com/w/cpp/utility/variant>`_ 
 
 .. code-block:: cpp
 
