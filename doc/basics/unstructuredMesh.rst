@@ -5,12 +5,10 @@ unstructuredMesh
 
 
 .. doxygenclass:: NeoFOAM::unstructuredMesh
-   :members:
-
+   :members: points_, cellVolumes_, cellCentres_, cel
 
 .. doxygenclass:: NeoFOAM::BoundaryMesh
    :members:
-
 
 .. doxygenclass:: NeoFOAM::StencilDataBase
    :members:

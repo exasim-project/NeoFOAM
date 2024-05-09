@@ -1,7 +1,10 @@
-.. _api_fields:
+.. _basics_containers:
+
+containers
+==========
 
 Fields
-======
+^^^^^^
 
 The Field classes are the central elements for implementing a platform portable CFD framework. Fields are able to perform basic algebraic operations such as addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar. The Field classes store the data in a platform-independent way and the executor, which is used to dispatch the operations to the correct device. The Field classes are implemented in the ``Field.hpp`` header file and mainly store a pointer to the data, the size of the data, and the executor.
 
@@ -56,11 +59,73 @@ The fill function uses the std::visit function to call the correct function base
 
 Following other operations such as summation, min, max etc are listed below
 
+.. note::
+
+     TODO
+     organize the FieldOperation so the can be easily shown here
+
+
+FieldGraph
+^^^^^^^^^^
+
+The Field can now be used to compose more complex types to represent more complex data structures. To solve PDE's, information about the neibours is required. This is ususally with the following approach:
+
+
 .. code-block:: cpp
 
-    // organize the FieldOperation so the can be easily shown here
+     int nCells = 3;
+     std::vector<std::vector<int> > cellToCellStencil(nCells);
 
-The Field can now be used to compose more complex types such as the BoundaryFields and domainFields
+     cellToCellStencil.push_back({1, 2, 3});
+     cellToCellStencil.push_back({4, 5, 6});
+     cellToCellStencil.push_back({7, 8, 9});
+
+     for (for auto& cell : cellToCellStencil)
+     {
+          for (auto& neibour : cell)
+          {
+               std::cout << neibour << " ";
+          }
+          std::cout << std::endl;
+     }
+
+
+Now we can loop over each cell and access the neibours with a nested for loop. However, this approach is not suited for a GPUs. Instead of the a vector of vector, the information layed out with two fields (described with std::vector to simplify the example):
+
+.. code-block:: cpp
+
+     int nCells = 3;
+     std::vector<int> value = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+     std::vector<int> offset_ = {0, 3, 6, 9};
+
+     for (int i = 0; i < nCells ; i++)
+     {
+          int start = offset_[i];
+          int end = offset_[i+1];
+          for (int j = start; j < end; j++)
+          {
+               int neibour = value[j];
+               std::cout << neibour << " ";
+          }
+          std::cout << std::endl;
+     }
+
+The same approach is used in the ``FieldGraph`` class (we had a better name for this but i forgot). That implements the above approach using the Field class.
+
+.. note::
+
+     TODO
+     implement the FieldGraph class
+
+BoundaryFields
+^^^^^^^^^^^^^^
+
+The BoundaryFields class is used to store the boundary conditions of a field. The BoundaryFields class is implemented in the ``BoundaryFields.hpp`` header file and store the boundary conditions in a general container that can be used to present different boundary conditions: Mixed, Dirichlet, Neumann. The class uses the same of set approach to loop over the boundary patches
+
+.. note::
+
+     TODO
+     implement the boundaryFields see other commit
 
 .. doxygenclass:: NeoFOAM::BoundaryFields
     :members:
@@ -72,3 +137,17 @@ The Field can now be used to compose more complex types such as the BoundaryFiel
         offset_
         nBoundaries_
         nBoundaryFaces_
+
+
+DomainField
+^^^^^^^^^^^
+
+The domainField stores the internalField and the boundaryFields in a single container and is used to represent all the relevant values of a fields for a given mesh.
+
+.. note::
+
+     TODO
+     implement the DomainField see other commit
+
+.. doxygenclass:: NeoFOAM::DomainField
+    :members:
