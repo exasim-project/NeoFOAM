@@ -6,7 +6,7 @@ Executor
 Overview
 ^^^^^^^^
 
-NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for parallelism. The `Executor` class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:
+NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The `Executor` class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:
 
 - `CPUExecutor`: run on the CPU with MPI
 - `OMPExecutor`: run on the CPU with OpenMP and MPI
