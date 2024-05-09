@@ -12,11 +12,39 @@ namespace NeoFOAM
 {
 
 class BoundaryMesh
+    /**
+     * @class BoundaryMesh
+     * @brief Represents a boundary mesh in an unstructured mesh.
+     *
+     * The BoundaryMesh class stores information about the boundary faces and their properties in an unstructured mesh.
+     * It provides access to various fields such as face cells, face centres, face normals, face areas normals, magnitudes of face areas normals,
+     * delta vectors, weights, delta coefficients, and offsets.
+     *
+     * The class also provides getter methods to access the individual fields and their components.
+     *
+     * @tparam Executor The type of the executor used for computations.
+     */
+    class BoundaryMesh
 {
 public:
 
+    /**
+     * @brief Constructor for the BoundaryMesh class.
+     *
+     * @param exec The executor used for computations.
+     * @param faceCells A field with the neighbouring cell of each boundary face.
+     * @param Cf A field of face centres.
+     * @param Cn A field of face normals.
+     * @param Sf A field of face areas normals.
+     * @param magSf A field of magnitudes of face areas normals.
+     * @param nf A field of face normals.
+     * @param delta A field of delta vectors.
+     * @param weights A field of weights used in cell to face interpolation.
+     * @param deltaCoeffs A field of cell to face distances.
+     * @param offset The offset of the boundary faces.
+     */
     BoundaryMesh(
-        const executor& exec,
+        const Executor& exec,
         labelField faceCells,
         vectorField Cf,
         vectorField Cn,
@@ -30,60 +58,217 @@ public:
     );
 
 
+    /**
+     * @brief Get the field of face cells.
+     *
+     * @return A constant reference to the field of face cells.
+     */
     const labelField& faceCells() const;
 
+    /**
+     * @brief Get a span of face cells for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of face cells for the specified boundary face.
+     */
     std::span<const label> faceCells(const int i) const;
 
+    /**
+     * @brief Get the field of face centres.
+     *
+     * @return A constant reference to the field of face centres.
+     */
     const vectorField& Cf() const;
 
+    /**
+     * @brief Get a span of face centres for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of face centres for the specified boundary face.
+     */
     std::span<const Vector> Cf(const int i) const;
 
+    /**
+     * @brief Get the field of face normals.
+     *
+     * @return A constant reference to the field of face normals.
+     */
     const vectorField& Cn() const;
 
+    /**
+     * @brief Get a span of face normals for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of face normals for the specified boundary face.
+     */
     std::span<const Vector> Cn(const int i) const;
 
+    /**
+     * @brief Get the field of face areas normals.
+     *
+     * @return A constant reference to the field of face areas normals.
+     */
     const vectorField& Sf() const;
 
+    /**
+     * @brief Get a span of face areas normals for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of face areas normals for the specified boundary face.
+     */
     std::span<const Vector> Sf(const int i) const;
 
+    /**
+     * @brief Get the field of magnitudes of face areas normals.
+     *
+     * @return A constant reference to the field of magnitudes of face areas normals.
+     */
     const scalarField& magSf() const;
 
+    /**
+     * @brief Get a span of magnitudes of face areas normals for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of magnitudes of face areas normals for the specified boundary face.
+     */
     std::span<const scalar> magSf(const int i) const;
 
+    /**
+     * @brief Get the field of face normals.
+     *
+     * @return A constant reference to the field of face normals.
+     */
     const vectorField& nf() const;
 
+    /**
+     * @brief Get a span of face normals for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of face normals for the specified boundary face.
+     */
     std::span<const Vector> nf(const int i) const;
 
+    /**
+     * @brief Get the field of delta vectors.
+     *
+     * @return A constant reference to the field of delta vectors.
+     */
     const vectorField& delta() const;
 
+    /**
+     * @brief Get a span of delta vectors for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of delta vectors for the specified boundary face.
+     */
     std::span<const Vector> delta(const int i) const;
 
+    /**
+     * @brief Get the field of weights.
+     *
+     * @return A constant reference to the boundary field of weights.
+     */
     const scalarField& weights() const;
 
+    /**
+     * @brief Get a span of weights for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of weights for the specified boundary face.
+     */
     std::span<const scalar> weights(const int i) const;
 
+    /**
+     * @brief Get the field of delta coefficients.
+     *
+     * @return A constant reference to the field of delta coefficients.
+     */
     const scalarField& deltaCoeffs() const;
 
+    /**
+     * @brief Get a span of delta coefficients for a specific boundary face.
+     *
+     * @param i The index of the boundary face.
+     * @return A span of delta coefficients for the specified boundary face.
+     */
     std::span<const scalar> deltaCoeffs(const int i) const;
 
+    /**
+     * @brief Get the offset of the boundary faces.
+     *
+     * @return A constant reference to the offset of the boundary faces.
+     */
     const std::vector<localIdx>& offset() const;
 
 
 private:
 
-    const executor exec_;
+    /**
+     * @brief Executor used for computations.
+     */
+    const Executor exec_;
 
+    /**
+     * @brief Field of face cells.
+     *
+     * A field with the neighbouring cell of each boundary face.
+     */
     labelField faceCells_;
+
+    /**
+     * @brief Field of face centres.
+     */
     vectorField Cf_;
+
+    /**
+     * @brief Field of face normals.
+     */
     vectorField Cn_;
+
+    /**
+     * @brief Field of face areas normals.
+     */
     vectorField Sf_;
+
+    /**
+     * @brief Field of magnitudes of face areas normals.
+     */
     scalarField magSf_;
+
+    /**
+     * @brief Field of face normals.
+     *
+     * The magnitude of the face normal is equal to 1.
+     */
     vectorField nf_;
+
+    /**
+     * @brief Field of delta vectors.
+     *
+     * The delta vector is defined as the vector from the face centre to the cell centre.
+     */
     vectorField delta_;
+
+    /**
+     * @brief Field of weights.
+     *
+     * The weights are used in cell to face interpolation.
+     */
     scalarField weights_;
+
+    /**
+     * @brief Field of delta coefficients.
+     *
+     * Field of cell to face distances.
+     */
     scalarField deltaCoeffs_;
 
-    std::vector<localIdx> offset_; ///< The view storing the offsets of each boundary.
+    /**
+     * @brief Offset of the boundary faces.
+     *
+     * The offset is used to access the boundary faces of each boundary.
+     */
+    std::vector<localIdx> offset_;
 };
 
 } // namespace NeoFOAM
