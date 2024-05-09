@@ -6,7 +6,7 @@ Executor
 Overview
 ^^^^^^^^
 
-NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for parallelism. The `Executor` class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:
+NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The `Executor` class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:
 
 - `CPUExecutor`: run on the CPU with MPI
 - `OMPExecutor`: run on the CPU with OpenMP and MPI
@@ -15,7 +15,8 @@ NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space 
 Design
 ^^^^^^
 
-One of the design goals is the ability to quickly switch between the executor models at runtime.
+One of the design goals is the ability to easily switch between different execution spaces at run time, i.e. enabling the ability to switch between CPU and GPU execution without having to recompile NeoFOAM. This is achieved by passing the executor as an argument to the container types like Field as shown below. 
+
 
 
 .. code-block:: cpp
@@ -27,7 +28,7 @@ One of the design goals is the ability to quickly switch between the executor mo
         NeoFOAM::Field<NeoFOAM::scalar> CPUField(cpuExec, 10);
 
 
-The `Executor` is a std::variant
+The `Executor` is a `std::variant <https://en.cppreference.com/w/cpp/utility/variant>`_ 
 
 .. code-block:: cpp
 

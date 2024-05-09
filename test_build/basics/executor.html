@@ -280,7 +280,7 @@
 <span id="basic-executor"></span><h1>Executor<a class="headerlink" href="#executor" title="Link to this heading">¶</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for parallelism. The <cite>Executor</cite> class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:</p>
+<p>NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The <cite>Executor</cite> class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:</p>
 <ul class="simple">
 <li><p><cite>CPUExecutor</cite>: run on the CPU with MPI</p></li>
 <li><p><cite>OMPExecutor</cite>: run on the CPU with OpenMP and MPI</p></li>
@@ -289,7 +289,7 @@
 </section>
 <section id="design">
 <h2>Design<a class="headerlink" href="#design" title="Link to this heading">¶</a></h2>
-<p>One of the design goals is the ability to quickly switch between the executor models at runtime.</p>
+<p>One of the design goals is the ability to easily switch between different execution spaces at run time, i.e. enabling the ability to switch between CPU and GPU execution without having to recompile NeoFOAM. This is achieved by passing the executor as an argument to the container types like Field as shown below.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">GPUExecutor</span><span class="w"> </span><span class="n">gpuExec</span><span class="w"> </span><span class="p">{};</span>
 <span class="n">NeoFOAM</span><span class="o">::</span><span class="n">CPUExecutor</span><span class="w"> </span><span class="n">cpuExec</span><span class="w"> </span><span class="p">{};</span>
 
@@ -297,7 +297,7 @@
 <span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">CPUField</span><span class="p">(</span><span class="n">cpuExec</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The <cite>Executor</cite> is a std::variant</p>
+<p>The <cite>Executor</cite> is a <a class="reference external" href="https://en.cppreference.com/w/cpp/utility/variant">std::variant</a></p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">variant</span><span class="o">&lt;</span><span class="n">OMPExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">GPUExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">CPUExecutor</span><span class="o">&gt;</span><span class="p">;</span>
 </pre></div>
 </div>
