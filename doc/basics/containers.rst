@@ -68,7 +68,7 @@ Following other operations such as summation, min, max etc are listed below
 FieldGraph
 ^^^^^^^^^^
 
-The Field can now be used to compose more complex types to represent more complex data structures. To solve PDE's, information about the neibours is required. This is usually with the following approach:
+The Field can now be used to compose  more complex data structures. To solve PDE's, information about the neighbors is required. This is usually done with the following approach:
 
 
 .. code-block:: cpp
