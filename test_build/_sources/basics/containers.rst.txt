@@ -41,7 +41,7 @@ To run the for loop on the GPU is a bit more complicated and is based on the Kok
           KOKKOS_LAMBDA(const int i) { sB[i] = 1.0; }
      );
 
-Kokkos requires the knowledge of where to run the code and the range of the loop. The range is defined by the size of the data and the executor. The KOKKOS_LAMBDA is required to mark the function so it is also compiled for the GPU. This approach however is not very user-friendly and requires the knowledge of the Kokkos library. To simplify the process, the Field class stores the executor and the field independent of the device can be set to 1.0 with the following code.
+Kokkos requires the knowledge of where to run the code and the range of the loop. The range is defined by the size of the data and the executor. The `KOKKOS_LAMBDA` is required to mark the function so it is also compiled for the GPU. This approach however is not very user-friendly and requires the knowledge of the Kokkos library. To simplify the process, the Field class stores the executor and the field independent of the device can be set to 1.0 with the following code.
 
 .. code-block:: cpp
 
