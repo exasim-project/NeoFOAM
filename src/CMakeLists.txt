@@ -18,7 +18,7 @@ target_sources(
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
-          "mesh/unstructuredMesh/unstructuredMesh.cpp"
+          "mesh/unstructuredMesh/UnstructuredMesh.cpp"
           "mesh/unstructuredMesh/BoundaryMesh.cpp"
           "mesh/stencil/StencilDataBase.cpp")
 
