@@ -29,7 +29,7 @@ The following example shows how to use the field function to access the data of 
           sA[i] = 1.0;
      }
 
-To run the for loop on the GPU is a bit more complicated and is based on the Kokkos library that simplifies the process and support different parallelization strategies such as OpenMP and different GPU vendors. The following example shows how to set all the values of a field to 1.0 on the GPU.
+To run the for loop on the GPU is a bit more complicated and is based on the Kokkos library that simplifies the process and support parallelization strategies for different GPU vendors and  OpenMP  support for CPU targets. The following example shows how to set all the values of a field to 1.0 on the GPU.
 
 .. code-block:: cpp
 
