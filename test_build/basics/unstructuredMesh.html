@@ -1,0 +1,792 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Dictionary" href="dictionary.html" /><link rel="prev" title="containers" href="containers.html" />
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/unstructuredMesh.html" />
+
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
+        <title>unstructuredMesh - NeoFOAM documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=387cc868" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" /
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">NeoFOAM  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">NeoFOAM  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../fvcc/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/DSL.html">Domain Specific Language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/boundaryConditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/operators.html">Operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/stencil.html">Stencil</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/fields.html">Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/executor.html">Executor</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/basics/unstructuredMesh.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="unstructuredmesh">
+<span id="basics-unstructuredmesh"></span><h1>unstructuredMesh<a class="headerlink" href="#unstructuredmesh" title="Link to this heading">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>doxygenclass: Cannot find class “NeoFOAM::unstructuredMesh” in doxygen xml output for project “NeoFOAM” from directory: _build/xml/</p>
+</div>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM12BoundaryMeshE">
+<span id="_CPPv3N7NeoFOAM12BoundaryMeshE"></span><span id="_CPPv2N7NeoFOAM12BoundaryMeshE"></span><span id="NeoFOAM::BoundaryMesh"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BoundaryMesh</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM12BoundaryMeshE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Represents a boundary mesh in an unstructured mesh. </p>
+<p>The <a class="reference internal" href="#classNeoFOAM_1_1BoundaryMesh"><span class="std std-ref">BoundaryMesh</span></a> class stores information about the boundary faces and their properties in an unstructured mesh. It provides access to various fields such as face cells, face centres, face normals, face areas normals, magnitudes of face areas normals, delta vectors, weights, delta coefficients, and offsets.</p>
+<p>The class also provides getter methods to access the individual fields and their components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Executor</strong> – The type of the executor used for computations. </p>
+</dd>
+</dl>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM12BoundaryMesh12BoundaryMeshERK8Executor10labelField11vectorField11vectorField11vectorField11scalarField11vectorField11vectorField11scalarField11scalarFieldNSt6vectorI8localIdxEE">
+<span id="_CPPv3N7NeoFOAM12BoundaryMesh12BoundaryMeshERK8Executor10labelField11vectorField11vectorField11vectorField11scalarField11vectorField11vectorField11scalarField11scalarFieldNSt6vectorI8localIdxEE"></span><span id="_CPPv2N7NeoFOAM12BoundaryMesh12BoundaryMeshERK8Executor10labelField11vectorField11vectorField11vectorField11scalarField11vectorField11vectorField11scalarField11scalarFieldNSt6vectorI8localIdxEE"></span><span id="NeoFOAM::BoundaryMesh::BoundaryMesh__ExecutorCR.labelField.vectorField.vectorField.vectorField.scalarField.vectorField.vectorField.scalarField.scalarField.std::vector:localIdx:"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1af0f8e68714709a54534108be3ff7884d"></span><span class="sig-name descname"><span class="n"><span class="pre">BoundaryMesh</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="n"><span class="pre">labelField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">faceCells</span></span>, <span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">Cf</span></span>, <span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">Cn</span></span>, <span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">Sf</span></span>, <span class="n"><span class="pre">scalarField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">magSf</span></span>, <span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nf</span></span>, <span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">delta</span></span>, <span class="n"><span class="pre">scalarField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">weights</span></span>, <span class="n"><span class="pre">scalarField</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">deltaCoeffs</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">localIdx</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">offset</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM12BoundaryMesh12BoundaryMeshERK8Executor10labelField11vectorField11vectorField11vectorField11scalarField11vectorField11vectorField11scalarField11scalarFieldNSt6vectorI8localIdxEE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Constructor for the <a class="reference internal" href="#classNeoFOAM_1_1BoundaryMesh"><span class="std std-ref">BoundaryMesh</span></a> class. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>exec</strong> – The executor used for computations. </p></li>
+<li><p><strong>faceCells</strong> – A field with the neighbouring cell of each boundary face. </p></li>
+<li><p><strong>Cf</strong> – A field of face centres. </p></li>
+<li><p><strong>Cn</strong> – A field of face normals. </p></li>
+<li><p><strong>Sf</strong> – A field of face areas normals. </p></li>
+<li><p><strong>magSf</strong> – A field of magnitudes of face areas normals. </p></li>
+<li><p><strong>nf</strong> – A field of face normals. </p></li>
+<li><p><strong>delta</strong> – A field of delta vectors. </p></li>
+<li><p><strong>weights</strong> – A field of weights used in cell to face interpolation. </p></li>
+<li><p><strong>deltaCoeffs</strong> – A field of cell to face distances. </p></li>
+<li><p><strong>offset</strong> – The offset of the boundary faces. </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh9faceCellsEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh9faceCellsEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh9faceCellsEv"></span><span id="NeoFOAM::BoundaryMesh::faceCellsC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1ae90616e6522fdbf88b89ae8d394c4c5c"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">labelField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">faceCells</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh9faceCellsEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of face cells. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of face cells. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh9faceCellsEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh9faceCellsEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh9faceCellsEKi"></span><span id="NeoFOAM::BoundaryMesh::faceCells__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1abd5fc676d55c967d864ee1decc7bd473"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">faceCells</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh9faceCellsEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of face cells for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of face cells for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2CfEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2CfEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2CfEv"></span><span id="NeoFOAM::BoundaryMesh::CfC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1af6a1688ef9f751f461a3a337a9fb7fc1"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">Cf</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CfEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of face centres. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of face centres. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2CfEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2CfEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2CfEKi"></span><span id="NeoFOAM::BoundaryMesh::Cf__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a4bd81836377ae294890147062d9aebd8"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vector</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Cf</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CfEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of face centres for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of face centres for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2CnEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2CnEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2CnEv"></span><span id="NeoFOAM::BoundaryMesh::CnC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1adad1008a19c1fb70ac4ecc322487b685"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">Cn</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CnEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of face normals. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of face normals. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2CnEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2CnEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2CnEKi"></span><span id="NeoFOAM::BoundaryMesh::Cn__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a0b0f4016003eb377953c8e003310ddf3"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vector</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Cn</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CnEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of face normals for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of face normals for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2SfEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2SfEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2SfEv"></span><span id="NeoFOAM::BoundaryMesh::SfC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a64c90dd3c0830a3ab9d9ee69a094ff6a"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">Sf</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2SfEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of face areas normals. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of face areas normals. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2SfEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2SfEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2SfEKi"></span><span id="NeoFOAM::BoundaryMesh::Sf__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1ae945fa941b5da8f32986ee69b79b4b1d"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vector</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Sf</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2SfEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of face areas normals for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of face areas normals for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh5magSfEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh5magSfEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh5magSfEv"></span><span id="NeoFOAM::BoundaryMesh::magSfC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a8d7db4a37d46179e1785b59ea5b44aa4"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalarField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">magSf</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5magSfEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of magnitudes of face areas normals. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of magnitudes of face areas normals. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh5magSfEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh5magSfEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh5magSfEKi"></span><span id="NeoFOAM::BoundaryMesh::magSf__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a91a51bb506d3d43737073534f98782f3"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalar</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">magSf</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5magSfEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of magnitudes of face areas normals for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of magnitudes of face areas normals for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2nfEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2nfEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2nfEv"></span><span id="NeoFOAM::BoundaryMesh::nfC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1ae9524a2eb5cc7dbd595a44564e851730"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">nf</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2nfEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of face normals. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of face normals. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh2nfEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh2nfEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh2nfEKi"></span><span id="NeoFOAM::BoundaryMesh::nf__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1aa1762ab55bc603bf356e8abee6de46a4"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vector</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nf</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2nfEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of face normals for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of face normals for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh5deltaEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh5deltaEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh5deltaEv"></span><span id="NeoFOAM::BoundaryMesh::deltaC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1acd96d7af1bac3f0d22c006a37961259f"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">vectorField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">delta</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5deltaEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of delta vectors. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of delta vectors. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh5deltaEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh5deltaEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh5deltaEKi"></span><span id="NeoFOAM::BoundaryMesh::delta__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1acc333ca15cc8a2337154187c91559cfc"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vector</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">delta</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5deltaEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of delta vectors for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of delta vectors for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh7weightsEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh7weightsEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh7weightsEv"></span><span id="NeoFOAM::BoundaryMesh::weightsC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1add21b76d6d3db1f6868c3791e6593ce0"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalarField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">weights</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh7weightsEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of weights. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the boundary field of weights. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh7weightsEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh7weightsEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh7weightsEKi"></span><span id="NeoFOAM::BoundaryMesh::weights__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1adb06c47d5e977aa5f78192551d0d2a14"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalar</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">weights</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh7weightsEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of weights for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of weights for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh11deltaCoeffsEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh11deltaCoeffsEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh11deltaCoeffsEv"></span><span id="NeoFOAM::BoundaryMesh::deltaCoeffsC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a6ec948e3691c6c304e9d7b3a7a58731f"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalarField</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">deltaCoeffs</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh11deltaCoeffsEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the field of delta coefficients. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the field of delta coefficients. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh11deltaCoeffsEKi">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh11deltaCoeffsEKi"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh11deltaCoeffsEKi"></span><span id="NeoFOAM::BoundaryMesh::deltaCoeffs__iCC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1a1370b1eb333987173abd615f2fb7fc2d"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalar</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">deltaCoeffs</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">i</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh11deltaCoeffsEKi" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get a span of delta coefficients for a specific boundary face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>i</strong> – The index of the boundary face. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A span of delta coefficients for the specified boundary face. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM12BoundaryMesh6offsetEv">
+<span id="_CPPv3NK7NeoFOAM12BoundaryMesh6offsetEv"></span><span id="_CPPv2NK7NeoFOAM12BoundaryMesh6offsetEv"></span><span id="NeoFOAM::BoundaryMesh::offsetC"></span><span class="target" id="classNeoFOAM_1_1BoundaryMesh_1ad053449cfe5f5cdbfe3a27e0622cc7e1"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">localIdx</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">offset</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM12BoundaryMesh6offsetEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Get the offset of the boundary faces. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A constant reference to the offset of the boundary faces. </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM15StencilDataBaseE">
+<span id="_CPPv3N7NeoFOAM15StencilDataBaseE"></span><span id="_CPPv2N7NeoFOAM15StencilDataBaseE"></span><span id="NeoFOAM::StencilDataBase"></span><span class="target" id="classNeoFOAM_1_1StencilDataBase"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">StencilDataBase</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM15StencilDataBaseE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>A class that represents a stencil database. </p>
+<p>The <a class="reference internal" href="#classNeoFOAM_1_1StencilDataBase"><span class="std std-ref">StencilDataBase</span></a> class provides a container for storing stencil data. It allows insertion, retrieval, and checking of stencil data using string keys. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM15StencilDataBase15StencilDataBaseEv">
+<span id="_CPPv3N7NeoFOAM15StencilDataBase15StencilDataBaseEv"></span><span id="_CPPv2N7NeoFOAM15StencilDataBase15StencilDataBaseEv"></span><span id="NeoFOAM::StencilDataBase::StencilDataBase"></span><span class="target" id="classNeoFOAM_1_1StencilDataBase_1a7076f6f75d93b4001b5659689a80c85d"></span><span class="sig-name descname"><span class="n"><span class="pre">StencilDataBase</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM15StencilDataBase15StencilDataBaseEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Default constructor for <a class="reference internal" href="#classNeoFOAM_1_1StencilDataBase"><span class="std std-ref">StencilDataBase</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM15StencilDataBase6insertEvRKNSt6stringE1T">
+<span id="_CPPv3I0EN7NeoFOAM15StencilDataBase6insertERKNSt6stringE1T"></span><span id="_CPPv2I0EN7NeoFOAM15StencilDataBase6insertERKNSt6stringE1T"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1StencilDataBase_1a86cad09b5995ceeeb73bf218e14ce1c9"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">insert</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span>, <a class="reference internal" href="#_CPPv4I0EN7NeoFOAM15StencilDataBase6insertEvRKNSt6stringE1T" title="NeoFOAM::StencilDataBase::insert::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">value</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM15StencilDataBase6insertEvRKNSt6stringE1T" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Inserts a value into the stencil database. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> – The type of the value to be inserted. </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>key</strong> – The key associated with the value. </p></li>
+<li><p><strong>value</strong> – The value to be inserted. </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM15StencilDataBaseixERKNSt6stringE">
+<span id="_CPPv3N7NeoFOAM15StencilDataBaseixERKNSt6stringE"></span><span id="_CPPv2N7NeoFOAM15StencilDataBaseixERKNSt6stringE"></span><span id="NeoFOAM::StencilDataBase::subscript-operator__ssCR"></span><span class="target" id="classNeoFOAM_1_1StencilDataBase_1ad1cbb77aeef578a54f0696092cc08244"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">[]</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM15StencilDataBaseixERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves a reference to the value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key associated with the value. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reference to the value associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM15StencilDataBaseixERKNSt6stringE">
+<span id="_CPPv3NK7NeoFOAM15StencilDataBaseixERKNSt6stringE"></span><span id="_CPPv2NK7NeoFOAM15StencilDataBaseixERKNSt6stringE"></span><span id="NeoFOAM::StencilDataBase::subscript-operator__ssCRC"></span><span class="target" id="classNeoFOAM_1_1StencilDataBase_1ad4bd899ff5402d0b8a222117ee4d46f5"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">[]</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM15StencilDataBaseixERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves a const reference to the value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key associated with the value. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A const reference to the value associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM15StencilDataBase3getER1TRKNSt6stringE">
+<span id="_CPPv3I0EN7NeoFOAM15StencilDataBase3getERKNSt6stringE"></span><span id="_CPPv2I0EN7NeoFOAM15StencilDataBase3getERKNSt6stringE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1StencilDataBase_1a917c60abab7b435b3f4490dafff4732e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM15StencilDataBase3getER1TRKNSt6stringE" title="NeoFOAM::StencilDataBase::get::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">get</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM15StencilDataBase3getER1TRKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves a reference to the value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> – The type of the value to be retrieved. </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>key</strong> – The key associated with the value. </p>
+</dd>
+<dt class="field-odd">Throws<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">bad_any_cast</span></span></span> – if the value cannot be cast to type T. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reference to the value associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0ENK7NeoFOAM15StencilDataBase3getERK1TRKNSt6stringE">
+<span id="_CPPv3I0ENK7NeoFOAM15StencilDataBase3getERKNSt6stringE"></span><span id="_CPPv2I0ENK7NeoFOAM15StencilDataBase3getERKNSt6stringE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1StencilDataBase_1ab4b373de79f4afe6531e368f48a127e4"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0ENK7NeoFOAM15StencilDataBase3getERK1TRKNSt6stringE" title="NeoFOAM::StencilDataBase::get::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">get</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4I0ENK7NeoFOAM15StencilDataBase3getERK1TRKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves a const reference to the value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> – The type of the value to be retrieved. </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>key</strong> – The key associated with the value. </p>
+</dd>
+<dt class="field-odd">Throws<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">bad_any_cast</span></span></span> – if the value cannot be cast to type T. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A const reference to the value associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM15StencilDataBase8containsERKNSt6stringE">
+<span id="_CPPv3NK7NeoFOAM15StencilDataBase8containsERKNSt6stringE"></span><span id="_CPPv2NK7NeoFOAM15StencilDataBase8containsERKNSt6stringE"></span><span id="NeoFOAM::StencilDataBase::contains__ssCRC"></span><span class="target" id="classNeoFOAM_1_1StencilDataBase_1a80901032042b849e267667d84510046a"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">contains</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM15StencilDataBase8containsERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Checks if the stencil database contains a value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key to check. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>true if the database contains the key, false otherwise. </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-private-members">Private Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM15StencilDataBase10stencilDB_E">
+<span id="_CPPv3N7NeoFOAM15StencilDataBase10stencilDB_E"></span><span id="_CPPv2N7NeoFOAM15StencilDataBase10stencilDB_E"></span><span id="NeoFOAM::StencilDataBase::stencilDB___std::unordered_map:ss.std::any:"></span><span class="target" id="classNeoFOAM_1_1StencilDataBase_1a88823f15266dfa23b08d377a444cd788"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">stencilDB_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM15StencilDataBase10stencilDB_E" title="Link to this definition">¶</a><br /></dt>
+<dd><p>The stencil database to register stencil data. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="dictionary.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Dictionary</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="containers.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">containers</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, NeoFOAM authors
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">unstructuredMesh</a><ul>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM12BoundaryMeshE"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM12BoundaryMesh12BoundaryMeshERK8Executor10labelField11vectorField11vectorField11vectorField11scalarField11vectorField11vectorField11scalarField11scalarFieldNSt6vectorI8localIdxEE"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::BoundaryMesh()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh9faceCellsEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::faceCells()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh9faceCellsEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::faceCells()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CfEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::Cf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CfEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::Cf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CnEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::Cn()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2CnEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::Cn()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2SfEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::Sf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2SfEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::Sf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5magSfEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::magSf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5magSfEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::magSf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2nfEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::nf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh2nfEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::nf()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5deltaEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::delta()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh5deltaEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::delta()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh7weightsEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::weights()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh7weightsEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::weights()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh11deltaCoeffsEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::deltaCoeffs()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh11deltaCoeffsEKi"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::deltaCoeffs()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM12BoundaryMesh6offsetEv"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh::offset()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM15StencilDataBaseE"><code class="docutils literal notranslate"><span class="pre">StencilDataBase</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM15StencilDataBase15StencilDataBaseEv"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::StencilDataBase()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM15StencilDataBase6insertEvRKNSt6stringE1T"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::insert()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM15StencilDataBaseixERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::operator[]()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM15StencilDataBaseixERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::operator[]()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM15StencilDataBase3getER1TRKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::get()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4I0ENK7NeoFOAM15StencilDataBase3getERK1TRKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::get()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM15StencilDataBase8containsERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::contains()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM15StencilDataBase10stencilDB_E"><code class="docutils literal notranslate"><span class="pre">StencilDataBase::stencilDB_</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=4e2eecee"></script>
+    </body>
+</html>
