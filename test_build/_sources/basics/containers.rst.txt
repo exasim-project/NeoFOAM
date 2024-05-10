@@ -57,7 +57,6 @@ The fill function uses the `std::visit` function to call the correct function ba
                { op(exec); },
                exec);
 
-Following other operations such as summation, min, max etc are listed below
 
 .. note::
 
