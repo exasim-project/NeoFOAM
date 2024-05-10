@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- basic implementation of an unstructuredMesh [#53](https://github.com/exasim-project/NeoFOAM/pull/53)
 - improved and documented the workflow with vscode [#58](https://github.com/exasim-project/NeoFOAM/pull/58)
 - Added dictionary class [#52](https://github.com/exasim-project/NeoFOAM/pull/52)
 - applied changes proposed by clang-tidy [#57](https://github.com/exasim-project/NeoFOAM/pull/57)
