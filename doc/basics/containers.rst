@@ -11,7 +11,7 @@ The Field classes are the central elements for implementing a platform portable 
 .. doxygenclass:: NeoFOAM::Field
     :members: size_, data_, exec_
 
-To run a function on the GPU, the data and function need to be trivially copyable. This is not the case with the existing Field class, and it can be viewed as a wrapper around the data. To solve this issue, the field class has a public member function called ``field()`` that returns a span that can be used to access the data on the CPU and GPU.
+To run a function on the GPU, the data and function need to be trivially copyable. This is not the case with the existing OpenFOAM Field class , and it can be viewed as a wrapper around the data. To solve this issue, the  NeoFOAM field class has a public member function called ``field()`` that returns a span that can be used to access the data on the CPU and GPU.
 
 .. doxygenclass:: NeoFOAM::Field
     :members: field
