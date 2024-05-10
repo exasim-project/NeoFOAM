@@ -48,7 +48,7 @@ Kokkos requires the knowledge of where to run the code and the range of the loop
      NeoFOAM::Field<NeoFOAM::scalar> c(gpuExec, size);
      NeoFOAM::fill(b, 10.0);
 
-The fill function uses the std::visit function to call the correct function based on the executor as described in the previous section.
+The fill function uses the `std::visit` function to call the correct function based on the executor as described in the previous section.
 
 .. code-block:: cpp
 
