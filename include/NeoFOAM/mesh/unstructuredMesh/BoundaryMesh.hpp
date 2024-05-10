@@ -45,9 +45,9 @@ public:
     BoundaryMesh(
         const Executor& exec,
         labelField faceCells,
-        vectorField Cf,
-        vectorField Cn,
-        vectorField Sf,
+        vectorField cf,
+        vectorField cn,
+        vectorField sf,
         scalarField magSf,
         vectorField nf,
         vectorField delta,
@@ -77,7 +77,7 @@ public:
      *
      * @return A constant reference to the field of face centres.
      */
-    const vectorField& Cf() const;
+    const vectorField& cf() const;
 
     /**
      * @brief Get a span of face centres for a specific boundary face.
@@ -85,14 +85,14 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face centres for the specified boundary face.
      */
-    std::span<const Vector> Cf(const int i) const;
+    std::span<const Vector> cf(const int i) const;
 
     /**
      * @brief Get the field of face normals.
      *
      * @return A constant reference to the field of face normals.
      */
-    const vectorField& Cn() const;
+    const vectorField& cn() const;
 
     /**
      * @brief Get a span of face normals for a specific boundary face.
@@ -100,14 +100,14 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face normals for the specified boundary face.
      */
-    std::span<const Vector> Cn(const int i) const;
+    std::span<const Vector> cn(const int i) const;
 
     /**
      * @brief Get the field of face areas normals.
      *
      * @return A constant reference to the field of face areas normals.
      */
-    const vectorField& Sf() const;
+    const vectorField& sf() const;
 
     /**
      * @brief Get a span of face areas normals for a specific boundary face.
@@ -115,7 +115,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face areas normals for the specified boundary face.
      */
-    std::span<const Vector> Sf(const int i) const;
+    std::span<const Vector> sf(const int i) const;
 
     /**
      * @brief Get the field of magnitudes of face areas normals.

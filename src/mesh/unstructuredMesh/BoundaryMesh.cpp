@@ -9,9 +9,9 @@ namespace NeoFOAM
 BoundaryMesh::BoundaryMesh(
     const Executor& exec,
     labelField faceCells,
-    vectorField Cf,
-    vectorField Cn,
-    vectorField Sf,
+    vectorField cf,
+    vectorField cn,
+    vectorField sf,
     scalarField magSf,
     vectorField nf,
     vectorField delta,
@@ -21,9 +21,9 @@ BoundaryMesh::BoundaryMesh(
 )
     : exec_(exec),
       faceCells_(faceCells),
-      Cf_(Cf),
-      Cn_(Cn),
-      Sf_(Sf),
+      Cf_(cf),
+      Cn_(cn),
+      Sf_(sf),
       magSf_(magSf),
       nf_(nf),
       delta_(delta),
@@ -44,36 +44,36 @@ std::span<const label> BoundaryMesh::faceCells(label i) const
     return faceCells_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::Cf() const
+const vectorField& BoundaryMesh::cf() const
 {
     return Cf_;
 }
 
-std::span<const Vector> BoundaryMesh::Cf(const int i) const
+std::span<const Vector> BoundaryMesh::cf(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
     return Cf_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::Cn() const
+const vectorField& BoundaryMesh::cn() const
 {
     return Cn_;
 }
 
-std::span<const Vector> BoundaryMesh::Cn(const int i) const
+std::span<const Vector> BoundaryMesh::cn(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
     return Cn_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::Sf() const
+const vectorField& BoundaryMesh::sf() const
 {
     return Sf_;
 }
 
-std::span<const Vector> BoundaryMesh::Sf(const int i) const
+std::span<const Vector> BoundaryMesh::sf(const int i) const
 {
     label start = offset_[i];
     label end = offset_[i + 1];
