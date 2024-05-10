@@ -21,7 +21,7 @@ TEST_CASE("parallelFor")
     );
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("parallelFor_" + exec_name)
+    SECTION("parallelFor_" + execName)
     {
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
@@ -53,7 +53,7 @@ TEST_CASE("parallelReduce")
     );
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("parallelReduce_" + exec_name)
+    SECTION("parallelReduce_" + execName)
     {
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
