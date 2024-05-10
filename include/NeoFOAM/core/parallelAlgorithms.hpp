@@ -42,7 +42,7 @@ void parallelFor(NeoFOAM::Executor& exec, label start, label end, Kernel kernel)
 
 
 template<typename executor, typename Kernel, typename T>
-void parallelRecudeImpl(
+void parallelReduceImpl(
     const executor& exec, label start, label end, Kernel kernel, T& value
 )
 {
@@ -58,7 +58,7 @@ void parallelRecudeImpl(
     {
         using runOn = typename executor::exec;
         Kokkos::parallel_reduce(
-            "parallelRecudeImpl",
+            "parallelReduceImpl",
             Kokkos::RangePolicy<runOn>(start, end),
             kernel,
             value
@@ -73,7 +73,7 @@ void parallelReduce(
 {
     return std::visit(
         [&](const auto& e)
-        { return parallelRecudeImpl(e, start, end, kernel, value); },
+        { return parallelReduceImpl(e, start, end, kernel, value); },
         exec
     );
 };
