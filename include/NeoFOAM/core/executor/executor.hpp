@@ -20,19 +20,27 @@ using Executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  */
 [[nodiscard]] inline bool operator==(const Executor& lhs, const Executor& rhs)
 {
-    return std::visit([]<typename ExecLhs, typename ExecRhs>([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&)
-                      {
-                         if constexpr (std::is_same_v<ExecLhs, ExecRhs>) {
-                                        return typename ExecLhs::exec() == typename ExecRhs::exec();
-                                    } else {
-                                        return false;
-                                    } },
-                      lhs,
-                      rhs);
+    return std::visit(
+        []<typename ExecLhs,
+           typename ExecRhs>([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&)
+        {
+            if constexpr (std::is_same_v<ExecLhs, ExecRhs>)
+            {
+                return typename ExecLhs::exec() == typename ExecRhs::exec();
+            }
+            else
+            {
+                return false;
+            }
+        },
+        lhs,
+        rhs
+    );
 };
 
 /**
- * @brief Checks if two executors are not equal, i.e. they are not of the same type.
+ * @brief Checks if two executors are not equal, i.e. they are not of the same
+ * type.
  * @param lhs The first executor.
  * @param rhs The second executor.
  * @return True if the executors not are equal, false otherwise.

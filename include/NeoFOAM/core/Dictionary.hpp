@@ -13,11 +13,12 @@ namespace NeoFOAM
  * @class Dictionary
  * @brief A class representing a dictionary that stores key-value pairs.
  *
- * The Dictionary class provides a way to store and retrieve values using string.
- * It supports inserting key-value pairs, accessing values using the subscript operator,
- * and retrieving values of specific types using the `get` function.
- * It also supports storing sub-dictionaries, which can be accessed using the `subDict` function.
- * The values are stored using `std::any`, which allows storing values of any type.
+ * The Dictionary class provides a way to store and retrieve values using
+ * string. It supports inserting key-value pairs, accessing values using the
+ * subscript operator, and retrieving values of specific types using the `get`
+ * function. It also supports storing sub-dictionaries, which can be accessed
+ * using the `subDict` function. The values are stored using `std::any`, which
+ * allows storing values of any type.
  */
 class Dictionary
 {
@@ -42,7 +43,8 @@ public:
     /**
      * @brief Removes an entry from the dictionary based on the specified key.
      *
-     * This function removes the entry with the specified key from the dictionary.
+     * This function removes the entry with the specified key from the
+     * dictionary.
      *
      * @param key The key of the entry to be removed.
      */
@@ -63,10 +65,12 @@ public:
     [[nodiscard]] const std::any& operator[](const std::string& key) const;
 
     /**
-     * @brief Retrieves the value associated with the given key, casting it to the specified type.
+     * @brief Retrieves the value associated with the given key, casting it to
+     * the specified type.
      * @tparam T The type to cast the value to.
      * @param key The key to retrieve the value for.
-     * @return A reference to the value associated with the key, casted to type T.
+     * @return A reference to the value associated with the key, casted to type
+     * T.
      */
     template<typename T>
     [[nodiscard]] T& get(const std::string& key)
@@ -75,10 +79,12 @@ public:
     }
 
     /**
-     * @brief Retrieves the value associated with the given key, casting it to the specified type.
+     * @brief Retrieves the value associated with the given key, casting it to
+     * the specified type.
      * @tparam T The type to cast the value to.
      * @param key The key to retrieve the value for.
-     * @return A const reference to the value associated with the key, casted to type T.
+     * @return A const reference to the value associated with the key, casted to
+     * type T.
      */
     template<typename T>
     [[nodiscard]] const T& get(const std::string& key) const

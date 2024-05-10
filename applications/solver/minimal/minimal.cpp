@@ -10,8 +10,7 @@ int main(int argc, char* argv[])
 #include "setRootCase.H"
 #include "createTime.H"
 
-    Info << "\nStarting time loop\n"
-         << endl;
+    Info << "\nStarting time loop\n" << endl;
 
     while (runTime.loop())
     {
@@ -20,8 +19,7 @@ int main(int argc, char* argv[])
 
     runTime.printExecutionTime(Info);
 
-    Info << "End\n"
-         << endl;
+    Info << "End\n" << endl;
 
     return 0;
 }
