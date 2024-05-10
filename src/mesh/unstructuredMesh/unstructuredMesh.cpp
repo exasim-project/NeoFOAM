@@ -15,11 +15,11 @@ UnstructuredMesh::UnstructuredMesh(
     scalarField magFaceAreas,
     labelField faceOwner,
     labelField faceNeighbour,
-    int32_t nCells,
-    int32_t nInternalFaces,
-    int32_t nBoundaryFaces,
-    int32_t nBoundaries,
-    int32_t nFaces,
+    localIdx nCells,
+    localIdx nInternalFaces,
+    localIdx nBoundaryFaces,
+    localIdx nBoundaries,
+    localIdx nFaces,
     BoundaryMesh boundaryMesh
 )
     : exec_(points.exec()),
@@ -82,27 +82,27 @@ const labelField& UnstructuredMesh::faceNeighbour() const
     return faceNeighbour_;
 }
 
-int32_t UnstructuredMesh::nCells() const
+localIdx UnstructuredMesh::nCells() const
 {
     return nCells_;
 }
 
-int32_t UnstructuredMesh::nInternalFaces() const
+localIdx UnstructuredMesh::nInternalFaces() const
 {
     return nInternalFaces_;
 }
 
-int32_t UnstructuredMesh::nBoundaryFaces() const
+localIdx UnstructuredMesh::nBoundaryFaces() const
 {
     return nBoundaryFaces_;
 }
 
-int32_t UnstructuredMesh::nBoundaries() const
+localIdx UnstructuredMesh::nBoundaries() const
 {
     return nBoundaries_;
 }
 
-int32_t UnstructuredMesh::nFaces() const
+localIdx UnstructuredMesh::nFaces() const
 {
     return nFaces_;
 }

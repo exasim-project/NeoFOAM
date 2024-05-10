@@ -54,11 +54,11 @@ public:
         scalarField magFaceAreas,
         labelField faceOwner,
         labelField faceNeighbour,
-        int32_t nCells,
-        int32_t nInternalFaces,
-        int32_t nBoundaryFaces,
-        int32_t nBoundaries,
-        int32_t nFaces,
+        localIdx nCells,
+        localIdx nInternalFaces,
+        localIdx nBoundaryFaces,
+        localIdx nBoundaries,
+        localIdx nFaces,
         BoundaryMesh boundaryMesh
     );
 
@@ -123,35 +123,35 @@ public:
      *
      * @return The number of cells in the mesh.
      */
-    label nCells() const;
+    localIdx nCells() const;
 
     /**
      * @brief Get the number of internal faces in the mesh.
      *
      * @return The number of internal faces in the mesh.
      */
-    int32_t nInternalFaces() const;
+    localIdx nInternalFaces() const;
 
     /**
      * @brief Get the number of boundary faces in the mesh.
      *
      * @return The number of boundary faces in the mesh.
      */
-    int32_t nBoundaryFaces() const;
+    localIdx nBoundaryFaces() const;
 
     /**
      * @brief Get the number of boundaries in the mesh.
      *
      * @return The number of boundaries in the mesh.
      */
-    int32_t nBoundaries() const;
+    localIdx nBoundaries() const;
 
     /**
      * @brief Get the number of faces in the mesh.
      *
      * @return The number of faces in the mesh.
      */
-    int32_t nFaces() const;
+    localIdx nFaces() const;
 
     /**
      * @brief Get the boundary mesh.
