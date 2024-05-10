@@ -19,7 +19,7 @@ TEST_CASE("parallelFor")
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
-    std::string exec_name = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
     SECTION("parallelFor_" + exec_name)
     {
@@ -51,7 +51,7 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
-    std::string exec_name = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
     SECTION("parallelReduce_" + exec_name)
     {
