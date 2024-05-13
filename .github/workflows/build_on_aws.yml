@@ -64,24 +64,23 @@ jobs:
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Build NeoFOAM
-        if: always()
-        shell: bash -o pipefail -i {0}
+        shell: bash -i {0}
         run: |
           export HOME=/share/ec2-user
-          module load gnu/10
+          module load clang/16
           module load libfabric-aws
           module load cmake
           cmake --version
           cmake --preset ninja-kokkos-cuda-all -DNEOFOAM_DEVEL_TOOLS=OFF
-          cmake --build  --preset ninja-cpuonly-all
+          cmake --build --preset ninja-kokkos-cuda-all
       - name: Build NeoFOAM
-        shell: bash -o pipefail -i {0}
+        shell: bash -i {0}
         run: |
           export HOME=/share/ec2-user
-          module load gnu/10
+          module load clang/16
           module load libfabric-aws
           module load cmake
-          ctest --test-dir build/ReleaseAll/test
+          ctest --test-dir build/ReleaseCudaAll/test
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
