@@ -39,8 +39,8 @@ const labelField& BoundaryMesh::faceCells() const
 
 std::span<const label> BoundaryMesh::faceCells(const localIdx i) const
 {
-    label start = offset_[i];
-    label end = offset_[i + 1];
+    const label& start = offset_[i];
+    const label& end = offset_[i + 1];
     return faceCells_.field().subspan(start, end - start);
 }
 
