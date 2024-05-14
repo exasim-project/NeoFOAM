@@ -56,7 +56,7 @@ jobs:
                  sudo ./postinstall_github > ~/install.log
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
-  do-the-job:
+  build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
@@ -73,7 +73,7 @@ jobs:
           cmake --version
           cmake --preset ninja-kokkos-cuda-all -DNEOFOAM_DEVEL_TOOLS=OFF
           cmake --build --preset ninja-kokkos-cuda-all
-      - name: Build NeoFOAM
+      - name: Test NeoFOAM
         shell: bash -i {0}
         run: |
           export HOME=/share/ec2-user
