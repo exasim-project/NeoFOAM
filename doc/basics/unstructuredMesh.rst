@@ -15,7 +15,7 @@ The `unstructuredMesh` in the current implementation stores the relevant data fo
 BoundaryMesh
 ^^^^^^^^^^^^
 
-The boundaryMesh in the current implementation stores the relevant data for the `boundaryMesh` on the selected executor. So it is currently a data container for boundary mesh data. The `boundaryMesh` information are stored in a continous array and the index for the boundary patch is stored in a offset.
+The boundaryMesh in the current implementation stores the relevant data for the `boundaryMesh` on the selected executor. So it is currently a data container for boundary mesh data. The `boundaryMesh` information are stored in a continuous array and the index for the boundary patch is stored in a offset.
 
 .. warning::
    - unable to read the boundary mesh from disc
