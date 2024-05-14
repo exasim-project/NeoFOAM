@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="API" href="../api/index.html" /><link rel="prev" title="Basics" href="index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="cellCenteredFiniteVolume" href="../fvcc/index.html" /><link rel="prev" title="unstructuredMesh" href="unstructuredMesh.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/dictionary.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
@@ -193,7 +193,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -216,14 +216,22 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#prerequisites">Prerequisites</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html#workflow-with-vscode">Workflow with vscode</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">unstructuredMesh</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Dictionary</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../fvcc/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/DSL.html">Domain Specific Language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/boundaryConditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/operators.html">Operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/stencil.html">Stencil</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/fields.html">Fields</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/executor.html">Executor</a></li>
 </ul>
@@ -262,7 +270,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -328,10 +336,159 @@
 <span class="n">sDict2</span><span class="p">.</span><span class="n">get</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;key1&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span>
 </pre></div>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>doxygenclass: Cannot find class “NeoFOAM::Dictionary” in doxygen xml output for project “NeoFOAM” from directory: _build/xml/</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10DictionaryE">
+<span id="_CPPv3N7NeoFOAM10DictionaryE"></span><span id="_CPPv2N7NeoFOAM10DictionaryE"></span><span id="NeoFOAM::Dictionary"></span><span class="target" id="classNeoFOAM_1_1Dictionary"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Dictionary</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM10DictionaryE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>A class representing a dictionary that stores key-value pairs. </p>
+<p>The <a class="reference internal" href="#classNeoFOAM_1_1Dictionary"><span class="std std-ref">Dictionary</span></a> class provides a way to store and retrieve values using string. It supports inserting key-value pairs, accessing values using the subscript operator, and retrieving values of specific types using the <code class="docutils literal notranslate"><span class="pre">get</span></code> function. It also supports storing sub-dictionaries, which can be accessed using the <code class="docutils literal notranslate"><span class="pre">subDict</span></code> function. The values are stored using <code class="docutils literal notranslate"><span class="pre">std::any</span></code>, which allows storing values of any type. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10Dictionary10DictionaryEv">
+<span id="_CPPv3N7NeoFOAM10Dictionary10DictionaryEv"></span><span id="_CPPv2N7NeoFOAM10Dictionary10DictionaryEv"></span><span id="NeoFOAM::Dictionary::Dictionary"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a8cd2ad8f5657deddd5ed68928d376dd9"></span><span class="sig-name descname"><span class="n"><span class="pre">Dictionary</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM10Dictionary10DictionaryEv" title="Link to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10Dictionary6insertERKNSt6stringERKNSt3anyE">
+<span id="_CPPv3N7NeoFOAM10Dictionary6insertERKNSt6stringERKNSt3anyE"></span><span id="_CPPv2N7NeoFOAM10Dictionary6insertERKNSt6stringERKNSt3anyE"></span><span id="NeoFOAM::Dictionary::insert__ssCR.std::anyCR"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a0f7b7b11512ff4720caaa96bc64f6d5f"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">insert</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">value</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM10Dictionary6insertERKNSt6stringERKNSt3anyE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Inserts a key-value pair into the dictionary. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> – The key to insert. </p></li>
+<li><p><strong>value</strong> – The value to insert. </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM10Dictionary5foundERKNSt6stringE">
+<span id="_CPPv3NK7NeoFOAM10Dictionary5foundERKNSt6stringE"></span><span id="_CPPv2NK7NeoFOAM10Dictionary5foundERKNSt6stringE"></span><span id="NeoFOAM::Dictionary::found__ssCRC"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a8ba43110fa14e3d53c2d45c4232d01d3"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">found</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM10Dictionary5foundERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Checks if the given key is present in the dictionary. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key to check. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the key is present, false otherwise. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10Dictionary6removeERKNSt6stringE">
+<span id="_CPPv3N7NeoFOAM10Dictionary6removeERKNSt6stringE"></span><span id="_CPPv2N7NeoFOAM10Dictionary6removeERKNSt6stringE"></span><span id="NeoFOAM::Dictionary::remove__ssCR"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a1845fb9b7f58fb161f10fad774c82176"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">remove</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM10Dictionary6removeERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Removes an entry from the dictionary based on the specified key. </p>
+<p>This function removes the entry with the specified key from the dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key of the entry to be removed. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10DictionaryixERKNSt6stringE">
+<span id="_CPPv3N7NeoFOAM10DictionaryixERKNSt6stringE"></span><span id="_CPPv2N7NeoFOAM10DictionaryixERKNSt6stringE"></span><span id="NeoFOAM::Dictionary::subscript-operator__ssCR"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a6eaec1fb51ab19963cf29a470aac96f2"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">[]</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM10DictionaryixERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Accesses the value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key to access. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reference to the value associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM10DictionaryixERKNSt6stringE">
+<span id="_CPPv3NK7NeoFOAM10DictionaryixERKNSt6stringE"></span><span id="_CPPv2NK7NeoFOAM10DictionaryixERKNSt6stringE"></span><span id="NeoFOAM::Dictionary::subscript-operator__ssCRC"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1afb34d78093ecdff8fe8b65d03c3de372"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">[]</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM10DictionaryixERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Accesses the value associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key to access. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A const reference to the value associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM10Dictionary3getER1TRKNSt6stringE">
+<span id="_CPPv3I0EN7NeoFOAM10Dictionary3getERKNSt6stringE"></span><span id="_CPPv2I0EN7NeoFOAM10Dictionary3getERKNSt6stringE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1Dictionary_1a8cb0409dc5eef2e70735a35ee321631a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM10Dictionary3getER1TRKNSt6stringE" title="NeoFOAM::Dictionary::get::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">get</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM10Dictionary3getER1TRKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves the value associated with the given key, casting it to the specified type. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> – The type to cast the value to. </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>key</strong> – The key to retrieve the value for. </p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A reference to the value associated with the key, casted to type T. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0ENK7NeoFOAM10Dictionary3getERK1TRKNSt6stringE">
+<span id="_CPPv3I0ENK7NeoFOAM10Dictionary3getERKNSt6stringE"></span><span id="_CPPv2I0ENK7NeoFOAM10Dictionary3getERKNSt6stringE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1Dictionary_1aa78cf34cb0a4cebc56bfe6100d213876"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0ENK7NeoFOAM10Dictionary3getERK1TRKNSt6stringE" title="NeoFOAM::Dictionary::get::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">get</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4I0ENK7NeoFOAM10Dictionary3getERK1TRKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves the value associated with the given key, casting it to the specified type. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> – The type to cast the value to. </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>key</strong> – The key to retrieve the value for. </p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A const reference to the value associated with the key, casted to type T. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10Dictionary7subDictERKNSt6stringE">
+<span id="_CPPv3N7NeoFOAM10Dictionary7subDictERKNSt6stringE"></span><span id="_CPPv2N7NeoFOAM10Dictionary7subDictERKNSt6stringE"></span><span id="NeoFOAM::Dictionary::subDict__ssCR"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a80d832aea07daa2c48fe8ace44854463"></span><a class="reference internal" href="#_CPPv4N7NeoFOAM10DictionaryE" title="NeoFOAM::Dictionary"><span class="n"><span class="pre">Dictionary</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">subDict</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">key</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM10Dictionary7subDictERKNSt6stringE" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves a sub-dictionary associated with the given key. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – The key to retrieve the sub-dictionary for. </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reference to the sub-dictionary associated with the key. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM10Dictionary6getMapEv">
+<span id="_CPPv3N7NeoFOAM10Dictionary6getMapEv"></span><span id="_CPPv2N7NeoFOAM10Dictionary6getMapEv"></span><span id="NeoFOAM::Dictionary::getMap"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1a5ce24584965b9154c0865103046ec7b5"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">getMap</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM10Dictionary6getMapEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves the underlying unordered map of the dictionary. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A reference to the underlying unordered map. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM10Dictionary6getMapEv">
+<span id="_CPPv3NK7NeoFOAM10Dictionary6getMapEv"></span><span id="_CPPv2NK7NeoFOAM10Dictionary6getMapEv"></span><span id="NeoFOAM::Dictionary::getMapC"></span><span class="target" id="classNeoFOAM_1_1Dictionary_1afbd917201c28bf93ef397bee1e37fe33"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">any</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">getMap</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM10Dictionary6getMapEv" title="Link to this definition">¶</a><br /></dt>
+<dd><p>Retrieves the underlying unordered map of the dictionary. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A const reference to the underlying unordered map. </p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
+</dd></dl>
+
 </section>
 
         </article>
@@ -339,23 +496,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../api/index.html">
+          <a class="next-page" href="../fvcc/index.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">API</div>
+                <div class="title">cellCenteredFiniteVolume</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="index.html">
+          <a class="prev-page" href="unstructuredMesh.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Basics</div>
+                <div class="title">unstructuredMesh</div>
                 
               </div>
             </a>
@@ -377,8 +534,40 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Dictionary</a><ul>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10DictionaryE"><code class="docutils literal notranslate"><span class="pre">Dictionary</span></code></a><ul>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10Dictionary10DictionaryEv"><code class="docutils literal notranslate"><span class="pre">Dictionary::Dictionary()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10Dictionary6insertERKNSt6stringERKNSt3anyE"><code class="docutils literal notranslate"><span class="pre">Dictionary::insert()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM10Dictionary5foundERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::found()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10Dictionary6removeERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::remove()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10DictionaryixERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::operator[]()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM10DictionaryixERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::operator[]()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM10Dictionary3getER1TRKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::get()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4I0ENK7NeoFOAM10Dictionary3getERK1TRKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::get()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10Dictionary7subDictERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">Dictionary::subDict()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM10Dictionary6getMapEv"><code class="docutils literal notranslate"><span class="pre">Dictionary::getMap()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM10Dictionary6getMapEv"><code class="docutils literal notranslate"><span class="pre">Dictionary::getMap()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
