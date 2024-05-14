@@ -31,6 +31,7 @@ option(NEOFOAM_ENABLE_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
 option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
+option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" FALSE)
 
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
   message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
@@ -142,6 +143,13 @@ if(NEOFOAM_DEVEL_TOOLS)
     COMMAND bash -c "${PRE_COMMIT} run"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     VERBATIM)
+endif()
+
+if(NEOFOAM_ENABLE_IWYU)
+  find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
+  set(IWYU_PATH_AND_OPTIONS ${iwyu_path})
+  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE
+                                       ${IWYU_PATH_AND_OPTIONS})
 endif()
 
 # include(cmake/InstallHelpers.cmake) neofoam_install()
