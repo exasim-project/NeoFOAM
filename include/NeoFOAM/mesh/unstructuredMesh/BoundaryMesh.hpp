@@ -15,11 +15,13 @@ namespace NeoFOAM
  * @class BoundaryMesh
  * @brief Represents boundaries of an unstructured mesh.
  *
- * The BoundaryMesh class stores information about the boundary faces and their properties in an unstructured mesh.
- * It provides access to various fields such as face cells, face centres, face normals, face areas normals, magnitudes of face areas normals,
- * delta vectors, weights, delta coefficients, and offsets.
+ * The BoundaryMesh class stores information about the boundary faces and their
+ * properties in an unstructured mesh. It provides access to various fields such
+ * as face cells, face centres, face normals, face areas normals, magnitudes of
+ * face areas normals, delta vectors, weights, delta coefficients, and offsets.
  *
- * The class also provides getter methods to access the individual fields and their components.
+ * The class also provides getter methods to access the individual fields and
+ * their components.
  *
  * @tparam Executor The type of the executor used for computations.
  */
@@ -31,7 +33,8 @@ public:
      * @brief Constructor for the BoundaryMesh class.
      *
      * @param exec The executor used for computations.
-     * @param faceCells A field with the neighbouring cell of each boundary face.
+     * @param faceCells A field with the neighbouring cell of each boundary
+     * face.
      * @param Cf A field of face centres.
      * @param Cn A field of face normals.
      * @param Sf A field of face areas normals.
@@ -120,15 +123,18 @@ public:
     /**
      * @brief Get the field of magnitudes of face areas normals.
      *
-     * @return A constant reference to the field of magnitudes of face areas normals.
+     * @return A constant reference to the field of magnitudes of face areas
+     * normals.
      */
     const scalarField& magSf() const;
 
     /**
-     * @brief Get a span of magnitudes of face areas normals for a specific boundary face.
+     * @brief Get a span of magnitudes of face areas normals for a specific
+     * boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of magnitudes of face areas normals for the specified boundary face.
+     * @return A span of magnitudes of face areas normals for the specified
+     * boundary face.
      */
     std::span<const scalar> magSf(const localIdx i) const;
 
@@ -244,7 +250,8 @@ private:
     /**
      * @brief Field of delta vectors.
      *
-     * The delta vector is defined as the vector from the face centre to the cell centre.
+     * The delta vector is defined as the vector from the face centre to the
+     * cell centre.
      */
     vectorField delta_;
 

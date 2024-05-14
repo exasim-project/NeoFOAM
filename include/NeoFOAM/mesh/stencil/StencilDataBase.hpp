@@ -13,7 +13,8 @@ namespace NeoFOAM
  * @class StencilDataBase
  * @brief A class that represents a stencil database.
  *
- * The StencilDataBase class provides a container for storing stencil data. It allows insertion, retrieval, and checking of stencil data using string keys.
+ * The StencilDataBase class provides a container for storing stencil data. It
+ * allows insertion, retrieval, and checking of stencil data using string keys.
  */
 class StencilDataBase
 {
@@ -46,7 +47,8 @@ public:
     std::any& operator[](const std::string& key);
 
     /**
-     * @brief Retrieves a const reference to the value associated with the given key.
+     * @brief Retrieves a const reference to the value associated with the given
+     * key.
      *
      * @param key The key associated with the value.
      * @return A const reference to the value associated with the key.
@@ -68,7 +70,8 @@ public:
     }
 
     /**
-     * @brief Retrieves a const reference to the value associated with the given key.
+     * @brief Retrieves a const reference to the value associated with the given
+     * key.
      *
      * @tparam T The type of the value to be retrieved.
      * @param key The key associated with the value.
@@ -82,7 +85,8 @@ public:
     }
 
     /**
-     * @brief Checks if the stencil database contains a value associated with the given key.
+     * @brief Checks if the stencil database contains a value associated with
+     * the given key.
      *
      * @param key The key to check.
      * @return true if the database contains the key, false otherwise.

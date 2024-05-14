@@ -17,11 +17,14 @@ namespace NeoFOAM
  * @class UnstructuredMesh
  * @brief Represents an unstructured mesh in NeoFOAM.
  *
- * The UnstructuredMesh class stores the data and provides access to the properties of an unstructured mesh.
- * It contains information such as mesh points, cell volumes, cell centres, face areas, face centres, face owner cells,
- * face neighbour cells, and boundary information. It also provides methods to retrieve the number of cells, internal faces,
- * boundary faces, boundaries, and faces in the mesh. Additionally, it includes a boundary mesh and a stencil data base.
- * The executor is used to run parallel operations on the mesh.
+ * The UnstructuredMesh class stores the data and provides access to the
+ * properties of an unstructured mesh. It contains information such as mesh
+ * points, cell volumes, cell centres, face areas, face centres, face owner
+ * cells, face neighbour cells, and boundary information. It also provides
+ * methods to retrieve the number of cells, internal faces, boundary faces,
+ * boundaries, and faces in the mesh. Additionally, it includes a boundary mesh
+ * and a stencil data base. The executor is used to run parallel operations on
+ * the mesh.
  */
 class UnstructuredMesh
 {
