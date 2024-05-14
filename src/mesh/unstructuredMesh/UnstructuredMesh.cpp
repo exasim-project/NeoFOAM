@@ -22,29 +22,17 @@ UnstructuredMesh::UnstructuredMesh(
     localIdx nFaces,
     BoundaryMesh boundaryMesh
 )
-    : exec_(points.exec()),
-      points_(points),
-      cellVolumes_(cellVolumes),
-      cellCentres_(cellCentres),
-      faceAreas_(faceAreas),
-      faceCentres_(faceCentres),
-      magFaceAreas_(magFaceAreas),
-      faceOwner_(faceOwner),
-      faceNeighbour_(faceNeighbour),
-      nCells_(nCells),
-      nInternalFaces_(nInternalFaces),
-      nBoundaryFaces_(nBoundaryFaces),
-      nBoundaries_(nBoundaries),
-      nFaces_(nFaces),
-      boundaryMesh_(boundaryMesh),
+    : exec_(points.exec()), points_(points), cellVolumes_(cellVolumes),
+      cellCentres_(cellCentres), faceAreas_(faceAreas),
+      faceCentres_(faceCentres), magFaceAreas_(magFaceAreas),
+      faceOwner_(faceOwner), faceNeighbour_(faceNeighbour), nCells_(nCells),
+      nInternalFaces_(nInternalFaces), nBoundaryFaces_(nBoundaryFaces),
+      nBoundaries_(nBoundaries), nFaces_(nFaces), boundaryMesh_(boundaryMesh),
       stencilDataBase_() {
 
       };
 
-const vectorField& UnstructuredMesh::points() const
-{
-    return points_;
-}
+const vectorField& UnstructuredMesh::points() const { return points_; }
 
 
 const scalarField& UnstructuredMesh::cellVolumes() const
@@ -62,50 +50,29 @@ const vectorField& UnstructuredMesh::faceCentres() const
     return faceCentres_;
 }
 
-const vectorField& UnstructuredMesh::faceAreas() const
-{
-    return faceAreas_;
-}
+const vectorField& UnstructuredMesh::faceAreas() const { return faceAreas_; }
 
 const scalarField& UnstructuredMesh::magFaceAreas() const
 {
     return magFaceAreas_;
 }
 
-const labelField& UnstructuredMesh::faceOwner() const
-{
-    return faceOwner_;
-}
+const labelField& UnstructuredMesh::faceOwner() const { return faceOwner_; }
 
 const labelField& UnstructuredMesh::faceNeighbour() const
 {
     return faceNeighbour_;
 }
 
-localIdx UnstructuredMesh::nCells() const
-{
-    return nCells_;
-}
+localIdx UnstructuredMesh::nCells() const { return nCells_; }
 
-localIdx UnstructuredMesh::nInternalFaces() const
-{
-    return nInternalFaces_;
-}
+localIdx UnstructuredMesh::nInternalFaces() const { return nInternalFaces_; }
 
-localIdx UnstructuredMesh::nBoundaryFaces() const
-{
-    return nBoundaryFaces_;
-}
+localIdx UnstructuredMesh::nBoundaryFaces() const { return nBoundaryFaces_; }
 
-localIdx UnstructuredMesh::nBoundaries() const
-{
-    return nBoundaries_;
-}
+localIdx UnstructuredMesh::nBoundaries() const { return nBoundaries_; }
 
-localIdx UnstructuredMesh::nFaces() const
-{
-    return nFaces_;
-}
+localIdx UnstructuredMesh::nFaces() const { return nFaces_; }
 
 const BoundaryMesh& UnstructuredMesh::boundaryMesh() const
 {
@@ -117,9 +84,6 @@ StencilDataBase& UnstructuredMesh::stencilDB() const
     return stencilDataBase_;
 }
 
-const Executor& UnstructuredMesh::exec() const
-{
-    return exec_;
-}
+const Executor& UnstructuredMesh::exec() const { return exec_; }
 
 } // namespace NeoFOAM

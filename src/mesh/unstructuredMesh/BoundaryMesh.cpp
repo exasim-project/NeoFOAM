@@ -19,23 +19,12 @@ BoundaryMesh::BoundaryMesh(
     scalarField deltaCoeffs,
     std::vector<localIdx> offset
 )
-    : exec_(exec),
-      faceCells_(faceCells),
-      Cf_(cf),
-      Cn_(cn),
-      Sf_(sf),
-      magSf_(magSf),
-      nf_(nf),
-      delta_(delta),
-      weights_(weights),
-      deltaCoeffs_(deltaCoeffs),
-      offset_(offset) {};
+    : exec_(exec), faceCells_(faceCells), Cf_(cf), Cn_(cn), Sf_(sf),
+      magSf_(magSf), nf_(nf), delta_(delta), weights_(weights),
+      deltaCoeffs_(deltaCoeffs), offset_(offset) {};
 
 // Accessor methods
-const labelField& BoundaryMesh::faceCells() const
-{
-    return faceCells_;
-}
+const labelField& BoundaryMesh::faceCells() const { return faceCells_; }
 
 std::span<const label> BoundaryMesh::faceCells(const localIdx i) const
 {
@@ -44,10 +33,7 @@ std::span<const label> BoundaryMesh::faceCells(const localIdx i) const
     return faceCells_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::cf() const
-{
-    return Cf_;
-}
+const vectorField& BoundaryMesh::cf() const { return Cf_; }
 
 std::span<const Vector> BoundaryMesh::cf(const localIdx i) const
 {
@@ -56,10 +42,7 @@ std::span<const Vector> BoundaryMesh::cf(const localIdx i) const
     return Cf_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::cn() const
-{
-    return Cn_;
-}
+const vectorField& BoundaryMesh::cn() const { return Cn_; }
 
 std::span<const Vector> BoundaryMesh::cn(const localIdx i) const
 {
@@ -68,10 +51,7 @@ std::span<const Vector> BoundaryMesh::cn(const localIdx i) const
     return Cn_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::sf() const
-{
-    return Sf_;
-}
+const vectorField& BoundaryMesh::sf() const { return Sf_; }
 
 std::span<const Vector> BoundaryMesh::sf(const localIdx i) const
 {
@@ -80,10 +60,7 @@ std::span<const Vector> BoundaryMesh::sf(const localIdx i) const
     return Sf_.field().subspan(start, end - start);
 }
 
-const scalarField& BoundaryMesh::magSf() const
-{
-    return magSf_;
-}
+const scalarField& BoundaryMesh::magSf() const { return magSf_; }
 
 std::span<const scalar> BoundaryMesh::magSf(const localIdx i) const
 {
@@ -92,10 +69,7 @@ std::span<const scalar> BoundaryMesh::magSf(const localIdx i) const
     return magSf_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::nf() const
-{
-    return nf_;
-}
+const vectorField& BoundaryMesh::nf() const { return nf_; }
 
 std::span<const Vector> BoundaryMesh::nf(const localIdx i) const
 {
@@ -104,10 +78,7 @@ std::span<const Vector> BoundaryMesh::nf(const localIdx i) const
     return nf_.field().subspan(start, end - start);
 }
 
-const vectorField& BoundaryMesh::delta() const
-{
-    return delta_;
-}
+const vectorField& BoundaryMesh::delta() const { return delta_; }
 
 std::span<const Vector> BoundaryMesh::delta(const localIdx i) const
 {
@@ -116,10 +87,7 @@ std::span<const Vector> BoundaryMesh::delta(const localIdx i) const
     return delta_.field().subspan(start, end - start);
 }
 
-const scalarField& BoundaryMesh::weights() const
-{
-    return weights_;
-}
+const scalarField& BoundaryMesh::weights() const { return weights_; }
 
 std::span<const scalar> BoundaryMesh::weights(const localIdx i) const
 {
@@ -128,10 +96,7 @@ std::span<const scalar> BoundaryMesh::weights(const localIdx i) const
     return weights_.field().subspan(start, end - start);
 }
 
-const scalarField& BoundaryMesh::deltaCoeffs() const
-{
-    return deltaCoeffs_;
-}
+const scalarField& BoundaryMesh::deltaCoeffs() const { return deltaCoeffs_; }
 
 std::span<const scalar> BoundaryMesh::deltaCoeffs(const localIdx i) const
 {
@@ -140,10 +105,7 @@ std::span<const scalar> BoundaryMesh::deltaCoeffs(const localIdx i) const
     return deltaCoeffs_.field().subspan(start, end - start);
 }
 
-const std::vector<localIdx>& BoundaryMesh::offset() const
-{
-    return offset_;
-}
+const std::vector<localIdx>& BoundaryMesh::offset() const { return offset_; }
 
 
 } // namespace NeoFOAM

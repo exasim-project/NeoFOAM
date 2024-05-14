@@ -8,7 +8,8 @@ std::any& NeoFOAM::StencilDataBase::operator[](const std::string& key)
     return stencilDB_.at(key);
 }
 
-const std::any& NeoFOAM::StencilDataBase::operator[](const std::string& key) const
+const std::any& NeoFOAM::StencilDataBase::operator[](const std::string& key
+) const
 {
     return stencilDB_.at(key);
 }
