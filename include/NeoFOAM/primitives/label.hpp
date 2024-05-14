@@ -5,7 +5,7 @@
 #include <cstdint>
 namespace NeoFOAM
 {
-typedef int32_t label;
-typedef uint32_t localIdx;
-typedef uint64_t globalIdx;
+using label = int32_t;
+using localIdx = uint32_t;
+using globalIdx = uint64_t;
 }
