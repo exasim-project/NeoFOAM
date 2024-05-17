@@ -46,9 +46,11 @@ public:
     {
         void* ptr = nullptr;
         auto size = rhs.size_;
-        std::visit([this, &ptr, size](const auto& exec)
-                   { ptr = exec.alloc(size * sizeof(T)); },
-                   exec_);
+        std::visit(
+            [this, &ptr, size](const auto& exec)
+            { ptr = exec.alloc(size * sizeof(T)); },
+            exec_
+        );
         data_ = static_cast<T*>(ptr);
         setField(*this, rhs.field());
     };
@@ -91,11 +93,11 @@ public:
                 exit(1);
             }
 
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                gpuView(data_, size_);
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
-                result.data(), size_
-            );
+            Kokkos::
+                View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
+                    gpuView(data_, size_);
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
+                resultView(result.data(), size_);
             Kokkos::deep_copy(resultView, gpuView);
         }
         return result;

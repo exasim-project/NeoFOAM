@@ -11,15 +11,16 @@ namespace NeoFOAM
 struct SumKernel
 {
     template<typename T>
-    void operator()(const GPUExecutor& exec, const Field<T>& field, T& sum) const
+    void
+    operator()(const GPUExecutor& exec, const Field<T>& field, T& sum) const
     {
         using executor = typename GPUExecutor::exec;
         auto field_f = field.field();
         auto end = field.size();
         Kokkos::parallel_reduce(
-            "sum", Kokkos::RangePolicy<executor>(0, end), KOKKOS_LAMBDA(const int i, T& lsum) {
-                lsum += field_f[i];
-            },
+            "sum",
+            Kokkos::RangePolicy<executor>(0, end),
+            KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
             sum
         );
     }
@@ -31,9 +32,9 @@ struct SumKernel
         auto field_f = field.field();
         auto end = field.size();
         Kokkos::parallel_reduce(
-            "sum", Kokkos::RangePolicy<executor>(0, end), KOKKOS_LAMBDA(const int i, T& lsum) {
-                lsum += field_f[i];
-            },
+            "sum",
+            Kokkos::RangePolicy<executor>(0, end),
+            KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
             sum
         );
     }
@@ -45,9 +46,9 @@ struct SumKernel
         auto field_f = field.field();
         auto end = field.size();
         Kokkos::parallel_reduce(
-            "sum", Kokkos::RangePolicy<executor>(0, end), KOKKOS_LAMBDA(const int i, T& lsum) {
-                lsum += field_f[i];
-            },
+            "sum",
+            Kokkos::RangePolicy<executor>(0, end),
+            KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
             sum
         );
     }
@@ -59,9 +60,9 @@ T sum(const Field<T>& field)
 {
     T sumValue {};
     SumKernel kernel {};
-    std::visit([&](const auto& exec)
-               { kernel(exec, field, sumValue); },
-               field.exec());
+    std::visit(
+        [&](const auto& exec) { kernel(exec, field, sumValue); }, field.exec()
+    );
     return sumValue;
 };
 
@@ -70,9 +71,9 @@ scalar sum(const Field<scalar>& field)
 {
     scalar sumValue = 0;
     SumKernel kernel {};
-    std::visit([&](const auto& exec)
-               { kernel(exec, field, sumValue); },
-               field.exec());
+    std::visit(
+        [&](const auto& exec) { kernel(exec, field, sumValue); }, field.exec()
+    );
     return sumValue;
 };
 
