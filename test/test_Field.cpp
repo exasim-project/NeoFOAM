@@ -22,9 +22,7 @@ TEST_CASE("Field Operations")
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
-    std::string execName = std::visit([](auto e)
-                                      { return e.print(); },
-                                      exec);
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
     SECTION("Field_" + execName)
     {
@@ -35,15 +33,15 @@ TEST_CASE("Field Operations")
 
         REQUIRE(compare(a, 5.0));
 
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N + 2);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size + 2);
         NeoFOAM::fill(b, 10.0);
 
         a = b;
-        REQUIRE(a.field().size() == N + 2);
+        REQUIRE(a.field().size() == size + 2);
         REQUIRE(compare(a, b));
 
         add(a, b);
-        REQUIRE(a.field().size() == N + 2);
+        REQUIRE(a.field().size() == size + 2);
         REQUIRE(compare(a, 20.0));
 
         a = a + b;
@@ -114,9 +112,7 @@ TEST_CASE("Boundaries")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e)
-                                      { return e.print(); },
-                                      exec);
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     SECTION("domainField_" + execName)
     {
 
@@ -143,43 +139,4 @@ TEST_CASE("Boundaries")
         NeoFOAM::fill(bCs.valueFraction(), 2.0);
         REQUIRE(compare(bCs.valueFraction(), 2.0));
     }
-
-    // SECTION("fvccBoundaryField")
-    // {
-
-    //     std::vector<std::unique_ptr<NeoFOAM::fvccBoundaryField<double>>> bcs;
-    //     bcs.push_back(std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(0, 10, 1.0));
-    //     bcs.push_back(std::make_unique<NeoFOAM::fvccScalarFixedValueBoundaryField>(10, 20, 2.0));
-
-    //     NeoFOAM::fvccVolField<NeoFOAM::scalar> volField(
-    //         1000,
-    //         20,
-    //         2,
-    //         std::move(bcs),
-    //         exec
-    //     );
-
-    //     NeoFOAM::boundaryFields<NeoFOAM::scalar>& bField = volField.boundaryField();
-
-    //     auto& volBCs = volField.boundaryConditions();
-
-    //     REQUIRE(volBCs.size() == 2.0);
-
-    //     volField.correctBoundaryConditions();
-
-    //     auto& bIn = bField.value();
-    //     auto& bRefIn = bField.refValue();
-
-    //     for (int i = 0; i < 10; i++)
-    //     {
-    //         REQUIRE(bIn.field()[i] == 1.0);
-    //         REQUIRE(bRefIn.field()[i] == 1.0);
-    //     }
-
-    //     for (int i = 10; i < 20; i++)
-    //     {
-    //         REQUIRE(bIn.field()[i] == 2.0);
-    //         REQUIRE(bRefIn.field()[i] == 2.0);
-    //     }
-    // }
 }

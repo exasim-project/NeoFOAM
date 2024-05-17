@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2024 NeoFOAM authors
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -12,21 +12,19 @@
 
 namespace NeoFOAM
 {
-// enum class boundaryType used in a kokkos view to categorize boundary
-// types
 
 
+/**
+* @class boundaryFields
+* @brief Represents the boundary fields for a computational domain.
+*
+* The boundaryFields class stores the boundary conditions and related information for a computational domain.
+* It provides access to the computed values, reference values, value fractions, reference gradients, boundary types,
+* offsets, and the number of boundaries and boundary faces.
+*/
 template<typename T>
 class BoundaryFields
 {
-    /**
-     * @class boundaryFields
-     * @brief Represents the boundary fields for a computational domain.
-     *
-     * The boundaryFields class stores the boundary conditions and related information for a computational domain.
-     * It provides access to the computed values, reference values, value fractions, reference gradients, boundary types,
-     * offsets, and the number of boundaries and boundary faces.
-     */
 
 public:
 
@@ -71,6 +69,8 @@ public:
         return value_;
     }
 
+   /** @copydoc const NeoFOAM::Field<T>& value() const
+   */
     NeoFOAM::Field<T>& value()
     {
         return value_;

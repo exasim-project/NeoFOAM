@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2024 NeoFOAM authors
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -13,17 +13,17 @@
 namespace NeoFOAM
 {
 
+/**
+* @class domainField
+* @brief Represents the domain fields for a computational domain.
+*
+* The domainField class stores the internal fields and boundary information for a computational domain.
+* It provides access to the computed values, reference values, value fractions, reference gradients, boundary types,
+* offsets, and the number of boundaries and boundary faces.
+*/
 template<typename T>
 class DomainField
 {
-    /**
-     * @class domainField
-     * @brief Represents the domain fields for a computational domain.
-     *
-     * The domainField class stores the internal fields and boundary information for a computational domain.
-     * It provides access to the computed values, reference values, value fractions, reference gradients, boundary types,
-     * offsets, and the number of boundaries and boundary faces.
-     */
 public:
 
     DomainField(const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
