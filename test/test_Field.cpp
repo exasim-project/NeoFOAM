@@ -13,7 +13,7 @@
 #include "NeoFOAM/fields/BoundaryFields.hpp"
 #include "NeoFOAM/fields/DomainField.hpp"
 
-#include "NeoFOAM/fields/comparisions/FieldComparision.hpp"
+#include "NeoFOAM/fields/comparisons/FieldComparison.hpp"
 
 TEST_CASE("Field Operations")
 {
