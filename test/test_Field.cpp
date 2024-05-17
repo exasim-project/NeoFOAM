@@ -10,10 +10,10 @@
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/fields/FieldOperations.hpp"
 
-#include "NeoFOAM/fields/boundaryFields.hpp"
-#include "NeoFOAM/fields/domainField.hpp"
+#include "NeoFOAM/fields/BoundaryFields.hpp"
+#include "NeoFOAM/fields/DomainField.hpp"
 
-#include "NeoFOAM/fields/comparisions/fieldComparision.hpp"
+#include "NeoFOAM/fields/comparisions/FieldComparision.hpp"
 
 TEST_CASE("Field Operations")
 {
