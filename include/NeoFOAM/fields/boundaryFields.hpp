@@ -30,13 +30,6 @@ class BoundaryFields
 
 public:
 
-    //
-    // enum class boundaryTypes: int
-    // {
-    //     Dirichlet,
-    //     Neumann,
-    //     Robin
-    // };
     /**
      * @brief Copy constructor.
      * @param rhs The boundaryFields object to be copied.
