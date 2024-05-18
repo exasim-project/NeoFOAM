@@ -13,7 +13,6 @@ target_sources(
   PRIVATE
     "core/Time.cpp"
     "core/Dictionary.cpp"
-    "core/Error.cpp"
     "core/Kokkos.cpp"
     "executor/OMPExecutor.cpp"
     "executor/GPUExecutor.cpp"
