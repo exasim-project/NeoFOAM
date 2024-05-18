@@ -2,36 +2,223 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <exception>
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <source_location>
 
+#include "Info.hpp"
+
+#ifdef NF_DEBUG_MESSAGING
 #include "cpptrace/cpptrace.hpp"
+#endif
 
-void test_error_exit() { cpptrace::generate_trace().print(); };
+namespace NeoFOAM
+{
 
+/**
+ * @brief Custom exception class for NeoFOAM.
+ *
+ * This class is derived from std::exception and provides a custom exception
+ * type for NeoFOAM. It stores an error message and overrides the what()
+ * function to return the error message.
+ */
+class NeoFOAMException : public std::exception
+{
+public:
+
+    /**
+     * @brief Constructs a NeoFOAMException object with the given error message.
+     * @param message The error message associated with the exception.
+     */
+    explicit NeoFOAMException(const std::string& message) : message_(message) {}
+
+    /**
+     * @brief Returns the error message associated with the exception.
+     * @return const char* The error message.
+     */
+    const char* what() const noexcept override { return message_.c_str(); }
+
+private:
+
+    std::string
+        message_; /**< The error message associated with the exception. */
+};
+
+} // namespace NeoFOAM
+
+#ifdef NF_DEBUG_MESSAGING
+/**
+ * @def NF_ERROR_MESSAGE
+ * @brief Macro for generating an error message with debug information.
+ *
+ * This macro generates an error message with the specified message, current
+ * file name, current line number, and debug trace information (if available).
+ *
+ * @param message The error message to be included in the generated message.
+ * @return std::string The generated error message.
+ */
+#define NF_ERROR_MESSAGE(message)                                              \
+    "\nError: " << message                                                     \
+                << "\nFile: " << std::source_location::current().file_name()   \
+                << "\nLine: " << std::source_location::current().line()        \
+                << "\n"                                                        \
+                << cpptrace::generate_trace().to_string() << "\n"
+#else
+/**
+ * @def NF_ERROR_MESSAGE
+ * @brief Macro for generating an error message without debug information.
+ *
+ * This macro generates an error message with the specified message, current
+ * file name, and current line number.
+ *
+ * @param message The error message to be included in the generated message.
+ * @return std::string The generated error message.
+ */
+#define NF_ERROR_MESSAGE(message)                                              \
+    "Error: " << message                                                       \
+              << "\nFile: " << std::source_location::current().file_name()     \
+              << "\nLine: " << std::source_location::current().line() << "\n"
+#endif
+
+/**
+ * @def NF_ERROR_EXIT
+ * @brief Macro for printing an error message and aborting the program.
+ *
+ * This macro prints the specified error message to the standard error stream,
+ * including the current file name and current line number, and then calls
+ * std::abort() to terminate the program.
+ *
+ * @param message The error message to be printed.
+ */
 #define NF_ERROR_EXIT(message)                                                 \
     do                                                                         \
     {                                                                          \
-        std::cerr << "Error: " << message << "File: " << __FILE__              \
-                  << "Line: " << __LINE__ << "Trace:"                          \
-            < < < < std::endl;                                                 \
-        cpptrace::generate_trace().print();                                    \
+        std::cerr << NF_ERROR_MESSAGE(message);                                \
         std::abort();                                                          \
     }                                                                          \
     while (false)
 
+/**
+ * @def NF_THROW
+ * @brief Macro for throwing a NeoFOAMException with an error message.
+ *
+ * This macro constructs a std::stringstream to concatenate the specified error
+ * message with the current file name and current line number, and then throws a
+ * NeoFOAMException with the resulting string as the error message.
+ *
+ * @param message The error message to be included in the exception.
+ */
+#define NF_THROW(message)                                                      \
+    do                                                                         \
+    {                                                                          \
+        std::stringstream ss;                                                  \
+        ss << NF_ERROR_MESSAGE(message);                                       \
+        throw NeoFOAM::NeoFOAMException(ss.str());                             \
+    }                                                                          \
+    while (false)
+
+/**
+ * @def NF_ASSERT
+ * @brief Macro for asserting a condition and printing an error message if the
+ * condition is false.
+ *
+ * This macro checks the specified condition and, if it evaluates to false,
+ * prints an error message to the standard error stream, including the current
+ * file name and current line number, and then calls std::abort() to terminate
+ * the program.
+ *
+ * @param condition The condition to be checked.
+ * @param message The error message to be printed if the condition is false.
+ */
 #define NF_ASSERT(condition, message)                                          \
     do                                                                         \
     {                                                                          \
-        if (!(condition))                                                      \
+        if (!(condition)) [[unlikely]]                                         \
         {                                                                      \
-            NF_ERROR_EXIT("Assertion `" #condition "` failed." << message);    \
+            NF_ERROR_EXIT(                                                     \
+                "Assertion `" #condition "` failed.\n       " << message       \
+            );                                                                 \
         }                                                                      \
     }                                                                          \
     while (false)
 
-#ifndef NF_DEBUG
-#define NF_DEBUG_ASSERT(condition) ASSERT(condition)
+/**
+ * @def NF_ASSERT_THROW
+ * @brief Macro for asserting a condition and throwing a NeoFOAMException if the
+ * condition is false.
+ *
+ * This macro checks the specified condition and, if it evaluates to false,
+ * constructs a std::stringstream to concatenate the specified error message
+ * with the current file name and current line number, and then throws a
+ * NeoFOAMException with the resulting string as the error message.
+ *
+ * @param condition The condition to be checked.
+ * @param message The error message to be included in the exception if the
+ * condition is false.
+ */
+#define NF_ASSERT_THROW(condition, message)                                    \
+    do                                                                         \
+    {                                                                          \
+        if (!(condition)) [[unlikely]]                                         \
+        {                                                                      \
+            NF_THROW(                                                          \
+                "Assertion `" #condition "` failed.\n       " << message       \
+            );                                                                 \
+        }                                                                      \
+    }                                                                          \
+    while (false)
+
+#ifdef NF_DEBUG
+/**
+ * @def NF_DEBUG_ASSERT
+ * @brief Macro for asserting a condition and printing an error message if the
+ * condition is false (only in debug mode).
+ *
+ * This macro is equivalent to NF_ASSERT in debug mode.
+ *
+ * @param condition The condition to be checked.
+ * @param message The error message to be printed if the condition is false.
+ */
+#define NF_DEBUG_ASSERT(condition, message) ASSERT(condition, message)
+
+/**
+ * @def NF_DEBUG_ASSERT_THROW
+ * @brief Macro for asserting a condition and throwing a NeoFOAMException if the
+ * condition is false (only in debug mode).
+ *
+ * This macro is equivalent to NF_ASSERT_THROW in debug mode.
+ *
+ * @param condition The condition to be checked.
+ * @param message The error message to be included in the exception if the
+ * condition is false.
+ */
+#define NF_DEBUG_ASSERT_THROW(condition, message)                              \
+    NF_ASSERT_THROW(condition, message)
 #else
-#define NF_DEBUG_ASSERT(condition) ((void)0)
+/**
+ * @def NF_DEBUG_ASSERT
+ * @brief Macro for asserting a condition and printing an error message if the
+ * condition is false (only in debug mode).
+ *
+ * This macro does nothing in release mode.
+ *
+ * @param condition The condition to be checked.
+ * @param message The error message to be printed if the condition is false.
+ */
+#define NF_DEBUG_ASSERT(condition, message) ((void)0)
+
+/**
+ * @def NF_DEBUG_ASSERT_THROW
+ * @brief Macro for asserting a condition and throwing a NeoFOAMException if the
+ * condition is false (only in debug mode).
+ *
+ * This macro does nothing in release mode.
+ *
+ * @param condition The condition to be checked.
+ * @param message The error message to be included in the exception if the
+ * condition is false.
+ */
+#define NF_DEBUG_ASSERT_THROW(condition, message) ((void)0)
 #endif

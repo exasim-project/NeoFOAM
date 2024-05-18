@@ -7,21 +7,10 @@
   },
   "configurePresets": [
     {
-      "name": "devel",
-      "hidden": true,
-      "cacheVariables": {
-        "NEOFOAM_DEVEL_TOOLS": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
-    },
-    {
-      "name": "default",
+      "name": "kokkos_default",
       "hidden": true,
       "binaryDir": "${sourceDir}/build/Release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
         "Kokkos_ENABLE_SERIAL": {
           "type": "BOOL",
           "value": "ON"
@@ -38,9 +27,28 @@
       "generator": "Ninja"
     },
     {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "devel",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "NEOFOAM_DEVEL_TOOLS": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      }
+    },
+    {
       "name": "test",
       "hidden": true,
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "NEOFOAM_BUILD_TESTS": {
           "type": "BOOL",
           "value": "ON"
@@ -63,7 +71,7 @@
     {
       "name": "ninja-kokkos-cuda",
       "inherits": [
-        "default",
+        "kokkos_default",
         "ninja",
         "devel"
       ],
@@ -84,7 +92,7 @@
     {
       "name": "ninja-cpuonly-test",
       "inherits": [
-        "default",
+        "kokkos_default",
         "ninja",
         "test",
         "devel"
@@ -96,7 +104,7 @@
     {
       "name": "ninja-cpuonly-all",
       "inherits": [
-        "default",
+        "kokkos_default",
         "ninja",
         "all",
         "devel"
