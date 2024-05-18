@@ -7,6 +7,13 @@ set(KOKKOS_CHECKOUT_VERSION
 
 find_package(Kokkos ${KOKKOS_CHECKOUT_VERSION} QUIET)
 
+include(FetchContent)
+FetchContent_Declare(
+  cpptrace
+  GIT_REPOSITORY "https://github.com/jeremy-rifkin/cpptrace.git"
+  GIT_TAG "v0.5.4")
+FetchContent_MakeAvailable(cpptrace)
+
 if(NOT ${Kokkos_FOUND})
   include(FetchContent)
 
