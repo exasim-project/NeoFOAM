@@ -5,26 +5,33 @@
 #include <iostream>
 #include <string>
 
-namespace NeoFOAM
-{
+#include "cpptrace/cpptrace.hpp"
 
-class Error
-{
-public:
+void test_error_exit() { cpptrace::generate_trace().print(); };
 
-    /**
-     * @brief Exit the program with an error message.
-     *
-     * @param errNo The error number to exit with.
-     * @param location Default argument for the location of the error.
-     */
-    void exit(const int errNo = 1)
-    {
-        std::cout << "Error: " << errNo << '\n';
-        std::exit(errNo);
-    };
+#define NF_ERROR_EXIT(message)                                                 \
+    do                                                                         \
+    {                                                                          \
+        std::cerr << "Error: " << message << "File: " << __FILE__              \
+                  << "Line: " << __LINE__ << "Trace:"                          \
+            < < < < std::endl;                                                 \
+        cpptrace::generate_trace().print();                                    \
+        std::abort();                                                          \
+    }                                                                          \
+    while (false)
 
-    Error(std::string) {};
-};
+#define NF_ASSERT(condition, message)                                          \
+    do                                                                         \
+    {                                                                          \
+        if (!(condition))                                                      \
+        {                                                                      \
+            NF_ERROR_EXIT("Assertion `" #condition "` failed." << message);    \
+        }                                                                      \
+    }                                                                          \
+    while (false)
 
-} // namespace NeoFOAM
+#ifndef NF_DEBUG
+#define NF_DEBUG_ASSERT(condition) ASSERT(condition)
+#else
+#define NF_DEBUG_ASSERT(condition) ((void)0)
+#endif
