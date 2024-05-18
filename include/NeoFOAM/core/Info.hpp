@@ -26,8 +26,7 @@
  * @param message The debug message to be printed.
  */
 #ifdef NF_DEBUG_MESSAGING
-#define NF_DINFO(message)                                                      \
-    NF_INFO(message)                                                           \
+#define NF_DINFO(message) NF_INFO(message)
 #else
 #define NF_DINFO(message) ((void)0)
 #endif
