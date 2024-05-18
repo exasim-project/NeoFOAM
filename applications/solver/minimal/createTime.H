@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-Info << "Create time\n" << endl;
+NF_INFO("Create time");
 
 NeoFOAM::Time runTime(NeoFOAM::Time::controlDictName, args);
