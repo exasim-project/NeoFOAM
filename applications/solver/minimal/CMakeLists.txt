@@ -12,4 +12,4 @@ endif()
 
 add_executable(minimalFoam "minimal.cpp")
 
-target_link_libraries(minimalFoam PUBLIC NeoFOAM)
+target_link_libraries(minimalFoam PUBLIC NeoFOAM cpptrace::cpptrace)
