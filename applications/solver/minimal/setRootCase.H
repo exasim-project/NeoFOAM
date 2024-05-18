@@ -7,7 +7,7 @@
 NeoFOAM::ArgList args(argc, argv);
 if (!args.checkRootCase())
 {
-    NeoFOAM::Error("--> FOAM FATAL ERROR: ").exit();
+    NF_ERROR_EXIT("--> FOAM FATAL ERROR: ");
 }
 
 // User can also perform checks on otherwise optional arguments.

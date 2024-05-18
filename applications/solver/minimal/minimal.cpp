@@ -10,16 +10,16 @@ int main(int argc, char* argv[])
 #include "setRootCase.H"
 #include "createTime.H"
 
-    Info << "\nStarting time loop\n" << endl;
+    NF_INFO("Starting time loop");
 
     while (runTime.loop())
     {
-        Info << "Time = " << runTime.timeName() << nl << endl;
+        NF_INFO("Time = " << runTime.timeName() << nl);
     }
 
-    runTime.printExecutionTime(Info);
+    runTime.printExecutionTime(std::cout);
 
-    Info << "End\n" << endl;
+    NF_INFO("End");
 
     return 0;
 }
