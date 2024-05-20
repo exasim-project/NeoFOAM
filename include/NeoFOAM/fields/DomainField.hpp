@@ -3,26 +3,29 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
+
 #include <iostream>
+
 #include "NeoFOAM/primitives/label.hpp"
 #include "NeoFOAM/primitives/scalar.hpp"
 #include "NeoFOAM/fields/BoundaryFields.hpp"
-
 #include "NeoFOAM/core/executor/executor.hpp"
 
 namespace NeoFOAM
 {
 
 /**
- * @class domainField
+ * @class DomainField
  * @brief Represents the domain fields for a computational domain.
  *
- * The domainField class stores the internal fields and boundary information for
+ * The DomainField class stores the internal fields and boundary information for
  * a computational domain. It provides access to the computed values, reference
  * values, value fractions, reference gradients, boundary types, offsets, and
  * the number of boundaries and boundary faces.
+ *
+ * @tparam ValueType The type of the underlying field values
  */
-template<typename T>
+template<typename ValueType>
 class DomainField
 {
 public:
@@ -35,20 +38,20 @@ public:
     {}
 
 
-    DomainField(const ::NeoFOAM::DomainField<T>& rhs)
+    DomainField(const ::NeoFOAM::DomainField<ValueType>& rhs)
         : exec_(rhs.exec_), internalField_(rhs.internalField_),
           boundaryFields_(rhs.boundaryFields_)
     {}
 
 
-    DomainField(DomainField<T>&& rhs)
+    DomainField(DomainField<ValueType>&& rhs)
         : exec_(std::move(rhs.exec_)),
           internalField_(std::move(rhs.internalField_)),
           boundaryFields_(std::move(rhs.boundaryFields_))
     {}
 
 
-    DomainField<T>& operator=(const ::NeoFOAM::DomainField<T>& rhs)
+    DomainField<ValueType>& operator=(const ::NeoFOAM::DomainField<ValueType>& rhs)
     {
         internalField_ = rhs.internalField_;
         boundaryFields_ = rhs.boundaryFields_;
@@ -56,7 +59,7 @@ public:
     }
 
 
-    DomainField<T>& operator=(DomainField<T>&& rhs)
+    DomainField<ValueType>& operator=(DomainField<ValueType>&& rhs)
     {
         internalField_ = std::move(rhs.internalField_);
         boundaryFields_ = std::move(rhs.boundaryFields_);
@@ -64,22 +67,22 @@ public:
     }
 
 
-    const Field<T>& internalField() const { return internalField_; }
+    const Field<ValueType>& internalField() const { return internalField_; }
 
 
-    Field<T>& internalField() { return internalField_; }
+    Field<ValueType>& internalField() { return internalField_; }
 
 
-    const BoundaryFields<T>& boundaryField() const { return boundaryFields_; }
+    const BoundaryFields<ValueType>& boundaryField() const { return boundaryFields_; }
 
 
-    BoundaryFields<T>& boundaryField() { return boundaryFields_; }
+    BoundaryFields<ValueType>& boundaryField() { return boundaryFields_; }
 
 private:
 
     Executor exec_;
-    Field<T> internalField_;
-    BoundaryFields<T> boundaryFields_;
+    Field<ValueType> internalField_;
+    BoundaryFields<ValueType> boundaryFields_;
 };
 
 
