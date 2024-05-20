@@ -29,27 +29,21 @@ public:
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
      * */
-    Field(const Executor& exec, size_t size)
-        : size_(size), data_(nullptr), exec_(exec)
+    Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& exec)
-            { ptr = exec.alloc(size * sizeof(T)); },
-            exec_
+            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
         );
         data_ = static_cast<T*>(ptr);
     };
 
-    Field(const Field<T>& rhs)
-        : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    Field(const Field<T>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
     {
         void* ptr = nullptr;
         auto size = rhs.size_;
         std::visit(
-            [this, &ptr, size](const auto& exec)
-            { ptr = exec.alloc(size * sizeof(T)); },
-            exec_
+            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
         );
         data_ = static_cast<T*>(ptr);
         setField(*this, rhs.field());
@@ -88,17 +82,12 @@ public:
         }
         else
         {
-            if (result.size() != size_)
-            {
-                // TODO raise an exeption here, once we implemented exception handling.
-                exit(1);
-            }
-
-            Kokkos::
-                View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                    gpuView(data_, size_);
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-                resultView(result.data(), size_);
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+                data_, size_
+            );
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
+                result.data(), size_
+            );
             Kokkos::deep_copy(resultView, gpuView);
         }
         return result;
@@ -114,22 +103,23 @@ public:
      */
     void copyToHost(Field<T>& result)
     {
+        if (result.size() != size_)
+        {
+            exit(1);
+        }
+
         if (!std::holds_alternative<GPUExecutor>(exec_))
         {
             result = *this;
         }
         else
         {
-            if (result.size() != size_)
-            {
-                exit(1);
-            }
-
-            Kokkos::
-                View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                    gpuView(data_, size_);
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-                resultView(result.data(), size_);
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+                data_, size_
+            );
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
+                result.data(), size_
+            );
             Kokkos::deep_copy(resultView, gpuView);
         }
     }
@@ -262,8 +252,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& exec)
-            { ptr = exec.realloc(data_, size * sizeof(T)); },
+            [this, &ptr, size](const auto& exec) { ptr = exec.realloc(data_, size * sizeof(T)); },
             exec_
         );
         data_ = static_cast<T*>(ptr);
@@ -305,17 +294,13 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> field() const
-    {
-        return std::span<T>(data_, size_);
-    }
+    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
 
 private:
 
-    size_t size_; //!< Size of the field.
-    T* data_;     //!< Pointer to the field data.
-    const Executor
-        exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
+    size_t size_;         //!< Size of the field.
+    T* data_;             //!< Pointer to the field data.
+    const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
 
