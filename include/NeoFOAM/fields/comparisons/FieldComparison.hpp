@@ -23,7 +23,7 @@ bool equal(Field<T>& field, T value)
 };
 
 template<typename T>
-bool compare(const Field<T>& field, const Field<T>& field2)
+bool equal(const Field<T>& field, const Field<T>& field2)
 {
     auto hostSpan = field.copyToHost().field();
     auto hostSpan2 = field2.copyToHost().field();
@@ -45,7 +45,7 @@ bool compare(const Field<T>& field, const Field<T>& field2)
 };
 
 template<typename T>
-bool compare(const Field<T>& field, std::span<T> span2)
+bool equal(const Field<T>& field, std::span<T> span2)
 {
     auto hostSpan = field.copyToHost().field();
 

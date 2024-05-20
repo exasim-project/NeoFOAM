@@ -31,34 +31,34 @@ TEST_CASE("Field Operations")
         auto sA = a.field();
         NeoFOAM::fill(a, 5.0);
 
-        REQUIRE(compare(a, 5.0));
+        REQUIRE(equal(a, 5.0));
 
         NeoFOAM::Field<NeoFOAM::scalar> b(exec, size + 2);
         NeoFOAM::fill(b, 10.0);
 
         a = b;
         REQUIRE(a.field().size() == size + 2);
-        REQUIRE(compare(a, b));
+        REQUIRE(equal(a, b));
 
         add(a, b);
         REQUIRE(a.field().size() == size + 2);
-        REQUIRE(compare(a, 20.0));
+        REQUIRE(equal(a, 20.0));
 
         a = a + b;
-        REQUIRE(compare(a, 30.0));
+        REQUIRE(equal(a, 30.0));
 
         a = a - b;
-        REQUIRE(compare(a, 20.0));
+        REQUIRE(equal(a, 20.0));
 
         a = a * 0.1;
-        REQUIRE(compare(a, 2.0));
+        REQUIRE(equal(a, 2.0));
 
         a = a * b;
-        REQUIRE(compare(a, 20.0));
+        REQUIRE(equal(a, 20.0));
 
         auto s_b = b.field();
         a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
-        REQUIRE(compare(a, 20.0));
+        REQUIRE(equal(a, 20.0));
     };
 }
 
@@ -119,7 +119,7 @@ TEST_CASE("Boundaries")
         NeoFOAM::DomainField<double> a(exec, 1000, 100, 10);
 
         NeoFOAM::fill(a.internalField(), 2.0);
-        REQUIRE(compare(a.internalField(), 2.0));
+        REQUIRE(equal(a.internalField(), 2.0));
     }
 
     SECTION("boundaryFields_" + execName)
@@ -128,15 +128,15 @@ TEST_CASE("Boundaries")
         NeoFOAM::BoundaryFields<double> bCs(exec, 100, 10);
 
         NeoFOAM::fill(bCs.value(), 2.0);
-        REQUIRE(compare(bCs.value(), 2.0));
+        REQUIRE(equal(bCs.value(), 2.0));
 
         NeoFOAM::fill(bCs.refValue(), 2.0);
-        REQUIRE(compare(bCs.refValue(), 2.0));
+        REQUIRE(equal(bCs.refValue(), 2.0));
 
         NeoFOAM::fill(bCs.refGrad(), 2.0);
-        REQUIRE(compare(bCs.refGrad(), 2.0));
+        REQUIRE(equal(bCs.refGrad(), 2.0));
 
         NeoFOAM::fill(bCs.valueFraction(), 2.0);
-        REQUIRE(compare(bCs.valueFraction(), 2.0));
+        REQUIRE(equal(bCs.valueFraction(), 2.0));
     }
 }
