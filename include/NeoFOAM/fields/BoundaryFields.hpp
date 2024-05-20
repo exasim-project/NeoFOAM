@@ -15,13 +15,15 @@ namespace NeoFOAM
 
 
 /**
- * @class boundaryFields
+ * @class BoundaryFields
  * @brief Represents the boundary fields for a computational domain.
  *
- * The boundaryFields class stores the boundary conditions and related
+ * The BoundaryFields class stores the boundary conditions and related
  * information for a computational domain. It provides access to the computed
  * values, reference values, value fractions, reference gradients, boundary
  * types, offsets, and the number of boundaries and boundary faces.
+ *
+ * @tparam ValueType The type of the underlying field values
  */
 template<typename T>
 class BoundaryFields
