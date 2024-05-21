@@ -1,5 +1,6 @@
 # Version 0.1.0 (unreleased)
-- basic implementation of an unstructuredMesh [#53](https://github.com/exasim-project/NeoFOAM/pull/53)
+- Added boundaryField and domainField [#54](https://github.com/exasim-project/NeoFOAM/pull/54)
+- Basic implementation of an unstructuredMesh [#53](https://github.com/exasim-project/NeoFOAM/pull/53)
 - Enforce 80 characters limit [#59](https://github.com/exasim-project/NeoFOAM/pull/59)
 - Improved and documented the workflow with vscode [#58](https://github.com/exasim-project/NeoFOAM/pull/58)
 - Added dictionary class [#52](https://github.com/exasim-project/NeoFOAM/pull/52)

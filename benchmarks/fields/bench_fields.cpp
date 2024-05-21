@@ -9,6 +9,8 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/operations/OperationsMacros.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include <vector>
 
 #include <catch2/catch_test_case_info.hpp>
@@ -39,18 +41,8 @@ int main(int argc, char* argv[])
 TEST_CASE("Vector addition [benchmark]")
 {
 
-    auto size = GENERATE(
-        8,
-        64,
-        512,
-        4096,
-        32768,
-        262144,
-        1048576,
-        1048576 * 4,
-        1048576 * 16,
-        1048576 * 64
-    );
+    auto size =
+        GENERATE(8, 64, 512, 4096, 32768, 262144, 1048576, 1048576 * 4, 1048576 * 16, 1048576 * 64);
 
     CAPTURE(size); // Capture the value of size
 
