@@ -42,8 +42,7 @@ public:
 
 private:
 
-    std::string
-        message_; /**< The error message associated with the exception. */
+    std::string message_; /**< The error message associated with the exception. */
 };
 
 } // namespace NeoFOAM
@@ -59,11 +58,9 @@ private:
  * @param message The error message to be included in the generated message.
  * @return std::string The generated error message.
  */
-#define NF_ERROR_MESSAGE(message)                                              \
-    "\nError: " << message                                                     \
-                << "\nFile: " << std::source_location::current().file_name()   \
-                << "\nLine: " << std::source_location::current().line()        \
-                << "\n"                                                        \
+#define NF_ERROR_MESSAGE(message)                                                                  \
+    "\nError: " << message << "\nFile: " << std::source_location::current().file_name()            \
+                << "\nLine: " << std::source_location::current().line() << "\n"                    \
                 << cpptrace::generate_trace().to_string() << "\n"
 #else
 /**
@@ -76,9 +73,8 @@ private:
  * @param message The error message to be included in the generated message.
  * @return std::string The generated error message.
  */
-#define NF_ERROR_MESSAGE(message)                                              \
-    "Error: " << message                                                       \
-              << "\nFile: " << std::source_location::current().file_name()     \
+#define NF_ERROR_MESSAGE(message)                                                                  \
+    "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
               << "\nLine: " << std::source_location::current().line() << "\n"
 #endif
 
@@ -92,12 +88,12 @@ private:
  *
  * @param message The error message to be printed.
  */
-#define NF_ERROR_EXIT(message)                                                 \
-    do                                                                         \
-    {                                                                          \
-        std::cerr << NF_ERROR_MESSAGE(message);                                \
-        std::abort();                                                          \
-    }                                                                          \
+#define NF_ERROR_EXIT(message)                                                                     \
+    do                                                                                             \
+    {                                                                                              \
+        std::cerr << NF_ERROR_MESSAGE(message);                                                    \
+        std::abort();                                                                              \
+    }                                                                                              \
     while (false)
 
 /**
@@ -110,13 +106,13 @@ private:
  *
  * @param message The error message to be included in the exception.
  */
-#define NF_THROW(message)                                                      \
-    do                                                                         \
-    {                                                                          \
-        std::stringstream ss;                                                  \
-        ss << NF_ERROR_MESSAGE(message);                                       \
-        throw NeoFOAM::NeoFOAMException(ss.str());                             \
-    }                                                                          \
+#define NF_THROW(message)                                                                          \
+    do                                                                                             \
+    {                                                                                              \
+        std::stringstream ss;                                                                      \
+        ss << NF_ERROR_MESSAGE(message);                                                           \
+        throw NeoFOAM::NeoFOAMException(ss.str());                                                 \
+    }                                                                                              \
     while (false)
 
 /**
@@ -132,16 +128,14 @@ private:
  * @param condition The condition to be checked.
  * @param message The error message to be printed if the condition is false.
  */
-#define NF_ASSERT(condition, message)                                          \
-    do                                                                         \
-    {                                                                          \
-        if (!(condition)) [[unlikely]]                                         \
-        {                                                                      \
-            NF_ERROR_EXIT(                                                     \
-                "Assertion `" #condition "` failed.\n       " << message       \
-            );                                                                 \
-        }                                                                      \
-    }                                                                          \
+#define NF_ASSERT(condition, message)                                                              \
+    do                                                                                             \
+    {                                                                                              \
+        if (!(condition)) [[unlikely]]                                                             \
+        {                                                                                          \
+            NF_ERROR_EXIT("Assertion `" #condition "` failed.\n       " << message);               \
+        }                                                                                          \
+    }                                                                                              \
     while (false)
 
 /**
@@ -158,16 +152,14 @@ private:
  * @param message The error message to be included in the exception if the
  * condition is false.
  */
-#define NF_ASSERT_THROW(condition, message)                                    \
-    do                                                                         \
-    {                                                                          \
-        if (!(condition)) [[unlikely]]                                         \
-        {                                                                      \
-            NF_THROW(                                                          \
-                "Assertion `" #condition "` failed.\n       " << message       \
-            );                                                                 \
-        }                                                                      \
-    }                                                                          \
+#define NF_ASSERT_THROW(condition, message)                                                        \
+    do                                                                                             \
+    {                                                                                              \
+        if (!(condition)) [[unlikely]]                                                             \
+        {                                                                                          \
+            NF_THROW("Assertion `" #condition "` failed.\n       " << message);                    \
+        }                                                                                          \
+    }                                                                                              \
     while (false)
 
 #ifdef NF_DEBUG
@@ -194,8 +186,7 @@ private:
  * @param message The error message to be included in the exception if the
  * condition is false.
  */
-#define NF_DEBUG_ASSERT_THROW(condition, message)                              \
-    NF_ASSERT_THROW(condition, message)
+#define NF_DEBUG_ASSERT_THROW(condition, message) NF_ASSERT_THROW(condition, message)
 #else
 /**
  * @def NF_DEBUG_ASSERT
