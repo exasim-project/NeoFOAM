@@ -115,12 +115,12 @@ private:
     Executor exec_;                        ///< The executor on which the field is stored
     NeoFOAM::Field<T> value_;              ///< The Field storing the computed values from the
                                            ///< boundary condition.
-    NeoFOAM::Field<T> refValue_;           ///< The view storing the Dirichlet boundary values.
-    NeoFOAM::Field<scalar> valueFraction_; ///< The view storing the fraction of
+    NeoFOAM::Field<T> refValue_;           ///< The Field storing the Dirichlet boundary values.
+    NeoFOAM::Field<scalar> valueFraction_; ///< The Field storing the fraction of
                                            ///< the boundary value.
-    NeoFOAM::Field<T> refGrad_;            ///< The view storing the Neumann boundary values.
-    NeoFOAM::Field<int> boundaryTypes_;    ///< The view storing the boundary types.
-    NeoFOAM::Field<localIdx> offset_;      ///< The view storing the offsets of each boundary.
+    NeoFOAM::Field<T> refGrad_;            ///< The Field storing the Neumann boundary values.
+    NeoFOAM::Field<int> boundaryTypes_;    ///< The Field storing the boundary types.
+    NeoFOAM::Field<localIdx> offset_;      ///< The Field storing the offsets of each boundary.
     int nBoundaries_;                      ///< The number of boundaries.
     int nBoundaryFaces_;                   ///< The number of boundary faces.
 };
