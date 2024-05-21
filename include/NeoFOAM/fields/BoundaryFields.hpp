@@ -6,8 +6,8 @@
 
 #include <iostream>
 
-#include "NeoFOAM/primitives/label.hpp"
-#include "NeoFOAM/primitives/scalar.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/fields/Field.hpp"
 

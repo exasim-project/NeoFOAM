@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "scalar.hpp"
 #include <Kokkos_Core.hpp>
+
+#include "NeoFOAM/core/primitives/scalar.hpp"
 
 namespace NeoFOAM
 {
@@ -43,16 +44,13 @@ public:
     KOKKOS_INLINE_FUNCTION
     bool operator==(const Vector& rhs) const
     {
-        return cmpts_[0] == rhs(0) && cmpts_[1] == rhs(1)
-            && cmpts_[2] == rhs(2);
+        return cmpts_[0] == rhs(0) && cmpts_[1] == rhs(1) && cmpts_[2] == rhs(2);
     }
 
     KOKKOS_INLINE_FUNCTION
     Vector operator+(const Vector& rhs)
     {
-        return Vector(
-            cmpts_[0] + rhs(0), cmpts_[1] + rhs(1), cmpts_[2] + rhs(2)
-        );
+        return Vector(cmpts_[0] + rhs(0), cmpts_[1] + rhs(1), cmpts_[2] + rhs(2));
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -66,9 +64,7 @@ public:
     KOKKOS_INLINE_FUNCTION
     Vector operator-(const Vector& rhs)
     {
-        return Vector(
-            cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2)
-        );
+        return Vector(cmpts_[0] - rhs(0), cmpts_[1] - rhs(1), cmpts_[2] - rhs(2));
     }
 
     KOKKOS_INLINE_FUNCTION

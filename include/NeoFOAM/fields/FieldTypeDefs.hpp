@@ -4,8 +4,8 @@
 
 #include "NeoFOAM/fields/Field.hpp"
 #include "NeoFOAM/fields/FieldOperations.hpp"
-#include "NeoFOAM/primitives/scalar.hpp"
-#include "NeoFOAM/primitives/vector.hpp"
+#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/core/primitives/vector.hpp"
 
 
 namespace NeoFOAM

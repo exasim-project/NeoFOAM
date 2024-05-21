@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cstdint>
+
 namespace NeoFOAM
 {
 using label = int32_t;

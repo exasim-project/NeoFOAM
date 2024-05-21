@@ -5,8 +5,8 @@
 #include <array>
 #include <vector>
 
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include "NeoFOAM/primitives/label.hpp"
 
 namespace NeoFOAM
 {

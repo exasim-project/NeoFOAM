@@ -6,10 +6,10 @@
 
 #include <iostream>
 
-#include "NeoFOAM/primitives/label.hpp"
-#include "NeoFOAM/primitives/scalar.hpp"
-#include "NeoFOAM/fields/BoundaryFields.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/fields/BoundaryFields.hpp"
 
 namespace NeoFOAM
 {
@@ -30,23 +30,19 @@ class DomainField
 {
 public:
 
-    DomainField(
-        const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries
-    )
+    DomainField(const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
         : exec_(exec), internalField_(exec, nCells),
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
     {}
 
 
     DomainField(const ::NeoFOAM::DomainField<ValueType>& rhs)
-        : exec_(rhs.exec_), internalField_(rhs.internalField_),
-          boundaryFields_(rhs.boundaryFields_)
+        : exec_(rhs.exec_), internalField_(rhs.internalField_), boundaryFields_(rhs.boundaryFields_)
     {}
 
 
     DomainField(DomainField<ValueType>&& rhs)
-        : exec_(std::move(rhs.exec_)),
-          internalField_(std::move(rhs.internalField_)),
+        : exec_(std::move(rhs.exec_)), internalField_(std::move(rhs.internalField_)),
           boundaryFields_(std::move(rhs.boundaryFields_))
     {}
 
@@ -80,7 +76,7 @@ public:
 
 private:
 
-    Executor exec_;                        ///< The executor on which the field is stored
+    Executor exec_; ///< The executor on which the field is stored
     Field<ValueType> internalField_;
     BoundaryFields<ValueType> boundaryFields_;
 };

@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-#include "NeoFOAM/primitives/vector.hpp"
+#include "NeoFOAM/core/primitives/vector.hpp"
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/BoundaryMesh.hpp"
 #include "NeoFOAM/mesh/stencil/StencilDataBase.hpp"

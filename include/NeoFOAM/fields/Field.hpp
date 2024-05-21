@@ -3,11 +3,12 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
-#include <iostream>
 
+#include <iostream>
 #include <span>
+
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/primitives/scalar.hpp"
+#include "NeoFOAM/core/primitives/scalar.hpp"
 
 namespace NeoFOAM
 {
