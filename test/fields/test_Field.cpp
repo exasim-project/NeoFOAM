@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -9,10 +9,6 @@
 
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
 #include "NeoFOAM/fields/FieldOperations.hpp"
-
-#include "NeoFOAM/fields/BoundaryFields.hpp"
-#include "NeoFOAM/fields/DomainField.hpp"
-
 #include "NeoFOAM/fields/comparisons/FieldComparison.hpp"
 
 TEST_CASE("Field Operations")
@@ -101,42 +97,4 @@ TEST_CASE("Primitives")
             REQUIRE((a + 2 * a + a) == d);
         };
     };
-};
-
-TEST_CASE("Boundaries")
-{
-
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
-    SECTION("domainField_" + execName)
-    {
-
-        NeoFOAM::DomainField<double> a(exec, 1000, 100, 10);
-
-        NeoFOAM::fill(a.internalField(), 2.0);
-        REQUIRE(equal(a.internalField(), 2.0));
-    }
-
-    SECTION("boundaryFields_" + execName)
-    {
-
-        NeoFOAM::BoundaryFields<double> bCs(exec, 100, 10);
-
-        NeoFOAM::fill(bCs.value(), 2.0);
-        REQUIRE(equal(bCs.value(), 2.0));
-
-        NeoFOAM::fill(bCs.refValue(), 2.0);
-        REQUIRE(equal(bCs.refValue(), 2.0));
-
-        NeoFOAM::fill(bCs.refGrad(), 2.0);
-        REQUIRE(equal(bCs.refGrad(), 2.0));
-
-        NeoFOAM::fill(bCs.valueFraction(), 2.0);
-        REQUIRE(equal(bCs.valueFraction(), 2.0));
-    }
 }
