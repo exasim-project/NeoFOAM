@@ -80,7 +80,7 @@ public:
 
 private:
 
-    Executor exec_;
+    Executor exec_;                        ///< The executor on which the field is stored
     Field<ValueType> internalField_;
     BoundaryFields<ValueType> boundaryFields_;
 };

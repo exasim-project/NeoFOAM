@@ -112,8 +112,8 @@ public:
 
 private:
 
-    Executor exec_;
-    NeoFOAM::Field<T> value_;              ///< The view storing the computed values from the
+    Executor exec_;                        ///< The executor on which the field is stored
+    NeoFOAM::Field<T> value_;              ///< The Field storing the computed values from the
                                            ///< boundary condition.
     NeoFOAM::Field<T> refValue_;           ///< The view storing the Dirichlet boundary values.
     NeoFOAM::Field<scalar> valueFraction_; ///< The view storing the fraction of

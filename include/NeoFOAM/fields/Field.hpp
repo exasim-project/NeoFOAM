@@ -90,6 +90,7 @@ public:
         {
             if (result.size() != size_)
             {
+                // TODO raise an exeption here, once we implemented exception handling.
                 exit(1);
             }
 
