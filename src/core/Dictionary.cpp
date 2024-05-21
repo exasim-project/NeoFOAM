@@ -15,10 +15,7 @@ bool NeoFOAM::Dictionary::found(const std::string& key) const
     return data_.find(key) != data_.end();
 }
 
-std::any& NeoFOAM::Dictionary::operator[](const std::string& key)
-{
-    return data_.at(key);
-}
+std::any& NeoFOAM::Dictionary::operator[](const std::string& key) { return data_.at(key); }
 
 const std::any& NeoFOAM::Dictionary::operator[](const std::string& key) const
 {
@@ -30,13 +27,9 @@ NeoFOAM::Dictionary& NeoFOAM::Dictionary::subDict(const std::string& key)
     return std::any_cast<NeoFOAM::Dictionary&>(data_.at(key));
 }
 
-std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap()
-{
-    return data_;
-}
+std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap() { return data_; }
 
-const std::unordered_map<std::string, std::any>&
-NeoFOAM::Dictionary::getMap() const
+const std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap() const
 {
     return data_;
 }

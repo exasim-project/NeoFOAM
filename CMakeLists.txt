@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
-option(NEOFOAM_DP_LABELS "double precision label" TRUE)
+option(NEOFOAM_DP_LABELS "double precision label" FALSE)
 option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
 option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
