@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/mesh/unstructuredMesh/BoundaryMesh.hpp"
+#include "NeoFOAM/mesh/unstructured/BoundaryMesh.hpp"
 
 namespace NeoFOAM
 {
@@ -19,9 +19,8 @@ BoundaryMesh::BoundaryMesh(
     scalarField deltaCoeffs,
     std::vector<localIdx> offset
 )
-    : exec_(exec), faceCells_(faceCells), Cf_(cf), Cn_(cn), Sf_(sf),
-      magSf_(magSf), nf_(nf), delta_(delta), weights_(weights),
-      deltaCoeffs_(deltaCoeffs), offset_(offset) {};
+    : exec_(exec), faceCells_(faceCells), Cf_(cf), Cn_(cn), Sf_(sf), magSf_(magSf), nf_(nf),
+      delta_(delta), weights_(weights), deltaCoeffs_(deltaCoeffs), offset_(offset) {};
 
 // Accessor methods
 const labelField& BoundaryMesh::faceCells() const { return faceCells_; }
