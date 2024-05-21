@@ -7,7 +7,8 @@ namespace NeoFOAM
 {
 
 template<>
-std::unique_ptr<fvccBoundaryField<scalar>> getBC(const unstructuredMesh& mesh, int patchID, const Dictionary& patchDict)
+std::unique_ptr<fvccBoundaryField<scalar>>
+getBC(const UnstructuredMesh& mesh, int patchID, const Dictionary& patchDict)
 {
     std::string type = patchDict.get<std::string>("type");
     if (type == "zeroGradient")
@@ -16,7 +17,9 @@ std::unique_ptr<fvccBoundaryField<scalar>> getBC(const unstructuredMesh& mesh, i
     }
     else if (type == "fixedValue")
     {
-        return std::make_unique<fvccScalarFixedValueBoundaryField>(mesh, patchID, patchDict.get<scalar>("value"));
+        return std::make_unique<fvccScalarFixedValueBoundaryField>(
+            mesh, patchID, patchDict.get<scalar>("value")
+        );
     }
     else if (type == "empty")
     {
@@ -38,7 +41,8 @@ std::unique_ptr<fvccBoundaryField<scalar>> getBC(const unstructuredMesh& mesh, i
 };
 
 template<>
-std::unique_ptr<fvccBoundaryField<Vector>> getBC(const unstructuredMesh& mesh, int patchID, const Dictionary& patchDict)
+std::unique_ptr<fvccBoundaryField<Vector>>
+getBC(const UnstructuredMesh& mesh, int patchID, const Dictionary& patchDict)
 {
     std::string type = patchDict.get<std::string>("type");
     if (type == "zeroGradient")
@@ -47,7 +51,9 @@ std::unique_ptr<fvccBoundaryField<Vector>> getBC(const unstructuredMesh& mesh, i
     }
     else if (type == "fixedValue")
     {
-        return std::make_unique<fvccVectorFixedValueBoundaryField>(mesh, patchID, patchDict.get<Vector>("value"));
+        return std::make_unique<fvccVectorFixedValueBoundaryField>(
+            mesh, patchID, patchDict.get<Vector>("value")
+        );
     }
     else if (type == "empty")
     {
@@ -69,7 +75,8 @@ std::unique_ptr<fvccBoundaryField<Vector>> getBC(const unstructuredMesh& mesh, i
 };
 
 template<>
-std::unique_ptr<fvccSurfaceBoundaryField<scalar>> getSurfaceBC(const unstructuredMesh& mesh, int patchID, const Dictionary& patchDict)
+std::unique_ptr<fvccSurfaceBoundaryField<scalar>>
+getSurfaceBC(const UnstructuredMesh& mesh, int patchID, const Dictionary& patchDict)
 {
     std::string type = patchDict.get<std::string>("type");
     if (type == "calculated")
@@ -92,7 +99,8 @@ std::unique_ptr<fvccSurfaceBoundaryField<scalar>> getSurfaceBC(const unstructure
 };
 
 template<>
-std::unique_ptr<fvccSurfaceBoundaryField<Vector>> getSurfaceBC(const unstructuredMesh& mesh, int patchID, const Dictionary& patchDict) {
+std::unique_ptr<fvccSurfaceBoundaryField<Vector>>
+getSurfaceBC(const UnstructuredMesh& mesh, int patchID, const Dictionary& patchDict) {
     // std::string type = patchDict.get<std::string>("type");
     // if (type == "zeroGradient")
     // {
@@ -100,7 +108,8 @@ std::unique_ptr<fvccSurfaceBoundaryField<Vector>> getSurfaceBC(const unstructure
     // }
     // else if (type == "fixedValue")
     // {
-    //     return std::make_unique<fvccVectorFixedValueBoundaryField>(mesh, patchID, patchDict.get<Vector>("value"));
+    //     return std::make_unique<fvccVectorFixedValueBoundaryField>(mesh, patchID,
+    //     patchDict.get<Vector>("value"));
     // }
     // else if (type == "empty")
     // {
@@ -113,7 +122,8 @@ std::unique_ptr<fvccSurfaceBoundaryField<Vector>> getSurfaceBC(const unstructure
 };
 
 template<>
-std::vector<std::unique_ptr<fvccSurfaceBoundaryField<scalar>>> createCalculatedBCs(const unstructuredMesh& mesh)
+std::vector<std::unique_ptr<fvccSurfaceBoundaryField<scalar>>>
+createCalculatedBCs(const UnstructuredMesh& mesh)
 {
     const auto& bMesh = mesh.boundaryMesh();
     std::vector<std::unique_ptr<fvccSurfaceBoundaryField<scalar>>> bcs;
@@ -130,7 +140,8 @@ std::vector<std::unique_ptr<fvccSurfaceBoundaryField<scalar>>> createCalculatedB
 
 
 template<>
-std::vector<std::unique_ptr<fvccSurfaceBoundaryField<Vector>>> createCalculatedBCs(const unstructuredMesh& mesh)
+std::vector<std::unique_ptr<fvccSurfaceBoundaryField<Vector>>>
+createCalculatedBCs(const UnstructuredMesh& mesh)
 {
     std::vector<std::unique_ptr<fvccSurfaceBoundaryField<Vector>>> bcs;
     return bcs;

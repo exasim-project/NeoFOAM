@@ -3,8 +3,8 @@
 #pragma once
 
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
-#include "NeoFOAM/fields/boundaryFields.hpp"
+#include "NeoFOAM/mesh/unstructured/UnstructuredMesh.hpp"
+#include "NeoFOAM/fields/BoundaryFields.hpp"
 
 namespace NeoFOAM
 {
@@ -15,27 +15,20 @@ class fvccBoundaryField
 
 public:
 
-    fvccBoundaryField(const unstructuredMesh& mesh, int patchID)
-        : mesh_(mesh),
-          patchID_(patchID),
-          start_(mesh.boundaryMesh().offset()[patchID_]),
-          end_(mesh.boundaryMesh().offset()[patchID_ + 1]),
-          size_(end_ - start_) {
+    fvccBoundaryField(const UnstructuredMesh& mesh, int patchID)
+        : mesh_(mesh), patchID_(patchID), start_(mesh.boundaryMesh().offset()[patchID_]),
+          end_(mesh.boundaryMesh().offset()[patchID_ + 1]), size_(end_ - start_) {};
 
-          };
-
-    virtual void correctBoundaryConditions(boundaryFields<T>& bfield, const Field<T>& internalField) {
+    virtual void
+    correctBoundaryConditions(BoundaryFields<T>& bfield, const Field<T>& internalField) {
 
     };
 
-    int size() const
-    {
-        return size_;
-    }
+    int size() const { return size_; }
 
 protected:
 
-    const unstructuredMesh& mesh_;
+    const UnstructuredMesh& mesh_;
     int patchID_;
     int start_;
     int end_;

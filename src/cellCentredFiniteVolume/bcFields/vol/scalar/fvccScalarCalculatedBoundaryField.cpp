@@ -5,13 +5,15 @@
 
 namespace NeoFOAM
 {
-fvccScalarCalculatedBoundaryField::fvccScalarCalculatedBoundaryField(const unstructuredMesh& mesh, int patchID)
+fvccScalarCalculatedBoundaryField::fvccScalarCalculatedBoundaryField(
+    const UnstructuredMesh& mesh, int patchID
+)
     : fvccBoundaryField<scalar>(mesh, patchID)
-{
-}
+{}
 
-void fvccScalarCalculatedBoundaryField::correctBoundaryConditions(boundaryFields<scalar>& bfield, const Field<scalar>& internalField)
-{
-}
+void fvccScalarCalculatedBoundaryField::correctBoundaryConditions(
+    BoundaryFields<scalar>& bfield, const Field<scalar>& internalField
+)
+{}
 
 }
