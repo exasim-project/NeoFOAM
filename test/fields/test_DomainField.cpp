@@ -8,7 +8,7 @@
 
 #include "NeoFOAM/fields/BoundaryFields.hpp"
 #include "NeoFOAM/fields/DomainField.hpp"
-#include "NeoFOAM/fields/comparisons/FieldComparison.hpp"
+#include "NeoFOAM/fields/operations/Comparison.hpp"
 
 TEST_CASE("Boundaries")
 {

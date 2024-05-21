@@ -5,6 +5,7 @@
 #include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
 
 namespace NeoFOAM
 {

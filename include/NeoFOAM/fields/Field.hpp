@@ -9,6 +9,8 @@
 
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/fields/operations/OperationsMacros.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 
 namespace NeoFOAM
 {
@@ -306,6 +308,3 @@ private:
 
 
 } // namespace NeoFOAM
-
-#include "FieldOperations.hpp"
-#include "FieldTypeDefs.hpp"

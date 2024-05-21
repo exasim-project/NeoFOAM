@@ -8,8 +8,8 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include "NeoFOAM/fields/FieldOperations.hpp"
-#include "NeoFOAM/fields/comparisons/FieldComparison.hpp"
+#include "NeoFOAM/fields/operations/OperationsMacros.hpp"
+#include "NeoFOAM/fields/operations/Comparison.hpp"
 
 TEST_CASE("Field Operations")
 {
