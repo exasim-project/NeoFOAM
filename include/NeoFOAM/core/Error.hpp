@@ -108,8 +108,7 @@ private:
  *
  * @param message The error message to be included in the exception.
  */
-#define NF_THROW(message)                                                                          \
-    throw NeoFOAM::NeoFOAMException(message)
+#define NF_THROW(message) throw NeoFOAM::NeoFOAMException(message)
 
 /**
  * @def NF_ASSERT
