@@ -59,9 +59,10 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "\nError: " << message << "\nFile: " << std::source_location::current().file_name()            \
-                << "\nLine: " << std::source_location::current().line() << "\n"                    \
-                << cpptrace::generate_trace().to_string() << "\n"
+    "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
+              << "\nFunc: " << std::source_location::current().function_name()                     \
+              << "\nLine: " << std::source_location::current().line() << "\n"                      \
+              << cpptrace::generate_trace().to_string() << "\n"
 #else
 /**
  * @def NF_ERROR_MESSAGE
@@ -75,6 +76,7 @@ private:
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
     "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
+              << "\nFunc: " << std::source_location::current().function_name()                     \
               << "\nLine: " << std::source_location::current().line() << "\n"
 #endif
 
