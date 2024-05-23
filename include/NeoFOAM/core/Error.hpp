@@ -20,9 +20,8 @@ namespace NeoFOAM
 /**
  * @brief Custom exception class for NeoFOAM.
  *
- * This class is derived from std::exception and provides a custom exception
- * type for NeoFOAM. It stores an error message and overrides the what()
- * function to return the error message.
+ * This class is derived from std::exception and provides a custom exception type for NeoFOAM. It
+ * stores an error message and overrides the what() function to return the error message.
  */
 class NeoFOAMException : public std::exception
 {
@@ -52,8 +51,8 @@ private:
  * @def NF_ERROR_MESSAGE
  * @brief Macro for generating an error message with debug information.
  *
- * This macro generates an error message with the specified message, current
- * file name, current line number, and debug trace information (if available).
+ * This macro generates an error message with the specified message, current file name, current line
+ * number, and debug trace information (if available).
  *
  * @param message The error message to be included in the generated message.
  * @return std::string The generated error message.
@@ -68,8 +67,8 @@ private:
  * @def NF_ERROR_MESSAGE
  * @brief Macro for generating an error message without debug information.
  *
- * This macro generates an error message with the specified message, current
- * file name, and current line number.
+ * This macro generates an error message with the specified message, current file name, and current
+ * line number.
  *
  * @param message The error message to be included in the generated message.
  * @return std::string The generated error message.
@@ -84,9 +83,8 @@ private:
  * @def NF_ERROR_EXIT
  * @brief Macro for printing an error message and aborting the program.
  *
- * This macro prints the specified error message to the standard error stream,
- * including the current file name and current line number, and then calls
- * std::abort() to terminate the program.
+ * This macro prints the specified error message to the standard error stream, including the current
+ * file name and current line number, and then calls std::abort() to terminate the program.
  *
  * @param message The error message to be printed.
  */
@@ -100,25 +98,25 @@ private:
 
 /**
  * @def NF_THROW
- * @brief Macro for throwing a NeoFOAMException with an error message.
+ * @brief Macro for throwing a NeoFOAMException with the specified error message.
  *
- * This macro constructs a std::stringstream to concatenate the specified error
- * message with the current file name and current line number, and then throws a
- * NeoFOAMException with the resulting string as the error message.
+ * This macro constructs a std::stringstream to concatenate the specified error message with the
+ * current file name and current line number, and then throws a NeoFOAMException with the resulting
+ * string as the error message.
  *
  * @param message The error message to be included in the exception.
  */
-#define NF_THROW(message) throw NeoFOAM::NeoFOAMException(message)
+#define NF_THROW(message)                                                                          \
+    throw NeoFOAM::NeoFOAMException((std::stringstream() << NF_ERROR_MESSAGE(message)).str())
 
 /**
  * @def NF_ASSERT
  * @brief Macro for asserting a condition and printing an error message if the
  * condition is false.
  *
- * This macro checks the specified condition and, if it evaluates to false,
- * prints an error message to the standard error stream, including the current
- * file name and current line number, and then calls std::abort() to terminate
- * the program.
+ * This macro checks the specified condition and, if it evaluates to false, prints an error message
+ * to the standard error stream, including the current file name and current line number, and then
+ * calls std::abort() to terminate the program.
  *
  * @param condition The condition to be checked.
  * @param message The error message to be printed if the condition is false.
@@ -135,13 +133,12 @@ private:
 
 /**
  * @def NF_ASSERT_THROW
- * @brief Macro for asserting a condition and throwing a NeoFOAMException if the
- * condition is false.
+ * @brief Macro for asserting a condition and throwing a NeoFOAMException if the condition is false.
  *
- * This macro checks the specified condition and, if it evaluates to false,
- * constructs a std::stringstream to concatenate the specified error message
- * with the current file name and current line number, and then throws a
- * NeoFOAMException with the resulting string as the error message.
+ * This macro checks the specified condition and, if it evaluates to false, constructs a
+ * std::stringstream to concatenate the specified error message with the current file name and
+ * current line number, and then throws a NeoFOAMException with the resulting string as the error
+ * message.
  *
  * @param condition The condition to be checked.
  * @param message The error message to be included in the exception if the
@@ -160,8 +157,8 @@ private:
 #ifdef NF_DEBUG
 /**
  * @def NF_DEBUG_ASSERT
- * @brief Macro for asserting a condition and printing an error message if the
- * condition is false (only in debug mode).
+ * @brief Macro for asserting a condition and printing an error message if the condition is false
+ * (only in debug mode).
  *
  * This macro is equivalent to NF_ASSERT in debug mode.
  *
@@ -172,8 +169,8 @@ private:
 
 /**
  * @def NF_DEBUG_ASSERT_THROW
- * @brief Macro for asserting a condition and throwing a NeoFOAMException if the
- * condition is false (only in debug mode).
+ * @brief Macro for asserting a condition and throwing a NeoFOAMException if the condition is false
+ * (only in debug mode).
  *
  * This macro is equivalent to NF_ASSERT_THROW in debug mode.
  *
@@ -185,8 +182,8 @@ private:
 #else
 /**
  * @def NF_DEBUG_ASSERT
- * @brief Macro for asserting a condition and printing an error message if the
- * condition is false (only in debug mode).
+ * @brief Macro for asserting a condition and printing an error message if the condition is false
+ * (only in debug mode).
  *
  * This macro does nothing in release mode.
  *
@@ -197,8 +194,8 @@ private:
 
 /**
  * @def NF_DEBUG_ASSERT_THROW
- * @brief Macro for asserting a condition and throwing a NeoFOAMException if the
- * condition is false (only in debug mode).
+ * @brief Macro for asserting a condition and throwing a NeoFOAMException if the condition is false
+ * (only in debug mode).
  *
  * This macro does nothing in release mode.
  *
@@ -208,3 +205,57 @@ private:
  */
 #define NF_DEBUG_ASSERT_THROW(condition, message) ((void)0)
 #endif
+
+/**
+ * @def NF_ASSERT_EQUAL
+ * @brief Macro for asserting that two values are equal and printing an error message if they are
+ * not.
+ *
+ * This macro checks that the two specified values are equal and, if they are not, prints an error
+ * message to the standard error stream, including the expected and actual values, the current file
+ * name, and the current line number, and then calls std::abort() to terminate the program.
+ *
+ * @param a The actual value to be compared.
+ * @param b The expected value to be compared.
+ */
+#define NF_ASSERT_EQUAL(a, b) NF_ASSERT(a == b, "Expected " << b << ", got " << a)
+
+/**
+ * @def NF_DEBUG_ASSERT_EQUAL
+ * @brief Macro for asserting that two values are equal and printing an error message if they are
+ * not (only in debug mode).
+ *
+ * This macro is equivalent to NF_ASSERT_EQUAL in debug mode.
+ *
+ * @param a The actual value to be compared.
+ * @param b The expected value to be compared.
+ */
+#define NF_DEBUG_ASSERT_EQUAL(a, b) NF_DEBUG_ASSERT(a == b, "Expected " << b << ", got " << a)
+
+/**
+ * @def NF_ASSERT_EQUAL_THROW
+ * @brief Macro for asserting that two values are equal and throwing a NeoFOAMException if they are
+ * not.
+ *
+ * This macro checks that the two specified values are equal and, if they are not, constructs a
+ * std::stringstream to concatenate the expected and actual values with the current file name and
+ * current line number, and then throws a NeoFOAMException with the resulting string as the error
+ * message.
+ *
+ * @param a The actual value to be compared.
+ * @param b The expected value to be compared.
+ */
+#define NF_ASSERT_EQUAL_THROW(a, b) NF_ASSERT_THROW(a == b, "Expected " << b << ", got " << a)
+
+/**
+ * @def NF_DEBUG_ASSERT_EQUAL_THROW
+ * @brief Macro for asserting that two values are equal and throwing a NeoFOAMException if they are
+ * not (only in debug mode).
+ *
+ * This macro is equivalent to NF_ASSERT_EQUAL_THROW in debug mode.
+ *
+ * @param a The actual value to be compared.
+ * @param b The expected value to be compared.
+ */
+#define NF_DEBUG_ASSERT_EQUAL_THROW(a, b)                                                          \
+    NF_DEBUG_ASSERT_THROW(a == b, "Expected " << b << ", got " << a)
