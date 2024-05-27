@@ -7,6 +7,7 @@
 #include <iostream>
 #include <span>
 
+#include "NeoFOAM/core/Error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/operations/OperationsMacros.hpp"
@@ -17,8 +18,7 @@ namespace NeoFOAM
 
 /**
  * @class Field
- * @brief A class to contain the data and executors for a field and define some
- * basic operations.
+ * @brief A class to contain the data and executors for a field and define some basic operations.
  *
  * @ingroup Fields
  */
@@ -52,7 +52,7 @@ public:
      */
     Field(const Field& other) : exec_(other.exec_), data_(data_)
     {
-        // TODO CHECK IF EXECUTORS ARE THE SAME
+        NF_ASSERT(exec_ == other.exec_, "Executors are not the same");
         void* ptr = nullptr;
         auto size = other.size_;
         std::visit(
@@ -183,15 +183,20 @@ public:
     //--------------------------------------------------------------------------------
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the parsed
-     * field.
+     * @brief Assignment operator, Sets the field values to that of the parsed field.
+     * @param rhs The value to set the field to.
+     */
+    void operator=(const T& rhs) { fill(*this, rhs); }
+
+    /**
+     * @brief Assignment operator, Sets the field values to that of the parsed field.
      * @param rhs The field to copy from.
      *
      * @warning This field will be sized to the size of the parsed field.
      */
     void operator=(const Field<T>& rhs)
     {
-        // TODO CHECK IF EXECUTORS ARE THE SAME
+        NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
         if (this->size() != rhs.size())
         {
             this->setSize(rhs.size());
@@ -200,19 +205,14 @@ public:
     }
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the value.
-     * @param rhs The value to set the field to.
-     */
-    void operator=(const T& rhs) { fill(*this, rhs); }
-
-    /**
-     * @brief Arithmetic addition assignment operator, adds a second field to this
-     * field.
+     * @brief Arithmetic addition assignment operator, adds a second field to this field.
      * @param rhs The field to add to this field.
      * @returns The result of the addition.
      */
     Field<T>& operator+=(const Field<T>& rhs)
     {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec_, "Executors are not the same.");
         add(*this, rhs);
         return *this;
     }
@@ -225,6 +225,8 @@ public:
      */
     Field<T>& operator-=(const Field<T>& rhs)
     {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec_, "Executors are not the same.");
         sub(*this, rhs);
         return *this;
     }
@@ -240,6 +242,8 @@ public:
      */
     [[nodiscard]] Field<T> operator-(const Field<T>& rhs)
     {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec(), "Executors are not the same.");
         Field<T> result(exec_, size_);
         result = *this;
         sub(result, rhs);
@@ -247,12 +251,14 @@ public:
     }
 
     /**
-     * @brief Arithmetic subtraction operator, subtraction by a second field.
+     * @brief Arithmetic multiply operator, multiply by a second field.
      * @param rhs The field to subtract from this field.
-     * @returns The result of the subtraction.
+     * @returns The result of the multiply.
      */
     [[nodiscard]] Field<T> operator*(const Field<scalar>& rhs)
     {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec(), "Executors are not the same.");
         Field<T> result(exec_, size_);
         result = *this;
         mul(result, rhs);
@@ -318,7 +324,7 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const executor& exec() { return exec_; }
+    [[nodiscard]] const Executor& exec() { return exec_; }
 
     /**
      * @brief Gets the size of the field.
