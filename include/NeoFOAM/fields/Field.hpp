@@ -7,6 +7,7 @@
 #include <iostream>
 #include <span>
 
+#include "NeoFOAM/core/Error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/operations/OperationsMacros.hpp"
@@ -17,8 +18,7 @@ namespace NeoFOAM
 
 /**
  * @class Field
- * @brief A class to contain the data and executors for a field and define some
- * basic operations.
+ * @brief A class to contain the data and executors for a field and define some basic operations.
  *
  * @ingroup Fields
  */
@@ -27,12 +27,17 @@ class Field
 {
 public:
 
+    //--------------------------------------------------------------------------------
+    // Constructors and Destructors
+    //--------------------------------------------------------------------------------
+
     /**
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
-     * */
-    Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
+     */
+    Field(const Executor& exec, size_t size)
+        : size_(size), data_(nullptr), exec_(exec) : size_(size), exec_(exec), data_(nullptr)
     {
         void* ptr = nullptr;
         std::visit(
@@ -41,16 +46,22 @@ public:
         data_ = static_cast<T*>(ptr);
     };
 
-    Field(const Field<T>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    /**
+     * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
+     * @param other The field to copy from.
+     */
+    Field(const Field& other) : exec_(other.exec_), data_(data_)
     {
+        NF_ASSERT(exec_ == other.exec_, "Executors are not the same");
         void* ptr = nullptr;
-        auto size = rhs.size_;
+        auto size = other.size_;
         std::visit(
             [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
         );
+        setSize(other.size_); // CHECK THIS with above
         data_ = static_cast<T*>(ptr);
-        setField(*this, rhs.field());
-    };
+        setField(*this, other.field());
+    }
 
     /**
      * @brief Destroy the Field object.
@@ -167,16 +178,25 @@ public:
         exit(1);
     }
 
+    //--------------------------------------------------------------------------------
+    // Assignment Operators
+    //--------------------------------------------------------------------------------
+
     /**
-     * @brief Assignment operator, Sets the field values to that of the parsed
-     * field.
+     * @brief Assignment operator, Sets the field values to that of the parsed field.
+     * @param rhs The value to set the field to.
+     */
+    void operator=(const T& rhs) { fill(*this, rhs); }
+
+    /**
+     * @brief Assignment operator, Sets the field values to that of the parsed field.
      * @param rhs The field to copy from.
      *
      * @warning This field will be sized to the size of the parsed field.
      */
     void operator=(const Field<T>& rhs)
     {
-
+        NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
         if (this->size() != rhs.size())
         {
             this->setSize(rhs.size());
@@ -185,25 +205,35 @@ public:
     }
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the value.
-     * @param rhs The value to set the field to.
-     */
-    void operator=(const T& rhs) { fill(*this, rhs); }
-
-    // arithmetic operator
-
-    /**
-     * @brief Arithmetic add operator, addition of a second field.
-     * @param rhs The field to add with this field.
+     * @brief Arithmetic addition assignment operator, adds a second field to this field.
+     * @param rhs The field to add to this field.
      * @returns The result of the addition.
      */
-    [[nodiscard]] Field<T> operator+(const Field<T>& rhs)
+    Field<T>& operator+=(const Field<T>& rhs)
     {
-        Field<T> result(exec_, size_);
-        result = *this;
-        add(result, rhs);
-        return result;
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec_, "Executors are not the same.");
+        add(*this, rhs);
+        return *this;
     }
+
+    /**
+     * @brief Arithmetic subtraction assignment operator, subtracts a second field
+     * from this field.
+     * @param rhs The field to subtract from this field.
+     * @returns The result of the subtraction.
+     */
+    Field<T>& operator-=(const Field<T>& rhs)
+    {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec_, "Executors are not the same.");
+        sub(*this, rhs);
+        return *this;
+    }
+
+    //--------------------------------------------------------------------------------
+    // Arithmetic Operator
+    //--------------------------------------------------------------------------------
 
     /**
      * @brief Arithmetic subtraction operator, subtraction by a second field.
@@ -212,6 +242,8 @@ public:
      */
     [[nodiscard]] Field<T> operator-(const Field<T>& rhs)
     {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec(), "Executors are not the same.");
         Field<T> result(exec_, size_);
         result = *this;
         sub(result, rhs);
@@ -219,12 +251,14 @@ public:
     }
 
     /**
-     * @brief Arithmetic subtraction operator, subtraction by a second field.
+     * @brief Arithmetic multiply operator, multiply by a second field.
      * @param rhs The field to subtract from this field.
-     * @returns The result of the subtraction.
+     * @returns The result of the multiply.
      */
     [[nodiscard]] Field<T> operator*(const Field<scalar>& rhs)
     {
+        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
+        NF_ASSERT_DEBUG(exec_ == rhs.exec(), "Executors are not the same.");
         Field<T> result(exec_, size_);
         result = *this;
         mul(result, rhs);
@@ -254,10 +288,20 @@ public:
     void setSize(const size_t size)
     {
         void* ptr = nullptr;
-        std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.realloc(data_, size * sizeof(T)); },
-            exec_
-        );
+        if (!empty())
+        {
+            std::visit(
+                [this, &ptr, size](const auto& exec)
+                { ptr = exec.realloc(data_, size * sizeof(T)); },
+                exec_
+            );
+        }
+        else
+        {
+            std::visit(
+                [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
+            );
+        }
         data_ = static_cast<T*>(ptr);
         size_ = size;
     }
@@ -280,13 +324,19 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const Executor& exec() const { return exec_; }
+    [[nodiscard]] const Executor& exec() { return exec_; }
 
     /**
      * @brief Gets the size of the field.
      * @return The size of the field.
      */
     [[nodiscard]] size_t size() const { return size_; }
+
+    /**
+     * @brief Checks if the field is empty.
+     * @return True if the field is empty, false otherwise.
+     */
+    [[nodiscard]] bool empty() const { return size() == 0; }
 
     /**
      * @brief Gets the field as a span.
@@ -301,10 +351,39 @@ public:
 
 private:
 
-    size_t size_;         //!< Size of the field.
-    T* data_;             //!< Pointer to the field data.
+    size_t size_ {0};     //!< Size of the field.
+    T* data_ {nullptr};   //!< Pointer to the field data.
     const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
+//------------------------------------------------------------------------------------
+// arithmetic operator
+//------------------------------------------------------------------------------------
+
+/**
+ * @brief Arithmetic add operator, addition of two fields.
+ * @param lhs The field to add with this field.
+ * @param rhs The field to add with this field.
+ * @returns The result of the addition.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
+{
+    lhs += rhs;
+    return lhs;
+}
+
+/**
+ * @brief Arithmetic subtraction operator, subtraction one field from another.
+ * @param lhs The field to subtract from.
+ * @param rhs The field to subtract by.
+ * @returns The result of the subtraction.
+ */
+template<typename T>
+[[nodiscard]] Field<T> operator-(Field<T> lhs, const Field<T>& rhs)
+{
+    lhs -= rhs;
+    return lhs;
+}
 
 } // namespace NeoFOAM
