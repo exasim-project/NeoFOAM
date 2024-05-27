@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/primitives/scalar.hpp"
-#include "NeoFOAM/primitives/vector.hpp"
+#include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/core/primitives/vector.hpp"
+
 
 namespace NeoFOAM
 {

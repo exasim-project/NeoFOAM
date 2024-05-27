@@ -16,8 +16,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
-option(NEOFOAM_DP_LABELS "double precision label" TRUE)
-option(NEOFOAM_BUILD_APPS "Build the applications folder" TRUE)
+option(NEOFOAM_DP_LABELS "double precision label" FALSE)
 option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" FALSE)
@@ -31,6 +30,7 @@ option(NEOFOAM_ENABLE_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
 option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
+option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" FALSE)
 
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
   message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
@@ -42,6 +42,11 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE
       Release
       CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
+  message(STATUS "Enabling generation of compilation database.")
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
 include(cmake/CxxThirdParty.cmake)
@@ -71,6 +76,7 @@ endif()
 
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(test)
 endif()
 
@@ -83,10 +89,6 @@ if(${NEOFOAM_DP_SCALAR})
 endif()
 if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
-endif()
-
-if(NEOFOAM_BUILD_APPS)
-  add_subdirectory(applications)
 endif()
 
 if(NEOFOAM_BUILD_DOC)
@@ -136,6 +138,13 @@ if(NEOFOAM_DEVEL_TOOLS)
     COMMAND bash -c "${PRE_COMMIT} run"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     VERBATIM)
+endif()
+
+if(NEOFOAM_ENABLE_IWYU)
+  find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
+  set(IWYU_PATH_AND_OPTIONS ${iwyu_path})
+  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE
+                                       ${IWYU_PATH_AND_OPTIONS})
 endif()
 
 # include(cmake/InstallHelpers.cmake) neofoam_install()

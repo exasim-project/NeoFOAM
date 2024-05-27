@@ -3,11 +3,14 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
-#include <iostream>
 
+#include <iostream>
 #include <span>
+
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/primitives/scalar.hpp"
+#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/fields/operations/OperationsMacros.hpp"
+#include "NeoFOAM/fields/FieldTypeDefs.hpp"
 
 namespace NeoFOAM
 {
@@ -33,26 +36,30 @@ public:
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
      */
-    Field(const executor& exec, size_t size)
-        : size_(size), exec_(exec), data_(nullptr)
+    Field(const Executor& exec, size_t size)
+        : size_(size), data_(nullptr), exec_(exec) : size_(size), exec_(exec), data_(nullptr)
     {
         void* ptr = nullptr;
-        std::visit([this, &ptr, size](const auto& exec)
-                   { ptr = exec.alloc(size * sizeof(T)); },
-                   exec_);
+        std::visit(
+            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
+        );
         data_ = static_cast<T*>(ptr);
     };
 
     /**
-     * @brief Copy constructor, creates a new field with the same size and data
-     * as the parsed field.
+     * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
      * @param other The field to copy from.
      */
-    Field(const Field& other)
-        : exec_(other.exec_), data_(data_)
+    Field(const Field& other) : exec_(other.exec_), data_(data_)
     {
         // TODO CHECK IF EXECUTORS ARE THE SAME
-        setSize(other.size_);
+        void* ptr = nullptr;
+        auto size = other.size_;
+        std::visit(
+            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
+        );
+        setSize(other.size_); // CHECK THIS with above
+        data_ = static_cast<T*>(ptr);
         setField(*this, other.field());
     }
 
@@ -61,9 +68,7 @@ public:
      */
     ~Field()
     {
-        std::visit([this](const auto& exec)
-                   { exec.free(data_); },
-                   exec_);
+        std::visit([this](const auto& exec) { exec.free(data_); }, exec_);
         data_ = nullptr;
     };
 
@@ -82,39 +87,54 @@ public:
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<T> copyToHost()
+    [[nodiscard]] Field<T> copyToHost() const
     {
         Field<T> result(CPUExecutor {}, size_);
-        this->copyToHost(result);
-        return result;
-    }
-
-    /**
-     * @brief Copies the data (from anywhere) to a parsed host field.
-     * @param result The field into which the data must be copied. Must be sized.
-     *
-     * @warning exits if the size of the result field is not the same as the
-     * source field.
-     */
-    void copyToHost(Field<T>& result)
-    {
         if (!std::holds_alternative<GPUExecutor>(exec_))
         {
             result = *this;
         }
         else
         {
-            if (result.size() != size_)
-            {
-                exit(1);
-            }
-
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                GPU_view(data_, size_);
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+                data_, size_
+            );
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
                 result.data(), size_
             );
-            Kokkos::deep_copy(result_view, GPU_view);
+            Kokkos::deep_copy(resultView, gpuView);
+        }
+        return result;
+    }
+
+    /**
+     * @brief Copies the data (from anywhere) to a parsed host field.
+     * @param result The field into which the data must be copied. Must be
+     * sized.
+     *
+     * @warning exits if the size of the result field is not the same as the
+     * source field.
+     */
+    void copyToHost(Field<T>& result)
+    {
+        if (result.size() != size_)
+        {
+            exit(1);
+        }
+
+        if (!std::holds_alternative<GPUExecutor>(exec_))
+        {
+            result = *this;
+        }
+        else
+        {
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+                data_, size_
+            );
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
+                result.data(), size_
+            );
+            Kokkos::deep_copy(resultView, gpuView);
         }
     }
 
@@ -240,8 +260,8 @@ public:
     }
 
     /**
-     * @brief Arithmetic multiply operator, multiplies every cell in the field by
-     * a scalar.
+     * @brief Arithmetic multiply operator, multiplies every cell in the field
+     * by a scalar.
      * @param rhs The scalar to multiply with the field.
      * @returns The result of the multiplication.
      */
@@ -266,20 +286,14 @@ public:
         {
             std::visit(
                 [this, &ptr, size](const auto& exec)
-                {
-                    ptr = exec.realloc(data_, size * sizeof(T));
-                },
+                { ptr = exec.realloc(data_, size * sizeof(T)); },
                 exec_
             );
         }
         else
         {
             std::visit(
-                [this, &ptr, size](const auto& exec)
-                {
-                    ptr = exec.alloc(size * sizeof(T));
-                },
-                exec_
+                [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
             );
         }
         data_ = static_cast<T*>(ptr);
@@ -304,7 +318,7 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const executor& exec() const { return exec_; }
+    [[nodiscard]] const executor& exec() { return exec_; }
 
     /**
      * @brief Gets the size of the field.
@@ -333,7 +347,7 @@ private:
 
     size_t size_ {0};     //!< Size of the field.
     T* data_ {nullptr};   //!< Pointer to the field data.
-    const executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
+    const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
 //------------------------------------------------------------------------------------
@@ -367,6 +381,3 @@ template<typename T>
 }
 
 } // namespace NeoFOAM
-
-#include "FieldOperations.hpp"
-#include "FieldTypeDefs.hpp"
