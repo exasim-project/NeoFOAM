@@ -14,6 +14,7 @@ Functionally, fvccVolField parallels several OpenFOAM classes such as `volScalar
 
 .. doxygenclass:: NeoFOAM::fvccVolField
     :members:
+        field_,
         fvccVolField,
         internalField,
         boundaryField,
@@ -31,6 +32,7 @@ However, the internalField also contains the boundary values, so no branches (if
 
 .. doxygenclass:: NeoFOAM::fvccSurfaceField
     :members:
+        field_,
         fvccSurfaceField,
         internalField,
         boundaryField,
