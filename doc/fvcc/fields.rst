@@ -3,6 +3,9 @@
 Fields (FVCC)
 =============
 
+.. warning::
+    The API of the classes probably will change in the future as currently parallelization is not supported.
+
 Cell centered fields
 ^^^^^^^^^^^^^^^^^^^^
 
