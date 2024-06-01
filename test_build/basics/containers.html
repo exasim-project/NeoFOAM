@@ -227,6 +227,7 @@
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../fvcc/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../fvcc/DSL.html">Domain Specific Language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fvcc/fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../fvcc/boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../fvcc/operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../fvcc/stencil.html">Stencil</a></li>
@@ -427,33 +428,13 @@ implement the FieldGraph class</p>
 </section>
 <section id="boundaryfields">
 <h2>BoundaryFields<a class="headerlink" href="#boundaryfields" title="Link to this heading">¶</a></h2>
-<p>The BoundaryFields class is used to store the boundary conditions of a field. The BoundaryFields class is implemented in the <code class="docutils literal notranslate"><span class="pre">BoundaryFields.hpp</span></code> header file and store the boundary conditions in a general container that can be used to present different boundary conditions: Mixed, Dirichlet, Neumann. The class uses the same of set approach to loop over the boundary patches</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>TODO
-implement the boundaryFields see other commit</p>
-</div>
-<dl class="cpp class">
-<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM14BoundaryFieldsE">
-<span id="_CPPv3I0EN7NeoFOAM14BoundaryFieldsE"></span><span id="_CPPv2I0EN7NeoFOAM14BoundaryFieldsE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1BoundaryFields"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BoundaryFields</span></span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Represents the boundary fields for a computational domain. </p>
-<p>The <a class="reference internal" href="#classNeoFOAM_1_1BoundaryFields"><span class="std std-ref">BoundaryFields</span></a> class stores the boundary conditions and related information for a computational domain. It provides access to the computed values, reference values, value fractions, reference gradients, boundary types, offsets, and the number of boundaries and boundary faces.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueType</strong> – The type of the underlying field values </p>
-</dd>
-</dl>
-</dd></dl>
-
+<p>The BoundaryFields class is used to store the boundary conditions of a field. The BoundaryFields class is implemented in the <code class="docutils literal notranslate"><span class="pre">BoundaryFields.hpp</span></code> header file and store the boundary conditions in a general container that can be used to present different boundary conditions: Mixed, Dirichlet, Neumann. The class uses the same of set approach to loop over the boundary patches
+It is a data container that only stores the values of the boundary conditions and needs to be modified by classes that implement the boundary conditions.</p>
 </section>
 <section id="domainfield">
 <h2>DomainField<a class="headerlink" href="#domainfield" title="Link to this heading">¶</a></h2>
-<p>The domainField stores the internalField and the boundaryFields in a single container and is used to represent all the relevant values of a fields for a given mesh.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>TODO
-implement the DomainField see other commit</p>
-</div>
+<p>The domainField stores the internalField and the boundaryFields in a single container and is used to represent all the relevant values of a fields for a given mesh.
+It is a data container that only stores the values of internalField and the boundary conditions and needs to be modified by other classes.</p>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM11DomainFieldE">
 <span id="_CPPv3I0EN7NeoFOAM11DomainFieldE"></span><span id="_CPPv2I0EN7NeoFOAM11DomainFieldE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1DomainField"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="Link to this definition">¶</a><br /></dt>
@@ -503,12 +484,12 @@ implement the DomainField see other commit</p>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM11DomainField13boundaryFieldEv">
-<span id="_CPPv3NK7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="_CPPv2NK7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="NeoFOAM::DomainField::boundaryFieldC"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a7a7c9a735b77236fd98284415478fe59"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields"><span class="n"><span class="pre">BoundaryFields</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">boundaryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM11DomainField13boundaryFieldEv" title="Link to this definition">¶</a><br /></dt>
+<span id="_CPPv3NK7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="_CPPv2NK7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="NeoFOAM::DomainField::boundaryFieldC"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a7a7c9a735b77236fd98284415478fe59"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">BoundaryFields</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">boundaryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM11DomainField13boundaryFieldEv" title="Link to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField13boundaryFieldEv">
-<span id="_CPPv3N7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="_CPPv2N7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="NeoFOAM::DomainField::boundaryField"></span><span class="target" id="classNeoFOAM_1_1DomainField_1afd6eb3b19fcc412746e2174c3e205b49"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields"><span class="n"><span class="pre">BoundaryFields</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">boundaryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField13boundaryFieldEv" title="Link to this definition">¶</a><br /></dt>
+<span id="_CPPv3N7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="_CPPv2N7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="NeoFOAM::DomainField::boundaryField"></span><span class="target" id="classNeoFOAM_1_1DomainField_1afd6eb3b19fcc412746e2174c3e205b49"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">BoundaryFields</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">boundaryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField13boundaryFieldEv" title="Link to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 </div>
@@ -585,10 +566,7 @@ implement the DomainField see other commit</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#fieldgraph">FieldGraph</a></li>
-<li><a class="reference internal" href="#boundaryfields">BoundaryFields</a><ul>
-<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE"><code class="docutils literal notranslate"><span class="pre">BoundaryFields</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#boundaryfields">BoundaryFields</a></li>
 <li><a class="reference internal" href="#domainfield">DomainField</a><ul>
 <li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE"><code class="docutils literal notranslate"><span class="pre">DomainField</span></code></a><ul>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executoriii"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
