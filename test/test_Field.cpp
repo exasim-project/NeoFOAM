@@ -22,9 +22,7 @@ TEST_CASE("Field Operations")
         NeoFOAM::executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::executor(NeoFOAM::GPUExecutor {})
     );
-    std::string exec_name = std::visit([](auto e)
-                                       { return e.print(); },
-                                       exec);
+    std::string exec_name = std::visit([](auto e) { return e.print(); }, exec);
 
     SECTION("Field_" + exec_name)
     {
@@ -114,9 +112,7 @@ TEST_CASE("Boundaries")
         NeoFOAM::executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string exec_name = std::visit([](auto e)
-                                       { return e.print(); },
-                                       exec);
+    std::string exec_name = std::visit([](auto e) { return e.print(); }, exec);
     SECTION("domainField_" + exec_name)
     {
 
@@ -160,10 +156,6 @@ TEST_CASE("Boundaries")
     //     );
 
     //     NeoFOAM::boundaryFields<NeoFOAM::scalar>& bField = volField.boundaryField();
-
-    //     auto& volBCs = volField.boundaryConditions();
-
-    //     REQUIRE(volBCs.size() == 2.0);
 
     //     volField.correctBoundaryConditions();
 
