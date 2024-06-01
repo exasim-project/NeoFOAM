@@ -278,8 +278,12 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="boundary-conditions">
-<span id="fvcc-bc"></span><h1>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading">¶</a></h1>
+          <div class="admonition warning" id="fvcc-bc">
+<p class="admonition-title">Warning</p>
+<p>The API of the classes probably will change in the future. It is a first draft implementation to iterate over the design.</p>
+</div>
+<section id="boundary-conditions">
+<h1>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading">¶</a></h1>
 <p>In contrast to OpenFOAM the boundary conditions do not store the data teh underlaying data but instead modify the data provided by <code class="docutils literal notranslate"><span class="pre">``DomainField``</span></code> in <code class="docutils literal notranslate"><span class="pre">``fvccVolField`</span></code> and <code class="docutils literal notranslate"><span class="pre">fvccSurfaceField</span></code>.
 The interface for the face centered and volField centered data is similar but not identical. The ‘correctBoundaryConditions’ update the data of the domainField.</p>
 <dl class="cpp class">
@@ -311,6 +315,37 @@ The interface for the face centered and volField centered data is similar but no
 <p>The above class are the baseClass of the specific implementation that provide the actual boundary conditions.</p>
 <section id="bc-for-volfield">
 <h2>BC for volField<a class="headerlink" href="#bc-for-volfield" title="Link to this heading">¶</a></h2>
+<p>The boundary condition modify the data of the <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code> with the visitor pattern</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">fvccScalarFixedValueBoundaryField::correctBoundaryConditions</span><span class="p">(</span>
+<span class="w">    </span><span class="n">BoundaryFields</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">bfield</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">internalField</span>
+<span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">fixedValueBCKernel</span><span class="w"> </span><span class="n">kernel_</span><span class="p">(</span><span class="n">mesh_</span><span class="p">,</span><span class="w"> </span><span class="n">patchID_</span><span class="p">,</span><span class="w"> </span><span class="n">start_</span><span class="p">,</span><span class="w"> </span><span class="n">end_</span><span class="p">,</span><span class="w"> </span><span class="n">uniformValue_</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">visit</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">kernel_</span><span class="p">(</span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="n">bfield</span><span class="p">,</span><span class="w"> </span><span class="n">internalField</span><span class="p">);</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="n">bfield</span><span class="p">.</span><span class="n">exec</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The logic is implemented in the kernel classes:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">fixedValueBCKernel::operator</span><span class="p">()(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">GPUExecutor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="n">BoundaryFields</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">bField</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">internalField</span>
+<span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">GPUExecutor</span><span class="o">::</span><span class="n">exec</span><span class="p">;</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">s_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bField</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">field</span><span class="p">();</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">s_refValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bField</span><span class="p">.</span><span class="n">refValue</span><span class="p">().</span><span class="n">field</span><span class="p">();</span>
+<span class="w">    </span><span class="n">scalar</span><span class="w"> </span><span class="n">uniformValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformValue_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;fvccScalarFixedValueBoundaryField&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">RangePolicy</span><span class="o">&lt;</span><span class="n">executor</span><span class="o">&gt;</span><span class="p">(</span><span class="n">start_</span><span class="p">,</span><span class="w"> </span><span class="n">end_</span><span class="p">),</span>
+<span class="w">        </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">s_value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformValue</span><span class="p">;</span>
+<span class="w">            </span><span class="n">s_refValue</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformValue</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>As the boundaryField stores all data in an continous array the boundary condition must only update the data in the range of the boundary specified by the <a href="#id1"><span class="problematic" id="id2">start_</span></a> and <a href="#id3"><span class="problematic" id="id4">end_</span></a> index. For this simple boundary condition the kernel is very simple and only sets the values to a uniformValue. The <code class="docutils literal notranslate"><span class="pre">value</span></code> field stores the current value on the boundaryConditinos that is used by the explicit operators and the <code class="docutils literal notranslate"><span class="pre">refValue</span></code> stores the value of the boundary condition that is used by the implicit operators.</p>
 <p>Currently the following boundary conditions are implemented for volField for scalar:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">fvccScalarCalculatedBoundaryField</span></code></p></li>
