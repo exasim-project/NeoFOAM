@@ -4,13 +4,13 @@
 
 #include <memory>
 
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/BoundaryField.hpp"
-#include "NeoFOAM/core/Dictionary.hpp"
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include "NeoFOAM/finiteVolume/CellCentred.hpp"
-#include "NeoFOAM/mesh/unstructured/UnstructuredMesh.hpp"
+#include "NeoFOAM/cellCentredFiniteVolume/bcFields/boundaryField.hpp"
+#include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/fields/fieldTypeDefs.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
-namespace NeoFOAM::finiteVolume::CellCentred
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>

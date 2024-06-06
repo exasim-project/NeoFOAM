@@ -4,11 +4,11 @@
 #include <vector>
 
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
-namespace NeoFOAM::finiteVolume::CellCentred
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
@@ -20,9 +20,9 @@ namespace NeoFOAM::finiteVolume::CellCentred
  * It provides methods to correct boundary conditions, access the internal field, boundary field,
  * and executor, and retrieve information about the mesh and boundary conditions.
  *
- * @tparam T The type of the field values.
+ * @tparam ValueType The type of the field values.
  */
-template<typename T>
+template<typename ValueType>
 class VolumeField
 {
 public:
@@ -35,13 +35,14 @@ public:
      * @param boundaryConditions The boundary conditions for the field.
      */
     VolumeField(
-        const executor& exec,
-        const unstructuredMesh& mesh,
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
         std::vector<std::unique_ptr<fvccBoundaryField<ValueType>>>&& boundaryConditions
     )
         : exec_(exec), mesh_(mesh),
           field_(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries()),
-          boundaryConditions_(std::move(boundaryConditions)) {};
+          boundaryConditions_(std::move(boundaryConditions))
+    {}
 
     /**
      * @brief Corrects the boundary conditions of the field.
@@ -57,49 +58,49 @@ public:
                 field_.boundaryField(), field_.internalField()
             );
         }
-    };
+    }
 
     /**
      * @brief Returns a const reference to the internal field.
      *
      * @return A const reference to the internal field.
      */
-    const Field<ValueType>& internalField() const { return field_.internalField(); };
+    const Field<ValueType>& internalField() const { return field_.internalField(); }
 
     /**
      * @brief Returns a reference to the internal field.
      *
      * @return A reference to the internal field.
      */
-    Field<ValueType>& internalField() { return field_.internalField(); };
+    Field<ValueType>& internalField() { return field_.internalField(); }
 
     /**
      * @brief Returns a const reference to the boundary field.
      *
      * @return A const reference to the boundary field.
      */
-    const boundaryFields<ValueType>& boundaryField() const { return field_.boundaryField(); };
+    const BoundaryFields<ValueType>& boundaryField() const { return field_.boundaryField(); }
 
     /**
      * @brief Returns a reference to the boundary field.
      *
      * @return A reference to the boundary field.
      */
-    boundaryFields<ValueType>& boundaryField() { return field_.boundaryField(); };
+    BoundaryFields<ValueType>& boundaryField() { return field_.boundaryField(); }
 
     /**
      * @brief Returns a const reference to the executor.
      *
      * @return A const reference to the executor.
      */
-    const executor& exec() const { return exec_; };
+    const Executor& exec() const { return exec_; }
 
 private:
 
-    executor exec_;                /**< The executor for parallel execution. */
-    const unstructuredMesh& mesh_; /**< The unstructured mesh. */
-    domainField<ValueType> field_;         /**< The domain field. */
-    std::vector<std::unique_ptr<fvccBoundaryField<ValueType>>>
+    Executor exec_;                /**< The executor for parallel execution. */
+    const UnstructuredMesh& mesh_; /**< The unstructured mesh. */
+    DomainField<ValueType> field_; /**< The domain field. */
+    std::vector<std::unique_ptr<BoundaryField<ValueType>>>
         boundaryConditions_; /**< The boundary conditions for the field. */
 };
 

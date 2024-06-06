@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include "NeoFOAM/fields/BoundaryFields.hpp"
-#include "NeoFOAM/mesh/unstructured/UnstructuredMesh.hpp"
+#include "NeoFOAM/fields/fieldTypeDefs.hpp"
+#include "NeoFOAM/fields/boundaryFields.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
-namespace NeoFOAM::finiteVolume::CellCentred
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
@@ -17,14 +17,12 @@ public:
 
     SurfaceBoundaryField(const UnstructuredMesh& mesh, int patchID)
         : mesh_(mesh), patchID_(patchID), start_(mesh.boundaryMesh().offset()[patchID_]),
-          end_(mesh.boundaryMesh().offset()[patchID_ + 1]), size_(end_ - start_) {
-
-                                                            };
+          end_(mesh.boundaryMesh().offset()[patchID_ + 1]), size_(end_ - start_)
+    {}
 
     virtual void
-    correctBoundaryConditions(BoundaryFields<scalar>& bfield, Field<scalar>& internalField) {
-
-    };
+    correctBoundaryConditions(BoundaryFields<scalar>& bfield, Field<scalar>& internalField)
+    {}
 
     int size() const { return size_; }
 

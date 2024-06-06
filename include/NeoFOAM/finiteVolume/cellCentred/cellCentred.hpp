@@ -4,6 +4,6 @@
 #include "fields/SurfaceField.hpp"
 #include "fields/VolumeField.hpp"
 
-#include "fields/boundary/BoundaryField.hpp"
-#include "fields/boundary/BoundaryFieldSelector.hpp"
-#include "fields/boundary/SurfaceBoundaryField.hpp"
+#include "fields/boundary/boundaryField.hpp"
+#include "fields/boundary/boundaryFieldSelector.hpp"
+#include "fields/boundary/surfaceBoundaryField.hpp"
