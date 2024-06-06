@@ -22,7 +22,7 @@ The interface for the face centered and volField centered data is similar but no
 
 The above class are the baseClass of the specific implementation that provide the actual boundary conditions.
 
-Boundary conditions for VolumeField's
+Boundary Conditions for VolumeField's
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The boundary condition modify the data of the ``boundaryField`` with the visitor pattern
@@ -59,7 +59,7 @@ The logic is implemented in the kernel classes:
         );
     }
 
-As the boundaryField stores all data in an continous array the boundary condition must only update the data in the range of the boundary specified by the start_ and end_ index. For this simple boundary condition the kernel is very simple and only sets the values to a uniformValue. The ``value`` field stores the current value on the boundaryConditinos that is used by the explicit operators and the ``refValue`` stores the value of the boundary condition that is used by the implicit operators.
+As the BoundaryFields class stores all data in a continuous array the boundary condition must only update the data in the range of the boundary specified by the `start_` and `end_` index. In the above simple boundary condition, the kernel only sets the values to a uniform/fixed value. The ``value`` field stores the current value of the boundary condition that is used by the explicit operators and the ``refValue`` stores the value of the boundary condition that is used by the implicit operators.
 
 Currently the following boundary conditions are implemented for volField for scalar:
 
