@@ -46,5 +46,5 @@ The code snippet also highlights another important aspect, the executor. The exe
 Interface
 ^^^^^^^^^
 
-.. doxygenclass:: NeoFOAM::Field
-    :members:
+.. doxygenfile:: NeoFOAM/fields/Field.hpp
+   :project: NeoFOAM
