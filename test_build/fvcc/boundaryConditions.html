@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Operators" href="operators.html" /><link rel="prev" title="Domain Specific Language" href="DSL.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Operators" href="operators.html" /><link rel="prev" title="Fields (FVCC)" href="fields.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/fvcc/boundaryConditions.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
@@ -193,7 +193,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -227,6 +227,7 @@
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">cellCenteredFiniteVolume</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="DSL.html">Domain Specific Language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stencil.html">Stencil</a></li>
@@ -271,14 +272,85 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="boundary-conditions">
-<span id="fvcc-bc"></span><h1>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading">¶</a></h1>
+          <div class="admonition warning" id="fvcc-bc">
+<p class="admonition-title">Warning</p>
+<p>The API of the classes probably will change in the future. It is a first draft implementation to iterate over the design.</p>
+</div>
+<section id="boundary-conditions">
+<h1>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading">¶</a></h1>
+<p>In contrast to OpenFOAM the boundary conditions do not store the data teh underlaying data but instead modify the data provided by <code class="docutils literal notranslate"><span class="pre">DomainField</span></code> in <code class="docutils literal notranslate"><span class="pre">fvccVolField</span></code> and <code class="docutils literal notranslate"><span class="pre">fvccSurfaceField</span></code>.
+The interface for the face centered and volField centered data is similar but not identical. The ‘correctBoundaryConditions’ update the data of the domainField.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>doxygenclass: Cannot find class “NeoFOAM::fvccBoundaryField” in doxygen xml output for project “NeoFOAM” from directory: _build/xml/</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>doxygenclass: Cannot find class “NeoFOAM::fvccSurfaceBoundaryField” in doxygen xml output for project “NeoFOAM” from directory: _build/xml/</p>
+</div>
+<p>The above class are the baseClass of the specific implementation that provide the actual boundary conditions.</p>
+<section id="bc-for-volfield">
+<h2>BC for volField<a class="headerlink" href="#bc-for-volfield" title="Link to this heading">¶</a></h2>
+<p>The boundary condition modify the data of the <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code> with the visitor pattern</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">fvccScalarFixedValueBoundaryField::correctBoundaryConditions</span><span class="p">(</span>
+<span class="w">    </span><span class="n">BoundaryFields</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">bfield</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">internalField</span>
+<span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">fixedValueBCKernel</span><span class="w"> </span><span class="n">kernel_</span><span class="p">(</span><span class="n">mesh_</span><span class="p">,</span><span class="w"> </span><span class="n">patchID_</span><span class="p">,</span><span class="w"> </span><span class="n">start_</span><span class="p">,</span><span class="w"> </span><span class="n">end_</span><span class="p">,</span><span class="w"> </span><span class="n">uniformValue_</span><span class="p">);</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">visit</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">kernel_</span><span class="p">(</span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="n">bfield</span><span class="p">,</span><span class="w"> </span><span class="n">internalField</span><span class="p">);</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="n">bfield</span><span class="p">.</span><span class="n">exec</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The logic is implemented in the kernel classes:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">fixedValueBCKernel::operator</span><span class="p">()(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">GPUExecutor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="n">BoundaryFields</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">bField</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">internalField</span>
+<span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">GPUExecutor</span><span class="o">::</span><span class="n">exec</span><span class="p">;</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">s_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bField</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">field</span><span class="p">();</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">s_refValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bField</span><span class="p">.</span><span class="n">refValue</span><span class="p">().</span><span class="n">field</span><span class="p">();</span>
+<span class="w">    </span><span class="n">scalar</span><span class="w"> </span><span class="n">uniformValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformValue_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;fvccScalarFixedValueBoundaryField&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">RangePolicy</span><span class="o">&lt;</span><span class="n">executor</span><span class="o">&gt;</span><span class="p">(</span><span class="n">start_</span><span class="p">,</span><span class="w"> </span><span class="n">end_</span><span class="p">),</span>
+<span class="w">        </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">s_value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformValue</span><span class="p">;</span>
+<span class="w">            </span><span class="n">s_refValue</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniformValue</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>As the boundaryField stores all data in an continous array the boundary condition must only update the data in the range of the boundary specified by the <a href="#id1"><span class="problematic" id="id2">start_</span></a> and <a href="#id3"><span class="problematic" id="id4">end_</span></a> index. For this simple boundary condition the kernel is very simple and only sets the values to a uniformValue. The <code class="docutils literal notranslate"><span class="pre">value</span></code> field stores the current value on the boundaryConditinos that is used by the explicit operators and the <code class="docutils literal notranslate"><span class="pre">refValue</span></code> stores the value of the boundary condition that is used by the implicit operators.</p>
+<p>Currently the following boundary conditions are implemented for volField for scalar:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccScalarCalculatedBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccScalarEmptyBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccScalarFixedValueBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccScalarZeroGradientBoundaryField</span></code></p></li>
+</ul>
+<p>Currently the following boundary conditions are implemented for volField for Vector:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccVectorCalculatedBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccVectorEmptyBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccVectorFixedValueBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccVectorZeroGradientBoundaryField</span></code></p></li>
+</ul>
+</section>
+<section id="bc-for-surfacefield">
+<h2>BC for surfaceField<a class="headerlink" href="#bc-for-surfacefield" title="Link to this heading">¶</a></h2>
+<p>Currently the following boundary conditions are implemented for volField for scalar:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccSurfaceScalarCalculatedBoundaryField</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fvccSurfaceScalarEmptyBoundaryField</span></code></p></li>
+</ul>
+</section>
 </section>
 
         </article>
@@ -295,14 +367,14 @@
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="DSL.html">
+          <a class="prev-page" href="fields.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Domain Specific Language</div>
+                <div class="title">Fields (FVCC)</div>
                 
               </div>
             </a>
@@ -324,8 +396,28 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Boundary Conditions</a><ul>
+<li><a class="reference internal" href="#bc-for-volfield">BC for volField</a></li>
+<li><a class="reference internal" href="#bc-for-surfacefield">BC for surfaceField</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
