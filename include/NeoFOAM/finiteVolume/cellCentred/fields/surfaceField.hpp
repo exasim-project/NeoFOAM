@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
+
 #include <vector>
 
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
-namespace NeoFOAM::finiteVolume::CellCentred
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 /**
@@ -33,8 +35,8 @@ public:
      * representing the boundary conditions.
      */
     SurfaceField(
-        const executor& exec,
-        const unstructuredMesh& mesh,
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
         std::vector<std::unique_ptr<SurfaceBoundaryField<ValueType>>>&& boundaryConditions
     )
         : exec_(exec), mesh_(mesh), field_(
@@ -43,9 +45,8 @@ public:
                                         mesh.nBoundaryFaces(),
                                         mesh.nBoundaries()
                                     ),
-          boundaryConditions_(std::move(boundaryConditions)) {
-
-          };
+          boundaryConditions_(std::move(boundaryConditions))
+    {}
 
     /**
      * @brief Copy constructor for SurfaceField.
@@ -54,10 +55,11 @@ public:
      */
     SurfaceField(const SurfaceField& sField)
         : exec_(sField.exec_), mesh_(sField.mesh_), field_(sField.field_),
-          boundaryConditions_(sField.boundaryConditions_.size()) {
-              // Copy the boundary conditions
-              // TODO add clone functionality to boundary conditions
-          };
+          boundaryConditions_(sField.boundaryConditions_.size())
+    {
+        // Copy the boundary conditions
+        // TODO add clone functionality to boundary conditions
+    }
 
     /**
      * @brief Corrects the boundary conditions of the surface field.
@@ -73,55 +75,55 @@ public:
                 field_.boundaryField(), field_.internalField()
             );
         }
-    };
+    }
 
     /**
      * @brief Returns a const reference to the internal field.
      *
      * @return The const reference to the internal field.
      */
-    const Field<ValueType>& internalField() const { return field_.internalField(); };
+    const Field<ValueType>& internalField() const { return field_.internalField(); }
 
     /**
      * @brief Returns a reference to the internal field.
      *
      * @return The reference to the internal field.
      */
-    Field<ValueType>& internalField() { return field_.internalField(); };
+    Field<ValueType>& internalField() { return field_.internalField(); }
 
     /**
      * @brief Returns a const reference to the boundary field.
      *
      * @return The const reference to the boundary field.
      */
-    const boundaryFields<ValueType>& boundaryField() const { return field_.boundaryField(); };
+    const BoundaryFields<ValueType>& boundaryField() const { return field_.boundaryField(); }
 
     /**
      * @brief Returns a reference to the boundary field.
      *
      * @return The reference to the boundary field.
      */
-    boundaryFields<ValueType>& boundaryField() { return field_.boundaryField(); };
+    BoundaryFields<ValueType>& boundaryField() { return field_.boundaryField(); }
 
     /**
      * @brief Returns a const reference to the executor object.
      *
      * @return The const reference to the executor object.
      */
-    const executor& exec() const { return exec_; };
+    const Executor& exec() const { return exec_; }
 
     /**
      * @brief Returns a const reference to the unstructured mesh object.
      *
      * @return The const reference to the unstructured mesh object.
      */
-    const unstructuredMesh& mesh() const { return mesh_; };
+    const UnstructuredMesh& mesh() const { return mesh_; }
 
 private:
 
-    executor exec_;                // The executor object
-    const unstructuredMesh& mesh_; // The unstructured mesh object
-    domainField<ValueType> field_; // The domain field object
+    Executor exec_;                // The executor object
+    const UnstructuredMesh& mesh_; // The unstructured mesh object
+    DomainField<ValueType> field_; // The domain field object
     std::vector<std::unique_ptr<SurfaceBoundaryField<ValueType>>>
         boundaryConditions_; // The vector of boundary conditions
 };
