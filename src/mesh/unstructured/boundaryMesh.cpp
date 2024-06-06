@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/mesh/unstructured/BoundaryMesh.hpp"
+#include "NeoFOAM/mesh/unstructured/boundaryMesh.hpp"
 
 namespace NeoFOAM
 {
