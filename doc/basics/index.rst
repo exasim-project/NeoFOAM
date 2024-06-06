@@ -12,4 +12,3 @@ Basics
     containers.rst
     unstructuredMesh.rst
     dictionary.rst
-    macros.rst
