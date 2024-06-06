@@ -119,8 +119,7 @@ The same approach is used in the ``FieldGraph`` class (we had a better name for 
 BoundaryFields
 ^^^^^^^^^^^^^^
 
-The `BoundaryFields` class is used to store the boundary conditions of a field. The `BoundaryFields` class is implemented in the ``BoundaryFields.hpp`` header file and store the boundary conditions in a general container that can be used to present different boundary conditions: Mixed, Dirichlet, Neumann. The class uses the same of set approach to loop over the boundary patches
-It is a data container that only stores the values of the boundary conditions and needs to be modified by classes that implement the boundary conditions.
+The `BoundaryFields` class is used to store the boundary conditions of a field. The `BoundaryFields` class is implemented in the ``BoundaryFields.hpp`` header file and stores the boundary conditions in a generic container that can be used to represent different boundary conditions: Mixed, Dirichlet, Neumann. The class uses the same of set approach to loop over the boundary patches
 
 .. doxygenclass:: NeoFOAM::BoundaryFields
     :members:
@@ -136,7 +135,7 @@ It is a data container that only stores the values of the boundary conditions an
 DomainField
 ^^^^^^^^^^^
 
-The domainField stores the internalField and the boundaryFields in a single container and is used to represent all the relevant values of a fields for a given mesh.
+The DomainField stores the internalField and the boundaryFields in a single container and is used to represent all the relevant values of a fields for a given mesh.
 It is a data container that only stores the values of internalField and the boundary conditions and needs to be modified by other classes.
 
 .. doxygenclass:: NeoFOAM::DomainField
