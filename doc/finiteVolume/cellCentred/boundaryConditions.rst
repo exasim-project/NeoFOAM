@@ -7,7 +7,7 @@
 Boundary Conditions
 ===================
 
-In contrast to OpenFOAM the boundary conditions do not store the data teh underlaying data but instead modify the data provided by ``DomainField`` in ``fvccVolField`` and ``fvccSurfaceField``.
+In contrast to OpenFOAM the boundary conditions do not store the underlying  data but instead modify the data provided by ``DomainField`` in ``fvccVolField`` and ``fvccSurfaceField``.
 The interface for the face centered and volField centered data is similar but not identical. The 'correctBoundaryConditions' update the data of the domainField.
 
 .. doxygenclass:: NeoFOAM::fvccBoundaryField
@@ -22,8 +22,8 @@ The interface for the face centered and volField centered data is similar but no
 
 The above class are the baseClass of the specific implementation that provide the actual boundary conditions.
 
-BC for volField
-^^^^^^^^^^^^^^^
+Boundary conditions for VolumeField's
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The boundary condition modify the data of the ``boundaryField`` with the visitor pattern
 
