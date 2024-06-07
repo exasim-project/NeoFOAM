@@ -11,15 +11,15 @@ target_include_directories(
 
 target_sources(
   NeoFOAM
-  PRIVATE "core/Time.cpp"
-          "core/Dictionary.cpp"
-          "core/Kokkos.cpp"
+  PRIVATE "core/time.cpp"
+          "core/dictionary.cpp"
+          "core/kokkos.cpp"
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
-          "mesh/unstructured/UnstructuredMesh.cpp"
-          "mesh/unstructured/BoundaryMesh.cpp"
-          "mesh/stencil/StencilDataBase.cpp")
+          "mesh/unstructured/unstructuredMesh.cpp"
+          "mesh/unstructured/boundaryMesh.cpp"
+          "mesh/stencil/stencilDataBase.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(

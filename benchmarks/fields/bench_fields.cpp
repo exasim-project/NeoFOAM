@@ -3,21 +3,21 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
+#include <vector>
+#include <iostream>
+
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-
-#include "NeoFOAM/fields/Field.hpp"
-#include "NeoFOAM/fields/operations/OperationsMacros.hpp"
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
-#include <vector>
-
 #include <catch2/catch_test_case_info.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
 #include <catch2/reporters/catch_reporter_registrars.hpp>
 #include <catch2/reporters/catch_reporter_streaming_base.hpp>
 
-#include <iostream>
+#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/fields/operations/operationsMacros.hpp"
+#include "NeoFOAM/fields/fieldTypeDefs.hpp"
+
 
 int main(int argc, char* argv[])
 {
