@@ -37,7 +37,7 @@ public:
     VolumeField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::vector<std::unique_ptr<fvccBoundaryField<ValueType>>>&& boundaryConditions
+        std::vector<std::unique_ptr<BoundaryField<ValueType>>>&& boundaryConditions
     )
         : exec_(exec), mesh_(mesh),
           field_(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries()),
