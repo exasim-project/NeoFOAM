@@ -1,5 +1,6 @@
 # Version 0.1.0 (unreleased)
 - Initial MPI support and infrastructure added, specifically focusing on not blocking communication [#79](https://github.com/exasim-project/NeoFOAM/pull/79).
+- Add compile time derived class discovery [#80](https://github.com/exasim-project/NeoFOAM/pull/80)
 - Basic introduction macros for console printouts to screen (Debug, Info, and Error), as well as assert checking and throwing [#63](https://github.com/exasim-project/NeoFOAM/pull/63)
 - Added boundaryField and domainField [#54](https://github.com/exasim-project/NeoFOAM/pull/54)
 - Basic implementation of an unstructuredMesh [#53](https://github.com/exasim-project/NeoFOAM/pull/53)
