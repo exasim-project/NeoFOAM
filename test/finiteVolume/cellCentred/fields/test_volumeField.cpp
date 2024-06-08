@@ -13,16 +13,16 @@
 TEST_CASE("surfaceField")
 {
     using namespace NeoFOAM;
-    using SurfaceField = finiteVolume::cellCentred::SurfaceField<scalar>;
+    using VolumeField = finiteVolume::cellCentred::VolumeField<scalar>;
 
     Executor exec =
         GENERATE(Executor(CPUExecutor {}), Executor(OMPExecutor {}), Executor(GPUExecutor {}));
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("can instantiate empty surfaceField on: " + execName)
+    SECTION("can instantiate empty VolumeField on: " + execName)
     {
-        auto sf = SurfaceField(exec);
-        REQUIRE(sf.exec() == exec);
+        auto vf = VolumeField(exec);
+        REQUIRE(vf.exec() == exec);
     }
 }
