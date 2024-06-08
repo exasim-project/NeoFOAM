@@ -6,8 +6,12 @@
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <Kokkos_Core.hpp>
 
+#include "NeoFOAM/core/mpi/environment.hpp"
+
 int main(int argc, char* argv[])
 {
+    NeoFOAM::mpi::MPIEnvironment mpi(argc, argv);
+
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
     Catch::Session session;
