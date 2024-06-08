@@ -25,7 +25,6 @@ struct registerClassManager
         return result.second;
     }
 
-    // static std::unique_ptr<baseClass> Create()
     static std::unique_ptr<baseClass> Create(const std::string& name, Args... args)
     {
         try
@@ -46,10 +45,6 @@ protected:
 };
 
 
-// template <typename baseClass, typename... Args>
-// bool registerClass<baseClass, Args...>::reg = registerClassManager<baseClass, Args...>::init();
-
-// template< typename derivedClass, typename baseClass>
 template<typename derivedClass, typename baseClass, typename... Args>
 struct registerClass
 {
@@ -62,19 +57,10 @@ struct registerClass
     static bool reg;
     static bool init()
     {
-        // derivedClass t;
-        // registerClassManager<baseClass, Args..>::registerClass(derivedClass::name(), [](Args...
-        // args) { return std::make_unique<derivedClass>(Args... args); });
-        // decltype(registerClassManager<baseClass, Args...>::Create) funcCreate = [](Args... args)
-        // { return std::make_unique<derivedClass>(args...); };
-        // std::function<std::unique_ptr<baseClass>(Args... args)> funcCreate2 = [](Args... args) {
-        // return std::make_unique<derivedClass>(Args... args); }; registerClassManager<baseClass,
-        // Args...>::createFunction funcCreate;
-        //  = [](Args... args) { return std::make_unique<derivedClass>(Args... args); };
+
         registerClassManager<baseClass, Args...>::registerClass(
             derivedClass::name(), derivedClass::create
-        ); //, [](Args... args) { return std::make_unique<derivedClass>(args...); });
-        // registerClassManager<baseClass>::registerClass(derivedClass::name());
+        );
         return true;
     }
 };
