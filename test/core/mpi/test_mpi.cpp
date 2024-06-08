@@ -13,6 +13,6 @@ TEST_CASE("Send and receive data to and from a specific rank", "[mpi]")
     SECTION("subDict")
     {
         NeoFOAM::scalar value = 1.0;
-        reduceAllScalar(&value, NeoFOAM::ReduceOp::Max, MPI_COMM_WORLD);
+        NeoFOAM::mpi::reduceAllScalar(&value, NeoFOAM::mpi::ReduceOp::Max, MPI_COMM_WORLD);
     }
 }
