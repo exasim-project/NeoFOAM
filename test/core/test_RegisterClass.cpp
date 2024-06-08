@@ -28,7 +28,7 @@ public:
         TestBaseClassReg<derivedClass> reg;
     }
 
-    static int size() { return regTestBaseClass::classMap_.size(); }
+    static int size() { return regTestBaseClass::classMap.size(); }
 
     // standard base class entries
     virtual ~TestBaseClass() = default;
