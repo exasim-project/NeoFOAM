@@ -52,12 +52,10 @@ struct registerClass
     using createFunction = std::function<std::unique_ptr<baseClass>(Args... args)>;
     registerClass() { reg; };
 
-    // virtual std::string name() = 0;
-
     static bool reg;
+
     static bool init()
     {
-
         registerClassManager<baseClass, Args...>::registerClass(
             derivedClass::name(), derivedClass::create
         );
