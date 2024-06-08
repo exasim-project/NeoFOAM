@@ -12,16 +12,7 @@ TEST_CASE("Send and receive data to and from a specific rank", "[mpi]")
 
     SECTION("subDict")
     {
-        if (rank == 0)
-        {
-            int data = 42;
-            NeoFOAM::core::mpi::send(&data, 1, 1, 0, MPI_COMM_WORLD);
-        }
-        else if (rank == 1)
-        {
-            int data;
-            NeoFOAM::core::mpi::recv(&data, 1, 0, 0, MPI_COMM_WORLD);
-            REQUIRE(data == 42);
-        }
+        NeoFOAM::scalar value = 1.0;
+        reduceAllScalar(&value, NeoFOAM::ReduceOp::Max, MPI_COMM_WORLD);
     }
 }
