@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <memory>
 
-#include "NeoFOAM/field/field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/mpi/operations.hpp"
 
 namespace NeoFOAM
@@ -22,13 +22,19 @@ struct CommNode
 struct CommMap
 { // This is a map of the nodes that need to be communicated from this rank to other ranks (and visa
     // versa).
-    MPI_Comm comm;
-    int i_rank;                                 // this rank
-    int max_ranks;                              // ranks to communicate with.
+
     std::vector<std::vector<CommNode>> send;    // position here is the buffer position
     std::vector<std::vector<CommNode>> receive; // position here is the buffer position
 
-    std::pair<std::vector<std::size_t>, std::vector<std::size_t>> Size() const
+    CommMap() : comm(MPI_COMM_WORLD) { InitRankInfo(); }
+
+    CommMap(MPI_Comm commGroup) : comm(commGroup) { InitRankInfo(); }
+
+    int Rank() const { return i_rank; }
+
+    int SizeRank() const { return max_ranks; }
+
+    std::pair<std::vector<std::size_t>, std::vector<std::size_t>> SizeBuffer() const
     {
         std::pair<std::vector<std::size_t>, std::vector<std::size_t>> sizes;
         for (auto rank = 0; rank < max_ranks; ++rank)
@@ -37,6 +43,20 @@ struct CommMap
             sizes.second.push_back(receive[rank].size());
         }
         return sizes;
+    }
+
+private:
+
+    MPI_Comm comm {nullptr};
+    int i_rank {-1};    // this rank
+    int max_ranks {-1}; // ranks to communicate with.
+
+    void InitRankInfo()
+    {
+        MPI_Comm_rank(comm, &i_rank);
+        MPI_Comm_size(comm, &max_ranks);
+        send.resize(max_ranks);
+        receive.resize(max_ranks);
     }
 };
 
@@ -53,18 +73,18 @@ struct SRBuffer
     std::vector<std::size_t> receiveDataSize;
 
 
-    resize(std::size_t size)
+    void resize(std::size_t size)
     {
         NF_DEBUG_ASSERT(tag == -1, "Communication buffer currently in use.");
         if (send.size() < size) return; // to avoid reallocation, we never size down.
         send.resize(size);
         receive.resize(size);
-        send_size.resize(size);
-        receive_size.resize(size);
+        sendDataSize.resize(size);
+        receiveDataSize.resize(size);
     }
 
     template<typename valueType>
-    resizeBuffers(std::vector<std::size_t> sendSize, std::vector<std::size_t> receiveSize)
+    void resizeBuffers(std::vector<std::size_t> sendSize, std::vector<std::size_t> receiveSize)
     {
 
         NF_DEBUG_ASSERT(tag == -1, "Communication buffer currently in use.");
@@ -87,7 +107,7 @@ struct SRBuffer
                 send[rank].reset(new char[sendDataSize[rank]]);
             }
 
-            std::size_t dataSize = receiveSize[rank] * typeSize;
+            dataSize = receiveSize[rank] * typeSize;
             if (receiveDataSize[rank] < dataSize)
                 continue; // to avoid reallocation, we never size down.
             else
@@ -99,7 +119,7 @@ struct SRBuffer
     }
 
     template<typename valueType>
-    initSend(Field<valueType>& field, CommMap commMap)
+    void initSend(Field<valueType>& field, CommMap commMap)
     {
         for (auto rank = 0; rank < commMap.max_ranks; ++rank)
         {
@@ -115,7 +135,7 @@ struct SRBuffer
     }
 
     template<typename valueType>
-    initRecieve(Field<valueType>& field, CommMap commMap)
+    void initRecieve(Field<valueType>& field, CommMap commMap)
     {
         for (auto rank = 0; rank < commMap.max_ranks; ++rank)
         {
@@ -130,7 +150,7 @@ struct SRBuffer
     {
         NF_DEBUG_ASSERT(tag == -1, "Communication buffer currently in use.");
         resize(commMap.max_ranks);
-        auto [sendSize, receiveSize] = commMap.Size();
+        auto [sendSize, receiveSize] = commMap.SizeBuffer();
         resizeBuffers<valueType>(sendSize, receiveSize);
         tag = 50;
         initSend(field, commMap);
@@ -168,7 +188,7 @@ struct SRBuffer
             // todo deadlock prevention.
             // wait for the communication to finish.
         }
-        auto [sendSize, receiveSize] = commMap.Size();
+        auto [sendSize, receiveSize] = commMap.SizeBuffer();
         copyTo(field, commMap);
         tag = -1;
     }

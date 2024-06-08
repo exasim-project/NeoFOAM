@@ -137,7 +137,7 @@ namespace mpi
         MPI_Request* request
     )
     {
-        int err = MPI_Isend(buffer, s_size, getType<valueType>(), r_rank, tag, comm, *request);
+        int err = MPI_Isend(buffer, size, getType<valueType>(), r_rank, tag, comm, *request);
         NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Isend failed.");
     }
 
@@ -146,7 +146,7 @@ namespace mpi
         valueType* buffer, const int size, int s_rank, int tag, MPI_Comm comm, MPI_Request* request
     )
     {
-        int err = int MPI_Irecv(buffer, size, getType<valueType>(), s_rank, tag, comm, *request);
+        int err = MPI_Irecv(buffer, size, getType<valueType>(), s_rank, tag, comm, *request);
         NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Irecv failed.");
     }
 
