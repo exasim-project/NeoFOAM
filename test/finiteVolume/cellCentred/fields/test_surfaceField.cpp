@@ -7,19 +7,23 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
+#include "NeoFOAM/core.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
 TEST_CASE("surfaceField")
 {
+    using namespace NeoFOAM;
+    using SurfaceField = finiteVolume::cellCentred::SurfaceField<scalar>;
 
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
+    Executor exec =
+        GENERATE(Executor(CPUExecutor {}), Executor(OMPExecutor {}), Executor(GPUExecutor {}));
 
     // UnstructuredMesh mesh;
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("can instantiate surfaceField" + execName) {}
+    SECTION("can instantiate empty surfaceField on: " + execName)
+    {
+        auto sf = SurfaceField(exec);
+        REQUIRE(sf.exec() == exec);
+    }
 }

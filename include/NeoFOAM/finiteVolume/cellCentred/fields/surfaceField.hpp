@@ -36,16 +36,23 @@ public:
      */
     SurfaceField(
         const Executor& exec,
-        const UnstructuredMesh& mesh,
+        std::shared_ptr<const UnstructuredMesh> mesh,
         std::vector<std::unique_ptr<SurfaceBoundaryField<ValueType>>>&& boundaryConditions
     )
         : exec_(exec), mesh_(mesh), field_(
                                         exec,
-                                        mesh.nInternalFaces() + mesh.nBoundaryFaces(),
-                                        mesh.nBoundaryFaces(),
-                                        mesh.nBoundaries()
+                                        mesh->nInternalFaces() + mesh->nBoundaryFaces(),
+                                        mesh->nBoundaryFaces(),
+                                        mesh->nBoundaries()
                                     ),
           boundaryConditions_(std::move(boundaryConditions))
+    {}
+
+    /**
+     * @brief Constructor for SurfaceField.
+     */
+    SurfaceField(const Executor& exec)
+        : exec_(exec), mesh_(nullptr), field_(exec), boundaryConditions_()
     {}
 
     /**
@@ -117,13 +124,13 @@ public:
      *
      * @return The const reference to the unstructured mesh object.
      */
-    const UnstructuredMesh& mesh() const { return mesh_; }
+    std::shared_ptr<const UnstructuredMesh> mesh() const { return mesh_; }
 
 private:
 
-    Executor exec_;                // The executor object
-    const UnstructuredMesh& mesh_; // The unstructured mesh object
-    DomainField<ValueType> field_; // The domain field object
+    Executor exec_;                                // The executor object
+    std::shared_ptr<const UnstructuredMesh> mesh_; // The unstructured mesh object
+    DomainField<ValueType> field_;                 // The domain field object
     std::vector<std::unique_ptr<SurfaceBoundaryField<ValueType>>>
         boundaryConditions_; // The vector of boundary conditions
 };
