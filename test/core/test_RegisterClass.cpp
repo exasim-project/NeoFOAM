@@ -117,5 +117,7 @@ TEST_CASE("Register Class")
     std::cout << "TestBaseClass testValue: " << testDerived2->testValue() << std::endl;
     std::cout << "TestBaseClass testString: " << testDerived2->testString() << std::endl;
     REQUIRE(testDerived2->testString() == "SecondDerived");
-    REQUIRE(testDerived2->testValue() == 2.0);
+    REQUIRE(
+        testDerived2->testValue() == 2.0
+    ); // multiplied by 2 (see implementation of TestDerivedClass2)
 }
