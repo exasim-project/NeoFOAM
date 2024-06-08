@@ -4,6 +4,7 @@
 
 #include <exception>
 #include <iostream>
+#include <mpi.h>
 #include <string>
 #include <sstream>
 #include <source_location>
@@ -92,7 +93,7 @@ private:
     do                                                                                             \
     {                                                                                              \
         std::cerr << NF_ERROR_MESSAGE(message);                                                    \
-        std::abort();                                                                              \
+        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     }                                                                                              \
     while (false)
 
