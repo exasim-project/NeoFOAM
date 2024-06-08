@@ -14,7 +14,9 @@ namespace NeoFOAM
 
 namespace mpi
 {
-
+    /**
+     * @brief Enumeration of MPI reduction operations
+     */
     enum class ReduceOp
     {
         Max,
@@ -29,6 +31,11 @@ namespace mpi
         Minloc
     };
 
+    /**
+     * @brief Returns the corresponding MPI_Op for a given ReduceOp
+     * @param op The reduction operation
+     * @return The corresponding MPI_Op
+     */
     constexpr MPI_Op getOp(const ReduceOp op)
     {
         switch (op)
@@ -59,12 +66,17 @@ namespace mpi
         }
     }
 
-
+    /**
+     * @brief Returns the corresponding MPI_Datatype for a given C++ type
+     * @tparam valueType The C++ type
+     * @return The corresponding MPI_Datatype
+     */
     template<typename valueType>
-    constexpr MPI_Datatype
-    getType() // maybe try to conseval this -> you can template but then compile errors are long!!!
+    constexpr MPI_Datatype getType()
     {
         if constexpr (std::is_same_v<valueType, char>) return MPI_CHAR;
+        else if constexpr (std::is_same_v<valueType, wchar_t>)
+            return MPI_WCHAR;
         else if constexpr (std::is_same_v<valueType, short>)
             return MPI_SHORT;
         else if constexpr (std::is_same_v<valueType, int>)
@@ -73,10 +85,6 @@ namespace mpi
             return MPI_LONG;
         else if constexpr (std::is_same_v<valueType, long long>)
             return MPI_LONG_LONG;
-        else if constexpr (std::is_same_v<valueType, signed char>)
-            return MPI_SIGNED_CHAR;
-        else if constexpr (std::is_same_v<valueType, unsigned char>)
-            return MPI_UNSIGNED_CHAR;
         else if constexpr (std::is_same_v<valueType, unsigned short>)
             return MPI_UNSIGNED_SHORT;
         else if constexpr (std::is_same_v<valueType, unsigned>)
@@ -91,24 +99,6 @@ namespace mpi
             return MPI_DOUBLE;
         else if constexpr (std::is_same_v<valueType, long double>)
             return MPI_LONG_DOUBLE;
-        else if constexpr (std::is_same_v<valueType, wchar_t>)
-            return MPI_WCHAR;
-        else if constexpr (std::is_same_v<valueType, int8_t>)
-            return MPI_INT8_T;
-        else if constexpr (std::is_same_v<valueType, int16_t>)
-            return MPI_INT16_T;
-        else if constexpr (std::is_same_v<valueType, int32_t>)
-            return MPI_INT32_T;
-        else if constexpr (std::is_same_v<valueType, int64_t>)
-            return MPI_INT64_T;
-        else if constexpr (std::is_same_v<valueType, uint8_t>)
-            return MPI_UINT8_T;
-        else if constexpr (std::is_same_v<valueType, uint16_t>)
-            return MPI_UINT16_T;
-        else if constexpr (std::is_same_v<valueType, uint32_t>)
-            return MPI_UINT32_T;
-        else if constexpr (std::is_same_v<valueType, uint64_t>)
-            return MPI_UINT64_T;
         else if constexpr (std::is_same_v<valueType, bool>)
             return MPI_CXX_BOOL;
         else if constexpr (std::is_same_v<valueType, std::complex<float>>)
@@ -119,12 +109,28 @@ namespace mpi
             return MPI_CXX_LONG_DOUBLE_COMPLEX;
         else
             NF_ERROR_EXIT("Invalid MPI datatype requested.");
+        return MPI_CHAR; // This is to suppress the warning
     }
 
+    /**
+     * @brief Performs an all-reduce operation on a scalar value across all processes in the
+     * communicator.
+     * @tparam valueType The type of the scalar value.
+     * @param value Pointer to the scalar value to be reduced.
+     * @param op The reduction operation to be performed.
+     * @param comm The communicator across which the reduction operation is performed.
+     */
     template<typename valueType>
     void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
     {
-        MPI_Allreduce(value, value, 1, getType<valueType>(), getOp(op), comm);
+        MPI_Allreduce(
+            reinterpret_cast<void*>(value),
+            reinterpret_cast<void*>(value),
+            1,
+            getType<valueType>(),
+            getOp(op),
+            comm
+        );
     }
 
     template<typename valueType>

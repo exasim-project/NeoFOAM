@@ -7,7 +7,7 @@
 #include <memory>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/mpi/operations.hpp"
+#include "NeoFOAM/core/mpi/operators.hpp"
 
 namespace NeoFOAM
 {
