@@ -105,14 +105,14 @@ TEST_CASE("Register Class")
     REQUIRE(TestBaseClass::size() == 2);
 
     std::unique_ptr<TestBaseClass> testDerived =
-        TestBaseClass::regTestBaseClass::Create("TestDerivedClass", "FirstDerived", 1.0);
+        TestBaseClass::regTestBaseClass::create("TestDerivedClass", "FirstDerived", 1.0);
     std::cout << "TestBaseClass testValue: " << testDerived->testValue() << std::endl;
     std::cout << "TestBaseClass testString: " << testDerived->testString() << std::endl;
     REQUIRE(testDerived->testString() == "FirstDerived");
     REQUIRE(testDerived->testValue() == 1.0);
 
     std::unique_ptr<TestBaseClass> testDerived2 =
-        TestBaseClass::regTestBaseClass::Create("TestDerivedClass2", "SecondDerived", 1.0);
+        TestBaseClass::regTestBaseClass::create("TestDerivedClass2", "SecondDerived", 1.0);
 
     std::cout << "TestBaseClass testValue: " << testDerived2->testValue() << std::endl;
     std::cout << "TestBaseClass testString: " << testDerived2->testString() << std::endl;
