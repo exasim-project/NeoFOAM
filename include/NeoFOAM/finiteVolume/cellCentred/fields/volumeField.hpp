@@ -34,13 +34,24 @@ public:
      * @param mesh The unstructured mesh.
      * @param boundaryConditions The boundary conditions for the field.
      */
+    VolumeField(const Executor& exec)
+        : exec_(exec), mesh_(nullptr), field_(exec), boundaryConditions_()
+    {}
+
+    /**
+     * @brief Constructor for VolumeField.
+     *
+     * @param exec The executor for parallel execution.
+     * @param mesh The unstructured mesh.
+     * @param boundaryConditions The boundary conditions for the field.
+     */
     VolumeField(
         const Executor& exec,
-        const UnstructuredMesh& mesh,
+        std::shared_ptr<const UnstructuredMesh> mesh,
         std::vector<std::unique_ptr<BoundaryField<ValueType>>>&& boundaryConditions
     )
         : exec_(exec), mesh_(mesh),
-          field_(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries()),
+          field_(exec, mesh->nCells(), mesh->nBoundaryFaces(), mesh->nBoundaries()),
           boundaryConditions_(std::move(boundaryConditions))
     {}
 
@@ -95,11 +106,18 @@ public:
      */
     const Executor& exec() const { return exec_; }
 
+    /**
+     * @brief Returns a const reference to the unstructured mesh object.
+     *
+     * @return The const reference to the unstructured mesh object.
+     */
+    std::shared_ptr<const UnstructuredMesh> mesh() const { return mesh_; }
+
 private:
 
-    Executor exec_;                /**< The executor for parallel execution. */
-    const UnstructuredMesh& mesh_; /**< The unstructured mesh. */
-    DomainField<ValueType> field_; /**< The domain field. */
+    Executor exec_;                                /**< The executor for parallel execution. */
+    std::shared_ptr<const UnstructuredMesh> mesh_; /**< The unstructured mesh. */
+    DomainField<ValueType> field_;                 /**< The domain field. */
     std::vector<std::unique_ptr<BoundaryField<ValueType>>>
         boundaryConditions_; /**< The boundary conditions for the field. */
 };
