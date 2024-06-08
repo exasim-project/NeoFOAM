@@ -4,7 +4,6 @@
 
 #include <memory>
 
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/boundaryField.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
