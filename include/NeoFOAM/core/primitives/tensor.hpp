@@ -3,9 +3,3 @@
 #pragma once
 
 #include "scalar.hpp"
-
-class tensor
-{
-public:
-private:
-};
