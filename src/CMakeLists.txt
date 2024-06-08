@@ -9,7 +9,7 @@ target_include_directories(
   NeoFOAM
   PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>"
-         ${MPI_CXX_INCLUDE_PATH})
+         ${MPI_CXX_INCLUDE_DIRS})
 
 target_sources(
   NeoFOAM

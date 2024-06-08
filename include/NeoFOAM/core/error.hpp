@@ -165,7 +165,7 @@ private:
  * @param condition The condition to be checked.
  * @param message The error message to be printed if the condition is false.
  */
-#define NF_DEBUG_ASSERT(condition, message) ASSERT(condition, message)
+#define NF_DEBUG_ASSERT(condition, message) NF_ASSERT(condition, message)
 
 /**
  * @def NF_DEBUG_ASSERT_THROW
