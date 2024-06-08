@@ -20,9 +20,12 @@ class BoundaryField
 
 public:
 
-    BoundaryField(const UnstructuredMesh& mesh, int patchID)
-        : mesh_(mesh), patchID_(patchID), start_(mesh.boundaryMesh().offset()[patchID_]),
-          end_(mesh.boundaryMesh().offset()[patchID_ + 1]), size_(end_ - start_)
+    BoundaryField(Executor exec) : exec_(exec), mesh_(nullptr) {}
+
+    BoundaryField(Executor exec, std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
+        : exec_(exec), mesh_(mesh), patchID_(patchID),
+          start_(mesh->boundaryMesh().offset()[patchID_]),
+          end_(mesh->boundaryMesh().offset()[patchID_ + 1]), size_(end_ - start_)
     {}
 
     virtual void correctBoundaryConditions(
@@ -34,7 +37,8 @@ public:
 
 protected:
 
-    const UnstructuredMesh& mesh_;
+    Executor exec_; // The executor object
+    std::shared_ptr<const UnstructuredMesh> mesh_;
     int patchID_;
     int start_;
     int end_;
