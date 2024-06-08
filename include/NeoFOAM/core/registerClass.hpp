@@ -17,7 +17,7 @@ struct RegisterClassManager
 
     static bool registerClass(const std::string name, createFunction funcCreate)
     {
-        auto result = classMap_.insert({name, funcCreate});
+        auto result = classMap.insert({name, funcCreate});
         if (!result.second)
         {
             throw std::runtime_error("Insertion failed: Key already exists.");
@@ -25,11 +25,11 @@ struct RegisterClassManager
         return result.second;
     }
 
-    static std::unique_ptr<baseClass> Create(const std::string& name, Args... args)
+    static std::unique_ptr<baseClass> create(const std::string& name, Args... args)
     {
         try
         {
-            auto func = classMap_.at(name);
+            auto func = classMap.at(name);
             return func(args...);
         }
         catch (const std::out_of_range& e)
@@ -39,7 +39,7 @@ struct RegisterClassManager
         }
     }
 
-    static inline std::unordered_map<std::string, createFunction> classMap_;
+    static inline std::unordered_map<std::string, createFunction> classMap;
 
 protected:
 };
