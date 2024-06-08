@@ -11,13 +11,13 @@ namespace NeoFOAM
 
 
 template<typename baseClass, typename... Args>
-struct registerClassManager
+struct RegisterClassManager
 {
     using createFunction = std::function<std::unique_ptr<baseClass>(Args... args)>;
 
     static bool registerClass(const std::string name, createFunction funcCreate)
     {
-        auto result = s_methods.insert({name, funcCreate});
+        auto result = classMap_.insert({name, funcCreate});
         if (!result.second)
         {
             throw std::runtime_error("Insertion failed: Key already exists.");
@@ -29,7 +29,7 @@ struct registerClassManager
     {
         try
         {
-            auto func = s_methods.at(name);
+            auto func = classMap_.at(name);
             return func(args...);
         }
         catch (const std::out_of_range& e)
@@ -39,24 +39,24 @@ struct registerClassManager
         }
     }
 
-    static inline std::unordered_map<std::string, createFunction> s_methods;
+    static inline std::unordered_map<std::string, createFunction> classMap_;
 
 protected:
 };
 
 
 template<typename derivedClass, typename baseClass, typename... Args>
-struct registerClass
+struct RegisterClass
 {
 
     using createFunction = std::function<std::unique_ptr<baseClass>(Args... args)>;
-    registerClass() { reg; };
+    RegisterClass() { reg; };
 
     static bool reg;
 
     static bool init()
     {
-        registerClassManager<baseClass, Args...>::registerClass(
+        RegisterClassManager<baseClass, Args...>::registerClass(
             derivedClass::name(), derivedClass::create
         );
         return true;
@@ -64,7 +64,7 @@ struct registerClass
 };
 
 template<typename derivedClass, typename baseClass, typename... Args>
-bool NeoFOAM::registerClass<derivedClass, baseClass, Args...>::reg =
-    NeoFOAM::registerClass<derivedClass, baseClass, Args...>::init();
+bool NeoFOAM::RegisterClass<derivedClass, baseClass, Args...>::reg =
+    NeoFOAM::RegisterClass<derivedClass, baseClass, Args...>::init();
 
 } // namespace NeoFOAM
