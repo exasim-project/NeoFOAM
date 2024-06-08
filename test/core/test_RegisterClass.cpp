@@ -16,11 +16,11 @@ class TestBaseClass
 public:
 
     // entries required runtime discovery
-    using regTestBaseClass = NeoFOAM::registerClassManager<TestBaseClass, std::string, double>;
+    using regTestBaseClass = NeoFOAM::RegisterClassManager<TestBaseClass, std::string, double>;
 
     template<typename derivedClass>
     using TestBaseClassReg =
-        NeoFOAM::registerClass<derivedClass, TestBaseClass, std::string, double>;
+        NeoFOAM::RegisterClass<derivedClass, TestBaseClass, std::string, double>;
 
     template<typename derivedClass>
     void registerClass()
@@ -28,7 +28,7 @@ public:
         TestBaseClassReg<derivedClass> reg;
     }
 
-    static int size() { return regTestBaseClass::s_methods.size(); }
+    static int size() { return regTestBaseClass::classMap_.size(); }
 
     // standard base class entries
     virtual ~TestBaseClass() = default;
