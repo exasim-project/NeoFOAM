@@ -25,6 +25,8 @@ include(cmake/CPM.cmake)
 cpmaddpackage(NAME cpptrace GITHUB_REPOSITORY jeremy-rifkin/cpptrace VERSION
               0.5.4)
 
+cpmaddpackage(NAME sundials GITHUB_REPOSITORY LLNL/sundials VERSION 7.0.0)
+
 cpmaddpackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json VERSION 3.11.3)
 
 cpmaddpackage(NAME spdlog GITHUB_REPOSITORY gabime/spdlog VERSION 1.13.0)
