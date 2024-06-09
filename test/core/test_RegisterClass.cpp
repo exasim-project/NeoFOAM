@@ -38,7 +38,6 @@ public:
     virtual double testValue() = 0;
 
 
-private:
 };
 
 
