@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/core.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 #include "NeoFOAM/fields/boundaryFields.hpp"
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
@@ -25,7 +26,7 @@ public:
     BoundaryField(Executor exec, std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
         : exec_(exec), mesh_(mesh), patchID_(patchID),
           start_(mesh->boundaryMesh().offset()[patchID_]),
-          end_(mesh->boundaryMesh().offset()[patchID_ + 1]), size_(end_ - start_)
+          end_(mesh->boundaryMesh().offset()[patchID_ + 1])
     {}
 
     virtual void correctBoundaryConditions(
@@ -33,15 +34,22 @@ public:
     )
     {}
 
-    int size() const { return size_; }
+    label start() const { return start_; };
+
+    label end() const { return end_; };
+
+    label size() const { return end_ - start_; }
+
+    label patchID() const { return patchID_; }
+
+    const Executor& exec() const { return exec_; }
 
 protected:
 
     Executor exec_; // The executor object
     std::shared_ptr<const UnstructuredMesh> mesh_;
-    int patchID_;
-    int start_;
-    int end_;
-    int size_;
+    label patchID_;
+    label start_;
+    label end_;
 };
 };
