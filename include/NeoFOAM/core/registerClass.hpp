@@ -41,7 +41,6 @@ struct RegisterClassManager
 
     static inline std::unordered_map<std::string, createFunction> classMap;
 
-protected:
 };
 
 
