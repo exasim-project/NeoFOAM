@@ -26,9 +26,7 @@ struct CommMap
     std::vector<std::vector<CommNode>> send;    // position here is the buffer position
     std::vector<std::vector<CommNode>> receive; // position here is the buffer position
 
-    CommMap() : comm(MPI_COMM_WORLD) { InitRankInfo(); }
-
-    CommMap(MPI_Comm commGroup) : comm(commGroup) { InitRankInfo(); }
+    CommMap(MPI_Comm commGroup = MPI_COMM_WORLD) : comm(commGroup) { InitRankInfo(); }
 
     int Rank() const { return i_rank; }
 
