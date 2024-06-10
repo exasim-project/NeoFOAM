@@ -22,7 +22,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * @tparam ValueType The data type of the field.
  * @tparam BoundaryFieldType The data type of the field.
  */
-template<typename ValueType, typename BoundaryFieldType>
+template<typename ValueType, typename BoundaryType>
 class GeometricField
 {
 public:
@@ -38,7 +38,7 @@ public:
     GeometricField(
         const Executor& exec,
         std::shared_ptr<const UnstructuredMesh> mesh,
-        std::vector<std::unique_ptr<BoundaryFieldType>>&& boundaryConditions
+        std::vector<std::unique_ptr<BoundaryType>>&& boundaryConditions
     )
         : exec_(exec), mesh_(mesh), field_(
                                         exec,
@@ -132,7 +132,7 @@ private:
     Executor exec_;                                // The executor object
     std::shared_ptr<const UnstructuredMesh> mesh_; // The unstructured mesh object
     DomainField<ValueType> field_;                 // The domain field object
-    std::vector<std::unique_ptr<BoundaryFieldType>>
+    std::vector<std::unique_ptr<BoundaryType>>
         boundaryConditions_; // The vector of boundary conditions
 };
 

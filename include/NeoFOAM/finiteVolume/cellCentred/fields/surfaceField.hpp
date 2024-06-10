@@ -22,11 +22,11 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * @tparam ValueType The data type of the field.
  */
 template<typename ValueType>
-class SurfaceField final : public GeometricField<ValueType, SurfaceBoundaryField<ValueType>>
+class SurfaceField final : public GeometricField<ValueType, SurfaceBoundaryBase<ValueType>>
 {
 public:
 
-    using GeometricField<ValueType, SurfaceBoundaryField<ValueType>>::GeometricField;
+    using GeometricField<ValueType, SurfaceBoundaryBase<ValueType>>::GeometricField;
 };
 
 } // namespace NeoFOAM
