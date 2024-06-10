@@ -18,7 +18,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
  *
  *
  * @tparam ValueType The data type of the field.
- * NOTE the class template parameters is currently needed since the
+ * @note the class template parameters is currently needed since the
  * correctBoundaryConditions functions which takes templated arguments
  * is virtual.
  */
@@ -28,11 +28,10 @@ class BoundaryBase
 
 public:
 
-    BoundaryBase(Executor exec) : exec_(exec), mesh_(nullptr) {}
+    BoundaryBase() {}
 
-    BoundaryBase(Executor exec, std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
-        : exec_(exec), mesh_(mesh), patchID_(patchID),
-          start_(mesh->boundaryMesh().offset()[patchID_]),
+    BoundaryBase(std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
+        : patchID_(patchID), start_(mesh->boundaryMesh().offset()[patchID_]),
           end_(mesh->boundaryMesh().offset()[patchID_ + 1])
     {}
 
@@ -41,8 +40,7 @@ public:
      */
     virtual void correctBoundaryConditions(
         const Field<ValueType>& internalField, BoundaryFields<ValueType>& bfield
-    )
-    {}
+    ) = 0;
 
     label start() const { return start_; };
 
@@ -52,12 +50,8 @@ public:
 
     label patchID() const { return patchID_; }
 
-    const Executor& exec() const { return exec_; }
-
 protected:
 
-    Executor exec_; ///< The executor object
-    std::shared_ptr<const UnstructuredMesh> mesh_;
     label patchID_; ///< The id of this patch
     label start_;   ///< The start index of the patch in the boundaryField
     label end_;     ///< The end  index of the patch in the boundaryField

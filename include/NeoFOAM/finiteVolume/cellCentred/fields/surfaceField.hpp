@@ -13,20 +13,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-/**
- * @brief Represents a surface field for a cell-centered finite volume method.
- *
- * This class stores the surface field data for a cell-centered finite volume method. It contains
- * the internal field and boundary field, as well as the boundary conditions.
- *
- * @tparam ValueType The data type of the field.
- */
 template<typename ValueType>
-class SurfaceField final : public GeometricField<ValueType, SurfaceBoundaryBase<ValueType>>
-{
-public:
-
-    using GeometricField<ValueType, SurfaceBoundaryBase<ValueType>>::GeometricField;
-};
+using SurfaceField = GeometricField<ValueType, SurfaceBoundaryBase<ValueType>>;
 
 } // namespace NeoFOAM
