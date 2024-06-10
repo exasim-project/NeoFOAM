@@ -33,6 +33,7 @@ namespace mpi
 
     /**
      * @brief Returns the corresponding MPI_Op for a given ReduceOp
+     *
      * @param op The reduction operation
      * @return The corresponding MPI_Op
      */
@@ -68,6 +69,7 @@ namespace mpi
 
     /**
      * @brief Returns the corresponding MPI_Datatype for a given C++ type
+     *
      * @tparam valueType The C++ type
      * @return The corresponding MPI_Datatype
      */
@@ -115,6 +117,7 @@ namespace mpi
     /**
      * @brief Performs an all-reduce operation on a scalar value across all processes in the
      * communicator.
+     *
      * @tparam valueType The type of the scalar value.
      * @param value Pointer to the scalar value to be reduced.
      * @param op The reduction operation to be performed.
@@ -131,6 +134,7 @@ namespace mpi
 
     /**
      * @brief Sends a set of scalar values to a remote rank.
+     *
      * @tparam valueType The type of the scalar value.
      * @param buffer Pointer to first scalar value to be sent.
      * @param size The size of the send buffer, i.e. number of components/elements.
@@ -156,6 +160,7 @@ namespace mpi
 
     /**
      * @brief Receives a set of scalar values from a remote rank.
+     *
      * @tparam valueType The type of the scalar value.
      * @param buffer Pointer to the buffer where the received scalar values will be stored.
      * @param size The size of the receive buffer, i.e. number of components/elements.
@@ -176,6 +181,7 @@ namespace mpi
 
     /**
      * @brief Tests if a non-blocking communication request has completed.
+     *
      * @param request Pointer to the MPI_Request object.
      * @return True if the request has completed, false otherwise.
      * @note Non-blocking MPI operation.
