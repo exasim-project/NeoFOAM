@@ -119,20 +119,27 @@ namespace mpi
      * @param value Pointer to the scalar value to be reduced.
      * @param op The reduction operation to be performed.
      * @param comm The communicator across which the reduction operation is performed.
+     * @note Blocking MPI operation.
      */
     template<typename valueType>
     void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
     {
         MPI_Allreduce(
-            MPI_IN_PLACE,
-            reinterpret_cast<void*>(value),
-            1,
-            getType<valueType>(),
-            getOp(op),
-            comm
+            MPI_IN_PLACE, reinterpret_cast<void*>(value), 1, getType<valueType>(), getOp(op), comm
         );
     }
 
+    /**
+     * @brief Sends a set of scalar values to a remote rank.
+     * @tparam valueType The type of the scalar value.
+     * @param buffer Pointer to first scalar value to be sent.
+     * @param size The size of the send buffer, i.e. number of components/elements.
+     * @param r_rank The receiving rank index.
+     * @param tag The tag of the message, used to identify the communication.
+     * @param comm The MPI communicator across which the message is sent.
+     * @param request Pointer to the MPI_Request object, is populated by the function.
+     * @note Non-blocking MPI operation.
+     */
     template<typename valueType>
     void sendScalar(
         const valueType* buffer,
@@ -143,19 +150,36 @@ namespace mpi
         MPI_Request* request
     )
     {
-        int err = MPI_Isend(buffer, size, getType<valueType>(), r_rank, tag, comm, *request);
+        int err = MPI_Isend(buffer, size, getType<valueType>(), r_rank, tag, comm, request);
         NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Isend failed.");
     }
 
+    /**
+     * @brief Receives a set of scalar values from a remote rank.
+     * @tparam valueType The type of the scalar value.
+     * @param buffer Pointer to the buffer where the received scalar values will be stored.
+     * @param size The size of the receive buffer, i.e. number of components/elements.
+     * @param s_rank The rank index of the sender.
+     * @param tag The tag of the message, used to identify the communication.
+     * @param comm The MPI communicator across which the message is received.
+     * @param request Pointer to the MPI_Request object, is populated by the function.
+     * @note Non-blocking MPI operation.
+     */
     template<typename valueType>
     void recvScalar(
         valueType* buffer, const int size, int s_rank, int tag, MPI_Comm comm, MPI_Request* request
     )
     {
-        int err = MPI_Irecv(buffer, size, getType<valueType>(), s_rank, tag, comm, *request);
+        int err = MPI_Irecv(buffer, size, getType<valueType>(), s_rank, tag, comm, request);
         NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Irecv failed.");
     }
 
+    /**
+     * @brief Tests if a non-blocking communication request has completed.
+     * @param request Pointer to the MPI_Request object.
+     * @return True if the request has completed, false otherwise.
+     * @note Non-blocking MPI operation.
+     */
     bool test(MPI_Request* request)
     {
         int flag;

@@ -10,7 +10,7 @@
 using namespace NeoFOAM;
 using namespace NeoFOAM::mpi;
 
-TEST_CASE("getOp function", "[getOp]")
+TEST_CASE("getOp")
 {
     REQUIRE(getOp(ReduceOp::Max) == MPI_MAX);
     REQUIRE(getOp(ReduceOp::Min) == MPI_MIN);
@@ -24,7 +24,7 @@ TEST_CASE("getOp function", "[getOp]")
     REQUIRE(getOp(ReduceOp::Minloc) == MPI_MINLOC);
 }
 
-TEST_CASE("getType function", "[getType]")
+TEST_CASE("getType")
 {
     REQUIRE(getType<char>() == MPI_CHAR);
     REQUIRE(getType<wchar_t>() == MPI_WCHAR);
@@ -44,7 +44,7 @@ TEST_CASE("getType function", "[getType]")
     REQUIRE(getType<std::complex<long double>>() == MPI_CXX_LONG_DOUBLE_COMPLEX);
 }
 
-TEST_CASE("reduceAllScalar function")
+TEST_CASE("reduceAllScalar")
 {
 
     SECTION("Integer reduction with MPI_MAX")
@@ -129,5 +129,66 @@ TEST_CASE("reduceAllScalar function")
         int send_value = value;
         reduceAllScalar(&send_value, ReduceOp::Bor, MPI_COMM_WORLD);
         REQUIRE(send_value == 1);
+    }
+}
+
+TEST_CASE("sendScalar recvScalar Test")
+{
+    MPI_Comm comm = MPI_COMM_WORLD;
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+
+    const int size01 = 3;
+    const int size10 = 2;
+    int send_value01[size01] = {42, -1, 145}; // random values
+    int send_value10[size10] = {-58, 234};    // random values
+    const int tag = 0;
+    MPI_Request requestSend;
+    MPI_Request requestReceive;
+
+    if (rank == 0)
+    {
+        int send_buffer[size01];
+        int recv_buffer[size10];
+        std::copy(std::begin(send_value01), std::end(send_value01), std::begin(send_buffer));
+        sendScalar(send_buffer, size01, 1, tag, comm, &requestSend);
+        recvScalar(recv_buffer, size10, 1, tag, comm, &requestReceive);
+
+        while (!test(&requestSend))
+        {
+            // Busy wait
+        }
+
+        while (!test(&requestReceive))
+        {
+            // Busy wait
+        }
+
+        // Check the received value
+        for (int i = 0; i < size10; i++)
+            REQUIRE(recv_buffer[i] == send_value10[i]);
+    }
+    else if (rank == 1)
+    {
+
+        int send_buffer[size10];
+        int recv_buffer[size01];
+        std::copy(std::begin(send_value10), std::end(send_value10), std::begin(send_buffer));
+        sendScalar(send_buffer, size10, 0, tag, comm, &requestSend);
+        recvScalar(recv_buffer, size01, 0, tag, comm, &requestReceive);
+
+        while (!test(&requestSend))
+        {
+            // Busy wait
+        }
+
+        while (!test(&requestReceive))
+        {
+            // Busy wait
+        }
+
+        // Check the received value
+        for (int i = 0; i < size01; i++)
+            REQUIRE(recv_buffer[i] == send_value01[i]);
     }
 }
