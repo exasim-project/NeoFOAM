@@ -11,23 +11,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
-/**
- * @class VolumeField
- * @brief Represents a cell-centered finite volume field at cell centers.
- *
- * The VolumeField class is used to store field information at the cell center.
- * It provides methods to correct boundary conditions, access the internal field, boundary field,
- * and executor, and retrieve information about the mesh and boundary conditions.
- *
- * @tparam ValueType The type of the field values.
- */
 template<typename ValueType>
-class VolumeField final : public GeometricField<ValueType, BoundaryBase<ValueType>>
-{
-public:
-
-    using GeometricField<ValueType, BoundaryBase<ValueType>>::GeometricField;
-};
+using VolumeField = GeometricField<ValueType, VolumeBoundaryBase<ValueType>>;
 
 } // namespace NeoFOAM
