@@ -98,8 +98,6 @@ struct SRBuffer
         {
             std::size_t dataSize = sendSize[rank] * typeSize;
             if (sendDataSize[rank] < dataSize)
-                continue; // to avoid reallocation, we never size down.
-            else
             {
                 sendDataSize[rank] = dataSize;
                 send[rank].reset(new char[sendDataSize[rank]]);
