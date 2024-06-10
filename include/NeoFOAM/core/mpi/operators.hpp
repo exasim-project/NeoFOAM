@@ -124,7 +124,7 @@ namespace mpi
     void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
     {
         MPI_Allreduce(
-            reinterpret_cast<void*>(value),
+            MPI_IN_PLACE,
             reinterpret_cast<void*>(value),
             1,
             getType<valueType>(),
