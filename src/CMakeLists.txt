@@ -6,9 +6,8 @@ add_library(NeoFOAM)
 include(GNUInstallDirs)
 
 target_include_directories(
-  NeoFOAM
-  PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-         "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
+  NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+                 "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 
 target_sources(
   NeoFOAM
@@ -36,5 +35,5 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-target_link_libraries(NeoFOAM PRIVATE cpptrace::cpptrace Kokkos::kokkos
-                                      MPI::MPI_CXX)
+target_link_libraries(NeoFOAM PUBLIC Kokkos::kokkos MPI::MPI_CXX)
+target_link_libraries(NeoFOAM PRIVATE cpptrace::cpptrace)
