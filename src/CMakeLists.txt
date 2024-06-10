@@ -38,4 +38,4 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
 endif()
 
 target_link_libraries(NeoFOAM PRIVATE cpptrace::cpptrace Kokkos::kokkos
-                                      ${MPI_CXX_LIBRARIES})
+                                      MPI::MPI_CXX)
