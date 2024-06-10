@@ -23,12 +23,6 @@ struct NodeMap
     int global_idx; /**< The global index. */
 };
 
-struct DomainCommMap
-{
-    std::vector<std::vector<NodeMap>> commNodes; /**< The nodes that need to be communicated. */
-};
-
-
 /**
  * @brief Represents a map of the nodes that need to be communicated from this rank to other ranks
  * (and vice versa).
@@ -112,7 +106,7 @@ public:
         }
         rankOffset.back() = dataSize;
 
-        if (rankBuffer < dataSize) rankBuffer.resize(dataSize); // we never size down.
+        if (rankBuffer.size() < dataSize) rankBuffer.resize(dataSize); // we never size down.
     }
 
     /**
@@ -128,7 +122,7 @@ public:
         NF_DEBUG_ASSERT(dataType == typeid(valueType), "Data type mismatch.");
         return std::span<valueType>(
             reinterpret_cast<valueType*>(rankBuffer.data() + rankOffset[rank]),
-            rankComm[rank + 1] - rankComm[rank]
+            rankOffset[rank + 1] - rankOffset[rank]
         );
     }
 
@@ -144,8 +138,8 @@ public:
     {
         NF_DEBUG_ASSERT(dataType == typeid(valueType), "Data type mismatch.");
         return std::span<const valueType>(
-            reinterpret_cast<valueType*>(rankBuffer.data() + rankOffset[rank]),
-            rankComm[rank + 1] - rankComm[rank]
+            reinterpret_cast<const valueType*>(rankBuffer.data() + rankOffset[rank]),
+            rankOffset[rank + 1] - rankOffset[rank]
         );
     }
 
