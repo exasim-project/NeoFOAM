@@ -15,9 +15,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * @tparam ValueType The data type of the field.
  */
 template<typename ValueType>
-class SurfaceBoundaryField : public BoundaryField<ValueType>
+class SurfaceBoundaryBase : public BoundaryBase<ValueType>
 {
-    using BoundaryField<ValueType>::BoundaryField;
+    using BoundaryBase<ValueType>::BoundaryBase;
 };
 
 }

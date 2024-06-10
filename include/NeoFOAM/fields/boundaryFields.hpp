@@ -130,4 +130,4 @@ private:
     int nBoundaryFaces_;                   ///< The number of boundary faces.
 };
 
-} // namespace NeoFOAM
+}
