@@ -47,7 +47,7 @@ struct CommMap
 
 private:
 
-    MPI_Comm comm {nullptr};
+    MPI_Comm comm {MPI_COMM_NULL};
     int i_rank {-1};    // this rank
     int max_ranks {-1}; // ranks to communicate with.
 
