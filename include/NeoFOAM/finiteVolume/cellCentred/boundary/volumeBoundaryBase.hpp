@@ -18,6 +18,11 @@ template<typename ValueType>
 class VolumeBoundaryBase : public BoundaryBase<ValueType>
 {
     using BoundaryBase<ValueType>::BoundaryBase;
+
+    virtual void correctBoundaryConditions(
+        const Field<ValueType>& internalField, BoundaryFields<ValueType>& bfield
+    )
+    {}
 };
 
 }
