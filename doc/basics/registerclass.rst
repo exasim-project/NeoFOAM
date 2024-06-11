@@ -5,7 +5,7 @@ Derived class discovery at compile time
 
 The ``RegisterClass`` class is a template class that allows to register derived classes into a map. This allows to instaniate derived classes from the base class by its name.  This mechanisem is similar to OpenFOAMs runtime selection mechanism. The classes are registered at compile time via static member initialization. Additional explanation can be found at: `here <https://stackoverflow.com/questions/52354538/derived-class-discovery-at-compile-time>`_ and  `here <https://stackoverflow.com/questions/10332725/how-to-automatically-register-a-class-on-creation>`_ .
 
-This approach allows to create a plugin architecture where now derived class can be loaded at runtime and simplifies the runtime selection of a specific class. Now the derived classes can be created based on the name provided:
+This approach allows to create a plugin architecture where now a derived class can be loaded at runtime. Additionally, it simplifies the runtime selection of a specific class. The derived classes can be created by providing its  name, as shown below:
 
 .. code-block:: cpp
 
