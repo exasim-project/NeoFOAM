@@ -86,7 +86,7 @@ We derive the base class from the ``TestBaseClassManager`` and define the interf
 
     };
 
-The derived classes will be registered using the ``registerClass`` function. The derived classes will implement the interface functions ``testString`` and ``testValue``. The ``create`` function will be used to instantiate the derived classes based on the name provided in the ``name`` function.
+The derived classes is registered using the ``registerClass`` function. The derived classes implements the interface functions ``testString`` and ``testValue``. The ``create`` function is used to instantiate the derived classes based on the name provided in the ``name`` function.
 
 .. code-block:: cpp
 
