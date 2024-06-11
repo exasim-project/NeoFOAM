@@ -122,7 +122,7 @@ The derived classes will be registered using the ``registerClass`` function. The
     };
 
 
-After the classes have been defined, we can use the ``create`` function to instantiate the derived classes based on the name provided.
+After the classes have been defined,  the ``create`` function can be used to instantiate the derived classes based on the name provided.
 
 .. code-block:: cpp
 
