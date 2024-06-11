@@ -8,7 +8,7 @@
 #include <sstream>
 #include <source_location>
 
-#include "Info.hpp"
+#include "info.hpp"
 
 #ifdef NF_DEBUG_MESSAGING
 #include "cpptrace/cpptrace.hpp"

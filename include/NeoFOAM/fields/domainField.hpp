@@ -30,6 +30,10 @@ class DomainField
 {
 public:
 
+    DomainField(const Executor& exec)
+        : exec_(exec), internalField_(exec, 0), boundaryFields_(exec, 0, 0)
+    {}
+
     DomainField(const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
         : exec_(exec), internalField_(exec, nCells),
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
