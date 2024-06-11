@@ -67,7 +67,7 @@ public:
      *
      * @return The number of registered classes.
      */
-    static size_t size() { return classMap.size(); }
+    static size_t size() const { return classMap.size(); }
 
     /**
      * @brief A container that maps strings to create functions.
