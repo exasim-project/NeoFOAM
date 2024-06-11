@@ -24,7 +24,7 @@ The ``RegisterClassManager`` class is a template class that manages the registra
 Usage
 ^^^^^
 
-The following example shows how to use the ``RegisterClass`` and ``RegisterClassManager`` to automatically register derived classes. (details see ``test_RegsiterClass.cpp``).
+The following example shows how to use the ``RegisterClass`` and ``RegisterClassManager`` to automatically register derived classes. (details see ``test_RegisterClass.cpp``).
 
 To implement our design, we must first define a createFunction. This function will return a ``std::unique_ptr`` to a base class, taking an argument list that specifies the class interface. Following this, we'll establish a ``RegisterClassManager``. This manager will handle the registration and storage of all classes that have been registered.
 
