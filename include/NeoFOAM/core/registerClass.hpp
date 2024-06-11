@@ -101,7 +101,7 @@ public:
      *
      * reg needs to be called in the constructor to ensure that the class is registered.
      */
-    RegisterClass() { reg; };
+    RegisterClass() { reg; }
 
     /**
      * @brief Static flag indicating if the class has been registered.
