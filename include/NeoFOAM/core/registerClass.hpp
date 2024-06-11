@@ -39,7 +39,7 @@ concept StdFunction = is_std_function<T>::value;
  * @tparam CreateFunction The type of the create function.
  */
 template<typename baseClass, StdFunction CreateFunction>
-class RegisterClassManager // needs to be a class otherwise breathe will not document it
+class BaseClassRegistry // needs to be a class otherwise breathe will not document it
 {
 public:
 
@@ -92,16 +92,20 @@ public:
  * @tparam CreateFunction The function pointer type for creating an instance of the derived class.
  */
 template<typename derivedClass, typename baseClass, StdFunction CreateFunction>
-class RegisterClass
+class RegisteredClass
 {
 public:
 
     /**
-     * @brief Constructor for the RegisterClass struct.
+     * @brief Constructor for the RegisteredClass struct.
      *
      * reg needs to be called in the constructor to ensure that the class is registered.
      */
-    RegisterClass() { reg; }
+    RegisteredClass()
+    {
+        bool store = reg; // force the initialization of the static variable
+        // store in bool to avoid warning
+    };
 
     /**
      * @brief Static flag indicating if the class has been registered.
@@ -112,14 +116,14 @@ public:
      * @brief Initializes the registration of the derived class with the base class.
      *
      * This function registers the derived class with the base class by calling the
-     * RegisterClassManager::registerClass() function with the derived class's name and
+     * BaseClassRegistry::registerClass() function with the derived class's name and
      * create function.
      *
      * @return True if the registration is successful, false otherwise.
      */
     static bool init()
     {
-        RegisterClassManager<baseClass, CreateFunction>::registerClass(
+        BaseClassRegistry<baseClass, CreateFunction>::registerClass(
             derivedClass::name(), derivedClass::create
         );
         return true;
@@ -139,7 +143,7 @@ public:
  * @tparam CreateFunction The function pointer type for creating an instance of the derived class.
  */
 template<typename derivedClass, typename baseClass, StdFunction CreateFunction>
-bool NeoFOAM::RegisterClass<derivedClass, baseClass, CreateFunction>::reg =
-    NeoFOAM::RegisterClass<derivedClass, baseClass, CreateFunction>::init();
+bool NeoFOAM::RegisteredClass<derivedClass, baseClass, CreateFunction>::reg =
+    NeoFOAM::RegisteredClass<derivedClass, baseClass, CreateFunction>::init();
 
 } // namespace NeoFOAM
