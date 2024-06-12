@@ -51,16 +51,16 @@ namespace mpi
         ~MPIEnvironment() { MPI_Finalize(); }
 
         /**
-         * @brief Returns the rank of the current process.
+         * @brief Returns the number of ranks.
          *
-         * @return The rank of the current process.
+         * @return The number of ranks.
          */
         int sizeRank() const { return m_rank; }
 
         /**
-         * @brief Returns the number of ranks.
+         * @brief Returns the rank of the current process.
          *
-         * @return The number of ranks.
+         * @return The rank of the current process.
          */
         int rank() const { return i_rank; }
 

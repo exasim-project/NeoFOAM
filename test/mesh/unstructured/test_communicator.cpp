@@ -14,7 +14,7 @@ TEST_CASE("CommMap Initialization")
 
     SECTION("Default constructor")
     {
-        CommMap comm_map;
+        RankNodeCommGraph comm_map;
         int rank;
         int size;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -39,7 +39,7 @@ TEST_CASE("CommMap Initialization")
     {
         MPI_Comm custom_comm;
         MPI_Comm_split(MPI_COMM_WORLD, 0, 0, &custom_comm);
-        CommMap comm_map(custom_comm);
+        RankNodeCommGraph comm_map(custom_comm);
         int rank;
         int size;
         MPI_Comm_rank(custom_comm, &rank);
@@ -65,8 +65,7 @@ TEST_CASE("CommMap Initialization")
 
 TEST_CASE("CommMap Send/Receive Buffer Sizes")
 {
-
-    CommMap comm_map;
+    RankNodeCommGraph comm_map;
     int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
