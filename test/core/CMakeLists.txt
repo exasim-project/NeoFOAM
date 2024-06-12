@@ -3,7 +3,7 @@
 
 add_subdirectory(mpi)
 
-neofoamunittest(dictionary)
-neofoamunittest(executor)
-neofoamunittest(registerClass)
-neofoamunittest(parallelAlgorithms)
+neofoam_unit_test(dictionary)
+neofoam_unit_test(executor)
+neofoam_unit_test(registerClass)
+neofoam_unit_test(parallelAlgorithms)

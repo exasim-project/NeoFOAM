@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-neofoamunittest(fullDuplexCommBuffer)
-neofoamunittest(halfDuplexCommBuffer)
+neofoam_unit_test(fullDuplexCommBuffer)
+neofoam_unit_test(halfDuplexCommBuffer)
