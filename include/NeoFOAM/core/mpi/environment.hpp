@@ -55,14 +55,14 @@ namespace mpi
          *
          * @return The number of ranks.
          */
-        int sizeRank() const { return m_rank; }
+        int sizeRank() const { return mpi_size; }
 
         /**
          * @brief Returns the rank of the current process.
          *
          * @return The rank of the current process.
          */
-        int rank() const { return i_rank; }
+        int rank() const { return mpi_rank; }
 
         /**
          * @brief Returns the communicator.
@@ -74,8 +74,8 @@ namespace mpi
     private:
 
         MPI_Comm communicator {MPI_COMM_NULL}; // MPI communicator
-        int i_rank {-1};                       // Index of this rank
-        int m_rank {-1};                       // Number of ranks in this communicator group.
+        int mpi_rank {-1};                     // Index of this rank
+        int mpi_size {-1};                     // Number of ranks in this communicator group.
 
         /**
          * @brief Updates the rank data, based on the communicator.
@@ -83,8 +83,8 @@ namespace mpi
         void updateRankData()
         {
             NF_ASSERT(communicator != MPI_COMM_NULL, "Invalid communicator, is null.");
-            MPI_Comm_rank(communicator, &i_rank);
-            MPI_Comm_size(communicator, &m_rank);
+            MPI_Comm_rank(communicator, &mpi_rank);
+            MPI_Comm_size(communicator, &mpi_size);
         }
     };
 
