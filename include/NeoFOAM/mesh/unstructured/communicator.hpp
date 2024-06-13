@@ -38,9 +38,12 @@ struct SimplexComm
 
     ~SimplexComm() = default;
 
+    int tag() const { return tag_; }
+
     template<typename valueType>
     void initSend(Field<valueType>& field, int tag)
     {
+        NF_DEBUG_ASSERT(tag_ == -1, "Communication buffer in use.");
         tag_ = tag;
         Buffer_.setCommTypeSize(std::vector<std::size_t> rankComm); // todo
         for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
@@ -57,6 +60,7 @@ struct SimplexComm
     template<typename valueType>
     void initReceive(int tag)
     {
+        NF_DEBUG_ASSERT(tag_ == -1, "Communication buffer in use.");
         tag_ = tag;
         rankBuffer.setCommTypeSize(std::vector<std::size_t> rankComm); // todo
         for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
@@ -75,6 +79,7 @@ struct SimplexComm
 
     bool test()
     {
+        NF_DEBUG_ASSERT(tag_ != -1, "Communication buffer not in use.");
         int flag;
         int err = MPI_Test(&request_, &flag, MPI_STATUS_IGNORE);
         NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
@@ -84,7 +89,7 @@ struct SimplexComm
     template<typename valueType>
     void finishComm(Field<valueType>& field)
     {
-        NF_DEBUG_ASSERT(tag != -1, "Communication buffer not in use.");
+        NF_DEBUG_ASSERT(tag_ != -1, "Communication buffer not in use.");
         while (!test())
         {
             // todo deadlock prevention.
@@ -106,106 +111,77 @@ private:
     Buffer Buffer_;
 
     MPI_Request request_;
-    int tag_;
+    int tag_ {-1};
 };
 
-struct DuplexBuffer
+struct DuplexCommBuffer
 {
-    SimplexComm send;
-    SimplexComm receive;
+    SimplexComm send_;
+    SimplexComm receive_;
+
+    DuplexCommBuffer() = default;
+    DuplexCommBuffer(
+        mpi::MPIEnvironment environ, RankSimplexCommMap sendMap, RankSimplexCommMap receiveMap
+    )
+        : send_(environ, sendMap), receive_(environ, receiveMap)
+    {}
 };
+
+int bufferHash(const std::string& key)
+{
+    std::hash<std::string> hash_fn; // I know its not completely safe, but it will do for now.
+    return static_cast<int>(hash_fn(key));
+}
 
 template<typename valueType>
 class Communicator
 {
 public:
 
-    Communicator()
-        : duplexBuffer_({SimplexComm(MPIEnviron_, sendMap_), SimplexComm(MPIEnviron_, receiveMap_)}
-        ) {};
+    Communicator() : duplexBuffer_(MPIEnviron_, sendMap_, receiveMap_) {};
     ~Communicator() = default;
 
     template<typename valueType>
-    void startComm(Field<valueType>& field, std::string key)
+    void startComm(
+        Field<valueType>& field, std::string key
+    ) // key should be file and line number as string
     {
-        duplexBuffer[key].startComm(field, tag);
+        auto iterBuff = findDuplexBuffer();
+        if (iterBuff == duplexBuffer_.end())
+            iterBuff =
+                duplexBuffer_.emplace(key, DuplexCommBuffer(MPIEnviron_, sendMap_, receiveMap_));
+
+        duplexBuffer[key].receive_.initReceive(bufferHash(key));
+        duplexBuffer[key].send_.initSend(field, bufferHash(key));
     }
 
+    void test(std::string key) // key should be file and line number as string
+    {
+        duplexBuffer_[key].receive_.test();
+        duplexBuffer_[key].send_.test();
+    }
+
+    void finishComm(
+        Field<valueType>& field, std::string key
+    ) // key should be file and line number as string
+    {
+        duplexBuffer_[key].receive_.finishComm(field);
+    }
 
 private:
 
     mpi::MPIEnvironment MPIEnviron_;
     RankSimplexCommMap sendMap_;
     RankSimplexCommMap receiveMap_;
-    DuplexBuffer duplexBuffer_;
+    std::unordered_map<std::string, DuplexCommBuffer> duplexBuffer_;
 
 
-    // template<typename valueType>
-    // void initComm(Field<valueType>& field, RankNodeCommGraph commMap)
-    // {
-    //     for (auto rank = 0; rank < commMap.max_ranks; ++rank)
-    //     {
-    //         auto sendSize = commMap.sendMap[rank].size();
-    //         auto sendBuffer = reinterpret_cast<valueType*>(send[rank].get());
-    //         for (auto data = 0; data < sendSize; ++data) // load data
-    //         {
-    //             auto local_idx = commMap.sendMap[rank][data].local_idx;
-    //             sendBuffer[data] = field(local_idx);
-    //         }
-    //         mpi::sendScalar<valueType>(send, sendSize, rank, tag, commMap.comm, request.get());
-    //          mpi::recvScalar<valueType>(
-    //             receive, commMap.receive[rank].size(), rank, tag, commMap.comm, request.get()
-    //         );
-    //     }
-    // }
-
-    // template<typename valueType>
-    // void startComm(Field<valueType>& field, RankNodeCommGraph commMap)
-    // {
-    //     NF_DEBUG_ASSERT(tag == -1, "Communication buffer currently in use.");
-    //     resize(commMap.max_ranks);
-    //     auto [sendSize, receiveSize] = commMap.SizeBuffer();
-    //     resizeBuffers<valueType>(sendSize, receiveSize);
-    //     tag = 50;
-    //     initSend(field, commMap);
-    //     initRecieve(field, commMap);
-    // }
-
-    // bool test()
-    // {
-    //     int flag;
-    //     int err = MPI_Test(request.get(), &flag, MPI_STATUS_IGNORE);
-    //     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
-    //     return static_cast<bool>(flag);
-    // }
-
-    // template<typename valueType>
-    // void copyTo(Field<valueType>& field, RankNodeCommGraph commMap)
-    // {
-    //     for (auto rank = 0; rank < commMap.max_ranks; ++rank)
-    //     {
-    //         auto recieveBuffer = reinterpret_cast<valueType*>(receive[rank].get());
-    //         for (auto data = 0; data < commMap.send[rank].size(); ++data) // load data
-    //         {
-    //             auto local_idx = commMap.send[rank][data].local_idx;
-    //             field(local_idx) = recieveBuffer[data];
-    //         }
-    //     }
-    // }
-
-    // template<typename valueType>
-    // void finishComm(Field<valueType>& field, RankNodeCommGraph commMap)
-    // {
-    //     NF_DEBUG_ASSERT(tag != -1, "Communication buffer not in use.");
-    //     while (!test())
-    //     {
-    //         // todo deadlock prevention.
-    //         // wait for the communication to finish.
-    //     }
-    //     auto [sendSize, receiveSize] = commMap.SizeBuffer();
-    //     copyTo(field, commMap);
-    //     tag = -1;
-    // }
+    std::unordered_map<std::string, DuplexCommBuffer>::iterator findDuplexBuffer()
+    {
+        for (auto it = duplexBuffer_.begin(); it != duplexBuffer_.end(); ++it)
+            if (it->second.send.tag() == -1 && it->second.receive.tag() == -1) return it;
+        return duplexBuffer_.end();
+    }
 };
 
 
