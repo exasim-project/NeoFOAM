@@ -34,7 +34,17 @@ struct SimplexComm
     SimplexComm() = default;
     SimplexComm(const mpi::MPIEnvironment& mpiEnvr, const RankSimplexCommMap& CommMap)
         : mpiEnvr_(mpiEnvr), CommMap_(CommMap)
-    {}
+    {
+        NF_ASSERT(
+            CommMap_.size() == mpiEnvr_.sizeRank(), "Invalid rank vs. communication map size."
+        );
+
+        // determine buffer size.
+        std::vector<std::size_t> rankCommSize(mpiEnvr_.sizeRank());
+        for (auto rank = 0; rank < CommMap.size(); ++rank)
+            rankCommSize[rank] = CommMap_[rank].size();
+        Buffer_.setCommTypeSize<double>(rankCommSize); //
+    }
 
     ~SimplexComm() = default;
 
@@ -45,14 +55,16 @@ struct SimplexComm
     {
         NF_DEBUG_ASSERT(tag_ == -1, "Communication buffer in use.");
         tag_ = tag;
-        Buffer_.setCommTypeSize(std::vector<std::size_t> rankComm); // todo
+        Buffer_.setCommType<valueType>();
         for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
         {
             auto rankBuffer = Buffer_.get<valueType>(rank);
+            if (rankBuffer.size() == 0) continue; // we don't send to this rank.
+
             for (auto data = 0; data < rankBuffer.size(); ++data)
-                rankBuffer[data] = field(CommMap_[rank][data].local_idx);
+                rankBuffer[data] = copyField(CommMap_[rank][data].local_idx);
             mpi::sendScalar<valueType>(
-                rankBuffer[rank].data(), rankBuffer.size(), rank, tag_, mpiEnvr_.comm(), &request_
+                rankBuffer.data(), rankBuffer.size(), rank, tag_, mpiEnvr_.comm(), &request_
             );
         }
     }
@@ -62,17 +74,13 @@ struct SimplexComm
     {
         NF_DEBUG_ASSERT(tag_ == -1, "Communication buffer in use.");
         tag_ = tag;
-        rankBuffer.setCommTypeSize(std::vector<std::size_t> rankComm); // todo
+        Buffer_.setCommType<valueType>();
         for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
         {
             auto rankBuffer = Buffer_.get<valueType>(rank);
+            if (rankBuffer.size() == 0) continue; // we don't receive form this rank.
             mpi::recvScalar<valueType>(
-                receiveBuffer[rank].data(),
-                rankBuffer.size(),
-                rank,
-                tag_,
-                mpiEnvr_.comm(),
-                &request_
+                rankBuffer.data(), rankBuffer.size(), rank, tag_, mpiEnvr_.comm(), &request_
             );
         }
     }
@@ -99,7 +107,8 @@ struct SimplexComm
         {
             auto rankBuffer = Buffer_.get<valueType>(rank);
             for (auto data = 0; data < rankBuffer.size(); ++data) // load data
-                field(CommMap_[rank][data].local_idx) = rankBuffer[data];
+                field(CommMap_[rank][data].local_idx) =
+                    rankBuffer[data]; // how do I copy back to device?
         }
         tag_ = -1;
     }

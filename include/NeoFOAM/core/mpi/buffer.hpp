@@ -45,21 +45,29 @@ namespace mpi
          * @brief Set the buffer data size based on the rank communication and value type.
          *
          * @tparam valueType The type of the data to be stored in the buffer.
-         * @param rankComm The number of nodes to be communicated to each rank.
+         * @param rankCommSize The number of nodes to be communicated between each rank.
          */
         template<typename valueType>
-        void setCommTypeSize(std::vector<std::size_t> rankComm)
+        void setCommTypeSize(std::vector<std::size_t> rankCommSize)
         {
             dataType = typeid(valueType);
-            std::size_t dataSize = 0;
-            rankOffset.resize(rankComm.size() + 1);
-            for (auto rank = 0; rank < rankComm.size(); ++rank)
-            {
-                rankOffset[rank] = dataSize;
-                dataSize += rankComm[rank] * sizeof(valueType);
-            }
-            rankOffset.back() = dataSize;
-            if (rankBuffer.size() < dataSize) rankBuffer.resize(dataSize); // we never size down.
+            rankOffset.resize(rankCommSize.size() + 1);
+            updateDataSize([&](const int rank) { return rankCommSize[rank]; }, sizeof(valueType));
+        }
+
+        /**
+         * @brief TODO
+         */
+        template<typename valueType>
+        void setCommType()
+        {
+            if (0 == (sizeof(dataType) - sizeof(valueType))) return;
+            updateDataSize(
+                [&](const int rank)
+                { return (rankOffset[rank + 1] - rankOffset[rank]) / sizeof(dataType); },
+                sizeof(valueType)
+            );
+            dataType = typeid(valueType);
         }
 
         /**
@@ -102,6 +110,20 @@ namespace mpi
             typeid(char)};                   /*< The data type currently stored in the buffer. */
         std::vector<char> rankBuffer;        /*< The buffer data for all ranks. Never shrinks. */
         std::vector<std::size_t> rankOffset; /*< The offset for a rank data in the buffer. */
+
+
+        template<typename func>
+        void updateDataSize(func rank_size, std::size_t data_size)
+        {
+            std::size_t dataSize = 0;
+            for (auto rank = 0; rank < (rankOffset.size() - 1); ++rank)
+            {
+                rankOffset[rank] = dataSize;
+                dataSize += rank_size(rank) * data_size;
+            }
+            rankOffset.back() = dataSize;
+            if (rankBuffer.size() < dataSize) rankBuffer.resize(dataSize); // we never size down.
+        }
     };
 
 }
