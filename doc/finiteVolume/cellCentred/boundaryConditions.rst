@@ -7,16 +7,16 @@
 Boundary Conditions
 ===================
 
-In contrast to OpenFOAM the boundary conditions do not store the underlying  data but instead modify the data provided by ``DomainField`` in ``fvccVolField`` and ``fvccSurfaceField``.
-The interface for the face centered and volField centered data is similar but not identical. The 'correctBoundaryConditions' update the data of the domainField.
+In contrast to OpenFOAM the boundary conditions do not store the underlying  data but instead modify the data provided by ``DomainField``.  A basic NoOp imlementation is provided by  the``VolumeBoundary`` and ``SurfaceBoundary`` classes.
+The interface for the face centered and volField centered data is similar but not identical. The 'correctBoundaryConditions' member function is responsible for updating the actual boundary data stored by the DomainField. To identify the corresponding block of memory in the contiguous data of the DomainField the parent BoundaryBase class store the start and end indices.
 
-.. doxygenclass:: NeoFOAM::fvccBoundaryField
+.. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::VolumeBoundary
     :members:
         correctBoundaryConditions
 
 
 
-.. doxygenclass:: NeoFOAM::fvccSurfaceBoundaryField
+.. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::SurfaceBoundary
     :members:
         correctBoundaryConditions
 
@@ -25,7 +25,7 @@ The above class are the baseClass of the specific implementation that provide th
 Boundary Conditions for VolumeField's
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The boundary condition modify the data of the ``boundaryField`` with the visitor pattern
+Boundary conditions are responsible of modifying the data of the ``boundaryField`` using the visitor pattern. A possible implementation is shown below.
 
 .. code-block:: c++
 
@@ -63,22 +63,12 @@ As the BoundaryFields class stores all data in a continuous array the boundary c
 
 Currently the following boundary conditions are implemented for volField for scalar:
 
-- ``fvccScalarCalculatedBoundaryField``
-- ``fvccScalarEmptyBoundaryField``
-- ``fvccScalarFixedValueBoundaryField``
-- ``fvccScalarZeroGradientBoundaryField``
 
 Currently the following boundary conditions are implemented for volField for Vector:
 
-- ``fvccVectorCalculatedBoundaryField``
-- ``fvccVectorEmptyBoundaryField``
-- ``fvccVectorFixedValueBoundaryField``
-- ``fvccVectorZeroGradientBoundaryField``
 
 BC for surfaceField
 ^^^^^^^^^^^^^^^^^^^
 
 Currently the following boundary conditions are implemented for volField for scalar:
 
-- ``fvccSurfaceScalarCalculatedBoundaryField``
-- ``fvccSurfaceScalarEmptyBoundaryField``
