@@ -5,32 +5,8 @@
 add_library(NeoFOAM)
 include(GNUInstallDirs)
 
-target_include_directories(NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-                                          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
-
-target_sources(
-  NeoFOAM
-  PRIVATE
-    "core/Time.cpp"
-    "core/Dictionary.cpp"
-    "core/Kokkos.cpp"
-    "executor/OMPExecutor.cpp"
-    "executor/GPUExecutor.cpp"
-    "executor/CPUExecutor.cpp"
-    "mesh/unstructured/UnstructuredMesh.cpp"
-    "mesh/unstructured/BoundaryMesh.cpp"
-    "mesh/stencil/StencilDataBase.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarFixedValueBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarZeroGradientBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarEmptyBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/scalar/fvccScalarCalculatedBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorFixedValueBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorZeroGradientBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorEmptyBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/vol/vector/fvccVectorCalculatedBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.cpp"
-    "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarEmptyBoundaryField.cpp"
-    "cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarCalculatedBoundaryField.cpp")
+# target_include_directories(NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+# "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
@@ -45,4 +21,18 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+if(${NEOFOAM_DP_SCALAR})
+  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)
+endif()
+if(${NEOFOAM_DP_LABEL})
+  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
+endif()
+
+add_subdirectory("core")
+add_subdirectory("mesh")
+add_subdirectory("finiteVolume/cellCentred")
+
+target_link_libraries(
+  NeoFOAM
+  PUBLIC NeoFOAM_public_api
+  PRIVATE Kokkos::kokkos cpptrace::cpptrace)

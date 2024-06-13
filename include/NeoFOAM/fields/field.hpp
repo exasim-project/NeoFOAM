@@ -85,18 +85,13 @@ public:
         }
         else
         {
-            if (result.size() != size_)
-            {
-                exit(1);
-            }
-
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> GPU_view(
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
                 data_, size_
             );
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> result_view(
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
                 result.data(), size_
             );
-            Kokkos::deep_copy(result_view, GPU_view);
+            Kokkos::deep_copy(resultView, gpuView);
         }
         return result;
     }
@@ -302,10 +297,7 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<const T> field() const
-    {
-        return std::span<const T>(data_, size_);
-    }
+    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
 
 private:
 

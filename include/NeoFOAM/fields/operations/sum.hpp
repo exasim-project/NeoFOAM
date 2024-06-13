@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: MIT
-<<<<<<< HEAD
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
-=======
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
->>>>>>> 502ae19 (ENH: added domain and boundaryField implementation)
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -21,15 +17,9 @@ struct SumKernel
         auto field_f = field.field();
         auto end = field.size();
         Kokkos::parallel_reduce(
-<<<<<<< HEAD
             "sum",
             Kokkos::RangePolicy<executor>(0, end),
             KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
-=======
-            "sum", Kokkos::RangePolicy<executor>(0, end), KOKKOS_LAMBDA(const int i, T& lsum) {
-                lsum += field_f[i];
-            },
->>>>>>> 502ae19 (ENH: added domain and boundaryField implementation)
             sum
         );
     }
