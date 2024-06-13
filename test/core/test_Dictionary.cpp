@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include <catch2/catch_test_macros.hpp>
-#include "NeoFOAM/core/Dictionary.hpp"
+#include "NeoFOAM/core/dictionary.hpp"
 
 TEST_CASE("Dictionary operations", "[dictionary]")
 {

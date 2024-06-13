@@ -9,7 +9,7 @@
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/fields/Field.hpp"
+#include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM
 {
@@ -130,4 +130,4 @@ private:
     int nBoundaryFaces_;                   ///< The number of boundary faces.
 };
 
-} // namespace NeoFOAM
+}

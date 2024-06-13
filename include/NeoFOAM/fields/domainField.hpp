@@ -9,7 +9,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/BoundaryFields.hpp"
+#include "NeoFOAM/fields/boundaryFields.hpp"
 
 namespace NeoFOAM
 {
@@ -29,6 +29,10 @@ template<typename ValueType>
 class DomainField
 {
 public:
+
+    DomainField(const Executor& exec)
+        : exec_(exec), internalField_(exec, 0), boundaryFields_(exec, 0, 0)
+    {}
 
     DomainField(const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
         : exec_(exec), internalField_(exec, nCells),
