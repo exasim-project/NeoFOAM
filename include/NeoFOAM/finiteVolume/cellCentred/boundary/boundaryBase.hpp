@@ -4,7 +4,8 @@
 
 #include "NeoFOAM/core.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
-#include "NeoFOAM/fields/boundaryFields.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
+
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -38,9 +39,7 @@ public:
     /**
      * @brief Update corresponding boundary state
      */
-    virtual void correctBoundaryConditions(
-        const Field<ValueType>& internalField, BoundaryFields<ValueType>& bfield
-    ) = 0;
+    virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) = 0;
 
     label start() const { return start_; };
 

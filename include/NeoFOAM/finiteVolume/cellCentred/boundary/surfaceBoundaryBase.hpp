@@ -19,10 +19,7 @@ class SurfaceBoundaryBase : public BoundaryBase<ValueType>
 {
     using BoundaryBase<ValueType>::BoundaryBase;
 
-    virtual void correctBoundaryConditions(
-        const Field<ValueType>& internalField, BoundaryFields<ValueType>& bfield
-    )
-    {}
+    virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) {}
 };
 
 }

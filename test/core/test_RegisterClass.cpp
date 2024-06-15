@@ -33,7 +33,7 @@ public:
     {
         try
         {
-            auto func = classMap.at(name);
+            auto func = classMap().at(name);
             return func(testString, testValue);
         }
         catch (const std::out_of_range& e)
@@ -116,8 +116,8 @@ private:
 
 TEST_CASE("Register Class")
 {
-    std::cout << "Number of registered classes: " << TestBaseClass::size() << std::endl;
-    REQUIRE(TestBaseClass::size() == 2);
+    std::cout << "Number of registered classes: " << TestBaseClass::nRegistered() << std::endl;
+    REQUIRE(TestBaseClass::nRegistered() == 2);
 
     std::unique_ptr<TestBaseClass> testDerived =
         TestBaseClass::create("TestDerivedClass", "FirstDerived", 1.0);

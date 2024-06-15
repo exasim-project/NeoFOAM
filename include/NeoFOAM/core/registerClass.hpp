@@ -4,6 +4,7 @@
 // additional information see:
 // https://stackoverflow.com/questions/52354538/derived-class-discovery-at-compile-time
 // https://stackoverflow.com/questions/10332725/how-to-automatically-register-a-class-on-creation
+// https://www.cppstories.com/2023/ub-factory-constinit/
 
 #pragma once
 
@@ -54,7 +55,7 @@ public:
      */
     static bool registerClass(const std::string name, CreateFunction createFunc)
     {
-        auto result = classMap.insert({name, createFunc});
+        auto result = classMap().insert({name, createFunc});
         if (!result.second)
         {
             throw std::runtime_error("Insertion failed: Key already exists.");
@@ -67,18 +68,22 @@ public:
      *
      * @return The number of registered classes.
      */
-    static size_t size() const { return classMap.size(); }
+    static size_t nRegistered() { return classMap().size(); }
 
     /**
-     * @brief A container that maps strings to create functions.
+     * @brief A static method that provides access to a map of creation functions.
      *
-     * This unordered map is used to store a mapping between strings and create functions.
-     * The keys are strings, and the values are functions that create objects
+     * This method returns a reference to a static unordered map. The map's keys are strings,
+     * representing class identifiers, and the values are creation functions for those classes.
+     * This design ensures that the classMap is initialized
      *
-     * @tparam Key The type of the keys in the map (std::string).
-     * @tparam T The type of the values in the map (CreateFunction)
+     * @return A reference to the static unordered map of class identifiers to creation functions.
      */
-    static inline std::unordered_map<std::string, CreateFunction> classMap;
+    static auto& classMap()
+    {
+        static std::unordered_map<std::string, CreateFunction> classMap_;
+        return classMap_;
+    }
 };
 
 
