@@ -3,23 +3,25 @@
 #pragma once
 #include "Kokkos_Core.hpp"
 
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccSurfaceBoundaryField.hpp"
-#include "NeoFOAM/mesh/unstructured/UnstructuredMesh.hpp"
+#include "NeoFOAM/core.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-class fvccSurfaceScalarEmptyBoundaryField : public fvccSurfaceBoundaryField<scalar>
+template<typename ValueType, typename BaseType>
+class Empty : public BaseType<ValueType>
 {
 public:
 
-    fvccSurfaceScalarEmptyBoundaryField(const UnstructuredMesh& mesh, int patchID);
+    using BaseType<ValueType>::BaseType;
 
     virtual void
-    correctBoundaryConditions(BoundaryFields<scalar>& bfield, Field<scalar>& internalField);
-
-private:
+    correctBoundaryConditions(BoundaryFields<ValueType>& bfield, Field<ValueType>& internalField);
 };
+
+using EmptySurfaceScalarBoundary = Empty<scalar, SurfaceBoundaryBase<scalar>>;
+using EmptySurfaceVolumeBoundary = Empty<scalar, VolumeBoundaryBase<scalar>>;
+
 };

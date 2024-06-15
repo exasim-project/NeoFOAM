@@ -4,9 +4,9 @@
 
 #include "Kokkos_Core.hpp"
 
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryField.hpp"
-#include "NeoFOAM/mesh/unstructured/UnstructuredMesh.hpp"
+#include "NeoFOAM/core.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM
 {

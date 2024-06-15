@@ -3,9 +3,9 @@
 #pragma once
 #include "Kokkos_Core.hpp"
 
-#include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccSurfaceBoundaryField.hpp"
-#include "NeoFOAM/mesh/unstructured/UnstructuredMesh.hpp"
+#include "NeoFOAM/core.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM
 {

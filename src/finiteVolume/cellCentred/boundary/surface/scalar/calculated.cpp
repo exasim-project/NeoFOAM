@@ -1,21 +1,10 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/surface/scalar/fvccSurfaceScalarCalculatedBoundaryField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
-
-fvccSurfaceScalarCalculatedBoundaryField::fvccSurfaceScalarCalculatedBoundaryField(
-    const UnstructuredMesh& mesh, int patchID
-)
-    : fvccSurfaceBoundaryField<scalar>(mesh, patchID)
-{}
-
-void fvccSurfaceScalarCalculatedBoundaryField::correctBoundaryConditions(
-    BoundaryFields<scalar>& bfield, Field<scalar>& internalField
-)
-{}
 
 
 }
