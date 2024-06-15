@@ -12,6 +12,25 @@ namespace NeoFOAM
 
 using Executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
 
+
+// templated lambdas are not supported by cuda, so we need to use a struct
+struct checkExecutorEqual
+{
+    template<typename ExecLhs, typename ExecRhs>
+    [[nodiscard]] inline bool
+    operator()([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&) const
+    {
+        if constexpr (std::is_same_v<ExecLhs, ExecRhs>)
+        {
+            return typename ExecLhs::exec() == typename ExecRhs::exec();
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+
 /**
  * @brief Checks if two executors are equal, i.e. they are of the same type.
  * @param lhs The first executor.
@@ -20,22 +39,7 @@ using Executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
  */
 [[nodiscard]] inline bool operator==(const Executor& lhs, const Executor& rhs)
 {
-    return std::visit(
-        []<typename ExecLhs,
-           typename ExecRhs>([[maybe_unused]] const ExecLhs&, [[maybe_unused]] const ExecRhs&)
-        {
-            if constexpr (std::is_same_v<ExecLhs, ExecRhs>)
-            {
-                return typename ExecLhs::exec() == typename ExecRhs::exec();
-            }
-            else
-            {
-                return false;
-            }
-        },
-        lhs,
-        rhs
-    );
+    return std::visit(checkExecutorEqual {}, lhs, rhs);
 };
 
 /**

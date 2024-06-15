@@ -18,6 +18,10 @@
         "Kokkos_ENABLE_OPENMP": {
           "type": "BOOL",
           "value": "ON"
+        },
+        "AMReX_OMP": {
+          "type": "BOOL",
+          "value": "ON"
         }
       }
     },
@@ -86,6 +90,14 @@
         "Kokkos_ENABLE_CUDA_CONSTEXPR": {
           "type": "BOOL",
           "value": "ON"
+        },
+        "AMReX_GPU_BACKEND": {
+          "type": "STRING",
+          "value": "CUDA"
+        },
+        "AMReX_GPU_RDC": {
+          "type": "BOOL",
+          "value": "OFF"
         }
       }
     },
@@ -122,7 +134,25 @@
       "displayName": "Build for CPUs and CUDA GPUs w tests and benchmarks",
       "description": "Build for CPUs and CUDA GPUs w tests and benchmarks",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/ReleaseCudaAll"
+      "binaryDir": "${sourceDir}/build/ReleaseCudaAll",
+      "cacheVariables": {
+        "Kokkos_ENABLE_CUDA": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "Kokkos_ENABLE_CUDA_CONSTEXPR": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "AMReX_GPU_BACKEND": {
+          "type": "STRING",
+          "value": "CUDA"
+        },
+        "AMReX_GPU_RDC": {
+          "type": "BOOL",
+          "value": "OFF"
+        }
+      }
     }
   ],
   "buildPresets": [
