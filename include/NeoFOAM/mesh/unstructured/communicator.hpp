@@ -8,7 +8,8 @@
 
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/mpi/buffer.hpp"
+#include "NeoFOAM/core/mpi/fullDuplexBuffer.hpp"
+#include "NeoFOAM/core/mpi/halfDuplexBuffer.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
 
@@ -25,7 +26,6 @@ struct NodeCommMap
 };
 
 using SimplexCommMap = std::vector<NodeCommMap>;
-
 using RankSimplexCommMap = std::vector<SimplexCommMap>;
 
 
@@ -49,9 +49,7 @@ public:
     ~Communicator() = default;
 
     template<typename valueType>
-    void startComm(
-        Field<valueType>& field, const std::string& commName
-    ) // key should be file and line number as string
+    void startComm(Field<valueType>& field, const std::string& commName)
     {
         auto iterBuff = findDuplexBuffer();
         if (iterBuff == duplexBuffer_.end())
@@ -105,9 +103,9 @@ private:
     mpi::MPIEnvironment MPIEnviron_;
     RankSimplexCommMap sendMap_;
     RankSimplexCommMap receiveMap_;
-    std::unordered_map<std::string, DuplexCommBuffer> duplexBuffer_;
+    std::unordered_map<std::string, FullDuplexBuffer> duplexBuffer_;
 
-    std::unordered_map<std::string, DuplexCommBuffer>::iterator findDuplexBuffer()
+    std::unordered_map<std::string, FullDuplexBuffer>::iterator findDuplexBuffer()
     {
         for (auto it = duplexBuffer_.begin(); it != duplexBuffer_.end(); ++it)
             if (!it->isCommInit()) return it;
