@@ -39,11 +39,11 @@ public:
      * @param receiveSize The number of nodes, per rank, that this rank receives from.
      */
     FullDuplexCommBuffer(
-        MPIEnvironment environ,
+        MPIEnvironment MPIEnviron,
         std::vector<std::size_t> sendSize,
         std::vector<std::size_t> receiveSize
     )
-        : send_(environ, sendSize), receive_(environ, receiveSize) {};
+        : send_(MPIEnviron, sendSize), receive_(MPIEnviron, receiveSize) {};
 
     /**
      * @brief Check if the communication buffers are initialized.
