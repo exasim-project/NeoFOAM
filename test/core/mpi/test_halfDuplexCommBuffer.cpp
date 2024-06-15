@@ -7,13 +7,11 @@
 
 #include "NeoFOAM/core/mpi/halfDuplexCommBuffer.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
-#include "NeoFOAM/core/mpi/operators.hpp"
-#include <cstring>
 
 using namespace NeoFOAM;
 using namespace NeoFOAM::mpi;
 
-TEST_CASE("HalfDuplexBuffer")
+TEST_CASE("halfDuplexBuffer")
 {
 
     MPIEnvironment mpiEnviron;
@@ -37,6 +35,7 @@ TEST_CASE("HalfDuplexBuffer")
         buffer.finaliseComm();
         REQUIRE(buffer.getCommName() == "unassigned");
         REQUIRE(true == buffer.isComplete());
+        REQUIRE(!buffer.isCommInit());
     }
 
     SECTION("Set Comm Rank Size")
