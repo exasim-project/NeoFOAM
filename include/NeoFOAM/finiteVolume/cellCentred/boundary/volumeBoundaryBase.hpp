@@ -17,7 +17,7 @@ class VolumeBoundaryModel;
 
 // define the create function use to instantiate the derived classes
 template<typename ValueType>
-using createFunc = std::function<std::unique_ptr<VolumeBoundaryModel<ValueType>>(
+using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryModel<ValueType>>(
     const UnstructuredMesh& mesh, const Dictionary dict, int patchID
 )>;
 
