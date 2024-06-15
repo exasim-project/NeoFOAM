@@ -5,7 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include <typeindex>
+
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/mpi/buffer.hpp"
@@ -28,131 +28,29 @@ using SimplexCommMap = std::vector<NodeCommMap>;
 
 using RankSimplexCommMap = std::vector<SimplexCommMap>;
 
-struct SimplexComm
-{
-
-    SimplexComm() = default;
-    SimplexComm(const mpi::MPIEnvironment& mpiEnvr, const RankSimplexCommMap& CommMap)
-        : mpiEnvr_(mpiEnvr), CommMap_(CommMap)
-    {
-        NF_ASSERT(
-            CommMap_.size() == mpiEnvr_.sizeRank(), "Invalid rank vs. communication map size."
-        );
-
-        // determine buffer size.
-        std::vector<std::size_t> rankCommSize(mpiEnvr_.sizeRank());
-        for (auto rank = 0; rank < CommMap.size(); ++rank)
-            rankCommSize[rank] = CommMap_[rank].size();
-        Buffer_.setCommTypeSize<double>(rankCommSize); //
-    }
-
-    ~SimplexComm() = default;
-
-    int tag() const { return tag_; }
-
-    template<typename valueType>
-    void initSend(Field<valueType>& field, int tag)
-    {
-        NF_DEBUG_ASSERT(tag_ == -1, "Communication buffer in use.");
-        tag_ = tag;
-        Buffer_.setCommType<valueType>();
-        for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
-        {
-            auto rankBuffer = Buffer_.get<valueType>(rank);
-            if (rankBuffer.size() == 0) continue; // we don't send to this rank.
-
-            for (auto data = 0; data < rankBuffer.size(); ++data)
-                rankBuffer[data] = copyField(CommMap_[rank][data].local_idx);
-            mpi::sendScalar<valueType>(
-                rankBuffer.data(), rankBuffer.size(), rank, tag_, mpiEnvr_.comm(), &request_
-            );
-        }
-    }
-
-    template<typename valueType>
-    void initReceive(int tag)
-    {
-        NF_DEBUG_ASSERT(tag_ == -1, "Communication buffer in use.");
-        tag_ = tag;
-        Buffer_.setCommType<valueType>();
-        for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
-        {
-            auto rankBuffer = Buffer_.get<valueType>(rank);
-            if (rankBuffer.size() == 0) continue; // we don't receive form this rank.
-            mpi::recvScalar<valueType>(
-                rankBuffer.data(), rankBuffer.size(), rank, tag_, mpiEnvr_.comm(), &request_
-            );
-        }
-    }
-
-    bool test()
-    {
-        NF_DEBUG_ASSERT(tag_ != -1, "Communication buffer not in use.");
-        int flag;
-        int err = MPI_Test(&request_, &flag, MPI_STATUS_IGNORE);
-        NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
-        return static_cast<bool>(flag);
-    }
-
-    template<typename valueType>
-    void finishComm(Field<valueType>& field)
-    {
-        NF_DEBUG_ASSERT(tag_ != -1, "Communication buffer not in use.");
-        while (!test())
-        {
-            // todo deadlock prevention.
-            // wait for the communication to finish.
-        }
-        for (auto rank = 0; rank < mpiEnvr_.sizeRank(); ++rank)
-        {
-            auto rankBuffer = Buffer_.get<valueType>(rank);
-            for (auto data = 0; data < rankBuffer.size(); ++data) // load data
-                field(CommMap_[rank][data].local_idx) =
-                    rankBuffer[data]; // how do I copy back to device?
-        }
-        tag_ = -1;
-    }
-
-private:
-
-    const mpi::MPIEnvironment& mpiEnvr_;
-    const RankSimplexCommMap& CommMap_;
-    Buffer Buffer_;
-
-    MPI_Request request_;
-    int tag_ {-1};
-};
-
-struct DuplexCommBuffer
-{
-    SimplexComm send_;
-    SimplexComm receive_;
-
-    DuplexCommBuffer() = default;
-    DuplexCommBuffer(
-        mpi::MPIEnvironment environ, RankSimplexCommMap sendMap, RankSimplexCommMap receiveMap
-    )
-        : send_(environ, sendMap), receive_(environ, receiveMap)
-    {}
-};
-
-int bufferHash(const std::string& key)
-{
-    std::hash<std::string> hash_fn; // I know its not completely safe, but it will do for now.
-    return static_cast<int>(hash_fn(key));
-}
 
 template<typename valueType>
 class Communicator
 {
 public:
 
-    Communicator() : duplexBuffer_(MPIEnviron_, sendMap_, receiveMap_) {};
+    Communicator()
+    {
+        // determine buffer size.
+        std::vector<std::size_t> rankSendSize(environ.sizeRank());
+        std::vector<std::size_t> rankReceiveSize(environ.sizeRank());
+        for (auto rank = 0; rank < environ.sizeRank(); ++rank)
+        {
+            rankSendSize[rank] = sendMap[rank].size();
+            rankReceiveSize[rank] = receiveMap[rank].size();
+        }
+        duplexBuffer_ = DuplexCommBuffer(MPIEnviron_, rankSendSize, rankReceiveSize)
+    };
     ~Communicator() = default;
 
     template<typename valueType>
     void startComm(
-        Field<valueType>& field, std::string key
+        Field<valueType>& field, const std::string& commName
     ) // key should be file and line number as string
     {
         auto iterBuff = findDuplexBuffer();
@@ -160,21 +58,46 @@ public:
             iterBuff =
                 duplexBuffer_.emplace(key, DuplexCommBuffer(MPIEnviron_, sendMap_, receiveMap_));
 
-        duplexBuffer[key].receive_.initReceive(bufferHash(key));
-        duplexBuffer[key].send_.initSend(field, bufferHash(key));
+        iterBuff.initComm<valueType>(commName);
+        for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+        {
+            auto rankBuffer = iterBuff.get<valueType>(rank);
+            if (rankBuffer.size() == 0) continue; // we don't send to this rank.
+
+            for (auto data = 0; data < sendMap_.size(); ++data)
+                rankBuffer[data] = field(sendMap_[rank][data].local_idx);
+        }
+        iterBuff.startComm();
     }
 
-    void test(std::string key) // key should be file and line number as string
+    void isComplete(std::string commName) // key should be file and line number as string
     {
-        duplexBuffer_[key].receive_.test();
-        duplexBuffer_[key].send_.test();
+        NF_DEBUG_ASSERT(
+            duplexBuffer_.find(commName) != duplexBuffer_.end(),
+            "No communication buffer associated with key: " << commName
+        );
+        duplexBuffer_[commName].isComplete()
     }
 
-    void finishComm(
-        Field<valueType>& field, std::string key
+    void finaliseComm(
+        Field<valueType>& field, std::string commName
     ) // key should be file and line number as string
     {
-        duplexBuffer_[key].receive_.finishComm(field);
+        NF_DEBUG_ASSERT(
+            duplexBuffer_.find(commName) != duplexBuffer_.end(),
+            "No communication buffer associated with key: " << commName
+        );
+
+        duplexBuffer_[commName].waitComplete();
+        for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+        {
+            auto rankBuffer = iterBuff.get<valueType>(rank);
+            if (rankBuffer.size() == 0) continue; // we don't send to this rank.
+
+            for (auto data = 0; data < receiveMap_.size(); ++data)
+                field(receiveMap_[rank][data].local_idx) = rankBuffer[data];
+        }
+        duplexBuffer_[commName].finaliseComm();
     }
 
 private:
@@ -184,11 +107,10 @@ private:
     RankSimplexCommMap receiveMap_;
     std::unordered_map<std::string, DuplexCommBuffer> duplexBuffer_;
 
-
     std::unordered_map<std::string, DuplexCommBuffer>::iterator findDuplexBuffer()
     {
         for (auto it = duplexBuffer_.begin(); it != duplexBuffer_.end(); ++it)
-            if (it->second.send.tag() == -1 && it->second.receive.tag() == -1) return it;
+            if (!it->isCommInit()) return it;
         return duplexBuffer_.end();
     }
 };
