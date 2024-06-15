@@ -18,8 +18,9 @@ target_sources(
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
-          "mesh/unstructured/unstructuredMesh.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
+          "mesh/unstructured/communicator.cpp"
+          "mesh/unstructured/unstructuredMesh.cpp"
           "mesh/stencil/stencilDataBase.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)

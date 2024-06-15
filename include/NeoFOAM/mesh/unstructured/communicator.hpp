@@ -20,8 +20,8 @@ namespace NeoFOAM
  */
 struct NodeCommMap
 {
-    int local_idx;  /**< The local index. */
-    int global_idx; /**< The global index. */
+    label local_idx;  /**< The local index. */
+    label global_idx; /**< The global index. */
 };
 
 /**
@@ -92,10 +92,11 @@ public:
         if (iterBuff == CommBuffer_.end()) iterBuff = createNewDuplexBuffer(commName);
         auto& buffer = (*iterBuff).second;
 
+        buffer.initComm<valueType>(commName);
         for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
         {
             auto rankBuffer = buffer.getSend<valueType>(rank);
-            for (auto data = 0; data < sendMap_.size(); ++data)
+            for (auto data = 0; data < sendMap_[rank].size(); ++data)
                 rankBuffer[data] = field(sendMap_[rank][data].local_idx);
         }
         buffer.startComm();
@@ -125,7 +126,7 @@ public:
         for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
         {
             auto rankBuffer = CommBuffer_[commName].getReceive<valueType>(rank);
-            for (auto data = 0; data < receiveMap_.size(); ++data)
+            for (auto data = 0; data < receiveMap_[rank].size(); ++data)
                 field(receiveMap_[rank][data].local_idx) = rankBuffer[data];
         }
         CommBuffer_[commName].finaliseComm();
