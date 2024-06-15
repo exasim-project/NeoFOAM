@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryBase.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryBase.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryBase.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
