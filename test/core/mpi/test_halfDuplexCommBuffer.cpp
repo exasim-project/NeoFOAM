@@ -5,11 +5,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 
-#include "NeoFOAM/core/mpi/halfDuplexBuffer.hpp"
+#include "NeoFOAM/core/mpi/halfDuplexCommBuffer.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 #include <cstring>
-
 
 using namespace NeoFOAM;
 using namespace NeoFOAM::mpi;
@@ -19,11 +18,11 @@ TEST_CASE("HalfDuplexBuffer")
 
     MPIEnvironment mpiEnviron;
     std::vector<std::size_t> rankCommSize(mpiEnviron.sizeRank(), 1);
-    HalfDuplexBuffer buffer(mpiEnviron, rankCommSize);
+    HalfDuplexCommBuffer buffer(mpiEnviron, rankCommSize);
 
     SECTION("Parameterized Constructor")
     {
-        HalfDuplexBuffer buffer2;
+        HalfDuplexCommBuffer buffer2;
         REQUIRE_FALSE(buffer2.isCommInit());
     }
 
@@ -57,8 +56,8 @@ TEST_CASE("HalfDuplexBuffer")
     SECTION("Send and Receive")
     {
 
-        HalfDuplexBuffer send(mpiEnviron, rankCommSize);
-        HalfDuplexBuffer receive(mpiEnviron, rankCommSize);
+        HalfDuplexCommBuffer send(mpiEnviron, rankCommSize);
+        HalfDuplexCommBuffer receive(mpiEnviron, rankCommSize);
 
         send.initComm<int>("Send and Receive");
         receive.initComm<int>("Send and Receive");

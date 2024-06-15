@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/core/mpi/halfDuplexBuffer.hpp"
+#include "NeoFOAM/core/mpi/halfDuplexCommBuffer.hpp"
 
 namespace NeoFOAM
 {
@@ -9,7 +9,7 @@ namespace NeoFOAM
 namespace mpi
 {
 
-bool HalfDuplexBuffer::isComplete()
+bool HalfDuplexCommBuffer::isComplete()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     int flag;
@@ -22,7 +22,7 @@ bool HalfDuplexBuffer::isComplete()
     return static_cast<bool>(flag);
 }
 
-void HalfDuplexBuffer::send()
+void HalfDuplexCommBuffer::send()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
@@ -40,7 +40,7 @@ void HalfDuplexBuffer::send()
     }
 }
 
-void HalfDuplexBuffer::receive()
+void HalfDuplexCommBuffer::receive()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
@@ -58,7 +58,7 @@ void HalfDuplexBuffer::receive()
     }
 }
 
-void HalfDuplexBuffer::waitComplete()
+void HalfDuplexCommBuffer::waitComplete()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     while (!isComplete())
@@ -68,7 +68,7 @@ void HalfDuplexBuffer::waitComplete()
     }
 }
 
-void HalfDuplexBuffer::finaliseComm()
+void HalfDuplexCommBuffer::finaliseComm()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Cannot finalise while buffer is active.");

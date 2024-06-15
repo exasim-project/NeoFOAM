@@ -11,7 +11,7 @@ target_include_directories(
 
 target_sources(
   NeoFOAM
-  PRIVATE "core/mpi/halfDuplexBuffer.cpp"
+  PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"

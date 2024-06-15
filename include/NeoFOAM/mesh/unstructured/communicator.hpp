@@ -8,8 +8,7 @@
 
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/mpi/fullDuplexBuffer.hpp"
-#include "NeoFOAM/core/mpi/halfDuplexBuffer.hpp"
+#include "NeoFOAM/core/mpi/fullDuplexCommBuffer.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
 
@@ -103,9 +102,9 @@ private:
     mpi::MPIEnvironment MPIEnviron_;
     RankSimplexCommMap sendMap_;
     RankSimplexCommMap receiveMap_;
-    std::unordered_map<std::string, FullDuplexBuffer> duplexBuffer_;
+    std::unordered_map<std::string, FullDuplexCommBuffer> duplexBuffer_;
 
-    std::unordered_map<std::string, FullDuplexBuffer>::iterator findDuplexBuffer()
+    std::unordered_map<std::string, FullDuplexCommBuffer>::iterator findDuplexBuffer()
     {
         for (auto it = duplexBuffer_.begin(); it != duplexBuffer_.end(); ++it)
             if (!it->isCommInit()) return it;

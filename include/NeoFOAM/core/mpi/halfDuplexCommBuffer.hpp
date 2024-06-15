@@ -31,14 +31,16 @@ inline int bufferHash(const std::string& str)
 }
 
 /**
- * @class HalfDuplexBuffer
+ * @class HalfDuplexCommBuffer
  * @brief A data buffer for half-duplex communication in a distributed system using MPI.
  *
- * The HalfDuplexBuffer class provides a mechanism to manage data buffers for communication
- * between different ranks in an MPI environment. It allows for memory-efficient and type-flexible
- * communication by maintaining a buffer that does not shrink and can handle various data types.
+ * The HalfDuplexCommBuffer class facilitates efficient, non-blocking, point-to-point data exchange
+ * between MPI ranks in a distributed system. It maintains a buffer used for data communication,
+ * capable of handling various data types. The buffer does not shrink once initialized, minimizing
+ * memory reallocation and improving memory efficiency. The class operates in a half-duplex mode,
+ * meaning it is either sending or receiving data at any given time.
  */
-class HalfDuplexBuffer
+class HalfDuplexCommBuffer
 {
 
 public:
@@ -46,12 +48,12 @@ public:
     /**
      * @brief Default constructor
      */
-    HalfDuplexBuffer() = default;
+    HalfDuplexCommBuffer() = default;
 
     /**
      * @brief Default destructor
      */
-    ~HalfDuplexBuffer() = default;
+    ~HalfDuplexCommBuffer() = default;
 
     /**
      * @brief Construct a new Half Duplex Buffer object
@@ -59,7 +61,7 @@ public:
      * @param mpiEnviron The MPI environment.
      * @param rankCommSize The number of nodes per rank to be communicated with.
      */
-    HalfDuplexBuffer(MPIEnvironment mpiEnviron, std::vector<std::size_t> rankCommSize)
+    HalfDuplexCommBuffer(MPIEnvironment mpiEnviron, std::vector<std::size_t> rankCommSize)
         : mpiEnviron_(mpiEnviron)
     {
         setCommRankSize<char>(rankCommSize);
