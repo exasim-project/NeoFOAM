@@ -2,12 +2,10 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/fieldTypeDefs.hpp"
-#include "NeoFOAM/fields/boundaryFields.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryBase.hpp"
-#include "NeoFOAM/core/registerClass.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/fields.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/core.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
