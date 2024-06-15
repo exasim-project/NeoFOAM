@@ -135,7 +135,7 @@ The `BoundaryFields` class is used to store the boundary conditions of a field. 
 DomainField
 ^^^^^^^^^^^
 
-The DomainField is a data class which stores both the internalField and boundaryFields in a single container. Together they represent all the relevant values of a field for a given mesh.
+The ``DomainField`` is a data class which stores both the ``InternalField`` and ``BoundaryFields`` in a single container. Together, it fully defines a discrete topologically closed physical field, for a given mesh.
 
 .. doxygenclass:: NeoFOAM::DomainField
     :members:
