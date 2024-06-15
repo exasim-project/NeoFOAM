@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.hpp"
-#include "NeoFOAM/core/Error.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/core.hpp"
+
 namespace NeoFOAM
 {
 
