@@ -36,7 +36,7 @@ public:
         RegisteredClass<derivedClass, VolumeBoundaryModel<ValueType>, createFunc<ValueType>>;
 
     template<typename derivedClass>
-    bool registerClass()
+    bool registerClass() const
     {
         return VolumeBoundaryModel<ValueType>::template VolumeBoundaryModelReg<derivedClass>::reg;
     }
