@@ -24,7 +24,7 @@ using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryModel<ValueType>>
 // define the class manager to register the classes
 template<typename ValueType>
 using VolumeBoundaryModelManager =
-    NeoFOAM::BaseClassRegistry<VolumeBoundaryModel<ValueType>, createFunc<ValueType>>;
+    NeoFOAM::BaseClassRegistry<VolumeBoundaryModel<ValueType>, CreateFunc<ValueType>>;
 
 template<typename ValueType>
 class VolumeBoundaryModel : public VolumeBoundaryModelManager<ValueType>
