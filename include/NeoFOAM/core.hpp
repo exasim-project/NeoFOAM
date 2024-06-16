@@ -8,4 +8,6 @@
 
 #include "core/error.hpp"
 #include "core/info.hpp"
+#include "core/dictionary.hpp"
 #include "core/time.hpp"
+#include "core/registerClass.hpp"

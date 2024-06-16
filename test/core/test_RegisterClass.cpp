@@ -17,16 +17,16 @@ class TestBaseClass;
 using createFunc = std::function<std::unique_ptr<TestBaseClass>(std::string, double)>;
 
 // define the class manager to register the classes
-using TestBaseClassManager = NeoFOAM::BaseClassRegistry<TestBaseClass, createFunc>;
+using BaseClassRegistry = NeoFOAM::BaseClassRegistry<TestBaseClass, createFunc>;
 
 
-class TestBaseClass : public TestBaseClassManager
+class TestBaseClass : public BaseClassRegistry
 {
 public:
 
 
-    template<typename derivedClass>
-    using TestBaseClassReg = NeoFOAM::RegisteredClass<derivedClass, TestBaseClass, createFunc>;
+    template<typename DerivedClass>
+    using TestBaseClassReg = NeoFOAM::RegisteredClass<DerivedClass, TestBaseClass, createFunc>;
 
     static std::unique_ptr<TestBaseClass>
     create(const std::string& name, std::string testString, double testValue)
@@ -44,10 +44,10 @@ public:
     }
 
 
-    template<typename derivedClass>
+    template<typename DerivedClass>
     bool registerClass()
     {
-        return TestBaseClassReg<derivedClass>::reg;
+        return TestBaseClassReg<DerivedClass>::reg;
     }
 
     virtual ~TestBaseClass() = default;
@@ -65,7 +65,7 @@ public:
     TestDerivedClass(std::string name, double test)
         : TestBaseClass(), testString_(name), testValue_(test)
     {
-        registerClass<TestDerivedClass>();
+        this->registerClass<TestDerivedClass>();
     }
 
     static std::unique_ptr<TestBaseClass> create(std::string name, double test)

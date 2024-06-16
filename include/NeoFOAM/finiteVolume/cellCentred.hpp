@@ -2,8 +2,7 @@
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 #include "cellCentred/boundary/boundaryBase.hpp"
-#include "cellCentred/boundary/surfaceBoundaryBase.hpp"
-#include "cellCentred/boundary/volumeBoundaryBase.hpp"
+#include "cellCentred/boundary/boundaryStrategy.hpp"
 
 #include "cellCentred/fields/geometricField.hpp"
 #include "cellCentred/fields/surfaceField.hpp"

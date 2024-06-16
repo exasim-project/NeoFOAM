@@ -24,14 +24,14 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * is virtual.
  */
 template<typename ValueType>
-class BoundaryBase
+class BoundaryPatchMixin
 {
 
 public:
 
-    BoundaryBase() {}
+    BoundaryPatchMixin() {}
 
-    BoundaryBase(std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
+    BoundaryPatchMixin(std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
         : patchID_(patchID), start_(mesh->boundaryMesh().offset()[patchID_]),
           end_(mesh->boundaryMesh().offset()[patchID_ + 1])
     {}
