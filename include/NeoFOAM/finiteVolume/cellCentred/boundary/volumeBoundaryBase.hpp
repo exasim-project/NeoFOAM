@@ -36,35 +36,7 @@ template<typename ValueType>
 class VolumeBoundaryModel : public ClassRegistry<ValueType>
 {
 
-private:
-
-    template<typename DerivedClass>
-    using VolumeBoundaryModelReg = NeoFOAM::
-        RegisteredClass<DerivedClass, VolumeBoundaryModel<ValueType>, CreateFunc<ValueType>>;
-
-public:
-
-    template<typename DerivedClass>
-    bool registerClass() const
-    {
-        return VolumeBoundaryModel<ValueType>::template VolumeBoundaryModelReg<DerivedClass>::reg;
-    }
-
-    static std::unique_ptr<VolumeBoundaryModel<ValueType>> create(
-        const std::string& name, const UnstructuredMesh& mesh, const Dictionary& dict, int patchID
-    )
-    {
-        try
-        {
-            auto func = ClassRegistry<ValueType>::classMap().at(name);
-            return func(mesh, dict, patchID);
-        }
-        catch (const std::out_of_range& e)
-        {
-            std::cerr << "Error: " << e.what() << std::endl;
-            return nullptr;
-        }
-    }
+    MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryModel<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) = 0;
 };

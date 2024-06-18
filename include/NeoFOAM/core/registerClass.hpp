@@ -11,8 +11,47 @@
 #include <functional>
 #include <iostream>
 
+#include "error.hpp"
+
 namespace NeoFOAM
 {
+
+/* This macro adds all required components to make a given
+** class a factory for run time selectable derived classes
+**
+*/
+#define MAKE_CLASS_A_RUNTIME_FACTORY(CLASSNAME, REGISTRY, CREATEFUNC)                              \
+private:                                                                                           \
+                                                                                                   \
+    template<typename DerivedClass>                                                                \
+    using BoundaryCorrectionStrategyReg =                                                          \
+        NeoFOAM::RegisteredClass<DerivedClass, CLASSNAME, CREATEFUNC>;                             \
+                                                                                                   \
+public:                                                                                            \
+                                                                                                   \
+    template<typename DerivedClass>                                                                \
+    bool registerClass() const                                                                     \
+    {                                                                                              \
+        return CLASSNAME::template BoundaryCorrectionStrategyReg<DerivedClass>::reg;               \
+    }                                                                                              \
+                                                                                                   \
+    template<typename... Args>                                                                     \
+    static std::unique_ptr<CLASSNAME> create(std::string name, const Args&... args)                \
+    {                                                                                              \
+        try                                                                                        \
+        {                                                                                          \
+            auto regCreate = REGISTRY::classMap().at(name);                                        \
+            return regCreate(args...);                                                             \
+        }                                                                                          \
+        catch (const std::out_of_range& e)                                                         \
+        {                                                                                          \
+            auto msg = std::string(" Could not find constructor for ") + name;                     \
+                                                                                                   \
+            NF_ERROR_EXIT(msg);                                                                    \
+            return nullptr;                                                                        \
+        }                                                                                          \
+    }
+
 
 // Type trait to check if a type is a std::function
 template<typename T>
