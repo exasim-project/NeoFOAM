@@ -13,20 +13,22 @@
 #include "NeoFOAM/core/dictionary.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
-using fvccScalarBC = fvcc::VolumeBoundaryModel<NeoFOAM::scalar>;
-using fvccVectorBC = fvcc::VolumeBoundaryModel<NeoFOAM::Vector>;
-class TestDerivedClass : public fvccScalarBC
+
+using ScalarVolumeBoundaryModel = fvcc::VolumeBoundaryModel<NeoFOAM::scalar>;
+using VectorVolumeBoundaryModel = fvcc::VolumeBoundaryModel<NeoFOAM::Vector>;
+
+class TestDerivedClass : public ScalarVolumeBoundaryModel
 {
 
 public:
 
     TestDerivedClass(std::string name, double test)
-        : fvccScalarBC(), testString_(name), testValue_(test)
+        : ScalarVolumeBoundaryModel(), testString_(name), testValue_(test)
     {
         registerClass<TestDerivedClass>();
     }
 
-    static std::unique_ptr<fvccScalarBC>
+    static std::unique_ptr<ScalarVolumeBoundaryModel>
     create(const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, int patchID)
     {
         std::string name = dict.get<std::string>("name");
@@ -118,9 +120,10 @@ template class fixedValue<NeoFOAM::Vector>;
 
 TEST_CASE("boundaryField")
 {
-    std::cout << "Number of registered classes: " << fvccScalarBC::nRegistered() << std::endl;
-    REQUIRE(fvccScalarBC::classMap().size() == 2);
-    REQUIRE(fvccVectorBC::classMap().size() == 1);
+    std::cout << "Number of registered classes: " << ScalarVolumeBoundaryModel::nRegistered()
+              << std::endl;
+    REQUIRE(ScalarVolumeBoundaryModel::classMap().size() == 2);
+    REQUIRE(VectorVolumeBoundaryModel::classMap().size() == 1);
 
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -136,7 +139,7 @@ TEST_CASE("boundaryField")
 
         TestDerivedClass testDerived("TestDerivedClass", 1.0);
         testDerived.correctBoundaryConditions(domainField);
-        REQUIRE(fvccScalarBC::nRegistered() == 2);
+        REQUIRE(ScalarVolumeBoundaryModel::nRegistered() == 2);
     }
 
     SECTION("fixedValue" + execName)
