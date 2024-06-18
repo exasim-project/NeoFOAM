@@ -14,41 +14,17 @@
 class TestBaseClass;
 
 // define the create function use to instantiate the derived classes
-using createFunc = std::function<std::unique_ptr<TestBaseClass>(std::string, double)>;
+using CreateFunc = std::function<std::unique_ptr<TestBaseClass>(std::string, double)>;
 
 // define the class manager to register the classes
-using BaseClassRegistry = NeoFOAM::BaseClassRegistry<TestBaseClass, createFunc>;
+using BaseClassRegistry = NeoFOAM::BaseClassRegistry<TestBaseClass, CreateFunc>;
 
 
 class TestBaseClass : public BaseClassRegistry
 {
 public:
 
-
-    template<typename DerivedClass>
-    using TestBaseClassReg = NeoFOAM::RegisteredClass<DerivedClass, TestBaseClass, createFunc>;
-
-    static std::unique_ptr<TestBaseClass>
-    create(const std::string& name, std::string testString, double testValue)
-    {
-        try
-        {
-            auto func = classMap().at(name);
-            return func(testString, testValue);
-        }
-        catch (const std::out_of_range& e)
-        {
-            std::cerr << "Error: " << e.what() << std::endl;
-            return nullptr;
-        }
-    }
-
-
-    template<typename DerivedClass>
-    bool registerClass()
-    {
-        return TestBaseClassReg<DerivedClass>::reg;
-    }
+    MAKE_CLASS_A_RUNTIME_FACTORY(TestBaseClass, BaseClassRegistry, CreateFunc)
 
     virtual ~TestBaseClass() = default;
 
