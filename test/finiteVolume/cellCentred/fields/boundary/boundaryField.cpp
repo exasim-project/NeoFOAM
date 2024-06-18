@@ -51,12 +51,12 @@ private:
 };
 
 template<typename ValueType>
-class fixedValue : public fvcc::VolumeBoundaryModel<ValueType>
+class FixedValue : public fvcc::VolumeBoundaryModel<ValueType>
 {
 
 public:
 
-    using FixedValueType = fixedValue<ValueType>;
+    using FixedValueType = FixedValue<ValueType>;
 
     template<typename executor>
     void setFixedValue(const executor& exec, std::span<ValueType> field, ValueType value)
@@ -79,7 +79,7 @@ public:
         }
     }
 
-    fixedValue(std::size_t start, std::size_t end, std::size_t patchID, ValueType uniformValue)
+    FixedValue(std::size_t start, std::size_t end, std::size_t patchID, ValueType uniformValue)
         : fvcc::VolumeBoundaryModel<ValueType>(), start_(start), end_(end), patchID_(patchID),
           uniformValue_(uniformValue)
     {
@@ -105,7 +105,7 @@ public:
         );
     }
 
-    static std::string name() { return "fixedValue"; }
+    static std::string name() { return "FixedValue"; }
 
 private:
 
@@ -115,8 +115,8 @@ private:
     std::size_t patchID_;
 };
 
-template class fixedValue<NeoFOAM::scalar>;
-template class fixedValue<NeoFOAM::Vector>;
+template class FixedValue<NeoFOAM::scalar>;
+template class FixedValue<NeoFOAM::Vector>;
 
 TEST_CASE("boundaryField")
 {
@@ -142,12 +142,12 @@ TEST_CASE("boundaryField")
         REQUIRE(ScalarVolumeBoundaryModel::nRegistered() == 2);
     }
 
-    SECTION("fixedValue" + execName)
+    SECTION("FixedValue" + execName)
     {
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
 
-        fixedValue<NeoFOAM::scalar> fixedValue(0, 10, 1, 1.0);
-        fixedValue.correctBoundaryConditions(domainField);
+        FixedValue<NeoFOAM::scalar> FixedValue(0, 10, 1, 1.0);
+        FixedValue.correctBoundaryConditions(domainField);
         auto refValueHost = domainField.boundaryField().refValue().copyToHost().field();
         for (std::size_t i = 0; i < 10; i++)
         {
