@@ -120,8 +120,8 @@ public:
      */
     static auto& classMap()
     {
-        static std::unordered_map<std::string, CreateFunction> classMap_;
-        return classMap_;
+        static std::unordered_map<std::string, CreateFunction> classMap;
+        return classMap;
     }
 };
 
