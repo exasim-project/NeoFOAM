@@ -6,5 +6,5 @@
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-template class fvcc::VolumeBoundaryModel<NeoFOAM::scalar>;
-template class fvcc::VolumeBoundaryModel<NeoFOAM::Vector>;
+template class fvcc::VolumeBoundaryFactory<NeoFOAM::scalar>;
+template class fvcc::VolumeBoundaryFactory<NeoFOAM::Vector>;

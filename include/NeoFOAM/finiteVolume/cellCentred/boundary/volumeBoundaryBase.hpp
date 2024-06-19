@@ -13,7 +13,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 // forward declaration so we can use it to define the create function and the class manager
 template<typename ValueType>
-class VolumeBoundaryModel;
+class VolumeBoundaryFactory;
 
 // a detail namespace to prevent conflicts for surface boundaries
 namespace cellCentred::VolummeBoundarDetail
@@ -21,22 +21,22 @@ namespace cellCentred::VolummeBoundarDetail
 
     // define the create function use to instantiate the derived classes
     template<typename ValueType>
-    using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryModel<ValueType>>(
+    using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryFactory<ValueType>>(
         const UnstructuredMesh&, const Dictionary, int
     )>;
 
     template<typename ValueType>
     using ClassRegistry =
-        NeoFOAM::BaseClassRegistry<VolumeBoundaryModel<ValueType>, CreateFunc<ValueType>>;
+        NeoFOAM::BaseClassRegistry<VolumeBoundaryFactory<ValueType>, CreateFunc<ValueType>>;
 }
 
 using namespace cellCentred::VolummeBoundarDetail;
 
 template<typename ValueType>
-class VolumeBoundaryModel : public ClassRegistry<ValueType>
+class VolumeBoundaryFactory : public ClassRegistry<ValueType>
 {
 
-    MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryModel<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
+    MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryFactory<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) = 0;
 };
@@ -48,26 +48,29 @@ class VolumeBoundaryModel : public ClassRegistry<ValueType>
  * @tparam ValueType The data type of the field.
  */
 template<typename ValueType>
-class VolumeBoundary : public BoundaryBase<ValueType>
+class VolumeBoundary : public BoundaryPatchMixin<ValueType>
 {
 public:
 
     VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary dict, int patchID)
-        : BoundaryBase<ValueType>(mesh, patchID),
-          bcModel_(NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryModel<ValueType>::create(
-              mesh, dict, patchID
-          ))
+        : BoundaryPatchMixin<ValueType>(mesh, patchID),
+          boundaryCorrectionStrategy_(
+              NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>::create(
+                  mesh, dict, patchID
+              )
+          )
     {}
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
     {
-        bcModel_->correctBoundaryConditions(domainField);
+        boundaryCorrectionStrategy_->correctBoundaryConditions(domainField);
     }
 
 private:
 
     // NOTE needs full namespace to be not ambiguous
-    std::unique_ptr<NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryModel<ValueType>> bcModel_;
+    std::unique_ptr<NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>>
+        boundaryCorrectionStrategy_;
 };
 
 }
