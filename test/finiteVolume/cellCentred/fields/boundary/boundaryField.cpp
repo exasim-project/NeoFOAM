@@ -146,8 +146,8 @@ TEST_CASE("boundaryField")
     {
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
 
-        FixedValue<NeoFOAM::scalar> FixedValue(0, 10, 1, 1.0);
-        FixedValue.correctBoundaryConditions(domainField);
+        FixedValue<NeoFOAM::scalar> fixedValue(0, 10, 1, 1.0);
+        fixedValue.correctBoundaryConditions(domainField);
         auto refValueHost = domainField.boundaryField().refValue().copyToHost().field();
         for (std::size_t i = 0; i < 10; i++)
         {
