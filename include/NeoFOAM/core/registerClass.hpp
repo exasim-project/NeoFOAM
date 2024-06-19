@@ -55,18 +55,18 @@ public:                                                                         
 
 // Type trait to check if a type is a std::function
 template<typename T>
-struct is_std_function : std::false_type
+struct IsStdFunction : std::false_type
 {
 };
 
 template<typename Ret, typename... Args>
-struct is_std_function<std::function<Ret(Args...)>> : std::true_type
+struct IsStdFunction<std::function<Ret(Args...)>> : std::true_type
 {
 };
 
 // Concept that uses the type trait
 template<typename T>
-concept StdFunction = is_std_function<T>::value;
+concept StdFunction = IsStdFunction<T>::value;
 
 /**
  * @brief Template struct for managing class registration.
