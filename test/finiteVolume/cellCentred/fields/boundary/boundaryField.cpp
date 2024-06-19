@@ -14,21 +14,21 @@
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-using ScalarVolumeBoundaryModel = fvcc::VolumeBoundaryModel<NeoFOAM::scalar>;
-using VectorVolumeBoundaryModel = fvcc::VolumeBoundaryModel<NeoFOAM::Vector>;
+using ScalarVolumeBoundaryFactory = fvcc::VolumeBoundaryFactory<NeoFOAM::scalar>;
+using VectorVolumeBoundaryFactory = fvcc::VolumeBoundaryFactory<NeoFOAM::Vector>;
 
-class TestDerivedClass : public ScalarVolumeBoundaryModel
+class TestDerivedClass : public ScalarVolumeBoundaryFactory
 {
 
 public:
 
     TestDerivedClass(std::string name, double test)
-        : ScalarVolumeBoundaryModel(), testString_(name), testValue_(test)
+        : ScalarVolumeBoundaryFactory(), testString_(name), testValue_(test)
     {
         registerClass<TestDerivedClass>();
     }
 
-    static std::unique_ptr<ScalarVolumeBoundaryModel>
+    static std::unique_ptr<ScalarVolumeBoundaryFactory>
     create(const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, int patchID)
     {
         std::string name = dict.get<std::string>("name");
@@ -51,7 +51,7 @@ private:
 };
 
 template<typename ValueType>
-class FixedValue : public fvcc::VolumeBoundaryModel<ValueType>
+class FixedValue : public fvcc::VolumeBoundaryFactory<ValueType>
 {
 
 public:
@@ -80,13 +80,13 @@ public:
     }
 
     FixedValue(std::size_t start, std::size_t end, std::size_t patchID, ValueType uniformValue)
-        : fvcc::VolumeBoundaryModel<ValueType>(), start_(start), end_(end), patchID_(patchID),
+        : fvcc::VolumeBoundaryFactory<ValueType>(), start_(start), end_(end), patchID_(patchID),
           uniformValue_(uniformValue)
     {
-        fvcc::VolumeBoundaryModel<ValueType>::template registerClass<FixedValueType>();
+        fvcc::VolumeBoundaryFactory<ValueType>::template registerClass<FixedValueType>();
     }
 
-    static std::unique_ptr<fvcc::VolumeBoundaryModel<ValueType>>
+    static std::unique_ptr<fvcc::VolumeBoundaryFactory<ValueType>>
     create(const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, int patchID)
     {
 
@@ -120,10 +120,10 @@ template class FixedValue<NeoFOAM::Vector>;
 
 TEST_CASE("boundaryField")
 {
-    std::cout << "Number of registered classes: " << ScalarVolumeBoundaryModel::nRegistered()
+    std::cout << "Number of registered classes: " << ScalarVolumeBoundaryFactory::nRegistered()
               << std::endl;
-    REQUIRE(ScalarVolumeBoundaryModel::classMap().size() == 2);
-    REQUIRE(VectorVolumeBoundaryModel::classMap().size() == 1);
+    REQUIRE(ScalarVolumeBoundaryFactory::classMap().size() == 2);
+    REQUIRE(VectorVolumeBoundaryFactory::classMap().size() == 1);
 
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -139,7 +139,7 @@ TEST_CASE("boundaryField")
 
         TestDerivedClass testDerived("TestDerivedClass", 1.0);
         testDerived.correctBoundaryConditions(domainField);
-        REQUIRE(ScalarVolumeBoundaryModel::nRegistered() == 2);
+        REQUIRE(ScalarVolumeBoundaryFactory::nRegistered() == 2);
     }
 
     SECTION("FixedValue" + execName)
