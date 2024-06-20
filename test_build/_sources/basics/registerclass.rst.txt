@@ -28,6 +28,7 @@ The following example shows how to use the ``RegisteredClass`` and ``BaseClassRe
 
 The ``createFunction`` returns a ``std::unique_ptr`` to its base class and takes an argument list specified by the class interface. Furthermore, the ``BaseClassRegistry`` handles the registration and storage of all classes that have been registered.
 
+
 .. code-block:: cpp
 
     // forward declaration so we can use it to define the create function and the class manager
