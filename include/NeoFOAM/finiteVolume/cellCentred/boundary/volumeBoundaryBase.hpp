@@ -16,7 +16,7 @@ template<typename ValueType>
 class VolumeBoundaryFactory;
 
 // a detail namespace to prevent conflicts for surface boundaries
-namespace cellCentred::VolummeBoundarDetail
+namespace cellCentred::VolumeBoundaryDetail
 {
 
     // define the create function use to instantiate the derived classes
@@ -30,7 +30,7 @@ namespace cellCentred::VolummeBoundarDetail
         NeoFOAM::BaseClassRegistry<VolumeBoundaryFactory<ValueType>, CreateFunc<ValueType>>;
 }
 
-using namespace cellCentred::VolummeBoundarDetail;
+using namespace cellCentred::VolumeBoundaryDetail;
 
 template<typename ValueType>
 class VolumeBoundaryFactory : public ClassRegistry<ValueType>
