@@ -23,7 +23,6 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * correctBoundaryConditions functions which takes templated arguments
  * is virtual.
  */
-template<typename ValueType>
 class BoundaryPatchMixin
 {
 
@@ -36,10 +35,9 @@ public:
           end_(mesh->boundaryMesh().offset()[patchID_ + 1])
     {}
 
-    /**
-     * @brief Update corresponding boundary state
-     */
-    virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) = 0;
+    BoundaryPatchMixin(label start, label end, label patchID)
+        : patchID_(patchID), start_(start), end_(end)
+    {}
 
     label start() const { return start_; };
 
