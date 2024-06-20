@@ -120,7 +120,7 @@ template class FixedValue<NeoFOAM::Vector>;
 
 TEST_CASE("boundaryField")
 {
-    std::cout << "Number of registered classes: " << ScalarVolumeBoundaryFactory::nRegistered()
+    std::cout << "Number of registered classes: " << ScalarVolumeBoundaryFactory::size()
               << std::endl;
     REQUIRE(ScalarVolumeBoundaryFactory::classMap().size() == 2);
     REQUIRE(VectorVolumeBoundaryFactory::classMap().size() == 1);
@@ -139,7 +139,7 @@ TEST_CASE("boundaryField")
 
         TestDerivedClass testDerived("TestDerivedClass", 1.0);
         testDerived.correctBoundaryCondition(domainField);
-        REQUIRE(ScalarVolumeBoundaryFactory::nRegistered() == 2);
+        REQUIRE(ScalarVolumeBoundaryFactory::size() == 2);
     }
 
     SECTION("FixedValue" + execName)
