@@ -18,7 +18,7 @@ template<typename ValueType>
 class SurfaceBoundaryPatchMixin : public BoundaryPatchMixin
 {
 
-    virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) {}
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) {}
 };
 
 }

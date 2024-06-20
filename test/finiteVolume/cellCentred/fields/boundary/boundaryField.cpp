@@ -36,7 +36,7 @@ public:
         return std::make_unique<TestDerivedClass>(name, test);
     }
 
-    virtual void correctBoundaryConditions(NeoFOAM::DomainField<NeoFOAM::scalar>& domainField
+    virtual void correctBoundaryCondition(NeoFOAM::DomainField<NeoFOAM::scalar>& domainField
     ) override
     {
         std::cout << "Correcting boundary conditions" << std::endl;
@@ -96,7 +96,7 @@ public:
         return std::make_unique<FixedValueType>(start, end, patchID, uniformValue);
     }
 
-    virtual void correctBoundaryConditions(NeoFOAM::DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(NeoFOAM::DomainField<ValueType>& domainField) override
     {
         std::visit(
             [&](auto exec)
@@ -138,7 +138,7 @@ TEST_CASE("boundaryField")
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
 
         TestDerivedClass testDerived("TestDerivedClass", 1.0);
-        testDerived.correctBoundaryConditions(domainField);
+        testDerived.correctBoundaryCondition(domainField);
         REQUIRE(ScalarVolumeBoundaryFactory::nRegistered() == 2);
     }
 
@@ -147,7 +147,7 @@ TEST_CASE("boundaryField")
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
 
         FixedValue<NeoFOAM::scalar> fixedValue(0, 10, 1, 1.0);
-        fixedValue.correctBoundaryConditions(domainField);
+        fixedValue.correctBoundaryCondition(domainField);
         auto refValueHost = domainField.boundaryField().refValue().copyToHost().field();
         for (std::size_t i = 0; i < 10; i++)
         {
