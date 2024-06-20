@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-    NeoFOAM::mpi::MPIEnvironment mpi(argc, argv);
+    NeoFOAM::mpi::MPIInit mpi(argc, argv);
 
     // Initialize Catch2
     Kokkos::initialize(argc, argv);

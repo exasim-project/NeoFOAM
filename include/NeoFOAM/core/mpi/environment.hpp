@@ -13,11 +13,41 @@ namespace mpi
 {
 
 /**
- * @class MPIEnvironment
+ * @struct MPIInit
  * @brief A RAII class to manage MPI initialization and finalization with thread support.
  */
-struct MPIEnvironment
+struct MPIInit
 {
+    /**
+     * @brief Initializes the MPI environment, ensuring thread support.
+     *
+     * @param argc Reference to the argument count.
+     * @param argv Reference to the argument vector.
+     */
+    MPIInit(int argc, char** argv)
+    {
+        int provided;
+        MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+        NF_ASSERT(
+            provided == MPI_THREAD_MULTIPLE, "The MPI library does not have full thread support"
+        );
+    }
+
+    /**
+     * @brief Destroy the MPIInit object.
+     */
+    ~MPIInit() { MPI_Finalize(); }
+};
+
+
+/**
+ * @class MPIEnvironment
+ * @brief Manages the MPI environment, including rank and rank size information.
+ */
+class MPIEnvironment
+{
+public:
+
     /**
      * @brief Initializes the MPI environment using a parsed communicator group.
      *
@@ -29,37 +59,9 @@ struct MPIEnvironment
     }
 
     /**
-     * @brief Initializes the MPI environment, ensuring thread support.
-     *
-     * @param argc Reference to the argument count.
-     * @param argv Reference to the argument vector.
-     */
-    MPIEnvironment(int argc, char** argv)
-    {
-        int provided;
-        MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-        NF_ASSERT(
-            provided == MPI_THREAD_MULTIPLE, "The MPI library does not have full thread support"
-        );
-
-        communicator = MPI_COMM_WORLD;
-        updateRankData();
-        isFinalize = true;
-        NF_DINFO("MPI Rank: " << mpi_rank);
-    }
-
-    MPIEnvironment(const MPIEnvironment& other) noexcept
-        : isFinalize(false), communicator(other.communicator), mpi_rank(other.mpi_rank),
-          mpi_size(other.mpi_size)
-    {}
-
-    /**
      * @brief Finalizes the MPI environment.
      */
-    ~MPIEnvironment()
-    {
-        if (isFinalize) MPI_Finalize();
-    }
+    ~MPIEnvironment() = default;
 
     /**
      * @brief Returns the number of ranks.
@@ -84,7 +86,6 @@ struct MPIEnvironment
 
 private:
 
-    bool isFinalize {false};               // Flag to check if MPI_Finalize has been called.
     MPI_Comm communicator {MPI_COMM_NULL}; // MPI communicator
     int mpi_rank {-1};                     // Index of this rank
     int mpi_size {-1};                     // Number of ranks in this communicator group.

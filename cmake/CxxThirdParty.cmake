@@ -5,7 +5,7 @@ set(KOKKOS_CHECKOUT_VERSION
     "4.3.00"
     CACHE STRING "Use specific version of Kokkos")
 
-find_package(MPI REQUIRED)
+find_package(MPI 3.1 REQUIRED)
 find_package(Kokkos ${KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})

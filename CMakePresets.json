@@ -22,20 +22,6 @@
       }
     },
     {
-      "name": "mpi_compiler",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": {
-          "type": "STRING",
-          "value": "/usr/bin/mpicxx"
-        },
-        "CMAKE_C_COMPILER": {
-          "type": "STRING",
-          "value": "/usr/bin/mpicc"
-        }
-      }
-    },
-    {
       "name": "ninja",
       "hidden": true,
       "generator": "Ninja"
@@ -72,8 +58,7 @@
     {
       "name": "all",
       "inherits": [
-        "test",
-        "mpi_compiler"
+        "test"
       ],
       "hidden": true,
       "cacheVariables": {
@@ -88,8 +73,7 @@
       "inherits": [
         "kokkos_default",
         "ninja",
-        "devel",
-        "mpi_compiler"
+        "devel"
       ],
       "displayName": "Build for CPUs and CUDA GPUs",
       "description": "Build for CPUs and CUDA GPUs",
@@ -111,8 +95,7 @@
         "kokkos_default",
         "ninja",
         "test",
-        "devel",
-        "mpi_compiler"
+        "devel"
       ],
       "displayName": "Build for CPUs only with unit tests enabled",
       "description": "Build for CPUs only with unit tests enabled",
@@ -124,8 +107,7 @@
         "kokkos_default",
         "ninja",
         "all",
-        "devel",
-        "mpi_compiler"
+        "devel"
       ],
       "displayName": "Build for CPUs only with unit tests building tests and benchmarks",
       "description": "Build for CPUs only with unit tests building tests and benchmarks",
@@ -135,8 +117,7 @@
       "name": "ninja-kokkos-cuda-all",
       "inherits": [
         "all",
-        "ninja-kokkos-cuda",
-        "mpi_compiler"
+        "ninja-kokkos-cuda"
       ],
       "displayName": "Build for CPUs and CUDA GPUs w tests and benchmarks",
       "description": "Build for CPUs and CUDA GPUs w tests and benchmarks",
