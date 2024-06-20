@@ -14,6 +14,6 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-using SurfaceField = GeometricField<ValueType, SurfaceBoundaryBase<ValueType>>;
+using SurfaceField = GeometricField<ValueType, SurfaceBoundaryPatchMixin<ValueType>>;
 
 } // namespace NeoFOAM

@@ -19,7 +19,8 @@ target_sources(
           "executor/CPUExecutor.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
-          "mesh/stencil/stencilDataBase.cpp")
+          "mesh/stencil/stencilDataBase.cpp"
+          "finiteVolume/boundary.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
