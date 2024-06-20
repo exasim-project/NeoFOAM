@@ -30,9 +30,9 @@ public:
 
     BoundaryPatchMixin() {}
 
-    BoundaryPatchMixin(std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
-        : patchID_(patchID), start_(mesh->boundaryMesh().offset()[patchID_]),
-          end_(mesh->boundaryMesh().offset()[patchID_ + 1])
+    BoundaryPatchMixin(const UnstructuredMesh& mesh, int patchID)
+        : patchID_(patchID), start_(mesh.boundaryMesh().offset()[patchID_]),
+          end_(mesh.boundaryMesh().offset()[patchID_ + 1])
     {}
 
     BoundaryPatchMixin(label start, label end, label patchID)
