@@ -79,7 +79,7 @@ public:
     {
         for (auto& boundaryCondition : boundaryConditions_)
         {
-            boundaryCondition->correctBoundaryConditions(
+            boundaryCondition->correctBoundaryCondition(
                 field_.boundaryField(), field_.internalField()
             );
         }

@@ -38,7 +38,7 @@ class VolumeBoundaryFactory : public ClassRegistry<ValueType>
 
     MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryFactory<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
 
-    virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) = 0;
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) = 0;
 };
 
 
@@ -67,7 +67,7 @@ public:
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
     {
-        boundaryCorrectionStrategy_->correctBoundaryConditions(domainField);
+        boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
     }
 
 private:
