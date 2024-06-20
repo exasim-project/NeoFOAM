@@ -107,7 +107,7 @@ public:
      *
      * @return The number of registered classes.
      */
-    static size_t nRegistered() { return classMap().size(); }
+    static size_t size() { return classMap().size(); }
 
     /**
      * @brief A static method that provides access to a map of creation functions.
