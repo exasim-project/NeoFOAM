@@ -48,12 +48,16 @@ class VolumeBoundaryFactory : public ClassRegistry<ValueType>
  * @tparam ValueType The data type of the field.
  */
 template<typename ValueType>
-class VolumeBoundary : public BoundaryPatchMixin<ValueType>
+class VolumeBoundary : public BoundaryPatchMixin
 {
 public:
 
     VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary dict, int patchID)
-        : BoundaryPatchMixin<ValueType>(mesh, patchID),
+        : BoundaryPatchMixin(
+            mesh.boundaryMesh().offset()[patchID],
+            mesh.boundaryMesh().offset()[patchID + 1],
+            patchID
+        ),
           boundaryCorrectionStrategy_(
               NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>::create(
                   mesh, dict, patchID
