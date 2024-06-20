@@ -2,58 +2,41 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/core.hpp"
+#include "NeoFOAM/core/registerClass.hpp"
 #include "NeoFOAM/fields.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/core.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
+
 // forward declaration so we can use it to define the create function and the class manager
 template<typename ValueType>
-class VolumeBoundaryModel;
+class VolumeBoundaryFactory;
 
-// define the create function use to instantiate the derived classes
-template<typename ValueType>
-using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryModel<ValueType>>(
-    const UnstructuredMesh& mesh, const Dictionary dict, int patchID
-)>;
-
-// define the class manager to register the classes
-template<typename ValueType>
-using VolumeBoundaryModelManager =
-    NeoFOAM::BaseClassRegistry<VolumeBoundaryModel<ValueType>, CreateFunc<ValueType>>;
-
-template<typename ValueType>
-class VolumeBoundaryModel : public VolumeBoundaryModelManager<ValueType>
+// a detail namespace to prevent conflicts for surface boundaries
+namespace cellCentred::VolummeBoundarDetail
 {
-public:
 
-    template<typename derivedClass>
-    using VolumeBoundaryModelReg = NeoFOAM::
-        RegisteredClass<derivedClass, VolumeBoundaryModel<ValueType>, createFunc<ValueType>>;
+    // define the create function use to instantiate the derived classes
+    template<typename ValueType>
+    using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryFactory<ValueType>>(
+        const UnstructuredMesh&, const Dictionary, int
+    )>;
 
-    template<typename derivedClass>
-    bool registerClass() const
-    {
-        return VolumeBoundaryModel<ValueType>::template VolumeBoundaryModelReg<derivedClass>::reg;
-    }
+    template<typename ValueType>
+    using ClassRegistry =
+        NeoFOAM::BaseClassRegistry<VolumeBoundaryFactory<ValueType>, CreateFunc<ValueType>>;
+}
 
-    static std::unique_ptr<VolumeBoundaryModel<ValueType>> create(
-        const std::string& name, const UnstructuredMesh& mesh, const Dictionary& dict, int patchID
-    )
-    {
-        try
-        {
-            auto func = VolumeBoundaryModelManager<ValueType>::classMap().at(name);
-            return func(mesh, dict, patchID);
-        }
-        catch (const std::out_of_range& e)
-        {
-            std::cerr << "Error: " << e.what() << std::endl;
-            return nullptr;
-        }
-    }
+using namespace cellCentred::VolummeBoundarDetail;
+
+template<typename ValueType>
+class VolumeBoundaryFactory : public ClassRegistry<ValueType>
+{
+
+    MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryFactory<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField) = 0;
 };
@@ -65,23 +48,29 @@ public:
  * @tparam ValueType The data type of the field.
  */
 template<typename ValueType>
-class VolumeBoundary : public BoundaryBase<ValueType>
+class VolumeBoundary : public BoundaryPatchMixin<ValueType>
 {
 public:
 
     VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary dict, int patchID)
-        : BoundaryBase<ValueType>(mesh, patchID),
-          bcModel_(VolumeBoundaryModel<ValueType>::create(mesh, dict, patchID))
+        : BoundaryPatchMixin<ValueType>(mesh, patchID),
+          boundaryCorrectionStrategy_(
+              NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>::create(
+                  mesh, dict, patchID
+              )
+          )
     {}
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
     {
-        bcModel_->correctBoundaryConditions(domainField);
+        boundaryCorrectionStrategy_->correctBoundaryConditions(domainField);
     }
 
 private:
 
-    std::unique_ptr<VolumeBoundaryModel<ValueType>> bcModel_;
+    // NOTE needs full namespace to be not ambiguous
+    std::unique_ptr<NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>>
+        boundaryCorrectionStrategy_;
 };
 
 }

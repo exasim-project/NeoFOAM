@@ -78,7 +78,7 @@ public:
 
     BoundaryFields<ValueType>& boundaryField() { return boundaryFields_; }
 
-     const Executor& exec() const { return exec_; }
+    const Executor& exec() const { return exec_; }
 
 private:
 

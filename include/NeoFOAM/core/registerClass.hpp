@@ -11,23 +11,62 @@
 #include <functional>
 #include <iostream>
 
+#include "error.hpp"
+
 namespace NeoFOAM
 {
 
+/* This macro adds all required components to make a given
+** class a factory for run time selectable derived classes
+**
+*/
+#define MAKE_CLASS_A_RUNTIME_FACTORY(CLASSNAME, REGISTRY, CREATEFUNC)                              \
+private:                                                                                           \
+                                                                                                   \
+    template<typename DerivedClass>                                                                \
+    using BoundaryCorrectionStrategyReg =                                                          \
+        NeoFOAM::RegisteredClass<DerivedClass, CLASSNAME, CREATEFUNC>;                             \
+                                                                                                   \
+public:                                                                                            \
+                                                                                                   \
+    template<typename DerivedClass>                                                                \
+    bool registerClass() const                                                                     \
+    {                                                                                              \
+        return CLASSNAME::template BoundaryCorrectionStrategyReg<DerivedClass>::reg;               \
+    }                                                                                              \
+                                                                                                   \
+    template<typename... Args>                                                                     \
+    static std::unique_ptr<CLASSNAME> create(std::string name, const Args&... args)                \
+    {                                                                                              \
+        try                                                                                        \
+        {                                                                                          \
+            auto regCreate = REGISTRY::classMap().at(name);                                        \
+            return regCreate(args...);                                                             \
+        }                                                                                          \
+        catch (const std::out_of_range& e)                                                         \
+        {                                                                                          \
+            auto msg = std::string(" Could not find constructor for ") + name;                     \
+                                                                                                   \
+            NF_ERROR_EXIT(msg);                                                                    \
+            return nullptr;                                                                        \
+        }                                                                                          \
+    }
+
+
 // Type trait to check if a type is a std::function
 template<typename T>
-struct is_std_function : std::false_type
+struct IsStdFunction : std::false_type
 {
 };
 
 template<typename Ret, typename... Args>
-struct is_std_function<std::function<Ret(Args...)>> : std::true_type
+struct IsStdFunction<std::function<Ret(Args...)>> : std::true_type
 {
 };
 
 // Concept that uses the type trait
 template<typename T>
-concept StdFunction = is_std_function<T>::value;
+concept StdFunction = IsStdFunction<T>::value;
 
 /**
  * @brief Template struct for managing class registration.
@@ -36,10 +75,10 @@ concept StdFunction = is_std_function<T>::value;
  * function. It maintains a map of class names to create functions, allowing for dynamic class
  * instantiation.
  *
- * @tparam baseClass The base class type.
+ * @tparam BaseClass The base class type.
  * @tparam CreateFunction The type of the create function.
  */
-template<typename baseClass, StdFunction CreateFunction>
+template<typename BaseClass, StdFunction CreateFunction>
 class BaseClassRegistry // needs to be a class otherwise breathe will not document it
 {
 public:
@@ -81,8 +120,8 @@ public:
      */
     static auto& classMap()
     {
-        static std::unordered_map<std::string, CreateFunction> classMap_;
-        return classMap_;
+        static std::unordered_map<std::string, CreateFunction> classMap;
+        return classMap;
     }
 };
 
@@ -92,11 +131,11 @@ public:
  *
  * This struct provides a mechanism for registering a derived class with a base class.
  *
- * @tparam derivedClass The derived class to be registered.
- * @tparam baseClass The base class that the derived class inherits from.
+ * @tparam DerivedClass The derived class to be registered.
+ * @tparam BaseClass The base class that the derived class inherits from.
  * @tparam CreateFunction The function pointer type for creating an instance of the derived class.
  */
-template<typename derivedClass, typename baseClass, StdFunction CreateFunction>
+template<typename DerivedClass, typename BaseClass, StdFunction CreateFunction>
 class RegisteredClass
 {
 public:
@@ -128,8 +167,8 @@ public:
      */
     static bool init()
     {
-        BaseClassRegistry<baseClass, CreateFunction>::registerClass(
-            derivedClass::name(), derivedClass::create
+        BaseClassRegistry<BaseClass, CreateFunction>::registerClass(
+            DerivedClass::name(), DerivedClass::create
         );
         return true;
     }
@@ -143,12 +182,12 @@ public:
  * It provides a static member variable `reg` which is initialized to `true` when the class is
  * instantiated
  *
- * @tparam derivedClass The derived class to be registered.
- * @tparam baseClass The base class with which the derived class is registered.
+ * @tparam DerivedClass The derived class to be registered.
+ * @tparam BaseClass The base class with which the derived class is registered.
  * @tparam CreateFunction The function pointer type for creating an instance of the derived class.
  */
-template<typename derivedClass, typename baseClass, StdFunction CreateFunction>
-bool NeoFOAM::RegisteredClass<derivedClass, baseClass, CreateFunction>::reg =
-    NeoFOAM::RegisteredClass<derivedClass, baseClass, CreateFunction>::init();
+template<typename DerivedClass, typename BaseClass, StdFunction CreateFunction>
+bool NeoFOAM::RegisteredClass<DerivedClass, BaseClass, CreateFunction>::reg =
+    NeoFOAM::RegisteredClass<DerivedClass, BaseClass, CreateFunction>::init();
 
 } // namespace NeoFOAM
