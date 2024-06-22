@@ -305,7 +305,7 @@
 <p>such that scalar reduction size is handled automatically. Ontop of the wrapped operators is the <code class="docutils literal notranslate"><span class="pre">MPI</span></code> enviroment. Here the <code class="docutils literal notranslate"><span class="pre">environment.hpp</span></code> files is included, which contains two classes <code class="docutils literal notranslate"><span class="pre">MPIInit</span></code> and <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code>.  The former is a simple RAII class that initialises and finalises (in the destructor) the <code class="docutils literal notranslate"><span class="pre">MPI</span></code> environment, thus a typicaly program using <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> would start by  alling the MPIInit constructor.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Since we support <code class="docutils literal notranslate"><span class="pre">OpenMP</span></code> (through <a href="#id1"><span class="problematic" id="id2">``</span></a>Kokkos`), we need to enusre threading support is available when we start.</p>
+<p>Since we support <code class="docutils literal notranslate"><span class="pre">OpenMP</span></code> (through <code class="docutils literal notranslate"><span class="pre">Kokkos</span></code>), we need to enusre threading support is available when we start.</p>
 </div>
 <p>Once started the <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> class is used to manage the <code class="docutils literal notranslate"><span class="pre">MPI_communicator</span></code>, <code class="docutils literal notranslate"><span class="pre">MPI_rank</span></code> and <code class="docutils literal notranslate"><span class="pre">MPI_size</span></code>. Since the class will populate the communicator with <code class="docutils literal notranslate"><span class="pre">MPI_COMM_WORLD</span></code> and initialise the rank and size the class can be constructed from anywhere in the code.</p>
 <div class="admonition note">
@@ -316,6 +316,31 @@
 <section id="global-communication">
 <h3>Global Communication<a class="headerlink" href="#global-communication" title="Link to this heading">¶</a></h3>
 <p>With the above in place global communication (i.e. communication between all <code class="docutils literal notranslate"><span class="pre">ranks</span></code> on a <code class="docutils literal notranslate"><span class="pre">MPI_Communicator</span></code>) can be achieved by using the enviroment and operators.</p>
+</section>
+<section id="point-to-point-communication">
+<h3>Point-to-Point Communication<a class="headerlink" href="#point-to-point-communication" title="Link to this heading">¶</a></h3>
+<p>This section focuses on the approach for two ranks to communicate with each other, specifically using non-blocking communication for field data synchronization. To begin, the reader is reminded of ‘communication terminology’: simplex, half-duplex, and full-duplex. Where simplex communication is one-way, from sender to receiver. Half-duplex allows two-way communication but only one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.</p>
+<p>To facilitate communication between two ranks, a half-duplex buffer is introduced, namely the <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code>, which is responsible for non-blocking sending/receiving data to/from different ranks and into member data buffers. To generalise the buffer for different data types <code class="docutils literal notranslate"><span class="pre">type-punning</span></code> is used, as such the actual data which is transferred is always of type <code class="docutils literal notranslate"><span class="pre">char</span></code>. Further since memory allocation is relatively expensive the buffer is never sized down. Finally, the buffers lay memory out continously than therefore it is required to have some map between the buffer position and the original data container (being communicated) position. This is part of the partitioning problem, and not the responsibility of the buffer.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code> duplex buffer has some guard rails in to esnure once communication has started various operations are no-longer possible until it is finished.</p>
+</div>
+<p>To acheive full-duplex communication two half-duplex buffers are combined, to form the <code class="docutils literal notranslate"><span class="pre">FullDuplexCommBuffer</span></code>. The process for two way communication is then broken down into the following steps:</p>
+<ol class="arabic simple">
+<li><p>Initalise the communication, using a name and data type. This obtains the buffer as a used resource.</p></li>
+<li><p>Load the buffer with data to send.</p></li>
+<li><p>Start the communication.</p></li>
+<li><p>Do other work to mask the communication.</p></li>
+<li><p>Wait for the communication to finish.</p></li>
+<li><p>Unload the buffer with the received data.</p></li>
+<li><p>Finalise the communication, releasing the buffer.</p></li>
+</ol>
+<p>The full communication between two ranks is thus given below:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The copying to and from the buffers does introduce an overhead, which could later be removed by using ‘inplace’ communication. This remains an open point.</p>
+</div>
+<p>TODO: where to send -&gt; number of buffers is different to comm path ways</p>
 </section>
 </section>
 <section id="partitioning">
@@ -375,6 +400,7 @@
 <li><a class="reference internal" href="#communication">Communication</a><ul>
 <li><a class="reference internal" href="#mpi-wrapping">MPI Wrapping</a></li>
 <li><a class="reference internal" href="#global-communication">Global Communication</a></li>
+<li><a class="reference internal" href="#point-to-point-communication">Point-to-Point Communication</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#partitioning">Partitioning</a></li>
