@@ -193,7 +193,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -271,7 +271,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -279,7 +279,58 @@
         <article role="main" id="furo-main-content">
           <section id="mpi-architecture">
 <span id="basic-mpi-architecture"></span><h1>MPI Architecture<a class="headerlink" href="#mpi-architecture" title="Link to this heading">¶</a></h1>
-<p>you thought I was going to write documentation :P. This is just a placeholder for now.</p>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading">¶</a></h2>
+<p>Virtually all large scientific and engineering codes require are too large to be practically usable with a single ‘computing element’. Most problems are broken down into smaller parts and distributed accross several ‘computing elements’. In many cases these ‘computing elements’ do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronise the solution proceedure accross these ‘computing elements’. <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code>, link many others uses <cite>MPI &lt;https://en.wikipedia.org/wiki/Message_Passing_Interface&gt;</cite> to achieve this, with each ‘computing element’ referred to as an <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">rank</span></code> (<code class="docutils literal notranslate"><span class="pre">rank</span></code>). Note: for shared memory architecture (including GPU computing) see <cite>executor.rst &lt;executor.rst&gt;</cite>. Fundementally 2 problems need to be solved:</p>
+<ol class="arabic simple">
+<li><p>How should the global computation be partitioned and distributed accross the <code class="docutils literal notranslate"><span class="pre">Ranks</span></code>.</p></li>
+<li><p>What data needs be communicated between which <code class="docutils literal notranslate"><span class="pre">ranks</span></code>.</p></li>
+</ol>
+<p>Finally, for a scalable solution it is desired that the comminication is ‘masked’, meaning as much as possible the overhead and cost of the communication is done in parallel to the main computation and therefore not the bottleneck. Broadly this is achieved by non-blocking communication between <code class="docutils literal notranslate"><span class="pre">ranks</span></code> in conjunction with the minimisation of the frequency and size of the communication. Since the comminication architecture informs the partitioning, we will discuss this first.</p>
+</section>
+<section id="communication">
+<h2>Communication<a class="headerlink" href="#communication" title="Link to this heading">¶</a></h2>
+<section id="mpi-wrapping">
+<h3>MPI Wrapping<a class="headerlink" href="#mpi-wrapping" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">MPI</span></code> is brought into <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> in the <code class="docutils literal notranslate"><span class="pre">operators.hpp</span></code> file. The purpose of this file is to wrap <code class="docutils literal notranslate"><span class="pre">MPI</span></code> functions such that they work more seemlessly with <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> data types, and also supplying typical defaults. For example the <code class="docutils literal notranslate"><span class="pre">MPI_Allreduce</span></code> function is wrapped:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">valueType</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">reduceAllScalar</span><span class="p">(</span><span class="n">valueType</span><span class="o">*</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">ReduceOp</span><span class="w"> </span><span class="n">op</span><span class="p">,</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">comm</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">MPI_Allreduce</span><span class="p">(</span>
+<span class="w">        </span><span class="n">MPI_IN_PLACE</span><span class="p">,</span><span class="w"> </span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">getType</span><span class="o">&lt;</span><span class="n">valueType</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"> </span><span class="n">getOp</span><span class="p">(</span><span class="n">op</span><span class="p">),</span><span class="w"> </span><span class="n">comm</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>such that scalar reduction size is handled automatically. Ontop of the wrapped operators is the <code class="docutils literal notranslate"><span class="pre">MPI</span></code> enviroment. Here the <code class="docutils literal notranslate"><span class="pre">environment.hpp</span></code> files is included, which contains two classes <code class="docutils literal notranslate"><span class="pre">MPIInit</span></code> and <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code>.  The former is a simple RAII class that initialises and finalises (in the destructor) the <code class="docutils literal notranslate"><span class="pre">MPI</span></code> environment, thus a typicaly program using <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> would start by  alling the MPIInit constructor.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since we support <code class="docutils literal notranslate"><span class="pre">OpenMP</span></code> (through <a href="#id1"><span class="problematic" id="id2">``</span></a>Kokkos`), we need to enusre threading support is available when we start.</p>
+</div>
+<p>Once started the <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> class is used to manage the <code class="docutils literal notranslate"><span class="pre">MPI_communicator</span></code>, <code class="docutils literal notranslate"><span class="pre">MPI_rank</span></code> and <code class="docutils literal notranslate"><span class="pre">MPI_size</span></code>. Since the class will populate the communicator with <code class="docutils literal notranslate"><span class="pre">MPI_COMM_WORLD</span></code> and initialise the rank and size the class can be constructed from anywhere in the code.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the future it is intended to use this class to manage the <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">Communicators</span></code> (allow for splitting of the communicator), at which point the above will no longer apply and the instance will need to be parsed.</p>
+</div>
+</section>
+<section id="global-communication">
+<h3>Global Communication<a class="headerlink" href="#global-communication" title="Link to this heading">¶</a></h3>
+<p>With the above in place global communication (i.e. communication between all <code class="docutils literal notranslate"><span class="pre">ranks</span></code> on a <code class="docutils literal notranslate"><span class="pre">MPI_Communicator</span></code>) can be achieved by using the enviroment and operators.</p>
+</section>
+</section>
+<section id="partitioning">
+<h2>Partitioning<a class="headerlink" href="#partitioning" title="Link to this heading">¶</a></h2>
+<p>The purpose of partitioning is to divide the global computation into smaller parts that can be solved in parallel, and essentially to distribute the computation accross the <code class="docutils literal notranslate"><span class="pre">ranks</span></code>. One the boundary</p>
+<p>Currently there is no formal partitioning system in <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code>, however it is assumed that all communication is done on the <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">World</span></code> communicator. This is to be updated in the future, together with dynamic load balancing.</p>
+</section>
+<section id="future-work">
+<h2>Future Work<a class="headerlink" href="#future-work" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Allow <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">Communicators</span></code> to be split, allowing for more complex partitioning of the computation.</p></li>
+<li><p>Mesh partitioning</p></li>
+<li><p>Implement dynamic load balancing.</p></li>
+</ol>
+</section>
 </section>
 
         </article>
@@ -307,8 +358,34 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">MPI Architecture</a><ul>
+<li><a class="reference internal" href="#background">Background</a></li>
+<li><a class="reference internal" href="#communication">Communication</a><ul>
+<li><a class="reference internal" href="#mpi-wrapping">MPI Wrapping</a></li>
+<li><a class="reference internal" href="#global-communication">Global Communication</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#partitioning">Partitioning</a></li>
+<li><a class="reference internal" href="#future-work">Future Work</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
