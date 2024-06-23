@@ -41,7 +41,4 @@ if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
 endif()
 
-target_link_libraries(
-  NeoFOAM
-  PUBLIC NeoFOAM_public_api
-  PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace)
