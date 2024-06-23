@@ -26,7 +26,8 @@ Usage
 
 The following example shows how to use the ``RegisteredClass`` and ``BaseClassRegistry`` to automatically register derived classes. (details see ``test_RegisterClass.cpp``).
 
-To implement this design, we must first define a createFunction. This function has to return a ``std::unique_ptr`` to its base class and taking an argument list  specified by the class interface. Furthemore, the ``BaseClassRegistry`` handles the registration and storage of all classes that have been registered.
+The ``createFunction`` returns a ``std::unique_ptr`` to its base class and takes an argument list specified by the class interface. Furthermore, the ``BaseClassRegistry`` handles the registration and storage of all classes that have been registered.
+
 
 .. code-block:: cpp
 

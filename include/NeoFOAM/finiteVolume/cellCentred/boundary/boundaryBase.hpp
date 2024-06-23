@@ -4,7 +4,8 @@
 
 #include "NeoFOAM/core.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
-#include "NeoFOAM/fields/boundaryFields.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
+
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -22,25 +23,21 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * correctBoundaryConditions functions which takes templated arguments
  * is virtual.
  */
-template<typename ValueType>
-class BoundaryBase
+class BoundaryPatchMixin
 {
 
 public:
 
-    BoundaryBase() {}
+    BoundaryPatchMixin() {}
 
-    BoundaryBase(std::shared_ptr<const UnstructuredMesh> mesh, int patchID)
-        : patchID_(patchID), start_(mesh->boundaryMesh().offset()[patchID_]),
-          end_(mesh->boundaryMesh().offset()[patchID_ + 1])
+    BoundaryPatchMixin(const UnstructuredMesh& mesh, int patchID)
+        : patchID_(patchID), start_(mesh.boundaryMesh().offset()[patchID_]),
+          end_(mesh.boundaryMesh().offset()[patchID_ + 1])
     {}
 
-    /**
-     * @brief Update corresponding boundary state
-     */
-    virtual void correctBoundaryConditions(
-        const Field<ValueType>& internalField, BoundaryFields<ValueType>& bfield
-    ) = 0;
+    BoundaryPatchMixin(label start, label end, label patchID)
+        : patchID_(patchID), start_(start), end_(end)
+    {}
 
     label start() const { return start_; };
 
