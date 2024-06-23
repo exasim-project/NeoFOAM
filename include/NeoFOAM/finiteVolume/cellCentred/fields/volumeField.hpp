@@ -13,7 +13,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-template<typename ValueType>
-using VolumeField = GeometricField<ValueType, VolumeBoundary<ValueType>>;
+// template<typename ValueType>
+// using VolumeField = GeometricField<ValueType, VolumeBoundary<ValueType>>;
 
 } // namespace NeoFOAM

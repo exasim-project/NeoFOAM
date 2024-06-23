@@ -5,7 +5,7 @@
 #include "NeoFOAM/core.hpp"
 #include "NeoFOAM/core/registerClass.hpp"
 #include "NeoFOAM/fields.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryBase.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -58,11 +58,7 @@ public:
             mesh.boundaryMesh().offset()[patchID + 1],
             patchID
         ),
-          boundaryCorrectionStrategy_(
-              NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>::create(
-                  mesh, dict, patchID
-              )
-          )
+          boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(mesh, dict, patchID))
     {}
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
