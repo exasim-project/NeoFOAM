@@ -319,8 +319,9 @@
 </section>
 <section id="point-to-point-communication">
 <h3>Point-to-Point Communication<a class="headerlink" href="#point-to-point-communication" title="Link to this heading">¶</a></h3>
-<p>This section focuses on the approach for two ranks to communicate with each other, specifically using non-blocking communication for field data synchronization. To begin, the reader is reminded of ‘communication terminology’: simplex, half-duplex, and full-duplex. Where simplex communication is one-way, from sender to receiver. Half-duplex allows two-way communication but only one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.</p>
-<p>To facilitate communication between two ranks, a half-duplex buffer is introduced, namely the <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code>, which is responsible for non-blocking sending/receiving data to/from different ranks and into member data buffers. To generalise the buffer for different data types <code class="docutils literal notranslate"><span class="pre">type-punning</span></code> is used, as such the actual data which is transferred is always of type <code class="docutils literal notranslate"><span class="pre">char</span></code>. Further since memory allocation is relatively expensive the buffer is never sized down. Finally, the buffers lay memory out continously than therefore it is required to have some map between the buffer position and the original data container (being communicated) position. This is part of the partitioning problem, and not the responsibility of the buffer.</p>
+<p>For simplicity, this section focuses on the approach for two ranks to communicate with each other, specifically using non-blocking communication for field data synchronization. However, in the interest of storing contigious memory, the <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code> stores all data required to send/recieve to/from all <code class="docutils literal notranslate"><span class="pre">ranks</span></code> in a single buffer (which is internally managed).</p>
+<p>To begin, the reader is reminded of ‘communication terminology’: simplex, half-duplex, and full-duplex. Where simplex communication is one-way, from sender to receiver. Half-duplex allows two-way communication but only one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.</p>
+<p>To facilitate communication between two or ranks, a half-duplex buffer is introduced, namely the <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code>, which is responsible for non-blocking sending/receiving data to/from different ranks and into member data buffers. To generalise the buffer for different data types <code class="docutils literal notranslate"><span class="pre">type-punning</span></code> is used, as such the actual data which is transferred is always of type <code class="docutils literal notranslate"><span class="pre">char</span></code>. Further since memory allocation is relatively expensive the buffer is never sized down. Finally, the buffers lay memory out continously than therefore it is required to have some map between the buffer position and the original data container (being communicated) position. This is part of the partitioning problem, and not the responsibility of the buffer.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code> duplex buffer has some guard rails in to esnure once communication has started various operations are no-longer possible until it is finished.</p>
@@ -340,6 +341,18 @@
 <p class="admonition-title">Note</p>
 <p>The copying to and from the buffers does introduce an overhead, which could later be removed by using ‘inplace’ communication. This remains an open point.</p>
 </div>
+<p>DEAD LOCK</p>
+</section>
+<section id="field-synchronization">
+<h3>Field Synchronization<a class="headerlink" href="#field-synchronization" title="Link to this heading">¶</a></h3>
+<p>The focus now shifts to the actual process of synchronising a global field between all its partitioned parts. In each <code class="docutils literal notranslate"><span class="pre">rank</span></code> there is some overlap of cells (i.e. cells which are present in more than one <code class="docutils literal notranslate"><span class="pre">rank</span></code>), which is dictated by the stencil size. If these shared cell have a missing neighbour cell in a local partition they are termed <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cells</span></code>. A <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cell</span></code> does not have enough geometric and/or field information to give the correct result and therefore must recieve the correct result from another rank.</p>
+<p>In the above there is no reason for the <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cells</span></code> to be nicly ordered, for example to exist at field index 0 to 10. Therefore we need some map betweem the <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cell</span></code> index in our mesh and our data buffers in the <code class="docutils literal notranslate"><span class="pre">FullDuplexCommBuffer</span></code>, for each <code class="docutils literal notranslate"><span class="pre">rank</span></code>. This map is stored in the <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> which stores for each <code class="docutils literal notranslate"><span class="pre">rank</span></code> which buffer position maps to which <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cell</span></code> in the mesh. To facilitate full duplex communication both a send and recieve <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> is needed.</p>
+<p>Arriving finally at the <code class="docutils literal notranslate"><span class="pre">Communicator</span></code>. One thing to note is there may be more than one field being synchronise at any give time, however the communication pathways contained within the send and recieve <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> remains the same. Thus the <code class="docutils literal notranslate"><span class="pre">Communicator</span></code> (may) consists of a set of communication buffers and a single <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Communicator</span></code> role is now defined to manage the non-blocking synchronization of a field for a given comminication pathway set. The user should, at for each communicate point in code, provide a unique string key to identify the comminication. Below is an example of the classes usage.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the file line and number are used as comminication key names they can allow for helpful debug messages when and <code class="docutils literal notranslate"><span class="pre">MPI</span></code> communication throws an error.</p>
+</div>
 <p>TODO: where to send -&gt; number of buffers is different to comm path ways</p>
 </section>
 </section>
@@ -354,6 +367,8 @@
 <li><p>Allow <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">Communicators</span></code> to be split, allowing for more complex partitioning of the computation.</p></li>
 <li><p>Mesh partitioning</p></li>
 <li><p>Implement dynamic load balancing.</p></li>
+<li><p>Replace, where possible, std containers with <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> containers.</p></li>
+<li><p>Perfromance metrics</p></li>
 </ol>
 </section>
 </section>
@@ -401,6 +416,7 @@
 <li><a class="reference internal" href="#mpi-wrapping">MPI Wrapping</a></li>
 <li><a class="reference internal" href="#global-communication">Global Communication</a></li>
 <li><a class="reference internal" href="#point-to-point-communication">Point-to-Point Communication</a></li>
+<li><a class="reference internal" href="#field-synchronization">Field Synchronization</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#partitioning">Partitioning</a></li>
