@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2023 NeoFOAM authors
-# add_subdirectory(DSL)
+# SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 add_library(NeoFOAM)
 include(GNUInstallDirs)
 
-target_include_directories(NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-                                          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
+target_include_directories(
+  NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+                 "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
 
 target_sources(
   NeoFOAM
@@ -23,8 +23,9 @@ target_sources(
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
-  NeoFOAM NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK NEOFOAM_ENABLE_SANITIZE_UB
-  NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
+  NeoFOAM NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK
+  NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
+  NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG)
@@ -34,18 +35,4 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-if(${NEOFOAM_DP_SCALAR})
-  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)
-endif()
-if(${NEOFOAM_DP_LABEL})
-  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
-endif()
-
-add_subdirectory("core")
-add_subdirectory("mesh")
-add_subdirectory("finiteVolume/cellCentred")
-
-target_link_libraries(
-  NeoFOAM
-  PUBLIC NeoFOAM_public_api
-  PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace)
