@@ -5,8 +5,21 @@
 add_library(NeoFOAM)
 include(GNUInstallDirs)
 
-# target_include_directories(NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-# "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
+target_include_directories(NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+                                          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
+
+target_sources(
+  NeoFOAM
+  PRIVATE "core/time.cpp"
+          "core/dictionary.cpp"
+          "core/kokkos.cpp"
+          "executor/OMPExecutor.cpp"
+          "executor/GPUExecutor.cpp"
+          "executor/CPUExecutor.cpp"
+          "mesh/unstructured/unstructuredMesh.cpp"
+          "mesh/unstructured/boundaryMesh.cpp"
+          "mesh/stencil/stencilDataBase.cpp"
+          "finiteVolume/boundary.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
@@ -27,10 +40,6 @@ endif()
 if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
 endif()
-
-add_subdirectory("core")
-add_subdirectory("mesh")
-add_subdirectory("finiteVolume/cellCentred")
 
 target_link_libraries(
   NeoFOAM

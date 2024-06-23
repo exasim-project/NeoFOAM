@@ -78,6 +78,8 @@ public:
 
     BoundaryFields<ValueType>& boundaryField() { return boundaryFields_; }
 
+    const Executor& exec() const { return exec_; }
+
 private:
 
     Executor exec_; ///< The executor on which the field is stored
