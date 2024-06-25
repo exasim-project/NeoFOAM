@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 #pragma once
+
 #include "Kokkos_Core.hpp"
 
 #include "NeoFOAM/core.hpp"
@@ -11,7 +13,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class FixedValue : public VolumeBoundaryFactory<ValueType>
+class FixedValue : public VolumeBoundaryFactory<ValueType>, public BoundaryPatchMixin
 {
 
 public:
@@ -21,7 +23,7 @@ public:
     template<typename executor>
     void setFixedValue(const executor& exec, std::span<ValueType> field, ValueType value)
     {
-        if constexpr (std::is_same<std::remove_reference_t<executor>, NeoFOAM::CPUExecutor>::value)
+        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
         {
             for (std::size_t i = start_; i < end_; i++)
             {
@@ -39,28 +41,24 @@ public:
         }
     }
 
-    FixedValue(std::size_t start, std::size_t end, std::size_t patchID, ValueType uniformValue)
-        : VolumeBoundaryFactory<ValueType>(), start_(start), end_(end), patchID_(patchID),
-          uniformValue_(uniformValue)
+    FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
+        : VolumeBoundaryFactory<ValueType>(), BoundaryPatchMixin(mesh, patchID),
+          fixedValue_(dict.get<ValueType>("uniformValue"))
     {
         VolumeBoundaryFactory<ValueType>::template registerClass<FixedValueType>();
     }
 
     static std::unique_ptr<VolumeBoundaryFactory<ValueType>>
-    create(const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, int patchID)
+    create(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
     {
-
-        ValueType uniformValue = dict.get<ValueType>("uniformValue");
-        std::size_t start = dict.get<std::size_t>("start");
-        std::size_t end = dict.get<std::size_t>("end");
-        return std::make_unique<FixedValueType>(start, end, patchID, uniformValue);
+        return std::make_unique<FixedValueType>(mesh, dict, patchID);
     }
 
-    virtual void correctBoundaryCondition(NeoFOAM::DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
         std::visit(
             [&](auto exec)
-            { setFixedValue(exec, domainField.boundaryField().refValue().field(), uniformValue_); },
+            { setFixedValue(exec, domainField.boundaryField().refValue().field(), fixedValue_); },
             domainField.exec()
         );
     }
@@ -69,10 +67,7 @@ public:
 
 private:
 
-    ValueType uniformValue_;
-    std::size_t start_;
-    std::size_t end_;
-    std::size_t patchID_;
+    ValueType fixedValue_;
 };
 
 }

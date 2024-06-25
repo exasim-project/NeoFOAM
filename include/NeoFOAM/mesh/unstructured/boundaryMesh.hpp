@@ -30,6 +30,11 @@ class BoundaryMesh
 public:
 
     /**
+     * @brief Constructor for the empty BoundaryMesh class.
+     */
+    BoundaryMesh();
+
+    /**
      * @brief Constructor for the BoundaryMesh class.
      *
      * @param exec The executor used for computations.

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 #pragma once
+
 #include "Kokkos_Core.hpp"
 
 #include "NeoFOAM/core.hpp"
@@ -11,7 +13,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class FixedGradient : public VolumeBoundaryFactory<ValueType>
+class FixedGradient : public VolumeBoundaryFactory<ValueType>, public BoundaryPatchMixin
 {
 
 public:
@@ -21,7 +23,7 @@ public:
     template<typename executor>
     void setFixedGradient(const executor& exec, std::span<ValueType> field, ValueType value)
     {
-        if constexpr (std::is_same<std::remove_reference_t<executor>, NeoFOAM::CPUExecutor>::value)
+        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
         {
             for (std::size_t i = start_; i < end_; i++)
             {
@@ -39,31 +41,25 @@ public:
         }
     }
 
-    FixedGradient(
-        std::size_t start, std::size_t end, std::size_t patchID, ValueType uniformGradient
-    )
-        : VolumeBoundaryFactory<ValueType>(), start_(start), end_(end), patchID_(patchID),
-          uniformGradient_(uniformGradient)
+    FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
+        : VolumeBoundaryFactory<ValueType>(), BoundaryPatchMixin(mesh, patchID),
+          fixedGradient_(dict.get<ValueType>("fixedGradient"))
     {
         VolumeBoundaryFactory<ValueType>::template registerClass<FixedGradientType>();
     }
 
     static std::unique_ptr<VolumeBoundaryFactory<ValueType>>
-    create(const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, int patchID)
+    create(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
     {
-
-        ValueType uniformGradient = dict.get<ValueType>("uniformGradient");
-        std::size_t start = dict.get<std::size_t>("start");
-        std::size_t end = dict.get<std::size_t>("end");
-        return std::make_unique<FixedGradientType>(start, end, patchID, uniformGradient);
+        return std::make_unique<FixedGradientType>(mesh, dict, patchID);
     }
 
-    virtual void correctBoundaryCondition(NeoFOAM::DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
         std::visit(
             [&](auto exec) {
                 setFixedGradient(
-                    exec, domainField.boundaryField().refValue().field(), uniformGradient_
+                    exec, domainField.boundaryField().refValue().field(), fixedGradient_
                 );
             },
             domainField.exec()
@@ -74,10 +70,7 @@ public:
 
 private:
 
-    ValueType uniformGradient_;
-    std::size_t start_;
-    std::size_t end_;
-    std::size_t patchID_;
+    ValueType fixedGradient_;
 };
 
 }

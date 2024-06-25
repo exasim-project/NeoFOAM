@@ -31,6 +31,11 @@ class UnstructuredMesh
 public:
 
     /**
+     * @brief Constructor for an empty UnstructuredMesh class.
+     */
+    UnstructuredMesh();
+
+    /**
      * @brief Constructor for the UnstructuredMesh class.
      *
      * @param points The field of mesh points.
@@ -269,5 +274,13 @@ private:
      */
     mutable StencilDataBase stencilDataBase_;
 };
+
+/* This helper functions creates a simple uniform mesh between [0,1]
+ */
+UnstructuredMesh createUniform1DMesh(label nCells)
+{
+    // TODO add concrete implementation
+    return UnstructuredMesh();
+}
 
 } // namespace NeoFOAM
