@@ -5,7 +5,7 @@
 #include "NeoFOAM/core.hpp"
 #include "NeoFOAM/core/registerClass.hpp"
 #include "NeoFOAM/fields.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -33,8 +33,13 @@ namespace cellCentred::VolumeBoundaryDetail
 using namespace cellCentred::VolumeBoundaryDetail;
 
 template<typename ValueType>
-class VolumeBoundaryFactory : public ClassRegistry<ValueType>
+class VolumeBoundaryFactory : public ClassRegistry<ValueType>, public BoundaryPatchMixin
 {
+public:
+
+    VolumeBoundaryFactory(const UnstructuredMesh& mesh, std::size_t patchID)
+        : BoundaryPatchMixin(mesh, patchID) {};
+
 
     MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryFactory<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
 

@@ -22,18 +22,20 @@ class TestDerivedClass : public ScalarVolumeBoundaryFactory
 
 public:
 
-    TestDerivedClass(std::string name, double test)
-        : ScalarVolumeBoundaryFactory(), testString_(name), testValue_(test)
+    TestDerivedClass(
+        const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, size_t patchID
+    )
+        : ScalarVolumeBoundaryFactory(mesh, patchID),
+          testString_(dict.get<std::string>("testName")), testValue_(dict.get<double>("testValue"))
     {
         registerClass<TestDerivedClass>();
     }
 
-    static std::unique_ptr<ScalarVolumeBoundaryFactory>
-    create(const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, int patchID)
+    static std::unique_ptr<ScalarVolumeBoundaryFactory> create(
+        const NeoFOAM::UnstructuredMesh& mesh, const NeoFOAM::Dictionary& dict, std::size_t patchID
+    )
     {
-        std::string name = dict.get<std::string>("name");
-        double test = dict.get<double>("test");
-        return std::make_unique<TestDerivedClass>(name, test);
+        return std::make_unique<TestDerivedClass>(mesh, dict, patchID);
     }
 
     virtual void correctBoundaryCondition(NeoFOAM::DomainField<NeoFOAM::scalar>& domainField
@@ -68,8 +70,13 @@ TEST_CASE("boundaryField")
     SECTION("TestDerivedClass" + execName)
     {
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
+        NeoFOAM::Dictionary dict;
+        dict.insert("testName", "TestDerivedClass");
+        dict.insert("testValue", 10);
 
-        TestDerivedClass testDerived("TestDerivedClass", 1.0);
+        auto mesh = NeoFOAM::createUniform1DMesh(10);
+
+        TestDerivedClass testDerived(mesh, dict, 1);
         testDerived.correctBoundaryCondition(domainField);
         REQUIRE(ScalarVolumeBoundaryFactory::size() == 5);
     }
@@ -77,8 +84,12 @@ TEST_CASE("boundaryField")
     SECTION("FixedValue" + execName)
     {
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
+        NeoFOAM::Dictionary dict;
+        dict.insert("uniformValue", 1.0);
 
-        fvcc::FixedValue<NeoFOAM::scalar> fixedValue(0, 10, 1, 1.0);
+        auto mesh = NeoFOAM::createUniform1DMesh(10);
+
+        fvcc::FixedValue<NeoFOAM::scalar> fixedValue(mesh, dict, 1);
         fixedValue.correctBoundaryCondition(domainField);
         auto refValueHost = domainField.boundaryField().refValue().copyToHost().field();
         for (std::size_t i = 0; i < 10; i++)

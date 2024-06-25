@@ -6,14 +6,14 @@
 #include "Kokkos_Core.hpp"
 
 #include "NeoFOAM/core.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class Empty : public VolumeBoundaryFactory<ValueType>, public BoundaryPatchMixin
+class Empty : public VolumeBoundaryFactory<ValueType>
 {
 
 public:
@@ -21,7 +21,7 @@ public:
     using EmptyType = Empty<ValueType>;
 
     Empty(const UnstructuredMesh& mesh, std::size_t patchID)
-        : VolumeBoundaryFactory<ValueType>(), BoundaryPatchMixin(mesh, patchID)
+        : VolumeBoundaryFactory<ValueType>(mesh, patchID)
     {
         VolumeBoundaryFactory<ValueType>::template registerClass<EmptyType>();
     }

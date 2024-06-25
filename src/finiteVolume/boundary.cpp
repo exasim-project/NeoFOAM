@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryBase.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryBase.hpp"
 
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"

@@ -6,14 +6,14 @@
 #include "Kokkos_Core.hpp"
 
 #include "NeoFOAM/core.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class FixedValue : public VolumeBoundaryFactory<ValueType>, public BoundaryPatchMixin
+class FixedValue : public VolumeBoundaryFactory<ValueType>
 {
 
 public:
@@ -25,7 +25,7 @@ public:
     {
         if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
         {
-            for (std::size_t i = start_; i < end_; i++)
+            for (std::size_t i = this->patchStart(); i < this->patchEnd(); i++)
             {
                 field[i] = value;
             }
@@ -35,14 +35,14 @@ public:
             using runOn = typename executor::exec;
             Kokkos::parallel_for(
                 "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(start_, end_),
+                Kokkos::RangePolicy<runOn>(this->patchStart(), this->patchEnd()),
                 KOKKOS_LAMBDA(std::size_t i) { field[i] = value; }
             );
         }
     }
 
     FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : VolumeBoundaryFactory<ValueType>(), BoundaryPatchMixin(mesh, patchID),
+        : VolumeBoundaryFactory<ValueType>(mesh, patchID),
           fixedValue_(dict.get<ValueType>("uniformValue"))
     {
         VolumeBoundaryFactory<ValueType>::template registerClass<FixedValueType>();

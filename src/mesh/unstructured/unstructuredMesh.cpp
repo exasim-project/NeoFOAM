@@ -5,6 +5,11 @@
 
 namespace NeoFOAM
 {
+UnstructuredMesh::UnstructuredMesh()
+    : exec_(NeoFOAM::CPUExecutor()), points_(exec_, 0), cellVolumes_(exec_, 0),
+      cellCentres_(exec_, 0), faceAreas_(exec_, 0), faceCentres_(exec_, 0), magFaceAreas_(exec_, 0),
+      faceOwner_(exec_, 0), faceNeighbour_(exec_, 0), nCells_(0), nInternalFaces_(0),
+      nBoundaryFaces_(0), nBoundaries_(0), nFaces_(0), boundaryMesh_(), stencilDataBase_() {};
 
 UnstructuredMesh::UnstructuredMesh(
     vectorField points,
