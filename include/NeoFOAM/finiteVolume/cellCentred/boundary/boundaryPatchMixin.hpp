@@ -39,11 +39,11 @@ public:
         : patchID_(patchID), start_(start), end_(end)
     {}
 
-    label start() const { return start_; };
+    label patchStart() const { return start_; };
 
-    label end() const { return start_; };
+    label patchEnd() const { return start_; };
 
-    label size() const { return end_ - start_; }
+    label patchSize() const { return end_ - start_; }
 
     label patchID() const { return patchID_; }
 
