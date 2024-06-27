@@ -72,6 +72,7 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
   neofoam_enable_clang_tidy(FALSE "")
 endif()
 
+add_subdirectory(include)
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
   enable_testing()
