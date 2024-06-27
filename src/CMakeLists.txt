@@ -31,13 +31,6 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-if(${NEOFOAM_DP_SCALAR})
-  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)
-endif()
-if(${NEOFOAM_DP_LABEL})
-  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
-endif()
-
 target_link_libraries(
   NeoFOAM
   PUBLIC NeoFOAM_public_api
