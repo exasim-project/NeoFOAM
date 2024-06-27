@@ -5,9 +5,6 @@
 add_library(NeoFOAM SHARED)
 include(GNUInstallDirs)
 
-target_include_directories(NeoFOAM PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-                                          "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
-
 target_sources(
   NeoFOAM
   PRIVATE "core/time.cpp"
@@ -41,4 +38,7 @@ if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
 endif()
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(
+  NeoFOAM
+  PUBLIC NeoFOAM_public_api
+  PRIVATE Kokkos::kokkos cpptrace::cpptrace)

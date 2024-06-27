@@ -20,27 +20,6 @@ public:
 
     using FixedValueType = FixedValue<ValueType>;
 
-    template<typename executor>
-    void setFixedValue(const executor& exec, std::span<ValueType> field, ValueType value)
-    {
-        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
-        {
-            for (std::size_t i = this->patchStart(); i < this->patchEnd(); i++)
-            {
-                field[i] = value;
-            }
-        }
-        else
-        {
-            using runOn = typename executor::exec;
-            Kokkos::parallel_for(
-                "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(this->patchStart(), this->patchEnd()),
-                KOKKOS_LAMBDA(std::size_t i) { field[i] = value; }
-            );
-        }
-    }
-
     FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
         : VolumeBoundaryFactory<ValueType>(mesh, patchID),
           fixedValue_(dict.get<ValueType>("uniformValue"))
@@ -66,6 +45,27 @@ public:
     static std::string name() { return "FixedValue"; }
 
 private:
+
+    template<typename executor>
+    void setFixedValue(const executor& exec, std::span<ValueType> valueField, ValueType value)
+    {
+        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
+        {
+            for (std::size_t i = this->patchStart(); i < this->patchEnd(); i++)
+            {
+                valueField[i] = value;
+            }
+        }
+        else
+        {
+            using runOn = typename executor::exec;
+            Kokkos::parallel_for(
+                "parallelForImpl",
+                Kokkos::RangePolicy<runOn>(this->patchStart(), this->patchEnd()),
+                KOKKOS_LAMBDA(std::size_t i) { valueField[i] = value; }
+            );
+        }
+    }
 
     ValueType fixedValue_;
 };

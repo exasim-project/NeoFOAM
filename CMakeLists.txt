@@ -73,6 +73,7 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
   neofoam_enable_clang_tidy(FALSE "")
 endif()
 
+add_subdirectory(include)
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
   enable_testing()
@@ -133,5 +134,3 @@ if(NEOFOAM_ENABLE_IWYU)
   set(IWYU_PATH_AND_OPTIONS ${iwyu_path})
   set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH_AND_OPTIONS})
 endif()
-
-# include(cmake/InstallHelpers.cmake) neofoam_install()
