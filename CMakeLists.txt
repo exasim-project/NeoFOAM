@@ -58,12 +58,10 @@ include(cmake/StaticAnalyzers.cmake)
 
 add_library(project_options INTERFACE)
 add_library(project_warnings INTERFACE)
-myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS}
-                               FALSE "" "" "")
+myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS} FALSE "" "" "")
 
 if(NEOFOAM_BUILD_PCH)
-  target_precompile_headers(project_options INTERFACE <vector> <string>
-                            <utility>)
+  target_precompile_headers(project_options INTERFACE <vector> <string> <utility>)
 endif()
 
 if(NEOFOAM_ENABLE_CPP_CHECK)
@@ -116,17 +114,13 @@ if(NEOFOAM_DEVEL_TOOLS)
     ERROR_VARIABLE pre-commit-error)
   if(pre-commit-result)
     message(
-      FATAL_ERROR
-        "Failed to install the git hooks via pre-commit."
-        "Please check the error message:\n"
-        "${pre-commit-output}\n${pre-commit-error}")
+      FATAL_ERROR "Failed to install the git hooks via pre-commit."
+                  "Please check the error message:\n" "${pre-commit-output}\n${pre-commit-error}")
   endif()
   if(pre-commit-output MATCHES "^Running in migration mode with existing hooks")
-    message(
-      WARNING
-        "An existing git hook was encountered during `pre-commit install`."
-        "The old git hook will also be executed."
-        "Consider removing it with `pre-commit install -f`")
+    message(WARNING "An existing git hook was encountered during `pre-commit install`."
+                    "The old git hook will also be executed."
+                    "Consider removing it with `pre-commit install -f`")
   elseif(NOT pre-commit-output MATCHES "^pre-commit installed at")
     message(WARNING "`pre-commit install` did not exit normally."
                     "Please check the output message:\n" "${pre-commit-output}")
@@ -143,8 +137,5 @@ endif()
 if(NEOFOAM_ENABLE_IWYU)
   find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
   set(IWYU_PATH_AND_OPTIONS ${iwyu_path})
-  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE
-                                       ${IWYU_PATH_AND_OPTIONS})
+  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH_AND_OPTIONS})
 endif()
-
-# include(cmake/InstallHelpers.cmake) neofoam_install()
