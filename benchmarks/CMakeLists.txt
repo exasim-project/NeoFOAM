@@ -5,9 +5,8 @@ add_subdirectory(fields)
 
 add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/benchmarks/fields.xml
-  COMMAND
-    ${PROJECT_BINARY_DIR}/benchmarks/fields/${CMAKE_BUILD_TYPE}/bench_fields -r
-    XML > fields.xml
+  COMMAND ${PROJECT_BINARY_DIR}/benchmarks/fields/${CMAKE_BUILD_TYPE}/bench_fields -r XML >
+          fields.xml
   COMMENT "Execute benchmarks")
 
 find_package(
@@ -25,6 +24,7 @@ add_custom_target(
   execute_benchmarks
   DEPENDS ${PROJECT_BINARY_DIR}/benchmarks/fields.xml
   COMMENT "execute benchmarks")
+
 add_custom_target(
   execute_plot_benchmark
   DEPENDS ${PROJECT_BINARY_DIR}/benchmarks/fields.png
