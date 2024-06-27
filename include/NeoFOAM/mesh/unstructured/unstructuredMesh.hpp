@@ -277,10 +277,6 @@ private:
 
 /* This helper functions creates a simple uniform mesh between [0,1]
  */
-UnstructuredMesh createUniform1DMesh(label nCells)
-{
-    // TODO add concrete implementation
-    return UnstructuredMesh();
-}
+UnstructuredMesh createUniform1DMesh(label nCells);
 
 } // namespace NeoFOAM

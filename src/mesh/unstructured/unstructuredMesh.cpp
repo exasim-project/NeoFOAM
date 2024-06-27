@@ -68,4 +68,10 @@ StencilDataBase& UnstructuredMesh::stencilDB() const { return stencilDataBase_; 
 
 const Executor& UnstructuredMesh::exec() const { return exec_; }
 
+UnstructuredMesh createUniform1DMesh(label nCells)
+{
+    // TODO add concrete implementation
+    return UnstructuredMesh();
+}
+
 } // namespace NeoFOAM
