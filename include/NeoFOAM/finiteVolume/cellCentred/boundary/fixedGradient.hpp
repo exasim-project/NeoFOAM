@@ -38,7 +38,7 @@ public:
         std::visit(
             [&](auto exec) {
                 setFixedGradient(
-                    exec, domainField.boundaryField().refValue().field(), fixedGradient_
+                    exec, domainField.boundaryField().refGrad().field(), fixedGradient_
                 );
             },
             domainField.exec()
