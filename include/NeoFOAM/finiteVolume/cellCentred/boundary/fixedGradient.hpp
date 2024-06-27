@@ -20,27 +20,6 @@ public:
 
     using FixedGradientType = FixedGradient<ValueType>;
 
-    template<typename executor>
-    void setFixedGradient(const executor& exec, std::span<ValueType> field, ValueType value)
-    {
-        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
-        {
-            for (std::size_t i = this->patchStart(); i < this->patchEnd(); i++)
-            {
-                field[i] = value;
-            }
-        }
-        else
-        {
-            using runOn = typename executor::exec;
-            Kokkos::parallel_for(
-                "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(this->patchStart(), this->patchEnd()),
-                KOKKOS_LAMBDA(std::size_t i) { field[i] = value; }
-            );
-        }
-    }
-
     FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
         : VolumeBoundaryFactory<ValueType>(mesh, patchID),
           fixedGradient_(dict.get<ValueType>("fixedGradient"))
@@ -69,6 +48,27 @@ public:
     static std::string name() { return "fixedGradient"; }
 
 private:
+
+    template<typename executor>
+    void setFixedGradient(const executor& exec, std::span<ValueType> gradientField, ValueType value)
+    {
+        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
+        {
+            for (std::size_t i = this->patchStart(); i < this->patchEnd(); i++)
+            {
+                gradientField[i] = value;
+            }
+        }
+        else
+        {
+            using runOn = typename executor::exec;
+            Kokkos::parallel_for(
+                "parallelForImpl",
+                Kokkos::RangePolicy<runOn>(this->patchStart(), this->patchEnd()),
+                KOKKOS_LAMBDA(std::size_t i) { gradientField[i] = value; }
+            );
+        }
+    }
 
     ValueType fixedGradient_;
 };
