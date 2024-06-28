@@ -41,6 +41,36 @@ public:
         data_ = static_cast<T*>(ptr);
     };
 
+    /**
+     * @brief Create a Field with a given size on an executor
+     * @param exec  Executor associated to the matrix
+     * @param size  size of the matrix
+     * */
+    Field(const Executor& exec, std::vector<T> in) : size_(in.size()), data_(nullptr), exec_(exec)
+    {
+        Executor host_exec = CPUExecutor();
+        void* ptr = nullptr;
+        std::visit(
+            [this, &ptr](const auto& exec) { ptr = exec.alloc(this->size_ * sizeof(T)); }, exec_
+        );
+        data_ = static_cast<T*>(ptr);
+
+        if (exec_ != host_exec)
+        {
+            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+                data_, size_
+            );
+            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(in.data(), size_);
+
+            Kokkos::deep_copy(gpuView, hostView);
+        }
+        else
+        {
+            std::copy(in.begin(), in.end(), data_);
+        }
+    };
+
+
     Field(const Field<T>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
     {
         void* ptr = nullptr;
@@ -73,28 +103,43 @@ public:
     }
 
     /**
-     * @brief Returns a copy of the field back to the host.
+     * @brief Copies the data to a new field on a specific executor
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<T> copyToHost() const
+    [[nodiscard]] Field<T> copyToExecutor(Executor target_exec) const
     {
-        Field<T> result(CPUExecutor {}, size_);
-        if (!std::holds_alternative<GPUExecutor>(exec_))
+        if (target_exec == exec_) return Field<T>(*this);
+        Field<T> result(target_exec, size_);
+
+        Executor gpuExecutor {GPUExecutor {}};
+        // copy from GPU to CPU
+        // target is GPU but data not already on GPU
+        T* gpu_data_ptr = (target_exec == gpuExecutor) ? result.data() : data_;
+        T* host_data_ptr = (target_exec == gpuExecutor) ? data_ : result.data();
+
+        Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+            gpu_data_ptr, size_
+        );
+        Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(host_data_ptr, size_);
+
+        // target is GPU but data not already on GPU
+        if (target_exec == gpuExecutor)
         {
-            result = *this;
+            Kokkos::deep_copy(gpuView, hostView);
         }
         else
         {
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
-                data_, size_
-            );
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
-                result.data(), size_
-            );
-            Kokkos::deep_copy(resultView, gpuView);
+            Kokkos::deep_copy(hostView, gpuView);
         }
         return result;
     }
+
+
+    /**
+     * @brief Returns a copy of the field back to the host.
+     * @returns A copy of the field on the host.
+     */
+    [[nodiscard]] Field<T> copyToHost() const { return copyToExecutor(CPUExecutor()); }
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -110,21 +155,7 @@ public:
         {
             exit(1);
         }
-
-        if (!std::holds_alternative<GPUExecutor>(exec_))
-        {
-            result = *this;
-        }
-        else
-        {
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
-                data_, size_
-            );
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
-                result.data(), size_
-            );
-            Kokkos::deep_copy(resultView, gpuView);
-        }
+        result = copyToExecutor(CPUExecutor());
     }
 
     // // move assignment operator
