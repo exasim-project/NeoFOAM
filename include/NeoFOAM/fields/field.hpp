@@ -154,7 +154,7 @@ public:
         if (result.size() != size_)
         {
             exit(1);
-        }
+        NF_DEBUG_ASSERT(results.size == size_, "Parsed Field size not the same as current field size");
         result = copyToExecutor(CPUExecutor());
     }
 
