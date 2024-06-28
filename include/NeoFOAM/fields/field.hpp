@@ -44,7 +44,7 @@ public:
     /**
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param in a vector of elements to copy over
      * */
     Field(const Executor& exec, std::vector<T> in) : size_(in.size()), data_(nullptr), exec_(exec)
     {
