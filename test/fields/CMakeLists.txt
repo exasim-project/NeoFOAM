@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 add_test(NAME field_test COMMAND test_Field)
-add_executable(test_Field "test_Field.cpp" "../test_main.cpp")
+add_executable(test_Field "field.cpp" "../test_main.cpp")
 target_link_libraries(test_Field PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos)
 
 add_test(NAME domain_field_test COMMAND test_DomainField)
