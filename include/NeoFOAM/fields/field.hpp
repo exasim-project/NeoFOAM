@@ -330,6 +330,15 @@ public:
      */
     [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
 
+    /**
+     * @brief Gets a sub view of the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] std::span<T> field(std::pair<int, int> range)
+    {
+        return std::span<T>(data_ + range.first, range.second - range.first);
+    }
+
 private:
 
     size_t size_;         //!< Size of the field.
