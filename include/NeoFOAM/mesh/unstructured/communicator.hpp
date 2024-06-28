@@ -45,6 +45,8 @@ class Communicator
 {
 public:
 
+    using bufferType = mpi::FullDuplexCommBuffer;
+
     /**
      * @brief Default constructor.
      */
@@ -88,25 +90,30 @@ public:
     template<typename valueType>
     void startComm(Field<valueType>& field, const std::string& commName)
     {
-        auto iterBuff = findDuplexBuffer();
-        if (iterBuff == CommBuffer_.end()) iterBuff = createNewDuplexBuffer(commName);
-        auto& buffer = (*iterBuff).second;
+        NF_DEBUG_ASSERT(
+            CommBuffer_.find(commName) == CommBuffer_.end() || (!CommBuffer_[commName]),
+            "There is already an ongoing communication for key " << commName << "."
+        );
 
-        buffer.initComm<valueType>(commName);
+        CommBuffer_[commName] = findDuplexBuffer();
+        if (!CommBuffer_[commName]) CommBuffer_[commName] = createNewDuplexBuffer();
+
+        CommBuffer_[commName]->initComm<valueType>(commName);
         for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
         {
-            auto rankBuffer = buffer.getSend<valueType>(rank);
+            auto rankBuffer = CommBuffer_[commName]->getSend<valueType>(rank);
             for (auto data = 0; data < sendMap_[rank].size(); ++data)
                 rankBuffer[data] = field(sendMap_[rank][data].local_idx);
         }
-        buffer.startComm();
+        CommBuffer_[commName]->startComm();
     }
 
     /**
      * @brief Checks if the non-blocking communication with the given name is complete.
      * @param commName The communication name, typically a file and line number.
+     * @return True if the communication is complete, false otherwise.
      */
-    void isComplete(std::string commName);
+    bool isComplete(std::string commName);
 
     /**
      * @brief Finalizes the non-blocking communication for a given field and communication name.
@@ -118,18 +125,19 @@ public:
     void finaliseComm(Field<valueType>& field, std::string commName)
     {
         NF_DEBUG_ASSERT(
-            CommBuffer_.find(commName) != CommBuffer_.end(),
-            "No communication buffer associated with key: " << commName
+            CommBuffer_.find(commName) != CommBuffer_.end() && CommBuffer_[commName],
+            "No communication associated with key: " << commName
         );
 
-        CommBuffer_[commName].waitComplete();
+        CommBuffer_[commName]->waitComplete();
         for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
         {
-            auto rankBuffer = CommBuffer_[commName].getReceive<valueType>(rank);
+            auto rankBuffer = CommBuffer_[commName]->getReceive<valueType>(rank);
             for (auto data = 0; data < receiveMap_[rank].size(); ++data)
                 field(receiveMap_[rank][data].local_idx) = rankBuffer[data];
         }
-        CommBuffer_[commName].finaliseComm();
+        CommBuffer_[commName]->finaliseComm();
+        CommBuffer_[commName] == nullptr;
     }
 
 private:
@@ -137,22 +145,22 @@ private:
     mpi::MPIEnvironment MPIEnviron_; /**< The MPI environment. */
     RankSimplexCommMap sendMap_;     /**< The rank send map. */
     RankSimplexCommMap receiveMap_;  /**< The rank receive map. */
-    std::unordered_map<std::string, mpi::FullDuplexCommBuffer>
-        CommBuffer_; /**< The communication buffers. */
+    std::vector<bufferType> buffers; /**< Communication buffers. */
+    std::unordered_map<std::string, bufferType*>
+        CommBuffer_; /**< The communication key to buffer map, nullptr indicates no assigned buffer.
+                      */
 
     /**
      * @brief Finds an uninitialized communication buffer.
-     * @return An iterator to the uninitialized communication buffer, or end iterator if not found.
+     * @return An pointer to a free communication buffer, or nullptr if no free buffer is found.
      */
-    std::unordered_map<std::string, mpi::FullDuplexCommBuffer>::iterator findDuplexBuffer();
+    bufferType* findDuplexBuffer();
 
     /**
      * @brief Creates a new communication buffer with the given name.
-     * @param commName The communication name.
-     * @return An iterator to the newly created communication buffer.
+     * @return pointer to the newly created buffer.
      */
-    std::unordered_map<std::string, mpi::FullDuplexCommBuffer>::iterator
-    createNewDuplexBuffer(std::string commName);
+    bufferType* createNewDuplexBuffer();
 };
 
 } // namespace NeoFOAM

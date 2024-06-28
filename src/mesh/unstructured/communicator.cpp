@@ -5,39 +5,23 @@
 namespace NeoFOAM
 {
 
-/**
- * @brief Checks if the communication with the given name is complete.
- * @param commName The communication name.
- */
-void Communicator::isComplete(std::string commName)
+bool Communicator::isComplete(std::string commName)
 {
     NF_DEBUG_ASSERT(
         CommBuffer_.find(commName) != CommBuffer_.end(),
         "No communication buffer associated with key: " << commName
     );
-    CommBuffer_[commName].isComplete();
+    return CommBuffer_[commName]->isComplete();
 }
 
-
-/**
- * @brief Finds an uninitialized communication buffer.
- * @return An iterator to the uninitialized communication buffer, or end iterator if not found.
- */
-std::unordered_map<std::string, mpi::FullDuplexCommBuffer>::iterator
-Communicator::findDuplexBuffer()
+bufferType* Communicator::findDuplexBuffer()
 {
-    for (auto it = CommBuffer_.begin(); it != CommBuffer_.end(); ++it)
-        if (!it->second.isCommInit()) return it;
-    return CommBuffer_.end();
+    for (auto it = buffers.begin(); it != buffers.end(); ++it)
+        if (!it->isCommInit()) return &(*it);
+    return nullptr;
 }
 
-/**
- * @brief Creates a new communication buffer with the given name.
- * @param commName The communication name.
- * @return An iterator to the newly created communication buffer.
- */
-std::unordered_map<std::string, mpi::FullDuplexCommBuffer>::iterator
-Communicator::createNewDuplexBuffer(std::string commName)
+bufferType* Communicator::createNewDuplexBuffer()
 {
     // determine buffer size.
     std::vector<std::size_t> rankSendSize(MPIEnviron_.sizeRank());
@@ -47,8 +31,7 @@ Communicator::createNewDuplexBuffer(std::string commName)
         rankSendSize[rank] = sendMap_[rank].size();
         rankReceiveSize[rank] = receiveMap_[rank].size();
     }
-    return CommBuffer_
-        .emplace(commName, mpi::FullDuplexCommBuffer(MPIEnviron_, rankSendSize, rankReceiveSize))
-        .first;
+    buffers.emplace_back(mpi::FullDuplexCommBuffer(MPIEnviron_, rankSendSize, rankReceiveSize));
+    return &buffers.back();
 }
 };
