@@ -62,28 +62,46 @@ StencilDataBase& UnstructuredMesh::stencilDB() const { return stencilDataBase_; 
 
 const Executor& UnstructuredMesh::exec() const { return exec_; }
 
-// UnstructuredMesh createSingleCellMesh(label nCells) {
+UnstructuredMesh createSingleCellMesh()
+{
+    Executor exec = CPUExecutor();
 
-// 	vectorField points {exec, nCells};
+    // a 2D mesh in 3D space with left, right, top, bottom boundary faces
+    // with the centre at (0.5, 0.5, 0.0)
+    // left, top, right, bottom faces
+    // and two boundaries one (left, top),  (right, bottom)
+    vectorField faceAreas({{-1, 0, 0}, {0, 1, 0}, {1, 0, 0}, {0, -1, 0}});
+    vectorField faceCentres({{0.0, 0.5, 0.0}, {0.5, 1.0, 0.0}, {1.0, 0.5, 0.0}, {0.5, 0.0, 0.0}});
+    scalarField magFaceAreas({1, 1, 1, 1});
 
-// 	scalarField cellVolumes {exec, nCells};
-
-
-// return UnstructuredMesh(
-//      points,
-//      cellVolumes,
-//      cellCentres,
-//      faceAreas,
-//      faceCentres,
-//      magFaceAreas,
-//      faceOwner,
-//      faceNeighbour,
-//      nCells,
-//      nInternalFaces,
-//      nBoundaryFaces,
-//      nBoundaries,
-//      nFaces,
-//      boundaryMesh
-//      );
-//     }
+    BoundaryMesh boundaryMesh(
+        exec,
+        {0, 0, 0, 0},                                                           // faceCells
+        faceCentres,                                                            // cf
+        faceAreas,                                                              // cn,
+        faceAreas,                                                              // sf,
+        magFaceAreas,                                                           // magSf,
+        faceAreas,                                                              //
+        {{1.0, 0.0, 0.0}, {0.0, -1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}}, // delta
+        {1, 1, 1, 1},                                                           // weights
+        {0.5, 0.5, 0.5, 0.5},                                                   // deltaCoeffs
+        {0, 0, 1, 1}                                                            // offset
+    );
+    return UnstructuredMesh(
+        {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}, // points,
+        {1},                                          // cellVolumes
+        {{0.5, 0.5, 0.0}},                            // cellCentres
+        faceAreas,
+        faceCentres,
+        magFaceAreas,
+        {0, 0, 0, 0}, // faceOwner
+        {},           // faceNeighbour,
+        1,            // nCells
+        0,            // nInternalFaces,
+        4,            // nBoundaryFaces,
+        2,            // nBoundaries,
+        4,            // nFaces,
+        boundaryMesh
+    );
+}
 } // namespace NeoFOAM

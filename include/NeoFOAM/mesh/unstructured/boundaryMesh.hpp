@@ -35,9 +35,9 @@ public:
      * @param exec The executor used for computations.
      * @param faceCells A field with the neighbouring cell of each boundary
      * face.
-     * @param Cf A field of face centres.
-     * @param Cn A field of face normals.
-     * @param Sf A field of face areas normals.
+     * @param cf A field of face centres.
+     * @param cn A field of face normals.
+     * @param sf A field of face areas normals.
      * @param magSf A field of magnitudes of face areas normals.
      * @param nf A field of face normals.
      * @param delta A field of delta vectors.
