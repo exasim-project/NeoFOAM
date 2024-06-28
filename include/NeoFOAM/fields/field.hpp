@@ -79,7 +79,7 @@ public:
             [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
         );
         data_ = static_cast<T*>(ptr);
-        setField(*this, rhs.field());
+        setField(*this, rhs.span());
     };
 
     /**
@@ -219,7 +219,7 @@ public:
         {
             this->setSize(rhs.size());
         }
-        setField(*this, rhs.field());
+        setField(*this, rhs.span());
     }
 
     /**
@@ -330,20 +330,29 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<T> field() { return std::span<T>(data_, size_); }
+    [[nodiscard]] std::span<T> span() { return std::span<T>(data_, size_); }
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> field() const { return std::span<T>(data_, size_); }
+    [[nodiscard]] const std::span<T> span() const { return std::span<T>(data_, size_); }
 
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<T> field(std::pair<int, int> range)
+    [[nodiscard]] std::span<T> span(std::pair<size_t, size_t> range)
     {
         return std::span<T>(data_ + range.first, range.second - range.first);
+    }
+
+    /**
+     * @brief Gets a sub view of the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] const std::span<T> span(std::pair<size_t, size_t> range) const
+    {
+        return span(range);
     }
 
 private:

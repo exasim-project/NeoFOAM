@@ -41,7 +41,7 @@ TEST_CASE("Field Operations")
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
 
         auto host_a = a.copyToHost();
-        auto subView = a.field({1, 2});
+        auto subView = a.span({1, 2});
 
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
@@ -51,7 +51,7 @@ TEST_CASE("Field Operations")
     {
         int size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
-        auto sA = a.field();
+        auto sA = a.span();
         NeoFOAM::fill(a, 5.0);
 
         REQUIRE(equal(a, 5.0));
@@ -60,11 +60,11 @@ TEST_CASE("Field Operations")
         NeoFOAM::fill(b, 10.0);
 
         a = b;
-        REQUIRE(a.field().size() == size + 2);
+        REQUIRE(a.span().size() == size + 2);
         REQUIRE(equal(a, b));
 
         add(a, b);
-        REQUIRE(a.field().size() == size + 2);
+        REQUIRE(a.span().size() == size + 2);
         REQUIRE(equal(a, 20.0));
 
         a = a + b;
@@ -79,7 +79,7 @@ TEST_CASE("Field Operations")
         a = a * b;
         REQUIRE(equal(a, 20.0));
 
-        auto s_b = b.field();
+        auto s_b = b.span();
         a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
         REQUIRE(equal(a, 20.0));
     };
