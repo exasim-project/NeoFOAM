@@ -210,6 +210,13 @@ public:
      */
     const std::vector<localIdx>& offset() const;
 
+    /**
+     * @brief Given a patchId this function returns the start and end index
+     *
+     * @return A pair of start and end index
+     */
+    const std::pair<localIdx, localIdx> patchRange(localIdx patchId) const;
+
 
 private:
 

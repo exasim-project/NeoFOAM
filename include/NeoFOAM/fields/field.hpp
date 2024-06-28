@@ -318,6 +318,7 @@ public:
      * @return Span of the field.
      */
     [[nodiscard]] std::span<ValueType> field() { return std::span<ValueType>(data_, size_); }
+
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
@@ -325,6 +326,24 @@ public:
     [[nodiscard]] const std::span<ValueType> field() const
     {
         return std::span<ValueType>(data_, size_);
+    }
+
+    /**
+     * @brief Gets a sub view of the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] std::span<ValueType> field(std::pair<int, int> range)
+    {
+        return std::span<ValueType>(data_ + range.first, range.second - range.first);
+    }
+
+    /**
+     * @brief Gets the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] const std::span<ValueType> field(std::pair<int, int> range) const
+    {
+        return field(range);
     }
 
 private:

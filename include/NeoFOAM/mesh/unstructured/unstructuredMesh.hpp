@@ -277,6 +277,6 @@ private:
 };
 
 /** @brief Create a 1D mesh between [0,1] with nCells */
-UnstructuredMesh createSingleCellMesh(Executor& exec, label nCells);
+UnstructuredMesh createSingleCellMesh();
 
 } // namespace NeoFOAM

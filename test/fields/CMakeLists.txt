@@ -6,5 +6,5 @@ add_executable(test_Field "field.cpp" "../test_main.cpp")
 target_link_libraries(test_Field PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos)
 
 add_test(NAME domain_field_test COMMAND test_DomainField)
-add_executable(test_DomainField "DomainField.cpp" "../test_main.cpp")
+add_executable(test_DomainField "domainField.cpp" "../test_main.cpp")
 target_link_libraries(test_DomainField PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos)

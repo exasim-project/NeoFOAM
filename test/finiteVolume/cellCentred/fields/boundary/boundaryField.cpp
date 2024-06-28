@@ -74,27 +74,32 @@ TEST_CASE("boundaryField")
         dict.insert("testName", "TestDerivedClass");
         dict.insert("testValue", 10);
 
-        auto mesh = NeoFOAM::createUniform1DMesh(10);
+        auto mesh = NeoFOAM::createSingleCellMesh();
 
         TestDerivedClass testDerived(mesh, dict, 1);
         testDerived.correctBoundaryCondition(domainField);
         REQUIRE(ScalarVolumeBoundaryFactory::size() == 5);
     }
 
-    SECTION("FixedValue" + execName)
+    SECTION("Can set fixedValue on " + execName)
     {
-        NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, 10, 10, 1);
+        auto mesh = NeoFOAM::createSingleCellMesh();
+        NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
         NeoFOAM::Dictionary dict;
         dict.insert("uniformValue", 1.0);
 
-        auto mesh = NeoFOAM::createUniform1DMesh(10);
+        fvcc::FixedValue<NeoFOAM::scalar> fixedValueI(mesh, dict, 1);
+        fixedValueI.correctBoundaryCondition(domainField);
 
-        fvcc::FixedValue<NeoFOAM::scalar> fixedValue(mesh, dict, 1);
-        fixedValue.correctBoundaryCondition(domainField);
-        auto refValueHost = domainField.boundaryField().refValue().copyToHost().field();
-        for (std::size_t i = 0; i < 10; i++)
+        auto refValueHost =
+            domainField.boundaryField().refValue().copyToHost().field(fixedValueI.patchRange());
+
+        REQUIRE(fixedValueI.patchRange().first == 0);
+        REQUIRE(fixedValueI.patchRange().second == 1);
+
+        for (auto value : refValueHost)
         {
-            REQUIRE(refValueHost[i] == 1.0);
+            REQUIRE(value == 1.0);
         }
     }
 }
