@@ -13,6 +13,7 @@
 namespace NeoFOAM
 {
 
+
 /**
  * @class UnstructuredMesh
  * @brief Represents an unstructured mesh in NeoFOAM.
@@ -275,8 +276,7 @@ private:
     mutable StencilDataBase stencilDataBase_;
 };
 
-/* This helper functions creates a simple uniform mesh between [0,1]
- */
-UnstructuredMesh createUniform1DMesh(label nCells);
+/** @brief Create a 1D mesh between [0,1] with nCells */
+UnstructuredMesh createSingleCellMesh(Executor& exec, label nCells);
 
 } // namespace NeoFOAM
