@@ -13,12 +13,27 @@
 
 TEST_CASE("Field Operations")
 {
+
+
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
+
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("Field_" + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto host_a = a.copyToHost();
+
+        REQUIRE(a.at(0) == 1);
+        REQUIRE(a.at(1) == 2);
+        REQUIRE(a.at(2) == 3);
+    }
 
     SECTION("Field_" + execName)
     {

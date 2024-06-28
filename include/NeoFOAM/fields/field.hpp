@@ -168,7 +168,14 @@ public:
     //     }
     //     return *this;
     // }
-    //
+
+
+    /**
+     * @brief access to underlying data
+     * @param i The index of cell in the field
+     * @warning returned value might not be on host
+     */
+    const T at(const int i) const { return *(data_ + i); }
 
     /**
      * @brief Function call operator
