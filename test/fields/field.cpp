@@ -11,6 +11,19 @@
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/operations/comparison.hpp"
 
+TEST_CASE("Field Host Init")
+{
+    SECTION("Can initialize from initializer list")
+    {
+        NeoFOAM::Field<NeoFOAM::label> a({1, 2, 3});
+
+        REQUIRE(a.field().size() == 3);
+        REQUIRE(a.at(0) == 1);
+        REQUIRE(a.at(1) == 2);
+        REQUIRE(a.at(2) == 3);
+    }
+}
+
 TEST_CASE("Field Operations")
 {
     NeoFOAM::Executor exec = GENERATE(

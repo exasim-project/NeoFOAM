@@ -26,12 +26,11 @@ UnstructuredMesh::UnstructuredMesh(
       faceAreas_(faceAreas), faceCentres_(faceCentres), magFaceAreas_(magFaceAreas),
       faceOwner_(faceOwner), faceNeighbour_(faceNeighbour), nCells_(nCells),
       nInternalFaces_(nInternalFaces), nBoundaryFaces_(nBoundaryFaces), nBoundaries_(nBoundaries),
-      nFaces_(nFaces), boundaryMesh_(boundaryMesh), stencilDataBase_() {
+      nFaces_(nFaces), boundaryMesh_(boundaryMesh), stencilDataBase_()
+{}
 
-                                                    };
 
 const vectorField& UnstructuredMesh::points() const { return points_; }
-
 
 const scalarField& UnstructuredMesh::cellVolumes() const { return cellVolumes_; }
 
@@ -63,4 +62,28 @@ StencilDataBase& UnstructuredMesh::stencilDB() const { return stencilDataBase_; 
 
 const Executor& UnstructuredMesh::exec() const { return exec_; }
 
+// UnstructuredMesh createSingleCellMesh(label nCells) {
+
+// 	vectorField points {exec, nCells};
+
+// 	scalarField cellVolumes {exec, nCells};
+
+
+// return UnstructuredMesh(
+//      points,
+//      cellVolumes,
+//      cellCentres,
+//      faceAreas,
+//      faceCentres,
+//      magFaceAreas,
+//      faceOwner,
+//      faceNeighbour,
+//      nCells,
+//      nInternalFaces,
+//      nBoundaryFaces,
+//      nBoundaries,
+//      nFaces,
+//      boundaryMesh
+//      );
+//     }
 } // namespace NeoFOAM
