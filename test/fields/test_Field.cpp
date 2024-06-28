@@ -23,7 +23,7 @@ TEST_CASE("Field Operations")
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("Field_" + execName)
+    SECTION("Can initialize Field from initializer list on " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
@@ -33,6 +33,18 @@ TEST_CASE("Field Operations")
         REQUIRE(a.at(0) == 1);
         REQUIRE(a.at(1) == 2);
         REQUIRE(a.at(2) == 3);
+    }
+
+    SECTION("Can initialize Field from initializer list on " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto host_a = a.copyToHost();
+        auto subView = a.field({1, 2});
+
+        REQUIRE(subView[0] == 2);
+        REQUIRE(subView[1] == 3);
     }
 
     SECTION("Field_" + execName)
