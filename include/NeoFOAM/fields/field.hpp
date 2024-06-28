@@ -22,7 +22,7 @@ namespace NeoFOAM
  *
  * @ingroup Fields
  */
-template<typename T>
+template<typename ValueType>
 class Field
 {
 public:
@@ -36,9 +36,10 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
+            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
+            exec_
         );
-        data_ = static_cast<T*>(ptr);
+        data_ = static_cast<ValueType*>(ptr);
     };
 
     /**
@@ -46,21 +47,24 @@ public:
      * @param exec  Executor associated to the matrix
      * @param in a vector of elements to copy over
      * */
-    Field(const Executor& exec, std::vector<T> in) : size_(in.size()), data_(nullptr), exec_(exec)
+    Field(const Executor& exec, std::vector<ValueType> in)
+        : size_(in.size()), data_(nullptr), exec_(exec)
     {
         Executor host_exec = CPUExecutor();
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr](const auto& exec) { ptr = exec.alloc(this->size_ * sizeof(T)); }, exec_
+            [this, &ptr](const auto& exec) { ptr = exec.alloc(this->size_ * sizeof(ValueType)); },
+            exec_
         );
-        data_ = static_cast<T*>(ptr);
+        data_ = static_cast<ValueType*>(ptr);
 
         if (exec_ != host_exec)
         {
-            Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
-                data_, size_
+            Kokkos::View<ValueType*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
+                gpuView(data_, size_);
+            Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(
+                in.data(), size_
             );
-            Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(in.data(), size_);
 
             Kokkos::deep_copy(gpuView, hostView);
         }
@@ -71,14 +75,15 @@ public:
     };
 
 
-    Field(const Field<T>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    Field(const Field<ValueType>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
     {
         void* ptr = nullptr;
         auto size = rhs.size_;
         std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
+            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
+            exec_
         );
-        data_ = static_cast<T*>(ptr);
+        data_ = static_cast<ValueType*>(ptr);
         setField(*this, rhs.span());
     };
 
@@ -106,21 +111,23 @@ public:
      * @brief Copies the data to a new field on a specific executor
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<T> copyToExecutor(Executor target_exec) const
+    [[nodiscard]] Field<ValueType> copyToExecutor(Executor target_exec) const
     {
-        if (target_exec == exec_) return Field<T>(*this);
-        Field<T> result(target_exec, size_);
+        if (target_exec == exec_) return Field<ValueType>(*this);
+        Field<ValueType> result(target_exec, size_);
 
         Executor gpuExecutor {GPUExecutor {}};
         // copy from GPU to CPU
         // target is GPU but data not already on GPU
-        T* gpu_data_ptr = (target_exec == gpuExecutor) ? result.data() : data_;
-        T* host_data_ptr = (target_exec == gpuExecutor) ? data_ : result.data();
+        ValueType* gpu_data_ptr = (target_exec == gpuExecutor) ? result.data() : data_;
+        ValueType* host_data_ptr = (target_exec == gpuExecutor) ? data_ : result.data();
 
-        Kokkos::View<T*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
+        Kokkos::View<ValueType*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
             gpu_data_ptr, size_
         );
-        Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(host_data_ptr, size_);
+        Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(
+            host_data_ptr, size_
+        );
 
         // target is GPU but data not already on GPU
         if (target_exec == gpuExecutor)
@@ -139,7 +146,7 @@ public:
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<T> copyToHost() const { return copyToExecutor(CPUExecutor()); }
+    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(CPUExecutor()); }
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -149,7 +156,7 @@ public:
      * @warning exits if the size of the result field is not the same as the
      * source field.
      */
-    void copyToHost(Field<T>& result)
+    void copyToHost(Field<ValueType>& result)
     {
         if (result.size() != size_)
         {
@@ -175,7 +182,7 @@ public:
      * @param i The index of cell in the field
      * @warning returned value might not be on host
      */
-    const T at(const int i) const { return *(data_ + i); }
+    const ValueType at(const size_t i) const { return *(data_ + i); }
 
     /**
      * @brief Function call operator
@@ -204,7 +211,7 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<T>& rhs)
+    void operator=(const Field<ValueType>& rhs)
     {
 
         if (this->size() != rhs.size())
@@ -218,7 +225,7 @@ public:
      * @brief Assignment operator, Sets the field values to that of the value.
      * @param rhs The value to set the field to.
      */
-    void operator=(const T& rhs) { fill(*this, rhs); }
+    void operator=(const ValueType& rhs) { fill(*this, rhs); }
 
     // arithmetic operator
 
@@ -227,9 +234,9 @@ public:
      * @param rhs The field to add with this field.
      * @returns The result of the addition.
      */
-    [[nodiscard]] Field<T> operator+(const Field<T>& rhs)
+    [[nodiscard]] Field<ValueType> operator+(const Field<ValueType>& rhs)
     {
-        Field<T> result(exec_, size_);
+        Field<ValueType> result(exec_, size_);
         result = *this;
         add(result, rhs);
         return result;
@@ -240,9 +247,9 @@ public:
      * @param rhs The field to subtract from this field.
      * @returns The result of the subtraction.
      */
-    [[nodiscard]] Field<T> operator-(const Field<T>& rhs)
+    [[nodiscard]] Field<ValueType> operator-(const Field<ValueType>& rhs)
     {
-        Field<T> result(exec_, size_);
+        Field<ValueType> result(exec_, size_);
         result = *this;
         sub(result, rhs);
         return result;
@@ -253,9 +260,9 @@ public:
      * @param rhs The field to subtract from this field.
      * @returns The result of the subtraction.
      */
-    [[nodiscard]] Field<T> operator*(const Field<scalar>& rhs)
+    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
     {
-        Field<T> result(exec_, size_);
+        Field<ValueType> result(exec_, size_);
         result = *this;
         mul(result, rhs);
         return result;
@@ -267,9 +274,9 @@ public:
      * @param rhs The scalar to multiply with the field.
      * @returns The result of the multiplication.
      */
-    [[nodiscard]] Field<T> operator*(const scalar rhs)
+    [[nodiscard]] Field<ValueType> operator*(const scalar rhs)
     {
-        Field<T> result(exec_, size_);
+        Field<ValueType> result(exec_, size_);
         result = *this;
         scalar_mul(result, rhs);
         return result;
@@ -285,10 +292,11 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.realloc(data_, size * sizeof(T)); },
+            [this, &ptr, size](const auto& exec)
+            { ptr = exec.realloc(data_, size * sizeof(ValueType)); },
             exec_
         );
-        data_ = static_cast<T*>(ptr);
+        data_ = static_cast<ValueType*>(ptr);
         size_ = size;
     }
 
@@ -298,13 +306,13 @@ public:
      * @brief Direct access to the underlying field data
      * @return Pointer to the first cell data in the field.
      */
-    [[nodiscard]] T* data() { return data_; }
+    [[nodiscard]] ValueType* data() { return data_; }
 
     /**
      * @brief Direct access to the underlying field data
      * @return Pointer to the first cell data in the field.
      */
-    [[nodiscard]] const T* data() const { return data_; }
+    [[nodiscard]] const ValueType* data() const { return data_; }
 
     /**
      * @brief Gets the executor associated with the field.
@@ -322,27 +330,30 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<T> span() { return std::span<T>(data_, size_); }
+    [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> span() const { return std::span<T>(data_, size_); }
-
-    /**
-     * @brief Gets a sub view of the field as a span.
-     * @return Span of the field.
-     */
-    [[nodiscard]] std::span<T> span(std::pair<size_t, size_t> range)
+    [[nodiscard]] const std::span<ValueType> span() const
     {
-        return std::span<T>(data_ + range.first, range.second - range.first);
+        return std::span<ValueType>(data_, size_);
     }
 
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<T> span(std::pair<size_t, size_t> range) const
+    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range)
+    {
+        return std::span<ValueType>(data_ + range.first, range.second - range.first);
+    }
+
+    /**
+     * @brief Gets a sub view of the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] const std::span<ValueType> span(std::pair<size_t, size_t> range) const
     {
         return span(range);
     }
@@ -350,7 +361,7 @@ public:
 private:
 
     size_t size_;         //!< Size of the field.
-    T* data_;             //!< Pointer to the field data.
+    ValueType* data_;     //!< Pointer to the field data.
     const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
 
