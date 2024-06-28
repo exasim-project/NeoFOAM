@@ -23,7 +23,7 @@ TEST_CASE("Boundaries")
     SECTION("domainField_" + execName)
     {
 
-        NeoFOAM::DomainField<double> a(exec, 1000, 100, 10);
+        NeoFOAM::DomainField<NeoFOAM::scalar> a(exec, 1000, 100, 10);
 
         NeoFOAM::fill(a.internalField(), 2.0);
         REQUIRE(equal(a.internalField(), 2.0));
@@ -32,7 +32,7 @@ TEST_CASE("Boundaries")
     SECTION("boundaryFields_" + execName)
     {
 
-        NeoFOAM::BoundaryFields<double> bCs(exec, 100, 10);
+        NeoFOAM::BoundaryFields<NeoFOAM::scalar> bCs(exec, 100, 10);
 
         NeoFOAM::fill(bCs.value(), 2.0);
         REQUIRE(equal(bCs.value(), 2.0));

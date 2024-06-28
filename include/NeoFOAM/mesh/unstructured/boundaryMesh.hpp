@@ -30,14 +30,19 @@ class BoundaryMesh
 public:
 
     /**
+     * @brief Constructor for the empty BoundaryMesh class.
+     */
+    BoundaryMesh();
+
+    /**
      * @brief Constructor for the BoundaryMesh class.
      *
      * @param exec The executor used for computations.
      * @param faceCells A field with the neighbouring cell of each boundary
      * face.
-     * @param Cf A field of face centres.
-     * @param Cn A field of face normals.
-     * @param Sf A field of face areas normals.
+     * @param cf A field of face centres.
+     * @param cn A field of face normals.
+     * @param sf A field of face areas normals.
      * @param magSf A field of magnitudes of face areas normals.
      * @param nf A field of face normals.
      * @param delta A field of delta vectors.
@@ -204,6 +209,13 @@ public:
      * @return A constant reference to the offset of the boundary faces.
      */
     const std::vector<localIdx>& offset() const;
+
+    /**
+     * @brief Given a patchId this function returns the start and end index
+     *
+     * @return A pair of start and end index
+     */
+    const std::pair<localIdx, localIdx> patchRange(localIdx patchId) const;
 
 
 private:

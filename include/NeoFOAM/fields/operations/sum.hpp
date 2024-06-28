@@ -63,14 +63,5 @@ T sum(const Field<T>& field)
     return sumValue;
 };
 
-template<>
-scalar sum(const Field<scalar>& field)
-{
-    scalar sumValue = 0;
-    SumKernel kernel {};
-    std::visit([&](const auto& exec) { kernel(exec, field, sumValue); }, field.exec());
-    return sumValue;
-};
-
 
 } // namespace NeoFOAM

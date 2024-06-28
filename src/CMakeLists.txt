@@ -2,10 +2,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 # add_subdirectory(DSL)
 
-add_library(NeoFOAM)
-
-set_property(TARGET NeoFOAM PROPERTY POSITION_INDEPENDENT_CODE ON)
-
+add_library(NeoFOAM SHARED)
 include(GNUInstallDirs)
 
 target_sources(

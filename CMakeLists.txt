@@ -83,13 +83,6 @@ if(NEOFOAM_BUILD_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
 
-if(${NEOFOAM_DP_SCALAR})
-  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)
-endif()
-if(${NEOFOAM_DP_LABEL})
-  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
-endif()
-
 if(NEOFOAM_BUILD_DOC)
   include(cmake/Docs.cmake)
   neofoam_build_docs()

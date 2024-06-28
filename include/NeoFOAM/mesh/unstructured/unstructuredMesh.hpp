@@ -13,6 +13,7 @@
 namespace NeoFOAM
 {
 
+
 /**
  * @class UnstructuredMesh
  * @brief Represents an unstructured mesh in NeoFOAM.
@@ -29,6 +30,11 @@ namespace NeoFOAM
 class UnstructuredMesh
 {
 public:
+
+    /**
+     * @brief Constructor for an empty UnstructuredMesh class.
+     */
+    UnstructuredMesh();
 
     /**
      * @brief Constructor for the UnstructuredMesh class.
@@ -269,5 +275,8 @@ private:
      */
     mutable StencilDataBase stencilDataBase_;
 };
+
+/** @brief Create a 1D mesh between [0,1] with nCells */
+UnstructuredMesh createSingleCellMesh();
 
 } // namespace NeoFOAM

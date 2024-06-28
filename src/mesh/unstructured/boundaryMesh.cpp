@@ -6,6 +6,11 @@
 namespace NeoFOAM
 {
 
+BoundaryMesh::BoundaryMesh()
+    : exec_(NeoFOAM::CPUExecutor()), faceCells_(exec_, 0), Cf_(exec_, 0), Cn_(exec_, 0),
+      Sf_(exec_, 0), magSf_(exec_, 0), nf_(exec_, 0), delta_(exec_, 0), weights_(exec_, 0),
+      deltaCoeffs_(exec_, 0), offset_() {};
+
 BoundaryMesh::BoundaryMesh(
     const Executor& exec,
     labelField faceCells,
