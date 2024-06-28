@@ -27,6 +27,8 @@ namespace mpi
  */
 inline int bufferHash(const std::string& str)
 {
+    // MPI does not like negative tags. So we kill the negative bit, still very unlikely to have a
+    // hash collide.
     return static_cast<int>(std::hash<std::string> {}(str)&0x7FFFFFFF);
 }
 

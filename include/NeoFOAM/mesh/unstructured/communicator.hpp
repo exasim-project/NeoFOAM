@@ -96,7 +96,10 @@ public:
         );
 
         CommBuffer_[commName] = findDuplexBuffer();
-        if (!CommBuffer_[commName]) CommBuffer_[commName] = createNewDuplexBuffer();
+        if (!CommBuffer_[commName])
+        {
+            CommBuffer_[commName] = createNewDuplexBuffer();
+        }
 
         CommBuffer_[commName]->initComm<valueType>(commName);
         for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
