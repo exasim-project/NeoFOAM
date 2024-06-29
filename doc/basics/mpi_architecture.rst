@@ -6,12 +6,12 @@ MPI Architecture
 Background
 ----------
 
-Virtually all large scientific and engineering codes require are too large to be practically usable with a single 'computing element'. Most problems are broken down into smaller parts and distributed accross several 'computing elements'. In many cases these 'computing elements' do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronise the solution proceedure accross these 'computing elements'. ``NeoFOAM``, link many others uses `MPI <https://en.wikipedia.org/wiki/Message_Passing_Interface>` to achieve this, with each 'computing element' referred to as an ``MPI rank`` (``rank``). Note: for shared memory architecture (including GPU computing) see `executor.rst <executor.rst>`. Fundementally 2 problems need to be solved:
+Virtually all large scientific and engineering codes are too large to be practically usable with a single 'computing element'. Most problems are broken down into smaller parts and distributed accross several 'computing elements'. In many cases these 'computing elements' do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronise the solution proceedure accross these 'computing elements'. ``NeoFOAM``, like many others uses `MPI <https://en.wikipedia.org/wiki/Message_Passing_Interface>` to achieve this, with each 'computing element' referred to as an ``MPI rank`` (``rank``). Note: for shared memory architecture (including GPU computing) see `executor.rst <executor.rst>`. Fundementally 2 problems need to be solved:
 
 1. How should the global computation be partitioned and distributed accross the ``Ranks``.
 2. What data needs be communicated between which ``ranks``.
 
-Finally, for a scalable solution it is desired that the comminication is 'masked', meaning as much as possible the overhead and cost of the communication is done in parallel to the main computation and therefore not the bottleneck. Broadly this is achieved by non-blocking communication between ``ranks`` in conjunction with the minimisation of the frequency and size of the communication. Since the comminication architecture informs the partitioning, we will discuss this first.
+Finally, for a scalable solution it is desired that the comminication is 'masked', meaning as much as possible the overhead and cost of the communication is done in parallel to the main computation and therefore not be the bottleneck. Broadly this is achieved by non-blocking communication between ``ranks`` in conjunction with the minimisation of the frequency and size of the communication. Since the comminication architecture informs the partitioning, we will discuss this first.
 
 Communication
 -------------
@@ -31,7 +31,7 @@ MPI Wrapping
         );
     }
 
-such that scalar reduction size is handled automatically. Ontop of the wrapped operators is the ``MPI`` enviroment. Here the ``environment.hpp`` files is included, which contains two classes ``MPIInit`` and ``MPIEnvironment``.  The former is a simple RAII class that initialises and finalises (in the destructor) the ``MPI`` environment, thus a typicaly program using ``NeoFOAM`` would start by  alling the MPIInit constructor.
+such that scalar reduction size is handled automatically. In addition to the wrapped operators, there is the ``MPI`` enviroment which is located in the ``environment.hpp`` file. Contained within are two classes ``MPIInit`` and ``MPIEnvironment``.  The former is a simple RAII class that initialises and finalises (in the destructor) the ``MPI`` environment, thus a typicaly program using ``NeoFOAM`` would start by calling the MPIInit constructor.
 
 .. code-block:: c++
     #include "NeoFOAM/core/mpi/environment.hpp"
@@ -46,9 +46,9 @@ such that scalar reduction size is handled automatically. Ontop of the wrapped o
     }
 
 .. note::
-    Since we support ``OpenMP`` (through ``Kokkos``), we need to enusre threading support is available when we start.
+    Since we support ``OpenMP`` (through ``Kokkos``), we need to enusre threading support is available when we start. This is checked in ``MPIInit``'s constructor.
 
-Once started the ``MPIEnvironment`` class is used to manage the ``MPI_communicator``, ``MPI_rank`` and ``MPI_size``. Since the class will populate the communicator with ``MPI_COMM_WORLD`` and initialise the rank and size the class can be constructed from anywhere in the code.
+Once started, the ``MPIEnvironment`` class is used to manage the ``MPI_communicator``, ``MPI_rank``, and ``MPI_size``. Since the class will populate the communicator with ``MPI_COMM_WORLD`` and initialise the rank and size the class can be constructed from anywhere in the code.
 
 .. note::
     In the future it is intended to use this class to manage the ``MPI Communicators`` (allow for splitting of the communicator), at which point the above will no longer apply and the instance will need to be parsed.
@@ -77,24 +77,24 @@ With the above in place global communication (i.e. communication between all ``r
 Point-to-Point Communication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For simplicity, this section focuses on the approach for two ranks to communicate with each other, specifically using non-blocking communication for field data synchronization. However, in the interest of storing contigious memory, the ``HalfDuplexCommBuffer`` stores all data required to send/recieve to/from all ``ranks`` in a single buffer (which is internally managed).
+For simplicity, this section focuses on the approach for two ranks to communicate with each other, specifically using non-blocking communication for field data synchronization.
 
-To begin, the reader is reminded of 'communication terminology': simplex, half-duplex, and full-duplex. Where simplex communication is one-way, from sender to receiver. Half-duplex allows two-way communication but only one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.
+To begin, the reader is reminded of 'communication terminology': simplex, half-duplex, and full-duplex. Where simplex communication is one-way, from sender to receiver or vice. versa. Half-duplex allows two-way communication but only in one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.
 
-To facilitate communication between two or ranks, a half-duplex buffer is introduced, namely the ``HalfDuplexCommBuffer``, which is responsible for non-blocking sending/receiving data to/from different ranks and into member data buffers. To generalise the buffer for different data types ``type-punning`` is used, as such the actual data which is transferred is always of type ``char``. Further since memory allocation is relatively expensive the buffer is never sized down. Finally, the buffers lay memory out continously than therefore it is required to have some map between the buffer position and the original data container (being communicated) position. This is part of the partitioning problem, and not the responsibility of the buffer.
+To facilitate communication between two or ranks, a half-duplex buffer is introduced, namely the ``HalfDuplexCommBuffer``, which is responsible for non-blocking sending to/receiving from different ranks and into member data buffers. To generalise the buffer for different data types, ``type-punning`` is used and as such the actual data which is transferred is always of type ``char``. Further since memory allocation is relatively expensive the buffer is never sized down. While the buffer memory is layed out continously it is accessed on a per ``rank`` basis, which is indexed from 0 to the size for the communicated data. It is therefore required to have some map between a cell's buffer position index and its data container (typically a ``Field`` of some kind) index. The construction of this map is part of the partitioning problem, and not the responsibility of the buffer.
 
 .. note::
     The ``HalfDuplexCommBuffer`` duplex buffer has some guard rails in to esnure once communication has started various operations are no-longer possible until it is finished.
 
 To acheive full-duplex communication two half-duplex buffers are combined, to form the ``FullDuplexCommBuffer``. The process for two way communication is then broken down into the following steps:
 
-1. Initalise the communication, using a name and data type. This obtains the buffer as a used resource.
+1. Initalise the communication, using a name and data type. This flags the buffer as a used resource.
 2. Load the buffer with data to send.
 3. Start the communication.
 4. Do other work to mask the communication.
 5. Wait for the communication to finish.
 6. Unload the buffer with the received data.
-7. Finalise the communication, releasing the buffer.
+7. Finalise the communication, releasing (de-flags) the buffer.
 
 The full communication between two ranks is thus given below:
 
@@ -152,70 +152,68 @@ The full communication between two ranks is thus given below:
 .. note::
     The copying to and from the buffers does introduce an overhead, which could later be removed by using 'inplace' communication. This remains an open point.
 
-DEAD LOCK
+.. note::
+    In the future it is aimed to have dead-lock detection, to prevent program hangs when developing MPI based algorithms.
 
 Field Synchronization
 ^^^^^^^^^^^^^^^^^^^^^
 
-The focus now shifts to the actual process of synchronising a global field between all its partitioned parts. In each ``rank`` there is some overlap of cells (i.e. cells which are present in more than one ``rank``), which is dictated by the stencil size. If these shared cell have a missing neighbour cell in a local partition they are termed ``halo cells``. A ``halo cell`` does not have enough geometric and/or field information to give the correct result and therefore must recieve the correct result from another rank.
+The focus now shifts to the actual process of synchronising a global field between all its partitioned parts. In each ``rank`` there is some overlap of cells (i.e. cells which are present in more than one ``rank``), which is dictated by the stencil size. If these shared cell have a missing neighbour cell in a local partition they are termed ``halo cells``. A ``halo cell`` does not have enough geometric and/or field information to be able to calculate the correct result and therefore must recieve the result from another rank.
 
-In the above there is no reason for the ``halo cells`` to be nicly ordered, for example to exist at field index 0 to 10. Therefore we need some map betweem the ``halo cell`` index in our mesh and our data buffers in the ``FullDuplexCommBuffer``, for each ``rank``. This map is stored in the ``RankSimplexCommMap`` which stores for each ``rank`` which buffer position maps to which ``halo cell`` in the mesh. To facilitate full duplex communication both a send and recieve ``RankSimplexCommMap`` is needed.
+In the above there is no reason for the ``halo cells`` to be nicely ordered, for example to start at field index 0 and end at 10. Therefore we need some map betweem the ``halo cell`` index in our mesh and our data buffers in the ``FullDuplexCommBuffer``, for each ``rank``. This map is stored in the ``RankSimplexCommMap`` which stores for each ``rank`` which buffer position maps to which ``halo cell`` in the mesh. To facilitate full duplex communication both a send and recieve ``RankSimplexCommMap`` is needed.
 
-Arriving finally at the ``Communicator``. One thing to note is there may be more than one field being synchronise at any give time, however the communication pathways contained within the send and recieve ``RankSimplexCommMap`` remains the same. Thus the ``Communicator`` (may) consists of a set of communication buffers and a single ``RankSimplexCommMap``.
+Arriving finally at the ``Communicator``. whose role is now defined to manage the non-blocking synchronization of a field for a given comminication pathway set. The user should, at for each communicate point in code, provide a unique string key to identify the comminication, see below is an example.
 
-The ``Communicator`` role is now defined to manage the non-blocking synchronization of a field for a given comminication pathway set. The user should, at for each communicate point in code, provide a unique string key to identify the comminication. Below is an example of the classes usage.
+It is worth noting that there may be more than one field being synchronised at any give time, however the communication pathways contained within the send and recieve ``RankSimplexCommMap`` remains the same. Thus the ``Communicator`` (may) consists of a multiple of communication buffers and a single ``RankSimplexCommMap``. This scaling is provided automatically.
 
 .. code-block::c++
 
     mpi::MPIEnvironment MPIEnviron;
     Communicator comm;
 
-    // first block send (size rank)
-    // second block remains the same
-    // third block receive (size rank)
-    Field<int> field(CPUExecutor(), 3 * MPIEnviron.sizeRank());
+    Field<int> field(CPUExecutor());
 
-    // Set up buffer to local map, we will ignore global_idx
+    // ...
+    // Size and populate field data.
+    // ...
+
+    // Set up buffer to local map
     RankSimplexCommMap rankSendMap(MPIEnviron.sizeRank());
     RankSimplexCommMap rankReceiveMap(MPIEnviron.sizeRank());
-    for (int rank = 0; rank < MPIEnviron.sizeRank(); rank++)
-    {
 
+    // ...
+    // Set up of send/receive maps per rank.
+    // ...
 
-        rankSendMap[rank].emplace_back(NodeCommMap {local_idx: rank, global_idx: -1});
-        rankReceiveMap[rank].emplace_back(
-            NodeCommMap {local_idx: 2 * MPIEnviron.sizeRank() + rank, global_idx: -1}
-        );
-    }
-
-    // Communicate
+    // Set up a communicatory.
     comm = Communicator(MPIEnviron, rankSendMap, rankReceiveMap);
+
     std::string loc =
-        std::source_location::current().file_name() + std::source_location::current().line();
+        std::source_location::current().file_name() + std::source_location::current().line(); // used to identify the communication
     comm.startComm(field, loc);
-    comm.isComplete(loc); // just call it to make sure it doesn't crash
+    comm.isComplete(loc);
     comm.finaliseComm(field, loc);
 
 .. note::
     If the file line and number are used as comminication key names they can allow for helpful debug messages when and ``MPI`` communication throws an error.
 
-
-TODO: where to send -> number of buffers is different to comm path ways
+In the above of course the logic would be situated in a solution loop, and the calls would not be made sequential as this would lead to blocking communication.
 
 Partitioning
 ------------
 
-The purpose of partitioning is to divide the global computation into smaller parts that can be solved in parallel, and essentially to distribute the computation accross the ``ranks``. One the boundary
+The purpose of partitioning is to divide the global computation into smaller parts that can be solved in parallel, and essentially to distribute the computation accross the ``ranks``.
 
 Currently there is no formal partitioning system in ``NeoFOAM``, however it is assumed that all communication is done on the ``MPI World`` communicator. This is to be updated in the future, together with dynamic load balancing.
-
 
 
 Future Work
 -----------
 
 1. Allow ``MPI Communicators`` to be split, allowing for more complex partitioning of the computation.
-2. Mesh partitioning
-3. Implement dynamic load balancing.
-4. Replace, where possible, std containers with ``NeoFOAM`` containers.
-5. Perfromance metrics
+2. GPU support.
+3. Mesh partitioning
+4. dead-lock detection.
+5. Implement dynamic load balancing.
+6. Replace, where possible, std containers with ``NeoFOAM`` containers.
+7. Perfromance metrics
