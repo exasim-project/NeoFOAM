@@ -141,11 +141,11 @@ The full communication between two ranks is thus given below:
         // wait for the communication to finish
         buffer.waitComplete();
 
-        // unload the recieve buffer
+        // unload the receive buffer
         auto receiveBuffer = buffer.getReceiveBuffer<double>(commRank); // span returned.
         allData[receiveMap[0]] = receiveBuffer[0];
 
-        // finalise the communication, releasing the buffer
+        // finalize the communication, releasing the buffer
         buffer.finaliseComm();
     }
 
@@ -202,7 +202,7 @@ In the above of course the logic would be situated in a solution loop, and the c
 Partitioning
 ------------
 
-The purpose of partitioning is to divide the global computation into smaller parts that can be solved in parallel, and essentially to distribute the computation accross the ``ranks``.
+The purpose of partitioning is to divide the global computation into smaller parts that can be solved in parallel, and essentially to distribute the computation across the ``ranks``.
 
 Currently there is no formal partitioning system in ``NeoFOAM``, however it is assumed that all communication is done on the ``MPI World`` communicator. This is to be updated in the future, together with dynamic load balancing.
 
