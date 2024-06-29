@@ -13,7 +13,7 @@
 
 using namespace NeoFOAM;
 
-TEST_CASE("Communicator Field Syncronization")
+TEST_CASE("Communicator Field Synchronization")
 {
     mpi::MPIEnvironment MPIEnviron;
     Communicator comm;

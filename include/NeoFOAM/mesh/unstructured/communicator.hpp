@@ -29,7 +29,7 @@ struct NodeCommMap
 using RankCommMap = std::vector<NodeCommMap>;
 
 /**
- * @brief Represents, for a single map, a mapping of all RankCommMaps for eith send or receive.
+ * @brief Represents, for a single map, a mapping of all RankCommMaps for either send or receive.
  */
 using CommMap = std::vector<RankCommMap>;
 
@@ -79,7 +79,7 @@ public:
     /**
      * @brief Starts the non-blocking communication for a given field and communication name.
      * @tparam valueType The value type of the field.
-     * @param field The field to be communicated/synchronised.
+     * @param field The field to be communicated/synchronized.
      * @param commName The communication name, typically a file and line number.
      */
     template<typename valueType>
@@ -116,7 +116,7 @@ public:
     /**
      * @brief Finalizes the non-blocking communication for a given field and communication name.
      * @tparam valueType The value type of the field.
-     * @param field The field to be communicated/synchronised.
+     * @param field The field to be communicated/synchronized.
      * @param commName The communication name, typically a file and line number.
      */
     template<typename valueType>
