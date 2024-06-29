@@ -40,7 +40,7 @@ public:
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
-    };
+    }
 
     /**
      * @brief Create a Field with a given size on an executor
@@ -72,7 +72,7 @@ public:
         {
             std::copy(in.begin(), in.end(), data_);
         }
-    };
+    }
 
 
     Field(const Field<ValueType>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
@@ -85,7 +85,7 @@ public:
         );
         data_ = static_cast<ValueType*>(ptr);
         setField(*this, rhs.span());
-    };
+    }
 
     /**
      * @brief Destroy the Field object.
@@ -94,7 +94,7 @@ public:
     {
         std::visit([this](const auto& exec) { exec.free(data_); }, exec_);
         data_ = nullptr;
-    };
+    }
 
     /**
      * @brief applies a functor, transformation, to the field
@@ -158,10 +158,9 @@ public:
      */
     void copyToHost(Field<ValueType>& result)
     {
-        if (result.size() != size_)
-        {
-            exit(1);
-        NF_DEBUG_ASSERT(results.size == size_, "Parsed Field size not the same as current field size");
+        NF_DEBUG_ASSERT(
+            result.size() == size_, "Parsed Field size not the same as current field size"
+        );
         result = copyToExecutor(CPUExecutor());
     }
 
