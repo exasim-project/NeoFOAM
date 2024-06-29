@@ -215,5 +215,5 @@ Future Work
 3. Mesh partitioning
 4. dead-lock detection.
 5. Implement dynamic load balancing.
-6. Replace, where possible, std containers with ``NeoFOAM`` containers.
+6. Replace, where possible, std containers with ``NeoFOAM`` and/or ``Kokkos`` containers.
 7. Perfromance metrics

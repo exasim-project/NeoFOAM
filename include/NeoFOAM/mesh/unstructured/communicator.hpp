@@ -20,19 +20,18 @@ namespace NeoFOAM
  */
 struct NodeCommMap
 {
-    label local_idx;  /**< The local index. */
-    label global_idx; /**< The global index. */
+    label local_idx; /**< The local index. */
 };
 
 /**
  * @brief Represents a mapping of NodeCommMap for a rank.
  */
-using SimplexCommMap = std::vector<NodeCommMap>;
+using RankCommMap = std::vector<NodeCommMap>;
 
 /**
- * @brief Represents a mapping of SimplexCommMap for each rank.
+ * @brief Represents, for a single map, a mapping of all RankCommMaps for eith send or receive.
  */
-using RankSimplexCommMap = std::vector<SimplexCommMap>;
+using CommMap = std::vector<RankCommMap>;
 
 /**
  * @class Communicator
@@ -64,11 +63,7 @@ public:
      * @param rankSendMap The rank send map.
      * @param rankReceiveMap The rank receive map.
      */
-    Communicator(
-        mpi::MPIEnvironment MPIEnviron,
-        RankSimplexCommMap rankSendMap,
-        RankSimplexCommMap rankReceiveMap
-    )
+    Communicator(mpi::MPIEnvironment MPIEnviron, CommMap rankSendMap, CommMap rankReceiveMap)
         : MPIEnviron_(MPIEnviron), sendMap_(rankSendMap), receiveMap_(rankReceiveMap)
     {
         NF_DEBUG_ASSERT(
@@ -146,8 +141,8 @@ public:
 private:
 
     mpi::MPIEnvironment MPIEnviron_; /**< The MPI environment. */
-    RankSimplexCommMap sendMap_;     /**< The rank send map. */
-    RankSimplexCommMap receiveMap_;  /**< The rank receive map. */
+    CommMap sendMap_;                /**< The rank send map. */
+    CommMap receiveMap_;             /**< The rank receive map. */
     std::vector<bufferType> buffers; /**< Communication buffers. */
     std::unordered_map<std::string, bufferType*>
         CommBuffer_; /**< The communication key to buffer map, nullptr indicates no assigned buffer.

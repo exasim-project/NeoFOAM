@@ -36,12 +36,10 @@ TEST_CASE("Communicator Field Syncronization")
     }
 
     // Set up buffer to local map, we will ignore global_idx
-    RankSimplexCommMap rankSendMap(MPIEnviron.sizeRank());
-    RankSimplexCommMap rankReceiveMap(MPIEnviron.sizeRank());
+    CommMap rankSendMap(MPIEnviron.sizeRank());
+    CommMap rankReceiveMap(MPIEnviron.sizeRank());
     for (int rank = 0; rank < MPIEnviron.sizeRank(); rank++)
     {
-
-
         rankSendMap[rank].emplace_back(NodeCommMap {local_idx: rank, global_idx: -1});
         rankReceiveMap[rank].emplace_back(
             NodeCommMap {local_idx: 2 * MPIEnviron.sizeRank() + rank, global_idx: -1}
