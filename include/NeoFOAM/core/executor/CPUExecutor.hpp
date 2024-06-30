@@ -35,6 +35,13 @@ public:
         return static_cast<T*>(Kokkos::kokkos_realloc<exec>(ptr, newSize * sizeof(T)));
     }
 
+    template<typename ValueType>
+    decltype(auto) createKokkosView(ValueType* ptr, size_t size) const
+    {
+        return Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(ptr, size);
+    }
+
+
     void* alloc(size_t size) const { return Kokkos::kokkos_malloc<exec>("Field", size); }
 
     void* realloc(void* ptr, size_t newSize) const
