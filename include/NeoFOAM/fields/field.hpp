@@ -17,6 +17,14 @@ namespace NeoFOAM
 
 namespace detail
 {
+    /**
+     * @brief A helper function to simplify the common pattern of copying between to executor.
+     * @param size The number of elements to copy.
+     * @param srcPtr Pointer to the original block of memory.
+     * @param dstPtr Pointer to the target block of memory.
+     * @tparam ValueType The type of the underlying elements.
+     * @returns A function that takes a source and an destination executor
+     */
     template<typename ValueType>
     auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
     {
@@ -110,19 +118,19 @@ public:
     }
 
     /**
-     * @brief Copies the data to a new field on a specific executor
+     * @brief Copies the data to a new field on a specific executor.
+     * @param dstExec The executor on which the data should be copied.
      * @returns A copy of the field on the host.
      */
     [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
     {
         if (dstExec == exec_) return Field<ValueType>(*this);
-        Field<ValueType> result(dstExec, size_);
 
+        Field<ValueType> result(dstExec, size_);
         std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
 
         return result;
     }
-
 
     /**
      * @brief Returns a copy of the field back to the host.
