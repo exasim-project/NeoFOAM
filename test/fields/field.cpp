@@ -28,14 +28,40 @@ TEST_CASE("Field Operations")
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
 
-        auto host_a = a.copyToHost();
+        auto hostA = a.copyToHost();
 
-        REQUIRE(a.at(0) == 1);
-        REQUIRE(a.at(1) == 2);
-        REQUIRE(a.at(2) == 3);
+        REQUIRE(hostA.data()[0] == 1);
+        REQUIRE(hostA.data()[1] == 2);
+        REQUIRE(hostA.data()[2] == 3);
     }
 
-    SECTION("Can initialize Field from initializer list on " + execName)
+    SECTION("Can create a subview " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto hostA = a.copyToHost();
+        auto subView = a.span({1, 2});
+
+        REQUIRE(subView[0] == 2);
+        REQUIRE(subView[1] == 3);
+    }
+
+    SECTION("Copy to host creates a copy from " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto hostA = a.copyToHost();
+        auto hostB = a.copyToHost();
+
+        hostA.data()[0] = 0;
+
+        REQUIRE(hostA.data()[0] != hostB.data()[0]);
+        REQUIRE(hostA.data()[1] == hostB.data()[1]);
+    }
+
+    SECTION("Can create a subview " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
