@@ -14,6 +14,10 @@
 
 namespace NeoFOAM
 {
+namespace detail
+{
+
+}
 
 /**
  * @class Field
@@ -25,6 +29,7 @@ namespace NeoFOAM
 template<typename ValueType>
 class Field
 {
+
 public:
 
     /**
@@ -111,33 +116,31 @@ public:
      * @brief Copies the data to a new field on a specific executor
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToExecutor(Executor target_exec) const
+    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
     {
-        if (target_exec == exec_) return Field<ValueType>(*this);
-        Field<ValueType> result(target_exec, size_);
+        if (dstExec == exec_) return Field<ValueType>(*this);
+        Field<ValueType> result(dstExec, size_);
 
-        Executor gpuExecutor {GPUExecutor {}};
-        // copy from GPU to CPU
-        // target is GPU but data not already on GPU
-        ValueType* gpu_data_ptr = (target_exec == gpuExecutor) ? result.data() : data_;
-        ValueType* host_data_ptr = (target_exec == gpuExecutor) ? data_ : result.data();
+        auto srcPtr = data_;
+        auto dstPtr = result.data();
+        auto size = size_;
 
-        Kokkos::View<ValueType*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged> gpuView(
-            gpu_data_ptr, size_
-        );
-        Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(
-            host_data_ptr, size_
-        );
-
-        // target is GPU but data not already on GPU
-        if (target_exec == gpuExecutor)
+        auto deepCopyVisitor = [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
         {
-            Kokkos::deep_copy(gpuView, hostView);
-        }
-        else
-        {
-            Kokkos::deep_copy(hostView, gpuView);
-        }
+            auto createView = [size]<typename ExecType>(const ExecType& exec, ValueType* ptr)
+            {
+                using ExecutionSpace = std::conditional<
+                    std::is_same_v<GPUExecutor, ExecType>,
+                    Kokkos::DefaultExecutionSpace,
+                    Kokkos::HostSpace>::type;
+                return Kokkos::View<ValueType*, ExecutionSpace, Kokkos::MemoryUnmanaged>(ptr, size);
+            };
+
+            Kokkos::deep_copy(createView(dstExec, dstPtr), createView(srcExec, srcPtr));
+        };
+
+        std::visit(deepCopyVisitor, exec_, dstExec);
+
         return result;
     }
 
@@ -358,6 +361,7 @@ public:
     }
 
 private:
+
 
     size_t size_;         //!< Size of the field.
     ValueType* data_;     //!< Pointer to the field data.
