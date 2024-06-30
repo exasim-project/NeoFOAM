@@ -75,7 +75,7 @@ TEST_CASE("reduceAllScalar")
     {
         int ranks;
         MPI_Comm_size(MPI_COMM_WORLD, &ranks);
-        int value = 2.5f;
+        int value = 2.5;
         int send_value = value;
         reduceAllScalar(&send_value, ReduceOp::Sum, MPI_COMM_WORLD);
         REQUIRE(send_value == value * ranks);
