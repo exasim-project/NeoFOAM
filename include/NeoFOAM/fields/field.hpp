@@ -159,13 +159,6 @@ public:
 
 
     /**
-     * @brief access to underlying data
-     * @param i The index of cell in the field
-     * @warning returned value might not be on host
-     */
-    const ValueType at(const size_t i) const { return *(data_ + i); }
-
-    /**
      * @brief Function call operator
      * @param i The index of cell in the field
      * @returns The value at the index i
