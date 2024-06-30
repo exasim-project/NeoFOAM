@@ -138,7 +138,7 @@ void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
  * @tparam valueType The type of the scalar value.
  * @param buffer Pointer to first scalar value to be sent.
  * @param size The size of the send buffer, i.e. number of components/elements.
- * @param r_rank The receiving rank index.
+ * @param rankReceive The receiving rank index.
  * @param tag The tag of the message, used to identify the communication.
  * @param comm The MPI communicator across which the message is sent.
  * @param request Pointer to the MPI_Request object, is populated by the function.
@@ -148,13 +148,13 @@ template<typename valueType>
 void sendScalar(
     const valueType* buffer,
     const int size,
-    int r_rank,
+    int rankReceive,
     int tag,
     MPI_Comm comm,
     MPI_Request* request
 )
 {
-    int err = MPI_Isend(buffer, size, getType<valueType>(), r_rank, tag, comm, request);
+    int err = MPI_Isend(buffer, size, getType<valueType>(), rankReceive, tag, comm, request);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Isend failed.");
 }
 
@@ -164,7 +164,7 @@ void sendScalar(
  * @tparam valueType The type of the scalar value.
  * @param buffer Pointer to the buffer where the received scalar values will be stored.
  * @param size The size of the receive buffer, i.e. number of components/elements.
- * @param s_rank The rank index of the sender.
+ * @param rankSend The rank index of the sender.
  * @param tag The tag of the message, used to identify the communication.
  * @param comm The MPI communicator across which the message is received.
  * @param request Pointer to the MPI_Request object, is populated by the function.
@@ -172,10 +172,10 @@ void sendScalar(
  */
 template<typename valueType>
 void recvScalar(
-    valueType* buffer, const int size, int s_rank, int tag, MPI_Comm comm, MPI_Request* request
+    valueType* buffer, const int size, int rankSend, int tag, MPI_Comm comm, MPI_Request* request
 )
 {
-    int err = MPI_Irecv(buffer, size, getType<valueType>(), s_rank, tag, comm, request);
+    int err = MPI_Irecv(buffer, size, getType<valueType>(), rankSend, tag, comm, request);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Irecv failed.");
 }
 

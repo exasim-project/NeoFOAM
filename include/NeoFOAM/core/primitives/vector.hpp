@@ -41,21 +41,21 @@ public:
      *
      * @return point to the first scalar
      */
-    scalar* Data() { return cmpts_; }
+    scalar* data() { return cmpts_; }
 
     /**
      * @brief Returns pointer to the data of the vector
      *
      * @return point to the first scalar
      */
-    const scalar* Data() const { return cmpts_; }
+    const scalar* data() const { return cmpts_; }
 
     /**
      * @brief Returns the size of the vector
      *
      * @return The size of the vector
      */
-    consteval std::size_t Size() { return 3; }
+    consteval std::size_t size() { return 3; }
 
     KOKKOS_INLINE_FUNCTION
     scalar& operator()(const int i) { return cmpts_[i]; }

@@ -63,8 +63,8 @@ public:
      * @param mpiEnviron The MPI environment.
      * @param rankCommSize The number of nodes per rank to be communicated with.
      */
-    HalfDuplexCommBuffer(MPIEnvironment MPIEnviron, std::vector<std::size_t> rankCommSize)
-        : MPIEnviron_(MPIEnviron)
+    HalfDuplexCommBuffer(MPIEnvironment mpiEnviron, std::vector<std::size_t> rankCommSize)
+        : MPIEnviron_(mpiEnviron)
     {
         setCommRankSize<char>(rankCommSize);
     }
@@ -211,8 +211,8 @@ private:
         );
         if (0 == (typeSize_ - sizeof(valueType))) return;
         updateDataSize(
-            [rankOffset_ = rankOffset_, typeSize_ = typeSize_](const int rank)
-            { return (rankOffset_[rank + 1] - rankOffset_[rank]) / typeSize_; },
+            [rankOffset = rankOffset_, typeSize = typeSize_](const int rank)
+            { return (rankOffset[rank + 1] - rankOffset[rank]) / typeSize; },
             sizeof(valueType)
         );
 

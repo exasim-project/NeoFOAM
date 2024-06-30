@@ -54,9 +54,9 @@ TEST_CASE("reduceAllScalar")
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &ranks);
         int value = rank;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Max, MPI_COMM_WORLD);
-        REQUIRE(send_value == (ranks - 1));
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Max, MPI_COMM_WORLD);
+        REQUIRE(sendValue == (ranks - 1));
     }
 
     SECTION("Integer reduction with MPI_MIN")
@@ -66,9 +66,9 @@ TEST_CASE("reduceAllScalar")
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &ranks);
         int value = rank;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Min, MPI_COMM_WORLD);
-        REQUIRE(send_value == 0);
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Min, MPI_COMM_WORLD);
+        REQUIRE(sendValue == 0);
     }
 
     SECTION("Integer reduction with MPI_SUM")
@@ -76,9 +76,9 @@ TEST_CASE("reduceAllScalar")
         int ranks;
         MPI_Comm_size(MPI_COMM_WORLD, &ranks);
         int value = 2.5;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Sum, MPI_COMM_WORLD);
-        REQUIRE(send_value == value * ranks);
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Sum, MPI_COMM_WORLD);
+        REQUIRE(sendValue == value * ranks);
     }
 
     SECTION("Float reduction with MPI_PROD")
@@ -86,9 +86,9 @@ TEST_CASE("reduceAllScalar")
         int ranks;
         MPI_Comm_size(MPI_COMM_WORLD, &ranks);
         float value = 2.5f;
-        float send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Prod, MPI_COMM_WORLD);
-        REQUIRE(send_value == std::pow(value, static_cast<float>(ranks)));
+        float sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Prod, MPI_COMM_WORLD);
+        REQUIRE(sendValue == std::pow(value, static_cast<float>(ranks)));
     }
 
     SECTION("Integer reduction with MPI_LAND")
@@ -96,9 +96,9 @@ TEST_CASE("reduceAllScalar")
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         int value = (rank == 0) ? 1 : 0;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Land, MPI_COMM_WORLD);
-        REQUIRE(send_value == 0);
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Land, MPI_COMM_WORLD);
+        REQUIRE(sendValue == 0);
     }
 
     SECTION("Integer reduction with MPI_LOR")
@@ -106,9 +106,9 @@ TEST_CASE("reduceAllScalar")
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         int value = (rank == 0) ? 1 : 0;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Lor, MPI_COMM_WORLD);
-        REQUIRE(send_value == 1);
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Lor, MPI_COMM_WORLD);
+        REQUIRE(sendValue == 1);
     }
 
     SECTION("Integer reduction with MPI_BAND")
@@ -116,9 +116,9 @@ TEST_CASE("reduceAllScalar")
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         int value = (rank == 0) ? 1 : 0;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Band, MPI_COMM_WORLD);
-        REQUIRE(send_value == 0);
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Band, MPI_COMM_WORLD);
+        REQUIRE(sendValue == 0);
     }
 
     SECTION("Integer reduction with MPI_BOR")
@@ -126,9 +126,9 @@ TEST_CASE("reduceAllScalar")
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         int value = (rank == 0) ? 1 : 0;
-        int send_value = value;
-        reduceAllScalar(&send_value, ReduceOp::Bor, MPI_COMM_WORLD);
-        REQUIRE(send_value == 1);
+        int sendValue = value;
+        reduceAllScalar(&sendValue, ReduceOp::Bor, MPI_COMM_WORLD);
+        REQUIRE(sendValue == 1);
     }
 }
 
@@ -140,19 +140,19 @@ TEST_CASE("sendScalar recvScalar Test")
 
     const int size01 = 3;
     const int size10 = 2;
-    int send_value01[size01] = {42, -1, 145}; // random values
-    int send_value10[size10] = {-58, 234};    // random values
+    int sendValue01[size01] = {42, -1, 145}; // random values
+    int sendValue10[size10] = {-58, 234};    // random values
     const int tag = 0;
     MPI_Request requestSend;
     MPI_Request requestReceive;
 
     if (rank == 0)
     {
-        int send_buffer[size01];
-        int recv_buffer[size10];
-        std::copy(std::begin(send_value01), std::end(send_value01), std::begin(send_buffer));
-        sendScalar(send_buffer, size01, 1, tag, comm, &requestSend);
-        recvScalar(recv_buffer, size10, 1, tag, comm, &requestReceive);
+        int sendBuffer[size01];
+        int recvBuffer[size10];
+        std::copy(std::begin(sendValue01), std::end(sendValue01), std::begin(sendBuffer));
+        sendScalar(sendBuffer, size01, 1, tag, comm, &requestSend);
+        recvScalar(recvBuffer, size10, 1, tag, comm, &requestReceive);
 
         while (!test(&requestSend))
         {
@@ -166,16 +166,16 @@ TEST_CASE("sendScalar recvScalar Test")
 
         // Check the received value
         for (int i = 0; i < size10; i++)
-            REQUIRE(recv_buffer[i] == send_value10[i]);
+            REQUIRE(recvBuffer[i] == sendValue10[i]);
     }
     else if (rank == 1)
     {
 
-        int send_buffer[size10];
-        int recv_buffer[size01];
-        std::copy(std::begin(send_value10), std::end(send_value10), std::begin(send_buffer));
-        sendScalar(send_buffer, size10, 0, tag, comm, &requestSend);
-        recvScalar(recv_buffer, size01, 0, tag, comm, &requestReceive);
+        int sendBuffer[size10];
+        int recvBuffer[size01];
+        std::copy(std::begin(sendValue10), std::end(sendValue10), std::begin(sendBuffer));
+        sendScalar(sendBuffer, size10, 0, tag, comm, &requestSend);
+        recvScalar(recvBuffer, size01, 0, tag, comm, &requestReceive);
 
         while (!test(&requestSend))
         {
@@ -189,6 +189,6 @@ TEST_CASE("sendScalar recvScalar Test")
 
         // Check the received value
         for (int i = 0; i < size01; i++)
-            REQUIRE(recv_buffer[i] == send_value01[i]);
+            REQUIRE(recvBuffer[i] == sendValue01[i]);
     }
 }
