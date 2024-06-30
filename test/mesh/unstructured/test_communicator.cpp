@@ -15,38 +15,38 @@ using namespace NeoFOAM;
 
 TEST_CASE("Communicator Field Synchronization")
 {
-    mpi::MPIEnvironment MPIEnviron;
+    mpi::MPIEnvironment mpiEnviron;
     Communicator comm;
 
     // first block send (size rank)
     // second block remains the same
     // third block receive (size rank)
-    Field<int> field(CPUExecutor(), 3 * MPIEnviron.sizeRank());
+    Field<int> field(CPUExecutor(), 3 * mpiEnviron.sizeRank());
 
-    for (int rank = 0; rank < MPIEnviron.sizeRank(); rank++)
+    for (int rank = 0; rank < mpiEnviron.sizeRank(); rank++)
     {
         // we send the rank numbers
         field(rank) = rank;
 
         // just make sure its not a communicated value.
-        field(rank + MPIEnviron.sizeRank()) = MPIEnviron.sizeRank() + rank;
+        field(rank + mpiEnviron.sizeRank()) = mpiEnviron.sizeRank() + rank;
 
         // set to 0.0 to check if the value is communicated
-        field(rank + 2 * MPIEnviron.sizeRank()) = 0;
+        field(rank + 2 * mpiEnviron.sizeRank()) = 0;
     }
 
     // Set up buffer to local map, we will ignore global_idx
-    CommMap rankSendMap(MPIEnviron.sizeRank());
-    CommMap rankReceiveMap(MPIEnviron.sizeRank());
-    for (int rank = 0; rank < MPIEnviron.sizeRank(); rank++)
+    CommMap rankSendMap(mpiEnviron.sizeRank());
+    CommMap rankReceiveMap(mpiEnviron.sizeRank());
+    for (int rank = 0; rank < mpiEnviron.sizeRank(); rank++)
     {
         rankSendMap[rank].emplace_back(NodeCommMap {.local_idx = rank});
-        NodeCommMap newNode({.local_idx = 2 * MPIEnviron.sizeRank() + rank});
+        NodeCommMap newNode({.local_idx = 2 * mpiEnviron.sizeRank() + rank});
         rankReceiveMap[rank].push_back(newNode); // got tired of fighting with clang-format.
     }
 
     // Communicate
-    comm = Communicator(MPIEnviron, rankSendMap, rankReceiveMap);
+    comm = Communicator(mpiEnviron, rankSendMap, rankReceiveMap);
     std::string loc =
         std::source_location::current().file_name() + std::source_location::current().line();
     comm.startComm(field, loc);
@@ -54,10 +54,10 @@ TEST_CASE("Communicator Field Synchronization")
     comm.finaliseComm(field, loc);
 
     // Check the values
-    for (int rank = 0; rank < MPIEnviron.sizeRank(); rank++)
+    for (int rank = 0; rank < mpiEnviron.sizeRank(); rank++)
     {
         REQUIRE(field(rank) == rank);
-        REQUIRE(field(rank + MPIEnviron.sizeRank()) == MPIEnviron.sizeRank() + rank);
-        REQUIRE(field(rank + 2 * MPIEnviron.sizeRank()) == MPIEnviron.rank());
+        REQUIRE(field(rank + mpiEnviron.sizeRank()) == mpiEnviron.sizeRank() + rank);
+        REQUIRE(field(rank + 2 * mpiEnviron.sizeRank()) == mpiEnviron.rank());
     }
 }

@@ -26,7 +26,7 @@ void HalfDuplexCommBuffer::send()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
-    for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+    for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
         sendScalar<char>(
@@ -34,7 +34,7 @@ void HalfDuplexCommBuffer::send()
             rankOffset_[rank + 1] - rankOffset_[rank],
             rank,
             tag_,
-            MPIEnviron_.comm(),
+            mpiEnviron_.comm(),
             &request_[rank]
         );
     }
@@ -44,7 +44,7 @@ void HalfDuplexCommBuffer::receive()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
-    for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+    for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
         recvScalar<char>(
@@ -52,7 +52,7 @@ void HalfDuplexCommBuffer::receive()
             rankOffset_[rank + 1] - rankOffset_[rank],
             rank,
             tag_,
-            MPIEnviron_.comm(),
+            mpiEnviron_.comm(),
             &request_[rank]
         );
     }

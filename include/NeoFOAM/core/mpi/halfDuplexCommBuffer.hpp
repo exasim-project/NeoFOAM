@@ -64,7 +64,7 @@ public:
      * @param rankCommSize The number of nodes per rank to be communicated with.
      */
     HalfDuplexCommBuffer(MPIEnvironment mpiEnviron, std::vector<std::size_t> rankCommSize)
-        : MPIEnviron_(mpiEnviron)
+        : mpiEnviron_(mpiEnviron)
     {
         setCommRankSize<char>(rankCommSize);
     }
@@ -74,7 +74,7 @@ public:
      *
      * @param mpiEnviron The MPI environment.
      */
-    inline void setMPIEnvironment(MPIEnvironment mpiEnviron) { MPIEnviron_ = mpiEnviron; }
+    inline void setMPIEnvironment(MPIEnvironment mpiEnviron) { mpiEnviron_ = mpiEnviron; }
 
     /**
      * @brief Get the communication name.
@@ -96,8 +96,8 @@ public:
             !isCommInit(), "Communication buffer was initialised by name: " << commName_ << "."
         );
         NF_DEBUG_ASSERT(
-            rankCommSize.size() == MPIEnviron_.sizeRank(),
-            "Rank size mismatch. " << rankCommSize.size() << " vs. " << MPIEnviron_.sizeRank()
+            rankCommSize.size() == mpiEnviron_.sizeRank(),
+            "Rank size mismatch. " << rankCommSize.size() << " vs. " << mpiEnviron_.sizeRank()
         );
         typeSize_ = sizeof(valueType);
         rankOffset_.resize(rankCommSize.size() + 1);
@@ -197,7 +197,7 @@ private:
     int tag_ {-1};                        /*< The tag for the communication. */
     std::string commName_ {"unassigned"}; /*< The name of the communication. */
     std::size_t typeSize_ {sizeof(char)}; /*< The data type currently stored in the buffer. */
-    MPIEnvironment MPIEnviron_;           /*< The MPI environment. */
+    MPIEnvironment mpiEnviron_;           /*< The MPI environment. */
     std::vector<MPI_Request> request_;    /*< The MPI request for communication with each rank. */
     std::vector<char> rankBuffer_;        /*< The buffer data for all ranks. Never shrinks. */
     std::vector<std::size_t>
@@ -233,7 +233,7 @@ private:
     void updateDataSize(func rankSize, std::size_t newSize)
     {
         std::size_t dataSize = 0;
-        for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             rankOffset_[rank] = dataSize;
             dataSize += rankSize(rank) * newSize;

@@ -59,19 +59,19 @@ public:
     /**
      * @brief Constructor that initializes the Communicator with MPI environment, rank send map, and
      * rank receive map.
-     * @param MPIEnviron The MPI environment.
+     * @param mpiEnviron The MPI environment.
      * @param rankSendMap The rank send map.
      * @param rankReceiveMap The rank receive map.
      */
-    Communicator(mpi::MPIEnvironment MPIEnviron, CommMap rankSendMap, CommMap rankReceiveMap)
-        : MPIEnviron_(MPIEnviron), sendMap_(rankSendMap), receiveMap_(rankReceiveMap)
+    Communicator(mpi::MPIEnvironment mpiEnviron, CommMap rankSendMap, CommMap rankReceiveMap)
+        : mpiEnviron_(mpiEnviron), sendMap_(rankSendMap), receiveMap_(rankReceiveMap)
     {
         NF_DEBUG_ASSERT(
-            MPIEnviron_.sizeRank() == rankSendMap.size(),
+            mpiEnviron_.sizeRank() == rankSendMap.size(),
             "Size of rankSendSize does not match MPI size."
         );
         NF_DEBUG_ASSERT(
-            MPIEnviron_.sizeRank() == rankReceiveMap.size(),
+            mpiEnviron_.sizeRank() == rankReceiveMap.size(),
             "Size of rankReceiveSize does not match MPI size."
         );
     };
@@ -97,7 +97,7 @@ public:
         }
 
         CommBuffer_[commName]->initComm<valueType>(commName);
-        for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             auto rankBuffer = CommBuffer_[commName]->getSend<valueType>(rank);
             for (auto data = 0; data < sendMap_[rank].size(); ++data)
@@ -128,7 +128,7 @@ public:
         );
 
         CommBuffer_[commName]->waitComplete();
-        for (auto rank = 0; rank < MPIEnviron_.sizeRank(); ++rank)
+        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             auto rankBuffer = CommBuffer_[commName]->getReceive<valueType>(rank);
             for (auto data = 0; data < receiveMap_[rank].size(); ++data)
@@ -140,7 +140,7 @@ public:
 
 private:
 
-    mpi::MPIEnvironment MPIEnviron_; /**< The MPI environment. */
+    mpi::MPIEnvironment mpiEnviron_; /**< The MPI environment. */
     CommMap sendMap_;                /**< The rank send map. */
     CommMap receiveMap_;             /**< The rank receive map. */
     std::vector<bufferType> buffers; /**< Communication buffers. */
