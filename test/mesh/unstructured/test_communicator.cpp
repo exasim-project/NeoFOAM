@@ -41,8 +41,8 @@ TEST_CASE("Communicator Field Synchronization")
     for (int rank = 0; rank < MPIEnviron.sizeRank(); rank++)
     {
         rankSendMap[rank].emplace_back(NodeCommMap {.local_idx = rank});
-        rankReceiveMap[rank].emplace_back(NodeCommMap {
-            .local_idx = 2 * MPIEnviron.sizeRank() + rank});
+        NodeCommMap newNode({.local_idx = 2 * MPIEnviron.sizeRank() + rank});
+        rankReceiveMap[rank].push_back(newNode); // got tired of fighting with clang-format.
     }
 
     // Communicate
