@@ -42,7 +42,7 @@ TEST_CASE("halfDuplexBuffer")
     {
         for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
             rankCommSize[rank] = rank;
-        buffer.setCommRankSize<double>({0, 1, 2});
+        buffer.setCommRankSize<double>(rankCommSize);
         buffer.initComm<double>("Set Comm Rank Size");
         for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {

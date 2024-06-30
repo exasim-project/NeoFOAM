@@ -95,7 +95,10 @@ public:
         NF_DEBUG_ASSERT(
             !isCommInit(), "Communication buffer was initialised by name: " << commName_ << "."
         );
-        NF_DEBUG_ASSERT(rankCommSize.size() == MPIEnviron_.sizeRank(), "Rank size mismatch.");
+        NF_DEBUG_ASSERT(
+            rankCommSize.size() == MPIEnviron_.sizeRank(),
+            "Rank size mismatch. " << rankCommSize.size() << " vs. " << MPIEnviron_.sizeRank()
+        );
         typeSize_ = sizeof(valueType);
         rankOffset_.resize(rankCommSize.size() + 1);
         request_.resize(rankCommSize.size(), MPI_REQUEST_NULL);
