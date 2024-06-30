@@ -14,9 +14,19 @@
 
 namespace NeoFOAM
 {
+
 namespace detail
 {
-
+    template<typename ValueType>
+    auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
+    {
+        return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
+        {
+            Kokkos::deep_copy(
+                dstExec.createKokkosView(dstPtr, size), srcExec.createKokkosView(srcPtr, size)
+            );
+        };
+    }
 }
 
 /**
@@ -55,7 +65,7 @@ public:
     Field(const Executor& exec, std::vector<ValueType> in)
         : size_(in.size()), data_(nullptr), exec_(exec)
     {
-        Executor host_exec = CPUExecutor();
+        Executor hostExec = CPUExecutor();
         void* ptr = nullptr;
         std::visit(
             [this, &ptr](const auto& exec) { ptr = exec.alloc(this->size_ * sizeof(ValueType)); },
@@ -63,20 +73,7 @@ public:
         );
         data_ = static_cast<ValueType*>(ptr);
 
-        if (exec_ != host_exec)
-        {
-            Kokkos::View<ValueType*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                gpuView(data_, size_);
-            Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> hostView(
-                in.data(), size_
-            );
-
-            Kokkos::deep_copy(gpuView, hostView);
-        }
-        else
-        {
-            std::copy(in.begin(), in.end(), data_);
-        }
+        std::visit(detail::deepCopyVisitor(size_, in.data(), data_), hostExec, exec);
     }
 
 
@@ -121,25 +118,7 @@ public:
         if (dstExec == exec_) return Field<ValueType>(*this);
         Field<ValueType> result(dstExec, size_);
 
-        auto srcPtr = data_;
-        auto dstPtr = result.data();
-        auto size = size_;
-
-        auto deepCopyVisitor = [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
-        {
-            auto createView = [size]<typename ExecType>(const ExecType& exec, ValueType* ptr)
-            {
-                using ExecutionSpace = std::conditional<
-                    std::is_same_v<GPUExecutor, ExecType>,
-                    Kokkos::DefaultExecutionSpace,
-                    Kokkos::HostSpace>::type;
-                return Kokkos::View<ValueType*, ExecutionSpace, Kokkos::MemoryUnmanaged>(ptr, size);
-            };
-
-            Kokkos::deep_copy(createView(dstExec, dstPtr), createView(srcExec, srcPtr));
-        };
-
-        std::visit(deepCopyVisitor, exec_, dstExec);
+        std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
 
         return result;
     }
@@ -369,7 +348,6 @@ public:
     }
 
 private:
-
 
     size_t size_;         //!< Size of the field.
     ValueType* data_;     //!< Pointer to the field data.

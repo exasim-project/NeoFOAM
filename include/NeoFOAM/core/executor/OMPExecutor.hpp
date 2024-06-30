@@ -43,6 +43,12 @@ public:
         return Kokkos::kokkos_realloc<exec>(ptr, newSize);
     }
 
+    template<typename ValueType>
+    decltype(auto) createKokkosView(ValueType* ptr, size_t size) const
+    {
+        return Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(ptr, size);
+    }
+
     std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
