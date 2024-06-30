@@ -135,7 +135,7 @@ public:
                 field(receiveMap_[rank][data].local_idx) = rankBuffer[data];
         }
         CommBuffer_[commName]->finaliseComm();
-        CommBuffer_[commName] == nullptr;
+        CommBuffer_[commName] = nullptr;
     }
 
 private:
