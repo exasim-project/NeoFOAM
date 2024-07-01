@@ -66,8 +66,8 @@ TEST_CASE("Field Operations")
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
 
-        auto host_a = a.copyToHost();
-        auto subView = a.span({1, 2});
+        auto hostA = a.copyToHost();
+        auto subView = hostA.span({1, 2});
 
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
