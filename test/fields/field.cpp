@@ -13,8 +13,6 @@
 
 TEST_CASE("Field Operations")
 {
-
-
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
