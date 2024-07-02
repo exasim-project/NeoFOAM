@@ -88,7 +88,7 @@ UnstructuredMesh createSingleCellMesh()
         {exec, {{1.0, 0.0, 0.0}, {0.0, -1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
         {exec, {0.5, 0.5, 0.5, 0.5}}, // deltaCoeffs
-        {0, 0, 1, 1}                  // offset
+        {0, 1, 2, 3}                  // offset
     );
     return UnstructuredMesh(
         {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
@@ -102,7 +102,7 @@ UnstructuredMesh createSingleCellMesh()
         1,                    // nCells
         0,                    // nInternalFaces,
         4,                    // nBoundaryFaces,
-        2,                    // nBoundaries,
+        4,                    // nBoundaries,
         4,                    // nFaces,
         boundaryMesh
     );
