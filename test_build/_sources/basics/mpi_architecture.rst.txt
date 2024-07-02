@@ -56,7 +56,7 @@ Once started, the ``MPIEnvironment`` class is used to manage the ``MPI_communica
 Global Communication
 ^^^^^^^^^^^^^^^^^^^^
 
-With the above in place global communication (i.e. communication between all ``ranks`` on a ``MPI_Communicator``) can be achieved by using the environment and operators.
+With the above in place, global communication (i.e. communication between all ``ranks`` on a ``MPI_Communicator``) can be achieved by using the environment and operators.
 
 .. code-block:: c++
     #include "NeoFOAM/core/mpi/environment.hpp"
