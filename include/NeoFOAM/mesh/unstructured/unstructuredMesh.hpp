@@ -270,4 +270,6 @@ private:
     mutable StencilDataBase stencilDataBase_;
 };
 
+UnstructuredMesh createSingleCellMesh();
+
 } // namespace NeoFOAM
