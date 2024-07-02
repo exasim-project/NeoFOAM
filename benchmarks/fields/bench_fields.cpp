@@ -95,8 +95,8 @@ TEST_CASE("Vector addition [benchmark]")
     NeoFOAM::Field<NeoFOAM::scalar> gpuC(gpuExec, size);
     NeoFOAM::fill(gpuC, 0.0);
 
-    auto sGpuB = gpuB.field();
-    auto sGpuC = gpuC.field();
+    auto sGpuB = gpuB.span();
+    auto sGpuC = gpuC.span();
     BENCHMARK("Field<GPU> addition no allocation")
     {
         gpuA.apply(KOKKOS_LAMBDA(const int i) { return sGpuB[i] + sGpuC[i]; });
@@ -114,8 +114,8 @@ TEST_CASE("Vector addition [benchmark]")
     NeoFOAM::Field<NeoFOAM::scalar> ompC(ompExec, size);
     NeoFOAM::fill(ompC, 0.0);
 
-    auto sompB = ompB.field();
-    auto sompC = ompC.field();
+    auto sompB = ompB.span();
+    auto sompC = ompC.span();
     BENCHMARK("Field<OMP> addition no allocation")
     {
         ompA.apply(KOKKOS_LAMBDA(const int i) { return sompB[i] + sompC[i]; });

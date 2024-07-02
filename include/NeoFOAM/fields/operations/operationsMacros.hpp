@@ -21,7 +21,7 @@ class Field;
         void operator()(const Executor& exec, Field<T>& a, const Inner in)                         \
         {                                                                                          \
             using executor = typename Executor::exec;                                              \
-            auto a_f = a.field();                                                                  \
+            auto a_f = a.span();                                                                   \
             Kokkos::parallel_for(                                                                  \
                 Kokkos::RangePolicy<executor>(0, a_f.size()),                                      \
                 KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = Kernel_Impl; }                         \
@@ -31,7 +31,7 @@ class Field;
         template<typename Executor>                                                                \
         void operator()(const CPUExecutor& exec, Field<T>& a, const Inner in)                      \
         {                                                                                          \
-            auto a_f = a.field();                                                                  \
+            auto a_f = a.span();                                                                   \
             for (int i = 0; i < a_f.size(); i++)                                                   \
             {                                                                                      \
                 a_f[i] = Kernel_Impl;                                                              \
@@ -60,8 +60,8 @@ DECLARE_UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
         void operator()(const Executor& exec, Field<T>& a, const Field<T>& b)                      \
         {                                                                                          \
             using executor = typename Executor::exec;                                              \
-            auto a_f = a.field();                                                                  \
-            auto b_f = b.field();                                                                  \
+            auto a_f = a.span();                                                                   \
+            auto b_f = b.span();                                                                   \
             Kokkos::parallel_for(                                                                  \
                 Kokkos::RangePolicy<executor>(0, a_f.size()),                                      \
                 KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = Kernel_Impl; }                         \
@@ -71,8 +71,8 @@ DECLARE_UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
         template<typename Executor>                                                                \
         void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b)                   \
         {                                                                                          \
-            auto a_f = a.field();                                                                  \
-            const auto b_f = b.field();                                                            \
+            auto a_f = a.span();                                                                   \
+            const auto b_f = b.span();                                                             \
             for (int i = 0; i < a_f.size(); i++)                                                   \
             {                                                                                      \
                 a_f[i] = Kernel_Impl;                                                              \

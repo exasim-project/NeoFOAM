@@ -5,12 +5,13 @@
 #include <iostream>
 #include <string>
 
+#include "primitives/scalar.hpp"
+
 const std::string nl = "\n";
 
 namespace NeoFOAM
 {
 
-using scalar = float;
 using word = std::string;
 
 class ArgList
