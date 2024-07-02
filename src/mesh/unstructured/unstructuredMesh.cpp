@@ -69,10 +69,10 @@ UnstructuredMesh createSingleCellMesh()
     // a 2D mesh in 3D space with left, right, top, bottom boundary faces
     // with the centre at (0.5, 0.5, 0.0)
     // left, top, right, bottom faces
-    // and two boundaries one (left, top),  (right, bottom)
+    // and four boundaries one left, right, top, bottom
 
-    vectorField faceAreas(exec, {{-1, 0, 0}, {0, 1, 0}, {1, 0, 0}, {0, -1, 0}});
-    vectorField faceCentres(
+    vectorField faceAreasVectors(exec, {{-1, 0, 0}, {0, 1, 0}, {1, 0, 0}, {0, -1, 0}});
+    vectorField faceCentresVectors(
         exec, {{0.0, 0.5, 0.0}, {0.5, 1.0, 0.0}, {1.0, 0.5, 0.0}, {0.5, 0.0, 0.0}}
     );
     scalarField magFaceAreas(exec, {1, 1, 1, 1});
@@ -80,11 +80,11 @@ UnstructuredMesh createSingleCellMesh()
     BoundaryMesh boundaryMesh(
         exec,
         {exec, {0, 0, 0, 0}},                                                           // faceCells
-        faceCentres,                                                                    // cf
-        faceAreas,                                                                      // cn,
-        faceAreas,                                                                      // sf,
+        faceCentresVectors,                                                             // cf
+        faceAreasVectors,                                                               // cn,
+        faceAreasVectors,                                                               // sf,
         magFaceAreas,                                                                   // magSf,
-        faceAreas,                                                                      //
+        faceAreasVectors,                                                               //
         {exec, {{1.0, 0.0, 0.0}, {0.0, -1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
         {exec, {0.5, 0.5, 0.5, 0.5}}, // deltaCoeffs
@@ -94,8 +94,8 @@ UnstructuredMesh createSingleCellMesh()
         {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
         {exec, {1}},                                          // cellVolumes
         {exec, {{0.5, 0.5, 0.0}}},                            // cellCentres
-        faceAreaVectors,
-        faceCentres,
+        faceAreasVectors,
+        faceCentresVectors,
         magFaceAreas,
         {exec, {0, 0, 0, 0}}, // faceOwner
         {exec, {}},           // faceNeighbour,
