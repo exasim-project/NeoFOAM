@@ -17,5 +17,8 @@ TEST_CASE("Unstructured Mesh")
         NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh();
 
         REQUIRE(mesh.nCells() == 1);
+        REQUIRE(mesh.nBoundaryFaces() == 4);
+        REQUIRE(mesh.nInternalFaces() == 0);
+        REQUIRE(mesh.nBoundaries() == 4);
     }
 }
