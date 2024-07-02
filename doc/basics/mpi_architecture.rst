@@ -68,7 +68,7 @@ With the above in place global communication (i.e. communication between all ``r
         NeoFOAM::mpi::MPIEnvironment mpiEnv;
 
         double value = 1.0;
-        NeoFOAM::mpi::reduceAllScalar(&value, NeoFOAM::mpi::ReduceOp::SUM, mpiEnv.com());
+        NeoFOAM::mpi::reduceAllScalar(&value, NeoFOAM::mpi::ReduceOp::SUM, mpiEnv.comm());
 
         if(mpiEnv.rank() == 0)
             std::cout<<"Value "<<value<<std::endl; // result is number of ranks.
