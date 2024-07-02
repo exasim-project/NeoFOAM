@@ -11,7 +11,7 @@ Virtually all large scientific and engineering codes are too large to be practic
 1. How should the global computation be partitioned and distributed across the ``ranks``.
 2. What data needs be communicated between which ``ranks``.
 
-Finally, for a scalable solution it is desired that the communication is 'masked', meaning as much as possible the overhead and cost of the communication is done in parallel to the main computation and therefore not be the bottleneck. Broadly this is achieved by non-blocking communication between ``ranks`` in conjunction with the minimization of the frequency and size of the communication. Since the communication architecture informs the partitioning, we will discuss this first.
+For scalable solutions, it's crucial to 'mask' communication costs. Data communication should occur in parallel with the main computation to avoid holding it up and to reduce overheads. Broadly this is achieved by non-blocking communication between ``ranks`` in conjunction with the minimization of the frequency and size of the communication. Since the communication architecture informs the partitioning, we will discuss this first.
 
 Communication
 -------------
@@ -19,7 +19,7 @@ Communication
 MPI Wrapping
 ^^^^^^^^^^^^
 
-``MPI`` is brought into ``NeoFOAM`` in the ``operators.hpp`` file. The purpose of this file is to wrap ``MPI`` functions such that they work more seamlessly with ``NeoFOAM`` data types, and also supplying typical defaults. For example the ``MPI_Allreduce`` function is wrapped:
+The majority of ``MPI`` operators are brought into ``NeoFOAM`` in the ``operators.hpp`` file. The purpose of this file is to wrap ``MPI`` functions such that they work more seamlessly with ``NeoFOAM`` data types, and also supplying typical defaults. For example the ``MPI_Allreduce`` function is wrapped:
 
 .. code-block:: c++
 
