@@ -94,7 +94,7 @@ UnstructuredMesh createSingleCellMesh()
         {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
         {exec, {1}},                                          // cellVolumes
         {exec, {{0.5, 0.5, 0.0}}},                            // cellCentres
-        faceAreas,
+        faceAreaVectors,
         faceCentres,
         magFaceAreas,
         {exec, {0, 0, 0, 0}}, // faceOwner
