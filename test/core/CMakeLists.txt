@@ -12,6 +12,11 @@ target_link_libraries(test_executor PRIVATE Catch2::Catch2 NeoFOAM
                                             Kokkos::kokkos)
 
 add_test(NAME register_test COMMAND test_RegisterClass)
-add_executable(test_RegisterClass "test_RegisterClass.cpp" "../test_main.cpp")
+add_executable(test_RegisterClass "registerClass.cpp" "../test_main.cpp")
 target_link_libraries(test_RegisterClass PRIVATE Catch2::Catch2 NeoFOAM
                                                  Kokkos::kokkos)
+
+add_test(NAME schema_test COMMAND test_Schema)
+add_executable(test_Schema "schema.cpp" "../test_main.cpp")
+target_link_libraries(test_Schema PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos
+                                          nlohmann_json::nlohmann_json)

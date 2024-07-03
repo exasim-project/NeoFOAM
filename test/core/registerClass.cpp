@@ -14,14 +14,17 @@ class BaseClass : public NeoFOAM::RuntimeSelectionFactory<BaseClass>
 
 public:
 
+    BaseClass() {}
+
     static std::string name() { return "BaseClass"; }
 };
 
 class BaseClass2 : public NeoFOAM::RuntimeSelectionFactory<BaseClass2>
 {
-    BaseClass2() {}
 
 public:
+
+    BaseClass2() {}
 
     static std::string name() { return "BaseClass2"; }
 };
@@ -33,27 +36,33 @@ public:
     DerivedClass() {}
 
     static std::string name() { return "DerivedClass"; }
+
+    static std::string doc() { return "DerivedClass documentation"; }
+
+    static std::string schema() { return "DerivedClass schema"; }
 };
 
-// class DerivedClass2 : public BaseClass2::Register<DerivedClass2>
-// {
-// public:
+class DerivedClass2 : public BaseClass2::Register<DerivedClass2>
+{
+public:
 
-//     DerivedClass2()
-//     {
+    DerivedClass2() {}
 
-//     }
+    static std::string name() { return "DerivedClass2"; }
 
-//     static std::string name()
-//     {
-//         return "DerivedClass";
-//     }
-// };
+    static std::string doc() { return "DerivedClass2 documentation"; }
+
+    static std::string schema() { return "DerivedClass2 schema"; }
+};
+
 
 TEST_CASE("Register")
 {
     std::cout << "Table size: " << NeoFOAM::runTimeSelectionManager::table().size() << std::endl;
-    std::cout << "Table size: " << NeoFOAM::runTimeSelectionManager::doc("BaseClass2") << std::endl;
+    std::cout << "derivedClass doc: "
+              << NeoFOAM::runTimeSelectionManager::doc("BaseClass", "DerivedClass") << std::endl;
+    std::cout << "derivedClass2 doc: "
+              << NeoFOAM::runTimeSelectionManager::doc("BaseClass2", "DerivedClass2") << std::endl;
 
-    REQUIRE(BaseClass::table().size() == 2);
+    REQUIRE(NeoFOAM::runTimeSelectionManager::table().size() == 1);
 }

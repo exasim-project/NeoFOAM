@@ -22,15 +22,24 @@ class classDocumentation
 {
 public:
 
+    std::function<std::string()> doc;
+    std::function<std::string()> schema;
+};
+
+
+class BaseClassDocumetation
+{
+public:
+
     std::function<std::string(const std::string&)> doc;
     std::function<std::string(const std::string&)> schema;
 };
-
 
 class runTimeSelectionManager
 {
 public:
 
+    using LookupTable = std::unordered_map<std::string, BaseClassDocumetation>;
 
     static void registerClass(
         std::string name,
@@ -39,12 +48,11 @@ public:
     )
     {
         // if not already registered
-        table()[name] = classDocumentation {doc, schema};
+        table()[name] = BaseClassDocumetation {doc, schema};
     }
 
     static std::string doc(const std::string& baseClassName, const std::string& derivedClassName)
     {
-        // from the base class, get the documentation of the derived class
         return table().at(baseClassName).doc(derivedClassName);
     }
 
@@ -54,7 +62,6 @@ public:
         return table().at(baseClassName).schema(derivedClassName);
     }
 
-    using LookupTable = std::unordered_map<std::string, classDocumentation>;
 
     static LookupTable& table()
     {
@@ -90,17 +97,18 @@ public:
 
     using CreatorFunc = std::function<std::unique_ptr<Base>(Args...)>;
     using LookupTable = std::unordered_map<std::string, CreatorFunc>;
+    using ClassDocTable = std::unordered_map<std::string, classDocumentation>;
 
     static std::string doc(const std::string& derivedClassName)
     {
         // get the documentation of the derived class
-        return table().at(derivedClassName);
+        return docTable().at(derivedClassName).doc();
     }
 
     static std::string schema(const std::string& derivedClassName)
     {
-        // get the documentation of the derived class
-        return "testschema";
+        // get the schema of the derived class
+        return docTable().at(derivedClassName).schema();
     }
 
 
@@ -132,8 +140,15 @@ public:
 
         static bool add_sub_type()
         {
-            RuntimeSelectionFactory::table()[T::name()] = [](Args... args) -> std::unique_ptr<Base>
+            CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
             { return std::unique_ptr<Base>(new T(std::forward<Args>(args)...)); };
+            RuntimeSelectionFactory::table()[T::name()] = func;
+
+            classDocumentation doc;
+            doc.doc = []() -> std::string { return T::doc(); };
+            doc.schema = []() -> std::string { return T::schema(); };
+            RuntimeSelectionFactory::docTable()[T::name()] = doc;
+
             return true;
         }
 
@@ -164,6 +179,12 @@ public:
     static LookupTable& table()
     {
         static LookupTable tbl;
+        return tbl;
+    }
+
+    static ClassDocTable& docTable()
+    {
+        static ClassDocTable tbl;
         return tbl;
     }
 
