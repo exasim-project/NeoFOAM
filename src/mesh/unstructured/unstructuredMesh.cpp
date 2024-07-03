@@ -85,7 +85,7 @@ UnstructuredMesh createSingleCellMesh()
         faceAreasVectors,                                                               // sf,
         magFaceAreas,                                                                   // magSf,
         faceAreasVectors,                                                               //
-        {exec, {{1.0, 0.0, 0.0}, {0.0, -1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}}}, // delta
+        {exec, {{0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}, {-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
         {exec, {0.5, 0.5, 0.5, 0.5}}, // deltaCoeffs
         {0, 1, 2, 3}                  // offset
