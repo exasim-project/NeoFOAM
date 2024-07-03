@@ -14,6 +14,7 @@ target_sources(
   PRIVATE "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
+          "core/schema/Number.cpp"
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
@@ -35,4 +36,5 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace
+                                      nlohmann_json::nlohmann_json)
