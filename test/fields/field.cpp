@@ -13,8 +13,6 @@
 
 TEST_CASE("Field Operations")
 {
-
-
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
@@ -33,6 +31,19 @@ TEST_CASE("Field Operations")
         REQUIRE(hostA.data()[0] == 1);
         REQUIRE(hostA.data()[1] == 2);
         REQUIRE(hostA.data()[2] == 3);
+    }
+
+    SECTION("Can initialize Field from a Field on " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+        NeoFOAM::Field<NeoFOAM::label> b(a);
+
+        auto hostB = b.copyToHost();
+
+        REQUIRE(hostB.data()[0] == 1);
+        REQUIRE(hostB.data()[1] == 2);
+        REQUIRE(hostB.data()[2] == 3);
     }
 
     SECTION("Can create a subview " + execName)
