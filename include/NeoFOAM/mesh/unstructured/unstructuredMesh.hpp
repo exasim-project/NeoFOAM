@@ -276,7 +276,14 @@ private:
     mutable StencilDataBase stencilDataBase_;
 };
 
-/** @brief Create a 1D mesh between [0,1] with nCells */
+/** @brief creates a mesh containing only a single cell
+ * @warn currently this is only a 2D mesh
+ *
+ * a 2D mesh in 3D space with left, right, top, bottom boundary faces
+ * with the centre at (0.5, 0.5, 0.0)
+ * left, top, right, bottom faces
+ * and four boundaries one left, right, top, bottom
+ */
 UnstructuredMesh createSingleCellMesh();
 
 } // namespace NeoFOAM

@@ -15,6 +15,28 @@
 namespace NeoFOAM
 {
 
+namespace detail
+{
+    /**
+     * @brief A helper function to simplify the common pattern of copying between to executor.
+     * @param size The number of elements to copy.
+     * @param srcPtr Pointer to the original block of memory.
+     * @param dstPtr Pointer to the target block of memory.
+     * @tparam ValueType The type of the underlying elements.
+     * @returns A function that takes a source and an destination executor
+     */
+    template<typename ValueType>
+    auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
+    {
+        return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
+        {
+            Kokkos::deep_copy(
+                dstExec.createKokkosView(dstPtr, size), srcExec.createKokkosView(srcPtr, size)
+            );
+        };
+    }
+}
+
 /**
  * @class Field
  * @brief A class to contain the data and executors for a field and define some
@@ -25,6 +47,7 @@ namespace NeoFOAM
 template<typename ValueType>
 class Field
 {
+
 public:
 
     /**
@@ -40,25 +63,27 @@ public:
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
-    };
+    }
 
     /**
-     * @brief Create a Field of given elements on CPU executor
+     * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
-     * @param size  size of the matrix
+     * @param in a vector of elements to copy over
      * */
-    Field(std::initializer_list<ValueType> inValues)
-        : size_(inValues.size()), data_(nullptr), exec_(CPUExecutor())
+    Field(const Executor& exec, std::vector<ValueType> in)
+        : size_(in.size()), data_(nullptr), exec_(exec)
     {
+        Executor hostExec = CPUExecutor();
         void* ptr = nullptr;
         std::visit(
             [this, &ptr](const auto& exec) { ptr = exec.alloc(this->size_ * sizeof(ValueType)); },
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
-        std::copy(inValues.begin(), inValues.end(), data_);
-    };
+
+        std::visit(detail::deepCopyVisitor(size_, in.data(), data_), hostExec, exec);
+    }
+
 
     Field(const Field<ValueType>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
     {
@@ -69,8 +94,8 @@ public:
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
-        setField(*this, rhs.field());
-    };
+        setField(*this, rhs.span());
+    }
 
     /**
      * @brief Destroy the Field object.
@@ -79,7 +104,7 @@ public:
     {
         std::visit([this](const auto& exec) { exec.free(data_); }, exec_);
         data_ = nullptr;
-    };
+    }
 
     /**
      * @brief applies a functor, transformation, to the field
@@ -93,27 +118,25 @@ public:
     }
 
     /**
+     * @brief Copies the data to a new field on a specific executor.
+     * @param dstExec The executor on which the data should be copied.
+     * @returns A copy of the field on the host.
+     */
+    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
+    {
+        if (dstExec == exec_) return Field<ValueType>(*this);
+
+        Field<ValueType> result(dstExec, size_);
+        std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
+
+        return result;
+    }
+
+    /**
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToHost() const
-    {
-        Field<ValueType> result(CPUExecutor {}, size_);
-        if (!std::holds_alternative<GPUExecutor>(exec_))
-        {
-            result = *this;
-        }
-        else
-        {
-            Kokkos::View<ValueType*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                gpuView(data_, size_);
-            Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
-                result.data(), size_
-            );
-            Kokkos::deep_copy(resultView, gpuView);
-        }
-        return result;
-    }
+    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(CPUExecutor()); }
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -125,24 +148,10 @@ public:
      */
     void copyToHost(Field<ValueType>& result)
     {
-        if (result.size() != size_)
-        {
-            exit(1);
-        }
-
-        if (!std::holds_alternative<GPUExecutor>(exec_))
-        {
-            result = *this;
-        }
-        else
-        {
-            Kokkos::View<ValueType*, Kokkos::DefaultExecutionSpace, Kokkos::MemoryUnmanaged>
-                gpuView(data_, size_);
-            Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> resultView(
-                result.data(), size_
-            );
-            Kokkos::deep_copy(resultView, gpuView);
-        }
+        NF_DEBUG_ASSERT(
+            result.size() == size_, "Parsed Field size not the same as current field size"
+        );
+        result = copyToExecutor(CPUExecutor());
     }
 
     // // move assignment operator
@@ -155,7 +164,7 @@ public:
     //     }
     //     return *this;
     // }
-    //
+
 
     /**
      * @brief Function call operator
@@ -205,7 +214,7 @@ public:
         {
             this->setSize(rhs.size());
         }
-        setField(*this, rhs.field());
+        setField(*this, rhs.span());
     }
 
     /**
@@ -317,13 +326,12 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> field() { return std::span<ValueType>(data_, size_); }
-
+    [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<ValueType> field() const
+    [[nodiscard]] const std::span<ValueType> span() const
     {
         return std::span<ValueType>(data_, size_);
     }
@@ -332,18 +340,18 @@ public:
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> field(std::pair<int, int> range)
+    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range)
     {
         return std::span<ValueType>(data_ + range.first, range.second - range.first);
     }
 
     /**
-     * @brief Gets the field as a span.
+     * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<ValueType> field(std::pair<int, int> range) const
+    [[nodiscard]] const std::span<ValueType> span(std::pair<size_t, size_t> range) const
     {
-        return field(range);
+        return span(range);
     }
 
 private:

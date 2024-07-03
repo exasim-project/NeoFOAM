@@ -74,38 +74,41 @@ UnstructuredMesh createSingleCellMesh()
     // a 2D mesh in 3D space with left, right, top, bottom boundary faces
     // with the centre at (0.5, 0.5, 0.0)
     // left, top, right, bottom faces
-    // and two boundaries one (left, top),  (right, bottom)
-    vectorField faceAreas({{-1, 0, 0}, {0, 1, 0}, {1, 0, 0}, {0, -1, 0}});
-    vectorField faceCentres({{0.0, 0.5, 0.0}, {0.5, 1.0, 0.0}, {1.0, 0.5, 0.0}, {0.5, 0.0, 0.0}});
-    scalarField magFaceAreas({1, 1, 1, 1});
+    // and four boundaries one left, right, top, bottom
+
+    vectorField faceAreasVectors(exec, {{-1, 0, 0}, {0, 1, 0}, {1, 0, 0}, {0, -1, 0}});
+    vectorField faceCentresVectors(
+        exec, {{0.0, 0.5, 0.0}, {0.5, 1.0, 0.0}, {1.0, 0.5, 0.0}, {0.5, 0.0, 0.0}}
+    );
+    scalarField magFaceAreas(exec, {1, 1, 1, 1});
 
     BoundaryMesh boundaryMesh(
         exec,
-        {0, 0, 0, 0},                                                           // faceCells
-        faceCentres,                                                            // cf
-        faceAreas,                                                              // cn,
-        faceAreas,                                                              // sf,
-        magFaceAreas,                                                           // magSf,
-        faceAreas,                                                              //
-        {{1.0, 0.0, 0.0}, {0.0, -1.0, 0.0}, {-1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}}, // delta
-        {1, 1, 1, 1},                                                           // weights
-        {0.5, 0.5, 0.5, 0.5},                                                   // deltaCoeffs
-        {0, 0, 1, 1}                                                            // offset
+        {exec, {0, 0, 0, 0}},                                                           // faceCells
+        faceCentresVectors,                                                             // cf
+        faceAreasVectors,                                                               // cn,
+        faceAreasVectors,                                                               // sf,
+        magFaceAreas,                                                                   // magSf,
+        faceAreasVectors,                                                               //
+        {exec, {{0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}, {-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}}}, // delta
+        {exec, {1, 1, 1, 1}},                                                           // weights
+        {exec, {0.5, 0.5, 0.5, 0.5}}, // deltaCoeffs
+        {0, 1, 2, 3}                  // offset
     );
     return UnstructuredMesh(
-        {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}, // points,
-        {1},                                          // cellVolumes
-        {{0.5, 0.5, 0.0}},                            // cellCentres
-        faceAreas,
-        faceCentres,
+        {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
+        {exec, {1}},                                          // cellVolumes
+        {exec, {{0.5, 0.5, 0.0}}},                            // cellCentres
+        faceAreasVectors,
+        faceCentresVectors,
         magFaceAreas,
-        {0, 0, 0, 0}, // faceOwner
-        {},           // faceNeighbour,
-        1,            // nCells
-        0,            // nInternalFaces,
-        4,            // nBoundaryFaces,
-        2,            // nBoundaries,
-        4,            // nFaces,
+        {exec, {0, 0, 0, 0}}, // faceOwner
+        {exec, {}},           // faceNeighbour,
+        1,                    // nCells
+        0,                    // nInternalFaces,
+        4,                    // nBoundaryFaces,
+        4,                    // nBoundaries,
+        4,                    // nFaces,
         boundaryMesh
     );
 }
