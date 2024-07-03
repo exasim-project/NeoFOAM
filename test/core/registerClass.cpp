@@ -1,121 +1,68 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-
-#include <iostream>
-
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 
-#include "NeoFOAM/core/registerClass.hpp"
-#include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 
-
-// forward declaration so we can use it to define the create function and the class manager
-class TestBaseClass;
-
-// define the create function use to instantiate the derived classes
-using CreateFunc = std::function<std::unique_ptr<TestBaseClass>(std::string, double)>;
-
-// define the class manager to register the classes
-using BaseClassRegistry = NeoFOAM::BaseClassRegistry<TestBaseClass, CreateFunc>;
-
-
-class TestBaseClass : public BaseClassRegistry
-{
-public:
-
-    MAKE_CLASS_A_RUNTIME_FACTORY(TestBaseClass, BaseClassRegistry, CreateFunc)
-
-    virtual ~TestBaseClass() = default;
-
-    virtual std::string testString() = 0;
-
-    virtual double testValue() = 0;
-};
-
-class TestDerivedClass : public TestBaseClass
+class BaseClass : public NeoFOAM::RuntimeSelectionFactory<BaseClass>
 {
 
 public:
 
-    TestDerivedClass(std::string name, double test)
-        : TestBaseClass(), testString_(name), testValue_(test)
-    {
-        registerClass<TestDerivedClass>();
-    }
+    BaseClass() {}
 
-    static std::unique_ptr<TestBaseClass> create(std::string name, double test)
-    {
-        return std::make_unique<TestDerivedClass>(name, test);
-    }
-
-    static std::string name() { return "TestDerivedClass"; }
-
-    virtual std::string testString() override { return testString_; };
-
-    virtual double testValue() override { return testValue_; };
-
-private:
-
-    std::string testString_;
-    double testValue_;
+    static std::string name() { return "BaseClass"; }
 };
 
-class TestDerivedClass2 : public TestBaseClass
+class BaseClass2 : public NeoFOAM::RuntimeSelectionFactory<BaseClass2>
 {
 
 public:
 
-    TestDerivedClass2(std::string name, double test)
-        : TestBaseClass(), testString_(name), testValue_(test)
-    {
-        registerClass<TestDerivedClass2>();
-    }
+    BaseClass2() {}
 
-    static std::unique_ptr<TestBaseClass> create(std::string name, double test)
-    {
-        return std::make_unique<TestDerivedClass2>(name, test);
-    }
+    static std::string name() { return "BaseClass2"; }
+};
 
-    static std::string name() { return "TestDerivedClass2"; }
+class DerivedClass : public BaseClass::Register<DerivedClass>
+{
+public:
 
-    virtual std::string testString() override { return testString_; };
+    DerivedClass() {}
 
-    virtual double testValue() override { return testValue_ * 2; };
+    static std::string name() { return "DerivedClass"; }
 
-private:
+    static std::string doc() { return "DerivedClass documentation"; }
 
-    std::string testString_;
-    double testValue_;
+    static std::string schema() { return "DerivedClass schema"; }
+};
+
+class DerivedClass2 : public BaseClass2::Register<DerivedClass2>
+{
+public:
+
+    DerivedClass2() {}
+
+    static std::string name() { return "DerivedClass2"; }
+
+    static std::string doc() { return "DerivedClass2 documentation"; }
+
+    static std::string schema() { return "DerivedClass2 schema"; }
 };
 
 
-TEST_CASE("Register Class")
+TEST_CASE("Register")
 {
-    std::cout << "Number of registered classes: " << TestBaseClass::size() << std::endl;
-    REQUIRE(TestBaseClass::size() == 2);
+    std::cout << "Table size: " << NeoFOAM::runTimeSelectionManager::table().size() << std::endl;
+    std::cout << "derivedClass doc: "
+              << NeoFOAM::runTimeSelectionManager::doc("BaseClass", "DerivedClass") << std::endl;
+    std::cout << "derivedClass2 doc: "
+              << NeoFOAM::runTimeSelectionManager::doc("BaseClass2", "DerivedClass2") << std::endl;
 
-    std::unique_ptr<TestBaseClass> testDerived =
-        TestBaseClass::create("TestDerivedClass", "FirstDerived", 1.0);
-
-    std::cout << "TestBaseClass testValue: " << testDerived->testValue() << std::endl;
-    std::cout << "TestBaseClass testString: " << testDerived->testString() << std::endl;
-
-    REQUIRE(testDerived->testString() == "FirstDerived");
-    REQUIRE(testDerived->testValue() == 1.0);
-
-    std::unique_ptr<TestBaseClass> testDerived2 =
-        TestBaseClass::create("TestDerivedClass2", "SecondDerived", 1.0);
-
-    std::cout << "TestBaseClass testValue: " << testDerived2->testValue() << std::endl;
-    std::cout << "TestBaseClass testString: " << testDerived2->testString() << std::endl;
-
-    REQUIRE(testDerived2->testString() == "SecondDerived");
-    REQUIRE(
-        testDerived2->testValue() == 2.0
-    ); // multiplied by 2 (see implementation of TestDerivedClass2)
+    REQUIRE(NeoFOAM::runTimeSelectionManager::table().size() == 1);
 }
