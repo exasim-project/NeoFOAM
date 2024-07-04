@@ -90,7 +90,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    if: ${{ needs.start-runner.result != 'skipped' }} # required to stop the runner even if the error happened in the previous jobs
+    # only try to run the stop job if the start runner hasn't been skipped
+    if: ${{ needs.start-runner.result != 'skipped' }} && ${{ needs.build-on-aws.result != 'skipped' }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
