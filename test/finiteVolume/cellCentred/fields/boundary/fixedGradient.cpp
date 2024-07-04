@@ -28,10 +28,10 @@ TEST_CASE("fixedValue")
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
         NeoFOAM::scalar uniformValue {10};
         NeoFOAM::Dictionary dict;
-        dict.insert("fixedValue", uniformValue);
+        dict.insert("fixedGradient", uniformValue);
         auto fixedValueBoundary =
             NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoFOAM::scalar>::create(
-                "fixedValue", mesh, dict, 0
+                "fixedGradient", mesh, dict, 0
             );
 
         fixedValueBoundary->correctBoundaryCondition(domainField);
