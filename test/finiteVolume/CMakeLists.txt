@@ -13,7 +13,9 @@ target_link_libraries(
   test_VolumeField PRIVATE Catch2::Catch2 NeoFOAM Kokkos::kokkos
                            cpptrace::cpptrace)
 
-# add_test(NAME boundaryField_test COMMAND test_boundaryField) add_executable(
-# test_boundaryField "cellCentred/fields/boundary/boundaryField.cpp"
-# "../test_main.cpp") target_link_libraries( test_boundaryField PRIVATE
-# Catch2::Catch2 NeoFOAM Kokkos::kokkos cpptrace::cpptrace)
+add_test(NAME boundaryField_test COMMAND test_boundaryField)
+add_executable(
+ test_boundaryField "cellCentred/fields/boundary/boundaryField.cpp"
+ "../test_main.cpp")
+target_link_libraries( test_boundaryField PRIVATE
+ Catch2::Catch2 NeoFOAM Kokkos::kokkos cpptrace::cpptrace)
