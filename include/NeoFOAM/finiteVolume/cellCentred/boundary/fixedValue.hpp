@@ -6,6 +6,7 @@
 #include "Kokkos_Core.hpp"
 
 #include "NeoFOAM/core.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
@@ -37,7 +38,7 @@ public:
     {
         std::visit(
             [&](auto exec)
-            { setFixedValue(exec, domainField.boundaryField().refValue().field(), fixedValue_); },
+            { setFixedValue(exec, domainField.boundaryField().refValue().span(), fixedValue_); },
             domainField.exec()
         );
     }
