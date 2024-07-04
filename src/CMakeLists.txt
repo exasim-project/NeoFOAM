@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 # add_subdirectory(DSL)
 
-add_library(NeoFOAM)
+add_library(NeoFOAM SHARED)
 
 set_property(TARGET NeoFOAM PROPERTY POSITION_INDEPENDENT_CODE ON)
 

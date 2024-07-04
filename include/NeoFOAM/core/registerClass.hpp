@@ -46,6 +46,7 @@ public:                                                                         
         catch (const std::out_of_range& e)                                                         \
         {                                                                                          \
             auto msg = std::string(" Could not find constructor for ") + name;                     \
+            msg += "valid constructors are: " + std::to_string(REGISTRY::classMap().size());       \
                                                                                                    \
             NF_ERROR_EXIT(msg);                                                                    \
             return nullptr;                                                                        \
