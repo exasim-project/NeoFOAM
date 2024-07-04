@@ -23,7 +23,7 @@ public:
 
     FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
         : VolumeBoundaryFactory<ValueType>(mesh, patchID),
-          fixedValue_(dict.get<ValueType>("uniformValue"))
+          fixedValue_(dict.get<ValueType>("fixedValue"))
     {
         VolumeBoundaryFactory<ValueType>::template registerClass<FixedValueType>();
     }
@@ -43,7 +43,7 @@ public:
         );
     }
 
-    static std::string name() { return "FixedValue"; }
+    static std::string name() { return "fixedValue"; }
 
 private:
 
