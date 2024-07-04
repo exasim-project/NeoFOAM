@@ -12,7 +12,6 @@ target_sources(
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
-          "core/schema/Number.cpp"
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
