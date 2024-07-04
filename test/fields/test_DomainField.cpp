@@ -6,9 +6,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/fields/BoundaryFields.hpp"
-#include "NeoFOAM/fields/DomainField.hpp"
-#include "NeoFOAM/fields/operations/Comparison.hpp"
+#include "NeoFOAM/fields/boundaryFields.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
+#include "NeoFOAM/fields/operations/comparison.hpp"
 
 TEST_CASE("Boundaries")
 {

@@ -15,6 +15,10 @@ set(CMAKE_CXX_STANDARD 20)
 # Add the cmake folder so the find_package command finds custom packages
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+# Set the output directories for all binaries and libraries
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" FALSE)
 option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)

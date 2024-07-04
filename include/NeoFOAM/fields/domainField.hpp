@@ -9,7 +9,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/BoundaryFields.hpp"
+#include "NeoFOAM/fields/boundaryFields.hpp"
 
 namespace NeoFOAM
 {

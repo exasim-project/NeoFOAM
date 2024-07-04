@@ -2,8 +2,9 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/Field.hpp"
 #include <span>
+
+#include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM
 {

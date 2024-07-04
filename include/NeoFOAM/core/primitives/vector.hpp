@@ -36,6 +36,27 @@ public:
         cmpts_[2] = z;
     }
 
+    /**
+     * @brief Returns pointer to the data of the vector
+     *
+     * @return point to the first scalar
+     */
+    scalar* data() { return cmpts_; }
+
+    /**
+     * @brief Returns pointer to the data of the vector
+     *
+     * @return point to the first scalar
+     */
+    const scalar* data() const { return cmpts_; }
+
+    /**
+     * @brief Returns the size of the vector
+     *
+     * @return The size of the vector
+     */
+    consteval std::size_t size() { return 3; }
+
     KOKKOS_INLINE_FUNCTION
     scalar& operator()(const int i) { return cmpts_[i]; }
 

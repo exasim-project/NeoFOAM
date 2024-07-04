@@ -10,8 +10,8 @@
 #include "NeoFOAM/core/Error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/operations/OperationsMacros.hpp"
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
+#include "NeoFOAM/fields/operations/operationsMacros.hpp"
+#include "NeoFOAM/fields/fieldTypeDefs.hpp"
 
 namespace NeoFOAM
 {
@@ -158,11 +158,7 @@ public:
      * @warning This function is not implemented
      */
     KOKKOS_FUNCTION
-    T& operator()(const int i)
-    {
-        // TODO not implemented
-        throw std::runtime_error("Not implemented");
-    }
+    T& operator()(const int i) { return data_[i]; }
 
     /**
      * @brief Function call operator
@@ -172,11 +168,7 @@ public:
      * @warning This function is not implemented
      */
     KOKKOS_FUNCTION
-    const T& operator()(const int i) const
-    {
-        // TODO not implemented
-        exit(1);
-    }
+    const T& operator()(const int i) const { return data_[i]; }
 
     //--------------------------------------------------------------------------------
     // Assignment Operators

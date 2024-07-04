@@ -4,11 +4,12 @@
 
 #include <exception>
 #include <iostream>
+#include <mpi.h>
 #include <string>
 #include <sstream>
 #include <source_location>
 
-#include "Info.hpp"
+#include "info.hpp"
 
 #ifdef NF_DEBUG_MESSAGING
 #include "cpptrace/cpptrace.hpp"
@@ -92,7 +93,7 @@ private:
     do                                                                                             \
     {                                                                                              \
         std::cerr << NF_ERROR_MESSAGE(message);                                                    \
-        std::abort();                                                                              \
+        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     }                                                                                              \
     while (false)
 
@@ -165,7 +166,7 @@ private:
  * @param condition The condition to be checked.
  * @param message The error message to be printed if the condition is false.
  */
-#define NF_DEBUG_ASSERT(condition, message) ASSERT(condition, message)
+#define NF_DEBUG_ASSERT(condition, message) NF_ASSERT(condition, message)
 
 /**
  * @def NF_DEBUG_ASSERT_THROW

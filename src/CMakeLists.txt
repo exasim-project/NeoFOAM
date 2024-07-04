@@ -11,15 +11,17 @@ target_include_directories(
 
 target_sources(
   NeoFOAM
-  PRIVATE "core/Time.cpp"
-          "core/Dictionary.cpp"
-          "core/Kokkos.cpp"
+  PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
+          "core/time.cpp"
+          "core/dictionary.cpp"
+          "core/kokkos.cpp"
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
-          "mesh/unstructured/UnstructuredMesh.cpp"
-          "mesh/unstructured/BoundaryMesh.cpp"
-          "mesh/stencil/StencilDataBase.cpp")
+          "mesh/unstructured/boundaryMesh.cpp"
+          "mesh/unstructured/communicator.cpp"
+          "mesh/unstructured/unstructuredMesh.cpp"
+          "mesh/stencil/stencilDataBase.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
@@ -35,4 +37,5 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PUBLIC Kokkos::kokkos MPI::MPI_CXX)
+target_link_libraries(NeoFOAM PRIVATE cpptrace::cpptrace)

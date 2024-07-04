@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/core/Dictionary.hpp"
+#include "NeoFOAM/core/dictionary.hpp"
 
 void NeoFOAM::Dictionary::insert(const std::string& key, const std::any& value)
 {
