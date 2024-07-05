@@ -4,8 +4,6 @@
 
 add_library(NeoFOAM SHARED)
 
-set_property(TARGET NeoFOAM PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 include(GNUInstallDirs)
 
 target_sources(

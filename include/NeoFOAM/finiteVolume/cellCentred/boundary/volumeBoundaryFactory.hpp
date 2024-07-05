@@ -68,6 +68,7 @@ public:
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
     {
+        std::cout << __FILE__ << __LINE__ << "correct value \n";
         boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
     }
 

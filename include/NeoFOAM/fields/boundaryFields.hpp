@@ -115,6 +115,15 @@ public:
 
     const Executor& exec() { return exec_; }
 
+    /**
+     * @brief Get the range for a given patchId
+     * @return The number of boundary faces.
+     */
+    std::pair<localIdx, localIdx> range(localIdx patchId) const
+    {
+        return {offset_.data()[patchId], offset_.data()[patchId + 1]};
+    }
+
 private:
 
     Executor exec_;                        ///< The executor on which the field is stored

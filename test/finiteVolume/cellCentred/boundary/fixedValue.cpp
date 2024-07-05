@@ -38,9 +38,19 @@ TEST_CASE("fixedValue")
 
         auto refValues = domainField.boundaryField().refValue().copyToHost();
 
-        for (auto boundaryValue : refValues.span(boundary->range()))
+        for (auto& boundaryValue : refValues.span(boundary->range()))
         {
             REQUIRE(boundaryValue == setValue);
+        }
+
+        auto otherBoundary =
+            NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoFOAM::scalar>::create(
+                "fixedValue", mesh, dict, 1
+            );
+
+        for (auto& boundaryValue : refValues.span(otherBoundary->range()))
+        {
+            REQUIRE(boundaryValue != setValue);
         }
     }
 }

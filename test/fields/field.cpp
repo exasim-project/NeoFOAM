@@ -72,15 +72,16 @@ TEST_CASE("Field Operations")
         REQUIRE(hostA.data()[1] == hostB.data()[1]);
     }
 
-    SECTION("Can create a subview " + execName)
+    SECTION("Can set via a subview " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
 
         auto hostA = a.copyToHost();
         auto subView = hostA.span({1, 2});
+        subView[0] = 5;
 
-        REQUIRE(subView[0] == 2);
+        REQUIRE(subView[0] == 5);
         REQUIRE(subView[1] == 3);
     }
 

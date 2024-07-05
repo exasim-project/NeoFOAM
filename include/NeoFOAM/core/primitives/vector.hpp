@@ -132,4 +132,11 @@ Vector operator*(const scalar& sclr, Vector rhs)
     return rhs;
 }
 
+KOKKOS_INLINE_FUNCTION
+std::ostream& operator<<(std::ostream& out, const Vector& e)
+{
+    out << "[" << e(0) << "," << e(1) << "," << e(2) << "]";
+    return out;
+}
+
 } // namespace NeoFOAM
