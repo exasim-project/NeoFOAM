@@ -39,7 +39,8 @@ TEST_CASE("fixedValue")
         auto refValues = domainField.boundaryField().refValue().copyToHost();
 
         for (auto value : refValues.span(std::pair<size_t, size_t> {
-                 fixedValueBoundary->patchStart(), fixedValueBoundary->patchEnd()}))
+                 fixedValueBoundary->patchStart(), fixedValueBoundary->patchEnd()
+             }))
         {
             REQUIRE(value == uniformValue);
         }
