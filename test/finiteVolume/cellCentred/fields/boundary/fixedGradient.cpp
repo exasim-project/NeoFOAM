@@ -26,23 +26,21 @@ TEST_CASE("fixedValue")
     {
         auto mesh = NeoFOAM::createSingleCellMesh();
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
-        NeoFOAM::scalar uniformValue {10};
+        NeoFOAM::scalar setValue {10};
         NeoFOAM::Dictionary dict;
-        dict.insert("fixedGradient", uniformValue);
-        auto fixedValueBoundary =
+        dict.insert("fixedGradient", setValue);
+        auto boundary =
             NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoFOAM::scalar>::create(
                 "fixedGradient", mesh, dict, 0
             );
 
-        fixedValueBoundary->correctBoundaryCondition(domainField);
+        boundary->correctBoundaryCondition(domainField);
 
-        auto refValues = domainField.boundaryField().refValue().copyToHost();
+        auto refValues = domainField.boundaryField().refGrad().copyToHost();
 
-        for (auto value : refValues.span(std::pair<size_t, size_t> {
-                 fixedValueBoundary->patchStart(), fixedValueBoundary->patchEnd()
-             }))
+        for (auto boundaryValue : refValues.span(boundary->range()))
         {
-            REQUIRE(value == uniformValue);
+            REQUIRE(boundaryValue == setValue);
         }
     }
 }

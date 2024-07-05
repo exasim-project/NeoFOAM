@@ -47,6 +47,8 @@ public:
 
     label patchID() const { return patchID_; }
 
+    std::pair<size_t, size_t> range() { return {start_, end_}; }
+
 protected:
 
     label patchID_; ///< The id of this patch
