@@ -36,10 +36,9 @@ public:
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
+        auto boundarySpan = domainField.boundaryField().refValue().span(this->range());
         std::visit(
-            [&](auto exec)
-            { setFixedValue(exec, domainField.boundaryField().refValue().span(), fixedValue_); },
-            domainField.exec()
+            [&](auto exec) { setFixedValue(exec, boundarySpan, fixedValue_); }, domainField.exec()
         );
     }
 
@@ -47,23 +46,23 @@ public:
 
 private:
 
-    template<typename executor>
-    void setFixedValue(const executor& exec, std::span<ValueType> valueField, ValueType value)
+    template<typename Executor>
+    void setFixedValue(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
     {
-        if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::value)
+        if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
         {
-            for (std::size_t i = this->patchStart(); i < this->patchEnd(); i++)
+            for (auto& value : inField)
             {
-                valueField[i] = value;
+                value = targetValue;
             }
         }
         else
         {
-            using runOn = typename executor::exec;
+            using runOn = typename Executor::exec;
             Kokkos::parallel_for(
                 "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(this->patchStart(), this->patchEnd()),
-                KOKKOS_LAMBDA(std::size_t i) { valueField[i] = value; }
+                Kokkos::RangePolicy<runOn>(0, inField.size()),
+                KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
             );
         }
     }

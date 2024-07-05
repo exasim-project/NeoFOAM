@@ -8,6 +8,7 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
 
 TEST_CASE("Unstructured Mesh")
 {
@@ -20,5 +21,16 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(mesh.nBoundaryFaces() == 4);
         REQUIRE(mesh.nInternalFaces() == 0);
         REQUIRE(mesh.nBoundaries() == 4);
+    }
+
+    SECTION("Can create domainField from mesh ")
+    {
+
+        auto exec = NeoFOAM::CPUExecutor {};
+
+        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh();
+        NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
+
+        REQUIRE(domainField.boundaryField().offset().size() == 5);
     }
 }
