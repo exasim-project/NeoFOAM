@@ -9,14 +9,15 @@
 #include <sstream>
 #include <iostream>
 
-//#include <source_location>
-#include <experimental/source_location>
+#include <source_location>
+//#include <experimental/source_location>
 
 #include "info.hpp"
 
 #ifdef NF_DEBUG_MESSAGING
 #include "cpptrace/cpptrace.hpp"
 #endif
+
 
 namespace NeoFOAM
 {
@@ -62,9 +63,8 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
-              << "\nFunc: " << std::source_location::current().function_name()                     \
-              << "\nLine: " << std::source_location::current().line() << "\n"                      \
+    "Error: " << message << "\nFile: " << __FILE__              \
+              << "\nLine: " << __LINE__ << "\n"                      \
               << cpptrace::generate_trace().to_string() << "\n"
 #else
 /**
@@ -78,9 +78,8 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
-              << "\nFunc: " << std::source_location::current().function_name()                     \
-              << "\nLine: " << std::source_location::current().line() << "\n"
+    "Error: " << message << "\nFile: " << __FILE__              \
+              << "\nLine: " << __LINE__ << "\n"
 #endif
 
 /**
@@ -95,7 +94,7 @@ private:
 #define NF_ERROR_EXIT(message)                                                                     \
     do                                                                                             \
     {                                                                                              \
-        /* TODO std::cerr << NF_ERROR_MESSAGE(message);*/                                          \
+        std::cerr << NF_ERROR_MESSAGE(message);                                                    \
         MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     }                                                                                              \
     while (false)
