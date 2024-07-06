@@ -8,7 +8,7 @@ Boundary Conditions
 ===================
 
 In contrast to OpenFOAM the boundary conditions do not store the underlying  data but instead modify the data provided by ``DomainField``.  A basic NoOp implementation is provided by  the ``VolumeBoundary`` and ``SurfaceBoundary`` classes.
-To apply boundary conditions for both Surface and Volume Fields a virtual base class member function, ``correctBoundaryConditions``, member is used. The member acts as an interface and is responsible for updating the actual boundary data contained within an ``InternalField`` (an attribute of the ``DomainField``).  
+To apply boundary conditions for both Surface and Volume Fields a virtual base class member function, ``correctBoundaryConditions``, member is used. The member acts as an interface and is responsible for updating the actual boundary data contained within an ``InternalField`` (an attribute of the ``DomainField``).
 
 .. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::VolumeBoundary
     :members:
@@ -71,4 +71,3 @@ BC for surfaceField
 ^^^^^^^^^^^^^^^^^^^
 
 Currently the following boundary conditions are implemented for volField for scalar:
-
