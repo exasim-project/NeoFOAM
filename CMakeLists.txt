@@ -15,6 +15,9 @@ set(CMAKE_CXX_STANDARD 20)
 # Add the cmake folder so the find_package command finds custom packages
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+# Eventhough we compile NeoFOAM as SHARED library we need to explicitly enable PIC for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" FALSE)
 option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)
