@@ -44,8 +44,11 @@ public:
 
     static std::string name() { return "fixedGradient"; }
 
-private:
 
+    // NOTE: this function can not be private or
+    // it will yield the following error: 
+    // The enclosing parent function for an extended __host__ __device__ lambda cannot have
+    // private or protected access within its cla
     template<typename Executor>
     void setFixedGradient(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
     {
@@ -59,14 +62,16 @@ private:
         else
         {
 	   // TODO implement
-           // using runOn = typename Executor::exec;
-           // Kokkos::parallel_for(
-           //     "parallelForImpl",
-           //     Kokkos::RangePolicy<runOn>(0, inField.size()),
-           //     KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
-           // );
+           using runOn = typename Executor::exec;
+           Kokkos::parallel_for(
+               "parallelForImpl",
+               Kokkos::RangePolicy<runOn>(0, inField.size()),
+               KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
+           );
         }
     }
+
+private:
 
     ValueType fixedGradient_;
 };

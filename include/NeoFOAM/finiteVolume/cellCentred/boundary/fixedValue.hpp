@@ -44,8 +44,10 @@ public:
 
     static std::string name() { return "fixedValue"; }
 
-private:
-
+    // NOTE: this function can not be private or
+    // it will yield the following error: 
+    // The enclosing parent function for an extended __host__ __device__ lambda cannot have
+    // private or protected access within its cla
     template<typename Executor>
     void setFixedValue(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
     {
@@ -59,14 +61,15 @@ private:
         else
         {
             using runOn = typename Executor::exec;
-	    // TODO implement
-            // Kokkos::parallel_for(
-            //     "parallelForImpl",
-            //     Kokkos::RangePolicy<runOn>(0, inField.size()),
-            //     KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
-            // );
+            Kokkos::parallel_for(
+                "parallelForImpl",
+                Kokkos::RangePolicy<runOn>(0, inField.size()),
+                KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
+            );
         }
     }
+
+private:
 
     ValueType fixedValue_;
 };
