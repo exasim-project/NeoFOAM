@@ -37,5 +37,5 @@ endif()
 
 target_link_libraries(
   NeoFOAM
-  PUBLIC NeoFOAM_public_api MPI::MPI_CXX
-  PRIVATE Kokkos::kokkos cpptrace::cpptrace)
+  PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
+  PRIVATE cpptrace::cpptrace)

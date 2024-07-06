@@ -3,12 +3,16 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
+
+#include <iostream>
+
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
+
 #include "NeoFOAM/core/registerClass.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
-#include <iostream>
+
 
 // forward declaration so we can use it to define the create function and the class manager
 class TestBaseClass;

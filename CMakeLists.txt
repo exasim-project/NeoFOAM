@@ -62,6 +62,8 @@ include(cmake/StandardProjectSettings.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
+include(cmake/NeoFOAMConfig.cmake)
+
 
 add_library(project_options INTERFACE)
 add_library(project_warnings INTERFACE)
