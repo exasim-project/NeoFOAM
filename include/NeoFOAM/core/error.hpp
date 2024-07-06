@@ -7,6 +7,8 @@
 #include <mpi.h>
 #include <string>
 #include <sstream>
+#include <iostream>
+
 //#include <source_location>
 #include <experimental/source_location>
 
@@ -93,7 +95,7 @@ private:
 #define NF_ERROR_EXIT(message)                                                                     \
     do                                                                                             \
     {                                                                                              \
-        std::cerr << NF_ERROR_MESSAGE(message);                                                    \
+        /* TODO std::cerr << NF_ERROR_MESSAGE(message);*/                                          \
         MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     }                                                                                              \
     while (false)

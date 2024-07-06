@@ -59,11 +59,12 @@ private:
         else
         {
             using runOn = typename Executor::exec;
-            Kokkos::parallel_for(
-                "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(0, inField.size()),
-                KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
-            );
+	    // TODO implement
+            // Kokkos::parallel_for(
+            //     "parallelForImpl",
+            //     Kokkos::RangePolicy<runOn>(0, inField.size()),
+            //     KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
+            // );
         }
     }
 
