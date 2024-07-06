@@ -85,41 +85,25 @@ jobs:
         echo "Please use your local clang-tidy or apply the following patch:"
         git diff -p
         exit 1
-  formatting-check:
-    name: Formatting check
+  pre-commit-run:
+    name: Pre-commit run
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Run clang-format style check for C/C++/Protobuf programs.
-      uses: jidicula/clang-format-action@v4.11.0
-      with:
-        clang-format-version: '17'
-        check-path: '.'
-        fallback-style: 'Mozilla' # optional
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install \
+           pre-commit
+        pip install identify --upgrade
+        pre-commit install
+    - name: Run pre-commit on all files
+      run: pre-commit run --all --color always --verbose
     - name: check for todo fixme note
       run: |
         NTODOS="$(grep -r 'TODO DONT MERGE' --exclude-dir=.github | wc -l)"
         echo "Found $NTODOS TODO DONT MERGE notes"
         ! grep -q -r "TODO DONT MERGE" --exclude-dir=.github
-  typos-check:
-    name: Spell check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Check for typos
-      uses: crate-ci/typos@master
-  check-spdx-headers:
-    name: License header check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout to repository
-        uses: actions/checkout@v4
-      - name: install reuse linter
-        run: |
-          pip3 install reuse attrs
-      - name: Execute reuse linter
-        run: |
-          reuse lint
   changelog:
     name: Changelog check
     runs-on: ubuntu-latest

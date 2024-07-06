@@ -22,8 +22,7 @@ endif()
 
 include(cmake/CPM.cmake)
 
-cpmaddpackage(NAME cpptrace GITHUB_REPOSITORY jeremy-rifkin/cpptrace VERSION
-              0.5.4)
+cpmaddpackage(NAME cpptrace GITHUB_REPOSITORY jeremy-rifkin/cpptrace VERSION 0.5.4)
 
 cpmaddpackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json VERSION 3.11.3)
 
