@@ -52,7 +52,7 @@ TEST_CASE("Field Operations")
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
 
         auto hostA = a.copyToHost();
-        auto subView = a.span({1, 2});
+        auto subView = hostA.span({1, 2});
 
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
@@ -120,7 +120,7 @@ TEST_CASE("Field Operations")
         auto s_b = b.span();
         a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
         REQUIRE(equal(a, 20.0));
-    };
+    }
 }
 
 TEST_CASE("Primitives")
@@ -160,6 +160,6 @@ TEST_CASE("Primitives")
             REQUIRE((a * 4) == d);
             REQUIRE((a + 3 * a) == d);
             REQUIRE((a + 2 * a + a) == d);
-        };
-    };
+        }
+    }
 }

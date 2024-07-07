@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 #pragma once
 
-#include "NeoFOAM/fields/fieldTypeDefs.hpp"
-#include "NeoFOAM/fields/boundaryFields.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

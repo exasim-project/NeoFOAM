@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include <source_location>
-//#include <experimental/source_location>
+// #include <experimental/source_location>
 
 #include "info.hpp"
 
@@ -63,8 +63,7 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "Error: " << message << "\nFile: " << __FILE__              \
-              << "\nLine: " << __LINE__ << "\n"                      \
+    "Error: " << message << "\nFile: " << __FILE__ << "\nLine: " << __LINE__ << "\n"               \
               << cpptrace::generate_trace().to_string() << "\n"
 #else
 /**
@@ -78,8 +77,7 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "Error: " << message << "\nFile: " << __FILE__              \
-              << "\nLine: " << __LINE__ << "\n"
+    "Error: " << message << "\nFile: " << __FILE__ << "\nLine: " << __LINE__ << "\n"
 #endif
 
 /**

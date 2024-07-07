@@ -5,10 +5,9 @@
 
 #include <vector>
 
-#include "NeoFOAM/core.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

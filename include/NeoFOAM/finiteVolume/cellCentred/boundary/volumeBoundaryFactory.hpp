@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 #pragma once
 
-#include "NeoFOAM/core.hpp"
+#include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/registerClass.hpp"
 #include "NeoFOAM/fields.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
@@ -19,15 +20,15 @@ class VolumeBoundaryFactory;
 namespace cellCentred::VolumeBoundaryDetail
 {
 
-    // define the create function use to instantiate the derived classes
-    template<typename ValueType>
-    using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryFactory<ValueType>>(
-        const UnstructuredMesh&, const Dictionary, int
-    )>;
+// define the create function use to instantiate the derived classes
+template<typename ValueType>
+using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryFactory<ValueType>>(
+    const UnstructuredMesh&, const Dictionary, int
+)>;
 
-    template<typename ValueType>
-    using ClassRegistry =
-        NeoFOAM::BaseClassRegistry<VolumeBoundaryFactory<ValueType>, CreateFunc<ValueType>>;
+template<typename ValueType>
+using ClassRegistry =
+    NeoFOAM::BaseClassRegistry<VolumeBoundaryFactory<ValueType>, CreateFunc<ValueType>>;
 }
 
 using namespace cellCentred::VolumeBoundaryDetail;

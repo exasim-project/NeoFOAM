@@ -5,7 +5,6 @@
 
 #include "Kokkos_Core.hpp"
 
-#include "NeoFOAM/core.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
@@ -45,7 +44,7 @@ public:
     static std::string name() { return "fixedValue"; }
 
     // NOTE: this function can not be private or
-    // it will yield the following error: 
+    // it will yield the following error:
     // The enclosing parent function for an extended __host__ __device__ lambda cannot have
     // private or protected access within its cla
     template<typename Executor>

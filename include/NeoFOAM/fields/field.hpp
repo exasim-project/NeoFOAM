@@ -18,24 +18,24 @@ namespace NeoFOAM
 
 namespace detail
 {
-    /**
-     * @brief A helper function to simplify the common pattern of copying between to executor.
-     * @param size The number of elements to copy.
-     * @param srcPtr Pointer to the original block of memory.
-     * @param dstPtr Pointer to the target block of memory.
-     * @tparam ValueType The type of the underlying elements.
-     * @returns A function that takes a source and an destination executor
-     */
-    template<typename ValueType>
-    auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
+/**
+ * @brief A helper function to simplify the common pattern of copying between to executor.
+ * @param size The number of elements to copy.
+ * @param srcPtr Pointer to the original block of memory.
+ * @param dstPtr Pointer to the target block of memory.
+ * @tparam ValueType The type of the underlying elements.
+ * @returns A function that takes a source and an destination executor
+ */
+template<typename ValueType>
+auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
+{
+    return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
     {
-        return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
-        {
-            Kokkos::deep_copy(
-                dstExec.createKokkosView(dstPtr, size), srcExec.createKokkosView(srcPtr, size)
-            );
-        };
-    }
+        Kokkos::deep_copy(
+            dstExec.createKokkosView(dstPtr, size), srcExec.createKokkosView(srcPtr, size)
+        );
+    };
+}
 }
 
 /**

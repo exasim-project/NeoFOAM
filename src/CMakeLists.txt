@@ -35,7 +35,5 @@ if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
   target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
 endif()
 
-target_link_libraries(
-  NeoFOAM
-  PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
-  PRIVATE cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
+                                     cpptrace::cpptrace)

@@ -3,6 +3,6 @@
 
 add_subdirectory(mpi)
 
-NeoFOAMUnitTest(dictionary)
-NeoFOAMUnitTest(executor)
-NeoFOAMUnitTest(registerClass)
+neofoamunittest(dictionary)
+neofoamunittest(executor)
+neofoamunittest(registerClass)

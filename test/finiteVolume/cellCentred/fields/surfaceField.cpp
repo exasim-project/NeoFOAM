@@ -7,8 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core.hpp"
-
+#include "NeoFOAM/finiteVolume/cellCentred/fields/geometricField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
 
 TEST_CASE("surfaceField")

@@ -64,7 +64,6 @@ include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/NeoFOAMConfig.cmake)
 
-
 add_library(project_options INTERFACE)
 add_library(project_warnings INTERFACE)
 myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS} FALSE "" "" "")

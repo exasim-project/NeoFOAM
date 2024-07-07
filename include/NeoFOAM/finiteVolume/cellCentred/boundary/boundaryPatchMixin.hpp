@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/core.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 

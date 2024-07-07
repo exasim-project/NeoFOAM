@@ -47,8 +47,8 @@ TEST_CASE("Communicator Field Synchronization")
 
     // Communicate
     comm = Communicator(mpiEnviron, rankSendMap, rankReceiveMap);
-    std::string loc =
-        std::source_location::current().file_name() + std::source_location::current().line();
+    std::string loc = "foo";
+    // std::source_location::current().file_name() + std::source_location::current().line();
     comm.startComm(field, loc);
     comm.isComplete(loc); // just call it to make sure it doesn't crash
     comm.finaliseComm(field, loc);
