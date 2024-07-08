@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
 
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
@@ -21,26 +22,13 @@ namespace NeoFOAM
 struct GaussGreenDivKernel
 {
     const unstructuredMesh& mesh_;
+
     const NeoFOAM::surfaceInterpolation& surfaceInterpolation_;
 
-    GaussGreenDivKernel(const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp);
+    GaussGreenDivKernel(const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp);
 
     void operator()(
-        const GPUExecutor& exec,
-        fvccVolField<scalar>& divPhi,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& phi
-    );
-
-    void operator()(
-        const OMPExecutor& exec,
-        fvccVolField<scalar>& divPhi,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& phi
-    );
-
-    void operator()(
-        const CPUExecutor& exec,
+        const Executor& exec,
         fvccVolField<scalar>& divPhi,
         const fvccSurfaceField<scalar>& faceFlux,
         const fvccVolField<scalar>& phi
@@ -48,12 +36,12 @@ struct GaussGreenDivKernel
 };
 
 
-class gaussGreenDiv
+class GaussGreenDiv
 {
 public:
 
     gaussGreenDiv(
-        const executor& exec, const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp
+        const Executor& exec, const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
     );
 
     // fvccVolField<scalar> grad(const fvccVolField<scalar>& phi);
@@ -65,8 +53,9 @@ public:
 
 private:
 
-    const unstructuredMesh& mesh_;
-    surfaceInterpolation surfaceInterpolation_;
+    const UnstructuredMesh& mesh_;
+
+    SurfaceInterpolation surfaceInterpolation_;
 };
 
 } // namespace NeoFOAM
