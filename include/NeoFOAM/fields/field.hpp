@@ -50,17 +50,12 @@ class Field
 
 public:
 
-    //--------------------------------------------------------------------------------
-    // Constructors and Destructors
-    //--------------------------------------------------------------------------------
-
     /**
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
      */
-    Field(const Executor& exec, size_t size)
-        : size_(size), data_(nullptr), exec_(exec) : size_(size), exec_(exec), data_(nullptr)
+    Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
     {
         void* ptr = nullptr;
         std::visit(
@@ -91,18 +86,18 @@ public:
 
     /**
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
-     * @param other The field to copy from.
+     * @param rhs The field to copy from.
      */
     Field(const Field<ValueType>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
     {
-        NF_ASSERT(exec_ == other.exec_, "Executors are not the same");
+        NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
         void* ptr = nullptr;
-        auto size = other.size_;
+        auto size = rhs.size_;
         std::visit(
             [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
             exec_
         );
-        setSize(other.size_); // CHECK THIS with above
+        setSize(rhs.size_); // CHECK THIS with above
         data_ = static_cast<ValueType*>(ptr);
         setField(*this, rhs.span());
     }
@@ -164,24 +159,26 @@ public:
         result = copyToExecutor(CPUExecutor());
     }
 
-    // // move assignment operator
-    // Field<T> &operator=(Field<T> &&rhs)
-    // {
-    //     if (this != &rhs)
-    //     {
-    //         field_ = std::move(rhs.field_);
-    //         size_ = rhs.size_;
-    //     }
-    //     return *this;
-    // }
+    /**
+     * @brief Subscript operator
+     * @param i The index of cell in the field
+     * @returns The value at the index i
+     */
+    KOKKOS_FUNCTION
+    ValueType& operator[](const int i) { return data_[i]; }
 
+    /**
+     * @brief Subscript operator
+     * @param i The index of cell in the field
+     * @returns The value at the index i
+     */
+    KOKKOS_FUNCTION
+    const ValueType& operator[](const int i) const { return data_[i]; }
 
     /**
      * @brief Function call operator
      * @param i The index of cell in the field
      * @returns The value at the index i
-     *
-     * @warning This function is not implemented
      */
     KOKKOS_FUNCTION
     ValueType& operator()(const int i) { return data_[i]; }
@@ -190,15 +187,9 @@ public:
      * @brief Function call operator
      * @param i The index of cell in the field
      * @returns The value at the index i
-     *
-     * @warning This function is not implemented
      */
     KOKKOS_FUNCTION
     const ValueType& operator()(const int i) const { return data_[i]; }
-
-    //--------------------------------------------------------------------------------
-    // Assignment Operators
-    //--------------------------------------------------------------------------------
 
     /**
      * @brief Assignment operator, Sets the field values to that of the parsed field.
@@ -223,29 +214,17 @@ public:
     }
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the value.
-     * @param rhs The value to set the field to.
-     */
-    void operator=(const ValueType& rhs) { fill(*this, rhs); }
-
-    // arithmetic operator
-
-    /**
      * @brief Arithmetic add operator, addition of a second field.
      * @param rhs The field to add with this field.
      * @returns The result of the addition.
      */
-    Field<ValueType>& operator+=(const Field<ValueType>& rhs)
+    Field<ValueType>& operator+(const Field<ValueType>& rhs)
     {
         Field<ValueType> result(exec_, size_);
         result = *this;
         add(result, rhs);
         return result;
     }
-
-    //--------------------------------------------------------------------------------
-    // Arithmetic Operator
-    //--------------------------------------------------------------------------------
 
     /**
      * @brief Arithmetic subtraction operator, subtraction by a second field.
@@ -254,26 +233,11 @@ public:
      */
     [[nodiscard]] Field<ValueType> operator-(const Field<ValueType>& rhs)
     {
-        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
-        NF_ASSERT_DEBUG(exec_ == rhs.exec(), "Executors are not the same.");
+        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
+        NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
         Field<ValueType> result(exec_, size_);
         result = *this;
         sub(result, rhs);
-        return result;
-    }
-
-    /**
-     * @brief Arithmetic multiply operator, multiply by a second field.
-     * @param rhs The field to subtract from this field.
-     * @returns The result of the multiply.
-     */
-    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
-    {
-        NF_ASSERT_DEBUG(size() == rhs.size(), "Fields are not the same size.");
-        NF_ASSERT_DEBUG(exec_ == rhs.exec(), "Executors are not the same.");
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        mul(result, rhs);
         return result;
     }
 
@@ -291,7 +255,20 @@ public:
         return result;
     }
 
-    // setter
+    /**
+     * @brief Arithmetic multiply operator, multiply by a second field.
+     * @param rhs The field to subtract from this field.
+     * @returns The result of the multiply.
+     */
+    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
+    {
+        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
+        NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
+        Field<ValueType> result(exec_, size_);
+        result = *this;
+        mul(result, rhs);
+        return result;
+    }
 
     /**
      * @brief Set the Size of the field.
@@ -338,7 +315,7 @@ public:
      * @brief Gets the executor associated with the field.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const Executor& exec() { return exec_; }
+    [[nodiscard]] const Executor& exec() const { return exec_; }
 
     /**
      * @brief Gets the size of the field.
@@ -390,10 +367,6 @@ private:
     ValueType* data_ {nullptr}; //!< Pointer to the field data.
     const Executor exec_;       //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 };
-
-//------------------------------------------------------------------------------------
-// arithmetic operator
-//------------------------------------------------------------------------------------
 
 /**
  * @brief Arithmetic add operator, addition of two fields.

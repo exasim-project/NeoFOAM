@@ -5,7 +5,7 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/registerClass.hpp"
-#include "NeoFOAM/fields.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
