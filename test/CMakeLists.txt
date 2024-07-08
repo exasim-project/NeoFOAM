@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Unlicense
+# SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
@@ -6,12 +6,43 @@ list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 # has to be first since it adds the main target
 add_subdirectory(catch2)
 
+# This function creates unit tests. It allows the following keywords:
+#
+# * MPI_SIZE: the number of MPI processors to be used, defaults to 1 if not set
+# * COMMAND: the test command (same behavior as for CMake's add_test), defaults to the test name
+# * WORKING_DIRECTORY: the working directory for the test, defaults to CMAKE_BINARY_DIR/bin
 function(neofoam_unit_test TEST)
-    add_executable(${TEST} "${TEST}.cpp")
-    target_link_libraries(${TEST} PRIVATE neofoam_catch_main Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
+  set(options "")
+  set(oneValueKeywords "MPI_SIZE" "COMMAND" "WORKING_DIRECTORY")
+  set(multiValueKeywords "")
+  cmake_parse_arguments("neofoam" "${options}" "${oneValueKeywords}" "${multiValueKeywords}"
+                        ${ARGN})
+  if(NOT DEFINED "neofoam_MPI_SIZE")
+    set(neofoam_MPI_SIZE 1)
+  endif()
+  if(NOT DEFINED "neofoam_WORKING_DIRECTORY")
+    set(neofoam_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+  endif()
+  if(NOT DEFINED "neofoam_COMMAND")
+    set(neofoam_COMMAND ${TEST})
+  endif()
 
-    add_test(NAME ${TEST} COMMAND mpiexec -n 4 ${CMAKE_BINARY_DIR}/bin/${TEST})
-    set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
+  add_executable(${TEST} "${TEST}.cpp")
+  target_link_libraries(${TEST} PRIVATE neofoam_catch_main Kokkos::kokkos NeoFOAM
+                                        cpptrace::cpptrace)
+
+  add_test(
+    NAME ${TEST}
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${neofoam_MPI_SIZE} ${neofoam_COMMAND}
+    WORKING_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
+  set_tests_properties(${neofoam_NAME} PROPERTIES PROCESSORS ${neofoam_MPI_SIZE})
+  if(${MPIEXEC_MAX_NUMPROCS} LESS neofoam_MPI_SIZE)
+    message(WARNING "Test <${neofoam_NAME}> requested <${neofoam_MPI_SIZE}> processors, "
+                    "but only <${numberOfProcessors}> are available. Disabling test "
+                    "<${neofoam_NAME}>")
+    set_tests_properties(${neofoam_NAME} PROPERTIES DISABLED TRUE)
+  endif()
 endfunction()
 
 add_subdirectory(core)
