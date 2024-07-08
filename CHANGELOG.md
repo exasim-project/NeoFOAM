@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- Implementation of boundary conditions and finite volume fields [#74](https://github.com/exasim-project/NeoFOAM/pull/74)
 - Initial MPI support and infrastructure added, specifically focusing on not blocking communication [#79](https://github.com/exasim-project/NeoFOAM/pull/79).
 - Inject the boundaryconditionsstrategy with compile discovery into the boundary condition  [#83](https://github.com/exasim-project/NeoFOAM/pull/83)
 - Add compile time derived class discovery [#80](https://github.com/exasim-project/NeoFOAM/pull/80)
