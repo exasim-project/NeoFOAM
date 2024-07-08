@@ -20,6 +20,7 @@ TEST_CASE("Boundaries")
     );
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
     SECTION("domainField_" + execName)
     {
 

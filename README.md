@@ -12,8 +12,8 @@
 NeoFOAM has the following requirements
 
 *  _cmake > 3.22_
-*  _gcc >= 10_ or  _clang >= 16_ 
-*  _Kokkos 4.3.0_ 
+*  _gcc >= 10_ or  _clang >= 16_
+*  _Kokkos 4.3.0_
 
 For NVIDIA GPU support
 * cuda
@@ -52,3 +52,8 @@ NeoFOAM provides a set of benchmarks which can be executed and plotted by the fo
 
     cmake --build . --target execute_benchmarks # runs the benchmark suite
     cmake --build . --target execute_execute_plot_benchmark # plots the benchmark results
+
+
+## Executing Tests
+
+    cmake --build . --target test

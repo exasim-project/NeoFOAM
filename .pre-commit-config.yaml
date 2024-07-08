@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
@@ -8,16 +8,20 @@ repos:
       - id: pretty-format-json
         args: [--autofix, --no-sort-keys]
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 'v14.0.0'  # The default in Ubuntu 22.04, which is used in our CI
+    rev: 'v17.0.6'  # The default in Ubuntu 22.04, which is used in our CI
     hooks:
       - id: clang-format
         types_or: [c++]
   - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: v0.6.10
+    rev: v0.6.13
     hooks:
       - id: cmake-format
       - id: cmake-lint
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v3.0.1
+    rev: v4.0.2
     hooks:
       - id: reuse
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.23.1
+    hooks:
+      - id: typos

@@ -26,11 +26,15 @@ struct MPIInit
      */
     MPIInit(int argc, char** argv)
     {
+#ifdef NEOFOAM_MPI_THREAD
         int provided;
         MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
         NF_ASSERT(
             provided == MPI_THREAD_MULTIPLE, "The MPI library does not have full thread support"
         );
+#else
+        MPI_Init(&argc, &argv);
+#endif
     }
 
     /**

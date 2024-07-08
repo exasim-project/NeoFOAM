@@ -11,6 +11,10 @@ on:
   schedule:
     - cron: "* 0 * * 0"
 
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  OMPI_MCA_rmaps_base_oversubscribe: 1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -67,7 +71,9 @@ jobs:
        run: |
          CC=${{matrix.compiler.CC}} \
          CXX=${{matrix.compiler.CXX}} \
-         cmake --preset ninja-cpuonly-all -DNEOFOAM_DEVEL_TOOLS=OFF
+         cmake --preset ninja-cpuonly-all \
+           -DNEOFOAM_DEVEL_TOOLS=OFF \
+           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
          cmake --build  --preset ninja-cpuonly-all
 
      - name: Execute unit tests NeoFOAM
