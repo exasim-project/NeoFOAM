@@ -10,9 +10,7 @@ namespace NeoFOAM
 {
 
 template<typename executor, typename Kernel>
-void parallelForImpl(
-    const executor& exec, label start, label end, Kernel kernel
-)
+void parallelFor(const executor& exec, label start, label end, Kernel kernel)
 {
     if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::
                       value)
@@ -26,7 +24,9 @@ void parallelForImpl(
     {
         using runOn = typename executor::exec;
         Kokkos::parallel_for(
-            "parallelForImpl", Kokkos::RangePolicy<runOn>(start, end), kernel
+            "parallelFor",
+            Kokkos::RangePolicy<runOn>(start, end),
+            KOKKOS_LAMBDA(const label i) { kernel(i); }
         );
     }
 }
@@ -36,13 +36,44 @@ template<typename Kernel>
 void parallelFor(NeoFOAM::Executor& exec, label start, label end, Kernel kernel)
 {
     std::visit(
-        [&](const auto& e) { parallelForImpl(e, start, end, kernel); }, exec
+        [&](const auto& e) { parallelFor(e, start, end, kernel); }, exec
+    );
+};
+
+template<typename executor, typename ValueType, typename Kernel>
+void parallelFor(const executor& exec, Field<ValueType>& field, Kernel kernel)
+{
+    auto span = field.field();
+    if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::
+                      value)
+    {
+        for (label i = 0; i < field.size(); i++)
+        {
+            span[i] = kernel(i);
+        }
+    }
+    else
+    {
+        using runOn = typename executor::exec;
+        Kokkos::parallel_for(
+            "parallelFor",
+            Kokkos::RangePolicy<runOn>(0, field.size()),
+            KOKKOS_LAMBDA(const label i) { span[i] = kernel(i); }
+        );
+    }
+}
+
+template<typename ValueType, typename Kernel>
+void parallelFor(Field<ValueType>& field, Kernel kernel)
+{
+    std::visit(
+        [&](const auto& e) { parallelFor(e, field, kernel); }, field.exec()
     );
 };
 
 
 template<typename executor, typename Kernel, typename T>
-void parallelReduceImpl(
+void parallelReduce(
     const executor& exec, label start, label end, Kernel kernel, T& value
 )
 {
@@ -58,7 +89,7 @@ void parallelReduceImpl(
     {
         using runOn = typename executor::exec;
         Kokkos::parallel_reduce(
-            "parallelReduceImpl",
+            "parallelReduce",
             Kokkos::RangePolicy<runOn>(start, end),
             kernel,
             value
@@ -73,8 +104,43 @@ void parallelReduce(
 {
     return std::visit(
         [&](const auto& e)
-        { return parallelReduceImpl(e, start, end, kernel, value); },
+        { return parallelReduce(e, start, end, kernel, value); },
         exec
+    );
+};
+
+
+template<typename executor, typename ValueType, typename Kernel, typename T>
+void parallelReduce(
+    const executor& exec, Field<ValueType>& field, Kernel kernel, T& value
+)
+{
+    if constexpr (std::is_same<std::remove_reference_t<executor>, CPUExecutor>::
+                      value)
+    {
+        for (label i = 0; i < field.size(); i++)
+        {
+            kernel(i, value);
+        }
+    }
+    else
+    {
+        using runOn = typename executor::exec;
+        Kokkos::parallel_reduce(
+            "parallelReduce",
+            Kokkos::RangePolicy<runOn>(0, field.size()),
+            kernel,
+            value
+        );
+    }
+}
+
+template<typename ValueType, typename Kernel, typename T>
+void parallelReduce(Field<ValueType>& field, Kernel kernel, T& value)
+{
+    return std::visit(
+        [&](const auto& e) { return parallelReduce(e, field, kernel, value); },
+        field.exec()
     );
 };
 
