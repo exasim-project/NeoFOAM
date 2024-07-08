@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -57,11 +57,16 @@ public:
 
 TEST_CASE("Register")
 {
-    std::cout << "Table size: " << NeoFOAM::runTimeSelectionManager::table().size() << std::endl;
+    std::cout << "Table size: " << NeoFOAM::BaseClassDocumentation::docTable().size() << std::endl;
     std::cout << "derivedClass doc: "
-              << NeoFOAM::runTimeSelectionManager::doc("BaseClass", "DerivedClass") << std::endl;
+              << NeoFOAM::BaseClassDocumentation::doc("BaseClass", "DerivedClass") << std::endl;
     std::cout << "derivedClass2 doc: "
-              << NeoFOAM::runTimeSelectionManager::doc("BaseClass2", "DerivedClass2") << std::endl;
+              << NeoFOAM::BaseClassDocumentation::doc("BaseClass2", "DerivedClass2") << std::endl;
 
-    REQUIRE(NeoFOAM::runTimeSelectionManager::table().size() == 1);
+    REQUIRE(NeoFOAM::BaseClassDocumentation::docTable().size() == 2);
+    for (const auto& it : NeoFOAM::BaseClassDocumentation::docTable())
+    {
+        std::cout << " - " << it.first << std::endl;
+    }
+    REQUIRE(NeoFOAM::BaseClassDocumentation::docTable().size() == 1);
 }

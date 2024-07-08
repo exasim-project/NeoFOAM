@@ -26,7 +26,7 @@ public:
     std::function<std::string(const std::string&)> schema;
 };
 
-class runTimeSelectionManager
+class BaseClassDocumentation
 {
 public:
 
@@ -39,22 +39,22 @@ public:
     )
     {
         // if not already registered
-        table()[name] = BaseClassData {doc, schema};
+        docTable()[name] = BaseClassData {doc, schema};
     }
 
     static std::string doc(const std::string& baseClassName, const std::string& derivedClassName)
     {
-        return table().at(baseClassName).doc(derivedClassName);
+        return docTable().at(baseClassName).doc(derivedClassName);
     }
 
     static std::string schema(const std::string& baseClassName, const std::string& derivedClassName)
     {
         // get the schema of the derived class
-        return table().at(baseClassName).schema(derivedClassName);
+        return docTable().at(baseClassName).schema(derivedClassName);
     }
 
 
-    static LookupTable& table()
+    static LookupTable& docTable()
     {
         static LookupTable tbl;
         return tbl;
@@ -63,24 +63,24 @@ public:
 
 
 template<class T>
-struct runTimeSelectionBase
+struct RegisterDocumentation
 {
-    runTimeSelectionBase()
+    RegisterDocumentation()
     {
         reg; // force specialization
     }
     static bool reg;
     static bool init()
     {
-        runTimeSelectionManager::registerClass(T::name(), T::doc, T::schema);
+        BaseClassDocumentation::registerClass(T::name(), T::doc, T::schema);
         return true;
     }
 };
 
 template<class T>
-bool runTimeSelectionBase<T>::reg = runTimeSelectionBase<T>::init();
+bool RegisterDocumentation<T>::reg = RegisterDocumentation<T>::init();
 
-class DerivedClassData
+class DerivedClassDocumentation
 {
 public:
 
@@ -100,13 +100,13 @@ class RuntimeSelectionFactory;
 
 // Partial specialization for Parameters
 template<typename Base, typename... Args>
-class RuntimeSelectionFactory<Base, Parameters<Args...>> : public runTimeSelectionBase<Base>
+class RuntimeSelectionFactory<Base, Parameters<Args...>> : public RegisterDocumentation<Base>
 {
 public:
 
     using CreatorFunc = std::function<std::unique_ptr<Base>(Args...)>;
     using LookupTable = std::unordered_map<std::string, CreatorFunc>;
-    using ClassDocTable = std::unordered_map<std::string, DerivedClassData>;
+    using ClassDocTable = std::unordered_map<std::string, DerivedClassDocumentation>;
 
     static std::string doc(const std::string& derivedClassName)
     {
@@ -153,7 +153,7 @@ public:
             { return std::unique_ptr<Base>(new T(std::forward<Args>(args)...)); };
             RuntimeSelectionFactory::table()[T::name()] = func;
 
-            DerivedClassData childData;
+            DerivedClassDocumentation childData;
             childData.doc = []() -> std::string { return T::doc(); };
             childData.schema = []() -> std::string { return T::schema(); };
             RuntimeSelectionFactory::docTable()[T::name()] = childData;
