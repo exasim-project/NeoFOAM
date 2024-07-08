@@ -218,12 +218,12 @@ public:
      * @param rhs The field to add with this field.
      * @returns The result of the addition.
      */
-    Field<ValueType>& operator+(const Field<ValueType>& rhs)
+    Field<ValueType>& operator+=(const Field<ValueType>& rhs)
     {
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        add(result, rhs);
-        return result;
+        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
+        NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
+        add(*this, rhs);
+        return *this;
     }
 
     /**
@@ -231,28 +231,12 @@ public:
      * @param rhs The field to subtract from this field.
      * @returns The result of the subtraction.
      */
-    [[nodiscard]] Field<ValueType> operator-(const Field<ValueType>& rhs)
+    Field<ValueType>& operator-=(const Field<ValueType>& rhs)
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
         NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        sub(result, rhs);
-        return result;
-    }
-
-    /**
-     * @brief Arithmetic multiply operator, multiplies every cell in the field
-     * by a scalar.
-     * @param rhs The scalar to multiply with the field.
-     * @returns The result of the multiplication.
-     */
-    [[nodiscard]] Field<ValueType> operator*(const scalar rhs)
-    {
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        scalar_mul(result, rhs);
-        return result;
+        sub(*this, rhs);
+        return *this;
     }
 
     /**
@@ -267,6 +251,20 @@ public:
         Field<ValueType> result(exec_, size_);
         result = *this;
         mul(result, rhs);
+        return result;
+    }
+
+    /**
+     * @brief Arithmetic multiply operator, multiplies every cell in the field
+     * by a scalar.
+     * @param rhs The scalar to multiply with the field.
+     * @returns The result of the multiplication.
+     */
+    [[nodiscard]] Field<ValueType> operator*(const scalar rhs)
+    {
+        Field<ValueType> result(exec_, size_);
+        result = *this;
+        scalar_mul(result, rhs);
         return result;
     }
 
@@ -296,8 +294,6 @@ public:
         data_ = static_cast<ValueType*>(ptr);
         size_ = size;
     }
-
-    // getter
 
     /**
      * @brief Direct access to the underlying field data
