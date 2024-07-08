@@ -9,7 +9,7 @@
 
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 
-class BaseClass : public NeoFOAM::RuntimeSelectionFactory<BaseClass>
+class BaseClass : public NeoFOAM::RuntimeSelectionFactory<BaseClass, NeoFOAM::Parameters<>>
 {
 
 public:
@@ -19,7 +19,7 @@ public:
     static std::string name() { return "BaseClass"; }
 };
 
-class BaseClass2 : public NeoFOAM::RuntimeSelectionFactory<BaseClass2>
+class BaseClass2 : public NeoFOAM::RuntimeSelectionFactory<BaseClass2, NeoFOAM::Parameters<>>
 {
 
 public:
@@ -54,7 +54,6 @@ public:
 
     static std::string schema() { return "DerivedClass2 schema"; }
 };
-
 
 TEST_CASE("Register")
 {

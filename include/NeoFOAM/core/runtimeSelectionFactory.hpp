@@ -18,16 +18,7 @@
 namespace NeoFOAM
 {
 
-class classDocumentation
-{
-public:
-
-    std::function<std::string()> doc;
-    std::function<std::string()> schema;
-};
-
-
-class BaseClassDocumetation
+class BaseClassData
 {
 public:
 
@@ -39,7 +30,7 @@ class runTimeSelectionManager
 {
 public:
 
-    using LookupTable = std::unordered_map<std::string, BaseClassDocumetation>;
+    using LookupTable = std::unordered_map<std::string, BaseClassData>;
 
     static void registerClass(
         std::string name,
@@ -48,7 +39,7 @@ public:
     )
     {
         // if not already registered
-        table()[name] = BaseClassDocumetation {doc, schema};
+        table()[name] = BaseClassData {doc, schema};
     }
 
     static std::string doc(const std::string& baseClassName, const std::string& derivedClassName)
@@ -89,15 +80,33 @@ struct runTimeSelectionBase
 template<class T>
 bool runTimeSelectionBase<T>::reg = runTimeSelectionBase<T>::init();
 
+class DerivedClassData
+{
+public:
 
-template<class Base, class... Args>
-class RuntimeSelectionFactory : public runTimeSelectionBase<Base>
+    std::function<std::string()> doc;
+    std::function<std::string()> schema;
+};
+
+// Parameters helper type
+template<typename... Args>
+struct Parameters
+{
+};
+
+// Primary template declaration
+template<typename Base, typename Params>
+class RuntimeSelectionFactory;
+
+// Partial specialization for Parameters
+template<typename Base, typename... Args>
+class RuntimeSelectionFactory<Base, Parameters<Args...>> : public runTimeSelectionBase<Base>
 {
 public:
 
     using CreatorFunc = std::function<std::unique_ptr<Base>(Args...)>;
     using LookupTable = std::unordered_map<std::string, CreatorFunc>;
-    using ClassDocTable = std::unordered_map<std::string, classDocumentation>;
+    using ClassDocTable = std::unordered_map<std::string, DerivedClassData>;
 
     static std::string doc(const std::string& derivedClassName)
     {
@@ -144,10 +153,10 @@ public:
             { return std::unique_ptr<Base>(new T(std::forward<Args>(args)...)); };
             RuntimeSelectionFactory::table()[T::name()] = func;
 
-            classDocumentation doc;
-            doc.doc = []() -> std::string { return T::doc(); };
-            doc.schema = []() -> std::string { return T::schema(); };
-            RuntimeSelectionFactory::docTable()[T::name()] = doc;
+            DerivedClassData childData;
+            childData.doc = []() -> std::string { return T::doc(); };
+            childData.schema = []() -> std::string { return T::schema(); };
+            RuntimeSelectionFactory::docTable()[T::name()] = childData;
 
             return true;
         }
@@ -206,7 +215,7 @@ private:
 
 template<class Base, class... Args>
 template<class T>
-bool RuntimeSelectionFactory<Base, Args...>::Register<T>::registered =
-    RuntimeSelectionFactory<Base, Args...>::Register<T>::add_sub_type();
+bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<T>::registered =
+    RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<T>::add_sub_type();
 
 }; // namespace NeoFOAM
