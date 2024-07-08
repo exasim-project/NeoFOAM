@@ -2,12 +2,13 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
 #include <functional>
 #include <type_traits>
 #include <unordered_map>
 #include <memory>
 #include <string>
+
+#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/linear.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/upwind.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
@@ -15,7 +16,7 @@
 namespace NeoFOAM
 {
 
-surfaceInterpolation surfaceInterpolationSelector(
+SurfaceInterpolation surfaceInterpolationSelector(
     std::string interPolMethodName, const executor& exec, const unstructuredMesh& mesh
 );
 
@@ -33,16 +34,16 @@ public:
 
     CompressionMethodFactory() = delete;
 
-    static bool Register(const std::string name, TCreateMethod funcCreate);
+    static bool register(const std::string name, TCreateMethod funcCreate);
 
     static surfaceInterpolation
-    Create(const std::string& name, const executor& exec, const unstructuredMesh& mesh);
+    create(const std::string& name, const Executor& exec, const UnstructuredMesh& mesh);
 
-    static int size() { return s_methods.size(); }
+    static int size() { return sMethods.size(); }
 
 private:
 
-    static std::unordered_map<std::string, TCreateMethod> s_methods;
+    static std::unordered_map<std::string, TCreateMethod> sMethods;
 };
 
 

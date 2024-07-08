@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 #pragma once
 
 #include "NeoFOAM/fields/FieldTypeDefs.hpp"
@@ -8,19 +9,21 @@
 #include "NeoFOAM/cellCentredFiniteVolume/fields/fvccVolField.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/fields/fvccSurfaceField.hpp"
 // #include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationSelector.hpp"
+
 #include "Kokkos_Core.hpp"
+
 #include <functional>
 
 
 namespace NeoFOAM
 {
 
-class surfaceInterpolationKernel
+class SurfaceInterpolationKernel
 {
 
 public:
 
-    surfaceInterpolationKernel(const executor& exec, const unstructuredMesh& mesh)
+    SurfaceInterpolationKernel(const Executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), mesh_(mesh) {};
 
     virtual void interpolate(
@@ -28,11 +31,13 @@ public:
         fvccSurfaceField<scalar>& surfaceField,
         const fvccVolField<scalar>& volField
     ) = 0;
+
     virtual void interpolate(
         const OMPExecutor& exec,
         fvccSurfaceField<scalar>& surfaceField,
         const fvccVolField<scalar>& volField
     ) = 0;
+
     virtual void interpolate(
         const CPUExecutor& exec,
         fvccSurfaceField<scalar>& surfaceField,
@@ -45,12 +50,14 @@ public:
         const fvccSurfaceField<scalar>& faceFlux,
         const fvccVolField<scalar>& volField
     ) = 0;
+
     virtual void interpolate(
         const OMPExecutor& exec,
         fvccSurfaceField<scalar>& surfaceField,
         const fvccSurfaceField<scalar>& faceFlux,
         const fvccVolField<scalar>& volField
     ) = 0;
+
     virtual void interpolate(
         const CPUExecutor& exec,
         fvccSurfaceField<scalar>& surfaceField,
@@ -63,25 +70,25 @@ public:
 
 protected:
 
-    const executor exec_;
-    const unstructuredMesh& mesh_;
+    const Executor exec_;
+    const UnstructuredMesh& mesh_;
 };
 
-class surfaceInterpolation
+class SurfaceInterpolation
 {
 public:
 
-    surfaceInterpolation(const surfaceInterpolation& surfInterp)
+    SurfaceInterpolation(const surfaceInterpolation& surfInterp)
         : exec_(surfInterp.exec_), mesh_(surfInterp.mesh_),
           interpolationKernel_(surfInterp.interpolationKernel_->clone()) {};
 
-    surfaceInterpolation(surfaceInterpolation&& surfInterp)
+    SurfaceInterpolation(surfaceInterpolation&& surfInterp)
         : exec_(surfInterp.exec_), mesh_(surfInterp.mesh_),
           interpolationKernel_(std::move(surfInterp.interpolationKernel_)) {};
 
-    surfaceInterpolation(
-        const executor& exec,
-        const unstructuredMesh& mesh,
+    SurfaceInterpolation(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
         std::unique_ptr<surfaceInterpolationKernel> interpolationKernel
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
@@ -113,9 +120,9 @@ public:
 
 private:
 
-    const executor exec_;
-    const unstructuredMesh& mesh_;
-    std::unique_ptr<surfaceInterpolationKernel> interpolationKernel_;
+    const Executor exec_;
+    const UnstructuredMesh& mesh_;
+    std::unique_ptr<SurfaceInterpolationKernel> interpolationKernel_;
 };
 
 
