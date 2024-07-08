@@ -18,13 +18,78 @@ TEST_CASE("Field Operations")
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
+
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("Can initialize Field from initializer list on " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto hostA = a.copyToHost();
+
+        REQUIRE(hostA.data()[0] == 1);
+        REQUIRE(hostA.data()[1] == 2);
+        REQUIRE(hostA.data()[2] == 3);
+    }
+
+    SECTION("Can initialize Field from a Field on " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+        NeoFOAM::Field<NeoFOAM::label> b(a);
+
+        auto hostB = b.copyToHost();
+
+        REQUIRE(hostB.data()[0] == 1);
+        REQUIRE(hostB.data()[1] == 2);
+        REQUIRE(hostB.data()[2] == 3);
+    }
+
+    SECTION("Can create a subview " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto hostA = a.copyToHost();
+        auto subView = hostA.span({1, 2});
+
+        REQUIRE(subView[0] == 2);
+        REQUIRE(subView[1] == 3);
+    }
+
+    SECTION("Copy to host creates a copy from " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto hostA = a.copyToHost();
+        auto hostB = a.copyToHost();
+
+        hostA.data()[0] = 0;
+
+        REQUIRE(hostA.data()[0] != hostB.data()[0]);
+        REQUIRE(hostA.data()[1] == hostB.data()[1]);
+    }
+
+    SECTION("Can set via a subview " + execName)
+    {
+
+        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
+
+        auto hostA = a.copyToHost();
+        auto subView = hostA.span({1, 2});
+        subView[0] = 5;
+
+        REQUIRE(subView[0] == 5);
+        REQUIRE(subView[1] == 3);
+    }
 
     SECTION("Field_" + execName)
     {
         int size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
-        auto sA = a.field();
+        auto sA = a.span();
         NeoFOAM::fill(a, 5.0);
 
         REQUIRE(equal(a, 5.0));
@@ -33,11 +98,11 @@ TEST_CASE("Field Operations")
         NeoFOAM::fill(b, 10.0);
 
         a = b;
-        REQUIRE(a.field().size() == size + 2);
+        REQUIRE(a.span().size() == size + 2);
         REQUIRE(equal(a, b));
 
         add(a, b);
-        REQUIRE(a.field().size() == size + 2);
+        REQUIRE(a.span().size() == size + 2);
         REQUIRE(equal(a, 20.0));
 
         a = a + b;
@@ -52,10 +117,10 @@ TEST_CASE("Field Operations")
         a = a * b;
         REQUIRE(equal(a, 20.0));
 
-        auto s_b = b.field();
+        auto s_b = b.span();
         a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
         REQUIRE(equal(a, 20.0));
-    };
+    }
 }
 
 TEST_CASE("Primitives")
@@ -95,6 +160,6 @@ TEST_CASE("Primitives")
             REQUIRE((a * 4) == d);
             REQUIRE((a + 3 * a) == d);
             REQUIRE((a + 2 * a + a) == d);
-        };
-    };
+        }
+    }
 }

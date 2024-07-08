@@ -27,7 +27,7 @@ with section("format"):
   disable = False
 
   # How wide to allow formatted cmake files
-  line_width = 80
+  line_width = 100
 
   # How many spaces to tab for indent
   tab_size = 2
@@ -107,7 +107,7 @@ with section("format"):
   autosort = False
 
   # By default, if cmake-format cannot successfully fit everything into the
-  # desired linewidth it will apply the last, most agressive attempt that it
+  # desired linewidth it will apply the last, most aggressive attempt that it
   # made. If this flag is True, however, cmake-format will print error, exit
   # with non-zero status code, and write-out nothing
   require_valid_layout = False
@@ -145,7 +145,7 @@ with section("markup"):
   ruler_pattern = '^\\s*[^\\w\\s]{3}.*[^\\w\\s]{3}$'
 
   # If a comment line matches starts with this pattern then it is explicitly a
-  # trailing comment for the preceeding argument. Default is '#<'
+  # trailing comment for the preceding argument. Default is '#<'
   explicit_trailing_pattern = '#<'
 
   # If a comment line starts with at least this many consecutive hash
@@ -166,7 +166,7 @@ with section("markup"):
 with section("lint"):
 
   # a list of lint codes to disable
-  disabled_codes = []
+  disabled_codes = ["C0103", "C0111", "W0105", "R0913", "R0912", "R0915"]
 
   # regular expression pattern describing valid function names
   function_pattern = '[0-9a-z_]+'
@@ -240,4 +240,3 @@ with section("misc"):
   # A dictionary containing any per-command configuration overrides. Currently
   # only `command_case` is supported.
   per_command = {}
-

@@ -71,7 +71,9 @@ jobs:
           module load libfabric-aws
           module load cmake
           cmake --version
-          cmake --preset ninja-kokkos-cuda-all -DNEOFOAM_DEVEL_TOOLS=OFF
+          cmake --preset ninja-kokkos-cuda-all \
+            -DNEOFOAM_DEVEL_TOOLS=OFF \
+           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
           cmake --build --preset ninja-kokkos-cuda-all
       - name: Test NeoFOAM
         shell: bash -i {0}
@@ -90,7 +92,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    if: ${{ needs.start-runner.result != 'skipped' }} # required to stop the runner even if the error happened in the previous jobs
+    # only try to run the stop job if the start runner hasn't been skipped
+    if: ${{ always() && needs.start-runner.result != 'skipped' }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

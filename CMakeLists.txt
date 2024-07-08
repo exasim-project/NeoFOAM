@@ -19,6 +19,9 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+# Eventhough we compile NeoFOAM as SHARED library we need to explicitly enable PIC for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
 option(NEOFOAM_DP_LABELS "double precision label" FALSE)
 option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)
@@ -35,6 +38,7 @@ option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" FALSE)
+option(NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT "Enable " TRUE)
 
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
   message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
@@ -59,15 +63,14 @@ include(cmake/StandardProjectSettings.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
+include(cmake/NeoFOAMConfig.cmake)
 
 add_library(project_options INTERFACE)
 add_library(project_warnings INTERFACE)
-myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS}
-                               FALSE "" "" "")
+myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS} FALSE "" "" "")
 
 if(NEOFOAM_BUILD_PCH)
-  target_precompile_headers(project_options INTERFACE <vector> <string>
-                            <utility>)
+  target_precompile_headers(project_options INTERFACE <vector> <string> <utility>)
 endif()
 
 if(NEOFOAM_ENABLE_CPP_CHECK)
@@ -78,6 +81,7 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
   neofoam_enable_clang_tidy(FALSE "")
 endif()
 
+add_subdirectory(include)
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
   enable_testing()
@@ -93,6 +97,9 @@ if(${NEOFOAM_DP_SCALAR})
 endif()
 if(${NEOFOAM_DP_LABEL})
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
+endif()
+if(${NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT})
+  target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_MPI_THREAD=1)
 endif()
 
 if(NEOFOAM_BUILD_DOC)
@@ -120,17 +127,13 @@ if(NEOFOAM_DEVEL_TOOLS)
     ERROR_VARIABLE pre-commit-error)
   if(pre-commit-result)
     message(
-      FATAL_ERROR
-        "Failed to install the git hooks via pre-commit."
-        "Please check the error message:\n"
-        "${pre-commit-output}\n${pre-commit-error}")
+      FATAL_ERROR "Failed to install the git hooks via pre-commit."
+                  "Please check the error message:\n" "${pre-commit-output}\n${pre-commit-error}")
   endif()
   if(pre-commit-output MATCHES "^Running in migration mode with existing hooks")
-    message(
-      WARNING
-        "An existing git hook was encountered during `pre-commit install`."
-        "The old git hook will also be executed."
-        "Consider removing it with `pre-commit install -f`")
+    message(WARNING "An existing git hook was encountered during `pre-commit install`."
+                    "The old git hook will also be executed."
+                    "Consider removing it with `pre-commit install -f`")
   elseif(NOT pre-commit-output MATCHES "^pre-commit installed at")
     message(WARNING "`pre-commit install` did not exit normally."
                     "Please check the output message:\n" "${pre-commit-output}")
@@ -147,8 +150,5 @@ endif()
 if(NEOFOAM_ENABLE_IWYU)
   find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
   set(IWYU_PATH_AND_OPTIONS ${iwyu_path})
-  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE
-                                       ${IWYU_PATH_AND_OPTIONS})
+  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH_AND_OPTIONS})
 endif()
-
-# include(cmake/InstallHelpers.cmake) neofoam_install()
