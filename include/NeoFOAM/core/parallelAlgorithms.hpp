@@ -10,8 +10,9 @@ namespace NeoFOAM
 {
 
 template<typename Executor, typename Kernel>
-void parallelFor(const Executor& exec, label start, label end, Kernel kernel)
+void parallelFor(const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
 {
+    auto [start, end] = range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
         for (label i = start; i < end; i++)
@@ -32,9 +33,9 @@ void parallelFor(const Executor& exec, label start, label end, Kernel kernel)
 
 
 template<typename Kernel>
-void parallelFor(NeoFOAM::Executor& exec, label start, label end, Kernel kernel)
+void parallelFor(NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
 {
-    std::visit([&](const auto& e) { parallelFor(e, start, end, kernel); }, exec);
+    std::visit([&](const auto& e) { parallelFor(e, range, kernel); }, exec);
 }
 
 template<typename Executor, typename ValueType, typename Kernel>
@@ -67,8 +68,9 @@ void parallelFor(Field<ValueType>& field, Kernel kernel)
 
 
 template<typename Executor, typename Kernel, typename T>
-void parallelReduce(const Executor& exec, label start, label end, Kernel kernel, T& value)
+void parallelReduce(const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value)
 {
+    auto [start, end] = range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
         for (label i = start; i < end; i++)
@@ -86,11 +88,11 @@ void parallelReduce(const Executor& exec, label start, label end, Kernel kernel,
 }
 
 template<typename Kernel, typename T>
-void parallelReduce(NeoFOAM::Executor& exec, label start, label end, Kernel kernel, T& value)
+void parallelReduce(
+    NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value
+)
 {
-    return std::visit(
-        [&](const auto& e) { return parallelReduce(e, start, end, kernel, value); }, exec
-    );
+    return std::visit([&](const auto& e) { return parallelReduce(e, range, kernel, value); }, exec);
 }
 
 
