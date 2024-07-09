@@ -14,3 +14,4 @@ Basics
     dictionary.rst
     registerclass.rst
     macros.rst
+    mpi_architecture.rst
