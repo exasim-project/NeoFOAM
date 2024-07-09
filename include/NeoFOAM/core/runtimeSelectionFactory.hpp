@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <functional>
-
+#include "error.hpp"
 
 namespace NeoFOAM
 {
@@ -379,14 +379,18 @@ private:
      *
      * @param key The key to check for existence in the table.
      */
-    static void key_exists_or_error(const std::string& key)
+    static void key_exists_or_error(const std::string& name)
     {
         const auto& tbl = table();
-        if (tbl.find(key) == tbl.end())
+        if (tbl.find(name) == tbl.end())
         {
-            std::cout << "Cannot find instance: " << key << std::endl;
-            std::cout << "Valid options are: " << std::endl;
-            print(std::cout);
+            auto msg = std::string(" Could not find constructor for ") + name + "\n";
+            msg += "valid constructors are: \n";
+            for (const auto& it : tbl)
+            {
+                msg += " - " + it.first + "\n";
+            }
+            NF_ERROR_EXIT(msg);
         }
     }
 
