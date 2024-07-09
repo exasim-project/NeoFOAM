@@ -9,13 +9,21 @@
 namespace NeoFOAM
 {
 
-template<typename Executor, typename Kernel>
+// Concept to check if a callable is compatible with void(const size_t)
+template<typename Kernel>
+concept parallelForKernel = requires(Kernel t, const size_t i) {
+    {
+        t(i)
+    } -> std::same_as<void>;
+};
+
+template<typename Executor, parallelForKernel Kernel>
 void parallelFor(const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
 {
     auto [start, end] = range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
-        for (label i = start; i < end; i++)
+        for (size_t i = start; i < end; i++)
         {
             kernel(i);
         }
@@ -26,25 +34,33 @@ void parallelFor(const Executor& exec, std::pair<size_t, size_t> range, Kernel k
         Kokkos::parallel_for(
             "parallelFor",
             Kokkos::RangePolicy<runOn>(start, end),
-            KOKKOS_LAMBDA(const label i) { kernel(i); }
+            KOKKOS_LAMBDA(const size_t i) { kernel(i); }
         );
     }
 }
 
 
-template<typename Kernel>
+template<parallelForKernel Kernel>
 void parallelFor(NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
 {
     std::visit([&](const auto& e) { parallelFor(e, range, kernel); }, exec);
 }
 
-template<typename Executor, typename ValueType, typename Kernel>
+// Concept to check if a callable is compatible with ValueType(const size_t)
+template<typename Kernel, typename ValueType>
+concept parallelForFieldKernel = requires(Kernel t, ValueType val, const size_t i) {
+    {
+        t(i)
+    } -> std::same_as<ValueType>;
+};
+
+template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
 void parallelFor(const Executor& exec, Field<ValueType>& field, Kernel kernel)
 {
     auto span = field.span();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
-        for (label i = 0; i < field.size(); i++)
+        for (size_t i = 0; i < field.size(); i++)
         {
             span[i] = kernel(i);
         }
@@ -55,12 +71,12 @@ void parallelFor(const Executor& exec, Field<ValueType>& field, Kernel kernel)
         Kokkos::parallel_for(
             "parallelFor",
             Kokkos::RangePolicy<runOn>(0, field.size()),
-            KOKKOS_LAMBDA(const label i) { span[i] = kernel(i); }
+            KOKKOS_LAMBDA(const size_t i) { span[i] = kernel(i); }
         );
     }
 }
 
-template<typename ValueType, typename Kernel>
+template<typename ValueType, parallelForFieldKernel<ValueType> Kernel>
 void parallelFor(Field<ValueType>& field, Kernel kernel)
 {
     std::visit([&](const auto& e) { parallelFor(e, field, kernel); }, field.exec());
@@ -73,7 +89,7 @@ void parallelReduce(const Executor& exec, std::pair<size_t, size_t> range, Kerne
     auto [start, end] = range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
-        for (label i = start; i < end; i++)
+        for (size_t i = start; i < end; i++)
         {
             kernel(i, value);
         }
@@ -101,7 +117,7 @@ void parallelReduce(const Executor& exec, Field<ValueType>& field, Kernel kernel
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
-        for (label i = 0; i < field.size(); i++)
+        for (size_t i = 0; i < field.size(); i++)
         {
             kernel(i, value);
         }

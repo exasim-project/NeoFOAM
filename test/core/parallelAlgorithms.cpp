@@ -30,7 +30,7 @@ TEST_CASE("parallelFor")
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
-            exec, {0, 5}, KOKKOS_LAMBDA(const NeoFOAM::label i) { spanA[i] = spanB[i] + 2.0; }
+            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
         );
         auto hostSpanA = fieldA.copyToHost().span();
         for (int i = 0; i < 5; i++)
@@ -48,7 +48,7 @@ TEST_CASE("parallelFor")
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const NeoFOAM::label i) { return spanB[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
         );
         auto hostSpanA = fieldA.copyToHost().span();
         for (int i = 0; i < 5; i++)
