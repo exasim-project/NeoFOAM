@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="cellCenteredFiniteVolume" href="../finiteVolume/cellCentred/index.html" /><link rel="prev" title="Macro Definitions" href="macros.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/mpi_architecture.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
@@ -213,20 +213,28 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
+  <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="index.html">Basics</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">unstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">MPI Architecture</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/fields.html">Fields (FVCC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/fields.html">Fields</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/executor.html">Executor</a></li>
 </ul>
@@ -297,6 +305,18 @@
 </pre></div>
 </div>
 <p>such that scalar reduction size is handled automatically. In addition to the wrapped operators, there is the <code class="docutils literal notranslate"><span class="pre">MPI</span></code> environment which is located in the <code class="docutils literal notranslate"><span class="pre">environment.hpp</span></code> file. Contained within are two classes <code class="docutils literal notranslate"><span class="pre">MPIInit</span></code> and <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code>.  The former is a simple RAII class that initializes and finalizes (in the destructor) the <code class="docutils literal notranslate"><span class="pre">MPI</span></code> environment, thus a typically program using <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> would start by calling the MPIInit constructor.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;NeoFOAM/core/mpi/environment.hpp&quot;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">**</span><span class="w"> </span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">MPIInit</span><span class="w"> </span><span class="n">mpi</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// main solver</span>
+
+<span class="w">    </span><span class="c1">// MPI_finalize is called in the destructor</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Since we support <code class="docutils literal notranslate"><span class="pre">OpenMP</span></code> (through <code class="docutils literal notranslate"><span class="pre">Kokkos</span></code>), we need to ensure threading support is available when we start. This is checked in <code class="docutils literal notranslate"><span class="pre">MPIInit</span></code>’s constructor.</p>
@@ -310,6 +330,22 @@
 <section id="global-communication">
 <h3>Global Communication<a class="headerlink" href="#global-communication" title="Link to this heading">¶</a></h3>
 <p>With the above in place, global communication (i.e. communication between all <code class="docutils literal notranslate"><span class="pre">ranks</span></code> on a <code class="docutils literal notranslate"><span class="pre">MPI_Communicator</span></code>) can be achieved by using the environment and operators.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;NeoFOAM/core/mpi/environment.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;NeoFOAM/core/mpi/operators.hpp&quot;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">**</span><span class="w"> </span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">MPIInit</span><span class="w"> </span><span class="n">mpi</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span>
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">MPIEnvironment</span><span class="w"> </span><span class="n">mpiEnv</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">reduceAllScalar</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">ReduceOp</span><span class="o">::</span><span class="n">SUM</span><span class="p">,</span><span class="w"> </span><span class="n">mpiEnv</span><span class="p">.</span><span class="n">comm</span><span class="p">());</span>
+
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">mpiEnv</span><span class="p">.</span><span class="n">rank</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Value &quot;</span><span class="o">&lt;&lt;</span><span class="n">value</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span><span class="w"> </span><span class="c1">// result is number of ranks.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </section>
 <section id="point-to-point-communication">
 <h3>Point-to-Point Communication<a class="headerlink" href="#point-to-point-communication" title="Link to this heading">¶</a></h3>
@@ -331,6 +367,57 @@
 <li><p>Finalize the communication, releasing (de-flags) the buffer.</p></li>
 </ol>
 <p>The full communication between two ranks is thus given below:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unordered_map&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;NeoFOAM/core/mpi/environment.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;NeoFOAM/core/mpi/operators.hpp&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;NeoFOAM/core/mpi/comm_buffer.hpp&quot;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">**</span><span class="w"> </span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">MPIInit</span><span class="w"> </span><span class="n">mpi</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span>
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">MPIEnvironment</span><span class="w"> </span><span class="n">mpiEnv</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// create the buffers</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sendSize</span><span class="p">;</span><span class="w">      </span><span class="c1">// per rank communication</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">receiveSize</span><span class="p">;</span><span class="w">   </span><span class="c1">// per rank communication</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">allData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">3.0</span><span class="p">};</span><span class="w"> </span><span class="c1">// the local data (could be a field or similar)</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sendMap</span><span class="p">;</span><span class="w"> </span><span class="c1">// assumes single rank communication</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">receiveMap</span><span class="p">;</span><span class="w"> </span><span class="c1">// assumes single rank communication</span>
+
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="c1">// populate above data</span>
+<span class="w">    </span><span class="c1">// ...</span>
+
+<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">mpi</span><span class="o">::</span><span class="n">FullDuplexCommBuffer</span><span class="w"> </span><span class="n">buffer</span><span class="p">(</span><span class="n">mpiEnv</span><span class="p">,</span><span class="w"> </span><span class="n">sendSize</span><span class="p">,</span><span class="w"> </span><span class="n">receiveSize</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Obtain the buffer.</span>
+<span class="w">    </span><span class="n">buffer</span><span class="p">.</span><span class="n">initComm</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;test_communication&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// load the send buffer</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">commRank</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mpiEnv</span><span class="p">.</span><span class="n">Rank</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">sendBuffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buffer</span><span class="p">.</span><span class="n">getSendBuffer</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">commRank</span><span class="p">);</span><span class="w"> </span><span class="c1">// span returned.</span>
+<span class="w">    </span><span class="n">sendBuffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">allData</span><span class="p">[</span><span class="n">sendMap</span><span class="p">[</span><span class="mi">0</span><span class="p">]];</span>
+
+<span class="w">    </span><span class="c1">// start the non-blocking communication</span>
+<span class="w">    </span><span class="n">buffer</span><span class="p">.</span><span class="n">startComm</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="c1">// do other work</span>
+<span class="w">    </span><span class="c1">// ...</span>
+
+<span class="w">    </span><span class="c1">// wait for the communication to finish</span>
+<span class="w">    </span><span class="n">buffer</span><span class="p">.</span><span class="n">waitComplete</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// unload the receive buffer</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">receiveBuffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buffer</span><span class="p">.</span><span class="n">getReceiveBuffer</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">commRank</span><span class="p">);</span><span class="w"> </span><span class="c1">// span returned.</span>
+<span class="w">    </span><span class="n">allData</span><span class="p">[</span><span class="n">receiveMap</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">receiveBuffer</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+
+<span class="w">    </span><span class="c1">// finalize the communication, releasing the buffer</span>
+<span class="w">    </span><span class="n">buffer</span><span class="p">.</span><span class="n">finaliseComm</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The copying to and from the buffers does introduce an overhead, which could later be removed by using ‘inplace’ communication. This remains an open point.</p>
@@ -377,8 +464,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="../finiteVolume/cellCentred/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">cellCenteredFiniteVolume</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="macros.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Macro Definitions</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
