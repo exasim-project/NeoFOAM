@@ -33,7 +33,7 @@ TEST_CASE("parallelFor")
             exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
         );
         auto hostSpanA = fieldA.copyToHost().span();
-        for (auto value: hostSpanA)
+        for (auto value : hostSpanA)
         {
             REQUIRE(value == 3.0);
         }
@@ -51,9 +51,9 @@ TEST_CASE("parallelFor")
             fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
         );
         auto hostSpanA = fieldA.copyToHost().span();
-        for (int i = 0; i < 5; i++)
+        for (auto value : hostSpanA)
         {
-            REQUIRE(hostSpanA[i] == 3.0);
+            REQUIRE(value == 3.0);
         }
     }
 };
