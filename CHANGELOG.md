@@ -1,5 +1,6 @@
 # Version 0.1.0 (unreleased)
 - added parallelFor and parallelReduce [#62](https://github.com/exasim-project/NeoFOAM/pull/62)
+- runtimeselectionFactory to simplify the usage of the runtime selection mechanism  [#95](https://github.com/exasim-project/NeoFOAM/pull/95)
 - Implementation of boundary conditions and finite volume fields [#74](https://github.com/exasim-project/NeoFOAM/pull/74)
 - Initial MPI support and infrastructure added, specifically focusing on not blocking communication [#79](https://github.com/exasim-project/NeoFOAM/pull/79).
 - Inject the boundaryconditionsstrategy with compile discovery into the boundary condition  [#83](https://github.com/exasim-project/NeoFOAM/pull/83)
