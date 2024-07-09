@@ -251,7 +251,7 @@ public:
      */
     static std::unique_ptr<Base> create(const std::string& key, Args... args)
     {
-        key_exists_or_error(key);
+        keyExistsOrError(key);
         auto ptr = table().at(key)(std::forward<Args>(args)...);
         return ptr;
     }
@@ -300,7 +300,7 @@ public:
          * @param args The arguments for constructing the derived class.
          * @return True if the derived class was successfully added as a sub type, false otherwise.
          */
-        static bool add_sub_type()
+        static bool addSubType()
         {
             CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
             { return std::unique_ptr<Base>(new derivedClass(std::forward<Args>(args)...)); };
@@ -379,7 +379,7 @@ private:
      *
      * @param key The key to check for existence in the table.
      */
-    static void key_exists_or_error(const std::string& name)
+    static void keyExistsOrError(const std::string& name)
     {
         const auto& tbl = table();
         if (tbl.find(name) == tbl.end())
@@ -401,6 +401,6 @@ private:
 template<class Base, class... Args>
 template<class derivedClass>
 bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::registered =
-    RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::add_sub_type();
+    RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::addSubType();
 
 }; // namespace NeoFOAM
