@@ -34,6 +34,7 @@ The majority of ``MPI`` operators are brought into ``NeoFOAM`` in the ``operator
 such that scalar reduction size is handled automatically. In addition to the wrapped operators, there is the ``MPI`` environment which is located in the ``environment.hpp`` file. Contained within are two classes ``MPIInit`` and ``MPIEnvironment``.  The former is a simple RAII class that initializes and finalizes (in the destructor) the ``MPI`` environment, thus a typically program using ``NeoFOAM`` would start by calling the MPIInit constructor.
 
 .. code-block:: c++
+
     #include "NeoFOAM/core/mpi/environment.hpp"
 
     int main(int argc, char** argv)
@@ -59,6 +60,7 @@ Global Communication
 With the above in place, global communication (i.e. communication between all ``ranks`` on a ``MPI_Communicator``) can be achieved by using the environment and operators.
 
 .. code-block:: c++
+
     #include "NeoFOAM/core/mpi/environment.hpp"
     #include "NeoFOAM/core/mpi/operators.hpp"
 
@@ -99,6 +101,7 @@ To achieve full-duplex communication two half-duplex buffers are combined, to fo
 The full communication between two ranks is thus given below:
 
 .. code-block:: c++
+
     #include <unordered_map>
     #include <vector>
     #include "NeoFOAM/core/mpi/environment.hpp"
