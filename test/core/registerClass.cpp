@@ -58,15 +58,24 @@ public:
 TEST_CASE("Register")
 {
     std::cout << "Table size: " << NeoFOAM::BaseClassDocumentation::docTable().size() << std::endl;
-    std::cout << "derivedClass doc: "
-              << NeoFOAM::BaseClassDocumentation::doc("BaseClass", "DerivedClass") << std::endl;
-    std::cout << "derivedClass2 doc: "
-              << NeoFOAM::BaseClassDocumentation::doc("BaseClass2", "DerivedClass2") << std::endl;
 
     REQUIRE(NeoFOAM::BaseClassDocumentation::docTable().size() == 2);
     for (const auto& it : NeoFOAM::BaseClassDocumentation::docTable())
     {
-        std::cout << " - " << it.first << std::endl;
+        std::string baseClassName = it.first;
+        std::cout << "baseClassName " << baseClassName << std::endl;
+        auto entries = NeoFOAM::BaseClassDocumentation::entries(baseClassName);
+        for (const auto& derivedClass : entries)
+        {
+            std::cout << "   - " << derivedClass << std::endl;
+            std::cout << "     doc: "
+                      << NeoFOAM::BaseClassDocumentation::doc(baseClassName, derivedClass)
+                      << std::endl;
+            std::cout << "     schema: "
+                      << NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass)
+                      << std::endl;
+            REQUIRE(!NeoFOAM::BaseClassDocumentation::doc(baseClassName, derivedClass).empty());
+            REQUIRE(!NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass).empty());
+        }
     }
-    REQUIRE(NeoFOAM::BaseClassDocumentation::docTable().size() == 1);
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2024 AMR Wind Authors
+// SPDX-FileCopyrightText: 2023 AMR Wind Authors
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 // ##############################################################################
 // # Original design taken from amr wind                                        #
@@ -24,6 +24,7 @@ public:
 
     std::function<std::string(const std::string&)> doc;
     std::function<std::string(const std::string&)> schema;
+    std::function<std::vector<std::string>()> entries;
 };
 
 class BaseClassDocumentation
@@ -32,14 +33,10 @@ public:
 
     using LookupTable = std::unordered_map<std::string, BaseClassData>;
 
-    static void registerClass(
-        std::string name,
-        std::function<std::string(const std::string&)> doc,
-        std::function<std::string(const std::string&)> schema
-    )
+    static void registerClass(std::string name, BaseClassData data)
     {
         // if not already registered
-        docTable()[name] = BaseClassData {doc, schema};
+        docTable()[name] = data;
     }
 
     static std::string doc(const std::string& baseClassName, const std::string& derivedClassName)
@@ -53,6 +50,10 @@ public:
         return docTable().at(baseClassName).schema(derivedClassName);
     }
 
+    static std::vector<std::string> entries(const std::string& baseClassName)
+    {
+        return docTable().at(baseClassName).entries();
+    }
 
     static LookupTable& docTable()
     {
@@ -62,23 +63,25 @@ public:
 };
 
 
-template<class T>
+template<class baseClass>
 struct RegisterDocumentation
 {
     RegisterDocumentation()
     {
-        reg; // force specialization
+        // avoid unused variable warning
+        (void)registered;
     }
-    static bool reg;
+    static bool registered;
     static bool init()
     {
-        BaseClassDocumentation::registerClass(T::name(), T::doc, T::schema);
+        BaseClassData data = {baseClass::doc, baseClass::schema, baseClass::entries};
+        BaseClassDocumentation::registerClass(baseClass::name(), data);
         return true;
     }
 };
 
-template<class T>
-bool RegisterDocumentation<T>::reg = RegisterDocumentation<T>::init();
+template<class baseClass>
+bool RegisterDocumentation<baseClass>::registered = RegisterDocumentation<baseClass>::init();
 
 class DerivedClassDocumentation
 {
@@ -104,6 +107,8 @@ class RuntimeSelectionFactory<Base, Parameters<Args...>> : public RegisterDocume
 {
 public:
 
+    friend Base;
+
     using CreatorFunc = std::function<std::unique_ptr<Base>(Args...)>;
     using LookupTable = std::unordered_map<std::string, CreatorFunc>;
     using ClassDocTable = std::unordered_map<std::string, DerivedClassDocumentation>;
@@ -118,6 +123,16 @@ public:
     {
         // get the schema of the derived class
         return docTable().at(derivedClassName).schema();
+    }
+
+    static std::vector<std::string> entries()
+    {
+        std::vector<std::string> entries;
+        for (const auto& it : table())
+        {
+            entries.push_back(it.first);
+        }
+        return entries;
     }
 
 
@@ -139,24 +154,24 @@ public:
         }
     }
 
-    template<class T>
+    template<class derivedClass>
     class Register : public Base
     {
     public:
 
-        friend T;
+        friend derivedClass;
         static bool registered;
 
         static bool add_sub_type()
         {
             CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
-            { return std::unique_ptr<Base>(new T(std::forward<Args>(args)...)); };
-            RuntimeSelectionFactory::table()[T::name()] = func;
+            { return std::unique_ptr<Base>(new derivedClass(std::forward<Args>(args)...)); };
+            RuntimeSelectionFactory::table()[derivedClass::name()] = func;
 
             DerivedClassDocumentation childData;
-            childData.doc = []() -> std::string { return T::doc(); };
-            childData.schema = []() -> std::string { return T::schema(); };
-            RuntimeSelectionFactory::docTable()[T::name()] = childData;
+            childData.doc = []() -> std::string { return derivedClass::doc(); };
+            childData.schema = []() -> std::string { return derivedClass::schema(); };
+            RuntimeSelectionFactory::docTable()[derivedClass::name()] = childData;
 
             return true;
         }
@@ -166,7 +181,7 @@ public:
             if (registered)
             {
                 const auto& tbl = RuntimeSelectionFactory::table();
-                const auto it = tbl.find(T::name());
+                const auto it = tbl.find(derivedClass::name());
                 registered = (it != tbl.end());
             }
         }
@@ -176,12 +191,11 @@ public:
         Register()
         {
             // avoid unused variable warning
-            bool tmp = registered;
+            (void)registered;
         }
     };
 
     virtual ~RuntimeSelectionFactory() = default;
-    friend Base;
 
     static std::size_t size() { return table().size(); }
 
