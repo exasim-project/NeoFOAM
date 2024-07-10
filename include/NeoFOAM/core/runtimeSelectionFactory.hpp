@@ -119,7 +119,7 @@ struct RegisterDocumentation
     {
         // avoid unused variable warning
         // is required to instantiate the static variable and with it the registration
-        (void)registered;
+        (void)REGISTERED;
     }
 
     /**
@@ -138,13 +138,13 @@ struct RegisterDocumentation
         return true;
     }
 
-    static bool registered; ///< Static variable used to trigger the registration of the class
+    static bool REGISTERED; ///< Static variable used to trigger the registration of the class
                             ///< documentation.
 };
 
 // Initialize the static variable and register the class
 template<class baseClass>
-bool RegisterDocumentation<baseClass>::registered = RegisterDocumentation<baseClass>::init();
+bool RegisterDocumentation<baseClass>::REGISTERED = RegisterDocumentation<baseClass>::init();
 
 /**
  * @brief Class representing the documentation for a derived class.
@@ -288,7 +288,7 @@ public:
     public:
 
         friend derivedClass;
-        static bool registered;
+        static bool REGISTERED;
 
         /**
          * @brief Adds the derived class as a sub type.
@@ -316,11 +316,11 @@ public:
 
         ~Register() override
         {
-            if (registered)
+            if (REGISTERED)
             {
                 const auto& tbl = RuntimeSelectionFactory::table();
                 const auto it = tbl.find(derivedClass::name());
-                registered = (it != tbl.end());
+                REGISTERED = (it != tbl.end());
             }
         }
 
@@ -335,7 +335,7 @@ public:
         {
             // avoid unused variable warning
             // is required to instantiate the static variable and with it the registration
-            (void)registered;
+            (void)REGISTERED;
         }
     };
 
@@ -400,7 +400,7 @@ private:
 // Initialize the static variable and register the class
 template<class Base, class... Args>
 template<class derivedClass>
-bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::registered =
+bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::REGISTERED =
     RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::addSubType();
 
 }; // namespace NeoFOAM

@@ -7,7 +7,7 @@
 
 #include "primitives/scalar.hpp"
 
-const std::string nl = "\n";
+const std::string NL = "\n";
 
 namespace NeoFOAM
 {
@@ -28,7 +28,7 @@ class Time
 {
 public:
 
-    const static word controlDictName;
+    const static word CONTROL_DICT_NAME;
 
     Time() : time_(0.) {};
 
@@ -49,6 +49,6 @@ private:
     scalar time_;
 };
 
-const word Time::controlDictName = "system/controlDict";
+const word Time::CONTROL_DICT_NAME = "system/controlDict";
 
 } // namespace NeoFOAM
