@@ -287,8 +287,10 @@ public:
     {
     public:
 
+        using Base::Base;
+
         friend derivedClass;
-        static bool REGISTERED;
+        [[maybe_unused]] static bool REGISTERED;
 
         /**
          * @brief Adds the derived class as a sub type.
@@ -322,20 +324,6 @@ public:
                 const auto it = tbl.find(derivedClass::name());
                 REGISTERED = (it != tbl.end());
             }
-        }
-
-    private:
-
-        /**
-         * @brief Default constructor for the Register class.
-         *
-         * This constructor is private to prevent instantiation of the Register class.
-         */
-        Register()
-        {
-            // avoid unused variable warning
-            // is required to instantiate the static variable and with it the registration
-            (void)REGISTERED;
         }
     };
 
