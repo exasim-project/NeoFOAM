@@ -32,7 +32,7 @@ public:                                                                         
     template<typename DerivedClass>                                                                \
     bool registerClass() const                                                                     \
     {                                                                                              \
-        return CLASSNAME::template BoundaryCorrectionStrategyReg<DerivedClass>::reg;               \
+        return CLASSNAME::template BoundaryCorrectionStrategyReg<DerivedClass>::REG;               \
     }                                                                                              \
                                                                                                    \
     template<typename... Args>                                                                     \
@@ -148,14 +148,14 @@ public:
      */
     RegisteredClass()
     {
-        bool store = reg; // force the initialization of the static variable
+        bool store = REG; // force the initialization of the static variable
         // store in bool to avoid warning
     };
 
     /**
      * @brief Static flag indicating if the class has been registered.
      */
-    static bool reg;
+    static bool REG;
 
     /**
      * @brief Initializes the registration of the derived class with the base class.
@@ -188,7 +188,7 @@ public:
  * @tparam CreateFunction The function pointer type for creating an instance of the derived class.
  */
 template<typename DerivedClass, typename BaseClass, StdFunction CreateFunction>
-bool NeoFOAM::RegisteredClass<DerivedClass, BaseClass, CreateFunction>::reg =
+bool NeoFOAM::RegisteredClass<DerivedClass, BaseClass, CreateFunction>::REG =
     NeoFOAM::RegisteredClass<DerivedClass, BaseClass, CreateFunction>::init();
 
 } // namespace NeoFOAM
