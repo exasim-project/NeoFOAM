@@ -59,7 +59,7 @@ TEST_CASE("Register")
 {
     std::cout << "Table size: " << NeoFOAM::BaseClassDocumentation::docTable().size() << std::endl;
 
-    REQUIRE(NeoFOAM::BaseClassDocumentation::docTable().size() == 2);
+    CHECK(NeoFOAM::BaseClassDocumentation::docTable().size() == 2);
     for (const auto& it : NeoFOAM::BaseClassDocumentation::docTable())
     {
         std::string baseClassName = it.first;
@@ -74,8 +74,8 @@ TEST_CASE("Register")
             std::cout << "     schema: "
                       << NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass)
                       << std::endl;
-            REQUIRE(!NeoFOAM::BaseClassDocumentation::doc(baseClassName, derivedClass).empty());
-            REQUIRE(!NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass).empty());
+            CHECK(!NeoFOAM::BaseClassDocumentation::doc(baseClassName, derivedClass).empty());
+            CHECK(!NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass).empty());
         }
     }
 }

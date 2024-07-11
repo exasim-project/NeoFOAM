@@ -11,7 +11,7 @@
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 
-TEST_CASE("fixedValue")
+TEST_CASE("fixedGradient")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
