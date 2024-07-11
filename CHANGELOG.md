@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- Implement a DSL interface []()
 - Provide wrapper for Catch2 that handles tests running with MPI [#82](https://github.com/exasim-project/NeoFOAM/pull/82)
 - added parallelFor and parallelReduce [#62](https://github.com/exasim-project/NeoFOAM/pull/62)
 - runtimeselectionFactory to simplify the usage of the runtime selection mechanism  [#95](https://github.com/exasim-project/NeoFOAM/pull/95)
