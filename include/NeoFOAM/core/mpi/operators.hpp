@@ -167,7 +167,7 @@ inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
  * @note Non-blocking MPI operation.
  */
 template<typename valueType>
-void Isend(
+void isend(
     const valueType* buffer,
     const int size,
     int rankReceive,
@@ -193,7 +193,7 @@ void Isend(
  * @note Non-blocking MPI operation.
  */
 template<typename valueType>
-void Irecv(
+void irecv(
     valueType* buffer, const int size, int rankSend, int tag, MPI_Comm comm, MPI_Request* request
 )
 {

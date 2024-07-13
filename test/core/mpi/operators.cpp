@@ -195,7 +195,7 @@ TEST_CASE("allReduce vectors")
     }
 }
 
-TEST_CASE("Isend Irecv Test")
+TEST_CASE("isend irecv Test")
 {
     MPI_Comm comm = MPI_COMM_WORLD;
     int rank;
@@ -214,8 +214,8 @@ TEST_CASE("Isend Irecv Test")
         int sendBuffer[size01];
         int recvBuffer[size10];
         std::copy(std::begin(sendValue01), std::end(sendValue01), std::begin(sendBuffer));
-        Isend(sendBuffer, size01, 1, tag, comm, &requestSend);
-        Irecv(recvBuffer, size10, 1, tag, comm, &requestReceive);
+        isend(sendBuffer, size01, 1, tag, comm, &requestSend);
+        irecv(recvBuffer, size10, 1, tag, comm, &requestReceive);
 
         while (!test(&requestSend))
         {
@@ -237,8 +237,8 @@ TEST_CASE("Isend Irecv Test")
         int sendBuffer[size10];
         int recvBuffer[size01];
         std::copy(std::begin(sendValue10), std::end(sendValue10), std::begin(sendBuffer));
-        Isend(sendBuffer, size10, 0, tag, comm, &requestSend);
-        Irecv(recvBuffer, size01, 0, tag, comm, &requestReceive);
+        isend(sendBuffer, size10, 0, tag, comm, &requestSend);
+        irecv(recvBuffer, size01, 0, tag, comm, &requestReceive);
 
         while (!test(&requestSend))
         {
