@@ -3,12 +3,10 @@
 
 #pragma once
 
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccVolField.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccSurfaceField.hpp"
-// #include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolationSelector.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
 #include "Kokkos_Core.hpp"
 
@@ -17,7 +15,7 @@
 
 namespace NeoFOAM
 {
-
+namespace fvcc = finiteVolume::cellCentred;
 class SurfaceInterpolationKernel
 {
 
@@ -28,45 +26,45 @@ public:
 
     virtual void interpolate(
         const GPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     virtual void interpolate(
         const OMPExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     virtual void interpolate(
         const CPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     virtual void interpolate(
         const GPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     virtual void interpolate(
         const OMPExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     virtual void interpolate(
         const CPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     // Pure virtual function for cloning
-    virtual std::unique_ptr<surfaceInterpolationKernel> clone() const = 0;
+    virtual std::unique_ptr<SurfaceInterpolationKernel> clone() const = 0;
 
 protected:
 
@@ -76,27 +74,28 @@ protected:
 
 class SurfaceInterpolation
 {
+
 public:
 
-    SurfaceInterpolation(const surfaceInterpolation& surfInterp)
+    SurfaceInterpolation(const SurfaceInterpolation& surfInterp)
         : exec_(surfInterp.exec_), mesh_(surfInterp.mesh_),
           interpolationKernel_(surfInterp.interpolationKernel_->clone()) {};
 
-    SurfaceInterpolation(surfaceInterpolation&& surfInterp)
+    SurfaceInterpolation(SurfaceInterpolation&& surfInterp)
         : exec_(surfInterp.exec_), mesh_(surfInterp.mesh_),
           interpolationKernel_(std::move(surfInterp.interpolationKernel_)) {};
 
     SurfaceInterpolation(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::unique_ptr<surfaceInterpolationKernel> interpolationKernel
+        std::unique_ptr<SurfaceInterpolationKernel> interpolationKernel
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    // virtual ~surfaceInterpolationKernel() {}; // Virtual destructor
+    // virtual ~SurfaceInterpolationKernel() {}; // Virtual destructor
 
     void
-    interpolate(fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField) const
+    interpolate(fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField) const
     {
         std::visit(
             [&](const auto& exec)
@@ -106,9 +105,9 @@ public:
     }
 
     void interpolate(
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     ) const
     {
         std::visit(

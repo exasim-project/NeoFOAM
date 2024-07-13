@@ -9,8 +9,8 @@
 namespace NeoFOAM
 {
 
-linear::linear(const executor& exec, const unstructuredMesh& mesh)
-    : surfaceInterpolationKernel(exec, mesh), mesh_(mesh),
+linear::linear(const executor& exec, const UnstructuredMesh& mesh)
+    : SurfaceInterpolationKernel(exec, mesh), mesh_(mesh),
       geometryScheme_(FvccGeometryScheme::readOrCreate(mesh)) {
 
       };
@@ -156,13 +156,13 @@ void linear::interpolate(
     interpolate(exec, surfaceField, volField);
 }
 
-std::unique_ptr<surfaceInterpolationKernel> linear::clone() const
+std::unique_ptr<SurfaceInterpolationKernel> linear::clone() const
 {
     return std::make_unique<linear>(exec_, mesh_);
 }
 
-std::unique_ptr<surfaceInterpolationKernel>
-linear::Create(const executor& exec, const unstructuredMesh& mesh)
+std::unique_ptr<SurfaceInterpolationKernel>
+linear::Create(const executor& exec, const UnstructuredMesh& mesh)
 {
     return std::make_unique<linear>(exec, mesh);
 }

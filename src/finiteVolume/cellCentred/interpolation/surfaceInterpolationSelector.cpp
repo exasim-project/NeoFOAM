@@ -23,7 +23,7 @@ bool CompressionMethodFactory::Register(
 }
 
 surfaceInterpolation CompressionMethodFactory::Create(
-    const std::string& name, const executor& exec, const unstructuredMesh& mesh
+    const std::string& name, const executor& exec, const UnstructuredMesh& mesh
 )
 {
     if (auto it = s_methods.find(name); it != s_methods.end())
@@ -34,7 +34,7 @@ surfaceInterpolation CompressionMethodFactory::Create(
 // surfaceInterpolationFactory::surfaceInterpolationFactory()
 // {}
 surfaceInterpolation surfaceInterpolationSelector(
-    std::string interPolMethodName, const executor& exec, const unstructuredMesh& mesh
+    std::string interPolMethodName, const executor& exec, const UnstructuredMesh& mesh
 )
 {
     if (interPolMethodName == "upwind")

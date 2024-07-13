@@ -20,7 +20,7 @@ target_sources(
           "mesh/unstructured/unstructuredMesh.cpp"
           "mesh/stencil/stencilDataBase.cpp"
           "mesh/stencil/stencilDataBase.cpp"
-          "finiteVolume/boundary.cpp")
+          "finiteVolume/cellCentred/boundary/boundary.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(

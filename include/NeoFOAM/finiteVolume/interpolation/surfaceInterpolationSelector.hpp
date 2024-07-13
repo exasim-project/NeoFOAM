@@ -17,7 +17,7 @@ namespace NeoFOAM
 {
 
 SurfaceInterpolation surfaceInterpolationSelector(
-    std::string interPolMethodName, const executor& exec, const unstructuredMesh& mesh
+    std::string interPolMethodName, const executor& exec, const UnstructuredMesh& mesh
 );
 
 
@@ -26,8 +26,8 @@ class CompressionMethodFactory
 public:
 
     // using TCreateMethod = std::unique_ptr<ICompressionMethod>(*)();
-    using TCreateMethod = std::function<std::unique_ptr<surfaceInterpolationKernel>(
-        const executor& exec, const unstructuredMesh& mesh
+    using TCreateMethod = std::function<std::unique_ptr<SurfaceInterpolationKernel>(
+        const executor& exec, const UnstructuredMesh& mesh
     )>;
 
 public:
