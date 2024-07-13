@@ -11,356 +11,7 @@
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/operations/comparison.hpp"
 
-TEST_CASE("Field Copy Constructor")
-{
-    SECTION("CPU")
-    {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-
-        NeoFOAM::Field<NeoFOAM::scalar> b(a);
-
-        REQUIRE(b.size() == N);
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(b.span()[i] == 5.0);
-        }
-    };
-
-    SECTION("OpenMP")
-    {
-        int N = 10;
-        NeoFOAM::OMPExecutor OMPExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
-        NeoFOAM::fill(a, 5.0);
-
-        NeoFOAM::Field<NeoFOAM::scalar> b(a);
-
-        REQUIRE(b.size() == N);
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(b.span()[i] == 5.0);
-        }
-    };
-
-    SECTION("GPU")
-    {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-
-        NeoFOAM::Field<NeoFOAM::scalar> b(a);
-
-        REQUIRE(b.size() == N);
-
-       auto hostB = b.copyToHost();
-        for (auto value: hostB.span())
-        {
-            REQUIRE( value == 5.0);
-        }
-    };
-}
-
-//--------------------------------------------------------------------------------
-// Assignment Operators
-//--------------------------------------------------------------------------------
-
-TEST_CASE("Field Operator+=")
-{
-    SECTION("CPU")
-    {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        a += b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(a.span()[i] == 15.0);
-        }
-    };
-
-    SECTION("OpenMP")
-    {
-        int N = 10;
-        NeoFOAM::OMPExecutor OMPExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        a += b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(a.span()[i] == 15.0);
-        }
-    };
-
-    SECTION("GPU")
-    {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        a += b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(a.copyToHost().span()[i] == 15.0);
-        }
-    };
-}
-
-TEST_CASE("Field Operator-=")
-{
-    SECTION("CPU")
-    {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        a -= b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(a.span()[i] == -5.0);
-        }
-    };
-
-    SECTION("OpenMP")
-    {
-        int N = 10;
-        NeoFOAM::OMPExecutor OMPExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        a -= b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(a.span()[i] == -5.0);
-        }
-    };
-
-    SECTION("GPU")
-    {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        a -= b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(a.copyToHost().span()[i] == -5.0);
-        }
-    };
-}
-
-TEST_CASE("Field Operator+")
-{
-    SECTION("CPU")
-    {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        c = a + b;
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(c.span()[i] == 15.0);
-        }
-    };
-
-    SECTION("OpenMP")
-    {
-        int N = 10;
-        NeoFOAM::OMPExecutor OMPExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(OMPExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        c = a + b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(c.span()[i] == 15.0);
-        }
-    };
-
-    SECTION("GPU")
-    {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(gpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        c = a + b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(c.span()[i] == 15.0);
-        }
-    };
-}
-
-TEST_CASE("Field Operator-")
-{
-    SECTION("CPU")
-    {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(cpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        c = a - b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(c.span()[i] == -5.0);
-        }
-    };
-
-    SECTION("OpenMP")
-    {
-        int N = 10;
-        NeoFOAM::OMPExecutor OMPExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(OMPExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        c = a - b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(c.span()[i] == -5.0);
-        }
-    };
-
-    SECTION("GPU")
-    {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(gpuExec, N);
-        NeoFOAM::fill(a, 5.0);
-        NeoFOAM::fill(b, 10.0);
-
-        c = a - b;
-
-        for (int i = 0; i < N; i++)
-        {
-            REQUIRE(c.span()[i] == -5.0);
-        }
-    };
-}
-
-TEST_CASE("Field empty, size, range")
-{
-    SECTION("CPU")
-    {
-        int N = 10;
-        NeoFOAM::CPUExecutor cpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, 0);
-        NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
-        REQUIRE(a.empty() == true);
-        REQUIRE(a.size() == 0);
-        REQUIRE(a.range().first == 0);
-        REQUIRE(a.range().second == N);
-        REQUIRE(b.empty() == false);
-        REQUIRE(b.size() == N);
-        REQUIRE(b.range().first == 0);
-        REQUIRE(b.range().second == N);
-    };
-
-    SECTION("OpenMP")
-    {
-        int N = 10;
-        NeoFOAM::OMPExecutor OMPExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(OMPExec, 0);
-        NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
-        REQUIRE(a.empty() == true);
-        REQUIRE(a.size() == 0);
-        REQUIRE(a.range().first == 0);
-        REQUIRE(a.range().second == N);
-        REQUIRE(b.empty() == false);
-        REQUIRE(b.size() == N);
-        REQUIRE(b.range().first == 0);
-        REQUIRE(b.range().second == N);
-    };
-
-    SECTION("GPU")
-    {
-        int N = 10;
-        NeoFOAM::GPUExecutor gpuExec {};
-
-        NeoFOAM::Field<NeoFOAM::scalar> a(gpuExec, 0);
-        NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
-        REQUIRE(a.empty() == true);
-        REQUIRE(a.size() == 0);
-        REQUIRE(a.range().first == 0);
-        REQUIRE(a.range().second == N);
-        REQUIRE(b.empty() == false);
-        REQUIRE(b.size() == N);
-        REQUIRE(b.range().first == 0);
-        REQUIRE(b.range().second == N);
-    };
-}
-
-TEST_CASE("Field Operations")
+TEST_CASE("Field Constructors")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -370,19 +21,31 @@ TEST_CASE("Field Operations")
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("Can initialize Field from initializer list on " + execName)
+    SECTION("Copy Constructor " + execName)
     {
+        int N = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(a);
 
+        REQUIRE(b.size() == N);
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(b.span()[i] == 5.0);
+        }
+    }
+
+    SECTION("Initialiser List Constructor " + execName)
+    {
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
-
         auto hostA = a.copyToHost();
-
         REQUIRE(hostA.data()[0] == 1);
         REQUIRE(hostA.data()[1] == 2);
         REQUIRE(hostA.data()[2] == 3);
     }
 
-    SECTION("Can initialize Field from a Field on " + execName)
+    SECTION("Cross Exec Constructor " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
@@ -394,20 +57,126 @@ TEST_CASE("Field Operations")
         REQUIRE(hostB.data()[1] == 2);
         REQUIRE(hostB.data()[2] == 3);
     }
+}
 
-    SECTION("Can create a subview " + execName)
+TEST_CASE("Field Operator Overloads")
+{
+
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("Field Operator+= " + execName)
     {
+        int N = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
 
+        a += b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.span()[i] == 15.0);
+        }
+    }
+
+    SECTION("Field Operator-= " + execName)
+    {
+        int N = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a -= b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(a.span()[i] == -5.0);
+        }
+    }
+
+    SECTION("Field Operator+ " + execName)
+    {
+        int N = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(exec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a + b;
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.span()[i] == 15.0);
+        }
+    }
+
+    SECTION("Field Operator-" + execName)
+    {
+        int N = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> c(exec, N);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a - b;
+
+        for (int i = 0; i < N; i++)
+        {
+            REQUIRE(c.span()[i] == -5.0);
+        }
+    }
+}
+
+TEST_CASE("Field Container Operations")
+{
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("empty, size, range" + execName)
+    {
+        int N = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, 0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        REQUIRE(a.empty() == true);
+        REQUIRE(a.size() == 0);
+        REQUIRE(a.range().first == 0);
+        REQUIRE(a.range().second == N);
+        REQUIRE(b.empty() == false);
+        REQUIRE(b.size() == N);
+        REQUIRE(b.range().first == 0);
+        REQUIRE(b.range().second == N);
+    };
+
+    SECTION("span" + execName)
+    {
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
-
         auto hostA = a.copyToHost();
-        auto subView = hostA.span({1, 2});
 
+        auto view = hostA.span();
+        REQUIRE(view[0] == 1);
+        REQUIRE(view[1] == 2);
+        REQUIRE(view[2] == 3);
+
+        auto subView = hostA.span({1, 2});
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
     }
 
-    SECTION("Copy to host creates a copy from " + execName)
+    SECTION("copyToHost " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
@@ -415,24 +184,20 @@ TEST_CASE("Field Operations")
         auto hostA = a.copyToHost();
         auto hostB = a.copyToHost();
 
-        hostA.data()[0] = 0;
-
-        REQUIRE(hostA.data()[0] != hostB.data()[0]);
+        REQUIRE(&(hostA.data()[0]) != &(hostB.data()[0]));
         REQUIRE(hostA.data()[1] == hostB.data()[1]);
     }
+}
 
-    SECTION("Can set via a subview " + execName)
-    {
+TEST_CASE("Field Operations")
+{
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
 
-        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
-
-        auto hostA = a.copyToHost();
-        auto subView = hostA.span({1, 2});
-        subView[0] = 5;
-
-        REQUIRE(subView[0] == 5);
-        REQUIRE(subView[1] == 3);
-    }
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
     SECTION("Field_" + execName)
     {

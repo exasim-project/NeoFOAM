@@ -220,8 +220,7 @@ public:
      */
     Field<ValueType>& operator+=(const Field<ValueType>& rhs)
     {
-        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-        NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
+        validate_other_field(rhs);
         add(*this, rhs);
         return *this;
     }
@@ -233,8 +232,7 @@ public:
      */
     Field<ValueType>& operator-=(const Field<ValueType>& rhs)
     {
-        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-        NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
+        validate_other_field(rhs);
         sub(*this, rhs);
         return *this;
     }
@@ -246,8 +244,7 @@ public:
      */
     [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
     {
-        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-        NF_DEBUG_ASSERT(exec_ == rhs.exec(), "Executors are not the same.");
+        validate_other_field(rhs);
         Field<ValueType> result(exec_, size_);
         result = *this;
         mul(result, rhs);
@@ -330,13 +327,14 @@ public:
      * @return Span of the field.
      */
     [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
+
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<ValueType> span() const
+    [[nodiscard]] std::span<const ValueType> span() const
     {
-        return std::span<ValueType>(data_, size_);
+        return std::span<const ValueType>(data_, size_);
     }
 
     /**
@@ -352,22 +350,32 @@ public:
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] const std::span<ValueType> span(std::pair<size_t, size_t> range) const
+    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const
     {
-        return span(range);
+        return std::span<const ValueType>(data_ + range.first, range.second - range.first);
     }
 
     /**
      * @brief Gets the range of the field.
      * @return The range of the field {0, size()}.
      */
-    [[nodiscard]] inline std::pair<size_t, size_t> field::range() const { return {0, size()}; }
+    [[nodiscard]] std::pair<size_t, size_t> range() const { return {0, size()}; }
 
 private:
 
     size_t size_ {0};           //!< Size of the field.
     ValueType* data_ {nullptr}; //!< Pointer to the field data.
     const Executor exec_;       //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
+
+    /**
+     * @brief Checks if two fields are the same size and have the same executor.
+     * @param rhs The field to compare with.
+     */
+    [[nodiscard]] void validate_other_field(const Field<ValueType>& rhs) const
+    {
+        NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
+        NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
+    }
 };
 
 /**
