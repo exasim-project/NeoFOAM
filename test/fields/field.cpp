@@ -23,14 +23,14 @@ TEST_CASE("Field Constructors")
 
     SECTION("Copy Constructor " + execName)
     {
-        int N = 10;
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::Field<NeoFOAM::scalar> b(a);
 
-        REQUIRE(b.size() == N);
+        REQUIRE(b.size() == size);
 
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < size; i++)
         {
             REQUIRE(b[i] == 5.0);
         }
@@ -72,15 +72,15 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator+= " + execName)
     {
-        int N = 10;
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::fill(b, 10.0);
 
         a += b;
 
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < size; i++)
         {
             REQUIRE(a[i] == 15.0);
         }
@@ -88,15 +88,15 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator-= " + execName)
     {
-        int N = 10;
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::fill(b, 10.0);
 
         a -= b;
 
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < size; i++)
         {
             REQUIRE(a[i] == -5.0);
         }
@@ -104,15 +104,15 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator+ " + execName)
     {
-        int N = 10;
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(exec, N);
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> c(exec, size);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::fill(b, 10.0);
 
         c = a + b;
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < size; i++)
         {
             REQUIRE(c[i] == 15.0);
         }
@@ -120,16 +120,16 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator-" + execName)
     {
-        int N = 10;
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
-        NeoFOAM::Field<NeoFOAM::scalar> c(exec, N);
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> c(exec, size);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::fill(b, 10.0);
 
         c = a - b;
 
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < size; i++)
         {
             REQUIRE(c[i] == -5.0);
         }
@@ -148,17 +148,17 @@ TEST_CASE("Field Container Operations")
 
     SECTION("empty, size, range" + execName)
     {
-        int N = 10;
+        int size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, 0);
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, N);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         REQUIRE(a.empty() == true);
         REQUIRE(a.size() == 0);
         REQUIRE(a.range().first == 0);
         REQUIRE(a.range().second == 0);
         REQUIRE(b.empty() == false);
-        REQUIRE(b.size() == N);
+        REQUIRE(b.size() == size);
         REQUIRE(b.range().first == 0);
-        REQUIRE(b.range().second == N);
+        REQUIRE(b.range().second == size);
     };
 
     SECTION("span" + execName)
