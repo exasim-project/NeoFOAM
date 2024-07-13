@@ -9,8 +9,8 @@
 namespace NeoFOAM
 {
 
-upwind::upwind(const executor& exec, const unstructuredMesh& mesh)
-    : surfaceInterpolationKernel(exec, mesh), mesh_(mesh),
+upwind::upwind(const executor& exec, const UnstructuredMesh& mesh)
+    : SurfaceInterpolationKernel(exec, mesh), mesh_(mesh),
       geometryScheme_(FvccGeometryScheme::readOrCreate(mesh)) {
 
       };
@@ -176,13 +176,13 @@ void upwind::interpolate(
 }
 
 
-std::unique_ptr<surfaceInterpolationKernel> upwind::clone() const
+std::unique_ptr<SurfaceInterpolationKernel> upwind::clone() const
 {
     return std::make_unique<upwind>(exec_, mesh_);
 }
 
-std::unique_ptr<surfaceInterpolationKernel>
-upwind::Create(const executor& exec, const unstructuredMesh& mesh)
+std::unique_ptr<SurfaceInterpolationKernel>
+upwind::Create(const executor& exec, const UnstructuredMesh& mesh)
 {
     return std::make_unique<upwind>(exec, mesh);
 }

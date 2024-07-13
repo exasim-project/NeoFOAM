@@ -21,7 +21,7 @@ namespace NeoFOAM
 
 struct GaussGreenDivKernel
 {
-    const unstructuredMesh& mesh_;
+    const UnstructuredMesh& mesh_;
 
     const NeoFOAM::surfaceInterpolation& surfaceInterpolation_;
 

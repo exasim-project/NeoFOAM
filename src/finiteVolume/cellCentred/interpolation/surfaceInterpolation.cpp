@@ -14,12 +14,12 @@
 namespace NeoFOAM
 {
 
-class surfaceInterpolationKernel
+class SurfaceInterpolationKernel
 {
 
 public:
 
-    surfaceInterpolationKernel(const executor& exec, const unstructuredMesh& mesh)
+    SurfaceInterpolationKernel(const executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), mesh_(mesh) {};
 
     virtual void operator()(
@@ -41,7 +41,7 @@ public:
 protected:
 
     const executor exec_;
-    const unstructuredMesh& mesh_;
+    const UnstructuredMesh& mesh_;
 };
 
 class surfaceInterpolation
@@ -50,12 +50,12 @@ public:
 
     surfaceInterpolation(
         const executor& exec,
-        const unstructuredMesh& mesh,
-        std::unique_ptr<surfaceInterpolationKernel> interpolationKernel
+        const UnstructuredMesh& mesh,
+        std::unique_ptr<SurfaceInterpolationKernel> interpolationKernel
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    // virtual ~surfaceInterpolationKernel() {}; // Virtual destructor
+    // virtual ~SurfaceInterpolationKernel() {}; // Virtual destructor
 
     void interpolate(fvccSurfaceField<scalar>& surfaceField, const fvccVolField<scalar>& volField)
     {
@@ -69,8 +69,8 @@ public:
 private:
 
     const executor exec_;
-    const unstructuredMesh& mesh_;
-    std::unique_ptr<surfaceInterpolationKernel> interpolationKernel_;
+    const UnstructuredMesh& mesh_;
+    std::unique_ptr<SurfaceInterpolationKernel> interpolationKernel_;
 };
 
 

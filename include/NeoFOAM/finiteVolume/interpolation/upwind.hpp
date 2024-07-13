@@ -21,7 +21,7 @@ class Upwind : public SurfaceInterpolationKernel
 
 public:
 
-    Upwind(const executor& exec, const unstructuredMesh& mesh);
+    Upwind(const executor& exec, const UnstructuredMesh& mesh);
 
     void interpolate(
         const GPUExecutor& exec,
@@ -64,8 +64,8 @@ public:
 
     std::unique_ptr<SurfaceInterpolationKernel> clone() const override;
 
-    static std::unique_ptr<surfaceInterpolationKernel>
-    create(const executor& exec, const unstructuredMesh& mesh);
+    static std::unique_ptr<SurfaceInterpolationKernel>
+    create(const executor& exec, const UnstructuredMesh& mesh);
 
 private:
 

@@ -63,9 +63,9 @@ public:
         const fvccVolField<scalar>& volField
     );
 
-    std::unique_ptr<surfaceInterpolationKernel> clone() const override;
+    std::unique_ptr<SurfaceInterpolationKernel> clone() const override;
 
-    static std::unique_ptr<surfaceInterpolationKernel>
+    static std::unique_ptr<SurfaceInterpolationKernel>
     create(const Executor& exec, const UnstructuredMesh& mesh);
 
 private:

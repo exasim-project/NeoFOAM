@@ -9,7 +9,7 @@ namespace NeoFOAM
 {
 
 GaussGreenDivKernel::GaussGreenDivKernel(
-    const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp
+    const UnstructuredMesh& mesh, const surfaceInterpolation& surfInterp
 )
     : mesh_(mesh), surfaceInterpolation_(surfInterp) {
 
@@ -159,7 +159,7 @@ void GaussGreenDivKernel::operator()(
 
 
 gaussGreenDiv::gaussGreenDiv(
-    const executor& exec, const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp
+    const executor& exec, const UnstructuredMesh& mesh, const surfaceInterpolation& surfInterp
 )
     : mesh_(mesh), surfaceInterpolation_(surfInterp) {
 

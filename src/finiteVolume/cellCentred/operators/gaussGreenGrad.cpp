@@ -9,7 +9,7 @@ namespace NeoFOAM
 {
 
 GaussGreenKernel::GaussGreenKernel(
-    const unstructuredMesh& mesh, const surfaceInterpolation& surfInterp
+    const UnstructuredMesh& mesh, const surfaceInterpolation& surfInterp
 )
     : mesh_(mesh), surfaceInterpolation_(surfInterp) {};
 
@@ -146,7 +146,7 @@ void GaussGreenKernel::operator()(
 }
 
 
-gaussGreenGrad::gaussGreenGrad(const executor& exec, const unstructuredMesh& mesh)
+gaussGreenGrad::gaussGreenGrad(const executor& exec, const UnstructuredMesh& mesh)
     : mesh_(mesh),
       surfaceInterpolation_(exec, mesh, std::make_unique<NeoFOAM::linear>(exec, mesh)) {
 
