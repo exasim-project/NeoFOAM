@@ -357,6 +357,12 @@ public:
         return span(range);
     }
 
+    /**
+     * @brief Gets the range of the field.
+     * @return The range of the field {0, size()}.
+     */
+    [[nodiscard]] inline std::pair<size_t, size_t> field::range() const { return {0, size()}; }
+
 private:
 
     size_t size_ {0};           //!< Size of the field.

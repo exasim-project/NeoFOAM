@@ -306,7 +306,7 @@ TEST_CASE("Field Operator-")
     };
 }
 
-TEST_CASE("Field empty and size")
+TEST_CASE("Field empty, size, range")
 {
     SECTION("CPU")
     {
@@ -317,8 +317,12 @@ TEST_CASE("Field empty and size")
         NeoFOAM::Field<NeoFOAM::scalar> b(cpuExec, N);
         REQUIRE(a.empty() == true);
         REQUIRE(a.size() == 0);
+        REQUIRE(a.range().first == 0);
+        REQUIRE(a.range().second == N);
         REQUIRE(b.empty() == false);
         REQUIRE(b.size() == N);
+        REQUIRE(b.range().first == 0);
+        REQUIRE(b.range().second == N);
     };
 
     SECTION("OpenMP")
@@ -330,8 +334,12 @@ TEST_CASE("Field empty and size")
         NeoFOAM::Field<NeoFOAM::scalar> b(OMPExec, N);
         REQUIRE(a.empty() == true);
         REQUIRE(a.size() == 0);
+        REQUIRE(a.range().first == 0);
+        REQUIRE(a.range().second == N);
         REQUIRE(b.empty() == false);
         REQUIRE(b.size() == N);
+        REQUIRE(b.range().first == 0);
+        REQUIRE(b.range().second == N);
     };
 
     SECTION("GPU")
@@ -343,8 +351,12 @@ TEST_CASE("Field empty and size")
         NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, N);
         REQUIRE(a.empty() == true);
         REQUIRE(a.size() == 0);
+        REQUIRE(a.range().first == 0);
+        REQUIRE(a.range().second == N);
         REQUIRE(b.empty() == false);
         REQUIRE(b.size() == N);
+        REQUIRE(b.range().first == 0);
+        REQUIRE(b.range().second == N);
     };
 }
 
