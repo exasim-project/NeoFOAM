@@ -192,7 +192,7 @@ public:
     const ValueType& operator()(const int i) const { return data_[i]; }
 
     /**
-     * @brief Assignment operator, Sets the field values to that of the parsed field.
+     * @brief Assignment operator, Sets the field values to that of the passed value.
      * @param rhs The value to set the field to.
      */
     void operator=(const ValueType& rhs) { fill(*this, rhs); }

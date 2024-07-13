@@ -61,9 +61,10 @@ TEST_CASE("Field Copy Constructor")
 
         REQUIRE(b.size() == N);
 
-        for (int i = 0; i < N; i++)
+       auto hostB = b.copyToHost();
+        for (auto value: hostB.span())
         {
-            REQUIRE(b.copyToHost().span()[i] == 5.0);
+            REQUIRE( value == 5.0);
         }
     };
 }
