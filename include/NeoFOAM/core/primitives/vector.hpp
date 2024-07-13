@@ -55,7 +55,13 @@ public:
      *
      * @return The size of the vector
      */
-    consteval std::size_t size() { return 3; }
+    constexpr std::size_t size() const { return 3; }
+
+    KOKKOS_INLINE_FUNCTION
+    scalar& operator[](const int i) { return cmpts_[i]; }
+
+    KOKKOS_INLINE_FUNCTION
+    scalar operator[](const int i) const { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
     scalar& operator()(const int i) { return cmpts_[i]; }

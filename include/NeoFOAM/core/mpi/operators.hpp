@@ -115,20 +115,42 @@ constexpr MPI_Datatype getType()
 }
 
 /**
- * @brief Performs an all-reduce operation on a scalar value across all processes in the
+ * @brief Performs a blocking all-reduce operation on a value across all processes in the
  * communicator.
  *
- * @tparam valueType The type of the scalar value.
- * @param value Pointer to the scalar value to be reduced.
+ * @tparam valueType The type of the value.
+ * @param value The value to be all-reduced.
  * @param op The reduction operation to be performed.
  * @param comm The communicator across which the reduction operation is performed.
  * @note Blocking MPI operation.
  */
 template<typename valueType>
-void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
+void allReduce(valueType& value, const ReduceOp op, MPI_Comm comm)
 {
     MPI_Allreduce(
-        MPI_IN_PLACE, reinterpret_cast<void*>(value), 1, getType<valueType>(), getOp(op), comm
+        MPI_IN_PLACE, reinterpret_cast<void*>(&value), 1, getType<valueType>(), getOp(op), comm
+    );
+}
+
+/**
+ * @brief Performs a blocking all-reduce operation on a vector across all processes in the
+ * communicator.
+ *
+ * @param vector The vector to be all-reduced.
+ * @param op The reduction operation to be performed.
+ * @param comm The communicator across which the reduction operation is performed.
+ * @note Blocking MPI operation.
+ */
+template<>
+inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
+{
+    MPI_Allreduce(
+        MPI_IN_PLACE,
+        reinterpret_cast<void*>(vector.data()),
+        vector.size(),
+        getType<scalar>(),
+        getOp(op),
+        comm
     );
 }
 
