@@ -88,17 +88,9 @@ public:
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
      * @param rhs The field to copy from.
      */
-    Field(const Field<ValueType>& rhs) : size_(rhs.size_), data_(nullptr), exec_(rhs.exec_)
+    Field(const Field<ValueType>& rhs) : data_(nullptr), exec_(rhs.exec_)
     {
-        NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
-        void* ptr = nullptr;
-        auto size = rhs.size_;
-        std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
-            exec_
-        );
-        setSize(rhs.size_); // CHECK THIS with above
-        data_ = static_cast<ValueType*>(ptr);
+        resize(rhs.size_);
         setField(*this, rhs.span());
     }
 
@@ -208,7 +200,7 @@ public:
         NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
         if (this->size() != rhs.size())
         {
-            this->setSize(rhs.size());
+            this->resize(rhs.size());
         }
         setField(*this, rhs.span());
     }
@@ -266,10 +258,10 @@ public:
     }
 
     /**
-     * @brief Set the Size of the field.
+     * @brief Resizes the field to a new size.
      * @param size The new size to set the field to.
      */
-    void setSize(const size_t size)
+    void resize(const size_t size)
     {
         void* ptr = nullptr;
         if (!empty())

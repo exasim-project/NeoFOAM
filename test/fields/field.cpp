@@ -32,7 +32,7 @@ TEST_CASE("Field Constructors")
 
         for (int i = 0; i < N; i++)
         {
-            REQUIRE(b.span()[i] == 5.0);
+            REQUIRE(b[i] == 5.0);
         }
     }
 
@@ -82,7 +82,7 @@ TEST_CASE("Field Operator Overloads")
 
         for (int i = 0; i < N; i++)
         {
-            REQUIRE(a.span()[i] == 15.0);
+            REQUIRE(a[i] == 15.0);
         }
     }
 
@@ -98,7 +98,7 @@ TEST_CASE("Field Operator Overloads")
 
         for (int i = 0; i < N; i++)
         {
-            REQUIRE(a.span()[i] == -5.0);
+            REQUIRE(a[i] == -5.0);
         }
     }
 
@@ -114,7 +114,7 @@ TEST_CASE("Field Operator Overloads")
         c = a + b;
         for (int i = 0; i < N; i++)
         {
-            REQUIRE(c.span()[i] == 15.0);
+            REQUIRE(c[i] == 15.0);
         }
     }
 
@@ -131,7 +131,7 @@ TEST_CASE("Field Operator Overloads")
 
         for (int i = 0; i < N; i++)
         {
-            REQUIRE(c.span()[i] == -5.0);
+            REQUIRE(c[i] == -5.0);
         }
     }
 }
@@ -154,7 +154,7 @@ TEST_CASE("Field Container Operations")
         REQUIRE(a.empty() == true);
         REQUIRE(a.size() == 0);
         REQUIRE(a.range().first == 0);
-        REQUIRE(a.range().second == N);
+        REQUIRE(a.range().second == 0);
         REQUIRE(b.empty() == false);
         REQUIRE(b.size() == N);
         REQUIRE(b.range().first == 0);
