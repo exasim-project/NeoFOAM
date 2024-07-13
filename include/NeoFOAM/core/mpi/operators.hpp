@@ -155,7 +155,7 @@ inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
 }
 
 /**
- * @brief Sends a set of scalar values to a remote rank.
+ * @brief Non-blocking send of a set of scalar values to a remote rank.
  *
  * @tparam valueType The type of the scalar value.
  * @param buffer Pointer to first scalar value to be sent.
@@ -167,7 +167,7 @@ inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
  * @note Non-blocking MPI operation.
  */
 template<typename valueType>
-void sendScalar(
+void Isend(
     const valueType* buffer,
     const int size,
     int rankReceive,
@@ -181,7 +181,7 @@ void sendScalar(
 }
 
 /**
- * @brief Receives a set of scalar values from a remote rank.
+ * @brief Non-blocking receive of a set of scalar values from a remote rank.
  *
  * @tparam valueType The type of the scalar value.
  * @param buffer Pointer to the buffer where the received scalar values will be stored.
@@ -193,7 +193,7 @@ void sendScalar(
  * @note Non-blocking MPI operation.
  */
 template<typename valueType>
-void recvScalar(
+void Irecv(
     valueType* buffer, const int size, int rankSend, int tag, MPI_Comm comm, MPI_Request* request
 )
 {
