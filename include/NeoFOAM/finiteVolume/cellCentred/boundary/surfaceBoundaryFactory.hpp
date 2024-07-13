@@ -12,18 +12,19 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+
 template<typename ValueType>
-class VolumeBoundaryFactory :
+class SurfaceBoundaryFactory :
     public NeoFOAM::RuntimeSelectionFactory<
-        VolumeBoundaryFactory<ValueType>,
+        SurfaceBoundaryFactory<ValueType>,
         Parameters<const UnstructuredMesh&, const Dictionary&, int>>,
     public BoundaryPatchMixin
 {
 public:
 
-    static std::string name() { return "VolumeBoundaryFactory"; }
+    static std::string name() { return "SurfaceBoundaryFactory"; }
 
-    VolumeBoundaryFactory(
+    SurfaceBoundaryFactory(
         const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary&, std::size_t patchID
     )
         : BoundaryPatchMixin(mesh, patchID) {};
@@ -38,17 +39,18 @@ public:
  * @tparam ValueType The data type of the field.
  */
 template<typename ValueType>
-class VolumeBoundary : public BoundaryPatchMixin
+class SurfaceBoundary : public BoundaryPatchMixin
 {
 public:
 
-    VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary dict, int patchID)
+    SurfaceBoundary(const UnstructuredMesh& mesh, const Dictionary dict, int patchID)
         : BoundaryPatchMixin(
             mesh.boundaryMesh().offset()[patchID],
             mesh.boundaryMesh().offset()[patchID + 1],
             patchID
         ),
-          boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(mesh, dict, patchID))
+          boundaryCorrectionStrategy_(SurfaceBoundaryFactory<ValueType>::create(mesh, dict, patchID)
+          )
     {}
 
     virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
@@ -59,7 +61,7 @@ public:
 private:
 
     // NOTE needs full namespace to be not ambiguous
-    std::unique_ptr<NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<ValueType>>
+    std::unique_ptr<NeoFOAM::finiteVolume::cellCentred::SurfaceBoundaryFactory<ValueType>>
         boundaryCorrectionStrategy_;
 };
 

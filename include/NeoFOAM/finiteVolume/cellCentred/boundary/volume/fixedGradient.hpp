@@ -5,44 +5,47 @@
 
 #include "Kokkos_Core.hpp"
 
-#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
 template<typename ValueType>
-class FixedValue : public VolumeBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>
+class FixedGradient :
+    public VolumeBoundaryFactory<ValueType>::template Register<FixedGradient<ValueType>>
 {
-    using Base = VolumeBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>;
+    using Base = VolumeBoundaryFactory<ValueType>::template Register<FixedGradient<ValueType>>;
 
 public:
 
-    FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : Base(mesh, dict, patchID), fixedValue_(dict.get<ValueType>("fixedValue"))
+    using FixedGradientType = FixedGradient<ValueType>;
+
+    FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
+        : Base(mesh, dict, patchID), fixedGradient_(dict.get<ValueType>("fixedGradient"))
     {}
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
-        auto boundarySpan = domainField.boundaryField().refValue().span(this->range());
+        auto boundarySpan = domainField.boundaryField().refGrad().span(this->range());
         std::visit(
-            [&](auto exec) { setFixedValue(exec, boundarySpan, fixedValue_); }, domainField.exec()
+            [&](auto exec) { setFixedGradient(exec, boundarySpan, fixedGradient_); },
+            domainField.exec()
         );
     }
 
-    static std::string name() { return "fixedValue"; }
+    static std::string name() { return "fixedGradient"; }
 
-    static std::string doc() { return "Set a fixed value on the boundary"; }
+    static std::string doc() { return "Set a fixed gradient on the boundary."; }
 
     static std::string schema() { return "none"; }
 
     // NOTE: this function can not be private or
     // it will yield the following error:
     // The enclosing parent function for an extended __host__ __device__ lambda cannot have
-    // private or protected access within its cla
+    // private or protected access within its class
     template<typename Executor>
-    void setFixedValue(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
+    void setFixedGradient(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
     {
         if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
         {
@@ -53,6 +56,7 @@ public:
         }
         else
         {
+            // TODO implement
             using runOn = typename Executor::exec;
             Kokkos::parallel_for(
                 "parallelForImpl",
@@ -64,7 +68,7 @@ public:
 
 private:
 
-    ValueType fixedValue_;
+    ValueType fixedGradient_;
 };
 
 }
