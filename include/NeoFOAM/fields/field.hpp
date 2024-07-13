@@ -371,7 +371,7 @@ private:
      * @brief Checks if two fields are the same size and have the same executor.
      * @param rhs The field to compare with.
      */
-    [[nodiscard]] void validate_other_field(const Field<ValueType>& rhs) const
+    void validate_other_field(const Field<ValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
         NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
