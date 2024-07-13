@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 add_subdirectory(mpi)
+add_subdirectory(primitives)
 
 neofoam_unit_test(dictionary)
 neofoam_unit_test(executor)
