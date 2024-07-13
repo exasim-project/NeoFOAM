@@ -13,28 +13,25 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class Empty : public VolumeBoundaryFactory<ValueType>
+class Empty : public VolumeBoundaryFactory<ValueType>::template Register<Empty<ValueType>>
 {
+    using Base = VolumeBoundaryFactory<ValueType>::template Register<Empty<ValueType>>;
 
 public:
 
-    using EmptyType = Empty<ValueType>;
-
-    Empty(const UnstructuredMesh& mesh, std::size_t patchID)
-        : VolumeBoundaryFactory<ValueType>(mesh, patchID)
-    {
-        VolumeBoundaryFactory<ValueType>::template registerClass<EmptyType>();
-    }
-
-    static std::unique_ptr<VolumeBoundaryFactory<ValueType>>
-    create(const UnstructuredMesh& mesh, const Dictionary&, std::size_t patchID)
-    {
-        return std::make_unique<EmptyType>(mesh, patchID);
-    }
+    Empty(
+        const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary& dict, std::size_t patchID
+    )
+        : Base(mesh, dict, patchID)
+    {}
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override {}
 
     static std::string name() { return "empty"; }
+
+    static std::string doc() { return "Do nothing on the boundary."; }
+
+    static std::string schema() { return "none"; }
 };
 
 }

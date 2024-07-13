@@ -13,25 +13,15 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class FixedValue : public VolumeBoundaryFactory<ValueType>
+class FixedValue : public VolumeBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>
 {
+    using Base = VolumeBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>;
 
 public:
 
-    using FixedValueType = FixedValue<ValueType>;
-
     FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : VolumeBoundaryFactory<ValueType>(mesh, patchID),
-          fixedValue_(dict.get<ValueType>("fixedValue"))
-    {
-        VolumeBoundaryFactory<ValueType>::template registerClass<FixedValueType>();
-    }
-
-    static std::unique_ptr<VolumeBoundaryFactory<ValueType>>
-    create(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-    {
-        return std::make_unique<FixedValueType>(mesh, dict, patchID);
-    }
+        : Base(mesh, dict, patchID), fixedValue_(dict.get<ValueType>("fixedValue"))
+    {}
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
@@ -42,6 +32,10 @@ public:
     }
 
     static std::string name() { return "fixedValue"; }
+
+    static std::string doc() { return "Set a fixed value on the boundary"; }
+
+    static std::string schema() { return "none"; }
 
     // NOTE: this function can not be private or
     // it will yield the following error:

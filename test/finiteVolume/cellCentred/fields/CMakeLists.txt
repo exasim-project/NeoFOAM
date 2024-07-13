@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-neofoamunittest(surfaceField)
-neofoamunittest(volumeField)
+neofoam_unit_test(surfaceField)
+neofoam_unit_test(volumeField)
