@@ -6,5 +6,5 @@
 #include "cellCentred/boundary/volumeBoundaryFactory.hpp"
 
 #include "cellCentred/fields/geometricField.hpp"
-// #include "cellCentred/fields/surfaceField.hpp"
-// #include "cellCentred/fields/volumeField.hpp"
+#include "cellCentred/fields/surfaceField.hpp"
+#include "cellCentred/fields/volumeField.hpp"
