@@ -201,10 +201,13 @@ TEST_CASE("isend irecv Test")
     int rank;
     MPI_Comm_rank(comm, &rank);
 
+    // data packet to be sent from rank 0 to rank 1
     const int size01 = 3;
+    int sendValue01[size01] = {42, -1, 145}; // Values known to all ranks so we can check.
+
+    // data packet to be sent from rank 1 to rank 0
     const int size10 = 2;
-    int sendValue01[size01] = {42, -1, 145}; // random values
-    int sendValue10[size10] = {-58, 234};    // random values
+    int sendValue10[size10] = {-58, 234}; // Values known to all ranks so we can check.
     const int tag = 0;
     MPI_Request requestSend;
     MPI_Request requestReceive;
@@ -214,8 +217,8 @@ TEST_CASE("isend irecv Test")
         int sendBuffer[size01];
         int recvBuffer[size10];
         std::copy(std::begin(sendValue01), std::end(sendValue01), std::begin(sendBuffer));
-        isend(sendBuffer, size01, 1, tag, comm, &requestSend);
-        irecv(recvBuffer, size10, 1, tag, comm, &requestReceive);
+        isend(sendBuffer, size01, 1, tag, comm, &requestSend);    // we send this data to rank 1
+        irecv(recvBuffer, size10, 1, tag, comm, &requestReceive); // we into this buffer from rank 1
 
         while (!test(&requestSend))
         {
@@ -237,8 +240,8 @@ TEST_CASE("isend irecv Test")
         int sendBuffer[size10];
         int recvBuffer[size01];
         std::copy(std::begin(sendValue10), std::end(sendValue10), std::begin(sendBuffer));
-        isend(sendBuffer, size10, 0, tag, comm, &requestSend);
-        irecv(recvBuffer, size01, 0, tag, comm, &requestReceive);
+        isend(sendBuffer, size10, 0, tag, comm, &requestSend);    // we send this data to rank 0
+        irecv(recvBuffer, size01, 0, tag, comm, &requestReceive); // we into this buffer from rank 0
 
         while (!test(&requestSend))
         {
