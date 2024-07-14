@@ -24,11 +24,6 @@ namespace NeoFOAM::finiteVolume::cellCentred
 template<typename ValueType>
 class SurfaceField : public GeometricFieldMixin<ValueType>
 {
-    // ...
-};
-template<typename ValueType>
-class SurfaceField : public GeometricFieldMixin<ValueType>
-{
 
 public:
 
