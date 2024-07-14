@@ -11,7 +11,7 @@ The Field classes are the central elements for implementing a platform portable 
 .. doxygenclass:: NeoFOAM::Field
     :members: size_, data_, exec_
 
-To run a function on the GPU, the data and function need to be trivially copyable. This is not the case with the existing OpenFOAM Field class , and it can be viewed as a wrapper around the data. To solve this issue, the  NeoFOAM field class has a public member function called ``field()`` that returns a span that can be used to access the data on the CPU and GPU.
+To run a function on the GPU, the data and function need to be trivially copyable. This is not the case with the existing OpenFOAM Field class , and it can be viewed as a wrapper around the data. To solve this issue, the  NeoFOAM field class has a public member function called ``span()`` that returns a span that can be used to access the data on the CPU and GPU.
 
 .. doxygenclass:: NeoFOAM::Field
     :members: field
@@ -22,7 +22,7 @@ The following example shows how to use the field function to access the data of 
 
      NeoFOAM::CPUExecutor cpuExec {};
      NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, size);
-     std::span<double> sA = a.field();
+     std::span<double> sA = a.span();
      // for loop
      for (int i = 0; i < sA.size(); i++)
      {
@@ -35,7 +35,7 @@ To run the for loop on the GPU is a bit more complicated and is based on the Kok
 
      NeoFOAM::GPUExecutor gpuExec {};
      NeoFOAM::Field<NeoFOAM::scalar> b(gpuExec, size);
-     std::span<double> sB = b.field();
+     std::span<double> sB = b.span();
      Kokkos::parallel_for(
           Kokkos::RangePolicy<gpuExec::exec>(0, sB.size()),
           KOKKOS_LAMBDA(const int i) { sB[i] = 1.0; }
