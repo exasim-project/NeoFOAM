@@ -7,11 +7,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/fixedGradient.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surface/fixedValue.hpp"
 
-TEST_CASE("fixedGradient")
+TEST_CASE("fixedValue")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -23,23 +23,33 @@ TEST_CASE("fixedGradient")
 
     SECTION("TestDerivedClass" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh();
+        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
         NeoFOAM::scalar setValue {10};
         NeoFOAM::Dictionary dict;
-        dict.insert("fixedGradient", setValue);
+        dict.insert("fixedValue", setValue);
         auto boundary =
-            NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoFOAM::scalar>::create(
-                "fixedGradient", mesh, dict, 0
+            NeoFOAM::finiteVolume::cellCentred::SurfaceBoundaryFactory<NeoFOAM::scalar>::create(
+                "fixedValue", mesh, dict, 0
             );
 
         boundary->correctBoundaryCondition(domainField);
 
-        auto refValues = domainField.boundaryField().refGrad().copyToHost();
+        auto refValues = domainField.boundaryField().refValue().copyToHost();
 
-        for (auto boundaryValue : refValues.span(boundary->range()))
+        for (auto& boundaryValue : refValues.span(boundary->range()))
         {
             REQUIRE(boundaryValue == setValue);
+        }
+
+        auto otherBoundary =
+            NeoFOAM::finiteVolume::cellCentred::SurfaceBoundaryFactory<NeoFOAM::scalar>::create(
+                "fixedValue", mesh, dict, 1
+            );
+
+        for (auto& boundaryValue : refValues.span(otherBoundary->range()))
+        {
+            REQUIRE(boundaryValue != setValue);
         }
     }
 }

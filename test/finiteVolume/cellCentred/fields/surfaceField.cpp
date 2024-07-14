@@ -7,22 +7,68 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/fields/geometricField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
 
 TEST_CASE("surfaceField")
 {
-    using namespace NeoFOAM;
-    using SurfaceField = finiteVolume::cellCentred::SurfaceField<scalar>;
+    namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-    Executor exec =
-        GENERATE(Executor(CPUExecutor {}), Executor(OMPExecutor {}), Executor(GPUExecutor {}));
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("can instantiate empty surfaceField on: " + execName)
+    SECTION("can instantiate SurfaceField with fixedValues on: " + execName)
     {
-        auto sf = SurfaceField(exec);
+        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
+        std::vector<std::unique_ptr<fvcc::SurfaceBoundary<NeoFOAM::scalar>>> bcs {};
+        for (size_t patchi : {0, 1, 2, 3})
+        {
+            NeoFOAM::Dictionary dict;
+            dict.insert("type", std::string("fixedValue"));
+            dict.insert("fixedValue", 2.0);
+            bcs.push_back(
+                std::make_unique<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh, dict, patchi)
+            );
+        }
+        fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, mesh, std::move(bcs));
+        // the internal field is 4 because the mesh has 4 boundaryFaces
+        NeoFOAM::fill(sf.internalField(), 1.0);
+
+        {
+            auto internalValues = sf.internalField().copyToHost();
+            for (size_t i = 0; i < internalValues.size(); ++i)
+            {
+                REQUIRE(internalValues[i] == 1.0);
+            }
+        }
+
+        sf.correctBoundaryConditions();
         REQUIRE(sf.exec() == exec);
+        REQUIRE(sf.internalField().size() == 4);
+
+        // the correctBoundaryConditions also sets the internalfield to 2.0
+        // for surfaceFields
+        auto internalValues = sf.internalField().copyToHost();
+        for (size_t i = 0; i < internalValues.size(); ++i)
+        {
+            REQUIRE(internalValues[i] == 2.0);
+        }
+
+        auto values = sf.boundaryField().value().copyToHost();
+        for (size_t i = 0; i < values.size(); ++i)
+        {
+            REQUIRE(values[i] == 2.0);
+        }
+
+        auto refValue = sf.boundaryField().refValue().copyToHost();
+        for (size_t i = 0; i < refValue.size(); ++i)
+        {
+            REQUIRE(refValue[i] == 2.0);
+        }
     }
 }

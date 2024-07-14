@@ -6,16 +6,17 @@
 #include "Kokkos_Core.hpp"
 
 #include "NeoFOAM/core.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoFOAM::finiteVolume::cellCentred::surfaceBoundary
 {
 
 template<typename ValueType>
-class Calculated : public VolumeBoundaryFactory<ValueType>::template Register<Calculated<ValueType>>
+class Calculated :
+    public SurfaceBoundaryFactory<ValueType>::template Register<Calculated<ValueType>>
 {
-    using Base = VolumeBoundaryFactory<ValueType>::template Register<Calculated<ValueType>>;
+    using Base = SurfaceBoundaryFactory<ValueType>::template Register<Calculated<ValueType>>;
 
 public:
 
