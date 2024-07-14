@@ -46,8 +46,8 @@ The logic is implemented in the kernel classes:
     )
     {
         using executor = typename GPUExecutor::exec;
-        auto s_value = bField.value().field();
-        auto s_refValue = bField.refValue().field();
+        auto s_value = bField.value().span();
+        auto s_refValue = bField.refValue().span();
         scalar uniformValue = uniformValue_;
         Kokkos::parallel_for(
             "fvccScalarFixedValueBoundaryField",
