@@ -26,6 +26,10 @@ public:
 
     Dictionary() = default;
 
+    Dictionary(const std::unordered_map<std::string, std::any>& keyValuePairs);
+
+    Dictionary(const std::initializer_list<std::pair<std::string, std::any>>& initList);
+
     /**
      * @brief Inserts a key-value pair into the dictionary.
      * @param key The key to insert.
