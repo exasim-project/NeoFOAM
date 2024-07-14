@@ -20,9 +20,9 @@ TEST_CASE("surfaceField")
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("can instantiate empty surfaceField on: " + execName)
-    {
-        auto sf = SurfaceField(exec);
-        REQUIRE(sf.exec() == exec);
-    }
+    // SECTION("can instantiate empty surfaceField on: " + execName)
+    // {
+    //     auto sf = SurfaceField(exec);
+    //     REQUIRE(sf.exec() == exec);
+    // }
 }

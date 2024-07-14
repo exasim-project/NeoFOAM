@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
-#include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
-#include "NeoFOAM/mesh/stencil/FvccGeometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
 
 #include "Kokkos_Core.hpp"
 
@@ -15,57 +15,58 @@
 
 namespace NeoFOAM
 {
+namespace fvcc = finiteVolume::cellCentred;
 
 class Upwind : public SurfaceInterpolationKernel
 {
 
 public:
 
-    Upwind(const executor& exec, const UnstructuredMesh& mesh);
+    Upwind(const Executor& exec, const UnstructuredMesh& mesh);
 
     void interpolate(
         const GPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::VolumeField<scalar>& volField
     );
 
     void interpolate(
         const OMPExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::VolumeField<scalar>& volField
     );
 
     void interpolate(
         const CPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::VolumeField<scalar>& volField
     );
 
     void interpolate(
         const GPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     );
 
     void interpolate(
         const OMPExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     );
 
     void interpolate(
         const CPUExecutor& exec,
-        fvccSurfaceField<scalar>& surfaceField,
-        const fvccSurfaceField<scalar>& faceFlux,
-        const fvccVolField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField,
+        const fvcc::SurfaceField<scalar>& faceFlux,
+        const fvcc::VolumeField<scalar>& volField
     );
 
     std::unique_ptr<SurfaceInterpolationKernel> clone() const override;
 
     static std::unique_ptr<SurfaceInterpolationKernel>
-    create(const executor& exec, const UnstructuredMesh& mesh);
+    create(const Executor& exec, const UnstructuredMesh& mesh);
 
 private:
 
