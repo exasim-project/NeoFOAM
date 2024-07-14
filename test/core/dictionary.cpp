@@ -73,7 +73,7 @@ TEST_CASE("Dictionary operations", "[dictionary]")
     {
         NeoFOAM::Dictionary dictInit({{"key1", 42}, {"key2", std::string("Hello")}});
 
-        REQUIRE(dict_init.get<int>("key1") == 42);
-        REQUIRE(dict_init.get<std::string>("key2") == "Hello");
+        REQUIRE(dictInit.get<int>("key1") == 42);
+        REQUIRE(dictInit.get<std::string>("key2") == "Hello");
     }
 }
