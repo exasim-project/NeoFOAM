@@ -11,6 +11,21 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+/**
+ * @class SurfaceField
+ * @brief Represents a surface field in a finite volume method.
+ *
+ * The SurfaceField class is a template class that represents a face-centered field in a finite
+ * volume method. It inherits from the GeometricFieldMixin class and provides methods for correcting
+ * boundary conditions.
+ *
+ * @tparam ValueType The value type of the field.
+ */
+template<typename ValueType>
+class SurfaceField : public GeometricFieldMixin<ValueType>
+{
+    // ...
+};
 template<typename ValueType>
 class SurfaceField : public GeometricFieldMixin<ValueType>
 {

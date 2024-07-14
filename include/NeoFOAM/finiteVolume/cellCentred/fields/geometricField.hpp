@@ -12,14 +12,16 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+
 /**
- * @brief Represents a geometric field for a cell-centered finite volume method.
+ * @class GeometricFieldMixin
+ * @brief This class represents a mixin for a geometric field.
  *
- * This class stores the field data for a cell-centered finite volume method. It contains
- * the internal field and boundary field, as well as the boundary conditions.
+ * The GeometricFieldMixin class provides a set of common operations and accessors for a geometric
+ * field. It is designed to be used as a mixin in other classes that require geometric field
+ * functionality.
  *
- * @tparam ValueType The data type of the field.
- * @tparam BoundaryType The boundary type of the field.
+ * @tparam ValueType The value type of the field.
  */
 template<typename ValueType>
 class GeometricFieldMixin
@@ -27,12 +29,11 @@ class GeometricFieldMixin
 public:
 
     /**
-     * @brief Constructor for GeometricField.
+     * @brief Constructor for GeometricFieldMixin.
      *
      * @param exec The executor object.
      * @param mesh The unstructured mesh object.
-     * @param boundaryConditions The vector of unique pointers to SurfaceBoundaryField objects
-     * representing the boundary conditions.
+     * @param field The domain field object.
      */
     GeometricFieldMixin(
         const Executor& exec, const UnstructuredMesh& mesh, const DomainField<ValueType>& field

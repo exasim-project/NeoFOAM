@@ -11,7 +11,16 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
+/**
+ * @class VolumeField
+ * @brief Represents a surface field in a finite volume method.
+ *
+ * The VolumeField class is a template class that represents a cell-centered field in a finite
+ * volume method. It inherits from the GeometricFieldMixin class and provides methods for correcting
+ * boundary conditions.
+ *
+ * @tparam ValueType The value type of the field.
+ */
 template<typename ValueType>
 class VolumeField : public GeometricFieldMixin<ValueType>
 {
