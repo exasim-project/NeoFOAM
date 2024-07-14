@@ -2,18 +2,17 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/fields/FieldTypeDefs.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
+#include "NeoFOAM/mesh/unstructured.hpp"
 
-#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccVolField.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/fields/fvccSurfaceField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
 #include "Kokkos_Core.hpp"
 #include <functional>
-#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/linear.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/upwind.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/surfaceInterpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/finiteVolume/interpolation/linear.hpp"
+#include "NeoFOAM/finiteVolume/interpolation/upwind.hpp"
+#include "NeoFOAM/finiteVolume/interpolation/surfaceInterpolation.hpp"
 
 
 namespace NeoFOAM
@@ -22,20 +21,26 @@ namespace NeoFOAM
 struct GaussGreenKernel
 {
     const UnstructuredMesh& mesh_;
-    const NeoFOAM::surfaceInterpolation& surfaceInterpolation_;
+    const NeoFOAM::SurfaceInterpolation& surfaceInterpolation_;
 
-    GaussGreenKernel(const UnstructuredMesh& mesh, const surfaceInterpolation& surfInterp);
+    GaussGreenKernel(const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp);
 
     void operator()(
-        const GPUExecutor& exec, fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi
+        const GPUExecutor& exec,
+        fvcc::VolumeField<Vector>& gradPhi,
+        const fvcc::VolumeField<scalar>& phi
     );
 
     void operator()(
-        const OMPExecutor& exec, fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi
+        const OMPExecutor& exec,
+        fvcc::VolumeField<Vector>& gradPhi,
+        const fvcc::VolumeField<scalar>& phi
     );
 
     void operator()(
-        const CPUExecutor& exec, fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi
+        const CPUExecutor& exec,
+        fvcc::VolumeField<Vector>& gradPhi,
+        const fvcc::VolumeField<scalar>& phi
     );
 };
 
@@ -44,15 +49,15 @@ class gaussGreenGrad
 {
 public:
 
-    gaussGreenGrad(const executor& exec, const UnstructuredMesh& mesh);
+    gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh);
 
-    // fvccVolField<Vector> grad(const fvccVolField<scalar>& phi);
+    // fvcc::VolumeField<Vector> grad(const fvcc::VolumeField<scalar>& phi);
 
-    void grad(fvccVolField<Vector>& gradPhi, const fvccVolField<scalar>& phi);
+    void grad(fvcc::VolumeField<Vector>& gradPhi, const fvcc::VolumeField<scalar>& phi);
 
 private:
 
-    NeoFOAM::surfaceInterpolation surfaceInterpolation_;
+    NeoFOAM::SurfaceInterpolation surfaceInterpolation_;
     const UnstructuredMesh& mesh_;
 };
 
