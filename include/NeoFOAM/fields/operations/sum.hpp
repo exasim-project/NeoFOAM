@@ -14,7 +14,7 @@ struct SumKernel
     void operator()(const GPUExecutor& exec, const Field<T>& field, T& sum) const
     {
         using executor = typename GPUExecutor::exec;
-        auto field_f = field.field();
+        auto field_f = field.span();
         auto end = field.size();
         Kokkos::parallel_reduce(
             "sum",
@@ -28,7 +28,7 @@ struct SumKernel
     void operator()(const OMPExecutor& exec, const Field<T>& field, T& sum)
     {
         using executor = typename OMPExecutor::exec;
-        auto field_f = field.field();
+        auto field_f = field.span();
         auto end = field.size();
         Kokkos::parallel_reduce(
             "sum",
@@ -42,7 +42,7 @@ struct SumKernel
     void operator()(const CPUExecutor& exec, const Field<T>& field, T& sum)
     {
         using executor = typename CPUExecutor::exec;
-        auto field_f = field.field();
+        auto field_f = field.span();
         auto end = field.size();
         Kokkos::parallel_reduce(
             "sum",

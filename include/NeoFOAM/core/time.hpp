@@ -49,6 +49,4 @@ private:
     scalar time_;
 };
 
-const word Time::CONTROL_DICT_NAME = "system/controlDict";
-
 } // namespace NeoFOAM
