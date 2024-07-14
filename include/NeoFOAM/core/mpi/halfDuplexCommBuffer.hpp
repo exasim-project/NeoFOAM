@@ -36,6 +36,16 @@ inline int bufferHash(const std::string& str)
     return (static_cast<int>(tag) % maxTagValue) + 10;
 }
 
+
+template<typename Type>
+concept MemorySpace = requires {
+    typename Type::execution_space;
+    {
+        Type::is_memory_space
+    } -> std::convertible_to<bool>;
+    requires Type::is_memory_space == true;
+};
+
 /**
  * @class HalfDuplexCommBuffer
  * @brief A data buffer for half-duplex communication in a distributed system using MPI.
@@ -242,13 +252,20 @@ private:
     void updateDataSize(func rankSize, std::size_t newSize)
     {
         std::size_t dataSize = 0;
+
+        // UPDATE FOR LOOP TO KOKKOS
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             rankOffset_[rank] = dataSize;
+            rankOffsetKokkos_(rank) = dataSize;
             dataSize += rankSize(rank) * newSize;
         }
+
         rankOffset_.back() = dataSize;
+        rankOffsetKokkos_(mpiEnviron_.sizeRank()) = dataSize;
+
         if (rankBuffer_.size() < dataSize) rankBuffer_.resize(dataSize); // we never size down.
+        if (rankBuffer_.size() < dataSize) Kokkos::resize(rankBufferKokkos_, dataSize);
     }
 };
 
