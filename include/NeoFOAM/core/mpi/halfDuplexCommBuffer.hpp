@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <mpi.h>
+#include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
@@ -45,6 +46,7 @@ inline int bufferHash(const std::string& str)
  * memory reallocation and improving memory efficiency. The class operates in a half-duplex mode,
  * meaning it is either sending or receiving data at any given time.
  */
+template<class MemorySpace = Kokkos::HostSpace>
 class HalfDuplexCommBuffer
 {
 
@@ -205,6 +207,10 @@ private:
     std::vector<char> rankBuffer_;        /*< The buffer data for all ranks. Never shrinks. */
     std::vector<std::size_t>
         rankOffset_; /*< The offset (in bytes) for a rank data in the buffer. */
+
+    Kokkos::View<char*, MemorySpace> rankBufferKokkos_; // duplication for now - will replace above
+    Kokkos::View<std::size_t*, MemorySpace>
+        rankOffsetKokkos_; // duplication for now - will replace above
 
     /**
      * @brief Set the data type for the buffer.
