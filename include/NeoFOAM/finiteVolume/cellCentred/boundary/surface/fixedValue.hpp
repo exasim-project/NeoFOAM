@@ -8,9 +8,32 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::surfaceBoundary
 {
+namespace impl
+{
+// Without this function the compiler warns that calling a __host__ function
+// from
+template<typename ValueType>
+void setFixedValue(
+    DomainField<ValueType>& domainField, std::pair<size_t, size_t> range, ValueType fixedValue
+)
+{
+    auto refValue = domainField.boundaryField().refValue().span();
+    auto value = domainField.boundaryField().value().span();
+
+    NeoFOAM::parallelFor(
+        domainField.exec(),
+        range,
+        KOKKOS_LAMBDA(const size_t i) {
+            refValue[i] = fixedValue;
+            value[i] = fixedValue;
+        }
+    );
+}
+}
 
 template<typename ValueType>
 class FixedValue :
@@ -26,10 +49,7 @@ public:
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
-        auto boundarySpan = domainField.boundaryField().refValue().span(this->range());
-        std::visit(
-            [&](auto exec) { setFixedValue(exec, boundarySpan, fixedValue_); }, domainField.exec()
-        );
+        impl::setFixedValue(domainField, this->range(), fixedValue_);
     }
 
     static std::string name() { return "fixedValue"; }
@@ -37,31 +57,6 @@ public:
     static std::string doc() { return "Set a fixed value on the boundary"; }
 
     static std::string schema() { return "none"; }
-
-    // NOTE: this function can not be private or
-    // it will yield the following error:
-    // The enclosing parent function for an extended __host__ __device__ lambda cannot have
-    // private or protected access within its cla
-    template<typename Executor>
-    void setFixedValue(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
-    {
-        if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
-        {
-            for (auto& value : inField)
-            {
-                value = targetValue;
-            }
-        }
-        else
-        {
-            using runOn = typename Executor::exec;
-            Kokkos::parallel_for(
-                "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(0, inField.size()),
-                KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
-            );
-        }
-    }
 
 private:
 

@@ -42,16 +42,18 @@ class VolumeBoundary : public BoundaryPatchMixin
 {
 public:
 
-    VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary dict, int patchID)
+    VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary& dict, int patchID)
         : BoundaryPatchMixin(
             mesh.boundaryMesh().offset()[patchID],
             mesh.boundaryMesh().offset()[patchID + 1],
             patchID
         ),
-          boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(mesh, dict, patchID))
+          boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(
+              dict.get<std::string>("type"), mesh, dict, patchID
+          ))
     {}
 
-    virtual void correctBoundaryConditions(DomainField<ValueType>& domainField)
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField)
     {
         boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
     }

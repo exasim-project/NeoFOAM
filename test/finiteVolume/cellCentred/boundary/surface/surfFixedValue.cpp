@@ -9,7 +9,7 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volume/fixedValue.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surface/fixedValue.hpp"
 
 TEST_CASE("fixedValue")
 {
@@ -23,13 +23,13 @@ TEST_CASE("fixedValue")
 
     SECTION("TestDerivedClass" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh();
+        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
         NeoFOAM::scalar setValue {10};
         NeoFOAM::Dictionary dict;
         dict.insert("fixedValue", setValue);
         auto boundary =
-            NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoFOAM::scalar>::create(
+            NeoFOAM::finiteVolume::cellCentred::SurfaceBoundaryFactory<NeoFOAM::scalar>::create(
                 "fixedValue", mesh, dict, 0
             );
 
@@ -43,7 +43,7 @@ TEST_CASE("fixedValue")
         }
 
         auto otherBoundary =
-            NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoFOAM::scalar>::create(
+            NeoFOAM::finiteVolume::cellCentred::SurfaceBoundaryFactory<NeoFOAM::scalar>::create(
                 "fixedValue", mesh, dict, 1
             );
 

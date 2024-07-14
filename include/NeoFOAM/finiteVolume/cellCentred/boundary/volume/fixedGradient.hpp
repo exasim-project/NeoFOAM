@@ -7,9 +7,41 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
+
+namespace impl
+{
+// Without this function the compiler warns that calling a __host__ function
+// from
+template<typename ValueType>
+void setGradientValue(
+    DomainField<ValueType>& domainField,
+    const UnstructuredMesh& mesh,
+    std::pair<size_t, size_t> range,
+    std::size_t patchID,
+    ValueType fixedGradient
+)
+{
+    const auto iField = domainField.internalField().span();
+    auto refGradient = domainField.boundaryField().refGrad().span();
+    auto value = domainField.boundaryField().value().span();
+    auto faceCells = mesh.boundaryMesh().faceCells(patchID);
+    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs(patchID);
+
+    NeoFOAM::parallelFor(
+        domainField.exec(),
+        range,
+        KOKKOS_LAMBDA(const size_t i) {
+            refGradient[i] = fixedGradient;
+            // operator / is not defined for all ValueTypes
+            value[i] = iField[faceCells[i]] + fixedGradient * (1 / deltaCoeffs[i]);
+        }
+    );
+}
+}
 
 template<typename ValueType>
 class FixedGradient :
@@ -22,16 +54,13 @@ public:
     using FixedGradientType = FixedGradient<ValueType>;
 
     FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : Base(mesh, dict, patchID), fixedGradient_(dict.get<ValueType>("fixedGradient"))
+        : Base(mesh, dict, patchID), mesh_(mesh),
+          fixedGradient_(dict.get<ValueType>("fixedGradient"))
     {}
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
-        auto boundarySpan = domainField.boundaryField().refGrad().span(this->range());
-        std::visit(
-            [&](auto exec) { setFixedGradient(exec, boundarySpan, fixedGradient_); },
-            domainField.exec()
-        );
+        impl::setGradientValue(domainField, mesh_, this->range(), this->patchID(), fixedGradient_);
     }
 
     static std::string name() { return "fixedGradient"; }
@@ -40,34 +69,10 @@ public:
 
     static std::string schema() { return "none"; }
 
-    // NOTE: this function can not be private or
-    // it will yield the following error:
-    // The enclosing parent function for an extended __host__ __device__ lambda cannot have
-    // private or protected access within its class
-    template<typename Executor>
-    void setFixedGradient(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
-    {
-        if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
-        {
-            for (auto& value : inField)
-            {
-                value = targetValue;
-            }
-        }
-        else
-        {
-            // TODO implement
-            using runOn = typename Executor::exec;
-            Kokkos::parallel_for(
-                "parallelForImpl",
-                Kokkos::RangePolicy<runOn>(0, inField.size()),
-                KOKKOS_LAMBDA(std::size_t i) { inField[i] = targetValue; }
-            );
-        }
-    }
 
 private:
 
+    const UnstructuredMesh& mesh_;
     ValueType fixedGradient_;
 };
 

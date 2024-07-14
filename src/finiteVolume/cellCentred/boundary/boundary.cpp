@@ -30,9 +30,6 @@ template class fvcc::SurfaceBoundaryFactory<Vector>;
 template class fvcc::surfaceBoundary::FixedValue<scalar>;
 template class fvcc::surfaceBoundary::FixedValue<Vector>;
 
-template class fvcc::surfaceBoundary::FixedGradient<scalar>;
-template class fvcc::surfaceBoundary::FixedGradient<Vector>;
-
 template class fvcc::surfaceBoundary::Calculated<scalar>;
 template class fvcc::surfaceBoundary::Calculated<Vector>;
 
