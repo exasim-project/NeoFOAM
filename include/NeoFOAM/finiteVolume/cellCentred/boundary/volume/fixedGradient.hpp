@@ -12,7 +12,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
-namespace impl
+namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from
@@ -60,7 +60,9 @@ public:
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
-        impl::setGradientValue(domainField, mesh_, this->range(), this->patchID(), fixedGradient_);
+        detail::setGradientValue(
+            domainField, mesh_, this->range(), this->patchID(), fixedGradient_
+        );
     }
 
     static std::string name() { return "fixedGradient"; }
