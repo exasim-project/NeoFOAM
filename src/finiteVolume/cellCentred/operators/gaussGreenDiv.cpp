@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/cellCentredFiniteVolume/div/gaussGreenDiv.hpp"
-#include "NeoFOAM/cellCentredFiniteVolume/bcFields/fvccBoundaryFieldSelector.hpp"
+#include "NeoFOAM/finiteVolume/operators/gaussGreenDiv.hpp"
 #include <functional>
 
 namespace NeoFOAM
 {
 
 GaussGreenDivKernel::GaussGreenDivKernel(
-    const UnstructuredMesh& mesh, const surfaceInterpolation& surfInterp
+    const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
 )
     : mesh_(mesh), surfaceInterpolation_(surfInterp) {
 
@@ -17,24 +16,24 @@ GaussGreenDivKernel::GaussGreenDivKernel(
 
 void GaussGreenDivKernel::operator()(
     const GPUExecutor& exec,
-    fvccVolField<scalar>& divPhi,
-    const fvccSurfaceField<scalar>& faceFlux,
-    const fvccVolField<scalar>& phi
+    fvcc::VolumeField<scalar>& divPhi,
+    const fvcc::SurfaceField<scalar>& faceFlux,
+    const fvcc::VolumeField<scalar>& phi
 )
 {
     using executor = typename GPUExecutor::exec;
-    fvccSurfaceField<NeoFOAM::scalar> phif(
+    fvcc::SurfaceField<NeoFOAM::scalar> phif(
         exec, mesh_, NeoFOAM::createCalculatedBCs<scalar>(mesh_)
     );
-    const auto s_faceCells = mesh_.boundaryMesh().faceCells().field();
+    const auto s_faceCells = mesh_.boundaryMesh().faceCells().span();
     surfaceInterpolation_.interpolate(phif, faceFlux, phi);
 
-    auto s_divPhi = divPhi.internalField().field();
+    auto s_divPhi = divPhi.internalField().span();
 
-    const auto s_phif = phif.internalField().field();
-    const auto s_owner = mesh_.faceOwner().field();
-    const auto s_neighbour = mesh_.faceNeighbour().field();
-    const auto s_faceFlux = faceFlux.internalField().field();
+    const auto s_phif = phif.internalField().span();
+    const auto s_owner = mesh_.faceOwner().span();
+    const auto s_neighbour = mesh_.faceNeighbour().span();
+    const auto s_faceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh_.nInternalFaces();
 
     Kokkos::parallel_for(
@@ -57,7 +56,7 @@ void GaussGreenDivKernel::operator()(
         }
     );
 
-    const auto s_V = mesh_.cellVolumes().field();
+    const auto s_V = mesh_.cellVolumes().span();
     Kokkos::parallel_for(
         "gaussGreenGrad",
         Kokkos::RangePolicy<executor>(0, mesh_.nCells()),
@@ -67,24 +66,24 @@ void GaussGreenDivKernel::operator()(
 
 void GaussGreenDivKernel::operator()(
     const OMPExecutor& exec,
-    fvccVolField<scalar>& divPhi,
-    const fvccSurfaceField<scalar>& faceFlux,
-    const fvccVolField<scalar>& phi
+    fvcc::VolumeField<scalar>& divPhi,
+    const fvcc::SurfaceField<scalar>& faceFlux,
+    const fvcc::VolumeField<scalar>& phi
 )
 {
     using executor = typename OMPExecutor::exec;
-    fvccSurfaceField<NeoFOAM::scalar> phif(
+    fvcc::SurfaceField<NeoFOAM::scalar> phif(
         exec, mesh_, NeoFOAM::createCalculatedBCs<scalar>(mesh_)
     );
-    const auto s_faceCells = mesh_.boundaryMesh().faceCells().field();
+    const auto s_faceCells = mesh_.boundaryMesh().faceCells().span();
     surfaceInterpolation_.interpolate(phif, faceFlux, phi);
 
-    auto s_divPhi = divPhi.internalField().field();
+    auto s_divPhi = divPhi.internalField().span();
 
-    const auto s_phif = phif.internalField().field();
-    const auto s_owner = mesh_.faceOwner().field();
-    const auto s_neighbour = mesh_.faceNeighbour().field();
-    const auto s_faceFlux = faceFlux.internalField().field();
+    const auto s_phif = phif.internalField().span();
+    const auto s_owner = mesh_.faceOwner().span();
+    const auto s_neighbour = mesh_.faceNeighbour().span();
+    const auto s_faceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh_.nInternalFaces();
 
     Kokkos::parallel_for(
@@ -107,7 +106,7 @@ void GaussGreenDivKernel::operator()(
         }
     );
 
-    const auto s_V = mesh_.cellVolumes().field();
+    const auto s_V = mesh_.cellVolumes().span();
     Kokkos::parallel_for(
         "gaussGreenGrad",
         Kokkos::RangePolicy<executor>(0, mesh_.nCells()),
@@ -116,24 +115,24 @@ void GaussGreenDivKernel::operator()(
 }
 void GaussGreenDivKernel::operator()(
     const CPUExecutor& exec,
-    fvccVolField<scalar>& divPhi,
-    const fvccSurfaceField<scalar>& faceFlux,
-    const fvccVolField<scalar>& phi
+    fvcc::VolumeField<scalar>& divPhi,
+    const fvcc::SurfaceField<scalar>& faceFlux,
+    const fvcc::VolumeField<scalar>& phi
 )
 {
     using executor = typename CPUExecutor::exec;
-    fvccSurfaceField<NeoFOAM::scalar> phif(
+    fvcc::SurfaceField<NeoFOAM::scalar> phif(
         exec, mesh_, NeoFOAM::createCalculatedBCs<scalar>(mesh_)
     );
-    const auto s_faceCells = mesh_.boundaryMesh().faceCells().field();
+    const auto s_faceCells = mesh_.boundaryMesh().faceCells().span();
     surfaceInterpolation_.interpolate(phif, faceFlux, phi);
 
-    auto s_divPhi = divPhi.internalField().field();
+    auto s_divPhi = divPhi.internalField().span();
 
-    const auto s_phif = phif.internalField().field();
-    const auto s_owner = mesh_.faceOwner().field();
-    const auto s_neighbour = mesh_.faceNeighbour().field();
-    const auto s_faceFlux = faceFlux.internalField().field();
+    const auto s_phif = phif.internalField().span();
+    const auto s_owner = mesh_.faceOwner().span();
+    const auto s_neighbour = mesh_.faceNeighbour().span();
+    const auto s_faceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh_.nInternalFaces();
 
     for (int i = 0; i < nInternalFaces; i++)
@@ -150,7 +149,7 @@ void GaussGreenDivKernel::operator()(
         s_divPhi[own] += value_own;
     }
 
-    const auto s_V = mesh_.cellVolumes().field();
+    const auto s_V = mesh_.cellVolumes().span();
     for (int celli = 0; celli < mesh_.nCells(); celli++)
     {
         s_divPhi[celli] *= 1 / s_V[celli];
@@ -158,17 +157,17 @@ void GaussGreenDivKernel::operator()(
 }
 
 
-gaussGreenDiv::gaussGreenDiv(
-    const executor& exec, const UnstructuredMesh& mesh, const surfaceInterpolation& surfInterp
+GaussGreenDiv::GaussGreenDiv(
+    const Executor& exec, const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
 )
     : mesh_(mesh), surfaceInterpolation_(surfInterp) {
 
                    };
 
-void gaussGreenDiv::div(
-    fvccVolField<scalar>& divPhi,
-    const fvccSurfaceField<scalar>& faceFlux,
-    fvccVolField<scalar>& phi
+void GaussGreenDiv::div(
+    fvcc::VolumeField<scalar>& divPhi,
+    const fvcc::SurfaceField<scalar>& faceFlux,
+    fvcc::VolumeField<scalar>& phi
 )
 {
     GaussGreenDivKernel kernel_(mesh_, surfaceInterpolation_);
