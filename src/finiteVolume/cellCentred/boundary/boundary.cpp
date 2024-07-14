@@ -12,16 +12,28 @@ namespace fvcc = finiteVolume::cellCentred;
 template class fvcc::VolumeBoundaryFactory<scalar>;
 template class fvcc::VolumeBoundaryFactory<Vector>;
 
-template class fvcc::FixedValue<scalar>;
-template class fvcc::FixedValue<Vector>;
+template class fvcc::volumeBoundary::FixedValue<scalar>;
+template class fvcc::volumeBoundary::FixedValue<Vector>;
 
-template class fvcc::FixedGradient<scalar>;
-template class fvcc::FixedGradient<Vector>;
+template class fvcc::volumeBoundary::FixedGradient<scalar>;
+template class fvcc::volumeBoundary::FixedGradient<Vector>;
 
-template class fvcc::Calculated<scalar>;
-template class fvcc::Calculated<Vector>;
+template class fvcc::volumeBoundary::Calculated<scalar>;
+template class fvcc::volumeBoundary::Calculated<Vector>;
 
-template class fvcc::Empty<scalar>;
-template class fvcc::Empty<Vector>;
+template class fvcc::volumeBoundary::Empty<scalar>;
+template class fvcc::volumeBoundary::Empty<Vector>;
+
+template class fvcc::SurfaceBoundaryFactory<scalar>;
+template class fvcc::SurfaceBoundaryFactory<Vector>;
+
+template class fvcc::surfaceBoundary::FixedValue<scalar>;
+template class fvcc::surfaceBoundary::FixedValue<Vector>;
+
+template class fvcc::surfaceBoundary::Calculated<scalar>;
+template class fvcc::surfaceBoundary::Calculated<Vector>;
+
+template class fvcc::surfaceBoundary::Empty<scalar>;
+template class fvcc::surfaceBoundary::Empty<Vector>;
 
 }

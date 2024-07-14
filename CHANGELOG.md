@@ -1,4 +1,6 @@
 # Version 0.1.0 (unreleased)
+- Implementation of surface BCs and improvements to volume BCs  [PR #104](https://github.com/exasim-project/NeoFOAM/pull/104)
+- improvements to vector and dictionary; fix of the hanging issue with cuda  [PR #108](https://github.com/exasim-project/NeoFOAM/pull/108)
 - Field update: A number of operators and functions added, some bug fixes, and improved testing. [PR #34](https://github.com/exasim-project/NeoFOAM/pull/34)
 - Provide wrapper for Catch2 that handles tests running with MPI [#82](https://github.com/exasim-project/NeoFOAM/pull/82)
 - added parallelFor and parallelReduce [#62](https://github.com/exasim-project/NeoFOAM/pull/62)
