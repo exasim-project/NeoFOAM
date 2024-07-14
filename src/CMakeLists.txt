@@ -9,6 +9,7 @@ include(GNUInstallDirs)
 target_sources(
   NeoFOAM
   PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
+          "core/primitives/vector.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
@@ -18,7 +19,6 @@ target_sources(
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/communicator.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
-          "mesh/stencil/stencilDataBase.cpp"
           "mesh/stencil/stencilDataBase.cpp"
           "finiteVolume/cellCentred/boundary/boundary.cpp")
 
