@@ -3,33 +3,38 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 
-void NeoFOAM::Dictionary::insert(const std::string& key, const std::any& value)
+namespace NeoFOAM
 {
-    data_[key] = value;
+
+Dictionary::Dictionary(const std::unordered_map<std::string, std::any>& keyValuePairs)
+    : data_(keyValuePairs)
+{}
+
+Dictionary::Dictionary(const std::initializer_list<std::pair<std::string, std::any>>& initList)
+{
+    for (const auto& pair : initList)
+    {
+        data_.insert(pair);
+    }
 }
 
-void NeoFOAM::Dictionary::remove(const std::string& key) { data_.erase(key); }
+void Dictionary::insert(const std::string& key, const std::any& value) { data_[key] = value; }
 
-bool NeoFOAM::Dictionary::found(const std::string& key) const
+void Dictionary::remove(const std::string& key) { data_.erase(key); }
+
+bool Dictionary::found(const std::string& key) const { return data_.find(key) != data_.end(); }
+
+std::any& Dictionary::operator[](const std::string& key) { return data_.at(key); }
+
+const std::any& Dictionary::operator[](const std::string& key) const { return data_.at(key); }
+
+Dictionary& Dictionary::subDict(const std::string& key)
 {
-    return data_.find(key) != data_.end();
+    return std::any_cast<Dictionary&>(data_.at(key));
 }
 
-std::any& NeoFOAM::Dictionary::operator[](const std::string& key) { return data_.at(key); }
+std::unordered_map<std::string, std::any>& Dictionary::getMap() { return data_; }
 
-const std::any& NeoFOAM::Dictionary::operator[](const std::string& key) const
-{
-    return data_.at(key);
-}
+const std::unordered_map<std::string, std::any>& Dictionary::getMap() const { return data_; }
 
-NeoFOAM::Dictionary& NeoFOAM::Dictionary::subDict(const std::string& key)
-{
-    return std::any_cast<NeoFOAM::Dictionary&>(data_.at(key));
-}
-
-std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap() { return data_; }
-
-const std::unordered_map<std::string, std::any>& NeoFOAM::Dictionary::getMap() const
-{
-    return data_;
-}
+} // namespace NeoFOAM
