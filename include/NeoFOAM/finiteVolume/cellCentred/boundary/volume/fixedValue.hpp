@@ -13,7 +13,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
-namespace impl
+namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from
@@ -50,7 +50,7 @@ public:
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final
     {
-        impl::setFixedValue(domainField, this->range(), fixedValue_);
+        detail::setFixedValue(domainField, this->range(), fixedValue_);
     }
 
     static std::string name() { return "fixedValue"; }
