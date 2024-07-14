@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "NeoFOAM/finiteVolume/cellCentred/fields/geometricField.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
