@@ -15,7 +15,7 @@ namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
-// from
+// from a __device__ function is not allowed
 template<typename ValueType>
 void setGradientValue(
     DomainField<ValueType>& domainField,
