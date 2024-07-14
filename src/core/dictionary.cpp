@@ -3,6 +3,20 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 
+NeoFOAM::Dictionary::Dictionary(const std::unordered_map<std::string, std::any>& keyValuePairs)
+    : data_(keyValuePairs)
+{}
+
+NeoFOAM::Dictionary::Dictionary(
+    const std::initializer_list<std::pair<std::string, std::any>>& initList
+)
+{
+    for (const auto& pair : initList)
+    {
+        data_.insert(pair);
+    }
+}
+
 void NeoFOAM::Dictionary::insert(const std::string& key, const std::any& value)
 {
     data_[key] = value;

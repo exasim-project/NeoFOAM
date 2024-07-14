@@ -39,6 +39,26 @@ TEST_CASE("parallelFor")
         }
     }
 
+    SECTION("parallelFor_Vector" + execName)
+    {
+        NeoFOAM::Field<NeoFOAM::Vector> fieldA(exec, 5);
+        NeoFOAM::fill(fieldA, NeoFOAM::Vector(0.0, 0.0, 0.0));
+        NeoFOAM::Field<NeoFOAM::Vector> fieldB(exec, 5);
+        auto spanA = fieldA.span();
+        auto spanB = fieldB.span();
+        NeoFOAM::fill(fieldB, NeoFOAM::Vector(1.0, 1.0, 1.0));
+        NeoFOAM::parallelFor(
+            exec,
+            {0, 5},
+            KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
+        );
+        auto hostSpanA = fieldA.copyToHost().span();
+        for (auto value : hostSpanA)
+        {
+            REQUIRE(value == NeoFOAM::Vector(3.0, 3.0, 3.0));
+        }
+    }
+
     SECTION("parallelFor_Field_" + execName)
     {
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);

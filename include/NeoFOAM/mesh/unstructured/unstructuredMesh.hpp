@@ -279,6 +279,6 @@ private:
  * left, top, right, bottom faces
  * and four boundaries one left, right, top, bottom
  */
-UnstructuredMesh createSingleCellMesh();
+UnstructuredMesh createSingleCellMesh(const Executor exec);
 
 } // namespace NeoFOAM

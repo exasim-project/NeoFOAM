@@ -9,7 +9,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
 template<typename ValueType>

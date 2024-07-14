@@ -9,6 +9,7 @@ include(GNUInstallDirs)
 target_sources(
   NeoFOAM
   PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
+          "core/primitives/vector.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
@@ -19,8 +20,13 @@ target_sources(
           "mesh/unstructured/communicator.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
           "mesh/stencil/stencilDataBase.cpp"
-          "mesh/stencil/stencilDataBase.cpp"
-          "finiteVolume/boundary.cpp")
+          "mesh/stencil/fvccGeometryScheme.cpp"
+          "mesh/stencil/basicFvccGeometryScheme.cpp"
+          "finiteVolume/cellCentred/boundary/boundary.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+          "finiteVolume/cellCentred/interpolation/linear.cpp"
+          "finiteVolume/cellCentred/interpolation/upwind.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(

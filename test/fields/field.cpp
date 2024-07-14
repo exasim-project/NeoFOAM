@@ -30,9 +30,10 @@ TEST_CASE("Field Constructors")
 
         REQUIRE(b.size() == size);
 
-        for (int i = 0; i < size; i++)
+        auto hostSpanB = b.copyToHost().span();
+        for (auto value : hostSpanB)
         {
-            REQUIRE(b[i] == 5.0);
+            REQUIRE(value == 5.0);
         }
     }
 
@@ -80,9 +81,10 @@ TEST_CASE("Field Operator Overloads")
 
         a += b;
 
-        for (int i = 0; i < size; i++)
+        auto hostSpanA = a.copyToHost().span();
+        for (auto value : hostSpanA)
         {
-            REQUIRE(a[i] == 15.0);
+            REQUIRE(value == 15.0);
         }
     }
 
@@ -96,9 +98,10 @@ TEST_CASE("Field Operator Overloads")
 
         a -= b;
 
-        for (int i = 0; i < size; i++)
+        auto hostSpanA = a.copyToHost().span();
+        for (auto value : hostSpanA)
         {
-            REQUIRE(a[i] == -5.0);
+            REQUIRE(value == -5.0);
         }
     }
 
@@ -112,9 +115,10 @@ TEST_CASE("Field Operator Overloads")
         NeoFOAM::fill(b, 10.0);
 
         c = a + b;
-        for (int i = 0; i < size; i++)
+        auto hostSpanC = c.copyToHost().span();
+        for (auto value : hostSpanC)
         {
-            REQUIRE(c[i] == 15.0);
+            REQUIRE(value == 15.0);
         }
     }
 
@@ -129,9 +133,10 @@ TEST_CASE("Field Operator Overloads")
 
         c = a - b;
 
-        for (int i = 0; i < size; i++)
+        auto hostSpanC = c.copyToHost().span();
+        for (auto value : hostSpanC)
         {
-            REQUIRE(c[i] == -5.0);
+            REQUIRE(value == -5.0);
         }
     }
 }
@@ -174,6 +179,21 @@ TEST_CASE("Field Container Operations")
         auto subView = hostA.span({1, 2});
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
+    }
+
+    SECTION("spanVector" + execName)
+    {
+        NeoFOAM::Field<NeoFOAM::Vector> a(exec, {{1, 1, 1}, {2, 2, 2}, {3, 3, 3}});
+        auto hostA = a.copyToHost();
+
+        auto view = hostA.span();
+        REQUIRE(view[0] == NeoFOAM::Vector(1, 1, 1));
+        REQUIRE(view[1] == NeoFOAM::Vector(2, 2, 2));
+        REQUIRE(view[2] == NeoFOAM::Vector(3, 3, 3));
+
+        auto subView = hostA.span({1, 2});
+        REQUIRE(subView[0] == NeoFOAM::Vector(2, 2, 2));
+        REQUIRE(subView[1] == NeoFOAM::Vector(3, 3, 3));
     }
 
     SECTION("copyToHost " + execName)

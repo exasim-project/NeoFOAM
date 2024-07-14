@@ -25,8 +25,8 @@ Besides creating a temporary for the result it mainly calls the free standing ``
 .. code-block:: cpp
 
    using executor = typename Executor::exec;
-   auto a_f = a.field();
-   auto b_f = b.field();
+   auto a_f = a.span();
+   auto b_f = b.span();
    Kokkos::parallel_for(
       Kokkos::RangePolicy<executor>(0, a_f.size()),
       KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = a_f[i] + b_f[i]; }

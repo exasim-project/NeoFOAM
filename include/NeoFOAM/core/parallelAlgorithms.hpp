@@ -41,7 +41,7 @@ void parallelFor(const Executor& exec, std::pair<size_t, size_t> range, Kernel k
 
 
 template<parallelForKernel Kernel>
-void parallelFor(NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
+void parallelFor(const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
 {
     std::visit([&](const auto& e) { parallelFor(e, range, kernel); }, exec);
 }
@@ -105,7 +105,7 @@ void parallelReduce(const Executor& exec, std::pair<size_t, size_t> range, Kerne
 
 template<typename Kernel, typename T>
 void parallelReduce(
-    NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value
+    const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value
 )
 {
     return std::visit([&](const auto& e) { return parallelReduce(e, range, kernel, value); }, exec);

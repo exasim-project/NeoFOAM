@@ -3,7 +3,11 @@
 
 #pragma once
 
-#include "boundary/empty.hpp"
-#include "boundary/calculated.hpp"
-#include "boundary/fixedValue.hpp"
-#include "boundary/fixedGradient.hpp"
+#include "boundary/volume/empty.hpp"
+#include "boundary/volume/calculated.hpp"
+#include "boundary/volume/fixedValue.hpp"
+#include "boundary/volume/fixedGradient.hpp"
+
+#include "boundary/surface/empty.hpp"
+#include "boundary/surface/calculated.hpp"
+#include "boundary/surface/fixedValue.hpp"

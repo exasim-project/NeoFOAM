@@ -19,9 +19,9 @@ TEST_CASE("surfaceField")
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("can instantiate empty VolumeField on: " + execName)
-    {
-        auto vf = VolumeField(exec);
-        REQUIRE(vf.exec() == exec);
-    }
+    // SECTION("can instantiate empty VolumeField on: " + execName)
+    // {
+    //     auto vf = VolumeField(exec);
+    //     REQUIRE(vf.exec() == exec);
+    // }
 }

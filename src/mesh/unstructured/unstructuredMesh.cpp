@@ -62,10 +62,8 @@ StencilDataBase& UnstructuredMesh::stencilDB() const { return stencilDataBase_; 
 
 const Executor& UnstructuredMesh::exec() const { return exec_; }
 
-UnstructuredMesh createSingleCellMesh()
+UnstructuredMesh createSingleCellMesh(const Executor exec)
 {
-    Executor exec = CPUExecutor();
-
     // a 2D mesh in 3D space with left, right, top, bottom boundary faces
     // with the centre at (0.5, 0.5, 0.0)
     // left, top, right, bottom faces
@@ -87,7 +85,7 @@ UnstructuredMesh createSingleCellMesh()
         faceAreasVectors,                                                               //
         {exec, {{0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}, {-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
-        {exec, {0.5, 0.5, 0.5, 0.5}}, // deltaCoeffs
+        {exec, {2.0, 2.0, 2.0, 2.0}}, // deltaCoeffs --> mag(1 / delta)
         {0, 1, 2, 3, 4}               // offset
     );
     return UnstructuredMesh(

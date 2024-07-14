@@ -68,4 +68,12 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         NeoFOAM::Dictionary& sDict2 = dict.subDict("subDict");
         REQUIRE(sDict2.get<int>("key1") == 100);
     }
+
+    SECTION("initialize with map")
+    {
+        NeoFOAM::Dictionary dict_init({{"key1", 42}, {"key2", std::string("Hello")}});
+
+        REQUIRE(dict_init.get<int>("key1") == 42);
+        REQUIRE(dict_init.get<std::string>("key2") == "Hello");
+    }
 }
