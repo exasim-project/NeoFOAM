@@ -11,7 +11,7 @@
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/operations/comparison.hpp"
 
-TEST_CASE("Field Operations")
+TEST_CASE("Field Constructors")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -21,19 +21,31 @@ TEST_CASE("Field Operations")
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("Can initialize Field from initializer list on " + execName)
+    SECTION("Copy Constructor " + execName)
     {
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(a);
 
+        REQUIRE(b.size() == size);
+
+        for (int i = 0; i < size; i++)
+        {
+            REQUIRE(b[i] == 5.0);
+        }
+    }
+
+    SECTION("Initialiser List Constructor " + execName)
+    {
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
-
         auto hostA = a.copyToHost();
-
         REQUIRE(hostA.data()[0] == 1);
         REQUIRE(hostA.data()[1] == 2);
         REQUIRE(hostA.data()[2] == 3);
     }
 
-    SECTION("Can initialize Field from a Field on " + execName)
+    SECTION("Cross Exec Constructor " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
@@ -45,20 +57,126 @@ TEST_CASE("Field Operations")
         REQUIRE(hostB.data()[1] == 2);
         REQUIRE(hostB.data()[2] == 3);
     }
+}
 
-    SECTION("Can create a subview " + execName)
+TEST_CASE("Field Operator Overloads")
+{
+
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("Field Operator+= " + execName)
     {
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
 
+        a += b;
+
+        for (int i = 0; i < size; i++)
+        {
+            REQUIRE(a[i] == 15.0);
+        }
+    }
+
+    SECTION("Field Operator-= " + execName)
+    {
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        a -= b;
+
+        for (int i = 0; i < size; i++)
+        {
+            REQUIRE(a[i] == -5.0);
+        }
+    }
+
+    SECTION("Field Operator+ " + execName)
+    {
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> c(exec, size);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a + b;
+        for (int i = 0; i < size; i++)
+        {
+            REQUIRE(c[i] == 15.0);
+        }
+    }
+
+    SECTION("Field Operator-" + execName)
+    {
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        NeoFOAM::Field<NeoFOAM::scalar> c(exec, size);
+        NeoFOAM::fill(a, 5.0);
+        NeoFOAM::fill(b, 10.0);
+
+        c = a - b;
+
+        for (int i = 0; i < size; i++)
+        {
+            REQUIRE(c[i] == -5.0);
+        }
+    }
+}
+
+TEST_CASE("Field Container Operations")
+{
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("empty, size, range" + execName)
+    {
+        int size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> a(exec, 0);
+        NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
+        REQUIRE(a.empty() == true);
+        REQUIRE(a.size() == 0);
+        REQUIRE(a.range().first == 0);
+        REQUIRE(a.range().second == 0);
+        REQUIRE(b.empty() == false);
+        REQUIRE(b.size() == size);
+        REQUIRE(b.range().first == 0);
+        REQUIRE(b.range().second == size);
+    };
+
+    SECTION("span" + execName)
+    {
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
-
         auto hostA = a.copyToHost();
-        auto subView = hostA.span({1, 2});
 
+        auto view = hostA.span();
+        REQUIRE(view[0] == 1);
+        REQUIRE(view[1] == 2);
+        REQUIRE(view[2] == 3);
+
+        auto subView = hostA.span({1, 2});
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
     }
 
-    SECTION("Copy to host creates a copy from " + execName)
+    SECTION("copyToHost " + execName)
     {
 
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
@@ -66,24 +184,20 @@ TEST_CASE("Field Operations")
         auto hostA = a.copyToHost();
         auto hostB = a.copyToHost();
 
-        hostA.data()[0] = 0;
-
-        REQUIRE(hostA.data()[0] != hostB.data()[0]);
+        REQUIRE(&(hostA.data()[0]) != &(hostB.data()[0]));
         REQUIRE(hostA.data()[1] == hostB.data()[1]);
     }
+}
 
-    SECTION("Can set via a subview " + execName)
-    {
+TEST_CASE("Field Operations")
+{
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
 
-        NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
-
-        auto hostA = a.copyToHost();
-        auto subView = hostA.span({1, 2});
-        subView[0] = 5;
-
-        REQUIRE(subView[0] == 5);
-        REQUIRE(subView[1] == 3);
-    }
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
     SECTION("Field_" + execName)
     {
@@ -120,46 +234,5 @@ TEST_CASE("Field Operations")
         auto s_b = b.span();
         a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
         REQUIRE(equal(a, 20.0));
-    }
-}
-
-TEST_CASE("Primitives")
-{
-    SECTION("Vector")
-    {
-        SECTION("CPU")
-        {
-            NeoFOAM::Vector a(1.0, 2.0, 3.0);
-            REQUIRE(a(0) == 1.0);
-            REQUIRE(a(1) == 2.0);
-            REQUIRE(a(2) == 3.0);
-
-            NeoFOAM::Vector b(1.0, 2.0, 3.0);
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector c(2.0, 4.0, 6.0);
-
-            REQUIRE(a + b == c);
-
-            REQUIRE((a - b) == NeoFOAM::Vector(0.0, 0.0, 0.0));
-
-            a += b;
-            REQUIRE(a == c);
-
-            a -= b;
-            REQUIRE(a == b);
-            a *= 2;
-            REQUIRE(a == c);
-            a = b;
-
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector d(4.0, 8.0, 12.0);
-            REQUIRE((a + a + a + a) == d);
-            REQUIRE((4 * a) == d);
-            REQUIRE((a * 4) == d);
-            REQUIRE((a + 3 * a) == d);
-            REQUIRE((a + 2 * a + a) == d);
-        }
     }
 }

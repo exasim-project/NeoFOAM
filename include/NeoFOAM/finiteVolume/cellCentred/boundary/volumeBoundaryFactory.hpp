@@ -4,45 +4,29 @@
 #pragma once
 
 #include "NeoFOAM/core/dictionary.hpp"
-#include "NeoFOAM/core/registerClass.hpp"
-#include "NeoFOAM/fields.hpp"
+#include "NeoFOAM/core/runtimeSelectionFactory.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-// forward declaration so we can use it to define the create function and the class manager
 template<typename ValueType>
-class VolumeBoundaryFactory;
-
-// a detail namespace to prevent conflicts for surface boundaries
-namespace cellCentred::VolumeBoundaryDetail
-{
-
-// define the create function use to instantiate the derived classes
-template<typename ValueType>
-using CreateFunc = std::function<std::unique_ptr<VolumeBoundaryFactory<ValueType>>(
-    const UnstructuredMesh&, const Dictionary, int
-)>;
-
-template<typename ValueType>
-using ClassRegistry =
-    NeoFOAM::BaseClassRegistry<VolumeBoundaryFactory<ValueType>, CreateFunc<ValueType>>;
-}
-
-using namespace cellCentred::VolumeBoundaryDetail;
-
-template<typename ValueType>
-class VolumeBoundaryFactory : public ClassRegistry<ValueType>, public BoundaryPatchMixin
+class VolumeBoundaryFactory :
+    public NeoFOAM::RuntimeSelectionFactory<
+        VolumeBoundaryFactory<ValueType>,
+        Parameters<const UnstructuredMesh&, const Dictionary&, int>>,
+    public BoundaryPatchMixin
 {
 public:
 
-    VolumeBoundaryFactory(const UnstructuredMesh& mesh, std::size_t patchID)
+    static std::string name() { return "VolumeBoundaryFactory"; }
+
+    VolumeBoundaryFactory(
+        const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary&, std::size_t patchID
+    )
         : BoundaryPatchMixin(mesh, patchID) {};
-
-
-    MAKE_CLASS_A_RUNTIME_FACTORY(VolumeBoundaryFactory<ValueType>, ClassRegistry<ValueType>, CreateFunc<ValueType>)
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) = 0;
 };

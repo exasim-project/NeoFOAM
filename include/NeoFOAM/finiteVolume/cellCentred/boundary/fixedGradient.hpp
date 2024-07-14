@@ -12,25 +12,18 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-class FixedGradient : public VolumeBoundaryFactory<ValueType>
+class FixedGradient :
+    public VolumeBoundaryFactory<ValueType>::template Register<FixedGradient<ValueType>>
 {
+    using Base = VolumeBoundaryFactory<ValueType>::template Register<FixedGradient<ValueType>>;
 
 public:
 
     using FixedGradientType = FixedGradient<ValueType>;
 
     FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : VolumeBoundaryFactory<ValueType>(mesh, patchID),
-          fixedGradient_(dict.get<ValueType>("fixedGradient"))
-    {
-        VolumeBoundaryFactory<ValueType>::template registerClass<FixedGradientType>();
-    }
-
-    static std::unique_ptr<VolumeBoundaryFactory<ValueType>>
-    create(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-    {
-        return std::make_unique<FixedGradientType>(mesh, dict, patchID);
-    }
+        : Base(mesh, dict, patchID), fixedGradient_(dict.get<ValueType>("fixedGradient"))
+    {}
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
     {
@@ -43,11 +36,14 @@ public:
 
     static std::string name() { return "fixedGradient"; }
 
+    static std::string doc() { return "Set a fixed gradient on the boundary."; }
+
+    static std::string schema() { return "none"; }
 
     // NOTE: this function can not be private or
     // it will yield the following error:
     // The enclosing parent function for an extended __host__ __device__ lambda cannot have
-    // private or protected access within its cla
+    // private or protected access within its class
     template<typename Executor>
     void setFixedGradient(const Executor& exec, std::span<ValueType> inField, ValueType targetValue)
     {
