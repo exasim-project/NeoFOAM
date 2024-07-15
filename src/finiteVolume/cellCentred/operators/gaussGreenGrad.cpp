@@ -3,153 +3,87 @@
 
 #include "NeoFOAM/finiteVolume/operators/gaussGreenGrad.hpp"
 #include <functional>
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM
 {
 
-GaussGreenKernel::GaussGreenKernel(
-    const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
-)
-    : mesh_(mesh), surfaceInterpolation_(surfInterp) {};
 
-void GaussGreenKernel::operator()(
-    const GPUExecutor& exec,
+void detail::computeGrad(
     fvcc::VolumeField<Vector>& gradPhi,
-    const fvcc::VolumeField<scalar>& phi
+    const fvcc::VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp
 )
 {
-    using executor = typename GPUExecutor::exec;
+
+    const UnstructuredMesh& mesh = gradPhi.mesh();
+    const auto exec = gradPhi.exec();
     fvcc::SurfaceField<NeoFOAM::scalar> phif(
-        exec, mesh_, NeoFOAM::createCalculatedBCs<scalar>(mesh_)
+        exec, mesh, NeoFOAM::createCalculatedBCs<scalar>(mesh)
     );
-    const auto s_faceCells = mesh_.boundaryMesh().faceCells().span();
-    surfaceInterpolation_.interpolate(phif, phi);
-
-    const auto s_phif = phif.internalField().span();
-    const auto s_gradPhi = gradPhi.internalField().span();
-    const auto s_owner = mesh_.faceOwner().span();
-    const auto s_neighbour = mesh_.faceNeighbour().span();
-    const auto s_Sf = mesh_.faceAreas().span();
-    size_t nInternalFaces = mesh_.nInternalFaces();
-
-    Kokkos::parallel_for(
-        "gaussGreenGrad",
-        Kokkos::RangePolicy<executor>(0, nInternalFaces),
-        KOKKOS_LAMBDA(const int i) {
-            NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
-            Kokkos::atomic_add(&s_gradPhi[s_owner[i]], Flux);
-            Kokkos::atomic_sub(&s_gradPhi[s_neighbour[i]], Flux);
-        }
-    );
-
-    Kokkos::parallel_for(
-        "gaussGreenGrad",
-        Kokkos::RangePolicy<executor>(nInternalFaces, s_phif.size()),
-        KOKKOS_LAMBDA(const int i) {
-            int32_t own = s_faceCells[i - nInternalFaces];
-            NeoFOAM::Vector value_own = s_Sf[i] * s_phif[i];
-            Kokkos::atomic_add(&s_gradPhi[own], value_own);
-        }
-    );
-
-    const auto s_V = mesh_.cellVolumes().span();
-    Kokkos::parallel_for(
-        "gaussGreenGrad",
-        Kokkos::RangePolicy<executor>(0, mesh_.nCells()),
-        KOKKOS_LAMBDA(const int celli) { s_gradPhi[celli] *= 1 / s_V[celli]; }
-    );
-}
-
-void GaussGreenKernel::operator()(
-    const OMPExecutor& exec,
-    fvcc::VolumeField<Vector>& gradPhi,
-    const fvcc::VolumeField<scalar>& phi
-)
-{
-    using executor = typename OMPExecutor::exec;
-    fvcc::SurfaceField<NeoFOAM::scalar> phif(
-        exec, mesh_, NeoFOAM::createCalculatedBCs<scalar>(mesh_)
-    );
-    const auto s_faceCells = mesh_.boundaryMesh().faceCells().span();
-    surfaceInterpolation_.interpolate(phif, phi);
-
-    const auto s_phif = phif.internalField().span();
-    const auto s_gradPhi = gradPhi.internalField().span();
-    const auto s_owner = mesh_.faceOwner().span();
-    const auto s_neighbour = mesh_.faceNeighbour().span();
-    const auto s_Sf = mesh_.faceAreas().span();
-    size_t nInternalFaces = mesh_.nInternalFaces();
-
-    Kokkos::parallel_for(
-        "gaussGreenGrad",
-        Kokkos::RangePolicy<executor>(0, nInternalFaces),
-        KOKKOS_LAMBDA(const int i) {
-            NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
-            Kokkos::atomic_add(&s_gradPhi[s_owner[i]], Flux);
-            Kokkos::atomic_sub(&s_gradPhi[s_neighbour[i]], Flux);
-        }
-    );
-
-    Kokkos::parallel_for(
-        "gaussGreenGrad",
-        Kokkos::RangePolicy<executor>(nInternalFaces, s_phif.size()),
-        KOKKOS_LAMBDA(const int i) {
-            int32_t own = s_faceCells[i - nInternalFaces];
-            NeoFOAM::Vector value_own = s_Sf[i] * s_phif[i];
-            Kokkos::atomic_add(&s_gradPhi[own], value_own);
-        }
-    );
-
-    const auto s_V = mesh_.cellVolumes().span();
-    Kokkos::parallel_for(
-        "gaussGreenGrad",
-        Kokkos::RangePolicy<executor>(0, mesh_.nCells()),
-        KOKKOS_LAMBDA(const int celli) { s_gradPhi[celli] *= 1 / s_V[celli]; }
-    );
-}
-
-void GaussGreenKernel::operator()(
-    const CPUExecutor& exec,
-    fvcc::VolumeField<Vector>& gradPhi,
-    const fvcc::VolumeField<scalar>& phi
-)
-{
-    using executor = typename CPUExecutor::exec;
-    fvcc::SurfaceField<NeoFOAM::scalar> phif(
-        exec, mesh_, NeoFOAM::createCalculatedBCs<scalar>(mesh_)
-    );
-    const auto s_faceCells = mesh_.boundaryMesh().faceCells().span();
-    const auto s_bSf = mesh_.boundaryMesh().sf().span();
+    const auto s_faceCells = mesh.boundaryMesh().faceCells().span();
+    const auto s_bSf = mesh.boundaryMesh().sf().span();
     auto s_gradPhi = gradPhi.internalField().span();
 
-    surfaceInterpolation_.interpolate(phif, phi);
+    surfInterp.interpolate(phif, phi);
     const auto s_phif = phif.internalField().span();
-    const auto s_owner = mesh_.faceOwner().span();
-    const auto s_neighbour = mesh_.faceNeighbour().span();
-    const auto s_Sf = mesh_.faceAreas().span();
-    size_t nInternalFaces = mesh_.nInternalFaces();
+    const auto s_owner = mesh.faceOwner().span();
+    const auto s_neighbour = mesh.faceNeighbour().span();
+    const auto s_Sf = mesh.faceAreas().span();
+    size_t nInternalFaces = mesh.nInternalFaces();
 
-    for (int i = 0; i < nInternalFaces; i++)
+    const auto s_V = mesh.cellVolumes().span();
+
+    if (std::holds_alternative<CPUExecutor>(exec))
     {
-        NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
-        s_gradPhi[s_owner[i]] += Flux;
-        s_gradPhi[s_neighbour[i]] -= Flux;
+        for (int i = 0; i < nInternalFaces; i++)
+        {
+            NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
+            s_gradPhi[s_owner[i]] += Flux;
+            s_gradPhi[s_neighbour[i]] -= Flux;
+        }
+
+        for (int i = nInternalFaces; i < s_phif.size(); i++)
+        {
+            int32_t own = s_faceCells[i - nInternalFaces];
+            NeoFOAM::Vector value_own = s_bSf[i - nInternalFaces] * s_phif[i];
+            s_gradPhi[own] += value_own;
+        }
+
+        for (int celli = 0; celli < mesh.nCells(); celli++)
+        {
+            s_gradPhi[celli] *= 1 / s_V[celli];
+        }
     }
-
-    for (int i = nInternalFaces; i < s_phif.size(); i++)
+    else
     {
-        int32_t own = s_faceCells[i - nInternalFaces];
-        NeoFOAM::Vector value_own = s_bSf[i - nInternalFaces] * s_phif[i];
-        s_gradPhi[own] += value_own;
-    }
+        NeoFOAM::parallelFor(
+            exec,
+            {0, nInternalFaces},
+            KOKKOS_LAMBDA(const size_t i) {
+                NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
+                Kokkos::atomic_add(&s_gradPhi[s_owner[i]], Flux);
+                Kokkos::atomic_sub(&s_gradPhi[s_neighbour[i]], Flux);
+            }
+        );
 
-    const auto s_V = mesh_.cellVolumes().span();
-    for (int celli = 0; celli < mesh_.nCells(); celli++)
-    {
-        s_gradPhi[celli] *= 1 / s_V[celli];
+        NeoFOAM::parallelFor(
+            exec,
+            {nInternalFaces, s_phif.size()},
+            KOKKOS_LAMBDA(const size_t i) {
+                size_t own = s_faceCells[i - nInternalFaces];
+                NeoFOAM::Vector value_own = s_Sf[i] * s_phif[i];
+                Kokkos::atomic_add(&s_gradPhi[own], value_own);
+            }
+        );
+
+        NeoFOAM::parallelFor(
+            exec,
+            {0, mesh.nCells()},
+            KOKKOS_LAMBDA(const size_t celli) { s_gradPhi[celli] *= 1 / s_V[celli]; }
+        );
     }
 }
-
 
 gaussGreenGrad::gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
     : mesh_(mesh),
@@ -160,19 +94,7 @@ gaussGreenGrad::gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mes
 
 void gaussGreenGrad::grad(fvcc::VolumeField<Vector>& gradPhi, const fvcc::VolumeField<scalar>& phi)
 {
-    GaussGreenKernel kernel_(mesh_, surfaceInterpolation_);
-    std::visit([&](const auto& exec) { kernel_(exec, gradPhi, phi); }, gradPhi.exec());
+    detail::computeGrad(gradPhi, phi, surfaceInterpolation_);
 };
-
-// fvcc::VolumeField<Vector> gaussGreenGrad::grad(const fvcc::VolumeField<scalar>& phi)
-// {
-//     fvcc::VolumeField<Vector> gradPhi(phi.exec(), mesh_, phi);
-//     GaussGreenKernel kernel_(mesh_, surfaceInterpolation_);
-//     std::visit([&](const auto& exec)
-//                { kernel_(exec,gradPhi,phi); },
-//                gradPhi.exec());
-
-//     return gradPhi;
-// };
 
 } // namespace NeoFOAM
