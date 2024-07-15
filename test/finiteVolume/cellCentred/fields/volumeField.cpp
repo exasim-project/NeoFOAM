@@ -34,11 +34,9 @@ TEST_CASE("volumeField")
             NeoFOAM::Dictionary dict;
             dict.insert("type", std::string("fixedValue"));
             dict.insert("fixedValue", 2.0);
-            bcs.push_back(
-                std::make_unique<fvcc::VolumeBoundary<NeoFOAM::scalar>>(mesh, dict, patchi)
-            );
+            bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
-        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, mesh, std::move(bcs));
+        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, mesh, bcs);
         NeoFOAM::fill(vf.internalField(), 1.0);
         vf.correctBoundaryConditions();
 
