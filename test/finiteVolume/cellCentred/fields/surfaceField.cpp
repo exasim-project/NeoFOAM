@@ -25,17 +25,15 @@ TEST_CASE("surfaceField")
     SECTION("can instantiate SurfaceField with fixedValues on: " + execName)
     {
         NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
-        std::vector<std::unique_ptr<fvcc::SurfaceBoundary<NeoFOAM::scalar>>> bcs {};
+        std::vector<fvcc::SurfaceBoundary<NeoFOAM::scalar>> bcs {};
         for (size_t patchi : {0, 1, 2, 3})
         {
             NeoFOAM::Dictionary dict;
             dict.insert("type", std::string("fixedValue"));
             dict.insert("fixedValue", 2.0);
-            bcs.push_back(
-                std::make_unique<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh, dict, patchi)
-            );
+            bcs.push_back(fvcc::SurfaceBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
-        fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, mesh, std::move(bcs));
+        fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, mesh, bcs);
         // the internal field is 4 because the mesh has 4 boundaryFaces
         NeoFOAM::fill(sf.internalField(), 1.0);
 

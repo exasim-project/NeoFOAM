@@ -16,16 +16,15 @@ namespace NeoFOAM
 namespace fvcc = finiteVolume::cellCentred;
 
 template<typename ValueType>
-std::vector<std::unique_ptr<fvcc::SurfaceBoundary<ValueType>>>
-createCalculatedBCs(const UnstructuredMesh& mesh)
+std::vector<fvcc::SurfaceBoundary<ValueType>> createCalculatedBCs(const UnstructuredMesh& mesh)
 {
     const auto& bMesh = mesh.boundaryMesh();
-    std::vector<std::unique_ptr<fvcc::SurfaceBoundary<ValueType>>> bcs;
+    std::vector<fvcc::SurfaceBoundary<ValueType>> bcs;
 
     for (int patchID = 0; patchID < mesh.nBoundaries(); patchID++)
     {
         Dictionary patchDict({{"type", std::string("calculated")}});
-        bcs.push_back(std::make_unique<fvcc::SurfaceBoundary<ValueType>>(mesh, patchDict, patchID));
+        bcs.push_back(fvcc::SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
     }
 
     return bcs;

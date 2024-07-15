@@ -27,12 +27,17 @@ public:
         : Base(mesh, dict, patchID)
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override {}
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final {}
 
     static std::string name() { return "calculated"; }
 
     static std::string doc() { return "TBD"; }
 
     static std::string schema() { return "none"; }
+
+    virtual std::unique_ptr<VolumeBoundaryFactory<ValueType>> clone() const final
+    {
+        return std::make_unique<Calculated>(*this);
+    }
 };
 }

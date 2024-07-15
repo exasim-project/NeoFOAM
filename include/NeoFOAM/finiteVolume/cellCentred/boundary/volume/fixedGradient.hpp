@@ -58,7 +58,7 @@ public:
           fixedGradient_(dict.get<ValueType>("fixedGradient"))
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final
     {
         detail::setGradientValue(
             domainField, mesh_, this->range(), this->patchID(), fixedGradient_
@@ -71,6 +71,10 @@ public:
 
     static std::string schema() { return "none"; }
 
+    virtual std::unique_ptr<VolumeBoundaryFactory<ValueType>> clone() const final
+    {
+        return std::make_unique<FixedGradient>(*this);
+    }
 
 private:
 
