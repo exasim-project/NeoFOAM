@@ -17,64 +17,48 @@
 namespace NeoFOAM
 {
 
-class Linear : public SurfaceInterpolationKernel
+namespace fvcc = finiteVolume::cellCentred;
+namespace detail
+{
+
+void computeLinearInterpolation(
+    fvcc::SurfaceField<scalar>& surfaceField,
+    const fvcc::VolumeField<scalar>& volField,
+    const std::shared_ptr<FvccGeometryScheme> geometryScheme
+);
+
+} // namespace detail
+
+
+class Linear : public SurfaceInterpolationFactory::Register<Linear>
 {
 
 public:
 
     Linear(const Executor& exec, const UnstructuredMesh& mesh);
 
+    static std::string name() { return "linear"; }
+
+    static std::string doc() { return "linear interpolation"; }
+
+    static std::string schema() { return "none"; }
+
+
     void interpolate(
-        const GPUExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::VolumeField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
     ) override;
 
     void interpolate(
-        const OMPExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::VolumeField<scalar>& volField
-    ) override;
-
-    void interpolate(
-        const CPUExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::VolumeField<scalar>& volField
-    ) override;
-
-    void interpolate(
-        const GPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::SurfaceField<scalar>& faceFlux,
         const fvcc::VolumeField<scalar>& volField
     ) override;
 
-    void interpolate(
-        const OMPExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& volField
-    ) override;
-
-    void interpolate(
-        const CPUExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& volField
-    ) override;
-
-    std::unique_ptr<SurfaceInterpolationKernel> clone() const override;
-
-    static std::unique_ptr<SurfaceInterpolationKernel>
-    create(const Executor& exec, const UnstructuredMesh& mesh);
+    std::unique_ptr<SurfaceInterpolationFactory> clone() const override;
 
 private:
 
-    const UnstructuredMesh& mesh_;
-    // const FvccGeometryScheme geometryScheme_;
     const std::shared_ptr<FvccGeometryScheme> geometryScheme_;
-
-    static bool sRegistered;
 };
 
 
