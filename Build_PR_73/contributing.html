@@ -284,15 +284,32 @@
 <p>Contributions are highly welcomed. Here is some information getting you started.</p>
 <section id="neofoam-code-style-guide">
 <h2>NeoFOAM Code Style Guide<a class="headerlink" href="#neofoam-code-style-guide" title="Link to this heading">¶</a></h2>
+<p>To simplify coding and code reviews the following code style should be considered.
+Formatting and non-format related code style is enforced via clang-format and clang-tidy.
+Corresponding configuration files are <a class="reference external" href="https://exasim-project.com/NeoFOAM/.clang-format">.clang-format</a>
+<a class="reference external" href="https://exasim-project.com/NeoFOAM/.clang-tidy">.clang-tidy</a></p>
 <blockquote>
 <div><ul class="simple">
-<li><p>use <cite>camelCase</cite> for functions and members and capitalized <cite>CamelCase</cite> for classes</p></li>
-<li><p>use <cite>camelCase</cite> for files and folder names</p></li>
-<li><p>use <cite>[[nodiscard]]</cite> except for getters</p></li>
-<li><p>use <cite>[[nodiscard]]</cite> except for getters</p></li>
-<li><p>use <cite>final except</cite> for abstract classes</p></li>
+<li><p>use US spelling</p></li>
+<li><p>Use <cite>camelCase</cite> for functions and members and capitalized <cite>CamelCase</cite> for classes</p></li>
+<li><p>Use descriptive template parameter names.
+For example prefer <cite>template &lt;class ValueType&gt;</cite> over <cite>template &lt;class T&gt;</cite></p></li>
+<li><p>Use <cite>[[nodiscard]]</cite> except for getters. To indicate that a function simply
+returns a value instead of performing expensice computations <cite>[[nodiscard]]</cite> can be omitted.</p></li>
+<li><p>Use <cite>final</cite> except for abstract classes</p></li>
+<li><p>Avoid storing references as data members in classes.
+An exception might be a <cite>const Unstructured&amp; mesh</cite> as it will most likely outlive any other objects.</p></li>
 </ul>
 </div></blockquote>
+<dl class="simple">
+<dt>Folder structurce and file names:</dt><dd><ul class="simple">
+<li><p>use <cite>camelCase</cite> for files and folder names</p></li>
+<li><p>the location of implementation and header files should be consistent.
+Ie. a file <cite>src/model/a.cpp</cite> should have a header file in <cite>include/NeoFOAM/model/a.hpp</cite> and corresponding test implementation in <cite>test/model/a.cpp</cite></p></li>
+<li><p>File and folder names should not be redundant.</p></li>
+</ul>
+</dd>
+</dl>
 </section>
 <section id="building-the-documentation">
 <h2>Building the Documentation<a class="headerlink" href="#building-the-documentation" title="Link to this heading">¶</a></h2>

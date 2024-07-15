@@ -6,12 +6,26 @@ Contributions are highly welcomed. Here is some information getting you started.
 NeoFOAM Code Style Guide
 """"""""""""""""""""""""
 
+To simplify coding and code reviews the following code style should be considered.
+Formatting and non-format related code style is enforced via clang-format and clang-tidy.
+Corresponding configuration files are `.clang-format <https://exasim-project.com/NeoFOAM/.clang-format>`_
+`.clang-tidy <https://exasim-project.com/NeoFOAM/.clang-tidy>`_
 
- * use `camelCase` for functions and members and capitalized `CamelCase` for classes
+ * use US spelling
+ * Use `camelCase` for functions and members and capitalized `CamelCase` for classes
+ * Use descriptive template parameter names.
+   For example prefer `template <class ValueType>` over `template <class T>`
+ * Use `[[nodiscard]]` except for getters. To indicate that a function simply
+   returns a value instead of performing expensice computations `[[nodiscard]]` can be omitted.
+ * Use `final` except for abstract classes
+ * Avoid storing references as data members in classes.
+   An exception might be a `const Unstructured& mesh` as it will most likely outlive any other objects.
+
+Folder structurce and file names:
  * use `camelCase` for files and folder names
- * use `[[nodiscard]]` except for getters
- * use `[[nodiscard]]` except for getters
- * use `final except` for abstract classes
+ * the location of implementation and header files should be consistent.
+   Ie. a file `src/model/a.cpp` should have a header file in `include/NeoFOAM/model/a.hpp` and corresponding test implementation in `test/model/a.cpp`
+ * File and folder names should not be redundant.
 
 
 Building the Documentation
