@@ -19,7 +19,9 @@ class OMPExecutor
 {
 public:
 
-    using exec = Kokkos::OpenMP;
+    // It is set to the highest available in the hierarchy host-parallel,host-serial
+    // works with OpenMP, Threads
+    using exec = Kokkos::DefaultHostExecutionSpace;
 
     OMPExecutor();
     ~OMPExecutor();
