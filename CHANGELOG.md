@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- Minor cleanup of MPI operator names, added vector version of allReduce, and updates mpi and thread support operations. [PR #105](https://github.com/exasim-project/NeoFOAM/pull/105)
 - Implementation of surface BCs and improvements to volume BCs  [PR #104](https://github.com/exasim-project/NeoFOAM/pull/104)
 - improvements to vector and dictionary; fix of the hanging issue with cuda  [PR #108](https://github.com/exasim-project/NeoFOAM/pull/108)
 - Field update: A number of operators and functions added, some bug fixes, and improved testing. [PR #34](https://github.com/exasim-project/NeoFOAM/pull/34)

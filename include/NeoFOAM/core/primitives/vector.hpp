@@ -55,19 +55,19 @@ public:
      *
      * @return The size of the vector
      */
-    consteval std::size_t size() { return 3; }
-
-    KOKKOS_INLINE_FUNCTION
-    scalar& operator()(const int i) { return cmpts_[i]; }
-
-    KOKKOS_INLINE_FUNCTION
-    scalar operator()(const int i) const { return cmpts_[i]; }
+    constexpr std::size_t size() const { return 3; }
 
     KOKKOS_INLINE_FUNCTION
     scalar& operator[](const int i) { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
     scalar operator[](const int i) const { return cmpts_[i]; }
+
+    KOKKOS_INLINE_FUNCTION
+    scalar& operator()(const int i) { return cmpts_[i]; }
+
+    KOKKOS_INLINE_FUNCTION
+    scalar operator()(const int i) const { return cmpts_[i]; }
 
     KOKKOS_INLINE_FUNCTION
     bool operator==(const Vector& rhs) const
@@ -82,11 +82,12 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    void operator+=(const Vector& rhs)
+    Vector& operator+=(const Vector& rhs)
     {
         cmpts_[0] += rhs(0);
         cmpts_[1] += rhs(1);
         cmpts_[2] += rhs(2);
+        return *this;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -96,11 +97,12 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    void operator-=(const Vector& rhs)
+    Vector& operator-=(const Vector& rhs)
     {
         cmpts_[0] -= rhs(0);
         cmpts_[1] -= rhs(1);
         cmpts_[2] -= rhs(2);
+        return *this;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -118,11 +120,12 @@ public:
 
 
     KOKKOS_INLINE_FUNCTION
-    void operator*=(const scalar& rhs)
+    Vector& operator*=(const scalar& rhs)
     {
         cmpts_[0] *= rhs;
         cmpts_[1] *= rhs;
         cmpts_[2] *= rhs;
+        return *this;
     }
 
 private:

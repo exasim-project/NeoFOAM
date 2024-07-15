@@ -26,7 +26,7 @@ struct MPIInit
      */
     MPIInit(int argc, char** argv)
     {
-#ifdef NEOFOAM_MPI_THREAD
+#ifdef NF_REQUIRE_MPI_THREAD_SUPPORT
         int provided;
         MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
         NF_ASSERT(

@@ -29,7 +29,7 @@ void HalfDuplexCommBuffer::send()
     for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
-        sendScalar<char>(
+        isend<char>(
             rankBuffer_.data() + rankOffset_[rank],
             rankOffset_[rank + 1] - rankOffset_[rank],
             rank,
@@ -47,7 +47,7 @@ void HalfDuplexCommBuffer::receive()
     for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
-        recvScalar<char>(
+        irecv<char>(
             rankBuffer_.data() + rankOffset_[rank],
             rankOffset_[rank + 1] - rankOffset_[rank],
             rank,
