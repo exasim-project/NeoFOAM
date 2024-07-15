@@ -16,57 +16,34 @@
 namespace NeoFOAM
 {
 namespace fvcc = finiteVolume::cellCentred;
-class SurfaceInterpolationKernel
+class SurfaceInterpolationFactory :
+    public NeoFOAM::RuntimeSelectionFactory<
+        SurfaceInterpolationFactory,
+        Parameters<const Executor&, const UnstructuredMesh&>>
 {
 
 public:
 
-    SurfaceInterpolationKernel(const Executor& exec, const UnstructuredMesh& mesh)
+    static std::string name() { return "SurfaceInterpolationFactory"; }
+
+    SurfaceInterpolationFactory(const Executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), mesh_(mesh) {};
 
-    virtual ~SurfaceInterpolationKernel() {} // Virtual destructor
+    virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
     virtual void interpolate(
-        const GPUExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::VolumeField<scalar>& volField
+        fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
-    virtual void interpolate(
-        const OMPExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::VolumeField<scalar>& volField
-    ) = 0;
 
     virtual void interpolate(
-        const CPUExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::VolumeField<scalar>& volField
-    ) = 0;
-
-    virtual void interpolate(
-        const GPUExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& volField
-    ) = 0;
-
-    virtual void interpolate(
-        const OMPExecutor& exec,
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& volField
-    ) = 0;
-
-    virtual void interpolate(
-        const CPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::SurfaceField<scalar>& faceFlux,
         const fvcc::VolumeField<scalar>& volField
     ) = 0;
 
     // Pure virtual function for cloning
-    virtual std::unique_ptr<SurfaceInterpolationKernel> clone() const = 0;
+    virtual std::unique_ptr<SurfaceInterpolationFactory> clone() const = 0;
 
 protected:
 
@@ -90,7 +67,7 @@ public:
     SurfaceInterpolation(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::unique_ptr<SurfaceInterpolationKernel> interpolationKernel
+        std::unique_ptr<SurfaceInterpolationFactory> interpolationKernel
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
@@ -98,11 +75,7 @@ public:
         fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
     ) const
     {
-        std::visit(
-            [&](const auto& exec)
-            { interpolationKernel_->interpolate(exec, surfaceField, volField); },
-            exec_
-        );
+        interpolationKernel_->interpolate(surfaceField, volField);
     }
 
     void interpolate(
@@ -111,18 +84,14 @@ public:
         const fvcc::VolumeField<scalar>& volField
     ) const
     {
-        std::visit(
-            [&](const auto& exec)
-            { interpolationKernel_->interpolate(exec, surfaceField, faceFlux, volField); },
-            exec_
-        );
+        interpolationKernel_->interpolate(surfaceField, faceFlux, volField);
     }
 
 private:
 
     const Executor exec_;
     const UnstructuredMesh& mesh_;
-    std::unique_ptr<SurfaceInterpolationKernel> interpolationKernel_;
+    std::unique_ptr<SurfaceInterpolationFactory> interpolationKernel_;
 };
 
 
