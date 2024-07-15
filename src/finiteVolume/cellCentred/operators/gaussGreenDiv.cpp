@@ -37,14 +37,14 @@ void detail::computeDiv(
     // check if the executor is GPU
     if (std::holds_alternative<CPUExecutor>(exec))
     {
-        for (int i = 0; i < nInternalFaces; i++)
+        for (size_t i = 0; i < nInternalFaces; i++)
         {
             NeoFOAM::scalar Flux = s_faceFlux[i] * s_phif[i];
             s_divPhi[s_owner[i]] += Flux;
             s_divPhi[s_neighbour[i]] -= Flux;
         }
 
-        for (int i = nInternalFaces; i < s_phif.size(); i++)
+        for (size_t i = nInternalFaces; i < s_phif.size(); i++)
         {
             int32_t own = s_faceCells[i - nInternalFaces];
             NeoFOAM::scalar value_own = s_faceFlux[i] * s_phif[i];
@@ -52,7 +52,7 @@ void detail::computeDiv(
         }
 
 
-        for (int celli = 0; celli < mesh.nCells(); celli++)
+        for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
             s_divPhi[celli] *= 1 / s_V[celli];
         }
