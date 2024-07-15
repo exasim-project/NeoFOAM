@@ -19,36 +19,17 @@
 namespace NeoFOAM
 {
 
-struct GaussGreenDivKernel
+
+namespace detail
 {
-    const UnstructuredMesh& mesh_;
+void computeDiv(
+    fvcc::VolumeField<scalar>& divPhi,
+    const fvcc::SurfaceField<scalar>& faceFlux,
+    const fvcc::VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp
+);
 
-    const NeoFOAM::SurfaceInterpolation& surfaceInterpolation_;
-
-    GaussGreenDivKernel(const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp);
-
-    void operator()(
-        const GPUExecutor& exec,
-        fvcc::VolumeField<scalar>& divPhi,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& phi
-    );
-
-    void operator()(
-        const OMPExecutor& exec,
-        fvcc::VolumeField<scalar>& divPhi,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& phi
-    );
-
-    void operator()(
-        const CPUExecutor& exec,
-        fvcc::VolumeField<scalar>& divPhi,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& phi
-    );
-};
-
+}
 
 class GaussGreenDiv
 {
@@ -58,8 +39,6 @@ public:
         const Executor& exec, const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
     );
 
-    // fvcc::VolumeField<scalar> grad(const fvcc::VolumeField<scalar>& phi);
-
     void
     div(fvcc::VolumeField<scalar>& divPhi,
         const fvcc::SurfaceField<scalar>& faceFlux,
@@ -68,7 +47,6 @@ public:
 private:
 
     const UnstructuredMesh& mesh_;
-
     SurfaceInterpolation surfaceInterpolation_;
 };
 
