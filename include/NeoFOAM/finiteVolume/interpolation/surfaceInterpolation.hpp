@@ -24,6 +24,8 @@ public:
     SurfaceInterpolationKernel(const Executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), mesh_(mesh) {};
 
+    virtual ~SurfaceInterpolationKernel() {} // Virtual destructor
+
     virtual void interpolate(
         const GPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
@@ -92,10 +94,9 @@ public:
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    // virtual ~SurfaceInterpolationKernel() {}; // Virtual destructor
-
-    void
-    interpolate(fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField) const
+    void interpolate(
+        fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
+    ) const
     {
         std::visit(
             [&](const auto& exec)
