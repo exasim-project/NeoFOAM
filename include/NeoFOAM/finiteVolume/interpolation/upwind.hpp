@@ -28,40 +28,40 @@ public:
         const GPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::VolumeField<scalar>& volField
-    );
+    ) override;
 
     void interpolate(
         const OMPExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::VolumeField<scalar>& volField
-    );
+    ) override;
 
     void interpolate(
         const CPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::VolumeField<scalar>& volField
-    );
+    ) override;
 
     void interpolate(
         const GPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::SurfaceField<scalar>& faceFlux,
         const fvcc::VolumeField<scalar>& volField
-    );
+    ) override;
 
     void interpolate(
         const OMPExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::SurfaceField<scalar>& faceFlux,
         const fvcc::VolumeField<scalar>& volField
-    );
+    ) override;
 
     void interpolate(
         const CPUExecutor& exec,
         fvcc::SurfaceField<scalar>& surfaceField,
         const fvcc::SurfaceField<scalar>& faceFlux,
         const fvcc::VolumeField<scalar>& volField
-    );
+    ) override;
 
     std::unique_ptr<SurfaceInterpolationKernel> clone() const override;
 
