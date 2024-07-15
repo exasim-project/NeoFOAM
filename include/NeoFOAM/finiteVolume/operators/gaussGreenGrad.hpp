@@ -17,32 +17,15 @@
 
 namespace NeoFOAM
 {
-
-struct GaussGreenKernel
+namespace detail
 {
-    const UnstructuredMesh& mesh_;
-    const NeoFOAM::SurfaceInterpolation& surfaceInterpolation_;
+void computeGrad(
+    fvcc::VolumeField<Vector>& gradPhi,
+    const fvcc::VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp
+);
 
-    GaussGreenKernel(const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp);
-
-    void operator()(
-        const GPUExecutor& exec,
-        fvcc::VolumeField<Vector>& gradPhi,
-        const fvcc::VolumeField<scalar>& phi
-    );
-
-    void operator()(
-        const OMPExecutor& exec,
-        fvcc::VolumeField<Vector>& gradPhi,
-        const fvcc::VolumeField<scalar>& phi
-    );
-
-    void operator()(
-        const CPUExecutor& exec,
-        fvcc::VolumeField<Vector>& gradPhi,
-        const fvcc::VolumeField<scalar>& phi
-    );
-};
+}
 
 
 class gaussGreenGrad
