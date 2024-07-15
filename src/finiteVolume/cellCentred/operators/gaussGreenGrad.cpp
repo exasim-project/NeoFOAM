@@ -36,21 +36,21 @@ void detail::computeGrad(
 
     if (std::holds_alternative<CPUExecutor>(exec))
     {
-        for (int i = 0; i < nInternalFaces; i++)
+        for (size_t i = 0; i < nInternalFaces; i++)
         {
             NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
             s_gradPhi[s_owner[i]] += Flux;
             s_gradPhi[s_neighbour[i]] -= Flux;
         }
 
-        for (int i = nInternalFaces; i < s_phif.size(); i++)
+        for (size_t i = nInternalFaces; i < s_phif.size(); i++)
         {
             int32_t own = s_faceCells[i - nInternalFaces];
             NeoFOAM::Vector value_own = s_bSf[i - nInternalFaces] * s_phif[i];
             s_gradPhi[own] += value_own;
         }
 
-        for (int celli = 0; celli < mesh.nCells(); celli++)
+        for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
             s_gradPhi[celli] *= 1 / s_V[celli];
         }
