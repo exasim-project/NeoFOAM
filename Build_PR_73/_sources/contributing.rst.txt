@@ -20,6 +20,8 @@ Corresponding configuration files are `.clang-format <https://exasim-project.com
  * Use `final` except for abstract classes
  * Avoid storing references as data members in classes.
    An exception might be a `const Unstructured& mesh` as it will most likely outlive any other objects.
+ * Place inout parameter at the end of function argument lists.
+   E.g. `foo(const Type& in, Type& out)` instead of `foo(Type& out,const Type& in)`.
 
 Folder structurce and file names:
  * use `camelCase` for files and folder names
