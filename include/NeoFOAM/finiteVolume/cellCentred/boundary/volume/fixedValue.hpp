@@ -59,6 +59,11 @@ public:
 
     static std::string schema() { return "none"; }
 
+    virtual std::unique_ptr<VolumeBoundaryFactory<ValueType>> clone() const final
+    {
+        return std::make_unique<FixedValue>(*this);
+    }
+
 private:
 
     ValueType fixedValue_;

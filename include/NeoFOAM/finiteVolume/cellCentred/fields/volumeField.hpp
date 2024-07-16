@@ -30,26 +30,19 @@ public:
     VolumeField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::vector<std::unique_ptr<VolumeBoundary<ValueType>>>&& boundaryConditions
+        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
             mesh,
             DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
-          boundaryConditions_(std::move(boundaryConditions))
+          boundaryConditions_(boundaryConditions)
     {}
 
     VolumeField(const VolumeField& other)
-        : GeometricFieldMixin<ValueType>(other),
-          boundaryConditions_(other.boundaryConditions_.size())
-    {
-        // for (size_t i = 0; i < other.boundaryConditions_.size(); ++i)
-        // {
-        //     boundaryConditions_[i] =
-        //     std::make_unique<SurfaceBoundary<ValueType>>(*other.boundaryConditions_[i]);
-        // }
-    }
+        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
+    {}
 
     /**
      * @brief Corrects the boundary conditions of the surface field.
@@ -61,14 +54,13 @@ public:
     {
         for (auto& boundaryCondition : boundaryConditions_)
         {
-            boundaryCondition->correctBoundaryCondition(this->field_);
+            boundaryCondition.correctBoundaryCondition(this->field_);
         }
     }
 
 private:
 
-    std::vector<std::unique_ptr<VolumeBoundary<ValueType>>>
-        boundaryConditions_; // The vector of boundary conditions
+    std::vector<VolumeBoundary<ValueType>> boundaryConditions_; // The vector of boundary conditions
 };
 
 } // namespace NeoFOAM
