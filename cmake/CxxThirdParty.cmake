@@ -1,22 +1,25 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-set(KOKKOS_CHECKOUT_VERSION
+set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     "4.3.00"
     CACHE STRING "Use specific version of Kokkos")
+mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 
 find_package(MPI 3.1 REQUIRED)
-find_package(Kokkos ${KOKKOS_CHECKOUT_VERSION} QUIET)
+find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
   include(FetchContent)
 
+  include(cmake/AutoEnableDevice.cmake)
+
   FetchContent_Declare(
     kokkos
-    QUITE
+    SYSTEM QUITE
     GIT_SHALLOW ON
     GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
-    GIT_TAG ${KOKKOS_CHECKOUT_VERSION})
+    GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
   FetchContent_MakeAvailable(Kokkos)
 endif()
