@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/finiteVolume/interpolation/upwind.hpp"
 #include <memory>
+
+#include "NeoFOAM/finiteVolume/cellCentred/interpolation/upwind.hpp"
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
+
 namespace NeoFOAM
 {
-
 
 void computeUpwindInterpolation(
     fvcc::SurfaceField<scalar>& surfaceField,
