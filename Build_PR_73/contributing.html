@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Basics" href="basics/index.html" /><link rel="prev" title="Installation" href="installation.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/contributing.html" />
 
-    <!-- Generated with Sphinx 7.4.3 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.4.4 and Furo 2024.05.06 -->
         <title>Contributing - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
@@ -284,34 +284,39 @@
 <p>Contributions are highly welcomed. Here is some information getting you started.</p>
 <section id="neofoam-code-style-guide">
 <h2>NeoFOAM Code Style Guide<a class="headerlink" href="#neofoam-code-style-guide" title="Link to this heading">¶</a></h2>
-<p>To simplify coding and code reviews the following code style should be considered.
-Formatting and non-format related code style is enforced via clang-format and clang-tidy.
+<p>To simplify coding and code reviews you should adhere to the following code style. However, most
+of NeoFOAMs code style guide is checked via automated tools.
+For example, formatting and non-format related code style is enforced via clang-format and clang-tidy.
 Corresponding configuration files are <a class="reference external" href="https://exasim-project.com/NeoFOAM/.clang-format">.clang-format</a>
-<a class="reference external" href="https://exasim-project.com/NeoFOAM/.clang-tidy">.clang-tidy</a></p>
+<a class="reference external" href="https://exasim-project.com/NeoFOAM/.clang-tidy">.clang-tidy</a>.
+Furthermore, adequate licensing of the source code is checked via the reuse linter and typos checks for obvious spelling issues.
+Thus, this style guide doesn’t list all stylistic rules explicitly but rather gives advise for ambiguous situations and mentions the rational for some decissions.</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>use US spelling</p></li>
 <li><p>Use <cite>camelCase</cite> for functions and members and capitalized <cite>CamelCase</cite> for classes</p></li>
 <li><p>Use descriptive template parameter names.
-For example prefer <cite>template &lt;class ValueType&gt;</cite> over <cite>template &lt;class T&gt;</cite></p></li>
-<li><p>Use <cite>[[nodiscard]]</cite> except for getters. To indicate that a function simply
-returns a value instead of performing expensice computations <cite>[[nodiscard]]</cite> can be omitted.</p></li>
-<li><p>Use <cite>final</cite> except for abstract classes</p></li>
+For example prefer <cite>template &lt;class ValueType&gt;</cite> over <cite>template &lt;class T&gt;</cite> if the type can be a float or double.</p></li>
+<li><p>Use <cite>[[nodiscard]]</cite> except for getters.
+To indicate that a function simply returns a value instead of performing expensive computations <cite>[[nodiscard]]</cite> can be omitted.</p></li>
+<li><p>Use <cite>final</cite> except for abstract classes.
+NeoFOAMs aims at having a rather flat inheritance hierarchy and composition is generally preferred.
+To avoid unintended inheritance the using <cite>final</cite> is advised.</p></li>
 <li><p>Avoid storing references as data members in classes.
 An exception might be a <cite>const Unstructured&amp; mesh</cite> as it will most likely outlive any other objects.</p></li>
-<li><p>Place inout parameter at the end of function argument lists.
+<li><p>Place in-out parameter at the end of function argument lists.
 E.g. <cite>foo(const Type&amp; in, Type&amp; out)</cite> instead of <cite>foo(Type&amp; out,const Type&amp; in)</cite>.</p></li>
+<li><p>use US spelling</p></li>
 </ul>
 </div></blockquote>
-<dl class="simple">
-<dt>Folder structurce and file names:</dt><dd><ul class="simple">
+<p>Folder structurce and file names:</p>
+<blockquote>
+<div><ul class="simple">
 <li><p>use <cite>camelCase</cite> for files and folder names</p></li>
 <li><p>the location of implementation and header files should be consistent.
 Ie. a file <cite>src/model/a.cpp</cite> should have a header file in <cite>include/NeoFOAM/model/a.hpp</cite> and corresponding test implementation in <cite>test/model/a.cpp</cite></p></li>
 <li><p>File and folder names should not be redundant.</p></li>
 </ul>
-</dd>
-</dl>
+</div></blockquote>
 </section>
 <section id="building-the-documentation">
 <h2>Building the Documentation<a class="headerlink" href="#building-the-documentation" title="Link to this heading">¶</a></h2>
