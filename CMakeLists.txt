@@ -101,14 +101,6 @@ if(${NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT})
   target_compile_definitions(NeoFOAM INTERFACE NF_REQUIRE_MPI_THREAD_SUPPORT)
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES Debug)
-  target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG)
-endif()
-
-if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
-  target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
-endif()
-
 if(NEOFOAM_BUILD_DOC)
   include(cmake/Docs.cmake)
   neofoam_build_docs()
