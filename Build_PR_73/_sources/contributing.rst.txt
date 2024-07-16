@@ -9,8 +9,8 @@ NeoFOAM Code Style Guide
 To simplify coding and code reviews you should adhere to the following code style. However, most
 of NeoFOAMs code style guide is checked via automated tools.
 For example, formatting and non-format related code style is enforced via clang-format and clang-tidy.
-Corresponding configuration files are `.clang-format <https://exasim-project.com/NeoFOAM/.clang-format>`_
-`.clang-tidy <https://exasim-project.com/NeoFOAM/.clang-tidy>`_.
+Corresponding configuration files are `.clang-format <https://github.com/exasim-project/NeoFOAM/blob/main/.clang-format>`_
+and `.clang-tidy <https://github.com/exasim-project/NeoFOAM/blob/main/.clang-format/.clang-tidy>`_.
 Furthermore, adequate licensing of the source code is checked via the reuse linter and typos checks for obvious spelling issues.
 Thus, this style guide doesn't list all stylistic rules explicitly but rather gives advise for ambiguous situations and mentions the rational for some decissions.
 
