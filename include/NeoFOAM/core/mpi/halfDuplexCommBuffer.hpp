@@ -14,6 +14,8 @@
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 
+#include "NeoFOAM/core/executor/memory.hpp"
+
 namespace NeoFOAM
 {
 
@@ -37,14 +39,14 @@ inline int bufferHash(const std::string& str)
 }
 
 
-template<typename Type>
-concept MemorySpace = requires {
-    typename Type::execution_space;
-    {
-        Type::is_memory_space
-    } -> std::convertible_to<bool>;
-    requires Type::is_memory_space == true;
-};
+// template<typename Type>
+// concept MemorySpace = requires {
+//     typename Type::execution_space;
+//     {
+//         Type::is_memory_space
+//     } -> std::convertible_to<bool>;
+//     requires Type::is_memory_space == true;
+// };
 
 /**
  * @class HalfDuplexCommBuffer
@@ -56,7 +58,7 @@ concept MemorySpace = requires {
  * memory reallocation and improving memory efficiency. The class operates in a half-duplex mode,
  * meaning it is either sending or receiving data at any given time.
  */
-template<class MemorySpace = Kokkos::HostSpace>
+// template<class MemorySpace = Kokkos::HostSpace>
 class HalfDuplexCommBuffer
 {
 
@@ -218,9 +220,14 @@ private:
     std::vector<std::size_t>
         rankOffset_; /*< The offset (in bytes) for a rank data in the buffer. */
 
-    Kokkos::View<char*, MemorySpace> rankBufferKokkos_; // duplication for now - will replace above
-    Kokkos::View<std::size_t*, MemorySpace>
-        rankOffsetKokkos_; // duplication for now - will replace above
+
+    char* rankBufferData_;
+    std::size_t rankBufferSize_;
+
+    std::size_t* rankBufferOffsetData_;
+    std::size_t rankBufferOffsetSize_;
+
+    const kokkosMemory memorySpace;
 
     /**
      * @brief Set the data type for the buffer.
@@ -257,15 +264,10 @@ private:
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             rankOffset_[rank] = dataSize;
-            rankOffsetKokkos_(rank) = dataSize;
             dataSize += rankSize(rank) * newSize;
         }
-
         rankOffset_.back() = dataSize;
-        rankOffsetKokkos_(mpiEnviron_.sizeRank()) = dataSize;
-
         if (rankBuffer_.size() < dataSize) rankBuffer_.resize(dataSize); // we never size down.
-        if (rankBuffer_.size() < dataSize) Kokkos::resize(rankBufferKokkos_, dataSize);
     }
 };
 

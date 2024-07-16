@@ -19,6 +19,7 @@ class CPUExecutor
 public:
 
     using exec = Kokkos::Serial;
+    using space = exec::memory_space;
 
     CPUExecutor();
     ~CPUExecutor();
