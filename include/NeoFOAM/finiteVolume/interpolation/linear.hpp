@@ -18,17 +18,6 @@ namespace NeoFOAM
 {
 
 namespace fvcc = finiteVolume::cellCentred;
-namespace detail
-{
-
-void computeLinearInterpolation(
-    fvcc::SurfaceField<scalar>& surfaceField,
-    const fvcc::VolumeField<scalar>& volField,
-    const std::shared_ptr<FvccGeometryScheme> geometryScheme
-);
-
-} // namespace detail
-
 
 class Linear : public SurfaceInterpolationFactory::Register<Linear>
 {
@@ -60,6 +49,5 @@ private:
 
     const std::shared_ptr<FvccGeometryScheme> geometryScheme_;
 };
-
 
 } // namespace NeoFOAM

@@ -9,7 +9,7 @@ namespace NeoFOAM
 {
 
 
-void detail::computeUpwindInterpolation(
+void computeUpwindInterpolation(
     fvcc::SurfaceField<scalar>& surfaceField,
     const fvcc::SurfaceField<scalar>& faceFlux,
     const fvcc::VolumeField<scalar>& volField,
@@ -76,7 +76,7 @@ void Upwind::interpolate(
     const fvcc::VolumeField<scalar>& volField
 )
 {
-    detail::computeUpwindInterpolation(surfaceField, faceFlux, volField, geometryScheme_);
+    computeUpwindInterpolation(surfaceField, faceFlux, volField, geometryScheme_);
 }
 
 std::unique_ptr<SurfaceInterpolationFactory> Upwind::clone() const

@@ -15,7 +15,9 @@
 
 namespace NeoFOAM
 {
+
 namespace fvcc = finiteVolume::cellCentred;
+
 class SurfaceInterpolationFactory :
     public NeoFOAM::RuntimeSelectionFactory<
         SurfaceInterpolationFactory,

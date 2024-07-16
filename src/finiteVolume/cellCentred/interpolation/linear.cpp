@@ -9,7 +9,7 @@
 namespace NeoFOAM
 {
 
-void detail::computeLinearInterpolation(
+void computeLinearInterpolation(
     fvcc::SurfaceField<scalar>& surfaceField,
     const fvcc::VolumeField<scalar>& volField,
     const std::shared_ptr<FvccGeometryScheme> geometryScheme
@@ -59,7 +59,7 @@ void Linear::interpolate(
     fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
 )
 {
-    detail::computeLinearInterpolation(surfaceField, volField, geometryScheme_);
+    computeLinearInterpolation(surfaceField, volField, geometryScheme_);
 }
 
 void Linear::interpolate(
