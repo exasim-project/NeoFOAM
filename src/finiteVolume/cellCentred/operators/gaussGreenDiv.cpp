@@ -8,7 +8,7 @@ namespace NeoFOAM
 {
 
 
-void detail::computeDiv(
+void computeDiv(
     fvcc::VolumeField<scalar>& divPhi,
     const fvcc::SurfaceField<scalar>& faceFlux,
     const fvcc::VolumeField<scalar>& phi,
@@ -100,7 +100,7 @@ void GaussGreenDiv::div(
     fvcc::VolumeField<scalar>& phi
 )
 {
-    detail::computeDiv(divPhi, faceFlux, phi, surfaceInterpolation_);
+    computeDiv(divPhi, faceFlux, phi, surfaceInterpolation_);
 };
 
 };

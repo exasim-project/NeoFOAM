@@ -19,18 +19,6 @@
 namespace NeoFOAM
 {
 
-
-namespace detail
-{
-void computeDiv(
-    fvcc::VolumeField<scalar>& divPhi,
-    const fvcc::SurfaceField<scalar>& faceFlux,
-    const fvcc::VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp
-);
-
-}
-
 class GaussGreenDiv
 {
 public:

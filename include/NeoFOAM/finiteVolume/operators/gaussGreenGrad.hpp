@@ -17,16 +17,6 @@
 
 namespace NeoFOAM
 {
-namespace detail
-{
-void computeGrad(
-    fvcc::VolumeField<Vector>& gradPhi,
-    const fvcc::VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp
-);
-
-}
-
 
 class gaussGreenGrad
 {

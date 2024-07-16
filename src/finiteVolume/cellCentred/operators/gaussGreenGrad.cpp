@@ -8,8 +8,7 @@
 namespace NeoFOAM
 {
 
-
-void detail::computeGrad(
+void computeGrad(
     fvcc::VolumeField<Vector>& gradPhi,
     const fvcc::VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp
@@ -94,7 +93,7 @@ gaussGreenGrad::gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mes
 
 void gaussGreenGrad::grad(fvcc::VolumeField<Vector>& gradPhi, const fvcc::VolumeField<scalar>& phi)
 {
-    detail::computeGrad(gradPhi, phi, surfaceInterpolation_);
+    computeGrad(gradPhi, phi, surfaceInterpolation_);
 };
 
 } // namespace NeoFOAM
