@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   start-runner:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci') || github.event_name == 'workflow_dispatch'}}
     name: Start self-hosted EC2 runner
     runs-on: ubuntu-latest
     permissions:
@@ -56,6 +56,7 @@ jobs:
                  sudo ./postinstall_github > ~/install.log
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
+                 export ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
