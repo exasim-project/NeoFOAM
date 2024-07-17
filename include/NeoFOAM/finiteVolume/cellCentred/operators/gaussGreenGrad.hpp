@@ -12,7 +12,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 class gaussGreenGrad
@@ -23,11 +23,11 @@ public:
 
     // fvcc::VolumeField<Vector> grad(const fvcc::VolumeField<scalar>& phi);
 
-    void grad(fvcc::VolumeField<Vector>& gradPhi, const fvcc::VolumeField<scalar>& phi);
+    void grad(VolumeField<Vector>& gradPhi, const VolumeField<scalar>& phi);
 
 private:
 
-    NeoFOAM::SurfaceInterpolation surfaceInterpolation_;
+    SurfaceInterpolation surfaceInterpolation_;
     const UnstructuredMesh& mesh_;
 };
 

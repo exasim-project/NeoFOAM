@@ -96,7 +96,7 @@ void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
-    computeDiv(divPhi, faceFlux, phi, surfaceInterpolation_);
+    computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
 
 };

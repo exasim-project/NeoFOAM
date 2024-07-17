@@ -12,7 +12,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 class GaussGreenDiv
@@ -24,9 +24,8 @@ public:
     );
 
     void
-    div(fvcc::VolumeField<scalar>& divPhi,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        fvcc::VolumeField<scalar>& phi);
+    div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+    );
 
 private:
 

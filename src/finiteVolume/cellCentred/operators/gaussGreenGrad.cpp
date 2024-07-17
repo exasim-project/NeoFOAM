@@ -89,7 +89,7 @@ gaussGreenGrad::gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mes
 
 void gaussGreenGrad::grad(VolumeField<Vector>& gradPhi, const VolumeField<scalar>& phi)
 {
-    computeGrad(gradPhi, phi, surfaceInterpolation_);
+    computeGrad(phi, surfaceInterpolation_, gradPhi);
 };
 
 } // namespace NeoFOAM
