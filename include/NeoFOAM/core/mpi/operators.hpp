@@ -147,7 +147,7 @@ inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
     MPI_Allreduce(
         MPI_IN_PLACE,
         reinterpret_cast<void*>(vector.data()),
-        vector.size(),
+        static_cast<mpi_label_t>(vector.size()),
         getType<scalar>(),
         getOp(op),
         comm
@@ -169,14 +169,15 @@ inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
 template<typename valueType>
 void isend(
     const valueType* buffer,
-    const int size,
-    int rankReceive,
-    int tag,
+    const mpi_label_t size,
+    mpi_label_t rankReceive,
+    mpi_label_t tag,
     MPI_Comm comm,
     MPI_Request* request
 )
 {
-    int err = MPI_Isend(buffer, size, getType<valueType>(), rankReceive, tag, comm, request);
+    mpi_label_t err =
+        MPI_Isend(buffer, size, getType<valueType>(), rankReceive, tag, comm, request);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Isend failed.");
 }
 
@@ -194,10 +195,15 @@ void isend(
  */
 template<typename valueType>
 void irecv(
-    valueType* buffer, const int size, int rankSend, int tag, MPI_Comm comm, MPI_Request* request
+    valueType* buffer,
+    const mpi_label_t size,
+    mpi_label_t rankSend,
+    mpi_label_t tag,
+    MPI_Comm comm,
+    MPI_Request* request
 )
 {
-    int err = MPI_Irecv(buffer, size, getType<valueType>(), rankSend, tag, comm, request);
+    mpi_label_t err = MPI_Irecv(buffer, size, getType<valueType>(), rankSend, tag, comm, request);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Irecv failed.");
 }
 
@@ -210,8 +216,8 @@ void irecv(
  */
 inline bool test(MPI_Request* request)
 {
-    int flag;
-    int err = MPI_Test(request, &flag, MPI_STATUS_IGNORE);
+    mpi_label_t flag;
+    mpi_label_t err = MPI_Test(request, &flag, MPI_STATUS_IGNORE);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
     return static_cast<bool>(flag);
 }

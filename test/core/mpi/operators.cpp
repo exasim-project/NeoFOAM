@@ -69,7 +69,7 @@ TEST_CASE("allReduce value")
 
     SECTION("MPI_SUM")
     {
-        int value = 2.5;
+        int value = 2;
         int sendValue = value;
         allReduce(sendValue, ReduceOp::Sum, MPI_COMM_WORLD);
         REQUIRE(sendValue == value * ranks);
@@ -127,13 +127,13 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_MAX")
     {
         Vector values;
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(rank) + static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Max, MPI_COMM_WORLD);
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             scalar expectedMaxValue =
                 static_cast<scalar>(ranks - 1) + static_cast<scalar>(ivalue) * 10.0;
@@ -144,32 +144,32 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_MIN")
     {
         Vector values;
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(rank) + static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Min, MPI_COMM_WORLD);
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
-            REQUIRE(sendValues[ivalue] == ivalue * 10.0);
+            REQUIRE(sendValues[ivalue] == static_cast<scalar>(ivalue) * 10.0);
         }
     }
 
     SECTION("MPI_SUM")
     {
         Vector values;
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Sum, MPI_COMM_WORLD);
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
-            values[ivalue] = static_cast<scalar>(ranks * ivalue) * 10.0;
+            values[ivalue] = static_cast<scalar>(ranks) * static_cast<scalar>(ivalue) * 10.0;
         }
-        for (int ivalue = 0; ivalue < sendValues.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < sendValues.size(); ++ivalue)
         {
             REQUIRE(sendValues[ivalue] == values[ivalue]);
         }
@@ -178,17 +178,17 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_PROD")
     {
         Vector values;
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Prod, MPI_COMM_WORLD);
-        for (int ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = std::pow(values[ivalue], static_cast<float>(ranks));
         }
-        for (int ivalue = 0; ivalue < sendValues.size(); ++ivalue)
+        for (size_t ivalue = 0; ivalue < sendValues.size(); ++ivalue)
         {
             REQUIRE(sendValues[ivalue] == values[ivalue]);
         }

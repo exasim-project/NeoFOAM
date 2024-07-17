@@ -97,11 +97,11 @@ public:
         }
 
         CommBuffer_[commName]->initComm<valueType>(commName);
-        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             auto rankBuffer = CommBuffer_[commName]->getSend<valueType>(rank);
-            for (auto data = 0; data < sendMap_[rank].size(); ++data)
-                rankBuffer[data] = field(sendMap_[rank][data].local_idx);
+            for (size_t data = 0; data < sendMap_[rank].size(); ++data)
+                rankBuffer[data] = field(static_cast<size_t>(sendMap_[rank][data].local_idx));
         }
         CommBuffer_[commName]->startComm();
     }
@@ -128,11 +128,11 @@ public:
         );
 
         CommBuffer_[commName]->waitComplete();
-        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             auto rankBuffer = CommBuffer_[commName]->getReceive<valueType>(rank);
-            for (auto data = 0; data < receiveMap_[rank].size(); ++data)
-                field(receiveMap_[rank][data].local_idx) = rankBuffer[data];
+            for (size_t data = 0; data < receiveMap_[rank].size(); ++data)
+                field(static_cast<size_t>(receiveMap_[rank][data].local_idx)) = rankBuffer[data];
         }
         CommBuffer_[commName]->finaliseComm();
         CommBuffer_[commName] = nullptr;

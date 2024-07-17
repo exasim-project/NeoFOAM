@@ -26,13 +26,13 @@ void HalfDuplexCommBuffer::send()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
-    for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+    for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
         isend<char>(
             rankBuffer_.data() + rankOffset_[rank],
-            rankOffset_[rank + 1] - rankOffset_[rank],
-            rank,
+            static_cast<mpi_label_t>(rankOffset_[rank + 1] - rankOffset_[rank]),
+            static_cast<mpi_label_t>(rank),
             tag_,
             mpiEnviron_.comm(),
             &request_[rank]
@@ -44,13 +44,13 @@ void HalfDuplexCommBuffer::receive()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
-    for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+    for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
         irecv<char>(
             rankBuffer_.data() + rankOffset_[rank],
-            rankOffset_[rank + 1] - rankOffset_[rank],
-            rank,
+            static_cast<mpi_label_t>(rankOffset_[rank + 1] - rankOffset_[rank]),
+            static_cast<mpi_label_t>(rank),
             tag_,
             mpiEnviron_.comm(),
             &request_[rank]
