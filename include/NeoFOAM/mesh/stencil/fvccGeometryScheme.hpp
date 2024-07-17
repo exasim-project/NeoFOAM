@@ -14,26 +14,11 @@ namespace NeoFOAM
 {
 namespace fvcc = finiteVolume::cellCentred;
 
-template<typename ValueType>
-std::vector<fvcc::SurfaceBoundary<ValueType>> createCalculatedBCs(const UnstructuredMesh& mesh)
-{
-    const auto& bMesh = mesh.boundaryMesh();
-    std::vector<fvcc::SurfaceBoundary<ValueType>> bcs;
-
-    for (int patchID = 0; patchID < mesh.nBoundaries(); patchID++)
-    {
-        Dictionary patchDict({{"type", std::string("calculated")}});
-        bcs.push_back(fvcc::SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
-    }
-
-    return bcs;
-};
-
-class GeometrySchemeKernel
+class GeometrySchemeFactory
 {
 public:
 
-    GeometrySchemeKernel(const UnstructuredMesh& mesh);
+    GeometrySchemeFactory(const UnstructuredMesh& mesh);
 
     virtual void updateWeights(const CPUExecutor& exec, fvcc::SurfaceField<scalar>& weights) = 0;
     virtual void updateWeights(const OMPExecutor& exec, fvcc::SurfaceField<scalar>& weights) = 0;
@@ -73,7 +58,7 @@ public:
 
     GeometryScheme(
         const Executor& exec,
-        std::unique_ptr<GeometrySchemeKernel> kernel,
+        std::unique_ptr<GeometrySchemeFactory> kernel,
         const fvcc::SurfaceField<scalar>& weights,
         const fvcc::SurfaceField<scalar>& deltaCoeffs,
         const fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs,
@@ -83,7 +68,7 @@ public:
     GeometryScheme(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::unique_ptr<GeometrySchemeKernel> kernel
+        std::unique_ptr<GeometrySchemeFactory> kernel
     );
 
     GeometryScheme(const UnstructuredMesh& mesh // will lookup the kernel
@@ -108,7 +93,7 @@ private:
 
     const Executor exec_;
     const UnstructuredMesh& mesh_;
-    std::unique_ptr<GeometrySchemeKernel> kernel_;
+    std::unique_ptr<GeometrySchemeFactory> kernel_;
 
     fvcc::SurfaceField<scalar> weights_;
     fvcc::SurfaceField<scalar> deltaCoeffs_;

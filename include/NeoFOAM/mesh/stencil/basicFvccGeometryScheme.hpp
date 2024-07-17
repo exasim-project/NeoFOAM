@@ -14,7 +14,7 @@
 namespace NeoFOAM
 {
 
-class BasicGeometryScheme : public GeometrySchemeKernel
+class BasicGeometryScheme : public GeometrySchemeFactory
 {
 public:
 

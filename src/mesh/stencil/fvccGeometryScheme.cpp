@@ -8,33 +8,31 @@
 
 namespace NeoFOAM
 {
+namespace fvcc = finiteVolume::cellCentred;
 
-FvccGeometrySchemeKernel::FvccGeometrySchemeKernel(const UnstructuredMesh& uMesh) {}
+GeometrySchemeFactory::GeometrySchemeFactory(const UnstructuredMesh& mesh) {}
 
 
-const std::shared_ptr<FvccGeometryScheme>
-FvccGeometryScheme::readOrCreate(const UnstructuredMesh& uMesh)
+const std::shared_ptr<GeometryScheme> GeometryScheme::readOrCreate(const UnstructuredMesh& mesh)
 {
-    StencilDataBase& stencil_db = uMesh.stencilDB();
-    if (!stencil_db.contains("FvccGeometryScheme"))
+    StencilDataBase& stencil_db = mesh.stencilDB();
+    if (!stencil_db.contains("GeometryScheme"))
     {
-        stencil_db.insert(
-            std::string("FvccGeometryScheme"), std::make_shared<FvccGeometryScheme>(uMesh)
-        );
+        stencil_db.insert(std::string("GeometryScheme"), std::make_shared<GeometryScheme>(mesh));
     }
-    return stencil_db.get<std::shared_ptr<FvccGeometryScheme>>("FvccGeometryScheme");
+    return stencil_db.get<std::shared_ptr<GeometryScheme>>("GeometryScheme");
 }
 
 
-FvccGeometryScheme::FvccGeometryScheme(
+GeometryScheme::GeometryScheme(
     const Executor& exec,
-    std::unique_ptr<FvccGeometrySchemeKernel> kernel,
+    std::unique_ptr<GeometrySchemeFactory> kernel,
     const fvcc::SurfaceField<scalar>& weights,
     const fvcc::SurfaceField<scalar>& deltaCoeffs,
     const fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs,
     const fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
 )
-    : exec_(exec), uMesh_(weights.mesh()), kernel_(std::move(kernel)), weights_(weights),
+    : exec_(exec), mesh_(weights.mesh()), kernel_(std::move(kernel)), weights_(weights),
       deltaCoeffs_(deltaCoeffs), nonOrthDeltaCoeffs_(nonOrthDeltaCoeffs),
       nonOrthCorrectionVectors_(nonOrthCorrectionVectors)
 {
@@ -44,16 +42,16 @@ FvccGeometryScheme::FvccGeometryScheme(
     }
 }
 
-FvccGeometryScheme::FvccGeometryScheme(
+GeometryScheme::GeometryScheme(
     const Executor& exec,
-    const UnstructuredMesh& uMesh,
-    std::unique_ptr<FvccGeometrySchemeKernel> kernel
+    const UnstructuredMesh& mesh,
+    std::unique_ptr<GeometrySchemeFactory> kernel
 )
-    : exec_(exec), uMesh_(uMesh), kernel_(std::move(kernel)),
-      weights_(uMesh.exec(), uMesh, createCalculatedBCs<scalar>(uMesh)),
-      deltaCoeffs_(uMesh.exec(), uMesh, createCalculatedBCs<scalar>(uMesh)),
-      nonOrthDeltaCoeffs_(uMesh.exec(), uMesh, createCalculatedBCs<scalar>(uMesh)),
-      nonOrthCorrectionVectors_(uMesh.exec(), uMesh, createCalculatedBCs<Vector>(uMesh))
+    : exec_(exec), mesh_(mesh), kernel_(std::move(kernel)),
+      weights_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
+      deltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
+      nonOrthDeltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
+      nonOrthCorrectionVectors_(mesh.exec(), mesh, fvcc::createCalculatedBCs<Vector>(mesh))
 {
     if (kernel_ == nullptr)
     {
@@ -62,14 +60,13 @@ FvccGeometryScheme::FvccGeometryScheme(
     update();
 }
 
-FvccGeometryScheme::FvccGeometryScheme(const UnstructuredMesh& uMesh)
-    : exec_(uMesh.exec()), uMesh_(uMesh),
-      kernel_(std::make_unique<NeoFOAM::BasicFvccGeometryScheme>(uMesh)
-      ), // TODO add selection mechanism
-      weights_(uMesh.exec(), uMesh, createCalculatedBCs<scalar>(uMesh)),
-      deltaCoeffs_(uMesh.exec(), uMesh, createCalculatedBCs<scalar>(uMesh)),
-      nonOrthDeltaCoeffs_(uMesh.exec(), uMesh, createCalculatedBCs<scalar>(uMesh)),
-      nonOrthCorrectionVectors_(uMesh.exec(), uMesh, createCalculatedBCs<Vector>(uMesh))
+GeometryScheme::GeometryScheme(const UnstructuredMesh& mesh)
+    : exec_(mesh.exec()), mesh_(mesh),
+      kernel_(std::make_unique<NeoFOAM::BasicGeometryScheme>(mesh)), // TODO add selection mechanism
+      weights_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
+      deltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
+      nonOrthDeltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
+      nonOrthCorrectionVectors_(mesh.exec(), mesh, fvcc::createCalculatedBCs<Vector>(mesh))
 {
     if (kernel_ == nullptr)
     {
@@ -78,9 +75,9 @@ FvccGeometryScheme::FvccGeometryScheme(const UnstructuredMesh& uMesh)
     update();
 }
 
-std::string FvccGeometryScheme::name() const { return std::string("FvccGeometryScheme"); }
+std::string GeometryScheme::name() const { return std::string("GeometryScheme"); }
 
-void FvccGeometryScheme::update()
+void GeometryScheme::update()
 {
     std::visit(
         [&](const auto& exec)
@@ -94,16 +91,16 @@ void FvccGeometryScheme::update()
     );
 }
 
-const fvcc::SurfaceField<scalar>& FvccGeometryScheme::weights() const { return weights_; }
+const fvcc::SurfaceField<scalar>& GeometryScheme::weights() const { return weights_; }
 
-const fvcc::SurfaceField<scalar>& FvccGeometryScheme::deltaCoeffs() const { return deltaCoeffs_; }
+const fvcc::SurfaceField<scalar>& GeometryScheme::deltaCoeffs() const { return deltaCoeffs_; }
 
-const fvcc::SurfaceField<scalar>& FvccGeometryScheme::nonOrthDeltaCoeffs() const
+const fvcc::SurfaceField<scalar>& GeometryScheme::nonOrthDeltaCoeffs() const
 {
     return nonOrthDeltaCoeffs_;
 }
 
-const fvcc::SurfaceField<Vector>& FvccGeometryScheme::nonOrthCorrectionVectors() const
+const fvcc::SurfaceField<Vector>& GeometryScheme::nonOrthCorrectionVectors() const
 {
     return nonOrthCorrectionVectors_;
 }
