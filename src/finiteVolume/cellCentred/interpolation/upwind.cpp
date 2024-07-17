@@ -7,14 +7,14 @@
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeUpwindInterpolation(
     fvcc::SurfaceField<scalar>& surfaceField,
     const fvcc::SurfaceField<scalar>& faceFlux,
     const fvcc::VolumeField<scalar>& volField,
-    const std::shared_ptr<FvccGeometryScheme> geometryScheme
+    const std::shared_ptr<GeometryScheme> geometryScheme
 )
 {
     const UnstructuredMesh& mesh = surfaceField.mesh();
@@ -59,7 +59,7 @@ void computeUpwindInterpolation(
 
 Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Upwind>(exec, mesh),
-      geometryScheme_(FvccGeometryScheme::readOrCreate(mesh)) {
+      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {
 
       };
 

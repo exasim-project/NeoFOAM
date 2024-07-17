@@ -82,7 +82,7 @@ std::vector<SurfaceBoundary<ValueType>> createCalculatedBCs(const UnstructuredMe
     for (int patchID = 0; patchID < mesh.nBoundaries(); patchID++)
     {
         Dictionary patchDict({{"type", std::string("calculated")}});
-        bcs.push_back(fvcc::SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
+        bcs.push_back(SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
     }
 
     return bcs;

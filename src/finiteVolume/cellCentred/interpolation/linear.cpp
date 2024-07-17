@@ -7,13 +7,13 @@
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeLinearInterpolation(
     fvcc::SurfaceField<scalar>& surfaceField,
     const fvcc::VolumeField<scalar>& volField,
-    const std::shared_ptr<FvccGeometryScheme> geometryScheme
+    const std::shared_ptr<GeometryScheme> geometryScheme
 )
 {
     const UnstructuredMesh& mesh = surfaceField.mesh();
@@ -52,7 +52,7 @@ void computeLinearInterpolation(
 
 Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
-      geometryScheme_(FvccGeometryScheme::readOrCreate(mesh)) {
+      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {
 
       };
 

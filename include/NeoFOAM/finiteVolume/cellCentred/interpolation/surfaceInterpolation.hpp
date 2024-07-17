@@ -13,10 +13,8 @@
 #include <functional>
 
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
-
-namespace fvcc = finiteVolume::cellCentred;
 
 class SurfaceInterpolationFactory :
     public NeoFOAM::RuntimeSelectionFactory<
@@ -33,15 +31,14 @@ public:
 
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
-    virtual void interpolate(
-        fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
-    ) = 0;
+    virtual void
+    interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) = 0;
 
 
     virtual void interpolate(
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& volField
+        SurfaceField<scalar>& surfaceField,
+        const SurfaceField<scalar>& faceFlux,
+        const VolumeField<scalar>& volField
     ) = 0;
 
     // Pure virtual function for cloning
@@ -73,17 +70,15 @@ public:
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    void interpolate(
-        fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
-    ) const
+    void interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) const
     {
         interpolationKernel_->interpolate(surfaceField, volField);
     }
 
     void interpolate(
-        fvcc::SurfaceField<scalar>& surfaceField,
-        const fvcc::SurfaceField<scalar>& faceFlux,
-        const fvcc::VolumeField<scalar>& volField
+        SurfaceField<scalar>& surfaceField,
+        const SurfaceField<scalar>& faceFlux,
+        const VolumeField<scalar>& volField
     ) const
     {
         interpolationKernel_->interpolate(surfaceField, faceFlux, volField);

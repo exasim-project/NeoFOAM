@@ -13,10 +13,8 @@
 
 #include <functional>
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
-
-namespace fvcc = finiteVolume::cellCentred;
 
 class Upwind : public SurfaceInterpolationFactory::Register<Upwind>
 {
@@ -47,7 +45,7 @@ public:
 
 private:
 
-    const std::shared_ptr<FvccGeometryScheme> geometryScheme_;
+    const std::shared_ptr<GeometryScheme> geometryScheme_;
 };
 
 } // namespace NeoFOAM
