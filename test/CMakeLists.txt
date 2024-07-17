@@ -28,8 +28,8 @@ function(neofoam_unit_test TEST)
   endif()
 
   add_executable(${TEST} "${TEST}.cpp")
-  target_link_libraries(${TEST} PRIVATE neofoam_catch_main Kokkos::kokkos NeoFOAM
-                                        cpptrace::cpptrace)
+  target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
+                                        Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
   add_test(
     NAME ${TEST}
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${neofoam_MPI_SIZE} ${neofoam_COMMAND}

@@ -7,7 +7,7 @@
 # https://github.com/cpp-best-practices/cmake_template                       #
 ##############################################################################
 
-function(myproject_set_project_warnings project_name WARNINGS_AS_ERRORS CLANG_WARNINGS GCC_WARNINGS
+function(neofoam_set_project_warnings project_name WARNINGS_AS_ERRORS CLANG_WARNINGS GCC_WARNINGS
          CUDA_WARNINGS)
 
   if("${CLANG_WARNINGS}" STREQUAL "")
