@@ -31,7 +31,7 @@ void fill(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
 
 
 template<typename ValueType>
-void setField(Field<ValueType>& a, const std::span<const std::type_identity_t<ValueType>> b)
+void setField(Field<ValueType>& a, const Span<const std::type_identity_t<ValueType>> b)
 {
     parallelFor(
         a, KOKKOS_LAMBDA(size_t i) { return b[i]; }

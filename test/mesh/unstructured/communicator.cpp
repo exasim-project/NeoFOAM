@@ -23,7 +23,7 @@ TEST_CASE("Communicator Field Synchronization")
     // third block receive (size rank)
     Field<int> field(CPUExecutor(), 3 * mpiEnviron.sizeRank());
 
-    for (size_t rank = 0; rank < mpiEnviron.sizeRank(); rank++)
+    for (NeoFOAM::size_t rank = 0; rank < mpiEnviron.sizeRank(); rank++)
     {
         // we send the rank numbers
         field(rank) = static_cast<int>(rank);
@@ -36,12 +36,12 @@ TEST_CASE("Communicator Field Synchronization")
     }
 
     // Set up buffer to local map, we will ignore global_idx
-    CommMap rankSendMap(mpiEnviron.sizeRank());
-    CommMap rankReceiveMap(mpiEnviron.sizeRank());
-    for (size_t rank = 0; rank < mpiEnviron.sizeRank(); rank++)
+    CommMap rankSendMap(mpiEnviron.usizeRank());
+    CommMap rankReceiveMap(mpiEnviron.usizeRank());
+    for (std::size_t rank = 0; rank < mpiEnviron.usizeRank(); rank++)
     {
         rankSendMap[rank].emplace_back(NodeCommMap {.local_idx = static_cast<label>(rank)});
-        NodeCommMap newNode({.local_idx = static_cast<label>(2 * mpiEnviron.sizeRank() + rank)});
+        NodeCommMap newNode({.local_idx = static_cast<label>(2 * mpiEnviron.usizeRank() + rank)});
         rankReceiveMap[rank].push_back(newNode); // got tired of fighting with clang-format.
     }
 
@@ -54,12 +54,10 @@ TEST_CASE("Communicator Field Synchronization")
     comm.finaliseComm(field, loc);
 
     // Check the values
-    for (size_t rank = 0; rank < mpiEnviron.sizeRank(); rank++)
+    for (NeoFOAM::size_t rank = 0; rank < mpiEnviron.sizeRank(); rank++)
     {
-        REQUIRE(field(rank) == static_cast<int>(rank));
-        REQUIRE(
-            field(rank + mpiEnviron.sizeRank()) == static_cast<int>(mpiEnviron.sizeRank() + rank)
-        );
-        REQUIRE(field(rank + 2 * mpiEnviron.sizeRank()) == static_cast<int>(mpiEnviron.rank()));
+        REQUIRE(field(rank) == rank);
+        REQUIRE(field(rank + mpiEnviron.sizeRank()) == mpiEnviron.sizeRank() + rank);
+        REQUIRE(field(rank + 2 * mpiEnviron.sizeRank()) == mpiEnviron.rank());
     }
 }

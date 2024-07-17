@@ -223,7 +223,6 @@ TEST_CASE("Field Operations")
     {
         NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
-        auto sA = a.span();
         NeoFOAM::fill(a, 5.0);
 
         REQUIRE(equal(a, 5.0));
@@ -252,7 +251,7 @@ TEST_CASE("Field Operations")
         REQUIRE(equal(a, 20.0));
 
         auto sB = b.span();
-        a.apply(KOKKOS_LAMBDA(size_t i) { return 2 * sB[i]; });
+        a.apply(KOKKOS_LAMBDA(NeoFOAM::size_t i) { return 2 * sB[i]; });
         REQUIRE(equal(a, 20.0));
     }
 }

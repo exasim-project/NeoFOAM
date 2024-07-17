@@ -49,7 +49,7 @@ class FixedValue :
 
 public:
 
-    FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
+    FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, size_t patchID)
         : Base(mesh, dict, patchID), mesh_(mesh), fixedValue_(dict.get<ValueType>("fixedValue"))
     {}
 

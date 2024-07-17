@@ -46,19 +46,19 @@ TEST_CASE("volumeField")
         REQUIRE(vf.internalField().size() == 1);
 
         auto internalValues = vf.internalField().copyToHost();
-        for (size_t i = 0; i < internalValues.size(); ++i)
+        for (NeoFOAM::size_t i = 0; i < internalValues.size(); ++i)
         {
             REQUIRE(internalValues[i] == 1.0);
         }
 
         auto values = vf.boundaryField().value().copyToHost();
-        for (size_t i = 0; i < values.size(); ++i)
+        for (NeoFOAM::size_t i = 0; i < values.size(); ++i)
         {
             REQUIRE(values[i] == 2.0);
         }
 
         auto refValue = vf.boundaryField().refValue().copyToHost();
-        for (size_t i = 0; i < refValue.size(); ++i)
+        for (NeoFOAM::size_t i = 0; i < refValue.size(); ++i)
         {
             REQUIRE(refValue[i] == 2.0);
         }

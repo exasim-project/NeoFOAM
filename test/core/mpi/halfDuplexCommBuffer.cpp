@@ -15,7 +15,7 @@ TEST_CASE("halfDuplexBuffer")
 {
 
     MPIEnvironment mpiEnviron;
-    std::vector<std::size_t> rankCommSize(mpiEnviron.sizeRank(), 1);
+    std::vector<NeoFOAM::size_t> rankCommSize(mpiEnviron.usizeRank(), 1);
     HalfDuplexCommBuffer buffer(mpiEnviron, rankCommSize);
 
     SECTION("Default Constructor")
@@ -40,11 +40,13 @@ TEST_CASE("halfDuplexBuffer")
 
     SECTION("Set Comm Rank Size")
     {
-        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
-            rankCommSize[rank] = rank;
+        for (std::size_t rank = 0; rank < mpiEnviron.usizeRank(); ++rank)
+        {
+            rankCommSize[rank] = static_cast<NeoFOAM::size_t>(rank);
+        }
         buffer.setCommRankSize<double>(rankCommSize);
         buffer.initComm<double>("Set Comm Rank Size");
-        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (NeoFOAM::size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = buffer.get<double>(rank);
             REQUIRE(data.size() == rank);
@@ -60,7 +62,7 @@ TEST_CASE("halfDuplexBuffer")
 
         send.initComm<int>("Send and Receive");
         receive.initComm<int>("Send and Receive");
-        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (NeoFOAM::size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = send.get<int>(rank);
             data[0] = static_cast<int>(rank);
@@ -72,7 +74,7 @@ TEST_CASE("halfDuplexBuffer")
         send.waitComplete();
         receive.waitComplete();
 
-        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (NeoFOAM::size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = receive.get<int>(rank);
             REQUIRE(data[0] == static_cast<int>(mpiEnviron.rank()));

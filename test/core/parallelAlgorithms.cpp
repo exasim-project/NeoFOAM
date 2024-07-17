@@ -30,7 +30,7 @@ TEST_CASE("parallelFor")
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
+            exec, {0, 5}, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { spanA[i] = spanB[i] + 2.0; }
         );
         auto hostSpanA = fieldA.copyToHost().span();
         for (auto value : hostSpanA)
@@ -50,7 +50,9 @@ TEST_CASE("parallelFor")
         NeoFOAM::parallelFor(
             exec,
             {0, 5},
-            KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
+            KOKKOS_LAMBDA(const NeoFOAM::size_t i) {
+                spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0);
+            }
         );
         auto hostSpanA = fieldA.copyToHost().span();
         for (auto value : hostSpanA)
@@ -64,11 +66,10 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + 2.0; }
         );
         auto hostSpanA = fieldA.copyToHost().span();
         for (auto value : hostSpanA)
@@ -93,12 +94,14 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
         NeoFOAM::parallelReduce(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
+            exec,
+            {0, 5},
+            KOKKOS_LAMBDA(const NeoFOAM::size_t i, double& lsum) { lsum += spanB[i]; },
+            sum
         );
 
         REQUIRE(sum == 5.0);
@@ -109,12 +112,11 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
         NeoFOAM::parallelReduce(
-            fieldA, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
+            fieldA, KOKKOS_LAMBDA(const NeoFOAM::size_t i, double& lsum) { lsum += spanB[i]; }, sum
         );
 
         REQUIRE(sum == 5.0);

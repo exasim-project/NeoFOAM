@@ -8,6 +8,7 @@
 
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/halfDuplexCommBuffer.hpp"
+#include "NeoFOAM/core/span.hpp"
 
 namespace NeoFOAM
 {
@@ -39,9 +40,7 @@ public:
      * @param receiveSize The number of nodes, per rank, that this rank receives from.
      */
     FullDuplexCommBuffer(
-        MPIEnvironment mpiEnviron,
-        std::vector<std::size_t> sendSize,
-        std::vector<std::size_t> receiveSize
+        MPIEnvironment mpiEnviron, std::vector<size_t> sendSize, std::vector<size_t> receiveSize
     )
         : send_(mpiEnviron, sendSize), receive_(mpiEnviron, receiveSize) {};
 
@@ -70,7 +69,7 @@ public:
      * @return A span of data for the send buffer.
      */
     template<typename valueType>
-    std::span<valueType> getSend(const size_t rank)
+    Span<valueType> getSend(const size_t rank)
     {
         return send_.get<valueType>(rank);
     }
@@ -82,7 +81,7 @@ public:
      * @return A span of data for the send buffer.
      */
     template<typename valueType>
-    std::span<const valueType> getSend(const size_t rank) const
+    Span<const valueType> getSend(const size_t rank) const
     {
         return send_.get<valueType>(rank);
     }
@@ -94,7 +93,7 @@ public:
      * @return A span of data for the receive buffer.
      */
     template<typename valueType>
-    std::span<valueType> getReceive(const size_t rank)
+    Span<valueType> getReceive(const size_t rank)
     {
         return receive_.get<valueType>(rank);
     }
@@ -106,7 +105,7 @@ public:
      * @return A span of data for the receive buffer.
      */
     template<typename valueType>
-    std::span<const valueType> getReceive(const size_t rank) const
+    Span<const valueType> getReceive(const size_t rank) const
     {
         return receive_.get<valueType>(rank);
     }

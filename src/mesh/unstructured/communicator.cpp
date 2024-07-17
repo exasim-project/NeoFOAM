@@ -24,12 +24,12 @@ Communicator::bufferType* Communicator::findDuplexBuffer()
 Communicator::bufferType* Communicator::createNewDuplexBuffer()
 {
     // determine buffer size.
-    std::vector<std::size_t> rankSendSize(mpiEnviron_.sizeRank());
-    std::vector<std::size_t> rankReceiveSize(mpiEnviron_.sizeRank());
-    for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+    std::vector<size_t> rankSendSize(mpiEnviron_.usizeRank());
+    std::vector<size_t> rankReceiveSize(mpiEnviron_.usizeRank());
+    for (std::size_t rank = 0; rank < mpiEnviron_.usizeRank(); ++rank)
     {
-        rankSendSize[rank] = sendMap_[rank].size();
-        rankReceiveSize[rank] = receiveMap_[rank].size();
+        rankSendSize[rank] = std::ssize(sendMap_[rank]);
+        rankReceiveSize[rank] = std::ssize(receiveMap_[rank]);
     }
     buffers.emplace_back(mpi::FullDuplexCommBuffer(mpiEnviron_, rankSendSize, rankReceiveSize));
     return &buffers.back();

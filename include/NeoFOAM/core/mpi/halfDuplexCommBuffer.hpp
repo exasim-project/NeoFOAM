@@ -12,6 +12,7 @@
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
+#include "NeoFOAM/core/span.hpp"
 
 namespace NeoFOAM
 {
@@ -99,13 +100,15 @@ public:
             !isCommInit(), "Communication buffer was initialised by name: " << commName_ << "."
         );
         NF_DEBUG_ASSERT(
-            rankCommSize.size() == mpiEnviron_.sizeRank(),
+            std::ssize(rankCommSize) == mpiEnviron_.sizeRank(),
             "Rank size mismatch. " << rankCommSize.size() << " vs. " << mpiEnviron_.sizeRank()
         );
         typeSize_ = sizeof(valueType);
         rankOffset_.resize(rankCommSize.size() + 1);
         request_.resize(rankCommSize.size(), MPI_REQUEST_NULL);
-        updateDataSize([&](const size_t rank) { return rankCommSize[rank]; }, sizeof(valueType));
+        updateDataSize(
+            [&](const std::size_t rank) { return rankCommSize[rank]; }, sizeof(valueType)
+        );
     }
 
     /**
@@ -167,13 +170,14 @@ public:
      * @return std::span<valueType> A span of the data for the given rank.
      */
     template<typename valueType>
-    std::span<valueType> get(const size_t rank)
+    Span<valueType> get(const size_t rank)
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
-        return std::span<valueType>(
-            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_[rank]),
-            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
+        auto urank = static_cast<std::size_t>(rank);
+        return Span<valueType>(
+            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_[urank]),
+            (rankOffset_[urank + 1] - rankOffset_[urank]) / sizeof(valueType)
         );
     }
 
@@ -185,13 +189,14 @@ public:
      * @return std::span<const valueType> A span of the data for the given rank.
      */
     template<typename valueType>
-    std::span<const valueType> get(const size_t rank) const
+    Span<const valueType> get(const size_t rank) const
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
-        return std::span<const valueType>(
-            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_[rank]),
-            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
+        auto urank = static_cast<std::size_t>(rank);
+        return Span<const valueType>(
+            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_[urank]),
+            (rankOffset_[urank + 1] - rankOffset_[urank]) / sizeof(valueType)
         );
     }
 
@@ -217,7 +222,7 @@ private:
         );
         if (0 == (typeSize_ - sizeof(valueType))) return;
         updateDataSize(
-            [rankOffset = rankOffset_, typeSize = typeSize_](const size_t rank)
+            [rankOffset = rankOffset_, typeSize = typeSize_](const std::size_t rank)
             { return (rankOffset[rank + 1] - rankOffset[rank]) / typeSize; },
             sizeof(valueType)
         );
@@ -236,10 +241,10 @@ private:
     void updateDataSize(func rankSize, std::size_t newSize)
     {
         std::size_t dataSize = 0;
-        for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        for (std::size_t rank = 0; rank < mpiEnviron_.usizeRank(); ++rank)
         {
             rankOffset_[rank] = dataSize;
-            dataSize += rankSize(rank) * newSize;
+            dataSize += static_cast<std::size_t>(rankSize(rank)) * newSize;
         }
         rankOffset_.back() = dataSize;
         if (rankBuffer_.size() < dataSize) rankBuffer_.resize(dataSize); // we never size down.

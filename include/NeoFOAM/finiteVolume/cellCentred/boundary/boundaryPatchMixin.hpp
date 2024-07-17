@@ -32,8 +32,11 @@ public:
     virtual ~BoundaryPatchMixin() = default;
 
     BoundaryPatchMixin(const UnstructuredMesh& mesh, size_t patchID)
-        : patchID_(patchID), start_(static_cast<label>(mesh.boundaryMesh().offset()[patchID_])),
-          end_(static_cast<label>(mesh.boundaryMesh().offset()[patchID_ + 1]))
+        : patchID_(patchID),
+          start_(static_cast<label>(mesh.boundaryMesh().offset()[static_cast<std::size_t>(patchID_)]
+          )),
+          end_(static_cast<label>(mesh.boundaryMesh().offset(
+          )[static_cast<std::size_t>(patchID_ + 1)]))
     {}
 
     BoundaryPatchMixin(label start, label end, size_t patchID)

@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/info.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
 
 namespace NeoFOAM
 {
@@ -73,6 +74,8 @@ public:
      * @return The number of ranks.
      */
     size_t sizeRank() const { return static_cast<size_t>(mpi_size); }
+
+    std::size_t usizeRank() const { return static_cast<std::size_t>(mpi_size); }
 
     /**
      * @brief Returns the rank of the current process.

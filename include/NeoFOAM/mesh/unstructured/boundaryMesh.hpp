@@ -73,7 +73,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face cells for the specified boundary face.
      */
-    std::span<const label> faceCells(const localIdx i) const;
+    Span<const label> faceCells(const localIdx i) const;
 
     /**
      * @brief Get the field of face centres.
@@ -88,7 +88,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face centres for the specified boundary face.
      */
-    std::span<const Vector> cf(const localIdx i) const;
+    Span<const Vector> cf(const localIdx i) const;
 
     /**
      * @brief Get the field of face normals.
@@ -103,7 +103,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face normals for the specified boundary face.
      */
-    std::span<const Vector> cn(const localIdx i) const;
+    Span<const Vector> cn(const localIdx i) const;
 
     /**
      * @brief Get the field of face areas normals.
@@ -118,7 +118,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face areas normals for the specified boundary face.
      */
-    std::span<const Vector> sf(const localIdx i) const;
+    Span<const Vector> sf(const localIdx i) const;
 
     /**
      * @brief Get the field of magnitudes of face areas normals.
@@ -136,7 +136,7 @@ public:
      * @return A span of magnitudes of face areas normals for the specified
      * boundary face.
      */
-    std::span<const scalar> magSf(const localIdx i) const;
+    Span<const scalar> magSf(const localIdx i) const;
 
     /**
      * @brief Get the field of face normals.
@@ -151,7 +151,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of face normals for the specified boundary face.
      */
-    std::span<const Vector> nf(const localIdx i) const;
+    Span<const Vector> nf(const localIdx i) const;
 
     /**
      * @brief Get the field of delta vectors.
@@ -166,7 +166,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of delta vectors for the specified boundary face.
      */
-    std::span<const Vector> delta(const localIdx i) const;
+    Span<const Vector> delta(const localIdx i) const;
 
     /**
      * @brief Get the field of weights.
@@ -181,7 +181,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of weights for the specified boundary face.
      */
-    std::span<const scalar> weights(const localIdx i) const;
+    Span<const scalar> weights(const localIdx i) const;
 
     /**
      * @brief Get the field of delta coefficients.
@@ -196,7 +196,7 @@ public:
      * @param i The index of the boundary face.
      * @return A span of delta coefficients for the specified boundary face.
      */
-    std::span<const scalar> deltaCoeffs(const localIdx i) const;
+    Span<const scalar> deltaCoeffs(const localIdx i) const;
 
     /**
      * @brief Get the offset of the boundary faces.

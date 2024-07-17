@@ -54,7 +54,7 @@ public:
 
     using FixedGradientType = FixedGradient<ValueType>;
 
-    FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
+    FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, size_t patchID)
         : Base(mesh, dict, patchID), mesh_(mesh),
           fixedGradient_(dict.get<ValueType>("fixedGradient"))
     {}

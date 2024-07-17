@@ -26,7 +26,7 @@ void HalfDuplexCommBuffer::send()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
-    for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+    for (std::size_t rank = 0; rank < mpiEnviron_.usizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
         isend<char>(
@@ -44,7 +44,7 @@ void HalfDuplexCommBuffer::receive()
 {
     NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
     NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
-    for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+    for (std::size_t rank = 0; rank < mpiEnviron_.usizeRank(); ++rank)
     {
         if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
         irecv<char>(

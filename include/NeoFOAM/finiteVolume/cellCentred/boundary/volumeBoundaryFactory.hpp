@@ -44,8 +44,8 @@ public:
 
     VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary& dict, size_t patchID)
         : BoundaryPatchMixin(
-            static_cast<label>(mesh.boundaryMesh().offset()[patchID]),
-            static_cast<label>(mesh.boundaryMesh().offset()[patchID + 1]),
+            static_cast<label>(mesh.boundaryMesh().offset()[static_cast<std::size_t>(patchID)]),
+            static_cast<label>(mesh.boundaryMesh().offset()[static_cast<std::size_t>(patchID + 1)]),
             patchID
         ),
           boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(

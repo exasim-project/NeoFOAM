@@ -5,11 +5,11 @@
 #include <Kokkos_Core.hpp>
 
 #include <iostream>
-#include <span>
 
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/core/span.hpp"
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 
@@ -57,13 +57,11 @@ public:
      */
     Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
     {
-        void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
+            [this, size](const auto& concreteExec)
+            { data_ = concreteExec.template alloc<ValueType>(size); },
             exec_
         );
-        data_ = static_cast<ValueType*>(ptr);
     }
 
     /**
@@ -72,16 +70,14 @@ public:
      * @param in a vector of elements to copy over
      */
     Field(const Executor& exec, std::vector<ValueType> in)
-        : size_(in.size()), data_(nullptr), exec_(exec)
+        : size_(static_cast<size_t>(in.size())), data_(nullptr), exec_(exec)
     {
         Executor hostExec = CPUExecutor();
-        void* ptr = nullptr;
         std::visit(
-            [this, &ptr](const auto& concreteExec)
-            { ptr = concreteExec.alloc(this->size_ * sizeof(ValueType)); },
+            [this](const auto& concreteExec)
+            { data_ = concreteExec.template alloc<ValueType>(this->size_); },
             exec_
         );
-        data_ = static_cast<ValueType*>(ptr);
 
         std::visit(detail::deepCopyVisitor(size_, in.data(), data_), hostExec, exec);
     }
@@ -265,24 +261,22 @@ public:
      */
     void resize(const size_t size)
     {
-        void* ptr = nullptr;
+        ;
         if (!empty())
         {
             std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.realloc(data_, size * sizeof(ValueType)); },
+                [this, size](const auto& exec)
+                { data_ = exec.template realloc<ValueType>(data_, size); },
                 exec_
             );
         }
         else
         {
             std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.alloc(size * sizeof(ValueType)); },
+                [this, size](const auto& exec) { data_ = exec.template alloc<ValueType>(size); },
                 exec_
             );
         }
-        data_ = static_cast<ValueType*>(ptr);
         size_ = size;
     }
 
@@ -320,33 +314,40 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
+    [[nodiscard]] Span<ValueType> span()
+    {
+        return Span<ValueType>(data_, static_cast<std::size_t>(size_));
+    }
 
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span() const
+    [[nodiscard]] Span<const ValueType> span() const
     {
-        return std::span<const ValueType>(data_, size_);
+        return Span<const ValueType>(data_, static_cast<std::size_t>(size_));
     }
 
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range)
+    [[nodiscard]] Span<ValueType> span(std::pair<size_t, size_t> range)
     {
-        return std::span<ValueType>(data_ + range.first, range.second - range.first);
+        return Span<ValueType>(
+            data_ + range.first, static_cast<std::size_t>(range.second - range.first)
+        );
     }
 
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const
+    [[nodiscard]] Span<const ValueType> span(std::pair<size_t, size_t> range) const
     {
-        return std::span<const ValueType>(data_ + range.first, range.second - range.first);
+        return Span<const ValueType>(
+            data_ + range.first, static_cast<std::size_t>(range.second - range.first)
+        );
     }
 
     /**

@@ -67,11 +67,11 @@ public:
         : mpiEnviron_(mpiEnviron), sendMap_(rankSendMap), receiveMap_(rankReceiveMap)
     {
         NF_DEBUG_ASSERT(
-            mpiEnviron_.sizeRank() == rankSendMap.size(),
+            mpiEnviron_.sizeRank() == std::ssize(rankSendMap),
             "Size of rankSendSize does not match MPI size."
         );
         NF_DEBUG_ASSERT(
-            mpiEnviron_.sizeRank() == rankReceiveMap.size(),
+            mpiEnviron_.sizeRank() == std::ssize(rankReceiveMap),
             "Size of rankReceiveSize does not match MPI size."
         );
     };
@@ -97,11 +97,11 @@ public:
         }
 
         CommBuffer_[commName]->initComm<valueType>(commName);
-        for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        for (std::size_t rank = 0; rank < mpiEnviron_.usizeRank(); ++rank)
         {
-            auto rankBuffer = CommBuffer_[commName]->getSend<valueType>(rank);
-            for (size_t data = 0; data < sendMap_[rank].size(); ++data)
-                rankBuffer[data] = field(static_cast<size_t>(sendMap_[rank][data].local_idx));
+            auto rankBuffer = CommBuffer_[commName]->getSend<valueType>(static_cast<size_t>(rank));
+            for (std::size_t data = 0; data < std::size(sendMap_[rank]); ++data)
+                rankBuffer[data] = field(sendMap_[rank][data].local_idx);
         }
         CommBuffer_[commName]->startComm();
     }
@@ -128,11 +128,12 @@ public:
         );
 
         CommBuffer_[commName]->waitComplete();
-        for (size_t rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        for (std::size_t rank = 0; rank < mpiEnviron_.usizeRank(); ++rank)
         {
-            auto rankBuffer = CommBuffer_[commName]->getReceive<valueType>(rank);
-            for (size_t data = 0; data < receiveMap_[rank].size(); ++data)
-                field(static_cast<size_t>(receiveMap_[rank][data].local_idx)) = rankBuffer[data];
+            auto rankBuffer =
+                CommBuffer_[commName]->getReceive<valueType>(static_cast<size_t>(rank));
+            for (std::size_t data = 0; data < std::size(receiveMap_[rank]); ++data)
+                field(receiveMap_[rank][data].local_idx) = rankBuffer[data];
         }
         CommBuffer_[commName]->finaliseComm();
         CommBuffer_[commName] = nullptr;

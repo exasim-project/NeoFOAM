@@ -127,13 +127,13 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_MAX")
     {
         Vector values;
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(rank) + static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Max, MPI_COMM_WORLD);
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             scalar expectedMaxValue =
                 static_cast<scalar>(ranks - 1) + static_cast<scalar>(ivalue) * 10.0;
@@ -144,13 +144,13 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_MIN")
     {
         Vector values;
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(rank) + static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Min, MPI_COMM_WORLD);
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             REQUIRE(sendValues[ivalue] == static_cast<scalar>(ivalue) * 10.0);
         }
@@ -159,17 +159,17 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_SUM")
     {
         Vector values;
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Sum, MPI_COMM_WORLD);
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(ranks) * static_cast<scalar>(ivalue) * 10.0;
         }
-        for (size_t ivalue = 0; ivalue < sendValues.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < sendValues.size(); ++ivalue)
         {
             REQUIRE(sendValues[ivalue] == values[ivalue]);
         }
@@ -178,17 +178,17 @@ TEST_CASE("allReduce vectors")
     SECTION("MPI_PROD")
     {
         Vector values;
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = static_cast<scalar>(ivalue) * 10.0;
         }
         Vector sendValues = values;
         allReduce(sendValues, ReduceOp::Prod, MPI_COMM_WORLD);
-        for (size_t ivalue = 0; ivalue < values.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < values.size(); ++ivalue)
         {
             values[ivalue] = std::pow(values[ivalue], static_cast<float>(ranks));
         }
-        for (size_t ivalue = 0; ivalue < sendValues.size(); ++ivalue)
+        for (NeoFOAM::size_t ivalue = 0; ivalue < sendValues.size(); ++ivalue)
         {
             REQUIRE(sendValues[ivalue] == values[ivalue]);
         }

@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
@@ -45,8 +46,8 @@ public:
 
     SurfaceBoundary(const UnstructuredMesh& mesh, const Dictionary& dict, size_t patchID)
         : BoundaryPatchMixin(
-            static_cast<label>(mesh.boundaryMesh().offset()[patchID]),
-            static_cast<label>(mesh.boundaryMesh().offset()[patchID + 1]),
+            static_cast<label>(mesh.boundaryMesh().offset()[static_cast<std::size_t>(patchID)]),
+            static_cast<label>(mesh.boundaryMesh().offset()[static_cast<std::size_t>(patchID + 1)]),
             patchID
         ),
           boundaryCorrectionStrategy_(SurfaceBoundaryFactory<ValueType>::create(
