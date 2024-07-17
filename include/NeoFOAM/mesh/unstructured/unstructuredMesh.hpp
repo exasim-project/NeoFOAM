@@ -58,11 +58,11 @@ public:
         scalarField magFaceAreas,
         labelField faceOwner,
         labelField faceNeighbour,
-        localIdx nCells,
-        localIdx nInternalFaces,
-        localIdx nBoundaryFaces,
-        localIdx nBoundaries,
-        localIdx nFaces,
+        size_t nCells,
+        size_t nInternalFaces,
+        size_t nBoundaryFaces,
+        size_t nBoundaries,
+        size_t nFaces,
         BoundaryMesh boundaryMesh
     );
 
@@ -127,35 +127,35 @@ public:
      *
      * @return The number of cells in the mesh.
      */
-    localIdx nCells() const;
+    size_t nCells() const;
 
     /**
      * @brief Get the number of internal faces in the mesh.
      *
      * @return The number of internal faces in the mesh.
      */
-    localIdx nInternalFaces() const;
+    size_t nInternalFaces() const;
 
     /**
      * @brief Get the number of boundary faces in the mesh.
      *
      * @return The number of boundary faces in the mesh.
      */
-    localIdx nBoundaryFaces() const;
+    size_t nBoundaryFaces() const;
 
     /**
      * @brief Get the number of boundaries in the mesh.
      *
      * @return The number of boundaries in the mesh.
      */
-    localIdx nBoundaries() const;
+    size_t nBoundaries() const;
 
     /**
      * @brief Get the number of faces in the mesh.
      *
      * @return The number of faces in the mesh.
      */
-    localIdx nFaces() const;
+    size_t nFaces() const;
 
     /**
      * @brief Get the boundary mesh.
@@ -233,27 +233,27 @@ private:
     /**
      * @brief Number of cells in the mesh.
      */
-    label nCells_;
+    size_t nCells_;
 
     /**
      * @brief Number of internal faces in the mesh.
      */
-    label nInternalFaces_;
+    size_t nInternalFaces_;
 
     /**
      * @brief Number of boundary faces in the mesh.
      */
-    label nBoundaryFaces_;
+    size_t nBoundaryFaces_;
 
     /**
      * @brief Number of boundaries in the mesh.
      */
-    label nBoundaries_;
+    size_t nBoundaries_;
 
     /**
      * @brief Number of faces in the mesh.
      */
-    label nFaces_;
+    size_t nFaces_;
 
     /**
      * @brief Boundary mesh.

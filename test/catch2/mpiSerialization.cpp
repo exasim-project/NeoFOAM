@@ -15,11 +15,19 @@ void serializeIO(volatile bool* threadShutdown)
         return;
     }
 
-    std::vector<MPI_Request> req(COMM_SIZE);
+    std::vector<MPI_Request> req(static_cast<std::size_t>(COMM_SIZE));
     bool recvBuffer;
     for (int i = 0; i < COMM_SIZE; ++i)
     {
-        MPI_Irecv(&recvBuffer, 1, MPI_CXX_BOOL, i, SERIALIZATION_TAG, COMM, &req[i]);
+        MPI_Irecv(
+            &recvBuffer,
+            1,
+            MPI_CXX_BOOL,
+            i,
+            SERIALIZATION_TAG,
+            COMM,
+            &req[static_cast<std::size_t>(i)]
+        );
     }
 
     while (!*threadShutdown)
@@ -31,7 +39,9 @@ void serializeIO(volatile bool* threadShutdown)
         while (completed == MPI_UNDEFINED && !*threadShutdown)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            MPI_Testany(req.size(), req.data(), &completed, &flag, MPI_STATUS_IGNORE);
+            MPI_Testany(
+                static_cast<int>(req.size()), req.data(), &completed, &flag, MPI_STATUS_IGNORE
+            );
         }
 
         if (*threadShutdown)
@@ -57,7 +67,13 @@ void serializeIO(volatile bool* threadShutdown)
 
         // re-activate request for process
         MPI_Irecv(
-            &recvBuffer, 1, MPI_CXX_BOOL, completed, SERIALIZATION_TAG, COMM, &req[completed]
+            &recvBuffer,
+            1,
+            MPI_CXX_BOOL,
+            completed,
+            SERIALIZATION_TAG,
+            COMM,
+            &req[static_cast<std::size_t>(completed)]
         );
     }
 }
