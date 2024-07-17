@@ -70,9 +70,9 @@ jobs:
         shell: bash -i {0}
         run: |
           export HOME=/share/ec2-user
-          module avail -S clang
           module load clang/16
           module load libfabric-aws
+          module spider libfabric-aws
           module load cmake
           cmake --version
           cmake --preset ninja-kokkos-cuda-all \
