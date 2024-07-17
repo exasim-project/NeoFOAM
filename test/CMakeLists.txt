@@ -31,9 +31,11 @@ function(neofoam_unit_test TEST)
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main Kokkos::kokkos NeoFOAM
                                         cpptrace::cpptrace)
 
+  set(neofoam_MPI_FLAGS "--allow-run-as-root")
   add_test(
     NAME ${TEST}
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${neofoam_MPI_SIZE} ${neofoam_COMMAND}
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${neofoam_MPI_SIZE} ${neofaom_MPI_FLAGS}
+            ${neofoam_COMMAND}
     WORKING_DIRECTORY ${neofoam_WORKING_DIRECTORY})
   set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
   set_tests_properties(${neofoam_NAME} PROPERTIES PROCESSORS ${neofoam_MPI_SIZE})
