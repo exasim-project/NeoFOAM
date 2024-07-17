@@ -26,14 +26,49 @@ endif()
 
 include(cmake/CPM.cmake)
 
-cpmaddpackage(NAME cpptrace GITHUB_REPOSITORY jeremy-rifkin/cpptrace VERSION 0.5.4)
+cpmaddpackage(
+  NAME
+  cpptrace
+  GITHUB_REPOSITORY
+  jeremy-rifkin/cpptrace
+  VERSION
+  0.5.4
+  SYSTEM)
 
-cpmaddpackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json VERSION 3.11.3)
+cpmaddpackage(
+  NAME
+  nlohmann_json
+  GITHUB_REPOSITORY
+  nlohmann/json
+  VERSION
+  3.11.3
+  SYSTEM)
 
-cpmaddpackage(NAME spdlog GITHUB_REPOSITORY gabime/spdlog VERSION 1.13.0)
+cpmaddpackage(
+  NAME
+  spdlog
+  GITHUB_REPOSITORY
+  gabime/spdlog
+  VERSION
+  1.13.0
+  SYSTEM)
 
-cpmaddpackage(NAME cxxopts GITHUB_REPOSITORY jarro2783/cxxopts VERSION 3.2.0)
+cpmaddpackage(
+  NAME
+  cxxopts
+  GITHUB_REPOSITORY
+  jarro2783/cxxopts
+  VERSION
+  3.2.0
+  SYSTEM)
 
 if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
-  cpmaddpackage(NAME Catch2 GITHUB_REPOSITORY catchorg/Catch2 VERSION 3.4.0)
+  cpmaddpackage(
+    NAME
+    Catch2
+    GITHUB_REPOSITORY
+    catchorg/Catch2
+    VERSION
+    3.4.0
+    SYSTEM)
 endif()

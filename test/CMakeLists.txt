@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 
-list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 # has to be first since it adds the main target
 add_subdirectory(catch2)
@@ -35,12 +35,11 @@ function(neofoam_unit_test TEST)
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${neofoam_MPI_SIZE} ${neofoam_COMMAND}
     WORKING_DIRECTORY ${neofoam_WORKING_DIRECTORY})
   set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
-  set_tests_properties(${neofoam_NAME} PROPERTIES PROCESSORS ${neofoam_MPI_SIZE})
+  set_tests_properties(${TEST} PROPERTIES PROCESSORS ${neofoam_MPI_SIZE})
   if(${MPIEXEC_MAX_NUMPROCS} LESS neofoam_MPI_SIZE)
-    message(WARNING "Test <${neofoam_NAME}> requested <${neofoam_MPI_SIZE}> processors, "
-                    "but only <${numberOfProcessors}> are available. Disabling test "
-                    "<${neofoam_NAME}>")
-    set_tests_properties(${neofoam_NAME} PROPERTIES DISABLED TRUE)
+    message(WARNING "Test <${TEST}> requested <${neofoam_MPI_SIZE}> processors, "
+                    "but only <${numberOfProcessors}> are available. Disabling test " "<${TEST}>")
+    set_tests_properties(${TEST} PROPERTIES DISABLED TRUE)
   endif()
 endfunction()
 
