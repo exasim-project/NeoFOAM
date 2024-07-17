@@ -8,18 +8,17 @@
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
 
 namespace NeoFOAM
 {
 
-class BasicFvccGeometryScheme : public FvccGeometrySchemeKernel
+class BasicGeometryScheme : public GeometrySchemeKernel
 {
 public:
 
-    BasicFvccGeometryScheme(const UnstructuredMesh& uMesh);
+    BasicGeometryScheme(const UnstructuredMesh& mesh);
 
     void updateWeights(const CPUExecutor& exec, fvcc::SurfaceField<scalar>& weights) override;
     void updateWeights(const OMPExecutor& exec, fvcc::SurfaceField<scalar>& weights) override;
@@ -54,7 +53,7 @@ public:
 
 private:
 
-    const UnstructuredMesh& uMesh_;
+    const UnstructuredMesh& mesh_;
 };
 
 } // namespace NeoFOAM

@@ -7,93 +7,89 @@
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeGrad(
-    fvcc::VolumeField<Vector>& gradPhi,
-    const fvcc::VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp
+    const VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp,
+    VolumeField<Vector>& gradPhi
 )
 {
-
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    fvcc::SurfaceField<NeoFOAM::scalar> phif(
-        exec, mesh, NeoFOAM::createCalculatedBCs<scalar>(mesh)
-    );
-    const auto s_faceCells = mesh.boundaryMesh().faceCells().span();
+    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto s_bSf = mesh.boundaryMesh().sf().span();
-    auto s_gradPhi = gradPhi.internalField().span();
+    auto surfGradPhi = gradPhi.internalField().span();
 
     surfInterp.interpolate(phif, phi);
-    const auto s_phif = phif.internalField().span();
-    const auto s_owner = mesh.faceOwner().span();
-    const auto s_neighbour = mesh.faceNeighbour().span();
+    const auto surfPhif = phif.internalField().span();
+    const auto surfOwner = mesh.faceOwner().span();
+    const auto surfNeighbour = mesh.faceNeighbour().span();
     const auto s_Sf = mesh.faceAreas().span();
     size_t nInternalFaces = mesh.nInternalFaces();
 
-    const auto s_V = mesh.cellVolumes().span();
+    const auto surfV = mesh.cellVolumes().span();
 
     if (std::holds_alternative<CPUExecutor>(exec))
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
-            s_gradPhi[s_owner[i]] += Flux;
-            s_gradPhi[s_neighbour[i]] -= Flux;
+            Vector Flux = s_Sf[i] * surfPhif[i];
+            surfGradPhi[surfOwner[i]] += Flux;
+            surfGradPhi[surfNeighbour[i]] -= Flux;
         }
 
-        for (size_t i = nInternalFaces; i < s_phif.size(); i++)
+        for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
-            int32_t own = s_faceCells[i - nInternalFaces];
-            NeoFOAM::Vector value_own = s_bSf[i - nInternalFaces] * s_phif[i];
-            s_gradPhi[own] += value_own;
+            int32_t own = surfFaceCells[i - nInternalFaces];
+            Vector valueOwn = s_bSf[i - nInternalFaces] * surfPhif[i];
+            surfGradPhi[own] += valueOwn;
         }
 
         for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
-            s_gradPhi[celli] *= 1 / s_V[celli];
+            surfGradPhi[celli] *= 1 / surfV[celli];
         }
     }
     else
     {
-        NeoFOAM::parallelFor(
+        parallelFor(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                NeoFOAM::Vector Flux = s_Sf[i] * s_phif[i];
-                Kokkos::atomic_add(&s_gradPhi[s_owner[i]], Flux);
-                Kokkos::atomic_sub(&s_gradPhi[s_neighbour[i]], Flux);
+                Vector Flux = s_Sf[i] * surfPhif[i];
+                Kokkos::atomic_add(&surfGradPhi[surfOwner[i]], Flux);
+                Kokkos::atomic_sub(&surfGradPhi[surfNeighbour[i]], Flux);
             }
         );
 
-        NeoFOAM::parallelFor(
+        parallelFor(
             exec,
-            {nInternalFaces, s_phif.size()},
+            {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
-                size_t own = s_faceCells[i - nInternalFaces];
-                NeoFOAM::Vector value_own = s_Sf[i] * s_phif[i];
-                Kokkos::atomic_add(&s_gradPhi[own], value_own);
+                size_t own = surfFaceCells[i - nInternalFaces];
+                Vector valueOwn = s_Sf[i] * surfPhif[i];
+                Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
             }
         );
 
-        NeoFOAM::parallelFor(
+        parallelFor(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) { s_gradPhi[celli] *= 1 / s_V[celli]; }
+            KOKKOS_LAMBDA(const size_t celli) { surfGradPhi[celli] *= 1 / surfV[celli]; }
         );
     }
 }
 
 gaussGreenGrad::gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
-    : mesh_(mesh),
-      surfaceInterpolation_(exec, mesh, std::make_unique<NeoFOAM::Linear>(exec, mesh)) {
+    : mesh_(mesh), surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {
 
-      };
+                   };
 
 
-void gaussGreenGrad::grad(fvcc::VolumeField<Vector>& gradPhi, const fvcc::VolumeField<scalar>& phi)
+void gaussGreenGrad::grad(VolumeField<Vector>& gradPhi, const VolumeField<scalar>& phi)
 {
     computeGrad(gradPhi, phi, surfaceInterpolation_);
 };

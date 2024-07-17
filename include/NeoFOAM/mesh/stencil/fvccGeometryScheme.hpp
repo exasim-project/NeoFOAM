@@ -5,7 +5,6 @@
 
 #include "NeoFOAM/core/primitives/vector.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 
@@ -30,11 +29,11 @@ std::vector<fvcc::SurfaceBoundary<ValueType>> createCalculatedBCs(const Unstruct
     return bcs;
 };
 
-class FvccGeometrySchemeKernel
+class GeometrySchemeKernel
 {
 public:
 
-    FvccGeometrySchemeKernel(const UnstructuredMesh& uMesh);
+    GeometrySchemeKernel(const UnstructuredMesh& mesh);
 
     virtual void updateWeights(const CPUExecutor& exec, fvcc::SurfaceField<scalar>& weights) = 0;
     virtual void updateWeights(const OMPExecutor& exec, fvcc::SurfaceField<scalar>& weights) = 0;
@@ -68,27 +67,26 @@ public:
     ) = 0;
 };
 
-class FvccGeometryScheme
+class GeometryScheme
 {
 public:
 
-
-    FvccGeometryScheme(
+    GeometryScheme(
         const Executor& exec,
-        std::unique_ptr<FvccGeometrySchemeKernel> kernel,
+        std::unique_ptr<GeometrySchemeKernel> kernel,
         const fvcc::SurfaceField<scalar>& weights,
         const fvcc::SurfaceField<scalar>& deltaCoeffs,
         const fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs,
         const fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
     );
 
-    FvccGeometryScheme(
+    GeometryScheme(
         const Executor& exec,
-        const UnstructuredMesh& uMesh,
-        std::unique_ptr<FvccGeometrySchemeKernel> kernel
+        const UnstructuredMesh& mesh,
+        std::unique_ptr<GeometrySchemeKernel> kernel
     );
 
-    FvccGeometryScheme(const UnstructuredMesh& uMesh // will lookup the kernel
+    GeometryScheme(const UnstructuredMesh& mesh // will lookup the kernel
     );
 
     const fvcc::SurfaceField<scalar>& weights() const;
@@ -104,13 +102,13 @@ public:
     std::string name() const;
 
     // add selection mechanism via dictionary later
-    static const std::shared_ptr<FvccGeometryScheme> readOrCreate(const UnstructuredMesh& uMesh);
+    static const std::shared_ptr<GeometryScheme> readOrCreate(const UnstructuredMesh& mesh);
 
 private:
 
     const Executor exec_;
-    const UnstructuredMesh& uMesh_;
-    std::unique_ptr<FvccGeometrySchemeKernel> kernel_;
+    const UnstructuredMesh& mesh_;
+    std::unique_ptr<GeometrySchemeKernel> kernel_;
 
     fvcc::SurfaceField<scalar> weights_;
     fvcc::SurfaceField<scalar> deltaCoeffs_;

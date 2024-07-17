@@ -7,34 +7,31 @@
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
 void computeDiv(
-    fvcc::VolumeField<scalar>& divPhi,
-    const fvcc::SurfaceField<scalar>& faceFlux,
-    const fvcc::VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp
+    const SurfaceField<scalar>& faceFlux,
+    const VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp,
+    VolumeField<scalar>& divPhi
 )
 {
-
     const UnstructuredMesh& mesh = divPhi.mesh();
     const auto exec = divPhi.exec();
-    fvcc::SurfaceField<NeoFOAM::scalar> phif(
-        exec, mesh, NeoFOAM::createCalculatedBCs<scalar>(mesh)
-    );
-    const auto s_faceCells = mesh.boundaryMesh().faceCells().span();
+    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(phif, faceFlux, phi);
 
-    auto s_divPhi = divPhi.internalField().span();
+    auto surfDivPhi = divPhi.internalField().span();
 
-    const auto s_phif = phif.internalField().span();
-    const auto s_owner = mesh.faceOwner().span();
-    const auto s_neighbour = mesh.faceNeighbour().span();
-    const auto s_faceFlux = faceFlux.internalField().span();
+    const auto surfPhif = phif.internalField().span();
+    const auto surfOwner = mesh.faceOwner().span();
+    const auto surfNeighbour = mesh.faceNeighbour().span();
+    const auto surfFaceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh.nInternalFaces();
-    const auto s_V = mesh.cellVolumes().span();
+    const auto surfV = mesh.cellVolumes().span();
 
 
     // check if the executor is GPU
@@ -42,50 +39,50 @@ void computeDiv(
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            NeoFOAM::scalar Flux = s_faceFlux[i] * s_phif[i];
-            s_divPhi[s_owner[i]] += Flux;
-            s_divPhi[s_neighbour[i]] -= Flux;
+            scalar Flux = surfFaceFlux[i] * surfPhif[i];
+            surfDivPhi[surfOwner[i]] += Flux;
+            surfDivPhi[surfNeighbour[i]] -= Flux;
         }
 
-        for (size_t i = nInternalFaces; i < s_phif.size(); i++)
+        for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
-            int32_t own = s_faceCells[i - nInternalFaces];
-            NeoFOAM::scalar value_own = s_faceFlux[i] * s_phif[i];
-            s_divPhi[own] += value_own;
+            int32_t own = surfFaceCells[i - nInternalFaces];
+            scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
+            surfDivPhi[own] += valueOwn;
         }
 
 
         for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
-            s_divPhi[celli] *= 1 / s_V[celli];
+            surfDivPhi[celli] *= 1 / surfV[celli];
         }
     }
     else
     {
-        NeoFOAM::parallelFor(
+        parallelFor(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                NeoFOAM::scalar Flux = s_faceFlux[i] * s_phif[i];
-                Kokkos::atomic_add(&s_divPhi[s_owner[i]], Flux);
-                Kokkos::atomic_sub(&s_divPhi[s_neighbour[i]], Flux);
+                scalar Flux = surfFaceFlux[i] * surfPhif[i];
+                Kokkos::atomic_add(&surfDivPhi[surfOwner[i]], Flux);
+                Kokkos::atomic_sub(&surfDivPhi[surfNeighbour[i]], Flux);
             }
         );
 
-        NeoFOAM::parallelFor(
+        parallelFor(
             exec,
-            {nInternalFaces, s_phif.size()},
+            {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
-                int32_t own = s_faceCells[i - nInternalFaces];
-                NeoFOAM::scalar value_own = s_faceFlux[i] * s_phif[i];
-                Kokkos::atomic_add(&s_divPhi[own], value_own);
+                int32_t own = surfFaceCells[i - nInternalFaces];
+                scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
+                Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
             }
         );
 
-        NeoFOAM::parallelFor(
+        parallelFor(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) { s_divPhi[celli] *= 1 / s_V[celli]; }
+            KOKKOS_LAMBDA(const size_t celli) { surfDivPhi[celli] *= 1 / surfV[celli]; }
         );
     }
 }
@@ -98,9 +95,7 @@ GaussGreenDiv::GaussGreenDiv(
                    };
 
 void GaussGreenDiv::div(
-    fvcc::VolumeField<scalar>& divPhi,
-    const fvcc::SurfaceField<scalar>& faceFlux,
-    fvcc::VolumeField<scalar>& phi
+    VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
     computeDiv(divPhi, faceFlux, phi, surfaceInterpolation_);
