@@ -20,7 +20,7 @@ void computeGrad(
     const auto exec = gradPhi.exec();
     SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    const auto s_bSf = mesh.boundaryMesh().sf().span();
+    const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();
 
     surfInterp.interpolate(phif, phi);
@@ -36,15 +36,15 @@ void computeGrad(
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            Vector Flux = s_Sf[i] * surfPhif[i];
-            surfGradPhi[surfOwner[i]] += Flux;
-            surfGradPhi[surfNeighbour[i]] -= Flux;
+            Vector flux = s_Sf[i] * surfPhif[i];
+            surfGradPhi[surfOwner[i]] += flux;
+            surfGradPhi[surfNeighbour[i]] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
             int32_t own = surfFaceCells[i - nInternalFaces];
-            Vector valueOwn = s_bSf[i - nInternalFaces] * surfPhif[i];
+            Vector valueOwn = sBSf[i - nInternalFaces] * surfPhif[i];
             surfGradPhi[own] += valueOwn;
         }
 
@@ -59,9 +59,9 @@ void computeGrad(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                Vector Flux = s_Sf[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfGradPhi[surfOwner[i]], Flux);
-                Kokkos::atomic_sub(&surfGradPhi[surfNeighbour[i]], Flux);
+                Vector flux = s_Sf[i] * surfPhif[i];
+                Kokkos::atomic_add(&surfGradPhi[surfOwner[i]], flux);
+                Kokkos::atomic_sub(&surfGradPhi[surfNeighbour[i]], flux);
             }
         );
 
@@ -83,11 +83,11 @@ void computeGrad(
     }
 }
 
-gaussGreenGrad::gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
+GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
     : mesh_(mesh), surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {};
 
 
-void gaussGreenGrad::grad(VolumeField<Vector>& gradPhi, const VolumeField<scalar>& phi)
+void GaussGreenGrad::grad(VolumeField<Vector>& gradPhi, const VolumeField<scalar>& phi)
 {
     computeGrad(phi, surfaceInterpolation_, gradPhi);
 };

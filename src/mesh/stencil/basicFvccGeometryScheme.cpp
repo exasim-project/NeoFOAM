@@ -19,9 +19,9 @@ void BasicGeometryScheme::updateWeights(
     const auto owner = mesh_.faceOwner().span();
     const auto neighbour = mesh_.faceNeighbour().span();
 
-    const auto Cf = mesh_.faceCentres().span();
-    const auto C = mesh_.cellCentres().span();
-    const auto Sf = mesh_.faceAreas().span();
+    const auto cf = mesh_.faceCentres().span();
+    const auto c = mesh_.cellCentres().span();
+    const auto sf = mesh_.faceAreas().span();
 
     auto w = weights.internalField().span();
 
@@ -32,12 +32,12 @@ void BasicGeometryScheme::updateWeights(
         // 90 deg and the dot-product will be positive.  For invalid
         // meshes (d & s <= 0), this will stabilise the calculation
         // but the result will be poor.
-        scalar SfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
-        scalar SfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
+        scalar sfdOwn = mag(sf[facei] & (cf[facei] - c[owner[facei]]));
+        scalar sfdNei = mag(sf[facei] & (c[neighbour[facei]] - cf[facei]));
 
-        if (std::abs(SfdOwn + SfdNei) > ROOTVSMALL)
+        if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
         {
-            w[facei] = SfdNei / (SfdOwn + SfdNei);
+            w[facei] = sfdNei / (sfdOwn + sfdNei);
         }
         else
         {
@@ -76,12 +76,12 @@ void BasicGeometryScheme::updateWeights(
             // 90 deg and the dot-product will be positive.  For invalid
             // meshes (d & s <= 0), this will stabilise the calculation
             // but the result will be poor.
-            scalar SfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
-            scalar SfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
+            scalar sfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
+            scalar sfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
 
-            if (std::abs(SfdOwn + SfdNei) > ROOTVSMALL)
+            if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
             {
-                w[facei] = SfdNei / (SfdOwn + SfdNei);
+                w[facei] = sfdNei / (sfdOwn + sfdNei);
             }
             else
             {
@@ -122,12 +122,12 @@ void BasicGeometryScheme::updateWeights(
             // 90 deg and the dot-product will be positive.  For invalid
             // meshes (d & s <= 0), this will stabilise the calculation
             // but the result will be poor.
-            scalar SfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
-            scalar SfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
+            scalar sfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
+            scalar sfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
 
-            if (std::abs(SfdOwn + SfdNei) > ROOTVSMALL)
+            if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
             {
-                w[facei] = SfdNei / (SfdOwn + SfdNei);
+                w[facei] = sfdNei / (sfdOwn + sfdNei);
             }
             else
             {

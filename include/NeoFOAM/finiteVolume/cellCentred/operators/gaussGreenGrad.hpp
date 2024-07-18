@@ -15,11 +15,11 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-class gaussGreenGrad
+class GaussGreenGrad
 {
 public:
 
-    gaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh);
+    GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh);
 
     // fvcc::VolumeField<Vector> grad(const fvcc::VolumeField<scalar>& phi);
 
