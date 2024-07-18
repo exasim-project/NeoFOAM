@@ -2,9 +2,10 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <vector>
-#include <string>
 #include <span>
+#include <string>
+#include <variant>
+#include <vector>
 
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/halfDuplexCommBuffer.hpp"
@@ -18,11 +19,13 @@ namespace mpi
 /**
  * @class FullDuplexCommBuffer
  * @brief A buffer for full-duplex communication in a distributed system using MPI.
+ * @tparam MemorySpace The memory space to use for the communication buffer.
  *
  * The FullDuplexCommBuffer class facilitates efficient, non-blocking, point-to-point data
  * exchange between MPI ranks, allowing for simultaneous send and receive operations. It
  * manages two HalfDuplexCommBuffer instances: one for sending data and one for receiving data.
  */
+template<class MemorySpace = Kokkos::HostSpace>
 class FullDuplexCommBuffer
 {
 public:
@@ -146,9 +149,25 @@ public:
 
 private:
 
-    HalfDuplexCommBuffer send_;    /**< The send buffer. */
-    HalfDuplexCommBuffer receive_; /**< The receive buffer. */
+    HalfDuplexCommBuffer<MemorySpace> send_;    /**< The send buffer. */
+    HalfDuplexCommBuffer<MemorySpace> receive_; /**< The receive buffer. */
 };
+
+using BufferVariant = std::variant FullDuplexCommBuffer<Kokkos::HostSpace>,
+#ifdef KOKKOS_ENABLE_CUDA
+      FullDuplexCommBuffer<Kokkos::CudaSpace>, FullDuplexCommBuffer<Kokkos::CudaUVMSpace>,
+#endif
+#ifdef KOKKOS_ENABLE_HIP
+      FullDuplexCommBuffer<Kokkos::HIPSpace>,
+#endif
+#ifdef KOKKOS_ENABLE_OPENMPTARGET
+      FullDuplexCommBuffer<Kokkos::OpenMPTargetSpace>,
+#endif
+#ifdef KOKKOS_ENABLE_SYCL
+      FullDuplexCommBuffer<Kokkos::SYCLSpace>, FullDuplexCommBuffer<Kokkos::SYCLSharedUSMSpace>,
+      FullDuplexCommBuffer<Kokkos::SYCLDeviceUSMSpace>,
+#endif
+      FullDuplexCommBuffer<Kokkos::AnonymousSpace> > ;
 
 }
 

@@ -39,14 +39,14 @@ inline int bufferHash(const std::string& str)
 }
 
 
-// template<typename Type>
-// concept MemorySpace = requires {
-//     typename Type::execution_space;
-//     {
-//         Type::is_memory_space
-//     } -> std::convertible_to<bool>;
-//     requires Type::is_memory_space == true;
-// };
+template<typename Type>
+concept MemorySpace = requires {
+    typename Type::execution_space;
+    {
+        Type::is_memory_space
+    } -> std::convertible_to<bool>;
+    requires Type::is_memory_space == true;
+};
 
 /**
  * @class HalfDuplexCommBuffer
@@ -58,7 +58,7 @@ inline int bufferHash(const std::string& str)
  * memory reallocation and improving memory efficiency. The class operates in a half-duplex mode,
  * meaning it is either sending or receiving data at any given time.
  */
-// template<class MemorySpace = Kokkos::HostSpace>
+template<class MemorySpace = Kokkos::HostSpace>
 class HalfDuplexCommBuffer
 {
 
@@ -117,7 +117,7 @@ public:
             "Rank size mismatch. " << rankCommSize.size() << " vs. " << mpiEnviron_.sizeRank()
         );
         typeSize_ = sizeof(valueType);
-        rankOffset_.resize(rankCommSize.size() + 1);
+        kokkos::resize(rankOffset_, rankCommSize.size() + 1);
         request_.resize(rankCommSize.size(), MPI_REQUEST_NULL);
         updateDataSize([&](const int rank) { return rankCommSize[rank]; }, sizeof(valueType));
     }
@@ -150,28 +150,90 @@ public:
      * @brief Check if the communication is complete.
      * @return true if the communication is complete else false.
      */
-    bool isComplete();
+    bool isComplete()
+    {
+        NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
+        int flag;
+        for (auto& request : request_)
+        {
+            int err = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
+            NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
+            if (!flag) return false;
+        }
+        return static_cast<bool>(flag);
+    }
 
     /**
      * @brief Post send for data to begin sending to all ranks this rank communicates with.
      */
-    void send();
+    void send()
+    {
+        NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
+        NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
+        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        {
+            if (rankOffset_(rank + 1) - rankOffset_(rank) == 0) continue;
+            isend<char>(
+                rankBuffer_.data() + rankOffset_(rank),
+                rankOffset_(rank + 1) - rankOffset_(rank),
+                rank,
+                tag_,
+                mpiEnviron_.comm(),
+                &request_[rank]
+            );
+        }
+    }
 
     /**
      * @brief Post receive for data to begin receiving from all ranks this rank communicates
      * with.
      */
-    void receive();
+    void receive()
+    {
+        NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
+        NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
+        for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
+        {
+            if (rankOffset_(rank + 1) - rankOffset_(rank) == 0) continue;
+            irecv<char>(
+                rankBuffer_.data() + rankOffset_(rank),
+                rankOffset_(rank + 1) - rankOffset_(rank),
+                rank,
+                tag_,
+                mpiEnviron_.comm(),
+                &request_[rank]
+            );
+        }
+    }
+
 
     /**
      * @brief Blocking wait for the communication to finish.
      */
-    void waitComplete();
+    void waitComplete()
+    {
+        NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
+        while (!isComplete())
+        {
+            // todo deadlock prevention.
+            // wait for the communication to finish.
+        }
+    }
 
     /**
      * @brief Finalise the communication.
      */
-    void finaliseComm();
+    void finaliseComm()
+    {
+        NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
+        NF_DEBUG_ASSERT(isComplete(), "Cannot finalise while buffer is active.");
+        for (auto& request : request_)
+            NF_DEBUG_ASSERT(
+                request == MPI_REQUEST_NULL, "MPI_Request not null, communication not complete."
+            );
+        tag_ = -1;
+        commName_ = "unassigned";
+    }
 
     /**
      * @brief Get a span of the buffer data for a given rank.
@@ -186,8 +248,8 @@ public:
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
         return std::span<valueType>(
-            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_[rank]),
-            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
+            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_(rank)),
+            (rankOffset_(rank + 1) - rankOffset_(rank)) / sizeof(valueType)
         );
     }
 
@@ -204,8 +266,8 @@ public:
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
         return std::span<const valueType>(
-            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_[rank]),
-            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
+            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_(rank)),
+            (rankOffset_(rank + 1) - rankOffset_(rank)) / sizeof(valueType)
         );
     }
 
@@ -216,18 +278,10 @@ private:
     std::size_t typeSize_ {sizeof(char)}; /*< The data type currently stored in the buffer. */
     MPIEnvironment mpiEnviron_;           /*< The MPI environment. */
     std::vector<MPI_Request> request_;    /*< The MPI request for communication with each rank. */
-    std::vector<char> rankBuffer_;        /*< The buffer data for all ranks. Never shrinks. */
-    std::vector<std::size_t>
+    Kokkos::View<char*, MemorySpace>
+        rankBuffer_; /*< The buffer data for all ranks. Never shrinks. */
+    Kokkos::View<std::size_t*, MemorySpace>
         rankOffset_; /*< The offset (in bytes) for a rank data in the buffer. */
-
-
-    char* rankBufferData_;
-    std::size_t rankBufferSize_;
-
-    std::size_t* rankBufferOffsetData_;
-    std::size_t rankBufferOffsetSize_;
-
-    const kokkosMemory memorySpace;
 
     /**
      * @brief Set the data type for the buffer.
@@ -263,11 +317,12 @@ private:
         // UPDATE FOR LOOP TO KOKKOS
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            rankOffset_[rank] = dataSize;
+            rankOffset_(rank) = dataSize;
             dataSize += rankSize(rank) * newSize;
         }
-        rankOffset_.back() = dataSize;
-        if (rankBuffer_.size() < dataSize) rankBuffer_.resize(dataSize); // we never size down.
+        rankOffset_(rankOffset_.size() - 1) = dataSize;
+        if (rankBuffer_.size() < dataSize)
+            kokkos::resize(rankBuffer_, dataSize); // we never size down.
     }
 };
 
