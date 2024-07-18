@@ -9,7 +9,9 @@
 #include <sstream>
 #include <iostream>
 
-#include <source_location>
+// compiling with clang and cuda fails to
+// find source location
+// #include <source_location>
 // #include <experimental/source_location>
 
 #include "info.hpp"
