@@ -11,7 +11,7 @@ add_custom_command(
 
 find_package(
   Python3
-  COMPONENTS Interpreter Development
+  COMPONENTS Interpreter
   REQUIRED)
 
 add_custom_command(

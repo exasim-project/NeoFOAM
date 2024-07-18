@@ -66,6 +66,10 @@ jobs:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: ["develop", "production"]
     steps:
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
@@ -78,10 +82,11 @@ jobs:
           module spider libfabric-aws
           module load cmake
           cmake --version
-          cmake --preset ninja-kokkos-cuda-all \
+          cmake --preset ${{matrix.preset}} \
+            -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
             -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
-          cmake --build --preset ninja-kokkos-cuda-all
+          cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
         run: |
@@ -89,7 +94,7 @@ jobs:
           module load clang/16
           module load libfabric-aws
           module load cmake
-          ctest --test-dir build/ReleaseCudaAll/test
+          ctest --preset ${{matrix.preset}}
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
