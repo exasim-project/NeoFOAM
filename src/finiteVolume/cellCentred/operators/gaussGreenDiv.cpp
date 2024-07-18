@@ -39,9 +39,9 @@ void computeDiv(
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            scalar Flux = surfFaceFlux[i] * surfPhif[i];
-            surfDivPhi[surfOwner[i]] += Flux;
-            surfDivPhi[surfNeighbour[i]] -= Flux;
+            scalar flux = surfFaceFlux[i] * surfPhif[i];
+            surfDivPhi[surfOwner[i]] += flux;
+            surfDivPhi[surfNeighbour[i]] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
@@ -63,9 +63,9 @@ void computeDiv(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                scalar Flux = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[surfOwner[i]], Flux);
-                Kokkos::atomic_sub(&surfDivPhi[surfNeighbour[i]], Flux);
+                scalar flux = surfFaceFlux[i] * surfPhif[i];
+                Kokkos::atomic_add(&surfDivPhi[surfOwner[i]], flux);
+                Kokkos::atomic_sub(&surfDivPhi[surfNeighbour[i]], flux);
             }
         );
 
