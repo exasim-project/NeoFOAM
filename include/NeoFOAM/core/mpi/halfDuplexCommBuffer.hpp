@@ -132,7 +132,7 @@ public:
             "Rank size mismatch. " << rankCommSize.size() << " vs. " << mpiEnviron_.sizeRank()
         );
         typeSize_ = sizeof(valueType);
-        rankOffset_.resize(rankCommSize.size() + 1);
+        rankOffsetMPI_.resize(rankCommSize.size() + 1);
         request_.resize(rankCommSize.size(), MPI_REQUEST_NULL);
         updateDataSize([&](const int rank) { return rankCommSize[rank]; }, sizeof(valueType));
     }
@@ -195,10 +195,10 @@ public:
         NF_DEBUG_ASSERT(!isActive(), "Communication buffer is already actively sending.");
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
+            if (rankOffsetMPI_[rank + 1] - rankOffsetMPI_[rank] == 0) continue;
             isend<char>(
-                rankBuffer_.data() + rankOffset_[rank],
-                rankOffset_[rank + 1] - rankOffset_[rank],
+                rankBuffer_.data() + rankOffsetMPI_[rank],
+                rankOffsetMPI_[rank + 1] - rankOffsetMPI_[rank],
                 rank,
                 tag_,
                 mpiEnviron_.comm(),
@@ -217,10 +217,10 @@ public:
         NF_DEBUG_ASSERT(!isActive(), "Communication buffer is already actively receiving.");
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
+            if (rankOffsetMPI_[rank + 1] - rankOffsetMPI_[rank] == 0) continue;
             irecv<char>(
-                rankBuffer_.data() + rankOffset_[rank],
-                rankOffset_[rank + 1] - rankOffset_[rank],
+                rankBuffer_.data() + rankOffsetMPI_[rank],
+                rankOffsetMPI_[rank + 1] - rankOffsetMPI_[rank],
                 rank,
                 tag_,
                 mpiEnviron_.comm(),
@@ -271,8 +271,8 @@ public:
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
         return std::span<valueType>(
-            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_[rank]),
-            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
+            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffsetMPI_[rank]),
+            (rankOffsetMPI_[rank + 1] - rankOffsetMPI_[rank]) / sizeof(valueType)
         );
     }
 
@@ -289,8 +289,8 @@ public:
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
         return std::span<const valueType>(
-            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_[rank]),
-            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
+            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffsetMPI_[rank]),
+            (rankOffsetMPI_[rank + 1] - rankOffsetMPI_[rank]) / sizeof(valueType)
         );
     }
 
@@ -304,7 +304,7 @@ private:
     Kokkos::View<char*, MemorySpace>
         rankBuffer_; /*< The buffer data for all ranks. Never shrinks. */
     std::vector<std::size_t>
-        rankOffset_; /*< The offset (in bytes) for a rank data in the buffer. */
+        rankOffsetMPI_; /*< The offset (in bytes) for a rank data in the buffer. */
 
     /**
      * @brief Set the data type for the buffer.
@@ -317,7 +317,7 @@ private:
         );
         if (0 == (typeSize_ - sizeof(valueType))) return;
         updateDataSize(
-            [rankOffset = rankOffset_, typeSize = typeSize_](const int rank)
+            [rankOffset = rankOffsetMPI_, typeSize = typeSize_](const int rank)
             { return (rankOffset[rank + 1] - rankOffset[rank]) / typeSize; },
             sizeof(valueType)
         );
@@ -340,10 +340,10 @@ private:
         // UPDATE FOR LOOP TO KOKKOS
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            rankOffset_[rank] = dataSize;
+            rankOffsetMPI_[rank] = dataSize;
             dataSize += rankSize(rank) * newSize;
         }
-        rankOffset_[rankOffset_.size() - 1] = dataSize;
+        rankOffsetMPI_[rankOffsetMPI_.size() - 1] = dataSize;
         if (rankBuffer_.size() < dataSize)
             Kokkos::resize(rankBuffer_, dataSize); // we never size down.
     }
