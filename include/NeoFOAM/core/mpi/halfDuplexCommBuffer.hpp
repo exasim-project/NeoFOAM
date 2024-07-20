@@ -168,14 +168,22 @@ public:
     bool isActive()
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
-        int flag;
+        bool isActive = false;
         for (auto& request : request_)
         {
-            int err = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
-            NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
-            if (!flag) return false;
+            if (request != MPI_REQUEST_NULL)
+            {
+                int flag = 0;
+                int err = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
+                NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
+                if (!flag)
+                {
+                    isActive = true;
+                    break;
+                }
+            }
         }
-        return static_cast<bool>(flag);
+        return isActive;
     }
 
     /**
@@ -233,6 +241,7 @@ public:
             // todo deadlock prevention.
             // wait for the communication to finish.
         }
+        setMPIRequestNull(); // deactivates the buffer.
     }
 
     /**
@@ -338,6 +347,27 @@ private:
         rankOffset_(rankOffset_.size() - 1) = dataSize;
         if (rankBuffer_.size() < dataSize)
             Kokkos::resize(rankBuffer_, dataSize); // we never size down.
+    }
+
+    /**
+     * @brief Cleanup completed MPI requests.
+     */
+    void setMPIRequestNull()
+    {
+        for (auto& request : request_)
+        {
+            int flag = 0;
+            int err = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
+            NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
+
+            if (!flag)
+            {
+                NF_DEBUG_ASSERT(false, "Attempting to free an active MPI request.");
+            }
+
+            err = MPI_Request_free(&request);
+            NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Request_free failed.");
+        }
     }
 };
 
