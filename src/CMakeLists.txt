@@ -8,8 +8,7 @@ include(GNUInstallDirs)
 
 target_sources(
   NeoFOAM
-  PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
-          "core/primitives/vector.cpp"
+  PRIVATE "core/primitives/vector.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
