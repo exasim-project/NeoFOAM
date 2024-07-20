@@ -14,8 +14,6 @@
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 
-#include "NeoFOAM/core/executor/memory.hpp"
-
 namespace NeoFOAM
 {
 
@@ -57,6 +55,23 @@ concept MemorySpace = requires {
  * capable of handling various data types. The buffer does not shrink once initialized, minimizing
  * memory reallocation and improving memory efficiency. The class operates in a half-duplex mode,
  * meaning it is either sending or receiving data at any given time.
+ *
+ * States and changes of states:
+ * 1. Initialized: Is the buffer initialized for a communication, with a name and data type.
+ * 2. Active: The buffer is actively sending or receiving data.
+ *
+ * These states can be queried using the isCommInit() and isActive() functions. However isActive()
+ * can only be called when the buffer is initialized, where as isCommInit() can be called at any
+ * time.
+ *
+ * The states are changed through the following functions:
+ * 1. initComm(): Sets the buffer to an initialized state.
+ * 2. send() & receive(): Sets the buffer to active state.
+ * 3. waitComplete(): One return sets the buffer to an inactive state.
+ * 4. finaliseComm(): Sets the buffer to an uninitialized state.
+ *
+ * It is critical once the data has been copied out of the buffer, the buffer set back to an
+ * uninitialized state so it can be re-used.
  */
 template<class MemorySpace = Kokkos::HostSpace>
 class HalfDuplexCommBuffer
@@ -117,7 +132,7 @@ public:
             "Rank size mismatch. " << rankCommSize.size() << " vs. " << mpiEnviron_.sizeRank()
         );
         typeSize_ = sizeof(valueType);
-        kokkos::resize(rankOffset_, rankCommSize.size() + 1);
+        Kokkos::resize(rankOffset_, rankCommSize.size() + 1);
         request_.resize(rankCommSize.size(), MPI_REQUEST_NULL);
         updateDataSize([&](const int rank) { return rankCommSize[rank]; }, sizeof(valueType));
     }
@@ -147,10 +162,10 @@ public:
     inline const std::string& getCommName() const { return commName_; }
 
     /**
-     * @brief Check if the communication is complete.
+     * @brief Check if the active communication is complete.
      * @return true if the communication is complete else false.
      */
-    bool isComplete()
+    bool isActive()
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         int flag;
@@ -169,7 +184,7 @@ public:
     void send()
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
-        NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
+        NF_DEBUG_ASSERT(!isActive(), "Communication buffer is already actively sending.");
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             if (rankOffset_(rank + 1) - rankOffset_(rank) == 0) continue;
@@ -191,7 +206,7 @@ public:
     void receive()
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
-        NF_DEBUG_ASSERT(isComplete(), "Communication buffer is already active.");
+        NF_DEBUG_ASSERT(!isActive(), "Communication buffer is already actively receiving.");
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
             if (rankOffset_(rank + 1) - rankOffset_(rank) == 0) continue;
@@ -213,7 +228,7 @@ public:
     void waitComplete()
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
-        while (!isComplete())
+        while (isActive())
         {
             // todo deadlock prevention.
             // wait for the communication to finish.
@@ -226,7 +241,7 @@ public:
     void finaliseComm()
     {
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
-        NF_DEBUG_ASSERT(isComplete(), "Cannot finalise while buffer is active.");
+        NF_DEBUG_ASSERT(!isActive(), "Cannot finalise while buffer is active.");
         for (auto& request : request_)
             NF_DEBUG_ASSERT(
                 request == MPI_REQUEST_NULL, "MPI_Request not null, communication not complete."
@@ -322,7 +337,7 @@ private:
         }
         rankOffset_(rankOffset_.size() - 1) = dataSize;
         if (rankBuffer_.size() < dataSize)
-            kokkos::resize(rankBuffer_, dataSize); // we never size down.
+            Kokkos::resize(rankBuffer_, dataSize); // we never size down.
     }
 };
 

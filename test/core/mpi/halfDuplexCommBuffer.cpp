@@ -30,11 +30,10 @@ TEST_CASE("halfDuplexBuffer")
     {
         buffer.initComm<int>("Init Comm");
         REQUIRE(buffer.isCommInit());
-        REQUIRE(true == buffer.isComplete());
+        REQUIRE(true == buffer.isActive());
         REQUIRE(buffer.getCommName() == "Init Comm");
         buffer.finaliseComm();
         REQUIRE(buffer.getCommName() == "unassigned");
-        REQUIRE(true == buffer.isComplete());
         REQUIRE(!buffer.isCommInit());
     }
 
