@@ -132,7 +132,7 @@ public:
             "Rank size mismatch. " << rankCommSize.size() << " vs. " << mpiEnviron_.sizeRank()
         );
         typeSize_ = sizeof(valueType);
-        Kokkos::resize(rankOffset_, rankCommSize.size() + 1);
+        rankOffset_.resize(rankCommSize.size() + 1);
         request_.resize(rankCommSize.size(), MPI_REQUEST_NULL);
         updateDataSize([&](const int rank) { return rankCommSize[rank]; }, sizeof(valueType));
     }
@@ -195,10 +195,10 @@ public:
         NF_DEBUG_ASSERT(!isActive(), "Communication buffer is already actively sending.");
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            if (rankOffset_(rank + 1) - rankOffset_(rank) == 0) continue;
+            if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
             isend<char>(
-                rankBuffer_.data() + rankOffset_(rank),
-                rankOffset_(rank + 1) - rankOffset_(rank),
+                rankBuffer_.data() + rankOffset_[rank],
+                rankOffset_[rank + 1] - rankOffset_[rank],
                 rank,
                 tag_,
                 mpiEnviron_.comm(),
@@ -217,10 +217,10 @@ public:
         NF_DEBUG_ASSERT(!isActive(), "Communication buffer is already actively receiving.");
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            if (rankOffset_(rank + 1) - rankOffset_(rank) == 0) continue;
+            if (rankOffset_[rank + 1] - rankOffset_[rank] == 0) continue;
             irecv<char>(
-                rankBuffer_.data() + rankOffset_(rank),
-                rankOffset_(rank + 1) - rankOffset_(rank),
+                rankBuffer_.data() + rankOffset_[rank],
+                rankOffset_[rank + 1] - rankOffset_[rank],
                 rank,
                 tag_,
                 mpiEnviron_.comm(),
@@ -241,7 +241,6 @@ public:
             // todo deadlock prevention.
             // wait for the communication to finish.
         }
-        setMPIRequestNull(); // deactivates the buffer.
     }
 
     /**
@@ -272,8 +271,8 @@ public:
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
         return std::span<valueType>(
-            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_(rank)),
-            (rankOffset_(rank + 1) - rankOffset_(rank)) / sizeof(valueType)
+            reinterpret_cast<valueType*>(rankBuffer_.data() + rankOffset_[rank]),
+            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
         );
     }
 
@@ -290,8 +289,8 @@ public:
         NF_DEBUG_ASSERT(isCommInit(), "Communication buffer is not initialised.");
         NF_DEBUG_ASSERT(typeSize_ == sizeof(valueType), "Data type (size) mismatch.");
         return std::span<const valueType>(
-            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_(rank)),
-            (rankOffset_(rank + 1) - rankOffset_(rank)) / sizeof(valueType)
+            reinterpret_cast<const valueType*>(rankBuffer_.data() + rankOffset_[rank]),
+            (rankOffset_[rank + 1] - rankOffset_[rank]) / sizeof(valueType)
         );
     }
 
@@ -304,7 +303,7 @@ private:
     std::vector<MPI_Request> request_;    /*< The MPI request for communication with each rank. */
     Kokkos::View<char*, MemorySpace>
         rankBuffer_; /*< The buffer data for all ranks. Never shrinks. */
-    Kokkos::View<std::size_t*, MemorySpace>
+    std::vector<std::size_t>
         rankOffset_; /*< The offset (in bytes) for a rank data in the buffer. */
 
     /**
@@ -341,33 +340,12 @@ private:
         // UPDATE FOR LOOP TO KOKKOS
         for (auto rank = 0; rank < mpiEnviron_.sizeRank(); ++rank)
         {
-            rankOffset_(rank) = dataSize;
+            rankOffset_[rank] = dataSize;
             dataSize += rankSize(rank) * newSize;
         }
-        rankOffset_(rankOffset_.size() - 1) = dataSize;
+        rankOffset_[rankOffset_.size() - 1] = dataSize;
         if (rankBuffer_.size() < dataSize)
             Kokkos::resize(rankBuffer_, dataSize); // we never size down.
-    }
-
-    /**
-     * @brief Cleanup completed MPI requests.
-     */
-    void setMPIRequestNull()
-    {
-        for (auto& request : request_)
-        {
-            int flag = 0;
-            int err = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
-            NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
-
-            if (!flag)
-            {
-                NF_DEBUG_ASSERT(false, "Attempting to free an active MPI request.");
-            }
-
-            err = MPI_Request_free(&request);
-            NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Request_free failed.");
-        }
     }
 };
 

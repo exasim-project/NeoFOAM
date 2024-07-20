@@ -5,6 +5,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 
+#include <Kokkos_Core.hpp>
+
 #include "NeoFOAM/core/mpi/halfDuplexCommBuffer.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
 
@@ -16,7 +18,7 @@ TEST_CASE("halfDuplexBuffer")
 
     MPIEnvironment mpiEnviron;
     std::vector<std::size_t> rankCommSize(mpiEnviron.sizeRank(), 1);
-    HalfDuplexCommBuffer buffer(mpiEnviron, rankCommSize);
+    HalfDuplexCommBuffer<Kokkos::HostSpace> buffer(mpiEnviron, rankCommSize);
 
     SECTION("Default Constructor")
     {
@@ -28,13 +30,15 @@ TEST_CASE("halfDuplexBuffer")
 
     SECTION("Init and Finalise")
     {
+        REQUIRE(false == buffer.isCommInit());
+        REQUIRE("unassigned" == buffer.getCommName());
         buffer.initComm<int>("Init Comm");
-        REQUIRE(buffer.isCommInit());
-        REQUIRE(true == buffer.isActive());
-        REQUIRE(buffer.getCommName() == "Init Comm");
+        REQUIRE(true == buffer.isCommInit());
+        REQUIRE(false == buffer.isActive());
+        REQUIRE("Init Comm" == buffer.getCommName());
         buffer.finaliseComm();
-        REQUIRE(buffer.getCommName() == "unassigned");
-        REQUIRE(!buffer.isCommInit());
+        REQUIRE("unassigned" == buffer.getCommName());
+        REQUIRE(false == buffer.isCommInit());
     }
 
     SECTION("Set Comm Rank Size")
@@ -65,11 +69,19 @@ TEST_CASE("halfDuplexBuffer")
             data[0] = rank;
         }
 
+        REQUIRE(false == send.isActive());
+        REQUIRE(false == receive.isActive());
+
         send.send();
         receive.receive();
 
+        // we cant test isActive is true here because it becomes a race condition.
+
         send.waitComplete();
         receive.waitComplete();
+
+        REQUIRE(false == send.isActive());
+        REQUIRE(false == receive.isActive());
 
         for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
