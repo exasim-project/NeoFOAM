@@ -19,7 +19,7 @@ class ArgList
 
 public:
 
-    ArgList(int argc, char* argv[]) {};
+    ArgList([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {};
 
     [[nodiscard]] bool checkRootCase() const { return true; };
 };

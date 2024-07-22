@@ -21,15 +21,15 @@ void setGradientValue(
     DomainField<ValueType>& domainField,
     const UnstructuredMesh& mesh,
     std::pair<size_t, size_t> range,
-    std::size_t patchID,
+    size_t patchID,
     ValueType fixedGradient
 )
 {
     const auto iField = domainField.internalField().span();
     auto refGradient = domainField.boundaryField().refGrad().span();
     auto value = domainField.boundaryField().value().span();
-    auto faceCells = mesh.boundaryMesh().faceCells(patchID);
-    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs(patchID);
+    auto faceCells = mesh.boundaryMesh().faceCells(static_cast<localIdx>(patchID));
+    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs(static_cast<localIdx>(patchID));
 
     NeoFOAM::parallelFor(
         domainField.exec(),
@@ -37,7 +37,8 @@ void setGradientValue(
         KOKKOS_LAMBDA(const size_t i) {
             refGradient[i] = fixedGradient;
             // operator / is not defined for all ValueTypes
-            value[i] = iField[faceCells[i]] + fixedGradient * (1 / deltaCoeffs[i]);
+            value[i] =
+                iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
         }
     );
 }

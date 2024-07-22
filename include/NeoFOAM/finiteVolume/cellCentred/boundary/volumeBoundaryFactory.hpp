@@ -16,7 +16,7 @@ template<typename ValueType>
 class VolumeBoundaryFactory :
     public NeoFOAM::RuntimeSelectionFactory<
         VolumeBoundaryFactory<ValueType>,
-        Parameters<const UnstructuredMesh&, const Dictionary&, int>>,
+        Parameters<const UnstructuredMesh&, const Dictionary&, size_t>>,
     public BoundaryPatchMixin
 {
 public:
@@ -24,7 +24,7 @@ public:
     static std::string name() { return "VolumeBoundaryFactory"; }
 
     VolumeBoundaryFactory(
-        const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary&, std::size_t patchID
+        const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary&, size_t patchID
     )
         : BoundaryPatchMixin(mesh, patchID) {};
 
@@ -42,10 +42,10 @@ class VolumeBoundary : public BoundaryPatchMixin
 {
 public:
 
-    VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary& dict, int patchID)
+    VolumeBoundary(const UnstructuredMesh& mesh, const Dictionary& dict, size_t patchID)
         : BoundaryPatchMixin(
-            mesh.boundaryMesh().offset()[patchID],
-            mesh.boundaryMesh().offset()[patchID + 1],
+            static_cast<label>(mesh.boundaryMesh().offset()[patchID]),
+            static_cast<label>(mesh.boundaryMesh().offset()[patchID + 1]),
             patchID
         ),
           boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(

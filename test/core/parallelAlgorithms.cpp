@@ -98,7 +98,7 @@ TEST_CASE("parallelReduce")
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
         NeoFOAM::parallelReduce(
-            exec, {0, 5}, KOKKOS_LAMBDA(const int i, double& lsum) { lsum += spanB[i]; }, sum
+            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
         );
 
         REQUIRE(sum == 5.0);
@@ -114,7 +114,7 @@ TEST_CASE("parallelReduce")
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
         NeoFOAM::parallelReduce(
-            fieldA, KOKKOS_LAMBDA(const int i, double& lsum) { lsum += spanB[i]; }, sum
+            fieldA, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
         );
 
         REQUIRE(sum == 5.0);

@@ -59,7 +59,8 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
+            [this, &ptr, size](const auto& concreteExec)
+            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
@@ -76,7 +77,8 @@ public:
         Executor hostExec = CPUExecutor();
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr](const auto& exec) { ptr = exec.alloc(this->size_ * sizeof(ValueType)); },
+            [this, &ptr](const auto& concreteExec)
+            { ptr = concreteExec.alloc(this->size_ * sizeof(ValueType)); },
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
@@ -157,7 +159,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    ValueType& operator[](const int i) { return data_[i]; }
+    ValueType& operator[](const size_t i) { return data_[i]; }
 
     /**
      * @brief Subscript operator
@@ -165,7 +167,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    const ValueType& operator[](const int i) const { return data_[i]; }
+    const ValueType& operator[](const size_t i) const { return data_[i]; }
 
     /**
      * @brief Function call operator
@@ -173,7 +175,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    ValueType& operator()(const int i) { return data_[i]; }
+    ValueType& operator()(const size_t i) { return data_[i]; }
 
     /**
      * @brief Function call operator
@@ -181,7 +183,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    const ValueType& operator()(const int i) const { return data_[i]; }
+    const ValueType& operator()(const size_t i) const { return data_[i]; }
 
     /**
      * @brief Assignment operator, Sets the field values to that of the passed value.
@@ -253,7 +255,7 @@ public:
     {
         Field<ValueType> result(exec_, size_);
         result = *this;
-        scalar_mul(result, rhs);
+        scalarMul(result, rhs);
         return result;
     }
 

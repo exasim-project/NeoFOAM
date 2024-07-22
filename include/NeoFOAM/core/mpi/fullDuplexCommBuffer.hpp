@@ -70,7 +70,7 @@ public:
      * @return A span of data for the send buffer.
      */
     template<typename valueType>
-    std::span<valueType> getSend(const int rank)
+    std::span<valueType> getSend(const size_t rank)
     {
         return send_.get<valueType>(rank);
     }
@@ -82,7 +82,7 @@ public:
      * @return A span of data for the send buffer.
      */
     template<typename valueType>
-    std::span<const valueType> getSend(const int rank) const
+    std::span<const valueType> getSend(const size_t rank) const
     {
         return send_.get<valueType>(rank);
     }
@@ -94,7 +94,7 @@ public:
      * @return A span of data for the receive buffer.
      */
     template<typename valueType>
-    std::span<valueType> getReceive(const int rank)
+    std::span<valueType> getReceive(const size_t rank)
     {
         return receive_.get<valueType>(rank);
     }
@@ -106,7 +106,7 @@ public:
      * @return A span of data for the receive buffer.
      */
     template<typename valueType>
-    std::span<const valueType> getReceive(const int rank) const
+    std::span<const valueType> getReceive(const size_t rank) const
     {
         return receive_.get<valueType>(rank);
     }

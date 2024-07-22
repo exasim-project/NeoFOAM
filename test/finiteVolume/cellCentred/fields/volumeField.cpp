@@ -10,6 +10,9 @@
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 
+template<typename T>
+using I = std::initializer_list<T>;
+
 TEST_CASE("volumeField")
 {
     namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
@@ -26,7 +29,7 @@ TEST_CASE("volumeField")
     {
         NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
         std::vector<std::unique_ptr<fvcc::VolumeBoundary<NeoFOAM::scalar>>> bcs {};
-        for (size_t patchi : {0, 1, 2, 3})
+        for (auto patchi : I<size_t> {0, 1, 2, 3})
         {
             NeoFOAM::Dictionary dict;
             dict.insert("type", std::string("fixedValue"));

@@ -99,7 +99,7 @@ TEST_CASE("Vector addition [benchmark]")
     auto sGpuC = gpuC.span();
     BENCHMARK("Field<GPU> addition no allocation")
     {
-        gpuA.apply(KOKKOS_LAMBDA(const int i) { return sGpuB[i] + sGpuC[i]; });
+        gpuA.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sGpuB[i] + sGpuC[i]; });
         return Kokkos::fence();
         // return GPUa;
     };
@@ -118,7 +118,7 @@ TEST_CASE("Vector addition [benchmark]")
     auto sompC = ompC.span();
     BENCHMARK("Field<OMP> addition no allocation")
     {
-        ompA.apply(KOKKOS_LAMBDA(const int i) { return sompB[i] + sompC[i]; });
+        ompA.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sompB[i] + sompC[i]; });
     };
 }
 }

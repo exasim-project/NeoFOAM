@@ -19,7 +19,7 @@ struct SumKernel
         Kokkos::parallel_reduce(
             "sum",
             Kokkos::RangePolicy<executor>(0, end),
-            KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
+            KOKKOS_LAMBDA(const size_t i, T& lsum) { lsum += field_f[i]; },
             sum
         );
     }
@@ -33,7 +33,7 @@ struct SumKernel
         Kokkos::parallel_reduce(
             "sum",
             Kokkos::RangePolicy<executor>(0, end),
-            KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
+            KOKKOS_LAMBDA(const size_t i, T& lsum) { lsum += field_f[i]; },
             sum
         );
     }
@@ -47,7 +47,7 @@ struct SumKernel
         Kokkos::parallel_reduce(
             "sum",
             Kokkos::RangePolicy<executor>(0, end),
-            KOKKOS_LAMBDA(const int i, T& lsum) { lsum += field_f[i]; },
+            KOKKOS_LAMBDA(const size_t i, T& lsum) { lsum += field_f[i]; },
             sum
         );
     }

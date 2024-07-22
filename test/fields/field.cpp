@@ -23,7 +23,7 @@ TEST_CASE("Field Constructors")
 
     SECTION("Copy Constructor " + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         NeoFOAM::fill(a, 5.0);
         NeoFOAM::Field<NeoFOAM::scalar> b(a);
@@ -73,7 +73,7 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator+= " + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         NeoFOAM::fill(a, 5.0);
@@ -90,7 +90,7 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator-= " + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         NeoFOAM::fill(a, 5.0);
@@ -107,7 +107,7 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator+ " + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         NeoFOAM::Field<NeoFOAM::scalar> c(exec, size);
@@ -124,7 +124,7 @@ TEST_CASE("Field Operator Overloads")
 
     SECTION("Field Operator-" + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         NeoFOAM::Field<NeoFOAM::scalar> c(exec, size);
@@ -153,7 +153,7 @@ TEST_CASE("Field Container Operations")
 
     SECTION("empty, size, range" + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, 0);
         NeoFOAM::Field<NeoFOAM::scalar> b(exec, size);
         REQUIRE(a.empty() == true);
@@ -221,7 +221,7 @@ TEST_CASE("Field Operations")
 
     SECTION("Field_" + execName)
     {
-        int size = 10;
+        NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
         auto sA = a.span();
         NeoFOAM::fill(a, 5.0);
@@ -251,8 +251,8 @@ TEST_CASE("Field Operations")
         a = a * b;
         REQUIRE(equal(a, 20.0));
 
-        auto s_b = b.span();
-        a.apply(KOKKOS_LAMBDA(int i) { return 2 * s_b[i]; });
+        auto sB = b.span();
+        a.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return 2 * sB[i]; });
         REQUIRE(equal(a, 20.0));
     }
 }
