@@ -8,6 +8,7 @@
 #include <span>
 
 #include "NeoFOAM/core/error.hpp"
+#include "NeoFOAM/core/types.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
@@ -23,11 +24,11 @@ namespace detail
  * @param size The number of elements to copy.
  * @param srcPtr Pointer to the original block of memory.
  * @param dstPtr Pointer to the target block of memory.
- * @tparam ValueType The type of the underlying elements.
+ * @tparam T The type of the underlying elements.
  * @returns A function that takes a source and an destination executor
  */
-template<typename ValueType>
-auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
+template<StorageType T>
+auto deepCopyVisitor(size_t size, const T* srcPtr, T* dstPtr)
 {
     return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
     {
@@ -44,7 +45,7 @@ auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
  *
  * @ingroup Fields
  */
-template<typename ValueType>
+template<StorageType T>
 class Field
 {
 
@@ -60,10 +61,10 @@ public:
         void* ptr = nullptr;
         std::visit(
             [this, &ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
+            { ptr = concreteExec.alloc(size * sizeof(T)); },
             exec_
         );
-        data_ = static_cast<ValueType*>(ptr);
+        data_ = static_cast<T*>(ptr);
     }
 
     /**
@@ -71,17 +72,16 @@ public:
      * @param exec  Executor associated to the matrix
      * @param in a vector of elements to copy over
      */
-    Field(const Executor& exec, std::vector<ValueType> in)
-        : size_(in.size()), data_(nullptr), exec_(exec)
+    Field(const Executor& exec, std::vector<T> in) : size_(in.size()), data_(nullptr), exec_(exec)
     {
         Executor hostExec = CPUExecutor();
         void* ptr = nullptr;
         std::visit(
             [this, &ptr](const auto& concreteExec)
-            { ptr = concreteExec.alloc(this->size_ * sizeof(ValueType)); },
+            { ptr = concreteExec.alloc(this->size_ * sizeof(T)); },
             exec_
         );
-        data_ = static_cast<ValueType*>(ptr);
+        data_ = static_cast<T*>(ptr);
 
         std::visit(detail::deepCopyVisitor(size_, in.data(), data_), hostExec, exec);
     }
@@ -90,7 +90,7 @@ public:
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
      * @param rhs The field to copy from.
      */
-    Field(const Field<ValueType>& rhs) : data_(nullptr), exec_(rhs.exec_)
+    Field(const Field<T>& rhs) : data_(nullptr), exec_(rhs.exec_)
     {
         resize(rhs.size_);
         setField(*this, rhs.span());
@@ -121,11 +121,11 @@ public:
      * @param dstExec The executor on which the data should be copied.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
+    [[nodiscard]] Field<T> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == exec_) return Field<ValueType>(*this);
+        if (dstExec == exec_) return Field<T>(*this);
 
-        Field<ValueType> result(dstExec, size_);
+        Field<T> result(dstExec, size_);
         std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
 
         return result;
@@ -135,7 +135,7 @@ public:
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(CPUExecutor()); }
+    [[nodiscard]] Field<T> copyToHost() const { return copyToExecutor(CPUExecutor()); }
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -145,7 +145,7 @@ public:
      * @warning exits if the size of the result field is not the same as the
      * source field.
      */
-    void copyToHost(Field<ValueType>& result)
+    void copyToHost(Field<T>& result)
     {
         NF_DEBUG_ASSERT(
             result.size() == size_, "Parsed Field size not the same as current field size"
@@ -159,7 +159,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    ValueType& operator[](const size_t i) { return data_[i]; }
+    T& operator[](const size_t i) { return data_[i]; }
 
     /**
      * @brief Subscript operator
@@ -167,7 +167,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    const ValueType& operator[](const size_t i) const { return data_[i]; }
+    const T& operator[](const size_t i) const { return data_[i]; }
 
     /**
      * @brief Function call operator
@@ -175,7 +175,7 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    ValueType& operator()(const size_t i) { return data_[i]; }
+    T& operator()(const size_t i) { return data_[i]; }
 
     /**
      * @brief Function call operator
@@ -183,13 +183,13 @@ public:
      * @returns The value at the index i
      */
     KOKKOS_FUNCTION
-    const ValueType& operator()(const size_t i) const { return data_[i]; }
+    const T& operator()(const size_t i) const { return data_[i]; }
 
     /**
      * @brief Assignment operator, Sets the field values to that of the passed value.
      * @param rhs The value to set the field to.
      */
-    void operator=(const ValueType& rhs) { fill(*this, rhs); }
+    void operator=(const T& rhs) { fill(*this, rhs); }
 
     /**
      * @brief Assignment operator, Sets the field values to that of the parsed field.
@@ -197,7 +197,7 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<ValueType>& rhs)
+    void operator=(const Field<T>& rhs)
     {
         NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
         if (this->size() != rhs.size())
@@ -212,7 +212,7 @@ public:
      * @param rhs The field to add with this field.
      * @returns The result of the addition.
      */
-    Field<ValueType>& operator+=(const Field<ValueType>& rhs)
+    Field<T>& operator+=(const Field<T>& rhs)
     {
         validateOtherField(rhs);
         add(*this, rhs);
@@ -224,7 +224,7 @@ public:
      * @param rhs The field to subtract from this field.
      * @returns The result of the subtraction.
      */
-    Field<ValueType>& operator-=(const Field<ValueType>& rhs)
+    Field<T>& operator-=(const Field<T>& rhs)
     {
         validateOtherField(rhs);
         sub(*this, rhs);
@@ -236,10 +236,10 @@ public:
      * @param rhs The field to subtract from this field.
      * @returns The result of the multiply.
      */
-    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
+    [[nodiscard]] Field<T> operator*(const Field<scalar>& rhs)
     {
         validateOtherField(rhs);
-        Field<ValueType> result(exec_, size_);
+        Field<T> result(exec_, size_);
         result = *this;
         mul(result, rhs);
         return result;
@@ -251,9 +251,9 @@ public:
      * @param rhs The scalar to multiply with the field.
      * @returns The result of the multiplication.
      */
-    [[nodiscard]] Field<ValueType> operator*(const scalar rhs)
+    [[nodiscard]] Field<T> operator*(const scalar rhs)
     {
-        Field<ValueType> result(exec_, size_);
+        Field<T> result(exec_, size_);
         result = *this;
         scalarMul(result, rhs);
         return result;
@@ -270,19 +270,17 @@ public:
         {
             std::visit(
                 [this, &ptr, size](const auto& exec)
-                { ptr = exec.realloc(data_, size * sizeof(ValueType)); },
+                { ptr = exec.realloc(data_, size * sizeof(T)); },
                 exec_
             );
         }
         else
         {
             std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.alloc(size * sizeof(ValueType)); },
-                exec_
+                [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(T)); }, exec_
             );
         }
-        data_ = static_cast<ValueType*>(ptr);
+        data_ = static_cast<T*>(ptr);
         size_ = size;
     }
 
@@ -290,13 +288,13 @@ public:
      * @brief Direct access to the underlying field data
      * @return Pointer to the first cell data in the field.
      */
-    [[nodiscard]] ValueType* data() { return data_; }
+    [[nodiscard]] T* data() { return data_; }
 
     /**
      * @brief Direct access to the underlying field data
      * @return Pointer to the first cell data in the field.
      */
-    [[nodiscard]] const ValueType* data() const { return data_; }
+    [[nodiscard]] const T* data() const { return data_; }
 
     /**
      * @brief Gets the executor associated with the field.
@@ -320,33 +318,30 @@ public:
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
+    [[nodiscard]] std::span<T> span() { return std::span<T>(data_, size_); }
 
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span() const
+    [[nodiscard]] std::span<const T> span() const { return std::span<const T>(data_, size_); }
+
+    /**
+     * @brief Gets a sub view of the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] std::span<T> span(std::pair<size_t, size_t> range)
     {
-        return std::span<const ValueType>(data_, size_);
+        return std::span<T>(data_ + range.first, range.second - range.first);
     }
 
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range)
+    [[nodiscard]] std::span<const T> span(std::pair<size_t, size_t> range) const
     {
-        return std::span<ValueType>(data_ + range.first, range.second - range.first);
-    }
-
-    /**
-     * @brief Gets a sub view of the field as a span.
-     * @return Span of the field.
-     */
-    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const
-    {
-        return std::span<const ValueType>(data_ + range.first, range.second - range.first);
+        return std::span<const T>(data_ + range.first, range.second - range.first);
     }
 
     /**
@@ -357,15 +352,15 @@ public:
 
 private:
 
-    size_t size_ {0};           //!< Size of the field.
-    ValueType* data_ {nullptr}; //!< Pointer to the field data.
-    const Executor exec_;       //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
+    size_t size_ {0};     //!< Size of the field.
+    T* data_ {nullptr};   //!< Pointer to the field data.
+    const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
 
     /**
      * @brief Checks if two fields are the same size and have the same executor.
      * @param rhs The field to compare with.
      */
-    void validateOtherField(const Field<ValueType>& rhs) const
+    void validateOtherField(const Field<T>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
         NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
@@ -378,7 +373,7 @@ private:
  * @param rhs The field to add with this field.
  * @returns The result of the addition.
  */
-template<typename T>
+template<StorageType T>
 [[nodiscard]] Field<T> operator+(Field<T> lhs, const Field<T>& rhs)
 {
     lhs += rhs;
@@ -391,7 +386,7 @@ template<typename T>
  * @param rhs The field to subtract by.
  * @returns The result of the subtraction.
  */
-template<typename T>
+template<StorageType T>
 [[nodiscard]] Field<T> operator-(Field<T> lhs, const Field<T>& rhs)
 {
     lhs -= rhs;

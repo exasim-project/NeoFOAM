@@ -5,13 +5,14 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+#include "NeoFOAM/core/types.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 
 namespace NeoFOAM
 {
 
 
-template<typename ValueType>
+template<StorageType T>
 class Field;
 
 
@@ -62,8 +63,8 @@ concept parallelForFieldKernel = requires(Kernel t, ValueType val, size_t i) {
     } -> std::same_as<ValueType>;
 };
 
-template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
-void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel)
+template<typename Executor, StorageType T, parallelForFieldKernel<T> Kernel>
+void parallelFor([[maybe_unused]] const Executor& exec, Field<T>& field, Kernel kernel)
 {
     auto span = field.span();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
@@ -84,8 +85,8 @@ void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field,
     }
 }
 
-template<typename ValueType, parallelForFieldKernel<ValueType> Kernel>
-void parallelFor(Field<ValueType>& field, Kernel kernel)
+template<StorageType T, parallelForFieldKernel<T> Kernel>
+void parallelFor(Field<T>& field, Kernel kernel)
 {
     std::visit([&](const auto& e) { parallelFor(e, field, kernel); }, field.exec());
 }
@@ -122,10 +123,9 @@ void parallelReduce(
 }
 
 
-template<typename Executor, typename ValueType, typename Kernel, typename T>
-void parallelReduce(
-    [[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel, T& value
-)
+template<typename Executor, StorageType T, typename Kernel, typename U>
+void parallelReduce([[maybe_unused]] const Executor& exec, Field<T>& field, Kernel kernel, U& value)
+    requires std::convertible_to<U, T>
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
     {
@@ -143,8 +143,9 @@ void parallelReduce(
     }
 }
 
-template<typename ValueType, typename Kernel, typename T>
-void parallelReduce(Field<ValueType>& field, Kernel kernel, T& value)
+template<StorageType T, typename Kernel, typename U>
+void parallelReduce(Field<T>& field, Kernel kernel, U& value)
+    requires std::convertible_to<U, T>
 {
     return std::visit(
         [&](const auto& e) { return parallelReduce(e, field, kernel, value); }, field.exec()
