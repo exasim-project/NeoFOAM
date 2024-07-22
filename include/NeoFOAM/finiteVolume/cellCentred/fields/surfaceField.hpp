@@ -19,10 +19,10 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * volume method. It inherits from the GeometricFieldMixin class and provides methods for correcting
  * boundary conditions.
  *
- * @tparam ValueType The value type of the field.
+ * @tparam T The value type of the field.
  */
-template<typename ValueType>
-class SurfaceField : public GeometricFieldMixin<ValueType>
+template<ValueType T>
+class SurfaceField : public GeometricFieldMixin<T>
 {
 
 public:
@@ -30,12 +30,12 @@ public:
     SurfaceField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::vector<std::unique_ptr<SurfaceBoundary<ValueType>>>&& boundaryConditions
+        std::vector<std::unique_ptr<SurfaceBoundary<T>>>&& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(
+        : GeometricFieldMixin<T>(
             exec,
             mesh,
-            DomainField<ValueType>(
+            DomainField<T>(
                 exec,
                 mesh.nInternalFaces() + mesh.nBoundaryFaces(),
                 mesh.nBoundaryFaces(),
@@ -48,21 +48,20 @@ public:
     SurfaceField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        const DomainField<ValueType>& field,
-        std::vector<std::unique_ptr<SurfaceBoundary<ValueType>>>&& boundaryConditions
+        const DomainField<T>& field,
+        std::vector<std::unique_ptr<SurfaceBoundary<T>>>&& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(exec, mesh, field),
+        : GeometricFieldMixin<T>(exec, mesh, field),
           boundaryConditions_(std::move(boundaryConditions))
     {}
 
     SurfaceField(const SurfaceField& other)
-        : GeometricFieldMixin<ValueType>(other),
-          boundaryConditions_(other.boundaryConditions_.size())
+        : GeometricFieldMixin<T>(other), boundaryConditions_(other.boundaryConditions_.size())
     {
         // for (size_t i = 0; i < other.boundaryConditions_.size(); ++i)
         // {
         //     boundaryConditions_[i] =
-        //     std::make_unique<SurfaceBoundary<ValueType>>(*other.boundaryConditions_[i]);
+        //     std::make_unique<SurfaceBoundary<T>>(*other.boundaryConditions_[i]);
         // }
     }
 
@@ -82,7 +81,7 @@ public:
 
 private:
 
-    std::vector<std::unique_ptr<SurfaceBoundary<ValueType>>>
+    std::vector<std::unique_ptr<SurfaceBoundary<T>>>
         boundaryConditions_; // The vector of boundary conditions
 };
 

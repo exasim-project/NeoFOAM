@@ -17,10 +17,8 @@ namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from
-template<typename ValueType>
-void setFixedValue(
-    DomainField<ValueType>& domainField, std::pair<size_t, size_t> range, ValueType fixedValue
-)
+template<ValueType T>
+void setFixedValue(DomainField<T>& domainField, std::pair<size_t, size_t> range, T fixedValue)
 {
     auto refValue = domainField.boundaryField().refValue().span();
     auto value = domainField.boundaryField().value().span();
@@ -37,18 +35,18 @@ void setFixedValue(
 
 }
 
-template<typename ValueType>
-class FixedValue : public VolumeBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>
+template<ValueType T>
+class FixedValue : public VolumeBoundaryFactory<T>::template Register<FixedValue<T>>
 {
-    using Base = VolumeBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>;
+    using Base = VolumeBoundaryFactory<T>::template Register<FixedValue<T>>;
 
 public:
 
     FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : Base(mesh, dict, patchID), fixedValue_(dict.get<ValueType>("fixedValue"))
+        : Base(mesh, dict, patchID), fixedValue_(dict.get<T>("fixedValue"))
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final
+    virtual void correctBoundaryCondition(DomainField<T>& domainField) final
     {
         detail::setFixedValue(domainField, this->range(), fixedValue_);
     }
@@ -61,7 +59,7 @@ public:
 
 private:
 
-    ValueType fixedValue_;
+    T fixedValue_;
 };
 
 }

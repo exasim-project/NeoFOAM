@@ -12,10 +12,10 @@
 namespace NeoFOAM::finiteVolume::cellCentred::surfaceBoundary
 {
 
-template<typename ValueType>
-class Empty : public SurfaceBoundaryFactory<ValueType>::template Register<Empty<ValueType>>
+template<ValueType T>
+class Empty : public SurfaceBoundaryFactory<T>::template Register<Empty<T>>
 {
-    using Base = SurfaceBoundaryFactory<ValueType>::template Register<Empty<ValueType>>;
+    using Base = SurfaceBoundaryFactory<T>::template Register<Empty<T>>;
 
 public:
 
@@ -25,7 +25,7 @@ public:
         : Base(mesh, dict, patchID)
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override {}
+    virtual void correctBoundaryCondition(DomainField<T>& domainField) override {}
 
     static std::string name() { return "empty"; }
 

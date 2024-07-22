@@ -9,7 +9,7 @@
 namespace NeoFOAM
 {
 
-template<typename T>
+template<StorageType T>
 bool equal(Field<T>& field, T value)
 {
     auto hostSpan = field.copyToHost().span();
@@ -23,7 +23,7 @@ bool equal(Field<T>& field, T value)
     return true;
 };
 
-template<typename T>
+template<StorageType T>
 bool equal(const Field<T>& field, const Field<T>& field2)
 {
     auto hostSpan = field.copyToHost().span();
@@ -45,7 +45,7 @@ bool equal(const Field<T>& field, const Field<T>& field2)
     return true;
 };
 
-template<typename T>
+template<StorageType T>
 bool equal(const Field<T>& field, std::span<T> span2)
 {
     auto hostSpan = field.copyToHost().span();

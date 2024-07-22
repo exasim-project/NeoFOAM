@@ -5,6 +5,8 @@
 #include <Kokkos_Core.hpp>
 #include <iostream>
 
+#include "NeoFOAM/core/types.hpp"
+
 namespace NeoFOAM
 {
 
@@ -23,13 +25,13 @@ public:
     CPUExecutor();
     ~CPUExecutor();
 
-    template<typename T>
+    template<StorageType T>
     T* alloc(size_t size) const
     {
         return static_cast<T*>(Kokkos::kokkos_malloc<exec>("Field", size * sizeof(T)));
     }
 
-    template<typename T>
+    template<StorageType T>
     T* realloc(void* ptr, size_t newSize) const
     {
         return static_cast<T*>(Kokkos::kokkos_realloc<exec>(ptr, newSize * sizeof(T)));
@@ -42,7 +44,7 @@ public:
      * @param size Number of elements this view contains
      * @tparam ValueType The value type the underlying memory holds
      * */
-    template<typename ValueType>
+    template<StorageType ValueType>
     decltype(auto) createKokkosView(ValueType* ptr, size_t size) const
     {
         return Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(ptr, size);

@@ -19,10 +19,10 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * volume method. It inherits from the GeometricFieldMixin class and provides methods for correcting
  * boundary conditions.
  *
- * @tparam ValueType The value type of the field.
+ * @tparam T The value type of the field.
  */
-template<typename ValueType>
-class VolumeField : public GeometricFieldMixin<ValueType>
+template<ValueType T>
+class VolumeField : public GeometricFieldMixin<T>
 {
 
 public:
@@ -30,24 +30,23 @@ public:
     VolumeField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::vector<std::unique_ptr<VolumeBoundary<ValueType>>>&& boundaryConditions
+        std::vector<std::unique_ptr<VolumeBoundary<T>>>&& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(
+        : GeometricFieldMixin<T>(
             exec,
             mesh,
-            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
+            DomainField<T>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
           boundaryConditions_(std::move(boundaryConditions))
     {}
 
     VolumeField(const VolumeField& other)
-        : GeometricFieldMixin<ValueType>(other),
-          boundaryConditions_(other.boundaryConditions_.size())
+        : GeometricFieldMixin<T>(other), boundaryConditions_(other.boundaryConditions_.size())
     {
         // for (size_t i = 0; i < other.boundaryConditions_.size(); ++i)
         // {
         //     boundaryConditions_[i] =
-        //     std::make_unique<SurfaceBoundary<ValueType>>(*other.boundaryConditions_[i]);
+        //     std::make_unique<SurfaceBoundary<T>>(*other.boundaryConditions_[i]);
         // }
     }
 
@@ -67,7 +66,7 @@ public:
 
 private:
 
-    std::vector<std::unique_ptr<VolumeBoundary<ValueType>>>
+    std::vector<std::unique_ptr<VolumeBoundary<T>>>
         boundaryConditions_; // The vector of boundary conditions
 };
 

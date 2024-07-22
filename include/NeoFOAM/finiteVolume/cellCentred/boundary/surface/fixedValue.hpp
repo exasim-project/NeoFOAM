@@ -16,12 +16,12 @@ namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from a __device__ function is not allowed
-template<typename ValueType>
+template<ValueType T>
 void setFixedValue(
-    DomainField<ValueType>& domainField,
+    DomainField<T>& domainField,
     const UnstructuredMesh& mesh,
     std::pair<size_t, size_t> range,
-    ValueType fixedValue
+    T fixedValue
 )
 {
     auto refValue = domainField.boundaryField().refValue().span();
@@ -41,19 +41,18 @@ void setFixedValue(
 }
 }
 
-template<typename ValueType>
-class FixedValue :
-    public SurfaceBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>
+template<ValueType T>
+class FixedValue : public SurfaceBoundaryFactory<T>::template Register<FixedValue<T>>
 {
-    using Base = SurfaceBoundaryFactory<ValueType>::template Register<FixedValue<ValueType>>;
+    using Base = SurfaceBoundaryFactory<T>::template Register<FixedValue<T>>;
 
 public:
 
     FixedValue(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : Base(mesh, dict, patchID), mesh_(mesh), fixedValue_(dict.get<ValueType>("fixedValue"))
+        : Base(mesh, dict, patchID), mesh_(mesh), fixedValue_(dict.get<T>("fixedValue"))
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(DomainField<T>& domainField) override
     {
         detail::setFixedValue(domainField, mesh_, this->range(), fixedValue_);
     }
@@ -67,7 +66,7 @@ public:
 private:
 
     const UnstructuredMesh& mesh_;
-    ValueType fixedValue_;
+    T fixedValue_;
 };
 
 }

@@ -3,7 +3,9 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
+
 #include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/core/types.hpp"
 #include "NeoFOAM/helpers/exceptions.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
@@ -11,18 +13,18 @@ namespace NeoFOAM
 {
 
 // Forward declaration
-template<typename ValueType>
+template<StorageType T>
 class Field;
 
 
-template<typename T, typename Inner>
+template<StorageType T, StorageType Inner>
 void map(Field<T>& a, const Inner inner)
 {
     parallelFor(a, inner);
 }
 
-template<typename ValueType>
-void fill(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+template<StorageType T>
+void fill(Field<T>& a, const std::type_identity_t<T> value)
 {
     parallelFor(
         a, KOKKOS_LAMBDA(const size_t) { return value; }
@@ -30,16 +32,16 @@ void fill(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
 }
 
 
-template<typename ValueType>
-void setField(Field<ValueType>& a, const std::span<const std::type_identity_t<ValueType>> b)
+template<StorageType T>
+void setField(Field<T>& a, const std::span<const std::type_identity_t<T>> b)
 {
     parallelFor(
         a, KOKKOS_LAMBDA(const size_t i) { return b[i]; }
     );
 }
 
-template<typename ValueType>
-void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+template<StorageType T>
+void scalarMul(Field<T>& a, const std::type_identity_t<T> value)
 {
     auto spanA = a.span();
     parallelFor(
@@ -49,10 +51,8 @@ void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
 
 namespace detail
 {
-template<typename ValueType, typename BinaryOp>
-void fieldBinaryOp(
-    Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b, BinaryOp op
-)
+template<StorageType T, typename BinaryOp>
+void fieldBinaryOp(Field<T>& a, const Field<std::type_identity_t<T>>& b, BinaryOp op)
 {
     NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);
     auto spanA = a.span();
@@ -63,28 +63,28 @@ void fieldBinaryOp(
 }
 }
 
-template<typename ValueType>
-void add(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+template<StorageType T>
+void add(Field<T>& a, const Field<std::type_identity_t<T>>& b)
 {
     detail::fieldBinaryOp(
-        a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va + vb; }
+        a, b, KOKKOS_LAMBDA(T va, T vb) { return va + vb; }
     );
 }
 
 
-template<typename ValueType>
-void sub(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+template<StorageType T>
+void sub(Field<T>& a, const Field<std::type_identity_t<T>>& b)
 {
     detail::fieldBinaryOp(
-        a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va - vb; }
+        a, b, KOKKOS_LAMBDA(T va, T vb) { return va - vb; }
     );
 }
 
-template<typename ValueType>
-void mul(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+template<StorageType T>
+void mul(Field<T>& a, const Field<std::type_identity_t<T>>& b)
 {
     detail::fieldBinaryOp(
-        a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va * vb; }
+        a, b, KOKKOS_LAMBDA(T va, T vb) { return va * vb; }
     );
 }
 

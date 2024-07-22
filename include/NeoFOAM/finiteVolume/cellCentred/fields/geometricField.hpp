@@ -21,9 +21,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
  * field. It is designed to be used as a mixin in other classes that require geometric field
  * functionality.
  *
- * @tparam ValueType The value type of the field.
+ * @tparam T The value type of the field.
  */
-template<typename ValueType>
+template<ValueType T>
 class GeometricFieldMixin
 {
 public:
@@ -36,7 +36,7 @@ public:
      * @param field The domain field object.
      */
     GeometricFieldMixin(
-        const Executor& exec, const UnstructuredMesh& mesh, const DomainField<ValueType>& field
+        const Executor& exec, const UnstructuredMesh& mesh, const DomainField<T>& field
     )
         : exec_(exec), mesh_(mesh), field_(field)
     {}
@@ -46,28 +46,28 @@ public:
      *
      * @return The const reference to the internal field.
      */
-    const Field<ValueType>& internalField() const { return field_.internalField(); }
+    const Field<T>& internalField() const { return field_.internalField(); }
 
     /**
      * @brief Returns a reference to the internal field.
      *
      * @return The reference to the internal field.
      */
-    Field<ValueType>& internalField() { return field_.internalField(); }
+    Field<T>& internalField() { return field_.internalField(); }
 
     /**
      * @brief Returns a const reference to the boundary field.
      *
      * @return The const reference to the boundary field.
      */
-    const BoundaryFields<ValueType>& boundaryField() const { return field_.boundaryField(); }
+    const BoundaryFields<T>& boundaryField() const { return field_.boundaryField(); }
 
     /**
      * @brief Returns a reference to the boundary field.
      *
      * @return The reference to the boundary field.
      */
-    BoundaryFields<ValueType>& boundaryField() { return field_.boundaryField(); }
+    BoundaryFields<T>& boundaryField() { return field_.boundaryField(); }
 
     /**
      * @brief Returns a const reference to the executor object.
@@ -87,7 +87,7 @@ protected:
 
     Executor exec_;                // The executor object
     const UnstructuredMesh& mesh_; // The unstructured mesh object
-    DomainField<ValueType> field_; // The domain field object
+    DomainField<T> field_;         // The domain field object
 };
 
 } // namespace NeoFOAM
