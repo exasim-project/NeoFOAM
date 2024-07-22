@@ -6,8 +6,7 @@
 
 #include <iostream>
 
-#include "NeoFOAM/core/primitives/label.hpp"
-#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/core/types.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/fields/field.hpp"
 
@@ -26,7 +25,7 @@ namespace NeoFOAM
  *
  * @tparam ValueType The type of the underlying field values
  */
-template<typename T>
+template<ValueType T>
 class BoundaryFields
 {
 

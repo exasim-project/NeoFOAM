@@ -12,14 +12,14 @@
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
-template<typename ValueType>
-class Calculated : public VolumeBoundaryFactory<ValueType>::template Register<Calculated<ValueType>>
+template<ValueType T>
+class Calculated : public VolumeBoundaryFactory<T>::template Register<Calculated<T>>
 {
-    using Base = VolumeBoundaryFactory<ValueType>::template Register<Calculated<ValueType>>;
+    using Base = VolumeBoundaryFactory<T>::template Register<Calculated<T>>;
 
 public:
 
-    using CalculatedType = Calculated<ValueType>;
+    using CalculatedType = Calculated<T>;
 
     Calculated(
         const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary& dict, std::size_t patchID
@@ -27,7 +27,7 @@ public:
         : Base(mesh, dict, patchID)
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override {}
+    virtual void correctBoundaryCondition(DomainField<T>& domainField) override {}
 
     static std::string name() { return "calculated"; }
 

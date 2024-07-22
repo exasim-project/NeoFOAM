@@ -16,13 +16,13 @@ namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from
-template<typename ValueType>
+template<ValueType T>
 void setGradientValue(
-    DomainField<ValueType>& domainField,
+    DomainField<T>& domainField,
     const UnstructuredMesh& mesh,
     std::pair<size_t, size_t> range,
     size_t patchID,
-    ValueType fixedGradient
+    T fixedGradient
 )
 {
     const auto iField = domainField.internalField().span();
@@ -36,7 +36,7 @@ void setGradientValue(
         range,
         KOKKOS_LAMBDA(const size_t i) {
             refGradient[i] = fixedGradient;
-            // operator / is not defined for all ValueTypes
+            // operator / is not defined for all Ts
             value[i] =
                 iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
         }
@@ -44,22 +44,20 @@ void setGradientValue(
 }
 }
 
-template<typename ValueType>
-class FixedGradient :
-    public VolumeBoundaryFactory<ValueType>::template Register<FixedGradient<ValueType>>
+template<ValueType T>
+class FixedGradient : public VolumeBoundaryFactory<T>::template Register<FixedGradient<T>>
 {
-    using Base = VolumeBoundaryFactory<ValueType>::template Register<FixedGradient<ValueType>>;
+    using Base = VolumeBoundaryFactory<T>::template Register<FixedGradient<T>>;
 
 public:
 
-    using FixedGradientType = FixedGradient<ValueType>;
+    using FixedGradientType = FixedGradient<T>;
 
     FixedGradient(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
-        : Base(mesh, dict, patchID), mesh_(mesh),
-          fixedGradient_(dict.get<ValueType>("fixedGradient"))
+        : Base(mesh, dict, patchID), mesh_(mesh), fixedGradient_(dict.get<T>("fixedGradient"))
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(DomainField<T>& domainField) override
     {
         detail::setGradientValue(
             domainField, mesh_, this->range(), this->patchID(), fixedGradient_
@@ -76,7 +74,7 @@ public:
 private:
 
     const UnstructuredMesh& mesh_;
-    ValueType fixedGradient_;
+    T fixedGradient_;
 };
 
 }
