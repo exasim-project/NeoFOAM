@@ -5,8 +5,7 @@ add_subdirectory(fields)
 
 add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/benchmarks/fields.xml
-  COMMAND ${PROJECT_BINARY_DIR}/benchmarks/fields/${CMAKE_BUILD_TYPE}/bench_fields -r XML >
-          fields.xml
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/benchmarks/bench_fields -r XML > fields.xml
   COMMENT "Execute benchmarks")
 
 find_package(
