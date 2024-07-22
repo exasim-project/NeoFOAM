@@ -21,7 +21,7 @@ function(neofoam_unit_test TEST)
     set(neofoam_MPI_SIZE 1)
   endif()
   if(NOT DEFINED "neofoam_WORKING_DIRECTORY")
-    set(neofoam_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bin/tests)
   endif()
   if(NOT DEFINED "neofoam_COMMAND")
     set(neofoam_COMMAND ${TEST})
@@ -30,6 +30,8 @@ function(neofoam_unit_test TEST)
   add_executable(${TEST} "${TEST}.cpp")
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
+  set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+
   add_test(
     NAME ${TEST}
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${neofoam_MPI_SIZE} ${neofoam_COMMAND}
