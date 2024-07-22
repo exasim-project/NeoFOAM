@@ -51,7 +51,7 @@ Additionally, we provide several Cmake presets to set commmonly required flags i
 NeoFOAM provides a set of benchmarks which can be executed and plotted by the following commands
 
     cmake --build . --target execute_benchmarks # runs the benchmark suite
-    cmake --build . --target execute_execute_plot_benchmark # plots the benchmark results
+    cmake --build . --target execute_plot_benchmark # plots the benchmark results
 
 
 ## Executing Tests
