@@ -6,8 +6,8 @@
 namespace NeoFOAM
 {
 #ifdef NEOFOAM_DP_SCALAR
-typedef double scalar;
+using scalar = double;
 #else
-typedef float scalar;
+using scalar = float;
 #endif
 } // namespace NeoFOAM
