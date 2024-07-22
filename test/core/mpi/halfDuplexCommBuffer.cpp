@@ -26,7 +26,13 @@ TEST_CASE("halfDuplexBuffer")
         REQUIRE_FALSE(buffer2.isCommInit());
     }
 
-    SECTION("Parameterized Constructor") { REQUIRE_FALSE(buffer.isCommInit()); }
+    SECTION("Parameterized Constructor")
+    {
+        // Simba remember
+        HalfDuplexCommBuffer<Kokkos::CudaSpace> buffer(mpiEnviron, rankCommSize);
+        REQUIRE_FALSE(buffer.isCommInit());
+        REQUIRE_FALSE(buffer.isCommInit());
+    }
 
     SECTION("Init and Finalise")
     {

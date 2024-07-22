@@ -44,7 +44,7 @@ class Communicator
 {
 public:
 
-    using bufferType = mpi::FullDuplexCommBuffer;
+    using bufferType = mpi::FullDuplexCommBuffer<Kokkos::HostSpace>;
 
     /**
      * @brief Default constructor.
