@@ -15,8 +15,8 @@ find_package(
 
 add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/benchmarks/fields.png
-  COMMAND python ${PROJECT_SOURCE_DIR}/scripts/plotBenchmarks.py
-          /benchmarks/fields/${CMAKE_BUILD_TYPE}/fields.xml
+  COMMAND Python3::Interpreter ${PROJECT_SOURCE_DIR}/scripts/plotBenchmarks.py
+          ${PROJECT_BINARY_DIR}/benchmarks/fields.xml
   COMMENT "Plot benchmark results")
 
 add_custom_target(

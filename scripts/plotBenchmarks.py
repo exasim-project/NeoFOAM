@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
 
+xml_file = sys.argv[1]
+
 # Parse the XML file
 tree = ET.parse(xml_file)
 
