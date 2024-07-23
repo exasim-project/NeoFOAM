@@ -6,12 +6,12 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Contributing" href="contributing.html" /><link rel="prev" title="Welcome to NeoFOAM!" href="index.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/installation.html" />
 
-    <!-- Generated with Sphinx 7.4.4 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
         <title>Installation - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=613ab9ff" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=fd3f3429" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -90,19 +90,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -143,7 +130,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -294,7 +281,7 @@
 </pre></div>
 </div>
 </div></blockquote>
-<p>NeoFOAM uses Cmake to build, thus the standard Cmake procedure should work, however, we recommend using one of the provided Cmake presets detailed below <a class="reference external" href="BuildingwithCmakePresets">below</a>. From a build directory, you can execute:</p>
+<p>NeoFOAM uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below <a class="reference external" href="BuildingwithCMakePresets">below</a>. From a build directory, you can execute:</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>build
 <span class="nb">cd</span><span class="w"> </span>build
@@ -304,7 +291,7 @@ cmake<span class="w"> </span>--install<span class="w"> </span>.
 </pre></div>
 </div>
 </div></blockquote>
-<p>The following can be chained with -D&lt;DesiredBuildFlags&gt;=&lt;Value&gt; to the Cmake command most and most relevant build flags are:</p>
+<p>The following can be chained with -D&lt;DesiredBuildFlags&gt;=&lt;Value&gt; to the CMake command most and most relevant build flags are:</p>
 <div class="table-wrapper docutils container">
 <table class="docutils align-default">
 <thead>
@@ -340,10 +327,10 @@ cmake<span class="w"> </span>--install<span class="w"> </span>.
 </tr>
 <tr class="row-even"><td><p>Kokkos_ENABLE_OPENMP</p></td>
 <td><p>Enable OpenMP backend for Kokkos</p></td>
-<td><p>OFF</p></td>
+<td><p>ON</p></td>
 </tr>
-<tr class="row-odd"><td><p>Kokkos_ENABLE_ROCM</p></td>
-<td><p>Enable ROCm backend for Kokkos</p></td>
+<tr class="row-odd"><td><p>Kokkos_ENABLE_HIP</p></td>
+<td><p>Enable HIP backend for Kokkos</p></td>
 <td><p>OFF</p></td>
 </tr>
 <tr class="row-even"><td><p>Kokkos_ENABLE_SYCL</p></td>
@@ -358,18 +345,23 @@ cmake<span class="w"> </span>--install<span class="w"> </span>.
 </table>
 </div>
 <p>By opening the the project with cmake-gui you can easily set these flags and configure the build.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>NeoFOAM will automatically enable <code class="docutils literal notranslate"><span class="pre">Kokkos_ENABLE_CUDA</span></code> or <code class="docutils literal notranslate"><span class="pre">Kokkos_ENABLE_HIP</span></code> if either of this is available on
+the system. This can be prevented by setting both options explicitly.</p>
+</div>
 <section id="building-with-cmake-presets">
-<h2>Building with Cmake Presets<a class="headerlink" href="#building-with-cmake-presets" title="Link to this heading">¶</a></h2>
-<p>Additionally, we provide several Cmake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.</p>
+<h2>Building with CMake Presets<a class="headerlink" href="#building-with-cmake-presets" title="Link to this heading">¶</a></h2>
+<p>Additionally, we provide several CMake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--list-presets<span class="w"> </span><span class="c1"># To list existing presets</span>
 </pre></div>
 </div>
 </div></blockquote>
-<p>To build NeoFOAM with Kokkos and CUDA support, you can use the following commands:</p>
+<p>To build NeoFOAM for production use, you can use the following commands:</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>ninja-kokkos-cuda<span class="w"> </span><span class="c1"># To configure with ninja and common kokkos flags for CUDA devices</span>
-cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>ninja-kokkos-cuda<span class="w"> </span><span class="c1"># To compile with ninja and common kokkos flags for CUDA devices</span>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>production<span class="w"> </span><span class="c1"># To configure with ninja and common kokkos flags</span>
+cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>production<span class="w"> </span><span class="c1"># To compile with ninja and common kokkos flags</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -475,7 +467,7 @@ ms-vscode.cmake-tools
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
-<li><a class="reference internal" href="#building-with-cmake-presets">Building with Cmake Presets</a></li>
+<li><a class="reference internal" href="#building-with-cmake-presets">Building with CMake Presets</a></li>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li><a class="reference internal" href="#workflow-with-vscode">Workflow with vscode</a></li>
 </ul>
@@ -492,6 +484,6 @@ ms-vscode.cmake-tools
 </div><script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
     </body>
 </html>

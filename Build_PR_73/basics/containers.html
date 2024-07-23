@@ -6,12 +6,12 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="unstructuredMesh" href="unstructuredMesh.html" /><link rel="prev" title="Executor" href="executor.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/containers.html" />
 
-    <!-- Generated with Sphinx 7.4.4 and Furo 2024.05.06 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
         <title>containers - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=387cc868" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=613ab9ff" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -90,19 +90,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -143,7 +130,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -335,7 +322,7 @@
 <span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
 <span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span>
 <span class="w">     </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">RangePolicy</span><span class="o">&lt;</span><span class="n">gpuExec</span><span class="o">::</span><span class="n">exec</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">sB</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span>
-<span class="w">     </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sB</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">     </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sB</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 <span class="p">);</span>
 </pre></div>
 </div>
@@ -455,13 +442,13 @@ implement the FieldGraph class</p>
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields12nBoundaries_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields12nBoundaries_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields12nBoundaries_E"></span><span id="NeoFOAM::BoundaryFields::nBoundaries___i"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a4dc9c17057c8b71f4d5b0b8e0b8dcbec"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nBoundaries_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields12nBoundaries_E" title="Link to this definition">¶</a><br /></dt>
+<span id="_CPPv3N7NeoFOAM14BoundaryFields12nBoundaries_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields12nBoundaries_E"></span><span id="NeoFOAM::BoundaryFields::nBoundaries___s"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a84342ff8b5af7d818f9ee836bf3cfeac"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nBoundaries_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields12nBoundaries_E" title="Link to this definition">¶</a><br /></dt>
 <dd><p>The number of boundaries. </p>
 </dd></dl>
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields15nBoundaryFaces_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"></span><span id="NeoFOAM::BoundaryFields::nBoundaryFaces___i"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a1760faee898f021885ac323fedf474a4"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nBoundaryFaces_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields15nBoundaryFaces_E" title="Link to this definition">¶</a><br /></dt>
+<span id="_CPPv3N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"></span><span id="NeoFOAM::BoundaryFields::nBoundaryFaces___s"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a7fa04c9abc880f5088018046204ea8bf"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nBoundaryFaces_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields15nBoundaryFaces_E" title="Link to this definition">¶</a><br /></dt>
 <dd><p>The number of boundary faces. </p>
 </dd></dl>
 
@@ -490,8 +477,8 @@ implement the FieldGraph class</p>
 <dd></dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executoriii">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8Executoriii"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8Executoriii"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR.i.i.i"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a948622fad92ad53214fb10472448f197"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nCells</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaryFaces</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaries</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executoriii" title="Link to this definition">¶</a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t">
+<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR.s.s.s"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a98fe71b9eb5dc6e7e569123ba0d1227c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nCells</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaryFaces</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaries</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t" title="Link to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
@@ -633,7 +620,7 @@ implement the FieldGraph class</p>
 <li><a class="reference internal" href="#domainfield">DomainField</a><ul>
 <li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE"><code class="docutils literal notranslate"><span class="pre">DomainField</span></code></a><ul>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executoriii"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
+<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK16UnstructuredMesh"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERKN7NeoFOAM11DomainFieldI9ValueTypeEE"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
@@ -662,6 +649,6 @@ implement the FieldGraph class</p>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     </body>
 </html>
