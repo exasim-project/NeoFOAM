@@ -4,13 +4,13 @@
 
 #include "NeoFOAM/core/executor/serialExecutor.hpp"
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
-#include "NeoFOAM/core/executor/OMPExecutor.hpp"
+#include "NeoFOAM/core/executor/CPUExecutor.hpp"
 #include <variant>
 
 namespace NeoFOAM
 {
 
-using Executor = std::variant<OMPExecutor, GPUExecutor, SerialExecutor>;
+using Executor = std::variant<CPUExecutor, GPUExecutor, SerialExecutor>;
 
 /**
  * @brief Checks if two executors are equal, i.e. they are of the same type.

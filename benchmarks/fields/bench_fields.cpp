@@ -59,7 +59,7 @@ TEST_CASE("Vector addition [benchmark]")
 }
 
 {
-    NeoFOAM::OMPExecutor ompExec {};
+    NeoFOAM::CPUExecutor ompExec {};
     NeoFOAM::Field<NeoFOAM::scalar> ompA(ompExec, size);
     NeoFOAM::fill(ompA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> ompB(ompExec, size);
@@ -106,7 +106,7 @@ TEST_CASE("Vector addition [benchmark]")
 }
 
 {
-    NeoFOAM::OMPExecutor ompExec {};
+    NeoFOAM::CPUExecutor ompExec {};
     NeoFOAM::Field<NeoFOAM::scalar> ompA(ompExec, size);
     NeoFOAM::fill(ompA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> ompB(ompExec, size);

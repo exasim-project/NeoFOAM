@@ -15,14 +15,14 @@ namespace NeoFOAM
  *
  * @ingroup Executor
  */
-class OMPExecutor
+class CPUExecutor
 {
 public:
 
     using exec = Kokkos::DefaultHostExecutionSpace;
 
-    OMPExecutor();
-    ~OMPExecutor();
+    CPUExecutor();
+    ~CPUExecutor();
 
     template<typename T>
     T* alloc(size_t size) const
@@ -60,7 +60,7 @@ public:
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
 
-    std::string name() const { return "OMPExecutor"; };
+    std::string name() const { return "CPUExecutor"; };
 };
 
 } // namespace NeoFOAM

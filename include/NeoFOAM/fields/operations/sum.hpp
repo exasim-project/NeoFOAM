@@ -25,9 +25,9 @@ struct SumKernel
     }
 
     template<typename T>
-    void operator()(const OMPExecutor& exec, const Field<T>& field, T& sum)
+    void operator()(const CPUExecutor& exec, const Field<T>& field, T& sum)
     {
-        using executor = typename OMPExecutor::exec;
+        using executor = typename CPUExecutor::exec;
         auto field_f = field.span();
         auto end = field.size();
         Kokkos::parallel_reduce(

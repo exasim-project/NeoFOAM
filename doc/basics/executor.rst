@@ -9,7 +9,7 @@ Overview
 NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The `Executor` class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:
 
 - `SerialExecutor`: run on the CPU with MPI
-- `OMPExecutor`: run on the CPU with OpenMP and MPI
+- `CPUExecutor`: run on the CPU with either OpenMP or Threads, and MPI
 - `GPUExecutor`: run on the GPU with MPI
 
 Design
@@ -22,7 +22,7 @@ One of the design goals is the ability to easily switch between different execut
 .. code-block:: cpp
 
         NeoFOAM::GPUExecutor gpuExec {};
-        NeoFOAM::SerialExecutor cpuExec {};
+        NeoFOAM::CPUExecutor cpuExec {};
 
         NeoFOAM::Field<NeoFOAM::scalar> GPUField(gpuExec, 10);
         NeoFOAM::Field<NeoFOAM::scalar> CPUField(cpuExec, 10);
@@ -32,7 +32,7 @@ The `Executor` is a `std::variant <https://en.cppreference.com/w/cpp/utility/var
 
 .. code-block:: cpp
 
-    using executor = std::variant<OMPExecutor, GPUExecutor, SerialExecutor>;
+    using executor = std::variant<CPUExecutor, GPUExecutor, SerialExecutor>;
 
 and allows to switch between the different strategies for memory allocation and execution at runtime. We use `std::visit <https://en.cppreference.com/w/cpp/utility/variant/visit>`_ to switch between the different strategies:
 
@@ -54,9 +54,9 @@ that are provided by a functor
             std::cout << "SerialExecutor" << std::endl;
         }
 
-        void operator()(const OMPExecutor& exec)
+        void operator()(const CPUExecutor& exec)
         {
-            std::cout << "OMPExecutor" << std::endl;
+            std::cout << "CPUExecutor" << std::endl;
         }
 
         void operator()(const GPUExecutor& exec)

@@ -13,7 +13,7 @@ target_sources(
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
-          "executor/OMPExecutor.cpp"
+          "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
