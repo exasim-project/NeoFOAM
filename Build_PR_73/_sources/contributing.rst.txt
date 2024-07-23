@@ -25,8 +25,8 @@ Thus, this style guide doesn't list all stylistic rules explicitly but rather gi
  * Avoid storing references as data members in classes.
    An exception might be a `const Unstructured& mesh` as it will most likely outlive any other objects.
  * Private member variables should be postfixed with `_`.
- * Place in-out parameter at the end of function argument lists.
-   E.g. `foo(const Type& in, Type& out)` instead of `foo(Type& out,const Type& in)`.
+ * Order of parameters to functions should be in, in-out, out.
+   E.g. `foo(const Type& in, Type& inOut, Type& out)` instead of `foo(Type& inOut,  Type& out, const Type& in)` or some other variation.
  * use US spelling
 
 Folder structurce and file names:
