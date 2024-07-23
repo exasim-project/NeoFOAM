@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build NeoFOAM
+    name: Build FoamAdapter
     strategy:
       fail-fast: false
       matrix:
@@ -71,14 +71,14 @@ jobs:
          ninja --version
          cmake --version
 
-     - name: Checkout submodule
+     - name: Checkout NeoFOAM submodule
        uses: actions/checkout@v4
        with:
         repository: exasim-project/NeoFOAM
         path: NeoFOAM
         ref: '${{ github.head_ref }}'
 
-     - name: Build NeoFOAM
+     - name: Build FoamAdapter
        run: |
          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
          CC=${{matrix.compiler.CC}} \
