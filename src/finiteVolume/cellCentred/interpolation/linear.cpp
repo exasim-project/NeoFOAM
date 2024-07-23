@@ -22,29 +22,28 @@ void computeLinearInterpolation(
     const NeoFOAM::labelField& owner = mesh.faceOwner();
     const NeoFOAM::labelField& neighbour = mesh.faceNeighbour();
 
-    const auto s_weight = geometryScheme->weights().internalField().span();
-    const auto s_volField = volField.internalField().span();
-    const auto s_bField = volField.boundaryField().value().span();
-    const auto s_owner = owner.span();
-    const auto s_neighbour = neighbour.span();
+    const auto sWeight = geometryScheme->weights().internalField().span();
+    const auto sVolField = volField.internalField().span();
+    const auto sBField = volField.boundaryField().value().span();
+    const auto sOwner = owner.span();
+    const auto sNeighbour = neighbour.span();
     int nInternalFaces = mesh.nInternalFaces();
-
 
     NeoFOAM::parallelFor(
         exec,
         {0, sfield.size()},
         KOKKOS_LAMBDA(const size_t facei) {
-            int32_t own = s_owner[facei];
-            int32_t nei = s_neighbour[facei];
+            int32_t own = sOwner[facei];
+            int32_t nei = sNeighbour[facei];
             if (facei < nInternalFaces)
             {
                 sfield[facei] =
-                    s_weight[facei] * s_volField[own] + (1 - s_weight[facei]) * s_volField[nei];
+                    sWeight[facei] * sVolField[own] + (1 - sWeight[facei]) * sVolField[nei];
             }
             else
             {
                 int pfacei = facei - nInternalFaces;
-                sfield[facei] = s_weight[facei] * s_bField[pfacei];
+                sfield[facei] = sWeight[facei] * sBField[pfacei];
             }
         }
     );
