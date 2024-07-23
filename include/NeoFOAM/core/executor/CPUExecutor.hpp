@@ -9,8 +9,8 @@ namespace NeoFOAM
 {
 
 /**
- * @class OMPExecutor
- * @brief Executor for handling OpenMP based parallelization.
+ * @class CPUExecutor
+ * @brief Executor for handling multicore CPU based parallelization.
  *
  *
  * @ingroup Executor
