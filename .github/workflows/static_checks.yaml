@@ -110,6 +110,7 @@ jobs:
         echo "Found $NTODOS TODO DONT MERGE notes"
         ! grep -q -r "TODO DONT MERGE" --exclude-dir=.github
   changelog:
+    if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-Changelog')}}
     name: Changelog check
     runs-on: ubuntu-latest
     steps:
