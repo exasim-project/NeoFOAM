@@ -9,20 +9,19 @@ namespace NeoFOAM
 {
 
 /**
- * @class OMPExecutor
- * @brief Executor for handling OpenMP based parallelization.
- *
+ * @class SerialExecutor
+ * @brief Reference executor for serial CPU execution.
  *
  * @ingroup Executor
  */
-class OMPExecutor
+class SerialExecutor
 {
 public:
 
-    using exec = Kokkos::OpenMP;
+    using exec = Kokkos::Serial;
 
-    OMPExecutor();
-    ~OMPExecutor();
+    SerialExecutor();
+    ~SerialExecutor();
 
     template<typename T>
     T* alloc(size_t size) const
@@ -34,13 +33,6 @@ public:
     T* realloc(void* ptr, size_t newSize) const
     {
         return static_cast<T*>(Kokkos::kokkos_realloc<exec>(ptr, newSize * sizeof(T)));
-    }
-
-    void* alloc(size_t size) const { return Kokkos::kokkos_malloc<exec>("Field", size); }
-
-    void* realloc(void* ptr, size_t newSize) const
-    {
-        return Kokkos::kokkos_realloc<exec>(ptr, newSize);
     }
 
     /** @brief create a Kokkos view for a given ptr
@@ -56,11 +48,19 @@ public:
         return Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(ptr, size);
     }
 
+
+    void* alloc(size_t size) const { return Kokkos::kokkos_malloc<exec>("Field", size); }
+
+    void* realloc(void* ptr, size_t newSize) const
+    {
+        return Kokkos::kokkos_realloc<exec>(ptr, newSize);
+    }
+
     std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
 
-    std::string name() const { return "OMPExecutor"; };
+    std::string name() const { return "SerialExecutor"; };
 };
 
 } // namespace NeoFOAM

@@ -3,6 +3,24 @@
 
 include(CheckLanguage)
 
+if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
+  find_package(OpenMP QUIET)
+
+  if(OpenMP_FOUND)
+    set(Kokkos_ENABLE_OPENMP
+        ON
+        CACHE INTERNAL "")
+  else()
+    find_package(Threads QUIET)
+
+    if(Threads_FOUND)
+      set(Kokkos_ENABLE_THREADS
+          ON
+          CACHE INTERNAL "")
+    endif()
+  endif()
+endif()
+
 if(NOT DEFINED Kokkos_ENABLE_CUDA)
   check_language(CUDA)
 

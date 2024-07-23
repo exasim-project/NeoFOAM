@@ -74,7 +74,7 @@ public:
     Field(const Executor& exec, std::vector<ValueType> in)
         : size_(in.size()), data_(nullptr), exec_(exec)
     {
-        Executor hostExec = CPUExecutor();
+        Executor hostExec = SerialExecutor();
         void* ptr = nullptr;
         std::visit(
             [this, &ptr](const auto& concreteExec)
@@ -135,7 +135,7 @@ public:
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(CPUExecutor()); }
+    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(SerialExecutor()); }
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -150,7 +150,7 @@ public:
         NF_DEBUG_ASSERT(
             result.size() == size_, "Parsed Field size not the same as current field size"
         );
-        result = copyToExecutor(CPUExecutor());
+        result = copyToExecutor(SerialExecutor());
     }
 
     /**

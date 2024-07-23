@@ -11,12 +11,12 @@
 
 TEST_CASE("Executor Equality")
 {
-    NeoFOAM::Executor cpuExec0(NeoFOAM::CPUExecutor {});
-    NeoFOAM::Executor ompExec0(NeoFOAM::OMPExecutor {});
+    NeoFOAM::Executor cpuExec0(NeoFOAM::SerialExecutor {});
+    NeoFOAM::Executor ompExec0(NeoFOAM::CPUExecutor {});
     NeoFOAM::Executor gpuExec0(NeoFOAM::GPUExecutor {});
 
-    NeoFOAM::Executor cpuExec1(NeoFOAM::CPUExecutor {});
-    NeoFOAM::Executor ompExec1(NeoFOAM::OMPExecutor {});
+    NeoFOAM::Executor cpuExec1(NeoFOAM::SerialExecutor {});
+    NeoFOAM::Executor ompExec1(NeoFOAM::CPUExecutor {});
     NeoFOAM::Executor gpuExec1(NeoFOAM::GPUExecutor {});
 
     REQUIRE(cpuExec0 == cpuExec1);

@@ -18,8 +18,8 @@ TEST_CASE("surfaceField")
     namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 

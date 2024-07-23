@@ -14,8 +14,8 @@
 TEST_CASE("Field Constructors")
 {
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
@@ -64,8 +64,8 @@ TEST_CASE("Field Operator Overloads")
 {
 
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
@@ -144,8 +144,8 @@ TEST_CASE("Field Operator Overloads")
 TEST_CASE("Field Container Operations")
 {
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
@@ -212,8 +212,8 @@ TEST_CASE("Field Container Operations")
 TEST_CASE("Field Operations")
 {
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 

@@ -29,7 +29,7 @@ void parallelFor(
 )
 {
     auto [start, end] = range;
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
+    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
         for (size_t i = start; i < end; i++)
         {
@@ -66,7 +66,7 @@ template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType
 void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel)
 {
     auto span = field.span();
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
+    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
         for (size_t i = 0; i < field.size(); i++)
         {
@@ -97,7 +97,7 @@ void parallelReduce(
 )
 {
     auto [start, end] = range;
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
+    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
         for (size_t i = start; i < end; i++)
         {
@@ -127,7 +127,7 @@ void parallelReduce(
     [[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel, T& value
 )
 {
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, CPUExecutor>::value)
+    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
         for (size_t i = 0; i < field.size(); i++)
         {

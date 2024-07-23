@@ -13,8 +13,8 @@
 TEST_CASE("Unstructured Mesh")
 {
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 

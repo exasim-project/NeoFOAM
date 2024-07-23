@@ -15,8 +15,8 @@
 TEST_CASE("parallelFor")
 {
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
@@ -82,8 +82,8 @@ TEST_CASE("parallelFor")
 TEST_CASE("parallelReduce")
 {
     NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
