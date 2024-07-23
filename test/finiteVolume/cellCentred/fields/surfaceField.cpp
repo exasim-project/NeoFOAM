@@ -28,13 +28,8 @@ TEST_CASE("surfaceField")
     SECTION("can instantiate SurfaceField with fixedValues on: " + execName)
     {
         NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
-<<<<<<< HEAD
         std::vector<std::unique_ptr<fvcc::SurfaceBoundary<NeoFOAM::scalar>>> bcs {};
         for (auto patchi : I<NeoFOAM::size_t> {0, 1, 2, 3})
-=======
-        std::vector<fvcc::SurfaceBoundary<NeoFOAM::scalar>> bcs {};
-        for (size_t patchi : {0, 1, 2, 3})
->>>>>>> 3c89718b (simplified boundary conditions handling and made them copyable)
         {
             NeoFOAM::Dictionary dict;
             dict.insert("type", std::string("fixedValue"));
