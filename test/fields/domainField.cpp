@@ -14,7 +14,7 @@ TEST_CASE("Boundaries")
 {
 
     NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );

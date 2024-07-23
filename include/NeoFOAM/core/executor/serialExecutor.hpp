@@ -14,14 +14,14 @@ namespace NeoFOAM
  *
  * @ingroup Executor
  */
-class CPUExecutor
+class SerialExecutor
 {
 public:
 
     using exec = Kokkos::Serial;
 
-    CPUExecutor();
-    ~CPUExecutor();
+    SerialExecutor();
+    ~SerialExecutor();
 
     template<typename T>
     T* alloc(size_t size) const
@@ -60,7 +60,7 @@ public:
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
 
-    std::string name() const { return "CPUExecutor"; };
+    std::string name() const { return "SerialExecutor"; };
 };
 
 } // namespace NeoFOAM

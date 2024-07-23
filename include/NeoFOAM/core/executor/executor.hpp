@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include "NeoFOAM/core/executor/CPUExecutor.hpp"
+#include "NeoFOAM/core/executor/serialExecutor.hpp"
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
 #include "NeoFOAM/core/executor/OMPExecutor.hpp"
 #include <variant>
@@ -10,7 +10,7 @@
 namespace NeoFOAM
 {
 
-using Executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
+using Executor = std::variant<OMPExecutor, GPUExecutor, SerialExecutor>;
 
 /**
  * @brief Checks if two executors are equal, i.e. they are of the same type.

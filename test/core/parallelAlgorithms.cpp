@@ -15,7 +15,7 @@
 TEST_CASE("parallelFor")
 {
     NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
@@ -82,7 +82,7 @@ TEST_CASE("parallelFor")
 TEST_CASE("parallelReduce")
 {
     NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::OMPExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );

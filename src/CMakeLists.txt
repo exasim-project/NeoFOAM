@@ -15,7 +15,7 @@ target_sources(
           "core/kokkos.cpp"
           "executor/OMPExecutor.cpp"
           "executor/GPUExecutor.cpp"
-          "executor/CPUExecutor.cpp"
+          "executor/serialExecutor.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/communicator.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"

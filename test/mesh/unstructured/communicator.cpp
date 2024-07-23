@@ -21,7 +21,7 @@ TEST_CASE("Communicator Field Synchronization")
     // first block send (size rank)
     // second block remains the same
     // third block receive (size rank)
-    Field<int> field(CPUExecutor(), 3 * mpiEnviron.sizeRank());
+    Field<int> field(SerialExecutor(), 3 * mpiEnviron.sizeRank());
 
     for (size_t rank = 0; rank < mpiEnviron.sizeRank(); rank++)
     {

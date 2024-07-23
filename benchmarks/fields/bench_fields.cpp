@@ -47,7 +47,7 @@ TEST_CASE("Vector addition [benchmark]")
     CAPTURE(size); // Capture the value of size
 
     // capture the value of size as section name
-    DYNAMIC_SECTION("" << size) {{NeoFOAM::CPUExecutor cpuExec {};
+    DYNAMIC_SECTION("" << size) {{NeoFOAM::SerialExecutor cpuExec {};
     NeoFOAM::Field<NeoFOAM::scalar> cpuA(cpuExec, size);
     NeoFOAM::fill(cpuA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> cpuB(cpuExec, size);
