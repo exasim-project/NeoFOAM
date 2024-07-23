@@ -28,7 +28,7 @@ TEST_CASE("volumeField")
     SECTION("can instantiate volumeField with fixedValues on: " + execName)
     {
         NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
-        std::vector<std::unique_ptr<fvcc::VolumeBoundary<NeoFOAM::scalar>>> bcs {};
+        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         for (auto patchi : I<size_t> {0, 1, 2, 3})
         {
             NeoFOAM::Dictionary dict;
