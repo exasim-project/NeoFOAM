@@ -32,10 +32,17 @@ jobs:
             CXX: g++
     runs-on: ubuntu-24.04
     steps:
-     - name: Checkout to repository
+     - name: Checkout FoamAdapter
        uses: actions/checkout@v4
        with:
         repository: exasim-project/FoamAdapter
+
+     - name: Checkout NeoFOAM submodule
+       uses: actions/checkout@v4
+       with:
+        repository: exasim-project/NeoFOAM
+        path: NeoFOAM
+        ref: '${{ github.head_ref }}'
 
      - name: Add repos
        run: |
@@ -70,13 +77,6 @@ jobs:
          clang --version
          ninja --version
          cmake --version
-
-     - name: Checkout NeoFOAM submodule
-       uses: actions/checkout@v4
-       with:
-        repository: exasim-project/NeoFOAM
-        path: NeoFOAM
-        ref: '${{ github.head_ref }}'
 
      - name: Build FoamAdapter
        run: |
