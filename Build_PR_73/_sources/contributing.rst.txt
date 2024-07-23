@@ -42,8 +42,10 @@ Collabortion via Pull Requests
 If you want to contribute a specific feature or fix, please don't hesitate to open a PR. After creating the PR the following process is applied.
 
  * Request a review by a given person or set the Ready-for-Review label.
- * At least one (ideally two) approval(s) is required before the PR can be merged.
+ * At least one (ideally two) approval(s) is/are required before a PR can be merged.
  * Make sure that all required pipelines succeed.
+ * If you add new features make sure to provide sufficent unit tests.
+   Also at some point before merging you can add the `full-ci` label to include build and tests on GPU hardware.
  * If you add a new feature or bug-fix, please add an entry to the `Changelog.md` file.
    For pure refactor PRs the `Skip-Changelog` label can be set.
  * If the PR should be merged in a specific order or if you don't have the permission to merge, add the `ready-to-merge` label.
