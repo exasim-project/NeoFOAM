@@ -21,9 +21,10 @@ Thus, this style guide doesn't list all stylistic rules explicitly but rather gi
    To indicate that a function simply returns a value instead of performing expensive computations `[[nodiscard]]` can be omitted.
  * Use `final` except for abstract classes.
    NeoFOAMs aims at having a rather flat inheritance hierarchy and composition is generally preferred.
-   To avoid unintended inheritance the using `final` is advised.
+   To avoid unintended inheritance the using final` is advised.
  * Avoid storing references as data members in classes.
    An exception might be a `const Unstructured& mesh` as it will most likely outlive any other objects.
+ * Private member variables should be postfixed with `_`.
  * Place in-out parameter at the end of function argument lists.
    E.g. `foo(const Type& in, Type& out)` instead of `foo(Type& out,const Type& in)`.
  * use US spelling
@@ -44,7 +45,7 @@ If you want to contribute a specific feature or fix, please don't hesitate to op
  * Request a review by a given person or set the Ready-for-Review label.
  * At least one (ideally two) approval(s) is/are required before a PR can be merged.
  * Make sure that all required pipelines succeed.
- * If you add new features make sure to provide sufficent unit tests.
+ * If you add new features make sure to provide sufficient unit tests.
    Also at some point before merging you can add the `full-ci` label to include build and tests on GPU hardware.
  * If you add a new feature or bug-fix, please add an entry to the `Changelog.md` file.
    For pure refactor PRs the `Skip-Changelog` label can be set.
