@@ -19,7 +19,7 @@ class OMPExecutor
 {
 public:
 
-    using exec = Kokkos::OpenMP;
+    using exec = Kokkos::DefaultHostExecutionSpace;
 
     OMPExecutor();
     ~OMPExecutor();
