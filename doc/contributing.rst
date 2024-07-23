@@ -33,7 +33,25 @@ Folder structurce and file names:
  * use `camelCase` for files and folder names
  * the location of implementation and header files should be consistent.
    Ie. a file `src/model/a.cpp` should have a header file in `include/NeoFOAM/model/a.hpp` and corresponding test implementation in `test/model/a.cpp`
- * File and folder names should not be redundant.
+ * File and folder names should not be redundant. Ie. `finiteVolume/cellCentred/geometryModel/finiteVolumecellCentredgeometryModel.hpp` should be
+   `finiteVolume/cellCentred/geometryModel/model.hpp`.
+
+Collabortion via Pull Requests
+""""""""""""""""""""""""""""""
+
+If you want to contribute a specific feature or fix, please don't hesitate to open a PR. After creating the PR the following process is applied.
+
+ * Request a review by a given person or set the Ready-for-Review label.
+ * At least one (ideally two) approval(s) is required before the PR can be merged.
+ * Make sure that all required pipelines succeed.
+ * If you add a new feature or bug-fix, please add an entry to the `Changelog.md` file.
+   For pure refactor PRs the `Skip-Changelog` label can be set.
+ * If the PR should be merged in a specific order or if you don't have the permission to merge, add the `ready-to-merge` label.
+ * Before merging make sure to rebase your PR on to the latest state of `main`.
+ * Make sure to add yourself to the `Authors.md` file.
+ * To simplify the review process small to medium sized PRs are preferred.
+   If your PR exceeds 1000 lines of code changes consider to break the PR up into smaller PRs which can be merged via `stacked PRs <https://graphite.dev/blog/stacked-prs>`_.
+
 
 
 Building the Documentation
