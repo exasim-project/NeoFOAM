@@ -272,8 +272,8 @@
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The <cite>Executor</cite> class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:</p>
 <ul class="simple">
-<li><p><cite>CPUExecutor</cite>: run on the CPU with MPI</p></li>
-<li><p><cite>OMPExecutor</cite>: run on the CPU with OpenMP and MPI</p></li>
+<li><p><cite>SerialExecutor</cite>: run on the CPU with MPI</p></li>
+<li><p><cite>CPUExecutor</cite>: run on the CPU with either OpenMP or C++ Threads in Combination and MPI</p></li>
 <li><p><cite>GPUExecutor</cite>: run on the GPU with MPI</p></li>
 </ul>
 </section>
@@ -288,11 +288,11 @@
 </pre></div>
 </div>
 <p>The <cite>Executor</cite> is a <a class="reference external" href="https://en.cppreference.com/w/cpp/utility/variant">std::variant</a></p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">variant</span><span class="o">&lt;</span><span class="n">OMPExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">GPUExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">CPUExecutor</span><span class="o">&gt;</span><span class="p">;</span>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">variant</span><span class="o">&lt;</span><span class="n">CPUExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">GPUExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">SerialExecutor</span><span class="o">&gt;</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>and allows to switch between the different strategies for memory allocation and execution at runtime. We use <a class="reference external" href="https://en.cppreference.com/w/cpp/utility/variant/visit">std::visit</a> to switch between the different strategies:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">CPUExecutor</span><span class="w"> </span><span class="n">exec</span><span class="p">{};</span>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">SerialExecutor</span><span class="w"> </span><span class="n">exec</span><span class="p">{};</span>
 <span class="n">std</span><span class="o">::</span><span class="n">visit</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span>
 <span class="w">           </span><span class="p">{</span><span class="w"> </span><span class="n">Functor</span><span class="p">(</span><span class="n">exec</span><span class="p">);</span><span class="w"> </span><span class="p">},</span>
 <span class="w">           </span><span class="n">exec</span><span class="p">);</span>
@@ -301,14 +301,14 @@
 <p>that are provided by a functor</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">Functor</span>
 <span class="p">{</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">operator</span><span class="p">()(</span><span class="k">const</span><span class="w"> </span><span class="n">SerialExecutor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;SerialExecutor&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
 <span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">operator</span><span class="p">()(</span><span class="k">const</span><span class="w"> </span><span class="n">CPUExecutor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span>
 <span class="w">    </span><span class="p">{</span>
 <span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;CPUExecutor&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">operator</span><span class="p">()(</span><span class="k">const</span><span class="w"> </span><span class="n">OMPExecutor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;OMPExecutor&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
 <span class="w">    </span><span class="p">}</span>
 
 <span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">operator</span><span class="p">()(</span><span class="k">const</span><span class="w"> </span><span class="n">GPUExecutor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span>
