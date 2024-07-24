@@ -9,7 +9,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 BasicGeometryScheme::BasicGeometryScheme(const UnstructuredMesh& mesh)
     : GeometrySchemeFactory(mesh), mesh_(mesh)
 {
-    // TODO Implement constructor here...
+    NF_ERROR_EXIT("Not implemented");
 }
 
 void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scalar>& weights)
@@ -91,7 +91,7 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
 
 void BasicGeometryScheme::updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs)
 {
-    // Implementation here...
+    NF_ERROR_EXIT("Not implemented");
 }
 
 
@@ -99,7 +99,7 @@ void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
     const Executor& exec, SurfaceField<scalar>& nonOrthDeltaCoeffs
 )
 {
-    // Implementation here...
+    NF_ERROR_EXIT("Not implemented");
 }
 
 
@@ -107,7 +107,7 @@ void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
     const Executor& exec, SurfaceField<Vector>& nonOrthDeltaCoeffs
 )
 {
-    // Implementation here...
+    NF_ERROR_EXIT("Not implemented");
 }
 
 } // namespace NeoFOAM
