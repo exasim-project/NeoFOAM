@@ -52,7 +52,7 @@ The logic is implemented in the kernel classes:
         Kokkos::parallel_for(
             "fvccScalarFixedValueBoundaryField",
             Kokkos::RangePolicy<executor>(start_, end_),
-            KOKKOS_LAMBDA(const int i) {
+            KOKKOS_LAMBDA(const size_t i) {
                 s_value[i] = uniformValue;
                 s_refValue[i] = uniformValue;
             }
