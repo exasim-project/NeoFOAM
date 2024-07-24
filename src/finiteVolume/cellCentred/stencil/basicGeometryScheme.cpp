@@ -23,9 +23,10 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
 
     auto w = weights.internalField().span();
 
-    if (std::holds_alternative<SerialExecutor>(exec))
-    {
-        for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    parallelFor(
+        exec,
+        {0, mesh_.nInternalFaces()},
+        [&](const int facei)
         {
             // Note: mag in the dot-product.
             // For all valid meshes, the non-orthogonality will be less than
@@ -44,49 +45,9 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
                 w[facei] = 0.5;
             }
         }
-    }
-    else
-    {
-        using exec = GPUExecutor::exec;
+    );
 
-        Kokkos::parallel_for(
-            "BasicFcccGeometryScheme::updateWeights",
-            Kokkos::RangePolicy<exec>(0, mesh_.nInternalFaces()),
-            KOKKOS_LAMBDA(const int facei) {
-                // Note: mag in the dot-product.
-                // For all valid meshes, the non-orthogonality will be less than
-                // 90 deg and the dot-product will be positive.  For invalid
-                // meshes (d & s <= 0), this will stabilise the calculation
-                // but the result will be poor.
-                scalar sfdOwn = mag(sf[facei] & (cf[facei] - c[owner[facei]]));
-                scalar sfdNei = mag(sf[facei] & (c[neighbour[facei]] - cf[facei]));
-
-                if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
-                {
-                    w[facei] = sfdNei / (sfdOwn + sfdNei);
-                }
-                else
-                {
-                    w[facei] = 0.5;
-                }
-            }
-        );
-
-        // TODO: other boundary condition requires other weights which is not implemented yet
-        //  and requires the implementation of the mesh functionality
-        Kokkos::parallel_for(
-            "BasicFcccGeometryScheme::updateWeightsBC",
-            Kokkos::RangePolicy<exec>(mesh_.nInternalFaces(), w.size()),
-            KOKKOS_LAMBDA(const int facei) { w[facei] = 1.0; }
-        );
-
-        // TODO: other boundary condition requires other weights which is not implemented yet
-        //  and requires the implementation of the mesh functionality
-        for (label facei = mesh_.nInternalFaces(); facei < w.size(); facei++)
-        {
-            w[facei] = 1.0;
-        }
-    }
+    parallelFor(exec, {0, mesh_.nInternalFaces()}, [w](const int facei) { w[facei] = 1.0; });
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs)
