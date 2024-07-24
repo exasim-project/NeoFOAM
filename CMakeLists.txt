@@ -13,24 +13,36 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 
 # Add the cmake folder so the find_package command finds custom packages
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option(NEOFOAM_DP_SCALAR "double precision scalar" TRUE)
-option(NEOFOAM_DP_LABELS "double precision label" FALSE)
-option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" FALSE)
-option(NEOFOAM_BUILD_TESTS "Build the unit tests" FALSE)
-option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" FALSE)
-option(NEOFOAM_BUILD_DOC "Build documentation" FALSE)
+# Set the output directories for all binaries and libraries
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_UB "Enable undefined behaviour sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_THREAD "Enable thread sanitizer" FALSE)
-option(NEOFOAM_ENABLE_SANITIZE_MEMORY "Enable memory sanitizer" FALSE)
-option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" FALSE)
-option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" FALSE)
-option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
-option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" FALSE)
+# Eventhough we compile NeoFOAM as SHARED library we need to explicitly enable PIC for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+option(NEOFOAM_DP_SCALAR "double precision scalar" ON)
+option(NEOFOAM_DP_LABEL "double precision label" OFF)
+option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" OFF)
+option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
+option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(NEOFOAM_BUILD_DOC "Build documentation" OFF)
+
+option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
+option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" OFF)
+option(NEOFOAM_ENABLE_SANITIZE_UB "Enable undefined behaviour sanitizer" OFF)
+option(NEOFOAM_ENABLE_SANITIZE_THREAD "Enable thread sanitizer" OFF)
+option(NEOFOAM_ENABLE_SANITIZE_MEMORY "Enable memory sanitizer" OFF)
+option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" OFF)
+option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" OFF)
+option(NEOFOAM_ENABLE_PCH "Enable precompiled header" OFF)
+option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" OFF)
+option(NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT "Enable " OFF)
+option(NEOFOAM_ENABLE_WARNINGS "Treat compiler warnings as errors" OFF)
+mark_as_advanced(NEOFOAM_ENABLE_WARNINGS)
+option(NEOFOAM_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+mark_as_advanced(NEOFOAM_WARNINGS_AS_ERRORS)
 
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
   message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
@@ -56,24 +68,25 @@ include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
 
-add_library(project_options INTERFACE)
-add_library(project_warnings INTERFACE)
-myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS}
-                               FALSE "" "" "")
+add_library(neofoam_options INTERFACE)
+add_library(neofoam_warnings INTERFACE)
+if(NEOFOAM_ENABLE_WARNINGS)
+  neofoam_set_project_warnings(neofoam_warnings ${NEOFOAM_WARNINGS_AS_ERRORS} "" "" "")
+endif()
 
 if(NEOFOAM_BUILD_PCH)
-  target_precompile_headers(project_options INTERFACE <vector> <string>
-                            <utility>)
+  target_precompile_headers(neofoam_options INTERFACE <vector> <string> <utility>)
 endif()
 
 if(NEOFOAM_ENABLE_CPP_CHECK)
-  neofoam_enable_cppcheck(FALSE "")
+  neofoam_enable_cppcheck(OFF "")
 endif()
 
 if(NEOFOAM_ENABLE_CLANG_TIDY)
-  neofoam_enable_clang_tidy(FALSE "")
+  neofoam_enable_clang_tidy(OFF "")
 endif()
 
+add_subdirectory(include)
 add_subdirectory(src)
 if(NEOFOAM_BUILD_TESTS)
   enable_testing()
@@ -84,11 +97,14 @@ if(NEOFOAM_BUILD_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
 
-if(${NEOFOAM_DP_SCALAR})
+if(NEOFOAM_DP_SCALAR)
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_SCALAR=1)
 endif()
-if(${NEOFOAM_DP_LABEL})
+if(NEOFOAM_DP_LABEL)
   target_compile_definitions(NeoFOAM PUBLIC NEOFOAM_DP_LABEL=1)
+endif()
+if(NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT)
+  target_compile_definitions(NeoFOAM INTERFACE NF_REQUIRE_MPI_THREAD_SUPPORT)
 endif()
 
 if(NEOFOAM_BUILD_DOC)
@@ -116,17 +132,13 @@ if(NEOFOAM_DEVEL_TOOLS)
     ERROR_VARIABLE pre-commit-error)
   if(pre-commit-result)
     message(
-      FATAL_ERROR
-        "Failed to install the git hooks via pre-commit."
-        "Please check the error message:\n"
-        "${pre-commit-output}\n${pre-commit-error}")
+      FATAL_ERROR "Failed to install the git hooks via pre-commit."
+                  "Please check the error message:\n" "${pre-commit-output}\n${pre-commit-error}")
   endif()
   if(pre-commit-output MATCHES "^Running in migration mode with existing hooks")
-    message(
-      WARNING
-        "An existing git hook was encountered during `pre-commit install`."
-        "The old git hook will also be executed."
-        "Consider removing it with `pre-commit install -f`")
+    message(WARNING "An existing git hook was encountered during `pre-commit install`."
+                    "The old git hook will also be executed."
+                    "Consider removing it with `pre-commit install -f`")
   elseif(NOT pre-commit-output MATCHES "^pre-commit installed at")
     message(WARNING "`pre-commit install` did not exit normally."
                     "Please check the output message:\n" "${pre-commit-output}")
@@ -143,8 +155,5 @@ endif()
 if(NEOFOAM_ENABLE_IWYU)
   find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
   set(IWYU_PATH_AND_OPTIONS ${iwyu_path})
-  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE
-                                       ${IWYU_PATH_AND_OPTIONS})
+  set_property(TARGET NeoFOAM PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH_AND_OPTIONS})
 endif()
-
-# include(cmake/InstallHelpers.cmake) neofoam_install()

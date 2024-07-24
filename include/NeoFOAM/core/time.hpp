@@ -5,12 +5,13 @@
 #include <iostream>
 #include <string>
 
-const std::string nl = "\n";
+#include "primitives/scalar.hpp"
+
+const std::string NL = "\n";
 
 namespace NeoFOAM
 {
 
-using scalar = float;
 using word = std::string;
 
 class ArgList
@@ -18,7 +19,7 @@ class ArgList
 
 public:
 
-    ArgList(int argc, char* argv[]) {};
+    ArgList([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {};
 
     [[nodiscard]] bool checkRootCase() const { return true; };
 };
@@ -27,7 +28,7 @@ class Time
 {
 public:
 
-    const static word controlDictName;
+    const static word CONTROL_DICT_NAME;
 
     Time() : time_(0.) {};
 
@@ -47,7 +48,5 @@ private:
 
     scalar time_;
 };
-
-const word Time::controlDictName = "system/controlDict";
 
 } // namespace NeoFOAM

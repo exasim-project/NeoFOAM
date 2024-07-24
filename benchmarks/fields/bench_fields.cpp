@@ -47,7 +47,7 @@ TEST_CASE("Vector addition [benchmark]")
     CAPTURE(size); // Capture the value of size
 
     // capture the value of size as section name
-    DYNAMIC_SECTION("" << size) {{NeoFOAM::CPUExecutor cpuExec {};
+    DYNAMIC_SECTION("" << size) {{NeoFOAM::SerialExecutor cpuExec {};
     NeoFOAM::Field<NeoFOAM::scalar> cpuA(cpuExec, size);
     NeoFOAM::fill(cpuA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> cpuB(cpuExec, size);
@@ -59,7 +59,7 @@ TEST_CASE("Vector addition [benchmark]")
 }
 
 {
-    NeoFOAM::OMPExecutor ompExec {};
+    NeoFOAM::CPUExecutor ompExec {};
     NeoFOAM::Field<NeoFOAM::scalar> ompA(ompExec, size);
     NeoFOAM::fill(ompA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> ompB(ompExec, size);
@@ -95,18 +95,18 @@ TEST_CASE("Vector addition [benchmark]")
     NeoFOAM::Field<NeoFOAM::scalar> gpuC(gpuExec, size);
     NeoFOAM::fill(gpuC, 0.0);
 
-    auto sGpuB = gpuB.field();
-    auto sGpuC = gpuC.field();
+    auto sGpuB = gpuB.span();
+    auto sGpuC = gpuC.span();
     BENCHMARK("Field<GPU> addition no allocation")
     {
-        gpuA.apply(KOKKOS_LAMBDA(const int i) { return sGpuB[i] + sGpuC[i]; });
+        gpuA.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sGpuB[i] + sGpuC[i]; });
         return Kokkos::fence();
         // return GPUa;
     };
 }
 
 {
-    NeoFOAM::OMPExecutor ompExec {};
+    NeoFOAM::CPUExecutor ompExec {};
     NeoFOAM::Field<NeoFOAM::scalar> ompA(ompExec, size);
     NeoFOAM::fill(ompA, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> ompB(ompExec, size);
@@ -114,11 +114,11 @@ TEST_CASE("Vector addition [benchmark]")
     NeoFOAM::Field<NeoFOAM::scalar> ompC(ompExec, size);
     NeoFOAM::fill(ompC, 0.0);
 
-    auto sompB = ompB.field();
-    auto sompC = ompC.field();
+    auto sompB = ompB.span();
+    auto sompC = ompC.span();
     BENCHMARK("Field<OMP> addition no allocation")
     {
-        ompA.apply(KOKKOS_LAMBDA(const int i) { return sompB[i] + sompC[i]; });
+        ompA.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sompB[i] + sompC[i]; });
     };
 }
 }

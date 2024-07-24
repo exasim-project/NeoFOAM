@@ -12,4 +12,6 @@ Basics
     containers.rst
     unstructuredMesh.rst
     dictionary.rst
+    registerclass.rst
     macros.rst
+    mpi_architecture.rst

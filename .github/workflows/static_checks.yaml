@@ -24,16 +24,19 @@ jobs:
            ninja-build \
            iwyu \
            clang-16 \
-           libomp-16-dev
+           libomp-16-dev \
+           libopenmpi-dev \
+           openmpi-bin
 
     - name: Create Compilation Database
       run: |
-        cmake --preset ninja-cpuonly-all \
+        cmake --preset develop \
           -DNEOFOAM_DEVEL_TOOLS=OFF \
           -DCMAKE_CXX_COMPILER=clang++-16 \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
           -DNEOFOAM_ENABLE_IWYU=ON
-        cmake --build --preset ninja-cpuonly-all
+        cmake --build --preset develop
     - uses: actions/upload-artifact@v4
       with:
         name: build-artifact
@@ -56,7 +59,9 @@ jobs:
         sudo apt update
         sudo apt install \
            clang-tidy-16 \
-           libomp-16-dev
+           libomp-16-dev \
+           libopenmpi-dev \
+           openmpi-bin
 
     - uses: actions/download-artifact@v4
       with:
@@ -70,11 +75,11 @@ jobs:
         # Create list of .cpp files that are in this repository and part of the
         # compilation database
         # also filters out " at the begin and end of the filename
-        jq ".[] | .file" build/ReleaseAll/compile_commands.json \
+        jq ".[] | .file" build/develop/compile_commands.json \
           | sed 's/^"\(.*\)"$/\1/' \
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
-        clang-tidy-16 --fix --extra-arg=-w -p build/ReleaseAll $(cat files)
+        clang-tidy-16 --fix --extra-arg=-w -p build/develop $(cat files)
 
     - name: Check for fixes
       run: |
@@ -85,41 +90,25 @@ jobs:
         echo "Please use your local clang-tidy or apply the following patch:"
         git diff -p
         exit 1
-  formatting-check:
-    name: Formatting check
+  pre-commit-run:
+    name: Pre-commit run
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Run clang-format style check for C/C++/Protobuf programs.
-      uses: jidicula/clang-format-action@v4.11.0
-      with:
-        clang-format-version: '17'
-        check-path: '.'
-        fallback-style: 'Mozilla' # optional
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install \
+           pre-commit
+        pip install identify --upgrade
+        pre-commit install
+    - name: Run pre-commit on all files
+      run: pre-commit run --all --color always --verbose
     - name: check for todo fixme note
       run: |
         NTODOS="$(grep -r 'TODO DONT MERGE' --exclude-dir=.github | wc -l)"
         echo "Found $NTODOS TODO DONT MERGE notes"
         ! grep -q -r "TODO DONT MERGE" --exclude-dir=.github
-  typos-check:
-    name: Spell check
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Check for typos
-      uses: crate-ci/typos@master
-  check-spdx-headers:
-    name: License header check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout to repository
-        uses: actions/checkout@v4
-      - name: install reuse linter
-        run: |
-          pip3 install reuse
-      - name: Execute reuse linter
-        run: |
-          reuse lint
   changelog:
     name: Changelog check
     runs-on: ubuntu-latest

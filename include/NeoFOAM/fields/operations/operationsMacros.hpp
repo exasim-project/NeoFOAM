@@ -3,95 +3,90 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/helpers/exceptions.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM
 {
 
-// Forward declarition
+// Forward declaration
 template<typename ValueType>
 class Field;
 
 
-#define DECLARE_UNARY_FIELD_OP(Name, Kernel_Impl)                                                  \
-    template<typename T, typename Inner>                                                           \
-    struct Name##Op                                                                                \
-    {                                                                                              \
-        template<typename Executor>                                                                \
-        void operator()(const Executor& exec, Field<T>& a, const Inner in)                         \
-        {                                                                                          \
-            using executor = typename Executor::exec;                                              \
-            auto a_f = a.field();                                                                  \
-            Kokkos::parallel_for(                                                                  \
-                Kokkos::RangePolicy<executor>(0, a_f.size()),                                      \
-                KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = Kernel_Impl; }                         \
-            );                                                                                     \
-        }                                                                                          \
-                                                                                                   \
-        template<typename Executor>                                                                \
-        void operator()(const CPUExecutor& exec, Field<T>& a, const Inner in)                      \
-        {                                                                                          \
-            auto a_f = a.field();                                                                  \
-            for (int i = 0; i < a_f.size(); i++)                                                   \
-            {                                                                                      \
-                a_f[i] = Kernel_Impl;                                                              \
-            }                                                                                      \
-        }                                                                                          \
-    };                                                                                             \
-    template<typename T, typename Inner>                                                           \
-    void Name(Field<T>& a, const Inner inner)                                                      \
-    {                                                                                              \
-        Name##Op<T, Inner> op_;                                                                    \
-        std::visit([&](const auto& exec) { op_(exec, a, inner); }, a.exec());                      \
-    }
+template<typename T, typename Inner>
+void map(Field<T>& a, const Inner inner)
+{
+    parallelFor(a, inner);
+}
 
-DECLARE_UNARY_FIELD_OP(map, in(i));
-DECLARE_UNARY_FIELD_OP(fill, in);
-DECLARE_UNARY_FIELD_OP(setField, in[i]);
-DECLARE_UNARY_FIELD_OP(scalar_mul, a_f[i] *= in);
+template<typename ValueType>
+void fill(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+{
+    parallelFor(
+        a, KOKKOS_LAMBDA(const size_t) { return value; }
+    );
+}
 
-#undef DECLARE_UNARY_FIELD_OP
 
-#define DECLARE_BINARY_FIELD_OP(Name, Kernel_Impl)                                                 \
-    template<typename T>                                                                           \
-    struct Name##Op                                                                                \
-    {                                                                                              \
-        template<typename Executor>                                                                \
-        void operator()(const Executor& exec, Field<T>& a, const Field<T>& b)                      \
-        {                                                                                          \
-            using executor = typename Executor::exec;                                              \
-            auto a_f = a.field();                                                                  \
-            auto b_f = b.field();                                                                  \
-            Kokkos::parallel_for(                                                                  \
-                Kokkos::RangePolicy<executor>(0, a_f.size()),                                      \
-                KOKKOS_CLASS_LAMBDA(const int i) { a_f[i] = Kernel_Impl; }                         \
-            );                                                                                     \
-        }                                                                                          \
-                                                                                                   \
-        template<typename Executor>                                                                \
-        void operator()(const CPUExecutor& exec, Field<T>& a, const Field<T>& b)                   \
-        {                                                                                          \
-            auto a_f = a.field();                                                                  \
-            const auto b_f = b.field();                                                            \
-            for (int i = 0; i < a_f.size(); i++)                                                   \
-            {                                                                                      \
-                a_f[i] = Kernel_Impl;                                                              \
-            }                                                                                      \
-        }                                                                                          \
-    };                                                                                             \
-    template<typename T>                                                                           \
-    void Name(Field<T>& a, const Field<T>& b)                                                      \
-    {                                                                                              \
-        NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);                                                         \
-        Name##Op<T> op_;                                                                           \
-        std::visit([&](const auto& exec) { op_(exec, a, b); }, a.exec());                          \
-    }
+template<typename ValueType>
+void setField(Field<ValueType>& a, const std::span<const std::type_identity_t<ValueType>> b)
+{
+    parallelFor(
+        a, KOKKOS_LAMBDA(const size_t i) { return b[i]; }
+    );
+}
 
-DECLARE_BINARY_FIELD_OP(add, a_f[i] + b_f[i]);
-DECLARE_BINARY_FIELD_OP(sub, a_f[i] - b_f[i]);
-DECLARE_BINARY_FIELD_OP(mul, a_f[i] * b_f[i]);
+template<typename ValueType>
+void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+{
+    auto spanA = a.span();
+    parallelFor(
+        a, KOKKOS_LAMBDA(const size_t i) { return spanA[i] * value; }
+    );
+}
 
-#undef DECLARE_BINARY_FIELD_OP
+namespace detail
+{
+template<typename ValueType, typename BinaryOp>
+void fieldBinaryOp(
+    Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b, BinaryOp op
+)
+{
+    NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);
+    auto spanA = a.span();
+    auto spanB = b.span();
+    parallelFor(
+        a, KOKKOS_LAMBDA(const size_t i) { return op(spanA[i], spanB[i]); }
+    );
+}
+}
+
+template<typename ValueType>
+void add(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+{
+    detail::fieldBinaryOp(
+        a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va + vb; }
+    );
+}
+
+
+template<typename ValueType>
+void sub(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+{
+    detail::fieldBinaryOp(
+        a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va - vb; }
+    );
+}
+
+template<typename ValueType>
+void mul(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+{
+    detail::fieldBinaryOp(
+        a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va * vb; }
+    );
+}
 
 
 } // namespace NeoFOAM

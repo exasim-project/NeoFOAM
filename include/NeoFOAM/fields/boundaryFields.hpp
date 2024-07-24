@@ -44,7 +44,7 @@ public:
     {}
 
 
-    BoundaryFields(const Executor& exec, int nBoundaryFaces, int nBoundaries)
+    BoundaryFields(const Executor& exec, size_t nBoundaryFaces, size_t nBoundaries)
         : exec_(exec), value_(exec, nBoundaryFaces), refValue_(exec, nBoundaryFaces),
           valueFraction_(exec, nBoundaryFaces), refGrad_(exec, nBoundaryFaces),
           boundaryTypes_(exec, nBoundaries), offset_(exec, nBoundaries + 1),
@@ -105,15 +105,24 @@ public:
      * @brief Get the number of boundaries.
      * @return The number of boundaries.
      */
-    int nBoundaries() const { return nBoundaries_; }
+    size_t nBoundaries() const { return nBoundaries_; }
 
     /**
      * @brief Get the number of boundary faces.
      * @return The number of boundary faces.
      */
-    int nBoundaryFaces() const { return nBoundaryFaces_; }
+    size_t nBoundaryFaces() const { return nBoundaryFaces_; }
 
     const Executor& exec() { return exec_; }
+
+    /**
+     * @brief Get the range for a given patchId
+     * @return The number of boundary faces.
+     */
+    std::pair<localIdx, localIdx> range(localIdx patchId) const
+    {
+        return {offset_.data()[patchId], offset_.data()[patchId + 1]};
+    }
 
 private:
 
@@ -126,8 +135,8 @@ private:
     NeoFOAM::Field<T> refGrad_;            ///< The Field storing the Neumann boundary values.
     NeoFOAM::Field<int> boundaryTypes_;    ///< The Field storing the boundary types.
     NeoFOAM::Field<localIdx> offset_;      ///< The Field storing the offsets of each boundary.
-    int nBoundaries_;                      ///< The number of boundaries.
-    int nBoundaryFaces_;                   ///< The number of boundary faces.
+    size_t nBoundaries_;                   ///< The number of boundaries.
+    size_t nBoundaryFaces_;                ///< The number of boundary faces.
 };
 
-} // namespace NeoFOAM
+}

@@ -14,4 +14,6 @@ using label = int32_t;
 using localIdx = uint32_t;
 #endif
 using globalIdx = uint64_t;
+using size_t = std::size_t;
+using mpi_label_t = int;
 }

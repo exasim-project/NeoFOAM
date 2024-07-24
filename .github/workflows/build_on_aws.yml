@@ -1,5 +1,10 @@
 name: Compile on AWS
 run-name: Compile on AWS
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  OMPI_ALLOW_RUN_AS_ROOT: 1
+  OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+  OMPI_MCA_rmaps_base_oversubscribe: true
 on:
   pull_request:
     types: [opened, synchronize]
@@ -8,7 +13,7 @@ on:
   workflow_dispatch:
 jobs:
   start-runner:
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci') || github.event_name == 'workflow_dispatch'}}
     name: Start self-hosted EC2 runner
     runs-on: ubuntu-latest
     permissions:
@@ -56,10 +61,15 @@ jobs:
                  sudo ./postinstall_github > ~/install.log
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
+                 export ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: ["develop", "production"]
     steps:
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
@@ -69,10 +79,14 @@ jobs:
           export HOME=/share/ec2-user
           module load clang/16
           module load libfabric-aws
+          module spider libfabric-aws
           module load cmake
           cmake --version
-          cmake --preset ninja-kokkos-cuda-all -DNEOFOAM_DEVEL_TOOLS=OFF
-          cmake --build --preset ninja-kokkos-cuda-all
+          cmake --preset ${{matrix.preset}} \
+            -DNEOFOAM_BUILD_TESTS=ON \
+            -DNEOFOAM_DEVEL_TOOLS=OFF \
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+          cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
         run: |
@@ -80,7 +94,7 @@ jobs:
           module load clang/16
           module load libfabric-aws
           module load cmake
-          ctest --test-dir build/ReleaseCudaAll/test
+          ctest --preset ${{matrix.preset}}
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
@@ -90,7 +104,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    if: ${{ needs.start-runner.result != 'skipped' }} # required to stop the runner even if the error happened in the previous jobs
+    # only try to run the stop job if the start runner hasn't been skipped
+    if: ${{ always() && needs.start-runner.result != 'skipped' }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

@@ -8,14 +8,14 @@ Overview
 
 NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The `Executor` class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:
 
-- `CPUExecutor`: run on the CPU with MPI
-- `OMPExecutor`: run on the CPU with OpenMP and MPI
+- `SerialExecutor`: run on the CPU with MPI
+- `CPUExecutor`: run on the CPU with either OpenMP or C++ Threads in Combination and MPI
 - `GPUExecutor`: run on the GPU with MPI
 
 Design
 ^^^^^^
 
-One of the design goals is the ability to easily switch between different execution spaces at run time, i.e. enabling the ability to switch between CPU and GPU execution without having to recompile NeoFOAM. This is achieved by passing the executor as an argument to the container types like Field as shown below. 
+One of the design goals is the ability to easily switch between different execution spaces at run time, i.e. enabling the ability to switch between CPU and GPU execution without having to recompile NeoFOAM. This is achieved by passing the executor as an argument to the container types like Field as shown below.
 
 
 
@@ -28,17 +28,17 @@ One of the design goals is the ability to easily switch between different execut
         NeoFOAM::Field<NeoFOAM::scalar> CPUField(cpuExec, 10);
 
 
-The `Executor` is a `std::variant <https://en.cppreference.com/w/cpp/utility/variant>`_ 
+The `Executor` is a `std::variant <https://en.cppreference.com/w/cpp/utility/variant>`_
 
 .. code-block:: cpp
 
-    using executor = std::variant<OMPExecutor, GPUExecutor, CPUExecutor>;
+    using executor = std::variant<CPUExecutor, GPUExecutor, SerialExecutor>;
 
 and allows to switch between the different strategies for memory allocation and execution at runtime. We use `std::visit <https://en.cppreference.com/w/cpp/utility/variant/visit>`_ to switch between the different strategies:
 
 .. code-block:: cpp
 
-    NeoFOAM::CPUExecutor exec{};
+    NeoFOAM::SerialExecutor exec{};
     std::visit([&](const auto& exec)
                { Functor(exec); },
                exec);
@@ -49,14 +49,14 @@ that are provided by a functor
 
     struct Functor
     {
+        void operator()(const SerialExecutor& exec)
+        {
+            std::cout << "SerialExecutor" << std::endl;
+        }
+
         void operator()(const CPUExecutor& exec)
         {
             std::cout << "CPUExecutor" << std::endl;
-        }
-
-        void operator()(const OMPExecutor& exec)
-        {
-            std::cout << "OMPExecutor" << std::endl;
         }
 
         void operator()(const GPUExecutor& exec)

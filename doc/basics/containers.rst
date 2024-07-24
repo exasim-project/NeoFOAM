@@ -20,7 +20,7 @@ The following example shows how to use the field function to access the data of 
 
 .. code-block:: cpp
 
-     NeoFOAM::CPUExecutor cpuExec {};
+     NeoFOAM::SerialExecutor cpuExec {};
      NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, size);
      std::span<double> sA = a.field();
      // for loop
@@ -38,7 +38,7 @@ To run the for loop on the GPU is a bit more complicated and is based on the Kok
      std::span<double> sB = b.field();
      Kokkos::parallel_for(
           Kokkos::RangePolicy<gpuExec::exec>(0, sB.size()),
-          KOKKOS_LAMBDA(const int i) { sB[i] = 1.0; }
+          KOKKOS_LAMBDA(const NeoFOAM::size_t i) { sB[i] = 1.0; }
      );
 
 Kokkos requires the knowledge of where to run the code and the range of the loop. The range is defined by the size of the data and the executor. The `KOKKOS_LAMBDA` is required to mark the function so it is also compiled for the GPU. This approach however is not very user-friendly and requires the knowledge of the Kokkos library. To simplify the process, the Field class stores the executor and the field independent of the device can be set to 1.0 with the following code.
@@ -119,34 +119,23 @@ The same approach is used in the ``FieldGraph`` class (we had a better name for 
 BoundaryFields
 ^^^^^^^^^^^^^^
 
-The BoundaryFields class is used to store the boundary conditions of a field. The BoundaryFields class is implemented in the ``BoundaryFields.hpp`` header file and store the boundary conditions in a general container that can be used to present different boundary conditions: Mixed, Dirichlet, Neumann. The class uses the same of set approach to loop over the boundary patches
-
-.. note::
-
-     TODO
-     implement the boundaryFields see other commit
+The ``BoundaryFields`` class is used to store all the boundary conditions of a ``DomainField``. The ``BoundaryFields`` class is implemented in the ``boundaryFields.hpp`` header file and stores the boundary conditions in a generic container that can be used to represent different boundary conditions: Dirichlet, Neumann, and Robin.
 
 .. doxygenclass:: NeoFOAM::BoundaryFields
     :members:
-        value_
-        refValue_
-        valueFraction_
-        refGrad_
-        boundaryTypes_
-        offset_
-        nBoundaries_
+        value_,
+        refValue_,
+        valueFraction_,
+        refGrad_,
+        boundaryTypes_,
+        offset_,
+        nBoundaries_,
         nBoundaryFaces_
-
 
 DomainField
 ^^^^^^^^^^^
 
-The domainField stores the internalField and the boundaryFields in a single container and is used to represent all the relevant values of a fields for a given mesh.
-
-.. note::
-
-     TODO
-     implement the DomainField see other commit
+The ``DomainField`` is a data class which stores both the ``InternalField`` and ``BoundaryFields`` in a single container. Together, it fully defines a discrete topologically closed physical field, for a given mesh.
 
 .. doxygenclass:: NeoFOAM::DomainField
     :members:

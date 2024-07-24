@@ -4,15 +4,22 @@
 
 #include <exception>
 #include <iostream>
+#include <mpi.h>
 #include <string>
 #include <sstream>
-#include <source_location>
+#include <iostream>
 
-#include "Info.hpp"
+// compiling with clang and cuda fails to
+// find source location
+// #include <source_location>
+// #include <experimental/source_location>
+
+#include "info.hpp"
 
 #ifdef NF_DEBUG_MESSAGING
 #include "cpptrace/cpptrace.hpp"
 #endif
+
 
 namespace NeoFOAM
 {
@@ -58,9 +65,7 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
-              << "\nFunc: " << std::source_location::current().function_name()                     \
-              << "\nLine: " << std::source_location::current().line() << "\n"                      \
+    "Error: " << message << "\nFile: " << __FILE__ << "\nLine: " << __LINE__ << "\n"               \
               << cpptrace::generate_trace().to_string() << "\n"
 #else
 /**
@@ -74,9 +79,7 @@ private:
  * @return std::string The generated error message.
  */
 #define NF_ERROR_MESSAGE(message)                                                                  \
-    "Error: " << message << "\nFile: " << std::source_location::current().file_name()              \
-              << "\nFunc: " << std::source_location::current().function_name()                     \
-              << "\nLine: " << std::source_location::current().line() << "\n"
+    "Error: " << message << "\nFile: " << __FILE__ << "\nLine: " << __LINE__ << "\n"
 #endif
 
 /**
@@ -92,7 +95,7 @@ private:
     do                                                                                             \
     {                                                                                              \
         std::cerr << NF_ERROR_MESSAGE(message);                                                    \
-        std::abort();                                                                              \
+        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     }                                                                                              \
     while (false)
 
@@ -165,7 +168,7 @@ private:
  * @param condition The condition to be checked.
  * @param message The error message to be printed if the condition is false.
  */
-#define NF_DEBUG_ASSERT(condition, message) ASSERT(condition, message)
+#define NF_DEBUG_ASSERT(condition, message) NF_ASSERT(condition, message)
 
 /**
  * @def NF_DEBUG_ASSERT_THROW

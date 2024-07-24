@@ -11,6 +11,8 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/boundaryFields.hpp"
 
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
+
 namespace NeoFOAM
 {
 
@@ -30,9 +32,19 @@ class DomainField
 {
 public:
 
-    DomainField(const Executor& exec, int nCells, int nBoundaryFaces, int nBoundaries)
+    DomainField(const Executor& exec)
+        : exec_(exec), internalField_(exec, 0), boundaryFields_(exec, 0, 0)
+    {}
+
+    DomainField(const Executor& exec, size_t nCells, size_t nBoundaryFaces, size_t nBoundaries)
         : exec_(exec), internalField_(exec, nCells),
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
+    {}
+
+
+    DomainField(const Executor& exec, const UnstructuredMesh& mesh)
+        : exec_(exec), internalField_(exec, mesh.nCells()),
+          boundaryFields_(exec, mesh.nBoundaryFaces(), mesh.nBoundaries())
     {}
 
 
@@ -73,6 +85,8 @@ public:
 
 
     BoundaryFields<ValueType>& boundaryField() { return boundaryFields_; }
+
+    const Executor& exec() const { return exec_; }
 
 private:
 

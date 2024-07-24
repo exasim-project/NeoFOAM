@@ -7,20 +7,16 @@
 # https://github.com/cpp-best-practices/cmake_template                       #
 ##############################################################################
 
-function(
-  myproject_set_project_warnings
-  project_name
-  WARNINGS_AS_ERRORS
-  CLANG_WARNINGS
-  GCC_WARNINGS
-  CUDA_WARNINGS)
+function(neofoam_set_project_warnings project_name WARNINGS_AS_ERRORS CLANG_WARNINGS GCC_WARNINGS
+         CUDA_WARNINGS)
 
   if("${CLANG_WARNINGS}" STREQUAL "")
     set(CLANG_WARNINGS
         -Wall
         -Wextra # reasonable and standard
         -Wshadow # warn the user if a variable declaration shadows one from a parent context
-        -Wnon-virtual-dtor # warn the user if a class with virtual functions has a non-virtual destructor. This helps
+        -Wnon-virtual-dtor # warn the user if a class with virtual functions has a non-virtual
+                           # destructor. This helps
         # catch hard to track down memory errors
         -Wold-style-cast # warn for c-style casts
         -Wcast-align # warn for potential performance problem casts
@@ -48,13 +44,8 @@ function(
   endif()
 
   if("${CUDA_WARNINGS}" STREQUAL "")
-    set(CUDA_WARNINGS
-        -Wall
-        -Wextra
-        -Wunused
-        -Wconversion
-        -Wshadow
-        # TODO add more Cuda warnings
+    set(CUDA_WARNINGS -Wall -Wextra -Wunused -Wconversion -Wshadow
+                      # TODO add more Cuda warnings
     )
   endif()
 
