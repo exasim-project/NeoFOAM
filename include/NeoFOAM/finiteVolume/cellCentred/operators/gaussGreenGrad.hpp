@@ -23,7 +23,7 @@ public:
 
     // fvcc::VolumeField<Vector> grad(const fvcc::VolumeField<scalar>& phi);
 
-    void grad(VolumeField<Vector>& gradPhi, const VolumeField<scalar>& phi);
+    void grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi);
 
 private:
 
