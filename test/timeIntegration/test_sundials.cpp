@@ -13,7 +13,7 @@
 #include <sunmatrix/sunmatrix_dense.h> // access to dense SUNMatrix
 #include <sunlinsol/sunlinsol_dense.h> // access to dense SUNLinearSolver
 #include <sundials/sundials_types.h>   // definition of type sunrealtype
-
+#include <nvector/nvector_kokkos.hpp>
 
 // Function to compute the right-hand sides of the ODE system
 int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
@@ -25,6 +25,26 @@ int f(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
     return 0;                       // return with success
 }
 
+
+TEST_CASE("Kokkos Test")
+{
+    SUNContext sunctx;
+    std::size_t length = 10;
+    // Vector with extent length using the default execution space
+    sundials::kokkos::Vector<> x {length, sunctx};
+
+    // Vector with extent length using the Cuda execution space
+    sundials::kokkos::Vector<Kokkos::Cuda> x_cuda {length, sunctx};
+
+    // Vector based on an existing Kokkos::View
+    Kokkos::View<double*> view {"a view", length};
+    sundials::kokkos::Vector<> x_view {view, sunctx};
+
+    // Vector based on an existing Kokkos::View for device and host
+    Kokkos::View<double*, Kokkos::Cuda> device_view {"another view", length};
+    auto host_view = Kokkos::create_mirror_view(device_view);
+    sundials::kokkos::Vector<> x_view_duel {device_view, host_view, sunctx};
+}
 
 TEST_CASE("SUNDIALS CVODE solver")
 {
