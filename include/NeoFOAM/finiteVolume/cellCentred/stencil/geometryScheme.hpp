@@ -31,6 +31,9 @@ public:
     updateNonOrthDeltaCoeffs(const Executor& exec, SurfaceField<Vector>& nonOrthDeltaCoeffs) = 0;
 };
 
+/* @class GeometryScheme
+ * @brief Implements a method to compute deltaCoeffs
+ */
 class GeometryScheme
 {
 public:

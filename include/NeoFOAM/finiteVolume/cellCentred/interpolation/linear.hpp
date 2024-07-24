@@ -7,7 +7,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
 #include "Kokkos_Core.hpp"
 

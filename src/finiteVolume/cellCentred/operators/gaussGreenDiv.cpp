@@ -3,9 +3,9 @@
 
 #include <functional>
 
-#include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

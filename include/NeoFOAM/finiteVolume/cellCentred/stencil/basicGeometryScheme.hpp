@@ -8,8 +8,7 @@
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
-#include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
