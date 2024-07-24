@@ -1,55 +1,32 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
-#pragma once
 
+#pragma once
 
 #include "NeoFOAM/core/primitives/vector.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"
-#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/mesh/stencil/fvccGeometryScheme.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 class BasicGeometryScheme : public GeometrySchemeFactory
 {
+
 public:
 
     BasicGeometryScheme(const UnstructuredMesh& mesh);
 
-    void updateWeights(const CPUExecutor& exec, fvcc::SurfaceField<scalar>& weights) override;
-    void updateWeights(const OMPExecutor& exec, fvcc::SurfaceField<scalar>& weights) override;
-    void updateWeights(const GPUExecutor& exec, fvcc::SurfaceField<scalar>& weights) override;
+    void updateWeights(const Executor& exec, SurfaceField<scalar>& weights) override;
 
-    void
-    updateDeltaCoeffs(const CPUExecutor& exec, fvcc::SurfaceField<scalar>& deltaCoeffs) override;
-    void
-    updateDeltaCoeffs(const OMPExecutor& exec, fvcc::SurfaceField<scalar>& deltaCoeffs) override;
-    void
-    updateDeltaCoeffs(const GPUExecutor& exec, fvcc::SurfaceField<scalar>& deltaCoeffs) override;
+    void updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs) override;
 
-    void updateNonOrthDeltaCoeffs(
-        const CPUExecutor& exec, fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs
-    ) override;
-    void updateNonOrthDeltaCoeffs(
-        const OMPExecutor& exec, fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs
-    ) override;
-    void updateNonOrthDeltaCoeffs(
-        const GPUExecutor& exec, fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs
-    ) override;
-
-    void updateNonOrthCorrectionVectors(
-        const CPUExecutor& exec, fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
-    ) override;
-    void updateNonOrthCorrectionVectors(
-        const OMPExecutor& exec, fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
-    ) override;
-    void updateNonOrthCorrectionVectors(
-        const GPUExecutor& exec, fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
-    ) override;
+    void updateNonOrthDeltaCoeffs(const Executor& exec, SurfaceField<ValueType>& nonOrthDeltaCoeffs)
+        override;
 
 private:
 

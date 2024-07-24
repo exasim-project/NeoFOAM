@@ -27,7 +27,7 @@ void computeGrad(
     const auto surfPhif = phif.internalField().span();
     const auto surfOwner = mesh.faceOwner().span();
     const auto surfNeighbour = mesh.faceNeighbour().span();
-    const auto s_Sf = mesh.faceAreas().span();
+    const auto sSf = mesh.faceAreas().span();
     size_t nInternalFaces = mesh.nInternalFaces();
 
     const auto surfV = mesh.cellVolumes().span();
@@ -36,7 +36,7 @@ void computeGrad(
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            Vector flux = s_Sf[i] * surfPhif[i];
+            Vector flux = sSf[i] * surfPhif[i];
             surfGradPhi[surfOwner[i]] += flux;
             surfGradPhi[surfNeighbour[i]] -= flux;
         }
@@ -59,7 +59,7 @@ void computeGrad(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                Vector flux = s_Sf[i] * surfPhif[i];
+                Vector flux = sSf[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfGradPhi[surfOwner[i]], flux);
                 Kokkos::atomic_sub(&surfGradPhi[surfNeighbour[i]], flux);
             }
@@ -70,7 +70,7 @@ void computeGrad(
             {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
                 size_t own = surfFaceCells[i - nInternalFaces];
-                Vector valueOwn = s_Sf[i] * surfPhif[i];
+                Vector valueOwn = sSf[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
             }
         );

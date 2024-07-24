@@ -11,9 +11,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeUpwindInterpolation(
-    fvcc::SurfaceField<scalar>& surfaceField,
-    const fvcc::SurfaceField<scalar>& faceFlux,
-    const fvcc::VolumeField<scalar>& volField,
+    SurfaceField<scalar>& surfaceField,
+    const SurfaceField<scalar>& faceFlux,
+    const VolumeField<scalar>& volField,
     const std::shared_ptr<GeometryScheme> geometryScheme
 )
 {
@@ -64,17 +64,15 @@ Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh)
       };
 
 
-void Upwind::interpolate(
-    fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
-)
+void Upwind::interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField)
 {
     NF_ERROR_EXIT("limited scheme require a faceFlux");
 }
 
 void Upwind::interpolate(
-    fvcc::SurfaceField<scalar>& surfaceField,
-    const fvcc::SurfaceField<scalar>& faceFlux,
-    const fvcc::VolumeField<scalar>& volField
+    SurfaceField<scalar>& surfaceField,
+    const SurfaceField<scalar>& faceFlux,
+    const VolumeField<scalar>& volField
 )
 {
     computeUpwindInterpolation(surfaceField, faceFlux, volField, geometryScheme_);

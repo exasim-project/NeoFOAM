@@ -3,18 +3,16 @@
 
 #include "NeoFOAM/mesh/stencil/basicFvccGeometryScheme.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 BasicGeometryScheme::BasicGeometryScheme(const UnstructuredMesh& mesh)
     : GeometrySchemeFactory(mesh), mesh_(mesh)
 {
-    // Constructor implementation here...
+    // TODO Implement constructor here...
 }
 
-void BasicGeometryScheme::updateWeights(
-    const CPUExecutor& exec, fvcc::SurfaceField<scalar>& weights
-)
+void BasicGeometryScheme::updateWeights(const CPUExecutor& exec, SurfaceField<scalar>& weights)
 {
     const auto owner = mesh_.faceOwner().span();
     const auto neighbour = mesh_.faceNeighbour().span();
@@ -53,17 +51,15 @@ void BasicGeometryScheme::updateWeights(
     }
 }
 
-void BasicGeometryScheme::updateWeights(
-    const OMPExecutor& exec, fvcc::SurfaceField<scalar>& weights
-)
+void BasicGeometryScheme::updateWeights(const OMPExecutor& exec, SurfaceField<scalar>& weights)
 {
     using executor = OMPExecutor::exec;
     const auto owner = mesh_.faceOwner().span();
     const auto neighbour = mesh_.faceNeighbour().span();
 
-    const auto Cf = mesh_.faceCentres().span();
-    const auto C = mesh_.cellCentres().span();
-    const auto Sf = mesh_.faceAreas().span();
+    const auto cf = mesh_.faceCentres().span();
+    const auto c = mesh_.cellCentres().span();
+    const auto sf = mesh_.faceAreas().span();
 
     auto w = weights.internalField().span();
 
@@ -76,8 +72,8 @@ void BasicGeometryScheme::updateWeights(
             // 90 deg and the dot-product will be positive.  For invalid
             // meshes (d & s <= 0), this will stabilise the calculation
             // but the result will be poor.
-            scalar sfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
-            scalar sfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
+            scalar sfdOwn = mag(Sf[facei] & (cf[facei] - c[owner[facei]]));
+            scalar sfdNei = mag(Sf[facei] & (c[neighbour[facei]] - cf[facei]));
 
             if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
             {
@@ -99,17 +95,15 @@ void BasicGeometryScheme::updateWeights(
     );
 }
 
-void BasicGeometryScheme::updateWeights(
-    const GPUExecutor& exec, fvcc::SurfaceField<scalar>& weights
-)
+void BasicGeometryScheme::updateWeights(const GPUExecutor& exec, SurfaceField<scalar>& weights)
 {
     using executor = GPUExecutor::exec;
     const auto owner = mesh_.faceOwner().span();
     const auto neighbour = mesh_.faceNeighbour().span();
 
-    const auto Cf = mesh_.faceCentres().span();
-    const auto C = mesh_.cellCentres().span();
-    const auto Sf = mesh_.faceAreas().span();
+    const auto cf = mesh_.faceCentres().span();
+    const auto c = mesh_.cellCentres().span();
+    const auto sf = mesh_.faceAreas().span();
 
     auto w = weights.internalField().span();
 
@@ -122,8 +116,8 @@ void BasicGeometryScheme::updateWeights(
             // 90 deg and the dot-product will be positive.  For invalid
             // meshes (d & s <= 0), this will stabilise the calculation
             // but the result will be poor.
-            scalar sfdOwn = mag(Sf[facei] & (Cf[facei] - C[owner[facei]]));
-            scalar sfdNei = mag(Sf[facei] & (C[neighbour[facei]] - Cf[facei]));
+            scalar sfdOwn = mag(sf[facei] & (cf[facei] - c[owner[facei]]));
+            scalar sfdNei = mag(sf[facei] & (c[neighbour[facei]] - cf[facei]));
 
             if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
             {
@@ -146,63 +140,63 @@ void BasicGeometryScheme::updateWeights(
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(
-    const CPUExecutor& exec, fvcc::SurfaceField<scalar>& deltaCoeffs
+    const CPUExecutor& exec, SurfaceField<scalar>& deltaCoeffs
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(
-    const OMPExecutor& exec, fvcc::SurfaceField<scalar>& deltaCoeffs
+    const OMPExecutor& exec, SurfaceField<scalar>& deltaCoeffs
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(
-    const GPUExecutor& exec, fvcc::SurfaceField<scalar>& deltaCoeffs
+    const GPUExecutor& exec, SurfaceField<scalar>& deltaCoeffs
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
-    const CPUExecutor& exec, fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs
+    const CPUExecutor& exec, SurfaceField<scalar>& nonOrthDeltaCoeffs
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
-    const OMPExecutor& exec, fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs
+    const OMPExecutor& exec, SurfaceField<scalar>& nonOrthDeltaCoeffs
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
-    const GPUExecutor& exec, fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs
+    const GPUExecutor& exec, SurfaceField<scalar>& nonOrthDeltaCoeffs
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateNonOrthCorrectionVectors(
-    const CPUExecutor& exec, fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
+    const CPUExecutor& exec, SurfaceField<Vector>& nonOrthCorrectionVectors
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateNonOrthCorrectionVectors(
-    const OMPExecutor& exec, fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
+    const OMPExecutor& exec, SurfaceField<Vector>& nonOrthCorrectionVectors
 )
 {
     // Implementation here...
 }
 
 void BasicGeometryScheme::updateNonOrthCorrectionVectors(
-    const GPUExecutor& exec, fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
+    const GPUExecutor& exec, SurfaceField<Vector>& nonOrthCorrectionVectors
 )
 {
     // Implementation here...

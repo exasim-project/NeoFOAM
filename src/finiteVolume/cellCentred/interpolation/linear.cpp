@@ -11,8 +11,8 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeLinearInterpolation(
-    fvcc::SurfaceField<scalar>& surfaceField,
-    const fvcc::VolumeField<scalar>& volField,
+    SurfaceField<scalar>& surfaceField,
+    const VolumeField<scalar>& volField,
     const std::shared_ptr<GeometryScheme> geometryScheme
 )
 {
@@ -55,17 +55,15 @@ Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
 
       };
 
-void Linear::interpolate(
-    fvcc::SurfaceField<scalar>& surfaceField, const fvcc::VolumeField<scalar>& volField
-)
+void Linear::interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField)
 {
     computeLinearInterpolation(surfaceField, volField, geometryScheme_);
 }
 
 void Linear::interpolate(
-    fvcc::SurfaceField<scalar>& surfaceField,
-    const fvcc::SurfaceField<scalar>& faceFlux,
-    const fvcc::VolumeField<scalar>& volField
+    SurfaceField<scalar>& surfaceField,
+    const SurfaceField<scalar>& faceFlux,
+    const VolumeField<scalar>& volField
 )
 {
     interpolate(surfaceField, volField);
