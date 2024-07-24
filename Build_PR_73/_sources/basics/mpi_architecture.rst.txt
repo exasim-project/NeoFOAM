@@ -174,7 +174,7 @@ It is worth noting that there may be more than one field being synchronized at a
     mpi::MPIEnvironment MPIEnviron;
     Communicator comm;
 
-    Field<int> field(CPUExecutor());
+    Field<int> field(SerialExecutor());
 
     // ...
     // Size and populate field data.

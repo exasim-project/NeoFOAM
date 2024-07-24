@@ -20,7 +20,7 @@ The following example shows how to use the field function to access the data of 
 
 .. code-block:: cpp
 
-     NeoFOAM::CPUExecutor cpuExec {};
+     NeoFOAM::SerialExecutor cpuExec {};
      NeoFOAM::Field<NeoFOAM::scalar> a(cpuExec, size);
      std::span<double> sA = a.field();
      // for loop

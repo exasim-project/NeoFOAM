@@ -14,6 +14,7 @@ and `.clang-tidy <https://github.com/exasim-project/NeoFOAM/blob/main/.clang-for
 Furthermore, adequate licensing of the source code is checked via the reuse linter and typos checks for obvious spelling issues.
 Thus, this style guide doesn't list all stylistic rules explicitly but rather gives advise for ambiguous situations and mentions the rational for some decissions.
 
+ * We generally try to comply with the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>_`.
  * Use `camelCase` for functions and members and capitalized `CamelCase` for classes
  * Use descriptive template parameter names.
    For example prefer `template <class ValueType>` over `template <class T>` if the type can be a float or double.
