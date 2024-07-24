@@ -6,9 +6,8 @@
 #include "NeoFOAM/core/error.hpp"
 #include <any>
 
-namespace NeoFOAM
+namespace NeoFOAM::finiteVolume::cellCentred
 {
-namespace fvcc = finiteVolume::cellCentred;
 
 GeometrySchemeFactory::GeometrySchemeFactory(const UnstructuredMesh& mesh) {}
 
@@ -27,10 +26,10 @@ const std::shared_ptr<GeometryScheme> GeometryScheme::readOrCreate(const Unstruc
 GeometryScheme::GeometryScheme(
     const Executor& exec,
     std::unique_ptr<GeometrySchemeFactory> kernel,
-    const fvcc::SurfaceField<scalar>& weights,
-    const fvcc::SurfaceField<scalar>& deltaCoeffs,
-    const fvcc::SurfaceField<scalar>& nonOrthDeltaCoeffs,
-    const fvcc::SurfaceField<Vector>& nonOrthCorrectionVectors
+    const SurfaceField<scalar>& weights,
+    const SurfaceField<scalar>& deltaCoeffs,
+    const SurfaceField<scalar>& nonOrthDeltaCoeffs,
+    const SurfaceField<Vector>& nonOrthCorrectionVectors
 )
     : exec_(exec), mesh_(weights.mesh()), kernel_(std::move(kernel)), weights_(weights),
       deltaCoeffs_(deltaCoeffs), nonOrthDeltaCoeffs_(nonOrthDeltaCoeffs),
@@ -48,10 +47,10 @@ GeometryScheme::GeometryScheme(
     std::unique_ptr<GeometrySchemeFactory> kernel
 )
     : exec_(exec), mesh_(mesh), kernel_(std::move(kernel)),
-      weights_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
-      deltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
-      nonOrthDeltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
-      nonOrthCorrectionVectors_(mesh.exec(), mesh, fvcc::createCalculatedBCs<Vector>(mesh))
+      weights_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
+      deltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
+      nonOrthDeltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
+      nonOrthCorrectionVectors_(mesh.exec(), mesh, createCalculatedBCs<Vector>(mesh))
 {
     if (kernel_ == nullptr)
     {
@@ -62,11 +61,11 @@ GeometryScheme::GeometryScheme(
 
 GeometryScheme::GeometryScheme(const UnstructuredMesh& mesh)
     : exec_(mesh.exec()), mesh_(mesh),
-      kernel_(std::make_unique<NeoFOAM::BasicGeometryScheme>(mesh)), // TODO add selection mechanism
-      weights_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
-      deltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
-      nonOrthDeltaCoeffs_(mesh.exec(), mesh, fvcc::createCalculatedBCs<scalar>(mesh)),
-      nonOrthCorrectionVectors_(mesh.exec(), mesh, fvcc::createCalculatedBCs<Vector>(mesh))
+      kernel_(std::make_unique<BasicGeometryScheme>(mesh)), // TODO add selection mechanism
+      weights_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
+      deltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
+      nonOrthDeltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
+      nonOrthCorrectionVectors_(mesh.exec(), mesh, createCalculatedBCs<Vector>(mesh))
 {
     if (kernel_ == nullptr)
     {
@@ -91,16 +90,16 @@ void GeometryScheme::update()
     );
 }
 
-const fvcc::SurfaceField<scalar>& GeometryScheme::weights() const { return weights_; }
+const SurfaceField<scalar>& GeometryScheme::weights() const { return weights_; }
 
-const fvcc::SurfaceField<scalar>& GeometryScheme::deltaCoeffs() const { return deltaCoeffs_; }
+const SurfaceField<scalar>& GeometryScheme::deltaCoeffs() const { return deltaCoeffs_; }
 
-const fvcc::SurfaceField<scalar>& GeometryScheme::nonOrthDeltaCoeffs() const
+const SurfaceField<scalar>& GeometryScheme::nonOrthDeltaCoeffs() const
 {
     return nonOrthDeltaCoeffs_;
 }
 
-const fvcc::SurfaceField<Vector>& GeometryScheme::nonOrthCorrectionVectors() const
+const SurfaceField<Vector>& GeometryScheme::nonOrthCorrectionVectors() const
 {
     return nonOrthCorrectionVectors_;
 }

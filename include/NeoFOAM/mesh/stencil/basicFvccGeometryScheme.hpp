@@ -25,8 +25,12 @@ public:
 
     void updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs) override;
 
-    void updateNonOrthDeltaCoeffs(const Executor& exec, SurfaceField<ValueType>& nonOrthDeltaCoeffs)
+    void updateNonOrthDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& nonOrthDeltaCoeffs)
         override;
+
+    void updateNonOrthDeltaCoeffs(const Executor& exec, SurfaceField<Vector>& nonOrthDeltaCoeffs)
+        override;
+
 
 private:
 
