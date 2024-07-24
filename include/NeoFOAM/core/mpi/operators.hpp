@@ -115,25 +115,47 @@ constexpr MPI_Datatype getType()
 }
 
 /**
- * @brief Performs an all-reduce operation on a scalar value across all processes in the
+ * @brief Performs a blocking all-reduce operation on a value across all processes in the
  * communicator.
  *
- * @tparam valueType The type of the scalar value.
- * @param value Pointer to the scalar value to be reduced.
+ * @tparam valueType The type of the value.
+ * @param value The value to be all-reduced.
  * @param op The reduction operation to be performed.
  * @param comm The communicator across which the reduction operation is performed.
  * @note Blocking MPI operation.
  */
 template<typename valueType>
-void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
+void allReduce(valueType& value, const ReduceOp op, MPI_Comm comm)
 {
     MPI_Allreduce(
-        MPI_IN_PLACE, reinterpret_cast<void*>(value), 1, getType<valueType>(), getOp(op), comm
+        MPI_IN_PLACE, reinterpret_cast<void*>(&value), 1, getType<valueType>(), getOp(op), comm
     );
 }
 
 /**
- * @brief Sends a set of scalar values to a remote rank.
+ * @brief Performs a blocking all-reduce operation on a vector across all processes in the
+ * communicator.
+ *
+ * @param vector The vector to be all-reduced.
+ * @param op The reduction operation to be performed.
+ * @param comm The communicator across which the reduction operation is performed.
+ * @note Blocking MPI operation.
+ */
+template<>
+inline void allReduce(Vector& vector, const ReduceOp op, MPI_Comm comm)
+{
+    MPI_Allreduce(
+        MPI_IN_PLACE,
+        reinterpret_cast<void*>(vector.data()),
+        static_cast<mpi_label_t>(vector.size()),
+        getType<scalar>(),
+        getOp(op),
+        comm
+    );
+}
+
+/**
+ * @brief Non-blocking send of a set of scalar values to a remote rank.
  *
  * @tparam valueType The type of the scalar value.
  * @param buffer Pointer to first scalar value to be sent.
@@ -145,21 +167,22 @@ void reduceAllScalar(valueType* value, const ReduceOp op, MPI_Comm comm)
  * @note Non-blocking MPI operation.
  */
 template<typename valueType>
-void sendScalar(
+void isend(
     const valueType* buffer,
-    const int size,
-    int rankReceive,
-    int tag,
+    const mpi_label_t size,
+    mpi_label_t rankReceive,
+    mpi_label_t tag,
     MPI_Comm comm,
     MPI_Request* request
 )
 {
-    int err = MPI_Isend(buffer, size, getType<valueType>(), rankReceive, tag, comm, request);
+    mpi_label_t err =
+        MPI_Isend(buffer, size, getType<valueType>(), rankReceive, tag, comm, request);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Isend failed.");
 }
 
 /**
- * @brief Receives a set of scalar values from a remote rank.
+ * @brief Non-blocking receive of a set of scalar values from a remote rank.
  *
  * @tparam valueType The type of the scalar value.
  * @param buffer Pointer to the buffer where the received scalar values will be stored.
@@ -171,11 +194,16 @@ void sendScalar(
  * @note Non-blocking MPI operation.
  */
 template<typename valueType>
-void recvScalar(
-    valueType* buffer, const int size, int rankSend, int tag, MPI_Comm comm, MPI_Request* request
+void irecv(
+    valueType* buffer,
+    const mpi_label_t size,
+    mpi_label_t rankSend,
+    mpi_label_t tag,
+    MPI_Comm comm,
+    MPI_Request* request
 )
 {
-    int err = MPI_Irecv(buffer, size, getType<valueType>(), rankSend, tag, comm, request);
+    mpi_label_t err = MPI_Irecv(buffer, size, getType<valueType>(), rankSend, tag, comm, request);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Irecv failed.");
 }
 
@@ -188,8 +216,8 @@ void recvScalar(
  */
 inline bool test(MPI_Request* request)
 {
-    int flag;
-    int err = MPI_Test(request, &flag, MPI_STATUS_IGNORE);
+    mpi_label_t flag;
+    mpi_label_t err = MPI_Test(request, &flag, MPI_STATUS_IGNORE);
     NF_DEBUG_ASSERT(err == MPI_SUCCESS, "MPI_Test failed.");
     return static_cast<bool>(flag);
 }

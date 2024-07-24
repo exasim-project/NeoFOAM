@@ -30,6 +30,16 @@ jobs:
             CXX: clang++
           - CC: gcc
             CXX: g++
+        preset: ["develop", "profiling", "production"]
+        exclude:
+          - compiler:
+              CC: gcc
+              CXX: g++
+            preset: "develop"
+          - compiler:
+              CC: clang
+              CXX: clang++
+            preset: "profiling"
     runs-on: ubuntu-latest
     steps:
      - name: Checkout to repository
@@ -71,11 +81,12 @@ jobs:
        run: |
          CC=${{matrix.compiler.CC}} \
          CXX=${{matrix.compiler.CXX}} \
-         cmake --preset ninja-cpuonly-all \
+         cmake --preset ${{matrix.preset}} \
+           -DNEOFOAM_BUILD_TESTS=ON \
            -DNEOFOAM_DEVEL_TOOLS=OFF \
            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
-         cmake --build  --preset ninja-cpuonly-all
+         cmake --build  --preset ${{matrix.preset}}
 
      - name: Execute unit tests NeoFOAM
        run: |
-         ctest --preset ninja-cpuonly-all
+         ctest --preset ${{matrix.preset}}

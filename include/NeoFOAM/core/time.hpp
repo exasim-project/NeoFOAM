@@ -19,7 +19,7 @@ class ArgList
 
 public:
 
-    ArgList(int argc, char* argv[]) {};
+    ArgList([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {};
 
     [[nodiscard]] bool checkRootCase() const { return true; };
 };
@@ -48,7 +48,5 @@ private:
 
     scalar time_;
 };
-
-const word Time::CONTROL_DICT_NAME = "system/controlDict";
 
 } // namespace NeoFOAM

@@ -12,77 +12,34 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+
 /**
- * @brief Represents a geometric field for a cell-centered finite volume method.
+ * @class GeometricFieldMixin
+ * @brief This class represents a mixin for a geometric field.
  *
- * This class stores the field data for a cell-centered finite volume method. It contains
- * the internal field and boundary field, as well as the boundary conditions.
+ * The GeometricFieldMixin class provides a set of common operations and accessors for a geometric
+ * field. It is designed to be used as a mixin in other classes that require geometric field
+ * functionality.
  *
- * @tparam ValueType The data type of the field.
- * @tparam BoundaryType The boundary type of the field.
+ * @tparam ValueType The value type of the field.
  */
-template<typename ValueType, typename BoundaryType>
-class GeometricField
+template<typename ValueType>
+class GeometricFieldMixin
 {
 public:
 
     /**
-     * @brief Constructor for GeometricField.
+     * @brief Constructor for GeometricFieldMixin.
      *
      * @param exec The executor object.
      * @param mesh The unstructured mesh object.
-     * @param boundaryConditions The vector of unique pointers to SurfaceBoundaryField objects
-     * representing the boundary conditions.
+     * @param field The domain field object.
      */
-    GeometricField(
-        const Executor& exec,
-        std::shared_ptr<const UnstructuredMesh> mesh,
-        std::vector<std::unique_ptr<BoundaryType>>&& boundaryConditions
+    GeometricFieldMixin(
+        const Executor& exec, const UnstructuredMesh& mesh, const DomainField<ValueType>& field
     )
-        : exec_(exec), mesh_(mesh), field_(
-                                        exec,
-                                        mesh->nInternalFaces() + mesh->nBoundaryFaces(),
-                                        mesh->nBoundaryFaces(),
-                                        mesh->nBoundaries()
-                                    ),
-          boundaryConditions_(std::move(boundaryConditions))
+        : exec_(exec), mesh_(mesh), field_(field)
     {}
-
-    /**
-     * @brief Constructor for GeometricField.
-     */
-    GeometricField(const Executor& exec)
-        : exec_(exec), mesh_(nullptr), field_(exec), boundaryConditions_()
-    {}
-
-    /**
-     * @brief Copy constructor for GeometricField.
-     *
-     * @param sField The GeometricField object to be copied.
-     */
-    GeometricField(const GeometricField& sField)
-        : exec_(sField.exec_), mesh_(sField.mesh_), field_(sField.field_),
-          boundaryConditions_(sField.boundaryConditions_.size())
-    {
-        // Copy the boundary conditions
-        // TODO add clone functionality to boundary conditions
-    }
-
-    /**
-     * @brief Corrects the boundary conditions of the surface field.
-     *
-     * This function applies the correctBoundaryConditions() method to each boundary condition in
-     * the field.
-     */
-    void correctBoundaryConditions()
-    {
-        for (auto& boundaryCondition : boundaryConditions_)
-        {
-            boundaryCondition->correctBoundaryCondition(
-                field_.boundaryField(), field_.internalField()
-            );
-        }
-    }
 
     /**
      * @brief Returns a const reference to the internal field.
@@ -124,15 +81,13 @@ public:
      *
      * @return The const reference to the unstructured mesh object.
      */
-    std::shared_ptr<const UnstructuredMesh> mesh() const { return mesh_; }
+    const UnstructuredMesh& mesh() const { return mesh_; }
 
-private:
+protected:
 
-    Executor exec_;                                // The executor object
-    std::shared_ptr<const UnstructuredMesh> mesh_; // The unstructured mesh object
-    DomainField<ValueType> field_;                 // The domain field object
-    std::vector<std::unique_ptr<BoundaryType>>
-        boundaryConditions_; // The vector of boundary conditions
+    Executor exec_;                // The executor object
+    const UnstructuredMesh& mesh_; // The unstructured mesh object
+    DomainField<ValueType> field_; // The domain field object
 };
 
 } // namespace NeoFOAM

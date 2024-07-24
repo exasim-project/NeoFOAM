@@ -12,10 +12,17 @@
 
 TEST_CASE("Unstructured Mesh")
 {
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
 
-    SECTION("Can create single cell mesh ")
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("Can create single cell mesh " + execName)
     {
-        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh();
+        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
         REQUIRE(mesh.nCells() == 1);
         REQUIRE(mesh.nBoundaryFaces() == 4);
@@ -23,12 +30,10 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(mesh.nBoundaries() == 4);
     }
 
-    SECTION("Can create domainField from mesh ")
+    SECTION("Can create domainField from mesh " + execName)
     {
 
-        auto exec = NeoFOAM::CPUExecutor {};
-
-        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh();
+        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
 
         REQUIRE(domainField.boundaryField().offset().size() == 5);

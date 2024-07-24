@@ -42,7 +42,7 @@ NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From
 Additionally, we provide several Cmake presets to set commmonly required flags if you compile NeoFoam in combination with Kokkos.
 
     cmake --list-presets # To list existing presets
-    cmake --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
+    cmake --preset production # To compile for production use
 
 
 
@@ -51,7 +51,7 @@ Additionally, we provide several Cmake presets to set commmonly required flags i
 NeoFOAM provides a set of benchmarks which can be executed and plotted by the following commands
 
     cmake --build . --target execute_benchmarks # runs the benchmark suite
-    cmake --build . --target execute_execute_plot_benchmark # plots the benchmark results
+    cmake --build . --target execute_plot_benchmark # plots the benchmark results
 
 
 ## Executing Tests

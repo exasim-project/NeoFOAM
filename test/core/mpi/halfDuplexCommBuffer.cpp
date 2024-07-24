@@ -40,11 +40,11 @@ TEST_CASE("halfDuplexBuffer")
 
     SECTION("Set Comm Rank Size")
     {
-        for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
             rankCommSize[rank] = rank;
         buffer.setCommRankSize<double>(rankCommSize);
         buffer.initComm<double>("Set Comm Rank Size");
-        for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = buffer.get<double>(rank);
             REQUIRE(data.size() == rank);
@@ -60,10 +60,10 @@ TEST_CASE("halfDuplexBuffer")
 
         send.initComm<int>("Send and Receive");
         receive.initComm<int>("Send and Receive");
-        for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = send.get<int>(rank);
-            data[0] = rank;
+            data[0] = static_cast<int>(rank);
         }
 
         send.send();
@@ -72,10 +72,10 @@ TEST_CASE("halfDuplexBuffer")
         send.waitComplete();
         receive.waitComplete();
 
-        for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = receive.get<int>(rank);
-            REQUIRE(data[0] == mpiEnviron.rank());
+            REQUIRE(data[0] == static_cast<int>(mpiEnviron.rank()));
         }
 
         send.finaliseComm();

@@ -9,12 +9,13 @@ include(GNUInstallDirs)
 target_sources(
   NeoFOAM
   PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
+          "core/primitives/vector.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/kokkos.cpp"
-          "executor/OMPExecutor.cpp"
-          "executor/GPUExecutor.cpp"
           "executor/CPUExecutor.cpp"
+          "executor/GPUExecutor.cpp"
+          "executor/serialExecutor.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/communicator.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
@@ -27,13 +28,6 @@ enable_sanitizers(
   NeoFOAM NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK NEOFOAM_ENABLE_SANITIZE_UB
   NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
-if(${CMAKE_BUILD_TYPE} MATCHES Debug)
-  target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG)
-endif()
-
-if(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
-  target_compile_definitions(NeoFOAM INTERFACE NF_DEBUG_INFO)
-endif()
-
+target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
 target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
                                      cpptrace::cpptrace)

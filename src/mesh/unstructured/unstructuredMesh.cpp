@@ -15,11 +15,11 @@ UnstructuredMesh::UnstructuredMesh(
     scalarField magFaceAreas,
     labelField faceOwner,
     labelField faceNeighbour,
-    localIdx nCells,
-    localIdx nInternalFaces,
-    localIdx nBoundaryFaces,
-    localIdx nBoundaries,
-    localIdx nFaces,
+    size_t nCells,
+    size_t nInternalFaces,
+    size_t nBoundaryFaces,
+    size_t nBoundaries,
+    size_t nFaces,
     BoundaryMesh boundaryMesh
 )
     : exec_(points.exec()), points_(points), cellVolumes_(cellVolumes), cellCentres_(cellCentres),
@@ -46,15 +46,15 @@ const labelField& UnstructuredMesh::faceOwner() const { return faceOwner_; }
 
 const labelField& UnstructuredMesh::faceNeighbour() const { return faceNeighbour_; }
 
-localIdx UnstructuredMesh::nCells() const { return nCells_; }
+size_t UnstructuredMesh::nCells() const { return nCells_; }
 
-localIdx UnstructuredMesh::nInternalFaces() const { return nInternalFaces_; }
+size_t UnstructuredMesh::nInternalFaces() const { return nInternalFaces_; }
 
-localIdx UnstructuredMesh::nBoundaryFaces() const { return nBoundaryFaces_; }
+size_t UnstructuredMesh::nBoundaryFaces() const { return nBoundaryFaces_; }
 
-localIdx UnstructuredMesh::nBoundaries() const { return nBoundaries_; }
+size_t UnstructuredMesh::nBoundaries() const { return nBoundaries_; }
 
-localIdx UnstructuredMesh::nFaces() const { return nFaces_; }
+size_t UnstructuredMesh::nFaces() const { return nFaces_; }
 
 const BoundaryMesh& UnstructuredMesh::boundaryMesh() const { return boundaryMesh_; }
 
@@ -62,10 +62,8 @@ StencilDataBase& UnstructuredMesh::stencilDB() const { return stencilDataBase_; 
 
 const Executor& UnstructuredMesh::exec() const { return exec_; }
 
-UnstructuredMesh createSingleCellMesh()
+UnstructuredMesh createSingleCellMesh(const Executor exec)
 {
-    Executor exec = CPUExecutor();
-
     // a 2D mesh in 3D space with left, right, top, bottom boundary faces
     // with the centre at (0.5, 0.5, 0.0)
     // left, top, right, bottom faces
@@ -87,7 +85,7 @@ UnstructuredMesh createSingleCellMesh()
         faceAreasVectors,                                                               //
         {exec, {{0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}, {-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
-        {exec, {0.5, 0.5, 0.5, 0.5}}, // deltaCoeffs
+        {exec, {2.0, 2.0, 2.0, 2.0}}, // deltaCoeffs --> mag(1 / delta)
         {0, 1, 2, 3, 4}               // offset
     );
     return UnstructuredMesh(

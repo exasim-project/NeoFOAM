@@ -26,7 +26,7 @@ struct MPIInit
      */
     MPIInit(int argc, char** argv)
     {
-#ifdef NEOFOAM_MPI_THREAD
+#ifdef NF_REQUIRE_MPI_THREAD_SUPPORT
         int provided;
         MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
         NF_ASSERT(
@@ -72,14 +72,14 @@ public:
      *
      * @return The number of ranks.
      */
-    int sizeRank() const { return mpi_size; }
+    size_t sizeRank() const { return static_cast<size_t>(mpi_size); }
 
     /**
      * @brief Returns the rank of the current process.
      *
      * @return The rank of the current process.
      */
-    int rank() const { return mpi_rank; }
+    size_t rank() const { return static_cast<size_t>(mpi_rank); }
 
     /**
      * @brief Returns the communicator.

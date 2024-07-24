@@ -13,7 +13,7 @@ template<typename T>
 bool equal(Field<T>& field, T value)
 {
     auto hostSpan = field.copyToHost().span();
-    for (int i = 0; i < hostSpan.size(); i++)
+    for (size_t i = 0; i < hostSpan.size(); i++)
     {
         if (hostSpan[i] != value)
         {
@@ -34,7 +34,7 @@ bool equal(const Field<T>& field, const Field<T>& field2)
         return false;
     }
 
-    for (int i = 0; i < hostSpan.size(); i++)
+    for (size_t i = 0; i < hostSpan.size(); i++)
     {
         if (hostSpan[i] != hostSpan2[i])
         {
@@ -55,7 +55,7 @@ bool equal(const Field<T>& field, std::span<T> span2)
         return false;
     }
 
-    for (int i = 0; i < hostSpan.size(); i++)
+    for (size_t i = 0; i < hostSpan.size(); i++)
     {
         if (hostSpan[i] != span2[i])
         {

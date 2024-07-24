@@ -39,19 +39,19 @@ TEST_CASE("fullDuplexBuffer")
     SECTION("Send and Receive")
     {
         buffer.initComm<int>("Send and Receive");
-        for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = buffer.getSend<int>(rank);
-            data[0] = rank;
+            data[0] = static_cast<int>(rank);
         }
 
         buffer.startComm();
         buffer.waitComplete();
 
-        for (int rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
+        for (size_t rank = 0; rank < mpiEnviron.sizeRank(); ++rank)
         {
             auto data = buffer.getReceive<int>(rank);
-            REQUIRE(data[0] == mpiEnviron.rank());
+            REQUIRE(data[0] == static_cast<int>(mpiEnviron.rank()));
         }
 
         buffer.finaliseComm();

@@ -4,3 +4,4 @@
 add_library(neofoam_catch_main test_main.cpp mpiReporter.cpp mpiGlobals.cpp mpiSerialization.cpp)
 target_link_libraries(neofoam_catch_main PUBLIC Catch2::Catch2 cpptrace::cpptrace Kokkos::kokkos
                                                 MPI::MPI_CXX NeoFOAM)
+target_link_libraries(neofoam_catch_main PRIVATE neofoam_warnings neofoam_options)
