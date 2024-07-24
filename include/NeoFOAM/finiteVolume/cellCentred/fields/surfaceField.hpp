@@ -30,7 +30,7 @@ public:
     SurfaceField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::vector<std::unique_ptr<SurfaceBoundary<ValueType>>>&& boundaryConditions
+        const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
@@ -42,29 +42,13 @@ public:
                 mesh.nBoundaries()
             )
         ),
-          boundaryConditions_(std::move(boundaryConditions))
+          boundaryConditions_(boundaryConditions)
     {}
 
-    SurfaceField(
-        const Executor& exec,
-        const UnstructuredMesh& mesh,
-        const DomainField<ValueType>& field,
-        std::vector<std::unique_ptr<SurfaceBoundary<ValueType>>>&& boundaryConditions
-    )
-        : GeometricFieldMixin<ValueType>(exec, mesh, field),
-          boundaryConditions_(std::move(boundaryConditions))
-    {}
 
     SurfaceField(const SurfaceField& other)
-        : GeometricFieldMixin<ValueType>(other),
-          boundaryConditions_(other.boundaryConditions_.size())
-    {
-        // for (size_t i = 0; i < other.boundaryConditions_.size(); ++i)
-        // {
-        //     boundaryConditions_[i] =
-        //     std::make_unique<SurfaceBoundary<ValueType>>(*other.boundaryConditions_[i]);
-        // }
-    }
+        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
+    {}
 
     /**
      * @brief Corrects the boundary conditions of the surface field.
@@ -76,13 +60,13 @@ public:
     {
         for (auto& boundaryCondition : boundaryConditions_)
         {
-            boundaryCondition->correctBoundaryCondition(this->field_);
+            boundaryCondition.correctBoundaryCondition(this->field_);
         }
     }
 
 private:
 
-    std::vector<std::unique_ptr<SurfaceBoundary<ValueType>>>
+    std::vector<SurfaceBoundary<ValueType>>
         boundaryConditions_; // The vector of boundary conditions
 };
 

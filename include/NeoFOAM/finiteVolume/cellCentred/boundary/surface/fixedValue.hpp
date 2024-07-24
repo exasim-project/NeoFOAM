@@ -64,6 +64,11 @@ public:
 
     static std::string schema() { return "none"; }
 
+    virtual std::unique_ptr<SurfaceBoundaryFactory<ValueType>> clone() const override
+    {
+        return std::make_unique<FixedValue>(*this);
+    }
+
 private:
 
     const UnstructuredMesh& mesh_;

@@ -16,7 +16,7 @@ namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
-// from
+// from a __device__ function is not allowed
 template<typename ValueType>
 void setFixedValue(
     DomainField<ValueType>& domainField, std::pair<size_t, size_t> range, ValueType fixedValue
@@ -58,6 +58,11 @@ public:
     static std::string doc() { return "Set a fixed value on the boundary"; }
 
     static std::string schema() { return "none"; }
+
+    virtual std::unique_ptr<VolumeBoundaryFactory<ValueType>> clone() const final
+    {
+        return std::make_unique<FixedValue>(*this);
+    }
 
 private:
 
