@@ -15,7 +15,7 @@ Navigate to the NeoFOAM directory:
 
       cd NeoFOAM
 
-NeoFOAM uses Cmake to build, thus the standard Cmake procedure should work, however, we recommend using one of the provided Cmake presets detailed below `below <Building with Cmake Presets>`_. From a build directory, you can execute:
+NeoFOAM uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below `below <Building with CMake Presets>`_. From a build directory, you can execute:
 
    .. code-block:: bash
 
@@ -25,7 +25,7 @@ NeoFOAM uses Cmake to build, thus the standard Cmake procedure should work, howe
         cmake --build .
         cmake --install .
 
-The following can be chained with -D<DesiredBuildFlags>=<Value> to the Cmake command most and most relevant build flags are:
+The following can be chained with -D<DesiredBuildFlags>=<Value> to the CMake command most and most relevant build flags are:
 
 +---------------------------+-----------------------------------+---------+
 | Flag                      | Description                       | Default |
@@ -42,9 +42,9 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the Cmake com
 +---------------------------+-----------------------------------+---------+
 | Kokkos_ENABLE_SERIAL      | Enable Serial backend for Kokkos  | ON      |
 +---------------------------+-----------------------------------+---------+
-| Kokkos_ENABLE_OPENMP      | Enable OpenMP backend for Kokkos  | OFF     |
+| Kokkos_ENABLE_OPENMP      | Enable OpenMP backend for Kokkos  | ON      |
 +---------------------------+-----------------------------------+---------+
-| Kokkos_ENABLE_ROCM        | Enable ROCm backend for Kokkos    | OFF     |
+| Kokkos_ENABLE_HIP         | Enable HIP backend for Kokkos     | OFF     |
 +---------------------------+-----------------------------------+---------+
 | Kokkos_ENABLE_SYCL        | Enable SYCL backend for Kokkos    | OFF     |
 +---------------------------+-----------------------------------+---------+
@@ -53,21 +53,26 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the Cmake com
 
 By opening the the project with cmake-gui you can easily set these flags and configure the build.
 
-Building with Cmake Presets
+.. note::
+
+   NeoFOAM will automatically enable ``Kokkos_ENABLE_CUDA`` or ``Kokkos_ENABLE_HIP`` if either of this is available on
+   the system. This can be prevented by setting both options explicitly.
+
+Building with CMake Presets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Additionally, we provide several Cmake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.
+Additionally, we provide several CMake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.
 
    .. code-block:: bash
 
     cmake --list-presets # To list existing presets
 
-To build NeoFOAM with Kokkos and CUDA support, you can use the following commands:
+To build NeoFOAM for production use, you can use the following commands:
 
    .. code-block:: bash
 
-    cmake --preset ninja-kokkos-cuda # To configure with ninja and common kokkos flags for CUDA devices
-    cmake --build --preset ninja-kokkos-cuda # To compile with ninja and common kokkos flags for CUDA devices
+    cmake --preset production # To configure with ninja and common kokkos flags
+    cmake --build --preset production # To compile with ninja and common kokkos flags
 
 It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
 
