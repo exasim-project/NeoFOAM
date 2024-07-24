@@ -26,8 +26,7 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
     parallelFor(
         exec,
         {0, mesh_.nInternalFaces()},
-        [&](const int facei)
-        {
+        KOKKOS_LAMBDA(const int facei) {
             // Note: mag in the dot-product.
             // For all valid meshes, the non-orthogonality will be less than
             // 90 deg and the dot-product will be positive.  For invalid
