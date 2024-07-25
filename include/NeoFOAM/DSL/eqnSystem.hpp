@@ -7,6 +7,8 @@
 #include <vector>
 #include <utility>
 
+#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/core/error.hpp"
 
@@ -17,14 +19,19 @@ class EqnSystem
 {
 public:
 
-    NeoFOAM::scalar explicitOperation()
+    EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
+        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_()
+    {}
+
+    NeoFOAM::Field<NeoFOAM::scalar> explicitOperation()
     {
-        NeoFOAM::scalar exp = 0;
+        NeoFOAM::Field<NeoFOAM::scalar> source(exec_, nCells_);
+        NeoFOAM::fill(source, 0.0);
         for (auto& eqnTerm : explicitTerms_)
         {
-            eqnTerm.explicitOperation(exp);
+            eqnTerm.explicitOperation(source);
         }
-        return exp;
+        return source;
     }
 
     void addTerm(const EqnTerm& eqnTerm)
@@ -87,8 +94,14 @@ public:
 
     const std::vector<EqnTerm>& explicitTerms() const { return explicitTerms_; }
 
+    const NeoFOAM::Executor& exec() const { return exec_; }
+
+    const std::size_t nCells() const { return nCells_; }
+
 private:
 
+    const NeoFOAM::Executor exec_;
+    const std::size_t nCells_;
     std::vector<EqnTerm> temporalTerms_;
     std::vector<EqnTerm> implicitTerms_;
     std::vector<EqnTerm> explicitTerms_;
@@ -111,7 +124,7 @@ EqnSystem operator+(const EqnSystem& lhs, const EqnTerm& rhs)
 
 EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
 {
-    EqnSystem eqnSys;
+    EqnSystem eqnSys(lhs.exec(), lhs.nCells());
     eqnSys.addTerm(lhs);
     eqnSys.addTerm(rhs);
     return eqnSys;
@@ -119,7 +132,7 @@ EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
 
 EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
 {
-    EqnSystem results;
+    EqnSystem results(es.exec(), es.nCells());
     for (const auto& eqnTerm : es.temporalTerms())
     {
         results.addTerm(scale * eqnTerm);
@@ -137,7 +150,6 @@ EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
 
 EqnSystem operator-(const EqnSystem& lhs, const EqnSystem& rhs)
 {
-    std::cout << "Subtracting EqnSystem from EqnSystem" << std::endl;
     EqnSystem results = lhs;
     results.addSystem(-1.0 * rhs);
     return results;
@@ -152,7 +164,7 @@ EqnSystem operator-(const EqnSystem& lhs, const EqnTerm& rhs)
 
 EqnSystem operator-(const EqnTerm& lhs, const EqnTerm& rhs)
 {
-    EqnSystem results;
+    EqnSystem results(lhs.exec(), lhs.nCells());
     results.addTerm(lhs);
     results.addTerm(-1.0 * rhs);
     return results;

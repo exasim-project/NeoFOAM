@@ -9,6 +9,7 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 
 #include "NeoFOAM/DSL/eqnTerm.hpp"
@@ -24,11 +25,26 @@ public:
 
     std::string display() const { return "Divergence"; }
 
-    void explicitOperation(NeoFOAM::scalar& exp, NeoFOAM::scalar scale) { exp += 1 * scale; }
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    {
+        auto sourceField = source.span();
+        NeoFOAM::parallelFor(
+            source.exec(),
+            {0, source.size()},
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
+        );
+    }
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
+
+    const NeoFOAM::Executor& exec() const { return exec_; }
+
+    std::size_t nCells() const { return nCells_; }
+
     dsl::EqnTerm::Type termType_;
+    NeoFOAM::Executor exec_;
+    std::size_t nCells_;
 };
 
 class TimeTerm
@@ -38,24 +54,40 @@ public:
 
     std::string display() const { return "TimeTerm"; }
 
-    void explicitOperation(NeoFOAM::scalar& exp, NeoFOAM::scalar scale) { exp += 1 * scale; }
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    {
+        auto sourceField = source.span();
+        NeoFOAM::parallelFor(
+            source.exec(),
+            {0, source.size()},
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1 * scale; }
+        );
+    }
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
+
+    const NeoFOAM::Executor& exec() const { return exec_; }
+
+    std::size_t nCells() const { return nCells_; }
+
     dsl::EqnTerm::Type termType_;
+    const NeoFOAM::Executor exec_;
+    std::size_t nCells_;
 };
 
 
 TEST_CASE("TimeIntegration")
 {
+    auto exec = NeoFOAM::SerialExecutor();
     namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
     NeoFOAM::Dictionary dict;
     dict.insert("type", std::string("forwardEuler"));
 
-    dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit);
+    dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit, exec, 1);
 
-    dsl::EqnTerm ddtTerm = TimeTerm(dsl::EqnTerm::Type::Temporal);
+    dsl::EqnTerm ddtTerm = TimeTerm(dsl::EqnTerm::Type::Temporal, exec, 1);
 
     dsl::EqnSystem eqnSys = ddtTerm + divTerm;
 

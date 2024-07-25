@@ -19,11 +19,26 @@ public:
 
     std::string display() const { return "Laplacian"; }
 
-    void explicitOperation(NeoFOAM::scalar& exp, NeoFOAM::scalar scale) { exp += 1 * scale; }
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    {
+        auto sourceField = source.span();
+        NeoFOAM::parallelFor(
+            source.exec(),
+            {0, source.size()},
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
+        );
+    }
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
+    const NeoFOAM::Executor& exec() const { return exec_; }
+
+    const std::size_t nCells() const { return nCells_; }
+
     dsl::EqnTerm::Type termType_;
+
+    const NeoFOAM::Executor exec_;
+    const std::size_t nCells_;
 };
 
 class Divergence
@@ -33,116 +48,140 @@ public:
 
     std::string display() const { return "Divergence"; }
 
-    void explicitOperation(NeoFOAM::scalar& exp, NeoFOAM::scalar scale) { exp += 1 * scale; }
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    {
+        auto sourceField = source.span();
+        NeoFOAM::parallelFor(
+            source.exec(),
+            {0, source.size()},
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
+        );
+    }
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
+
+    const NeoFOAM::Executor& exec() const { return exec_; }
+
+    const std::size_t nCells() const { return nCells_; }
+
     dsl::EqnTerm::Type termType_;
+
+    const NeoFOAM::Executor exec_;
+    const std::size_t nCells_;
 };
 
+NeoFOAM::scalar getField(const NeoFOAM::Field<NeoFOAM::scalar>& source)
+{
+    auto sourceField = source.copyToHost().span();
+    return sourceField[0];
+}
 
 TEST_CASE("DSL")
 {
-    dsl::EqnTerm lapTerm = Laplacian(dsl::EqnTerm::Type::Explicit);
+    auto exec = NeoFOAM::SerialExecutor();
+    dsl::EqnTerm lapTerm = Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1);
 
     REQUIRE("Laplacian" == lapTerm.display());
 
-    dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit);
+    dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit, exec, 1);
 
     REQUIRE("Divergence" == divTerm.display());
-    NeoFOAM::scalar source = 0;
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> source(exec, 1);
+        NeoFOAM::fill(source, 0.0);
 
-    lapTerm.explicitOperation(source);
-    divTerm.explicitOperation(source);
+        lapTerm.explicitOperation(source);
+        divTerm.explicitOperation(source);
 
-    REQUIRE(source == 2.0);
+        REQUIRE(getField(source) == 2.0);
+    }
 
     {
         dsl::EqnSystem eqnSys = lapTerm + divTerm;
         REQUIRE(eqnSys.size() == 2);
-        REQUIRE(eqnSys.explicitOperation() == 2);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 2);
     }
 
     {
         dsl::EqnSystem eqnSys(lapTerm + lapTerm + divTerm + divTerm);
         REQUIRE(eqnSys.size() == 4);
-        REQUIRE(eqnSys.explicitOperation() == 4.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 4.0);
     }
 
     {
-        dsl::EqnSystem eqnSys(lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit));
+        dsl::EqnSystem eqnSys(lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1));
         REQUIRE(eqnSys.size() == 2);
-        REQUIRE(eqnSys.explicitOperation() == 2.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 2.0);
     }
 
     {
         dsl::EqnSystem eqnSys = lapTerm - divTerm;
         REQUIRE(eqnSys.size() == 2);
-        REQUIRE(eqnSys.explicitOperation() == 0.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 0.0);
     }
 
     {
-        dsl::EqnSystem eqnSys(lapTerm - Laplacian(dsl::EqnTerm::Type::Explicit));
+        dsl::EqnSystem eqnSys(lapTerm - Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1));
         REQUIRE(eqnSys.size() == 2);
-        REQUIRE(eqnSys.explicitOperation() == 0.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 0.0);
     }
 
     {
         dsl::EqnSystem eqnSys(lapTerm - lapTerm - divTerm - divTerm);
         REQUIRE(eqnSys.size() == 4);
-        REQUIRE(eqnSys.explicitOperation() == -2.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == -2.0);
     }
 
     {
         dsl::EqnSystem eqnSys(
-            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit) + divTerm
-            + Divergence(dsl::EqnTerm::Type::Explicit)
+            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1) + divTerm
+            + Divergence(dsl::EqnTerm::Type::Explicit, exec, 1)
         );
         dsl::EqnSystem eqnSys2(
-            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit) + divTerm
-            + Divergence(dsl::EqnTerm::Type::Explicit)
+            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1) + divTerm
+            + Divergence(dsl::EqnTerm::Type::Explicit, exec, 1)
         );
         REQUIRE(eqnSys.size() == 4);
-        REQUIRE(eqnSys.explicitOperation() == 4.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 4.0);
         dsl::EqnSystem combinedEqnSys = eqnSys + eqnSys2;
         REQUIRE(combinedEqnSys.size() == 8);
-        REQUIRE(combinedEqnSys.explicitOperation() == 8.0);
+        REQUIRE(getField(combinedEqnSys.explicitOperation()) == 8.0);
     }
 
     {
         dsl::EqnSystem eqnSys(
-            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit) - divTerm
-            - Divergence(dsl::EqnTerm::Type::Explicit)
+            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1) - divTerm
+            - Divergence(dsl::EqnTerm::Type::Explicit, exec, 1)
         );
         dsl::EqnSystem eqnSys2(
-            lapTerm - Laplacian(dsl::EqnTerm::Type::Explicit) - divTerm
-            - Divergence(dsl::EqnTerm::Type::Explicit)
+            lapTerm - Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1) - divTerm
+            - Divergence(dsl::EqnTerm::Type::Explicit, exec, 1)
         );
         REQUIRE(eqnSys.size() == 4);
-        REQUIRE(eqnSys.explicitOperation() == 0.0);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 0.0);
         REQUIRE(eqnSys2.size() == 4);
-        REQUIRE(eqnSys2.explicitOperation() == -2.0);
-        REQUIRE(-eqnSys2.explicitOperation() == 2.0);
+        REQUIRE(getField(eqnSys2.explicitOperation()) == -2.0);
 
         SECTION("multiplying eqnSys by 2")
         {
             dsl::EqnSystem multiplyEqnSys = 2.0 * eqnSys2;
             REQUIRE(multiplyEqnSys.size() == 4);
-            REQUIRE(multiplyEqnSys.explicitOperation() == -4.0);
+            REQUIRE(getField(multiplyEqnSys.explicitOperation()) == -4.0);
         }
 
         SECTION("adding eqnSys to eqnSys2")
         {
             dsl::EqnSystem addEqnSys = eqnSys2 + eqnSys;
             REQUIRE(addEqnSys.size() == 8);
-            REQUIRE(addEqnSys.explicitOperation() == -2.0);
+            REQUIRE(getField(addEqnSys.explicitOperation()) == -2.0);
         }
         SECTION("subtracting eqnSys from eqnSys2")
         {
             std::cout << "subtracting eqnSys from eqnSys2" << std::endl;
             dsl::EqnSystem subtractEqnSys = eqnSys - eqnSys2;
             REQUIRE(subtractEqnSys.size() == 8);
-            REQUIRE(subtractEqnSys.explicitOperation() == 2.0);
+            REQUIRE(getField(subtractEqnSys.explicitOperation()) == 2.0);
         }
     }
 }

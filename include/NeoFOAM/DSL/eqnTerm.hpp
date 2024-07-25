@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM::DSL
 {
@@ -46,14 +47,19 @@ public:
 
     std::string display() const { return model_->display(); }
 
-    void explicitOperation(NeoFOAM::scalar& exp)
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
-        model_->explicitOperation(exp, model_->scaleCoeff);
+        model_->explicitOperation(source, model_->scaleCoeff);
     }
 
     EqnTerm::Type getType() const { return model_->getType(); }
 
     void setScale(NeoFOAM::scalar scale) { model_->scaleCoeff *= scale; }
+
+
+    const NeoFOAM::Executor& exec() const { return model_->exec(); }
+
+    std::size_t nCells() const { return model_->nCells(); }
 
 
 private:
@@ -63,11 +69,16 @@ private:
     {
         virtual ~Concept() = default;
         virtual std::string display() const = 0;
-        virtual void explicitOperation(NeoFOAM::scalar& exp, NeoFOAM::scalar scale) = 0;
-        // The Prototype Design Pattern
-        virtual std::unique_ptr<Concept> clone() const = 0;
+        virtual void
+        explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale) = 0;
         NeoFOAM::scalar scaleCoeff = 1.0;
         virtual EqnTerm::Type getType() const = 0;
+
+        virtual const NeoFOAM::Executor& exec() const = 0;
+        virtual std::size_t nCells() const = 0;
+
+        // The Prototype Design Pattern
+        virtual std::unique_ptr<Concept> clone() const = 0;
     };
 
     // Templated derived class to implement the type-specific behavior
@@ -78,17 +89,23 @@ private:
 
         std::string display() const override { return cls_.display(); }
 
-        virtual void explicitOperation(NeoFOAM::scalar& exp, NeoFOAM::scalar scale) override
+        virtual void
+        explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale) override
         {
-            cls_.explicitOperation(exp, scale);
+            cls_.explicitOperation(source, scale);
         }
+
 
         EqnTerm::Type getType() const override { return cls_.getType(); }
 
-        T cls_;
+        const NeoFOAM::Executor& exec() const override { return cls_.exec(); }
+
+        std::size_t nCells() const override { return cls_.nCells(); }
 
         // The Prototype Design Pattern
         std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(*this); }
+
+        T cls_;
     };
 
     std::unique_ptr<Concept> model_;
