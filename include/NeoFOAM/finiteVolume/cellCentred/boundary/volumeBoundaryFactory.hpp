@@ -29,6 +29,8 @@ public:
         : BoundaryPatchMixin(mesh, patchID) {};
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) = 0;
+
+    virtual std::unique_ptr<VolumeBoundaryFactory> clone() const = 0;
 };
 
 
@@ -51,6 +53,11 @@ public:
           boundaryCorrectionStrategy_(VolumeBoundaryFactory<ValueType>::create(
               dict.get<std::string>("type"), mesh, dict, patchID
           ))
+    {}
+
+    VolumeBoundary(const VolumeBoundary& other)
+        : BoundaryPatchMixin(other),
+          boundaryCorrectionStrategy_(other.boundaryCorrectionStrategy_->clone())
     {}
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField)

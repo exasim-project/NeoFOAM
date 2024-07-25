@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/mesh/stencil/stencilDataBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/stencilDataBase.hpp"
 
 std::any& NeoFOAM::StencilDataBase::operator[](const std::string& key)
 {

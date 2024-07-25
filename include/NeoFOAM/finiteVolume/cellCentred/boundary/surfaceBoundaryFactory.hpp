@@ -12,7 +12,6 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
 template<typename ValueType>
 class SurfaceBoundaryFactory :
     public NeoFOAM::RuntimeSelectionFactory<
@@ -30,6 +29,8 @@ public:
         : BoundaryPatchMixin(mesh, patchID) {};
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) = 0;
+
+    virtual std::unique_ptr<SurfaceBoundaryFactory> clone() const = 0;
 };
 
 
@@ -54,6 +55,11 @@ public:
           ))
     {}
 
+    SurfaceBoundary(const SurfaceBoundary& other)
+        : BoundaryPatchMixin(other),
+          boundaryCorrectionStrategy_(other.boundaryCorrectionStrategy_->clone())
+    {}
+
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField)
     {
         boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
@@ -64,6 +70,22 @@ private:
     // NOTE needs full namespace to be not ambiguous
     std::unique_ptr<NeoFOAM::finiteVolume::cellCentred::SurfaceBoundaryFactory<ValueType>>
         boundaryCorrectionStrategy_;
+};
+
+// free functions
+template<typename ValueType>
+std::vector<SurfaceBoundary<ValueType>> createCalculatedBCs(const UnstructuredMesh& mesh)
+{
+    const auto& bMesh = mesh.boundaryMesh();
+    std::vector<SurfaceBoundary<ValueType>> bcs;
+
+    for (int patchID = 0; patchID < mesh.nBoundaries(); patchID++)
+    {
+        Dictionary patchDict({{"type", std::string("calculated")}});
+        bcs.push_back(SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
+    }
+
+    return bcs;
 };
 
 }

@@ -19,9 +19,16 @@ target_sources(
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/communicator.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
-          "mesh/stencil/stencilDataBase.cpp"
-          "mesh/stencil/stencilDataBase.cpp"
-          "finiteVolume/boundary.cpp")
+          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+          "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
+          "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
+          "finiteVolume/cellCentred/boundary/boundary.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+          "finiteVolume/cellCentred/interpolation/linear.cpp"
+          "finiteVolume/cellCentred/interpolation/upwind.cpp"
+          "finiteVolume/cellCentred/timeIntegration/forwardEuler.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
