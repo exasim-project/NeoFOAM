@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"

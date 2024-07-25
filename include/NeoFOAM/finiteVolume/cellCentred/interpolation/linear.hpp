@@ -9,7 +9,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include <functional>
 
