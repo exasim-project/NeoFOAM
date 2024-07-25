@@ -108,6 +108,26 @@ cpmaddpackage(
   3.2.0
   SYSTEM)
 
+set(GINKGO_BUILD_TESTS
+    OFF
+    CACHE INTERNAL "")
+set(GINKGO_BUILD_BENCHMARKS
+    OFF
+    CACHE INTERNAL "")
+set(GINKGO_BUILD_EXAMPLES
+    OFF
+    CACHE INTERNAL "")
+cpmaddpackage(
+  NAME
+  Ginkgo
+  GITHUB_REPOSITORY
+  ginkgo-project/ginkgo
+  GIT_TAG
+  batch-optim
+  VERSION
+  1.9.0
+  SYSTEM)
+
 if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(
     NAME
