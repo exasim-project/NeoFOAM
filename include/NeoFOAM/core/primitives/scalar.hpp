@@ -10,4 +10,7 @@ typedef double scalar;
 #else
 typedef float scalar;
 #endif
+
+constexpr scalar ROOTVSMALL = 1e-18;
+
 } // namespace NeoFOAM

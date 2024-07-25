@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
@@ -15,7 +15,7 @@ namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
-// from
+// from a __device__ function is not allowed
 template<typename ValueType>
 void setGradientValue(
     DomainField<ValueType>& domainField,
@@ -59,7 +59,7 @@ public:
           fixedGradient_(dict.get<ValueType>("fixedGradient"))
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override
+    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final
     {
         detail::setGradientValue(
             domainField, mesh_, this->range(), this->patchID(), fixedGradient_
@@ -72,6 +72,10 @@ public:
 
     static std::string schema() { return "none"; }
 
+    virtual std::unique_ptr<VolumeBoundaryFactory<ValueType>> clone() const final
+    {
+        return std::make_unique<FixedGradient>(*this);
+    }
 
 private:
 

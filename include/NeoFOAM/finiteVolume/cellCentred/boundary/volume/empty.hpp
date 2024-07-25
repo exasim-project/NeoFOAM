@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/core.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
@@ -26,7 +26,7 @@ public:
     {}
 
     virtual void correctBoundaryCondition([[maybe_unused]] DomainField<ValueType>& domainField
-    ) override
+    ) final
     {}
 
     static std::string name() { return "empty"; }
@@ -34,6 +34,11 @@ public:
     static std::string doc() { return "Do nothing on the boundary."; }
 
     static std::string schema() { return "none"; }
+
+    virtual std::unique_ptr<VolumeBoundaryFactory<ValueType>> clone() const final
+    {
+        return std::make_unique<Empty>(*this);
+    }
 };
 
 }
