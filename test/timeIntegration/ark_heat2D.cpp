@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
 {
     // Kokkos variables
     Kokkos::ScopeGuard kokkos(argc, argv);
-    //Kokkos::initialize(argc, argv);
+    // Kokkos::initialize(argc, argv);
     VecType sk_u;
     LSType sk_ls;
 
@@ -638,9 +638,9 @@ int main(int argc, char* argv[])
     // --------------------
 
     ARKodeFree(&arkode_mem); // Free integrator memory
-    //SUNLinSolFree(LS);       // Free linear solver -> its a kokkos thing
-    //N_VDestroy(u);           // Free vectors -> its a kokkos thing
-    FreeUserData(udata);     // Free user data
+    // SUNLinSolFree(LS);       // Free linear solver -> its a kokkos thing
+    // N_VDestroy(u);           // Free vectors -> its a kokkos thing
+    FreeUserData(udata); // Free user data
     delete udata;
     (void)SUNAdaptController_Destroy(C); // Free time adaptivity controller
     SUNContext_Free(&ctx);               // Free context
@@ -901,15 +901,15 @@ static int FreeUserData(UserData* udata)
     // Free preconditioner data
     if (udata->d)
     {
-      N_VDestroy(udata->d); // its a kokkos thing
-      udata->d = NULL;
+        N_VDestroy(udata->d); // its a kokkos thing
+        udata->d = NULL;
     }
 
     // Free error vector
     if (udata->e)
     {
-      N_VDestroy(udata->e); // its a kokkos thing
-      udata->e = NULL;
+        N_VDestroy(udata->e); // its a kokkos thing
+        udata->e = NULL;
     }
 
     // Return success
