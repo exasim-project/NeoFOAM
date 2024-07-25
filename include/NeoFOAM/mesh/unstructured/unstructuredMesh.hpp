@@ -9,7 +9,7 @@
 #include "NeoFOAM/core/primitives/vector.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 #include "NeoFOAM/mesh/unstructured/boundaryMesh.hpp"
-#include "NeoFOAM/mesh/stencil/stencilDataBase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/stencilDataBase.hpp"
 
 namespace NeoFOAM
 {
