@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
