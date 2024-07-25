@@ -61,6 +61,8 @@ public:
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
 
     std::string name() const { return "SerialExecutor"; };
+
+    exec underlyingExec() const { return exec {}; }
 };
 
 } // namespace NeoFOAM
