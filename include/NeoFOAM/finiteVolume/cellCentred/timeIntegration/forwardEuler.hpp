@@ -8,8 +8,6 @@
 #include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
-#include "Kokkos_Core.hpp"
-
 #include <functional>
 
 

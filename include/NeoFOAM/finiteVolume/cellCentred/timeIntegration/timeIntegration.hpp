@@ -11,8 +11,6 @@
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
 
-#include "Kokkos_Core.hpp"
-
 #include <functional>
 
 namespace dsl = NeoFOAM::DSL;
