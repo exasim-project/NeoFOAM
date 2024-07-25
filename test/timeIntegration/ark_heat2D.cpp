@@ -58,6 +58,33 @@
 #include "sunlinsol/sunlinsol_pcg.h"   // access to PCG SUNLinearSolver
 #include "sunlinsol/sunlinsol_spgmr.h" // access to SPGMR SUNLinearSolver
 
+#include <nvector/nvector_kokkos.hpp>
+#include <sundials/sundials_core.hpp>
+#include <sunlinsol/sunlinsol_kokkosdense.hpp>
+#include <sunmatrix/sunmatrix_kokkosdense.hpp>
+
+#include "test_sunlinsol.h"
+
+#if defined(USE_CUDA)
+using ExecSpace = Kokkos::Cuda;
+#elif defined(USE_HIP)
+#if KOKKOS_VERSION / 10000 > 3
+using ExecSpace = Kokkos::HIP;
+#else
+using ExecSpace = Kokkos::Experimental::HIP;
+#endif
+#elif defined(USE_OPENMP)
+using ExecSpace = Kokkos::OpenMP;
+#else
+using ExecSpace = Kokkos::Serial;
+#endif
+
+using VecType = sundials::kokkos::Vector<ExecSpace>;
+using MatType = sundials::kokkos::DenseMatrix<ExecSpace>;
+using LSType = sundials::kokkos::DenseLinearSolver<ExecSpace>;
+using SizeType = VecType::size_type;
+
+
 // Macros for problem constants
 #define PI SUN_RCONST(3.141592653589793238462643383279502884197169)
 #define ZERO SUN_RCONST(0.0)
@@ -216,6 +243,12 @@ static int check_flag(void* flagvalue, const string funcname, int opt);
 
 int main(int argc, char* argv[])
 {
+    // Kokkos variables
+    Kokkos::ScopeGuard kokkos(argc, argv);
+    //Kokkos::initialize(argc, argv);
+    VecType sk_u;
+    LSType sk_ls;
+
     int flag;                    // reusable error-checking flag
     UserData* udata = NULL;      // user data structure
     N_Vector u = NULL;           // vector for storing solution
@@ -290,7 +323,8 @@ int main(int argc, char* argv[])
     // ----------------------
 
     // Create vector for solution
-    u = N_VNew_Serial(udata->nodes, ctx);
+    sk_u = VecType(udata->nodes, ctx);
+    u = sk_u;
     if (check_flag((void*)u, "N_VNew_Serial", 0))
     {
         return 1;
@@ -317,6 +351,8 @@ int main(int argc, char* argv[])
     // Create linear solver
     int prectype = (udata->prec) ? SUN_PREC_RIGHT : SUN_PREC_NONE;
 
+    sk_ls = LSType(ctx);
+    LS = sk_ls;
     if (udata->pcg)
     {
         LS = SUNLinSol_PCG(u, prectype, udata->liniters, ctx);
@@ -602,8 +638,8 @@ int main(int argc, char* argv[])
     // --------------------
 
     ARKodeFree(&arkode_mem); // Free integrator memory
-    SUNLinSolFree(LS);       // Free linear solver
-    N_VDestroy(u);           // Free vectors
+    //SUNLinSolFree(LS);       // Free linear solver -> its a kokkos thing
+    //N_VDestroy(u);           // Free vectors -> its a kokkos thing
     FreeUserData(udata);     // Free user data
     delete udata;
     (void)SUNAdaptController_Destroy(C); // Free time adaptivity controller
@@ -865,15 +901,15 @@ static int FreeUserData(UserData* udata)
     // Free preconditioner data
     if (udata->d)
     {
-        N_VDestroy(udata->d);
-        udata->d = NULL;
+      N_VDestroy(udata->d); // its a kokkos thing
+      udata->d = NULL;
     }
 
     // Free error vector
     if (udata->e)
     {
-        N_VDestroy(udata->e);
-        udata->e = NULL;
+      N_VDestroy(udata->e); // its a kokkos thing
+      udata->e = NULL;
     }
 
     // Return success
