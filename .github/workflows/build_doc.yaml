@@ -26,9 +26,11 @@ jobs:
     - name: Build docs
       run: |
         sphinx-build -b html ./doc ./docs_build/
+        doxygen Doxyfile.in
         cd docs_build
         touch .nojekyll
         ls ..
+        ls .
         cp ../_build/ docs_build
     - name: Deploy PR Build
       uses: JamesIves/github-pages-deploy-action@v4
