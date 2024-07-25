@@ -6,6 +6,8 @@
 #include "core/primitives/vector.hpp"
 #include "core/primitives/tensor.hpp"
 
+#include "core/linearAlgebra/linearAlgebra.hpp"
+
 #include "core/dictionary.hpp"
 #include "core/error.hpp"
 #include "core/info.hpp"
