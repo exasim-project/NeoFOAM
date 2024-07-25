@@ -14,7 +14,7 @@ and `.clang-tidy <https://github.com/exasim-project/NeoFOAM/blob/main/.clang-for
 Furthermore, adequate licensing of the source code is checked via the reuse linter and typos checks for obvious spelling issues.
 Thus, this style guide doesn't list all stylistic rules explicitly but rather gives advise for ambiguous situations and mentions the rational for some decissions.
 
- * We generally try to comply with the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>_`.
+ * We generally try to comply with the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`_.
  * Use `camelCase` for functions and members and capitalized `CamelCase` for classes
  * Use descriptive template parameter names.
    For example prefer `template <class ValueType>` over `template <class T>` if the type can be a float or double.
@@ -38,7 +38,7 @@ Folder structurce and file names:
  * File and folder names should not be redundant. Ie. `finiteVolume/cellCentred/geometryModel/finiteVolumecellCentredgeometryModel.hpp` should be
    `finiteVolume/cellCentred/geometryModel/model.hpp`.
 
-Collabortion via Pull Requests
+Collaboration via Pull Requests
 """"""""""""""""""""""""""""""
 
 If you want to contribute a specific feature or fix, please don't hesitate to open a PR. After creating the PR the following process is applied.
@@ -61,7 +61,7 @@ If you want to contribute a specific feature or fix, please don't hesitate to op
 Building the Documentation
 """"""""""""""""""""""""""
 
-NeoFOAMs documentation can be found `main <https://exasim-project.com/NeoFOAM/>`_  and `doxygen <https://exasim-project.com/NeoFOAM/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally you can do so, by executing the following steps.
+NeoFOAMs documentation can be found `main <https://exasim-project.com/NeoFOAM/>`_  and `doxygen <https://exasim-project.com/NeoFOAM/latest/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally you can do so, by executing the following steps.
 First, make sure that Sphinx and Doxygen are installed on your system. Second, execute the following commands:
 
    .. code-block:: bash

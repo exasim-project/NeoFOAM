@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci') || github.event_name == 'workflow_dispatch'}}
     name: Build FoamAdapter
     strategy:
       fail-fast: false
