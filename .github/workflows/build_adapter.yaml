@@ -71,7 +71,6 @@ jobs:
          sudo ln -s /usr/bin/clang-16 /usr/bin/clang
          sudo ln -s /usr/bin/clang++-16 /usr/bin/clang++
 
-
      - name: Get versions
        run: |
          clang --version
@@ -86,8 +85,8 @@ jobs:
          cmake --preset ninja-cpuonly-all \
            -DNEOFOAM_DEVEL_TOOLS=OFF \
            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
-         cmake --build  --preset ninja-cpuonly-all
+         cmake --build  --preset develop
 
      - name: Execute unit tests NeoFOAM
        run: |
-         ctest --preset ninja-cpuonly-all
+         ctest --preset develop
