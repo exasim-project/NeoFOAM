@@ -68,7 +68,14 @@ cpmaddpackage(
   3.11.3
   SYSTEM)
 
-cpmaddpackage(NAME sundials GITHUB_REPOSITORY LLNL/sundials VERSION 7.0.0)
+cpmaddpackage(
+  NAME
+  sundials
+  GITHUB_REPOSITORY
+  LLNL/sundials
+  VERSION
+  7.1.1
+  SYSTEM)
 
 cpmaddpackage(
   NAME

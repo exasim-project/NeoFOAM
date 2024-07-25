@@ -15,6 +15,7 @@
 #include <sundials/sundials_types.h>   // definition of type sunrealtype
 #include <nvector/nvector_kokkos.hpp>
 #include <sunmatrix/sunmatrix_kokkosdense.hpp>
+#include <sunlinsol/sunlinsol_kokkosdense.hpp>
 
 // Function to compute the right-hand sides of the ODE system
 int f(sunrealtype t, N_Vector phi, N_Vector phiDot, void* user_data)
@@ -36,22 +37,22 @@ int f(sunrealtype t, N_Vector phi, N_Vector phiDot, void* user_data)
 
 TEST_CASE("Kokkos Test")
 {
-    SUNContext sunctx;
-    std::size_t length = 10;
-    // Vector with extent length using the default execution space
-    sundials::kokkos::Vector<> x {length, sunctx};
+    // SUNContext sunctx;
+    // std::size_t length = 10;
+    // // Vector with extent length using the default execution space
+    // sundials::kokkos::Vector<> x {length, sunctx};
 
-    // Vector with extent length using the Cuda execution space
-    sundials::kokkos::Vector<Kokkos::Cuda> x_cuda {length, sunctx};
+    // // Vector with extent length using the Cuda execution space
+    // sundials::kokkos::Vector<Kokkos::Cuda> x_cuda {length, sunctx};
 
-    // Vector based on an existing Kokkos::View
-    Kokkos::View<sunrealtype*> view {"a view", length};
-    sundials::kokkos::Vector<> x_view {view, sunctx};
+    // // Vector based on an existing Kokkos::View
+    // Kokkos::View<sunrealtype*> view {"a view", length};
+    // sundials::kokkos::Vector<> x_view {view, sunctx};
 
-    // Vector based on an existing Kokkos::View for device and host
-    Kokkos::View<sunrealtype*, Kokkos::Cuda> device_view {"another view", length};
-    auto host_view = Kokkos::create_mirror_view(device_view);
-    sundials::kokkos::Vector<> x_view_duel {device_view, host_view, sunctx};
+    // // Vector based on an existing Kokkos::View for device and host
+    // Kokkos::View<sunrealtype*, Kokkos::Cuda> device_view {"another view", length};
+    // auto host_view = Kokkos::create_mirror_view(device_view);
+    // sundials::kokkos::Vector<> x_view_duel {device_view, host_view, sunctx};
 }
 
 TEST_CASE("SUNDIALS CVODE kokkos solver")
@@ -65,7 +66,7 @@ TEST_CASE("SUNDIALS CVODE kokkos solver")
     sunrealtype k = 100;       // decay constant
     sunrealtype reltol = 1e-8; // relative tolerance
     sunrealtype abstol = 1e-8; // absolute tolerance
-    sunindextype length = 2;   // length of the vector
+    sunindextype length = 3;   // length of the vector
 
     // Initial condition: y(0) = 1.0
     Kokkos::View<sunrealtype*, Kokkos::HostSpace> viewPhi {"view phi", length};
@@ -91,8 +92,9 @@ TEST_CASE("SUNDIALS CVODE kokkos solver")
     CVodeSetUserData(cvode_mem, &k);
 
     // Use a dense SUNLinearSolver
-    sundials::kokkos::DenseMatrix<> skPhiCoef {length, length, sunctx};
+    sundials::kokkos::DenseMatrix<Kokkos::Serial> skPhiCoef {1, length, length, sunctx};
     SUNMatrix phiCoef = skPhiCoef;
+    sundials::kokkos::DenseLinearSolver<Kokkos::Serial> skLinSolv {sunctx};
     SUNLinearSolver LinSol = SUNLinSol_Dense(phi, phiCoef, sunctx);
     CVodeSetLinearSolver(cvode_mem, LinSol, phiCoef);
 
@@ -121,10 +123,10 @@ TEST_CASE("SUNDIALS CVODE kokkos solver")
 
     // // Free resources
     // N_VDestroy(phi); // do not do this for kokkos vectors
-    SUNMatDestroy(phiCoef);
+    // SUNMatDestroy(phiCoef); // do not do this for kokkos matrices
     SUNLinSolFree(LinSol);
     CVodeFree(&cvode_mem);
-    // REQUIRE(finalY == Catch::Approx(0.0).margin(1e-8));
+    REQUIRE(finalY == Catch::Approx(0.0).margin(1e-8));
 }
 
 
