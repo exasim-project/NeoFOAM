@@ -17,6 +17,12 @@
 #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 #include <sunlinsol/sunlinsol_kokkosdense.hpp>
 
+
+using VecType = sundials::kokkos::Vector<Kokkos::Serial>;
+using MatType = sundials::kokkos::DenseMatrix<Kokkos::Serial>;
+using LSType = sundials::kokkos::DenseLinearSolver<Kokkos::Serial>;
+using SizeType = VecType::size_type;
+
 // Function to compute the right-hand sides of the ODE system
 int f(sunrealtype t, N_Vector phi, N_Vector phiDot, void* user_data)
 {
@@ -66,7 +72,7 @@ TEST_CASE("SUNDIALS CVODE kokkos solver")
     sunrealtype k = 100;       // decay constant
     sunrealtype reltol = 1e-8; // relative tolerance
     sunrealtype abstol = 1e-8; // absolute tolerance
-    sunindextype length = 3;   // length of the vector
+    SizeType length = 2;       // length of the vector
 
     // Initial condition: y(0) = 1.0
     Kokkos::View<sunrealtype*, Kokkos::HostSpace> viewPhi {"view phi", length};
@@ -92,9 +98,13 @@ TEST_CASE("SUNDIALS CVODE kokkos solver")
     CVodeSetUserData(cvode_mem, &k);
 
     // Use a dense SUNLinearSolver
-    sundials::kokkos::DenseMatrix<Kokkos::Serial> skPhiCoef {1, length, length, sunctx};
+    MatType skPhiCoef {1, length, length, sunctx};
     SUNMatrix phiCoef = skPhiCoef;
-    sundials::kokkos::DenseLinearSolver<Kokkos::Serial> skLinSolv {sunctx};
+    LSType skLinSolv {sunctx};
+    SUNLinSolInitialize(skLinSolv);
+    // sundials::sync_device();
+    SUNLinSolSetup(skLinSolv, skPhiCoef);
+    // sundials::sync_device();
     SUNLinearSolver LinSol = SUNLinSol_Dense(phi, phiCoef, sunctx);
     CVodeSetLinearSolver(cvode_mem, LinSol, phiCoef);
 
@@ -124,7 +134,7 @@ TEST_CASE("SUNDIALS CVODE kokkos solver")
     // // Free resources
     // N_VDestroy(phi); // do not do this for kokkos vectors
     // SUNMatDestroy(phiCoef); // do not do this for kokkos matrices
-    SUNLinSolFree(LinSol);
+    // SUNLinSolFree(LinSol);
     CVodeFree(&cvode_mem);
     REQUIRE(finalY == Catch::Approx(0.0).margin(1e-8));
 }
