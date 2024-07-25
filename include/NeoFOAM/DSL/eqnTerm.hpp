@@ -113,7 +113,7 @@ private:
 
 
 // add multiply operator to EqnTerm
-EqnTerm operator*(NeoFOAM::scalar scale, const EqnTerm& lhs)
+inline EqnTerm operator*(NeoFOAM::scalar scale, const EqnTerm& lhs)
 {
     EqnTerm result = lhs;
     result.setScale(scale);

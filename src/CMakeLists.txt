@@ -28,7 +28,8 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
-          "finiteVolume/cellCentred/timeIntegration/forwardEuler.cpp")
+          "finiteVolume/cellCentred/timeIntegration/forwardEuler.cpp"
+          "finiteVolume/cellCentred/timeIntegration/sundialsIntergrator.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
