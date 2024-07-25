@@ -17,6 +17,13 @@ class EqnTerm
 {
 public:
 
+    enum class Type
+    {
+        Temporal,
+        Implicit,
+        Explicit
+    };
+
     template<typename T>
     EqnTerm(T cls) : model_(std::make_unique<Model<T>>(std::move(cls)))
     {}
@@ -44,6 +51,8 @@ public:
         model_->explicitOperation(exp, model_->scaleCoeff);
     }
 
+    EqnTerm::Type getType() const { return model_->getType(); }
+
     void setScale(NeoFOAM::scalar scale) { model_->scaleCoeff *= scale; }
 
 
@@ -58,6 +67,7 @@ private:
         // The Prototype Design Pattern
         virtual std::unique_ptr<Concept> clone() const = 0;
         NeoFOAM::scalar scaleCoeff = 1.0;
+        virtual EqnTerm::Type getType() const = 0;
     };
 
     // Templated derived class to implement the type-specific behavior
@@ -73,6 +83,8 @@ private:
             cls_.explicitOperation(exp, scale);
         }
 
+        EqnTerm::Type getType() const override { return cls_.getType(); }
+
         T cls_;
 
         // The Prototype Design Pattern
@@ -81,5 +93,21 @@ private:
 
     std::unique_ptr<Concept> model_;
 };
+
+
+// add multiply operator to EqnTerm
+EqnTerm operator*(NeoFOAM::scalar scale, const EqnTerm& lhs)
+{
+    EqnTerm result = lhs;
+    result.setScale(scale);
+    return result;
+}
+
+// EqnTerm operator*(const EqnTerm& lhs,NeoFOAM::scalar scale)
+// {
+//     EqnTerm result = lhs;
+//     result.setScale(scale);
+//     return result;
+// }
 
 } // namespace NeoFOAM::DSL
