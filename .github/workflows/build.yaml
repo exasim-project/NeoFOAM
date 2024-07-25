@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
     name: Build NeoFOAM
     strategy:
       fail-fast: false
