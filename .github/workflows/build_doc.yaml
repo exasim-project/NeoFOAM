@@ -26,8 +26,7 @@ jobs:
     - name: Build docs
       run: |
         sphinx-build -b html ./doc ./docs_build/
-        find . -name _build
-        cp doc/_build/ docs_build/doxygen
+        cp -r doc/_build/ docs_build/doxygen
         cd docs_build
         touch .nojekyll
     - name: Deploy PR Build
