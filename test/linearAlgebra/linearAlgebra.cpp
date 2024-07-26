@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2/catch_session.hpp"
+#include "catch2/catch_test_macros.hpp"
+#include "catch2/generators/catch_generators_all.hpp"
 
-#include "NeoFOAM/linearAlgebra/linearAlgebra.hpp"
+#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #include "NeoFOAM/linearAlgebra/petsc.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 

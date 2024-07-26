@@ -7,32 +7,11 @@
 #include <ginkgo/extensions/kokkos.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/linearAlgebra/utilities.hpp"
 
 
 namespace NeoFOAM
 {
-
-struct Dim
-{
-    size_t numRows;
-    size_t numCols;
-};
-
-
-template<typename IndexType>
-struct MatrixCoordinate
-{
-    IndexType row;
-    IndexType col;
-};
-
-template<typename ValueType, typename IndexType>
-struct MatrixEntry
-{
-    IndexType row;
-    IndexType col;
-    ValueType value;
-};
 
 std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
 {
