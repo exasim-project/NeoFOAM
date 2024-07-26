@@ -44,7 +44,11 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
         }
     );
 
-    parallelFor(exec, {0, mesh_.nInternalFaces()}, [w](const int facei) { w[facei] = 1.0; });
+    parallelFor(
+        exec,
+        {mesh_.nInternalFaces(), mesh_.nFaces()},
+        KOKKOS_LAMBDA(const int facei) { w[facei] = 1.0; }
+    );
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs)
