@@ -32,7 +32,7 @@ void computeGrad(
 
     const auto surfV = mesh.cellVolumes().span();
 
-    if (std::holds_alternative<CPUExecutor>(exec))
+    if (std::holds_alternative<SerialExecutor>(exec))
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
