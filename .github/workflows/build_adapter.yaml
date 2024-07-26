@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   build:
-    if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci') || github.event_name == 'workflow_dispatch'}}
+    if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
     name: Build FoamAdapter
     strategy:
       fail-fast: false
