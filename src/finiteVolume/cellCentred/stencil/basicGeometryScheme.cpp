@@ -9,7 +9,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 BasicGeometryScheme::BasicGeometryScheme(const UnstructuredMesh& mesh)
     : GeometrySchemeFactory(mesh), mesh_(mesh)
 {
-    NF_ERROR_EXIT("Not implemented");
+
 }
 
 void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scalar>& weights)
