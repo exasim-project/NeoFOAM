@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "NeoFOAM/linearAlgebra/linearAlgebra.hpp"
+#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 
 namespace NeoFOAM
 {

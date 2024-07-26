@@ -5,5 +5,5 @@
 
 #include "finiteVolume/cellCentred.hpp"
 
-#include "linearAlgebra/linearAlgebra.hpp"
+#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #include "linearAlgebra/petsc.hpp"
