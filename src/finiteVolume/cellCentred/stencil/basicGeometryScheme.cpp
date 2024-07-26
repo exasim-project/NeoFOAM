@@ -45,9 +45,7 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
     );
 
     parallelFor(
-        exec,
-        {mesh_.nInternalFaces(), mesh_.nFaces()},
-        KOKKOS_LAMBDA(const int facei) { w[facei] = 1.0; }
+        exec, {mesh_.nInternalFaces(), w.size()}, KOKKOS_LAMBDA(const int facei) { w[facei] = 1.0; }
     );
 }
 
