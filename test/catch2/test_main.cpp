@@ -7,6 +7,8 @@
 #include "catch2/reporters/catch_reporter_registrars.hpp"
 #include <Kokkos_Core.hpp>
 
+#include <petsc.h>
+
 #include "NeoFOAM/core/mpi/environment.hpp"
 
 #include "mpiReporter.hpp"
@@ -28,6 +30,9 @@ int main(int argc, char* argv[])
 
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
+
+    // Initialize Petsc
+    PetscCall(PetscInitialize(&argc, &argv, nullptr, nullptr));
 
     // ensure any kokkos initialization output will appear first
     std::cout << std::flush;

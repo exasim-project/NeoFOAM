@@ -6,3 +6,4 @@
 #include "finiteVolume/cellCentred.hpp"
 
 #include "linearAlgebra/linearAlgebra.hpp"
+#include "linearAlgebra/petsc.hpp"

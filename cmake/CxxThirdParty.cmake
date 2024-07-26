@@ -62,25 +62,32 @@ cpmaddpackage(
   3.2.0
   SYSTEM)
 
-set(GINKGO_BUILD_TESTS
-    OFF
-    CACHE INTERNAL "")
-set(GINKGO_BUILD_BENCHMARKS
-    OFF
-    CACHE INTERNAL "")
-set(GINKGO_BUILD_EXAMPLES
-    OFF
-    CACHE INTERNAL "")
-cpmaddpackage(
-  NAME
-  Ginkgo
-  GITHUB_REPOSITORY
-  ginkgo-project/ginkgo
-  GIT_TAG
-  batch-optim
-  VERSION
-  1.9.0
-  SYSTEM)
+if(NEOFOAM_ENABLE_GINKGO)
+  set(GINKGO_BUILD_TESTS
+      OFF
+      CACHE INTERNAL "")
+  set(GINKGO_BUILD_BENCHMARKS
+      OFF
+      CACHE INTERNAL "")
+  set(GINKGO_BUILD_EXAMPLES
+      OFF
+      CACHE INTERNAL "")
+  cpmaddpackage(
+    NAME
+    Ginkgo
+    GITHUB_REPOSITORY
+    ginkgo-project/ginkgo
+    GIT_TAG
+    batch-optim
+    VERSION
+    1.9.0
+    SYSTEM)
+endif()
+
+if(NEOFOAM_ENABLE_PETSC)
+  find_package(PkgConfig REQUIRED)
+  pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
+endif()
 
 if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(

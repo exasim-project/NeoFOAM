@@ -6,6 +6,7 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/linearAlgebra/linearAlgebra.hpp"
+#include "NeoFOAM/linearAlgebra/petsc.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 TEST_CASE("MatrixAssembly")
@@ -18,6 +19,15 @@ TEST_CASE("MatrixAssembly")
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
     gko::matrix_data<double, int> expected {{2, -1, 0}, {-1, 2, -1}, {0, -1, 2}};
+
+    //    auto mat = NeoFOAM::Matrix(...);
+    //    auto assembly = mat.startAssembly(nnzEst);
+    //    // parallelFor
+    //    mat.finishAssembly(std::move(assembly));
+    //
+    //    auto assembly = NeoFOAM::Matrix::Assembly(...);
+    //    // parallelFor
+    //    auto mat = NeoFOAM::Matrix(std::move(assembly));
 
 
     SECTION("assemble_" + execName)
@@ -103,6 +113,82 @@ TEST_CASE("MatrixAssembly")
         NeoFOAM::Field<double> expected(NeoFOAM::SerialExecutor {}, {1, 0, 1});
 
         matrix.apply(in, out);
+
+        auto hostOut = out.copyToHost();
+        REQUIRE(hostOut.size() == expected.size());
+        for (size_t i = 0; i < expected.size(); ++i)
+        {
+            CHECK(hostOut[i] == expected[i]);
+        }
+    }
+}
+
+TEST_CASE("Petsc")
+{
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    SECTION("assemble_" + execName)
+    {
+        NeoFOAM::PetscMatrix mat(exec, {3, 3}, 3 * 3);
+        auto symAssembly = mat.startSymbolicAssembly();
+
+        // this has to be on a Host executor
+        NeoFOAM::parallelFor(
+            NeoFOAM::CPUExecutor {},
+            {0, 3},
+            KOKKOS_LAMBDA(const int i) {
+                if (i > 0)
+                {
+                    symAssembly.insert(i * 3, {i, i - 1});
+                }
+                symAssembly.insert(i * 3 + 1, {i, i});
+                if (i < 3 - 1)
+                {
+                    symAssembly.insert(i * 3 + 2, {i, i + 1});
+                }
+            }
+        );
+        auto numAssembly = mat.startNumericAssembly(std::move(symAssembly));
+        NeoFOAM::parallelFor(
+            exec,
+            {0, 3},
+            KOKKOS_LAMBDA(const int i) {
+                if (i > 0)
+                {
+                    numAssembly.insert(i * 3, -1.0);
+                }
+                numAssembly.insert(i * 3 + 1, 2.0);
+                if (i < 3 - 1)
+                {
+                    numAssembly.insert(i * 3 + 2, -1.0);
+                }
+            }
+        );
+        mat.finishNumericAssembly(std::move(numAssembly));
+
+        MatView(mat.getUnderlying(), PETSC_VIEWER_STDOUT_WORLD);
+    }
+
+    SECTION("apply_" + execName)
+    {
+        NeoFOAM::PetscMatrix mat(
+            exec,
+            {3, 3},
+            {exec, {0, 0, 1, 1, 1, 2, 2}},
+            {exec, {0, 1, 0, 1, 2, 1, 2}},
+            {exec, {2, -1, -1, 2, -1, -1, 2}}
+        );
+
+        NeoFOAM::Field<double> in(exec, {1, 1, 1});
+        NeoFOAM::Field<double> out(exec, {0, 0, 0});
+        NeoFOAM::Field<double> expected(NeoFOAM::SerialExecutor {}, {1, 0, 1});
+
+        mat.apply(in, out);
 
         auto hostOut = out.copyToHost();
         REQUIRE(hostOut.size() == expected.size());

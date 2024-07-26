@@ -13,7 +13,13 @@ set_property(
   APPEND
   PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}")
 
-target_link_libraries(NeoFOAM_public_api INTERFACE Ginkgo::ginkgo)
+if(NEOFOAM_ENABLE_GINKGO)
+  target_link_libraries(NeoFOAM_public_api INTERFACE Ginkgo::ginkgo)
+endif()
+
+if(NEOFOAM_ENABLE_PETSC)
+  target_link_libraries(NeoFOAM_public_api INTERFACE PkgConfig::PETSc)
+endif()
 
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)
   target_compile_definitions(NeoFOAM_public_api INTERFACE NF_DEBUG)
