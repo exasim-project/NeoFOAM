@@ -23,7 +23,7 @@ public:
     ~EqnSystem() = default;
 
     EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
-        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_()
+        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(), volumeField_(nullptr)
     {}
 
     NeoFOAM::Field<NeoFOAM::scalar> explicitOperation()
@@ -97,9 +97,32 @@ public:
 
     const std::vector<EqnTerm>& explicitTerms() const { return explicitTerms_; }
 
+    std::vector<EqnTerm>& temporalTerms() { return temporalTerms_; }
+
+    std::vector<EqnTerm>& implicitTerms() { return implicitTerms_; }
+
+    std::vector<EqnTerm>& explicitTerms() { return explicitTerms_; }
+
     const NeoFOAM::Executor& exec() const { return exec_; }
 
     std::size_t nCells() const { return nCells_; }
+
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() 
+    {
+        if (temporalTerms_.size() == 0 && implicitTerms_.size() == 0)
+        {
+            NF_ERROR_EXIT("No temporal or implicit terms to solve.");
+        }
+        if (temporalTerms_.size() > 0)
+        {
+            volumeField_ = temporalTerms_[0].volumeField();
+        }
+        else
+        {
+            volumeField_ = implicitTerms_[0].volumeField();
+        }
+        return volumeField_; 
+    }
 
 private:
 
@@ -108,6 +131,7 @@ private:
     std::vector<EqnTerm> temporalTerms_;
     std::vector<EqnTerm> implicitTerms_;
     std::vector<EqnTerm> explicitTerms_;
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField_;
 };
 
 inline EqnSystem operator+(const EqnSystem& lhs, const EqnSystem& rhs)

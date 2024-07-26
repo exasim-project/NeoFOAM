@@ -9,10 +9,30 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 namespace NeoFOAM::DSL
 {
 
+template<typename T>
+concept HasTemporalTerm = requires(T t) {
+    {
+        t.temporalOperation(
+            std::declval<NeoFOAM::Field<NeoFOAM::scalar>&>(), std::declval<NeoFOAM::scalar>()
+        )
+    } -> std::same_as<void>; // Adjust return type and arguments as needed
+};
+
+template<typename T>
+concept HasExplicitTerm = requires(T t) {
+    {
+        t.explicitOperation(
+            std::declval<NeoFOAM::Field<NeoFOAM::scalar>&>(), std::declval<NeoFOAM::scalar>()
+        )
+    } -> std::same_as<void>; // Adjust return type and arguments as needed
+};
 // EqnTerm class that uses type erasure without inheritance
 class EqnTerm
 {
@@ -52,6 +72,11 @@ public:
         model_->explicitOperation(source, model_->scaleCoeff);
     }
 
+    void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field)
+    {
+        model_->temporalOperation(field, model_->scaleCoeff);
+    }
+
     EqnTerm::Type getType() const { return model_->getType(); }
 
     void setScale(NeoFOAM::scalar scale) { model_->scaleCoeff *= scale; }
@@ -60,6 +85,9 @@ public:
     const NeoFOAM::Executor& exec() const { return model_->exec(); }
 
     std::size_t nCells() const { return model_->nCells(); }
+
+
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() { return model_->volumeField(); }
 
 
 private:
@@ -71,11 +99,14 @@ private:
         virtual std::string display() const = 0;
         virtual void
         explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale) = 0;
+        virtual void
+        temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field, NeoFOAM::scalar scale) = 0;
         NeoFOAM::scalar scaleCoeff = 1.0;
         virtual EqnTerm::Type getType() const = 0;
 
         virtual const NeoFOAM::Executor& exec() const = 0;
         virtual std::size_t nCells() const = 0;
+        virtual fvcc::VolumeField<NeoFOAM::scalar>* volumeField() = 0;
 
         // The Prototype Design Pattern
         virtual std::unique_ptr<Concept> clone() const = 0;
@@ -92,9 +123,25 @@ private:
         virtual void
         explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale) override
         {
-            cls_.explicitOperation(source, scale);
+            if constexpr (HasExplicitTerm<T>)
+            {
+                cls_.explicitOperation(source, scale);
+            }
         }
 
+        virtual void
+        temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field, NeoFOAM::scalar scale) override
+        {
+            if constexpr (HasTemporalTerm<T>)
+            {
+                cls_.temporalOperation(field, scale);
+            }
+        }
+
+        virtual fvcc::VolumeField<NeoFOAM::scalar>* volumeField() override
+        {
+            return cls_.volumeField();
+        }
 
         EqnTerm::Type getType() const override { return cls_.getType(); }
 
@@ -119,12 +166,5 @@ inline EqnTerm operator*(NeoFOAM::scalar scale, const EqnTerm& lhs)
     result.setScale(scale);
     return result;
 }
-
-// EqnTerm operator*(const EqnTerm& lhs,NeoFOAM::scalar scale)
-// {
-//     EqnTerm result = lhs;
-//     result.setScale(scale);
-//     return result;
-// }
 
 } // namespace NeoFOAM::DSL

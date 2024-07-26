@@ -37,6 +37,7 @@ public:
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
@@ -66,6 +67,7 @@ public:
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
