@@ -15,7 +15,7 @@
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
 
-
+using namespace NeoFOAM;
 namespace dsl = NeoFOAM::DSL;
 
 class Divergence
@@ -83,7 +83,9 @@ TEST_CASE("TimeIntegration")
     namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
     NeoFOAM::Dictionary dict;
-    dict.insert("type", std::string("forwardEuler"));
+    dict.insert("Relative Tolerance", scalar(1.e-5));
+    dict.insert("Absolute Tolerance", scalar(1.e-10));
+    dict.insert("Fixed Step Size", scalar(1.0e-3));
 
     dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit, exec, 1);
 

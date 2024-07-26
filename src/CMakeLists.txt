@@ -38,4 +38,4 @@ enable_sanitizers(
 
 target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
 target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
-                                     cpptrace::cpptrace)
+                                     Kokkos::kokkoskernels sundials_arkode cpptrace::cpptrace)

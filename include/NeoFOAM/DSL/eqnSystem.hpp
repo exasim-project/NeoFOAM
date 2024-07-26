@@ -19,6 +19,9 @@ class EqnSystem
 {
 public:
 
+    EqnSystem() = default;
+    ~EqnSystem() = default;
+
     EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
         : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_()
     {}
@@ -96,7 +99,7 @@ public:
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
-    const std::size_t nCells() const { return nCells_; }
+    std::size_t nCells() const { return nCells_; }
 
 private:
 
