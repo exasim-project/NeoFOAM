@@ -121,6 +121,7 @@ public:
         return volumeField_; 
     }
 
+    NeoFOAM::scalar dt = 0;
 private:
 
     const NeoFOAM::Executor exec_;

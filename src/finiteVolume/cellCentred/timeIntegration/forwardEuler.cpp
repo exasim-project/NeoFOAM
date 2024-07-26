@@ -20,7 +20,7 @@ ForwardEuler::ForwardEuler(const dsl::EqnSystem& eqnSystem, const Dictionary& di
 void ForwardEuler::solve()
 {
     std::cout << "Solving using Forward Euler" << std::endl;
-    scalar dt = 0.001; // Time step
+    scalar dt = eqnSystem_.dt;
     fvcc::VolumeField<scalar>* refField = eqnSystem_.volumeField();
     // Field<scalar> Phi(eqnSystem_.exec(), eqnSystem_.nCells());
     // NeoFOAM::fill(Phi, 0.0);
