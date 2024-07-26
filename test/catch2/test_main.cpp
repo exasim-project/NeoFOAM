@@ -7,14 +7,19 @@
 #include "catch2/catch_test_macros.hpp"
 #include "catch2/generators/catch_generators_adapters.hpp"
 #include "catch2/reporters/catch_reporter_registrars.hpp"
+
 #include <Kokkos_Core.hpp>
 
+#include <petsc.h>
 
 int main(int argc, char* argv[])
 {
 
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
+
+    // Initialize Petsc
+    PetscCall(PetscInitialize(&argc, &argv, nullptr, nullptr));
 
     // ensure any kokkos initialization output will appear first
     std::cout << std::flush;
