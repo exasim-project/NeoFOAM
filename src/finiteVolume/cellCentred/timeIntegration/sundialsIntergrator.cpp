@@ -50,7 +50,8 @@ void SundialsIntergrator::initNDData()
     data_->absTol_ = dict.get<scalar>("Absolute Tolerance");
     data_->fixedStepSize_ = dict.get<scalar>("Fixed Step Size"); // zero for adaptive
     data_->order = 1;                                            // Temporal order of the method
-    data_->controller = 0; // currently the timestep size is fixed .
+    data_->controller =
+        ARKAdaptControllerType::PID; // dummy value, currently the timestep size is fixed .
     data_->maxsteps = 1;
     data_->linear = false;
     data_->diagnostics = true;
@@ -92,6 +93,14 @@ void SundialsIntergrator::initSUNLinearSolver()
     linearSolver_ = SUNLinSol_PCG(solution_, preconType, udata->liniters, context_);
     if (data->precondition) data->diagonal = std::make_unique<N_VClone>(N_VClone(solution_));
 };
+
+
+void SundialsIntergrator::initSUNAdaptController()
+{
+    controller_ = sundials::createController(sundials::ARKAdaptControllerType::PID, context_);
+    int flag = ARKodeSetAdaptController(arkode_mem, C);
+    NF_ASSERT(flag == 0, "ARKodeSetAdaptController failed");
+}
 
 
 } // namespace NeoFOAM

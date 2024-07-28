@@ -17,6 +17,8 @@
 #include <sunlinsol/sunlinsol_kokkosdense.hpp>
 #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 
+#include "sundails.hpp"
+
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
@@ -46,14 +48,15 @@ struct NFData
     sunrealtype tf;
 
     // Integrator settings
-    sunrealtype realTol_;       // relative tolerance
-    sunrealtype absTol_;        // absolute tolerance
-    sunrealtype fixedStepSize_; // fixed step size
-    int order;                  // ARKode method order
-    int controller;             // step size adaptivity method
-    int maxsteps;               // max number of steps between outputs
-    bool linear;                // enable/disable linearly implicit option
-    bool diagnostics;           // output diagnostics
+    sunrealtype realTol_;                        // relative tolerance
+    sunrealtype absTol_;                         // absolute tolerance
+    sunrealtype fixedStepSize_;                  // fixed step size
+    int order;                                   // ARKode method order
+    sundials::ARKAdaptControllerType controller; // step size adaptivity method (0 == fixedStepSize_
+                                                 // -> fixed step size controller number ignored)
+    int maxsteps;                                // max number of steps between outputs
+    bool linear;                                 // enable/disable linearly implicit option
+    bool diagnostics;                            // output diagnostics
 
     // Linear solver and preconditioner settings
     bool pcg;           // use PCG (true) or GMRES (false)
@@ -122,12 +125,16 @@ private:
 
     SUNContext context_;
     SUNLinearSolver linearSolver_;
-    // std::unique_ptr<void> arkodeMemory_;
+    SUNAdaptController controller_;
+    std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
+                                         // store the next best thing.
     std::unique_ptr<NFData> data_;
+
 
     void initNDData();
     void initSUNContext();
     void initSUNLinearSolver();
+    void initSUNAdaptController(); // I don't think we need a time controller.
 };
 
 } // namespace NeoFOAM
