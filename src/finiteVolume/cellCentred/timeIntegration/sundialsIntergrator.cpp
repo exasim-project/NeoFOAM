@@ -17,6 +17,32 @@ SundialsIntergrator::SundialsIntergrator(const dsl::EqnSystem& eqnSystem, const 
 
     // NF_ASSERT(system_.exec() == Executor(CPUExecutor), "SundialsIntergrator currently only
     // supports CPU execution");
+    initNDData();
+    initSUNContext();
+    initSUNLinearSolver();
+}
+
+SundialsIntergrator::SundialsIntergrator(const SundialsIntergrator& other)
+    : Base(other), // Call the base class copy constructor
+      data_(
+          other.data_ ? std::make_unique<NFData>(*other.data_) : nullptr
+      ) // Deep copy of unique_ptr
+{
+
+    solution_ = other.solution;
+    context_ = other.context_;
+    linearSolver_ = other.linearSolver_;
+}
+
+void SundialsIntergrator::solve() {}
+
+std::unique_ptr<TimeIntegrationFactory> SundialsIntergrator::clone() const
+{
+    return std::make_unique<SundialsIntergrator>(*this);
+}
+
+void SundialsIntergrator::initNDData()
+{
     data_ = std::make_unique<NFData>();
 
     data_->forcing = true; // forces error output
@@ -29,15 +55,13 @@ SundialsIntergrator::SundialsIntergrator(const dsl::EqnSystem& eqnSystem, const 
     data_->linear = false;
     data_->diagnostics = true;
 
-    data_->pcg = true;     // use PCG (true) or GMRES (false)
-    data_->prec = true;    // enable preconditioning
-    data_->lsinfo = false; // output residual history
-    data_->liniters = 40;  // max linear iterations
-    data_->msbp = 0;       // use default (20 steps)
-    data_->epslin = 0.0;   // use default (0.05)
+    data_->pcg = true;          // use PCG (true) or GMRES (false)
+    data_->precondition = true; // enable preconditioning
+    data_->lsinfo = false;      // output residual history
+    data_->liniters = 40;       // max linear iterations
+    data_->msbp = 20;           // use default (20 steps)
+    data_->epslin = 0.05;       // use default (0.05)
 
-    // Inverse of Jacobian diagonal for preconditioner
-    data_->d = nullptr;
 
     // Output variables
     data_->output = 1; // 0 = no output, 1 = stats output, 2 = output to disk
@@ -50,25 +74,24 @@ SundialsIntergrator::SundialsIntergrator(const dsl::EqnSystem& eqnSystem, const 
     data_->rhstime = 0.0;
     data_->psetuptime = 0.0;
     data_->psolvetime = 0.0;
-}
+};
 
-SundialsIntergrator::SundialsIntergrator(const SundialsIntergrator& other)
-    : Base(other), // Call the base class copy constructor
-      data_(
-          other.data_ ? std::make_unique<NFData>(*other.data_) : nullptr
-      ) // Deep copy of unique_ptr
+
+void SundialsIntergrator::initSUNContext()
 {
-
-    solution = other.solution;
-    context_ = other.context_;
-    linearSolver_ = other.linearSolver_;
+    int flag = SUNContext_Create(SUN_COMM_NULL, &context_);
+    NF_ASSERT(flag == 0, "SUNContext_Create failed");
 }
 
-void SundialsIntergrator::solve() {}
-
-std::unique_ptr<TimeIntegrationFactory> SundialsIntergrator::clone() const
+void SundialsIntergrator::initSUNLinearSolver()
 {
-    return std::make_unique<SundialsIntergrator>(*this);
-}
+    // kokkosLS = LSType(context_);
+    // linearSolver_ = kokkosLS;
+    int preconType = data->precondition ? SUN_PREC_RIGHT
+                                        : SUN_PREC_NONE; // will need to investigate further typing.
+    linearSolver_ = SUNLinSol_PCG(solution_, preconType, udata->liniters, context_);
+    if (data->precondition) data->diagonal = std::make_unique<N_VClone>(N_VClone(solution_));
+};
+
 
 } // namespace NeoFOAM

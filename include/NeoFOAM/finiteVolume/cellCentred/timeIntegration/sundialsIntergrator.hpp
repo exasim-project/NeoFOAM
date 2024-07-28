@@ -57,14 +57,14 @@ struct NFData
 
     // Linear solver and preconditioner settings
     bool pcg;           // use PCG (true) or GMRES (false)
-    bool prec;          // preconditioner on/off
+    bool precondition;  // use a preconditioner (true - we will use one)
     bool lsinfo;        // output residual history
     int liniters;       // number of linear iterations
     int msbp;           // max number of steps between preconditioner setups
     sunrealtype epslin; // linear solver tolerance factor
 
     // Inverse of Jacobian diagonal for preconditioner
-    N_Vector d;
+    std::unique_ptr<N_Vector> diagonal;
 
     // Output variables
     int output; // output level
@@ -118,12 +118,16 @@ public:
 
 private:
 
-    N_Vector solution;
+    N_Vector solution_;
 
     SUNContext context_;
     SUNLinearSolver linearSolver_;
     // std::unique_ptr<void> arkodeMemory_;
     std::unique_ptr<NFData> data_;
+
+    void initNDData();
+    void initSUNContext();
+    void initSUNLinearSolver();
 };
 
 } // namespace NeoFOAM
