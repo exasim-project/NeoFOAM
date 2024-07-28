@@ -74,7 +74,7 @@ struct NFData
     int nout;   // number of output times
     // ofstream uout; // output file stream
     // ofstream eout; // error file stream
-    N_Vector e; // error vector
+    // N_Vector e; // error vector
 
     // Timing variables
     bool timing; // print timings
@@ -132,9 +132,12 @@ private:
 
 
     void initNDData();
+    void initSUNARKODESolver();
     void initSUNContext();
     void initSUNLinearSolver();
     void initSUNAdaptController(); // I don't think we need a time controller.
+
+    void solveExplicit();
 };
 
 } // namespace NeoFOAM

@@ -19,6 +19,7 @@ SundialsIntergrator::SundialsIntergrator(const dsl::EqnSystem& eqnSystem, const 
     // supports CPU execution");
     initNDData();
     initSUNContext();
+    initSUNARKODESolver();
     initSUNLinearSolver();
 }
 
@@ -34,7 +35,12 @@ SundialsIntergrator::SundialsIntergrator(const SundialsIntergrator& other)
     linearSolver_ = other.linearSolver_;
 }
 
-void SundialsIntergrator::solve() {}
+void SundialsIntergrator::solve()
+{
+    ARKStepEvolve(
+        reinterpret_cast<void*>(arkodeMemory_.get()), 0.0, solution_, nullptr, ARK_ONE_STEP
+    );
+}
 
 std::unique_ptr<TimeIntegrationFactory> SundialsIntergrator::clone() const
 {
@@ -84,6 +90,24 @@ void SundialsIntergrator::initSUNContext()
     NF_ASSERT(flag == 0, "SUNContext_Create failed");
 }
 
+void SundialsIntergrator::initSUNARKODESolver()
+{
+    void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+    ark = ARKStepCreate(this->solveExplicit(), nullptr, 0.0, solution_, context_);
+
+    // attach controller
+    int flag = ARKodeSetAdaptController(ark, controller_);
+    NF_ASSERT(flag == 0, "Attaching ARKodeSetAdaptController failed");
+
+    // attach linear solver
+    flag = ARKodeSetLinearSolver(
+        ark, linearSolver_, nullptr
+    ); // We will need to add a matrix here for the linear solver.
+    NS_ASSERT(flag == 0, "Attaching ARKodeSetLinearSolver failed");
+
+    // TODO: must still set tolerances.
+}
+
 void SundialsIntergrator::initSUNLinearSolver()
 {
     // kokkosLS = LSType(context_);
@@ -98,8 +122,30 @@ void SundialsIntergrator::initSUNLinearSolver()
 void SundialsIntergrator::initSUNAdaptController()
 {
     controller_ = sundials::createController(sundials::ARKAdaptControllerType::PID, context_);
-    int flag = ARKodeSetAdaptController(arkode_mem, C);
-    NF_ASSERT(flag == 0, "ARKodeSetAdaptController failed");
+}
+
+void SundialsIntergrator::explicitSolve()
+{
+    std::cout << "Solving using Forward Euler" << std::endl;
+    scalar dt = 0.001; // Time step
+    fvcc::VolumeField<scalar>* refField = eqnSystem_.volumeField();
+    // Field<scalar> Phi(eqnSystem_.exec(), eqnSystem_.nCells());
+    // NeoFOAM::fill(Phi, 0.0);
+    Field<scalar> source = eqnSystem_.explicitOperation();
+
+    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
+    // {
+    //     eqnTerm.temporalOperation(Phi);
+    // }
+    // Phi += source*dt;
+    refField->internalField() -= source * dt;
+    refField->correctBoundaryConditions();
+
+    // check if execturo is GPU
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqnSystem_.exec()))
+    {
+        Kokkos::fence();
+    }
 }
 
 
