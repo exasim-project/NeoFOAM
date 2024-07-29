@@ -46,7 +46,7 @@ Kokkos requires the knowledge of where to run the code and the range of the loop
 .. code-block:: cpp
 
      NeoFOAM::Field<NeoFOAM::scalar> c(gpuExec, size);
-     NeoFOAM::fill(b, 10.0);
+     NeoFOAM::fill(b, 1.0);
 
 The fill function uses the `std::visit` function to call the correct function based on the executor as described in the previous section.
 
@@ -89,7 +89,7 @@ The Field can now be used to compose  more complex data structures. To solve PDE
      }
 
 
-Now we can loop over each cell and access the neighbors with a nested for loop. However, this approach is not suited for GPUs. Instead of the  vector of vector approach, the neighbor hood  is stored  with two fields (described with std::vector to simplify the example):
+Now we can loop over each cell and access the neighbors with a nested for loop. However, this approach is not suited for GPUs. Instead of the  vector of vector approach, the neighborhood  is stored  with two fields (described with std::vector to simplify the example):
 
 .. code-block:: cpp
 

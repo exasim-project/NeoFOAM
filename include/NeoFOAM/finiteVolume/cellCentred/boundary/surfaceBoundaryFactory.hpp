@@ -35,7 +35,7 @@ public:
 
 
 /**
- * @brief Represents a volume boundary field for a cell-centered finite volume method.
+ * @brief Represents a surface boundary field for a cell-centered finite volume method.
  *
  * @tparam ValueType The data type of the field.
  */
