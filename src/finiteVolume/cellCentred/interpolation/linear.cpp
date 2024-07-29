@@ -53,14 +53,8 @@ Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
-// SurfaceField<scalar> surfaceField Linear::interpolate(const VolumeField<scalar>& volField)
-//{
-//     auto surfaceField = SurfaceField(exec_, mesh_, );
-//     computeLinearInterpolation(volField, geometryScheme_, surfaceField);
-//     return ret;
-// }
-
 void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
+    const
 {
     computeLinearInterpolation(volField, geometryScheme_, surfaceField);
 }
@@ -69,7 +63,7 @@ void Linear::interpolate(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& volField,
     SurfaceField<scalar>& surfaceField
-)
+) const
 {
     interpolate(volField, surfaceField);
 }
@@ -78,6 +72,5 @@ std::unique_ptr<SurfaceInterpolationFactory> Linear::clone() const
 {
     return std::make_unique<Linear>(*this);
 }
-
 
 } // namespace NeoFOAM

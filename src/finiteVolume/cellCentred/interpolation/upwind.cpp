@@ -61,8 +61,8 @@ Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Upwind>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
-
 void Upwind::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
+    const
 {
     NF_ERROR_EXIT("limited scheme require a faceFlux");
 }
@@ -71,7 +71,7 @@ void Upwind::interpolate(
     SurfaceField<scalar>& surfaceField,
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& volField
-)
+) const
 {
     computeUpwindInterpolation(faceFlux, volField, geometryScheme_, surfaceField);
 }
@@ -80,6 +80,5 @@ std::unique_ptr<SurfaceInterpolationFactory> Upwind::clone() const
 {
     return std::make_unique<Upwind>(*this);
 }
-
 
 } // namespace NeoFOAM
