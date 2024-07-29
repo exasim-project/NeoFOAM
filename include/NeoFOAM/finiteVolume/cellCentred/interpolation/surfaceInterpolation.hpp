@@ -31,15 +31,15 @@ public:
 
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
+    virtual SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField) = 0;
+
     virtual void
     interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) = 0;
 
-    virtual SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField) = 0;
-
     virtual void interpolate(
-        SurfaceField<scalar>& surfaceField,
         const SurfaceField<scalar>& faceFlux,
-        const VolumeField<scalar>& volField
+        const VolumeField<scalar>& volField,
+        SurfaceField<scalar>& surfaceField
     ) = 0;
 
     // Pure virtual function for cloning
