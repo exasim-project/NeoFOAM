@@ -11,6 +11,10 @@
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
 
+using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
+using NeoFOAM::finiteVolume::cellCentred::VolumeField;
+using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
+
 TEST_CASE("linear")
 {
     NeoFOAM::Executor exec = GENERATE(
@@ -23,8 +27,8 @@ TEST_CASE("linear")
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
     auto linear = SurfaceInterpolation(exec, mesh, "linear");
 
-    auto in = VolumeField(exec, mesh, {});
-    auto out = SurfaceField(exec, mesh, {});
+    auto in = VolumeField<NeoFOAM::scalar>(exec, mesh, {});
+    auto out = SurfaceField<NeoFOAM::scalar>(exec, mesh, {});
 
     SECTION("can call interpolate" + execName) { linear.interpolate(in, out); }
 }
