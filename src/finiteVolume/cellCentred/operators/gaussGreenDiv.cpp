@@ -22,7 +22,7 @@ void computeDiv(
     const auto exec = divPhi.exec();
     SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    surfInterp.interpolate(phif, faceFlux, phi);
+    surfInterp.interpolate(faceFlux, phi, phif);
 
     auto surfDivPhi = divPhi.internalField().span();
 

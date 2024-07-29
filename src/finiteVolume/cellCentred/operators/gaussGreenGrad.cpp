@@ -23,7 +23,7 @@ void computeGrad(
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();
 
-    surfInterp.interpolate(phif, phi);
+    surfInterp.interpolate(phi, phif);
     const auto surfPhif = phif.internalField().span();
     const auto surfOwner = mesh.faceOwner().span();
     const auto surfNeighbour = mesh.faceNeighbour().span();

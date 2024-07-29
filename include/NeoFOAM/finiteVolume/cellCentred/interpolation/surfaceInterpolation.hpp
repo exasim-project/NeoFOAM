@@ -32,13 +32,13 @@ public:
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
     virtual void
-    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) = 0;
+    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const = 0;
 
     virtual void interpolate(
         const SurfaceField<scalar>& faceFlux,
         const VolumeField<scalar>& volField,
         SurfaceField<scalar>& surfaceField
-    ) = 0;
+    ) const = 0;
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<SurfaceInterpolationFactory> clone() const = 0;
