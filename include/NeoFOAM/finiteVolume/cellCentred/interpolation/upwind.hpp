@@ -23,7 +23,6 @@ public:
 
     Upwind(const Executor& exec, const UnstructuredMesh& mesh);
 
-
     static std::string name() { return "upwind"; }
 
     static std::string doc() { return "upwind interpolation"; }
