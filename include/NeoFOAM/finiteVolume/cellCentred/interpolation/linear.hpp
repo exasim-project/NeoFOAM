@@ -31,14 +31,15 @@ public:
 
     static std::string schema() { return "none"; }
 
+    void SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField, ) override;
 
     void
-    interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) override;
+    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) override;
 
     void interpolate(
-        SurfaceField<scalar>& surfaceField,
         const SurfaceField<scalar>& faceFlux,
-        const VolumeField<scalar>& volField
+        const VolumeField<scalar>& volField,
+        SurfaceField<scalar>& surfaceField
     ) override;
 
     std::unique_ptr<SurfaceInterpolationFactory> clone() const override;

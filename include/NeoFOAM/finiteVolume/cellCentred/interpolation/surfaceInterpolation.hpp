@@ -32,8 +32,9 @@ public:
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
     virtual void
-    interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) = 0;
+    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) = 0;
 
+    virtual SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField) = 0;
 
     virtual void interpolate(
         SurfaceField<scalar>& surfaceField,
