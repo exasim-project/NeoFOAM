@@ -68,9 +68,9 @@ void Upwind::interpolate(const VolumeField<scalar>& volField, SurfaceField<scala
 }
 
 void Upwind::interpolate(
-    SurfaceField<scalar>& surfaceField,
     const SurfaceField<scalar>& faceFlux,
-    const VolumeField<scalar>& volField
+    const VolumeField<scalar>& volField,
+    SurfaceField<scalar>& surfaceField
 ) const
 {
     computeUpwindInterpolation(faceFlux, volField, geometryScheme_, surfaceField);

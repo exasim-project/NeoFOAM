@@ -30,8 +30,6 @@ public:
 
     static std::string schema() { return "none"; }
 
-    //    void SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField ) override;
-
     void interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const;
 
     void interpolate(
