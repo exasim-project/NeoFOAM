@@ -32,18 +32,15 @@ public:
 
     //    void SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField ) override;
 
-    void
-    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) override;
+    void interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const;
 
     void interpolate(
         const SurfaceField<scalar>& faceFlux,
         const VolumeField<scalar>& volField,
         SurfaceField<scalar>& surfaceField
-    ) override;
-
+    ) const;
 
     std::unique_ptr<SurfaceInterpolationFactory> clone() const override;
-
 
 private:
 

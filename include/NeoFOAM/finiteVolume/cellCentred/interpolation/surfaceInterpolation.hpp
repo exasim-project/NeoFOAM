@@ -71,18 +71,18 @@ public:
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    void interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) const
+    void interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const
     {
-        interpolationKernel_->interpolate(surfaceField, volField);
+        interpolationKernel_->interpolate(volField, surfaceField);
     }
 
     void interpolate(
-        SurfaceField<scalar>& surfaceField,
         const SurfaceField<scalar>& faceFlux,
-        const VolumeField<scalar>& volField
+        const VolumeField<scalar>& volField,
+        SurfaceField<scalar>& surfaceField
     ) const
     {
-        interpolationKernel_->interpolate(surfaceField, faceFlux, volField);
+        interpolationKernel_->interpolate(faceFlux, volField, surfaceField);
     }
 
 private:
