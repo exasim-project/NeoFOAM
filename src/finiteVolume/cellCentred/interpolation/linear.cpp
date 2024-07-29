@@ -53,6 +53,13 @@ Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
+// SurfaceField<scalar> surfaceField Linear::interpolate(const VolumeField<scalar>& volField)
+//{
+//     auto surfaceField = SurfaceField(exec_, mesh_, );
+//     computeLinearInterpolation(volField, geometryScheme_, surfaceField);
+//     return ret;
+// }
+
 void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
 {
     computeLinearInterpolation(volField, geometryScheme_, surfaceField);
