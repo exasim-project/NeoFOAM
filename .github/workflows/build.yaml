@@ -52,6 +52,12 @@ jobs:
          wget https://apt.llvm.org/llvm-snapshot.gpg.key
          sudo apt-key add llvm-snapshot.gpg.key
 
+     - name: Set up cache
+       uses: actions/cache@v4
+       with:
+         path: build
+         key: build_PR_${{ github.event.pull_request.number }}_${{matrix.compiler.CC}}_${{matrix.preset}}
+
      - name: Install dependencies
        run: |
          sudo apt update
@@ -70,7 +76,6 @@ jobs:
          sudo rm /usr/bin/clang++
          sudo ln -s /usr/bin/clang-16 /usr/bin/clang
          sudo ln -s /usr/bin/clang++-16 /usr/bin/clang++
-
 
      - name: Get versions
        run: |

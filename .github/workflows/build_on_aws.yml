@@ -73,6 +73,11 @@ jobs:
     steps:
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
+      - name: Set up cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
