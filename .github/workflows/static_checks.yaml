@@ -29,6 +29,12 @@ jobs:
            libopenmpi-dev \
            openmpi-bin
 
+    - name: Set up cache
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: static_PR_${{ github.event.pull_request.number }}
+
     - name: Create Compilation Database
       run: |
         cmake --preset develop \
