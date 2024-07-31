@@ -206,24 +206,19 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Contributing</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="basics/index.html">Basics</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="basics/executor.html">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="basics/containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="basics/unstructuredMesh.html">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics/containers.html">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics/unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="basics/dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="basics/registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="basics/macros.html">Macro Definitions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="basics/mpi_architecture.html">MPI Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics/fields.html">Fields</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="finiteVolume/cellCentred/fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="finiteVolume/cellCentred/operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="finiteVolume/cellCentred/stencil.html">Stencil</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/fields.html">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/executor.html">Executor</a></li>
 </ul>
 </li>
 </ul>
@@ -268,7 +263,7 @@
         <article role="main" id="furo-main-content">
           <section id="contributing">
 <h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h1>
-<p>Contributions are highly welcomed. Here is some information getting you started.</p>
+<p>Contributions are highly welcome. Here is some information getting you started.</p>
 <section id="neofoam-code-style-guide">
 <h2>NeoFOAM Code Style Guide<a class="headerlink" href="#neofoam-code-style-guide" title="Link to this heading">¶</a></h2>
 <p>To simplify coding and code reviews you should adhere to the following code style. However, most
@@ -277,32 +272,32 @@ For example, formatting and non-format related code style is enforced via clang-
 Corresponding configuration files are <a class="reference external" href="https://github.com/exasim-project/NeoFOAM/blob/main/.clang-format">.clang-format</a>
 and <a class="reference external" href="https://github.com/exasim-project/NeoFOAM/blob/main/.clang-format/.clang-tidy">.clang-tidy</a>.
 Furthermore, adequate licensing of the source code is checked via the reuse linter and typos checks for obvious spelling issues.
-Thus, this style guide doesn’t list all stylistic rules explicitly but rather gives advise for ambiguous situations and mentions the rational for some decissions.</p>
+Thus, this style guide doesn’t list all stylistic rules explicitly but rather gives advice for ambiguous situations and mentions the rational for some decisions.</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>We generally try to comply with the <a class="reference external" href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines">C++ core guidelines</a>.</p></li>
 <li><p>Use <cite>camelCase</cite> for functions and members and capitalized <cite>CamelCase</cite> for classes</p></li>
 <li><p>Use descriptive template parameter names.
-For example prefer <cite>template &lt;class ValueType&gt;</cite> over <cite>template &lt;class T&gt;</cite> if the type can be a float or double.</p></li>
+For example, prefer <cite>template &lt;class ValueType&gt;</cite> over <cite>template &lt;class T&gt;</cite> if the type can be a float or double.</p></li>
 <li><p>Use <cite>[[nodiscard]]</cite> except for getters.
-To indicate that a function simply returns a value instead of performing expensive computations <cite>[[nodiscard]]</cite> can be omitted.</p></li>
+To indicate that a function simply returns a value instead of performing expensive computations, <cite>[[nodiscard]]</cite> can be omitted.</p></li>
 <li><p>Use <cite>final</cite> except for abstract classes.
 NeoFOAMs aims at having a rather flat inheritance hierarchy and composition is generally preferred.
-To avoid unintended inheritance the using final` is advised.</p></li>
+To avoid unintended inheritance, using <cite>final</cite> is advised.</p></li>
 <li><p>Avoid storing references as data members in classes.
 An exception might be a <cite>const Unstructured&amp; mesh</cite> as it will most likely outlive any other objects.</p></li>
-<li><p>Private member variables should be postfixed with <cite>_</cite>.</p></li>
+<li><p>Private member variables should be suffixed with <cite>_</cite>.</p></li>
 <li><p>Order of parameters to functions should be in, in-out, out.
 E.g. <cite>foo(const Type&amp; in, Type&amp; inOut, Type&amp; out)</cite> instead of <cite>foo(Type&amp; inOut,  Type&amp; out, const Type&amp; in)</cite> or some other variation.</p></li>
-<li><p>use US spelling</p></li>
+<li><p>Use US spelling</p></li>
 </ul>
 </div></blockquote>
-<p>Folder structurce and file names:</p>
+<p>Folder structure and file names:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>use <cite>camelCase</cite> for files and folder names</p></li>
-<li><p>the location of implementation and header files should be consistent.
-Ie. a file <cite>src/model/a.cpp</cite> should have a header file in <cite>include/NeoFOAM/model/a.hpp</cite> and corresponding test implementation in <cite>test/model/a.cpp</cite></p></li>
+<li><p>Use <cite>camelCase</cite> for files and folder names</p></li>
+<li><p>The location of implementation and header files should be consistent.
+i.e. a file <cite>src/model/a.cpp</cite> should have a header file in <cite>include/NeoFOAM/model/a.hpp</cite> and the corresponding test implementation in <cite>test/model/a.cpp</cite></p></li>
 <li><p>File and folder names should not be redundant. Ie. <cite>finiteVolume/cellCentred/geometryModel/finiteVolumecellCentredgeometryModel.hpp</cite> should be
 <cite>finiteVolume/cellCentred/geometryModel/model.hpp</cite>.</p></li>
 </ul>
@@ -310,27 +305,27 @@ Ie. a file <cite>src/model/a.cpp</cite> should have a header file in <cite>inclu
 </section>
 <section id="collaboration-via-pull-requests">
 <h2>Collaboration via Pull Requests<a class="headerlink" href="#collaboration-via-pull-requests" title="Link to this heading">¶</a></h2>
-<p>If you want to contribute a specific feature or fix, please don’t hesitate to open a PR. After creating the PR the following process is applied.</p>
+<p>If you want to contribute a specific feature or fix, please don’t hesitate to open a PR. After creating the PR, the following process is applied.</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Request a review by a given person or set the Ready-for-Review label.</p></li>
 <li><p>At least one (ideally two) approval(s) is/are required before a PR can be merged.</p></li>
 <li><p>Make sure that all required pipelines succeed.</p></li>
-<li><p>If you add new features make sure to provide sufficient unit tests.
+<li><p>If you add new features, make sure to provide sufficient unit tests.
 Also at some point before merging you can add the <cite>full-ci</cite> label to include build and tests on GPU hardware.</p></li>
 <li><p>If you add a new feature or bug-fix, please add an entry to the <cite>Changelog.md</cite> file.
-For pure refactor PRs the <cite>Skip-Changelog</cite> label can be set.</p></li>
+For pure refactor PRs, the <cite>Skip-Changelog</cite> label can be set.</p></li>
 <li><p>If the PR should be merged in a specific order or if you don’t have the permission to merge, add the <cite>ready-to-merge</cite> label.</p></li>
-<li><p>Before merging make sure to rebase your PR on to the latest state of <cite>main</cite>.</p></li>
+<li><p>Before merging, make sure to rebase your PR on to the latest state of <cite>main</cite>.</p></li>
 <li><p>Make sure to add yourself to the <cite>Authors.md</cite> file.</p></li>
-<li><p>To simplify the review process small to medium sized PRs are preferred.
-If your PR exceeds 1000 lines of code changes consider to break the PR up into smaller PRs which can be merged via <a class="reference external" href="https://graphite.dev/blog/stacked-prs">stacked PRs</a>.</p></li>
+<li><p>To simplify the review process, small to medium sized PRs are preferred.
+If your PR exceeds 1000 lines of code changes, consider to break the PR up into smaller PRs which can be merged via <a class="reference external" href="https://graphite.dev/blog/stacked-prs">stacked PRs</a>.</p></li>
 </ul>
 </div></blockquote>
 </section>
 <section id="building-the-documentation">
 <h2>Building the Documentation<a class="headerlink" href="#building-the-documentation" title="Link to this heading">¶</a></h2>
-<p>NeoFOAMs documentation can be found <a class="reference external" href="https://exasim-project.com/NeoFOAM/">main</a>  and <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/doxygen/html/">doxygen</a> documentation can be found online. However, if you want to build the documentation locally you can do so, by executing the following steps.
+<p>NeoFOAM’s documentation can be found <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/index.html">main</a>  and <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/doxygen/html/">doxygen</a> documentation can be found online. However, if you want to build the documentation locally, you can do so by executing the following steps.
 First, make sure that Sphinx and Doxygen are installed on your system. Second, execute the following commands:</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DNEOFOAM_BUILD_DOC<span class="o">=</span>ON<span class="w"> </span><span class="c1"># configure the build</span>

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="containers" href="containers.html" /><link rel="prev" title="Basics" href="index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Containers" href="containers.html" /><link rel="prev" title="Basics" href="index.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/executor.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
@@ -206,24 +206,19 @@
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mpi_architecture.html">MPI Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fields.html">Fields</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/fields.html">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/executor.html">Executor</a></li>
 </ul>
 </li>
 </ul>
@@ -270,7 +265,7 @@
 <span id="basic-executor"></span><h1>Executor<a class="headerlink" href="#executor" title="Link to this heading">¶</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The <cite>Executor</cite> class uses Kokkos and provides an interface for memory management and specifics were to execute the operations:</p>
+<p>NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The <cite>Executor</cite> class uses Kokkos, provides an interface for memory management, and specifies where to execute the operations:</p>
 <ul class="simple">
 <li><p><cite>SerialExecutor</cite>: run on the CPU with MPI</p></li>
 <li><p><cite>CPUExecutor</cite>: run on the CPU with either OpenMP or C++ Threads in Combination and MPI</p></li>
@@ -333,7 +328,7 @@
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">containers</div>
+                <div class="title">Containers</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
