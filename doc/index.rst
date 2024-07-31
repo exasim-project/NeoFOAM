@@ -31,7 +31,7 @@ Table of Contents
 Compatibility with OpenFOAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We are aiming for a high level of compatibility with OpenFOAM. However, we don't expect binary or ABI compatibility. This means you NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement for existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead, we aim for source compatibility, i.e. the possibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.
+We are aiming for a high level of compatibility with OpenFOAM. However, we don't expect binary or ABI compatibility. This means that NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so` which could serve as a plugin replacement for existing `libfiniteVolume.so` and `libOpenFOAM.so`. Instead, we aim for source compatibility, i.e. the possibility to compile application OpenFOAM code like pimpleFoam  and others against the NeoFOAM libraries.
 
 Building OpenFOAM Applications with NeoFOAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,7 +1,7 @@
 Contributing
 ^^^^^^^^^^^^
 
-Contributions are highly welcomed. Here is some information getting you started.
+Contributions are highly welcome. Here is some information getting you started.
 
 NeoFOAM Code Style Guide
 """"""""""""""""""""""""
@@ -12,56 +12,56 @@ For example, formatting and non-format related code style is enforced via clang-
 Corresponding configuration files are `.clang-format <https://github.com/exasim-project/NeoFOAM/blob/main/.clang-format>`_
 and `.clang-tidy <https://github.com/exasim-project/NeoFOAM/blob/main/.clang-format/.clang-tidy>`_.
 Furthermore, adequate licensing of the source code is checked via the reuse linter and typos checks for obvious spelling issues.
-Thus, this style guide doesn't list all stylistic rules explicitly but rather gives advise for ambiguous situations and mentions the rational for some decissions.
+Thus, this style guide doesn't list all stylistic rules explicitly but rather gives advice for ambiguous situations and mentions the rational for some decisions.
 
  * We generally try to comply with the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`_.
  * Use `camelCase` for functions and members and capitalized `CamelCase` for classes
  * Use descriptive template parameter names.
-   For example prefer `template <class ValueType>` over `template <class T>` if the type can be a float or double.
+   For example, prefer `template <class ValueType>` over `template <class T>` if the type can be a float or double.
  * Use `[[nodiscard]]` except for getters.
-   To indicate that a function simply returns a value instead of performing expensive computations `[[nodiscard]]` can be omitted.
+   To indicate that a function simply returns a value instead of performing expensive computations, `[[nodiscard]]` can be omitted.
  * Use `final` except for abstract classes.
    NeoFOAMs aims at having a rather flat inheritance hierarchy and composition is generally preferred.
-   To avoid unintended inheritance the using final` is advised.
+   To avoid unintended inheritance, using `final` is advised.
  * Avoid storing references as data members in classes.
    An exception might be a `const Unstructured& mesh` as it will most likely outlive any other objects.
- * Private member variables should be postfixed with `_`.
+ * Private member variables should be suffixed with `_`.
  * Order of parameters to functions should be in, in-out, out.
    E.g. `foo(const Type& in, Type& inOut, Type& out)` instead of `foo(Type& inOut,  Type& out, const Type& in)` or some other variation.
- * use US spelling
+ * Use US spelling
 
-Folder structurce and file names:
+Folder structure and file names:
 
- * use `camelCase` for files and folder names
- * the location of implementation and header files should be consistent.
-   Ie. a file `src/model/a.cpp` should have a header file in `include/NeoFOAM/model/a.hpp` and corresponding test implementation in `test/model/a.cpp`
+ * Use `camelCase` for files and folder names
+ * The location of implementation and header files should be consistent.
+   i.e. a file `src/model/a.cpp` should have a header file in `include/NeoFOAM/model/a.hpp` and the corresponding test implementation in `test/model/a.cpp`
  * File and folder names should not be redundant. Ie. `finiteVolume/cellCentred/geometryModel/finiteVolumecellCentredgeometryModel.hpp` should be
    `finiteVolume/cellCentred/geometryModel/model.hpp`.
 
 Collaboration via Pull Requests
 """"""""""""""""""""""""""""""
 
-If you want to contribute a specific feature or fix, please don't hesitate to open a PR. After creating the PR the following process is applied.
+If you want to contribute a specific feature or fix, please don't hesitate to open a PR. After creating the PR, the following process is applied.
 
  * Request a review by a given person or set the Ready-for-Review label.
  * At least one (ideally two) approval(s) is/are required before a PR can be merged.
  * Make sure that all required pipelines succeed.
- * If you add new features make sure to provide sufficient unit tests.
+ * If you add new features, make sure to provide sufficient unit tests.
    Also at some point before merging you can add the `full-ci` label to include build and tests on GPU hardware.
  * If you add a new feature or bug-fix, please add an entry to the `Changelog.md` file.
-   For pure refactor PRs the `Skip-Changelog` label can be set.
+   For pure refactor PRs, the `Skip-Changelog` label can be set.
  * If the PR should be merged in a specific order or if you don't have the permission to merge, add the `ready-to-merge` label.
- * Before merging make sure to rebase your PR on to the latest state of `main`.
+ * Before merging, make sure to rebase your PR on to the latest state of `main`.
  * Make sure to add yourself to the `Authors.md` file.
- * To simplify the review process small to medium sized PRs are preferred.
-   If your PR exceeds 1000 lines of code changes consider to break the PR up into smaller PRs which can be merged via `stacked PRs <https://graphite.dev/blog/stacked-prs>`_.
+ * To simplify the review process, small to medium sized PRs are preferred.
+   If your PR exceeds 1000 lines of code changes, consider to break the PR up into smaller PRs which can be merged via `stacked PRs <https://graphite.dev/blog/stacked-prs>`_.
 
 
 
 Building the Documentation
 """"""""""""""""""""""""""
 
-NeoFOAMs documentation can be found `main <https://exasim-project.com/NeoFOAM/>`_  and `doxygen <https://exasim-project.com/NeoFOAM/latest/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally you can do so, by executing the following steps.
+NeoFOAM's documentation can be found `main <https://exasim-project.com/NeoFOAM/latest/index.html>`_  and `doxygen <https://exasim-project.com/NeoFOAM/latest/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally, you can do so by executing the following steps.
 First, make sure that Sphinx and Doxygen are installed on your system. Second, execute the following commands:
 
    .. code-block:: bash
