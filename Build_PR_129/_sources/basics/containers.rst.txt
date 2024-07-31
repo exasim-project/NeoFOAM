@@ -1,6 +1,6 @@
 .. _basics_containers:
 
-containers
+Containers
 ==========
 
 Fields

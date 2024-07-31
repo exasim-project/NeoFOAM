@@ -6,7 +6,7 @@ MPI Architecture
 Background
 ----------
 
-Virtually all large scientific and engineering codes are too large to be practically usable with a single 'computing unit'. Most problems are broken down into smaller parts and distributed across several 'computing units'. In many cases these 'computing elements' do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronize the solution procedure across these 'computing elements'. ``NeoFOAM`` uses `MPI <https://en.wikipedia.org/wiki/Message_Passing_Interface>`_ to achieve this, with each 'computing unit' referred to as an ``MPI rank`` (``rank``). Note: for shared memory architecture (including GPU computing), see `executor.rst <https://exasim-project.com/NeoFOAM/latest/basics/executor.html>`_. Fundamentally 2 problems need to be solved:
+Virtually all large scientific and engineering codes are too large to be practically usable with a single 'computing unit'. Most problems are broken down into smaller parts and distributed across several 'computing units'. In many cases these 'computing elements' do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronize the solution procedure across these 'computing elements'. ``NeoFOAM`` uses `MPI <https://en.wikipedia.org/wiki/Message_Passing_Interface>`_ to achieve this, with each 'computing unit' referred to as an ``MPI rank`` (``rank``). Note: for shared memory architecture (including GPU computing), see `Executor <https://exasim-project.com/NeoFOAM/latest/basics/executor.html>`_. Two fundamental problems need to be solved:
 
 1. How should the global computation be partitioned and distributed across ``ranks``?.
 2. What data needs to be communicated between which ``ranks``?.
@@ -52,7 +52,7 @@ such that scalar reduction size is handled automatically. In addition to the wra
 Once started, the ``MPIEnvironment`` class is used to manage the MPI communicator, ``MPI_rank``, and ``MPI_size``. Since the class will populate the communicator with ``MPI_COMM_WORLD`` and initialize the rank and size, the class can be constructed from anywhere in the code.
 
 .. note::
-    In the future it is intended to use this class to manage multiple MPI communicators (which are derived from the splitting of an existing communicator), at which point the above will no longer apply and the instance of ``MPIEnvironment`` will need to be parsed.
+    In the future, it is intended to use this class to manage multiple MPI communicators which are derived from the splitting of an existing communicator. By then, the above will no longer apply and the instance of ``MPIEnvironment`` will need to be parsed.
 
 Global Communication
 ^^^^^^^^^^^^^^^^^^^^

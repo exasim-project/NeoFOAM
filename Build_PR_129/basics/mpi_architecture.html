@@ -206,8 +206,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
@@ -266,7 +266,7 @@
 <span id="basic-mpi-architecture"></span><h1>MPI Architecture<a class="headerlink" href="#mpi-architecture" title="Link to this heading">¶</a></h1>
 <section id="background">
 <h2>Background<a class="headerlink" href="#background" title="Link to this heading">¶</a></h2>
-<p>Virtually all large scientific and engineering codes are too large to be practically usable with a single ‘computing unit’. Most problems are broken down into smaller parts and distributed across several ‘computing units’. In many cases these ‘computing elements’ do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronize the solution procedure across these ‘computing elements’. <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> uses <a class="reference external" href="https://en.wikipedia.org/wiki/Message_Passing_Interface">MPI</a> to achieve this, with each ‘computing unit’ referred to as an <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">rank</span></code> (<code class="docutils literal notranslate"><span class="pre">rank</span></code>). Note: for shared memory architecture (including GPU computing), see <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/basics/executor.html">executor.rst</a>. Fundamentally 2 problems need to be solved:</p>
+<p>Virtually all large scientific and engineering codes are too large to be practically usable with a single ‘computing unit’. Most problems are broken down into smaller parts and distributed across several ‘computing units’. In many cases these ‘computing elements’ do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronize the solution procedure across these ‘computing elements’. <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> uses <a class="reference external" href="https://en.wikipedia.org/wiki/Message_Passing_Interface">MPI</a> to achieve this, with each ‘computing unit’ referred to as an <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">rank</span></code> (<code class="docutils literal notranslate"><span class="pre">rank</span></code>). Note: for shared memory architecture (including GPU computing), see <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/basics/executor.html">Executor</a>. Two fundamental problems need to be solved:</p>
 <ol class="arabic simple">
 <li><p>How should the global computation be partitioned and distributed across <code class="docutils literal notranslate"><span class="pre">ranks</span></code>?.</p></li>
 <li><p>What data needs to be communicated between which <code class="docutils literal notranslate"><span class="pre">ranks</span></code>?.</p></li>
@@ -307,7 +307,7 @@
 <p>Once started, the <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> class is used to manage the MPI communicator, <code class="docutils literal notranslate"><span class="pre">MPI_rank</span></code>, and <code class="docutils literal notranslate"><span class="pre">MPI_size</span></code>. Since the class will populate the communicator with <code class="docutils literal notranslate"><span class="pre">MPI_COMM_WORLD</span></code> and initialize the rank and size, the class can be constructed from anywhere in the code.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>In the future it is intended to use this class to manage multiple MPI communicators (which are derived from the splitting of an existing communicator), at which point the above will no longer apply and the instance of <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> will need to be parsed.</p>
+<p>In the future, it is intended to use this class to manage multiple MPI communicators which are derived from the splitting of an existing communicator. By then, the above will no longer apply and the instance of <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> will need to be parsed.</p>
 </div>
 </section>
 <section id="global-communication">
