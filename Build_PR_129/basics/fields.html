@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/fields.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
-        <title>Fields (FVCC) - NeoFOAM documentation</title>
+        <title>Fields - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=613ab9ff" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
@@ -212,8 +212,7 @@
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mpi_architecture.html">MPI Architecture</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Fields (FVCC)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fields-api">Fields API</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Fields</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -262,8 +261,8 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="fields-fvcc">
-<span id="fvcc-fields"></span><h1>Fields (FVCC)<a class="headerlink" href="#fields-fvcc" title="Link to this heading">¶</a></h1>
+          <section id="fields">
+<span id="fvcc-fields"></span><h1>Fields<a class="headerlink" href="#fields" title="Link to this heading">¶</a></h1>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>The API of the classes probably will change in the future as currently parallelization is not supported.</p>
@@ -272,7 +271,7 @@
 <h2>Cell Centered Fields<a class="headerlink" href="#cell-centered-fields" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">VolumeField</span></code> stores the field values at cell centers and along boundaries, providing essential data for constructing the DSL (Domain Specific Language). This functionality also includes access to mesh data, integrating closely with the computational framework.</p>
 <p><code class="docutils literal notranslate"><span class="pre">DomainField</span></code> acts as the fundamental data container within this structure, offering both read and write to the <code class="docutils literal notranslate"><span class="pre">internalField</span></code> and <code class="docutils literal notranslate"><span class="pre">boundaryFields</span></code> provided by the <code class="docutils literal notranslate"><span class="pre">DomainField</span></code>. The <code class="docutils literal notranslate"><span class="pre">correctBoundaryConditions</span></code> member function updates the field’s boundary conditions, which are specified at construction. It does not hold the data but rather modifies the <code class="docutils literal notranslate"><span class="pre">DomainField</span></code> or <code class="docutils literal notranslate"><span class="pre">BoundaryField</span></code> container.</p>
-<p>Functionally, <code class="docutils literal notranslate"><span class="pre">fvccVolField</span></code> parallels several OpenFOAM classes such as <code class="docutils literal notranslate"><span class="pre">volScalarField</span></code>, <code class="docutils literal notranslate"><span class="pre">volVectorField</span></code>, and <code class="docutils literal notranslate"><span class="pre">volTensorField</span></code>.</p>
+<p>Functionally, <code class="docutils literal notranslate"><span class="pre">fvccVolField</span></code> parallels several OpenFOAM classes such as <code class="docutils literal notranslate"><span class="pre">volScalarField</span></code>, <code class="docutils literal notranslate"><span class="pre">volVectorField</span></code>, and <code class="docutils literal notranslate"><span class="pre">volTensorField</span></code>. Note: “fvcc” represents “Finite Volume Cell Centered”.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>doxygenclass: Cannot find class “NeoFOAM::fvccVolField” in doxygen xml output for project “NeoFOAM” from directory: _build/xml/</p>
@@ -289,11 +288,8 @@ However, the <code class="docutils literal notranslate"><span class="pre">intern
 <p>doxygenclass: Cannot find class “NeoFOAM::fvccSurfaceField” in doxygen xml output for project “NeoFOAM” from directory: _build/xml/</p>
 </div>
 </section>
-</section>
 <section id="fields-api">
-<span id="api-fields"></span><h1>Fields API<a class="headerlink" href="#fields-api" title="Link to this heading">¶</a></h1>
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<span id="api-fields"></span><h2>Fields API<a class="headerlink" href="#fields-api" title="Link to this heading">¶</a></h2>
 <p>The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.</p>
 <p>In the following, we will explain the implementation details of the field operations using the additions operator as an example. The block of code below shows an example implementation of the addition operator.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span>
@@ -753,13 +749,10 @@ However, the <code class="docutils literal notranslate"><span class="pre">intern
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Fields (FVCC)</a><ul>
+<li><a class="reference internal" href="#">Fields</a><ul>
 <li><a class="reference internal" href="#cell-centered-fields">Cell Centered Fields</a></li>
 <li><a class="reference internal" href="#face-centered-fields">Face Centered fields</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#fields-api">Fields API</a><ul>
-<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#fields-api">Fields API</a></li>
 <li><a class="reference internal" href="#interface">Interface</a><ul>
 <li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE"><code class="docutils literal notranslate"><span class="pre">Field</span></code></a><ul>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>

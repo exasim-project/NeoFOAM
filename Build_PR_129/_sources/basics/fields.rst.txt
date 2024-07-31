@@ -1,7 +1,7 @@
 .. _fvcc_fields:
 
-Fields (FVCC)
-=============
+Fields
+======
 
 .. warning::
     The API of the classes probably will change in the future as currently parallelization is not supported.
@@ -13,7 +13,7 @@ The ``VolumeField`` stores the field values at cell centers and along boundaries
 
 ``DomainField`` acts as the fundamental data container within this structure, offering both read and write to the ``internalField`` and ``boundaryFields`` provided by the ``DomainField``. The ``correctBoundaryConditions`` member function updates the field's boundary conditions, which are specified at construction. It does not hold the data but rather modifies the ``DomainField`` or ``BoundaryField`` container.
 
-Functionally, ``fvccVolField`` parallels several OpenFOAM classes such as ``volScalarField``, ``volVectorField``, and ``volTensorField``.
+Functionally, ``fvccVolField`` parallels several OpenFOAM classes such as ``volScalarField``, ``volVectorField``, and ``volTensorField``. Note: "fvcc" represents "Finite Volume Cell Centered".
 
 .. doxygenclass:: NeoFOAM::fvccVolField
     :members:
@@ -44,11 +44,9 @@ However, the ``internalField`` also contains the boundary values, so no branches
 
 .. _api_fields:
 
-Fields API
-==========
 
-Overview
-^^^^^^^^
+Fields API
+^^^^^^^^^^
 The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
 
 In the following, we will explain the implementation details of the field operations using the additions operator as an example. The block of code below shows an example implementation of the addition operator.
