@@ -52,8 +52,7 @@ void ExplicitRungeKutta::initNDData()
     data_->absTol_ = dict_.get<scalar>("Absolute Tolerance");
     data_->fixedStepSize_ = dict_.get<scalar>("Fixed Step Size"); // zero for adaptive
     data_->maxsteps = 1;
-    
-    
+
 
     // Output variables
     data_->output = 1; // 0 = no output, 1 = stats output, 2 = output to disk
@@ -78,8 +77,8 @@ void ExplicitRungeKutta::initSUNContext()
 
 void ExplicitRungeKutta::initSUNARKODESolver()
 {
-    //kokkosSolution_ = VecType(data_->nodes, context_);
-    //solution_ = kokkosSolution_;
+    // kokkosSolution_ = VecType(data_->nodes, context_);
+    // solution_ = kokkosSolution_;
     void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
     // this->explicitSolve();
     ark = ERKStepCreate(nullptr, 0.0, solution_, context_);
@@ -91,14 +90,15 @@ void ExplicitRungeKutta::initSUNARKODESolver()
 
 void ExplicitRungeKutta::explicitSolve()
 {
-    int flag = ARKStepEvolve(arkodeMemory_.get(), time_ + timeStepSize_, solution_, &time_, ARK_ONE_STEP);
-        
-    if (flag < 0) {
+    int flag =
+        ARKStepEvolve(arkodeMemory_.get(), time_ + timeStepSize_, solution_, &time_, ARK_ONE_STEP);
+
+    if (flag < 0)
+    {
         std::cout << "Integration failed with flag: " << flag << std::endl;
     }
 
     std::cout << "Step t = " << time_ << std::endl;
-   
 }
 
 
