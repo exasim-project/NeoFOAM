@@ -36,7 +36,6 @@ using ExecSpace = Kokkos::OpenMP;
 using ExecSpace = Kokkos::Serial;
 #endif
 
-
 // Where to put?
 struct NFData
 {
@@ -52,22 +51,10 @@ struct NFData
     sunrealtype absTol_;                         // absolute tolerance
     sunrealtype fixedStepSize_;                  // fixed step size
     int order;                                   // ARKode method order
-    sundials::ARKAdaptControllerType controller; // step size adaptivity method (0 == fixedStepSize_
                                                  // -> fixed step size controller number ignored)
     int maxsteps;                                // max number of steps between outputs
     bool linear;                                 // enable/disable linearly implicit option
     bool diagnostics;                            // output diagnostics
-
-    // Linear solver and preconditioner settings
-    bool pcg;           // use PCG (true) or GMRES (false)
-    bool precondition;  // use a preconditioner (true - we will use one)
-    bool lsinfo;        // output residual history
-    int liniters;       // number of linear iterations
-    int msbp;           // max number of steps between preconditioner setups
-    sunrealtype epslin; // linear solver tolerance factor
-
-    // Inverse of Jacobian diagonal for preconditioner
-    std::unique_ptr<N_Vector> diagonal;
 
     // Output variables
     int output; // output level
@@ -89,11 +76,8 @@ struct NFData
 
 class ExplicitRungeKutta : public TimeIntegrationFactory::Register<ExplicitRungeKutta>
 {
-    using Base = TimeIntegrationFactory::Register<ExplicitRungeKutta>;
-    using VecType = sundials::kokkos::Vector<ExecSpace>;
-    using MatType = sundials::kokkos::DenseMatrix<ExecSpace>;
-    using LSType = sundials::kokkos::DenseLinearSolver<ExecSpace>;
-    using SizeType = VecType::size_type;
+   // using VecType = sundials::kokkos::Vector<ExecSpace>;
+   // using SizeType = VecType::size_type;
 
 public:
 
@@ -122,8 +106,9 @@ public:
 
 
 private:
-
-    VectType kokkosSolution_;
+    double timeStepSize_;
+    double time_;
+   // VecType kokkosSolution_;
     N_Vector solution_;
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
