@@ -3,7 +3,7 @@
 
 #include "arkode/arkode_arkstep.h" // access to ARKStep
 
-#include "error.hpp"
+#include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM::sundials
 {

@@ -28,8 +28,8 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
-          "finiteVolume/cellCentred/timeIntegration/forwardEuler.cpp"
-          "finiteVolume/cellCentred/timeIntegration/sundialsIntergrator.cpp")
+          "finiteVolume/cellCentred/timeIntegration/explicitRungeKutta.cpp"
+          "finiteVolume/cellCentred/timeIntegration/forwardEuler.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
@@ -37,5 +37,5 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
-target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
-                                     Kokkos::kokkoskernels sundials_arkode cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos sundials_arkode
+                                     cpptrace::cpptrace)
