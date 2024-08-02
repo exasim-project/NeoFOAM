@@ -56,6 +56,17 @@ If you want to contribute a specific feature or fix, please don't hesitate to op
  * To simplify the review process, small to medium sized PRs are preferred.
    If your PR exceeds 1000 lines of code changes, consider to break the PR up into smaller PRs which can be merged via `stacked PRs <https://graphite.dev/blog/stacked-prs>`_.
 
+Github Workflows and Labels
+"""""""""""""""""""""""""""
+
+In order to influence the workflow pipeline and to structure the review process, several labels exist. The following labels and their meaning are discussed here:
+
+ * ``ready-for-review``: Signal that the PR is ready for review.
+ * ``ready-to-merge``: Signal that the work on this PR has been finished and can be merged.
+ * ``Skip-Changelog``: Don't check whether the changelog has been updated. Use this label if the changes are not any new features or bug-fixes.
+ * ``Skip-build``: Don't run any build steps, including building the compile commands database.
+ * ``Skip-cache``: Don't cache the build folders. Forces to rebuild the build folder after every push to GitHub.
+ * ``full-ci``: Run tests on AWS.
 
 
 Building the Documentation
