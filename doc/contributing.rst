@@ -59,14 +59,14 @@ If you want to contribute a specific feature or fix, please don't hesitate to op
 Github Workflows and Labels
 """""""""""""""""""""""""""
 
-In order to influence the workflow pipeline and to structure the review process several labels exist. The following labels and their meaning are discussed here:
+In order to influence the workflow pipeline and to structure the review process, several labels exist. The following labels and their meaning are discussed here:
 
- *  `ready-for-review` Signal that the PR is ready for review.
+ * ``ready-for-review``: Signal that the PR is ready for review.
  *  `ready-to-merge` Signal that the work on this PR has been finished and can be merged.
  *  `Skip-Changelog` Don't check whether the changelog has been updated. Use this label if the changes are not any new features or bug-fixes.
  *  `Skip-build` Don't run any build steps, including building the compile commands database.
- *  `Skip-cache` Don't cache the build folders. Forces to rebuild the build folder after every push to github.
- *  `full-ci` Run tests on aws.
+ *  `Skip-cache` Don't cache the build folders. Forces to rebuild the build folder after every push to GitHub.
+ *  `full-ci` Run tests on AWS.
 
 
 Building the Documentation
