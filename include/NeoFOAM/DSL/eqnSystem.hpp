@@ -23,7 +23,8 @@ public:
     ~EqnSystem() = default;
 
     EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
-        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(), volumeField_(nullptr)
+        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(),
+          volumeField_(nullptr)
     {}
 
     NeoFOAM::Field<NeoFOAM::scalar> explicitOperation()
@@ -107,7 +108,7 @@ public:
 
     std::size_t nCells() const { return nCells_; }
 
-    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() 
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField()
     {
         if (temporalTerms_.size() == 0 && implicitTerms_.size() == 0)
         {
@@ -121,13 +122,13 @@ public:
         {
             volumeField_ = implicitTerms_[0].volumeField();
         }
-        return volumeField_; 
+        return volumeField_;
     }
 
 private:
 
-    const NeoFOAM::Executor exec_;
-    const std::size_t nCells_;
+    NeoFOAM::Executor exec_;
+    std::size_t nCells_;
     std::vector<EqnTerm> temporalTerms_;
     std::vector<EqnTerm> implicitTerms_;
     std::vector<EqnTerm> explicitTerms_;
