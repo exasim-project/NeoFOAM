@@ -19,8 +19,12 @@ class EqnSystem
 {
 public:
 
+    EqnSystem() = default;
+    ~EqnSystem() = default;
+
     EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
-        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(), volumeField_(nullptr)
+        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(),
+          volumeField_(nullptr)
     {}
 
     NeoFOAM::Field<NeoFOAM::scalar> explicitOperation()
@@ -102,9 +106,9 @@ public:
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
-    const std::size_t nCells() const { return nCells_; }
+    std::size_t nCells() const { return nCells_; }
 
-    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() 
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField()
     {
         if (temporalTerms_.size() == 0 && implicitTerms_.size() == 0)
         {
@@ -118,20 +122,20 @@ public:
         {
             volumeField_ = implicitTerms_[0].volumeField();
         }
-        return volumeField_; 
+        return volumeField_;
     }
 
 private:
 
-    const NeoFOAM::Executor exec_;
-    const std::size_t nCells_;
+    NeoFOAM::Executor exec_;
+    std::size_t nCells_;
     std::vector<EqnTerm> temporalTerms_;
     std::vector<EqnTerm> implicitTerms_;
     std::vector<EqnTerm> explicitTerms_;
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField_;
 };
 
-EqnSystem operator+(const EqnSystem& lhs, const EqnSystem& rhs)
+inline EqnSystem operator+(const EqnSystem& lhs, const EqnSystem& rhs)
 {
     std::cout << "Adding EqnSystem from EqnSystem" << std::endl;
     EqnSystem results = lhs;
@@ -139,14 +143,14 @@ EqnSystem operator+(const EqnSystem& lhs, const EqnSystem& rhs)
     return results;
 }
 
-EqnSystem operator+(const EqnSystem& lhs, const EqnTerm& rhs)
+inline EqnSystem operator+(const EqnSystem& lhs, const EqnTerm& rhs)
 {
     EqnSystem results = lhs;
     results.addTerm(rhs);
     return results;
 }
 
-EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
+inline EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
 {
     EqnSystem eqnSys(lhs.exec(), lhs.nCells());
     eqnSys.addTerm(lhs);
@@ -154,7 +158,7 @@ EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
     return eqnSys;
 }
 
-EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
+inline EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
 {
     EqnSystem results(es.exec(), es.nCells());
     for (const auto& eqnTerm : es.temporalTerms())
@@ -172,21 +176,21 @@ EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
     return results;
 }
 
-EqnSystem operator-(const EqnSystem& lhs, const EqnSystem& rhs)
+inline EqnSystem operator-(const EqnSystem& lhs, const EqnSystem& rhs)
 {
     EqnSystem results = lhs;
     results.addSystem(-1.0 * rhs);
     return results;
 }
 
-EqnSystem operator-(const EqnSystem& lhs, const EqnTerm& rhs)
+inline EqnSystem operator-(const EqnSystem& lhs, const EqnTerm& rhs)
 {
     EqnSystem results = lhs;
     results.addTerm(-1.0 * rhs);
     return results;
 }
 
-EqnSystem operator-(const EqnTerm& lhs, const EqnTerm& rhs)
+inline EqnSystem operator-(const EqnTerm& lhs, const EqnTerm& rhs)
 {
     EqnSystem results(lhs.exec(), lhs.nCells());
     results.addTerm(lhs);

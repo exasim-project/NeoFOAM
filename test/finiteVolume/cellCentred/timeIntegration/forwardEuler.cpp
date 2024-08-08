@@ -7,7 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/forwardEuler.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
