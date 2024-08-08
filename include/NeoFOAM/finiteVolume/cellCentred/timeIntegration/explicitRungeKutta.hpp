@@ -39,10 +39,6 @@ using ExecSpace = Kokkos::Serial;
 // Where to put?
 struct NFData
 {
-
-    // Enable/disable forcing (what does this do?)
-    bool forcing;
-
     // Final time
     sunrealtype tf;
 
@@ -50,26 +46,21 @@ struct NFData
     sunrealtype realTol_;       // relative tolerance
     sunrealtype absTol_;        // absolute tolerance
     sunrealtype fixedStepSize_; // fixed step size
+    sunrealtype endTime_;       // end time
     int order;                  // ARKode method order
                                 // -> fixed step size controller number ignored)
     int maxsteps;               // max number of steps between outputs
-    bool linear;                // enable/disable linearly implicit option
-    bool diagnostics;           // output diagnostics
+    int timeStep;               // time step number
+
+    dsl::EqnSystem System;
 
     // Output variables
     int output; // output level
     int nout;   // number of output times
-    // ofstream uout; // output file stream
-    // ofstream eout; // error file stream
-    // N_Vector e; // error vector
 
     // Timing variables
     bool timing; // print timings
     double evolvetime;
-    double rhstime;
-    double psetuptime;
-    double psolvetime;
-
     size_t nodes;
 };
 
@@ -92,7 +83,7 @@ public:
         return *this;
     };
 
-    ExplicitRungeKutta(const dsl::EqnSystem& eqnSystem, const Dictionary& dict);
+    ExplicitRungeKutta(dsl::EqnSystem eqnSystem, const Dictionary& dict);
 
     static std::string name() { return "explicitRungeKutta"; }
 
@@ -104,6 +95,7 @@ public:
 
     std::unique_ptr<TimeIntegrationFactory> clone() const override;
 
+    int explicitSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data);
 
 private:
 
@@ -120,8 +112,6 @@ private:
     void initNDData();
     void initSUNARKODESolver();
     void initSUNContext();
-
-    void explicitSolve();
 };
 
 } // namespace NeoFOAM

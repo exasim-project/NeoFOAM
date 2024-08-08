@@ -13,7 +13,16 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-ExplicitRungeKutta::ExplicitRungeKutta(const dsl::EqnSystem& eqnSystem, const Dictionary& dict)
+int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
+{
+    // Cast user_data to ExplicitRungeKutta* to access the instance
+    // ExplicitRungeKutta* self = static_cast<ExplicitRungeKutta*>(user_data);
+    std::cout << "\nHello from explicitSolveWrapperFreeFunction\n";
+    // Call the non-static member function explicitSolve on the instance
+    return 1; // self->explicitSolve(t, y, ydot, user_data);
+}
+
+ExplicitRungeKutta::ExplicitRungeKutta(dsl::EqnSystem eqnSystem, const Dictionary& dict)
     : TimeIntegrationFactory::Register<ExplicitRungeKutta>(eqnSystem, dict)
 {
     initNDData();
@@ -33,9 +42,12 @@ ExplicitRungeKutta::ExplicitRungeKutta(const ExplicitRungeKutta& other)
 
 void ExplicitRungeKutta::solve()
 {
-    ARKStepEvolve(
-        reinterpret_cast<void*>(arkodeMemory_.get()), 0.0, solution_, nullptr, ARK_ONE_STEP
-    );
+    while (time_ < data_->endTime_)
+    {
+        time_ += data_->fixedStepSize_;
+
+        std::cout << "Step t = " << time_ << std::endl;
+    }
 }
 
 std::unique_ptr<TimeIntegrationFactory> ExplicitRungeKutta::clone() const
@@ -46,26 +58,15 @@ std::unique_ptr<TimeIntegrationFactory> ExplicitRungeKutta::clone() const
 void ExplicitRungeKutta::initNDData()
 {
     data_ = std::make_unique<NFData>();
-
-    data_->forcing = true; // forces error output
     data_->realTol_ = dict_.get<scalar>("Relative Tolerance");
     data_->absTol_ = dict_.get<scalar>("Absolute Tolerance");
     data_->fixedStepSize_ = dict_.get<scalar>("Fixed Step Size"); // zero for adaptive
-    data_->maxsteps = 1;
+    data_->endTime_ = dict_.get<scalar>("End Time");
 
-
-    // Output variables
-    data_->output = 1; // 0 = no output, 1 = stats output, 2 = output to disk
-    data_->nout = 20;  // Number of output times
-
-    // Timing variables
-    data_->timing = false;
-    data_->evolvetime = 0.0;
-    data_->rhstime = 0.0;
-    data_->psetuptime = 0.0;
-    data_->psolvetime = 0.0;
+    data_->System = dsl::EqnSystem(eqnSystem_);
 
     data_->nodes = 1;
+    data_->maxsteps = 1;
 };
 
 
@@ -79,26 +80,33 @@ void ExplicitRungeKutta::initSUNARKODESolver()
 {
     // kokkosSolution_ = VecType(data_->nodes, context_);
     // solution_ = kokkosSolution_;
-    void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+
     // this->explicitSolve();
-    ark = ERKStepCreate(nullptr, 0.0, solution_, context_);
+    arkodeMemory_.reset(reinterpret_cast<char*>(
+        ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, solution_, context_)
+    ));
+    void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+
+    // Initialize ERKStep solver
+    ERKStepSetUserData(ark, NULL);
+    ERKStepSetInitStep(ark, data_->fixedStepSize_);
+    ERKStepSetFixedStep(ark, data_->fixedStepSize_);
 
     ERKStepSetTableNum(arkodeMemory_.get(), ARKODE_HEUN_EULER_2_1_2);
 
     ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
 }
 
-void ExplicitRungeKutta::explicitSolve()
+int ExplicitRungeKutta::explicitSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
-    int flag =
-        ARKStepEvolve(arkodeMemory_.get(), time_ + timeStepSize_, solution_, &time_, ARK_ONE_STEP);
+    // int flag =
+    //     ARKStepEvolve(arkodeMemory_.get(), time_ + timeStepSize_, solution_, &time_,
+    //     ARK_ONE_STEP);
 
-    if (flag < 0)
-    {
-        std::cout << "Integration failed with flag: " << flag << std::endl;
-    }
-
-    std::cout << "Step t = " << time_ << std::endl;
+    // if (flag < 0)
+    // {
+    //     std::cout << "Integration failed with flag: " << flag << std::endl;
+    // }
 }
 
 
