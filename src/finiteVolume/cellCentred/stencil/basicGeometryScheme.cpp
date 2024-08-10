@@ -8,9 +8,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 BasicGeometryScheme::BasicGeometryScheme(const UnstructuredMesh& mesh)
     : GeometrySchemeFactory(mesh), mesh_(mesh)
-{
-
-}
+{}
 
 void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scalar>& weights)
 {
@@ -26,7 +24,7 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
     parallelFor(
         exec,
         {0, mesh_.nInternalFaces()},
-        KOKKOS_LAMBDA(const int facei) {
+        KOKKOS_LAMBDA(const size_t facei) {
             // Note: mag in the dot-product.
             // For all valid meshes, the non-orthogonality will be less than
             // 90 deg and the dot-product will be positive.  For invalid
@@ -46,7 +44,9 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
         }
     );
 
-    parallelFor(exec, {0, mesh_.nInternalFaces()}, [w](const int facei) { w[facei] = 1.0; });
+    parallelFor(
+        exec, {mesh_.nInternalFaces(), w.size()}, KOKKOS_LAMBDA(const int facei) { w[facei] = 1.0; }
+    );
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs)
