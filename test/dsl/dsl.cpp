@@ -5,12 +5,14 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
 
 
 namespace dsl = NeoFOAM::DSL;
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 class Laplacian
 {
@@ -34,6 +36,8 @@ public:
     const NeoFOAM::Executor& exec() const { return exec_; }
 
     const std::size_t nCells() const { return nCells_; }
+
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() { return nullptr; }
 
     dsl::EqnTerm::Type termType_;
 
@@ -64,6 +68,8 @@ public:
     const NeoFOAM::Executor& exec() const { return exec_; }
 
     const std::size_t nCells() const { return nCells_; }
+
+    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() { return nullptr; }
 
     dsl::EqnTerm::Type termType_;
 
@@ -102,18 +108,33 @@ TEST_CASE("DSL")
         REQUIRE(eqnSys.size() == 2);
         REQUIRE(getField(eqnSys.explicitOperation()) == 2);
     }
+    BENCHMARK("Creation from EqnTerm")
+    {
+        dsl::EqnSystem eqnSys = lapTerm + divTerm;
+        return eqnSys;
+    };
 
     {
         dsl::EqnSystem eqnSys(lapTerm + lapTerm + divTerm + divTerm);
         REQUIRE(eqnSys.size() == 4);
         REQUIRE(getField(eqnSys.explicitOperation()) == 4.0);
     }
+    BENCHMARK("Creation from multiple terms")
+    {
+        dsl::EqnSystem eqnSys2(lapTerm + lapTerm + divTerm + divTerm);
+        return eqnSys2;
+    };
 
     {
         dsl::EqnSystem eqnSys(lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1));
         REQUIRE(eqnSys.size() == 2);
         REQUIRE(getField(eqnSys.explicitOperation()) == 2.0);
     }
+    BENCHMARK("Creation from term and temporary term")
+    {
+        dsl::EqnSystem eqnSys(lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1));
+        return eqnSys;
+    };
 
     {
         dsl::EqnSystem eqnSys = lapTerm - divTerm;
@@ -148,6 +169,19 @@ TEST_CASE("DSL")
         REQUIRE(combinedEqnSys.size() == 8);
         REQUIRE(getField(combinedEqnSys.explicitOperation()) == 8.0);
     }
+    BENCHMARK("Creation from term and temporary term")
+    {
+        dsl::EqnSystem eqnSys(
+            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1) + divTerm
+            + Divergence(dsl::EqnTerm::Type::Explicit, exec, 1)
+        );
+        dsl::EqnSystem eqnSys2(
+            lapTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1) + divTerm
+            + Divergence(dsl::EqnTerm::Type::Explicit, exec, 1)
+        );
+        dsl::EqnSystem combinedEqnSys = eqnSys + eqnSys2;
+        return combinedEqnSys;
+    };
 
     {
         dsl::EqnSystem eqnSys(
@@ -184,4 +218,60 @@ TEST_CASE("DSL")
             REQUIRE(getField(subtractEqnSys.explicitOperation()) == 2.0);
         }
     }
+    // profiling
+    // with different number of terms
+    BENCHMARK("Creation from 2 terms")
+    {
+        dsl::EqnSystem eqnSys(divTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1));
+
+        return eqnSys;
+    };
+
+    BENCHMARK("Creation from 4 terms")
+    {
+        dsl::EqnSystem eqnSys(
+            divTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+        );
+
+        return eqnSys;
+    };
+
+    BENCHMARK("Creation from 8 terms")
+    {
+        dsl::EqnSystem eqnSys(
+            divTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+        );
+
+        return eqnSys;
+    };
+
+    BENCHMARK("Creation from 16 terms")
+    {
+        dsl::EqnSystem eqnSys(
+            divTerm + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+            + Laplacian(dsl::EqnTerm::Type::Explicit, exec, 1)
+        );
+
+        return eqnSys;
+    };
 }
