@@ -77,7 +77,12 @@ const std::any& Dictionary::operator[](const std::string& key) const
 
 Dictionary& Dictionary::subDict(const std::string& key)
 {
-    return std::any_cast<Dictionary&>(data_.at(key));
+    return std::any_cast<Dictionary&>(operator[](key));
+}
+
+const Dictionary& Dictionary::subDict(const std::string& key) const
+{
+    return std::any_cast<const Dictionary&>(operator[](key));
 }
 
 bool Dictionary::isDict(const std::string& key) const

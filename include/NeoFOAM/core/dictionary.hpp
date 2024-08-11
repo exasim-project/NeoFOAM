@@ -137,6 +137,13 @@ public:
     Dictionary& subDict(const std::string& key);
 
     /**
+     * @brief Retrieves a sub-dictionary associated with the given key.
+     * @param key The key to retrieve the sub-dictionary for.
+     * @return A reference to the sub-dictionary associated with the key.
+     */
+    const Dictionary& subDict(const std::string& key) const;
+
+    /**
      * @brief Retrieves the keys of the dictionary.
      * @return A vector containing the keys of the dictionary.
      */
