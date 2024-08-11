@@ -8,6 +8,8 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 #include "NeoFOAM/core/error.hpp"
+#include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/core/tokenList.hpp"
 
 #include "NeoFOAM/finiteVolume/cellCentred/operators/explicitOperators/expOpDiv.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/explicitOperators/expOpDdt.hpp"
@@ -43,8 +45,11 @@ dsl::EqnTerm div(fvcc::VolumeField<NeoFOAM::scalar>& phi)
 dsl::EqnTerm
 div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux,
     fvcc::VolumeField<NeoFOAM::scalar>& phi,
-    const std::string& interpolationScheme)
+    const NeoFOAM::Dictionary& dict)
 {
+    std::string schemeName = "div(" + faceFlux.name() + "," + phi.name() + ")";
+    auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
+    auto interpolationScheme = tokens.get<std::string>(1);
     return dsl::EqnTerm(DivScheme(faceFlux, phi, interpolationScheme));
 }
 
