@@ -146,7 +146,7 @@ EqnSystem operator+(EqnSystem lhs, const EqnTerm& rhs)
     return lhs;
 }
 
-EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
+EqnSystem operator+(EqnTerm lhs, EqnTerm rhs)
 {
     EqnSystem eqnSys(lhs.exec(), lhs.nCells());
     eqnSys.addTerm(lhs);
