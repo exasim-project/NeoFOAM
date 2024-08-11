@@ -8,9 +8,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 BasicGeometryScheme::BasicGeometryScheme(const UnstructuredMesh& mesh)
     : GeometrySchemeFactory(mesh), mesh_(mesh)
-{
-
-}
+{}
 
 void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scalar>& weights)
 {
@@ -46,7 +44,9 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
         }
     );
 
-    parallelFor(exec, {0, mesh_.nInternalFaces()}, KOKKOS_LAMBDA(const size_t facei) { w[facei] = 1.0; });
+    parallelFor(
+        exec, {mesh_.nInternalFaces(), w.size()}, KOKKOS_LAMBDA(const int facei) { w[facei] = 1.0; }
+    );
 }
 
 void BasicGeometryScheme::updateDeltaCoeffs(const Executor& exec, SurfaceField<scalar>& deltaCoeffs)
