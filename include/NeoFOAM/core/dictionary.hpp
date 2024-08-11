@@ -8,6 +8,7 @@
 #include <iostream>
 #include "NeoFOAM/core/demangle.hpp"
 #include <vector>
+#include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM
 {
@@ -89,11 +90,11 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            NF_THROW( "Caught a bad_any_cast exception: " << std::endl
-                      << "requested type " << demangle(typeid(T).name()) << std::endl
-                      << "actual type " << demangle(operator[](key).type().name()) << std::endl
-                      << e.what() << std::endl;
-            throw;
+            std::cerr << "Caught a bad_any_cast exception: \n"
+                      << "requested type " << demangle(typeid(T).name()) << "\n"
+                      << "actual type " << demangle(operator[](key).type().name()) << "\n"
+                      << e.what()) << std::endl;
+            throw e;
         }
     }
 
@@ -114,11 +115,11 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            NF_THROW("Caught a bad_any_cast exception: " << std::endl
-                      << "requested type " << demangle(typeid(T).name()) << std::endl
-                      << "actual type " << demangle(operator[](key).type().name()) << std::endl
-                      << e.what() << std::endl;
-            throw;
+            std::cerr << "Caught a bad_any_cast exception: \n"
+                      << "requested type " << demangle(typeid(T).name()) << "\n"
+                      << "actual type " << demangle(operator[](key).type().name()) << "\n"
+                      << e.what()) << std::endl;
+            throw e;
         }
     }
 

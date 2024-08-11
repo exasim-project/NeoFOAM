@@ -33,20 +33,17 @@ std::any& Dictionary::operator[](const std::string& key)
     }
     catch (const std::out_of_range& e)
     {
-
-        NF_THROW(
-            "Key not found: " << key << " \n"
-                              << "available keys are: \n"
-                              << std::accumulate(
-                                     data_.begin(),
-                                     data_.end(),
-                                     std::string(""),
-                                     [](const std::string& a,
-                                        const std::pair<std::string, std::any>& b)
-                                     { return a + "  - " + b.first + " \n"; }
-                                 )
-                              << e.what()
-        );
+        std::cerr << "Key not found: " << key << " \n"
+                  << "available keys are: \n"
+                  << std::accumulate(
+                         data_.begin(),
+                         data_.end(),
+                         std::string(""),
+                         [](const std::string& a, const std::pair<std::string, std::any>& b)
+                         { return a + "  - " + b.first + " \n"; }
+                     )
+                  << e.what() << std::endl;
+        throw e;
     }
 }
 
@@ -59,19 +56,17 @@ const std::any& Dictionary::operator[](const std::string& key) const
     catch (const std::out_of_range& e)
     {
 
-        NF_THROW(
-            "Key not found: " << key << " \n"
-                              << "available keys are: \n"
-                              << std::accumulate(
-                                     data_.begin(),
-                                     data_.end(),
-                                     std::string(""),
-                                     [](const std::string& a,
-                                        const std::pair<std::string, std::any>& b)
-                                     { return a + "  - " + b.first + " \n"; }
-                                 )
-                              << e.what()
-        );
+        std::cerr << "Key not found: " << key << " \n"
+                  << "available keys are: \n"
+                  << std::accumulate(
+                         data_.begin(),
+                         data_.end(),
+                         std::string(""),
+                         [](const std::string& a, const std::pair<std::string, std::any>& b)
+                         { return a + "  - " + b.first + " \n"; }
+                     )
+                  << e.what() << std::endl;
+        throw e;
     }
 }
 
