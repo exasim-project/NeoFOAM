@@ -19,7 +19,9 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // ExplicitRungeKutta* self = static_cast<ExplicitRungeKutta*>(user_data);
     std::cout << "\nHello from explicitSolveWrapperFreeFunction\n";
     // Call the non-static member function explicitSolve on the instance
-    return 0; // self->explicitSolve(t, y, ydot, user_data);
+    NV_Ith_S(ydot, 0) = -1.0 * NV_Ith_S(y, 0);
+
+    return 0; // set 0 -> success
 }
 
 ExplicitRungeKutta::ExplicitRungeKutta(dsl::EqnSystem eqnSystem, const Dictionary& dict)
@@ -48,9 +50,8 @@ void ExplicitRungeKutta::solve()
         ARKStepEvolve(
             arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
         );
-        exit(0);
 
-        std::cout << "Step t = " << time_ << std::endl;
+        std::cout << "Step t = " << time_ << "\t" << NV_Ith_S(solution_, 0) << std::endl;
     }
 }
 
@@ -86,7 +87,7 @@ void ExplicitRungeKutta::initSUNARKODESolver()
     // solution_ = kokkosSolution_;
     solution_ = N_VNew_Serial(data_->nodes, context_);
     initial_conditions_ = N_VNew_Serial(data_->nodes, context_);
-    N_VConst(0.0, initial_conditions_);
+    N_VConst(1.0, initial_conditions_);
 
     // this->explicitSolve();
     arkodeMemory_.reset(reinterpret_cast<char*>(
