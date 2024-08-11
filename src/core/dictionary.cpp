@@ -33,6 +33,11 @@ Dictionary& Dictionary::subDict(const std::string& key)
     return std::any_cast<Dictionary&>(data_.at(key));
 }
 
+bool Dictionary::isDict(const std::string& key) const
+{
+    return found(key) && std::any_cast<Dictionary>(&data_.at(key));
+}
+
 std::unordered_map<std::string, std::any>& Dictionary::getMap() { return data_; }
 
 const std::unordered_map<std::string, std::any>& Dictionary::getMap() const { return data_; }

@@ -25,6 +25,7 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         dict["key"] = 43;
 
         REQUIRE(dict.found("key"));
+        REQUIRE(!dict.isDict("key"));
     }
 
     SECTION("Modify values")
@@ -65,6 +66,7 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         sDict.get<int>("key1") = 100;
 
         // check if the value is modified
+        REQUIRE(dict.isDict("subDict"));
         NeoFOAM::Dictionary& sDict2 = dict.subDict("subDict");
         REQUIRE(sDict2.get<int>("key1") == 100);
     }

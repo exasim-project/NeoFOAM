@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <any>
 #include <string>
+#include <iostream>
+#include "NeoFOAM/core/demangle.hpp"
 
 namespace NeoFOAM
 {
@@ -20,6 +22,7 @@ namespace NeoFOAM
  * using the `subDict` function. The values are stored using `std::any`, which
  * allows storing values of any type.
  */
+
 class Dictionary
 {
 public:
@@ -79,7 +82,18 @@ public:
     template<typename T>
     [[nodiscard]] T& get(const std::string& key)
     {
-        return std::any_cast<T&>(data_.at(key));
+        try
+        {
+            return std::any_cast<T&>(data_.at(key));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            std::cerr << "Caught a bad_any_cast exception: " << std::endl
+                      << "requested type " << demangle(typeid(T).name()) << std::endl
+                      << "actual type " << demangle(data_.at(key).type().name()) << std::endl
+                      << e.what() << std::endl;
+            throw;
+        }
     }
 
     /**
@@ -93,8 +107,26 @@ public:
     template<typename T>
     [[nodiscard]] const T& get(const std::string& key) const
     {
-        return std::any_cast<const T&>(data_.at(key));
+        try
+        {
+            return std::any_cast<const T&>(data_.at(key));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            std::cerr << "Caught a bad_any_cast exception: " << std::endl
+                      << "requested type " << demangle(typeid(T).name()) << std::endl
+                      << "actual type " << demangle(data_.at(key).type().name()) << std::endl
+                      << e.what() << std::endl;
+            throw;
+        }
     }
+
+    /**
+     * @brief Checks if the value associated with the given key is a dictionary.
+     * @param key The key to check.
+     * @return True if the value is a dictionary, false otherwise.
+     */
+    [[nodiscard]] bool isDict(const std::string& key) const;
 
     /**
      * @brief Retrieves a sub-dictionary associated with the given key.
