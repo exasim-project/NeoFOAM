@@ -70,6 +70,13 @@ public:
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
+    SurfaceInterpolation(
+        const Executor& exec, const UnstructuredMesh& mesh, std::string interpolationScheme
+    )
+        : exec_(exec), mesh_(mesh),
+          interpolationKernel_(SurfaceInterpolationFactory::create(interpolationScheme, exec, mesh)
+          ) {};
+
     void interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) const
     {
         interpolationKernel_->interpolate(surfaceField, volField);
