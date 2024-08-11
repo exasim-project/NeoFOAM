@@ -80,7 +80,7 @@ public:
     template<typename T>
     [[nodiscard]] T& get(const std::string& key)
     {
-        return std::any_cast<T&>(data_.at(key));
+        return std::any_cast<T&>(operator[](key));
     }
 
     /**
@@ -94,7 +94,7 @@ public:
     template<typename T>
     [[nodiscard]] const T& get(const std::string& key) const
     {
-        return std::any_cast<const T&>(data_.at(key));
+        return std::any_cast<const T&>(operator[](key));
     }
 
     /**

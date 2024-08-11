@@ -2,7 +2,8 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include "NeoFOAM/core/dictionary.hpp"
-
+#include "NeoFOAM/core/error.hpp"
+#include <numeric>
 namespace NeoFOAM
 {
 
@@ -24,9 +25,55 @@ void Dictionary::remove(const std::string& key) { data_.erase(key); }
 
 bool Dictionary::found(const std::string& key) const { return data_.find(key) != data_.end(); }
 
-std::any& Dictionary::operator[](const std::string& key) { return data_.at(key); }
+std::any& Dictionary::operator[](const std::string& key)
+{
+    try
+    {
+        return data_.at(key);
+    }
+    catch (const std::out_of_range& e)
+    {
 
-const std::any& Dictionary::operator[](const std::string& key) const { return data_.at(key); }
+        NF_THROW(
+            "Key not found: " << key << " \n"
+                              << "available keys are: \n"
+                              << std::accumulate(
+                                     data_.begin(),
+                                     data_.end(),
+                                     std::string(""),
+                                     [](const std::string& a,
+                                        const std::pair<std::string, std::any>& b)
+                                     { return a + "  - " + b.first + " \n"; }
+                                 )
+                              << e.what()
+        );
+    }
+}
+
+const std::any& Dictionary::operator[](const std::string& key) const
+{
+    try
+    {
+        return data_.at(key);
+    }
+    catch (const std::out_of_range& e)
+    {
+
+        NF_THROW(
+            "Key not found: " << key << " \n"
+                              << "available keys are: \n"
+                              << std::accumulate(
+                                     data_.begin(),
+                                     data_.end(),
+                                     std::string(""),
+                                     [](const std::string& a,
+                                        const std::pair<std::string, std::any>& b)
+                                     { return a + "  - " + b.first + " \n"; }
+                                 )
+                              << e.what()
+        );
+    }
+}
 
 Dictionary& Dictionary::subDict(const std::string& key)
 {
