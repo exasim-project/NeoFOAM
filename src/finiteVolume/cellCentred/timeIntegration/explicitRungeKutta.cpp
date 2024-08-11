@@ -80,6 +80,7 @@ void ExplicitRungeKutta::initSUNARKODESolver()
 {
     // kokkosSolution_ = VecType(data_->nodes, context_);
     // solution_ = kokkosSolution_;
+    solution_ = N_VNew_Serial(data_->nodes, context_);
 
     // this->explicitSolve();
     arkodeMemory_.reset(reinterpret_cast<char*>(

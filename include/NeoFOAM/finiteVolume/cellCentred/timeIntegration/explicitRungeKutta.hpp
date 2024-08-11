@@ -13,6 +13,8 @@
 
 // possibly useful headers.
 #include <nvector/nvector_kokkos.hpp>
+#include <nvector/nvector_serial.h>
+#include <sundials/sundials_nvector.h>
 #include <sundials/sundials_core.hpp>
 // #include <sunlinsol/sunlinsol_kokkosdense.hpp>
 // #include <sunmatrix/sunmatrix_kokkosdense.hpp>
