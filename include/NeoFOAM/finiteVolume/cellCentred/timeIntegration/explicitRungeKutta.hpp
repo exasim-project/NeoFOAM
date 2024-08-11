@@ -104,6 +104,7 @@ private:
     double timeStepSize_;
     double time_;
     // VecType kokkosSolution_;
+    N_Vector initial_conditions_;
     N_Vector solution_;
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we

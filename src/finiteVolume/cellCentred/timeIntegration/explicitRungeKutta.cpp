@@ -19,7 +19,7 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // ExplicitRungeKutta* self = static_cast<ExplicitRungeKutta*>(user_data);
     std::cout << "\nHello from explicitSolveWrapperFreeFunction\n";
     // Call the non-static member function explicitSolve on the instance
-    return 1; // self->explicitSolve(t, y, ydot, user_data);
+    return 0; // self->explicitSolve(t, y, ydot, user_data);
 }
 
 ExplicitRungeKutta::ExplicitRungeKutta(dsl::EqnSystem eqnSystem, const Dictionary& dict)
@@ -45,6 +45,10 @@ void ExplicitRungeKutta::solve()
     while (time_ < data_->endTime_)
     {
         time_ += data_->fixedStepSize_;
+        ARKStepEvolve(
+            arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
+        );
+        exit(0);
 
         std::cout << "Step t = " << time_ << std::endl;
     }
@@ -81,10 +85,12 @@ void ExplicitRungeKutta::initSUNARKODESolver()
     // kokkosSolution_ = VecType(data_->nodes, context_);
     // solution_ = kokkosSolution_;
     solution_ = N_VNew_Serial(data_->nodes, context_);
+    initial_conditions_ = N_VNew_Serial(data_->nodes, context_);
+    N_VConst(0.0, initial_conditions_);
 
     // this->explicitSolve();
     arkodeMemory_.reset(reinterpret_cast<char*>(
-        ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, solution_, context_)
+        ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initial_conditions_, context_)
     ));
     void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
@@ -93,7 +99,7 @@ void ExplicitRungeKutta::initSUNARKODESolver()
     ERKStepSetInitStep(ark, data_->fixedStepSize_);
     ERKStepSetFixedStep(ark, data_->fixedStepSize_);
 
-    ERKStepSetTableNum(arkodeMemory_.get(), ARKODE_HEUN_EULER_2_1_2);
+    ERKStepSetTableNum(arkodeMemory_.get(), ARKODE_FORWARD_EULER_1_1);
 
     ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
 }
