@@ -85,13 +85,13 @@ public:
     {
         try
         {
-            return std::any_cast<T&>(data_.at(key));
+            return std::any_cast<T&>(operator[](key));
         }
         catch (const std::bad_any_cast& e)
         {
             std::cerr << "Caught a bad_any_cast exception: " << std::endl
                       << "requested type " << demangle(typeid(T).name()) << std::endl
-                      << "actual type " << demangle(data_.at(key).type().name()) << std::endl
+                      << "actual type " << demangle(operator[](key).type().name()) << std::endl
                       << e.what() << std::endl;
             throw;
         }
@@ -110,13 +110,13 @@ public:
     {
         try
         {
-            return std::any_cast<const T&>(data_.at(key));
+            return std::any_cast<const T&>(operator[](key));
         }
         catch (const std::bad_any_cast& e)
         {
             std::cerr << "Caught a bad_any_cast exception: " << std::endl
                       << "requested type " << demangle(typeid(T).name()) << std::endl
-                      << "actual type " << demangle(data_.at(key).type().name()) << std::endl
+                      << "actual type " << demangle(operator[](key).type().name()) << std::endl
                       << e.what() << std::endl;
             throw;
         }
