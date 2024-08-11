@@ -13,6 +13,7 @@ target_sources(
           "core/time.cpp"
           "core/dictionary.cpp"
           "core/demangle.cpp"
+          "core/tokenList.cpp"
           "core/kokkos.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
