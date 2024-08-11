@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include "NeoFOAM/core/demangle.hpp"
+#include <vector>
 
 namespace NeoFOAM
 {
@@ -134,6 +135,12 @@ public:
      * @return A reference to the sub-dictionary associated with the key.
      */
     Dictionary& subDict(const std::string& key);
+
+    /**
+     * @brief Retrieves the keys of the dictionary.
+     * @return A vector containing the keys of the dictionary.
+     */
+    std::vector<std::string> keys() const;
 
     /**
      * @brief Retrieves the underlying unordered map of the dictionary.
