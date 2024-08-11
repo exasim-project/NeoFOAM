@@ -113,11 +113,10 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            std::cerr << "Caught a bad_any_cast exception: " << std::endl
+            NF_THROW("Caught a bad_any_cast exception: " << std::endl
                       << "requested type " << demangle(typeid(T).name()) << std::endl
                       << "actual type " << demangle(data_.at(key).type().name()) << std::endl
-                      << e.what() << std::endl;
-            throw;
+                      << e.what());
         }
     }
 
