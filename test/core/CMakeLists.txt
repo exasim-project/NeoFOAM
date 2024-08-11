@@ -5,6 +5,7 @@ add_subdirectory(mpi)
 add_subdirectory(primitives)
 
 neofoam_unit_test(dictionary)
+neofoam_unit_test(tokenList)
 neofoam_unit_test(executor)
 neofoam_unit_test(parallelAlgorithms)
 
