@@ -1,5 +1,5 @@
-name: Build NeoFOAM
-run-name: 'Build workflow'
+name: FoamAdapter Integration Test
+run-name: 'Foam Adapter Integration Test'
 
 on:
   push:
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
-    name: Build NeoFOAM
+    name: Build FoamAdapter
     strategy:
       fail-fast: false
       matrix:
@@ -31,24 +31,24 @@ jobs:
             CXX: clang++
           - CC: gcc
             CXX: g++
-        preset: ["develop", "profiling", "production"]
-        exclude:
-          - compiler:
-              CC: gcc
-              CXX: g++
-            preset: "develop"
-          - compiler:
-              CC: clang
-              CXX: clang++
-            preset: "profiling"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-     - name: Checkout to repository
+     - name: Checkout FoamAdapter
        uses: actions/checkout@v4
+       with:
+        repository: exasim-project/FoamAdapter
 
-     - name: Add clang repo
+     - name: Checkout NeoFOAM submodule
+       uses: actions/checkout@v4
+       with:
+        repository: exasim-project/NeoFOAM
+        path: NeoFOAM
+        ref: '${{ github.head_ref }}'
+
+     - name: Add repos
        run: |
          sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main'
+         wget -q -O - https://dl.openfoam.com/add-debian-repo.sh | sudo bash
          wget https://apt.llvm.org/llvm-snapshot.gpg.key
          sudo apt-key add llvm-snapshot.gpg.key
 
@@ -64,13 +64,13 @@ jobs:
            python3-dev \
            build-essential \
            libopenmpi-dev \
-           openmpi-bin
+           openmpi-bin \
+           openfoam2406-dev
          sudo apt remove clang-14
          sudo rm /usr/bin/clang
          sudo rm /usr/bin/clang++
          sudo ln -s /usr/bin/clang-16 /usr/bin/clang
          sudo ln -s /usr/bin/clang++-16 /usr/bin/clang++
-
 
      - name: Get versions
        run: |
@@ -78,16 +78,17 @@ jobs:
          ninja --version
          cmake --version
 
-     - name: Build NeoFOAM
+     - name: Build FoamAdapter
        run: |
+         source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
          CC=${{matrix.compiler.CC}} \
          CXX=${{matrix.compiler.CXX}} \
-         cmake --preset ${{matrix.preset}} \
-           -DNEOFOAM_BUILD_TESTS=ON \
+         cmake --preset develop \
            -DNEOFOAM_DEVEL_TOOLS=OFF \
            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
-         cmake --build  --preset ${{matrix.preset}}
+         cmake --build  --preset develop
 
      - name: Execute unit tests NeoFOAM
        run: |
-         ctest --preset ${{matrix.preset}}
+         source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+         ctest --preset develop
