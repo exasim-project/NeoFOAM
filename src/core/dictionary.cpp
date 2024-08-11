@@ -33,6 +33,17 @@ Dictionary& Dictionary::subDict(const std::string& key)
     return std::any_cast<Dictionary&>(data_.at(key));
 }
 
+// get keys of the dictionary
+std::vector<std::string> Dictionary::keys() const
+{
+    std::vector<std::string> keys;
+    for (const auto& pair : data_)
+    {
+        keys.push_back(pair.first);
+    }
+    return keys;
+}
+
 std::unordered_map<std::string, std::any>& Dictionary::getMap() { return data_; }
 
 const std::unordered_map<std::string, std::any>& Dictionary::getMap() const { return data_; }
