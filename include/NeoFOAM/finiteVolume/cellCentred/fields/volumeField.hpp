@@ -29,11 +29,13 @@ public:
 
     VolumeField(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
+            name,
             mesh,
             DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),

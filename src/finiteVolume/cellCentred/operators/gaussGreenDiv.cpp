@@ -20,7 +20,7 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = divPhi.mesh();
     const auto exec = divPhi.exec();
-    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(phif, faceFlux, phi);
 
@@ -96,7 +96,7 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(phif, faceFlux, phi);
 
