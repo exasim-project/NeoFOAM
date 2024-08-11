@@ -36,7 +36,7 @@ TEST_CASE("volumeField")
             dict.insert("fixedValue", 2.0);
             bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
-        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, "vf", mesh, bcs);
+        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, mesh, bcs);
         NeoFOAM::fill(vf.internalField(), 1.0);
         vf.correctBoundaryConditions();
 
