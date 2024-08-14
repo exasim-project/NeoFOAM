@@ -40,7 +40,6 @@ public:
     template<typename T>
     [[nodiscard]] const T& get(const size_t& idx) const
     {
-        std::cout << "const T& get(const size_t& idx) const" << std::endl;
         return std::any_cast<const T&>(data_.at(idx));
     }
 
