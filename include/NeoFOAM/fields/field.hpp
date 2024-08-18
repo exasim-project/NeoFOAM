@@ -67,6 +67,24 @@ public:
     }
 
     /**
+     * @brief Create a Field with a given size on an executor and uniform value
+     * @param exec  Executor associated to the matrix
+     * @param size  size of the matrix
+     */
+    Field(const Executor& exec, size_t size, ValueType value)
+        : size_(size), data_(nullptr), exec_(exec)
+    {
+        void* ptr = nullptr;
+        std::visit(
+            [this, &ptr, size](const auto& concreteExec)
+            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
+            exec_
+        );
+        data_ = static_cast<ValueType*>(ptr);
+        NeoFOAM::fill(*this, value);
+    }
+
+    /**
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param in a vector of elements to copy over
@@ -158,7 +176,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     ValueType& operator[](const size_t i) { return data_[i]; }
 
     /**
@@ -166,7 +184,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     const ValueType& operator[](const size_t i) const { return data_[i]; }
 
     /**
@@ -174,7 +192,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     ValueType& operator()(const size_t i) { return data_[i]; }
 
     /**
@@ -182,7 +200,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     const ValueType& operator()(const size_t i) const { return data_[i]; }
 
     /**

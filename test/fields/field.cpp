@@ -35,6 +35,15 @@ TEST_CASE("Field Constructors")
         {
             REQUIRE(value == 5.0);
         }
+
+        NeoFOAM::Field<NeoFOAM::scalar> initWith5(exec, size, 5.0);
+        REQUIRE(initWith5.size() == size);
+
+        auto hostInitWith5 = initWith5.copyToHost().span();
+        for (auto value : hostInitWith5)
+        {
+            REQUIRE(value == 5.0);
+        }
     }
 
     SECTION("Initialiser List Constructor " + execName)
@@ -59,6 +68,7 @@ TEST_CASE("Field Constructors")
         REQUIRE(hostB.data()[2] == 3);
     }
 }
+
 
 TEST_CASE("Field Operator Overloads")
 {
@@ -255,4 +265,23 @@ TEST_CASE("Field Operations")
         a.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return 2 * sB[i]; });
         REQUIRE(equal(a, 20.0));
     }
+}
+
+TEST_CASE("getSpans")
+{
+    NeoFOAM::Executor exec = NeoFOAM::SerialExecutor {};
+
+    NeoFOAM::Field<NeoFOAM::scalar> a(exec, 3, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
+
+    auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
+
+    REQUIRE(spanA[0] == 1.0);
+    REQUIRE(spanB[0] == 2.0);
+    REQUIRE(spanC[0] == 3.0);
+
+    auto [spanA2] = NeoFOAM::spans(a);
+
+    REQUIRE(spanA[0] == 1.0);
 }
