@@ -14,7 +14,7 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 namespace NeoFOAM::finiteVolume::cellCentred::expOp
 {
 
-class DivScheme
+class DivScheme : public dsl::EqnTermMixin<NeoFOAM::scalar>
 {
 
 public:
@@ -24,7 +24,8 @@ public:
         fvcc::VolumeField<NeoFOAM::scalar>& Phi,
         const Input& input
     )
-        : termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit), exec_(Phi.exec()),
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(),
+          termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit), exec_(Phi.exec()),
           nCells_(Phi.mesh().nCells()), faceFlux_(faceFlux), Phi_(Phi),
           div_(Phi.exec(), Phi.mesh(), input)
     {}

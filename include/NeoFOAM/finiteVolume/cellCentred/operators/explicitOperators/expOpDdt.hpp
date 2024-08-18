@@ -15,13 +15,14 @@ namespace NeoFOAM::finiteVolume::cellCentred::expOp
 {
 
 
-class DdtScheme
+class DdtScheme : public dsl::EqnTermMixin<NeoFOAM::scalar>
 {
 
 public:
 
     DdtScheme(fvcc::VolumeField<NeoFOAM::scalar>& Phi)
-        : termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Temporal), Phi_(Phi), exec_(Phi.exec()),
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(),
+          termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Temporal), Phi_(Phi), exec_(Phi.exec()),
           nCells_(Phi.mesh().nCells())
     {}
 
