@@ -21,36 +21,39 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 namespace NeoFOAM::finiteVolume::cellCentred::expOp
 {
 
-dsl::EqnTerm ddt(fvcc::VolumeField<NeoFOAM::scalar>& phi) { return dsl::EqnTerm(DdtScheme(phi)); }
-
-dsl::EqnTerm ddt(fvcc::VolumeField<NeoFOAM::scalar>& rho, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+dsl::EqnTerm<NeoFOAM::scalar> ddt(fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    NF_ERROR_EXIT("Not implemented");
-    return dsl::EqnTerm(DdtScheme(phi));
+    return dsl::EqnTerm<NeoFOAM::scalar>(DdtScheme(phi));
 }
 
-dsl::EqnTerm div(const fvcc::SurfaceField<NeoFOAM::scalar>& flux)
+dsl::EqnTerm<NeoFOAM::scalar>
+ddt(fvcc::VolumeField<NeoFOAM::scalar>& rho, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
     NF_ERROR_EXIT("Not implemented");
-    // return dsl::EqnTerm(DivScheme(flux));
+    return dsl::EqnTerm<NeoFOAM::scalar>(DdtScheme(phi));
 }
 
-dsl::EqnTerm div(fvcc::VolumeField<NeoFOAM::scalar>& phi)
+dsl::EqnTerm<NeoFOAM::scalar> div(const fvcc::SurfaceField<NeoFOAM::scalar>& flux)
 {
     NF_ERROR_EXIT("Not implemented");
-    return dsl::EqnTerm(DdtScheme(phi)); // suppress warning
-    // return dsl::EqnTerm(DivScheme(flux));
+    // return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(flux));
 }
 
-dsl::EqnTerm
+dsl::EqnTerm<NeoFOAM::scalar> div(fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    NF_ERROR_EXIT("Not implemented");
+    return dsl::EqnTerm<NeoFOAM::scalar>(DdtScheme(phi)); // suppress warning
+    // return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(flux));
+}
+
+dsl::EqnTerm<NeoFOAM::scalar>
 div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux,
     fvcc::VolumeField<NeoFOAM::scalar>& phi,
     const NeoFOAM::Dictionary& dict)
 {
     std::string schemeName = "div(" + faceFlux.name() + "," + phi.name() + ")";
     auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
-    auto interpolationScheme = tokens.get<std::string>(1);
-    return dsl::EqnTerm(DivScheme(faceFlux, phi, interpolationScheme));
+    return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(faceFlux, phi, tokens));
 }
 
 

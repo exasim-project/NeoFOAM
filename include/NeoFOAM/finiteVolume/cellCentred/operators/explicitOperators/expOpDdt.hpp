@@ -21,7 +21,7 @@ class DdtScheme
 public:
 
     DdtScheme(fvcc::VolumeField<NeoFOAM::scalar>& Phi)
-        : termType_(dsl::EqnTerm::Type::Temporal), Phi_(Phi), exec_(Phi.exec()),
+        : termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Temporal), Phi_(Phi), exec_(Phi.exec()),
           nCells_(Phi.mesh().nCells())
     {}
 
@@ -29,7 +29,7 @@ public:
 
     void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field, NeoFOAM::scalar scale) {}
 
-    dsl::EqnTerm::Type getType() const { return termType_; }
+    dsl::EqnTerm<NeoFOAM::scalar>::Type getType() const { return termType_; }
 
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField() { return &Phi_; }
 
@@ -37,7 +37,7 @@ public:
 
     std::size_t nCells() const { return nCells_; }
 
-    dsl::EqnTerm::Type termType_;
+    dsl::EqnTerm<NeoFOAM::scalar>::Type termType_;
 
 
     fvcc::VolumeField<NeoFOAM::scalar>& Phi_;
