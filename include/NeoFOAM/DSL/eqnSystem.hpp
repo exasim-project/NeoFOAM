@@ -90,7 +90,7 @@ public:
             fvcc::TimeIntegration<ValueType> timeIntergrator(
                 *this, fvSchemesDict.subDict("ddtSchemes")
             );
-            // timeIntergrator.solve();
+            timeIntergrator.solve();
         }
         else
         {
