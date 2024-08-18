@@ -26,15 +26,15 @@ public:
 
     static std::string schema() { return "none"; }
 
-    GaussGreenDiv(
-        const Executor& exec, const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
-    );
+    GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs);
 
     void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    );
+    ) override;
 
-    void div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi);
+    void
+    div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+    ) override;
 
     std::unique_ptr<DivOperatorFactory> clone() const override;
 

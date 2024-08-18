@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
+#include "NeoFOAM/core/inputs.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
@@ -19,10 +20,29 @@ namespace NeoFOAM::finiteVolume::cellCentred
 class SurfaceInterpolationFactory :
     public NeoFOAM::RuntimeSelectionFactory<
         SurfaceInterpolationFactory,
-        Parameters<const Executor&, const UnstructuredMesh&>>
+        Parameters<const Executor&, const UnstructuredMesh&, Input>>
 {
 
 public:
+
+    static std::unique_ptr<SurfaceInterpolationFactory>
+    create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
+    {
+        std::string key;
+        // input is dictionary the key is "interpolation"
+        if (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
+        {
+            key = std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("surfaceInterpolation");
+        }
+        else
+        {
+            key = std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
+        }
+
+        keyExistsOrError(key);
+        auto ptr = table().at(key)(exec, uMesh, inputs);
+        return ptr;
+    }
 
     static std::string name() { return "SurfaceInterpolationFactory"; }
 
@@ -70,12 +90,9 @@ public:
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    SurfaceInterpolation(
-        const Executor& exec, const UnstructuredMesh& mesh, std::string interpolationScheme
-    )
+    SurfaceInterpolation(const Executor& exec, const UnstructuredMesh& mesh, Input input)
         : exec_(exec), mesh_(mesh),
-          interpolationKernel_(SurfaceInterpolationFactory::create(interpolationScheme, exec, mesh)
-          ) {};
+          interpolationKernel_(SurfaceInterpolationFactory::create(exec, mesh, input)) {};
 
     void interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField) const
     {

@@ -49,7 +49,7 @@ void computeLinearInterpolation(
     );
 }
 
-Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
+Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh, Input input)
     : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {
 
