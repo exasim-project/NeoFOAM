@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['local_5fidx_720',['local_idx',['../structNeoFOAM_1_1NodeCommMap.html#a6b64895e94e527021b3817122a4cbced',1,'NeoFOAM::NodeCommMap']]]
+  ['hasexplicitterm_732',['HasExplicitTerm',['../namespaceNeoFOAM_1_1DSL.html#a41b1b4bcc794ab897f65d25b8ba1e371',1,'NeoFOAM::DSL']]],
+  ['hastemporalterm_733',['HasTemporalTerm',['../namespaceNeoFOAM_1_1DSL.html#ab072f0b9ab697dafc3ff480643acecc0',1,'NeoFOAM::DSL']]]
 ];

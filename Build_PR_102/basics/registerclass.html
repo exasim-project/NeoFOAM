@@ -6,10 +6,10 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Macro Definitions" href="macros.html" /><link rel="prev" title="Dictionary" href="dictionary.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/registerclass.html" />
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
         <title>Derived class discovery at compile time - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     
@@ -206,24 +206,19 @@
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mpi_architecture.html">MPI Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fields.html">Fields</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/fields.html">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/executor.html">Executor</a></li>
 </ul>
 </li>
 </ul>
@@ -268,8 +263,8 @@
         <article role="main" id="furo-main-content">
           <section id="derived-class-discovery-at-compile-time">
 <span id="basics-registeredclass"></span><h1>Derived class discovery at compile time<a class="headerlink" href="#derived-class-discovery-at-compile-time" title="Link to this heading">¶</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> class is a template class that allows to register derived classes into a map. This allows to instaniate derived classes from the base class by its name.  This mechanisem is similar to OpenFOAMs runtime selection mechanism. The classes are registered at compile time via static member initialization. Additional explanation can be found at: <a class="reference external" href="https://stackoverflow.com/questions/52354538/derived-class-discovery-at-compile-time">here</a> and  <a class="reference external" href="https://stackoverflow.com/questions/10332725/how-to-automatically-register-a-class-on-creation">here</a> .</p>
-<p>This approach allows to create a plugin architecture where now a derived class can be loaded at runtime. Additionally, it simplifies the runtime selection of a specific class. The derived classes can be created by providing its  name, as shown below:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> class is a template class that allows to register derived classes into a map. This allows to instaniate derived classes from the base class by its name.  This mechanisem is similar to OpenFOAM’s runtime selection mechanism. The classes are registered at compile time via static member initialization. Additional explanation can be found in the following two posts on Stack OverFlow: <a class="reference external" href="https://stackoverflow.com/questions/52354538/derived-class-discovery-at-compile-time">Derived class discovery at compile time</a> and  <a class="reference external" href="https://stackoverflow.com/questions/10332725/how-to-automatically-register-a-class-on-creation">How to automatically register a class on creation</a> .</p>
+<p>This approach allows to create a plugin architecture where a derived class can be loaded at runtime. Additionally, it simplifies the runtime selection of a specific class. The derived classes can be created by providing its  name, as shown below:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">baseClass</span><span class="o">&gt;</span><span class="w"> </span><span class="n">derivedClass</span><span class="w"> </span><span class="o">=</span>
 <span class="w">    </span><span class="n">baseClass</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;Name of derivedClass&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Additional arguments&quot;</span><span class="p">,...);</span>
 </pre></div>
@@ -292,16 +287,19 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> class is a template class that manages the registration of the derived classes and stores the map of the registered classes. The map associates a function with a string that is used to create the derived class.</p>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
-<p>The following example shows how to use the <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> and <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory::Register</span></code> to automatically register derived classes. (details see <code class="docutils literal notranslate"><span class="pre">registerClass.cpp</span></code>).</p>
-<p>The static function <code class="docutils literal notranslate"><span class="pre">create</span></code> returns a <code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code> to its base class and takes an argument list specified by inside the template class <code class="docutils literal notranslate"><span class="pre">NeoFOAM::Parameters&lt;&gt;</span></code>.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BaseClass</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">RuntimeSelectionFactory</span><span class="o">&lt;</span><span class="n">BaseClass</span><span class="p">,</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Parameters</span><span class="o">&lt;&gt;&gt;</span>
+<p>The following example shows how to use the <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> and <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory::Register</span></code> to automatically register derived classes. (check <code class="docutils literal notranslate"><span class="pre">registerClass.cpp</span></code> for details).</p>
+<p>The static function <code class="docutils literal notranslate"><span class="pre">create</span></code> returns a <code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code> to its base class and takes an argument list specified inside the template class <code class="docutils literal notranslate"><span class="pre">NeoFOAM::Parameters&lt;&gt;</span></code>.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">Base</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="p">...</span><span class="w"> </span><span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RuntimeSelectionFactory</span><span class="o">&lt;</span><span class="n">Base</span><span class="p">,</span><span class="w"> </span><span class="n">Parameters</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">RegisterDocumentation</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span>
 <span class="p">{</span>
 
-<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="w"> </span><span class="n">create</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">Args</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">keyExistsOrError</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">().</span><span class="n">at</span><span class="p">(</span><span class="n">key</span><span class="p">)(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">ptr</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 
-<span class="w">    </span><span class="n">BaseClass</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
-
-<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;BaseClass&quot;</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 <span class="p">};</span>
 </pre></div>
 </div>
@@ -324,7 +322,7 @@
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">BaseClass</span><span class="o">&gt;</span><span class="w"> </span><span class="n">testDerived</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseClass</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;DerivedClass&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>All baseclasses are also registered in the <code class="docutils literal notranslate"><span class="pre">NeoFOAM::BaseClassDocumentation</span></code> map and the documentation and the schema retrieved as followed:</p>
+<p>All base classes are also registered in the <code class="docutils literal notranslate"><span class="pre">NeoFOAM::BaseClassDocumentation</span></code> map and the documentation and the schema retrieved as followed:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">baseClassName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;BaseClass&quot;</span><span class="p">;</span>
 <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">derivedClass</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;DerivedClass&quot;</span><span class="p">;</span>
 <span class="n">NeoFOAM</span><span class="o">::</span><span class="n">BaseClassDocumentation</span><span class="o">::</span><span class="n">doc</span><span class="p">(</span><span class="n">baseClassName</span><span class="p">,</span><span class="w"> </span><span class="n">derivedClass</span><span class="p">)</span>

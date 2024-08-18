@@ -3,13 +3,13 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Operators" href="operators.html" /><link rel="prev" title="Fields (FVCC)" href="fields.html" />
+<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Operators" href="operators.html" /><link rel="prev" title="cellCenteredFiniteVolume" href="index.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/finiteVolume/cellCentred/boundaryConditions.html" />
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
         <title>Boundary Conditions - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     
@@ -206,24 +206,19 @@
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../basics/index.html">Basics</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/executor.html">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../basics/containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../basics/unstructuredMesh.html">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../basics/containers.html">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../basics/unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/macros.html">Macro Definitions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/mpi_architecture.html">MPI Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../basics/fields.html">Fields</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">cellCenteredFiniteVolume</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stencil.html">Stencil</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../api/fields.html">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/executor.html">Executor</a></li>
 </ul>
 </li>
 </ul>
@@ -272,8 +267,8 @@
 </div>
 <section id="boundary-conditions">
 <h1>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading">¶</a></h1>
-<p>In contrast to OpenFOAM the boundary conditions do not store the underlying  data but instead modify the data provided by <code class="docutils literal notranslate"><span class="pre">DomainField</span></code>.  A basic NoOp implementation is provided by  the <code class="docutils literal notranslate"><span class="pre">VolumeBoundary</span></code> and <code class="docutils literal notranslate"><span class="pre">SurfaceBoundary</span></code> classes.
-To apply boundary conditions for both Surface and Volume Fields a virtual base class member function, <code class="docutils literal notranslate"><span class="pre">correctBoundaryConditions</span></code>, member is used. The member acts as an interface and is responsible for updating the actual boundary data contained within an <code class="docutils literal notranslate"><span class="pre">InternalField</span></code> (an attribute of the <code class="docutils literal notranslate"><span class="pre">DomainField</span></code>).</p>
+<p>In contrast to OpenFOAM, the boundary conditions do not store the underlying  data but instead modify the data provided by <code class="docutils literal notranslate"><span class="pre">DomainField</span></code>.  A basic NoOp implementation is provided by  the <code class="docutils literal notranslate"><span class="pre">VolumeBoundary</span></code> and <code class="docutils literal notranslate"><span class="pre">SurfaceBoundary</span></code> classes.
+To apply boundary conditions for both Surface and Volume Fields, a virtual base class member function <code class="docutils literal notranslate"><span class="pre">correctBoundaryConditions</span></code> is used. The member acts as an interface and is responsible for updating the actual boundary data contained within an <code class="docutils literal notranslate"><span class="pre">InternalField</span></code> (an attribute of the <code class="docutils literal notranslate"><span class="pre">DomainField</span></code>).</p>
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred14VolumeBoundaryE">
 <span id="_CPPv3I0EN7NeoFOAM12finiteVolume11cellCentred14VolumeBoundaryE"></span><span id="_CPPv2I0EN7NeoFOAM12finiteVolume11cellCentred14VolumeBoundaryE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeBoundary"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VolumeBoundary</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">finiteVolume</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">cellCentred</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">BoundaryPatchMixin</span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred14VolumeBoundaryE" title="Link to this definition">¶</a><br /></dt>
@@ -288,7 +283,7 @@ To apply boundary conditions for both Surface and Volume Fields a virtual base c
 <dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred15SurfaceBoundaryE">
 <span id="_CPPv3I0EN7NeoFOAM12finiteVolume11cellCentred15SurfaceBoundaryE"></span><span id="_CPPv2I0EN7NeoFOAM12finiteVolume11cellCentred15SurfaceBoundaryE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceBoundary"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">SurfaceBoundary</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">finiteVolume</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">cellCentred</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">BoundaryPatchMixin</span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred15SurfaceBoundaryE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Represents a volume boundary field for a cell-centered finite volume method. </p>
+<dd><p>Represents a surface boundary field for a cell-centered finite volume method. </p>
 <dl class="field-list simple">
 <dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>ValueType</strong> – The data type of the field. </p>
@@ -299,7 +294,7 @@ To apply boundary conditions for both Surface and Volume Fields a virtual base c
 <p>The above are the base classes for the specific (derived) implementations which will ultimately provide the actual boundary conditions to both volumetric and surface fields.</p>
 <section id="boundary-conditions-for-volumefield-s">
 <h2>Boundary Conditions for VolumeField’s<a class="headerlink" href="#boundary-conditions-for-volumefield-s" title="Link to this heading">¶</a></h2>
-<p>Boundary conditions are responsible of modifying the data of the <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code> using the visitor pattern. A possible implementation is shown below.</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">correctBoundaryConditions</span></code> is responsible for modifying the data of the <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code> using the visitor pattern. A possible implementation is shown below.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">fvccScalarFixedValueBoundaryField::correctBoundaryConditions</span><span class="p">(</span>
 <span class="w">    </span><span class="n">BoundaryFields</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">bfield</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">internalField</span>
 <span class="p">)</span>
@@ -329,7 +324,7 @@ To apply boundary conditions for both Surface and Volume Fields a virtual base c
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>As the BoundaryFields class stores all data in a continuous array the boundary condition must only update the data in the range of the boundary specified by the <cite>start_</cite> and <cite>end_</cite> index. In the above simple boundary condition, the kernel only sets the values to a uniform/fixed value. The <code class="docutils literal notranslate"><span class="pre">value</span></code> field stores the current value of the boundary condition that is used by the explicit operators and the <code class="docutils literal notranslate"><span class="pre">refValue</span></code> stores the value of the boundary condition that is used by the implicit operators.</p>
+<p>As the <code class="docutils literal notranslate"><span class="pre">BoundaryFields</span></code> class stores all data in a contiguous array, the boundary condition must only update the data in the range of the boundary specified by the <cite>start_</cite> and <cite>end_</cite> index. In the above simple boundary condition, the kernel only sets the values to a uniform/fixed value. The <code class="docutils literal notranslate"><span class="pre">value</span></code> field stores the current value of the boundary condition that is used by the explicit operators and the <code class="docutils literal notranslate"><span class="pre">refValue</span></code> stores the value of the boundary condition that is used by the implicit operators.</p>
 <p>Currently the following boundary conditions are implemented for volField for scalar:</p>
 <p>Currently the following boundary conditions are implemented for volField for Vector:</p>
 </section>
@@ -353,14 +348,14 @@ To apply boundary conditions for both Surface and Volume Fields a virtual base c
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="fields.html">
+          <a class="prev-page" href="index.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Fields (FVCC)</div>
+                <div class="title">cellCenteredFiniteVolume</div>
                 
               </div>
             </a>

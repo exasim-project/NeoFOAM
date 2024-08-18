@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['halfduplexcommbuffer_2ehpp_474',['halfDuplexCommBuffer.hpp',['../halfDuplexCommBuffer_8hpp.html',1,'']]]
+  ['halfduplexcommbuffer_2ehpp_483',['halfDuplexCommBuffer.hpp',['../halfDuplexCommBuffer_8hpp.html',1,'']]]
 ];
