@@ -26,6 +26,7 @@ jobs:
     - name: Build docs
       run: |
         sphinx-build -b html ./doc ./docs_build/
+        cp -r doc/_build/ docs_build/doxygen
         cd docs_build
         touch .nojekyll
     - name: Deploy PR Build
@@ -45,3 +46,6 @@ jobs:
       with:
         folder: docs_build
         target-folder: latest
+    - name: Echo Build PR URL
+      run: |
+        echo "Deploy to: https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}"

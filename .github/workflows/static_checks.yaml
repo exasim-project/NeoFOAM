@@ -6,6 +6,7 @@ on:
       types: [opened, synchronize]
 jobs:
   build-compilation-db:
+    if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
     name: Build with IWYU
     runs-on: ubuntu-latest
     steps:
