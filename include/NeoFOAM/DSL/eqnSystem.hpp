@@ -11,10 +11,21 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/core/error.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
+
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
+
+namespace NeoFOAM::finiteVolume::cellCentred
+{
+template<typename ValueType>
+class TimeIntegration;
+}
+
 
 namespace NeoFOAM::DSL
 {
 
+template<typename ValueType>
 class EqnSystem
 {
 public:
@@ -35,23 +46,23 @@ public:
         return source;
     }
 
-    void addTerm(const EqnTerm& eqnTerm)
+    void addTerm(const EqnTerm<ValueType>& eqnTerm)
     {
         switch (eqnTerm.getType())
         {
-        case EqnTerm::Type::Temporal:
+        case EqnTerm<ValueType>::Type::Temporal:
             temporalTerms_.push_back(eqnTerm);
             break;
-        case EqnTerm::Type::Implicit:
+        case EqnTerm<ValueType>::Type::Implicit:
             implicitTerms_.push_back(eqnTerm);
             break;
-        case EqnTerm::Type::Explicit:
+        case EqnTerm<ValueType>::Type::Explicit:
             explicitTerms_.push_back(eqnTerm);
             break;
         }
     }
 
-    void addSystem(const EqnSystem& eqnSys)
+    void addSystem(const EqnSystem<ValueType>& eqnSys)
     {
         for (auto& eqnTerm : eqnSys.temporalTerms_)
         {
@@ -76,6 +87,10 @@ public:
         if (temporalTerms_.size() > 0)
         {
             // integrate equations in time
+            fvcc::TimeIntegration<ValueType> timeIntergrator(
+                *this, fvSchemesDict.subDict("ddtSchemes")
+            );
+            // timeIntergrator.solve();
         }
         else
         {
@@ -89,17 +104,17 @@ public:
     }
 
     // getters
-    const std::vector<EqnTerm>& temporalTerms() const { return temporalTerms_; }
+    const std::vector<EqnTerm<ValueType>>& temporalTerms() const { return temporalTerms_; }
 
-    const std::vector<EqnTerm>& implicitTerms() const { return implicitTerms_; }
+    const std::vector<EqnTerm<ValueType>>& implicitTerms() const { return implicitTerms_; }
 
-    const std::vector<EqnTerm>& explicitTerms() const { return explicitTerms_; }
+    const std::vector<EqnTerm<ValueType>>& explicitTerms() const { return explicitTerms_; }
 
-    std::vector<EqnTerm>& temporalTerms() { return temporalTerms_; }
+    std::vector<EqnTerm<ValueType>>& temporalTerms() { return temporalTerms_; }
 
-    std::vector<EqnTerm>& implicitTerms() { return implicitTerms_; }
+    std::vector<EqnTerm<ValueType>>& implicitTerms() { return implicitTerms_; }
 
-    std::vector<EqnTerm>& explicitTerms() { return explicitTerms_; }
+    std::vector<EqnTerm<ValueType>>& explicitTerms() { return explicitTerms_; }
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
@@ -123,40 +138,45 @@ public:
     }
 
     NeoFOAM::scalar dt = 0;
+    NeoFOAM::Dictionary fvSchemesDict;
 
 private:
 
     const NeoFOAM::Executor exec_;
     const std::size_t nCells_;
-    std::vector<EqnTerm> temporalTerms_;
-    std::vector<EqnTerm> implicitTerms_;
-    std::vector<EqnTerm> explicitTerms_;
+    std::vector<EqnTerm<ValueType>> temporalTerms_;
+    std::vector<EqnTerm<ValueType>> implicitTerms_;
+    std::vector<EqnTerm<ValueType>> explicitTerms_;
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField_;
 };
 
-EqnSystem operator+(EqnSystem lhs, const EqnSystem& rhs)
+template<typename ValueType>
+EqnSystem<ValueType> operator+(EqnSystem<ValueType> lhs, const EqnSystem<ValueType>& rhs)
 {
     lhs.addSystem(rhs);
     return lhs;
 }
 
-EqnSystem operator+(EqnSystem lhs, const EqnTerm& rhs)
+template<typename ValueType>
+EqnSystem<ValueType> operator+(EqnSystem<ValueType> lhs, const EqnTerm<ValueType>& rhs)
 {
     lhs.addTerm(rhs);
     return lhs;
 }
 
-EqnSystem operator+(EqnTerm lhs, EqnTerm rhs)
+template<typename ValueType>
+EqnSystem<ValueType> operator+(EqnTerm<ValueType> lhs, EqnTerm<ValueType> rhs)
 {
-    EqnSystem eqnSys(lhs.exec(), lhs.nCells());
+    EqnSystem<ValueType> eqnSys(lhs.exec(), lhs.nCells());
     eqnSys.addTerm(lhs);
     eqnSys.addTerm(rhs);
     return eqnSys;
 }
 
-EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
+template<typename ValueType>
+EqnSystem<ValueType> operator*(NeoFOAM::scalar scale, const EqnSystem<ValueType>& es)
 {
-    EqnSystem results(es.exec(), es.nCells());
+    EqnSystem<ValueType> results(es.exec(), es.nCells());
     for (const auto& eqnTerm : es.temporalTerms())
     {
         results.addTerm(scale * eqnTerm);
@@ -172,21 +192,24 @@ EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
     return results;
 }
 
-EqnSystem operator-(EqnSystem lhs, const EqnSystem& rhs)
+template<typename ValueType>
+EqnSystem<ValueType> operator-(EqnSystem<ValueType> lhs, const EqnSystem<ValueType>& rhs)
 {
     lhs.addSystem(-1.0 * rhs);
     return lhs;
 }
 
-EqnSystem operator-(EqnSystem lhs, const EqnTerm& rhs)
+template<typename ValueType>
+EqnSystem<ValueType> operator-(EqnSystem<ValueType> lhs, const EqnTerm<ValueType>& rhs)
 {
     lhs.addTerm(-1.0 * rhs);
     return lhs;
 }
 
-EqnSystem operator-(const EqnTerm& lhs, const EqnTerm& rhs)
+template<typename ValueType>
+EqnSystem<ValueType> operator-(const EqnTerm<ValueType>& lhs, const EqnTerm<ValueType>& rhs)
 {
-    EqnSystem results(lhs.exec(), lhs.nCells());
+    EqnSystem<ValueType> results(lhs.exec(), lhs.nCells());
     results.addTerm(lhs);
     results.addTerm(-1.0 * rhs);
     return results;

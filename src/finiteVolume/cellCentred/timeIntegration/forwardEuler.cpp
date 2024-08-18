@@ -11,7 +11,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-ForwardEuler::ForwardEuler(const dsl::EqnSystem& eqnSystem, const Dictionary& dict)
+ForwardEuler::ForwardEuler(const dsl::EqnSystem<NeoFOAM::scalar>& eqnSystem, const Dictionary& dict)
     : TimeIntegrationFactory::Register<ForwardEuler>(eqnSystem, dict)
 {
     // Constructor
@@ -26,22 +26,17 @@ void ForwardEuler::solve()
     // NeoFOAM::fill(Phi, 0.0);
     Field<scalar> source = eqnSystem_.explicitOperation();
 
-    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
-    // {
-    //     eqnTerm.temporalOperation(Phi);
-    // }
-    // Phi += source*dt;
-    refField->internalField() -= source*dt;
+    refField->internalField() -= source * dt;
     refField->correctBoundaryConditions();
 
-    // check if execturo is GPU
+    // check if executor is GPU
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqnSystem_.exec()))
     {
-       Kokkos::fence();
+        Kokkos::fence();
     }
 }
 
-std::unique_ptr<TimeIntegrationFactory> ForwardEuler::clone() const
+std::unique_ptr<TimeIntegrationFactory<NeoFOAM::scalar>> ForwardEuler::clone() const
 {
     return std::make_unique<ForwardEuler>(*this);
 }

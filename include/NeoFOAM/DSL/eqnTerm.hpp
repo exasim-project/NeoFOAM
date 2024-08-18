@@ -19,21 +19,45 @@ namespace NeoFOAM::DSL
 template<typename T>
 concept HasTemporalTerm = requires(T t) {
     {
-        t.temporalOperation(
-            std::declval<NeoFOAM::Field<NeoFOAM::scalar>&>(), std::declval<NeoFOAM::scalar>()
-        )
+        t.temporalOperation(std::declval<NeoFOAM::Field<NeoFOAM::scalar>&>())
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
 template<typename T>
 concept HasExplicitTerm = requires(T t) {
     {
-        t.explicitOperation(
-            std::declval<NeoFOAM::Field<NeoFOAM::scalar>&>(), std::declval<NeoFOAM::scalar>()
-        )
+        t.explicitOperation(std::declval<NeoFOAM::Field<NeoFOAM::scalar>&>())
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
-// EqnTerm class that uses type erasure without inheritance
+
+
+template<typename ValueType>
+class EqnTermMixin
+{
+public:
+
+    EqnTermMixin() : scaleField_(), scale_(1.0) {};
+
+
+    virtual ~EqnTermMixin() = default;
+
+    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() { return scaleField_; }
+
+    const std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const
+    {
+        return scaleField_;
+    }
+
+    NeoFOAM::scalar& scaleValue() { return scale_; }
+
+    NeoFOAM::scalar scaleValue() const { return scale_; }
+
+    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField_;
+    NeoFOAM::scalar scale_ = 1.0;
+};
+
+
+template<typename ValueType>
 class EqnTerm
 {
 public:
@@ -67,20 +91,24 @@ public:
 
     std::string display() const { return model_->display(); }
 
-    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
-    {
-        model_->explicitOperation(source, model_->scaleCoeff);
-    }
+    void explicitOperation(NeoFOAM::Field<ValueType>& source) { model_->explicitOperation(source); }
 
-    void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field)
-    {
-        model_->temporalOperation(field, model_->scaleCoeff);
-    }
+    void temporalOperation(NeoFOAM::Field<ValueType>& field) { model_->temporalOperation(field); }
 
     EqnTerm::Type getType() const { return model_->getType(); }
 
-    void setScale(NeoFOAM::scalar scale) { model_->scaleCoeff *= scale; }
+    void setScale(NeoFOAM::scalar scale) { model_->scaleValue() = scale; }
 
+    NeoFOAM::scalar& scaleValue() { return model_->scaleValue(); }
+
+    NeoFOAM::scalar scaleValue() const { return model_->scaleValue(); }
+
+    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() { return model_->scaleField(); }
+
+    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const
+    {
+        return model_->scaleField;
+    }
 
     const NeoFOAM::Executor& exec() const { return model_->exec(); }
 
@@ -97,12 +125,14 @@ private:
     {
         virtual ~Concept() = default;
         virtual std::string display() const = 0;
-        virtual void
-        explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale) = 0;
-        virtual void
-        temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field, NeoFOAM::scalar scale) = 0;
-        NeoFOAM::scalar scaleCoeff = 1.0;
+        virtual void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source) = 0;
+        virtual void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field) = 0;
+
         virtual EqnTerm::Type getType() const = 0;
+        virtual NeoFOAM::scalar& scaleValue() = 0;
+        virtual NeoFOAM::scalar scaleValue() const = 0;
+        virtual std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() = 0;
+        virtual std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const = 0;
 
         virtual const NeoFOAM::Executor& exec() const = 0;
         virtual std::size_t nCells() const = 0;
@@ -120,21 +150,19 @@ private:
 
         std::string display() const override { return cls_.display(); }
 
-        virtual void
-        explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale) override
+        virtual void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source) override
         {
             if constexpr (HasExplicitTerm<T>)
             {
-                cls_.explicitOperation(source, scale);
+                cls_.explicitOperation(source);
             }
         }
 
-        virtual void
-        temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field, NeoFOAM::scalar scale) override
+        virtual void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field) override
         {
             if constexpr (HasTemporalTerm<T>)
             {
-                cls_.temporalOperation(field, scale);
+                cls_.temporalOperation(field);
             }
         }
 
@@ -149,6 +177,20 @@ private:
 
         std::size_t nCells() const override { return cls_.nCells(); }
 
+        std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() override
+        {
+            return cls_.scaleField();
+        }
+
+        std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const override
+        {
+            return cls_.scaleField();
+        }
+
+        NeoFOAM::scalar& scaleValue() override { return cls_.scaleValue(); }
+
+        NeoFOAM::scalar scaleValue() const override { return cls_.scaleValue(); }
+
         // The Prototype Design Pattern
         std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(*this); }
 
@@ -160,10 +202,44 @@ private:
 
 
 // add multiply operator to EqnTerm
-EqnTerm operator*(NeoFOAM::scalar scale, const EqnTerm& lhs)
+template<typename ValueType>
+EqnTerm<ValueType> operator*(NeoFOAM::scalar scale, const EqnTerm<ValueType>& lhs)
 {
-    EqnTerm result = lhs;
-    result.setScale(scale);
+    EqnTerm<ValueType> result = lhs;
+    result.scaleValue() *= scale;
+    return result;
+}
+
+// add multiply operator to EqnTerm
+template<typename ValueType>
+EqnTerm<ValueType> operator*(NeoFOAM::Field<NeoFOAM::scalar> scale, const EqnTerm<ValueType>& lhs)
+{
+    EqnTerm<ValueType> result = lhs;
+    if (!result.scaleField())
+    {
+        result.scaleField() = std::make_shared<NeoFOAM::Field<NeoFOAM::scalar>>(scale);
+    }
+    else
+    {
+        auto sRes = result.scaleField()->span();
+        auto sSpan = scale.span();
+        result.scaleField()->apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) {
+            return sRes[i] * sSpan[i];
+        });
+    }
+    return result;
+}
+
+template<typename ValueType, typename ScaleFunction>
+EqnTerm<ValueType> operator*(ScaleFunction scaleFunc, const EqnTerm<ValueType>& lhs)
+{
+    EqnTerm<ValueType> result = lhs;
+    if (!result.scaleField())
+    {
+        result.scaleField() =
+            std::make_shared<NeoFOAM::Field<NeoFOAM::scalar>>(lhs.exec(), lhs.nCells());
+    }
+    NeoFOAM::map(*result.scaleField(), scaleFunc);
     return result;
 }
 

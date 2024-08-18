@@ -15,12 +15,12 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-class ForwardEuler : public TimeIntegrationFactory::Register<ForwardEuler>
+class ForwardEuler : public TimeIntegrationFactory<NeoFOAM::scalar>::Register<ForwardEuler>
 {
 
 public:
 
-    ForwardEuler(const dsl::EqnSystem& eqnSystem, const Dictionary& dict);
+    ForwardEuler(const dsl::EqnSystem<NeoFOAM::scalar>& eqnSystem, const Dictionary& dict);
 
     static std::string name() { return "forwardEuler"; }
 

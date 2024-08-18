@@ -18,15 +18,24 @@
 
 namespace dsl = NeoFOAM::DSL;
 
-class Divergence
+class Divergence : public dsl::EqnTermMixin<NeoFOAM::scalar>
 {
 
 public:
 
+    Divergence(
+        dsl::EqnTerm<NeoFOAM::scalar>::Type termType,
+        const NeoFOAM::Executor& exec,
+        std::size_t nCells
+    )
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(), termType_(termType), exec_(exec), nCells_(nCells)
+    {}
+
     std::string display() const { return "Divergence"; }
 
-    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
+        auto scale = scaleValue();
         auto sourceField = source.span();
         NeoFOAM::parallelFor(
             source.exec(),
@@ -35,7 +44,7 @@ public:
         );
     }
 
-    dsl::EqnTerm::Type getType() const { return termType_; }
+    dsl::EqnTerm<NeoFOAM::scalar>::Type getType() const { return termType_; }
 
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
 
@@ -43,20 +52,29 @@ public:
 
     std::size_t nCells() const { return nCells_; }
 
-    dsl::EqnTerm::Type termType_;
+    dsl::EqnTerm<NeoFOAM::scalar>::Type termType_;
     NeoFOAM::Executor exec_;
     std::size_t nCells_;
 };
 
-class TimeTerm
+class TimeTerm : public dsl::EqnTermMixin<NeoFOAM::scalar>
 {
 
 public:
 
+    TimeTerm(
+        dsl::EqnTerm<NeoFOAM::scalar>::Type termType,
+        const NeoFOAM::Executor& exec,
+        std::size_t nCells
+    )
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(), termType_(termType), exec_(exec), nCells_(nCells)
+    {}
+
     std::string display() const { return "TimeTerm"; }
 
-    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
+        auto scale = scaleValue();
         auto sourceField = source.span();
         NeoFOAM::parallelFor(
             source.exec(),
@@ -65,7 +83,7 @@ public:
         );
     }
 
-    dsl::EqnTerm::Type getType() const { return termType_; }
+    dsl::EqnTerm<NeoFOAM::scalar>::Type getType() const { return termType_; }
 
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
 
@@ -73,7 +91,7 @@ public:
 
     std::size_t nCells() const { return nCells_; }
 
-    dsl::EqnTerm::Type termType_;
+    dsl::EqnTerm<NeoFOAM::scalar>::Type termType_;
     const NeoFOAM::Executor exec_;
     std::size_t nCells_;
 };
@@ -87,9 +105,11 @@ TEST_CASE("TimeIntegration")
     NeoFOAM::Dictionary dict;
     dict.insert("type", std::string("forwardEuler"));
 
-    dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit, exec, 1);
+    dsl::EqnTerm<NeoFOAM::scalar> divTerm =
+        Divergence(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, 1);
 
-    dsl::EqnTerm ddtTerm = TimeTerm(dsl::EqnTerm::Type::Temporal, exec, 1);
+    dsl::EqnTerm<NeoFOAM::scalar> ddtTerm =
+        TimeTerm(dsl::EqnTerm<NeoFOAM::scalar>::Type::Temporal, exec, 1);
 
     dsl::EqnSystem eqnSys = ddtTerm + divTerm;
 
