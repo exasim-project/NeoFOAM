@@ -54,7 +54,7 @@ struct NFData
     int maxsteps;               // max number of steps between outputs
     int timeStep;               // time step number
 
-    dsl::EqnSystem System;
+    dsl::EqnSystem system_; // system of equations
 
     // Output variables
     int output; // output level

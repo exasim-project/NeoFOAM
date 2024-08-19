@@ -16,9 +16,27 @@ namespace NeoFOAM::finiteVolume::cellCentred
 int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
     // Cast user_data to ExplicitRungeKutta* to access the instance
-    // ExplicitRungeKutta* self = static_cast<ExplicitRungeKutta*>(user_data);
+    NFData* nfData = reinterpret_cast<NFData*>(user_data);
     std::cout << "\nHello from explicitSolveWrapperFreeFunction\n";
     // Call the non-static member function explicitSolve on the instance
+
+    Field<scalar> source = nfData->system_.explicitOperation();
+
+    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
+    // {
+    //     eqnTerm.temporalOperation(Phi);
+    // }
+    // Phi += source*dt;
+    // refField->internalField() -= source * dt;
+    // refField->correctBoundaryConditions();
+
+    // check if execturo is GPU
+    // if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_.exec()))
+    // {
+    //     Kokkos::fence();
+    // }
+
+
     NV_Ith_S(ydot, 0) = -1.0 * NV_Ith_S(y, 0);
 
     return 0; // set 0 -> success
@@ -68,7 +86,7 @@ void ExplicitRungeKutta::initNDData()
     data_->fixedStepSize_ = dict_.get<scalar>("Fixed Step Size"); // zero for adaptive
     data_->endTime_ = dict_.get<scalar>("End Time");
 
-    data_->System = dsl::EqnSystem(eqnSystem_);
+    data_->system_ = dsl::EqnSystem(eqnSystem_);
 
     data_->nodes = 1;
     data_->maxsteps = 1;
@@ -103,6 +121,7 @@ void ExplicitRungeKutta::initSUNARKODESolver()
     ERKStepSetTableNum(arkodeMemory_.get(), ARKODE_FORWARD_EULER_1_1);
 
     ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
+    ARKodeSetUserData(arkodeMemory_.get(), data_.get());
 }
 
 int ExplicitRungeKutta::explicitSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
