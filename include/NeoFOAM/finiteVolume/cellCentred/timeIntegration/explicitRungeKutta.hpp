@@ -12,17 +12,15 @@
 #include <memory>
 
 // possibly useful headers.
-#include <nvector/nvector_kokkos.hpp>
+
 #include <nvector/nvector_serial.h>
+#include <nvector/nvector_kokkos.hpp>
 #include <sundials/sundials_nvector.h>
 #include <sundials/sundials_core.hpp>
 // #include <sunlinsol/sunlinsol_kokkosdense.hpp>
 // #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 
-#include "sundails.hpp"
-
-namespace NeoFOAM::finiteVolume::cellCentred
-{
+#include "sundials.hpp"
 
 #if defined(USE_CUDA)
 using ExecSpace = Kokkos::Cuda;
@@ -37,6 +35,13 @@ using ExecSpace = Kokkos::OpenMP;
 #else
 using ExecSpace = Kokkos::Serial;
 #endif
+
+namespace NeoFOAM::finiteVolume::cellCentred
+{
+
+
+// Define VecType using the correct SUNDIALS Kokkos vector
+
 
 // Where to put?
 struct NFData
@@ -69,8 +74,8 @@ struct NFData
 
 class ExplicitRungeKutta : public TimeIntegrationFactory::Register<ExplicitRungeKutta>
 {
-    // using VecType = sundials::kokkos::Vector<ExecSpace>;
-    // using SizeType = VecType::size_type;
+    using VecType = ::sundials::kokkos::Vector<ExecSpace>;
+    using SizeType = VecType::size_type;
 
 public:
 
@@ -97,14 +102,13 @@ public:
 
     std::unique_ptr<TimeIntegrationFactory> clone() const override;
 
-    int explicitSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data);
-
 private:
 
     double timeStepSize_;
     double time_;
-    // VecType kokkosSolution_;
-    N_Vector initial_conditions_;
+    VecType kokkosSolution_;
+    VecType kokkosInitialConditions_;
+    N_Vector initialConditions_;
     N_Vector solution_;
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we

@@ -17,9 +17,6 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
 {
     // Cast user_data to ExplicitRungeKutta* to access the instance
     NFData* nfData = reinterpret_cast<NFData*>(user_data);
-    std::cout << "\nHello from explicitSolveWrapperFreeFunction\n";
-    // Call the non-static member function explicitSolve on the instance
-
     Field<scalar> source = nfData->system_.explicitOperation();
 
     // for (auto& eqnTerm : eqnSystem_.temporalTerms())
@@ -36,9 +33,13 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     //     Kokkos::fence();
     // }
 
+    for (std::size_t i = 0; i < nfData->nodes; ++i)
+    {
+        NV_Ith_S(ydot, i) = NV_Ith_S(y, i) - NV_Ith_S(y, i);
+    }
 
+    // some kind of memory leak below - need to fix. Is y and ydot sized correctly?
     NV_Ith_S(ydot, 0) = -1.0 * NV_Ith_S(y, 0);
-
     return 0; // set 0 -> success
 }
 
@@ -68,7 +69,6 @@ void ExplicitRungeKutta::solve()
         ARKStepEvolve(
             arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
         );
-
         std::cout << "Step t = " << time_ << "\t" << NV_Ith_S(solution_, 0) << std::endl;
     }
 }
@@ -101,15 +101,18 @@ void ExplicitRungeKutta::initSUNContext()
 
 void ExplicitRungeKutta::initSUNARKODESolver()
 {
-    // kokkosSolution_ = VecType(data_->nodes, context_);
-    // solution_ = kokkosSolution_;
-    solution_ = N_VNew_Serial(data_->nodes, context_);
-    initial_conditions_ = N_VNew_Serial(data_->nodes, context_);
-    N_VConst(1.0, initial_conditions_);
+    // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order of
+    // initialization.
 
-    // this->explicitSolve();
+
+    kokkosSolution_ = VecType(data_->nodes, context_);
+    kokkosInitialConditions_ = VecType(data_->nodes, context_);
+    solution_ = kokkosSolution_;
+    initialConditions_ = kokkosInitialConditions_;
+
+    N_VConst(1.0, initialConditions_);
     arkodeMemory_.reset(reinterpret_cast<char*>(
-        ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initial_conditions_, context_)
+        ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initialConditions_, context_)
     ));
     void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
@@ -122,18 +125,6 @@ void ExplicitRungeKutta::initSUNARKODESolver()
 
     ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
     ARKodeSetUserData(arkodeMemory_.get(), data_.get());
-}
-
-int ExplicitRungeKutta::explicitSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
-{
-    // int flag =
-    //     ARKStepEvolve(arkodeMemory_.get(), time_ + timeStepSize_, solution_, &time_,
-    //     ARK_ONE_STEP);
-
-    // if (flag < 0)
-    // {
-    //     std::cout << "Integration failed with flag: " << flag << std::endl;
-    // }
 }
 
 
