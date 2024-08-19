@@ -26,28 +26,23 @@ public:
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
-        NeoFOAM::scalar value2 = value;
+        NeoFOAM::scalar setValue = value;
+        NeoFOAM::scalar sV = scaleValue();
+        NeoFOAM::ValueOrSpan<NeoFOAM::scalar> sF;
         if (scaleField())
         {
-            auto sField = scaleField()->span();
-            NeoFOAM::scalar scale = scaleValue();
-            auto sourceField = source.span();
-            NeoFOAM::parallelFor(
-                source.exec(),
-                {0, source.size()},
-                KOKKOS_LAMBDA(const size_t i) { sourceField[i] += scale * sField[i] * value2; }
-            );
+            sF = scaleField()->span();
         }
         else
         {
-            NeoFOAM::scalar scale = scaleValue();
-            auto sourceField = source.span();
-            NeoFOAM::parallelFor(
-                source.exec(),
-                {0, source.size()},
-                KOKKOS_LAMBDA(const size_t i) { sourceField[i] += scale * value2; }
-            );
+            sF = 1.0;
         }
+        auto sourceField = source.span();
+        NeoFOAM::parallelFor(
+            source.exec(),
+            {0, source.size()},
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += sV * sF[i] * setValue; }
+        );
     }
 
     dsl::EqnTerm<NeoFOAM::scalar>::Type getType() const { return termType_; }
@@ -86,28 +81,23 @@ public:
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
-        NeoFOAM::scalar value2 = value;
+        NeoFOAM::scalar setValue = value;
+        NeoFOAM::scalar sV = scaleValue();
+        NeoFOAM::ValueOrSpan<NeoFOAM::scalar> sF;
         if (scaleField())
         {
-            auto sField = scaleField()->span();
-            NeoFOAM::scalar scale = scaleValue();
-            auto sourceField = source.span();
-            NeoFOAM::parallelFor(
-                source.exec(),
-                {0, source.size()},
-                KOKKOS_LAMBDA(const size_t i) { sourceField[i] += scale * sField[i] * value2; }
-            );
+            sF = scaleField()->span();
         }
         else
         {
-            NeoFOAM::scalar scale = scaleValue();
-            auto sourceField = source.span();
-            NeoFOAM::parallelFor(
-                source.exec(),
-                {0, source.size()},
-                KOKKOS_LAMBDA(const size_t i) { sourceField[i] += scale * value2; }
-            );
+            sF = 1.0;
         }
+        auto sourceField = source.span();
+        NeoFOAM::parallelFor(
+            source.exec(),
+            {0, source.size()},
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += sV * sF[i] * setValue; }
+        );
     }
 
     dsl::EqnTerm<NeoFOAM::scalar>::Type getType() const { return termType_; }

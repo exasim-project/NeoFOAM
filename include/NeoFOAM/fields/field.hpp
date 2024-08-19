@@ -28,6 +28,7 @@ namespace NeoFOAM
 template<typename ValueType>
 struct ValueOrSpan
 {
+    ValueOrSpan() = default;
     ValueOrSpan(std::span<ValueType> values) : values(values), useSpan(true) {}
 
     ValueOrSpan(ValueType value) : values(), value(value), useSpan(false) {}
