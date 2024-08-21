@@ -32,14 +32,29 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // {
     //     Kokkos::fence();
     // }
+    std::cout << "\n--" << nfData->nodes << "\n";
+    std::cout << "\n--" << N_VGetLength(y) << "\n";
+    std::cout << "\n--" << N_VGetLength(ydot) << "\n";
+
+    sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
+    sunrealtype* yarray = N_VGetArrayPointer(y);
+
+    if (ydotarray == NULL)
+    {
+        return -1;
+    }
+    if (yarray == NULL)
+    {
+        return -1;
+    }
 
     for (std::size_t i = 0; i < nfData->nodes; ++i)
     {
-        NV_Ith_S(ydot, i) = NV_Ith_S(y, i) - NV_Ith_S(y, i);
+        ydotarray[i] = -1.0 * yarray[i];
     }
 
     // some kind of memory leak below - need to fix. Is y and ydot sized correctly?
-    NV_Ith_S(ydot, 0) = -1.0 * NV_Ith_S(y, 0);
+    // NV_Ith_S(ydot, 0) = -1.0 * NV_Ith_S(y, 0);
     return 0; // set 0 -> success
 }
 
