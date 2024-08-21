@@ -15,27 +15,8 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
-    // Cast user_data to ExplicitRungeKutta* to access the instance
+    // Pointer wrangling
     NFData* nfData = reinterpret_cast<NFData*>(user_data);
-    Field<scalar> source = nfData->system_.explicitOperation();
-
-    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
-    // {
-    //     eqnTerm.temporalOperation(Phi);
-    // }
-    // Phi += source*dt;
-    // refField->internalField() -= source * dt;
-    // refField->correctBoundaryConditions();
-
-    // check if execturo is GPU
-    // if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_.exec()))
-    // {
-    //     Kokkos::fence();
-    // }
-    std::cout << "\n--" << nfData->nodes << "\n";
-    std::cout << "\n--" << N_VGetLength(y) << "\n";
-    std::cout << "\n--" << N_VGetLength(ydot) << "\n";
-
     sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
     sunrealtype* yarray = N_VGetArrayPointer(y);
 
@@ -48,22 +29,38 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
         return -1;
     }
 
+    // TODO: copy the field to the solution
+
+
+    // solve the spacil terms
+    Field<scalar> source = nfData->system_.explicitOperation();
+
     for (std::size_t i = 0; i < nfData->nodes; ++i)
     {
-        ydotarray[i] = -1.0 * yarray[i];
+        ydotarray[i] = source[i];
     }
 
-    // some kind of memory leak below - need to fix. Is y and ydot sized correctly?
-    // NV_Ith_S(ydot, 0) = -1.0 * NV_Ith_S(y, 0);
-    return 0; // set 0 -> success
+    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
+    // {
+    //     eqnTerm.temporalOperation(Phi);
+    // }
+    // Phi += source*dt;
+    // refField->internalField() -= source * dt;
+    // refField->correctBoundaryConditions();
+
+    // check if execturo is GPU
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_.exec()))
+    {
+        Kokkos::fence();
+    }
+    return 0;
 }
+
 
 ExplicitRungeKutta::ExplicitRungeKutta(dsl::EqnSystem eqnSystem, const Dictionary& dict)
     : TimeIntegrationFactory::Register<ExplicitRungeKutta>(eqnSystem, dict)
 {
-    initNDData();
-    initSUNContext();
-    initSUNARKODESolver();
+    initSUNERKSolver();
 }
 
 ExplicitRungeKutta::ExplicitRungeKutta(const ExplicitRungeKutta& other)
@@ -93,7 +90,21 @@ std::unique_ptr<TimeIntegrationFactory> ExplicitRungeKutta::clone() const
     return std::make_unique<ExplicitRungeKutta>(*this);
 }
 
-void ExplicitRungeKutta::initNDData()
+void ExplicitRungeKutta::initSUNERKSolver()
+{
+    // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order of
+    // initialization.
+    initNFData();
+
+    // Initialize SUNdials solver;
+    initSUNContext();
+    initSUNDimension();
+    initSUNInitialConditions();
+    initSUNCreateERK();
+    initSUNTolerances();
+}
+
+void ExplicitRungeKutta::initNFData()
 {
     data_ = std::make_unique<NFData>();
     data_->realTol_ = dict_.get<scalar>("Relative Tolerance");
@@ -107,25 +118,24 @@ void ExplicitRungeKutta::initNDData()
     data_->maxsteps = 1;
 };
 
-
 void ExplicitRungeKutta::initSUNContext()
 {
     int flag = SUNContext_Create(SUN_COMM_NULL, &context_);
     NF_ASSERT(flag == 0, "SUNContext_Create failed");
 }
 
-void ExplicitRungeKutta::initSUNARKODESolver()
+void ExplicitRungeKutta::initSUNDimension()
 {
-    // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order of
-    // initialization.
-
-
     kokkosSolution_ = VecType(data_->nodes, context_);
     kokkosInitialConditions_ = VecType(data_->nodes, context_);
     solution_ = kokkosSolution_;
     initialConditions_ = kokkosInitialConditions_;
+}
 
-    N_VConst(1.0, initialConditions_);
+void ExplicitRungeKutta::initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }
+
+void ExplicitRungeKutta::initSUNCreateERK()
+{
     arkodeMemory_.reset(reinterpret_cast<char*>(
         ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initialConditions_, context_)
     ));
@@ -135,11 +145,13 @@ void ExplicitRungeKutta::initSUNARKODESolver()
     ERKStepSetUserData(ark, NULL);
     ERKStepSetInitStep(ark, data_->fixedStepSize_);
     ERKStepSetFixedStep(ark, data_->fixedStepSize_);
+    ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
+    ARKodeSetUserData(ark, data_.get());
+}
 
-    ERKStepSetTableNum(arkodeMemory_.get(), ARKODE_FORWARD_EULER_1_1);
-
+void ExplicitRungeKutta::initSUNTolerances()
+{
     ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
-    ARKodeSetUserData(arkodeMemory_.get(), data_.get());
 }
 
 

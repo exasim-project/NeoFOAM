@@ -39,10 +39,6 @@ using ExecSpace = Kokkos::Serial;
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
-// Define VecType using the correct SUNDIALS Kokkos vector
-
-
 // Where to put?
 struct NFData
 {
@@ -115,10 +111,13 @@ private:
                                          // store the next best thing.
     std::unique_ptr<NFData> data_;
 
-
-    void initNDData();
-    void initSUNARKODESolver();
+    void initSUNERKSolver();
+    void initNFData();
     void initSUNContext();
+    void initSUNDimension();
+    void initSUNInitialConditions();
+    void initSUNCreateERK();
+    void initSUNTolerances();
 };
 
 } // namespace NeoFOAM
