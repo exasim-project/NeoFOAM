@@ -31,4 +31,14 @@ TEST_CASE("tokenList")
         REQUIRE(tokenList.get<NeoFOAM::label>(0) == 1);
         REQUIRE(tokenList.get<std::string>(1) == "string");
     }
+
+    SECTION("Access out of bound index")
+    {
+        REQUIRE_THROWS_AS(tokenList.get<NeoFOAM::label>(3), std::out_of_range);
+    }
+
+    SECTION("check bad any cast")
+    {
+        REQUIRE_THROWS_AS(tokenList.get<NeoFOAM::scalar>(0), std::bad_any_cast);
+    }
 }

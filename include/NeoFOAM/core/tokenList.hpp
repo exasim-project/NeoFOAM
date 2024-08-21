@@ -6,6 +6,7 @@
 #include <any>
 #include <string>
 #include <iostream>
+#include "NeoFOAM/core/demangle.hpp"
 
 namespace NeoFOAM
 {
@@ -33,14 +34,36 @@ public:
     template<typename T>
     [[nodiscard]] T& get(const size_t& idx)
     {
-        return std::any_cast<T&>(data_.at(idx));
+        try
+        {
+            return std::any_cast<T&>(data_.at(idx));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            std::cerr << "Caught a bad_any_cast exception: \n"
+                      << "requested type " << demangle(typeid(T).name()) << "\n"
+                      << "actual type " << demangle(data_.at(idx).type().name()) << "\n"
+                      << e.what() << std::endl;
+            throw e;
+        }
     }
 
 
     template<typename T>
     [[nodiscard]] const T& get(const size_t& idx) const
     {
-        return std::any_cast<const T&>(data_.at(idx));
+        try
+        {
+            return std::any_cast<const T&>(data_.at(idx));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            std::cerr << "Caught a bad_any_cast exception: \n"
+                      << "requested type " << demangle(typeid(T).name()) << "\n"
+                      << "actual type " << demangle(data_.at(idx).type().name()) << "\n"
+                      << e.what() << std::endl;
+            throw e;
+        }
     }
 
     [[nodiscard]] std::vector<std::any>& tokens();
