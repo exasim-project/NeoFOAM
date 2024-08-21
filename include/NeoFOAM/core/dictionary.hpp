@@ -93,7 +93,7 @@ public:
             std::cerr << "Caught a bad_any_cast exception: \n"
                       << "requested type " << demangle(typeid(T).name()) << "\n"
                       << "actual type " << demangle(operator[](key).type().name()) << "\n"
-                      << e.what()) << std::endl;
+                      << e.what() << std::endl;
             throw e;
         }
     }
@@ -118,7 +118,7 @@ public:
             std::cerr << "Caught a bad_any_cast exception: \n"
                       << "requested type " << demangle(typeid(T).name()) << "\n"
                       << "actual type " << demangle(operator[](key).type().name()) << "\n"
-                      << e.what()) << std::endl;
+                      << e.what() << std::endl;
             throw e;
         }
     }
