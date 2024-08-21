@@ -31,13 +31,12 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
 
     // TODO: copy the field to the solution
 
-
     // solve the spacil terms
-    Field<scalar> source = nfData->system_.explicitOperation();
+    // Field<scalar> source = nfData->system_.explicitOperation();
 
     for (std::size_t i = 0; i < nfData->nodes; ++i)
     {
-        ydotarray[i] = source[i];
+        ydotarray[i] = -1.0 * yarray[i]; // replace with source[i]
     }
 
     // for (auto& eqnTerm : eqnSystem_.temporalTerms())
@@ -81,7 +80,8 @@ void ExplicitRungeKutta::solve()
         ARKStepEvolve(
             arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
         );
-        std::cout << "Step t = " << time_ << "\t" << NV_Ith_S(solution_, 0) << std::endl;
+        sunrealtype* solution = N_VGetArrayPointer(solution_);
+        std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
     }
 }
 
