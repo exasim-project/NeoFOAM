@@ -1,17 +1,30 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <iostream>
-
 #include "catch2/catch_session.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "catch2/generators/catch_generators_adapters.hpp"
 #include "catch2/reporters/catch_reporter_registrars.hpp"
-#include <Kokkos_Core.hpp>
+#include "Kokkos_Core.hpp"
 
+#include "NeoFOAM/core/mpi/environment.hpp"
+
+#include "mpiReporter.hpp"
+#include "mpiSerialization.hpp"
+
+CATCH_REGISTER_REPORTER("mpi", MpiReporter);
 
 int main(int argc, char* argv[])
 {
+    NeoFOAM::mpi::MPIInit mpi(argc, argv);
+
+    MPI_Comm_rank(COMM, &RANK);
+    MPI_Comm_size(COMM, &COMM_SIZE);
+    IS_ROOT = RANK == ROOT;
+
+    // create a thread (on the root process) that serializes the IO
+    bool threadShutdown = false;
+    std::thread sequalizeIOThread {serializeIO, &threadShutdown};
 
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
@@ -19,6 +32,7 @@ int main(int argc, char* argv[])
     // ensure any kokkos initialization output will appear first
     std::cout << std::flush;
     std::cerr << std::flush;
+    MPI_Barrier(COMM);
 
     Catch::Session session;
 
@@ -28,6 +42,13 @@ int main(int argc, char* argv[])
         return returnCode;
 
     int result = session.run();
+    MPI_Allreduce(MPI_IN_PLACE, &result, 1, MPI_INT, MPI_MAX, COMM);
+
+    MPI_Barrier(COMM);
+    threadShutdown = true;
+    sequalizeIOThread.join();
+
+    Kokkos::finalize();
 
     return result;
 }
