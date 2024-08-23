@@ -6,8 +6,9 @@
 #include <any>
 #include <string>
 #include <iostream>
-#include "NeoFOAM/core/demangle.hpp"
 #include <vector>
+
+#include "NeoFOAM/core/demangle.hpp"
 #include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM
