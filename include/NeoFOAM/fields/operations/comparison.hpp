@@ -12,7 +12,8 @@ namespace NeoFOAM
 template<typename T>
 bool equal(Field<T>& field, T value)
 {
-    auto hostSpan = field.copyToHost().span();
+    auto hostField = field.copyToHost();
+    auto hostSpan = hostField.span();
     for (size_t i = 0; i < hostSpan.size(); i++)
     {
         if (hostSpan[i] != value)
@@ -26,8 +27,8 @@ bool equal(Field<T>& field, T value)
 template<typename T>
 bool equal(const Field<T>& field, const Field<T>& field2)
 {
-    auto hostSpan = field.copyToHost().span();
-    auto hostSpan2 = field2.copyToHost().span();
+    auto [hostField, hostField2] = copyToHosts(field, field2);
+    auto [hostSpan, hostSpan2] = spans(hostField, hostField2);
 
     if (hostSpan.size() != hostSpan2.size())
     {

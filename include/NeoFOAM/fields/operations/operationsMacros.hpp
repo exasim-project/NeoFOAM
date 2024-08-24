@@ -96,5 +96,10 @@ auto spans(Args&... fields)
     return std::make_tuple(fields.span()...);
 }
 
+template<typename... Args>
+auto copyToHosts(Args&... fields)
+{
+    return std::make_tuple(fields.copyToHost()...);
+}
 
 } // namespace NeoFOAM

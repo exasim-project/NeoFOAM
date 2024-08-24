@@ -334,17 +334,23 @@ public:
      */
     [[nodiscard]] bool empty() const { return size() == 0; }
 
-    /**
-     * @brief Gets the field as a span.
-     * @return Span of the field.
-     */
-    [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
+    // ensures no return a span of a temporary object --> invalid memory access
+    std::span<ValueType> span() && = delete;
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    std::span<const ValueType> span() const&& = delete;
 
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span() const
+    [[nodiscard]] std::span<ValueType> span() & { return std::span<ValueType>(data_, size_); }
+
+    /**
+     * @brief Gets the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] std::span<const ValueType> span() const&
     {
         return std::span<const ValueType>(data_, size_);
     }
