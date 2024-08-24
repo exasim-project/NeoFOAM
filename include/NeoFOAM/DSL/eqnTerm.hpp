@@ -58,7 +58,7 @@ public:
     std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField_;
     NeoFOAM::scalar scale_ = 1.0;
 
-    bool termEvaluated() { return termEvaluated; }
+    bool evaluated() { return termEvaluated; }
 
 protected:
 
@@ -119,7 +119,7 @@ public:
         return model_->scaleField;
     }
 
-    bool termEvaluated() { return model_->termEvaluated(); }
+    bool evaluated() { return model_->termEvaluated(); }
 
     void build(const NeoFOAM::Input& input) { model_->build(input); }
 
@@ -142,7 +142,7 @@ private:
         virtual void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field) = 0;
         virtual void build(const NeoFOAM::Input& input) = 0;
 
-        virtual bool termEvaluated() = 0;
+        virtual bool evaluated() = 0;
 
         virtual EqnTerm::Type getType() const = 0;
         virtual NeoFOAM::scalar& scaleValue() = 0;
@@ -190,7 +190,7 @@ private:
 
         virtual void build(const NeoFOAM::Input& input) override { cls_.build(input); }
 
-        virtual bool termEvaluated() override { return cls_.termEvaluated(); }
+        virtual bool evaluated() override { return cls_.evaluated(); }
 
         EqnTerm::Type getType() const override { return cls_.getType(); }
 
