@@ -32,6 +32,12 @@ public:
     Dictionary(const std::initializer_list<std::pair<std::string, std::any>>& initList);
 
     /**
+     * @brief Checks if the dictionary is empty.
+     * @return True if the dictionary is empty, false otherwise.
+     */
+    [[nodiscard]] bool empty() const;
+
+    /**
      * @brief Inserts a key-value pair into the dictionary.
      * @param key The key to insert.
      * @param value The value to insert.
