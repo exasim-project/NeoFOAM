@@ -10,7 +10,6 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
-#include "NeoFOAM/DSL/eqnTermBuilder.hpp"
 
 #include "testOperator.hpp"
 
@@ -114,7 +113,6 @@ TEST_CASE("DSL")
         }
         SECTION("subtracting eqnSys from eqnSys2")
         {
-            std::cout << "subtracting eqnSys from eqnSys2" << std::endl;
             dsl::EqnSystem subtractEqnSys = eqnSys - eqnSys2;
             REQUIRE(subtractEqnSys.size() == 8);
             REQUIRE(getField(subtractEqnSys.explicitOperation()) == 2.0);
@@ -156,122 +154,65 @@ TEST_CASE("DSL")
     };
 }
 
-dsl::eqnTermBuilder<NeoFOAM::scalar> createLaplacian(NeoFOAM::scalar value)
-{
-    size_t nCells = 1;
 
-    dsl::eqnTermBuilder<NeoFOAM::scalar> builder;
-    builder.push_back(
-        [&](const NeoFOAM::Input&)
-        {
-            return Laplacian(
-                dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit,
-                NeoFOAM::SerialExecutor(),
-                nCells,
-                value
-            );
-        }
-    );
-    return builder;
+dsl::EqnTerm<NeoFOAM::scalar> createLaplacian(const NeoFOAM::Executor& exec, size_t nCells)
+{
+    return Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells);
 }
 
-dsl::eqnTermBuilder<NeoFOAM::scalar> createDivergence(NeoFOAM::scalar value)
+dsl::EqnTerm<NeoFOAM::scalar> createDivergence(const NeoFOAM::Executor& exec, size_t nCells)
 {
-    size_t nCells = 1;
-
-    dsl::eqnTermBuilder<NeoFOAM::scalar> builder;
-    builder.push_back(
-        [&](const NeoFOAM::Input&)
-        {
-            return Divergence(
-                dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit,
-                NeoFOAM::SerialExecutor(),
-                nCells,
-                value
-            );
-        }
-    );
-    return builder;
+    return Divergence(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells);
 }
 
-TEST_CASE("build EqnSystem from Terms")
+TEST_CASE("build eqnsystem from unevaluated terms")
 {
-    SECTION("test basics")
+    auto exec = NeoFOAM::SerialExecutor();
+    size_t nCells = 1;
+    NeoFOAM::Dictionary dict {{"value", 1.0}};
+
+
+    SECTION("addition")
     {
-        size_t nCells = 1;
-        NeoFOAM::scalar value = 1;
-
-        auto exec = NeoFOAM::SerialExecutor();
-        dsl::EqnTerm<NeoFOAM::scalar> lapTerm =
-            Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value);
-        dsl::eqnTermBuilder<NeoFOAM::scalar> builder;
-        NeoFOAM::Input input;
-
-        // Add some build functions
-        builder.push_back(
-            [&](const NeoFOAM::Input&) {
-                return Laplacian(
-                    dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value
-                );
-            }
+        dsl::EqnSystem eqnSys(
+            createLaplacian(exec, nCells) + createLaplacian(exec, nCells)
+            + createDivergence(exec, nCells) + createDivergence(exec, nCells)
         );
-        builder.push_back(
-            [&](const NeoFOAM::Input&) {
-                return Laplacian(
-                    dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value
-                );
-            }
-        );
-        builder.push_back(
-            [&](const NeoFOAM::Input&) {
-                return Laplacian(
-                    dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value
-                );
-            }
-        );
-
-        std::vector<dsl::EqnTerm<NeoFOAM::scalar>> terms;
-        for (auto& buildFunction : builder)
-        {
-            auto term = buildFunction(input);
-            std::string display = term.display();
-            REQUIRE(display == "Laplacian");
-            terms.push_back(term);
-        }
-
-        REQUIRE(terms.size() == 3);
+        eqnSys.build(dict);
+        REQUIRE(eqnSys.size() == 4);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 4.0);
     }
 
-    SECTION("Construction of EqnSystem from EqnTermBuilder")
+    SECTION("subtraction")
     {
-        NeoFOAM::Input input;
-        dsl::eqnTermBuilder<NeoFOAM::scalar> builder;
-        auto lapBuilder = createLaplacian(1.0);
-        auto divBuilder = createDivergence(2.0);
-        builder.push_back(lapBuilder);
-        builder.push_back(divBuilder);
+        dsl::EqnSystem eqnSys(
+            createLaplacian(exec, nCells) - createLaplacian(exec, nCells)
+            - createDivergence(exec, nCells) - createDivergence(exec, nCells)
+        );
+        eqnSys.build(dict);
+        REQUIRE(eqnSys.size() == 4);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 1.0 - 1.0 - 1.0 - 1.0);
+    }
 
-        std::vector<dsl::EqnTerm<NeoFOAM::scalar>> terms;
-        for (auto& buildFunction : builder)
-        {
-            auto term = buildFunction(input);
-            std::string display = term.display();
-            REQUIRE((display == "Laplacian" || display == "Divergence"));
-            terms.push_back(term);
-        }
+    SECTION("with scaling")
+    {
+        dsl::EqnSystem eqnSys(
+            4.0 * createLaplacian(exec, nCells) - 2 * createLaplacian(exec, nCells)
+            - createDivergence(exec, nCells) - createDivergence(exec, nCells)
+        );
+        eqnSys.build(dict);
+        REQUIRE(eqnSys.size() == 4);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 4.0 - 2.0 - 1.0 - 1.0);
+    }
 
-        REQUIRE(terms.size() == 2);
-
-        SECTION("addition")
-        {
-            auto testBuilder = createLaplacian(3.0) + createDivergence(4.0);
-            REQUIRE(terms.size() == 2);
-        }
-
-        SECTION("subtraction")
-        {
-            auto testBuilder = createLaplacian(3.0) - createDivergence(4.0);
-            REQUIRE(terms.size() == 2);
-        }
+    SECTION("with scaling")
+    {
+        dsl::EqnSystem eqnSys(
+            4.0 * createLaplacian(exec, nCells) - 2 * createLaplacian(exec, nCells)
+            - createDivergence(exec, nCells) - createDivergence(exec, nCells)
+        );
+        eqnSys.build(dict);
+        REQUIRE(eqnSys.size() == 4);
+        REQUIRE(getField(eqnSys.explicitOperation()) == 4.0 - 2.0 - 1.0 - 1.0);
     }
 }

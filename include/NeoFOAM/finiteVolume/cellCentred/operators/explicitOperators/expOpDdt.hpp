@@ -21,12 +21,14 @@ class DdtScheme : public dsl::EqnTermMixin<NeoFOAM::scalar>
 public:
 
     DdtScheme(fvcc::VolumeField<NeoFOAM::scalar>& Phi)
-        : dsl::EqnTermMixin<NeoFOAM::scalar>(),
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(true),
           termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Temporal), Phi_(Phi), exec_(Phi.exec()),
           nCells_(Phi.mesh().nCells())
     {}
 
     std::string display() const { return "DdtScheme"; }
+
+    void build(const NeoFOAM::Input& input) {}
 
     void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field, NeoFOAM::scalar scale) {}
 

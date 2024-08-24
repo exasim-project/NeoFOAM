@@ -6,10 +6,14 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <concepts>
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/core/inputs.hpp"
+
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
@@ -36,8 +40,7 @@ class EqnTermMixin
 {
 public:
 
-    EqnTermMixin() : scaleField_(), scale_(1.0) {};
-
+    EqnTermMixin(bool isEvaluated) : scaleField_(), scale_(1.0), termEvaluated(isEvaluated) {};
 
     virtual ~EqnTermMixin() = default;
 
@@ -54,6 +57,12 @@ public:
 
     std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField_;
     NeoFOAM::scalar scale_ = 1.0;
+
+    bool termEvaluated() { return termEvaluated; }
+
+protected:
+
+    bool termEvaluated;
 };
 
 
@@ -110,6 +119,10 @@ public:
         return model_->scaleField;
     }
 
+    bool termEvaluated() { return model_->termEvaluated(); }
+
+    void build(const NeoFOAM::Input& input) { model_->build(input); }
+
     const NeoFOAM::Executor& exec() const { return model_->exec(); }
 
     std::size_t nCells() const { return model_->nCells(); }
@@ -127,10 +140,14 @@ private:
         virtual std::string display() const = 0;
         virtual void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source) = 0;
         virtual void temporalOperation(NeoFOAM::Field<NeoFOAM::scalar>& field) = 0;
+        virtual void build(const NeoFOAM::Input& input) = 0;
+
+        virtual bool termEvaluated() = 0;
 
         virtual EqnTerm::Type getType() const = 0;
         virtual NeoFOAM::scalar& scaleValue() = 0;
         virtual NeoFOAM::scalar scaleValue() const = 0;
+
         virtual std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() = 0;
         virtual std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const = 0;
 
@@ -170,6 +187,10 @@ private:
         {
             return cls_.volumeField();
         }
+
+        virtual void build(const NeoFOAM::Input& input) override { cls_.build(input); }
+
+        virtual bool termEvaluated() override { return cls_.termEvaluated(); }
 
         EqnTerm::Type getType() const override { return cls_.getType(); }
 
@@ -230,7 +251,7 @@ EqnTerm<ValueType> operator*(NeoFOAM::Field<NeoFOAM::scalar> scale, const EqnTer
     return result;
 }
 
-template<typename ValueType, typename ScaleFunction>
+template<typename ValueType, parallelForFieldKernel<ValueType> ScaleFunction>
 EqnTerm<ValueType> operator*(ScaleFunction scaleFunc, const EqnTerm<ValueType>& lhs)
 {
     EqnTerm<ValueType> result = lhs;

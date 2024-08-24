@@ -24,11 +24,35 @@ public:
         fvcc::VolumeField<NeoFOAM::scalar>& Phi,
         const Input& input
     )
-        : dsl::EqnTermMixin<NeoFOAM::scalar>(),
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(true),
           termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit), exec_(Phi.exec()),
           nCells_(Phi.mesh().nCells()), faceFlux_(faceFlux), Phi_(Phi),
           div_(Phi.exec(), Phi.mesh(), input)
     {}
+
+    DivScheme(
+        const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& Phi
+    )
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(false),
+          termType_(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit), exec_(Phi.exec()),
+          nCells_(Phi.mesh().nCells()), faceFlux_(faceFlux), Phi_(Phi), div_(Phi.exec(), Phi.mesh())
+    {}
+
+    void build(const const NeoFOAM::Input& input)
+    {
+        if (std::holds_alternative<NeoFOAM::Dictionary>(input))
+        {
+            auto dict = std::get<NeoFOAM::Dictionary>(input);
+            std::string schemeName = "div(" + faceFlux_.name() + "," + Phi_.name() + ")";
+            auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
+            div_.build(tokens);
+        }
+        else
+        {
+            auto tokens = std::get<NeoFOAM::TokenList>(input);
+            div_.build(tokens);
+        }
+    }
 
     std::string display() const { return "DivScheme"; }
 

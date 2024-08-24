@@ -28,7 +28,8 @@ public:
         const NeoFOAM::Executor& exec,
         std::size_t nCells
     )
-        : dsl::EqnTermMixin<NeoFOAM::scalar>(), termType_(termType), exec_(exec), nCells_(nCells)
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(true), termType_(termType), exec_(exec),
+          nCells_(nCells)
     {}
 
     std::string display() const { return "Divergence"; }
@@ -42,6 +43,11 @@ public:
             {0, source.size()},
             KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
         );
+    }
+
+    void build(const NeoFOAM::Input& input)
+    {
+        // do nothing
     }
 
     dsl::EqnTerm<NeoFOAM::scalar>::Type getType() const { return termType_; }
@@ -67,10 +73,16 @@ public:
         const NeoFOAM::Executor& exec,
         std::size_t nCells
     )
-        : dsl::EqnTermMixin<NeoFOAM::scalar>(), termType_(termType), exec_(exec), nCells_(nCells)
+        : dsl::EqnTermMixin<NeoFOAM::scalar>(true), termType_(termType), exec_(exec),
+          nCells_(nCells)
     {}
 
     std::string display() const { return "TimeTerm"; }
+
+    void build(const NeoFOAM::Input& input)
+    {
+        // do nothing
+    }
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {

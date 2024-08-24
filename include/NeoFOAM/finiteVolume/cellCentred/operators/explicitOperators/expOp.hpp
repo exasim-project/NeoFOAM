@@ -56,5 +56,11 @@ div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux,
     return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(faceFlux, phi, tokens));
 }
 
+dsl::EqnTerm<NeoFOAM::scalar>
+div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(faceFlux, phi));
+}
+
 
 } // namespace NeoFOAM

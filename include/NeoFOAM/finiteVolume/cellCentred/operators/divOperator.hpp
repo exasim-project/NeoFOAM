@@ -75,7 +75,9 @@ public:
 
     DivOperator(const DivOperator& divOperator)
         : exec_(divOperator.exec_), mesh_(divOperator.mesh_),
-          divOperatorStrategy_(divOperator.divOperatorStrategy_->clone()) {};
+          divOperatorStrategy_(
+              divOperator.divOperatorStrategy_ ? divOperator.divOperatorStrategy_->clone() : nullptr
+          ) {};
 
     DivOperator(DivOperator&& divOperator)
         : exec_(divOperator.exec_), mesh_(divOperator.mesh_),
@@ -91,6 +93,14 @@ public:
     DivOperator(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
         : exec_(exec), mesh_(mesh),
           divOperatorStrategy_(DivOperatorFactory::create(exec, mesh, input)) {};
+
+    DivOperator(const Executor& exec, const UnstructuredMesh& mesh)
+        : exec_(exec), mesh_(mesh), divOperatorStrategy_() {};
+
+    void build(const Input& input)
+    {
+        divOperatorStrategy_ = DivOperatorFactory::create(exec_, mesh_, input);
+    }
 
     void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi

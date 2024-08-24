@@ -13,6 +13,7 @@
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 
+
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -31,9 +32,25 @@ class EqnSystem
 public:
 
     EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
-        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(),
-          volumeField_(nullptr)
+        : exec_(exec), nCells_(nCells), termsEvaluated(false), temporalTerms_(), implicitTerms_(),
+          explicitTerms_(), volumeField_(nullptr)
     {}
+
+    void build(NeoFOAM::Input input)
+    {
+        for (auto& eqnTerm : temporalTerms_)
+        {
+            eqnTerm.build(input);
+        }
+        for (auto& eqnTerm : implicitTerms_)
+        {
+            eqnTerm.build(input);
+        }
+        for (auto& eqnTerm : explicitTerms_)
+        {
+            eqnTerm.build(input);
+        }
+    }
 
     NeoFOAM::Field<NeoFOAM::scalar> explicitOperation()
     {
@@ -80,6 +97,16 @@ public:
 
     void solve()
     {
+        bool allTermsEvaluated = checkEvaluated();
+        if (!allTermsEvaluated)
+        {
+            if (fvSchemesDict.empty())
+            {
+                NF_ERROR_EXIT("No scheme dictionary provided.");
+            }
+            build(fvSchemesDict);
+        }
+
         if (temporalTerms_.size() == 0 && implicitTerms_.size() == 0)
         {
             NF_ERROR_EXIT("No temporal or implicit terms to solve.");
@@ -118,7 +145,7 @@ public:
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
-    const std::size_t nCells() const { return nCells_; }
+    std::size_t nCells() const { return nCells_; }
 
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField()
     {
@@ -142,8 +169,39 @@ public:
 
 private:
 
-    const NeoFOAM::Executor exec_;
-    const std::size_t nCells_;
+    bool checkEvaluated()
+    {
+        // check if terms have been evaluated
+        for (auto& eqnTerm : temporalTerms_)
+        {
+            if (!eqnTerm.termEvaluated())
+            {
+                return false;
+            }
+        }
+
+        for (auto& eqnTerm : implicitTerms_)
+        {
+            if (!eqnTerm.termEvaluated())
+            {
+                return false;
+            }
+        }
+
+        for (auto& eqnTerm : explicitTerms_)
+        {
+            if (!eqnTerm.termEvaluated())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    NeoFOAM::Executor exec_;
+    std::size_t nCells_;
+    bool termsEvaluated = false;
     std::vector<EqnTerm<ValueType>> temporalTerms_;
     std::vector<EqnTerm<ValueType>> implicitTerms_;
     std::vector<EqnTerm<ValueType>> explicitTerms_;

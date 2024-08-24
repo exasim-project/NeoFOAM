@@ -10,7 +10,6 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/DSL/eqnTerm.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
-#include "NeoFOAM/DSL/eqnTermBuilder.hpp"
 
 #include "testOperator.hpp"
 
@@ -37,7 +36,7 @@ NeoFOAM::Field<NeoFOAM::scalar> evaluateTerm(dsl::EqnTerm<NeoFOAM::scalar>& term
 TEST_CASE("EqnTerm")
 {
     // size_t nCells = GENERATE(1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7);
-    size_t nCells = 1e6;
+    size_t nCells = 1e3;
 
     // NeoFOAM::Executor exec = NeoFOAM::SerialExecutor();
     NeoFOAM::Executor exec = GENERATE(
@@ -90,7 +89,6 @@ TEST_CASE("EqnTerm")
     SECTION("Scale Scalar")
     {
         NeoFOAM::scalar value = 1;
-        NeoFOAM::scalar scale = 2.0;
         dsl::EqnTerm<NeoFOAM::scalar> lapTerm =
             Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value);
 
@@ -195,5 +193,59 @@ TEST_CASE("EqnTerm")
             auto res = evaluateTerm(scaledTerm);
             return 0;
         };
+    }
+}
+
+dsl::EqnTerm<NeoFOAM::scalar> createLaplacian(const NeoFOAM::Executor& exec, size_t nCells)
+{
+    return Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells);
+}
+
+TEST_CASE("term create from function")
+{
+    NeoFOAM::scalar nCells = 1;
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+    NeoFOAM::Dictionary dict {{"value", 1.0}};
+
+    SECTION("Scale Field")
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> scale(exec, nCells, 2.0);
+
+        {
+            auto scaledTerm = scale * createLaplacian(exec, nCells);
+            scaledTerm.build(dict);
+            REQUIRE(scaledTerm.scaleField());
+            auto res = evaluateTerm(scaledTerm);
+            REQUIRE(getField(res) == 2.0);
+        }
+
+        {
+            auto scaledTerm = (scale + scale) * createLaplacian(exec, nCells);
+            scaledTerm.build(dict);
+            REQUIRE(scaledTerm.scaleField());
+            auto res = evaluateTerm(scaledTerm);
+            REQUIRE(getField(res) == 4.0);
+        }
+
+        {
+            auto scaledTerm = (scale + scale + scale + scale) * createLaplacian(exec, nCells);
+            scaledTerm.build(dict);
+            REQUIRE(scaledTerm.scaleField());
+            auto res = evaluateTerm(scaledTerm);
+            REQUIRE(getField(res) == 8.0);
+        }
+
+        {
+            auto span = scale.span();
+            auto scaledTerm = (KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return 4.0 * span[i]; })
+                            * createLaplacian(exec, nCells);
+            scaledTerm.build(dict);
+            auto res = evaluateTerm(scaledTerm);
+            REQUIRE(getField(res) == 8.0);
+        }
     }
 }
