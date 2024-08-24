@@ -36,12 +36,12 @@ public:
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
-        auto scale = scaleValue();
+        auto scale = scaleField();
         auto sourceField = source.span();
         NeoFOAM::parallelFor(
             source.exec(),
             {0, source.size()},
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale[i]; }
         );
     }
 
@@ -86,12 +86,12 @@ public:
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
-        auto scale = scaleValue();
+        auto scale = scaleField();
         auto sourceField = source.span();
         NeoFOAM::parallelFor(
             source.exec(),
             {0, source.size()},
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1 * scale; }
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1 * scale[i]; }
         );
     }
 

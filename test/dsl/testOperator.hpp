@@ -66,21 +66,12 @@ public:
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
         NeoFOAM::scalar setValue = value;
-        NeoFOAM::scalar sV = scaleValue();
-        NeoFOAM::ValueOrSpan<NeoFOAM::scalar> sF;
-        if (scaleField())
-        {
-            sF = scaleField()->span();
-        }
-        else
-        {
-            sF = 1.0;
-        }
+        auto scale = scaleField();
         auto sourceField = source.span();
         NeoFOAM::parallelFor(
             source.exec(),
             {0, source.size()},
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += sV * sF[i] * setValue; }
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += scale[i] * setValue; }
         );
     }
 
@@ -161,21 +152,12 @@ public:
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source)
     {
         NeoFOAM::scalar setValue = value;
-        NeoFOAM::scalar sV = scaleValue();
-        NeoFOAM::ValueOrSpan<NeoFOAM::scalar> sF;
-        if (scaleField())
-        {
-            sF = scaleField()->span();
-        }
-        else
-        {
-            sF = 1.0;
-        }
+        auto scale = scaleField();
         auto sourceField = source.span();
         NeoFOAM::parallelFor(
             source.exec(),
             {0, source.size()},
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += sV * sF[i] * setValue; }
+            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += scale[i] * setValue; }
         );
     }
 

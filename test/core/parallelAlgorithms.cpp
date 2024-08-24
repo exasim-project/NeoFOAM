@@ -83,10 +83,10 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5, 1.0);
         auto [spanA, spanB] = NeoFOAM::spans(fieldA, fieldB);
-        NeoFOAM::ValueOrSpan<NeoFOAM::scalar> cOrS = spanB;
+        NeoFOAM::ScalingField<NeoFOAM::scalar> sF = spanB;
 
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return cOrS[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
         );
 
         auto hostSpanA = fieldA.copyToHost();
@@ -95,10 +95,10 @@ TEST_CASE("parallelFor")
             REQUIRE(value == 3.0);
         }
 
-        cOrS = 1.0;
+        sF = NeoFOAM::ScalingField<NeoFOAM::scalar>(1.0);
 
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return cOrS[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
         );
 
         hostSpanA = fieldA.copyToHost();
@@ -124,27 +124,27 @@ TEST_CASE("ConstantOrSpan Benchmark")
     NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
     NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
     auto [spanA, spanB] = NeoFOAM::spans(fieldA, fieldB);
-    NeoFOAM::ValueOrSpan<NeoFOAM::scalar> cOrS = spanB;
-    REQUIRE(cOrS.useSpan == true);
+    NeoFOAM::ScalingField<NeoFOAM::scalar> sF = spanB;
+    REQUIRE(sF.useSpan == true);
 
-    BENCHMARK("ValueOrSpan<NeoFOAM::scalar> Span " + execName + " " + std::to_string(size))
+    BENCHMARK("ScalingField<NeoFOAM::scalar> Span " + execName + " " + std::to_string(size))
     {
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return cOrS[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
         );
     };
 
-    cOrS = 1.0;
-    REQUIRE(cOrS.useSpan == false);
+    sF = NeoFOAM::ScalingField<NeoFOAM::scalar>(1.0);
+    REQUIRE(sF.useSpan == false);
 
-    BENCHMARK("ValueOrSpan<NeoFOAM::scalar> Constant " + execName + " " + std::to_string(size))
+    BENCHMARK("ScalingField<NeoFOAM::scalar> Constant " + execName + " " + std::to_string(size))
     {
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return cOrS[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
         );
     };
 
-    BENCHMARK("ValueOrSpan<NeoFOAM::scalar> Double " + execName + " " + std::to_string(size))
+    BENCHMARK("ScalingField<NeoFOAM::scalar> Double " + execName + " " + std::to_string(size))
     {
         NeoFOAM::parallelFor(
             fieldA, KOKKOS_LAMBDA(const size_t i) { return 1.0 + 2.0; }

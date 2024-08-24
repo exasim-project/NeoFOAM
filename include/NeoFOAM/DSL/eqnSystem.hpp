@@ -97,7 +97,7 @@ public:
 
     void solve()
     {
-        bool allTermsEvaluated = checkEvaluated();
+        bool allTermsEvaluated = evaluated();
         if (!allTermsEvaluated)
         {
             if (fvSchemesDict.empty())
@@ -169,12 +169,12 @@ public:
 
 private:
 
-    bool checkEvaluated()
+    bool evaluated()
     {
         // check if terms have been evaluated
         for (auto& eqnTerm : temporalTerms_)
         {
-            if (!eqnTerm.termEvaluated())
+            if (!eqnTerm.evaluated())
             {
                 return false;
             }
@@ -182,7 +182,7 @@ private:
 
         for (auto& eqnTerm : implicitTerms_)
         {
-            if (!eqnTerm.termEvaluated())
+            if (!eqnTerm.evaluated())
             {
                 return false;
             }
@@ -190,7 +190,7 @@ private:
 
         for (auto& eqnTerm : explicitTerms_)
         {
-            if (!eqnTerm.termEvaluated())
+            if (!eqnTerm.evaluated())
             {
                 return false;
             }

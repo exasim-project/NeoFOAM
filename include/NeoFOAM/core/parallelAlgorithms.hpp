@@ -4,6 +4,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <type_traits>
+#include <span>
 
 #include "NeoFOAM/core/executor/executor.hpp"
 
@@ -88,6 +89,33 @@ template<typename ValueType, parallelForFieldKernel<ValueType> Kernel>
 void parallelFor(Field<ValueType>& field, Kernel kernel)
 {
     std::visit([&](const auto& e) { parallelFor(e, field, kernel); }, field.exec());
+}
+
+template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
+void parallelFor([[maybe_unused]] const Executor& exec, std::span<ValueType> span, Kernel kernel)
+{
+    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
+    {
+        for (size_t i = 0; i < span.size(); i++)
+        {
+            span[i] = kernel(i);
+        }
+    }
+    else
+    {
+        using runOn = typename Executor::exec;
+        Kokkos::parallel_for(
+            "parallelFor",
+            Kokkos::RangePolicy<runOn>(0, span.size()),
+            KOKKOS_LAMBDA(const size_t i) { span[i] = kernel(i); }
+        );
+    }
+}
+
+template<typename ValueType, parallelForFieldKernel<ValueType> Kernel>
+void parallelFor(const NeoFOAM::Executor& exec, std::span<ValueType> span, Kernel kernel)
+{
+    std::visit([&](const auto& e) { parallelFor(e, span, kernel); }, exec);
 }
 
 

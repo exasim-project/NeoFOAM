@@ -40,27 +40,32 @@ class EqnTermMixin
 {
 public:
 
-    EqnTermMixin(bool isEvaluated) : scaleField_(), scale_(1.0), termEvaluated(isEvaluated) {};
+    EqnTermMixin(bool isEvaluated) : field_(), scaleField_(1.0), termEvaluated(isEvaluated) {};
 
     virtual ~EqnTermMixin() = default;
 
-    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() { return scaleField_; }
-
-    const std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const
+    void setField(std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> field)
     {
-        return scaleField_;
+        field_ = field;
+        scaleField() = ScalingField<ValueType>(field_->span(), scaleField().value);
     }
 
-    NeoFOAM::scalar& scaleValue() { return scale_; }
+    NeoFOAM::ScalingField<ValueType>& scaleField() { return scaleField_; }
 
-    NeoFOAM::scalar scaleValue() const { return scale_; }
-
-    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField_;
-    NeoFOAM::scalar scale_ = 1.0;
+    NeoFOAM::ScalingField<ValueType> scaleField() const { return scaleField_; }
 
     bool evaluated() { return termEvaluated; }
 
+    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& field() { return field_; }
+
 protected:
+
+    // used to allocate the shared pointer scaling field
+    // requires a span and the field is required to keep the pointer alive
+
+    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> field_;
+
+    NeoFOAM::ScalingField<ValueType> scaleField_;
 
     bool termEvaluated;
 };
@@ -106,20 +111,16 @@ public:
 
     EqnTerm::Type getType() const { return model_->getType(); }
 
-    void setScale(NeoFOAM::scalar scale) { model_->scaleValue() = scale; }
-
-    NeoFOAM::scalar& scaleValue() { return model_->scaleValue(); }
-
-    NeoFOAM::scalar scaleValue() const { return model_->scaleValue(); }
-
-    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() { return model_->scaleField(); }
-
-    std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const
+    void setField(std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> field)
     {
-        return model_->scaleField;
+        model_->setField(field);
     }
 
-    bool evaluated() { return model_->termEvaluated(); }
+    NeoFOAM::ScalingField<ValueType>& scaleField() { return model_->scaleField(); }
+
+    NeoFOAM::ScalingField<ValueType> scaleField() const { return model_->scaleField(); }
+
+    bool evaluated() { return model_->evaluated(); }
 
     void build(const NeoFOAM::Input& input) { model_->build(input); }
 
@@ -145,11 +146,10 @@ private:
         virtual bool evaluated() = 0;
 
         virtual EqnTerm::Type getType() const = 0;
-        virtual NeoFOAM::scalar& scaleValue() = 0;
-        virtual NeoFOAM::scalar scaleValue() const = 0;
 
-        virtual std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() = 0;
-        virtual std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const = 0;
+        virtual void setField(std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> field) = 0;
+        virtual NeoFOAM::ScalingField<NeoFOAM::scalar>& scaleField() = 0;
+        virtual NeoFOAM::ScalingField<NeoFOAM::scalar> scaleField() const = 0;
 
         virtual const NeoFOAM::Executor& exec() const = 0;
         virtual std::size_t nCells() const = 0;
@@ -198,19 +198,20 @@ private:
 
         std::size_t nCells() const override { return cls_.nCells(); }
 
-        std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>>& scaleField() override
+        void setField(std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> field) override
+        {
+            cls_.setField(field);
+        }
+
+        virtual NeoFOAM::ScalingField<NeoFOAM::scalar>& scaleField() override
         {
             return cls_.scaleField();
         }
 
-        std::shared_ptr<NeoFOAM::Field<NeoFOAM::scalar>> scaleField() const override
+        virtual NeoFOAM::ScalingField<NeoFOAM::scalar> scaleField() const override
         {
             return cls_.scaleField();
         }
-
-        NeoFOAM::scalar& scaleValue() override { return cls_.scaleValue(); }
-
-        NeoFOAM::scalar scaleValue() const override { return cls_.scaleValue(); }
 
         // The Prototype Design Pattern
         std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(*this); }
@@ -227,7 +228,7 @@ template<typename ValueType>
 EqnTerm<ValueType> operator*(NeoFOAM::scalar scale, const EqnTerm<ValueType>& lhs)
 {
     EqnTerm<ValueType> result = lhs;
-    result.scaleValue() *= scale;
+    result.scaleField() *= scale;
     return result;
 }
 
@@ -236,17 +237,14 @@ template<typename ValueType>
 EqnTerm<ValueType> operator*(NeoFOAM::Field<NeoFOAM::scalar> scale, const EqnTerm<ValueType>& lhs)
 {
     EqnTerm<ValueType> result = lhs;
-    if (!result.scaleField())
+    if (!result.scaleField().useSpan)
     {
-        result.scaleField() = std::make_shared<NeoFOAM::Field<NeoFOAM::scalar>>(scale);
+        // allocate the scaling field to avoid deallocation
+        result.setField(std::make_shared<NeoFOAM::Field<NeoFOAM::scalar>>(scale));
     }
     else
     {
-        auto sRes = result.scaleField()->span();
-        auto sSpan = scale.span();
-        result.scaleField()->apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) {
-            return sRes[i] * sSpan[i];
-        });
+        result.scaleField() *= scale;
     }
     return result;
 }
@@ -255,12 +253,13 @@ template<typename ValueType, parallelForFieldKernel<ValueType> ScaleFunction>
 EqnTerm<ValueType> operator*(ScaleFunction scaleFunc, const EqnTerm<ValueType>& lhs)
 {
     EqnTerm<ValueType> result = lhs;
-    if (!result.scaleField())
+    if (!result.scaleField().useSpan)
     {
-        result.scaleField() =
-            std::make_shared<NeoFOAM::Field<NeoFOAM::scalar>>(lhs.exec(), lhs.nCells());
+        result.setField(
+            std::make_shared<NeoFOAM::Field<NeoFOAM::scalar>>(result.exec(), result.nCells(), 1.0)
+        );
     }
-    NeoFOAM::map(*result.scaleField(), scaleFunc);
+    NeoFOAM::map(result.exec(), result.scaleField().values, scaleFunc);
     return result;
 }
 

@@ -93,7 +93,7 @@ TEST_CASE("EqnTerm")
             Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value);
 
         auto scaledTerm = 2.0 * lapTerm;
-        REQUIRE(!scaledTerm.scaleField());
+        REQUIRE(!scaledTerm.scaleField().useSpan);
         auto res = evaluateTerm(scaledTerm);
         REQUIRE(getField(res) == 2.0);
 
@@ -114,21 +114,21 @@ TEST_CASE("EqnTerm")
 
         {
             auto scaledTerm = scale * lapTerm;
-            REQUIRE(scaledTerm.scaleField());
+            REQUIRE(scaledTerm.scaleField().useSpan);
             auto res = evaluateTerm(scaledTerm);
             REQUIRE(getField(res) == 2.0);
         }
 
         {
             auto scaledTerm = (scale + scale) * lapTerm;
-            REQUIRE(scaledTerm.scaleField());
+            REQUIRE(scaledTerm.scaleField().useSpan);
             auto res = evaluateTerm(scaledTerm);
             REQUIRE(getField(res) == 4.0);
         }
 
         {
             auto scaledTerm = (scale + scale + scale + scale) * lapTerm;
-            REQUIRE(scaledTerm.scaleField());
+            REQUIRE(scaledTerm.scaleField().useSpan);
             auto res = evaluateTerm(scaledTerm);
             REQUIRE(getField(res) == 8.0);
         }
@@ -218,7 +218,7 @@ TEST_CASE("term create from function")
         {
             auto scaledTerm = scale * createLaplacian(exec, nCells);
             scaledTerm.build(dict);
-            REQUIRE(scaledTerm.scaleField());
+            REQUIRE(scaledTerm.scaleField().useSpan);
             auto res = evaluateTerm(scaledTerm);
             REQUIRE(getField(res) == 2.0);
         }
@@ -226,7 +226,7 @@ TEST_CASE("term create from function")
         {
             auto scaledTerm = (scale + scale) * createLaplacian(exec, nCells);
             scaledTerm.build(dict);
-            REQUIRE(scaledTerm.scaleField());
+            REQUIRE(scaledTerm.scaleField().useSpan);
             auto res = evaluateTerm(scaledTerm);
             REQUIRE(getField(res) == 4.0);
         }
@@ -234,7 +234,7 @@ TEST_CASE("term create from function")
         {
             auto scaledTerm = (scale + scale + scale + scale) * createLaplacian(exec, nCells);
             scaledTerm.build(dict);
-            REQUIRE(scaledTerm.scaleField());
+            REQUIRE(scaledTerm.scaleField().useSpan);
             auto res = evaluateTerm(scaledTerm);
             REQUIRE(getField(res) == 8.0);
         }

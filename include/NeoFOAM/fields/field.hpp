@@ -12,34 +12,11 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
+#include "NeoFOAM/fields/scalingField.hpp"
 
 namespace NeoFOAM
 {
 
-/**
- * @brief A wrapper class that represents either a span of values or a single value.
- *
- * This class is used to store either a span of values or a single value of type `ValueType`.
- * It provides an indexing operator `operator[]` that returns the value at the specified index
- * or a constant value
- *
- * @tparam ValueType The type of the values stored in the class.
- */
-template<typename ValueType>
-struct ValueOrSpan
-{
-    ValueOrSpan() = default;
-    ValueOrSpan(std::span<ValueType> values) : values(values), useSpan(true) {}
-
-    ValueOrSpan(ValueType value) : values(), value(value), useSpan(false) {}
-
-    std::span<ValueType> values;
-    ValueType value;
-    bool useSpan;
-
-    KOKKOS_INLINE_FUNCTION
-    ValueType operator[](const size_t) const { return useSpan ? values[0] : value; }
-};
 
 namespace detail
 {
