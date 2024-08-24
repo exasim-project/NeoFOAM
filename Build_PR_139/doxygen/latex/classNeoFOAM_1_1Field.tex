@@ -1,0 +1,730 @@
+\hypertarget{classNeoFOAM_1_1Field}{}\doxysection{Neo\+FOAM\+::Field$<$ Value\+Type $>$ Class Template Reference}
+\label{classNeoFOAM_1_1Field}\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+
+
+A class to contain the data and executors for a field and define some basic operations.  
+
+
+
+
+{\ttfamily \#include $<$field.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field_a6900cfd42fa127eda30b27dd0cebd9a6}{Field}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&\mbox{\hyperlink{classNeoFOAM_1_1Field_adf7e27c2661a7c1edfd919f1e33e964a}{exec}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} \mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}})
+\begin{DoxyCompactList}\small\item\em Create a \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} with a given size on an executor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field_ac25179c81371894f06f4c974fcdf081b}{Field}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&\mbox{\hyperlink{classNeoFOAM_1_1Field_adf7e27c2661a7c1edfd919f1e33e964a}{exec}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} \mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}, Value\+Type value)
+\begin{DoxyCompactList}\small\item\em Create a \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} with a given size on an executor and uniform value. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field_ac615ca8777f8e5ce7d5d9cb64cc58441}{Field}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&\mbox{\hyperlink{classNeoFOAM_1_1Field_adf7e27c2661a7c1edfd919f1e33e964a}{exec}}, std\+::vector$<$ Value\+Type $>$ in)
+\begin{DoxyCompactList}\small\item\em Create a \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} with a given size on an executor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field_ab17560942b395479c075549c15188709}{Field}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&rhs)
+\begin{DoxyCompactList}\small\item\em Copy constructor, creates a new field with the same size and data as the parsed field. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field_a7cad3648ef3dbb9efd4429fd9ddc4860}{$\sim$\+Field}} ()
+\begin{DoxyCompactList}\small\item\em Destroy the \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} object. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename func $>$ }\\void \mbox{\hyperlink{classNeoFOAM_1_1Field_ab3d5f8f8a4a7b07d5873f767978c0be7}{apply}} (func f)
+\begin{DoxyCompactList}\small\item\em applies a functor, transformation, to the field \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_ae6f586e79c51c81a4d786171a9741c02}{copy\+To\+Executor}} (\mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} dst\+Exec) const
+\begin{DoxyCompactList}\small\item\em Copies the data to a new field on a specific executor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a1d14f252f4815e69e8b085946f27cea4}{copy\+To\+Host}} () const
+\begin{DoxyCompactList}\small\item\em Returns a copy of the field back to the host. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Field_a4e66ce8a5aca4acb78041a8b94ff9734}{copy\+To\+Host}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&result)
+\begin{DoxyCompactList}\small\item\em Copies the data (from anywhere) to a parsed host field. \end{DoxyCompactList}\item 
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Field_ac50ebe1f96d984ab3bad80769cf0e9fb}{operator\mbox{[}$\,$\mbox{]}}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} i)
+\begin{DoxyCompactList}\small\item\em Subscript operator. \end{DoxyCompactList}\item 
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION const Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Field_a6e746984b08dcb801db1da82b4cf1011}{operator\mbox{[}$\,$\mbox{]}}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} i) const
+\begin{DoxyCompactList}\small\item\em Subscript operator. \end{DoxyCompactList}\item 
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Field_a84b219b5da78a859ec34574db7e8d898}{operator()}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} i)
+\begin{DoxyCompactList}\small\item\em Function call operator. \end{DoxyCompactList}\item 
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION const Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Field_ab9ace08d86a2bbabfbc66bbd72217950}{operator()}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} i) const
+\begin{DoxyCompactList}\small\item\em Function call operator. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Field_a274696665d8efadef9091750fe3950db}{operator=}} (const Value\+Type \&rhs)
+\begin{DoxyCompactList}\small\item\em Assignment operator, Sets the field values to that of the passed value. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Field_a8bd676379e963159ca6fdd3c5ce55f9e}{operator=}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&rhs)
+\begin{DoxyCompactList}\small\item\em Assignment operator, Sets the field values to that of the parsed field. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Field_a89cf1bba89428dd2df53018c321b9929}{operator+=}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&rhs)
+\begin{DoxyCompactList}\small\item\em Arithmetic add operator, addition of a second field. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Field_ac4dbc74f865c4a838006e65f91cef68a}{operator-\/=}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&rhs)
+\begin{DoxyCompactList}\small\item\em Arithmetic subtraction operator, subtraction by a second field. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_ab0195569f34e8c75b0418f4ef14f5b3e}{operator$\ast$}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} $>$ \&rhs)
+\begin{DoxyCompactList}\small\item\em Arithmetic multiply operator, multiply by a second field. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_aca1d0b39c7fa232cb5a31aa92b745080}{operator$\ast$}} (const \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} rhs)
+\begin{DoxyCompactList}\small\item\em Arithmetic multiply operator, multiplies every cell in the field by a scalar. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Field_a1c9e4d097ea90596f696bbc491587391}{resize}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} \mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}})
+\begin{DoxyCompactList}\small\item\em Resizes the field to a new size. \end{DoxyCompactList}\item 
+Value\+Type $\ast$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a16966264d31600923c12c3908300b687}{data}} ()
+\begin{DoxyCompactList}\small\item\em Direct access to the underlying field data. \end{DoxyCompactList}\item 
+const Value\+Type $\ast$ \mbox{\hyperlink{classNeoFOAM_1_1Field_ad18d4075815570d9f3560a8660dd7d53}{data}} () const
+\begin{DoxyCompactList}\small\item\em Direct access to the underlying field data. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \& \mbox{\hyperlink{classNeoFOAM_1_1Field_adf7e27c2661a7c1edfd919f1e33e964a}{exec}} () const
+\begin{DoxyCompactList}\small\item\em Gets the executor associated with the field. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} \mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}} () const
+\begin{DoxyCompactList}\small\item\em Gets the size of the field. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1Field_a1009e73d13b7ba45b4faaf25bb5802de}{empty}} () const
+\begin{DoxyCompactList}\small\item\em Checks if the field is empty. \end{DoxyCompactList}\item 
+std\+::span$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a565eec5f60f4e057792069c2f4832448}{span}} () \&\&=delete
+\item 
+std\+::span$<$ const Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a8d2599353d87f5d68a435cbade674455}{span}} () const \&\&=delete
+\item 
+std\+::span$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a6f3f4f0dbd16309de3786a4d92bf0564}{span}} () \&
+\begin{DoxyCompactList}\small\item\em Gets the field as a span. \end{DoxyCompactList}\item 
+std\+::span$<$ const Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a3780518723a1d3843b86f35542004b89}{span}} () const \&
+\begin{DoxyCompactList}\small\item\em Gets the field as a span. \end{DoxyCompactList}\item 
+std\+::span$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_adbb43b668dde2f44dce85aa692ea4a1e}{span}} (std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_aa1e34ceff04763a8bbf7714e1381e0ac}{range}})
+\begin{DoxyCompactList}\small\item\em Gets a sub view of the field as a span. \end{DoxyCompactList}\item 
+std\+::span$<$ const Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_a05697313996211d5e53a90417260002b}{span}} (std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_aa1e34ceff04763a8bbf7714e1381e0ac}{range}}) const
+\begin{DoxyCompactList}\small\item\em Gets a sub view of the field as a span. \end{DoxyCompactList}\item 
+std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ \mbox{\hyperlink{classNeoFOAM_1_1Field_aa1e34ceff04763a8bbf7714e1381e0ac}{range}} () const
+\begin{DoxyCompactList}\small\item\em Gets the range of the field. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\subsubsection*{template$<$typename Value\+Type$>$\newline
+class Neo\+FOAM\+::\+Field$<$ Value\+Type $>$}
+
+A class to contain the data and executors for a field and define some basic operations. 
+
+Definition at line 48 of file field.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a6900cfd42fa127eda30b27dd0cebd9a6}\label{classNeoFOAM_1_1Field_a6900cfd42fa127eda30b27dd0cebd9a6}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!Field@{Field}}
+\index{Field@{Field}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{Field()}{Field()}\hspace{0.1cm}{\footnotesize\ttfamily [1/4]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{\mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Create a \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} with a given size on an executor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & Executor associated to the matrix \\
+\hline
+{\em size} & size of the matrix \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 58 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ac25179c81371894f06f4c974fcdf081b}\label{classNeoFOAM_1_1Field_ac25179c81371894f06f4c974fcdf081b}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!Field@{Field}}
+\index{Field@{Field}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{Field()}{Field()}\hspace{0.1cm}{\footnotesize\ttfamily [2/4]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{\mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{size,  }\item[{Value\+Type}]{value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Create a \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} with a given size on an executor and uniform value. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & Executor associated to the matrix \\
+\hline
+{\em size} & size of the matrix \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 74 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ac615ca8777f8e5ce7d5d9cb64cc58441}\label{classNeoFOAM_1_1Field_ac615ca8777f8e5ce7d5d9cb64cc58441}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!Field@{Field}}
+\index{Field@{Field}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{Field()}{Field()}\hspace{0.1cm}{\footnotesize\ttfamily [3/4]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{std\+::vector$<$ Value\+Type $>$}]{in }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Create a \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} with a given size on an executor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & Executor associated to the matrix \\
+\hline
+{\em in} & a vector of elements to copy over \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 92 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ab17560942b395479c075549c15188709}\label{classNeoFOAM_1_1Field_ab17560942b395479c075549c15188709}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!Field@{Field}}
+\index{Field@{Field}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{Field()}{Field()}\hspace{0.1cm}{\footnotesize\ttfamily [4/4]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Copy constructor, creates a new field with the same size and data as the parsed field. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The field to copy from. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 111 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a7cad3648ef3dbb9efd4429fd9ddc4860}\label{classNeoFOAM_1_1Field_a7cad3648ef3dbb9efd4429fd9ddc4860}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!````~Field@{$\sim$Field}}
+\index{````~Field@{$\sim$Field}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{$\sim$Field()}{~Field()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::$\sim$\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Destroy the \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} object. 
+
+
+
+Definition at line 120 of file field.\+hpp.
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ab3d5f8f8a4a7b07d5873f767978c0be7}\label{classNeoFOAM_1_1Field_ab3d5f8f8a4a7b07d5873f767978c0be7}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!apply@{apply}}
+\index{apply@{apply}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{apply()}{apply()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+template$<$typename func $>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::apply (\begin{DoxyParamCaption}\item[{func}]{f }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+applies a functor, transformation, to the field 
+
+
+\begin{DoxyParams}{Parameters}
+{\em f} & The functor to map over the field. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyNote}{Note}
+Ideally the f should be a KOKKOS\+\_\+\+LAMBA 
+\end{DoxyNote}
+
+
+Definition at line 132 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ae6f586e79c51c81a4d786171a9741c02}\label{classNeoFOAM_1_1Field_ae6f586e79c51c81a4d786171a9741c02}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!copyToExecutor@{copyToExecutor}}
+\index{copyToExecutor@{copyToExecutor}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{copyToExecutor()}{copyToExecutor()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::copy\+To\+Executor (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}}}]{dst\+Exec }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Copies the data to a new field on a specific executor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em dst\+Exec} & The executor on which the data should be copied. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A copy of the field on the host. 
+\end{DoxyReturn}
+
+
+Definition at line 142 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a1d14f252f4815e69e8b085946f27cea4}\label{classNeoFOAM_1_1Field_a1d14f252f4815e69e8b085946f27cea4}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!copyToHost@{copyToHost}}
+\index{copyToHost@{copyToHost}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{copyToHost()}{copyToHost()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::copy\+To\+Host (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns a copy of the field back to the host. 
+
+\begin{DoxyReturn}{Returns}
+A copy of the field on the host. 
+\end{DoxyReturn}
+
+
+Definition at line 156 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a4e66ce8a5aca4acb78041a8b94ff9734}\label{classNeoFOAM_1_1Field_a4e66ce8a5aca4acb78041a8b94ff9734}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!copyToHost@{copyToHost}}
+\index{copyToHost@{copyToHost}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{copyToHost()}{copyToHost()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::copy\+To\+Host (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{result }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Copies the data (from anywhere) to a parsed host field. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em result} & The field into which the data must be copied. Must be sized.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+exits if the size of the result field is not the same as the source field. 
+\end{DoxyWarning}
+
+
+Definition at line 166 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a16966264d31600923c12c3908300b687}\label{classNeoFOAM_1_1Field_a16966264d31600923c12c3908300b687}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!data@{data}}
+\index{data@{data}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{data()}{data()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+Value\+Type$\ast$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::data (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Direct access to the underlying field data. 
+
+\begin{DoxyReturn}{Returns}
+Pointer to the first cell data in the field. 
+\end{DoxyReturn}
+
+
+Definition at line 311 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ad18d4075815570d9f3560a8660dd7d53}\label{classNeoFOAM_1_1Field_ad18d4075815570d9f3560a8660dd7d53}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!data@{data}}
+\index{data@{data}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{data()}{data()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+const Value\+Type$\ast$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::data (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Direct access to the underlying field data. 
+
+\begin{DoxyReturn}{Returns}
+Pointer to the first cell data in the field. 
+\end{DoxyReturn}
+
+
+Definition at line 317 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a1009e73d13b7ba45b4faaf25bb5802de}\label{classNeoFOAM_1_1Field_a1009e73d13b7ba45b4faaf25bb5802de}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!empty@{empty}}
+\index{empty@{empty}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{empty()}{empty()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+bool \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::empty (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Checks if the field is empty. 
+
+\begin{DoxyReturn}{Returns}
+True if the field is empty, false otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 335 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_adf7e27c2661a7c1edfd919f1e33e964a}\label{classNeoFOAM_1_1Field_adf7e27c2661a7c1edfd919f1e33e964a}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!exec@{exec}}
+\index{exec@{exec}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{exec()}{exec()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}}\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::exec (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the executor associated with the field. 
+
+\begin{DoxyReturn}{Returns}
+Reference to the executor. 
+\end{DoxyReturn}
+
+
+Definition at line 323 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a84b219b5da78a859ec34574db7e8d898}\label{classNeoFOAM_1_1Field_a84b219b5da78a859ec34574db7e8d898}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator()@{operator()}}
+\index{operator()@{operator()}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator()()}{operator()()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator() (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{i }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Function call operator. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em i} & The index of cell in the field \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The value at the index i 
+\end{DoxyReturn}
+
+
+Definition at line 196 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ab9ace08d86a2bbabfbc66bbd72217950}\label{classNeoFOAM_1_1Field_ab9ace08d86a2bbabfbc66bbd72217950}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator()@{operator()}}
+\index{operator()@{operator()}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator()()}{operator()()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION const Value\+Type\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator() (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{i }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Function call operator. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em i} & The index of cell in the field \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The value at the index i 
+\end{DoxyReturn}
+
+
+Definition at line 204 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ab0195569f34e8c75b0418f4ef14f5b3e}\label{classNeoFOAM_1_1Field_ab0195569f34e8c75b0418f4ef14f5b3e}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator$\ast$@{operator$\ast$}}
+\index{operator$\ast$@{operator$\ast$}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator$\ast$()}{operator*()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator$\ast$ (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} $>$ \&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Arithmetic multiply operator, multiply by a second field. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The field to subtract from this field. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The result of the multiply. 
+\end{DoxyReturn}
+
+
+Definition at line 257 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_aca1d0b39c7fa232cb5a31aa92b745080}\label{classNeoFOAM_1_1Field_aca1d0b39c7fa232cb5a31aa92b745080}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator$\ast$@{operator$\ast$}}
+\index{operator$\ast$@{operator$\ast$}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator$\ast$()}{operator*()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator$\ast$ (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Arithmetic multiply operator, multiplies every cell in the field by a scalar. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The scalar to multiply with the field. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The result of the multiplication. 
+\end{DoxyReturn}
+
+
+Definition at line 272 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a89cf1bba89428dd2df53018c321b9929}\label{classNeoFOAM_1_1Field_a89cf1bba89428dd2df53018c321b9929}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator+=@{operator+=}}
+\index{operator+=@{operator+=}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator+=()}{operator+=()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$Value\+Type$>$\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator+= (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Arithmetic add operator, addition of a second field. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The field to add with this field. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The result of the addition. 
+\end{DoxyReturn}
+
+
+Definition at line 233 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ac4dbc74f865c4a838006e65f91cef68a}\label{classNeoFOAM_1_1Field_ac4dbc74f865c4a838006e65f91cef68a}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator-\/=@{operator-\/=}}
+\index{operator-\/=@{operator-\/=}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator-\/=()}{operator-=()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$Value\+Type$>$\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator-\/= (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Arithmetic subtraction operator, subtraction by a second field. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The field to subtract from this field. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The result of the subtraction. 
+\end{DoxyReturn}
+
+
+Definition at line 245 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a8bd676379e963159ca6fdd3c5ce55f9e}\label{classNeoFOAM_1_1Field_a8bd676379e963159ca6fdd3c5ce55f9e}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator=@{operator=}}
+\index{operator=@{operator=}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator=()}{operator=()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator= (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Assignment operator, Sets the field values to that of the parsed field. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The field to copy from.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+This field will be sized to the size of the parsed field. 
+\end{DoxyWarning}
+
+
+Definition at line 218 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a274696665d8efadef9091750fe3950db}\label{classNeoFOAM_1_1Field_a274696665d8efadef9091750fe3950db}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator=@{operator=}}
+\index{operator=@{operator=}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator=()}{operator=()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator= (\begin{DoxyParamCaption}\item[{const Value\+Type \&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Assignment operator, Sets the field values to that of the passed value. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rhs} & The value to set the field to. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 210 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_ac50ebe1f96d984ab3bad80769cf0e9fb}\label{classNeoFOAM_1_1Field_ac50ebe1f96d984ab3bad80769cf0e9fb}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator\mbox{[}\mbox{]}@{operator[]}}
+\index{operator\mbox{[}\mbox{]}@{operator[]}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator[]()}{operator[]()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{i }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Subscript operator. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em i} & The index of cell in the field \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The value at the index i 
+\end{DoxyReturn}
+
+
+Definition at line 180 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a6e746984b08dcb801db1da82b4cf1011}\label{classNeoFOAM_1_1Field_a6e746984b08dcb801db1da82b4cf1011}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!operator\mbox{[}\mbox{]}@{operator[]}}
+\index{operator\mbox{[}\mbox{]}@{operator[]}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{operator[]()}{operator[]()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION const Value\+Type\& \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{i }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Subscript operator. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em i} & The index of cell in the field \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The value at the index i 
+\end{DoxyReturn}
+
+
+Definition at line 188 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_aa1e34ceff04763a8bbf7714e1381e0ac}\label{classNeoFOAM_1_1Field_aa1e34ceff04763a8bbf7714e1381e0ac}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!range@{range}}
+\index{range@{range}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{range()}{range()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::pair$<$\mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::range (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the range of the field. 
+
+\begin{DoxyReturn}{Returns}
+The range of the field \{0, \mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size()}}\}. 
+\end{DoxyReturn}
+
+
+Definition at line 380 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a1c9e4d097ea90596f696bbc491587391}\label{classNeoFOAM_1_1Field_a1c9e4d097ea90596f696bbc491587391}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!resize@{resize}}
+\index{resize@{resize}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{resize()}{resize()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::resize (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Resizes the field to a new size. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em size} & The new size to set the field to. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 284 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}\label{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!size@{size}}
+\index{size@{size}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{size()}{size()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::size (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the size of the field. 
+
+\begin{DoxyReturn}{Returns}
+The size of the field. 
+\end{DoxyReturn}
+
+
+Definition at line 329 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a6f3f4f0dbd16309de3786a4d92bf0564}\label{classNeoFOAM_1_1Field_a6f3f4f0dbd16309de3786a4d92bf0564}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}\hspace{0.1cm}{\footnotesize\ttfamily [1/6]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::span$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::span (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) \&\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the field as a span. 
+
+\begin{DoxyReturn}{Returns}
+Span of the field. 
+\end{DoxyReturn}
+
+
+Definition at line 347 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a565eec5f60f4e057792069c2f4832448}\label{classNeoFOAM_1_1Field_a565eec5f60f4e057792069c2f4832448}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}\hspace{0.1cm}{\footnotesize\ttfamily [2/6]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::span$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::span (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) \&\&\hspace{0.3cm}{\ttfamily [delete]}}
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a3780518723a1d3843b86f35542004b89}\label{classNeoFOAM_1_1Field_a3780518723a1d3843b86f35542004b89}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}\hspace{0.1cm}{\footnotesize\ttfamily [3/6]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::span$<$const Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::span (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const \&\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the field as a span. 
+
+\begin{DoxyReturn}{Returns}
+Span of the field. 
+\end{DoxyReturn}
+
+
+Definition at line 353 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a8d2599353d87f5d68a435cbade674455}\label{classNeoFOAM_1_1Field_a8d2599353d87f5d68a435cbade674455}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}\hspace{0.1cm}{\footnotesize\ttfamily [4/6]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::span$<$const Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::span (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const \&\&\hspace{0.3cm}{\ttfamily [delete]}}
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_adbb43b668dde2f44dce85aa692ea4a1e}\label{classNeoFOAM_1_1Field_adbb43b668dde2f44dce85aa692ea4a1e}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}\hspace{0.1cm}{\footnotesize\ttfamily [5/6]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::span$<$Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::span (\begin{DoxyParamCaption}\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a sub view of the field as a span. 
+
+\begin{DoxyReturn}{Returns}
+Span of the field. 
+\end{DoxyReturn}
+
+
+Definition at line 362 of file field.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1Field_a05697313996211d5e53a90417260002b}\label{classNeoFOAM_1_1Field_a05697313996211d5e53a90417260002b}} 
+\index{NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::Field$<$ ValueType $>$@{NeoFOAM::Field$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}\hspace{0.1cm}{\footnotesize\ttfamily [6/6]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::span$<$const Value\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$\+::span (\begin{DoxyParamCaption}\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a sub view of the field as a span. 
+
+\begin{DoxyReturn}{Returns}
+Span of the field. 
+\end{DoxyReturn}
+
+
+Definition at line 371 of file field.\+hpp.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/core/\mbox{\hyperlink{parallelAlgorithms_8hpp}{parallel\+Algorithms.\+hpp}}\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/fields/\mbox{\hyperlink{field_8hpp}{field.\+hpp}}\end{DoxyCompactItemize}
