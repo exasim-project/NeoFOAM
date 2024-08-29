@@ -355,11 +355,17 @@ public:
         return std::span<const ValueType>(data_, size_);
     }
 
+    // ensures no return a span of a temporary object --> invalid memory access
+    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range) && = delete;
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const&& = delete;
+
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range)
+    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range) &
     {
         return std::span<ValueType>(data_ + range.first, range.second - range.first);
     }
@@ -368,7 +374,7 @@ public:
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const
+    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const&
     {
         return std::span<const ValueType>(data_ + range.first, range.second - range.first);
     }
