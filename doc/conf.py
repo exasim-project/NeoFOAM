@@ -23,6 +23,7 @@ author = 'NeoFOAM authors'
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinxcontrib.mermaid',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
