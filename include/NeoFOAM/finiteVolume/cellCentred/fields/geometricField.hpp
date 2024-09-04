@@ -37,11 +37,11 @@ public:
      */
     GeometricFieldMixin(
         const Executor& exec,
-        std::string name,
+        std::string fieldName,
         const UnstructuredMesh& mesh,
         const DomainField<ValueType>& field
     )
-        : exec_(exec), name_(name), mesh_(mesh), field_(field)
+        : exec_(exec), name(fieldName), mesh_(mesh), field_(field)
     {}
 
     /**
@@ -86,12 +86,7 @@ public:
      */
     const UnstructuredMesh& mesh() const { return mesh_; }
 
-    /**
-     * @brief Returns the name of the field.
-     *
-     * @return The name of the field.
-     */
-    std::string name() const { return name_; }
+    std::string name; // The name of the field
 
 protected:
 
@@ -100,5 +95,6 @@ protected:
     const UnstructuredMesh& mesh_; // The unstructured mesh object
     DomainField<ValueType> field_; // The domain field object
 };
+
 
 } // namespace NeoFOAM
