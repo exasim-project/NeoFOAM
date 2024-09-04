@@ -155,22 +155,22 @@ TEST_CASE("DSL")
 }
 
 
-dsl::EqnTerm<NeoFOAM::scalar> createLaplacian(const NeoFOAM::Executor& exec, size_t nCells)
+auto createLaplacian(const NeoFOAM::Executor& exec, size_t nCells)
 {
     return Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells);
 }
 
-dsl::EqnTerm<NeoFOAM::scalar> createDivergence(const NeoFOAM::Executor& exec, size_t nCells)
+auto createDivergence(const NeoFOAM::Executor& exec, size_t nCells)
 {
     return Divergence(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells);
 }
+
 
 TEST_CASE("build eqnsystem from unevaluated terms")
 {
     auto exec = NeoFOAM::SerialExecutor();
     size_t nCells = 1;
     NeoFOAM::Dictionary dict {{"value", 1.0}};
-
 
     SECTION("addition")
     {

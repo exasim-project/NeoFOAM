@@ -106,8 +106,7 @@ TEST_CASE("EqnTerm")
 
     SECTION("Scale Field")
     {
-        NeoFOAM::Field<NeoFOAM::scalar> scale(exec, nCells);
-        NeoFOAM::fill(scale, 2.0);
+        NeoFOAM::Field<NeoFOAM::scalar> scale(exec, nCells, 2.0);
         NeoFOAM::scalar value = 1;
         dsl::EqnTerm<NeoFOAM::scalar> lapTerm =
             Laplacian(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, value);

@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <concepts>
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
@@ -208,6 +209,7 @@ private:
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField_;
 };
 
+
 template<typename ValueType>
 EqnSystem<ValueType> operator+(EqnSystem<ValueType> lhs, const EqnSystem<ValueType>& rhs)
 {
@@ -215,16 +217,22 @@ EqnSystem<ValueType> operator+(EqnSystem<ValueType> lhs, const EqnSystem<ValueTy
     return lhs;
 }
 
-template<typename ValueType>
-EqnSystem<ValueType> operator+(EqnSystem<ValueType> lhs, const EqnTerm<ValueType>& rhs)
+template<typename ValueType, typename EqnTermType>
+EqnSystem<ValueType> operator+(EqnSystem<ValueType> lhs, const EqnTermType& rhs)
 {
     lhs.addTerm(rhs);
     return lhs;
 }
 
-template<typename ValueType>
-EqnSystem<ValueType> operator+(EqnTerm<ValueType> lhs, EqnTerm<ValueType> rhs)
+
+// template<typename Term, typename ValueType>
+// concept ConvertibleToEqnTerm = std::convertible_to<Term, NeoFOAM::DSL::EqnTerm<ValueType>>;
+
+
+template<typename EqnTermType>
+auto operator+(EqnTermType lhs, EqnTermType rhs)
 {
+    using ValueType = typename EqnTermType::EqnTermValueType;
     EqnSystem<ValueType> eqnSys(lhs.exec(), lhs.nCells());
     eqnSys.addTerm(lhs);
     eqnSys.addTerm(rhs);
@@ -257,20 +265,21 @@ EqnSystem<ValueType> operator-(EqnSystem<ValueType> lhs, const EqnSystem<ValueTy
     return lhs;
 }
 
-template<typename ValueType>
-EqnSystem<ValueType> operator-(EqnSystem<ValueType> lhs, const EqnTerm<ValueType>& rhs)
+template<typename ValueType, typename EqnTermType>
+EqnSystem<ValueType> operator-(EqnSystem<ValueType> lhs, const EqnTermType& rhs)
 {
     lhs.addTerm(-1.0 * rhs);
     return lhs;
 }
 
-template<typename ValueType>
-EqnSystem<ValueType> operator-(const EqnTerm<ValueType>& lhs, const EqnTerm<ValueType>& rhs)
+template<typename EqnTermType>
+auto operator-(EqnTermType lhs, EqnTermType rhs)
 {
-    EqnSystem<ValueType> results(lhs.exec(), lhs.nCells());
-    results.addTerm(lhs);
-    results.addTerm(-1.0 * rhs);
-    return results;
+    using ValueType = typename EqnTermType::EqnTermValueType;
+    EqnSystem<ValueType> eqnSys(lhs.exec(), lhs.nCells());
+    eqnSys.addTerm(lhs);
+    eqnSys.addTerm(-1.0 * EqnTerm<ValueType>(rhs));
+    return eqnSys;
 }
 
 

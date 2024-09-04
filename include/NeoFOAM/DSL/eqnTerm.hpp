@@ -40,6 +40,8 @@ class EqnTermMixin
 {
 public:
 
+    using EqnTermValueType = ValueType;
+
     EqnTermMixin(bool isEvaluated) : field_(), scaleField_(1.0), termEvaluated(isEvaluated) {};
 
     virtual ~EqnTermMixin() = default;
@@ -82,6 +84,9 @@ public:
         Implicit,
         Explicit
     };
+
+    // expise valuetype to other templates
+    using EqnTermValueType = ValueType;
 
     template<typename T>
     EqnTerm(T cls) : model_(std::make_unique<Model<T>>(std::move(cls)))
@@ -224,18 +229,20 @@ private:
 
 
 // add multiply operator to EqnTerm
-template<typename ValueType>
-EqnTerm<ValueType> operator*(NeoFOAM::scalar scale, const EqnTerm<ValueType>& lhs)
+template<typename EqnTermType>
+auto operator*(NeoFOAM::scalar scale, const EqnTermType& lhs)
 {
+    using ValueType = typename EqnTermType::EqnTermValueType;
     EqnTerm<ValueType> result = lhs;
     result.scaleField() *= scale;
     return result;
 }
 
 // add multiply operator to EqnTerm
-template<typename ValueType>
-EqnTerm<ValueType> operator*(NeoFOAM::Field<NeoFOAM::scalar> scale, const EqnTerm<ValueType>& lhs)
+template<typename EqnTermType>
+auto operator*(NeoFOAM::Field<NeoFOAM::scalar> scale, const EqnTermType& lhs)
 {
+    using ValueType = typename EqnTermType::EqnTermValueType;
     EqnTerm<ValueType> result = lhs;
     if (!result.scaleField().useSpan)
     {
