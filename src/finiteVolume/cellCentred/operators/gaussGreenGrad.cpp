@@ -18,7 +18,7 @@ void computeGrad(
 {
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, SurfaceBoundary<scalar>::calculatedBCs(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();
@@ -91,6 +91,17 @@ GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mes
 void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi)
 {
     computeGrad(phi, surfaceInterpolation_, gradPhi);
+};
+
+VolumeField<Vector> GaussGreenGrad::grad(const VolumeField<scalar>& phi)
+{
+    VolumeField<Vector> gradPhi(
+        phi.exec(), "gradPhi", phi.mesh(), VolumeBoundary<Vector>::calculatedBCs(mesh_)
+    );
+    NeoFOAM::fill(gradPhi.internalField(), Vector(0.0, 0.0, 0.0));
+    NeoFOAM::fill(gradPhi.boundaryField().value(), Vector(0.0, 0.0, 0.0));
+    computeGrad(phi, surfaceInterpolation_, gradPhi);
+    return gradPhi;
 };
 
 } // namespace NeoFOAM

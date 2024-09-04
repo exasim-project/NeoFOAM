@@ -20,7 +20,7 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = divPhi.mesh();
     const auto exec = divPhi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, SurfaceBoundary<scalar>::calculatedBCs(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(phif, faceFlux, phi);
 
@@ -96,7 +96,7 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, SurfaceBoundary<scalar>::calculatedBCs(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(phif, faceFlux, phi);
 
@@ -181,6 +181,17 @@ void GaussGreenDiv::div(
 )
 {
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
+};
+
+VolumeField<scalar>
+GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi)
+{
+    std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
+    VolumeField<scalar> divPhi(exec_, name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_));
+    NeoFOAM::fill(divPhi.internalField(), 0.0);
+    NeoFOAM::fill(divPhi.boundaryField().value(), 0.0);
+    computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
+    return divPhi;
 };
 
 std::unique_ptr<DivOperatorFactory> GaussGreenDiv::clone() const
