@@ -36,14 +36,14 @@ ddt(fvcc::VolumeField<NeoFOAM::scalar>& rho, fvcc::VolumeField<NeoFOAM::scalar>&
 dsl::EqnTerm<NeoFOAM::scalar> div(const fvcc::SurfaceField<NeoFOAM::scalar>& flux)
 {
     NF_ERROR_EXIT("Not implemented");
-    // return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(flux));
+    // return dsl::EqnTerm<NeoFOAM::scalar>(DivEqnTerm(flux));
 }
 
 dsl::EqnTerm<NeoFOAM::scalar> div(fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
     NF_ERROR_EXIT("Not implemented");
     return dsl::EqnTerm<NeoFOAM::scalar>(DdtScheme(phi)); // suppress warning
-    // return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(flux));
+    // return dsl::EqnTerm<NeoFOAM::scalar>(DivEqnTerm(flux));
 }
 
 dsl::EqnTerm<NeoFOAM::scalar>
@@ -51,15 +51,15 @@ div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux,
     fvcc::VolumeField<NeoFOAM::scalar>& phi,
     const NeoFOAM::Dictionary& dict)
 {
-    std::string schemeName = "div(" + faceFlux.name() + "," + phi.name() + ")";
+    std::string schemeName = "div(" + faceFlux.name + "," + phi.name + ")";
     auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
-    return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(faceFlux, phi, tokens));
+    return dsl::EqnTerm<NeoFOAM::scalar>(DivEqnTerm(faceFlux, phi, tokens));
 }
 
 dsl::EqnTerm<NeoFOAM::scalar>
 div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    return dsl::EqnTerm<NeoFOAM::scalar>(DivScheme(faceFlux, phi));
+    return dsl::EqnTerm<NeoFOAM::scalar>(DivEqnTerm(faceFlux, phi));
 }
 
 

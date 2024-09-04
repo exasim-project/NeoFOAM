@@ -99,6 +99,15 @@ public:
         interpolationKernel_->interpolate(surfaceField, volField);
     }
 
+    SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField) const
+    {
+        SurfaceField<scalar> surfaceField(
+            exec_, "phif", mesh_, SurfaceBoundary<scalar>::calculatedBCs(mesh_)
+        );
+        interpolate(surfaceField, volField);
+        return surfaceField;
+    }
+
     void interpolate(
         SurfaceField<scalar>& surfaceField,
         const SurfaceField<scalar>& faceFlux,
@@ -106,6 +115,16 @@ public:
     ) const
     {
         interpolationKernel_->interpolate(surfaceField, faceFlux, volField);
+    }
+
+    SurfaceField<scalar>
+    interpolate(const SurfaceField<scalar>& faceFlux, const VolumeField<scalar>& volField) const
+    {
+        SurfaceField<scalar> surfaceField(
+            exec_, "phif", mesh_, SurfaceBoundary<scalar>::calculatedBCs(mesh_)
+        );
+        interpolate(surfaceField, faceFlux, volField);
+        return surfaceField;
     }
 
 private:
