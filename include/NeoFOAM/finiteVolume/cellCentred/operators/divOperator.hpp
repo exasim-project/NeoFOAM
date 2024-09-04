@@ -59,6 +59,9 @@ public:
     virtual void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
 
+    virtual VolumeField<scalar>
+    div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
+
     // Pure virtual function for cloning
     virtual std::unique_ptr<DivOperatorFactory> clone() const = 0;
 
@@ -102,11 +105,17 @@ public:
         divOperatorStrategy_ = DivOperatorFactory::create(exec_, mesh_, input);
     }
 
-    void
-    div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    ) const
+    VolumeField<scalar> div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
     {
+        // std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
+        std::string name = "div";
+        VolumeField<scalar> divPhi(
+            exec_, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_)
+        );
+        NeoFOAM::fill(divPhi.internalField(), 0.0);
+        NeoFOAM::fill(divPhi.boundaryField().value(), 0.0);
         divOperatorStrategy_->div(divPhi, faceFlux, phi);
+        return divPhi;
     }
 
     void

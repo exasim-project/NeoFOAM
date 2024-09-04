@@ -22,7 +22,7 @@ public:
 
     static std::string name() { return "Gauss"; }
 
-    static std::string doc() { return "Gauss Divergence"; }
+    static std::string doc() { return "Gauss-Green Divergence"; }
 
     static std::string schema() { return "none"; }
 
@@ -35,6 +35,9 @@ public:
     void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) override;
+
+    VolumeField<scalar>
+    div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) override;
 
     std::unique_ptr<DivOperatorFactory> clone() const override;
 

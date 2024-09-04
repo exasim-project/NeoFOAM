@@ -65,6 +65,20 @@ public:
         boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
     }
 
+    static std::vector<VolumeBoundary<ValueType>> calculatedBCs(const UnstructuredMesh& mesh)
+    {
+        const auto& bMesh = mesh.boundaryMesh();
+        std::vector<VolumeBoundary<ValueType>> bcs;
+
+        for (int patchID = 0; patchID < mesh.nBoundaries(); patchID++)
+        {
+            Dictionary patchDict({{"type", std::string("calculated")}});
+            bcs.push_back(VolumeBoundary<ValueType>(mesh, patchDict, patchID));
+        }
+
+        return bcs;
+    };
+
 private:
 
     // NOTE needs full namespace to be not ambiguous
