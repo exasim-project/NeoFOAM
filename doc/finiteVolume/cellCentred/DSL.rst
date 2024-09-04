@@ -107,25 +107,18 @@ So, the general assumption is that a EqnSystem consists of multiple EqnTerms tha
 EqnTerm
 -------
 
-.. * What does it do?
-.. * how to scale terms?
-.. * how to evaluate terms?
-.. * how to store terms?
-.. * how is it implemented?
 
-
-`EqnTerm` represents a term in an equation. It is a template class that can be instantiated with different value types. An `EqnTerm` can be of different types, such as explicit, implicit or temporal, and can be scaled by a scalar value or a field. It is implemented as Type Erasure (more details`[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_). So, the `EqnTerm` class provides a common interface for classes without inheritance. Consequently, the classes only needs to implement the interface and can be used in the DSL as shown in the example:
+`EqnTerm` represents a term in an equation. It is a template class that can be instantiated with different value types. An `EqnTerm` can be explicit, implicit or temporal and needs be scalable by a scalar value or a field. `EqnTerm` is implemented as Type Erasure (more details `[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_). So, the `EqnTerm` class provides a common interface for classes without inheritance. Consequently, the classes only needs to implement the interface and can be used in the DSL as shown in the example:
 
 
 Example:
     .. code-block:: cpp
 
         NeoFOAM::DSL::EqnTerm<NeoFOAM::scalar> divTerm =
-            Divergence(NeoFOAM::DSL::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, 1);
+            Divergence(NeoFOAM::DSL::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, ...);
 
         NeoFOAM::DSL::EqnTerm<NeoFOAM::scalar> ddtTerm =
-            TimeTerm(NeoFOAM::DSL::EqnTerm<NeoFOAM::scalar>::Type::Temporal, exec, 1);
-
+            TimeTerm(NeoFOAM::DSL::EqnTerm<NeoFOAM::scalar>::Type::Temporal, exec, ..);
 
 
 To fit the specification of the EqnSystem (storage in a vector), the EqnTerm needs to be able to be scaled:
@@ -135,21 +128,21 @@ To fit the specification of the EqnSystem (storage in a vector), the EqnTerm nee
         NeoFOAM::Field<NeoFOAM::scalar> scalingField(exec, nCells, 2.0);
         auto sF = scalingField.span();
 
-        dsl::EqnTerm<NeoFOAM::scalar> lapTerm =
-            Divergence(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, 1.0);
+        dsl::EqnTerm<NeoFOAM::scalar> customTerm =
+            CustomTerm(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, 1.0);
 
-        auto scaledTerm = 2.0 * lapTerm; // 2.0 is the scaling factor
-        scaledTerm = -1.0 * lapTerm; // -1.0 is the scaling factor
-        scaledTerm = scalingField * lapTerm; // scalingField is the scaling field
+        auto scaledTerm = 2.0 * customTerm; // 2.0 is the scaling factor
+        scaledTerm = -1.0 * customTerm; // -1.0 is the scaling factor
+        scaledTerm = scalingField * customTerm; // scalingField is the scaling field
 
         // EqnTerm also supports a similar syntax as OpenFOAM
-        auto scaledTerm = (scale + scale + scale + scale) * lapTerm;
+        auto scaledTerm = (scale + scale + scale + scale) * customTerm;
 
         // EqnTerm also supports the use of a lambda as scaling function to reduce the number of temporaries generated
         scaledTerm =
-            (KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sF[i] + sF[i] + sF[i]  + sF[i]; }) * lapTerm;
+            (KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sF[i] + sF[i] + sF[i]  + sF[i]; }) * customTerm;
 
-The simplest approach to add a custom EqnTerm, is to derive a class from the EqnTermMixin and implement the required functions. The EqnTermMixin provides the interface for the EqnTerm and the EqnTermMixin can be used to implement the EqnTerm. The EqnTermMixin provides the following interface:
+The simplest approach to add a custom EqnTerm, is to derive a class from the EqnTermMixin and implement the required functions. A class that want to use the EqnTerm interface needs to provide the following functions:
 
     - build: build the term
     - explicitOperation: perform the explicit operation
@@ -160,11 +153,11 @@ The simplest approach to add a custom EqnTerm, is to derive a class from the Eqn
     - nCells: get the number of cells
     - volumeField: get the volume field
 
-as shown below:
+An example is given below:
 
 .. code-block:: cpp
 
-    class Laplacian : public dsl::EqnTermMixin<NeoFOAM::scalar>
+    class CustomEqnTerm : public dsl::EqnTermMixin<NeoFOAM::scalar>
     {
 
     public:
