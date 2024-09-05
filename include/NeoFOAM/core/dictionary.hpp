@@ -14,6 +14,12 @@
 namespace NeoFOAM
 {
 
+void logOutRange(
+    const std::out_of_range& e,
+    const std::string& key,
+    const std::unordered_map<std::string, std::any>& data
+);
+
 /**
  * @class Dictionary
  * @brief A class representing a dictionary that stores key-value pairs.
@@ -90,10 +96,7 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            std::cerr << "Caught a bad_any_cast exception: \n"
-                      << "requested type " << demangle(typeid(T).name()) << "\n"
-                      << "actual type " << demangle(operator[](key).type().name()) << "\n"
-                      << e.what() << std::endl;
+            logBadAnyCast<T>(e, key, data_);
             throw e;
         }
     }
@@ -115,10 +118,7 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            std::cerr << "Caught a bad_any_cast exception: \n"
-                      << "requested type " << demangle(typeid(T).name()) << "\n"
-                      << "actual type " << demangle(operator[](key).type().name()) << "\n"
-                      << e.what() << std::endl;
+            logBadAnyCast<T>(e, key, data_);
             throw e;
         }
     }

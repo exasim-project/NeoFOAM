@@ -41,10 +41,7 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            std::cerr << "Caught a bad_any_cast exception: \n"
-                      << "requested type " << demangle(typeid(T).name()) << "\n"
-                      << "actual type " << demangle(data_.at(idx).type().name()) << "\n"
-                      << e.what() << std::endl;
+            logBadAnyCast<T>(e, idx, data_);
             throw e;
         }
     }
@@ -59,10 +56,7 @@ public:
         }
         catch (const std::bad_any_cast& e)
         {
-            std::cerr << "Caught a bad_any_cast exception: \n"
-                      << "requested type " << demangle(typeid(T).name()) << "\n"
-                      << "actual type " << demangle(data_.at(idx).type().name()) << "\n"
-                      << e.what() << std::endl;
+            logBadAnyCast<T>(e, idx, data_);
             throw e;
         }
     }

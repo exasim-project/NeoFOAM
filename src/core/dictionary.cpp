@@ -6,6 +6,23 @@
 #include <numeric>
 namespace NeoFOAM
 {
+void logOutRange(
+    const std::out_of_range& e,
+    const std::string& key,
+    const std::unordered_map<std::string, std::any>& data
+)
+{
+    std::cerr << "Key not found: " << key << " \n"
+              << "available keys are: \n"
+              << std::accumulate(
+                     data.begin(),
+                     data.end(),
+                     std::string(""),
+                     [](const std::string& a, const std::pair<std::string, std::any>& b)
+                     { return a + "  - " + b.first + " \n"; }
+                 )
+              << e.what() << std::endl;
+}
 
 Dictionary::Dictionary(const std::unordered_map<std::string, std::any>& keyValuePairs)
     : data_(keyValuePairs)
@@ -33,16 +50,7 @@ std::any& Dictionary::operator[](const std::string& key)
     }
     catch (const std::out_of_range& e)
     {
-        std::cerr << "Key not found: " << key << " \n"
-                  << "available keys are: \n"
-                  << std::accumulate(
-                         data_.begin(),
-                         data_.end(),
-                         std::string(""),
-                         [](const std::string& a, const std::pair<std::string, std::any>& b)
-                         { return a + "  - " + b.first + " \n"; }
-                     )
-                  << e.what() << std::endl;
+        logOutRange(e, key, data_);
         throw e;
     }
 }
@@ -55,17 +63,7 @@ const std::any& Dictionary::operator[](const std::string& key) const
     }
     catch (const std::out_of_range& e)
     {
-
-        std::cerr << "Key not found: " << key << " \n"
-                  << "available keys are: \n"
-                  << std::accumulate(
-                         data_.begin(),
-                         data_.end(),
-                         std::string(""),
-                         [](const std::string& a, const std::pair<std::string, std::any>& b)
-                         { return a + "  - " + b.first + " \n"; }
-                     )
-                  << e.what() << std::endl;
+        logOutRange(e, key, data_);
         throw e;
     }
 }

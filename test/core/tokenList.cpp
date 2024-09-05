@@ -39,6 +39,6 @@ TEST_CASE("tokenList")
 
     SECTION("check bad any cast")
     {
-        REQUIRE_THROWS_AS(tokenList.get<NeoFOAM::scalar>(0), std::bad_any_cast);
+        REQUIRE_THROWS_AS(tokenList.get<std::string>(0), std::bad_any_cast);
     }
 }
