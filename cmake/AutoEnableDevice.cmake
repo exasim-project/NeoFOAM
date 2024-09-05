@@ -4,16 +4,9 @@
 include(CheckLanguage)
 
 if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    message(STATUS "Using Clang compiler")
-    set(OpenMP_CXX_FLAGS "-fopenmp=libgomp")
-    set(OpenMP_CXX_LIB_NAMES "gomp")
-    set(OpenMP_gomp_LIBRARY gomp)
-  endif()
   find_package(OpenMP QUIET)
 
   if(OpenMP_FOUND)
-    # Check if the compiler is Clang
     set(Kokkos_ENABLE_OPENMP
         ON
         CACHE INTERNAL "")
