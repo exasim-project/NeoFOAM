@@ -58,18 +58,18 @@ EqnSystem
 ---------
 
 
-The `EqnSystem` template class in NeoFOAM represents holds, manage, builds and solves the DSL and is the core part that orchestrates the following questions:
+The `EqnSystem` template class in NeoFOAM holds, manages, builds and solves the expressed/programmed equation and its core responsibilities lie in the answering of the following questions:
 
-    - How to discretize the eqnterms?
+    - How to discretize the spatial terms?
         - In OpenFOAM this information is provided in **fvSchemes**
     - How to integrate the system in time?
         - In OpenFOAM this information is provided in **fvSchemes**
     - How to solve the system?
         - In OpenFOAM this information is provided in **fvSolution**
 
-The main difference between OpenFOAM and NeoFOAM is that the DSL in NeoFOAM is evaluated lazily. Therefore, the evaluation is no longer tied to a sparse matrix enabling other numerical integration strategies (RK method) or even substepping can be integrated inside the equation.
+The main difference between NeoFOAM and OpenFOAM is that the DSL is evaluated lazily. Therefore, the evaluation is not tied to the construction and solution of a sparse matrix, enabling other numerical integration strategies (e.g. RK methods or even substepping within an the equation).
 
-To evaluate the terms lazily, `EqnSystem` stores 3 vectors:
+For lazy evaluation, the `EqnSystem` stores 3 vectors:
 
 .. mermaid::
 
@@ -101,14 +101,14 @@ To evaluate the terms lazily, `EqnSystem` stores 3 vectors:
         EqnTerm <|-- Others
         EqnSystem <|-- EqnTerm
 
-So, the general assumption is that a EqnSystem consists of multiple EqnTerms that are either explicit, implicit or temporal. Consequently, plus, minus or scaling with a field needs to be handled by the EqnTerm.
+Thus, an `EqnSystem` consists of multiple `EqnTerms` which are either explicit, implicit, or temporal. Consequently, plus, minus, and scaling with a field needs to be handled by the `EqnTerm`.
 
 
 EqnTerm
 -------
 
 
-`EqnTerm` represents a term in an equation. It is a template class that can be instantiated with different value types. An `EqnTerm` can be explicit, implicit or temporal and needs be scalable by a scalar value or a field. `EqnTerm` is implemented as Type Erasure (more details `[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_). So, the `EqnTerm` class provides a common interface for classes without inheritance. Consequently, the classes only needs to implement the interface and can be used in the DSL as shown in the example:
+The template `EqnTerm` represents a term in an equation and can be instantiated with different value types. An `EqnTerm` is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field. The `EqnTerm` implementation used Type Erasure (more details `[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:
 
 
 Example:
@@ -131,18 +131,18 @@ To fit the specification of the EqnSystem (storage in a vector), the EqnTerm nee
         dsl::EqnTerm<NeoFOAM::scalar> customTerm =
             CustomTerm(dsl::EqnTerm<NeoFOAM::scalar>::Type::Explicit, exec, nCells, 1.0);
 
-        auto scaledTerm = 2.0 * customTerm; // 2.0 is the scaling factor
-        scaledTerm = -1.0 * customTerm; // -1.0 is the scaling factor
-        scaledTerm = scalingField * customTerm; // scalingField is the scaling field
+        auto constantScaledTerm = 2.0 * customTerm; // A constant scaling factor of 2 for the term.
+        auto fieldScaledTerm = scalingField * customTerm; // scalingField is used to scale the term.
 
         // EqnTerm also supports a similar syntax as OpenFOAM
-        auto scaledTerm = (scale + scale + scale + scale) * customTerm;
+        auto multiScaledTerm = (scale + scale + scale + scale) * customTerm;
 
         // EqnTerm also supports the use of a lambda as scaling function to reduce the number of temporaries generated
-        scaledTerm =
+        auto lambdaScaledTerm =
             (KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sF[i] + sF[i] + sF[i]  + sF[i]; }) * customTerm;
 
-The simplest approach to add a custom EqnTerm, is to derive a class from the EqnTermMixin and implement the required functions. A class that want to use the EqnTerm interface needs to provide the following functions:
+To add a user-defined `EqnTerm`, a new derived class must be created, inheriting from `EqnTermMixin`, 
+ and provide the definitions of the below virtual functions that are required for the `EquTerm` interface: 
 
     - build: build the term
     - explicitOperation: perform the explicit operation
@@ -208,7 +208,7 @@ An example is given below:
         NeoFOAM::scalar value = 1.0;
     };
 
-The required scaling of the term is handle by the `scaleField` function that is provided by the EqnTermMixin. The `scaleField` function returns 'ScalingField' class that considers scaling by fields and scalars.
+The required scaling of the term is handle by the `scaleField` function, provided by `EqnTermMixin`. The `scaleField` function returns the 'ScalingField' class that is used to scale by fields and scalars.
 
 .. code-block:: cpp
 
