@@ -25,7 +25,6 @@ namespace NeoFOAM
  * using the `subDict` function. The values are stored using `std::any`, which
  * allows storing values of any type.
  */
-
 class Dictionary
 {
 public:

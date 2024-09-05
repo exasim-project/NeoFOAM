@@ -2,9 +2,10 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <variant>
+
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/tokenList.hpp"
-#include <variant>
 
 namespace NeoFOAM
 {
