@@ -12,10 +12,10 @@ namespace NeoFOAM
 
 using Input = std::variant<Dictionary, TokenList>;
 
-template<class T>
-T create(Input input)
+template<class dataClass>
+dataClass read(Input input)
 {
-    return std::visit([](const auto& i) { return T::create(i); }, input);
+    return std::visit([](const auto& i) { return dataClass::read(i); }, input);
 }
 
 }
