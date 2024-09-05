@@ -8,7 +8,9 @@ var searchData=
   ['linear_2ehpp_155',['linear.hpp',['../linear_8hpp.html',1,'']]],
   ['local_5fidx_156',['local_idx',['../structNeoFOAM_1_1NodeCommMap.html#a6b64895e94e527021b3817122a4cbced',1,'NeoFOAM::NodeCommMap']]],
   ['localidx_157',['localIdx',['../namespaceNeoFOAM.html#a95525d89d661b88aaa4548bdf2766842',1,'NeoFOAM']]],
-  ['lookuptable_158',['LookupTable',['../classNeoFOAM_1_1BaseClassDocumentation.html#ab75de8a1828f530b45c19e6af868b771',1,'NeoFOAM::BaseClassDocumentation::LookupTable()'],['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4.html#a14a85d6de971973e4372608c63250231',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::LookupTable()']]],
-  ['loop_159',['loop',['../classNeoFOAM_1_1Time.html#a97324c456ba7c0d944a4ee8bcf891d75',1,'NeoFOAM::Time']]],
-  ['lor_160',['Lor',['../namespaceNeoFOAM_1_1mpi.html#ad2080ed6fe76416aece0600b1993f496a8595fb71a368d49d1ce5eead7f7ec7a5',1,'NeoFOAM::mpi']]]
+  ['logbadanycast_158',['logBadAnyCast',['../namespaceNeoFOAM.html#ad0a06ebc4aa82a65353cdc36eb19810e',1,'NeoFOAM']]],
+  ['logoutrange_159',['logOutRange',['../namespaceNeoFOAM.html#af6f9721ae18e83a58215ddfbba7413b1',1,'NeoFOAM']]],
+  ['lookuptable_160',['LookupTable',['../classNeoFOAM_1_1BaseClassDocumentation.html#ab75de8a1828f530b45c19e6af868b771',1,'NeoFOAM::BaseClassDocumentation::LookupTable()'],['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4.html#a14a85d6de971973e4372608c63250231',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::LookupTable()']]],
+  ['loop_161',['loop',['../classNeoFOAM_1_1Time.html#a97324c456ba7c0d944a4ee8bcf891d75',1,'NeoFOAM::Time']]],
+  ['lor_162',['Lor',['../namespaceNeoFOAM_1_1mpi.html#ad2080ed6fe76416aece0600b1993f496a8595fb71a368d49d1ce5eead7f7ec7a5',1,'NeoFOAM::mpi']]]
 ];
