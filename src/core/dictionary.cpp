@@ -4,6 +4,7 @@
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/error.hpp"
 #include <numeric>
+
 namespace NeoFOAM
 {
 void logOutRange(
@@ -40,7 +41,7 @@ void Dictionary::insert(const std::string& key, const std::any& value) { data_[k
 
 void Dictionary::remove(const std::string& key) { data_.erase(key); }
 
-bool Dictionary::found(const std::string& key) const { return data_.find(key) != data_.end(); }
+bool Dictionary::contains(const std::string& key) const { return data_.find(key) != data_.end(); }
 
 std::any& Dictionary::operator[](const std::string& key)
 {
@@ -80,7 +81,7 @@ const Dictionary& Dictionary::subDict(const std::string& key) const
 
 bool Dictionary::isDict(const std::string& key) const
 {
-    return found(key) && std::any_cast<Dictionary>(&data_.at(key));
+    return contains(key) && std::any_cast<Dictionary>(&data_.at(key));
 }
 
 // get keys of the dictionary

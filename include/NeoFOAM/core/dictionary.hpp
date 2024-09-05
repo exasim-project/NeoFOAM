@@ -53,7 +53,7 @@ public:
      * @param key The key to check.
      * @return True if the key is present, false otherwise.
      */
-    [[nodiscard]] bool found(const std::string& key) const;
+    [[nodiscard]] bool contains(const std::string& key) const;
 
     /**
      * @brief Removes an entry from the dictionary based on the specified key.

@@ -24,7 +24,7 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         dict.insert("key", 42);
         dict["key"] = 43;
 
-        REQUIRE(dict.found("key"));
+        REQUIRE(dict.contains("key"));
         REQUIRE(!dict.isDict("key"));
     }
 
@@ -42,7 +42,7 @@ TEST_CASE("Dictionary operations", "[dictionary]")
         dict["key"] = 43;
         dict.remove("key");
 
-        REQUIRE(!dict.found("key"));
+        REQUIRE(!dict.contains("key"));
     }
 
     SECTION("Access non-existent key")
