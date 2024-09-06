@@ -269,7 +269,12 @@ TEST_CASE("Field Operations")
 
 TEST_CASE("getSpans")
 {
-    NeoFOAM::Executor exec = NeoFOAM::SerialExecutor {};
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
 
     NeoFOAM::Field<NeoFOAM::scalar> a(exec, 3, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
@@ -284,4 +289,15 @@ TEST_CASE("getSpans")
     auto [spanA2] = NeoFOAM::spans(a);
 
     REQUIRE(spanA[0] == 1.0);
+
+    NeoFOAM::parallelFor(
+        a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
+    );
+
+    auto [hostA] = NeoFOAM::copyToHosts(a);
+
+    for (auto value : hostA.span())
+    {
+        REQUIRE(value == 5.0);
+    }
 }
