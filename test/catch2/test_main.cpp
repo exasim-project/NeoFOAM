@@ -29,5 +29,7 @@ int main(int argc, char* argv[])
 
     int result = session.run();
 
+    Kokkos::finalize();
+
     return result;
 }
