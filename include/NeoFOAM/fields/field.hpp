@@ -70,14 +70,15 @@ public:
      * @brief Create a Field with a given size on an executor and uniform value
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
+     * @param value  the  default value
      */
     Field(const Executor& exec, size_t size, ValueType value)
         : size_(size), data_(nullptr), exec_(exec)
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
+            [this, &ptr, size](const auto& exec)
+            { ptr = exec.alloc(size * sizeof(ValueType)); },
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);

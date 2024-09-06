@@ -30,8 +30,8 @@ TEST_CASE("Field Constructors")
 
         REQUIRE(b.size() == size);
 
-        auto hostSpanB = b.copyToHost();
-        for (auto value : hostSpanB.span())
+        auto hostB = b.copyToHost();
+        for (auto value : hostB.span())
         {
             REQUIRE(value == 5.0);
         }
@@ -108,8 +108,8 @@ TEST_CASE("Field Operator Overloads")
 
         a -= b;
 
-        auto hostSpanA = a.copyToHost();
-        for (auto value : hostSpanA.span())
+        auto host = a.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == -5.0);
         }
@@ -125,8 +125,8 @@ TEST_CASE("Field Operator Overloads")
         NeoFOAM::fill(b, 10.0);
 
         c = a + b;
-        auto hostSpanC = c.copyToHost();
-        for (auto value : hostSpanC.span())
+        auto hostC = c.copyToHost();
+        for (auto value : hostC.span())
         {
             REQUIRE(value == 15.0);
         }
@@ -143,8 +143,8 @@ TEST_CASE("Field Operator Overloads")
 
         c = a - b;
 
-        auto hostSpanC = c.copyToHost();
-        for (auto value : hostSpanC.span())
+        auto hostC = c.copyToHost();
+        for (auto value : hostC.span())
         {
             REQUIRE(value == -5.0);
         }
