@@ -108,7 +108,7 @@ TEST_CASE("Field Operator Overloads")
 
         a -= b;
 
-        auto host = a.copyToHost();
+        auto hostA = a.copyToHost();
         for (auto value : hostA.span())
         {
             REQUIRE(value == -5.0);
