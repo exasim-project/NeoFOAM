@@ -126,7 +126,8 @@ Following package are required with pacman
    pacman -S mingw-w64-x86_64-ninja
    pacman -S mingw-w64-x86_64-msmpi
 
-   pacman -S mingw-w64-x86_64-clang mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-msmpi mingw-w64-x86_64-python
+   pacman -S mingw-w64-x86_64-clang mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-msmpi mingw-w64-x86_64-python mingw-w64-x86_64-lld
+
 
 It also requires the addition of following User Path variables (see vscode guide), assuming the default installation path
 
