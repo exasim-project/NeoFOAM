@@ -6,7 +6,10 @@
 // # from here                                                                  #
 // # https://github.com/Exawind/amr-wind/blob/v2.1.0/amr-wind/core/Factory.H    #
 // ##############################################################################
-
+// its quite tricky for multiple compilers that bool REGISTERED gets initialized
+// the staticassert helps to register the class
+// https://stackoverflow.com/questions/6420985/
+// how-to-force-a-static-member-to-be-initialized?noredirect=1&lq=1
 #pragma once
 
 #include <memory>
@@ -140,6 +143,7 @@ struct RegisterDocumentation
 
     static bool REGISTERED; ///< Static variable used to trigger the registration of the class
                             ///< documentation.
+    static_assert((bool)&REGISTERED);
 };
 
 // Initialize the static variable and register the class
@@ -290,7 +294,8 @@ public:
         using Base::Base;
 
         friend derivedClass;
-        static bool REGISTERED;
+        [[maybe_unused]] static bool REGISTERED;
+        static_assert((bool)&REGISTERED);
 
         /**
          * @brief Adds the derived class as a sub type.

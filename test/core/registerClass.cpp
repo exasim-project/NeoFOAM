@@ -33,5 +33,6 @@ TEST_CASE("Register")
         }
     }
 
-    std::cout << "BaseClass table size: " << BaseClass::table().size() << std::endl;
+    CHECK(BaseClass::table().size() == 1);
+    CHECK(BaseClass2::table().size() == 1);
 }
