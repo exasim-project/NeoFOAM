@@ -6,7 +6,7 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 
-find_package(MPI 3.1 REQUIRED)
+find_package(MPI 2.0 REQUIRED)
 find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
@@ -21,7 +21,10 @@ if(NOT ${Kokkos_FOUND})
     GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
-  FetchContent_MakeAvailable(Kokkos)
+    # Ensure that Kokkos is built as a shared library
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build Kokkos as shared" FORCE)
+
+    FetchContent_MakeAvailable(Kokkos)
 endif()
 
 include(cmake/CPM.cmake)

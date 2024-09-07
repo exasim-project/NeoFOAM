@@ -22,7 +22,7 @@ void serializeIO(volatile bool* threadShutdown)
         MPI_Irecv(
             &recvBuffer,
             1,
-            MPI_CXX_BOOL,
+            MPI_INT,
             i,
             SERIALIZATION_TAG,
             COMM,
@@ -51,14 +51,14 @@ void serializeIO(volatile bool* threadShutdown)
 
         // allow process to print
         const bool allowPrint = true;
-        MPI_Send(&allowPrint, 1, MPI_CXX_BOOL, completed, SERIALIZATION_TAG, COMM);
+        MPI_Send(&allowPrint, 1, MPI_INT, completed, SERIALIZATION_TAG, COMM);
 
         // wait until process has finished printing
         bool remoteHasFinished = false;
         MPI_Recv(
             &remoteHasFinished,
             1,
-            MPI_CXX_BOOL,
+            MPI_INT,
             completed,
             SERIALIZATION_TAG,
             COMM,
@@ -69,7 +69,7 @@ void serializeIO(volatile bool* threadShutdown)
         MPI_Irecv(
             &recvBuffer,
             1,
-            MPI_CXX_BOOL,
+            MPI_INT,
             completed,
             SERIALIZATION_TAG,
             COMM,
