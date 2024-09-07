@@ -11,7 +11,6 @@ BaseClass2::BaseClass2() {}
 
 std::string BaseClass2::name() { return "BaseClass2"; }
 
-
 DerivedClass::DerivedClass() {}
 
 std::string DerivedClass::name() { return "DerivedClass"; }

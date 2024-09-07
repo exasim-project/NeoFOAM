@@ -290,7 +290,7 @@ public:
         using Base::Base;
 
         friend derivedClass;
-        [[maybe_unused]] static bool REGISTERED;
+        static bool REGISTERED;
 
         /**
          * @brief Adds the derived class as a sub type.
@@ -325,6 +325,9 @@ public:
                 REGISTERED = (it != tbl.end());
             }
         }
+
+        private:
+            Register() { (void)REGISTERED; }
     };
 
     virtual ~RuntimeSelectionFactory() = default;

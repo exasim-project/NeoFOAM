@@ -32,4 +32,6 @@ TEST_CASE("Register")
             CHECK(!NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass).empty());
         }
     }
+
+    std::cout << "BaseClass table size: " << BaseClass::table().size() << std::endl;
 }
