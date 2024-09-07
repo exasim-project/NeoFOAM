@@ -22,7 +22,7 @@ if(NOT ${Kokkos_FOUND})
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
     # Ensure that Kokkos is built as a shared library
-    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build Kokkos as shared" FORCE)
+    # set(BUILD_SHARED_LIBS ON CACHE BOOL "Build Kokkos as shared" FORCE)
 
     FetchContent_MakeAvailable(Kokkos)
 endif()
