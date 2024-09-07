@@ -143,7 +143,9 @@ struct RegisterDocumentation
 
     static bool REGISTERED; ///< Static variable used to trigger the registration of the class
                             ///< documentation.
-    static_assert((bool)&REGISTERED);
+    // with this static_assert all test pass the same approach 
+    // runTimeSelectionFactory does not work
+    static_assert((bool)&REGISTERED); 
 };
 
 // Initialize the static variable and register the class
@@ -295,7 +297,6 @@ public:
 
         friend derivedClass;
         [[maybe_unused]] static bool REGISTERED;
-        static_assert((bool)&REGISTERED);
 
         /**
          * @brief Adds the derived class as a sub type.
