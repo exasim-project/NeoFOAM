@@ -12,7 +12,7 @@ neofoam_unit_test(parallelAlgorithms)
 # up the factories registered in neofoam, which will make the test hard to maintain.
 add_library(testRegister SHARED)
 target_sources(testRegister  PRIVATE "testRegister.cpp")
-target_link_libraries(testRegister PRIVATE NeoFOAM_public_api cpptrace::cpptrace)
+target_link_libraries(testRegister PRIVATE NeoFOAM_public_api cpptrace::cpptrace MPI::MPI_CXX)
 
 add_executable(registerClass "registerClass.cpp")
 target_link_libraries(registerClass PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace MPI::MPI_CXX
