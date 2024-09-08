@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <any>
 #include <string>
+#include <iostream>
+#include <vector>
 
 #include "NeoFOAM/core/demangle.hpp"
 #include "NeoFOAM/core/error.hpp"
