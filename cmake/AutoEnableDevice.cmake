@@ -4,17 +4,17 @@
 include(CheckLanguage)
 
 if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
-  find_package(OpenMP QUIET)
+  find_package(Threads QUIET)
 
-  if(OpenMP_FOUND)
-    set(Kokkos_ENABLE_OPENMP
+  if(Threads_FOUND)
+    set(Kokkos_ENABLE_THREADS
         ON
         CACHE INTERNAL "")
   else()
-    find_package(Threads QUIET)
+    find_package(OpenMP QUIET)
 
-    if(Threads_FOUND)
-      set(Kokkos_ENABLE_THREADS
+    if(OpenMP_FOUND)
+      set(Kokkos_ENABLE_OPENMP
           ON
           CACHE INTERNAL "")
     endif()
