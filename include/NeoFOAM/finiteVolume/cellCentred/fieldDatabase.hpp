@@ -6,23 +6,26 @@
 #include <any>
 #include <string>
 
-namespace NeoFOAM
+#include "NeoFOAM/core/demangle.hpp"
+#include "NeoFOAM/core/error.hpp"
+
+namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 /**
- * @class fieldDataBase
+ * @class FieldDatabase
  * @brief A class that represents a field database.
  *
- * The fieldDataBase class provides a container for storing field data. 
+ * The FieldDatabase class provides a container for storing field data. 
  */
-class fieldDataBase
+class FieldDatabase
 {
 public:
 
     /**
-     * @brief Default constructor for fieldDataBase.
+     * @brief Default constructor for FieldDatabase.
      */
-    fieldDataBase();
+    FieldDatabase();
 
     /**
      * @brief Inserts a value into the stencil database.
@@ -48,7 +51,15 @@ public:
     template<typename T>
     T& get(const std::string& key)
     {
-        return std::any_cast<T&>(fieldDB_.at(key));
+        try
+        {
+            return std::any_cast<T&>(fieldDB_.at(key));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            logBadAnyCast<T>(e, key, fieldDB_);
+            throw e;
+        }
     }
 
     /**
@@ -63,7 +74,15 @@ public:
     template<typename T>
     const T& get(const std::string& key) const
     {
-        return std::any_cast<const T&>(fieldDB_.at(key));
+        try
+        {
+            return std::any_cast<const T&>(fieldDB_.at(key));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            logBadAnyCast<T>(e, key, fieldDB_);
+            throw e;
+        }
     }
 
 private:

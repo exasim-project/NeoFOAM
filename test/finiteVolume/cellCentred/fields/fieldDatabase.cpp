@@ -9,14 +9,58 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/fields/fieldDatabase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fieldDatabase.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fieldEntityManager.hpp"
 
 template<typename T>
 using I = std::initializer_list<T>;
 
-TEST_CASE("FieldRepo")
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
+
+fvcc::VolumeField<NeoFOAM::scalar> createVolumeField(const NeoFOAM::UnstructuredMesh& mesh)
 {
-    namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
+    std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+    for (auto patchi : I<size_t> {0, 1, 2, 3})
+    {
+        NeoFOAM::Dictionary dict;
+        dict.insert("type", std::string("fixedValue"));
+        dict.insert("fixedValue", 2.0);
+        bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
+    }
+    fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), "vf", mesh, bcs);
+    NeoFOAM::fill(vf.internalField(), 1.0);
+    return vf;
+}
+
+TEST_CASE("FieldEntityManager")
+{
+
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
+
+
+    SECTION("FieldEntityManager: " + execName)
+    {
+        fvcc::FieldEntityManager fm = fvcc::operations::newFieldEntity(createVolumeField(mesh));
+
+        auto fieldPtr = fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).field;//->internalField().copyToHost();
+        auto hostInteralField = fieldPtr->internalField().copyToHost();
+        REQUIRE(hostInteralField.span()[0] == 1.0);
+        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).timeIndex == 0.0);
+        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).iterationIndex == 0.0);
+        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).category == fvcc::FieldCategory::newTime);
+    }
+}
+
+
+TEST_CASE("FieldDatabase")
+{
 
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -29,18 +73,10 @@ TEST_CASE("FieldRepo")
 
     SECTION("store Field: " + execName)
     {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        for (auto patchi : I<size_t> {0, 1, 2, 3})
-        {
-            NeoFOAM::Dictionary dict;
-            dict.insert("type", std::string("fixedValue"));
-            dict.insert("fixedValue", 2.0);
-            bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
-        }
-        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, "vf", mesh, bcs);
+        auto vf = createVolumeField(mesh);
         NeoFOAM::fill(vf.internalField(), 1.0);
 
-        NeoFOAM::fieldDataBase fieldDB {};
+        fvcc::FieldDatabase fieldDB {};
 
         fieldDB.insert("test", 1.0);
         REQUIRE(fieldDB.get<double>("test") == 1.0);
@@ -49,4 +85,5 @@ TEST_CASE("FieldRepo")
         auto vf2 = fieldDB.get<fvcc::VolumeField<NeoFOAM::scalar>>("vf").internalField().copyToHost();
         REQUIRE(vf2.span()[0] == 1.0);
     }
+
 }
