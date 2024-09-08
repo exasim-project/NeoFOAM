@@ -14,6 +14,7 @@ target_sources(
           "core/dictionary.cpp"
           "core/tokenList.cpp"
           "core/kokkos.cpp"
+          "fields/fieldDatabase.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
