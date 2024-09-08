@@ -96,20 +96,10 @@ void mul(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
     );
 }
 
-// check if type is a Field with concept
-template<typename T>
-concept HasSpanMethod = requires(T t) { t.span(); };
-
-template<HasSpanMethod Field>
-auto getSpan(Field& field)
-{
-    return field.span();
-}
-
 template<typename... Args>
 auto spans(Args&... fields)
 {
-    return std::make_tuple(getSpan(fields)...);
+    return std::make_tuple(fields.span()...);
 }
 
 template<typename... Args>

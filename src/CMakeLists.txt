@@ -12,6 +12,7 @@ target_sources(
           "core/primitives/vector.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
+          "core/demangle.cpp"
           "core/tokenList.cpp"
           "core/kokkos.cpp"
           "executor/CPUExecutor.cpp"

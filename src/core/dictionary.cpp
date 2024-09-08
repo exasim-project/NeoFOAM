@@ -6,6 +6,23 @@
 #include <numeric>
 namespace NeoFOAM
 {
+void logOutRange(
+    const std::out_of_range& e,
+    const std::string& key,
+    const std::unordered_map<std::string, std::any>& data
+)
+{
+    std::cerr << "Key not found: " << key << " \n"
+              << "available keys are: \n"
+              << std::accumulate(
+                     data.begin(),
+                     data.end(),
+                     std::string(""),
+                     [](const std::string& a, const std::pair<std::string, std::any>& b)
+                     { return a + "  - " + b.first + " \n"; }
+                 )
+              << e.what() << std::endl;
+}
 
 Dictionary::Dictionary(const std::unordered_map<std::string, std::any>& keyValuePairs)
     : data_(keyValuePairs)
@@ -25,7 +42,7 @@ void Dictionary::insert(const std::string& key, const std::any& value) { data_[k
 
 void Dictionary::remove(const std::string& key) { data_.erase(key); }
 
-bool Dictionary::found(const std::string& key) const { return data_.find(key) != data_.end(); }
+bool Dictionary::contains(const std::string& key) const { return data_.find(key) != data_.end(); }
 
 std::any& Dictionary::operator[](const std::string& key)
 {
@@ -35,20 +52,8 @@ std::any& Dictionary::operator[](const std::string& key)
     }
     catch (const std::out_of_range& e)
     {
-
-        NF_THROW(
-            "Key not found: " << key << " \n"
-                              << "available keys are: \n"
-                              << std::accumulate(
-                                     data_.begin(),
-                                     data_.end(),
-                                     std::string(""),
-                                     [](const std::string& a,
-                                        const std::pair<std::string, std::any>& b)
-                                     { return a + "  - " + b.first + " \n"; }
-                                 )
-                              << e.what()
-        );
+        logOutRange(e, key, data_);
+        throw e;
     }
 }
 
@@ -60,20 +65,8 @@ const std::any& Dictionary::operator[](const std::string& key) const
     }
     catch (const std::out_of_range& e)
     {
-
-        NF_THROW(
-            "Key not found: " << key << " \n"
-                              << "available keys are: \n"
-                              << std::accumulate(
-                                     data_.begin(),
-                                     data_.end(),
-                                     std::string(""),
-                                     [](const std::string& a,
-                                        const std::pair<std::string, std::any>& b)
-                                     { return a + "  - " + b.first + " \n"; }
-                                 )
-                              << e.what()
-        );
+        logOutRange(e, key, data_);
+        throw e;
     }
 }
 
@@ -85,6 +78,11 @@ Dictionary& Dictionary::subDict(const std::string& key)
 const Dictionary& Dictionary::subDict(const std::string& key) const
 {
     return std::any_cast<const Dictionary&>(operator[](key));
+}
+
+bool Dictionary::isDict(const std::string& key) const
+{
+    return contains(key) && std::any_cast<Dictionary>(&data_.at(key));
 }
 
 // get keys of the dictionary

@@ -15,7 +15,7 @@
 struct TestInput
 {
 
-    static TestInput create(const NeoFOAM::Dictionary& dict)
+    static TestInput read(const NeoFOAM::Dictionary& dict)
     {
         TestInput ti;
         ti.label_ = dict.get<NeoFOAM::label>("label");
@@ -24,7 +24,7 @@ struct TestInput
         return ti;
     }
 
-    static TestInput create(const NeoFOAM::TokenList& tl)
+    static TestInput read(const NeoFOAM::TokenList& tl)
     {
         TestInput ti;
         ti.label_ = tl.get<NeoFOAM::label>(0);
@@ -39,7 +39,7 @@ struct TestInput
 
 TEST_CASE("Input")
 {
-    SECTION("create from TokenList")
+    SECTION("read from TokenList")
     {
         NeoFOAM::TokenList tokenList;
         REQUIRE(tokenList.empty());
@@ -52,13 +52,13 @@ TEST_CASE("Input")
 
         NeoFOAM::Input input = tokenList;
 
-        TestInput ti = NeoFOAM::create<TestInput>(input);
+        TestInput ti = NeoFOAM::read<TestInput>(input);
         REQUIRE(ti.label_ == 1);
         REQUIRE(ti.scalar_ == 2.0);
         REQUIRE(ti.string_ == "string");
     }
 
-    SECTION("create from Dictionary")
+    SECTION("read from Dictionary")
     {
         NeoFOAM::Dictionary dict;
 
@@ -70,7 +70,7 @@ TEST_CASE("Input")
 
         NeoFOAM::Input input = dict;
 
-        TestInput ti = NeoFOAM::create<TestInput>(input);
+        TestInput ti = NeoFOAM::read<TestInput>(input);
         REQUIRE(ti.label_ == 1);
         REQUIRE(ti.scalar_ == 2.0);
         REQUIRE(ti.string_ == "string");
