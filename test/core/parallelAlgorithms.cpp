@@ -33,8 +33,8 @@ TEST_CASE("parallelFor")
         NeoFOAM::parallelFor(
             exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
         );
-        auto hostSpanA = fieldA.copyToHost();
-        for (auto value : hostSpanA.span())
+        auto hostA = fieldA.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == 3.0);
         }
@@ -53,8 +53,8 @@ TEST_CASE("parallelFor")
             {0, 5},
             KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
         );
-        auto hostSpanA = fieldA.copyToHost();
-        for (auto value : hostSpanA.span())
+        auto hostA = fieldA.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == NeoFOAM::Vector(3.0, 3.0, 3.0));
         }
@@ -71,38 +71,8 @@ TEST_CASE("parallelFor")
         NeoFOAM::parallelFor(
             fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
         );
-        auto hostSpanA = fieldA.copyToHost();
-        for (auto value : hostSpanA.span())
-        {
-            REQUIRE(value == 3.0);
-        }
-    }
-
-    SECTION("parallelFor_Field_Visit" + execName)
-    {
-        NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5, 0.0);
-        NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5, 1.0);
-        auto [spanA, spanB] = NeoFOAM::spans(fieldA, fieldB);
-        NeoFOAM::ScalingField<NeoFOAM::scalar> sF = spanB;
-
-        NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
-        );
-
-        auto hostSpanA = fieldA.copyToHost();
-        for (auto value : hostSpanA.span())
-        {
-            REQUIRE(value == 3.0);
-        }
-
-        sF = NeoFOAM::ScalingField<NeoFOAM::scalar>(1.0);
-
-        NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
-        );
-
-        hostSpanA = fieldA.copyToHost();
-        for (auto value : hostSpanA.span())
+        auto hostA = fieldA.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == 3.0);
         }

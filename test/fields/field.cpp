@@ -30,8 +30,8 @@ TEST_CASE("Field Constructors")
 
         REQUIRE(b.size() == size);
 
-        auto hostSpanB = b.copyToHost();
-        for (auto value : hostSpanB.span())
+        auto hostB = b.copyToHost();
+        for (auto value : hostB.span())
         {
             REQUIRE(value == 5.0);
         }
@@ -108,8 +108,8 @@ TEST_CASE("Field Operator Overloads")
 
         a -= b;
 
-        auto hostSpanA = a.copyToHost();
-        for (auto value : hostSpanA.span())
+        auto hostA = a.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == -5.0);
         }
@@ -125,8 +125,8 @@ TEST_CASE("Field Operator Overloads")
         NeoFOAM::fill(b, 10.0);
 
         c = a + b;
-        auto hostSpanC = c.copyToHost();
-        for (auto value : hostSpanC.span())
+        auto hostC = c.copyToHost();
+        for (auto value : hostC.span())
         {
             REQUIRE(value == 15.0);
         }
@@ -143,8 +143,8 @@ TEST_CASE("Field Operator Overloads")
 
         c = a - b;
 
-        auto hostSpanC = c.copyToHost();
-        for (auto value : hostSpanC.span())
+        auto hostC = c.copyToHost();
+        for (auto value : hostC.span())
         {
             REQUIRE(value == -5.0);
         }
@@ -290,7 +290,7 @@ TEST_CASE("getSpans")
     REQUIRE(spanA[0] == 1.0);
 
     NeoFOAM::parallelFor(
-        exec, spanA, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
+        a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
     );
 
     auto [hostA] = NeoFOAM::copyToHosts(a);
