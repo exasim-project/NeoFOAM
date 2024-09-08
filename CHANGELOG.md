@@ -1,4 +1,5 @@
 # Version 0.1.0 (unreleased)
+- improved error handling and addition of tokenList and Input [#134](https://github.com/exasim-project/NeoFOAM/pull/134)
 - disable span from temporary objects and simplification related to fields [#139](https://github.com/exasim-project/NeoFOAM/pull/139)
 - added launch json to debug unit test in vscode [#135](https://github.com/exasim-project/NeoFOAM/pull/135)
 - Add a basic implementation of operators [#100](https://github.com/exasim-project/NeoFOAM/pull/100)
