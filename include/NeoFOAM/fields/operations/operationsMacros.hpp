@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <tuple>
+
 #include <Kokkos_Core.hpp>
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/helpers/exceptions.hpp"
@@ -88,5 +90,16 @@ void mul(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
     );
 }
 
+template<typename... Args>
+auto spans(Args&... fields)
+{
+    return std::make_tuple(fields.span()...);
+}
+
+template<typename... Args>
+auto copyToHosts(Args&... fields)
+{
+    return std::make_tuple(fields.copyToHost()...);
+}
 
 } // namespace NeoFOAM
