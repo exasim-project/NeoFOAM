@@ -1,5 +1,5 @@
 # Version 0.1.0 (unreleased)
-
+- improved error handling and addition of tokenList and Input [#134](https://github.com/exasim-project/NeoFOAM/pull/134)
 - Add a basic implementation of operators [#100](https://github.com/exasim-project/NeoFOAM/pull/100)
 - Changes executor meanings, the CPUExecutor was renamed to SerialExecutor and  the OMPExecutor was renamed to CPUExecutor. [PR #120](https://github.com/exasim-project/NeoFOAM/pull/120)
 - Minor cleanup of MPI operator names, added vector version of allReduce, and updates mpi and thread support operations. [PR #105](https://github.com/exasim-project/NeoFOAM/pull/105)
