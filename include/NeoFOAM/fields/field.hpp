@@ -12,9 +12,11 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
+#include "NeoFOAM/fields/scalingField.hpp"
 
 namespace NeoFOAM
 {
+
 
 namespace detail
 {

@@ -6,6 +6,7 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
@@ -77,6 +78,49 @@ TEST_CASE("parallelFor")
         }
     }
 };
+
+TEST_CASE("ConstantOrSpan Benchmark")
+{
+    size_t size = GENERATE(1e2, 1e3, 1e4, 1e5, 1e6, 1e7);
+
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+
+    NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
+    NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
+    auto [spanA, spanB] = NeoFOAM::spans(fieldA, fieldB);
+    NeoFOAM::ScalingField<NeoFOAM::scalar> sF = spanB;
+    REQUIRE(sF.useSpan == true);
+
+    BENCHMARK("ScalingField<NeoFOAM::scalar> Span " + execName + " " + std::to_string(size))
+    {
+        NeoFOAM::parallelFor(
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
+        );
+    };
+
+    sF = NeoFOAM::ScalingField<NeoFOAM::scalar>(1.0);
+    REQUIRE(sF.useSpan == false);
+
+    BENCHMARK("ScalingField<NeoFOAM::scalar> Constant " + execName + " " + std::to_string(size))
+    {
+        NeoFOAM::parallelFor(
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return sF[i] + 2.0; }
+        );
+    };
+
+    BENCHMARK("ScalingField<NeoFOAM::scalar> Double " + execName + " " + std::to_string(size))
+    {
+        NeoFOAM::parallelFor(
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return 1.0 + 2.0; }
+        );
+    };
+}
 
 
 TEST_CASE("parallelReduce")

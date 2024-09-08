@@ -18,9 +18,15 @@ class Field;
 
 
 template<typename T, typename Inner>
-void map(Field<T>& a, const Inner inner)
+void map(Field<T>& field, const Inner inner)
 {
-    parallelFor(a, inner);
+    parallelFor(field, inner);
+}
+
+template<typename T, typename Inner>
+void map(const NeoFOAM::Executor& exec, std::span<T> s, const Inner inner)
+{
+    parallelFor(exec, s, inner);
 }
 
 template<typename ValueType>

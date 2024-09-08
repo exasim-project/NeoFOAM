@@ -9,7 +9,6 @@ cellCenteredFiniteVolume
     :glob:
 
     DSL.rst
-    fields.rst
     boundaryConditions.rst
     operators.rst
     stencil.rst
