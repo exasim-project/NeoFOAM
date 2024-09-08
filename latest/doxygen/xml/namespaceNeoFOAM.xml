@@ -18,6 +18,7 @@
     <innerclass refid="classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4" prot="public">NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;</innerclass>
     <innerclass refid="classNeoFOAM_1_1ArgList" prot="public">NeoFOAM::ArgList</innerclass>
     <innerclass refid="classNeoFOAM_1_1Time" prot="public">NeoFOAM::Time</innerclass>
+    <innerclass refid="classNeoFOAM_1_1TokenList" prot="public">NeoFOAM::TokenList</innerclass>
     <innerclass refid="classNeoFOAM_1_1BoundaryFields" prot="public">NeoFOAM::BoundaryFields</innerclass>
     <innerclass refid="classNeoFOAM_1_1DomainField" prot="public">NeoFOAM::DomainField</innerclass>
     <innerclass refid="structNeoFOAM_1_1SumKernel" prot="public">NeoFOAM::SumKernel</innerclass>
@@ -44,6 +45,19 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="13" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" prot="public" static="no">
+        <type>std::variant&lt; <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>, <ref refid="classNeoFOAM_1_1TokenList" kindref="compound">TokenList</ref> &gt;</type>
+        <definition>using NeoFOAM::Input = typedef std::variant&lt;Dictionary, TokenList&gt;</definition>
+        <argsstring></argsstring>
+        <name>Input</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" bodystart="13" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespaceNeoFOAM_1a7c2c6a7a7bda94e9fb289fd81b96f745" prot="public" static="no">
         <type>int32_t</type>
@@ -270,6 +284,84 @@
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
+      <memberdef kind="function" id="namespaceNeoFOAM_1a9ecd7090c554081dd6200a92fb0f6b85" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string NeoFOAM::demangle</definition>
+        <argsstring>(const char *mangledName)</argsstring>
+        <name>demangle</name>
+        <param>
+          <type>const char *</type>
+          <declname>mangledName</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/demangle.hpp" line="12" column="13" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/demangle.hpp" declline="12" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1ad0a06ebc4aa82a65353cdc36eb19810e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+          <param>
+            <type>typename Container</type>
+          </param>
+          <param>
+            <type>typename Key</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::logBadAnyCast</definition>
+        <argsstring>(const std::bad_any_cast &amp;e, const Key &amp;key, const Container &amp;data)</argsstring>
+        <name>logBadAnyCast</name>
+        <param>
+          <type>const std::bad_any_cast &amp;</type>
+          <declname>e</declname>
+        </param>
+        <param>
+          <type>const Key &amp;</type>
+          <declname>key</declname>
+        </param>
+        <param>
+          <type>const Container &amp;</type>
+          <declname>data</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/demangle.hpp" line="15" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/demangle.hpp" bodystart="15" bodyend="21"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1af6f9721ae18e83a58215ddfbba7413b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::logOutRange</definition>
+        <argsstring>(const std::out_of_range &amp;e, const std::string &amp;key, const std::unordered_map&lt; std::string, std::any &gt; &amp;data)</argsstring>
+        <name>logOutRange</name>
+        <param>
+          <type>const std::out_of_range &amp;</type>
+          <declname>e</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>key</declname>
+        </param>
+        <param>
+          <type>const std::unordered_map&lt; std::string, std::any &gt; &amp;</type>
+          <declname>data</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/dictionary.hpp" line="17" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/dictionary.hpp" declline="17" declcolumn="6"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ace895d0abfec1573f663b84e098f7a03" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
         <definition>bool NeoFOAM::operator==</definition>
@@ -353,6 +445,28 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="48" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="48" bodyend="51"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1ae9443ed34cbae06fde725760bdc69d5b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class dataClass</type>
+          </param>
+        </templateparamlist>
+        <type>dataClass</type>
+        <definition>dataClass NeoFOAM::read</definition>
+        <argsstring>(Input input)</argsstring>
+        <name>read</name>
+        <param>
+          <type><ref refid="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" kindref="member">Input</ref></type>
+          <declname>input</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" line="16" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" bodystart="16" bodyend="19"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1aac4885dd6833b52cee698c733256d915" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1200,6 +1314,6 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/dictionary.hpp" line="9" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/demangle.hpp" line="9" column="1"/>
   </compounddef>
 </doxygen>

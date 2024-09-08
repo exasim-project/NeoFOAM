@@ -44,6 +44,8 @@ class \mbox{\hyperlink{classNeoFOAM_1_1ArgList}{Arg\+List}}
 \item 
 class \mbox{\hyperlink{classNeoFOAM_1_1Time}{Time}}
 \item 
+class \mbox{\hyperlink{classNeoFOAM_1_1TokenList}{Token\+List}}
+\begin{DoxyCompactList}\small\item\em A class representing a list of tokens. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields}{Boundary\+Fields}}
 \begin{DoxyCompactList}\small\item\em Represents the boundary fields for a computational domain. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1DomainField}{Domain\+Field}}
@@ -68,6 +70,8 @@ class \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}}
 \begin{DoxyCompactItemize}
 \item 
 using \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} = std\+::variant$<$ \mbox{\hyperlink{classNeoFOAM_1_1CPUExecutor}{CPUExecutor}}, \mbox{\hyperlink{classNeoFOAM_1_1GPUExecutor}{GPUExecutor}}, \mbox{\hyperlink{classNeoFOAM_1_1SerialExecutor}{Serial\+Executor}} $>$
+\item 
+using \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}} = std\+::variant$<$ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}, \mbox{\hyperlink{classNeoFOAM_1_1TokenList}{Token\+List}} $>$
 \item 
 using \mbox{\hyperlink{namespaceNeoFOAM_a7c2c6a7a7bda94e9fb289fd81b96f745}{label}} = int32\+\_\+t
 \item 
@@ -96,10 +100,18 @@ using \mbox{\hyperlink{namespaceNeoFOAM_a3daa9ed0aec5483218e5946371398db5}{Comm\
 \doxysubsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_a9ecd7090c554081dd6200a92fb0f6b85}{demangle}} (const char $\ast$mangled\+Name)
+\item 
+{\footnotesize template$<$typename T , typename Container , typename Key $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ad0a06ebc4aa82a65353cdc36eb19810e}{log\+Bad\+Any\+Cast}} (const std\+::bad\+\_\+any\+\_\+cast \&e, const Key \&key, const Container \&data)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_af6f9721ae18e83a58215ddfbba7413b1}{log\+Out\+Range}} (const std\+::out\+\_\+of\+\_\+range \&e, const std\+::string \&key, const std\+::unordered\+\_\+map$<$ std\+::string, std\+::any $>$ \&data)
+\item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_ace895d0abfec1573f663b84e098f7a03}{operator==}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&lhs, const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&rhs)
 \begin{DoxyCompactList}\small\item\em Checks if two executors are equal, i.\+e. they are of the same type. \end{DoxyCompactList}\item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_a4354d14390c6cd1d3a813869a7aff63b}{operator!=}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&lhs, const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&rhs)
 \begin{DoxyCompactList}\small\item\em Checks if two executors are not equal, i.\+e. they are not of the same type. \end{DoxyCompactList}\item 
+{\footnotesize template$<$class data\+Class $>$ }\\data\+Class \mbox{\hyperlink{namespaceNeoFOAM_ae9443ed34cbae06fde725760bdc69d5b}{read}} (\mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}} input)
+\item 
 {\footnotesize template$<$typename Executor , parallel\+For\+Kernel Kernel$>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_aac4885dd6833b52cee698c733256d915}{parallel\+For}} (\mbox{[}\mbox{[}maybe\+\_\+unused\mbox{]}\mbox{]} const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel)
 \item 
 {\footnotesize template$<$parallel\+For\+Kernel Kernel$>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a7958ee996f48991cc3013b06fee9deff}{parallel\+For}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Neo\+FOAM\+::\+Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel)
@@ -203,6 +215,16 @@ Definition at line 13 of file executor.\+hpp.
 
 
 Definition at line 16 of file label.\+hpp.
+
+\mbox{\Hypertarget{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}\label{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}} 
+\index{NeoFOAM@{NeoFOAM}!Input@{Input}}
+\index{Input@{Input}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{Input}{Input}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Neo\+FOAM\+::\+Input}} = typedef std\+::variant$<$\mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}, \mbox{\hyperlink{classNeoFOAM_1_1TokenList}{Token\+List}}$>$}
+
+
+
+Definition at line 13 of file inputs.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_a7c2c6a7a7bda94e9fb289fd81b96f745}\label{namespaceNeoFOAM_a7c2c6a7a7bda94e9fb289fd81b96f745}} 
 \index{NeoFOAM@{NeoFOAM}!label@{label}}
@@ -343,7 +365,13 @@ Definition at line 100 of file operations\+Macros.\+hpp.
 
 creates a mesh containing only a single cell @warn currently this is only a 2D mesh 
 
-a 2D mesh in 3D space with left, right, top, bottom boundary faces with the centre at (0.\+5, 0.\+5, 0.\+0) left, top, right, bottom faces and four boundaries one left, right, top, bottom \mbox{\Hypertarget{namespaceNeoFOAM_a80e6bdcbd3aa2c4474cb7d96cd96e35e}\label{namespaceNeoFOAM_a80e6bdcbd3aa2c4474cb7d96cd96e35e}} 
+a 2D mesh in 3D space with left, right, top, bottom boundary faces with the centre at (0.\+5, 0.\+5, 0.\+0) left, top, right, bottom faces and four boundaries one left, right, top, bottom \mbox{\Hypertarget{namespaceNeoFOAM_a9ecd7090c554081dd6200a92fb0f6b85}\label{namespaceNeoFOAM_a9ecd7090c554081dd6200a92fb0f6b85}} 
+\index{NeoFOAM@{NeoFOAM}!demangle@{demangle}}
+\index{demangle@{demangle}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{demangle()}{demangle()}}
+{\footnotesize\ttfamily std\+::string Neo\+FOAM\+::demangle (\begin{DoxyParamCaption}\item[{const char $\ast$}]{mangled\+Name }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{namespaceNeoFOAM_a80e6bdcbd3aa2c4474cb7d96cd96e35e}\label{namespaceNeoFOAM_a80e6bdcbd3aa2c4474cb7d96cd96e35e}} 
 \index{NeoFOAM@{NeoFOAM}!equal@{equal}}
 \index{equal@{equal}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{equal()}{equal()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
@@ -386,6 +414,23 @@ void Neo\+FOAM\+::fill (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeo
 
 
 Definition at line 27 of file operations\+Macros.\+hpp.
+
+\mbox{\Hypertarget{namespaceNeoFOAM_ad0a06ebc4aa82a65353cdc36eb19810e}\label{namespaceNeoFOAM_ad0a06ebc4aa82a65353cdc36eb19810e}} 
+\index{NeoFOAM@{NeoFOAM}!logBadAnyCast@{logBadAnyCast}}
+\index{logBadAnyCast@{logBadAnyCast}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{logBadAnyCast()}{logBadAnyCast()}}
+{\footnotesize\ttfamily template$<$typename T , typename Container , typename Key $>$ \\
+void Neo\+FOAM\+::log\+Bad\+Any\+Cast (\begin{DoxyParamCaption}\item[{const std\+::bad\+\_\+any\+\_\+cast \&}]{e,  }\item[{const Key \&}]{key,  }\item[{const Container \&}]{data }\end{DoxyParamCaption})}
+
+
+
+Definition at line 15 of file demangle.\+hpp.
+
+\mbox{\Hypertarget{namespaceNeoFOAM_af6f9721ae18e83a58215ddfbba7413b1}\label{namespaceNeoFOAM_af6f9721ae18e83a58215ddfbba7413b1}} 
+\index{NeoFOAM@{NeoFOAM}!logOutRange@{logOutRange}}
+\index{logOutRange@{logOutRange}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{logOutRange()}{logOutRange()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::log\+Out\+Range (\begin{DoxyParamCaption}\item[{const std\+::out\+\_\+of\+\_\+range \&}]{e,  }\item[{const std\+::string \&}]{key,  }\item[{const std\+::unordered\+\_\+map$<$ std\+::string, std\+::any $>$ \&}]{data }\end{DoxyParamCaption})}
 
 \mbox{\Hypertarget{namespaceNeoFOAM_a30753699ca02c237b4081286380cabd6}\label{namespaceNeoFOAM_a30753699ca02c237b4081286380cabd6}} 
 \index{NeoFOAM@{NeoFOAM}!mag@{mag}}
@@ -630,6 +675,17 @@ void Neo\+FOAM\+::parallel\+Reduce (\begin{DoxyParamCaption}\item[{\mbox{\hyperl
 
 
 Definition at line 147 of file parallel\+Algorithms.\+hpp.
+
+\mbox{\Hypertarget{namespaceNeoFOAM_ae9443ed34cbae06fde725760bdc69d5b}\label{namespaceNeoFOAM_ae9443ed34cbae06fde725760bdc69d5b}} 
+\index{NeoFOAM@{NeoFOAM}!read@{read}}
+\index{read@{read}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily template$<$class data\+Class $>$ \\
+data\+Class Neo\+FOAM\+::read (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}}]{input }\end{DoxyParamCaption})}
+
+
+
+Definition at line 16 of file inputs.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}\label{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}} 
 \index{NeoFOAM@{NeoFOAM}!scalarMul@{scalarMul}}

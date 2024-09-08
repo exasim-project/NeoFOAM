@@ -16,7 +16,7 @@ var searchData=
   ['communicator_39',['Communicator',['../classNeoFOAM_1_1Communicator.html#a4ff276542af0d01243bb714206ab7c25',1,'NeoFOAM::Communicator::Communicator()=default'],['../classNeoFOAM_1_1Communicator.html#a2dce21b0154123fbc5da543181c0c736',1,'NeoFOAM::Communicator::Communicator(mpi::MPIEnvironment mpiEnviron, CommMap rankSendMap, CommMap rankReceiveMap)'],['../classNeoFOAM_1_1Communicator.html',1,'NeoFOAM::Communicator']]],
   ['communicator_2ehpp_40',['communicator.hpp',['../communicator_8hpp.html',1,'']]],
   ['comparison_2ehpp_41',['comparison.hpp',['../comparison_8hpp.html',1,'']]],
-  ['contains_42',['contains',['../classNeoFOAM_1_1StencilDataBase.html#a80901032042b849e267667d84510046a',1,'NeoFOAM::StencilDataBase']]],
+  ['contains_42',['contains',['../classNeoFOAM_1_1StencilDataBase.html#a80901032042b849e267667d84510046a',1,'NeoFOAM::StencilDataBase::contains()'],['../classNeoFOAM_1_1Dictionary.html#aa2451dff287026a4d8899acad3b30d6e',1,'NeoFOAM::Dictionary::contains()']]],
   ['control_5fdict_5fname_43',['CONTROL_DICT_NAME',['../classNeoFOAM_1_1Time.html#a993a30f96f2f961ce76bc92a922396a3',1,'NeoFOAM::Time']]],
   ['copytoexecutor_44',['copyToExecutor',['../classNeoFOAM_1_1Field.html#ae6f586e79c51c81a4d786171a9741c02',1,'NeoFOAM::Field']]],
   ['copytohost_45',['copyToHost',['../classNeoFOAM_1_1Field.html#a1d14f252f4815e69e8b085946f27cea4',1,'NeoFOAM::Field::copyToHost() const'],['../classNeoFOAM_1_1Field.html#a4e66ce8a5aca4acb78041a8b94ff9734',1,'NeoFOAM::Field::copyToHost(Field&lt; ValueType &gt; &amp;result)']]],
