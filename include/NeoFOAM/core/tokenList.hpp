@@ -62,7 +62,6 @@ public:
      */
     [[nodiscard]] size_t size() const;
 
-
     /**
      * @brief Retrieves the value associated with the given index, casting it to
      * the specified type.
@@ -114,6 +113,7 @@ public:
      * @return A reference to the value associated with the index.
      */
     [[nodiscard]] std::any& operator[](const size_t& idx);
+    
     [[nodiscard]] std::vector<std::any>& tokens();
 
 
