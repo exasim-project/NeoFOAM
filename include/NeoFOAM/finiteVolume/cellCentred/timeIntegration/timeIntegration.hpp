@@ -32,6 +32,10 @@ public:
         : eqnSystem_(eqnSystem), dict_(dict)
     {}
 
+    TimeIntegrationFactory(const TimeIntegrationFactory& other)
+        : eqnSystem_(other.eqnSystem_), dict_(other.dict_)
+    {}
+
     virtual ~TimeIntegrationFactory() {} // Virtual destructor
 
     virtual void solve() = 0; // Pure virtual function for solving
