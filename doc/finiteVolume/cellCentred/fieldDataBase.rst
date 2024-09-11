@@ -3,25 +3,23 @@
 fieldDataBase
 =============
 
-OpenFOAM mangages its opjects over a object registry. The object registry can be viewed as a database the regsiter types that are derived from regIOobject. The database is accessible used inside Time and mesh to register the objects. This approach tries to decouple the mesh from the implemnetation so it applies to the single reponsible principle. 
+OpenFOAM manages its objects through an object registry. The object registry can be viewed as a database that registers types derived from regIOobject. This database is accessible and used within Time and Mesh to register objects. This approach aims to decouple the mesh from the implementation, adhering to the single responsibility principle.
 
-The same applies to the geometricField that also provides the access to the oldTime and therefore also needs to be mangage the time state.
+The same principle applies to geometricField, which also provides access to oldTime and, therefore, needs to manage the time state.
 
-However, the design of the DSL for convient use requires the acessbility of the oldTime from the current objects and the access to additional fields to compute boundary conditions.
+However, the design of the DSL for convenient use requires accessibility to oldTime from the current objects, as well as access to additional fields to compute boundary conditions.
 
-Consequently, a new fieldDataBase needs to be introduced that stores all register field via the FieldEntityManager. The FieldEntityManager to store the oldTime(s), cacheGradient and storeIteration and also stores with fields need to be written to disk.
+As a result, a new FieldDatabase must be introduced to store all registered fields via the FieldEntityManager. The FieldEntityManager handles the storage of oldTime(s), caches gradients, and manages iterations, while also determining which fields need to be written to disk.
 
-The FieldEntityManager is created by the FieldDataBase and stores a reference to the database. If a field is created with the FieldEntityManager it is stored in the database. 
-BoundaryConditions have access to the main field and can therefore can access the database and retrieve arbitrary fields.
+The FieldEntityManager is created by the FieldDatabase and maintains a reference to the database. When a field is created with the FieldEntityManager, it is stored in the database. Boundary conditions have access to the main field and, therefore, can access the database to retrieve any necessary fields.
 
-An example where this is required is the heatFlux of the boundary conitions, the face normal gradient requires the knowledge of the heat conductivity.
+One example of where this is required is the heatFlux in boundary conditions. The face normal gradient requires knowledge of the heat conductivity.
 
-This design has simplifies the usage of the fields and makes it simpler to access the requires fields. However, the global nature of the database requires a specific initialization order. In our case the thermodynamic model needs to be initialized before the creation of the boundary conditions.
+This design simplifies the usage of fields and makes it easier to access the required fields. However, the global nature of the database introduces a specific initialization order. In our case, the thermodynamic model must be initialized before the boundary conditions are created.
 
-This dependency of the initialization order is a drawback of the design. However, the design is more flexible and allows to access the fields in a more convient way and from personal experience the initialization order is not a big issue.
+This dependency on initialization order is a drawback of the design. Nonetheless, the design is more flexible and allows for more convenient access to fields. From personal experience, the initialization order has not been a significant issue.
 
-However, global variables introduce hidden state and be generally be avoided. Consequently, the access to the database should be read only from in case of global access.
-
+However, global variables introduce hidden states and should generally be avoided. As a result, global access to the database should be read-only.
 .. mermaid::
 
     classDiagram
