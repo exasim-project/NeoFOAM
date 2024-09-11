@@ -21,6 +21,9 @@ This dependency on initialization order is a drawback of the design. Nonetheless
 
 However, global variables introduce hidden states and should generally be avoided. As a result, global access to the database should be read-only.
 
+The general design is shown in the following class diagram:
+
+
 .. mermaid::
 
     classDiagram
