@@ -44,7 +44,6 @@ TEST_CASE("FieldEntityManager")
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
-
     SECTION("FieldEntityManager: " + execName)
     {
         fvcc::FieldEntityManager fm = fvcc::operations::newFieldEntity(createVolumeField(mesh));
