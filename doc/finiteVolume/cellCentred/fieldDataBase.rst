@@ -20,6 +20,7 @@ This design simplifies the usage of fields and makes it easier to access the req
 This dependency on initialization order is a drawback of the design. Nonetheless, the design is more flexible and allows for more convenient access to fields. From personal experience, the initialization order has not been a significant issue.
 
 However, global variables introduce hidden states and should generally be avoided. As a result, global access to the database should be read-only.
+
 .. mermaid::
 
     classDiagram
