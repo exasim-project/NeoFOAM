@@ -273,58 +273,56 @@
 <p>One example of where this is required is the heatFlux in boundary conditions. The face normal gradient requires knowledge of the heat conductivity.</p>
 <p>This design simplifies the usage of fields and makes it easier to access the required fields. However, the global nature of the database introduces a specific initialization order. In our case, the thermodynamic model must be initialized before the boundary conditions are created.</p>
 <p>This dependency on initialization order is a drawback of the design. Nonetheless, the design is more flexible and allows for more convenient access to fields. From personal experience, the initialization order has not been a significant issue.</p>
-<p>However, global variables introduce hidden states and should generally be avoided. As a result, global access to the database should be read-only.
-.. mermaid:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">classDiagram</span>
-<span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">operations</span><span class="p">{</span>
-<span class="w">        </span><span class="o">&lt;&lt;</span><span class="k">namespace</span><span class="o">&gt;&gt;</span>
-<span class="w">        </span><span class="o">+</span><span class="nn">oldTime</span><span class="p">()</span>
-<span class="w">        </span><span class="o">+</span><span class="nn">cacheGradient</span><span class="p">()</span>
-<span class="w">        </span><span class="o">+</span><span class="nn">storeIteration</span><span class="p">()</span>
-<span class="w">        </span><span class="o">+</span><span class="nn">getFieldDataBase</span><span class="p">()</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="nn">class</span><span class="w"> </span><span class="nn">FieldDataBase</span><span class="p">{</span>
-<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">~</span><span class="n">FieldEntityManager</span><span class="o">~</span><span class="w"> </span><span class="n">fem</span>
-<span class="w">        </span><span class="o">+</span><span class="n">CRUD</span><span class="p">()</span>
-<span class="w">        </span><span class="o">+</span><span class="n">createFieldEntityManager</span><span class="p">()</span><span class="w"> </span><span class="n">FieldEntityManager</span>
+<p>However, global variables introduce hidden states and should generally be avoided. As a result, global access to the database should be read-only.</p>
+<div class="mermaid">
+            classDiagram
+    class operations{
+        &lt;&lt;namespace&gt;&gt;
+        +oldTime()
+        +cacheGradient()
+        +storeIteration()
+        +getFieldDataBase()
+    }
+    class FieldDataBase{
+        std::vector~FieldEntityManager~ fem
+        +CRUD()
+        +createFieldEntityManager() FieldEntityManager
 
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldEntityManager</span><span class="p">{</span>
-<span class="w">        </span><span class="o">-</span><span class="k">const</span><span class="w"> </span><span class="n">FieldDataBase</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fdb</span>
-<span class="w">        </span><span class="o">-</span><span class="n">std</span><span class="o">::</span><span class="n">strind</span><span class="w"> </span><span class="n">name</span>
-<span class="w">        </span><span class="o">-</span><span class="n">GeometricField</span><span class="o">~</span><span class="n">Type</span><span class="o">~</span><span class="w"> </span><span class="n">field</span>
-<span class="w">        </span><span class="o">-</span><span class="n">map</span><span class="o">~</span><span class="n">intFieldComponent</span><span class="o">~</span><span class="w"> </span><span class="n">fieldDB</span>
-<span class="w">        </span><span class="o">+</span><span class="n">createField</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="n">GeometricField</span>
-<span class="w">        </span><span class="o">+</span><span class="n">CRUD</span><span class="p">()</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">GeometricField</span><span class="o">~</span><span class="n">Type</span><span class="o">~</span><span class="p">{</span>
-<span class="w">        </span><span class="n">DomainField</span><span class="o">~</span><span class="n">Type</span><span class="o">~</span><span class="w"> </span><span class="n">field</span>
-<span class="w">        </span><span class="n">correctBoundaryCondition</span><span class="p">()</span>
-<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">optional</span><span class="o">~</span><span class="n">FieldEntityManager</span><span class="o">&amp;~</span><span class="w"> </span><span class="n">fem</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldCategory</span><span class="p">{</span>
-<span class="w">        </span><span class="o">&lt;&lt;</span><span class="n">enumeration</span><span class="o">&gt;&gt;</span>
-<span class="w">        </span><span class="n">Iteration</span>
-<span class="w">        </span><span class="n">oldTime</span>
-<span class="w">        </span><span class="n">cacheField</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">FieldComponent</span><span class="o">~</span><span class="n">Type</span><span class="o">~</span><span class="p">{</span>
-<span class="w">        </span><span class="o">+</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">~</span><span class="n">Type</span><span class="o">~</span><span class="w"> </span><span class="n">field</span>
-<span class="w">        </span><span class="o">+</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">timeIndex</span>
-<span class="w">        </span><span class="o">+</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">iterationIndex</span>
-<span class="w">        </span><span class="o">+</span><span class="kt">bool</span><span class="w"> </span><span class="n">write</span>
-<span class="w">        </span><span class="o">+</span><span class="n">FieldCategory</span><span class="w"> </span><span class="n">category</span>
-<span class="w">    </span><span class="p">}</span>
+    }
+    class FieldEntityManager{
+        -const FieldDataBase&amp; fdb
+        -std::strind name
+        -GeometricField~Type~ field
+        -map~intFieldComponent~ fieldDB
+        +createField(): GeometricField
+        +CRUD()
+    }
+    class GeometricField~Type~{
+        DomainField~Type~ field
+        correctBoundaryCondition()
+        std::optional~FieldEntityManager&amp;~ fem
+    }
+    class FieldCategory{
+        &lt;&lt;enumeration&gt;&gt;
+        Iteration
+        oldTime
+        cacheField
+    }
+    class FieldComponent~Type~{
+        +std::shared_ptr~Type~ field
+        +std::size_t timeIndex
+        +std::size_t iterationIndex
+        +bool write
+        +FieldCategory category
+    }
 
-<span class="w">    </span><span class="n">FieldDataBase</span><span class="w"> </span><span class="n">o</span><span class="o">--</span><span class="w"> </span><span class="n">operations</span>
-<span class="w">    </span><span class="n">FieldEntityManager</span><span class="w"> </span><span class="n">o</span><span class="o">--</span><span class="w"> </span><span class="n">operations</span>
-<span class="w">    </span><span class="n">FieldDataBase</span><span class="w"> </span><span class="n">o</span><span class="o">--</span><span class="w"> </span><span class="n">FieldEntityManager</span>
-<span class="w">    </span><span class="n">GeometricField</span><span class="w"> </span><span class="n">o</span><span class="o">--</span><span class="w"> </span><span class="n">FieldEntityManager</span>
-<span class="w">    </span><span class="n">FieldEntityManager</span><span class="w"> </span><span class="n">o</span><span class="o">--</span><span class="w"> </span><span class="n">FieldComponent</span>
-<span class="w">    </span><span class="n">FieldComponent</span><span class="w"> </span><span class="o">*--</span><span class="w"> </span><span class="n">FieldCategory</span>
-</pre></div>
-</div>
-</section>
+    FieldDataBase o-- operations
+    FieldEntityManager o-- operations
+    FieldDataBase o-- FieldEntityManager
+    GeometricField o-- FieldEntityManager
+    FieldEntityManager o-- FieldComponent
+    FieldComponent *-- FieldCategory
+        </div></section>
 
         </article>
       </div>
@@ -379,5 +377,7 @@
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
+    <script src="https://unpkg.com/mermaid@10.2.0/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
     </body>
 </html>
