@@ -26,7 +26,7 @@ target_sources(
           "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
           "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
           "finiteVolume/cellCentred/fieldDatabase.cpp"
-          "finiteVolume/cellCentred/fieldEntityManager.cpp"
+          "finiteVolume/cellCentred/solutionFields.cpp"
           "finiteVolume/cellCentred/boundary/boundary.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"

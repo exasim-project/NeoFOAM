@@ -34,12 +34,12 @@ struct FieldComponent
     FieldCategory category;
 };
 
-class FieldEntityManager
+class SolutionFields
 {
 
 public:
 
-    FieldEntityManager();
+    SolutionFields();
 
     template<typename T>
     void insert(const int& key, T value)
@@ -86,18 +86,18 @@ namespace operations
 {
 
 template <typename T>
-FieldEntityManager newFieldEntity(const T& field)
+SolutionFields newFieldEntity(const T& field)
 {
-    FieldEntityManager fieldEntityManager;
-    fieldEntityManager.fieldName = field.name;
+    SolutionFields SolutionFields;
+    SolutionFields.fieldName = field.name;
     FieldComponent<T> fieldComponent{
         .field = std::make_shared<T>(field),
         .timeIndex = 0,
         .iterationIndex = 0,
         .category = FieldCategory::newTime
     };
-    fieldEntityManager.insert(0, fieldComponent);
-    return fieldEntityManager;
+    SolutionFields.insert(0, fieldComponent);
+    return SolutionFields;
 }
 
 } // namespace operations

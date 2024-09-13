@@ -10,7 +10,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fieldDatabase.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fieldEntityManager.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/solutionFields.hpp"
 
 template<typename T>
 using I = std::initializer_list<T>;
@@ -30,31 +30,6 @@ fvcc::VolumeField<NeoFOAM::scalar> createVolumeField(const NeoFOAM::Unstructured
     fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), "vf", mesh, bcs);
     NeoFOAM::fill(vf.internalField(), 1.0);
     return vf;
-}
-
-TEST_CASE("FieldEntityManager")
-{
-
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
-    NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
-
-    SECTION("FieldEntityManager: " + execName)
-    {
-        fvcc::FieldEntityManager fm = fvcc::operations::newFieldEntity(createVolumeField(mesh));
-
-        auto fieldPtr = fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).field;//->internalField().copyToHost();
-        auto hostInteralField = fieldPtr->internalField().copyToHost();
-        REQUIRE(hostInteralField.span()[0] == 1.0);
-        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).timeIndex == 0.0);
-        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).iterationIndex == 0.0);
-        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).category == fvcc::FieldCategory::newTime);
-    }
 }
 
 
@@ -86,3 +61,30 @@ TEST_CASE("FieldDatabase")
     }
 
 }
+
+
+TEST_CASE("SolutionFields")
+{
+
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
+
+    SECTION("SolutionFields: " + execName)
+    {
+        fvcc::SolutionFields fm = fvcc::operations::newFieldEntity(createVolumeField(mesh));
+
+        auto fieldPtr = fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).field;//->internalField().copyToHost();
+        auto hostInteralField = fieldPtr->internalField().copyToHost();
+        REQUIRE(hostInteralField.span()[0] == 1.0);
+        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).timeIndex == 0.0);
+        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).iterationIndex == 0.0);
+        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).category == fvcc::FieldCategory::newTime);
+    }
+}
+
