@@ -42,6 +42,23 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
+    VolumeField(
+        const Executor& exec,
+        std::string name,
+        const UnstructuredMesh& mesh,
+        SolutionFields& solField,
+        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
+    )
+        : GeometricFieldMixin<ValueType>(
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries()),
+            solField
+        ),
+          boundaryConditions_(boundaryConditions)
+    {}
+
     VolumeField(const VolumeField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
     {}

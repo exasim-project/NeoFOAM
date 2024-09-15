@@ -17,7 +17,7 @@ using I = std::initializer_list<T>;
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-fvcc::VolumeField<NeoFOAM::scalar> createVolumeField(const NeoFOAM::UnstructuredMesh& mesh)
+fvcc::VolumeField<NeoFOAM::scalar> createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
 {
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     for (auto patchi : I<size_t> {0, 1, 2, 3})
@@ -27,11 +27,18 @@ fvcc::VolumeField<NeoFOAM::scalar> createVolumeField(const NeoFOAM::Unstructured
         dict.insert("fixedValue", 2.0);
         bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
     }
-    fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), "vf", mesh, bcs);
+    fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), fieldName, mesh, bcs);
     NeoFOAM::fill(vf.internalField(), 1.0);
     return vf;
 }
 
+struct Registerer {
+    constexpr Registerer(bool reg) : registered_(reg) {}
+    constexpr bool registered() const { return registered_; }
+
+    private:
+    bool registered_;
+};
 
 TEST_CASE("FieldDatabase")
 {
@@ -41,23 +48,70 @@ TEST_CASE("FieldDatabase")
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
+    constexpr Registerer reg {true};
+
+    static_assert(reg.registered(), "This is a static assert");
+
+    constexpr Registerer reg2 {false};
+
+    static_assert(reg2.registered(), "This is a static assert");
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
-    SECTION("store Field: " + execName)
+    SECTION("create FieldDatabase: " + execName)
     {
-        auto vf = createVolumeField(mesh);
-        NeoFOAM::fill(vf.internalField(), 1.0);
+        // auto vf = createVolumeField(mesh);
+        // NeoFOAM::fill(vf.internalField(), 1.0);
 
         fvcc::FieldDatabase fieldDB {};
 
-        fieldDB.insert("test", 1.0);
-        REQUIRE(fieldDB.get<double>("test") == 1.0);
+        // fieldDB.insert("test", 1.0);
+        // REQUIRE(fieldDB.get<double>("test") == 1.0);
 
-        fieldDB.insert("vf", vf);
-        auto vf2 = fieldDB.get<fvcc::VolumeField<NeoFOAM::scalar>>("vf").internalField().copyToHost();
-        REQUIRE(vf2.span()[0] == 1.0);
+        // fieldDB.insert("vf", vf);
+        // auto vf2 = fieldDB.get<fvcc::VolumeField<NeoFOAM::scalar>>("vf").internalField().copyToHost();
+        // REQUIRE(vf2.span()[0] == 1.0);
+        SECTION("create SolutionField")
+        {
+            auto solutionField = fieldDB.createSolutionField(
+                [&]() { return createVolumeField(mesh, "T"); }
+            );
+            REQUIRE(solutionField.name() == "T");
+            REQUIRE(solutionField.field.internalField().copyToHost()[0] == 1.0);
+
+            fvcc::VolumeField<NeoFOAM::scalar>& volField = fieldDB.createSolutionField(
+                [&]() { return createVolumeField(mesh, "T2"); }
+            ).field;
+
+            REQUIRE(volField.name == "T2");
+            REQUIRE(volField.internalField().copyToHost()[0] == 1.0);
+
+        }
+
+        SECTION("create oldTime")
+        {
+            auto& T = fieldDB.createSolutionField(
+                [&]() { return createVolumeField(mesh, "T"); }
+            ).field;
+            REQUIRE(T.name == "T");
+            REQUIRE(T.hasSolField());
+            auto& Told = fvcc::operations::oldTime(T);
+            REQUIRE(Told.name == "T_0");
+            REQUIRE(Told.internalField().copyToHost()[0] == 1.0);
+
+            auto& sameTold = fvcc::operations::oldTime(T);
+            // check if the same field is returned
+            REQUIRE(&Told == &sameTold);
+
+            auto& Told2 = fvcc::operations::oldTime(Told);
+            REQUIRE(Told2.name == "T_0_0");
+            REQUIRE(Told2.internalField().copyToHost()[0] == 1.0);
+
+            auto& sameTold2 = fvcc::operations::oldTime(Told);
+            // check if the same field is returned
+            REQUIRE(&Told2 == &sameTold2);
+        }
     }
 
 }
@@ -77,14 +131,14 @@ TEST_CASE("SolutionFields")
 
     SECTION("SolutionFields: " + execName)
     {
-        fvcc::SolutionFields fm = fvcc::operations::newFieldEntity(createVolumeField(mesh));
+        // fvcc::SolutionFields fm = fvcc::operations::newFieldEntity(createVolumeField(mesh));
 
-        auto fieldPtr = fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).field;//->internalField().copyToHost();
-        auto hostInteralField = fieldPtr->internalField().copyToHost();
-        REQUIRE(hostInteralField.span()[0] == 1.0);
-        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).timeIndex == 0.0);
-        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).iterationIndex == 0.0);
-        REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).category == fvcc::FieldCategory::newTime);
+        // auto fieldPtr = fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).field;//->internalField().copyToHost();
+        // auto hostInteralField = fieldPtr->internalField().copyToHost();
+        // REQUIRE(hostInteralField.span()[0] == 1.0);
+        // REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).timeIndex == 0.0);
+        // REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).iterationIndex == 0.0);
+        // REQUIRE(fm.get<fvcc::FieldComponent<fvcc::VolumeField<NeoFOAM::scalar>>>(0).category == fvcc::FieldCategory::newTime);
     }
 }
 

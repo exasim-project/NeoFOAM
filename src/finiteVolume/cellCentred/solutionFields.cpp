@@ -6,7 +6,11 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-SolutionFields::SolutionFields()
+SolutionFields::SolutionFields
+(
+    const VolumeField<scalar>& field
+)
+    : field(field), fieldName_(field.name)
 {}
 
    

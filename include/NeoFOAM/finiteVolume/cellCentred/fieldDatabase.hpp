@@ -5,13 +5,16 @@
 #include <unordered_map>
 #include <any>
 #include <string>
-
+#include <functional>
 #include "NeoFOAM/core/demangle.hpp"
 #include "NeoFOAM/core/error.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/solutionFields.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+
+using CreateFunction = std::function<VolumeField<scalar>()>;
 /**
  * @class FieldDatabase
  * @brief A class that represents a field database.
@@ -83,6 +86,15 @@ public:
             logBadAnyCast<T>(e, key, fieldDB_);
             throw e;
         }
+    }
+
+    SolutionFields& createSolutionField(CreateFunction creatFunc)
+    {
+        SolutionFields solutionField(creatFunc());
+        fieldDB_.emplace(solutionField.name(), solutionField);
+        auto& solField = std::any_cast<SolutionFields&>(fieldDB_.at(solutionField.name()));
+        solField.field.setSolField(solField);
+        return solField;
     }
 
 private:

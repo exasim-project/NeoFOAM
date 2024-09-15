@@ -47,6 +47,28 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
+    SurfaceField(
+        const Executor& exec,
+        std::string name,
+        const UnstructuredMesh& mesh,
+        SolutionFields& solField,
+        const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
+    )
+        : GeometricFieldMixin<ValueType>(
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(
+                exec,
+                mesh.nInternalFaces() + mesh.nBoundaryFaces(),
+                mesh.nBoundaryFaces(),
+                mesh.nBoundaries()
+            ),
+            solField
+        ),
+          boundaryConditions_(boundaryConditions)
+    {}
+
 
     SurfaceField(const SurfaceField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
