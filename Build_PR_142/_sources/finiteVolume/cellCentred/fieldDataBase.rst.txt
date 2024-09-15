@@ -9,9 +9,9 @@ The same principle applies to geometricField, which also provides access to oldT
 
 However, the design of the DSL for convenient use requires accessibility to oldTime from the current objects, as well as access to additional fields to compute boundary conditions.
 
-As a result, a new FieldDatabase must be introduced to store all registered fields via the FieldEntityManager. The FieldEntityManager handles the storage of oldTime(s), caches gradients, and manages iterations, while also determining which fields need to be written to disk.
+As a result, a new FieldDatabase must be introduced to store all registered fields via the SolutionFields. The SolutionFields handles the storage of oldTime(s), caches gradients, and manages iterations, while also determining which fields need to be written to disk.
 
-The FieldEntityManager is created by the FieldDatabase and maintains a reference to the database. When a field is created with the FieldEntityManager, it is stored in the database. Boundary conditions have access to the main field and, therefore, can access the database to retrieve any necessary fields.
+The SolutionFields is created by the FieldDatabase and maintains a reference to the database. When a field is created with the SolutionFields, it is stored in the database. Boundary conditions have access to the main field and, therefore, can access the database to retrieve any necessary fields.
 
 One example of where this is required is the heatFlux in boundary conditions. The face normal gradient requires knowledge of the heat conductivity.
 
@@ -35,12 +35,12 @@ The general design is shown in the following class diagram:
             +getFieldDataBase()
         }
         class FieldDataBase{
-            std::vector~FieldEntityManager~ fem
+            std::vector~SolutionFields~ fem
             +CRUD()
-            +createFieldEntityManager() FieldEntityManager
+            +createSolutionFields() SolutionFields
 
         }
-        class FieldEntityManager{
+        class SolutionFields{
             -const FieldDataBase& fdb
             -std::strind name
             -GeometricField~Type~ field
@@ -51,7 +51,7 @@ The general design is shown in the following class diagram:
         class GeometricField~Type~{
             DomainField~Type~ field
             correctBoundaryCondition()
-            std::optional~FieldEntityManager&~ fem
+            std::optional~SolutionFields&~ fem
         }
         class FieldCategory{
             <<enumeration>>
@@ -68,8 +68,8 @@ The general design is shown in the following class diagram:
         }
 
         FieldDataBase o-- operations
-        FieldEntityManager o-- operations
-        FieldDataBase o-- FieldEntityManager
-        GeometricField o-- FieldEntityManager
-        FieldEntityManager o-- FieldComponent
+        SolutionFields o-- operations
+        FieldDataBase o-- SolutionFields
+        GeometricField o-- SolutionFields
+        SolutionFields o-- FieldComponent
         FieldComponent *-- FieldCategory

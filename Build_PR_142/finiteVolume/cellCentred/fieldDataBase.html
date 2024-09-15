@@ -268,8 +268,8 @@
 <p>OpenFOAM manages its objects through an object registry. The object registry can be viewed as a database that registers types derived from regIOobject. This database is accessible and used within Time and Mesh to register objects. This approach aims to decouple the mesh from the implementation, adhering to the single responsibility principle.</p>
 <p>The same principle applies to geometricField, which also provides access to oldTime and, therefore, needs to manage the time state.</p>
 <p>However, the design of the DSL for convenient use requires accessibility to oldTime from the current objects, as well as access to additional fields to compute boundary conditions.</p>
-<p>As a result, a new FieldDatabase must be introduced to store all registered fields via the FieldEntityManager. The FieldEntityManager handles the storage of oldTime(s), caches gradients, and manages iterations, while also determining which fields need to be written to disk.</p>
-<p>The FieldEntityManager is created by the FieldDatabase and maintains a reference to the database. When a field is created with the FieldEntityManager, it is stored in the database. Boundary conditions have access to the main field and, therefore, can access the database to retrieve any necessary fields.</p>
+<p>As a result, a new FieldDatabase must be introduced to store all registered fields via the SolutionFields. The SolutionFields handles the storage of oldTime(s), caches gradients, and manages iterations, while also determining which fields need to be written to disk.</p>
+<p>The SolutionFields is created by the FieldDatabase and maintains a reference to the database. When a field is created with the SolutionFields, it is stored in the database. Boundary conditions have access to the main field and, therefore, can access the database to retrieve any necessary fields.</p>
 <p>One example of where this is required is the heatFlux in boundary conditions. The face normal gradient requires knowledge of the heat conductivity.</p>
 <p>This design simplifies the usage of fields and makes it easier to access the required fields. However, the global nature of the database introduces a specific initialization order. In our case, the thermodynamic model must be initialized before the boundary conditions are created.</p>
 <p>This dependency on initialization order is a drawback of the design. Nonetheless, the design is more flexible and allows for more convenient access to fields. From personal experience, the initialization order has not been a significant issue.</p>
@@ -285,12 +285,12 @@
         +getFieldDataBase()
     }
     class FieldDataBase{
-        std::vector~FieldEntityManager~ fem
+        std::vector~SolutionFields~ fem
         +CRUD()
-        +createFieldEntityManager() FieldEntityManager
+        +createSolutionFields() SolutionFields
 
     }
-    class FieldEntityManager{
+    class SolutionFields{
         -const FieldDataBase&amp; fdb
         -std::strind name
         -GeometricField~Type~ field
@@ -301,7 +301,7 @@
     class GeometricField~Type~{
         DomainField~Type~ field
         correctBoundaryCondition()
-        std::optional~FieldEntityManager&amp;~ fem
+        std::optional~SolutionFields&amp;~ fem
     }
     class FieldCategory{
         &lt;&lt;enumeration&gt;&gt;
@@ -318,10 +318,10 @@
     }
 
     FieldDataBase o-- operations
-    FieldEntityManager o-- operations
-    FieldDataBase o-- FieldEntityManager
-    GeometricField o-- FieldEntityManager
-    FieldEntityManager o-- FieldComponent
+    SolutionFields o-- operations
+    FieldDataBase o-- SolutionFields
+    GeometricField o-- SolutionFields
+    SolutionFields o-- FieldComponent
     FieldComponent *-- FieldCategory
         </div></section>
 
