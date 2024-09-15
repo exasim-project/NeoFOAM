@@ -25,13 +25,18 @@ enum class FieldCategory
     cacheField
 };
 
+struct fieldMetadata
+{
+    std::size_t timeIndex;
+    std::size_t iterationIndex;
+    FieldCategory category;
+};
+
 template<typename Type>
 struct FieldComponent
 {
     std::shared_ptr<Type> field;
-    std::size_t timeIndex;
-    std::size_t iterationIndex;
-    FieldCategory category;
+    fieldMetadata metaData;
 };
 
 class SolutionFields
@@ -39,16 +44,19 @@ class SolutionFields
 
 public:
 
-    SolutionFields();
+    SolutionFields(
+        const VolumeField<NeoFOAM::scalar>& field
+    );
 
     template<typename T>
-    void insert(const int& key, T value)
+    size_t insert(T value)
     {
-        fieldDB_.emplace(key, value);
+        fieldDB_.push_back(value);
+        return fieldDB_.size() - 1;
     }
 
     template<typename T>
-    T& get(const int& key)
+    T& get(const size_t key)
     {
         try
         {
@@ -62,7 +70,7 @@ public:
     }
 
     template<typename T>
-    const T& get(const int& key) const
+    const T& get(const size_t key) const
     {
         try
         {
@@ -74,30 +82,54 @@ public:
             throw e;
         }
     }
+    std::string name() const { return fieldName_; }
 
-    std::string fieldName;
+    VolumeField<NeoFOAM::scalar> field;
+
+    
 private:
 
-    std::unordered_map<int, std::any> fieldDB_;
+    std::string fieldName_;
+    std::vector<std::any> fieldDB_;
 
 };  
 
 namespace operations
 {
 
+// template <typename T>
+// SolutionFields newFieldEntity(const T& field)
+// {
+//     SolutionFields SolutionFields;
+//     SolutionFields.fieldName = field.name;
+//     FieldComponent<T> fieldComponent{
+//         .field = std::make_shared<T>(field),
+//         .timeIndex = 0,
+//         .iterationIndex = 0,
+//         .category = FieldCategory::newTime
+//     };
+//     SolutionFields.insert(0, fieldComponent);
+//     return SolutionFields;
+// }
+
 template <typename T>
-SolutionFields newFieldEntity(const T& field)
+VolumeField<T>& oldTime(VolumeField<T>& field)
 {
-    SolutionFields SolutionFields;
-    SolutionFields.fieldName = field.name;
-    FieldComponent<T> fieldComponent{
-        .field = std::make_shared<T>(field),
-        .timeIndex = 0,
-        .iterationIndex = 0,
-        .category = FieldCategory::newTime
+    SolutionFields& solutionFields = field.solField();
+    FieldComponent<VolumeField<T>> fieldComponent{
+        .field = std::make_shared<VolumeField<T>>(field),
+        .metaData = {
+            .timeIndex = 0,
+            .iterationIndex = 0,
+            .category = FieldCategory::oldTime
+        }
     };
-    SolutionFields.insert(0, fieldComponent);
-    return SolutionFields;
+    size_t key = solutionFields.insert(fieldComponent);
+    auto& fc = solutionFields.get<FieldComponent<VolumeField<T>>>(key); 
+    VolumeField<T>& volField = *fc.field;
+    volField.name = field.name + "_0";
+    return volField;
+    // return fieldComponent.get;
 }
 
 } // namespace operations
