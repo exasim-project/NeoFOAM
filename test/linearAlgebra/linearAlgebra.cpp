@@ -20,39 +20,24 @@ TEST_CASE("MatrixAssembly")
 
     gko::matrix_data<double, int> expected {{2, -1, 0}, {-1, 2, -1}, {0, -1, 2}};
 
-    //    auto mat = NeoFOAM::Matrix(...);
-    //    auto assembly = mat.startAssembly(nnzEst);
-    //    // parallelFor
-    //    mat.finishAssembly(std::move(assembly));
-    //
-    //    auto assembly = NeoFOAM::Matrix::Assembly(...);
-    //    // parallelFor
-    //    auto mat = NeoFOAM::Matrix(std::move(assembly));
-
-
     SECTION("assemble_" + execName)
     {
-        auto kokkosAssembly = NeoFOAM::GinkgoMatrixAssembly<double, int>(exec, 3, 3, 3 * 3);
+        NeoFOAM::la::ginkgo::Matrix<double> matrix(exec, {3, 3}, 3 * 3);
+        auto kokkosAssembly = matrix.startAssembly();
 
         NeoFOAM::parallelFor(
             exec,
             {0, 3},
             KOKKOS_LAMBDA(const int i) {
-                if (i > 0)
-                {
-                    kokkosAssembly.insert(i * 3, {i, i - 1, -1.0});
-                }
+                kokkosAssembly.insert(i * 3, {i, i - 1, i > 0 ? -1.0 : 0});
                 kokkosAssembly.insert(i * 3 + 1, {i, i, 2});
-                if (i < 3 - 1)
-                {
-                    kokkosAssembly.insert(i * 3 + 2, {i, i + 1, -1.0});
-                }
+                kokkosAssembly.insert(i * 3 + 2, {i, i + 1, (i < 3 - 1) ? -1.0 : 0});
             }
         );
-        kokkosAssembly.finalize();
-        auto& gkoAssembly = kokkosAssembly.getUnderlyingData();
+        matrix.finishAssembly(std::move(kokkosAssembly));
 
-        auto hostGkoAssembly = gkoAssembly.copy_to_host();
+        gko::matrix_data<double, int> hostGkoAssembly;
+        matrix.getUnderlyingData()->write(hostGkoAssembly);
         REQUIRE(hostGkoAssembly.nonzeros.size() == expected.nonzeros.size());
         for (size_t i = 0; i < expected.nonzeros.size(); ++i)
         {
@@ -62,24 +47,19 @@ TEST_CASE("MatrixAssembly")
 
     SECTION("createMatrix_" + execName)
     {
-        auto kokkosAssembly = NeoFOAM::GinkgoMatrixAssembly<double, int>(exec, 3, 3, 3 * 3);
+        NeoFOAM::la::ginkgo::Matrix<double> matrix(exec, {3, 3}, 3 * 3);
+        auto kokkosAssembly = matrix.startAssembly();
         NeoFOAM::parallelFor(
             exec,
             {0, 3},
             KOKKOS_LAMBDA(const int i) {
-                if (i > 0)
-                {
-                    kokkosAssembly.insert(i * 3, {i, i - 1, -1.0});
-                }
+                kokkosAssembly.insert(i * 3, {i, i - 1, i > 0 ? -1.0 : 0});
                 kokkosAssembly.insert(i * 3 + 1, {i, i, 2});
-                if (i < 3 - 1)
-                {
-                    kokkosAssembly.insert(i * 3 + 2, {i, i + 1, -1.0});
-                }
+                kokkosAssembly.insert(i * 3 + 2, {i, i + 1, (i < 3 - 1) ? -1.0 : 0});
             }
         );
 
-        NeoFOAM::Matrix<double> matrix(std::move(kokkosAssembly));
+        matrix.finishAssembly(std::move(kokkosAssembly));
         gko::matrix_data<double, int> hostGkoAssembly;
         matrix.getUnderlyingData()->write(hostGkoAssembly);
         REQUIRE(hostGkoAssembly.nonzeros.size() == expected.nonzeros.size());
@@ -91,23 +71,18 @@ TEST_CASE("MatrixAssembly")
 
     SECTION("applyMatrix_" + execName)
     {
-        auto kokkosAssembly = NeoFOAM::GinkgoMatrixAssembly<double, int>(exec, 3, 3, 3 * 3);
+        NeoFOAM::la::ginkgo::Matrix<double> matrix(exec, {3, 3}, 3 * 3);
+        auto kokkosAssembly = matrix.startAssembly();
         NeoFOAM::parallelFor(
             exec,
             {0, 3},
             KOKKOS_LAMBDA(const int i) {
-                if (i > 0)
-                {
-                    kokkosAssembly.insert(i * 3, {i, i - 1, -1.0});
-                }
+                kokkosAssembly.insert(i * 3, {i, i - 1, i > 0 ? -1.0 : 0});
                 kokkosAssembly.insert(i * 3 + 1, {i, i, 2});
-                if (i < 3 - 1)
-                {
-                    kokkosAssembly.insert(i * 3 + 2, {i, i + 1, -1.0});
-                }
+                kokkosAssembly.insert(i * 3 + 2, {i, i + 1, (i < 3 - 1) ? -1.0 : 0});
             }
         );
-        NeoFOAM::Matrix<double> matrix(std::move(kokkosAssembly));
+        matrix.finishAssembly(std::move(kokkosAssembly));
         NeoFOAM::Field<double> in(exec, {1, 1, 1});
         NeoFOAM::Field<double> out(exec, {0, 0, 0});
         NeoFOAM::Field<double> expected(NeoFOAM::SerialExecutor {}, {1, 0, 1});
@@ -134,12 +109,12 @@ TEST_CASE("Petsc")
 
     SECTION("assemble_" + execName)
     {
-        NeoFOAM::PetscMatrix mat(exec, {3, 3}, 3 * 3);
+        NeoFOAM::la::petsc::Matrix mat({3, 3}, 3 * 3);
         auto symAssembly = mat.startSymbolicAssembly();
 
         // this has to be on a Host executor
         NeoFOAM::parallelFor(
-            NeoFOAM::CPUExecutor {},
+            symAssembly.getCompatibleExecutor(exec),
             {0, 3},
             KOKKOS_LAMBDA(const int i) {
                 if (i > 0)
@@ -176,11 +151,10 @@ TEST_CASE("Petsc")
 
     SECTION("apply_" + execName)
     {
-        NeoFOAM::PetscMatrix mat(
-            exec,
+        NeoFOAM::la::petsc::Matrix mat(
             {3, 3},
-            {exec, {0, 0, 1, 1, 1, 2, 2}},
-            {exec, {0, 1, 0, 1, 2, 1, 2}},
+            {NeoFOAM::CPUExecutor {}, {0, 0, 1, 1, 1, 2, 2}},
+            {NeoFOAM::CPUExecutor {}, {0, 1, 0, 1, 2, 1, 2}},
             {exec, {2, -1, -1, 2, -1, -1, 2}}
         );
 
