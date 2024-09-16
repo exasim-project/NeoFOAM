@@ -6,18 +6,16 @@
 
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::la::petsc
 {
 
-class PetscMatrix
+class Matrix
 {
 public:
 
     struct SymbolicAssembly
     {
-        SymbolicAssembly(PetscMatrix& mat)
-            : rowIdxs(mat.rowIdxs.data()), colIdxs(mat.colIdxs.data())
-        {}
+        SymbolicAssembly(Matrix& mat) : rowIdxs(mat.rowIdxs.data()), colIdxs(mat.colIdxs.data()) {}
 
         KOKKOS_FUNCTION void insert(size_t nnzId, MatrixCoordinate<PetscInt> coordinate) const
         {
@@ -25,18 +23,27 @@ public:
             colIdxs[nnzId] = coordinate.col;
         }
 
+        static Executor getCompatibleExecutor(const Executor& exec)
+        {
+            if (std::holds_alternative<GPUExecutor>(exec))
+            {
+                return CPUExecutor {};
+            }
+
+            return exec;
+        }
+
     private:
 
-        friend PetscMatrix;
+        friend Matrix;
 
         PetscInt* rowIdxs;
         PetscInt* colIdxs;
     };
 
-
-    struct NumericAssembly
+    struct NumericAssembly : CompatibleWithAnyExecutor
     {
-        NumericAssembly(PetscMatrix& mat) : values(mat.values.data()) {}
+        NumericAssembly(Matrix& mat) : values(mat.values.data()) {}
 
         KOKKOS_FUNCTION void insert(size_t nnzId, PetscScalar value) const
         {
@@ -45,14 +52,14 @@ public:
 
     private:
 
-        friend PetscMatrix;
+        friend Matrix;
 
         PetscScalar* values;
     };
 
-    PetscMatrix(Executor exec, Dim dim, size_t nnzEstimation)
+    Matrix(Dim dim, size_t nnzEstimation)
         : rowIdxs(CPUExecutor {}, nnzEstimation), colIdxs(CPUExecutor {}, nnzEstimation),
-          values(exec, nnzEstimation)
+          values(get_executor(), nnzEstimation)
     {
         MatCreate(MPI_COMM_WORLD, &mat);
         MatSetType(mat, MATSEQAIJKOKKOS);
@@ -60,14 +67,10 @@ public:
     }
 
 
-    PetscMatrix(
-        Executor exec,
-        Dim dim,
-        Field<PetscInt> rowIdxs,
-        Field<PetscInt> colIdxs,
-        Field<PetscScalar> values
+    Matrix(
+        Dim dim, Field<PetscInt> rowIdxs, Field<PetscInt> colIdxs, const Field<PetscScalar>& values
     )
-        : rowIdxs(CPUExecutor {}, 0), colIdxs(CPUExecutor {}, 0), values(exec, 0)
+        : rowIdxs(CPUExecutor {}, 0), colIdxs(CPUExecutor {}, 0), values(get_executor(), 0)
     {
         MatCreate(MPI_COMM_WORLD, &mat);
         MatSetType(mat, MATSEQAIJKOKKOS);
@@ -114,6 +117,8 @@ public:
 
         MatMult(mat, petscIn, petscOut);
     }
+
+    Executor get_executor() const { return GPUExecutor {}; }
 
     Mat getUnderlying() { return mat; }
 
