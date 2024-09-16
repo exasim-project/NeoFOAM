@@ -28,4 +28,11 @@ struct MatrixEntry
     ValueType value;
 };
 
+
+struct CompatibleWithAnyExecutor
+{
+    static Executor getCompatibleExecutor(const Executor& exec) { return exec; }
+};
+
+
 }
