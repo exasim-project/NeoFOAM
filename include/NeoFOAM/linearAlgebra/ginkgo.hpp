@@ -10,7 +10,7 @@
 #include "NeoFOAM/linearAlgebra/utilities.hpp"
 
 
-namespace NeoFOAM
+namespace NeoFOAM::la::ginkgo
 {
 
 std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
@@ -22,35 +22,66 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
     );
 }
 
-
-template<typename ValueType, typename IndexType>
-struct MatrixAssemblyInterface
+template<typename ValueType, typename IndexType = int32_t>
+class Matrix
 {
-    MatrixAssemblyInterface(Executor exec, size_t numRows, size_t numCols, size_t nnzEstimation);
+public:
 
-    KOKKOS_FUNCTION void insert(size_t nnzId, MatrixEntry<ValueType, IndexType> entry) const;
-};
+    struct SymbolicAssembly : CompatibleWithAnyExecutor
+    {
+        SymbolicAssembly(Matrix& mat)
+            : rowIdxs(mat.data.get_row_idxs()), colIdxs(mat.data.get_col_idxs())
+        {}
 
-template<typename ValueType, typename IndexType>
-struct MatrixInterface
-{
-    MatrixInterface(MatrixAssemblyInterface<ValueType, IndexType>&&);
+        KOKKOS_FUNCTION void insert(size_t nnzId, MatrixCoordinate<IndexType> coordinate) const
+        {
+            rowIdxs[nnzId] = coordinate.row;
+            colIdxs[nnzId] = coordinate.col;
+        }
 
-    void apply(const Field<ValueType>&, Field<ValueType>&);
-};
+    private:
 
+        IndexType* rowIdxs;
+        IndexType* colIdxs;
+    };
 
-template<typename ValueType, typename IndexType>
-struct GinkgoMatrixAssembly
-{
-    GinkgoMatrixAssembly(Executor exec, size_t numRows, size_t numCols, size_t nnzEstimation)
-        : data(getGkoExecutor(exec), gko::dim<2>(numRows, numCols), nnzEstimation)
+    struct NumericAssembly : CompatibleWithAnyExecutor
+    {
+        NumericAssembly(Matrix& mat) : values(mat.data.get_values()) {}
+
+        KOKKOS_FUNCTION void insert(size_t nnzId, ValueType value) const { values[nnzId] = value; }
+
+    private:
+
+        ValueType* values;
+    };
+
+    struct Assembly : CompatibleWithAnyExecutor
+    {
+        Assembly(Matrix& mat) : symAssembly(mat), numAssembly(mat) {}
+
+        KOKKOS_FUNCTION void insert(size_t nnzId, MatrixEntry<ValueType, IndexType> entry) const
+        {
+            symAssembly.insert(nnzId, {entry.row, entry.col});
+            numAssembly.insert(nnzId, entry.value);
+        }
+
+    private:
+
+        SymbolicAssembly symAssembly;
+        NumericAssembly numAssembly;
+    };
+
+    Matrix(Executor exec, Dim dim, size_t nnzEstimation)
+        : exec_(exec),
+          data(getGkoExecutor(exec), gko::dim<2>(dim.numRows, dim.numCols), nnzEstimation),
+          mtx(gko::matrix::Coo<ValueType, IndexType>::create(getGkoExecutor(exec)))
     {
         auto size = data.get_size();
         auto arrays = data.empty_out();
         arrays.row_idxs.fill(0);
         arrays.col_idxs.fill(0);
-        arrays.values.fill(0);
+        arrays.values.fill(ValueType {});
         data = gko::device_matrix_data<ValueType, IndexType>(
             data.get_executor(),
             size,
@@ -58,54 +89,26 @@ struct GinkgoMatrixAssembly
             std::move(arrays.col_idxs),
             std::move(arrays.values)
         );
-        rowIdxs = data.get_row_idxs();
-        colIdxs = data.get_col_idxs();
-        values = data.get_values();
     }
 
-    KOKKOS_FUNCTION void insert(size_t nnzId, MatrixEntry<ValueType, IndexType> entry) const
+    SymbolicAssembly startSymbolicAssembly() { return {*this}; }
+
+    NumericAssembly startNumericAssembly(SymbolicAssembly&& assembly) { return {*this}; }
+
+    void finishNumericAssembly(NumericAssembly&& assembly)
     {
-        rowIdxs[nnzId] = entry.row;
-        colIdxs[nnzId] = entry.col;
-        values[nnzId] = entry.value;
-    }
-
-    Executor exec() const { return exec_; }
-
-    auto&& getUnderlyingData() && { return std::move(data); }
-
-    auto& getUnderlyingData() & { return data; }
-
-    void finalize()
-    {
-        data.sort_row_major();
         data.sum_duplicates();
+        data.remove_zeros();
+        mtx->read(std::move(data));
     }
 
-private:
+    Assembly startAssembly() { return {*this}; }
 
-    Executor exec_;
-    gko::device_matrix_data<ValueType, label> data;
-
-    IndexType* rowIdxs;
-    IndexType* colIdxs;
-    ValueType* values;
-};
-
-
-template<typename ValueType>
-class Matrix
-{
-public:
-
-    Matrix() : mtx(gko::matrix::Coo<ValueType, int>::create()) {}
-    Matrix(GinkgoMatrixAssembly<ValueType, int>&& matrixAssembly)
-        : mtx(gko::matrix::Coo<ValueType, int>::create(getGkoExecutor(matrixAssembly.exec())))
+    void finishAssembly(Assembly&& assembly)
     {
-        matrixAssembly.finalize();
-        auto gkoData = std::move(matrixAssembly).getUnderlyingData();
-
-        mtx->read(std::move(gkoData));
+        data.sum_duplicates();
+        data.remove_zeros();
+        mtx->read(std::move(data));
     }
 
     void apply(const Field<ValueType>& in, Field<ValueType>& out)
@@ -124,11 +127,16 @@ public:
         mtx->apply(wrapField(in), wrapField(out));
     }
 
+    Executor getExecutor() const { return exec_; }
+
     auto* getUnderlyingData() { return mtx.get(); }
 
 private:
 
-    std::shared_ptr<gko::matrix::Coo<ValueType, label>> mtx;
+    Executor exec_;
+    gko::device_matrix_data<ValueType, IndexType> data;
+
+    std::shared_ptr<gko::matrix::Coo<ValueType, IndexType>> mtx;
 };
 
 
