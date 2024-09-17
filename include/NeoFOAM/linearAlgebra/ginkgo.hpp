@@ -22,14 +22,19 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
     );
 }
 
+template<typename ValueType, typename IndexType>
+class Matrix;
+
 template<typename ValueType, typename IndexType = int32_t>
-class Matrix
+class MatrixBuilder
 {
+    friend class Matrix<ValueType, IndexType>;
+
 public:
 
     struct SymbolicAssembly : CompatibleWithAnyExecutor
     {
-        SymbolicAssembly(Matrix& mat)
+        SymbolicAssembly(MatrixBuilder& mat)
             : rowIdxs(mat.data.get_row_idxs()), colIdxs(mat.data.get_col_idxs())
         {}
 
@@ -47,7 +52,7 @@ public:
 
     struct NumericAssembly : CompatibleWithAnyExecutor
     {
-        NumericAssembly(Matrix& mat) : values(mat.data.get_values()) {}
+        NumericAssembly(MatrixBuilder& mat) : values(mat.data.get_values()) {}
 
         KOKKOS_FUNCTION void insert(size_t nnzId, ValueType value) const { values[nnzId] = value; }
 
@@ -58,7 +63,7 @@ public:
 
     struct Assembly : CompatibleWithAnyExecutor
     {
-        Assembly(Matrix& mat) : symAssembly(mat), numAssembly(mat) {}
+        Assembly(MatrixBuilder& mat) : symAssembly(mat), numAssembly(mat) {}
 
         KOKKOS_FUNCTION void insert(size_t nnzId, MatrixEntry<ValueType, IndexType> entry) const
         {
@@ -72,10 +77,9 @@ public:
         NumericAssembly numAssembly;
     };
 
-    Matrix(Executor exec, Dim dim, size_t nnzEstimation)
+    MatrixBuilder(Executor exec, Dim dim, size_t nnzEstimation)
         : exec_(exec),
-          data(getGkoExecutor(exec), gko::dim<2>(dim.numRows, dim.numCols), nnzEstimation),
-          mtx(gko::matrix::Coo<ValueType, IndexType>::create(getGkoExecutor(exec)))
+          data(getGkoExecutor(exec), gko::dim<2>(dim.numRows, dim.numCols), nnzEstimation)
     {
         auto size = data.get_size();
         auto arrays = data.empty_out();
@@ -95,20 +99,29 @@ public:
 
     NumericAssembly startNumericAssembly(SymbolicAssembly&& assembly) { return {*this}; }
 
-    void finishNumericAssembly(NumericAssembly&& assembly)
-    {
-        data.sum_duplicates();
-        data.remove_zeros();
-        mtx->read(std::move(data));
-    }
-
     Assembly startAssembly() { return {*this}; }
 
-    void finishAssembly(Assembly&& assembly)
+    Executor getExecutor() const { return exec_; }
+
+private:
+
+    Executor exec_;
+    gko::device_matrix_data<ValueType, IndexType> data;
+};
+
+
+template<typename ValueType, typename IndexType = int32_t>
+class Matrix
+{
+public:
+
+    Matrix(MatrixBuilder<ValueType, IndexType>&& builder)
+        : exec_(builder.exec_),
+          mtx(gko::matrix::Coo<ValueType, IndexType>::create(builder.data.get_executor()))
     {
-        data.sum_duplicates();
-        data.remove_zeros();
-        mtx->read(std::move(data));
+        builder.data.sum_duplicates();
+        builder.data.remove_zeros();
+        mtx->read(std::move(builder.data));
     }
 
     void apply(const Field<ValueType>& in, Field<ValueType>& out)
@@ -134,7 +147,6 @@ public:
 private:
 
     Executor exec_;
-    gko::device_matrix_data<ValueType, IndexType> data;
 
     std::shared_ptr<gko::matrix::Coo<ValueType, IndexType>> mtx;
 };
