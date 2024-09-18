@@ -15,10 +15,16 @@ set_property(
 
 if(NEOFOAM_ENABLE_GINKGO)
   target_link_libraries(NeoFOAM_public_api INTERFACE Ginkgo::ginkgo)
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_GINKGO=1)
+else()
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_GINKGO=1)
 endif()
 
 if(NEOFOAM_ENABLE_PETSC)
   target_link_libraries(NeoFOAM_public_api INTERFACE PkgConfig::PETSc)
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_PETSC=1)
+else()
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_PETSC=1)
 endif()
 
 if(${CMAKE_BUILD_TYPE} MATCHES Debug)

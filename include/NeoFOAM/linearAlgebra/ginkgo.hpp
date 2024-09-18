@@ -3,6 +3,8 @@
 
 #pragma once
 
+#if NF_WITH_GINKGO
+
 #include <ginkgo/ginkgo.hpp>
 #include <ginkgo/extensions/kokkos.hpp>
 
@@ -153,3 +155,5 @@ private:
 
 
 }
+
+#endif
