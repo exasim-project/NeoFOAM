@@ -1,8 +1,11 @@
-#pragma once
-
-#include <petsc.h>
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
+#pragma once
+
+#if NF_WITH_PETSC
+
+#include <petsc.h>
 
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 
@@ -149,3 +152,5 @@ private:
 };
 
 }
+
+#endif

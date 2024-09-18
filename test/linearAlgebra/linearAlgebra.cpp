@@ -9,7 +9,9 @@
 #include "NeoFOAM/linearAlgebra/petsc.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
-TEST_CASE("MatrixAssembly")
+#if NF_WITH_GINKGO
+
+TEST_CASE("MatrixAssembly - Ginkgo")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -73,7 +75,11 @@ TEST_CASE("MatrixAssembly")
     }
 }
 
-TEST_CASE("Petsc")
+#endif
+
+#if NF_WITH_PETSC
+
+TEST_CASE("MatrixAssembly - Petsc")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -92,15 +98,9 @@ TEST_CASE("Petsc")
             symAssembly.getCompatibleExecutor(exec),
             {0, 3},
             KOKKOS_LAMBDA(const int i) {
-                if (i > 0)
-                {
-                    symAssembly.insert(i * 3, {i, i - 1});
-                }
+                symAssembly.insert(i * 3, {i, i - 1});
                 symAssembly.insert(i * 3 + 1, {i, i});
-                if (i < 3 - 1)
-                {
-                    symAssembly.insert(i * 3 + 2, {i, i + 1});
-                }
+                symAssembly.insert(i * 3 + 2, {i, i + 1});
             }
         );
         auto numAssembly = builder.startNumericAssembly(std::move(symAssembly));
@@ -108,19 +108,14 @@ TEST_CASE("Petsc")
             exec,
             {0, 3},
             KOKKOS_LAMBDA(const int i) {
-                if (i > 0)
-                {
-                    numAssembly.insert(i * 3, -1.0);
-                }
+                numAssembly.insert(i * 3, i > 0 ? -1.0 : 0);
                 numAssembly.insert(i * 3 + 1, 2.0);
-                if (i < 3 - 1)
-                {
-                    numAssembly.insert(i * 3 + 2, -1.0);
-                }
+                numAssembly.insert(i * 3 + 2, (i < 3 - 1) ? -1.0 : 0);
             }
         );
         NeoFOAM::la::petsc::Matrix mat(std::move(builder));
 
+        // There is no real test here, since I have no idea how to
         MatView(mat.getUnderlying(), PETSC_VIEWER_STDOUT_WORLD);
     }
 
@@ -147,3 +142,5 @@ TEST_CASE("Petsc")
         }
     }
 }
+
+#endif
