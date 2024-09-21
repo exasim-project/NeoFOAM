@@ -32,13 +32,6 @@ fvcc::VolumeField<NeoFOAM::scalar> createVolumeField(const NeoFOAM::Unstructured
     return vf;
 }
 
-struct Registerer {
-    constexpr Registerer(bool reg) : registered_(reg) {}
-    constexpr bool registered() const { return registered_; }
-
-    private:
-    bool registered_;
-};
 
 TEST_CASE("FieldDatabase")
 {
@@ -48,13 +41,7 @@ TEST_CASE("FieldDatabase")
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
-    constexpr Registerer reg {true};
 
-    static_assert(reg.registered(), "This is a static assert");
-
-    constexpr Registerer reg2 {false};
-
-    static_assert(reg2.registered(), "This is a static assert");
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
@@ -66,23 +53,17 @@ TEST_CASE("FieldDatabase")
 
         fvcc::FieldDatabase fieldDB {};
 
-        // fieldDB.insert("test", 1.0);
-        // REQUIRE(fieldDB.get<double>("test") == 1.0);
-
-        // fieldDB.insert("vf", vf);
-        // auto vf2 = fieldDB.get<fvcc::VolumeField<NeoFOAM::scalar>>("vf").internalField().copyToHost();
-        // REQUIRE(vf2.span()[0] == 1.0);
         SECTION("create SolutionField")
         {
-            auto solutionField = fieldDB.createSolutionField(
+            auto solutionField = fieldDB.createSolutionField<fvcc::VolumeField<NeoFOAM::scalar>>(
                 [&]() { return createVolumeField(mesh, "T"); }
             );
             REQUIRE(solutionField.name() == "T");
-            REQUIRE(solutionField.field.internalField().copyToHost()[0] == 1.0);
+            REQUIRE(solutionField.field().internalField().copyToHost()[0] == 1.0);
 
-            fvcc::VolumeField<NeoFOAM::scalar>& volField = fieldDB.createSolutionField(
+            fvcc::VolumeField<NeoFOAM::scalar>& volField = fieldDB.createSolutionField<fvcc::VolumeField<NeoFOAM::scalar>>(
                 [&]() { return createVolumeField(mesh, "T2"); }
-            ).field;
+            ).field();
 
             REQUIRE(volField.name == "T2");
             REQUIRE(volField.internalField().copyToHost()[0] == 1.0);
@@ -91,11 +72,12 @@ TEST_CASE("FieldDatabase")
 
         SECTION("create oldTime")
         {
-            auto& T = fieldDB.createSolutionField(
+            auto& T = fieldDB.createSolutionField<fvcc::VolumeField<NeoFOAM::scalar>>(
                 [&]() { return createVolumeField(mesh, "T"); }
-            ).field;
+            ).field();
             REQUIRE(T.name == "T");
             REQUIRE(T.hasSolField());
+            
             auto& Told = fvcc::operations::oldTime(T);
             REQUIRE(Told.name == "T_0");
             REQUIRE(Told.internalField().copyToHost()[0] == 1.0);

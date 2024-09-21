@@ -7,6 +7,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <ranges> // for std::ranges::find
+#include <iterator> // for std::distance
 
 #include "NeoFOAM/core/demangle.hpp"
 #include "NeoFOAM/core/error.hpp"
@@ -25,74 +27,105 @@ enum class FieldCategory
     cacheField
 };
 
-struct fieldMetadata
+struct FieldMetaData
 {
     std::size_t timeIndex;
     std::size_t iterationIndex;
     FieldCategory category;
+
+    bool operator==(const FieldMetaData& other) const
+    {
+        return timeIndex == other.timeIndex && iterationIndex == other.iterationIndex && category == other.category;
+    }
 };
 
 template<typename Type>
 struct FieldComponent
 {
     std::shared_ptr<Type> field;
-    fieldMetadata metaData;
+    FieldMetaData metaData;
 };
 
+template<class GeoField>
 class SolutionFields
 {
 
 public:
 
-    SolutionFields(
-        const VolumeField<NeoFOAM::scalar>& field
-    );
+    SolutionFields(const GeoField& field)  {
+        auto mainField = field;
+        mainField.solutionFieldKey = 0;
+        fieldDB_.push_back(mainField);
+        fieldMetaData.push_back(FieldMetaData{.timeIndex = 0, .iterationIndex = 0, .category = FieldCategory::newTime});
+    }
 
-    template<typename T>
-    size_t insert(T value)
+
+    size_t insert(const GeoField& field, FieldMetaData metaData)
     {
-        fieldDB_.push_back(value);
+        fieldDB_.push_back(field);
+        fieldMetaData.push_back(metaData);
         return fieldDB_.size() - 1;
     }
 
-    template<typename T>
-    T& get(const size_t key)
+    
+    GeoField& getField(const size_t key)
     {
-        try
-        {
-            return std::any_cast<T&>(fieldDB_.at(key));
-        }
-        catch (const std::bad_any_cast& e)
-        {
-            logBadAnyCast<T>(e, key, fieldDB_);
-            throw e;
-        }
+        return fieldDB_.at(key);
     }
-
-    template<typename T>
-    const T& get(const size_t key) const
-    {
-        try
-        {
-            return std::any_cast<const T&>(fieldDB_.at(key));
-        }
-        catch (const std::bad_any_cast& e)
-        {
-            logBadAnyCast<T>(e, key, fieldDB_);
-            throw e;
-        }
-    }
-    std::string name() const { return fieldName_; }
-
-    VolumeField<NeoFOAM::scalar> field;
 
     
+    const GeoField& getField(const size_t key) const
+    {
+        return fieldDB_.at(key);
+    }
+
+    int32_t findField(const GeoField& field)
+    {
+        int32_t key = -1;
+        std::cout << "address findField: " << &field << std::endl;
+        for ( int32_t i = 0; i < fieldDB_.size(); i++)
+        {
+            std::cout << "fieldDB_ " << &fieldDB_[i] << std::endl;
+            if (&field == &fieldDB_[i])
+            {
+                key = i;
+                break;
+            }
+        }
+        return key;
+    }
+
+    // template<typename T>
+    // const T& get(const size_t key) const
+    // {
+    //     try
+    //     {
+    //         return std::any_cast<const T&>(fieldDB_.at(key));
+    //     }
+    //     catch (const std::bad_any_cast& e)
+    //     {
+    //         logBadAnyCast<T>(e, key, fieldDB_);
+    //         throw e;
+    //     }
+    // }
+
+    std::string name() const { return fieldDB_[0].name; }
+
+    GeoField& field() { return fieldDB_[0]; }
+
+    const GeoField& field() const { return fieldDB_[0]; }
+
+    std::size_t size() const { return fieldDB_.size(); }
+
+
+
+    std::vector<FieldMetaData> fieldMetaData;
+
 private:
 
-    std::string fieldName_;
-    std::vector<std::any> fieldDB_;
 
-};  
+    std::vector<GeoField> fieldDB_;
+};
 
 namespace operations
 {
@@ -112,25 +145,34 @@ namespace operations
 //     return SolutionFields;
 // }
 
-template <typename T>
+template<typename T>
 VolumeField<T>& oldTime(VolumeField<T>& field)
 {
-    SolutionFields& solutionFields = field.solField();
-    FieldComponent<VolumeField<T>> fieldComponent{
-        .field = std::make_shared<VolumeField<T>>(field),
-        .metaData = {
-            .timeIndex = 0,
-            .iterationIndex = 0,
-            .category = FieldCategory::oldTime
-        }
-    };
-    size_t key = solutionFields.insert(fieldComponent);
-    auto& fc = solutionFields.get<FieldComponent<VolumeField<T>>>(key); 
-    VolumeField<T>& volField = *fc.field;
-    volField.name = field.name + "_0";
+    auto& solutionFields = field.solField().get();
+    size_t fieldKey = field.solutionFieldKey.value();
+
+    FieldMetaData oldTimeMetaData = solutionFields.fieldMetaData[fieldKey];
+    oldTimeMetaData.category = FieldCategory::oldTime;
+    oldTimeMetaData.timeIndex = oldTimeMetaData.timeIndex - 1;
+
+    auto it = std::ranges::find(solutionFields.fieldMetaData, oldTimeMetaData);
+    bool found = (it != solutionFields.fieldMetaData.end());
+    size_t key = std::distance(solutionFields.fieldMetaData.begin(), it);
+
+    if (!found)
+    {
+        VolumeField<T> oldTimeField = field;
+        oldTimeField.name = field.name + "_0";
+        oldTimeField.setSolField(solutionFields);
+        key = solutionFields.insert(oldTimeField, oldTimeMetaData);
+        VolumeField<T>& volField = solutionFields.getField(key);
+        volField.solutionFieldKey = key;
+    }
+    
+    VolumeField<T>& volField = solutionFields.getField(key);
     return volField;
-    // return fieldComponent.get;
 }
+
 
 } // namespace operations
 

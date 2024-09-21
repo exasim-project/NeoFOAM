@@ -14,7 +14,8 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-using CreateFunction = std::function<VolumeField<scalar>()>;
+template<typename GeoField>
+using CreateFunction = std::function<GeoField()>;
 /**
  * @class FieldDatabase
  * @brief A class that represents a field database.
@@ -88,12 +89,13 @@ public:
         }
     }
 
-    SolutionFields& createSolutionField(CreateFunction creatFunc)
+    template<typename GeoField>
+    SolutionFields<GeoField>& createSolutionField(CreateFunction<GeoField> creatFunc)
     {
-        SolutionFields solutionField(creatFunc());
+        SolutionFields<GeoField> solutionField(creatFunc());
         fieldDB_.emplace(solutionField.name(), solutionField);
-        auto& solField = std::any_cast<SolutionFields&>(fieldDB_.at(solutionField.name()));
-        solField.field.setSolField(solField);
+        auto& solField = std::any_cast<SolutionFields<GeoField>&>(fieldDB_.at(solutionField.name()));
+        solField.field().setSolField(solField);
         return solField;
     }
 
