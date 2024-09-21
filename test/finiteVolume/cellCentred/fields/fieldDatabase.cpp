@@ -55,13 +55,13 @@ TEST_CASE("FieldDatabase")
 
         SECTION("create SolutionField")
         {
-            auto solutionField = fieldDB.createSolutionField<fvcc::VolumeField<NeoFOAM::scalar>>(
+            auto solutionField = fieldDB.createSolutionField(
                 [&]() { return createVolumeField(mesh, "T"); }
             );
             REQUIRE(solutionField.name() == "T");
             REQUIRE(solutionField.field().internalField().copyToHost()[0] == 1.0);
 
-            fvcc::VolumeField<NeoFOAM::scalar>& volField = fieldDB.createSolutionField<fvcc::VolumeField<NeoFOAM::scalar>>(
+            fvcc::VolumeField<NeoFOAM::scalar>& volField = fieldDB.createSolutionField(
                 [&]() { return createVolumeField(mesh, "T2"); }
             ).field();
 
@@ -72,7 +72,7 @@ TEST_CASE("FieldDatabase")
 
         SECTION("create oldTime")
         {
-            auto& T = fieldDB.createSolutionField<fvcc::VolumeField<NeoFOAM::scalar>>(
+            auto& T = fieldDB.createSolutionField(
                 [&]() { return createVolumeField(mesh, "T"); }
             ).field();
             REQUIRE(T.name == "T");

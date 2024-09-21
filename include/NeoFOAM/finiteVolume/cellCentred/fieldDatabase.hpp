@@ -89,8 +89,17 @@ public:
         }
     }
 
+    template<typename CreateFunc>
+    auto& createSolutionField(CreateFunc creatFunc)
+    {
+        using GeoField = std::invoke_result_t<CreateFunc>;
+        return createSolutionFieldImpl<GeoField>(creatFunc);
+    }
+
+private:
+
     template<typename GeoField>
-    SolutionFields<GeoField>& createSolutionField(CreateFunction<GeoField> creatFunc)
+    SolutionFields<GeoField>& createSolutionFieldImpl(CreateFunction<GeoField> creatFunc)
     {
         SolutionFields<GeoField> solutionField(creatFunc());
         fieldDB_.emplace(solutionField.name(), solutionField);
@@ -98,8 +107,6 @@ public:
         solField.field().setSolField(solField);
         return solField;
     }
-
-private:
 
     // /**
     //  * @brief The field database to register field data.
