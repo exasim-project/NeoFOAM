@@ -59,7 +59,6 @@ public:
         fieldMetaData.push_back(FieldMetaData{.timeIndex = 0, .iterationIndex = 0, .category = FieldCategory::newTime});
     }
 
-
     size_t insert(const GeoField& field, FieldMetaData metaData)
     {
         fieldDB_.push_back(field);
@@ -67,13 +66,11 @@ public:
         return fieldDB_.size() - 1;
     }
 
-    
     GeoField& getField(const size_t key)
     {
         return fieldDB_.at(key);
     }
 
-    
     const GeoField& getField(const size_t key) const
     {
         return fieldDB_.at(key);
@@ -95,20 +92,6 @@ public:
         return key;
     }
 
-    // template<typename T>
-    // const T& get(const size_t key) const
-    // {
-    //     try
-    //     {
-    //         return std::any_cast<const T&>(fieldDB_.at(key));
-    //     }
-    //     catch (const std::bad_any_cast& e)
-    //     {
-    //         logBadAnyCast<T>(e, key, fieldDB_);
-    //         throw e;
-    //     }
-    // }
-
     std::string name() const { return fieldDB_[0].name; }
 
     GeoField& field() { return fieldDB_[0]; }
@@ -116,8 +99,6 @@ public:
     const GeoField& field() const { return fieldDB_[0]; }
 
     std::size_t size() const { return fieldDB_.size(); }
-
-
 
     std::vector<FieldMetaData> fieldMetaData;
 
@@ -129,21 +110,6 @@ private:
 
 namespace operations
 {
-
-// template <typename T>
-// SolutionFields newFieldEntity(const T& field)
-// {
-//     SolutionFields SolutionFields;
-//     SolutionFields.fieldName = field.name;
-//     FieldComponent<T> fieldComponent{
-//         .field = std::make_shared<T>(field),
-//         .timeIndex = 0,
-//         .iterationIndex = 0,
-//         .category = FieldCategory::newTime
-//     };
-//     SolutionFields.insert(0, fieldComponent);
-//     return SolutionFields;
-// }
 
 template<typename T>
 VolumeField<T>& oldTime(VolumeField<T>& field)
