@@ -3,3 +3,4 @@
 
 neofoam_unit_test(surfaceField)
 neofoam_unit_test(volumeField)
+neofoam_unit_test(fieldDatabase)

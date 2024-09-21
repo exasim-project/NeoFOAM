@@ -47,10 +47,22 @@ GeometryScheme::GeometryScheme(
     std::unique_ptr<GeometrySchemeFactory> kernel
 )
     : exec_(exec), mesh_(mesh), kernel_(std::move(kernel)),
-      weights_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
-      deltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
-      nonOrthDeltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
-      nonOrthCorrectionVectors_(mesh.exec(), mesh, createCalculatedBCs<Vector>(mesh))
+      weights_(mesh.exec(), "weights", mesh, SurfaceBoundary<NeoFOAM::scalar>::calculatedBCs(mesh)),
+      deltaCoeffs_(
+          mesh.exec(), "deltaCoeffs", mesh, SurfaceBoundary<NeoFOAM::scalar>::calculatedBCs(mesh)
+      ),
+      nonOrthDeltaCoeffs_(
+          mesh.exec(),
+          "nonOrthDeltaCoeffs",
+          mesh,
+          SurfaceBoundary<NeoFOAM::scalar>::calculatedBCs(mesh)
+      ),
+      nonOrthCorrectionVectors_(
+          mesh.exec(),
+          "nonOrthCorrectionVectors",
+          mesh,
+          SurfaceBoundary<NeoFOAM::Vector>::calculatedBCs(mesh)
+      )
 {
     if (kernel_ == nullptr)
     {
@@ -62,10 +74,22 @@ GeometryScheme::GeometryScheme(
 GeometryScheme::GeometryScheme(const UnstructuredMesh& mesh)
     : exec_(mesh.exec()), mesh_(mesh),
       kernel_(std::make_unique<BasicGeometryScheme>(mesh)), // TODO add selection mechanism
-      weights_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
-      deltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
-      nonOrthDeltaCoeffs_(mesh.exec(), mesh, createCalculatedBCs<scalar>(mesh)),
-      nonOrthCorrectionVectors_(mesh.exec(), mesh, createCalculatedBCs<Vector>(mesh))
+      weights_(mesh.exec(), "weights", mesh, SurfaceBoundary<NeoFOAM::scalar>::calculatedBCs(mesh)),
+      deltaCoeffs_(
+          mesh.exec(), "deltaCoeffs", mesh, SurfaceBoundary<NeoFOAM::scalar>::calculatedBCs(mesh)
+      ),
+      nonOrthDeltaCoeffs_(
+          mesh.exec(),
+          "nonOrthDeltaCoeffs",
+          mesh,
+          SurfaceBoundary<NeoFOAM::scalar>::calculatedBCs(mesh)
+      ),
+      nonOrthCorrectionVectors_(
+          mesh.exec(),
+          "nonOrthCorrectionVectors",
+          mesh,
+          SurfaceBoundary<NeoFOAM::Vector>::calculatedBCs(mesh)
+      )
 {
     if (kernel_ == nullptr)
     {

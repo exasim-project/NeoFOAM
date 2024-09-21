@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
@@ -24,6 +24,8 @@ public:
     // fvcc::VolumeField<Vector> grad(const fvcc::VolumeField<scalar>& phi);
 
     void grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi);
+
+    VolumeField<Vector> grad(const VolumeField<scalar>& phi);
 
 private:
 

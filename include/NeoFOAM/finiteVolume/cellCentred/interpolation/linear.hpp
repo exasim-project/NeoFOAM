@@ -9,7 +9,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include <functional>
 
@@ -23,7 +23,7 @@ class Linear : public SurfaceInterpolationFactory::Register<Linear>
 
 public:
 
-    Linear(const Executor& exec, const UnstructuredMesh& mesh);
+    Linear(const Executor& exec, const UnstructuredMesh& mesh, Input input);
 
     static std::string name() { return "linear"; }
 
