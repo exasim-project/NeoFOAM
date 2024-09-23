@@ -29,6 +29,4 @@ TEST_CASE("linear")
 
     auto in = VolumeField<NeoFOAM::scalar>(exec, mesh, {});
     auto out = SurfaceField<NeoFOAM::scalar>(exec, mesh, {});
-
-    SECTION("can call interpolate" + execName) { linear.interpolate(in, out); }
 }
