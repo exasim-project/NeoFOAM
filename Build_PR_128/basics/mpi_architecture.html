@@ -3,13 +3,13 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="cellCenteredFiniteVolume" href="../finiteVolume/cellCentred/index.html" /><link rel="prev" title="Macro Definitions" href="macros.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Fields" href="fields.html" /><link rel="prev" title="Macro Definitions" href="macros.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/mpi_architecture.html" />
 
-    <!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
         <title>MPI Architecture - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     
@@ -206,24 +206,19 @@
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">unstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="containers.html">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">MPI Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fields.html">Fields</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/fields.html">Fields (FVCC)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
-</ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../api/fields.html">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api/executor.html">Executor</a></li>
 </ul>
 </li>
 </ul>
@@ -270,10 +265,10 @@
 <span id="basic-mpi-architecture"></span><h1>MPI Architecture<a class="headerlink" href="#mpi-architecture" title="Link to this heading">¶</a></h1>
 <section id="background">
 <h2>Background<a class="headerlink" href="#background" title="Link to this heading">¶</a></h2>
-<p>Virtually all large scientific and engineering codes are too large to be practically usable with a single ‘computing unit’. Most problems are broken down into smaller parts and distributed across several ‘computing units’. In many cases these ‘computing elements’ do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronize the solution procedure across these ‘computing elements’. <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code>, like many others uses <cite>MPI &lt;https://en.wikipedia.org/wiki/Message_Passing_Interface&gt;</cite> to achieve this, with each ‘computing unit’ referred to as an <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">rank</span></code> (<code class="docutils literal notranslate"><span class="pre">rank</span></code>). Note: for shared memory architecture (including GPU computing) see <cite>executor.rst &lt;executor.rst&gt;</cite>. Fundamentally 2 problems need to be solved:</p>
+<p>Virtually all large scientific and engineering codes are too large to be practically usable with a single ‘computing unit’. Most problems are broken down into smaller parts and distributed across several ‘computing units’. In many cases these ‘computing elements’ do not share the same memory addressing space, or distributed memory architecture. This introduces the need to communicate data and synchronize the solution procedure across these ‘computing elements’. <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> uses <a class="reference external" href="https://en.wikipedia.org/wiki/Message_Passing_Interface">MPI</a> to achieve this, with each ‘computing unit’ referred to as an <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">rank</span></code> (<code class="docutils literal notranslate"><span class="pre">rank</span></code>). Note: for shared memory architecture (including GPU computing), see <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/basics/executor.html">Executor</a>. Two fundamental problems need to be solved:</p>
 <ol class="arabic simple">
-<li><p>How should the global computation be partitioned and distributed across the <code class="docutils literal notranslate"><span class="pre">ranks</span></code>.</p></li>
-<li><p>What data needs be communicated between which <code class="docutils literal notranslate"><span class="pre">ranks</span></code>.</p></li>
+<li><p>How should the global computation be partitioned and distributed across <code class="docutils literal notranslate"><span class="pre">ranks</span></code>?.</p></li>
+<li><p>What data needs to be communicated between which <code class="docutils literal notranslate"><span class="pre">ranks</span></code>?.</p></li>
 </ol>
 <p>For scalable solutions, it’s crucial to ‘mask’ communication costs. Data communication should occur in parallel with the main computation to avoid holding it up and to reduce overheads. Broadly this is achieved by non-blocking communication between <code class="docutils literal notranslate"><span class="pre">ranks</span></code> in conjunction with the minimization of the frequency and size of the communication. Since the communication architecture informs the partitioning, we will discuss this first.</p>
 </section>
@@ -281,7 +276,7 @@
 <h2>Communication<a class="headerlink" href="#communication" title="Link to this heading">¶</a></h2>
 <section id="mpi-wrapping">
 <h3>MPI Wrapping<a class="headerlink" href="#mpi-wrapping" title="Link to this heading">¶</a></h3>
-<p>The majority of <code class="docutils literal notranslate"><span class="pre">MPI</span></code> operators are brought into <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> in the <code class="docutils literal notranslate"><span class="pre">operators.hpp</span></code> file. The purpose of this file is to wrap <code class="docutils literal notranslate"><span class="pre">MPI</span></code> functions such that they work more seamlessly with <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> data types, and also supplying typical defaults. For example the <code class="docutils literal notranslate"><span class="pre">MPI_Allreduce</span></code> function is wrapped:</p>
+<p>The majority of <code class="docutils literal notranslate"><span class="pre">MPI</span></code> operators are brought into <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> in the <code class="docutils literal notranslate"><span class="pre">operators.hpp</span></code> file. The purpose of this file is to wrap <code class="docutils literal notranslate"><span class="pre">MPI</span></code> functions such that they work more seamlessly with <code class="docutils literal notranslate"><span class="pre">NeoFOAM</span></code> data types, and also to supply typical defaults. For example the <code class="docutils literal notranslate"><span class="pre">MPI_Allreduce</span></code> function is wrapped:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">valueType</span><span class="o">&gt;</span>
 <span class="kt">void</span><span class="w"> </span><span class="n">reduceAllScalar</span><span class="p">(</span><span class="n">valueType</span><span class="o">*</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">ReduceOp</span><span class="w"> </span><span class="n">op</span><span class="p">,</span><span class="w"> </span><span class="n">MPI_Comm</span><span class="w"> </span><span class="n">comm</span><span class="p">)</span>
 <span class="p">{</span>
@@ -308,10 +303,10 @@
 <p class="admonition-title">Note</p>
 <p>Since we support <code class="docutils literal notranslate"><span class="pre">OpenMP</span></code> (through <code class="docutils literal notranslate"><span class="pre">Kokkos</span></code>), we need to ensure threading support is available when we start. This is checked in <code class="docutils literal notranslate"><span class="pre">MPIInit</span></code>’s constructor.</p>
 </div>
-<p>Once started, the <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> class is used to manage the <code class="docutils literal notranslate"><span class="pre">MPI_communicator</span></code>, <code class="docutils literal notranslate"><span class="pre">MPI_rank</span></code>, and <code class="docutils literal notranslate"><span class="pre">MPI_size</span></code>. Since the class will populate the communicator with <code class="docutils literal notranslate"><span class="pre">MPI_COMM_WORLD</span></code> and initialize the rank and size the class can be constructed from anywhere in the code.</p>
+<p>Once started, the <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> class is used to manage the MPI communicator, <code class="docutils literal notranslate"><span class="pre">MPI_rank</span></code>, and <code class="docutils literal notranslate"><span class="pre">MPI_size</span></code>. Since the class will populate the communicator with <code class="docutils literal notranslate"><span class="pre">MPI_COMM_WORLD</span></code> and initialize the rank and size, the class can be constructed from anywhere in the code.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>In the future it is intended to use this class to manage the <code class="docutils literal notranslate"><span class="pre">MPI</span> <span class="pre">Communicators</span></code> (allow for splitting of the communicator), at which point the above will no longer apply and the instance will need to be parsed.</p>
+<p>In the future, it is intended to use this class to manage multiple MPI communicators which are derived from the splitting of an existing communicator. By then, the above will no longer apply and the instance of <code class="docutils literal notranslate"><span class="pre">MPIEnvironment</span></code> will need to be parsed.</p>
 </div>
 </section>
 <section id="global-communication">
@@ -337,13 +332,13 @@
 <section id="point-to-point-communication">
 <h3>Point-to-Point Communication<a class="headerlink" href="#point-to-point-communication" title="Link to this heading">¶</a></h3>
 <p>For simplicity, this section focuses on the approach for two ranks to communicate with each other, specifically using non-blocking communication for field data synchronization.</p>
-<p>To begin, the reader is reminded of ‘communication terminology’: simplex, half-duplex, and full-duplex. Where simplex communication is one-way, from sender to receiver or vice versa. Half-duplex allows two-way communication but only in one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.</p>
-<p>To facilitate communication between two or ranks, a half-duplex buffer is introduced, namely the <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code>, which is responsible for non-blocking sending to/receiving from different ranks and into member data buffers. To generalize the buffer for different data types, <code class="docutils literal notranslate"><span class="pre">type-punning</span></code> is used and as such the actual data which is transferred is always of type <code class="docutils literal notranslate"><span class="pre">char</span></code>. Further, since memory allocation is relatively expensive the buffer is never sized down. While the buffer memory is laid out continuously it is accessed on a per <code class="docutils literal notranslate"><span class="pre">rank</span></code> basis, which is indexed from 0 to the size for the communicated data. It is therefore required to have some map between a cell’s buffer position index and its data container (typically a <code class="docutils literal notranslate"><span class="pre">Field</span></code> of some kind) index. The construction of this map is part of the partitioning problem, and not the responsibility of the buffer.</p>
+<p>To begin, the reader is reminded of ‘communication terminology’: simplex, half-duplex, and full-duplex. Simplex communication is one-way, from sender to receiver or vice versa. Half-duplex allows two-way communication but only in one direction at a time. Full-duplex enables two-way communication simultaneously in both directions.</p>
+<p>To facilitate communication between two or more ranks, a half-duplex buffer is introduced, namely the <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code>, which is responsible for non-blocking sending to/receiving from different ranks and into member data buffers. To generalize the buffer for different data types, <code class="docutils literal notranslate"><span class="pre">type-punning</span></code> is used and as such the actual data which is transferred is always of type <code class="docutils literal notranslate"><span class="pre">char</span></code>. Further, since memory allocation is relatively expensive the buffer is never sized down. While the buffer memory is laid out continuously it is accessed on a per <code class="docutils literal notranslate"><span class="pre">rank</span></code> basis, which is indexed from 0 to the size for the communicated data. It is therefore required to have some map between a cell’s buffer position index and its data container (typically a <code class="docutils literal notranslate"><span class="pre">Field</span></code> of some kind) index. The construction of this map is part of the partitioning problem, and not the responsibility of the buffer.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code> duplex buffer has some guard rails in to ensure once communication has started various operations are no-longer possible until it is finished.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">HalfDuplexCommBuffer</span></code> duplex buffer has some guard rails in to ensure that once communication has started, various operations are no-longer possible until it is finished.</p>
 </div>
-<p>To achieve full-duplex communication two half-duplex buffers are combined, to form the <code class="docutils literal notranslate"><span class="pre">FullDuplexCommBuffer</span></code>. The process for two way communication is then broken down into the following steps:</p>
+<p>To achieve full-duplex communication, two half-duplex buffers are combined to form the <code class="docutils literal notranslate"><span class="pre">FullDuplexCommBuffer</span></code>. The process for two way communication is then broken down into the following steps:</p>
 <ol class="arabic simple">
 <li><p>Initialize the communication, using a name and data type. This flags the buffer as a used resource.</p></li>
 <li><p>Load the buffer with data to send.</p></li>
@@ -418,11 +413,11 @@
 <h3>Field Synchronization<a class="headerlink" href="#field-synchronization" title="Link to this heading">¶</a></h3>
 <p>The focus now shifts to the actual process of synchronizing a global field between all its partitioned parts. In each <code class="docutils literal notranslate"><span class="pre">rank</span></code> there is some overlap of cells (i.e. cells which are present in more than one <code class="docutils literal notranslate"><span class="pre">rank</span></code>), which is dictated by the stencil size. If these shared cell have a missing neighbor cell in a local partition they are termed <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cells</span></code>. A <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cell</span></code> does not have enough geometric and/or field information to be able to calculate the correct result and therefore must receive the result from another rank.</p>
 <p>In the above there is no reason for the <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cells</span></code> to be nicely ordered, for example to start at field index 0 and end at 10. Therefore we need some map between the <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cell</span></code> index in our mesh and our data buffers in the <code class="docutils literal notranslate"><span class="pre">FullDuplexCommBuffer</span></code>, for each <code class="docutils literal notranslate"><span class="pre">rank</span></code>. This map is stored in the <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> which stores for each <code class="docutils literal notranslate"><span class="pre">rank</span></code> which buffer position maps to which <code class="docutils literal notranslate"><span class="pre">halo</span> <span class="pre">cell</span></code> in the mesh. To facilitate full duplex communication both a send and receive <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> is needed.</p>
-<p>Arriving finally at the <code class="docutils literal notranslate"><span class="pre">Communicator</span></code>. whose role is now defined to manage the non-blocking synchronization of a field for a given communication pathway set. The user should, at for each communicate point in code, provide a unique string key to identify the communication, see below is an example.</p>
-<p>It is worth noting that there may be more than one field being synchronized at any give time, however the communication pathways contained within the send and receive <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> remains the same. Thus the <code class="docutils literal notranslate"><span class="pre">Communicator</span></code> (may) consists of a multiple of communication buffers and a single <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code>. This scaling is provided automatically.</p>
+<p>Arriving finally at the <code class="docutils literal notranslate"><span class="pre">Communicator</span></code>. Its role is now defined to manage the non-blocking synchronization of a field for a given communication pathway set. The user should, for each communicate point in code, provide a unique string key to identify the communication, see below is an example.</p>
+<p>It is worth noting that there may be more than one field being synchronized at any give time. However, the communication pathways contained within the send and receive <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code> remains the same. Thus the <code class="docutils literal notranslate"><span class="pre">Communicator</span></code> (may) consists of a multiple of communication buffers and a single <code class="docutils literal notranslate"><span class="pre">RankSimplexCommMap</span></code>. This scaling is provided automatically.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>If the file line and number are used as communication key names they can allow for helpful debug messages when and <code class="docutils literal notranslate"><span class="pre">MPI</span></code> communication throws an error.</p>
+<p>If the file line and number are used as communication key names they can allow for helpful debug messages where <code class="docutils literal notranslate"><span class="pre">MPI</span></code> communication throws an error.</p>
 </div>
 <p>In the above of course the logic would be situated in a solution loop, and the calls would not be made sequential as this would lead to blocking communication.</p>
 </section>
@@ -451,12 +446,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../finiteVolume/cellCentred/index.html">
+          <a class="next-page" href="fields.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">cellCenteredFiniteVolume</div>
+                <div class="title">Fields</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

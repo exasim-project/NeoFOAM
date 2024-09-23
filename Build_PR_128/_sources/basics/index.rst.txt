@@ -15,3 +15,4 @@ Basics
     registerclass.rst
     macros.rst
     mpi_architecture.rst
+    fields.rst

@@ -1,6 +1,6 @@
 .. _basics_unstructuredMesh:
 
-unstructuredMesh
+UnstructuredMesh
 ================
 
 The `unstructuredMesh` in the current implementation stores the relevant data for the `unstructuredMesh` on the selected executor. So it is currently a data container for mesh data.
