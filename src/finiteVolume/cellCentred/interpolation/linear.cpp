@@ -11,9 +11,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeLinearInterpolation(
-    SurfaceField<scalar>& surfaceField,
     const VolumeField<scalar>& volField,
-    const std::shared_ptr<GeometryScheme> geometryScheme
+    const std::shared_ptr<GeometryScheme> geometryScheme,
+    SurfaceField<scalar>& surfaceField
 )
 {
     const UnstructuredMesh& mesh = surfaceField.mesh();
@@ -51,28 +51,26 @@ void computeLinearInterpolation(
 
 Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
-      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {
+      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
-      };
-
-void Linear::interpolate(SurfaceField<scalar>& surfaceField, const VolumeField<scalar>& volField)
+void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
+    const
 {
-    computeLinearInterpolation(surfaceField, volField, geometryScheme_);
+    computeLinearInterpolation(volField, geometryScheme_, surfaceField);
 }
 
 void Linear::interpolate(
-    SurfaceField<scalar>& surfaceField,
     const SurfaceField<scalar>& faceFlux,
-    const VolumeField<scalar>& volField
-)
+    const VolumeField<scalar>& volField,
+    SurfaceField<scalar>& surfaceField
+) const
 {
-    interpolate(surfaceField, volField);
+    interpolate(volField, surfaceField);
 }
 
 std::unique_ptr<SurfaceInterpolationFactory> Linear::clone() const
 {
     return std::make_unique<Linear>(*this);
 }
-
 
 } // namespace NeoFOAM
