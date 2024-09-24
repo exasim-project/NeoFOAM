@@ -19,7 +19,7 @@ namespace NeoFOAM
 namespace detail
 {
 /**
- * @brief A helper function to simplify the common pattern of copying between to executor.
+ * @brief A helper function to simplify the common pattern of copying between and to executor.
  * @param size The number of elements to copy.
  * @param srcPtr Pointer to the original block of memory.
  * @param dstPtr Pointer to the target block of memory.
@@ -64,6 +64,25 @@ public:
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
+    }
+
+    /**
+     * @brief Create a Field with a given size from existing memory on an executor
+     * @param exec  Executor associated to the matrix
+     * @param size  size of the matrix
+     * @param in    Pointer to existing data
+     */
+    Field(const Executor& exec, size_t size, const ValueType* in)
+        : size_(size), data_(nullptr), exec_(exec)
+    {
+        void* ptr = nullptr;
+        std::visit(
+            [this, &ptr, size](const auto& concreteExec)
+            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
+            exec_
+        );
+        data_ = static_cast<ValueType*>(ptr);
+        std::visit(detail::deepCopyVisitor(size_, in, data_), NeoFOAM::CPUExecutor {}, exec_);
     }
 
     /**
