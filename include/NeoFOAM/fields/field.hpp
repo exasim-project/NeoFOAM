@@ -75,6 +75,7 @@ public:
     Field(const Executor& exec, size_t size, const ValueType* in)
         : size_(size), data_(nullptr), exec_(exec)
     {
+        Executor hostExec = SerialExecutor();
         void* ptr = nullptr;
         std::visit(
             [this, &ptr, size](const auto& concreteExec)
@@ -82,7 +83,7 @@ public:
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
-        std::visit(detail::deepCopyVisitor(size_, in, data_), NeoFOAM::CPUExecutor {}, exec_);
+        std::visit(detail::deepCopyVisitor<ValueType>(size_, in, data_), hostExec, exec_);
     }
 
     /**
