@@ -29,7 +29,7 @@ public:
 
 private:
 
-    const UnstructuredMesh& mesh_;
+    [[maybe_unused]] const UnstructuredMesh& mesh_;
     SurfaceInterpolation surfaceInterpolation_;
 };
 

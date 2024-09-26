@@ -59,7 +59,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& concreteExec)
+            [&ptr, size](const auto& concreteExec)
             { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
             exec_
         );
@@ -77,8 +77,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
-            exec_
+            [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); }, exec_
         );
         data_ = static_cast<ValueType*>(ptr);
         NeoFOAM::fill(*this, value);
@@ -288,15 +287,14 @@ public:
         {
             std::visit(
                 [this, &ptr, size](const auto& exec)
-                { ptr = exec.realloc(data_, size * sizeof(ValueType)); },
+                { ptr = exec.realloc(this->data_, size * sizeof(ValueType)); },
                 exec_
             );
         }
         else
         {
             std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.alloc(size * sizeof(ValueType)); },
+                [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
                 exec_
             );
         }

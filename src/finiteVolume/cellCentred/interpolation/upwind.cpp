@@ -29,29 +29,28 @@ void computeUpwindInterpolation(
     const auto sBField = volField.boundaryField().value().span();
     const auto sOwner = owner.span();
     const auto sNeighbour = neighbour.span();
-    int nInternalFaces = mesh.nInternalFaces();
+    size_t nInternalFaces = mesh.nInternalFaces();
 
     NeoFOAM::parallelFor(
         exec,
         {0, sfield.size()},
         KOKKOS_LAMBDA(const size_t facei) {
-            int32_t own = sOwner[facei];
-            int32_t nei = sNeighbour[facei];
             if (facei < nInternalFaces)
             {
                 if (sFaceFlux[facei] >= 0)
                 {
+                    size_t own = static_cast<size_t>(sOwner[facei]);
                     sfield[facei] = sVolField[own];
                 }
                 else
                 {
+                    size_t nei = static_cast<size_t>(sNeighbour[facei]);
                     sfield[facei] = sVolField[nei];
                 }
             }
             else
             {
-                int pfacei = facei - nInternalFaces;
-                sfield[facei] = sWeight[facei] * sBField[pfacei];
+                sfield[facei] = sWeight[facei] * sBField[facei - nInternalFaces];
             }
         }
     );
@@ -61,8 +60,10 @@ Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh)
     : SurfaceInterpolationFactory::Register<Upwind>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
-void Upwind::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
-    const
+void Upwind::interpolate(
+    [[maybe_unused]] const VolumeField<scalar>& volField
+    [[maybe_unused]] SurfaceField<scalar>& surfaceField,
+)
 {
     NF_ERROR_EXIT("limited scheme require a faceFlux");
 }
