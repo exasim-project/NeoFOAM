@@ -61,9 +61,9 @@ Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh)
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
 void Upwind::interpolate(
-    [[maybe_unused]] const VolumeField<scalar>& volField
-    [[maybe_unused]] SurfaceField<scalar>& surfaceField,
-)
+    [[maybe_unused]] const VolumeField<scalar>& volField,
+    [[maybe_unused]] SurfaceField<scalar>& surfaceField
+) const
 {
     NF_ERROR_EXIT("limited scheme require a faceFlux");
 }
