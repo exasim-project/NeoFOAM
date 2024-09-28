@@ -11,6 +11,7 @@ target_sources(
   PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
           "core/primitives/vector.cpp"
           "core/time.cpp"
+          "core/database.cpp"
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/tokenList.cpp"
