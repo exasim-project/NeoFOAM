@@ -27,6 +27,6 @@ TEST_CASE("linear")
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
     auto linear = SurfaceInterpolation(exec, mesh, "linear");
 
-    auto in = VolumeField<NeoFOAM::scalar>(exec, mesh, {});
-    auto out = SurfaceField<NeoFOAM::scalar>(exec, mesh, {});
+    auto in = VolumeField<NeoFOAM::scalar>(exec,"in", mesh, {});
+    auto out = SurfaceField<NeoFOAM::scalar>(exec, "out", mesh, {});
 }

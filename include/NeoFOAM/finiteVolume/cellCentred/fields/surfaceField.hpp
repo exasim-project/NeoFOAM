@@ -33,11 +33,13 @@ public:
 
     SurfaceField(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
+            name,
             mesh,
             DomainField<ValueType>(
                 exec,

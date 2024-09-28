@@ -39,9 +39,12 @@ public:
      * @param field The domain field object.
      */
     GeometricFieldMixin(
-        const Executor& exec, const UnstructuredMesh& mesh, const DomainField<ValueType>& field
+        const Executor& exec,
+        std::string fieldName,
+        const UnstructuredMesh& mesh,
+        const DomainField<ValueType>& field
     )
-        : exec_(exec), mesh_(mesh), field_(field)
+        : exec_(exec), name(fieldName), mesh_(mesh), field_(field)
     {}
 
     /**
