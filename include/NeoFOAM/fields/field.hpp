@@ -108,20 +108,7 @@ public:
      * @param exec  Executor associated to the matrix
      * @param in a vector of elements to copy over
      */
-    Field(const Executor& exec, std::vector<ValueType> in)
-        : size_(in.size()), data_(nullptr), exec_(exec)
-    {
-        Executor hostExec = SerialExecutor();
-        void* ptr = nullptr;
-        std::visit(
-            [this, &ptr](const auto& concreteExec)
-            { ptr = concreteExec.alloc(this->size_ * sizeof(ValueType)); },
-            exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-
-        std::visit(detail::deepCopyVisitor(size_, in.data(), data_), hostExec, exec);
-    }
+    Field(const Executor& exec, std::vector<ValueType> in) : Field(exec, in.data(), in.size()) {}
 
     /**
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
