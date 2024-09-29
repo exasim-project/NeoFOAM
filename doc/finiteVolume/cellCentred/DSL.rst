@@ -5,7 +5,7 @@ Domain Specific Language
 
 Domain Specific Language (DSL) dramatically simplifies the process of writing and solving equations. Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required. This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.
 
-The Navier-Stokes equations can be expressed in the DSL as follows in OpenFOAM as follows:
+The Navier-Stokes equations can be expressed in the DSL in OpenFOAM as follows:
 
 .. code-block:: cpp
 
@@ -29,13 +29,13 @@ This approach is readable and easy to understand for engineers familiar with Ope
 
     - the solution system is always a sparse matrix
     - the sparse matrix is always a LDU matrix that is not supported by external linear solvers
-    - LDU matrix only supports finite volume cell-centred discretisation
+    - Only cell-centred discretisation is supported
 
 NeoFOAM DSL tries to address these issues by providing:
 
-    - lazy evaluation evaluation of the equations
+    - lazy evaluation of the equations terms. This allows for better optimisation of the resulting equation and can reduce the number of required temporaries.
     - a more modular design
-    - a standard matrix format for support of external linear solvers
+    - Support for standard matrix formats like COO and CSR, to simplify the use of external linear solvers
 
 The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space. The equation system can be passed to **sundials** and be integrated by **RK methods** and **BDF methods** on heterogeneous architectures.
 
@@ -53,7 +53,7 @@ The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adop
     solve(UEqn == -fvcc::expOp::grad(p));
 
 
-The majority of the work is done in the solve step: assemble the system and solve the system. After the system is solved or assembled, it allows needs to be provide access to the linear system for the SIMPLE and PISO algorithms.
+In contrast to OpenFOAM, here the majority of the work is done in the solve step. That is 1. assemble the system and 2. solve the system. After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.
 
 
 EqnSystem
@@ -77,7 +77,6 @@ For lazy evaluation, the `EqnSystem` stores 3 vectors:
 
     classDiagram
         class EqnTerm {
-
             +explicitOperation(...)
             +implicitOperation(...)
         }
@@ -110,7 +109,7 @@ EqnTerm
 -------
 
 
-The template `EqnTerm` represents a term in an equation and can be instantiated with different value types. An `EqnTerm` is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field. The `EqnTerm` implementation used Type Erasure (more details `[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:
+The template `EqnTerm` represents a term in an equation and can be instantiated with different value types. An `EqnTerm` is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field. The `EqnTerm` implementation uses Type Erasure (more details `[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:
 
 
 Example:
@@ -144,7 +143,7 @@ To fit the specification of the EqnSystem (storage in a vector), the EqnTerm nee
             (KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sF[i] + sF[i] + sF[i]  + sF[i]; }) * customTerm;
 
 To add a user-defined `EqnTerm`, a new derived class must be created, inheriting from `EqnTermMixin`, 
- and provide the definitions of the below virtual functions that are required for the `EquTerm` interface: 
+ and provide the definitions of the below virtual functions that are required for the `EqnTerm` interface: 
 
     - build: build the term
     - explicitOperation: perform the explicit operation
