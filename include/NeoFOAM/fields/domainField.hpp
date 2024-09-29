@@ -41,7 +41,11 @@ public:
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
     {}
 
-    DomainField(const Executor& exec, const Field<ValueType>& internalField, const boundaryFields&)
+    DomainField(
+        const Executor& exec,
+        const Field<ValueType>& internalField,
+        const BoundaryFields<ValueType>& boundaryFields
+    )
         : exec_(exec), internalField_(exec, internalField), boundaryFields_(exec, boundaryFields)
     {}
 
