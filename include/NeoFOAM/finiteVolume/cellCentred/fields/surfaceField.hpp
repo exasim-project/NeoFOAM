@@ -45,6 +45,16 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
+    SurfaceField(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const Field<ValueType>& internalField,
+        const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
+    )
+        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField}),
+          boundaryConditions_(boundaryConditions)
+    {}
+
 
     SurfaceField(const SurfaceField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)

@@ -40,6 +40,22 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
+    /* @brief Constructor for a VolumeField
+     *
+     * @param mesh The underlying mesh
+     * @param domainField Combination of internal field and boundary information
+     * @param reference to boundary conditions
+     */
+    VolumeField(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const Field<ValueType>& internalField,
+        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
+    )
+        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField}),
+          boundaryConditions_(boundaryConditions)
+    {}
+
     VolumeField(const VolumeField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
     {}
