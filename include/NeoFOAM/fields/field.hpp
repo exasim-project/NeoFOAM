@@ -72,7 +72,7 @@ public:
      * @param size  size of the matrix
      * @param in    Pointer to existing data
      */
-    Field(const Executor& exec, size_t size, const ValueType* in)
+    Field(const Executor& exec, const ValueType* in, size_t size)
         : size_(size), data_(nullptr), exec_(exec)
     {
         Executor hostExec = SerialExecutor();
