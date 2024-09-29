@@ -92,7 +92,7 @@ GaussGreenDiv::GaussGreenDiv(
     const UnstructuredMesh& mesh,
     const SurfaceInterpolation& surfInterp
 )
-    : mesh_(mesh), surfaceInterpolation_(surfInterp) {};
+    : surfaceInterpolation_(surfInterp) {};
 
 void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
