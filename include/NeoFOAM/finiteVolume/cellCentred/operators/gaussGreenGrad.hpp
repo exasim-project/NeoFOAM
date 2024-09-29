@@ -28,7 +28,6 @@ public:
 private:
 
     SurfaceInterpolation surfaceInterpolation_;
-    [[maybe_unused]] const UnstructuredMesh& mesh_;
 };
 
 } // namespace NeoFOAM

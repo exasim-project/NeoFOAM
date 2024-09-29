@@ -29,7 +29,6 @@ public:
 
 private:
 
-    [[maybe_unused]] const UnstructuredMesh& mesh_;
     SurfaceInterpolation surfaceInterpolation_;
 };
 
