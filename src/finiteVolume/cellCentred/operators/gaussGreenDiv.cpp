@@ -89,7 +89,7 @@ void computeDiv(
 
 GaussGreenDiv::GaussGreenDiv(
     [[maybe_unused]] const Executor& exec,
-    const UnstructuredMesh& mesh,
+    [[maybe_unused]] const UnstructuredMesh& mesh,
     const SurfaceInterpolation& surfInterp
 )
     : surfaceInterpolation_(surfInterp) {};
