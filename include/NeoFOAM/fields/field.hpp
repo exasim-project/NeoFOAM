@@ -51,7 +51,7 @@ class Field
 public:
 
     /**
-     * @brief Create a Field with a given size on an executor
+     * @brief Create an uninitialized Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
      */
@@ -72,10 +72,11 @@ public:
      * @param size  size of the matrix
      * @param in    Pointer to existing data
      */
-    Field(const Executor& exec, const ValueType* in, size_t size)
+    Field(
+        const Executor& exec, const ValueType* in, size_t size, Executor hostExec = SerialExecutor()
+    )
         : size_(size), data_(nullptr), exec_(exec)
     {
-        Executor hostExec = SerialExecutor();
         void* ptr = nullptr;
         std::visit(
             [this, &ptr, size](const auto& concreteExec)
@@ -109,6 +110,15 @@ public:
      * @param in a vector of elements to copy over
      */
     Field(const Executor& exec, std::vector<ValueType> in) : Field(exec, in.data(), in.size()) {}
+
+    /**
+     * @brief Create a Field as a copy of a Field on a specified executor
+     * @param exec  Executor associated to the matrix
+     * @param in a vector of elements to copy over
+     */
+    Field(const Executor& exec, const Field<ValueType>& in)
+        : Field(exec, in.data(), in.size(), in.exec())
+    {}
 
     /**
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
