@@ -279,7 +279,6 @@ TEST_CASE("getSpans")
     NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
 
     auto [hostA, hostB, hostC] = NeoFOAM::copyToHosts(a, b, c);
-    auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
 
     REQUIRE(hostA[0] == 1.0);
     REQUIRE(hostB[0] == 2.0);
