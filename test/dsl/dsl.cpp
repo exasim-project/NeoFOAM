@@ -79,8 +79,8 @@ public:
 
 NeoFOAM::scalar getField(const NeoFOAM::Field<NeoFOAM::scalar>& source)
 {
-    auto sourceField = source.copyToHost().span();
-    return sourceField[0];
+    auto sourceField = source.copyToHost();
+    return sourceField.span()[0];
 }
 
 TEST_CASE("DSL")
