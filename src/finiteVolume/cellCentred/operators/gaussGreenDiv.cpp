@@ -98,7 +98,8 @@ void computeDiv(
     const auto exec = phi.exec();
     SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    surfInterp.interpolate(phif, faceFlux, phi);
+    // FIXME not implemented
+    // surfInterp.interpolate(phif, faceFlux, phi);
 
     auto surfDivPhi = divPhi.span();
 
