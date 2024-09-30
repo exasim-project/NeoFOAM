@@ -27,14 +27,14 @@ void computeLinearInterpolation(
     const auto sBField = volField.boundaryField().value().span();
     const auto sOwner = owner.span();
     const auto sNeighbour = neighbour.span();
-    int nInternalFaces = mesh.nInternalFaces();
+    size_t nInternalFaces = mesh.nInternalFaces();
 
     NeoFOAM::parallelFor(
         exec,
         {0, sfield.size()},
         KOKKOS_LAMBDA(const size_t facei) {
-            int32_t own = sOwner[facei];
-            int32_t nei = sNeighbour[facei];
+            size_t own = static_cast<size_t>(sOwner[facei]);
+            size_t nei = static_cast<size_t>(sNeighbour[facei]);
             if (facei < nInternalFaces)
             {
                 sfield[facei] =
@@ -42,8 +42,7 @@ void computeLinearInterpolation(
             }
             else
             {
-                int pfacei = facei - nInternalFaces;
-                sfield[facei] = sWeight[facei] * sBField[pfacei];
+                sfield[facei] = sWeight[facei] * sBField[facei - nInternalFaces];
             }
         }
     );
@@ -60,7 +59,7 @@ void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scala
 }
 
 void Linear::interpolate(
-    const SurfaceField<scalar>& faceFlux,
+    [[maybe_unused]] const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& volField,
     SurfaceField<scalar>& surfaceField
 ) const

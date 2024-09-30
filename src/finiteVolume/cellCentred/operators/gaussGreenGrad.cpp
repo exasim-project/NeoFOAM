@@ -37,13 +37,13 @@ void computeGrad(
         for (size_t i = 0; i < nInternalFaces; i++)
         {
             Vector flux = sSf[i] * surfPhif[i];
-            surfGradPhi[surfOwner[i]] += flux;
-            surfGradPhi[surfNeighbour[i]] -= flux;
+            surfGradPhi[static_cast<size_t>(surfOwner[i])] += flux;
+            surfGradPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
-            int32_t own = surfFaceCells[i - nInternalFaces];
+            size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             Vector valueOwn = sBSf[i - nInternalFaces] * surfPhif[i];
             surfGradPhi[own] += valueOwn;
         }
@@ -60,8 +60,8 @@ void computeGrad(
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 Vector flux = sSf[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfGradPhi[surfOwner[i]], flux);
-                Kokkos::atomic_sub(&surfGradPhi[surfNeighbour[i]], flux);
+                Kokkos::atomic_add(&surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
+                Kokkos::atomic_sub(&surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
             }
         );
 
@@ -69,7 +69,7 @@ void computeGrad(
             exec,
             {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
-                size_t own = surfFaceCells[i - nInternalFaces];
+                size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 Vector valueOwn = sSf[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
             }
@@ -84,7 +84,7 @@ void computeGrad(
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
-    : mesh_(mesh), surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {};
+    : surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {};
 
 
 void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi)

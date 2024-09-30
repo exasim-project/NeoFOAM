@@ -64,7 +64,6 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
@@ -93,7 +92,6 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
@@ -109,7 +107,6 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;

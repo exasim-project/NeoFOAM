@@ -10,7 +10,10 @@ TokenList::TokenList(const std::initializer_list<std::any>& initList) : data_(in
 
 void TokenList::insert(const std::any& value) { data_.push_back(value); }
 
-void TokenList::remove(size_t index) { data_.erase(data_.begin() + index); }
+void TokenList::remove(size_t index)
+{
+    data_.erase(data_.begin() + static_cast<std::vector<double>::difference_type>(index));
+}
 
 [[nodiscard]] bool TokenList::empty() const { return data_.empty(); }
 
