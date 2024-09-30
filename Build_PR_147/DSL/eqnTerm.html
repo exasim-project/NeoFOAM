@@ -3,11 +3,11 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="DSL" href="index.html" />
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/DSL/DSL.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="EqnSystem" href="eqnSystem.html" />
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/DSL/eqnTerm.html" />
 
     <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
-        <title>Domain Specific Language (DSL) - NeoFOAM documentation</title>
+        <title>EqnTerm - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
@@ -180,7 +180,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -221,8 +221,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">DSL</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of DSL</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Domain Specific Language (DSL)</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Domain Specific Language (DSL)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="eqnSystem.html">EqnSystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eqnSystem.html#eqnterm">EqnTerm</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">EqnTerm</a></li>
 </ul>
 </li>
 </ul>
@@ -245,7 +247,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/DSL/DSL.rst.txt" title="View this page">
+  <a class="muted-link" href="../_sources/DSL/eqnTerm.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -259,128 +261,14 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="domain-specific-language-dsl">
-<h1>Domain Specific Language (DSL)<a class="headerlink" href="#domain-specific-language-dsl" title="Link to this heading">¶</a></h1>
-<p>The concept of a Domain Specific Language (DSL) allows to dramatically simplify the process of implementing and solving equations in a given programming language like C++.
-Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required.
-This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.</p>
-<p>The Navier-Stokes equations can be expressed in the DSL in OpenFOAM as follows:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">fvVectorMatrix</span><span class="w"> </span><span class="nf">UEqn</span>
-<span class="p">(</span>
-<span class="w">    </span><span class="n">fvm</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-<span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">fvm</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
-<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">fvm</span><span class="o">::</span><span class="n">laplacian</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
-<span class="p">);</span>
-
-<span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">fvc</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
-</pre></div>
-</div>
-<p>To solve the continuity equation in OpenFOAM with the PISO or SIMPLE algorithm, the VectorMatrix, UEqn, needs to provide the diagonal and off-diagonal terms of the matrix.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">volScalarField</span><span class="w"> </span><span class="nf">rAU</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">UEqn</span><span class="p">.</span><span class="n">A</span><span class="p">());</span>
-<span class="n">volVectorField</span><span class="w"> </span><span class="nf">HbyA</span><span class="p">(</span><span class="n">constrainHbyA</span><span class="p">(</span><span class="n">rAU</span><span class="o">*</span><span class="n">UEqn</span><span class="p">.</span><span class="n">H</span><span class="p">(),</span><span class="w"> </span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">));</span>
-</pre></div>
-</div>
-<p>This approach is readable and easy to understand for engineers familiar with OpenFOAM. However, it has several limitations due to its implementation in OpenFOAM:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>the solution system is always a sparse matrix</p></li>
-<li><p>the sparse matrix is always a LDU matrix that is not supported by external linear solvers</p></li>
-<li><p>Only cell-centred discretisation is supported</p></li>
-</ul>
-</div></blockquote>
-<p>NeoFOAM DSL tries to address these issues by providing:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>lazy evaluation of the equations terms. This allows for better optimisation of the resulting equation and can reduce the number of required temporaries.</p></li>
-<li><p>a more modular design</p></li>
-<li><p>Support for standard matrix formats like COO and CSR, to simplify the use of external linear solvers</p></li>
-</ul>
-</div></blockquote>
-<p>The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
-The equation system can be passed to <strong>sundials</strong> and be integrated by <strong>RK methods</strong> and <strong>BDF methods</strong> on heterogeneous architectures.</p>
-<p>The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adoption should be possible with minimal effort and the same equation from above should read:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnSystem</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">UEqn</span>
-<span class="p">(</span>
-<span class="w">    </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-<span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
-<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">laplacian</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
-<span class="p">)</span>
-
-<span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">fvcc</span><span class="o">::</span><span class="n">expOp</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
-</pre></div>
-</div>
-<p>In contrast to OpenFOAM, here the majority of the work is done in the solve step.
-That is 1. assemble the system and 2. solve the system.
-After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.</p>
-<section id="eqnsystem">
-<h2>EqnSystem<a class="headerlink" href="#eqnsystem" title="Link to this heading">¶</a></h2>
-<p>The <cite>EqnSystem</cite> template class in NeoFOAM holds, manages, builds and solves the expressed/programmed equation and its core responsibilities lie in the answering of the following questions:</p>
-<blockquote>
-<div><ul class="simple">
-<li><dl class="simple">
-<dt>How to discretize the spatial terms?</dt><dd><ul>
-<li><p>In OpenFOAM this information is provided in <strong>fvSchemes</strong></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>How to integrate the system in time?</dt><dd><ul>
-<li><p>In OpenFOAM this information is provided in <strong>fvSchemes</strong></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>How to solve the system?</dt><dd><ul>
-<li><p>In OpenFOAM this information is provided in <strong>fvSolution</strong></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</div></blockquote>
-<p>The main difference between NeoFOAM and OpenFOAM is that the DSL is evaluated lazily, i.e. evaluation is not performed on construction by default.
-Since, the evaluation is not tied to the construction but rather delayde, other numerical integration strategies (e.g. RK methods or even substepping within an the equation) are possible.</p>
-<p>To implement lazy evaluation, the <cite>EqnSystem</cite> stores 3 vectors:</p>
-<div class="mermaid">
-            classDiagram
-    class EqnTerm {
-        +explicitOperation(...)
-        +implicitOperation(...)
-    }
-    class DivEqnTerm {
-        +explicitOperation(...)
-        +implicitOperation(...)
-    }
-    class TemporalEqnTerm {
-        +explicitOperation(...)
-        +implicitOperation(...)
-    }
-    class Others[&quot;...&quot;] {
-        +explicitOperation(...)
-        +implicitOperation(...)
-    }
-    class EqnSystem {
-        +temporalTerms_: vector~EqnTerm~
-        +implicitTerms_: vector~EqnTerm~
-        +explicitTerms_: vector~EqnTerm~
-    }
-    EqnTerm &lt;|-- DivEqnTerm
-    EqnTerm &lt;|-- TemporalEqnTerm
-    EqnTerm &lt;|-- Others
-    EqnSystem &lt;|-- EqnTerm
-        </div><p>Thus, an <cite>EqnSystem</cite> consists of multiple <cite>EqnTerms</cite> which are either explicit, implicit, or temporal.
-Consequently, plus, minus, and scaling with a field needs to be handled by the <cite>EqnTerm</cite>.</p>
-</section>
-<section id="eqnterm">
-<h2>EqnTerm<a class="headerlink" href="#eqnterm" title="Link to this heading">¶</a></h2>
+          <section id="eqnterm">
+<h1>EqnTerm<a class="headerlink" href="#eqnterm" title="Link to this heading">¶</a></h1>
 <p>The template <cite>EqnTerm</cite> represents a term in an equation and can be instantiated with different value types.
 An <cite>EqnTerm</cite> is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field.
 The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class="reference external" href="https://medium.com/&#64;gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0">[1]</a> <a class="reference external" href="https://www.youtube.com/watch?v=4eeESJQk-mw">[2]</a> <a class="reference external" href="https://www.youtube.com/watch?v=qn6OqefuH08">[3]</a>) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:</p>
@@ -494,7 +382,6 @@ The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class
 </pre></div>
 </div>
 </section>
-</section>
 
         </article>
       </div>
@@ -502,14 +389,14 @@ The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class
         
         <div class="related-pages">
           
-          <a class="prev-page" href="index.html">
+          <a class="prev-page" href="eqnSystem.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">DSL</div>
+                <div class="title">EqnSystem</div>
                 
               </div>
             </a>
@@ -531,28 +418,8 @@ The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            On this page
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">Domain Specific Language (DSL)</a><ul>
-<li><a class="reference internal" href="#eqnsystem">EqnSystem</a></li>
-<li><a class="reference internal" href="#eqnterm">EqnTerm</a></li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>
@@ -561,7 +428,5 @@ The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
-    <script src="https://unpkg.com/mermaid@10.2.0/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:true});</script>
     </body>
 </html>

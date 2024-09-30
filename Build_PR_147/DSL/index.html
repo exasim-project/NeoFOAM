@@ -3,11 +3,11 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Domain Specific Language (DSL)" href="DSL.html" /><link rel="prev" title="Stencil" href="../finiteVolume/cellCentred/stencil.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="EqnSystem" href="eqnSystem.html" /><link rel="prev" title="Stencil" href="../finiteVolume/cellCentred/stencil.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/DSL/index.html" />
 
     <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
-        <title>DSL - NeoFOAM documentation</title>
+        <title>Domain Specific Language (DSL) - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
@@ -221,8 +221,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">DSL</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of DSL</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="DSL.html">Domain Specific Language (DSL)</a></li>
+<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">Domain Specific Language (DSL)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="eqnSystem.html">EqnSystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eqnSystem.html#eqnterm">EqnTerm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="eqnTerm.html">EqnTerm</a></li>
 </ul>
 </li>
 </ul>
@@ -265,15 +267,64 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="dsl">
-<span id="fvcc"></span><h1>DSL<a class="headerlink" href="#dsl" title="Link to this heading">¶</a></h1>
+          <section id="domain-specific-language-dsl">
+<span id="fvcc"></span><h1>Domain Specific Language (DSL)<a class="headerlink" href="#domain-specific-language-dsl" title="Link to this heading">¶</a></h1>
+<p>The concept of a Domain Specific Language (DSL) allows to dramatically simplify the process of implementing and solving equations in a given programming language like C++.
+Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required.
+This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.</p>
+<p>The Navier-Stokes equations can be expressed in the DSL in OpenFOAM as follows:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">fvVectorMatrix</span><span class="w"> </span><span class="nf">UEqn</span>
+<span class="p">(</span>
+<span class="w">    </span><span class="n">fvm</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">fvm</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">fvm</span><span class="o">::</span><span class="n">laplacian</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">fvc</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>To solve the continuity equation in OpenFOAM with the PISO or SIMPLE algorithm, the VectorMatrix, UEqn, needs to provide the diagonal and off-diagonal terms of the matrix.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">volScalarField</span><span class="w"> </span><span class="nf">rAU</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">UEqn</span><span class="p">.</span><span class="n">A</span><span class="p">());</span>
+<span class="n">volVectorField</span><span class="w"> </span><span class="nf">HbyA</span><span class="p">(</span><span class="n">constrainHbyA</span><span class="p">(</span><span class="n">rAU</span><span class="o">*</span><span class="n">UEqn</span><span class="p">.</span><span class="n">H</span><span class="p">(),</span><span class="w"> </span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>This approach is readable and easy to understand for engineers familiar with OpenFOAM. However, it has several limitations due to its implementation in OpenFOAM:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the solution system is always a sparse matrix</p></li>
+<li><p>the sparse matrix is always a LDU matrix that is not supported by external linear solvers</p></li>
+<li><p>Only cell-centred discretisation is supported</p></li>
+</ul>
+</div></blockquote>
+<p>NeoFOAM DSL tries to address these issues by providing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>lazy evaluation of the equations terms. This allows for better optimisation of the resulting equation and can reduce the number of required temporaries.</p></li>
+<li><p>a more modular design</p></li>
+<li><p>Support for standard matrix formats like COO and CSR, to simplify the use of external linear solvers</p></li>
+</ul>
+</div></blockquote>
+<p>The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
+The equation system can be passed to <strong>sundials</strong> and be integrated by <strong>RK methods</strong> and <strong>BDF methods</strong> on heterogeneous architectures.</p>
+<p>The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adoption should be possible with minimal effort and the same equation from above should read:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnSystem</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">UEqn</span>
+<span class="p">(</span>
+<span class="w">    </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">laplacian</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">fvcc</span><span class="o">::</span><span class="n">expOp</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>In contrast to OpenFOAM, here the majority of the work is done in the solve step.
+That is 1. assemble the system and 2. solve the system.
+After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="DSL.html">Domain Specific Language (DSL)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="DSL.html#eqnsystem">EqnSystem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="DSL.html#eqnterm">EqnTerm</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="eqnSystem.html">EqnSystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eqnSystem.html#eqnterm">EqnTerm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="eqnTerm.html">EqnTerm</a></li>
 </ul>
 </div>
 </section>
@@ -283,12 +334,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="DSL.html">
+          <a class="next-page" href="eqnSystem.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Domain Specific Language (DSL)</div>
+                <div class="title">EqnSystem</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
