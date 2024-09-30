@@ -1,9 +1,11 @@
 var searchData=
 [
-  ['_7eboundarypatchmixin_340',['~BoundaryPatchMixin',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1BoundaryPatchMixin.html#a923cf29ee11bb548424f6a8106e8ab4e',1,'NeoFOAM::finiteVolume::cellCentred::BoundaryPatchMixin']]],
-  ['_7ecommunicator_341',['~Communicator',['../classNeoFOAM_1_1Communicator.html#a58bb0db91db180ce4d2fa8f8edc17e00',1,'NeoFOAM::Communicator']]],
-  ['_7ecpuexecutor_342',['~CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html#a96176dcaa399677d193aa5c7219624a9',1,'NeoFOAM::CPUExecutor']]],
-  ['_7efield_343',['~Field',['../classNeoFOAM_1_1Field.html#a7cad3648ef3dbb9efd4429fd9ddc4860',1,'NeoFOAM::Field']]],
+  ['_7eboundarypatchmixin_338',['~BoundaryPatchMixin',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1BoundaryPatchMixin.html#a923cf29ee11bb548424f6a8106e8ab4e',1,'NeoFOAM::finiteVolume::cellCentred::BoundaryPatchMixin']]],
+  ['_7ecommunicator_339',['~Communicator',['../classNeoFOAM_1_1Communicator.html#a58bb0db91db180ce4d2fa8f8edc17e00',1,'NeoFOAM::Communicator']]],
+  ['_7ecpuexecutor_340',['~CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html#a96176dcaa399677d193aa5c7219624a9',1,'NeoFOAM::CPUExecutor']]],
+  ['_7efield_341',['~Field',['../classNeoFOAM_1_1Field.html#a7cad3648ef3dbb9efd4429fd9ddc4860',1,'NeoFOAM::Field']]],
+  ['_7egeometryscheme_342',['~GeometryScheme',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#afadfe4d66e253c2d4f6ee9758fe8c849',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
+  ['_7egeometryschemefactory_343',['~GeometrySchemeFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometrySchemeFactory.html#a575d8a195f0f5e9c2466a333fb865aa3',1,'NeoFOAM::finiteVolume::cellCentred::GeometrySchemeFactory']]],
   ['_7egpuexecutor_344',['~GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html#aa76970303961fc978a34620964b8abd3',1,'NeoFOAM::GPUExecutor']]],
   ['_7ehalfduplexcommbuffer_345',['~HalfDuplexCommBuffer',['../classNeoFOAM_1_1mpi_1_1HalfDuplexCommBuffer.html#aa15ac8d9ca7064025bdbe555c6b4fa0f',1,'NeoFOAM::mpi::HalfDuplexCommBuffer']]],
   ['_7empienvironment_346',['~MPIEnvironment',['../classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a739ebad6e4147342302572cee82fad28',1,'NeoFOAM::mpi::MPIEnvironment']]],
