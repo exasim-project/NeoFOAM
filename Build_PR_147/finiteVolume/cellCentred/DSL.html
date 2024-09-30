@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/finiteVolume/cellCentred/DSL.html" />
 
     <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
-        <title>Domain Specific Language - NeoFOAM documentation</title>
+        <title>Domain Specific Language (DSL) - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
@@ -216,7 +216,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">cellCenteredFiniteVolume</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Domain Specific Language</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Domain Specific Language (DSL)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stencil.html">Stencil</a></li>
@@ -262,9 +262,11 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="domain-specific-language">
-<h1>Domain Specific Language<a class="headerlink" href="#domain-specific-language" title="Link to this heading">¶</a></h1>
-<p>Domain Specific Language (DSL) dramatically simplifies the process of writing and solving equations. Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required. This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.</p>
+          <section id="domain-specific-language-dsl">
+<h1>Domain Specific Language (DSL)<a class="headerlink" href="#domain-specific-language-dsl" title="Link to this heading">¶</a></h1>
+<p>The concept of a Domain Specific Language (DSL) allows to dramatically simplify the process of implementing and solving equations in a given programming language like C++.
+Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required.
+This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.</p>
 <p>The Navier-Stokes equations can be expressed in the DSL in OpenFOAM as follows:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">fvVectorMatrix</span><span class="w"> </span><span class="nf">UEqn</span>
 <span class="p">(</span>
@@ -297,7 +299,8 @@
 <li><p>Support for standard matrix formats like COO and CSR, to simplify the use of external linear solvers</p></li>
 </ul>
 </div></blockquote>
-<p>The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space. The equation system can be passed to <strong>sundials</strong> and be integrated by <strong>RK methods</strong> and <strong>BDF methods</strong> on heterogeneous architectures.</p>
+<p>The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
+The equation system can be passed to <strong>sundials</strong> and be integrated by <strong>RK methods</strong> and <strong>BDF methods</strong> on heterogeneous architectures.</p>
 <p>The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adoption should be possible with minimal effort and the same equation from above should read:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnSystem</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">UEqn</span>
 <span class="p">(</span>
@@ -309,7 +312,9 @@
 <span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">fvcc</span><span class="o">::</span><span class="n">expOp</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
 </pre></div>
 </div>
-<p>In contrast to OpenFOAM, here the majority of the work is done in the solve step. That is 1. assemble the system and 2. solve the system. After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.</p>
+<p>In contrast to OpenFOAM, here the majority of the work is done in the solve step.
+That is 1. assemble the system and 2. solve the system.
+After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.</p>
 <section id="eqnsystem">
 <h2>EqnSystem<a class="headerlink" href="#eqnsystem" title="Link to this heading">¶</a></h2>
 <p>The <cite>EqnSystem</cite> template class in NeoFOAM holds, manages, builds and solves the expressed/programmed equation and its core responsibilities lie in the answering of the following questions:</p>
@@ -338,8 +343,9 @@
 </li>
 </ul>
 </div></blockquote>
-<p>The main difference between NeoFOAM and OpenFOAM is that the DSL is evaluated lazily. Therefore, the evaluation is not tied to the construction and solution of a sparse matrix, enabling other numerical integration strategies (e.g. RK methods or even substepping within an the equation).</p>
-<p>For lazy evaluation, the <cite>EqnSystem</cite> stores 3 vectors:</p>
+<p>The main difference between NeoFOAM and OpenFOAM is that the DSL is evaluated lazily, i.e. evaluation is not performed on construction by default.
+Since, the evaluation is not tied to the construction but rather delayde, other numerical integration strategies (e.g. RK methods or even substepping within an the equation) are possible.</p>
+<p>To implement lazy evaluation, the <cite>EqnSystem</cite> stores 3 vectors:</p>
 <div class="mermaid">
             classDiagram
     class EqnTerm {
@@ -367,11 +373,14 @@
     EqnTerm &lt;|-- TemporalEqnTerm
     EqnTerm &lt;|-- Others
     EqnSystem &lt;|-- EqnTerm
-        </div><p>Thus, an <cite>EqnSystem</cite> consists of multiple <cite>EqnTerms</cite> which are either explicit, implicit, or temporal. Consequently, plus, minus, and scaling with a field needs to be handled by the <cite>EqnTerm</cite>.</p>
+        </div><p>Thus, an <cite>EqnSystem</cite> consists of multiple <cite>EqnTerms</cite> which are either explicit, implicit, or temporal.
+Consequently, plus, minus, and scaling with a field needs to be handled by the <cite>EqnTerm</cite>.</p>
 </section>
 <section id="eqnterm">
 <h2>EqnTerm<a class="headerlink" href="#eqnterm" title="Link to this heading">¶</a></h2>
-<p>The template <cite>EqnTerm</cite> represents a term in an equation and can be instantiated with different value types. An <cite>EqnTerm</cite> is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field. The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class="reference external" href="https://medium.com/&#64;gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0">[1]</a> <a class="reference external" href="https://www.youtube.com/watch?v=4eeESJQk-mw">[2]</a> <a class="reference external" href="https://www.youtube.com/watch?v=qn6OqefuH08">[3]</a>) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:</p>
+<p>The template <cite>EqnTerm</cite> represents a term in an equation and can be instantiated with different value types.
+An <cite>EqnTerm</cite> is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field.
+The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class="reference external" href="https://medium.com/&#64;gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0">[1]</a> <a class="reference external" href="https://www.youtube.com/watch?v=4eeESJQk-mw">[2]</a> <a class="reference external" href="https://www.youtube.com/watch?v=qn6OqefuH08">[3]</a>) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:</p>
 <dl>
 <dt>Example:</dt><dd><div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">DSL</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">divTerm</span><span class="w"> </span><span class="o">=</span>
 <span class="w">    </span><span class="n">Divergence</span><span class="p">(</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">DSL</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="o">::</span><span class="n">Explicit</span><span class="p">,</span><span class="w"> </span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
@@ -539,7 +548,7 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Domain Specific Language</a><ul>
+<li><a class="reference internal" href="#">Domain Specific Language (DSL)</a><ul>
 <li><a class="reference internal" href="#eqnsystem">EqnSystem</a></li>
 <li><a class="reference internal" href="#eqnterm">EqnTerm</a></li>
 </ul>
