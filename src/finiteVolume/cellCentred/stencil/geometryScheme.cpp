@@ -9,7 +9,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-GeometrySchemeFactory::GeometrySchemeFactory(const UnstructuredMesh& mesh) {}
+GeometrySchemeFactory::GeometrySchemeFactory([[maybe_unused]] const UnstructuredMesh& mesh) {}
 
 
 const std::shared_ptr<GeometryScheme> GeometryScheme::readOrCreate(const UnstructuredMesh& mesh)

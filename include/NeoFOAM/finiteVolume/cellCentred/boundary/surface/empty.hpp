@@ -19,13 +19,13 @@ class Empty : public SurfaceBoundaryFactory<ValueType>::template Register<Empty<
 
 public:
 
-    Empty(
-        const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary& dict, std::size_t patchID
-    )
+    Empty(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
         : Base(mesh, dict, patchID)
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) override {}
+    virtual void correctBoundaryCondition([[maybe_unused]] DomainField<ValueType>& domainField
+    ) override
+    {}
 
     static std::string name() { return "empty"; }
 
