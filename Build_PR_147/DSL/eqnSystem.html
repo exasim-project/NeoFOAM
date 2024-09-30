@@ -223,7 +223,6 @@
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Domain Specific Language (DSL)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">EqnSystem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#eqnterm">EqnTerm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="eqnTerm.html">EqnTerm</a></li>
 </ul>
 </li>
@@ -326,122 +325,7 @@ Since, the evaluation is not tied to the construction but rather delayde, other 
     EqnTerm &lt;|-- Others
     EqnSystem &lt;|-- EqnTerm
         </div><p>Thus, an <cite>EqnSystem</cite> consists of multiple <cite>EqnTerms</cite> which are either explicit, implicit, or temporal.
-Consequently, plus, minus, and scaling with a field needs to be handled by the <cite>EqnTerm</cite>.</p>
-</section>
-<section id="eqnterm">
-<h1>EqnTerm<a class="headerlink" href="#eqnterm" title="Link to this heading">¶</a></h1>
-<p>The template <cite>EqnTerm</cite> represents a term in an equation and can be instantiated with different value types.
-An <cite>EqnTerm</cite> is either explicit, implicit or temporal, and needs to be scalable by a scalar value or a further field.
-The <cite>EqnTerm</cite> implementation uses Type Erasure (more details <a class="reference external" href="https://medium.com/&#64;gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0">[1]</a> <a class="reference external" href="https://www.youtube.com/watch?v=4eeESJQk-mw">[2]</a> <a class="reference external" href="https://www.youtube.com/watch?v=qn6OqefuH08">[3]</a>) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:</p>
-<dl>
-<dt>Example:</dt><dd><div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">DSL</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">divTerm</span><span class="w"> </span><span class="o">=</span>
-<span class="w">    </span><span class="n">Divergence</span><span class="p">(</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">DSL</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="o">::</span><span class="n">Explicit</span><span class="p">,</span><span class="w"> </span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
-
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">DSL</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ddtTerm</span><span class="w"> </span><span class="o">=</span>
-<span class="w">    </span><span class="n">TimeTerm</span><span class="p">(</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">DSL</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="o">::</span><span class="n">Temporal</span><span class="p">,</span><span class="w"> </span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="p">..);</span>
-</pre></div>
-</div>
-</dd>
-</dl>
-<p>To fit the specification of the EqnSystem (storage in a vector), the EqnTerm needs to be able to be scaled:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">scalingField</span><span class="p">(</span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">);</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">sF</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scalingField</span><span class="p">.</span><span class="n">span</span><span class="p">();</span>
-
-<span class="n">dsl</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">customTerm</span><span class="w"> </span><span class="o">=</span>
-<span class="w">    </span><span class="n">CustomTerm</span><span class="p">(</span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="o">::</span><span class="n">Explicit</span><span class="p">,</span><span class="w"> </span><span class="n">exec</span><span class="p">,</span><span class="w"> </span><span class="n">nCells</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
-
-<span class="k">auto</span><span class="w"> </span><span class="n">constantScaledTerm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">customTerm</span><span class="p">;</span><span class="w"> </span><span class="c1">// A constant scaling factor of 2 for the term.</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fieldScaledTerm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scalingField</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">customTerm</span><span class="p">;</span><span class="w"> </span><span class="c1">// scalingField is used to scale the term.</span>
-
-<span class="c1">// EqnTerm also supports a similar syntax as OpenFOAM</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">multiScaledTerm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">scale</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">scale</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">customTerm</span><span class="p">;</span>
-
-<span class="c1">// EqnTerm also supports the use of a lambda as scaling function to reduce the number of temporaries generated</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">lambdaScaledTerm</span><span class="w"> </span><span class="o">=</span>
-<span class="w">    </span><span class="p">(</span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">sF</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sF</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sF</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w">  </span><span class="o">+</span><span class="w"> </span><span class="n">sF</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">customTerm</span><span class="p">;</span>
-</pre></div>
-</div>
-<dl>
-<dt>To add a user-defined <cite>EqnTerm</cite>, a new derived class must be created, inheriting from <cite>EqnTermMixin</cite>,</dt><dd><p>and provide the definitions of the below virtual functions that are required for the <cite>EqnTerm</cite> interface:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>build: build the term</p></li>
-<li><p>explicitOperation: perform the explicit operation</p></li>
-<li><p>implicitOperation: perform the implicit operation</p></li>
-<li><p>display: display the term</p></li>
-<li><p>getType: get the type of the term</p></li>
-<li><p>exec: get the executor</p></li>
-<li><p>nCells: get the number of cells</p></li>
-<li><p>volumeField: get the volume field</p></li>
-</ul>
-</div></blockquote>
-</dd>
-</dl>
-<p>An example is given below:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomEqnTerm</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnTermMixin</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span>
-<span class="p">{</span>
-
-<span class="k">public</span><span class="o">:</span>
-
-<span class="w">    </span><span class="c1">// constructors ..</span>
-<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Input</span><span class="o">&amp;</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// ..</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">build</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Input</span><span class="o">&amp;</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
-<span class="w">        </span><span class="n">termEvaluated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">display</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;Laplacian&quot;</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">explicitOperation</span><span class="p">(</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">source</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="w"> </span><span class="n">setValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
-<span class="w">        </span><span class="c1">// scaleField is defined in EqnTermMixin</span>
-<span class="w">        </span><span class="c1">// and accounts for the scaling of the terms</span>
-<span class="w">        </span><span class="c1">// and considers scaling by fields and scalars</span>
-<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scaleField</span><span class="p">();</span>
-<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">sourceField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">source</span><span class="p">.</span><span class="n">span</span><span class="p">();</span>
-<span class="w">        </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">parallelFor</span><span class="p">(</span>
-<span class="w">            </span><span class="n">source</span><span class="p">.</span><span class="n">exec</span><span class="p">(),</span>
-<span class="w">            </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">.</span><span class="n">size</span><span class="p">()},</span>
-<span class="w">            </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sourceField</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">scale</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">setValue</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">        </span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="c1">// other helper functions</span>
-<span class="w">    </span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="w"> </span><span class="n">getType</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">termType_</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Executor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">exec_</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">nCells</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">nCells_</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">fvcc</span><span class="o">::</span><span class="n">VolumeField</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">volumeField</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnTerm</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="w"> </span><span class="n">termType_</span><span class="p">;</span>
-
-
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Executor</span><span class="w"> </span><span class="n">exec_</span><span class="p">;</span>
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">nCells_</span><span class="p">;</span>
-<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
-<span class="p">};</span>
-</pre></div>
-</div>
-<p>The required scaling of the term is handle by the <cite>scaleField</cite> function, provided by <cite>EqnTermMixin</cite>. The <cite>scaleField</cite> function returns the ‘ScalingField’ class that is used to scale by fields and scalars.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ValueType</span><span class="o">&gt;</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ScalingField</span>
-<span class="p">{</span>
-
-<span class="w">    </span><span class="c1">// the span is only used if it is defined</span>
-<span class="w">    </span><span class="n">KOKKOS_INLINE_FUNCTION</span>
-<span class="w">    </span><span class="n">ValueType</span><span class="w"> </span><span class="k">operator</span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">useSpan</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="p">}</span>
-</pre></div>
-</div>
+Consequently, addition, subtraction, and scaling with a field needs to be handled by the <cite>EqnTerm</cite>.</p>
 </section>
 
         </article>
