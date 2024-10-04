@@ -16,14 +16,8 @@ add_executable(registerClass "registerClass.cpp")
 if(Kokkos_ENABLE_CUDA)
   set_source_files_properties("registerClass.cpp" PROPERTIES LANGUAGE CUDA)
 endif()
-target_link_libraries(registerClass 
-  PRIVATE 
-  Catch2::Catch2WithMain 
-  cpptrace::cpptrace
-  MPI::MPI_C 
-  MPI::MPI_CXX
-  NeoFOAM_public_api
-)
+target_link_libraries(registerClass PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace MPI::MPI_C
+                                            MPI::MPI_CXX NeoFOAM_public_api)
 add_test(
   NAME registerClass
   COMMAND registerClass

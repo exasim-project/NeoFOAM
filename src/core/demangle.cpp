@@ -21,5 +21,5 @@ std::string NeoFOAM::demangle(const char* name)
     {
         return name;
     }
-#endif 
+#endif
 }
