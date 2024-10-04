@@ -11,7 +11,7 @@
 #include "NeoFOAM/DSL/coeff.hpp"
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
-using Coeff = NeoFOAM::dsl::Coeff;
+using Coeff = NeoFOAM::DSL::Coeff;
 
 
 TEST_CASE("Coeff")
