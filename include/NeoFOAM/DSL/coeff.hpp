@@ -38,7 +38,7 @@ public:
         coeff_ *= rhs;
         return *this;
     }
-
+    /* function to force evaluation to a newly created field */
     void toField(Field<scalar>& rhs)
     {
         rhs.resize(span_.size());
