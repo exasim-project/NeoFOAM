@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-namespace NeoFOAM::dsl
+namespace NeoFOAM::DSL
 {
 
 /**
@@ -38,17 +38,30 @@ public:
         coeff_ *= rhs;
         return *this;
     }
-    /* function to force evaluation to a newly created field */
+
+    /* @brief function to force evaluation to a field, the field will be resized to hold either a
+     * single value or the full field
+     *
+     * @param field to store the result
+     */
     void toField(Field<scalar>& rhs)
     {
-        rhs.resize(span_.size());
-        fill(rhs, 1.0);
-        auto rhsSpan = rhs.span();
-        // otherwise we are unable to capture values in the lambda
-        auto& coeff = *this;
-        parallelFor(
-            rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] *= coeff[i]; }
-        );
+        if (hasSpan_)
+        {
+            rhs.resize(span_.size());
+            fill(rhs, 1.0);
+            auto rhsSpan = rhs.span();
+            // otherwise we are unable to capture values in the lambda
+            auto& coeff = *this;
+            parallelFor(
+                rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] *= coeff[i]; }
+            );
+        }
+        else
+        {
+            rhs.resize(1);
+            fill(rhs, coeff_);
+        }
     }
 
     Coeff& operator*=(const Coeff& rhs)
