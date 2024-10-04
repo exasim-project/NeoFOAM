@@ -36,10 +36,33 @@ public:
      * @param field The domain field object.
      */
     GeometricFieldMixin(
-        const Executor& exec, const UnstructuredMesh& mesh, const DomainField<ValueType>& field
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const DomainField<ValueType>& domainField
     )
-        : exec_(exec), mesh_(mesh), field_(field)
+        : exec_(exec), mesh_(mesh), field_(domainField)
     {}
+
+    /**
+     * @brief Constructor for GeometricFieldMixin.
+     *
+     * @param exec The executor object.
+     * @param mesh The unstructured mesh object.
+     * @param field The domain field object.
+     */
+    GeometricFieldMixin(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const Field<ValueType>& internalField,
+        const BoundaryFields<ValueType>& boundaryFields
+    )
+        : exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
+    {
+        if (mesh.nCells() != internalField.size())
+        {
+            NF_ERROR_EXIT("Inconsistent size of mesh and internal field detected");
+        }
+    }
 
     /**
      * @brief Returns a const reference to the internal field.
