@@ -6,7 +6,7 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 
-find_package(MPI 3.1 REQUIRED)
+find_package(MPI REQUIRED)
 find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
