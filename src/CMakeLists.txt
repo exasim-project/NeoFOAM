@@ -32,7 +32,9 @@ set(NeoFOAM_SRCS
 )
 
 target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
-set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
+if(Kokkos_ENABLE_CUDA)
+  set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
+endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
