@@ -37,5 +37,4 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
-target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_CXX Kokkos::kokkos
-                                     cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_C MPI::MPI_CXX Kokkos::kokkos cpptrace::cpptrace)
