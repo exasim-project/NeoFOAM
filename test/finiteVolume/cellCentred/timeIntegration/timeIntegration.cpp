@@ -10,9 +10,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-
-
-#include "NeoFOAM/DSL/eqnTerm.hpp"
+#include "NeoFOAM/DSL/operator.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
 
 
@@ -35,7 +33,7 @@ public:
         );
     }
 
-    dsl::EqnTerm::Type getType() const { return termType_; }
+    dsl::Operator::Type getType() const { return termType_; }
 
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
 
@@ -43,17 +41,17 @@ public:
 
     std::size_t nCells() const { return nCells_; }
 
-    dsl::EqnTerm::Type termType_;
+    dsl::Operator::Type termType_;
     NeoFOAM::Executor exec_;
     std::size_t nCells_;
 };
 
-class TimeTerm
+class TimeOperator
 {
 
 public:
 
-    std::string display() const { return "TimeTerm"; }
+    std::string display() const { return "TimeOperator"; }
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
     {
@@ -65,7 +63,7 @@ public:
         );
     }
 
-    dsl::EqnTerm::Type getType() const { return termType_; }
+    dsl::Operator::Type getType() const { return termType_; }
 
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
 
@@ -73,7 +71,7 @@ public:
 
     std::size_t nCells() const { return nCells_; }
 
-    dsl::EqnTerm::Type termType_;
+    dsl::Operator::Type termType_;
     const NeoFOAM::Executor exec_;
     std::size_t nCells_;
 };
@@ -87,11 +85,11 @@ TEST_CASE("TimeIntegration")
     NeoFOAM::Dictionary dict;
     dict.insert("type", std::string("forwardEuler"));
 
-    dsl::EqnTerm divTerm = Divergence(dsl::EqnTerm::Type::Explicit, exec, 1);
+    dsl::Operator divOperator = Divergence(dsl::Operator::Type::Explicit, exec, 1);
 
-    dsl::EqnTerm ddtTerm = TimeTerm(dsl::EqnTerm::Type::Temporal, exec, 1);
+    dsl::Operator ddtOperator = TimeOperator(dsl::Operator::Type::Temporal, exec, 1);
 
-    dsl::EqnSystem eqnSys = ddtTerm + divTerm;
+    dsl::EqnSystem eqnSys = ddtOperator + divOperator;
 
     fvcc::TimeIntegration timeIntergrator(eqnSys, dict);
 }

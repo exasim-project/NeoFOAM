@@ -33,7 +33,6 @@ void computeDiv(
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
 
-
     // check if the executor is GPU
     if (std::holds_alternative<SerialExecutor>(exec))
     {
@@ -50,7 +49,6 @@ void computeDiv(
             scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
             surfDivPhi[own] += valueOwn;
         }
-
 
         for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
