@@ -9,7 +9,7 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/DSL/eqnTerm.hpp"
+#include "NeoFOAM/DSL/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM::DSL
@@ -20,60 +20,60 @@ class EqnSystem
 public:
 
     EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
-        : exec_(exec), nCells_(nCells), temporalTerms_(), implicitTerms_(), explicitTerms_(),
-          volumeField_(nullptr)
+        : exec_(exec), nCells_(nCells), temporalOperators_(), implicitOperators_(),
+          explicitOperators_(), volumeField_(nullptr)
     {}
 
     NeoFOAM::Field<NeoFOAM::scalar> explicitOperation()
     {
         NeoFOAM::Field<NeoFOAM::scalar> source(exec_, nCells_);
         NeoFOAM::fill(source, 0.0);
-        for (auto& eqnTerm : explicitTerms_)
+        for (auto& Operator : explicitOperators_)
         {
-            eqnTerm.explicitOperation(source);
+            Operator.explicitOperation(source);
         }
         return source;
     }
 
-    void addTerm(const EqnTerm& eqnTerm)
+    void addOperator(const Operator& Operator)
     {
-        switch (eqnTerm.getType())
+        switch (Operator.getType())
         {
-        case EqnTerm::Type::Temporal:
-            temporalTerms_.push_back(eqnTerm);
+        case Operator::Type::Temporal:
+            temporalOperators_.push_back(Operator);
             break;
-        case EqnTerm::Type::Implicit:
-            implicitTerms_.push_back(eqnTerm);
+        case Operator::Type::Implicit:
+            implicitOperators_.push_back(Operator);
             break;
-        case EqnTerm::Type::Explicit:
-            explicitTerms_.push_back(eqnTerm);
+        case Operator::Type::Explicit:
+            explicitOperators_.push_back(Operator);
             break;
         }
     }
 
     void addSystem(const EqnSystem& eqnSys)
     {
-        for (auto& eqnTerm : eqnSys.temporalTerms_)
+        for (auto& Operator : eqnSys.temporalOperators_)
         {
-            temporalTerms_.push_back(eqnTerm);
+            temporalOperators_.push_back(Operator);
         }
-        for (auto& eqnTerm : eqnSys.implicitTerms_)
+        for (auto& Operator : eqnSys.implicitOperators_)
         {
-            implicitTerms_.push_back(eqnTerm);
+            implicitOperators_.push_back(Operator);
         }
-        for (auto& eqnTerm : eqnSys.explicitTerms_)
+        for (auto& Operator : eqnSys.explicitOperators_)
         {
-            explicitTerms_.push_back(eqnTerm);
+            explicitOperators_.push_back(Operator);
         }
     }
 
     void solve()
     {
-        if (temporalTerms_.size() == 0 && implicitTerms_.size() == 0)
+        if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
         {
             NF_ERROR_EXIT("No temporal or implicit terms to solve.");
         }
-        if (temporalTerms_.size() > 0)
+        if (temporalOperators_.size() > 0)
         {
             // integrate equations in time
         }
@@ -85,52 +85,58 @@ public:
 
     size_t size() const
     {
-        return temporalTerms_.size() + implicitTerms_.size() + explicitTerms_.size();
+        return temporalOperators_.size() + implicitOperators_.size() + explicitOperators_.size();
     }
 
     // getters
-    const std::vector<EqnTerm>& temporalTerms() const { return temporalTerms_; }
+    const std::vector<Operator>& temporalOperators() const { return temporalOperators_; }
 
-    const std::vector<EqnTerm>& implicitTerms() const { return implicitTerms_; }
+    const std::vector<Operator>& implicitOperators() const { return implicitOperators_; }
 
-    const std::vector<EqnTerm>& explicitTerms() const { return explicitTerms_; }
+    const std::vector<Operator>& explicitOperators() const { return explicitOperators_; }
 
-    std::vector<EqnTerm>& temporalTerms() { return temporalTerms_; }
+    std::vector<Operator>& temporalOperators() { return temporalOperators_; }
 
-    std::vector<EqnTerm>& implicitTerms() { return implicitTerms_; }
+    std::vector<Operator>& implicitOperators() { return implicitOperators_; }
 
-    std::vector<EqnTerm>& explicitTerms() { return explicitTerms_; }
+    std::vector<Operator>& explicitOperators() { return explicitOperators_; }
 
     const NeoFOAM::Executor& exec() const { return exec_; }
 
     const std::size_t nCells() const { return nCells_; }
 
+    scalar getDt() const { return dt_; }
+
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField()
     {
-        if (temporalTerms_.size() == 0 && implicitTerms_.size() == 0)
+        if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
         {
             NF_ERROR_EXIT("No temporal or implicit terms to solve.");
         }
-        if (temporalTerms_.size() > 0)
+        if (temporalOperators_.size() > 0)
         {
-            volumeField_ = temporalTerms_[0].volumeField();
+            // FIXME
+            NF_ERROR_EXIT("Not implemented.");
+            // volumeField_ = temporalOperators_[0].volumeField();
         }
         else
         {
-            volumeField_ = implicitTerms_[0].volumeField();
+            // FIXME
+            NF_ERROR_EXIT("Not implemented.");
+            // volumeField_ = implicitOperators_[0].volumeField();
         }
         return volumeField_;
     }
 
-    NeoFOAM::scalar dt = 0;
+    NeoFOAM::scalar dt_ = 0;
 
 private:
 
     const NeoFOAM::Executor exec_;
     const std::size_t nCells_;
-    std::vector<EqnTerm> temporalTerms_;
-    std::vector<EqnTerm> implicitTerms_;
-    std::vector<EqnTerm> explicitTerms_;
+    std::vector<Operator> temporalOperators_;
+    std::vector<Operator> implicitOperators_;
+    std::vector<Operator> explicitOperators_;
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField_;
 };
 
@@ -140,34 +146,35 @@ EqnSystem operator+(EqnSystem lhs, const EqnSystem& rhs)
     return lhs;
 }
 
-EqnSystem operator+(EqnSystem lhs, const EqnTerm& rhs)
+EqnSystem operator+(EqnSystem lhs, const Operator& rhs)
 {
-    lhs.addTerm(rhs);
+    lhs.addOperator(rhs);
     return lhs;
 }
 
-EqnSystem operator+(const EqnTerm& lhs, const EqnTerm& rhs)
+EqnSystem operator+(const Operator& lhs, const Operator& rhs)
 {
-    EqnSystem eqnSys(lhs.exec(), lhs.nCells());
-    eqnSys.addTerm(lhs);
-    eqnSys.addTerm(rhs);
-    return eqnSys;
+    NF_ERROR_EXIT("Not implemented.");
+    //     EqnSystem eqnSys(lhs.exec(), lhs.nCells());
+    //     eqnSys.addOperator(lhs);
+    //     eqnSys.addOperator(rhs);
+    //     return eqnSys;
 }
 
 EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
 {
     EqnSystem results(es.exec(), es.nCells());
-    for (const auto& eqnTerm : es.temporalTerms())
+    for (const auto& Operator : es.temporalOperators())
     {
-        results.addTerm(scale * eqnTerm);
+        results.addOperator(scale * Operator);
     }
-    for (const auto& eqnTerm : es.implicitTerms())
+    for (const auto& Operator : es.implicitOperators())
     {
-        results.addTerm(scale * eqnTerm);
+        results.addOperator(scale * Operator);
     }
-    for (const auto& eqnTerm : es.explicitTerms())
+    for (const auto& Operator : es.explicitOperators())
     {
-        results.addTerm(scale * eqnTerm);
+        results.addOperator(scale * Operator);
     }
     return results;
 }
@@ -178,18 +185,19 @@ EqnSystem operator-(EqnSystem lhs, const EqnSystem& rhs)
     return lhs;
 }
 
-EqnSystem operator-(EqnSystem lhs, const EqnTerm& rhs)
+EqnSystem operator-(EqnSystem lhs, const Operator& rhs)
 {
-    lhs.addTerm(-1.0 * rhs);
+    lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
-EqnSystem operator-(const EqnTerm& lhs, const EqnTerm& rhs)
+EqnSystem operator-(const Operator& lhs, const Operator& rhs)
 {
-    EqnSystem results(lhs.exec(), lhs.nCells());
-    results.addTerm(lhs);
-    results.addTerm(-1.0 * rhs);
-    return results;
+    NF_ERROR_EXIT("Not implemented.");
+    // EqnSystem results(lhs.exec(), lhs.nCells());
+    // results.addOperator(lhs);
+    // results.addOperator(-1.0 * rhs);
+    // return results;
 }
 
 

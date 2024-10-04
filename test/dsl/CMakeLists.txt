@@ -2,4 +2,6 @@
 # SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 neofoam_unit_test(coeff)
+neofoam_unit_test(operator)
+
 # FIXME neofoam_unit_test(dsl)

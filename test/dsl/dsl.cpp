@@ -64,7 +64,6 @@ public:
 
     dsl::EqnTerm::Type getType() const { return termType_; }
 
-
     const NeoFOAM::Executor& exec() const { return exec_; }
 
     const std::size_t nCells() const { return nCells_; }

@@ -8,7 +8,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
-#include "NeoFOAM/DSL/eqnTerm.hpp"
+#include "NeoFOAM/DSL/operator.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
 
 #include <functional>
