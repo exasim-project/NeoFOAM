@@ -33,36 +33,16 @@ public:
     KOKKOS_INLINE_FUNCTION
     scalar operator[](const size_t i) const { return (hasSpan_) ? span_[i] * coeff_ : coeff_; }
 
+    bool hasSpan() { return hasSpan_; }
+
+    std::span<const scalar> span() { return span_; }
+
     Coeff& operator*=(scalar rhs)
     {
         coeff_ *= rhs;
         return *this;
     }
 
-    /* @brief function to force evaluation to a field, the field will be resized to hold either a
-     * single value or the full field
-     *
-     * @param field to store the result
-     */
-    void toField(Field<scalar>& rhs)
-    {
-        if (hasSpan_)
-        {
-            rhs.resize(span_.size());
-            fill(rhs, 1.0);
-            auto rhsSpan = rhs.span();
-            // otherwise we are unable to capture values in the lambda
-            auto& coeff = *this;
-            parallelFor(
-                rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] *= coeff[i]; }
-            );
-        }
-        else
-        {
-            rhs.resize(1);
-            fill(rhs, coeff_);
-        }
-    }
 
     Coeff& operator*=(const Coeff& rhs)
     {
@@ -92,6 +72,34 @@ private:
 };
 
 
+namespace detail
+{
+/* @brief function to force evaluation to a field, the field will be resized to hold either a
+ * single value or the full field
+ *
+ * @param field to store the result
+ */
+void toField(Coeff& coeff, Field<scalar>& rhs)
+{
+    if (coeff.hasSpan())
+    {
+        rhs.resize(coeff.span().size());
+        fill(rhs, 1.0);
+        auto rhsSpan = rhs.span();
+        // otherwise we are unable to capture values in the lambda
+        parallelFor(
+            rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] *= coeff[i]; }
+        );
+    }
+    else
+    {
+        rhs.resize(1);
+        fill(rhs, coeff[0]);
+    }
+}
+}
+
+
 inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
 {
     Coeff result = lhs;
@@ -99,4 +107,4 @@ inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
     return result;
 }
 
-} // namespace NeoFOAM::dsl
+} // namespace NeoFOAM::DSL

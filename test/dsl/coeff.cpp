@@ -12,6 +12,7 @@
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::DSL::Coeff;
+namespace detail = NeoFOAM::DSL::detail;
 
 
 TEST_CASE("Coeff")
@@ -35,21 +36,21 @@ TEST_CASE("Coeff")
         REQUIRE(c[0] == 4.0);
 
         Coeff d {3.0, fA};
-        d.toField(res);
+        detail::toField(d, res);
         auto hostResD = res.copyToHost();
         REQUIRE(hostResD.data()[0] == 6.0);
         REQUIRE(hostResD.data()[1] == 6.0);
         REQUIRE(hostResD.data()[2] == 6.0);
 
         Coeff e = d * b;
-        e.toField(res);
+        detail::toField(e, res);
         auto hostResE = res.copyToHost();
         REQUIRE(hostResE.data()[0] == 12.0);
         REQUIRE(hostResE.data()[1] == 12.0);
         REQUIRE(hostResE.data()[2] == 12.0);
 
         Coeff f = b * d;
-        f.toField(res);
+        detail::toField(f, res);
         auto hostResF = res.copyToHost();
         REQUIRE(hostResF.data()[0] == 12.0);
         REQUIRE(hostResF.data()[1] == 12.0);
