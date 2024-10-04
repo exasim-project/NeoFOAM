@@ -6,30 +6,33 @@ add_library(NeoFOAM SHARED)
 
 include(GNUInstallDirs)
 
-target_sources(
-  NeoFOAM
-  PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
-          "core/primitives/vector.cpp"
-          "core/time.cpp"
-          "core/dictionary.cpp"
-          "core/demangle.cpp"
-          "core/tokenList.cpp"
-          "core/kokkos.cpp"
-          "executor/CPUExecutor.cpp"
-          "executor/GPUExecutor.cpp"
-          "executor/serialExecutor.cpp"
-          "mesh/unstructured/boundaryMesh.cpp"
-          "mesh/unstructured/communicator.cpp"
-          "mesh/unstructured/unstructuredMesh.cpp"
-          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
-          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
-          "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
-          "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
-          "finiteVolume/cellCentred/boundary/boundary.cpp"
-          "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
-          "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
-          "finiteVolume/cellCentred/interpolation/linear.cpp"
-          "finiteVolume/cellCentred/interpolation/upwind.cpp")
+set(NeoFOAM_SRCS
+  "core/mpi/halfDuplexCommBuffer.cpp"
+  "core/primitives/vector.cpp"
+  "core/time.cpp"
+  "core/dictionary.cpp"
+  "core/demangle.cpp"
+  "core/tokenList.cpp"
+  "core/kokkos.cpp"
+  "executor/CPUExecutor.cpp"
+  "executor/GPUExecutor.cpp"
+  "executor/serialExecutor.cpp"
+  "mesh/unstructured/boundaryMesh.cpp"
+  "mesh/unstructured/communicator.cpp"
+  "mesh/unstructured/unstructuredMesh.cpp"
+  "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+  "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+  "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
+  "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
+  "finiteVolume/cellCentred/boundary/boundary.cpp"
+  "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
+  "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+  "finiteVolume/cellCentred/interpolation/linear.cpp"
+  "finiteVolume/cellCentred/interpolation/upwind.cpp"
+)
+
+target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
+set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(
