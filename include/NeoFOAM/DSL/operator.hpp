@@ -255,18 +255,10 @@ private:
         }
 
         /* @brief get the associated coefficient for this term */
-        virtual Coeff& getCoefficient() override
-        {
-            // FIXME
-            // return cls_.getCoefficient();
-        }
+        virtual Coeff& getCoefficient() override { return cls_.getCoefficient(); }
 
         /* @brief get the associated coefficient for this term */
-        virtual Coeff getCoefficient() const override
-        {
-            // FIXME
-            // return cls_.getCoefficient();
-        }
+        virtual Coeff getCoefficient() const override { return cls_.getCoefficient(); }
 
         // The Prototype Design Pattern
         std::unique_ptr<OperatorConcept> clone() const override

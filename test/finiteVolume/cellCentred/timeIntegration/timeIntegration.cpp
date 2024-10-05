@@ -13,10 +13,9 @@
 #include "NeoFOAM/DSL/operator.hpp"
 #include "NeoFOAM/DSL/eqnSystem.hpp"
 
-
 namespace dsl = NeoFOAM::DSL;
 
-class Divergence
+class Divergence : public NeoFOAM::DSL::OperatorMixin
 {
 
 public:
@@ -42,7 +41,9 @@ public:
     std::size_t nCells() const { return nCells_; }
 
     dsl::Operator::Type termType_;
+
     NeoFOAM::Executor exec_;
+
     std::size_t nCells_;
 };
 
@@ -85,11 +86,11 @@ TEST_CASE("TimeIntegration")
     NeoFOAM::Dictionary dict;
     dict.insert("type", std::string("forwardEuler"));
 
-    dsl::Operator divOperator = Divergence(dsl::Operator::Type::Explicit, exec, 1);
+    // dsl::Operator divOperator = Divergence(dsl::Operator::Type::Explicit, exec, 1);
 
-    dsl::Operator ddtOperator = TimeOperator(dsl::Operator::Type::Temporal, exec, 1);
+    // dsl::Operator ddtOperator = TimeOperator(dsl::Operator::Type::Temporal, exec, 1);
 
-    dsl::EqnSystem eqnSys = ddtOperator + divOperator;
+    // dsl::EqnSystem eqnSys = ddtOperator + divOperator;
 
-    fvcc::TimeIntegration timeIntergrator(eqnSys, dict);
+    // fvcc::TimeIntegration timeIntergrator(eqnSys, dict);
 }

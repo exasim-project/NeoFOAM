@@ -17,6 +17,7 @@ using Operator = NeoFOAM::DSL::Operator;
 using OperatorMixin = NeoFOAM::DSL::OperatorMixin;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
+using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 /* A dummy implementation of a Operator
@@ -63,28 +64,26 @@ TEST_CASE("Operator")
 
     SECTION("Operator creation on " + execName)
     {
-
-        Field fA(exec, 3, 2.0);
+        Field fA(exec, 1, 2.0);
+        BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        auto vf = VolumeField(exec, mesh, bcs);
+        auto vf = VolumeField(exec, mesh, fA, bf, bcs);
         auto b = Dummy(exec, vf);
     }
 
     SECTION("Supports Coefficients" + execName)
     {
-
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        auto vf = VolumeField(exec, mesh, bcs);
 
-        Field fA(exec, 3, 2.0);
-        Field fB(exec, 3, 3.0);
+        Field fA(exec, 1, 2.0);
+        Field fB(exec, 1, 2.0);
+        BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        auto vf = VolumeField(exec, mesh, fA, bf, bcs);
 
-        auto b = Dummy(exec, &fA);
-
-        auto c = 2 * Dummy(exec, &fA);
-        auto d = fB * Dummy(exec, &fA);
-        auto e = Coeff(-3, fB) * Dummy(exec, &fA);
+        auto c = 2 * Dummy(exec, vf);
+        auto d = fB * Dummy(exec, vf);
+        auto e = Coeff(-3, fB) * Dummy(exec, vf);
 
         auto coeffc = c.getCoefficient();
         auto coeffd = d.getCoefficient();
