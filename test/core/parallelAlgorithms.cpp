@@ -12,6 +12,34 @@
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 
+template<typename SpanA, typename SpanB, typename T>
+struct kernelLambda_1
+{
+    SpanA spanA;
+    SpanB spanB;
+    T val;
+
+    KOKKOS_FUNCTION void operator()(const size_t i) const { spanA[i] = spanB[i] + val; }
+};
+
+template<typename Span, typename T>
+struct kernelLambda_2
+{
+    Span span;
+    T val;
+
+    KOKKOS_FUNCTION T operator()(const size_t i) const { return span[i] + val; }
+};
+
+
+template<typename Span>
+struct kernelLambda_3
+{
+    Span span;
+
+    KOKKOS_FUNCTION void operator()(const size_t i, double& lsum) const { lsum += span[i]; }
+};
+
 TEST_CASE("parallelFor")
 {
     NeoFOAM::Executor exec = GENERATE(
@@ -29,9 +57,10 @@ TEST_CASE("parallelFor")
         auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
-        NeoFOAM::parallelFor(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
-        );
+
+        NeoFOAM::scalar val = 2.0;
+        kernelLambda_1<decltype(spanA), decltype(spanB), decltype(val)> kernel {spanA, spanB, val};
+        NeoFOAM::parallelFor(exec, {0, 5}, kernel);
         auto hostA = fieldA.copyToHost();
         for (auto value : hostA.span())
         {
@@ -47,11 +76,10 @@ TEST_CASE("parallelFor")
         auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, NeoFOAM::Vector(1.0, 1.0, 1.0));
-        NeoFOAM::parallelFor(
-            exec,
-            {0, 5},
-            KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
-        );
+
+        NeoFOAM::Vector val = NeoFOAM::Vector(2.0, 2.0, 2.0);
+        kernelLambda_1<decltype(spanA), decltype(spanB), decltype(val)> kernel {spanA, spanB, val};
+        NeoFOAM::parallelFor(exec, {0, 5}, kernel);
         auto hostA = fieldA.copyToHost();
         for (auto value : hostA.span())
         {
@@ -66,9 +94,10 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
-        NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
-        );
+
+        NeoFOAM::scalar val = 2.0;
+        kernelLambda_2<decltype(spanB), decltype(val)> kernel {spanB, val};
+        NeoFOAM::parallelFor(fieldA, kernel);
         auto hostA = fieldA.copyToHost();
         for (auto value : hostA.span())
         {
@@ -95,9 +124,9 @@ TEST_CASE("parallelReduce")
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
-        NeoFOAM::parallelReduce(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
-        );
+
+        kernelLambda_3<decltype(spanB)> kernel {spanB};
+        NeoFOAM::parallelReduce(exec, {0, 5}, kernel, sum);
 
         REQUIRE(sum == 5.0);
     }
@@ -110,9 +139,9 @@ TEST_CASE("parallelReduce")
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
-        NeoFOAM::parallelReduce(
-            fieldA, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
-        );
+
+        kernelLambda_3<decltype(spanB)> kernel {spanB};
+        NeoFOAM::parallelReduce(fieldA, kernel, sum);
 
         REQUIRE(sum == 5.0);
     }
