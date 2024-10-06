@@ -18,6 +18,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # Set the output directories for all binaries and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Eventhough we compile NeoFOAM as SHARED library we need to explicitly enable PIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -67,6 +68,11 @@ include(cmake/StandardProjectSettings.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
+
+if(Kokkos_ENABLE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  enable_language(CUDA)
+endif()
 
 add_library(neofoam_options INTERFACE)
 add_library(neofoam_warnings INTERFACE)
