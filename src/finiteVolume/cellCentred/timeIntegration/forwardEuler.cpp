@@ -31,13 +31,13 @@ void ForwardEuler::solve()
     //     eqnTerm.temporalOperation(Phi);
     // }
     // Phi += source*dt;
-    refField->internalField() -= source*dt;
+    refField->internalField() -= source * dt;
     refField->correctBoundaryConditions();
 
     // check if execturo is GPU
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqnSystem_.exec()))
     {
-       Kokkos::fence();
+        Kokkos::fence();
     }
 }
 
