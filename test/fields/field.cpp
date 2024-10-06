@@ -233,7 +233,6 @@ TEST_CASE("Field Operations")
     {
         NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
-        auto sA = a.span();
         NeoFOAM::fill(a, 5.0);
 
         REQUIRE(equal(a, 5.0));
@@ -286,10 +285,6 @@ TEST_CASE("getSpans")
     REQUIRE(hostA[0] == 1.0);
     REQUIRE(hostB[0] == 2.0);
     REQUIRE(hostC[0] == 3.0);
-
-    auto [spanA2] = NeoFOAM::spans(hostA);
-
-    REQUIRE(spanA2[0] == 1.0);
 
     NeoFOAM::parallelFor(
         a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }

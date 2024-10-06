@@ -44,6 +44,18 @@ public:
     {}
 
 
+    /**
+     * @brief Copy constructor.
+     * @param rhs The boundaryFields object to be copied.
+     */
+    BoundaryFields(const Executor& exec, const BoundaryFields<T>& rhs)
+        : exec_(rhs.exec_), value_(exec, rhs.value_), refValue_(exec, rhs.refValue_),
+          valueFraction_(exec, rhs.valueFraction_), refGrad_(exec, rhs.refGrad_),
+          boundaryTypes_(exec, rhs.boundaryTypes_), offset_(exec, rhs.offset_),
+          nBoundaries_(rhs.nBoundaries_), nBoundaryFaces_(rhs.nBoundaryFaces_)
+    {}
+
+
     BoundaryFields(const Executor& exec, size_t nBoundaryFaces, size_t nBoundaries)
         : exec_(exec), value_(exec, nBoundaryFaces), refValue_(exec, nBoundaryFaces),
           valueFraction_(exec, nBoundaryFaces), refGrad_(exec, nBoundaryFaces),

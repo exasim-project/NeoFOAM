@@ -31,6 +31,12 @@ class VolumeField : public GeometricFieldMixin<ValueType>
 
 public:
 
+    /* @brief Constructor for a uninitialized VolumeField
+     *
+     * @param exec The executor
+     * @param mesh The underlying mesh
+     * @param boundaryConditions a vector of boundary conditions
+     */
     VolumeField(
         const Executor& exec,
         std::string name,
@@ -62,6 +68,22 @@ public:
         boundaryConditions_(boundaryConditions),
         solField_(solField),
         solutionFieldKey(solutionFieldKey)
+    {}
+
+    /* @brief Constructor for a VolumeField with a given internal field
+     *
+     * @param mesh The underlying mesh
+     * @param internalField the underlying internal field
+     * @param boundaryConditions a vector of boundary conditions
+     */
+    VolumeField(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const Field<ValueType>& internalField,
+        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
+    )
+        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField}),
+          boundaryConditions_(boundaryConditions)
     {}
 
     VolumeField(const VolumeField& other)

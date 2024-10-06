@@ -51,25 +51,20 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
+    /* @brief Constructor for a surfaceField with a given internal field
+     *
+     * @param exec The executor
+     * @param mesh The underlying mesh
+     * @param internalField the underlying internal field
+     * @param boundaryConditions a vector of boundary conditions
+     */
     SurfaceField(
         const Executor& exec,
-        std::string name,
         const UnstructuredMesh& mesh,
-        const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions,
-        SolutionFields<SurfaceField<ValueType>>& solField
+        const Field<ValueType>& internalField,
+        const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(
-                exec,
-                mesh.nInternalFaces() + mesh.nBoundaryFaces(),
-                mesh.nBoundaryFaces(),
-                mesh.nBoundaries()
-            ),
-            solField
-        ),
+        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField}),
           boundaryConditions_(boundaryConditions)
     {}
 

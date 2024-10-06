@@ -29,7 +29,6 @@ public:
 
 private:
 
-    const UnstructuredMesh& mesh_;
     SurfaceInterpolation surfaceInterpolation_;
 };
 
