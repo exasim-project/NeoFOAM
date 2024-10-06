@@ -56,4 +56,65 @@ TEST_CASE("Coeff")
         REQUIRE(hostResF.data()[1] == 12.0);
         REQUIRE(hostResF.data()[2] == 12.0);
     }
+
+    SECTION("evaluation in parallelFor" + execName)
+    {
+        size_t size = 3;
+
+        NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
+        NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
+
+        SECTION("span")
+        {
+            Coeff coeff = fieldB; // is a span with uniform value 1.0
+            {
+                NeoFOAM::parallelFor(
+                    fieldA, KOKKOS_LAMBDA(const size_t i) { return coeff[i] + 2.0; }
+                );
+            };
+            auto hostFieldA = fieldA.copyToHost();
+            REQUIRE(coeff.hasSpan() == true);
+            REQUIRE(hostFieldA[0] == 3.0);
+            REQUIRE(hostFieldA[1] == 3.0);
+            REQUIRE(hostFieldA[2] == 3.0);
+        }
+
+        SECTION("scalar")
+        {
+            NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
+
+            Coeff coeff = Coeff(2.0);
+            {
+                NeoFOAM::parallelFor(
+                    fieldA, KOKKOS_LAMBDA(const size_t i) { return coeff[i] + 2.0; }
+                );
+            };
+            auto hostFieldA = fieldA.copyToHost();
+            REQUIRE(coeff.hasSpan() == false);
+            REQUIRE(hostFieldA[0] == 4.0);
+            REQUIRE(hostFieldA[1] == 4.0);
+            REQUIRE(hostFieldA[2] == 4.0);
+        }
+
+        SECTION("span and scalar")
+        {
+            NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
+            NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
+            Coeff coeff {-5.0,fieldB};
+            {
+                NeoFOAM::parallelFor(
+                    fieldA, KOKKOS_LAMBDA(const size_t i) { return coeff[i] + 2.0; }
+                );
+            };
+            auto hostFieldA = fieldA.copyToHost();
+            REQUIRE(coeff.hasSpan() == true);
+            REQUIRE(hostFieldA[0] == -3.0);
+            REQUIRE(hostFieldA[1] == -3.0);
+            REQUIRE(hostFieldA[2] == -3.0);
+        }
+
+    }
+
+        
+    
 }
