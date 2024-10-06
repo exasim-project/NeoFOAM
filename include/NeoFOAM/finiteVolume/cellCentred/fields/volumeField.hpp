@@ -51,24 +51,6 @@ public:
         ),
           boundaryConditions_(boundaryConditions)
     {}
-    VolumeField(
-        const Executor& exec,
-        std::string name,
-        const UnstructuredMesh& mesh,
-        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
-        SolutionFields<VolumeField<ValueType>>& solField,
-        size_t solutionFieldKey
-    )
-        : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
-        boundaryConditions_(boundaryConditions),
-        solField_(solField),
-        solutionFieldKey(solutionFieldKey)
-    {}
 
     /* @brief Constructor for a VolumeField with a given internal field
      *
@@ -87,7 +69,7 @@ public:
     {}
 
     VolumeField(const VolumeField& other)
-        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_), solField_(other.solField_), solutionFieldKey(other.solutionFieldKey)
+        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
     {}
 
     /**
@@ -104,30 +86,9 @@ public:
         }
     }
 
-    /**
-     * @brief Returns a const reference to the solution field object.
-     *
-     * @return The const reference to the solution field object.
-    */
-    const auto& solField() const { return solField_.value(); }
-
-    /**
-     * @brief Returns a reference to the solution field object.
-     *
-     * @return The reference to the solution field object.
-    */
-    auto& solField() { return solField_.value(); }
-
-    bool hasSolField() const { return solField_.has_value(); }
-
-    void setSolField(SolutionFields<VolumeField<ValueType>>& solField) { solField_ = solField; }
-
-    std::optional<size_t> solutionFieldKey;
-
 private:
 
     std::vector<VolumeBoundary<ValueType>> boundaryConditions_; // The vector of boundary conditions
-    std::optional<std::reference_wrapper<SolutionFields<VolumeField<ValueType>>>> solField_; // The solution field object
 };
 
 } // namespace NeoFOAM

@@ -87,29 +87,11 @@ public:
         }
     }
 
-    /**
-     * @brief Returns a const reference to the solution field object.
-     *
-     * @return The const reference to the solution field object.
-    */
-    const auto& solField() const { return solField_.value(); }
-
-    /**
-     * @brief Returns a reference to the solution field object.
-     *
-     * @return The reference to the solution field object.
-    */
-    auto& solField() { return solField_.value(); }
-
-    bool hasSolField() const { return solField_.has_value(); }
-
-    void setSolField(SolutionFields<SurfaceField<ValueType>>& solField) { solField_ = solField; }
 
 private:
 
     std::vector<SurfaceBoundary<ValueType>>
         boundaryConditions_; // The vector of boundary conditions
-    std::optional<std::reference_wrapper<SolutionFields<SurfaceField<ValueType>>>> solField_; // The solution field object
 };
 
 
