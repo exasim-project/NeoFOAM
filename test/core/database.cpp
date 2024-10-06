@@ -8,9 +8,10 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/core/database.hpp"
+#include "NeoFOAM/core/collection.hpp"
+#include "NeoFOAM/core/document.hpp"
 
 #include "customTestCollection.hpp"
-
 
 TEST_CASE("Document")
 {
@@ -25,6 +26,7 @@ TEST_CASE("Document")
     {
         NeoFOAM::Document doc({{"key1", std::string("value1")}, {"key2", 2.0}});
         REQUIRE(doc.keys().size() == 3);
+        REQUIRE(doc.id().substr(0,4) == "doc_");
         REQUIRE(doc.get<std::string>("key1") == "value1");
         REQUIRE(doc.get<double>("key2") == 2.0);
 
@@ -42,10 +44,22 @@ TEST_CASE("Document")
     {
         auto validator = [](const NeoFOAM::Dictionary& dict)
         { return dict.contains("key1") && dict.contains("key2"); };
-        NeoFOAM::Document doc({{"key1", std::string("value1")}, {"key2", 2.0}}, validator);
-        REQUIRE(doc.keys().size() == 3);
-        REQUIRE(doc.get<std::string>("key1") == "value1");
-        REQUIRE(doc.get<double>("key2") == 2.0);
+
+        SECTION("valid document")
+        {
+            NeoFOAM::Document doc({{"key1", std::string("value1")}, {"key2", 2.0}}, validator);
+            REQUIRE_NOTHROW(doc.validate());
+            REQUIRE(doc.keys().size() == 3);
+            REQUIRE(doc.get<std::string>("key1") == "value1");
+            REQUIRE(doc.get<double>("key2") == 2.0);
+        }
+
+        SECTION("invalid document")
+        {
+            REQUIRE_THROWS(
+                    NeoFOAM::Document({{"key1", std::string("value1")}}, validator).validate()
+            );
+        }
     }
 }
 
@@ -64,7 +78,7 @@ TEST_CASE("Database")
     {
         db.createCollection("collection1", "testCollection");
 
-        auto collection1 = db.getCollection("collection1");
+        auto& collection1 = db.getCollection("collection1");
 
         REQUIRE(collection1.size() == 0);
 
@@ -84,7 +98,7 @@ TEST_CASE("Database")
     {
         db.createCollection("collection1", "testCollection");
 
-        auto collection1 = db.getCollection("collection1");
+        auto& collection1 = db.getCollection("collection1");
 
         NeoFOAM::Document doc1;
         doc1.insert("key1", std::string("value1"));
@@ -108,76 +122,79 @@ TEST_CASE("Database")
         REQUIRE(collection1.get(results[0]).get<std::string>("key1") == "value2");
     }
 
+    SECTION("custom Document")
+    {
+        auto doc = CustomTestDocument::create("name1", 1.0);
+        REQUIRE(name(doc) == "name1");
+        REQUIRE(value(doc) == 1.0);
+    }
+
     SECTION("custom Collection")
     {
-        CustomTestCollection::registerCollection("customCollection", db);
+        CustomTestCollection::create("customCollection", db);
 
-        auto customCollection = CustomTestCollection::getCollection("customCollection", db);
+        NeoFOAM::Collection& customCollection = CustomTestCollection::getCollection(db, "customCollection");
 
         REQUIRE(customCollection.name() == "customCollection");
         REQUIRE(customCollection.size() == 0);
 
-
-        // insert documents
-        CustomTestDocument doc1 {"name1", 1.0};
-        auto keyDoc1 = customCollection.insert(doc1);
-
-        REQUIRE(customCollection.size() == 1);
-
-        CustomTestDocument doc2 {"name2", 2.0};
-        auto keyDoc2 = customCollection.insert(doc2);
-
-        REQUIRE(customCollection.size() == 2);
-
-        SECTION("get existing documents")
+        SECTION("insert document")
         {
-            CustomTestDocument testDoc = customCollection.get(keyDoc1);
+            auto doc1 = CustomTestDocument::create("name1", 1.0);
+            REQUIRE(doc1.id().substr(0,4) == "doc_");
+            auto keyDoc1 = customCollection.insert(doc1);
 
-            REQUIRE(testDoc.name == "name1");
-            REQUIRE(testDoc.value == 1.0);
-        }
+            REQUIRE(customCollection.size() == 1);
 
-        SECTION("modify document")
-        {
-            CustomTestDocument testDoc = customCollection.get(keyDoc1);
-            testDoc.value = 3.0;
-            customCollection.update(keyDoc1, testDoc);
+            SECTION("get existing document")
+            {
+                auto& testDoc = customCollection.get(keyDoc1);
 
-            CustomTestDocument testDoc2 = customCollection.get(keyDoc1);
-            REQUIRE(testDoc2.value == 3.0);
+                REQUIRE(name(testDoc) == "name1");
+                REQUIRE(value(testDoc) == 1.0);
+            }
 
-            // update without id
-            testDoc.value = 4.0;
-            customCollection.update(testDoc);
+            SECTION("modify document")
+            {
+                auto& testDoc = customCollection.get(keyDoc1);
+                value(testDoc) = 3.0;
 
-            CustomTestDocument testDoc3 = customCollection.get(keyDoc1);
-            REQUIRE(testDoc3.value == 4.0);
-        }
+                auto& testDoc2 = customCollection.get(keyDoc1);
+                REQUIRE(value(testDoc2) == 3.0);
 
-        SECTION("get non existing documents") { REQUIRE_THROWS(customCollection.get("id3")); }
+                // update without id
+                value(testDoc) = 4.0;
 
-        SECTION("query existing documents")
-        {
-            // query documents
-            auto results = customCollection.find(
-                [](const NeoFOAM::Document& doc)
-                { return doc.contains("name") && doc.get<std::string>("name") == "name2"; }
-            );
+                auto& testDoc3 = customCollection.get(keyDoc1);
+                REQUIRE(value(testDoc3) == 4.0);
+            }
 
-            REQUIRE(results.size() == 1);
-        }
+            SECTION("get non existing document") { REQUIRE_THROWS(customCollection.get("doesNotExcist")); }
 
-        SECTION("query non existing documents")
-        {
-            // query documents
-            auto results = customCollection.find(
-                [](const NeoFOAM::Document& doc) {
-                    return doc.contains("notValidKey")
-                        && doc.get<std::string>("notValidKey") == "name3";
-                }
-            );
+            SECTION("query existing document")
+            {
+                // query documents
+                auto results = customCollection.find(
+                    [](const NeoFOAM::Document& doc)
+                    { return doc.contains("name") && name(doc) == "name1"; }
+                );
 
-            REQUIRE(results.size() == 0);
+                REQUIRE(results.size() == 1);
+            }
+
+            SECTION("query non existing document")
+            {
+                // query documents
+                auto results = customCollection.find(
+                    [](const NeoFOAM::Document& doc) {
+                        return doc.contains("notValidKey")
+                            && doc.get<std::string>("notValidKey") == "name3";
+                    }
+                );
+
+                REQUIRE(results.size() == 0);
+            }
         }
     }
+
 }

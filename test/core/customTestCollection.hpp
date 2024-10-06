@@ -5,108 +5,190 @@
 #include <optional>
 #include <string>
 #include <NeoFOAM/core/database.hpp>
+#include "NeoFOAM/core/document.hpp"
+
+// auto 
 
 struct CustomTestDocument
 {
-
-    CustomTestDocument(const NeoFOAM::Document& doc)
-        : name(doc.get<std::string>("name")), value(doc.get<double>("value")), id_(doc.get<std::string>("id"))
+    NeoFOAM::DocumentValidator customValidator = [](const NeoFOAM::Document& doc)
     {
+        return doc.contains("name") && doc.contains("value") && hasId(doc);
+    };
+
+    static NeoFOAM::Document create(std::string name, double value)
+    {
+        return NeoFOAM::Document({{"name", name}, {"value", value}});
     }
 
-    CustomTestDocument(std::string name, double value)
-        : name(name), value(value), id_(std::nullopt)
-    {
-    }
-    
-    std::string name;
-    double value;
-
-    // convert to Document
-    operator NeoFOAM::Document() const
-    {
-        // document with define the id
-        NeoFOAM::Document doc;
-        if (id_.has_value())
-        {
-            doc.insert("id", id_.value());
-        }
-        doc.insert("name", name);
-        doc.insert("value", value);
-        return doc;
-    }
-
-    std::optional<std::string> id() const
-    {
-        return id_;
-    }
-
-    private:
-       std::optional<std::string> id_;
 };
+
+const double& value(const NeoFOAM::Document& doc)
+{
+    return doc.get<double>("value");
+}
+
+double& value(NeoFOAM::Document& doc)
+{
+    return doc.get<double>("value");
+}
 
 class CustomTestCollection
 {
-
 public:
-
-    CustomTestCollection(std::string name,NeoFOAM::Database& db)
-        : name_(name), db_(db), collection_(db.getCollection(name))
+    static const std::string typeName()
     {
-
-    }
-    static void registerCollection(std::string name, NeoFOAM::Database& db)
-    {
-        db.createCollection(name, CustomTestCollection::typeName);
+        return "CustomTestCollection";
     }
 
-    static CustomTestCollection getCollection(std::string name, NeoFOAM::Database& db)
+    static void create(std::string name, NeoFOAM::Database& db)
     {
-        return CustomTestCollection(name,db);
+        db.createCollection(name, CustomTestCollection::typeName());
     }
 
-    std::string name() const
+    static NeoFOAM::Collection& getCollection(NeoFOAM::Database& db, std::string name)
     {
-        return name_;
+        return db.getCollection(name);
     }
-
-    CustomTestDocument get(const std::string& id)
-    {
-        NeoFOAM::Document& doc = collection_.get(id);
-        return CustomTestDocument(doc);
-    }
-
-    size_t size() const
-    {
-        return collection_.size();
-    }
-
-    auto insert(CustomTestDocument doc)
-    {
-        return collection_.insert(doc);
-    }
-
-    void update(const std::string& id, const CustomTestDocument& doc)
-    {
-        collection_.update(id, doc);
-    }
-
-    void update(const CustomTestDocument& doc)
-    {
-        collection_.update(doc);
-    }
-
-    std::vector<NeoFOAM::key> find(const std::function<bool(const NeoFOAM::Document&)>& predicate) const
-    {
-        return collection_.find(predicate);
-    }
-
-private:
-    static const std::string typeName;
-    std::string name_;
-    NeoFOAM::Database& db_;
-    NeoFOAM::Collection& collection_;
 
 };
 
-const std::string CustomTestCollection::typeName = "CustomTestCollection";
+
+//     CustomTestDocument(const NeoFOAM::Document& doc)
+//         : doc_(doc)
+//     {
+//     }
+
+//     CustomTestDocument(std::string name, double value)
+//         : doc_(NeoFOAM::Document({{"name", name}, {"value", value}}))
+//     {
+//     }
+    
+//     double value() const
+//     {
+//         return doc_.get<double>("value");
+//     }
+
+//     double& value()
+//     {
+//         return doc_.get<double>("value");
+//     }
+
+//     const std::string& name() const
+//     {
+//         return doc_.get<std::string>("name");
+//     }
+
+//     std::string& name()
+//     {
+//         return doc_.get<std::string>("name");
+//     }
+
+//     std::string id() const
+//     {
+//         return doc_.get<std::string>("id");
+//     }
+
+//     const NeoFOAM::Document& doc() const
+//     {
+//         return doc_;
+//     }
+
+//     NeoFOAM::Document& doc()
+//     {
+//         return doc_;
+//     }
+
+//     private:
+//        std::optional<std::string> id_;
+//        NeoFOAM::Document doc_;
+// };
+
+// class CustomTestCollection
+// {
+
+// public:
+
+//     CustomTestCollection(std::string name,NeoFOAM::Database& db)
+//         : name_(name), db_(db)
+//     {
+
+//     }
+//     static void registerCollection(std::string name, NeoFOAM::Database& db)
+//     {
+//         db.createCollection(name, CustomTestCollection::typeName);
+//     }
+
+//     static CustomTestCollection getCollection(std::string name, NeoFOAM::Database& db)
+//     {
+//         return CustomTestCollection(name,db);
+//     }
+
+//     std::string name() const
+//     {
+//         return name_;
+//     }
+
+//     CustomTestDocument& get(const std::string& id)
+//     {
+//         auto it = documents_.find(id);
+//         if (it != documents_.end())
+//         {
+//             return it->second;
+//         }
+//         throw std::runtime_error("Document not found");
+//     }
+
+//     const CustomTestDocument& get(const std::string& id) const
+//     {
+//         auto it = documents_.find(id);
+//         if (it != documents_.end())
+//         {
+//             return it->second;
+//         }
+//         throw std::runtime_error("Document not found");
+//     }
+
+//     size_t size() const
+//     {
+//         return documents_.size();
+//     }
+
+//     std::string insert(CustomTestDocument doc)
+//     {
+//         documents_.insert({doc.id(), doc});
+//         return doc.id();
+//     }
+
+//     // void update(const std::string& id, const CustomTestDocument& doc)
+//     // {
+//     //     documents_.update(id, doc);
+//     // }
+
+//     // void update(const CustomTestDocument& doc)
+//     // {
+//     //     documents_.update(doc);
+//     // }
+
+//     std::vector<std::string> find(const std::function<bool(const NeoFOAM::Document&)>& predicate) const
+//     {
+//         std::vector<std::string> result;
+//         for (const auto& [key, doc] : documents_)
+//         {
+//             if (predicate(doc.doc()))
+//             {
+//                 result.push_back(doc.id());
+//             }
+//         }
+//         return result;
+//     }
+
+// private:
+//     static const std::string typeName;
+//     std::string name_;
+//     NeoFOAM::Database& db_;
+//     std::unordered_map<std::string, CustomTestDocument> documents_;
+
+// };
+
+// const std::string CustomTestCollection::typeName = "CustomTestCollection";
