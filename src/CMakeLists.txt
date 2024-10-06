@@ -43,3 +43,14 @@ enable_sanitizers(
 target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
 target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api MPI::MPI_C MPI::MPI_CXX Kokkos::kokkos
                                      cpptrace::cpptrace)
+
+add_library(NeoFOAM-STATIC)
+target_sources(NeoFOAM-STATIC PRIVATE ${NeoFOAM_SRCS})
+enable_sanitizers(
+  NeoFOAM-STATIC NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK
+  NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
+
+target_link_libraries(NeoFOAM-STATIC PRIVATE neofoam_warnings neofoam_options)
+target_link_libraries(NeoFOAM-STATIC PUBLIC NeoFOAM_public_api MPI::MPI_C MPI::MPI_CXX
+                                            Kokkos::kokkos cpptrace::cpptrace)
+set_target_properties(NeoFOAM-STATIC PROPERTIES OUTPUT_NAME "NeoFOAM")
