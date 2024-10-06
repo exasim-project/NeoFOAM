@@ -31,15 +31,9 @@ void Document::validate()
     }
 }
 
-const std::string& name(const NeoFOAM::Document& doc)
-{
-    return doc.get<std::string>("name");
-}
+const std::string& name(const NeoFOAM::Document& doc) { return doc.get<std::string>("name"); }
 
-std::string& name(NeoFOAM::Document& doc)
-{
-    return doc.get<std::string>("name");
-}
+std::string& name(NeoFOAM::Document& doc) { return doc.get<std::string>("name"); }
 
 
 } // namespace NeoFOAM

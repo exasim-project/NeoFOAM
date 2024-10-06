@@ -25,7 +25,7 @@ class Collection
 {
 public:
 
-    Collection(std::string type,std::string name, Database& db);
+    Collection(std::string type, std::string name, Database& db);
 
 
     key insert(Document doc);
