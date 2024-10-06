@@ -1,0 +1,304 @@
+\hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer}{}\doxysection{Neo\+FOAM\+::mpi\+::Full\+Duplex\+Comm\+Buffer Class Reference}
+\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer}\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+
+
+A buffer for full-\/duplex communication in a distributed system using MPI.  
+
+
+
+
+{\ttfamily \#include $<$full\+Duplex\+Comm\+Buffer.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a31210ad9752f89e9f9358ffc727eec0e}{Full\+Duplex\+Comm\+Buffer}} ()=default
+\begin{DoxyCompactList}\small\item\em Default constructor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a72b566a0a161548ba7742d740a8062bd}{Full\+Duplex\+Comm\+Buffer}} (\mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1MPIEnvironment}{MPIEnvironment}} mpi\+Environ, std\+::vector$<$ std\+::size\+\_\+t $>$ send\+Size, std\+::vector$<$ std\+::size\+\_\+t $>$ receive\+Size)
+\begin{DoxyCompactList}\small\item\em Constructor that initializes the send and receive buffers. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a180b6f7fbc497d5bc8b150d83a927719}{is\+Comm\+Init}} () const
+\begin{DoxyCompactList}\small\item\em Check if the communication buffers are initialized. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\void \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a670bdc6009db2fd80a9fbe5178a4dc2e}{init\+Comm}} (std\+::string comm\+Name)
+\begin{DoxyCompactList}\small\item\em Initialize the communication buffer. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\std\+::span$<$ value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_ade2f20093bb137e0422a43a968e57811}{get\+Send}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} rank)
+\begin{DoxyCompactList}\small\item\em Gets a span of data for the send buffer for a specific rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\std\+::span$<$ const value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a5dac50ff38d261c667f48af6f0a4e55d}{get\+Send}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} rank) const
+\begin{DoxyCompactList}\small\item\em Gets a span of data for the send buffer for a specific rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\std\+::span$<$ value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a398efacd68a113396e428991b49a96ab}{get\+Receive}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} rank)
+\begin{DoxyCompactList}\small\item\em Gets a span of data for the receive buffer for a specific rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\std\+::span$<$ const value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_aeef462f5ce333ed0fa57d14613056e47}{get\+Receive}} (const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} rank) const
+\begin{DoxyCompactList}\small\item\em Gets a span of data for the receive buffer for a specific rank. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_ac1cd4b95dc80536b64266fbe16e6e6b4}{start\+Comm}} ()
+\begin{DoxyCompactList}\small\item\em Start non-\/blocking communication by sending and receiving data. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_abc3cbe1aa10bea2d33f31d0a6c1b8034}{is\+Complete}} ()
+\begin{DoxyCompactList}\small\item\em Check if the communication is complete. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a2c810eccadb8e016be42296a2ef97d8c}{wait\+Complete}} ()
+\begin{DoxyCompactList}\small\item\em Blocking wait for the communication to complete. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a5ac36813eeeef04072088bf0912336ce}{finalise\+Comm}} ()
+\begin{DoxyCompactList}\small\item\em Finalize the communication by cleaning up the buffers. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A buffer for full-\/duplex communication in a distributed system using MPI. 
+
+The \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer}{Full\+Duplex\+Comm\+Buffer}} class facilitates efficient, non-\/blocking, point-\/to-\/point data exchange between MPI ranks, allowing for simultaneous send and receive operations. It manages two \mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1HalfDuplexCommBuffer}{Half\+Duplex\+Comm\+Buffer}} instances\+: one for sending data and one for receiving data. 
+
+Definition at line 26 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a31210ad9752f89e9f9358ffc727eec0e}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a31210ad9752f89e9f9358ffc727eec0e}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!FullDuplexCommBuffer@{FullDuplexCommBuffer}}
+\index{FullDuplexCommBuffer@{FullDuplexCommBuffer}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{FullDuplexCommBuffer()}{FullDuplexCommBuffer()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::\+Full\+Duplex\+Comm\+Buffer (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [default]}}
+
+
+
+Default constructor. 
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a72b566a0a161548ba7742d740a8062bd}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a72b566a0a161548ba7742d740a8062bd}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!FullDuplexCommBuffer@{FullDuplexCommBuffer}}
+\index{FullDuplexCommBuffer@{FullDuplexCommBuffer}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{FullDuplexCommBuffer()}{FullDuplexCommBuffer()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::\+Full\+Duplex\+Comm\+Buffer (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1mpi_1_1MPIEnvironment}{MPIEnvironment}}}]{mpi\+Environ,  }\item[{std\+::vector$<$ std\+::size\+\_\+t $>$}]{send\+Size,  }\item[{std\+::vector$<$ std\+::size\+\_\+t $>$}]{receive\+Size }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Constructor that initializes the send and receive buffers. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em environ} & The MPI environment. \\
+\hline
+{\em send\+Size} & The number of nodes, per rank, that this rank sends to. \\
+\hline
+{\em receive\+Size} & The number of nodes, per rank, that this rank receives from. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 41 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a5ac36813eeeef04072088bf0912336ce}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a5ac36813eeeef04072088bf0912336ce}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!finaliseComm@{finaliseComm}}
+\index{finaliseComm@{finaliseComm}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{finaliseComm()}{finaliseComm()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::finalise\+Comm (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Finalize the communication by cleaning up the buffers. 
+
+
+
+Definition at line 141 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a398efacd68a113396e428991b49a96ab}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a398efacd68a113396e428991b49a96ab}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!getReceive@{getReceive}}
+\index{getReceive@{getReceive}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{getReceive()}{getReceive()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename value\+Type $>$ \\
+std\+::span$<$value\+Type$>$ Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::get\+Receive (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{rank }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a span of data for the receive buffer for a specific rank. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em value\+Type} & The type of the data. \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em rank} & The rank of the receive buffer to get. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A span of data for the receive buffer. 
+\end{DoxyReturn}
+
+
+Definition at line 97 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_aeef462f5ce333ed0fa57d14613056e47}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_aeef462f5ce333ed0fa57d14613056e47}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!getReceive@{getReceive}}
+\index{getReceive@{getReceive}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{getReceive()}{getReceive()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename value\+Type $>$ \\
+std\+::span$<$const value\+Type$>$ Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::get\+Receive (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{rank }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a span of data for the receive buffer for a specific rank. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em value\+Type} & The type of the data. \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em rank} & The rank of the receive buffer to get. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A span of data for the receive buffer. 
+\end{DoxyReturn}
+
+
+Definition at line 109 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_ade2f20093bb137e0422a43a968e57811}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_ade2f20093bb137e0422a43a968e57811}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!getSend@{getSend}}
+\index{getSend@{getSend}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{getSend()}{getSend()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename value\+Type $>$ \\
+std\+::span$<$value\+Type$>$ Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::get\+Send (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{rank }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a span of data for the send buffer for a specific rank. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em value\+Type} & The type of the data. \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em rank} & The rank of the send buffer to get. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A span of data for the send buffer. 
+\end{DoxyReturn}
+
+
+Definition at line 73 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a5dac50ff38d261c667f48af6f0a4e55d}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a5dac50ff38d261c667f48af6f0a4e55d}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!getSend@{getSend}}
+\index{getSend@{getSend}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{getSend()}{getSend()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename value\+Type $>$ \\
+std\+::span$<$const value\+Type$>$ Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::get\+Send (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{rank }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a span of data for the send buffer for a specific rank. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em value\+Type} & The type of the data. \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em rank} & The rank of the send buffer to get. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A span of data for the send buffer. 
+\end{DoxyReturn}
+
+
+Definition at line 85 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a670bdc6009db2fd80a9fbe5178a4dc2e}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a670bdc6009db2fd80a9fbe5178a4dc2e}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!initComm@{initComm}}
+\index{initComm@{initComm}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{initComm()}{initComm()}}
+{\footnotesize\ttfamily template$<$typename value\+Type $>$ \\
+void Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::init\+Comm (\begin{DoxyParamCaption}\item[{std\+::string}]{comm\+Name }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Initialize the communication buffer. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em value\+Type} & The type of the data to be stored in the buffer. \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em comm\+Name} & A name for the communication, typically a file and line number. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 60 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a180b6f7fbc497d5bc8b150d83a927719}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a180b6f7fbc497d5bc8b150d83a927719}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!isCommInit@{isCommInit}}
+\index{isCommInit@{isCommInit}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{isCommInit()}{isCommInit()}}
+{\footnotesize\ttfamily bool Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::is\+Comm\+Init (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Check if the communication buffers are initialized. 
+
+\begin{DoxyReturn}{Returns}
+True if the buffers are initialized, false otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 52 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_abc3cbe1aa10bea2d33f31d0a6c1b8034}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_abc3cbe1aa10bea2d33f31d0a6c1b8034}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!isComplete@{isComplete}}
+\index{isComplete@{isComplete}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{isComplete()}{isComplete()}}
+{\footnotesize\ttfamily bool Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::is\+Complete (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Check if the communication is complete. 
+
+\begin{DoxyReturn}{Returns}
+True if the communication is complete, false otherwise. 
+\end{DoxyReturn}
+
+
+Definition at line 127 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_ac1cd4b95dc80536b64266fbe16e6e6b4}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_ac1cd4b95dc80536b64266fbe16e6e6b4}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!startComm@{startComm}}
+\index{startComm@{startComm}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{startComm()}{startComm()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::start\+Comm (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Start non-\/blocking communication by sending and receiving data. 
+
+
+
+Definition at line 117 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a2c810eccadb8e016be42296a2ef97d8c}\label{classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer_a2c810eccadb8e016be42296a2ef97d8c}} 
+\index{NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}!waitComplete@{waitComplete}}
+\index{waitComplete@{waitComplete}!NeoFOAM::mpi::FullDuplexCommBuffer@{NeoFOAM::mpi::FullDuplexCommBuffer}}
+\doxysubsubsection{\texorpdfstring{waitComplete()}{waitComplete()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::mpi\+::\+Full\+Duplex\+Comm\+Buffer\+::wait\+Complete (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Blocking wait for the communication to complete. 
+
+
+
+Definition at line 132 of file full\+Duplex\+Comm\+Buffer.\+hpp.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/core/mpi/\mbox{\hyperlink{fullDuplexCommBuffer_8hpp}{full\+Duplex\+Comm\+Buffer.\+hpp}}\end{DoxyCompactItemize}
