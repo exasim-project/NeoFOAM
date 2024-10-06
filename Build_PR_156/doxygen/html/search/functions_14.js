@@ -1,6 +1,14 @@
 var searchData=
 [
-  ['waitcomplete_671',['waitComplete',['../classNeoFOAM_1_1mpi_1_1FullDuplexCommBuffer.html#a2c810eccadb8e016be42296a2ef97d8c',1,'NeoFOAM::mpi::FullDuplexCommBuffer::waitComplete()'],['../classNeoFOAM_1_1mpi_1_1HalfDuplexCommBuffer.html#a70e8643078efa5b90942e97595081c8b',1,'NeoFOAM::mpi::HalfDuplexCommBuffer::waitComplete()']]],
-  ['weights_672',['weights',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a47cce75143670f8273d356a16b9baa5b',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme::weights()'],['../classNeoFOAM_1_1BoundaryMesh.html#add21b76d6d3db1f6868c3791e6593ce0',1,'NeoFOAM::BoundaryMesh::weights() const'],['../classNeoFOAM_1_1BoundaryMesh.html#af7a4e277f7e3b2a132837db89bf61e5d',1,'NeoFOAM::BoundaryMesh::weights(const localIdx i) const']]],
-  ['what_673',['what',['../classNeoFOAM_1_1NeoFOAMException.html#aa82c424baa9271ef79f191ff0448d347',1,'NeoFOAM::NeoFOAMException::what()'],['../classNeoFOAM_1_1Error.html#af83ca1338f3a80e3801a84d37351c924',1,'NeoFOAM::Error::what()']]]
+  ['_7eboundarypatchmixin_607',['~BoundaryPatchMixin',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1BoundaryPatchMixin.html#a923cf29ee11bb548424f6a8106e8ab4e',1,'NeoFOAM::finiteVolume::cellCentred::BoundaryPatchMixin']]],
+  ['_7ecommunicator_608',['~Communicator',['../classNeoFOAM_1_1Communicator.html#a58bb0db91db180ce4d2fa8f8edc17e00',1,'NeoFOAM::Communicator']]],
+  ['_7ecpuexecutor_609',['~CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html#a96176dcaa399677d193aa5c7219624a9',1,'NeoFOAM::CPUExecutor']]],
+  ['_7efield_610',['~Field',['../classNeoFOAM_1_1Field.html#a7cad3648ef3dbb9efd4429fd9ddc4860',1,'NeoFOAM::Field']]],
+  ['_7egeometryscheme_611',['~GeometryScheme',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#afadfe4d66e253c2d4f6ee9758fe8c849',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
+  ['_7egeometryschemefactory_612',['~GeometrySchemeFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometrySchemeFactory.html#a575d8a195f0f5e9c2466a333fb865aa3',1,'NeoFOAM::finiteVolume::cellCentred::GeometrySchemeFactory']]],
+  ['_7egpuexecutor_613',['~GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html#aa76970303961fc978a34620964b8abd3',1,'NeoFOAM::GPUExecutor']]],
+  ['_7eregister_614',['~Register',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register.html#a2218ee132a8f492507c3516639061274',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::Register']]],
+  ['_7eruntimeselectionfactory_615',['~RuntimeSelectionFactory',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4.html#a203cea16f8b1cb5249fcd9d4acbe508d',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;']]],
+  ['_7eserialexecutor_616',['~SerialExecutor',['../classNeoFOAM_1_1SerialExecutor.html#a5528a63f2a630f51f794c894f16565bb',1,'NeoFOAM::SerialExecutor']]],
+  ['_7esurfaceinterpolationfactory_617',['~SurfaceInterpolationFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolationFactory.html#a0f8b50249bfa75a3b72d821ef741e884',1,'NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolationFactory']]]
 ];

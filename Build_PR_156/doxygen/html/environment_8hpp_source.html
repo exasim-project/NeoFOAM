@@ -81,75 +81,70 @@ $(function() {
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;{</div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160; </div>
-<div class="line"><a name="l00012"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1mpi.html">   12</a></span>&#160;<span class="keyword">namespace </span>mpi</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;{</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160; </div>
-<div class="line"><a name="l00019"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1mpi_1_1MPIInit.html">   19</a></span>&#160;<span class="keyword">struct </span><a class="code" href="structNeoFOAM_1_1mpi_1_1MPIInit.html">MPIInit</a></div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;{</div>
-<div class="line"><a name="l00027"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1mpi_1_1MPIInit.html#a91e2920cc415c651e4cffc70e1a0ce21">   27</a></span>&#160;    <a class="code" href="structNeoFOAM_1_1mpi_1_1MPIInit.html#a91e2920cc415c651e4cffc70e1a0ce21">MPIInit</a>(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span>** argv)</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    {</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor">#ifdef NF_REQUIRE_MPI_THREAD_SUPPORT</span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;        <span class="keywordtype">int</span> provided;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;        MPI_Init_thread(&amp;argc, &amp;argv, MPI_THREAD_MULTIPLE, &amp;provided);</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;        <a class="code" href="error_8hpp.html#aecc669a189db22f652ffb9788f01a99b">NF_ASSERT</a>(</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;            provided == MPI_THREAD_MULTIPLE, <span class="stringliteral">&quot;The MPI library does not have full thread support&quot;</span></div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        );</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        MPI_Init(&amp;argc, &amp;argv);</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    }</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160; </div>
-<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1mpi_1_1MPIInit.html#a93a398b9173063ca19617d3a67ee2e3b">   43</a></span>&#160;    <a class="code" href="structNeoFOAM_1_1mpi_1_1MPIInit.html#a93a398b9173063ca19617d3a67ee2e3b">~MPIInit</a>() { MPI_Finalize(); }</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;};</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160; </div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160; </div>
-<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html">   51</a></span>&#160;<span class="keyword">class </span><a class="code" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html">MPIEnvironment</a></div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;{</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160; </div>
-<div class="line"><a name="l00060"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a009f16c4ae8850f3d94aacf82ac28095">   60</a></span>&#160;    <a class="code" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a009f16c4ae8850f3d94aacf82ac28095">MPIEnvironment</a>(MPI_Comm commGroup = MPI_COMM_WORLD) : communicator(commGroup)</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    {</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        updateRankData();</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    }</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160; </div>
-<div class="line"><a name="l00068"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a739ebad6e4147342302572cee82fad28">   68</a></span>&#160;    <a class="code" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a739ebad6e4147342302572cee82fad28">~MPIEnvironment</a>() = <span class="keywordflow">default</span>;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160; </div>
-<div class="line"><a name="l00075"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#ae0adf6f31335c281e2b610c1e7e1c75b">   75</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#ae0adf6f31335c281e2b610c1e7e1c75b">sizeRank</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(mpi_size); }</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160; </div>
-<div class="line"><a name="l00082"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#ad3057765956b4b1b4a4c97e9df5aa00c">   82</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#ad3057765956b4b1b4a4c97e9df5aa00c">rank</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(mpi_rank); }</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160; </div>
-<div class="line"><a name="l00089"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#aa06d55128b85b8479ac7ffff1d0d2e7d">   89</a></span>&#160;    MPI_Comm <a class="code" href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#aa06d55128b85b8479ac7ffff1d0d2e7d">comm</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> communicator; }</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160; </div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#ifdef NF_WITH_MPI_SUPPORT</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="keyword">namespace </span>mpi</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;{</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160; </div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="keyword">struct </span>MPIInit</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;{</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    MPIInit(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span>** argv)</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    {</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#ifdef NF_REQUIRE_MPI_THREAD_SUPPORT</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;        <span class="keywordtype">int</span> provided;</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;        MPI_Init_thread(&amp;argc, &amp;argv, MPI_THREAD_MULTIPLE, &amp;provided);</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        <a class="code" href="error_8hpp.html#aecc669a189db22f652ffb9788f01a99b">NF_ASSERT</a>(</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;            provided == MPI_THREAD_MULTIPLE, <span class="stringliteral">&quot;The MPI library does not have full thread support&quot;</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        );</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        MPI_Init(&amp;argc, &amp;argv);</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    }</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160; </div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    ~MPIInit() { MPI_Finalize(); }</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;};</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160; </div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160; </div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="keyword">class </span>MPIEnvironment</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;{</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160; </div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    MPIEnvironment(MPI_Comm commGroup = MPI_COMM_WORLD) : communicator(commGroup)</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    {</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        updateRankData();</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    }</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    ~MPIEnvironment() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160; </div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keywordtype">size_t</span> sizeRank()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(mpi_size); }</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160; </div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    <span class="keywordtype">size_t</span> rank()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span><span class="keywordtype">size_t</span><span class="keyword">&gt;</span>(mpi_rank); }</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160; </div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;    MPI_Comm comm()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> communicator; }</div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160; </div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    MPI_Comm communicator {MPI_COMM_NULL}; <span class="comment">// MPI communicator</span></div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="keywordtype">int</span> mpi_rank {-1};                     <span class="comment">// Index of this rank</span></div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keywordtype">int</span> mpi_size {-1};                     <span class="comment">// Number of ranks in this communicator group.</span></div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160; </div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <span class="keywordtype">void</span> updateRankData()</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    {</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        <a class="code" href="error_8hpp.html#aecc669a189db22f652ffb9788f01a99b">NF_ASSERT</a>(communicator != MPI_COMM_NULL, <span class="stringliteral">&quot;Invalid communicator, is null.&quot;</span>);</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        MPI_Comm_rank(communicator, &amp;mpi_rank);</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;        MPI_Comm_size(communicator, &amp;mpi_size);</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    }</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;};</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160; </div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;} <span class="comment">// namespace mpi</span></div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160; </div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    MPI_Comm communicator {MPI_COMM_NULL}; <span class="comment">// MPI communicator</span></div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <span class="keywordtype">int</span> mpi_rank {-1};                     <span class="comment">// Index of this rank</span></div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    <span class="keywordtype">int</span> mpi_size {-1};                     <span class="comment">// Number of ranks in this communicator group.</span></div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160; </div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    <span class="keywordtype">void</span> updateRankData()</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    {</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;        <a class="code" href="error_8hpp.html#aecc669a189db22f652ffb9788f01a99b">NF_ASSERT</a>(communicator != MPI_COMM_NULL, <span class="stringliteral">&quot;Invalid communicator, is null.&quot;</span>);</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;        MPI_Comm_rank(communicator, &amp;mpi_rank);</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        MPI_Comm_size(communicator, &amp;mpi_size);</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    }</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;};</div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160; </div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;} <span class="comment">// namespace NeoFOAM</span></div>
-<div class="ttc" id="aclassNeoFOAM_1_1mpi_1_1MPIEnvironment_html"><div class="ttname"><a href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html">NeoFOAM::mpi::MPIEnvironment</a></div><div class="ttdoc">Manages the MPI environment, including rank and rank size information.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00051">environment.hpp:52</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1mpi_1_1MPIEnvironment_html_a009f16c4ae8850f3d94aacf82ac28095"><div class="ttname"><a href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a009f16c4ae8850f3d94aacf82ac28095">NeoFOAM::mpi::MPIEnvironment::MPIEnvironment</a></div><div class="ttdeci">MPIEnvironment(MPI_Comm commGroup=MPI_COMM_WORLD)</div><div class="ttdoc">Initializes the MPI environment using a parsed communicator group.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00060">environment.hpp:60</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1mpi_1_1MPIEnvironment_html_a739ebad6e4147342302572cee82fad28"><div class="ttname"><a href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#a739ebad6e4147342302572cee82fad28">NeoFOAM::mpi::MPIEnvironment::~MPIEnvironment</a></div><div class="ttdeci">~MPIEnvironment()=default</div><div class="ttdoc">Finalizes the MPI environment.</div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1mpi_1_1MPIEnvironment_html_aa06d55128b85b8479ac7ffff1d0d2e7d"><div class="ttname"><a href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#aa06d55128b85b8479ac7ffff1d0d2e7d">NeoFOAM::mpi::MPIEnvironment::comm</a></div><div class="ttdeci">MPI_Comm comm() const</div><div class="ttdoc">Returns the communicator.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00089">environment.hpp:89</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1mpi_1_1MPIEnvironment_html_ad3057765956b4b1b4a4c97e9df5aa00c"><div class="ttname"><a href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#ad3057765956b4b1b4a4c97e9df5aa00c">NeoFOAM::mpi::MPIEnvironment::rank</a></div><div class="ttdeci">size_t rank() const</div><div class="ttdoc">Returns the rank of the current process.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00082">environment.hpp:82</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1mpi_1_1MPIEnvironment_html_ae0adf6f31335c281e2b610c1e7e1c75b"><div class="ttname"><a href="classNeoFOAM_1_1mpi_1_1MPIEnvironment.html#ae0adf6f31335c281e2b610c1e7e1c75b">NeoFOAM::mpi::MPIEnvironment::sizeRank</a></div><div class="ttdeci">size_t sizeRank() const</div><div class="ttdoc">Returns the number of ranks.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00075">environment.hpp:75</a></div></div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;} <span class="comment">// namespace mpi</span></div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160; </div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160; </div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aerror_8hpp_html"><div class="ttname"><a href="error_8hpp.html">error.hpp</a></div></div>
 <div class="ttc" id="aerror_8hpp_html_aecc669a189db22f652ffb9788f01a99b"><div class="ttname"><a href="error_8hpp.html#aecc669a189db22f652ffb9788f01a99b">NF_ASSERT</a></div><div class="ttdeci">#define NF_ASSERT(condition, message)</div><div class="ttdoc">Macro for asserting a condition and printing an error message if the condition is false.</div><div class="ttdef"><b>Definition:</b> <a href="error_8hpp_source.html#l00127">error.hpp:127</a></div></div>
 <div class="ttc" id="ainfo_8hpp_html"><div class="ttname"><a href="info_8hpp.html">info.hpp</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition:</b> <a href="demangle_8hpp_source.html#l00009">demangle.hpp:10</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1mpi_1_1MPIInit_html"><div class="ttname"><a href="structNeoFOAM_1_1mpi_1_1MPIInit.html">NeoFOAM::mpi::MPIInit</a></div><div class="ttdoc">A RAII class to manage MPI initialization and finalization with thread support.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00019">environment.hpp:20</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1mpi_1_1MPIInit_html_a91e2920cc415c651e4cffc70e1a0ce21"><div class="ttname"><a href="structNeoFOAM_1_1mpi_1_1MPIInit.html#a91e2920cc415c651e4cffc70e1a0ce21">NeoFOAM::mpi::MPIInit::MPIInit</a></div><div class="ttdeci">MPIInit(int argc, char **argv)</div><div class="ttdoc">Initializes the MPI environment, ensuring thread support.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00027">environment.hpp:27</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1mpi_1_1MPIInit_html_a93a398b9173063ca19617d3a67ee2e3b"><div class="ttname"><a href="structNeoFOAM_1_1mpi_1_1MPIInit.html#a93a398b9173063ca19617d3a67ee2e3b">NeoFOAM::mpi::MPIInit::~MPIInit</a></div><div class="ttdeci">~MPIInit()</div><div class="ttdoc">Destroy the MPIInit object.</div><div class="ttdef"><b>Definition:</b> <a href="environment_8hpp_source.html#l00043">environment.hpp:43</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
