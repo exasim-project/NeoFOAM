@@ -15,47 +15,33 @@
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-
-TEST_CASE("Field Collection")
+TEST_CASE("Field Document")
 {
-    NeoFOAM::Database db;
 
-    SECTION("create FieldCollection")
+    SECTION("create FieldDocument")
     {
-        // fvcc::FieldCollection::registerCollection("fieldCollection", db);
-        // fvcc::FieldCollection fieldCollection("fieldCollection", db);
-        // REQUIRE(fieldCollection.name() == "fieldCollection");
-        // REQUIRE(fieldCollection.size() == 0);
+        auto doc = fvcc::FieldDocument::create({
+            .name = "T",
+            .timeIndex = 1,
+            .iterationIndex = 2,
+            .subCycleIndex = 3
+        });
+        REQUIRE(doc.keys().size() == 5);
+        REQUIRE(doc.id().substr(0,4) == "doc_");
+        REQUIRE(name(doc) == "T");
+        REQUIRE(fvcc::timeIndex(doc) == 1);
+        REQUIRE(fvcc::iterationIndex(doc) == 2);
+        REQUIRE(fvcc::subCycleIndex(doc) == 3);
 
-        // SECTION("insert Field")
-        // {
-        //     auto field = createVolumeField(NeoFOAM::createSingleCellMesh(NeoFOAM::SerialExecutor {}), "T");
-        //     fieldCollection.insert(field);
-        //     REQUIRE(fieldCollection.size() == 1);
-        // }
-
-        // SECTION("get Field")
-        // {
-        //     auto field = createVolumeField(NeoFOAM::createSingleCellMesh(NeoFOAM::SerialExecutor {}), "T");
-        //     auto key = fieldCollection.insert(field);
-        //     auto retrievedField = fieldCollection.get(key);
-        //     REQUIRE(retrievedField.name() == "T");
-        // }
-
-        // SECTION("query Fields")
-        // {
-        //     auto field1 = createVolumeField(NeoFOAM::createSingleCellMesh(NeoFOAM::SerialExecutor {}), "T");
-        //     auto key1 = fieldCollection.insert(field1);
-
-        //     auto field2 = createVolumeField(NeoFOAM::createSingleCellMesh(NeoFOAM::SerialExecutor {}), "T2");
-        //     auto key2 = fieldCollection.insert(field2);
-
-        //     auto results = fieldCollection.find([](const fvcc::VolumeField<NeoFOAM::scalar>& field) {
-        //         return field.name() == "T2";
-        //     });
-
-        //     REQUIRE(results.size() == 1);
-        //     REQUIRE(fieldCollection.get(results[0]).name() == "T2");
-        // }
+        SECTION("modify FieldDocument")
+        {
+            fvcc::timeIndex(doc) = 4;
+            fvcc::iterationIndex(doc) = 5;
+            fvcc::subCycleIndex(doc) = 6;
+            REQUIRE(fvcc::timeIndex(doc) == 4);
+            REQUIRE(fvcc::iterationIndex(doc) == 5);
+            REQUIRE(fvcc::subCycleIndex(doc) == 6);
+        }
     }
 }
+

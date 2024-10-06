@@ -10,25 +10,43 @@
 #include "NeoFOAM/core/error.hpp"
 
 #include "NeoFOAM/core/database.hpp"
+#include "NeoFOAM/core/document.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-class FieldCollection
+
+
+bool validateFieldDoc(const Document& doc);
+
+class FieldDocument
 {
 public:
 
-    FieldCollection(std::string name, NeoFOAM::Database& db);
+    std::string name;
+    std::size_t timeIndex;
+    std::size_t iterationIndex;
+    std::int64_t subCycleIndex;
 
-    static void registerCollection(std::string name, NeoFOAM::Database& db);
+    
+    static NeoFOAM::Document create(FieldDocument fDoc);
 
-private:
-    static const std::string typeName;
-    std::string name_;
-    NeoFOAM::Database& db_;
-    NeoFOAM::Collection& collection_;
-
+    Document doc();
 };
+
+// const versions
+std::size_t timeIndex(const NeoFOAM::Document& doc);
+
+std::size_t iterationIndex(const NeoFOAM::Document& doc);
+
+std::int64_t subCycleIndex(const NeoFOAM::Document& doc);
+
+// non-const versions
+std::size_t& timeIndex(NeoFOAM::Document& doc);
+
+std::size_t& iterationIndex(NeoFOAM::Document& doc);
+
+std::int64_t& subCycleIndex(NeoFOAM::Document& doc);
 
 
 } // namespace NeoFOAM

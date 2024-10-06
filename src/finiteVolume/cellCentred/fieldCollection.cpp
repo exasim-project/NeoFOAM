@@ -1,27 +1,62 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
 #include "NeoFOAM/finiteVolume/cellCentred/fieldCollection.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-const std::string FieldCollection::typeName = "FieldCollection";
 
-FieldCollection::FieldCollection(std::string name, NeoFOAM::Database& db)
-    : name_(name), db_(db), collection_(db.getCollection(name))
+// Initialize the static member
+bool validateFieldDoc(const Document& doc)
 {
-
+    return doc.contains("name") && doc.contains("timeIndex") && doc.contains("iterationIndex")
+        && doc.contains("subCycleIndex") && hasId(doc);
 }
 
-void FieldCollection::registerCollection(std::string name, NeoFOAM::Database& db)
+Document FieldDocument::create(FieldDocument fDoc) { return fDoc.doc(); }
+
+Document FieldDocument::doc()
 {
-
-    FieldCollection::registerCollection("fieldCollection", db);
-
-    db.createCollection(name, FieldCollection::typeName);
+    return Document(
+        {{"name", name},
+         {"timeIndex", timeIndex},
+         {"iterationIndex", iterationIndex},
+         {"subCycleIndex", subCycleIndex}},
+        validateFieldDoc
+    );
 }
 
+// const versions
+std::size_t timeIndex(const NeoFOAM::Document& doc)
+{
+    return doc.get<std::size_t>("timeIndex");
+}
 
+std::size_t iterationIndex(const NeoFOAM::Document& doc)
+{
+    return doc.get<std::size_t>("iterationIndex");
+}
 
-} // namespace NeoFOAM
+std::int64_t subCycleIndex(const NeoFOAM::Document& doc)
+{
+    return doc.get<std::int64_t>("subCycleIndex");
+}
+
+// non-const versions
+std::size_t& timeIndex(NeoFOAM::Document& doc)
+{
+    return doc.get<std::size_t>("timeIndex");
+}
+
+std::size_t& iterationIndex(NeoFOAM::Document& doc)
+{
+    return doc.get<std::size_t>("iterationIndex");
+}
+
+std::int64_t& subCycleIndex(NeoFOAM::Document& doc)
+{
+    return doc.get<std::int64_t>("subCycleIndex");
+}
+
+} // namespace NeoFOAM::finiteVolume::cellCentred
