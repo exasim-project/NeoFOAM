@@ -14,12 +14,34 @@
 
 #include "mpiSerialization.hpp"
 
+/**
+ * Add this class for null buffer
+ */
+class NullStreamBuf : public std::streambuf
+{
+public:
+
+    int overflow(int c) override { return c; }
+};
 
 /**
  * Stream that doesn't do anything (think of /dev/null)
  */
 class NullStream : public std::ostream
 {
+public:
+
+    /**
+     * Add this default constructor to avoid MSVC compile error message "the default constructor of
+     * "NullStream" cannot be referenced -- it is a deleted function"
+     *
+     * Use defined buffer initialize basic class ostream
+     */
+    NullStream() : std::ostream(&buffer) {}
+
+private:
+
+    NullStreamBuf buffer;
 };
 
 /**
@@ -42,6 +64,12 @@ const NullStream& operator<<(NullStream&& os, const T& value)
 class DiscardStream : public Catch::IStream
 {
 public:
+
+    /**
+     * Add this default constructor to avoid MSVC compile error message "the default constructor of
+     * "NullStream" cannot be referenced -- it is a deleted function"
+     */
+    DiscardStream() {}
 
     std::ostream& stream() override { return nullStream; }
 
