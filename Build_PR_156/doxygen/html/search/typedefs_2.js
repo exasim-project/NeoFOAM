@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['exec_641',['exec',['../classNeoFOAM_1_1CPUExecutor.html#ae9332fe72769bbc6fef8d9ba0ad5c294',1,'NeoFOAM::CPUExecutor::exec()'],['../classNeoFOAM_1_1GPUExecutor.html#a6b6de4e85583777ea90859d082c4beaf',1,'NeoFOAM::GPUExecutor::exec()'],['../classNeoFOAM_1_1SerialExecutor.html#a9d88d2e09a3c3e5d8ff690badf556437',1,'NeoFOAM::SerialExecutor::exec()']]],
-  ['executor_642',['Executor',['../namespaceNeoFOAM.html#ad8645a25cba2275ee5bea619093da91e',1,'NeoFOAM']]]
+  ['fixedgradienttype_621',['FixedGradientType',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1FixedGradient.html#a73b4994cd2996a5f312af16898e578f1',1,'NeoFOAM::finiteVolume::cellCentred::volumeBoundary::FixedGradient']]]
 ];
