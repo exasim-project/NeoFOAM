@@ -41,6 +41,8 @@ public:
         );
     }
 
+    std::string getName() const { return "Dummy"; }
+
     const VolumeField& volumeField() const { return field_; }
 
     VolumeField& volumeField() { return field_; }
@@ -72,6 +74,8 @@ TEST_CASE("Operator")
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, mesh, fA, bf, bcs);
         auto b = Dummy(exec, vf);
+
+        REQUIRE(b.getName() == "Dummy");
     }
 
     SECTION("Supports Coefficients" + execName)
