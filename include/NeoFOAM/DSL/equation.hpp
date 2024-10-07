@@ -15,11 +15,11 @@
 namespace NeoFOAM::DSL
 {
 
-class EqnSystem
+class Equation
 {
 public:
 
-    EqnSystem(const NeoFOAM::Executor& exec, std::size_t nCells)
+    Equation(const NeoFOAM::Executor& exec, std::size_t nCells)
         : exec_(exec), nCells_(nCells), temporalOperators_(), implicitOperators_(),
           explicitOperators_(), volumeField_(nullptr)
     {}
@@ -51,7 +51,7 @@ public:
         }
     }
 
-    void addSystem(const EqnSystem& eqnSys)
+    void addSystem(const Equation& eqnSys)
     {
         for (auto& Operator : eqnSys.temporalOperators_)
         {
@@ -140,30 +140,30 @@ private:
     fvcc::VolumeField<NeoFOAM::scalar>* volumeField_;
 };
 
-EqnSystem operator+(EqnSystem lhs, const EqnSystem& rhs)
+Equation operator+(Equation lhs, const Equation& rhs)
 {
     lhs.addSystem(rhs);
     return lhs;
 }
 
-EqnSystem operator+(EqnSystem lhs, const Operator& rhs)
+Equation operator+(Equation lhs, const Operator& rhs)
 {
     lhs.addOperator(rhs);
     return lhs;
 }
 
-EqnSystem operator+(const Operator& lhs, const Operator& rhs)
+Equation operator+(const Operator& lhs, const Operator& rhs)
 {
     NF_ERROR_EXIT("Not implemented.");
-    //     EqnSystem eqnSys(lhs.exec(), lhs.nCells());
+    //     Equation eqnSys(lhs.exec(), lhs.nCells());
     //     eqnSys.addOperator(lhs);
     //     eqnSys.addOperator(rhs);
     //     return eqnSys;
 }
 
-EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
+Equation operator*(NeoFOAM::scalar scale, const Equation& es)
 {
-    EqnSystem results(es.exec(), es.nCells());
+    Equation results(es.exec(), es.nCells());
     for (const auto& Operator : es.temporalOperators())
     {
         results.addOperator(scale * Operator);
@@ -179,22 +179,22 @@ EqnSystem operator*(NeoFOAM::scalar scale, const EqnSystem& es)
     return results;
 }
 
-EqnSystem operator-(EqnSystem lhs, const EqnSystem& rhs)
+Equation operator-(Equation lhs, const Equation& rhs)
 {
     lhs.addSystem(-1.0 * rhs);
     return lhs;
 }
 
-EqnSystem operator-(EqnSystem lhs, const Operator& rhs)
+Equation operator-(Equation lhs, const Operator& rhs)
 {
     lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
-EqnSystem operator-(const Operator& lhs, const Operator& rhs)
+Equation operator-(const Operator& lhs, const Operator& rhs)
 {
     NF_ERROR_EXIT("Not implemented.");
-    // EqnSystem results(lhs.exec(), lhs.nCells());
+    // Equation results(lhs.exec(), lhs.nCells());
     // results.addOperator(lhs);
     // results.addOperator(-1.0 * rhs);
     // return results;

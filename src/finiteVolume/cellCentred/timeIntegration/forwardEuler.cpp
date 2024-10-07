@@ -11,7 +11,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-ForwardEuler::ForwardEuler(const dsl::EqnSystem& eqnSystem, const Dictionary& dict)
+ForwardEuler::ForwardEuler(const dsl::Equation& eqnSystem, const Dictionary& dict)
     : TimeIntegrationFactory::Register<ForwardEuler>(eqnSystem, dict)
 {
     // Constructor

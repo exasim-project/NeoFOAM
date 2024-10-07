@@ -20,7 +20,7 @@ class ForwardEuler : public TimeIntegrationFactory::Register<ForwardEuler>
 
 public:
 
-    ForwardEuler(const dsl::EqnSystem& eqnSystem, const Dictionary& dict);
+    ForwardEuler(const DSL::Equation& eqnSystem, const Dictionary& dict);
 
     static std::string name() { return "forwardEuler"; }
 

@@ -7,11 +7,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/DSL/operator.hpp"
-#include "NeoFOAM/DSL/eqnSystem.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 
 namespace dsl = NeoFOAM::DSL;
 
