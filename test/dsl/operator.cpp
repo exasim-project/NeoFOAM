@@ -76,6 +76,7 @@ TEST_CASE("Operator")
         auto b = Dummy(exec, vf);
 
         REQUIRE(b.getName() == "Dummy");
+        REQUIRE(b.getType() == Operator::Type::Explicit);
     }
 
     SECTION("Supports Coefficients" + execName)

@@ -68,7 +68,7 @@ public:
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) {}
 
-    //
+    // NOTE
     // const Field<scalar>* field() { return field_; }
 
 protected:
@@ -77,7 +77,6 @@ protected:
 
     // NOTE unfortunately does not work
     // std::optional<const Field<scalar>&> field_;
-
     // const Field<scalar>* field_;
 
     Coeff coeffs_;
