@@ -149,10 +149,6 @@ public:
 
     const Executor& exec() const { return model_->exec(); }
 
-    // std::size_t nCells() const { return model_->nCells(); }
-
-    // fvcc::VolumeField<scalar>* volumeField() { return model_->volumeField(); }
-
 
 private:
 
@@ -165,7 +161,6 @@ private:
     {
         virtual ~OperatorConcept() = default;
 
-        virtual std::string display() const = 0;
 
         virtual void explicitOperation(Field<scalar>& source) = 0;
 
@@ -175,6 +170,9 @@ private:
         virtual void build(const Input& input) = 0;
 
         virtual bool evaluated() const = 0;
+
+        /* returns the name of the operator */
+        virtual std::string getName() const = 0;
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
         virtual Operator::Type getType() const = 0;
@@ -186,8 +184,6 @@ private:
         virtual Coeff getCoefficient() const = 0;
 
         virtual const Executor& exec() const = 0;
-
-        // virtual std::size_t nCells() const = 0;
 
         // virtual fvcc::VolumeField<scalar>* volumeField() = 0;
 
@@ -202,9 +198,8 @@ private:
         /* @brief build with concrete operator */
         OperatorModel(ConcreteOperatorType concreteOp) : concreteOp_(std::move(concreteOp)) {}
 
-        std::string display() const override
-        { /*return concreteOp_.display();*/
-        }
+        /* returns the name of the operator */
+        std::string getName() const override { return concreteOp_.getName(); }
 
         virtual void explicitOperation(Field<scalar>& source) override
         {
@@ -221,9 +216,6 @@ private:
                 concreteOp_.temporalOperation(field);
             }
         }
-
-        // virtual fvcc::VolumeField<scalar>* volumeField() override { return
-        // concreteOp_.volumeField(); }
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) override { concreteOp_.build(input); }
