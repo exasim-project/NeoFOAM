@@ -12,7 +12,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/core/inputs.hpp"
+#include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/DSL/coeff.hpp"
 
 
@@ -55,13 +55,6 @@ public:
 
     virtual ~OperatorMixin() = default;
 
-    // void setField(const Field<scalar>> field)
-    // {
-    //     field_ = field;
-    //     // FIXME
-    //     // getCoefficient() = Coeff(field_->span(), getCoefficient().value);
-    // }
-
     const Executor& exec() const { return exec_; }
 
     Coeff& getCoefficient() { return coeffs_; }
@@ -71,6 +64,9 @@ public:
     bool evaluated() const { return evaluated_; }
 
     bool& evaluated() { return evaluated_; }
+
+    /* @brief Given an input this function reads required coeffs */
+    void build(const Input& input) {}
 
     //
     // const Field<scalar>* field() { return field_; }
@@ -142,14 +138,13 @@ public:
     /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
     Operator::Type getType() const { return model_->getType(); }
 
-    void setField(std::shared_ptr<Field<scalar>> field) { model_->setField(field); }
-
     Coeff& getCoefficient() { return model_->getCoefficient(); }
 
     Coeff getCoefficient() const { return model_->getCoefficient(); }
 
-    bool evaluated() { return model_->evaluated(); }
+    bool evaluated() const { return model_->evaluated(); }
 
+    /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) { model_->build(input); }
 
     const Executor& exec() const { return model_->exec(); }
@@ -176,14 +171,13 @@ private:
 
         virtual void temporalOperation(Field<scalar>& field) = 0;
 
+        /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
 
-        virtual bool evaluated() = 0;
+        virtual bool evaluated() const = 0;
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
         virtual Operator::Type getType() const = 0;
-
-        virtual void setField(std::shared_ptr<Field<scalar>> field) = 0;
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() = 0;
@@ -202,63 +196,52 @@ private:
     };
 
     // Templated derived class to implement the type-specific behavior
-    template<typename T>
+    template<typename ConcreteOperatorType>
     struct OperatorModel : OperatorConcept
     {
-        OperatorModel(T cls) : cls_(std::move(cls)) {}
+        /* @brief build with concrete operator */
+        OperatorModel(ConcreteOperatorType concreteOp) : concreteOp_(std::move(concreteOp)) {}
 
         std::string display() const override
-        { /*return cls_.display();*/
+        { /*return concreteOp_.display();*/
         }
 
         virtual void explicitOperation(Field<scalar>& source) override
         {
-            if constexpr (HasExplicitOperator<T>)
+            if constexpr (HasExplicitOperator<ConcreteOperatorType>)
             {
-                cls_.explicitOperation(source);
+                concreteOp_.explicitOperation(source);
             }
         }
 
         virtual void temporalOperation(Field<scalar>& field) override
         {
-            if constexpr (HasTemporalOperator<T>)
+            if constexpr (HasTemporalOperator<ConcreteOperatorType>)
             {
-                cls_.temporalOperation(field);
+                concreteOp_.temporalOperation(field);
             }
         }
 
-        // virtual fvcc::VolumeField<scalar>* volumeField() override { return cls_.volumeField(); }
+        // virtual fvcc::VolumeField<scalar>* volumeField() override { return
+        // concreteOp_.volumeField(); }
 
-        virtual void build(const Input& input) override
-        {
-            // FIXME
-            // cls_.build(input);
-        }
+        /* @brief Given an input this function reads required coeffs */
+        virtual void build(const Input& input) override { concreteOp_.build(input); }
 
-        virtual bool evaluated() override
-        {
-            // FIXME
-            // return cls_.evaluated();
-        }
+        virtual bool evaluated() const override { return concreteOp_.evaluated(); }
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-        Operator::Type getType() const override { return cls_.getType(); }
+        Operator::Type getType() const override { return concreteOp_.getType(); }
 
-        const Executor& exec() const override { return cls_.exec(); }
+        const Executor& exec() const override { return concreteOp_.exec(); }
 
-        // std::size_t nCells() const override { return cls_.nCells(); }
-
-        void setField(std::shared_ptr<Field<scalar>> field) override
-        {
-            // FIXME
-            // cls_.setField(field);
-        }
+        // std::size_t nCells() const override { return concreteOp_.nCells(); }
 
         /* @brief get the associated coefficient for this term */
-        virtual Coeff& getCoefficient() override { return cls_.getCoefficient(); }
+        virtual Coeff& getCoefficient() override { return concreteOp_.getCoefficient(); }
 
         /* @brief get the associated coefficient for this term */
-        virtual Coeff getCoefficient() const override { return cls_.getCoefficient(); }
+        virtual Coeff getCoefficient() const override { return concreteOp_.getCoefficient(); }
 
         // The Prototype Design Pattern
         std::unique_ptr<OperatorConcept> clone() const override
@@ -266,43 +249,41 @@ private:
             return std::make_unique<OperatorModel>(*this);
         }
 
-        T cls_;
+        ConcreteOperatorType concreteOp_;
     };
 
     std::unique_ptr<OperatorConcept> model_;
 };
 
 
-auto operator*(scalar scale, const Operator& lhs)
+auto operator*(scalar scalarCoeff, const Operator& rhs)
 {
-    Operator result = lhs;
-    result.getCoefficient() *= scale;
+    Operator result = rhs;
+    result.getCoefficient() *= scalarCoeff;
     return result;
 }
 
-// add multiply operator to Operator
-auto operator*(Field<scalar> scale, const Operator& lhs)
+auto operator*(const Field<scalar>& coeffField, const Operator& rhs)
 {
-    Operator result = lhs;
-    // FIXME
-    // if (!result.getCoefficient().useSpan)
-    // {
-    //     // allocate the scaling field to avoid deallocation
-    //     result.setField(std::make_shared<Field<scalar>>(scale));
-    // }
-    // else
-    // {
-    //     result.getCoefficient() *= scale;
-    // }
+    Operator result = rhs;
+    result.getCoefficient() *= Coeff(coeffField);
     return result;
 }
 
-// template<ForFieldKernel ScaleFunction>
-template<typename ScaleFunction>
-Operator operator*(ScaleFunction scaleFunc, const Operator& lhs)
+auto operator*(const Coeff& coeff, const Operator& rhs)
 {
+    Operator result = rhs;
+    result.getCoefficient() *= coeff;
+    return result;
+}
+
+template<typename CoeffFunction>
+    requires std::invocable<CoeffFunction&, size_t>
+Operator operator*(CoeffFunction coeffFunc, const Operator& lhs)
+{
+    // TODO implement
+    NF_ERROR_EXIT("Not implemented");
     Operator result = lhs;
-    // FIXME
     // if (!result.getCoefficient().useSpan)
     // {
     //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));

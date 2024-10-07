@@ -29,13 +29,15 @@ public:
 
     Dummy(const Executor& exec, VolumeField& field) : OperatorMixin(exec), field_(field) {}
 
-    void explicitOperation(Field& source, NeoFOAM::scalar scale)
+    void explicitOperation(Field& source)
     {
-        auto sourceField = source.span();
+        auto sourceSpan = source.span();
+        auto fieldSpan = field_.internalField().span();
+        auto coeff = getCoefficient();
         NeoFOAM::parallelFor(
             source.exec(),
-            {0, source.size()},
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
+            source.range(),
+            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += coeff[i] * fieldSpan[i]; }
         );
     }
 
@@ -88,5 +90,26 @@ TEST_CASE("Operator")
         auto coeffc = c.getCoefficient();
         auto coeffd = d.getCoefficient();
         auto coeffE = e.getCoefficient();
+
+        REQUIRE(c.evaluated() == false);
+        REQUIRE(d.evaluated() == false);
+        REQUIRE(e.evaluated() == false);
+
+        Field source(exec, 1, 2.0);
+        c.explicitOperation(source);
+
+        // 2 += 2 * 2
+        auto hostSourceC = source.copyToHost();
+        REQUIRE(hostSourceC.span()[0] == 6.0);
+
+        // 6 += 2 * 2
+        d.explicitOperation(source);
+        auto hostSourceD = source.copyToHost();
+        REQUIRE(hostSourceD.span()[0] == 10.0);
+
+        // 10 += - 6 * 2
+        e.explicitOperation(source);
+        auto hostSourceE = source.copyToHost();
+        REQUIRE(hostSourceE.span()[0] == -2.0);
     }
 }
