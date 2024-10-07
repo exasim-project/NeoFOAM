@@ -29,7 +29,7 @@ public:
 
     Dummy(const Executor& exec, VolumeField& field) : OperatorMixin(exec), field_(field) {}
 
-    void explicitOperation(Field& source)
+    void explicitOperation(Field& source) const
     {
         auto sourceSpan = source.span();
         auto fieldSpan = field_.internalField().span();
@@ -48,6 +48,8 @@ public:
     VolumeField& volumeField() { return field_; }
 
     Operator::Type getType() const { return Operator::Type::Explicit; }
+
+    size_t getSize() const { return field_.internalField().size(); }
 
 private:
 
