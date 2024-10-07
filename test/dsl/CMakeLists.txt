@@ -3,5 +3,4 @@
 
 neofoam_unit_test(coeff)
 neofoam_unit_test(operator)
-
-# FIXME neofoam_unit_test(dsl)
+neofoam_unit_test(equation)
