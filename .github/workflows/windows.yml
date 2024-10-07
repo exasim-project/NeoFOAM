@@ -23,6 +23,7 @@ jobs:
     - name: Checkout the latest code (shallow clone)
       uses: actions/checkout@v4
 
+    - uses: ilammy/msvc-dev-cmd@v1
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: configure
       run: |
@@ -31,16 +32,10 @@ jobs:
 
     - name: build
       run: |
-        set PATH=C:\Program Files\Git\mingw64\bin;%PATH%
-        set PATH=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin;%PATH%
-        set PATH=C:\Program Files (x86)\Ginkgo\bin;%PATH%
         cmake --build --preset develop
       shell: cmd
 
     - name: test
       run: |
-        set PATH=C:\Program Files\Git\mingw64\bin;%PATH%
-        set PATH=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin;%PATH%
-        set PATH=C:\Program Files (x86)\Ginkgo\bin;%PATH%
         cmake --build --preset develop --target test
       shell: cmd
