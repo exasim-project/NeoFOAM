@@ -100,19 +100,14 @@ public:
 
     Operator(Operator&& eqnOperator) : model_ {std::move(eqnOperator.model_)} {}
 
+    // TODO needed?
     Operator& operator=(const Operator& eqnOperator)
     {
         model_ = eqnOperator.model_->clone();
         return *this;
     }
 
-    Operator& operator=(Operator&& eqnOperator)
-    {
-        model_ = std::move(eqnOperator.model_);
-        return *this;
-    }
-
-    // std::string display() const { return model_->display(); }
+    Operator& operator=(Operator&& eqnOperator) { return this->operator=(eqnOperator); }
 
     void explicitOperation(Field<scalar>& source) { model_->explicitOperation(source); }
 
@@ -128,6 +123,7 @@ public:
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) { model_->build(input); }
 
+    /* @brief Get the executor */
     const Executor& exec() const { return model_->exec(); }
 
 
@@ -135,13 +131,10 @@ private:
 
     /* @brief Base class defining the concept of a term. This effectively
      * defines what functions need to be implemented by a concrete Operator implementation
-     *
-     *
      * */
     struct OperatorConcept
     {
         virtual ~OperatorConcept() = default;
-
 
         virtual void explicitOperation(Field<scalar>& source) = 0;
 
@@ -162,6 +155,7 @@ private:
         /* @brief get the associated coefficient for this term */
         virtual Coeff getCoefficient() const = 0;
 
+        /* @brief Get the executor */
         virtual const Executor& exec() const = 0;
 
         // The Prototype Design Pattern
@@ -200,6 +194,7 @@ private:
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
         Operator::Type getType() const override { return concreteOp_.getType(); }
 
+        /* @brief Get the executor */
         const Executor& exec() const override { return concreteOp_.exec(); }
 
         /* @brief get the associated coefficient for this term */
