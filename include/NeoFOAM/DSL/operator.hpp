@@ -100,15 +100,6 @@ public:
 
     Operator(Operator&& eqnOperator) : model_ {std::move(eqnOperator.model_)} {}
 
-    // TODO needed?
-    Operator& operator=(const Operator& eqnOperator)
-    {
-        model_ = eqnOperator.model_->clone();
-        return *this;
-    }
-
-    Operator& operator=(Operator&& eqnOperator) { return this->operator=(eqnOperator); }
-
     void explicitOperation(Field<scalar>& source) { model_->explicitOperation(source); }
 
     void temporalOperation(Field<scalar>& field) { model_->temporalOperation(field); }
