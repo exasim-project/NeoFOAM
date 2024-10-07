@@ -50,9 +50,6 @@ public:
 
     OperatorMixin(const Executor exec) : exec_(exec), coeffs_() {};
 
-    // OperatorMixin(const Executor exec, const Field<scalar>* field)
-    //     : exec_(exec), field_(field), coeffs_(), evaluated_(false) {};
-
     virtual ~OperatorMixin() = default;
 
     const Executor& exec() const { return exec_; }
@@ -64,16 +61,9 @@ public:
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) {}
 
-    // NOTE
-    // const Field<scalar>* field() { return field_; }
-
 protected:
 
     const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
-
-    // NOTE unfortunately does not work
-    // std::optional<const Field<scalar>&> field_;
-    // const Field<scalar>* field_;
 
     Coeff coeffs_;
 };
@@ -174,8 +164,6 @@ private:
 
         virtual const Executor& exec() const = 0;
 
-        // virtual fvcc::VolumeField<scalar>* volumeField() = 0;
-
         // The Prototype Design Pattern
         virtual std::unique_ptr<OperatorConcept> clone() const = 0;
     };
@@ -213,8 +201,6 @@ private:
         Operator::Type getType() const override { return concreteOp_.getType(); }
 
         const Executor& exec() const override { return concreteOp_.exec(); }
-
-        // std::size_t nCells() const override { return concreteOp_.nCells(); }
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() override { return concreteOp_.getCoefficient(); }
