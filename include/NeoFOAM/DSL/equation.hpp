@@ -21,7 +21,7 @@ public:
 
     Equation(const Executor& exec, std::size_t nCells)
         : exec_(exec), nCells_(nCells), temporalOperators_(), implicitOperators_(),
-          explicitOperators_(), volumeField_(nullptr)
+          explicitOperators_()
     {}
 
     /* @brief perform all explicit operation and accumulate the result */
@@ -116,37 +116,19 @@ public:
 
     scalar getDt() const { return dt_; }
 
-    fvcc::VolumeField<scalar>* volumeField()
-    {
-        if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
-        {
-            NF_ERROR_EXIT("No temporal or implicit terms to solve.");
-        }
-        if (temporalOperators_.size() > 0)
-        {
-            // FIXME
-            NF_ERROR_EXIT("Not implemented.");
-            // volumeField_ = temporalOperators_[0].volumeField();
-        }
-        else
-        {
-            // FIXME
-            NF_ERROR_EXIT("Not implemented.");
-            // volumeField_ = implicitOperators_[0].volumeField();
-        }
-        return volumeField_;
-    }
-
     scalar dt_ = 0;
 
 private:
 
     const Executor exec_;
+
     const std::size_t nCells_;
+
     std::vector<Operator> temporalOperators_;
+
     std::vector<Operator> implicitOperators_;
+
     std::vector<Operator> explicitOperators_;
-    fvcc::VolumeField<scalar>* volumeField_;
 };
 
 Equation operator+(Equation lhs, const Equation& rhs)
