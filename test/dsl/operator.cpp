@@ -96,10 +96,6 @@ TEST_CASE("Operator")
         auto coeffd = d.getCoefficient();
         auto coeffE = e.getCoefficient();
 
-        REQUIRE(c.evaluated() == false);
-        REQUIRE(d.evaluated() == false);
-        REQUIRE(e.evaluated() == false);
-
         Field source(exec, 1, 2.0);
         c.explicitOperation(source);
 

@@ -48,7 +48,7 @@ class OperatorMixin
 
 public:
 
-    OperatorMixin(const Executor exec) : exec_(exec), coeffs_(), evaluated_(false) {};
+    OperatorMixin(const Executor exec) : exec_(exec), coeffs_() {};
 
     // OperatorMixin(const Executor exec, const Field<scalar>* field)
     //     : exec_(exec), field_(field), coeffs_(), evaluated_(false) {};
@@ -60,10 +60,6 @@ public:
     Coeff& getCoefficient() { return coeffs_; }
 
     const Coeff& getCoefficient() const { return coeffs_; }
-
-    bool evaluated() const { return evaluated_; }
-
-    bool& evaluated() { return evaluated_; }
 
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) {}
@@ -80,8 +76,6 @@ protected:
     // const Field<scalar>* field_;
 
     Coeff coeffs_;
-
-    bool evaluated_;
 };
 
 
@@ -141,8 +135,6 @@ public:
 
     Coeff getCoefficient() const { return model_->getCoefficient(); }
 
-    bool evaluated() const { return model_->evaluated(); }
-
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) { model_->build(input); }
 
@@ -167,8 +159,6 @@ private:
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
-
-        virtual bool evaluated() const = 0;
 
         /* returns the name of the operator */
         virtual std::string getName() const = 0;
@@ -218,8 +208,6 @@ private:
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) override { concreteOp_.build(input); }
-
-        virtual bool evaluated() const override { return concreteOp_.evaluated(); }
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
         Operator::Type getType() const override { return concreteOp_.getType(); }
