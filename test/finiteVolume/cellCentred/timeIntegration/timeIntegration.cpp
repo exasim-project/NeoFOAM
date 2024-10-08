@@ -3,10 +3,10 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
+#include "common.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
@@ -71,7 +71,9 @@ public:
     std::size_t nCells() const { return nCells_; }
 
     dsl::Operator::Type termType_;
+
     const NeoFOAM::Executor exec_;
+
     std::size_t nCells_;
 };
 

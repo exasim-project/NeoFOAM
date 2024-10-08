@@ -13,26 +13,24 @@
 
 #include <functional>
 
-namespace dsl = NeoFOAM::DSL;
-
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoFOAM
 {
 
 class TimeIntegrationFactory :
-    public NeoFOAM::RuntimeSelectionFactory<
+    public RuntimeSelectionFactory<
         TimeIntegrationFactory,
-        Parameters<const dsl::Equation&, const Dictionary&>>
+        Parameters<const DSL::Equation&, const Dictionary&>>
 {
 
 public:
 
     static std::string name() { return "timeIntegrationFactory"; }
 
-    TimeIntegrationFactory(const dsl::Equation& eqnSystem, const Dictionary& dict)
+    TimeIntegrationFactory(const DSL::Equation& eqnSystem, const Dictionary& dict)
         : eqnSystem_(eqnSystem), dict_(dict)
     {}
 
-    virtual ~TimeIntegrationFactory() {} // Virtual destructor
+    virtual ~TimeIntegrationFactory() {}
 
     virtual void solve() = 0; // Pure virtual function for solving
 
@@ -62,11 +60,9 @@ public:
             TimeIntegrationFactory::create(dict.get<std::string>("type"), eqnSystem, dict)
         ) {};
 
-
     void solve() { timeIntegrateStrategy_->solve(); }
 
 private:
-
 
     std::unique_ptr<TimeIntegrationFactory> timeIntegrateStrategy_;
 };

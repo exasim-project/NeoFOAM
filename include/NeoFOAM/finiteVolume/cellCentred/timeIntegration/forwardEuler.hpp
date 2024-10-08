@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
+//
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #pragma once
+
+#include <functional>
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
-#include <functional>
-
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-
 
 class ForwardEuler : public TimeIntegrationFactory::Register<ForwardEuler>
 {
@@ -27,7 +27,6 @@ public:
     static std::string doc() { return "forwardEuler timeIntegration"; }
 
     static std::string schema() { return "none"; }
-
 
     void solve() override;
 
