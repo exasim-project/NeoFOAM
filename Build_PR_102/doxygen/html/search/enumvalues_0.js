@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['band_816',['Band',['../namespaceNeoFOAM_1_1mpi.html#ad2080ed6fe76416aece0600b1993f496a67fd95fc1e88f15b3efb9feef0fc0dc9',1,'NeoFOAM::mpi']]],
-  ['bor_817',['Bor',['../namespaceNeoFOAM_1_1mpi.html#ad2080ed6fe76416aece0600b1993f496a2fc3e7b551bc67be82d33717e22f43df',1,'NeoFOAM::mpi']]]
+  ['explicit_720',['Explicit',['../classNeoFOAM_1_1DSL_1_1Operator.html#a37681417f8de1cc8f478d673061e537da9d71760e2dd451db2df354d0fd29cd7f',1,'NeoFOAM::DSL::Operator']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['reduceop_814',['ReduceOp',['../namespaceNeoFOAM_1_1mpi.html#ad2080ed6fe76416aece0600b1993f496',1,'NeoFOAM::mpi']]]
+  ['type_719',['Type',['../classNeoFOAM_1_1DSL_1_1Operator.html#a37681417f8de1cc8f478d673061e537d',1,'NeoFOAM::DSL::Operator']]]
 ];

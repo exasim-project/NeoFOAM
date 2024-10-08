@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['mpienvironment_433',['MPIEnvironment',['../classNeoFOAM_1_1mpi_1_1MPIEnvironment.html',1,'NeoFOAM::mpi']]],
-  ['mpiinit_434',['MPIInit',['../structNeoFOAM_1_1mpi_1_1MPIInit.html',1,'NeoFOAM::mpi']]]
+  ['operator_379',['Operator',['../classNeoFOAM_1_1DSL_1_1Operator.html',1,'NeoFOAM::DSL']]],
+  ['operatormixin_380',['OperatorMixin',['../classNeoFOAM_1_1DSL_1_1OperatorMixin.html',1,'NeoFOAM::DSL']]]
 ];
