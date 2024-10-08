@@ -12,6 +12,7 @@
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::DSL::Coeff;
+
 namespace detail = NeoFOAM::DSL::detail;
 
 
@@ -100,7 +101,7 @@ TEST_CASE("Coeff")
         {
             NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
             NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
-            Coeff coeff {-5.0,fieldB};
+            Coeff coeff {-5.0, fieldB};
             {
                 NeoFOAM::parallelFor(
                     fieldA, KOKKOS_LAMBDA(const size_t i) { return coeff[i] + 2.0; }
@@ -112,9 +113,5 @@ TEST_CASE("Coeff")
             REQUIRE(hostFieldA[1] == -3.0);
             REQUIRE(hostFieldA[2] == -3.0);
         }
-
     }
-
-        
-    
 }

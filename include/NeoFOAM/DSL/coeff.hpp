@@ -43,7 +43,6 @@ public:
         return *this;
     }
 
-
     Coeff& operator*=(const Coeff& rhs)
     {
         if (hasSpan_ && rhs.hasSpan_)
@@ -73,6 +72,7 @@ private:
 
 
 namespace detail
+
 {
 /* @brief function to force evaluation to a field, the field will be resized to hold either a
  * single value or the full field
@@ -97,8 +97,8 @@ void toField(Coeff& coeff, Field<scalar>& rhs)
         fill(rhs, coeff[0]);
     }
 }
-}
 
+}
 
 inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
 {
