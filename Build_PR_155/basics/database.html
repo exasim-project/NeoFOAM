@@ -217,7 +217,6 @@
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/fieldDataBase.html">fieldDataBase</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
@@ -265,17 +264,16 @@
         <article role="main" id="furo-main-content">
           <section id="database">
 <span id="fvcc-database"></span><h1>Database<a class="headerlink" href="#database" title="Link to this heading">¶</a></h1>
+<p>NeoFOAM uses a document-based database to store the data. This general purpose database stores data in a collection of documents. Each document is pair of strings and values that are validate with a custom validator function as shown in the the following class diagram:</p>
 <div class="mermaid">
             classDiagram
 
     class Database{
-        +CRUD()
         -std::unordermap&amp;lt;std::string, Collection&gt; data
     }
 
     class Collection{
-        +CRUD()
-        +query()
+        +std::vector&amp;lt;std::string&gt; find(std::function predicate)
         -std::unordermap&amp;lt;std::string, Document&gt; data
     }
 
@@ -288,7 +286,73 @@
 
     Database &quot;1&quot; -- &quot;n&quot; Collection
     Collection &quot;1&quot; -- &quot;n&quot; Document
-        </div></section>
+        </div><p>The general abstraction is that each object can be represented as Key-Value pairs similar to the <code class="docutils literal notranslate"><span class="pre">Dictionary</span></code> class. The following code snippet shows how to create a document and access its values:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Document</span><span class="w"> </span><span class="n">doc</span><span class="p">({{</span><span class="s">&quot;key1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;value1&quot;</span><span class="p">)},</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;key2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">}});</span>
+<span class="w">    </span><span class="n">REQUIRE</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="n">keys</span><span class="p">().</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span>
+<span class="w">    </span><span class="n">REQUIRE</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="n">id</span><span class="p">().</span><span class="n">substr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;doc_&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">REQUIRE</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="n">get</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;key1&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;value1&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">REQUIRE</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="n">get</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;key2&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">2.0</span><span class="p">);</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">NeoFOAM::Document</span></code> mainly extendes the <code class="docutils literal notranslate"><span class="pre">Dictionary</span></code> class by and id and adds a validator function that can be used to validate the document. The following code snippet shows how to create a document with a custom validator function:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">validator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Dictionary</span><span class="o">&amp;</span><span class="w"> </span><span class="n">dict</span><span class="p">)</span>
+<span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">dict</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="s">&quot;key1&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">dict</span><span class="p">.</span><span class="n">contains</span><span class="p">(</span><span class="s">&quot;key2&quot;</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
+
+<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Document</span><span class="w"> </span><span class="n">doc</span><span class="p">({{</span><span class="s">&quot;key1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;value1&quot;</span><span class="p">)},</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;key2&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">}},</span><span class="w"> </span><span class="n">validator</span><span class="p">);</span>
+<span class="n">REQUIRE_NOTHROW</span><span class="p">(</span><span class="n">doc</span><span class="p">.</span><span class="n">validate</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>These documents are stored in a collection that can be accessed by the database. The following code snippet shows how to create a collection and add a document to it:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Document</span><span class="w"> </span><span class="n">doc</span><span class="p">;</span>
+<span class="n">doc</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="s">&quot;key1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;value1&quot;</span><span class="p">));</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">doc1Id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">collection1</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">doc</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The collection can be accessed by the database. The following code snippet shows add and get a collection:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Database</span><span class="w"> </span><span class="n">db</span><span class="p">;</span>
+<span class="n">db</span><span class="p">.</span><span class="n">createCollection</span><span class="p">(</span><span class="s">&quot;collection1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;testCollection&quot;</span><span class="p">);</span>
+<span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">collection1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">db</span><span class="p">.</span><span class="n">getCollection</span><span class="p">(</span><span class="s">&quot;collection1&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>The job of the developer is to create constraints on the data that is stored in the collection e.g. by providing free functions, validators to simplify the data access and ensure the data consistency:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FieldDocument</span>
+<span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">timeIndex</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">iterationIndex</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">int64_t</span><span class="w"> </span><span class="n">subCycleIndex</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">any</span><span class="w"> </span><span class="n">field</span><span class="p">;</span><span class="w"> </span><span class="c1">// stores any VolumeField or SurfaceField</span>
+
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">Document</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="n">FieldDocument</span><span class="w"> </span><span class="n">fDoc</span><span class="p">);</span><span class="w"> </span><span class="c1">// also creates a document with a custom validator function</span>
+
+<span class="w">    </span><span class="n">Document</span><span class="w"> </span><span class="nf">doc</span><span class="p">();</span>
+<span class="p">};</span>
+
+<span class="c1">// access field members</span>
+<span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="nf">timeIndex</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Document</span><span class="o">&amp;</span><span class="w"> </span><span class="n">doc</span><span class="p">);</span><span class="w"> </span><span class="c1">// const access</span>
+<span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">timeIndex</span><span class="p">(</span><span class="n">Document</span><span class="o">&amp;</span><span class="w"> </span><span class="n">doc</span><span class="p">);</span><span class="w"> </span><span class="c1">// non-const access</span>
+
+
+<span class="c1">// usage</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">doc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">FieldDocument</span><span class="o">::</span><span class="n">create</span><span class="p">(</span>
+<span class="w">    </span><span class="p">{.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;T&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">.</span><span class="n">timeIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="p">.</span><span class="n">iterationIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">        </span><span class="p">.</span><span class="n">subCycleIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">        </span><span class="p">.</span><span class="n">field</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">createVolumeField</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;T&quot;</span><span class="p">)}</span>
+<span class="p">);</span>
+<span class="c1">// insert</span>
+<span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">keyDoc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fieldCollection</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">doc1</span><span class="p">);</span>
+
+<span class="c1">// modify the timeIndex</span>
+<span class="n">fvcc</span><span class="o">::</span><span class="n">timeIndex</span><span class="p">(</span><span class="n">doc2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>The simplest way to additional functionality for a collection is by providing free functions that operate on the document as shown above. However, there are other approaches how to wrap a collection with additional functionality.</p>
+</section>
 
         </article>
       </div>
