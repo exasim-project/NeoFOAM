@@ -11,6 +11,10 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+// forward declaration
+template<typename GeoField>
+class SolutionFields;
+
 /**
  * @class SurfaceField
  * @brief Represents a surface field in a finite volume method.
@@ -29,11 +33,13 @@ public:
 
     SurfaceField(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
+            name,
             mesh,
             DomainField<ValueType>(
                 exec,
@@ -80,6 +86,7 @@ public:
             boundaryCondition.correctBoundaryCondition(this->field_);
         }
     }
+
 
 private:
 

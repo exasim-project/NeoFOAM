@@ -4,14 +4,17 @@
 #pragma once
 
 #include <vector>
+#include <optional>
+#include <functional>
+
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
+
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-
 
 /**
  * @class GeometricFieldMixin
@@ -36,9 +39,12 @@ public:
      * @param field The domain field object.
      */
     GeometricFieldMixin(
-        const Executor& exec, const UnstructuredMesh& mesh, const DomainField<ValueType>& field
+        const Executor& exec,
+        std::string fieldName,
+        const UnstructuredMesh& mesh,
+        const DomainField<ValueType>& field
     )
-        : exec_(exec), mesh_(mesh), field_(field)
+        : exec_(exec), name(fieldName), mesh_(mesh), field_(field)
     {}
 
     /**
@@ -83,11 +89,16 @@ public:
      */
     const UnstructuredMesh& mesh() const { return mesh_; }
 
+    std::string name; // The name of the field
+
+
+
 protected:
 
     Executor exec_;                // The executor object
     const UnstructuredMesh& mesh_; // The unstructured mesh object
     DomainField<ValueType> field_; // The domain field object
+
 };
 
 } // namespace NeoFOAM

@@ -10,6 +10,9 @@ target_sources(
   NeoFOAM
   PRIVATE "core/primitives/vector.cpp"
           "core/time.cpp"
+          "core/collection.cpp"
+          "core/database.cpp"
+          "core/document.cpp"
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/tokenList.cpp"
@@ -23,6 +26,7 @@ target_sources(
           "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
           "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
           "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
+          "finiteVolume/cellCentred/fieldCollection.cpp"
           "finiteVolume/cellCentred/boundary/boundary.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
