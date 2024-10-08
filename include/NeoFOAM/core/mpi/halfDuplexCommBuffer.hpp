@@ -7,14 +7,14 @@
 #include <typeindex>
 #include <vector>
 
-#include <mpi.h>
-
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 
 namespace NeoFOAM
 {
+
+#ifdef NF_WITH_MPI_SUPPORT
 
 namespace mpi
 {
@@ -246,6 +246,8 @@ private:
     }
 };
 
-}
+} // namespace mpi
+
+#endif
 
 }

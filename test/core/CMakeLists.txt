@@ -1,10 +1,15 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-add_subdirectory(mpi)
+if(NEOFOAM_ENABLE_MPI_SUPPORT)
+  add_subdirectory(mpi)
+endif()
+
 add_subdirectory(primitives)
 
 neofoam_unit_test(dictionary)
+neofoam_unit_test(tokenList)
+neofoam_unit_test(inputs)
 neofoam_unit_test(executor)
 neofoam_unit_test(parallelAlgorithms)
 
@@ -15,8 +20,9 @@ target_sources(testRegister  PRIVATE "testRegister.cpp")
 target_link_libraries(testRegister PRIVATE NeoFOAM_public_api cpptrace::cpptrace MPI::MPI_CXX)
 
 add_executable(registerClass "registerClass.cpp")
-target_link_libraries(registerClass PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace MPI::MPI_CXX
-                                            NeoFOAM_public_api testRegister)
+
+target_link_libraries(registerClass PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace
+                                            NeoFOAM_public_api)
 add_test(
   NAME registerClass
   COMMAND registerClass
