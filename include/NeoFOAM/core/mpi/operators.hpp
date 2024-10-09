@@ -3,7 +3,9 @@
 #pragma once
 
 #include <complex>
+#ifdef NF_WITH_MPI_SUPPORT
 #include <mpi.h>
+#endif
 #include <type_traits>
 
 #include "NeoFOAM/core/error.hpp"
@@ -11,6 +13,8 @@
 
 namespace NeoFOAM
 {
+
+#ifdef NF_WITH_MPI_SUPPORT
 
 namespace mpi
 {
@@ -222,6 +226,8 @@ inline bool test(MPI_Request* request)
     return static_cast<bool>(flag);
 }
 
-}
+} // namespace mpi
+
+#endif
 
 }
