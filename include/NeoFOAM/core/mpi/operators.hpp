@@ -106,13 +106,13 @@ constexpr MPI_Datatype getType()
     else if constexpr (std::is_same_v<valueType, long double>)
         return MPI_LONG_DOUBLE;
     else if constexpr (std::is_same_v<valueType, bool>)
-        return MPI_C_BOOL;
+        return MPI_CXX_BOOL;
     else if constexpr (std::is_same_v<valueType, std::complex<float>>)
-        return MPI_C_FLOAT_COMPLEX;
+        return MPI_CXX_FLOAT_COMPLEX;
     else if constexpr (std::is_same_v<valueType, std::complex<double>>)
-        return MPI_C_DOUBLE_COMPLEX;
+        return MPI_CXX_DOUBLE_COMPLEX;
     else if constexpr (std::is_same_v<valueType, std::complex<long double>>)
-        return MPI_C_LONG_DOUBLE_COMPLEX;
+        return MPI_CXX_LONG_DOUBLE_COMPLEX;
     else
         NF_ERROR_EXIT("Invalid MPI datatype requested.");
     return MPI_CHAR; // This is to suppress the warning
