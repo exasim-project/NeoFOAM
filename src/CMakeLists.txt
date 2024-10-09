@@ -7,37 +7,34 @@ add_library(NeoFOAM SHARED)
 include(GNUInstallDirs)
 
 set(NeoFOAM_SRCS
-"core/primitives/vector.cpp"
-          "core/time.cpp"
-          "core/dictionary.cpp"
-          "core/demangle.cpp"
-          "core/tokenList.cpp"
-          "core/kokkos.cpp"
-          "executor/CPUExecutor.cpp"
-          "executor/GPUExecutor.cpp"
-          "executor/serialExecutor.cpp"
-          "mesh/unstructured/boundaryMesh.cpp"
-          "mesh/unstructured/unstructuredMesh.cpp"
-          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
-          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
-          "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
-          "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
-          "finiteVolume/cellCentred/boundary/boundary.cpp"
-          "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
-          "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
-          "finiteVolume/cellCentred/interpolation/linear.cpp"
-          "finiteVolume/cellCentred/interpolation/upwind.cpp"
-)
+    "core/primitives/vector.cpp"
+    "core/time.cpp"
+    "core/dictionary.cpp"
+    "core/demangle.cpp"
+    "core/tokenList.cpp"
+    "core/kokkos.cpp"
+    "executor/CPUExecutor.cpp"
+    "executor/GPUExecutor.cpp"
+    "executor/serialExecutor.cpp"
+    "mesh/unstructured/boundaryMesh.cpp"
+    "mesh/unstructured/unstructuredMesh.cpp"
+    "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+    "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+    "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
+    "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
+    "finiteVolume/cellCentred/boundary/boundary.cpp"
+    "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
+    "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+    "finiteVolume/cellCentred/interpolation/linear.cpp"
+    "finiteVolume/cellCentred/interpolation/upwind.cpp")
 
-target_sources(
-  NeoFOAM
-  PRIVATE ${NeoFOAM_SRCS})
+target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
                                  "mesh/unstructured/communicator.cpp")
 endif()
-if(Kokkos_ENABLE_CUDA)
+if(NEOFOAM_ENABLE_CUDA)
   set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
 endif()
 
@@ -52,7 +49,6 @@ if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM PUBLIC MPI::MPI_CXX)
 endif()
 
-
 add_library(NeoFOAM_STATIC STATIC)
 target_sources(NeoFOAM_STATIC PRIVATE ${NeoFOAM_SRCS})
 enable_sanitizers(
@@ -60,8 +56,7 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 target_link_libraries(NeoFOAM_STATIC PRIVATE neofoam_warnings neofoam_options)
-target_link_libraries(NeoFOAM_STATIC PUBLIC NeoFOAM_public_api  
-                                            Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM_STATIC PUBLIC NeoFOAM_public_api Kokkos::kokkos cpptrace::cpptrace)
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM_STATIC PUBLIC MPI::MPI_CXX)
 endif()
