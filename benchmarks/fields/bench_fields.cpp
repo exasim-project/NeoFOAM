@@ -38,25 +38,6 @@ int main(int argc, char* argv[])
     return result;
 }
 
-template<typename SpanA, typename SpanB, typename T>
-struct kernelLambda_1
-{
-    SpanA spanA;
-    SpanB spanB;
-    T val;
-
-    KOKKOS_FUNCTION void operator()(const size_t i) const { spanA[i] = spanB[i] + val; }
-};
-
-template<typename SpanA, typename SpanB, typename T>
-struct kernelLambdaPlusB
-{
-    SpanA spanA;
-    SpanB spanB;
-
-    KOKKOS_FUNCTION T operator()(const size_t i) const { return spanA[i] + spanB[i]; }
-};
-
 TEST_CASE("Vector addition [benchmark]")
 {
 
@@ -116,10 +97,9 @@ TEST_CASE("Vector addition [benchmark]")
 
     auto sGpuB = gpuB.span();
     auto sGpuC = gpuC.span();
-    kernelLambdaPlusB<decltype(sGpuB), decltype(sGpuC), NeoFOAM::scalar> kernel {sGpuB, sGpuC};
     BENCHMARK("Field<GPU> addition no allocation")
     {
-        gpuA.apply(kernel);
+        gpuA.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sGpuB[i] + sGpuC[i]; });
         return Kokkos::fence();
         // return GPUa;
     };
@@ -136,8 +116,10 @@ TEST_CASE("Vector addition [benchmark]")
 
     auto sompB = ompB.span();
     auto sompC = ompC.span();
-    kernelLambdaPlusB<decltype(sompB), decltype(sompC), NeoFOAM::scalar> kernel {sompB, sompC};
-    BENCHMARK("Field<OMP> addition no allocation") { ompA.apply(kernel); };
+    BENCHMARK("Field<OMP> addition no allocation")
+    {
+        ompA.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return sompB[i] + sompC[i]; });
+    };
 }
 }
 ;

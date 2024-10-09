@@ -219,15 +219,6 @@ TEST_CASE("Field Container Operations")
     }
 }
 
-template<typename Span, typename T>
-struct kernelLambdaDouble
-{
-    Span span;
-    T val;
-
-    KOKKOS_FUNCTION T operator()(const size_t i) const { return val * span[i]; }
-};
-
 TEST_CASE("Field Operations")
 {
     NeoFOAM::Executor exec = GENERATE(
@@ -270,21 +261,10 @@ TEST_CASE("Field Operations")
         REQUIRE(equal(a, 20.0));
 
         auto sB = b.span();
-        NeoFOAM::scalar val = 2.0;
-        kernelLambdaDouble<decltype(sB), decltype(val)> kernel {sB, val};
-        a.apply(kernel);
+        a.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return 2 * sB[i]; });
         REQUIRE(equal(a, 20.0));
     }
 }
-
-template<typename SpanA, typename SpanB, typename T>
-struct kernelLambdaPlus
-{
-    SpanA spanA;
-    SpanB spanB;
-
-    KOKKOS_FUNCTION T operator()(const size_t i) const { return spanA[i] + spanB[i]; }
-};
 
 TEST_CASE("getSpans")
 {
@@ -294,32 +274,25 @@ TEST_CASE("getSpans")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("getSpans_" + execName)
+    NeoFOAM::Field<NeoFOAM::scalar> a(exec, 3, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
+
+    auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
+
+    REQUIRE(spanA[0] == 1.0);
+    REQUIRE(spanB[0] == 2.0);
+    REQUIRE(spanC[0] == 3.0);
+
+    NeoFOAM::parallelFor(
+        a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
+    );
+
+    auto [hostA] = NeoFOAM::copyToHosts(a);
+
+    for (auto value : hostA.span())
     {
-        NeoFOAM::Field<NeoFOAM::scalar> a(exec, 5, 1.0);
-        NeoFOAM::Field<NeoFOAM::scalar> b(exec, 5, 2.0);
-        NeoFOAM::Field<NeoFOAM::scalar> c(exec, 5, 3.0);
-
-        auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
-
-        {
-            auto [hostA, hostB, hostC] = NeoFOAM::copyToHosts(a, b, c);
-
-            REQUIRE(hostA[0] == 1.0);
-            REQUIRE(hostB[0] == 2.0);
-            REQUIRE(hostC[0] == 3.0);
-        }
-
-        kernelLambdaPlus<decltype(spanB), decltype(spanC), NeoFOAM::scalar> kernel {spanB, spanC};
-        NeoFOAM::parallelFor(a, kernel);
-
-        auto [hostA] = NeoFOAM::copyToHosts(a);
-
-        for (auto value : hostA.span())
-        {
-            REQUIRE(value == 5.0);
-        }
+        REQUIRE(value == 5.0);
     }
 }
