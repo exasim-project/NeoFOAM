@@ -25,7 +25,11 @@ if(NOT ${Kokkos_FOUND})
 
   FetchContent_MakeAvailable(Kokkos)
 else()
-  include(cmake/AutoEnableDevice.cmake)
+  if(DEFINED Kokkos_ENABLE_CUDA)
+    set(NEOFOAM_ENABLE_CUDA
+        ON
+        CACHE INTERNAL "")
+  endif()
 endif()
 
 include(cmake/CPM.cmake)

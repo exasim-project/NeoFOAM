@@ -44,10 +44,6 @@ if(NOT DEFINED Kokkos_ENABLE_CUDA)
         OFF
         CACHE INTERNAL "")
   endif()
-else()
-  set(NEOFOAM_ENABLE_CUDA
-      ON
-      CACHE INTERNAL "")
 endif()
 
 if(NOT DEFINED Kokkos_ENABLE_HIP)
