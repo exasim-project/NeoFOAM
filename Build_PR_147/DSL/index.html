@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="EqnSystem" href="eqnSystem.html" /><link rel="prev" title="Stencil" href="../finiteVolume/cellCentred/stencil.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Equation" href="equation.html" /><link rel="prev" title="Stencil" href="../finiteVolume/cellCentred/stencil.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/DSL/index.html" />
 
     <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
@@ -222,8 +222,8 @@
 </ul>
 </li>
 <li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">Domain Specific Language (DSL)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="eqnSystem.html">EqnSystem</a></li>
-<li class="toctree-l2"><a class="reference internal" href="eqnTerm.html">EqnTerm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="equation.html">Equation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operator.html">Operator</a></li>
 </ul>
 </li>
 </ul>
@@ -306,7 +306,7 @@ This approach allows engineers to focus on the physics of the problem rather tha
 <p>The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
 The equation system can be passed to <strong>sundials</strong> and be integrated by <strong>RK methods</strong> and <strong>BDF methods</strong> on heterogeneous architectures.</p>
 <p>The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adoption should be possible with minimal effort and the same equation from above should read:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">dsl</span><span class="o">::</span><span class="n">EqnSystem</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">UEqn</span>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">dsl</span><span class="o">::</span><span class="n">Equation</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">UEqn</span>
 <span class="p">(</span>
 <span class="w">    </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 <span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
@@ -321,8 +321,8 @@ That is 1. assemble the system and 2. solve the system.
 After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="eqnSystem.html">EqnSystem</a></li>
-<li class="toctree-l1"><a class="reference internal" href="eqnTerm.html">EqnTerm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="equation.html">Equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operator.html">Operator</a></li>
 </ul>
 </div>
 </section>
@@ -332,12 +332,12 @@ After the system is assembled or solved, it provides access to the linear system
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="eqnSystem.html">
+          <a class="next-page" href="equation.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">EqnSystem</div>
+                <div class="title">Equation</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

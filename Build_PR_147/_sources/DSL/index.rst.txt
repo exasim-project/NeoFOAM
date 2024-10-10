@@ -46,7 +46,7 @@ The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adop
 
 .. code-block:: cpp
 
-    dsl::EqnSystem<NeoFOAM::scalar> UEqn
+    dsl::Equation<NeoFOAM::scalar> UEqn
     (
         fvcc::impOp::ddt(U)
         + fvcc::impOp::div(phi, U)
@@ -67,5 +67,5 @@ After the system is assembled or solved, it provides access to the linear system
     :maxdepth: 2
     :glob:
 
-    eqnSystem.rst
-    eqnTerm.rst
+    equation.rst
+    operator.rst

@@ -2,24 +2,25 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM_1_1DSL" kind="namespace" language="C++">
     <compoundname>NeoFOAM::DSL</compoundname>
-    <innerclass refid="classNeoFOAM_1_1DSL_1_1EqnSystem" prot="public">NeoFOAM::DSL::EqnSystem</innerclass>
-    <innerclass refid="classNeoFOAM_1_1DSL_1_1EqnTerm" prot="public">NeoFOAM::DSL::EqnTerm</innerclass>
+    <innerclass refid="classNeoFOAM_1_1DSL_1_1Coeff" prot="public">NeoFOAM::DSL::Coeff</innerclass>
+    <innerclass refid="classNeoFOAM_1_1DSL_1_1Equation" prot="public">NeoFOAM::DSL::Equation</innerclass>
+    <innerclass refid="classNeoFOAM_1_1DSL_1_1OperatorMixin" prot="public">NeoFOAM::DSL::OperatorMixin</innerclass>
+    <innerclass refid="classNeoFOAM_1_1DSL_1_1Operator" prot="public">NeoFOAM::DSL::Operator</innerclass>
+    <innernamespace refid="namespaceNeoFOAM_1_1DSL_1_1detail">NeoFOAM::DSL::detail</innernamespace>
       <sectiondef kind="var">
-      <memberdef kind="variable" id="namespaceNeoFOAM_1_1DSL_1ab072f0b9ab697dafc3ff480643acecc0" prot="public" static="no" mutable="no">
+      <memberdef kind="variable" id="namespaceNeoFOAM_1_1DSL_1a7d33b9ceb769bf9fc2fdca218bf3989a" prot="public" static="no" mutable="no">
         <templateparamlist>
           <param>
             <type>typename T</type>
           </param>
         </templateparamlist>
         <type>concept</type>
-        <definition>concept NeoFOAM::DSL::HasTemporalTerm</definition>
+        <definition>concept NeoFOAM::DSL::HasTemporalOperator</definition>
         <argsstring></argsstring>
-        <name>HasTemporalTerm</name>
+        <name>HasTemporalOperator</name>
         <initializer>= requires(T t) {
     {
-        t.temporalOperation(
-            std::declval&lt;<ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">NeoFOAM::scalar</ref>&gt;&amp;&gt;(), std::declval&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">NeoFOAM::scalar</ref>&gt;()
-        )
+        t.temporalOperation(std::declval&lt;<ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">scalar</ref>&gt;&amp;&gt;(), std::declval&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">scalar</ref>&gt;())
     } -&gt; std::same_as&lt;void&gt;; 
 }</initializer>
         <briefdescription>
@@ -28,23 +29,21 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnTerm.hpp" line="20" column="9" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnTerm.hpp" bodystart="20" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" line="25" column="9" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" bodystart="25" bodyend="-1"/>
       </memberdef>
-      <memberdef kind="variable" id="namespaceNeoFOAM_1_1DSL_1a41b1b4bcc794ab897f65d25b8ba1e371" prot="public" static="no" mutable="no">
+      <memberdef kind="variable" id="namespaceNeoFOAM_1_1DSL_1a2ffb95869599c26679834d2ceaefe569" prot="public" static="no" mutable="no">
         <templateparamlist>
           <param>
             <type>typename T</type>
           </param>
         </templateparamlist>
         <type>concept</type>
-        <definition>concept NeoFOAM::DSL::HasExplicitTerm</definition>
+        <definition>concept NeoFOAM::DSL::HasExplicitOperator</definition>
         <argsstring></argsstring>
-        <name>HasExplicitTerm</name>
+        <name>HasExplicitOperator</name>
         <initializer>= requires(T t) {
     {
-        t.explicitOperation(
-            std::declval&lt;<ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">NeoFOAM::scalar</ref>&gt;&amp;&gt;(), std::declval&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">NeoFOAM::scalar</ref>&gt;()
-        )
+        t.explicitOperation(std::declval&lt;<ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt;<ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">scalar</ref>&gt;&amp;&gt;())
     } -&gt; std::same_as&lt;void&gt;; 
 }</initializer>
         <briefdescription>
@@ -53,84 +52,105 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnTerm.hpp" line="29" column="9" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnTerm.hpp" bodystart="29" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" line="32" column="9" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" bodystart="32" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a820d4e04fb7a65aa4b5afdf548e154f8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator+</definition>
-        <argsstring>(EqnSystem lhs, const EqnSystem &amp;rhs)</argsstring>
-        <name>operator+</name>
-        <param>
-          <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-          <declname>lhs</declname>
-        </param>
-        <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref> &amp;</type>
-          <declname>rhs</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="137" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="137" bodyend="141"/>
-      </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1af599e6c209c0db51b0c80590dd38e99f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator+</definition>
-        <argsstring>(EqnSystem lhs, const EqnTerm &amp;rhs)</argsstring>
-        <name>operator+</name>
-        <param>
-          <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-          <declname>lhs</declname>
-        </param>
-        <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
-          <declname>rhs</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="143" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="143" bodyend="147"/>
-      </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a9f88bf215b7d32f33991c4c824661d8a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator+</definition>
-        <argsstring>(const EqnTerm &amp;lhs, const EqnTerm &amp;rhs)</argsstring>
-        <name>operator+</name>
-        <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
-          <declname>lhs</declname>
-        </param>
-        <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
-          <declname>rhs</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="149" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="149" bodyend="155"/>
-      </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a4dd1c4af4771f93fc8a4c3dc0e08560d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator*</definition>
-        <argsstring>(NeoFOAM::scalar scale, const EqnSystem &amp;es)</argsstring>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1aed88429694340ed502a89301131f7cfb" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Coeff" kindref="compound">Coeff</ref></type>
+        <definition>Coeff NeoFOAM::DSL::operator*</definition>
+        <argsstring>(const Coeff &amp;lhs, const Coeff &amp;rhs)</argsstring>
         <name>operator*</name>
         <param>
-          <type><ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">NeoFOAM::scalar</ref></type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Coeff" kindref="compound">Coeff</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Coeff" kindref="compound">Coeff</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/coeff.hpp" line="103" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/coeff.hpp" bodystart="103" bodyend="108"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a8a4687b0098b8f71b795a7fbc5ebf3c8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator+</definition>
+        <argsstring>(Equation lhs, const Equation &amp;rhs)</argsstring>
+        <name>operator+</name>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="134" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="134" bodyend="138"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1ac8dbc6e0061e3f19592264d5bcd45263" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator+</definition>
+        <argsstring>(Equation lhs, const Operator &amp;rhs)</argsstring>
+        <name>operator+</name>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="140" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="140" bodyend="144"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1aa918de58f4669fb9393648e9e776971a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator+</definition>
+        <argsstring>(const Operator &amp;lhs, const Operator &amp;rhs)</argsstring>
+        <name>operator+</name>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
+          <declname>lhs</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="146" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="146" bodyend="152"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a518fa8d3dde3bd3bbc2182203b09f4fe" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator*</definition>
+        <argsstring>(scalar scale, const Equation &amp;es)</argsstring>
+        <name>operator*</name>
+        <param>
+          <type><ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">scalar</ref></type>
           <declname>scale</declname>
         </param>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref> &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref> &amp;</type>
           <declname>es</declname>
         </param>
         <briefdescription>
@@ -139,19 +159,19 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="157" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="157" bodyend="173"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="154" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="154" bodyend="170"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a28fe378eb23a48922d2a0da7f3bab2fe" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator-</definition>
-        <argsstring>(EqnSystem lhs, const EqnSystem &amp;rhs)</argsstring>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1af8034fa55537acbacac1a52fdc436cd0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator-</definition>
+        <argsstring>(Equation lhs, const Equation &amp;rhs)</argsstring>
         <name>operator-</name>
         <param>
-          <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
+          <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
           <declname>lhs</declname>
         </param>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref> &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref> &amp;</type>
           <declname>rhs</declname>
         </param>
         <briefdescription>
@@ -160,19 +180,19 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="175" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="175" bodyend="179"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="172" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="172" bodyend="176"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a5697582c42ea365b258ce8c65d9f07d1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator-</definition>
-        <argsstring>(EqnSystem lhs, const EqnTerm &amp;rhs)</argsstring>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a486ce54ad866c73cfc532fd4705c21bd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator-</definition>
+        <argsstring>(Equation lhs, const Operator &amp;rhs)</argsstring>
         <name>operator-</name>
         <param>
-          <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
+          <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
           <declname>lhs</declname>
         </param>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
           <declname>rhs</declname>
         </param>
         <briefdescription>
@@ -181,19 +201,19 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="181" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="181" bodyend="185"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="178" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="178" bodyend="182"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a3aeb604cf95a1650322aab4fc29c6760" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnSystem" kindref="compound">EqnSystem</ref></type>
-        <definition>EqnSystem NeoFOAM::DSL::operator-</definition>
-        <argsstring>(const EqnTerm &amp;lhs, const EqnTerm &amp;rhs)</argsstring>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a509b41fc487339bed05f252e013172ba" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1DSL_1_1Equation" kindref="compound">Equation</ref></type>
+        <definition>Equation NeoFOAM::DSL::operator-</definition>
+        <argsstring>(const Operator &amp;lhs, const Operator &amp;rhs)</argsstring>
         <name>operator-</name>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
           <declname>lhs</declname>
         </param>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
           <declname>rhs</declname>
         </param>
         <briefdescription>
@@ -202,19 +222,87 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="187" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" bodystart="187" bodyend="193"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" line="184" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/equation.hpp" bodystart="184" bodyend="190"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1ae726b4724d995be4969896c14e9c5efa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <type><ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref></type>
-        <definition>EqnTerm NeoFOAM::DSL::operator*</definition>
-        <argsstring>(NeoFOAM::scalar scale, const EqnTerm &amp;lhs)</argsstring>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a17ffd5529fe00999363b657887605eaf" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>auto</type>
+        <definition>auto NeoFOAM::DSL::operator*</definition>
+        <argsstring>(scalar scalarCoeff, const Operator &amp;rhs)</argsstring>
         <name>operator*</name>
         <param>
-          <type><ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">NeoFOAM::scalar</ref></type>
-          <declname>scale</declname>
+          <type><ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">scalar</ref></type>
+          <declname>scalarCoeff</declname>
         </param>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1EqnTerm" kindref="compound">EqnTerm</ref> &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" line="218" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" bodystart="218" bodyend="223"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a71910456c57c399984bb216e8b2c37ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>auto</type>
+        <definition>auto NeoFOAM::DSL::operator*</definition>
+        <argsstring>(const Field&lt; scalar &gt; &amp;coeffField, const Operator &amp;rhs)</argsstring>
+        <name>operator*</name>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>&lt; <ref refid="namespaceNeoFOAM_1a03eba15c79160376393af407daa0fd7b" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>coeffField</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" line="225" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" bodystart="225" bodyend="230"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1afcfb13ae575aff7ecc84f837e24e455d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>auto</type>
+        <definition>auto NeoFOAM::DSL::operator*</definition>
+        <argsstring>(const Coeff &amp;coeff, const Operator &amp;rhs)</argsstring>
+        <name>operator*</name>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Coeff" kindref="compound">Coeff</ref> &amp;</type>
+          <declname>coeff</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
+          <declname>rhs</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" line="232" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" bodystart="232" bodyend="237"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1DSL_1a1c372fc1244c1d9db79615d0ad5d6206" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename CoeffFunction</type>
+          </param>
+        </templateparamlist>
+        <type>requires std::invocable&lt; CoeffFunction &amp;, <ref refid="namespaceNeoFOAM_1aa8ea339f1c9a4f2232da876ead30a82c" kindref="member">size_t</ref> &gt; <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref></type>
+        <definition>requires std::invocable&lt;CoeffFunction&amp;, size_t&gt; Operator NeoFOAM::DSL::operator*</definition>
+        <argsstring>(CoeffFunction coeffFunc, const Operator &amp;lhs)</argsstring>
+        <name>operator*</name>
+        <param>
+          <type>CoeffFunction</type>
+          <declname>coeffFunc</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1DSL_1_1Operator" kindref="compound">Operator</ref> &amp;</type>
           <declname>lhs</declname>
         </param>
         <briefdescription>
@@ -223,13 +311,13 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnTerm.hpp" line="163" column="9" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnTerm.hpp" bodystart="163" bodyend="168"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" line="241" column="10" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/operator.hpp" bodystart="241" bodyend="252"/>
       </memberdef>
       </sectiondef>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/eqnSystem.hpp" line="15" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/DSL/coeff.hpp" line="5" column="1"/>
   </compounddef>
 </doxygen>
