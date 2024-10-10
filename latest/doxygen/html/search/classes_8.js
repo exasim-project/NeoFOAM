@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['neofoamexception_335',['NeoFOAMException',['../classNeoFOAM_1_1NeoFOAMException.html',1,'NeoFOAM']]]
+  ['linear_428',['Linear',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Linear.html',1,'NeoFOAM::finiteVolume::cellCentred']]]
 ];

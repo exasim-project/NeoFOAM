@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['mesh_5f_607',['mesh_',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin.html#ac17e9c87e07836492fbece18b56f8809',1,'NeoFOAM::finiteVolume::cellCentred::GeometricFieldMixin::mesh_()'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolationFactory.html#a43abfa97294c3650bb88f927e9b0033e',1,'NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolationFactory::mesh_()']]]
+  ['hasexplicitoperator_776',['HasExplicitOperator',['../namespaceNeoFOAM_1_1DSL.html#a2ffb95869599c26679834d2ceaefe569',1,'NeoFOAM::DSL']]],
+  ['hastemporaloperator_777',['HasTemporalOperator',['../namespaceNeoFOAM_1_1DSL.html#a7d33b9ceb769bf9fc2fdca218bf3989a',1,'NeoFOAM::DSL']]]
 ];

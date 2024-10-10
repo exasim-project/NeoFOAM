@@ -1,6 +1,7 @@
 \hypertarget{operators_8hpp}{}\doxysection{/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/core/mpi/operators.hpp File Reference}
 \label{operators_8hpp}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/mpi/operators.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/mpi/operators.hpp}}
 {\ttfamily \#include $<$complex$>$}\newline
+{\ttfamily \#include $<$mpi.\+h$>$}\newline
 {\ttfamily \#include $<$type\+\_\+traits$>$}\newline
 {\ttfamily \#include \char`\"{}Neo\+FOAM/core/error.\+hpp\char`\"{}}\newline
 {\ttfamily \#include \char`\"{}Neo\+FOAM/core/primitives/vector.\+hpp\char`\"{}}\newline
@@ -8,4 +9,41 @@
 \begin{DoxyCompactItemize}
 \item 
  \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}}
+\item 
+ \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi}{Neo\+FOAM\+::mpi}}
 \end{DoxyCompactItemize}
+\doxysubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496}{Neo\+FOAM\+::mpi\+::\+Reduce\+Op}} \{ \newline
+\mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a6a061313d22e51e0f25b7cd4dc065233}{Neo\+FOAM\+::mpi\+::\+Max}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a78d811e98514cd165dda532286610fd2}{Neo\+FOAM\+::mpi\+::\+Min}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496aa0ec87054b5e5b7847d0d8780a01a3d5}{Neo\+FOAM\+::mpi\+::\+Sum}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a362a33c23b08e4a32a4ec53fbb82cccd}{Neo\+FOAM\+::mpi\+::\+Prod}}
+, \newline
+\mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a512ef7c688a2c8572d5e16f44e17e869}{Neo\+FOAM\+::mpi\+::\+Land}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a67fd95fc1e88f15b3efb9feef0fc0dc9}{Neo\+FOAM\+::mpi\+::\+Band}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a8595fb71a368d49d1ce5eead7f7ec7a5}{Neo\+FOAM\+::mpi\+::\+Lor}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a2fc3e7b551bc67be82d33717e22f43df}{Neo\+FOAM\+::mpi\+::\+Bor}}
+, \newline
+\mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496aba589477cc8a0f3e2863ca6f0c2459d8}{Neo\+FOAM\+::mpi\+::\+Maxloc}}
+, \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ad2080ed6fe76416aece0600b1993f496a5425939f10e63fc722bb5fc0d8da7a84}{Neo\+FOAM\+::mpi\+::\+Minloc}}
+ \}
+\begin{DoxyCompactList}\small\item\em Enumeration of MPI reduction operations. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+constexpr MPI\+\_\+\+Op \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ae9840fe5d75027b3431398e3a6806ed0}{Neo\+FOAM\+::mpi\+::get\+Op}} (const Reduce\+Op op)
+\begin{DoxyCompactList}\small\item\em Returns the corresponding MPI\+\_\+\+Op for a given Reduce\+Op. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\constexpr MPI\+\_\+\+Datatype \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_a715f9aea7eceddbac548898a5f1e2e8b}{Neo\+FOAM\+::mpi\+::get\+Type}} ()
+\begin{DoxyCompactList}\small\item\em Returns the corresponding MPI\+\_\+\+Datatype for a given C++ type. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_af04bb54610e8cfae03423dc2c4c8cfc8}{Neo\+FOAM\+::mpi\+::all\+Reduce}} (value\+Type \&value, const Reduce\+Op op, MPI\+\_\+\+Comm comm)
+\begin{DoxyCompactList}\small\item\em Performs a blocking all-\/reduce operation on a value across all processes in the communicator. \end{DoxyCompactList}\item 
+template$<$$>$ void \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_aadb797323c2020c5bf54669abdbc1c1c}{Neo\+FOAM\+::mpi\+::all\+Reduce}} (Vector \&vector, const Reduce\+Op op, MPI\+\_\+\+Comm comm)
+\begin{DoxyCompactList}\small\item\em Performs a blocking all-\/reduce operation on a vector across all processes in the communicator. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_a4b7f7a3712768795b481436b53327fe5}{Neo\+FOAM\+::mpi\+::isend}} (const value\+Type $\ast$buffer, const mpi\+\_\+label\+\_\+t size, mpi\+\_\+label\+\_\+t rank\+Receive, mpi\+\_\+label\+\_\+t tag, MPI\+\_\+\+Comm comm, MPI\+\_\+\+Request $\ast$request)
+\begin{DoxyCompactList}\small\item\em Non-\/blocking send of a set of scalar values to a remote rank. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_a6812bb90b0a66834757aee8a193e8115}{Neo\+FOAM\+::mpi\+::irecv}} (value\+Type $\ast$buffer, const mpi\+\_\+label\+\_\+t size, mpi\+\_\+label\+\_\+t rank\+Send, mpi\+\_\+label\+\_\+t tag, MPI\+\_\+\+Comm comm, MPI\+\_\+\+Request $\ast$request)
+\begin{DoxyCompactList}\small\item\em Non-\/blocking receive of a set of scalar values from a remote rank. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_1_1mpi_ae6e3efafb27b0a2a0ffa30f04798832a}{Neo\+FOAM\+::mpi\+::test}} (MPI\+\_\+\+Request $\ast$request)
+\begin{DoxyCompactList}\small\item\em Tests if a non-\/blocking communication request has completed. \end{DoxyCompactList}\end{DoxyCompactItemize}

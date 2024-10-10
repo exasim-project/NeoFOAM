@@ -26,9 +26,13 @@
     <innerclass refid="classNeoFOAM_1_1Error" prot="public">NeoFOAM::Error</innerclass>
     <innerclass refid="classNeoFOAM_1_1DimensionMismatch" prot="public">NeoFOAM::DimensionMismatch</innerclass>
     <innerclass refid="classNeoFOAM_1_1BoundaryMesh" prot="public">NeoFOAM::BoundaryMesh</innerclass>
+    <innerclass refid="structNeoFOAM_1_1NodeCommMap" prot="public">NeoFOAM::NodeCommMap</innerclass>
+    <innerclass refid="classNeoFOAM_1_1Communicator" prot="public">NeoFOAM::Communicator</innerclass>
     <innerclass refid="classNeoFOAM_1_1UnstructuredMesh" prot="public">NeoFOAM::UnstructuredMesh</innerclass>
     <innernamespace refid="namespaceNeoFOAM_1_1detail">NeoFOAM::detail</innernamespace>
+    <innernamespace refid="namespaceNeoFOAM_1_1DSL">NeoFOAM::DSL</innernamespace>
     <innernamespace refid="namespaceNeoFOAM_1_1finiteVolume">NeoFOAM::finiteVolume</innernamespace>
+    <innernamespace refid="namespaceNeoFOAM_1_1mpi">NeoFOAM::mpi</innernamespace>
       <sectiondef kind="typedef">
       <memberdef kind="typedef" id="namespaceNeoFOAM_1ad8645a25cba2275ee5bea619093da91e" prot="public" static="no">
         <type>std::variant&lt; <ref refid="classNeoFOAM_1_1CPUExecutor" kindref="compound">CPUExecutor</ref>, <ref refid="classNeoFOAM_1_1GPUExecutor" kindref="compound">GPUExecutor</ref>, <ref refid="classNeoFOAM_1_1SerialExecutor" kindref="compound">SerialExecutor</ref> &gt;</type>
@@ -54,7 +58,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" bodystart="13" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/input.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/input.hpp" bodystart="13" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespaceNeoFOAM_1a7c2c6a7a7bda94e9fb289fd81b96f745" prot="public" static="no">
         <type>int32_t</type>
@@ -185,6 +189,34 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/fieldTypeDefs.hpp" line="15" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/fieldTypeDefs.hpp" bodystart="15" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespaceNeoFOAM_1accb500ad59c99ee6538533036039b6b4" prot="public" static="no">
+        <type>std::vector&lt; <ref refid="structNeoFOAM_1_1NodeCommMap" kindref="compound">NodeCommMap</ref> &gt;</type>
+        <definition>using NeoFOAM::RankCommMap = typedef std::vector&lt;NodeCommMap&gt;</definition>
+        <argsstring></argsstring>
+        <name>RankCommMap</name>
+        <briefdescription>
+<para>Represents a mapping of <ref refid="structNeoFOAM_1_1NodeCommMap" kindref="compound">NodeCommMap</ref> for a rank. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/mesh/unstructured/communicator.hpp" line="29" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/mesh/unstructured/communicator.hpp" bodystart="29" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespaceNeoFOAM_1a3daa9ed0aec5483218e5946371398db5" prot="public" static="no">
+        <type>std::vector&lt; <ref refid="namespaceNeoFOAM_1accb500ad59c99ee6538533036039b6b4" kindref="member">RankCommMap</ref> &gt;</type>
+        <definition>using NeoFOAM::CommMap = typedef std::vector&lt;RankCommMap&gt;</definition>
+        <argsstring></argsstring>
+        <name>CommMap</name>
+        <briefdescription>
+<para>Represents, for a single map, a mapping of all RankCommMaps for either send or receive. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/mesh/unstructured/communicator.hpp" line="34" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/mesh/unstructured/communicator.hpp" bodystart="34" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="var">
@@ -435,7 +467,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" line="16" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/inputs.hpp" bodystart="16" bodyend="19"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/input.hpp" line="16" column="11" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/input.hpp" bodystart="16" bodyend="19"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1aac4885dd6833b52cee698c733256d915" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
