@@ -24,6 +24,8 @@ if(NOT ${Kokkos_FOUND})
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
   FetchContent_MakeAvailable(Kokkos)
+else()
+  include(cmake/AutoEnableDevice.cmake)
 endif()
 
 include(cmake/CPM.cmake)
