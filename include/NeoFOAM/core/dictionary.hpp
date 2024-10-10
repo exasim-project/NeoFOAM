@@ -162,6 +162,12 @@ public:
      */
     const std::unordered_map<std::string, std::any>& getMap() const;
 
+    /**
+     * @brief Checks whether the dictionary is empty
+     * @return A bool indicating if the dictionary is empty
+     */
+    bool empty() const { return data_.empty(); }
+
 private:
 
     std::unordered_map<std::string, std::any> data_;

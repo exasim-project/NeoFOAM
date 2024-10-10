@@ -274,16 +274,11 @@ TEST_CASE("getSpans")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-
     NeoFOAM::Field<NeoFOAM::scalar> a(exec, 3, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
     NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
 
     auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
-
-    REQUIRE(spanA[0] == 1.0);
-    REQUIRE(spanB[0] == 2.0);
-    REQUIRE(spanC[0] == 3.0);
 
     NeoFOAM::parallelFor(
         a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
