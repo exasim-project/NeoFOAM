@@ -55,7 +55,7 @@ public:
     const Coeff& getCoefficient() const { return coeffs_; }
 
     /* @brief Given an input this function reads required coeffs */
-    void build(const Input& input) {}
+    void build([[maybe_unused]] const Input& input) {}
 
 protected:
 

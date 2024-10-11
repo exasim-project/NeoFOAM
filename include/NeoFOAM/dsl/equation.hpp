@@ -112,7 +112,7 @@ public:
 
     const Executor& exec() const { return exec_; }
 
-    const std::size_t nCells() const { return nCells_; }
+    std::size_t nCells() const { return nCells_; }
 
     scalar getDt() const { return dt_; }
 

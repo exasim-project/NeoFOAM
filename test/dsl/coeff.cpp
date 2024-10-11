@@ -62,8 +62,8 @@ TEST_CASE("Coeff")
     {
         size_t size = 3;
 
-        NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
-        NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
+        Field fieldA(exec, size, 0.0);
+        Field fieldB(exec, size, 1.0);
 
         SECTION("span")
         {
@@ -82,8 +82,6 @@ TEST_CASE("Coeff")
 
         SECTION("scalar")
         {
-            NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
-
             Coeff coeff = Coeff(2.0);
             {
                 NeoFOAM::parallelFor(
@@ -99,8 +97,6 @@ TEST_CASE("Coeff")
 
         SECTION("span and scalar")
         {
-            NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, size, 0.0);
-            NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, size, 1.0);
             Coeff coeff {-5.0, fieldB};
             {
                 NeoFOAM::parallelFor(
