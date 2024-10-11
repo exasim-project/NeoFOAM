@@ -65,6 +65,9 @@ public:
     static std::string schema() { return "DerivedClass2 schema"; }
 };
 
+// in case of registered template classes templates need to be instantiated explicitly
+template class DerivedClass2<float>;
+template class DerivedClass2<int>;
 
 TEST_CASE("RunTimeSelectionFactory")
 {
