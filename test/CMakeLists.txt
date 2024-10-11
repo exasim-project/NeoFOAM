@@ -80,3 +80,8 @@ add_subdirectory(core)
 add_subdirectory(fields)
 add_subdirectory(finiteVolume)
 add_subdirectory(mesh)
+# Copy NeoFOAM.fll
+if(MSVC)
+  file(COPY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}/NeoFOAM.dll
+       DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/${CMAKE_BUILD_TYPE})
+endif()
