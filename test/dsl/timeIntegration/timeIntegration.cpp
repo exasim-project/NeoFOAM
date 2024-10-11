@@ -6,51 +6,23 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "common.hpp"
+#include "../common.hpp"
+
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/dsl/equation.hpp"
+#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 
-namespace dsl = NeoFOAM::DSL;
-
-class Divergence : public NeoFOAM::DSL::OperatorMixin
+class TimeOperator : public OperatorMixin
 {
 
 public:
 
-    std::string display() const { return "Divergence"; }
+    TimeOperator(const Executor& exec, VolumeField& field) : OperatorMixin(exec), field_(field) {}
 
-    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
-    {
-        auto sourceField = source.span();
-        NeoFOAM::parallelFor(
-            source.exec(),
-            {0, source.size()},
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1.0 * scale; }
-        );
-    }
+    std::string getName() const { return "TimeOperator"; }
 
-    dsl::Operator::Type getType() const { return termType_; }
-
-    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
-
-    const NeoFOAM::Executor& exec() const { return exec_; }
-
-    std::size_t nCells() const { return nCells_; }
-
-    dsl::Operator::Type termType_;
-
-    NeoFOAM::Executor exec_;
-
-    std::size_t nCells_;
-};
-
-class TimeOperator
-{
-
-public:
-
-    std::string display() const { return "TimeOperator"; }
+    Operator::Type getType() const { return Operator::Type::Temporal; }
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
     {
@@ -62,35 +34,54 @@ public:
         );
     }
 
-    dsl::Operator::Type getType() const { return termType_; }
+    VolumeField& volumeField() const { return field_; }
 
-    fvcc::VolumeField<NeoFOAM::scalar>* volumeField() const { return nullptr; }
+    size_t getSize() const { return field_.internalField().size(); }
 
-    const NeoFOAM::Executor& exec() const { return exec_; }
+    const Executor& exec() const { return exec_; }
 
-    std::size_t nCells() const { return nCells_; }
-
-    dsl::Operator::Type termType_;
-
-    const NeoFOAM::Executor exec_;
+    const Executor exec_;
 
     std::size_t nCells_;
+
+    VolumeField& field_;
 };
 
 
 TEST_CASE("TimeIntegration")
 {
-    auto exec = NeoFOAM::SerialExecutor();
-    namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
 
-    NeoFOAM::Dictionary dict;
-    dict.insert("type", std::string("forwardEuler"));
+    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    auto mesh = NeoFOAM::createSingleCellMesh(exec);
 
-    // dsl::Operator divOperator = Divergence(dsl::Operator::Type::Explicit, exec, 1);
+    Field fA(exec, 1, 2.0);
+    BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
-    // dsl::Operator ddtOperator = TimeOperator(dsl::Operator::Type::Temporal, exec, 1);
+    std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+    auto vf = VolumeField(exec, mesh, fA, bf, bcs);
+    auto fB = Field(exec, 1, 4.0);
 
-    // dsl::EqnSystem eqnSys = ddtOperator + divOperator;
+
+    NeoFOAM::Dictionary dict, subDict;
+    subDict.insert("type", std::string("forwardEuler"));
+    dict.insert("ddtSchemes", subDict);
+
+    auto dummy = Dummy(exec, vf);
+
+    SECTION("Create equation and perform explicitOperation on " + execName)
+    {
+
+        Operator ddtOperator = TimeOperator(exec, vf);
+
+        auto eqn = ddtOperator + dummy;
+
+        eqn.solve(vf, dict);
+    }
 
     // fvcc::TimeIntegration timeIntergrator(eqnSys, dict);
 }

@@ -3,67 +3,64 @@
 
 #pragma once
 
-#include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
-#include "NeoFOAM/dsl/equation.hpp"
-
 #include <functional>
+
+#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
 namespace NeoFOAM
 {
 
+/* @class Factory class to create time integration method by a given name
+ */
+template<typename EquationType, typename SolutionType>
 class TimeIntegrationFactory :
     public RuntimeSelectionFactory<
-        TimeIntegrationFactory,
-        Parameters<const dsl::Equation&, const Dictionary&>>
+        TimeIntegrationFactory<EquationType, SolutionType>,
+        Parameters<const Dictionary&>>
 {
 
 public:
 
     static std::string name() { return "timeIntegrationFactory"; }
 
-    TimeIntegrationFactory(const dsl::Equation& eqnSystem, const Dictionary& dict)
-        : eqnSystem_(eqnSystem), dict_(dict)
-    {}
+    TimeIntegrationFactory(const Dictionary& dict) : dict_(dict) {}
 
     virtual ~TimeIntegrationFactory() {}
 
-    virtual void solve() = 0; // Pure virtual function for solving
+    virtual void
+    solve(EquationType& eqn, SolutionType& sol) const = 0; // Pure virtual function for solving
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<TimeIntegrationFactory> clone() const = 0;
 
 protected:
 
-    dsl::Equation eqnSystem_;
-
     const Dictionary& dict_;
 };
 
+template<typename EquationType, typename SolutionType>
 class TimeIntegration
 {
 
 public:
 
-    TimeIntegration(const TimeIntegration& timeIntegrate)
-        : timeIntegrateStrategy_(timeIntegrate.timeIntegrateStrategy_->clone()) {};
+    TimeIntegration(const TimeIntegration& timeIntegrator)
+        : timeIntegratorStrategy_(timeIntegrator.timeIntegratorStrategy_->clone()) {};
 
-    TimeIntegration(TimeIntegration&& timeIntegrate)
-        : timeIntegrateStrategy_(std::move(timeIntegrate.timeIntegrateStrategy_)) {};
+    TimeIntegration(TimeIntegration&& timeIntegrator)
+        : timeIntegratorStrategy_(std::move(timeIntegrator.timeIntegratorStrategy_)) {};
 
-    TimeIntegration(const dsl::Equation& eqnSystem, const Dictionary& dict)
-        : timeIntegrateStrategy_(
-            TimeIntegrationFactory::create(dict.get<std::string>("type"), eqnSystem, dict)
-        ) {};
+    TimeIntegration(const Dictionary& dict)
+        : timeIntegratorStrategy_(TimeIntegrationFactory<EquationType, SolutionType>::create(
+            dict.get<std::string>("type"), dict
+        )) {};
 
-    void solve() { timeIntegrateStrategy_->solve(); }
+    void solve(EquationType& eqn, SolutionType& sol) { timeIntegratorStrategy_->solve(eqn, sol); }
 
 private:
 
-    std::unique_ptr<TimeIntegrationFactory> timeIntegrateStrategy_;
+    std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> timeIntegratorStrategy_;
 };
 
 
