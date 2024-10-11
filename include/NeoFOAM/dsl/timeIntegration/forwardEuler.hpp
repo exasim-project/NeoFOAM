@@ -12,22 +12,53 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-class ForwardEuler : public TimeIntegrationFactory::Register<ForwardEuler>
+template<typename EquationType, typename SolutionType>
+class ForwardEuler :
+    public TimeIntegrationFactory<EquationType, SolutionType>::template Register<
+        ForwardEuler<EquationType, SolutionType>>
 {
 
 public:
 
-    ForwardEuler(const dsl::Equation& eqnSystem, const Dictionary& dict);
+    ForwardEuler(const Dictionary& dict) : dict_(dict) {}
 
     static std::string name() { return "forwardEuler"; }
 
-    static std::string doc() { return "forwardEuler timeIntegration"; }
+    static std::string doc() { return "first order time integration method"; }
 
     static std::string schema() { return "none"; }
 
-    void solve() override;
+    virtual void solve(EquationType& eqn, SolutionType& sol) override
+    {
+        scalar dt = eqn.getDt();
+        // fvcc::VolumeField<scalar>* refField = eqnSystem_.volumeField();
+        // Field<scalar> Phi(eqnSystem_.exec(), eqnSystem_.nCells());
+        // NeoFOAM::fill(Phi, 0.0);
+        // Field<scalar> source = eqn.explicitOperation();
 
-    std::unique_ptr<TimeIntegrationFactory> clone() const override;
+        // for (auto& eqnTerm : eqnSystem_.temporalTerms())
+        // {
+        //     eqnTerm.temporalOperation(Phi);
+        // }
+        // Phi += source*dt;
+        // refField->internalField() -= source * dt;
+        // refField->correctBoundaryConditions();
+
+        // check if execturo is GPU
+        // if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqnSystem_.exec()))
+        // {
+        //     Kokkos::fence();
+        // }
+    };
+
+    std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> clone() const override
+    {
+        return std::make_unique<ForwardEuler>(*this);
+    }
+
+private:
+
+    Dictionary dict_;
 };
 
 } // namespace NeoFOAM
