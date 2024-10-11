@@ -10,15 +10,11 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/DSL/coeff.hpp"
+#include "NeoFOAM/dsl/coeff.hpp"
 
 
-namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
-
-namespace NeoFOAM::DSL
+namespace NeoFOAM::dsl
 {
 
 template<typename T>
@@ -38,10 +34,10 @@ concept HasExplicitOperator = requires(T t) {
 
 /* @class OperatorMixin
  * @brief A mixin class to represent simplify implementations of concrete operators
- * in NeoFOAMs DSL
+ * in NeoFOAMs dsl
  *
  *
- * @ingroup DSL
+ * @ingroup dsl
  */
 class OperatorMixin
 {
@@ -70,7 +66,7 @@ protected:
 
 
 /* @class Operator
- * @brief A class to represent a operator in NeoFOAMs DSL
+ * @brief A class to represent a operator in NeoFOAMs dsl
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw
@@ -79,7 +75,7 @@ protected:
  * of Operators e.g Divergence, Laplacian, etc can be stored in a vector of
  * Operators
  *
- * @ingroup DSL
+ * @ingroup dsl
  */
 class Operator
 {
@@ -251,4 +247,4 @@ Operator operator*(CoeffFunction coeffFunc, const Operator& lhs)
     return result;
 }
 
-} // namespace NeoFOAM::DSL
+} // namespace NeoFOAM::dsl

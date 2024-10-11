@@ -7,10 +7,7 @@
 #include <functional>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
-
+#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -20,7 +17,7 @@ class ForwardEuler : public TimeIntegrationFactory::Register<ForwardEuler>
 
 public:
 
-    ForwardEuler(const DSL::Equation& eqnSystem, const Dictionary& dict);
+    ForwardEuler(const dsl::Equation& eqnSystem, const Dictionary& dict);
 
     static std::string name() { return "forwardEuler"; }
 

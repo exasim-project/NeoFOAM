@@ -3,9 +3,9 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 #include "common.hpp"
-#include "NeoFOAM/DSL/equation.hpp"
+#include "NeoFOAM/dsl/equation.hpp"
 
-using Equation = NeoFOAM::DSL::Equation;
+using Equation = NeoFOAM::dsl::Equation;
 
 TEST_CASE("Equation")
 {

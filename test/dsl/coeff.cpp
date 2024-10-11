@@ -8,12 +8,12 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/DSL/coeff.hpp"
+#include "NeoFOAM/dsl/coeff.hpp"
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
-using Coeff = NeoFOAM::DSL::Coeff;
+using Coeff = NeoFOAM::dsl::Coeff;
 
-namespace detail = NeoFOAM::DSL::detail;
+namespace detail = NeoFOAM::dsl::detail;
 
 
 TEST_CASE("Coeff")

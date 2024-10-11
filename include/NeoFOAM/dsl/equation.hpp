@@ -9,10 +9,10 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/DSL/operator.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-namespace NeoFOAM::DSL
+namespace NeoFOAM::dsl
 {
 
 class Equation
@@ -189,4 +189,4 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
     return equation;
 }
 
-} // namespace NeoFOAM::DSL
+} // namespace NeoFOAM::dsl

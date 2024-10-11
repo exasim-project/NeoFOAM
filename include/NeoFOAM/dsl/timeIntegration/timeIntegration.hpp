@@ -7,9 +7,8 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
-
-#include "NeoFOAM/DSL/operator.hpp"
-#include "NeoFOAM/DSL/equation.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/equation.hpp"
 
 #include <functional>
 
@@ -19,14 +18,14 @@ namespace NeoFOAM
 class TimeIntegrationFactory :
     public RuntimeSelectionFactory<
         TimeIntegrationFactory,
-        Parameters<const DSL::Equation&, const Dictionary&>>
+        Parameters<const dsl::Equation&, const Dictionary&>>
 {
 
 public:
 
     static std::string name() { return "timeIntegrationFactory"; }
 
-    TimeIntegrationFactory(const DSL::Equation& eqnSystem, const Dictionary& dict)
+    TimeIntegrationFactory(const dsl::Equation& eqnSystem, const Dictionary& dict)
         : eqnSystem_(eqnSystem), dict_(dict)
     {}
 
@@ -39,7 +38,7 @@ public:
 
 protected:
 
-    DSL::Equation eqnSystem_;
+    dsl::Equation eqnSystem_;
 
     const Dictionary& dict_;
 };
@@ -55,7 +54,7 @@ public:
     TimeIntegration(TimeIntegration&& timeIntegrate)
         : timeIntegrateStrategy_(std::move(timeIntegrate.timeIntegrateStrategy_)) {};
 
-    TimeIntegration(const DSL::Equation& eqnSystem, const Dictionary& dict)
+    TimeIntegration(const dsl::Equation& eqnSystem, const Dictionary& dict)
         : timeIntegrateStrategy_(
             TimeIntegrationFactory::create(dict.get<std::string>("type"), eqnSystem, dict)
         ) {};
