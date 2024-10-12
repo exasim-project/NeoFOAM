@@ -67,11 +67,11 @@ TEST_CASE("TimeIntegration")
     auto fB = Field(exec, 1, 4.0);
 
 
-    NeoFOAM::Dictionary dict;
-    dict.insert("type", std::string("forwardEuler"));
+    NeoFOAM::Dictionary dict, subDict;
+    subDict.insert("type", std::string("forwardEuler"));
+    dict.insert("ddtSchemes", subDict);
 
     auto dummy = Dummy(exec, vf);
-    auto dummyB = Dummy(exec, vf);
 
     SECTION("Create equation and perform explicitOperation on " + execName)
     {

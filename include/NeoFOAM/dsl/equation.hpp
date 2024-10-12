@@ -14,8 +14,12 @@
 #include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/core/error.hpp"
 
+#include "NeoFOAM/dsl/timeIntegration/forwardEuler.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+
 namespace NeoFOAM::dsl
 {
+
 
 class Equation
 {
@@ -85,9 +89,8 @@ public:
         if (temporalOperators_.size() > 0)
         {
             // integrate equations in time
-            TimeIntegration<Equation, Field<scalar>> timeIntegrator(
-                solverProperties.subDict("ddtSchemes")
-            );
+            TimeIntegration<Equation, finiteVolume::cellCentred::VolumeField<scalar>>
+                timeIntegrator(solverProperties.subDict("ddtSchemes"));
             // timeIntegrator.solve(solution, solverProperties);
         }
         else
@@ -194,5 +197,7 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
     equation.addOperator(Coeff(-1) * rhs);
     return equation;
 }
+
+template class ForwardEuler<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
 
 } // namespace NeoFOAM::dsl

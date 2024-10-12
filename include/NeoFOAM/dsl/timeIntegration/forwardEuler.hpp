@@ -9,7 +9,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoFOAM::dsl
 {
 
 template<typename EquationType, typename SolutionType>
@@ -20,7 +20,10 @@ class ForwardEuler :
 
 public:
 
-    ForwardEuler(const Dictionary& dict) : dict_(dict) {}
+    using Base = TimeIntegrationFactory<EquationType, SolutionType>::template Register<
+        ForwardEuler<EquationType, SolutionType>>;
+
+    ForwardEuler(const Dictionary& dict) : Base(dict) {}
 
     static std::string name() { return "forwardEuler"; }
 
@@ -28,7 +31,7 @@ public:
 
     static std::string schema() { return "none"; }
 
-    virtual void solve(EquationType& eqn, SolutionType& sol) override
+    virtual void solve(EquationType& eqn, SolutionType& sol) const override
     {
         scalar dt = eqn.getDt();
         // fvcc::VolumeField<scalar>* refField = eqnSystem_.volumeField();
@@ -55,10 +58,7 @@ public:
     {
         return std::make_unique<ForwardEuler>(*this);
     }
-
-private:
-
-    Dictionary dict_;
 };
+
 
 } // namespace NeoFOAM
