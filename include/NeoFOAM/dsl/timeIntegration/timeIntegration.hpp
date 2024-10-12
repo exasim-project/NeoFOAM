@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+//
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #pragma once
@@ -8,10 +9,11 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::dsl
 {
 
 /* @class Factory class to create time integration method by a given name
+ * using NeoFOAMs runTimeFactory mechanism
  */
 template<typename EquationType, typename SolutionType>
 class TimeIntegrationFactory :
@@ -62,6 +64,4 @@ private:
 
     std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> timeIntegratorStrategy_;
 };
-
-
-} // namespace NeoFOAM
+} // namespace NeoFOAM::dsl
