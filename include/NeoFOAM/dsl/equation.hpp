@@ -198,6 +198,24 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
     return equation;
 }
 
+/* @brief free function to solve an equation
+ *
+ * @param eqn - Equation to solve
+ * @param solutionField - Field for which the equation is to be solved
+ * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
+ * @param fvSolution - Dictionary containing linear solver properties
+ */
+template<typename FieldType>
+void solve(
+    const Equation& eqn,
+    FieldType& solutionField,
+    const Dictionary& schemesDict,
+    const Dictionary& solutionDict
+)
+{
+    eqn.solve(solutionField, schemesDict);
+}
+
 template class ForwardEuler<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
 
 } // namespace NeoFOAM::dsl

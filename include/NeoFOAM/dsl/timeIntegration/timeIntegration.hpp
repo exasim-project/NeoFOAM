@@ -41,6 +41,12 @@ protected:
     const Dictionary& dict_;
 };
 
+/* @class Factory class to create time integration method by a given name
+ * using NeoFOAMs runTimeFactory mechanism
+ *
+ * @tparam EquationType Injects the type of equation for into the solve method
+ * @tparam SolutionType Type of the solution field eg, volumeField or just a plain Field
+ */
 template<typename EquationType, typename SolutionType>
 class TimeIntegration
 {
@@ -64,4 +70,5 @@ private:
 
     std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> timeIntegratorStrategy_;
 };
+
 } // namespace NeoFOAM::dsl
