@@ -30,7 +30,7 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
-          "finiteVolume/cellCentred/timeIntegration/explicitRungeKutta.cpp"
+          "dsl/timeIntegration/explicitRungeKutta.cpp"
           "dsl/timeIntegration/forwardEuler.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
