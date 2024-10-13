@@ -22,7 +22,7 @@ void computeDiv(
     const auto exec = divPhi.exec();
     SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    surfInterp.interpolate(phif, faceFlux, phi);
+    surfInterp.interpolate(faceFlux, phi, phif);
 
     auto surfDivPhi = divPhi.internalField().span();
 
@@ -32,7 +32,6 @@ void computeDiv(
     const auto surfFaceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
-
 
     // check if the executor is GPU
     if (std::holds_alternative<SerialExecutor>(exec))
@@ -50,7 +49,6 @@ void computeDiv(
             scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
             surfDivPhi[own] += valueOwn;
         }
-
 
         for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
@@ -98,7 +96,8 @@ void computeDiv(
     const auto exec = phi.exec();
     SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    surfInterp.interpolate(phif, faceFlux, phi);
+    // FIXME not implemented
+    // surfInterp.interpolate(phif, faceFlux, phi);
 
     auto surfDivPhi = divPhi.span();
 
@@ -116,13 +115,13 @@ void computeDiv(
         for (size_t i = 0; i < nInternalFaces; i++)
         {
             scalar flux = surfFaceFlux[i] * surfPhif[i];
-            surfDivPhi[surfOwner[i]] += flux;
-            surfDivPhi[surfNeighbour[i]] -= flux;
+            surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
+            surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
-            int32_t own = surfFaceCells[i - nInternalFaces];
+            size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
             surfDivPhi[own] += valueOwn;
         }
@@ -140,8 +139,8 @@ void computeDiv(
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 scalar flux = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[surfOwner[i]], flux);
-                Kokkos::atomic_sub(&surfDivPhi[surfNeighbour[i]], flux);
+                Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
+                Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
             }
         );
 
@@ -149,7 +148,7 @@ void computeDiv(
             exec,
             {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
-                int32_t own = surfFaceCells[i - nInternalFaces];
+                size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
             }
@@ -164,9 +163,11 @@ void computeDiv(
 }
 
 GaussGreenDiv::GaussGreenDiv(
-    const Executor& exec, const UnstructuredMesh& mesh, const SurfaceInterpolation& surfInterp
+    [[maybe_unused]] const Executor& exec,
+    [[maybe_unused]] const UnstructuredMesh& mesh,
+    const SurfaceInterpolation& surfInterp
 )
-    : mesh_(mesh), surfaceInterpolation_(surfInterp) {};
+    : surfaceInterpolation_(surfInterp) {};
 
 void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi

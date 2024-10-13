@@ -30,8 +30,17 @@ TEST_CASE("Field Constructors")
 
         REQUIRE(b.size() == size);
 
-        auto hostSpanB = b.copyToHost().span();
-        for (auto value : hostSpanB)
+        auto hostB = b.copyToHost();
+        for (auto value : hostB.span())
+        {
+            REQUIRE(value == 5.0);
+        }
+
+        NeoFOAM::Field<NeoFOAM::scalar> initWith5(exec, size, 5.0);
+        REQUIRE(initWith5.size() == size);
+
+        auto hostInitWith5 = initWith5.copyToHost();
+        for (auto value : hostInitWith5.span())
         {
             REQUIRE(value == 5.0);
         }
@@ -60,6 +69,7 @@ TEST_CASE("Field Constructors")
     }
 }
 
+
 TEST_CASE("Field Operator Overloads")
 {
 
@@ -81,8 +91,8 @@ TEST_CASE("Field Operator Overloads")
 
         a += b;
 
-        auto hostSpanA = a.copyToHost().span();
-        for (auto value : hostSpanA)
+        auto hostSpanA = a.copyToHost();
+        for (auto value : hostSpanA.span())
         {
             REQUIRE(value == 15.0);
         }
@@ -98,8 +108,8 @@ TEST_CASE("Field Operator Overloads")
 
         a -= b;
 
-        auto hostSpanA = a.copyToHost().span();
-        for (auto value : hostSpanA)
+        auto hostA = a.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == -5.0);
         }
@@ -115,8 +125,8 @@ TEST_CASE("Field Operator Overloads")
         NeoFOAM::fill(b, 10.0);
 
         c = a + b;
-        auto hostSpanC = c.copyToHost().span();
-        for (auto value : hostSpanC)
+        auto hostC = c.copyToHost();
+        for (auto value : hostC.span())
         {
             REQUIRE(value == 15.0);
         }
@@ -133,8 +143,8 @@ TEST_CASE("Field Operator Overloads")
 
         c = a - b;
 
-        auto hostSpanC = c.copyToHost().span();
-        for (auto value : hostSpanC)
+        auto hostC = c.copyToHost();
+        for (auto value : hostC.span())
         {
             REQUIRE(value == -5.0);
         }
@@ -223,7 +233,6 @@ TEST_CASE("Field Operations")
     {
         NeoFOAM::size_t size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> a(exec, size);
-        auto sA = a.span();
         NeoFOAM::fill(a, 5.0);
 
         REQUIRE(equal(a, 5.0));
@@ -254,5 +263,31 @@ TEST_CASE("Field Operations")
         auto sB = b.span();
         a.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return 2 * sB[i]; });
         REQUIRE(equal(a, 20.0));
+    }
+}
+
+TEST_CASE("getSpans")
+{
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+
+    NeoFOAM::Field<NeoFOAM::scalar> a(exec, 3, 1.0);
+    NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
+    NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
+
+    auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
+
+    NeoFOAM::parallelFor(
+        a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
+    );
+
+    auto [hostA] = NeoFOAM::copyToHosts(a);
+
+    for (auto value : hostA.span())
+    {
+        REQUIRE(value == 5.0);
     }
 }

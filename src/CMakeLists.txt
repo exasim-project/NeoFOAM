@@ -12,6 +12,8 @@ target_sources(
           "core/primitives/vector.cpp"
           "core/time.cpp"
           "core/dictionary.cpp"
+          "core/demangle.cpp"
+          "core/tokenList.cpp"
           "core/kokkos.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
@@ -29,7 +31,7 @@ target_sources(
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
           "finiteVolume/cellCentred/timeIntegration/explicitRungeKutta.cpp"
-          "finiteVolume/cellCentred/timeIntegration/forwardEuler.cpp")
+          "dsl/timeIntegration/forwardEuler.cpp")
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
 enable_sanitizers(

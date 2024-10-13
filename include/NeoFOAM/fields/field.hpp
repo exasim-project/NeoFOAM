@@ -19,7 +19,7 @@ namespace NeoFOAM
 namespace detail
 {
 /**
- * @brief A helper function to simplify the common pattern of copying between to executor.
+ * @brief A helper function to simplify the common pattern of copying between and to executor.
  * @param size The number of elements to copy.
  * @param srcPtr Pointer to the original block of memory.
  * @param dstPtr Pointer to the target block of memory.
@@ -51,7 +51,7 @@ class Field
 public:
 
     /**
-     * @brief Create a Field with a given size on an executor
+     * @brief Create an uninitialized Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param size  size of the matrix
      */
@@ -59,7 +59,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& concreteExec)
+            [&ptr, size](const auto& concreteExec)
             { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
             exec_
         );
@@ -67,24 +67,58 @@ public:
     }
 
     /**
+     * @brief Create a Field with a given size from existing memory on an executor
+     * @param exec  Executor associated to the matrix
+     * @param size  size of the matrix
+     * @param in    Pointer to existing data
+     */
+    Field(
+        const Executor& exec, const ValueType* in, size_t size, Executor hostExec = SerialExecutor()
+    )
+        : size_(size), data_(nullptr), exec_(exec)
+    {
+        void* ptr = nullptr;
+        std::visit(
+            [&ptr, size](const auto& concreteExec)
+            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
+            exec_
+        );
+        data_ = static_cast<ValueType*>(ptr);
+        std::visit(detail::deepCopyVisitor<ValueType>(size_, in, data_), hostExec, exec_);
+    }
+
+    /**
+     * @brief Create a Field with a given size on an executor and uniform value
+     * @param exec  Executor associated to the matrix
+     * @param size  size of the matrix
+     * @param value  the  default value
+     */
+    Field(const Executor& exec, size_t size, ValueType value)
+        : size_(size), data_(nullptr), exec_(exec)
+    {
+        void* ptr = nullptr;
+        std::visit(
+            [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); }, exec_
+        );
+        data_ = static_cast<ValueType*>(ptr);
+        NeoFOAM::fill(*this, value);
+    }
+
+    /**
      * @brief Create a Field with a given size on an executor
      * @param exec  Executor associated to the matrix
      * @param in a vector of elements to copy over
      */
-    Field(const Executor& exec, std::vector<ValueType> in)
-        : size_(in.size()), data_(nullptr), exec_(exec)
-    {
-        Executor hostExec = SerialExecutor();
-        void* ptr = nullptr;
-        std::visit(
-            [this, &ptr](const auto& concreteExec)
-            { ptr = concreteExec.alloc(this->size_ * sizeof(ValueType)); },
-            exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
+    Field(const Executor& exec, std::vector<ValueType> in) : Field(exec, in.data(), in.size()) {}
 
-        std::visit(detail::deepCopyVisitor(size_, in.data(), data_), hostExec, exec);
-    }
+    /**
+     * @brief Create a Field as a copy of a Field on a specified executor
+     * @param exec  Executor associated to the matrix
+     * @param in a vector of elements to copy over
+     */
+    Field(const Executor& exec, const Field<ValueType>& in)
+        : Field(exec, in.data(), in.size(), in.exec())
+    {}
 
     /**
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
@@ -158,7 +192,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     ValueType& operator[](const size_t i) { return data_[i]; }
 
     /**
@@ -166,7 +200,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     const ValueType& operator[](const size_t i) const { return data_[i]; }
 
     /**
@@ -174,7 +208,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     ValueType& operator()(const size_t i) { return data_[i]; }
 
     /**
@@ -182,7 +216,7 @@ public:
      * @param i The index of cell in the field
      * @returns The value at the index i
      */
-    KOKKOS_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     const ValueType& operator()(const size_t i) const { return data_[i]; }
 
     /**
@@ -270,15 +304,14 @@ public:
         {
             std::visit(
                 [this, &ptr, size](const auto& exec)
-                { ptr = exec.realloc(data_, size * sizeof(ValueType)); },
+                { ptr = exec.realloc(this->data_, size * sizeof(ValueType)); },
                 exec_
             );
         }
         else
         {
             std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.alloc(size * sizeof(ValueType)); },
+                [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
                 exec_
             );
         }
@@ -316,26 +349,38 @@ public:
      */
     [[nodiscard]] bool empty() const { return size() == 0; }
 
-    /**
-     * @brief Gets the field as a span.
-     * @return Span of the field.
-     */
-    [[nodiscard]] std::span<ValueType> span() { return std::span<ValueType>(data_, size_); }
+    // ensures no return a span of a temporary object --> invalid memory access
+    std::span<ValueType> span() && = delete;
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    std::span<const ValueType> span() const&& = delete;
 
     /**
      * @brief Gets the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span() const
+    [[nodiscard]] std::span<ValueType> span() & { return std::span<ValueType>(data_, size_); }
+
+    /**
+     * @brief Gets the field as a span.
+     * @return Span of the field.
+     */
+    [[nodiscard]] std::span<const ValueType> span() const&
     {
         return std::span<const ValueType>(data_, size_);
     }
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range) && = delete;
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const&& = delete;
 
     /**
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range)
+    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range) &
     {
         return std::span<ValueType>(data_ + range.first, range.second - range.first);
     }
@@ -344,7 +389,7 @@ public:
      * @brief Gets a sub view of the field as a span.
      * @return Span of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const
+    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const&
     {
         return std::span<const ValueType>(data_ + range.first, range.second - range.first);
     }

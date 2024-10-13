@@ -21,13 +21,13 @@ public:
 
     using CalculatedType = Calculated<ValueType>;
 
-    Calculated(
-        const UnstructuredMesh& mesh, [[maybe_unused]] const Dictionary& dict, std::size_t patchID
-    )
+    Calculated(const UnstructuredMesh& mesh, const Dictionary& dict, std::size_t patchID)
         : Base(mesh, dict, patchID)
     {}
 
-    virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final {}
+    virtual void correctBoundaryCondition([[maybe_unused]] DomainField<ValueType>& domainField
+    ) final
+    {}
 
     static std::string name() { return "calculated"; }
 

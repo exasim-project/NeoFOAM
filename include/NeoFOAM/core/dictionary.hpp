@@ -5,9 +5,20 @@
 #include <unordered_map>
 #include <any>
 #include <string>
+#include <iostream>
+#include <vector>
+
+#include "NeoFOAM/core/demangle.hpp"
+#include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM
 {
+
+void logOutRange(
+    const std::out_of_range& e,
+    const std::string& key,
+    const std::unordered_map<std::string, std::any>& data
+);
 
 /**
  * @class Dictionary
@@ -42,7 +53,7 @@ public:
      * @param key The key to check.
      * @return True if the key is present, false otherwise.
      */
-    [[nodiscard]] bool found(const std::string& key) const;
+    [[nodiscard]] bool contains(const std::string& key) const;
 
     /**
      * @brief Removes an entry from the dictionary based on the specified key.
@@ -79,7 +90,15 @@ public:
     template<typename T>
     [[nodiscard]] T& get(const std::string& key)
     {
-        return std::any_cast<T&>(data_.at(key));
+        try
+        {
+            return std::any_cast<T&>(operator[](key));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            logBadAnyCast<T>(e, key, data_);
+            throw e;
+        }
     }
 
     /**
@@ -93,8 +112,23 @@ public:
     template<typename T>
     [[nodiscard]] const T& get(const std::string& key) const
     {
-        return std::any_cast<const T&>(data_.at(key));
+        try
+        {
+            return std::any_cast<const T&>(operator[](key));
+        }
+        catch (const std::bad_any_cast& e)
+        {
+            logBadAnyCast<T>(e, key, data_);
+            throw e;
+        }
     }
+
+    /**
+     * @brief Checks if the value associated with the given key is a dictionary.
+     * @param key The key to check.
+     * @return True if the value is a dictionary, false otherwise.
+     */
+    [[nodiscard]] bool isDict(const std::string& key) const;
 
     /**
      * @brief Retrieves a sub-dictionary associated with the given key.
@@ -102,6 +136,19 @@ public:
      * @return A reference to the sub-dictionary associated with the key.
      */
     Dictionary& subDict(const std::string& key);
+
+    /**
+     * @brief Retrieves a sub-dictionary associated with the given key.
+     * @param key The key to retrieve the sub-dictionary for.
+     * @return A reference to the sub-dictionary associated with the key.
+     */
+    const Dictionary& subDict(const std::string& key) const;
+
+    /**
+     * @brief Retrieves the keys of the dictionary.
+     * @return A vector containing the keys of the dictionary.
+     */
+    std::vector<std::string> keys() const;
 
     /**
      * @brief Retrieves the underlying unordered map of the dictionary.
@@ -114,6 +161,12 @@ public:
      * @return A const reference to the underlying unordered map.
      */
     const std::unordered_map<std::string, std::any>& getMap() const;
+
+    /**
+     * @brief Checks whether the dictionary is empty
+     * @return A bool indicating if the dictionary is empty
+     */
+    bool empty() const { return data_.empty(); }
 
 private:
 

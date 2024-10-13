@@ -5,8 +5,6 @@ env:
 
 on:
  pull_request:
-    branches:
-      - main
     types: [closed, synchronize, opened]
  push:
     tags:
@@ -21,11 +19,13 @@ jobs:
         && pip3 install furo
         && pip3 install breathe
         && pip3 install sphinx-sitemap
+        && pip3 install sphinxcontrib-mermaid
     - name: Checkout repo
       uses: actions/checkout@v4
     - name: Build docs
       run: |
         sphinx-build -b html ./doc ./docs_build/
+        cp -r doc/_build/ docs_build/doxygen
         cd docs_build
         touch .nojekyll
     - name: Deploy PR Build
@@ -45,3 +45,13 @@ jobs:
       with:
         folder: docs_build
         target-folder: latest
+    - name: Comment PR
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        message: |
+          Deployed test documentation to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}
+        comment_tag: build_url
+
+    - name: Echo Build PR URL
+      run: |
+        echo "Deploy to: https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}"

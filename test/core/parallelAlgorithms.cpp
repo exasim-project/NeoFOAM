@@ -32,8 +32,8 @@ TEST_CASE("parallelFor")
         NeoFOAM::parallelFor(
             exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
         );
-        auto hostSpanA = fieldA.copyToHost().span();
-        for (auto value : hostSpanA)
+        auto hostA = fieldA.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == 3.0);
         }
@@ -52,8 +52,8 @@ TEST_CASE("parallelFor")
             {0, 5},
             KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
         );
-        auto hostSpanA = fieldA.copyToHost().span();
-        for (auto value : hostSpanA)
+        auto hostA = fieldA.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == NeoFOAM::Vector(3.0, 3.0, 3.0));
         }
@@ -64,14 +64,13 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
             fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
         );
-        auto hostSpanA = fieldA.copyToHost().span();
-        for (auto value : hostSpanA)
+        auto hostA = fieldA.copyToHost();
+        for (auto value : hostA.span())
         {
             REQUIRE(value == 3.0);
         }
@@ -93,7 +92,6 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
@@ -109,7 +107,6 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
         auto spanB = fieldB.span();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;

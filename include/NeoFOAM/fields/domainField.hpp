@@ -41,6 +41,13 @@ public:
           boundaryFields_(exec, nBoundaryFaces, nBoundaries)
     {}
 
+    DomainField(
+        const Executor& exec,
+        const Field<ValueType>& internalField,
+        const BoundaryFields<ValueType>& boundaryFields
+    )
+        : exec_(exec), internalField_(exec, internalField), boundaryFields_(exec, boundaryFields)
+    {}
 
     DomainField(const Executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), internalField_(exec, mesh.nCells()),
@@ -48,7 +55,7 @@ public:
     {}
 
 
-    DomainField(const ::NeoFOAM::DomainField<ValueType>& rhs)
+    DomainField(const DomainField<ValueType>& rhs)
         : exec_(rhs.exec_), internalField_(rhs.internalField_), boundaryFields_(rhs.boundaryFields_)
     {}
 
@@ -59,7 +66,7 @@ public:
     {}
 
 
-    DomainField<ValueType>& operator=(const ::NeoFOAM::DomainField<ValueType>& rhs)
+    DomainField<ValueType>& operator=(const DomainField<ValueType>& rhs)
     {
         internalField_ = rhs.internalField_;
         boundaryFields_ = rhs.boundaryFields_;
