@@ -52,3 +52,10 @@ target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos cpptrace:
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM PUBLIC MPI::MPI_CXX)
 endif()
+if(MSVC)
+  set_target_properties(
+    NeoFOAM
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<0:>
+               LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<0:>
+               ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<0:>)
+endif()
