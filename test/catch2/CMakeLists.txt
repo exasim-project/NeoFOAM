@@ -24,8 +24,7 @@ if(MSVC)
   add_custom_command(
     TARGET neofoam_catch_main
     POST_BUILD
-    COMMAND
-      ${CMAKE_COMMAND} -E copy ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}/NeoFOAM.dll
-      ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/${CMAKE_BUILD_TYPE}/NeoFOAM.dll
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/NeoFOAM.dll
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/${CMAKE_BUILD_TYPE}/NeoFOAM.dll
     COMMENT "Copy NeoFOAM.dll, test programs need it on Windows.")
 endif()
