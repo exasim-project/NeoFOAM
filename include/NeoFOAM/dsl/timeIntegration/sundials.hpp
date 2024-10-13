@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include "arkode/arkode_arkstep.h" // access to ARKStep
-
+#include "arkode/arkode_erkstep.h"
 #include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM::sundials

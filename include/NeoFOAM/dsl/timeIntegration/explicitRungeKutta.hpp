@@ -22,9 +22,10 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/dsl/timeIntegration/sundials.hpp"
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "sundials.hpp"
+#include "../equation.hpp" // TODO: This is a cyclic dependency
 
 #if defined(USE_CUDA)
 using ExecSpace = Kokkos::Cuda;
@@ -40,11 +41,11 @@ using ExecSpace = Kokkos::OpenMP;
 using ExecSpace = Kokkos::Serial;
 #endif
 
+
+// Where to put?
 namespace NeoFOAM::dsl
 {
 
-// Where to put?
-template<typename EquationType>
 struct NFData
 {
     // Final time
@@ -60,7 +61,7 @@ struct NFData
     int maxsteps;               // max number of steps between outputs
     int timeStep;               // time step number
 
-    EquationType system_; // system of equations
+    Equation system_; // system of equations // causing issues - cyclic
 
     // Output variables
     int output; // output level
@@ -72,11 +73,10 @@ struct NFData
     size_t nodes;
 };
 
-template<typename EquationType>
 int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
     // Pointer wrangling
-    NFData<EquationType>* nfData = reinterpret_cast<NFData<EquationType>*>(user_data);
+    NFData* nfData = reinterpret_cast<NFData*>(user_data);
     sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
     sunrealtype* yarray = N_VGetArrayPointer(y);
 
@@ -91,7 +91,7 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
 
     // TODO: copy the field to the solution
 
-    // solve the spacil terms
+    // solve the spacial terms
     // Field<scalar> source = nfData->system_.explicitOperation();
 
     for (std::size_t i = 0; i < nfData->nodes; ++i)
@@ -135,16 +135,14 @@ public:
 
     ExplicitRungeKutta(const Dictionary& dict) : Base(dict) {}
 
-    // ExplicitRungeKutta(const ExplicitRungeKutta& other)
-    //     : TimeIntegrationFactory::Register<ExplicitRungeKutta<EquationType,
-    //     SolutionType>>(other),
-    //       data_(
-    //           other.data_ ? std::make_unique<NFData<EquationType>>(*other.data_) : nullptr
-    //       ) // Deep copy of unique_ptr
-    // {
-    //     solution_ = other.solution_;
-    //     context_ = other.context_;
-    // }
+    ExplicitRungeKutta(const ExplicitRungeKutta& other)
+        : Base(other), data_(
+                           other.data_ ? std::make_unique<NFData>(*other.data_) : nullptr
+                       ) // Deep copy of unique_ptr
+    {
+        solution_ = other.solution_;
+        context_ = other.context_;
+    }
 
     // inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
     // {
@@ -160,12 +158,16 @@ public:
 
     static std::string name() { return "explicitRungeKutta"; }
 
-    static std::string doc() { return "explicitRungeKutta timeIntegration"; }
+    static std::string doc() { return "Explicit time integration using the Runge-Kutta method."; }
 
     static std::string schema() { return "none"; }
 
     virtual void solve(EquationType& eqn, SolutionType& sol) const override
     {
+
+        // data_->system_ = eqn; // This should be a construction/init thing, but I
+        //  don't have the equation on construction anymore.
+
         while (time_ < data_->endTime_)
         {
             // time_ += data_->fixedStepSize_;
@@ -195,7 +197,7 @@ private:
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
                                          // store the next best thing.
-    std::unique_ptr<NFData<EquationType>> data_;
+    std::unique_ptr<NFData> data_;
 
     void initSUNERKSolver()
     {
@@ -213,16 +215,13 @@ private:
 
     void initNFData()
     {
-
-        data_ = std::make_unique<NFData<EquationType>>();
-        data_->realTol_ = this->dict_.template get<scalar>("Relative Tolerance");
-        data_->absTol_ = this->dict_.template get<scalar>("Absolute Tolerance");
+        data_ = std::make_unique<NFData>();
+        auto erkDict = this->dict_.template get<Dictionary>("ddtSchemes");
+        data_->realTol_ = erkDict.template get<scalar>("Relative Tolerance");
+        data_->absTol_ = erkDict.template get<scalar>("Absolute Tolerance");
         data_->fixedStepSize_ =
-            this->dict_.template get<scalar>("Fixed Step Size"); // zero for adaptive
-        data_->endTime_ = this->dict_.template get<scalar>("End Time");
-
-        // data_->system_ = dsl::Equation(eqnSystem_);
-
+            erkDict.template get<scalar>("Fixed Step Size"); // zero for adaptive
+        data_->endTime_ = erkDict.template get<scalar>("End Time");
         data_->nodes = 1;
         data_->maxsteps = 1;
     }
@@ -251,10 +250,10 @@ private:
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
         // Initialize ERKStep solver
-        // ERKStepSetUserData(ark, NULL);
+        ERKStepSetUserData(ark, NULL);
         ERKStepSetInitStep(ark, data_->fixedStepSize_);
         ERKStepSetFixedStep(ark, data_->fixedStepSize_);
-        // ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
+        ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
         ARKodeSetUserData(ark, data_.get());
     }
 

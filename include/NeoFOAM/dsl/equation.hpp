@@ -15,6 +15,7 @@
 #include "NeoFOAM/core/error.hpp"
 
 #include "NeoFOAM/dsl/timeIntegration/forwardEuler.hpp"
+#include "NeoFOAM/dsl/timeIntegration/explicitRungeKutta.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 namespace NeoFOAM::dsl
@@ -199,5 +200,6 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
 }
 
 template class ForwardEuler<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
+template class ExplicitRungeKutta<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
 
 } // namespace NeoFOAM::dsl
