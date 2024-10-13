@@ -79,7 +79,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& concreteExec)
+            [&ptr, size](const auto& concreteExec)
             { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
             exec_
         );
