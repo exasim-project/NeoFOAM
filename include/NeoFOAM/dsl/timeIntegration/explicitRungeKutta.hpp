@@ -5,7 +5,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 #include <functional>
@@ -20,6 +20,10 @@
 // #include <sunlinsol/sunlinsol_kokkosdense.hpp>
 // #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 
+#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
+
+#include "NeoFOAM/core/primitives/scalar.hpp"
 #include "sundials.hpp"
 
 #if defined(USE_CUDA)
@@ -36,10 +40,11 @@ using ExecSpace = Kokkos::OpenMP;
 using ExecSpace = Kokkos::Serial;
 #endif
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoFOAM::dsl
 {
 
 // Where to put?
+template<typename EquationType>
 struct NFData
 {
     // Final time
@@ -55,7 +60,7 @@ struct NFData
     int maxsteps;               // max number of steps between outputs
     int timeStep;               // time step number
 
-    dsl::EqnSystem system_; // system of equations
+    EquationType system_; // system of equations
 
     // Output variables
     int output; // output level
@@ -67,26 +72,91 @@ struct NFData
     size_t nodes;
 };
 
+template<typename EquationType>
+int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
+{
+    // Pointer wrangling
+    NFData<EquationType>* nfData = reinterpret_cast<NFData<EquationType>*>(user_data);
+    sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
+    sunrealtype* yarray = N_VGetArrayPointer(y);
 
-class ExplicitRungeKutta : public TimeIntegrationFactory::Register<ExplicitRungeKutta>
+    if (ydotarray == NULL)
+    {
+        return -1;
+    }
+    if (yarray == NULL)
+    {
+        return -1;
+    }
+
+    // TODO: copy the field to the solution
+
+    // solve the spacil terms
+    // Field<scalar> source = nfData->system_.explicitOperation();
+
+    for (std::size_t i = 0; i < nfData->nodes; ++i)
+    {
+        ydotarray[i] = -1.0 * yarray[i]; // replace with source[i]
+    }
+
+    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
+    // {
+    //     eqnTerm.temporalOperation(Phi);
+    // }
+    // Phi += source*dt;
+    // refField->internalField() -= source * dt;
+    // refField->correctBoundaryConditions();
+
+    // check if execturo is GPU
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_.exec()))
+    {
+        Kokkos::fence();
+    }
+    return 0;
+}
+
+
+template<typename EquationType, typename SolutionType>
+class ExplicitRungeKutta :
+    public TimeIntegrationFactory<EquationType, SolutionType>::template Register<
+        ExplicitRungeKutta<EquationType, SolutionType>>
 {
     using VecType = ::sundials::kokkos::Vector<ExecSpace>;
     using SizeType = VecType::size_type;
 
 public:
 
+    using Base = TimeIntegrationFactory<EquationType, SolutionType>::template Register<
+        ExplicitRungeKutta<EquationType, SolutionType>>;
+    using Base::dict_;
+
     ExplicitRungeKutta() = default;
     ~ExplicitRungeKutta() = default;
 
-    ExplicitRungeKutta(const ExplicitRungeKutta& other);
+    ExplicitRungeKutta(const Dictionary& dict) : Base(dict) {}
 
-    inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
-    {
-        *this = ExplicitRungeKutta(other);
-        return *this;
-    };
+    // ExplicitRungeKutta(const ExplicitRungeKutta& other)
+    //     : TimeIntegrationFactory::Register<ExplicitRungeKutta<EquationType,
+    //     SolutionType>>(other),
+    //       data_(
+    //           other.data_ ? std::make_unique<NFData<EquationType>>(*other.data_) : nullptr
+    //       ) // Deep copy of unique_ptr
+    // {
+    //     solution_ = other.solution_;
+    //     context_ = other.context_;
+    // }
 
-    ExplicitRungeKutta(dsl::EqnSystem eqnSystem, const Dictionary& dict);
+    // inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
+    // {
+    //     *this = ExplicitRungeKutta(other);
+    //     return *this;
+    // };
+
+    // ExplicitRungeKutta(EquationType eqnSystem, const Dictionary& dict)
+    //     : TimeIntegrationFactory::Register<ExplicitRungeKutta>(eqnSystem, dict)
+    // {
+    //     initSUNERKSolver();
+    // }
 
     static std::string name() { return "explicitRungeKutta"; }
 
@@ -94,9 +164,25 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve() override;
+    virtual void solve(EquationType& eqn, SolutionType& sol) const override
+    {
+        while (time_ < data_->endTime_)
+        {
+            // time_ += data_->fixedStepSize_;
+            // ARKStepEvolve(
+            //     arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_,
+            //     ARK_ONE_STEP
+            // );
+            // sunrealtype* solution = N_VGetArrayPointer(solution_);
+            // std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
+        }
+    };
 
-    std::unique_ptr<TimeIntegrationFactory> clone() const override;
+    std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> clone() const
+    {
+        return std::make_unique<ExplicitRungeKutta>(*this);
+    }
+
 
 private:
 
@@ -109,15 +195,73 @@ private:
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
                                          // store the next best thing.
-    std::unique_ptr<NFData> data_;
+    std::unique_ptr<NFData<EquationType>> data_;
 
-    void initSUNERKSolver();
-    void initNFData();
-    void initSUNContext();
-    void initSUNDimension();
-    void initSUNInitialConditions();
-    void initSUNCreateERK();
-    void initSUNTolerances();
+    void initSUNERKSolver()
+    {
+        // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order
+        // of initialization.
+        initNFData();
+
+        // Initialize SUNdials solver;
+        initSUNContext();
+        initSUNDimension();
+        initSUNInitialConditions();
+        initSUNCreateERK();
+        initSUNTolerances();
+    }
+
+    void initNFData()
+    {
+
+        data_ = std::make_unique<NFData<EquationType>>();
+        data_->realTol_ = this->dict_.template get<scalar>("Relative Tolerance");
+        data_->absTol_ = this->dict_.template get<scalar>("Absolute Tolerance");
+        data_->fixedStepSize_ =
+            this->dict_.template get<scalar>("Fixed Step Size"); // zero for adaptive
+        data_->endTime_ = this->dict_.template get<scalar>("End Time");
+
+        // data_->system_ = dsl::Equation(eqnSystem_);
+
+        data_->nodes = 1;
+        data_->maxsteps = 1;
+    }
+
+    void initSUNContext()
+    {
+        int flag = SUNContext_Create(SUN_COMM_NULL, &context_);
+        NF_ASSERT(flag == 0, "SUNContext_Create failed");
+    }
+
+    void initSUNDimension()
+    {
+        kokkosSolution_ = VecType(data_->nodes, context_);
+        kokkosInitialConditions_ = VecType(data_->nodes, context_);
+        solution_ = kokkosSolution_;
+        initialConditions_ = kokkosInitialConditions_;
+    }
+
+    void initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }
+
+    void initSUNCreateERK()
+    {
+        arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
+            explicitSolveWrapperFreeFunction<EquationType>, 0.0, initialConditions_, context_
+        )));
+        void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+
+        // Initialize ERKStep solver
+        // ERKStepSetUserData(ark, NULL);
+        ERKStepSetInitStep(ark, data_->fixedStepSize_);
+        ERKStepSetFixedStep(ark, data_->fixedStepSize_);
+        // ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
+        ARKodeSetUserData(ark, data_.get());
+    }
+
+    void initSUNTolerances()
+    {
+        ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
+    }
 };
 
 } // namespace NeoFOAM

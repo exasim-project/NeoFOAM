@@ -33,9 +33,7 @@ concept HasExplicitOperator = requires(T t) {
 
 
 /* @class OperatorMixin
- * @brief A mixin class to represent simplify implementations of concrete operators
- * in NeoFOAMs dsl
- *
+ * @brief A mixin class to represent simplify implementations of concrete operators in NeoFOAMs dsl.
  *
  * @ingroup dsl
  */
@@ -66,7 +64,7 @@ protected:
 
 
 /* @class Operator
- * @brief A class to represent a operator in NeoFOAMs dsl
+ * @brief A class to represent an operator in NeoFOAMs dsl
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw
