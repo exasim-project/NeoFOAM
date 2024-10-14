@@ -48,7 +48,7 @@ public:
 
     virtual ~OperatorMixin() = default;
 
-    const Executor& exec() const { return exec_; }
+    virtual const Executor& exec() const final { return exec_; }
 
     Coeff& getCoefficient() { return coeffs_; }
 
