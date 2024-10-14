@@ -79,8 +79,16 @@ public:
         }
     }
 
+    /* @brief solve an equation
+     *
+     * @param solutionField - Field for which the equation is to be solved
+     * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
+     * @param fvSolution - Dictionary containing linear solver properties
+     * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
+     */
     template<typename SolutionFieldType>
-    void solve(SolutionFieldType& solution, const Dictionary& solverProperties)
+    void
+    solve(SolutionFieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution)
     {
         if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
         {
@@ -90,8 +98,8 @@ public:
         {
             // integrate equations in time
             TimeIntegration<Equation, finiteVolume::cellCentred::VolumeField<scalar>>
-                timeIntegrator(solverProperties.subDict("ddtSchemes"));
-            // timeIntegrator.solve(solution, solverProperties);
+                timeIntegrator(fvSchemes.subDict("ddtSchemes"));
+            timeIntegrator.solve(*this, solution);
         }
         else
         {
@@ -125,9 +133,12 @@ public:
 
     scalar getDt() const { return dt_; }
 
-    scalar dt_ = 0;
+    void setDt(scalar dt) { dt_ = dt; }
+
 
 private:
+
+    scalar dt_ = 0;
 
     const Executor exec_;
 
@@ -204,6 +215,7 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
  * @param solutionField - Field for which the equation is to be solved
  * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
  * @param fvSolution - Dictionary containing linear solver properties
+ * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
  */
 template<typename FieldType>
 void solve(
@@ -213,7 +225,7 @@ void solve(
     const Dictionary& solutionDict
 )
 {
-    eqn.solve(solutionField, schemesDict);
+    eqn.solve(solutionField, schemesDict, solutionDict);
 }
 
 template class ForwardEuler<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
