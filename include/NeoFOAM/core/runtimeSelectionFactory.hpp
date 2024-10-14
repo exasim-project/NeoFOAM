@@ -329,6 +329,10 @@ public:
                 REGISTERED = (it != tbl.end());
             }
         }
+
+    private:
+
+        Register() { (void)REGISTERED; }
     };
 
     virtual ~RuntimeSelectionFactory() = default;
@@ -365,7 +369,6 @@ public:
 
 private:
 
-    Register() { (void)REGISTERED; }
 
     /**
      * Checks if a given key exists in the table and prints an error message if it doesn't.
