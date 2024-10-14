@@ -78,4 +78,7 @@ TEST_CASE("Register")
             CHECK(!NeoFOAM::BaseClassDocumentation::schema(baseClassName, derivedClass).empty());
         }
     }
+
+    CHECK(BaseClass::table().size() == 1);
+    CHECK(BaseClass2::table().size() == 1);
 }
