@@ -24,6 +24,12 @@ if(NOT ${Kokkos_FOUND})
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
   FetchContent_MakeAvailable(Kokkos)
+else()
+  if(DEFINED Kokkos_ENABLE_CUDA)
+    set(NEOFOAM_ENABLE_CUDA
+        ON
+        CACHE INTERNAL "")
+  endif()
 endif()
 
 include(cmake/CPM.cmake)

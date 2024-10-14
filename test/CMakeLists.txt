@@ -25,9 +25,20 @@ function(neofoam_unit_test TEST)
   endif()
 
   add_executable(${TEST} "${TEST}.cpp")
+  if(NEOFOAM_ENABLE_CUDA)
+    set_source_files_properties("${TEST}.cpp" PROPERTIES LANGUAGE CUDA)
+  endif()
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-  set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  if(MSVC)
+    set_target_properties(
+      ${TEST}
+      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
+  else()
+    set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  endif()
 
   add_test(
     NAME ${TEST}
@@ -53,9 +64,20 @@ function(neofoam_unit_test_mpi TEST)
   endif()
 
   add_executable(${TEST} "${TEST}.cpp")
+  if(NEOFOAM_ENABLE_CUDA)
+    set_source_files_properties("${TEST}.cpp" PROPERTIES LANGUAGE CUDA)
+  endif()
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main_mpi neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-  set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  if(MSVC)
+    set_target_properties(
+      ${TEST}
+      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
+  else()
+    set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  endif()
 
   add_test(
     NAME ${TEST}
