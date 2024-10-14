@@ -365,6 +365,7 @@ public:
 
 private:
 
+    Register() { (void)REGISTERED; }
 
     /**
      * Checks if a given key exists in the table and prints an error message if it doesn't.
