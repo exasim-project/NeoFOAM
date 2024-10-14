@@ -295,7 +295,6 @@ public:
 
         friend derivedClass;
         [[maybe_unused]] static bool REGISTERED;
-        static_assert((bool)&REGISTERED);
 
         /**
          * @brief Adds the derived class as a sub type.
