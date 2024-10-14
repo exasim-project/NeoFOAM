@@ -34,20 +34,18 @@ public:
     virtual void solve(EquationType& eqn, SolutionType& sol) const override
     {
         scalar dt = eqn.getDt();
-        // fvcc::VolumeField<scalar>* refField = eqnSystem_.volumeField();
-        // Field<scalar> Phi(eqnSystem_.exec(), eqnSystem_.nCells());
-        // NeoFOAM::fill(Phi, 0.0);
-        // Field<scalar> source = eqn.explicitOperation();
+        Field<scalar> phi(sol.exec(), sol.size(), 0.0);
+        Field<scalar> source = eqn.explicitOperation();
 
-        // for (auto& eqnTerm : eqnSystem_.temporalTerms())
+        // phi += source*dt;
+        // for (auto& op : eqn.temporalOperators())
         // {
-        //     eqnTerm.temporalOperation(Phi);
+        //     op.temporalOperation(phi);
         // }
-        // Phi += source*dt;
-        // refField->internalField() -= source * dt;
-        // refField->correctBoundaryConditions();
+        sol.internalField() -= source * dt;
+        sol.correctBoundaryConditions();
 
-        // check if execturo is GPU
+        // check if executor is GPU
         // if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqnSystem_.exec()))
         // {
         //     Kokkos::fence();

@@ -22,13 +22,22 @@ public:
 
     Operator::Type getType() const { return Operator::Type::Temporal; }
 
-    void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
+    void explicitOperation(Field<scalar>& source, scalar scale)
     {
         auto sourceField = source.span();
-        NeoFOAM::parallelFor(
+        parallelFor(
             source.exec(),
-            {0, source.size()},
+            source.range(),
             KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1 * scale; }
+        );
+    }
+
+    void temporalOperation(Field<scalar>& phi)
+    {
+        auto phiSpan = phi.span();
+        auto fieldSpan = field_.internalField().span();
+        parallelFor(
+            phi.exec(), phi.range(), KOKKOS_LAMBDA(const size_t i) { fieldSpan[i] += phiSpan[i]; }
         );
     }
 
@@ -36,11 +45,7 @@ public:
 
     size_t getSize() const { return field_.internalField().size(); }
 
-    const Executor& exec() const { return exec_; }
-
-    const Executor exec_;
-
-    std::size_t nCells_;
+private:
 
     VolumeField& field_;
 };

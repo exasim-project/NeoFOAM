@@ -25,28 +25,34 @@ TEST_CASE("TimeIntegration")
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
 
+    NeoFOAM::Dictionary fvSchemes;
+    NeoFOAM::Dictionary ddtSchemes;
+    ddtSchemes.insert("type", std::string("forwardEuler"));
+    fvSchemes.insert("ddtSchemes", ddtSchemes);
+    NeoFOAM::Dictionary fvSolution;
+
     Field fA(exec, 1, 2.0);
     BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     auto vf = VolumeField(exec, mesh, fA, bf, bcs);
-    auto fB = Field(exec, 1, 4.0);
-
-
-    NeoFOAM::Dictionary dict, subDict;
-    subDict.insert("type", std::string("forwardEuler"));
-    dict.insert("ddtSchemes", subDict);
-
-    auto dummy = Dummy(exec, vf);
 
     SECTION("Create equation and perform explicitOperation on " + execName)
     {
+        auto dummy = Dummy(exec, vf);
         Operator ddtOperator = NeoFOAM::dsl::temporal::Ddt(exec, vf);
 
+        // ddt(U) = f
         auto eqn = ddtOperator + dummy;
+        eqn.setDt(2.0);
 
-        eqn.solve(vf, dict);
+        // int(ddt(U)) + f = 0
+        // (U^1-U^0)/dt = -f
+        // U^1 = - f * dt + U^0, where dt = 2, f=1, U^0=2.0 -> U^1=-2.0
+        eqn.solve(vf, fvSchemes, fvSolution);
+        REQUIRE(getField(vf.internalField()) == -2.0);
     }
 
+    // auto fB = Field(exec, 1, 4.0);
     // fvcc::TimeIntegration timeIntergrator(eqnSys, dict);
 }
