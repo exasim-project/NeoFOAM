@@ -24,10 +24,14 @@ if(NOT ${Kokkos_FOUND})
     GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
-    # Ensure that Kokkos is built as a shared library
-    # set(BUILD_SHARED_LIBS ON CACHE BOOL "Build Kokkos as shared" FORCE)
 
-    FetchContent_MakeAvailable(Kokkos)
+  FetchContent_MakeAvailable(Kokkos)
+else()
+  if(DEFINED Kokkos_ENABLE_CUDA)
+    set(NEOFOAM_ENABLE_CUDA
+        ON
+        CACHE INTERNAL "")
+  endif()
 endif()
 
 include(cmake/CPM.cmake)

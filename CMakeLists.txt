@@ -20,6 +20,12 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # Set the output directories for all binaries and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+# Tell cmake we want it to automate generating export symbols for the dll
+if(MSVC)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+endif()
 
 # Eventhough we compile NeoFOAM as SHARED library we need to explicitly enable PIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -40,6 +46,7 @@ option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" OFF)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" OFF)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" OFF)
 option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" OFF)
+option(NEOFOAM_ENABLE_CUDA "Enable CUDA" OFF)
 option(NEOFOAM_ENABLE_MPI "Enable MPI" ON)
 option(NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT "Enable MPI with threading support" OFF)
 option(NEOFOAM_ENABLE_WARNINGS "Treat compiler warnings as errors" OFF)
@@ -70,6 +77,11 @@ include(cmake/StandardProjectSettings.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
+
+if(NEOFOAM_ENABLE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  enable_language(CUDA)
+endif()
 
 add_library(neofoam_options INTERFACE)
 add_library(neofoam_warnings INTERFACE)
