@@ -111,7 +111,7 @@ required tools for compilation (ubuntu latest 24.04):
 Windows
 """""""
 
-To compile NeoFOAM on windows, mysys2 is required the installation is described in vscode user guide_  
+To compile NeoFOAM on windows, mysys2 is required the installation is described in vscode user guide_
 
 .. _guide: https://code.visualstudio.com/docs/cpp/config-mingw
 

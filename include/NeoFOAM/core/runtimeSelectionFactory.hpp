@@ -143,9 +143,9 @@ struct RegisterDocumentation
 
     static bool REGISTERED; ///< Static variable used to trigger the registration of the class
                             ///< documentation.
-    // with this static_assert all test pass the same approach 
+    // with this static_assert all test pass the same approach
     // runTimeSelectionFactory does not work
-    static_assert((bool)&REGISTERED); 
+    static_assert((bool)&REGISTERED);
 };
 
 // Initialize the static variable and register the class
@@ -332,8 +332,9 @@ public:
             }
         }
 
-        private:
-            Register() { (void)REGISTERED; }
+    private:
+
+        Register() { (void)REGISTERED; }
     };
 
     virtual ~RuntimeSelectionFactory() = default;

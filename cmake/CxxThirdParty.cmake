@@ -6,7 +6,6 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 
-
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   find_package(MPI 3.1 REQUIRED)
 endif()
@@ -23,7 +22,6 @@ if(NOT ${Kokkos_FOUND})
     GIT_SHALLOW ON
     GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
-
 
   FetchContent_MakeAvailable(Kokkos)
 else()

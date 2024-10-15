@@ -20,13 +20,7 @@ void serializeIO(volatile bool* threadShutdown)
     for (int i = 0; i < COMM_SIZE; ++i)
     {
         MPI_Irecv(
-            &recvBuffer,
-            1,
-            MPI_INT,
-            i,
-            SERIALIZATION_TAG,
-            COMM,
-            &req[static_cast<std::size_t>(i)]
+            &recvBuffer, 1, MPI_INT, i, SERIALIZATION_TAG, COMM, &req[static_cast<std::size_t>(i)]
         );
     }
 
@@ -56,13 +50,7 @@ void serializeIO(volatile bool* threadShutdown)
         // wait until process has finished printing
         bool remoteHasFinished = false;
         MPI_Recv(
-            &remoteHasFinished,
-            1,
-            MPI_INT,
-            completed,
-            SERIALIZATION_TAG,
-            COMM,
-            MPI_STATUS_IGNORE
+            &remoteHasFinished, 1, MPI_INT, completed, SERIALIZATION_TAG, COMM, MPI_STATUS_IGNORE
         );
 
         // re-activate request for process

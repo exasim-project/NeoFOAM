@@ -226,9 +226,7 @@ void MpiReporter::assertionEnded(const Catch::AssertionStats& stats)
         MPI_Send(&needPrint, 1, MPI_INT, ROOT, SERIALIZATION_TAG, COMM);
 
         bool allowedToPrint = false;
-        MPI_Recv(
-            &allowedToPrint, 1, MPI_INT, ROOT, SERIALIZATION_TAG, COMM, MPI_STATUS_IGNORE
-        );
+        MPI_Recv(&allowedToPrint, 1, MPI_INT, ROOT, SERIALIZATION_TAG, COMM, MPI_STATUS_IGNORE);
 
         r_stream_->stream() << "Rank [" << RANK << "|" << COMM_SIZE << "]\n" << std::flush;
         reporter_->assertionEnded(stats);
