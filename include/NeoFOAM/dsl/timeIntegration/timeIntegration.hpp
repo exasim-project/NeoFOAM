@@ -8,6 +8,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/dsl/equation.hpp"
 
 namespace NeoFOAM::dsl
 {
@@ -15,10 +16,10 @@ namespace NeoFOAM::dsl
 /* @class Factory class to create time integration method by a given name
  * using NeoFOAMs runTimeFactory mechanism
  */
-template<typename EquationType, typename SolutionType>
+template<typename SolutionType>
 class TimeIntegrationFactory :
     public RuntimeSelectionFactory<
-        TimeIntegrationFactory<EquationType, SolutionType>,
+        TimeIntegrationFactory<SolutionType>,
         Parameters<const Dictionary&>>
 {
 
@@ -31,7 +32,7 @@ public:
     virtual ~TimeIntegrationFactory() {}
 
     virtual void
-    solve(EquationType& eqn, SolutionType& sol) const = 0; // Pure virtual function for solving
+    solve(Equation& eqn, SolutionType& sol) const = 0; // Pure virtual function for solving
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<TimeIntegrationFactory> clone() const = 0;
@@ -44,10 +45,9 @@ protected:
 /* @class Factory class to create time integration method by a given name
  * using NeoFOAMs runTimeFactory mechanism
  *
- * @tparam EquationType Injects the type of equation for into the solve method
  * @tparam SolutionType Type of the solution field eg, volumeField or just a plain Field
  */
-template<typename EquationType, typename SolutionType>
+template<typename SolutionType>
 class TimeIntegration
 {
 
@@ -60,15 +60,15 @@ public:
         : timeIntegratorStrategy_(std::move(timeIntegrator.timeIntegratorStrategy_)) {};
 
     TimeIntegration(const Dictionary& dict)
-        : timeIntegratorStrategy_(TimeIntegrationFactory<EquationType, SolutionType>::create(
-            dict.get<std::string>("type"), dict
-        )) {};
+        : timeIntegratorStrategy_(
+            TimeIntegrationFactory<SolutionType>::create(dict.get<std::string>("type"), dict)
+        ) {};
 
-    void solve(EquationType& eqn, SolutionType& sol) { timeIntegratorStrategy_->solve(eqn, sol); }
+    void solve(Equation& eqn, SolutionType& sol) { timeIntegratorStrategy_->integrate(eqn, sol); }
 
 private:
 
-    std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> timeIntegratorStrategy_;
+    std::unique_ptr<TimeIntegrationFactory<SolutionType>> timeIntegratorStrategy_;
 };
 
 } // namespace NeoFOAM::dsl

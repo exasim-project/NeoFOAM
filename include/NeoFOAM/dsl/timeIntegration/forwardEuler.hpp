@@ -12,16 +12,15 @@
 namespace NeoFOAM::dsl
 {
 
-template<typename EquationType, typename SolutionType>
+template<typename SolutionType>
 class ForwardEuler :
-    public TimeIntegrationFactory<EquationType, SolutionType>::template Register<
-        ForwardEuler<EquationType, SolutionType>>
+    public TimeIntegrationFactory<SolutionType>::template Register<ForwardEuler<SolutionType>>
 {
 
 public:
 
-    using Base = TimeIntegrationFactory<EquationType, SolutionType>::template Register<
-        ForwardEuler<EquationType, SolutionType>>;
+    using Base =
+        TimeIntegrationFactory<SolutionType>::template Register<ForwardEuler<SolutionType>>;
 
     ForwardEuler(const Dictionary& dict) : Base(dict) {}
 
@@ -31,7 +30,7 @@ public:
 
     static std::string schema() { return "none"; }
 
-    virtual void solve(EquationType& eqn, SolutionType& sol) const override
+    virtual void solve(Equation& eqn, SolutionType& sol) const override
     {
         scalar dt = eqn.getDt();
         Field<scalar> phi(sol.exec(), sol.size(), 0.0);
@@ -52,7 +51,7 @@ public:
         // }
     };
 
-    std::unique_ptr<TimeIntegrationFactory<EquationType, SolutionType>> clone() const override
+    std::unique_ptr<TimeIntegrationFactory<SolutionType>> clone() const override
     {
         return std::make_unique<ForwardEuler>(*this);
     }

@@ -10,11 +10,8 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
-// TODO redundant name
-#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-#include "NeoFOAM/dsl/timeIntegration/forwardEuler.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 namespace NeoFOAM::dsl
@@ -96,10 +93,10 @@ public:
         }
         if (temporalOperators_.size() > 0)
         {
-            // integrate equations in time
-            TimeIntegration<Equation, finiteVolume::cellCentred::VolumeField<scalar>>
-                timeIntegrator(fvSchemes.subDict("ddtSchemes"));
-            timeIntegrator.solve(*this, solution);
+            // // integrate equations in time
+            // TimeIntegration<Equation, finiteVolume::cellCentred::VolumeField<scalar>>
+            //     timeIntegrator(fvSchemes.subDict("ddtSchemes"));
+            // timeIntegrator.solve(*this, solution);
         }
         else
         {
@@ -227,7 +224,5 @@ void solve(
 {
     eqn.solve(solutionField, schemesDict, solutionDict);
 }
-
-template class ForwardEuler<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
 
 } // namespace NeoFOAM::dsl
