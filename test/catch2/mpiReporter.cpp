@@ -140,7 +140,7 @@ void MpiReporter::testRunStarting(const Catch::TestRunInfo& testRunInfo)
 void MpiReporter::testRunEnded(const Catch::TestRunStats& stats)
 {
     Catch::TestRunStats globalStats(stats);
-    MPI_Reduce(&stats.aborting, &globalStats.aborting, 1, MPI_CXX_BOOL, MPI_LOR, ROOT, COMM);
+    MPI_Reduce(&stats.aborting, &globalStats.aborting, 1, MPI_INT, MPI_LOR, ROOT, COMM);
     MPI_Reduce(
         &stats.totals.assertions.failed,
         &globalStats.totals.assertions.failed,
@@ -223,18 +223,16 @@ void MpiReporter::assertionEnded(const Catch::AssertionStats& stats)
 
     if (needPrint)
     {
-        MPI_Send(&needPrint, 1, MPI_CXX_BOOL, ROOT, SERIALIZATION_TAG, COMM);
+        MPI_Send(&needPrint, 1, MPI_INT, ROOT, SERIALIZATION_TAG, COMM);
 
         bool allowedToPrint = false;
-        MPI_Recv(
-            &allowedToPrint, 1, MPI_CXX_BOOL, ROOT, SERIALIZATION_TAG, COMM, MPI_STATUS_IGNORE
-        );
+        MPI_Recv(&allowedToPrint, 1, MPI_INT, ROOT, SERIALIZATION_TAG, COMM, MPI_STATUS_IGNORE);
 
         r_stream_->stream() << "Rank [" << RANK << "|" << COMM_SIZE << "]\n" << std::flush;
         reporter_->assertionEnded(stats);
         r_stream_->stream() << std::flush;
 
         const bool finished = true;
-        MPI_Send(&finished, 1, MPI_CXX_BOOL, ROOT, SERIALIZATION_TAG, COMM);
+        MPI_Send(&finished, 1, MPI_INT, ROOT, SERIALIZATION_TAG, COMM);
     }
 }

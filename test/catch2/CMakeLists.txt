@@ -20,7 +20,7 @@ endif()
 target_link_libraries(neofoam_catch_main PUBLIC Catch2::Catch2 cpptrace::cpptrace Kokkos::kokkos
                                                 NeoFOAM)
 target_link_libraries(neofoam_catch_main PRIVATE neofoam_warnings neofoam_options)
-if(MSVC)
+if(WIN32)
   add_custom_command(
     TARGET neofoam_catch_main
     POST_BUILD
