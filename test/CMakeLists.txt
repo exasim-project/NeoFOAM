@@ -18,7 +18,7 @@ function(neofoam_unit_test TEST)
   cmake_parse_arguments("neofoam" "${options}" "${oneValueKeywords}" "${multiValueKeywords}"
                         ${ARGN})
   if(NOT DEFINED "neofoam_WORKING_DIRECTORY")
-    set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
   endif()
   if(NOT DEFINED "neofoam_COMMAND")
     set(neofoam_COMMAND ${TEST})
@@ -30,7 +30,7 @@ function(neofoam_unit_test TEST)
   endif()
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-  if(MSVC)
+  if(WIN32)
     set_target_properties(
       ${TEST}
       PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
@@ -57,7 +57,7 @@ function(neofoam_unit_test_mpi TEST)
     set(neofoam_MPI_SIZE 1)
   endif()
   if(NOT DEFINED "neofoam_WORKING_DIRECTORY")
-    set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
   endif()
   if(NOT DEFINED "neofoam_COMMAND")
     set(neofoam_COMMAND ${TEST})
@@ -69,7 +69,7 @@ function(neofoam_unit_test_mpi TEST)
   endif()
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main_mpi neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-  if(MSVC)
+  if(WIN32)
     set_target_properties(
       ${TEST}
       PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
