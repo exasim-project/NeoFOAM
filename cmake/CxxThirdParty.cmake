@@ -46,10 +46,10 @@ cpmaddpackage(
 cpmaddpackage(
   NAME
   nlohmann_json
-  GITHUB_REPOSITORY
-  nlohmann/json
   VERSION
   3.11.3
+  URL
+  https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
 
 cpmaddpackage(
