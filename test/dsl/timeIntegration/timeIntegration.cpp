@@ -10,7 +10,7 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/dsl/equation.hpp"
+#include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/timeIntegration/ddt.hpp"
 
 
@@ -49,7 +49,7 @@ TEST_CASE("TimeIntegration")
         // int(ddt(U)) + f = 0
         // (U^1-U^0)/dt = -f
         // U^1 = - f * dt + U^0, where dt = 2, f=1, U^0=2.0 -> U^1=-2.0
-        eqn.solve(vf, fvSchemes, fvSolution);
+        solve(eqn, vf, fvSchemes, fvSolution);
         REQUIRE(getField(vf.internalField()) == -2.0);
     }
 

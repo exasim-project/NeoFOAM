@@ -76,34 +76,6 @@ public:
         }
     }
 
-    /* @brief solve an equation
-     *
-     * @param solutionField - Field for which the equation is to be solved
-     * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
-     * @param fvSolution - Dictionary containing linear solver properties
-     * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
-     */
-    template<typename SolutionFieldType>
-    void
-    solve(SolutionFieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution)
-    {
-        if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
-        {
-            NF_ERROR_EXIT("No temporal or implicit terms to solve.");
-        }
-        if (temporalOperators_.size() > 0)
-        {
-            // // integrate equations in time
-            // TimeIntegration<Equation, finiteVolume::cellCentred::VolumeField<scalar>>
-            //     timeIntegrator(fvSchemes.subDict("ddtSchemes"));
-            // timeIntegrator.solve(*this, solution);
-        }
-        else
-        {
-            NF_ERROR_EXIT("Not implemented.");
-            // solve sparse matrix system
-        }
-    }
 
     /* @brief getter for the total number of terms in the equation */
     size_t size() const
@@ -131,7 +103,6 @@ public:
     scalar getDt() const { return dt_; }
 
     void setDt(scalar dt) { dt_ = dt; }
-
 
 private:
 
@@ -214,15 +185,5 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
  * @param fvSolution - Dictionary containing linear solver properties
  * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
  */
-template<typename FieldType>
-void solve(
-    const Equation& eqn,
-    FieldType& solutionField,
-    const Dictionary& schemesDict,
-    const Dictionary& solutionDict
-)
-{
-    eqn.solve(solutionField, schemesDict, solutionDict);
-}
 
 } // namespace NeoFOAM::dsl

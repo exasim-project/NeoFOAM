@@ -57,5 +57,8 @@ public:
     }
 };
 
+// unfortunately needs explicit instantiation
+template class ForwardEuler<finiteVolume::cellCentred::VolumeField<scalar>>;
+
 
 } // namespace NeoFOAM

@@ -64,11 +64,12 @@ public:
             TimeIntegrationFactory<SolutionType>::create(dict.get<std::string>("type"), dict)
         ) {};
 
-    void solve(Equation& eqn, SolutionType& sol) { timeIntegratorStrategy_->integrate(eqn, sol); }
+    void solve(Equation& eqn, SolutionType& sol) { timeIntegratorStrategy_->solve(eqn, sol); }
 
 private:
 
     std::unique_ptr<TimeIntegrationFactory<SolutionType>> timeIntegratorStrategy_;
 };
+
 
 } // namespace NeoFOAM::dsl
