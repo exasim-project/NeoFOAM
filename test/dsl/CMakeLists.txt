@@ -4,3 +4,5 @@
 neofoam_unit_test(coeff)
 neofoam_unit_test(operator)
 neofoam_unit_test(equation)
+
+add_subdirectory(timeIntegration)

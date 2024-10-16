@@ -42,9 +42,9 @@ TEST_CASE("Operator")
         auto d = fB * Dummy(exec, vf);
         auto e = Coeff(-3, fB) * Dummy(exec, vf);
 
-        auto coeffc = c.getCoefficient();
-        auto coeffd = d.getCoefficient();
-        auto coeffE = e.getCoefficient();
+        [[maybe_unused]] auto coeffC = c.getCoefficient();
+        [[maybe_unused]] auto coeffD = d.getCoefficient();
+        [[maybe_unused]] auto coeffE = e.getCoefficient();
 
         Field source(exec, 1, 2.0);
         c.explicitOperation(source);

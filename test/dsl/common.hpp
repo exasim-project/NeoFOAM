@@ -8,17 +8,19 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/DSL/coeff.hpp"
-#include "NeoFOAM/DSL/operator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/dsl/coeff.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
+
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
-using Coeff = NeoFOAM::DSL::Coeff;
-using Operator = NeoFOAM::DSL::Operator;
-using OperatorMixin = NeoFOAM::DSL::OperatorMixin;
+using Coeff = NeoFOAM::dsl::Coeff;
+using Operator = NeoFOAM::dsl::Operator;
+using OperatorMixin = NeoFOAM::dsl::OperatorMixin;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
 using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
-namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 /* A dummy implementation of a Operator
  * following the Operator interface */
