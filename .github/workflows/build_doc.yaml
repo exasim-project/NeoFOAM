@@ -17,12 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Requirements
-      run: sudo apt install doxygen python3-sphinx
-        && pip3 install furo
-        && pip3 install breathe
-        && pip3 install sphinx-sitemap
+      run: |
+        sudo apt install doxygen texlive-font-utils
     - name: Checkout repo
       uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        cache: 'pip'
+    - run: pip install -r doc/requirements.txt
+
     - name: Build docs
       run: |
         sphinx-build -b html ./doc ./docs_build/
