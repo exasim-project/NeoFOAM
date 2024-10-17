@@ -47,10 +47,8 @@ jobs:
 
      - name: Add repos
        run: |
-         sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main'
-         wget -q -O - https://dl.openfoam.com/add-debian-repo.sh | sudo bash
-         wget https://apt.llvm.org/llvm-snapshot.gpg.key
-         sudo apt-key add llvm-snapshot.gpg.key
+         sudo add-apt-repository 'deb https://dl.openfoam.com/repos/deb noble main'
+         sudo apt-key add .github/workflows/pubkey.gpg
 
      - name: Install dependencies
        run: |
@@ -66,11 +64,6 @@ jobs:
            libopenmpi-dev \
            openmpi-bin \
            openfoam2406-dev
-         sudo apt remove clang-14
-         sudo rm /usr/bin/clang
-         sudo rm /usr/bin/clang++
-         sudo ln -s /usr/bin/clang-16 /usr/bin/clang
-         sudo ln -s /usr/bin/clang++-16 /usr/bin/clang++
 
      - name: Get versions
        run: |
