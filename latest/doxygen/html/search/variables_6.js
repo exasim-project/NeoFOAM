@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['local_5fidx_778',['local_idx',['../structNeoFOAM_1_1NodeCommMap.html#a6b64895e94e527021b3817122a4cbced',1,'NeoFOAM::NodeCommMap']]]
+  ['nl_608',['NL',['../time_8hpp.html#a6c2bdfd6f25ccadb92fcff4173b7fec2',1,'time.hpp']]]
 ];
