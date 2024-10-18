@@ -9,17 +9,20 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/DSL/operator.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-namespace NeoFOAM::DSL
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+
+namespace NeoFOAM::dsl
 {
 
-class Equation
+
+class Expression
 {
 public:
 
-    Equation(const Executor& exec, std::size_t nCells)
+    Expression(const Executor& exec, std::size_t nCells)
         : exec_(exec), nCells_(nCells), temporalOperators_(), implicitOperators_(),
           explicitOperators_()
     {}
@@ -57,7 +60,7 @@ public:
         }
     }
 
-    void addEquation(const Equation& equation)
+    void addExpression(const Expression& equation)
     {
         for (auto& Operator : equation.temporalOperators_)
         {
@@ -73,23 +76,6 @@ public:
         }
     }
 
-    void solve()
-    {
-        if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
-        {
-            NF_ERROR_EXIT("No temporal or implicit terms to solve.");
-        }
-        if (temporalOperators_.size() > 0)
-        {
-            NF_ERROR_EXIT("Not implemented.");
-            // integrate equations in time
-        }
-        else
-        {
-            NF_ERROR_EXIT("Not implemented.");
-            // solve sparse matrix system
-        }
-    }
 
     /* @brief getter for the total number of terms in the equation */
     size_t size() const
@@ -112,13 +98,15 @@ public:
 
     const Executor& exec() const { return exec_; }
 
-    const std::size_t nCells() const { return nCells_; }
+    std::size_t nCells() const { return nCells_; }
 
     scalar getDt() const { return dt_; }
 
-    scalar dt_ = 0;
+    void setDt(scalar dt) { dt_ = dt; }
 
 private:
+
+    scalar dt_ = 0;
 
     const Executor exec_;
 
@@ -131,29 +119,29 @@ private:
     std::vector<Operator> explicitOperators_;
 };
 
-Equation operator+(Equation lhs, const Equation& rhs)
+Expression operator+(Expression lhs, const Expression& rhs)
 {
-    lhs.addEquation(rhs);
+    lhs.addExpression(rhs);
     return lhs;
 }
 
-Equation operator+(Equation lhs, const Operator& rhs)
+Expression operator+(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(rhs);
     return lhs;
 }
 
-Equation operator+(const Operator& lhs, const Operator& rhs)
+Expression operator+(const Operator& lhs, const Operator& rhs)
 {
-    Equation equation(lhs.exec(), lhs.getSize());
+    Expression equation(lhs.exec(), lhs.getSize());
     equation.addOperator(lhs);
     equation.addOperator(rhs);
     return equation;
 }
 
-Equation operator*(scalar scale, const Equation& es)
+Expression operator*(scalar scale, const Expression& es)
 {
-    Equation results(es.exec(), es.nCells());
+    Expression results(es.exec(), es.nCells());
     for (const auto& Operator : es.temporalOperators())
     {
         results.addOperator(scale * Operator);
@@ -169,24 +157,33 @@ Equation operator*(scalar scale, const Equation& es)
     return results;
 }
 
-Equation operator-(Equation lhs, const Equation& rhs)
+Expression operator-(Expression lhs, const Expression& rhs)
 {
-    lhs.addEquation(-1.0 * rhs);
+    lhs.addExpression(-1.0 * rhs);
     return lhs;
 }
 
-Equation operator-(Equation lhs, const Operator& rhs)
+Expression operator-(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
-Equation operator-(const Operator& lhs, const Operator& rhs)
+Expression operator-(const Operator& lhs, const Operator& rhs)
 {
-    Equation equation(lhs.exec(), lhs.getSize());
+    Expression equation(lhs.exec(), lhs.getSize());
     equation.addOperator(lhs);
     equation.addOperator(Coeff(-1) * rhs);
     return equation;
 }
 
-} // namespace NeoFOAM::DSL
+/* @brief free function to solve an equation
+ *
+ * @param eqn - Expression to solve
+ * @param solutionField - Field for which the equation is to be solved
+ * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
+ * @param fvSolution - Dictionary containing linear solver properties
+ * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
+ */
+
+} // namespace NeoFOAM::dsl
