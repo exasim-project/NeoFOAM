@@ -9,7 +9,7 @@ on:
   pull_request:
     types: synchronize
   schedule:
-    - cron: "* 0 * * 0"
+    - cron: "0 6 * * 1"
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
@@ -45,25 +45,24 @@ jobs:
         path: NeoFOAM
         ref: '${{ github.head_ref }}'
 
-     - name: Add repos
-       run: |
-         sudo add-apt-repository 'deb https://dl.openfoam.com/repos/deb noble main'
-         sudo apt-key add .github/workflows/pubkey.gpg
+     - name: Set up OpenFOAM
+       uses: gerlero/setup-openfoam@v1
+       with:
+         openfoam-version: 2406
 
      - name: Install dependencies
-       run: |
-         sudo apt update
-         sudo apt install \
-           ninja-build \
-           clang-16 \
-           gcc-10 \
-           libomp-16-dev \
-           python3 \
-           python3-dev \
-           build-essential \
-           libopenmpi-dev \
-           openmpi-bin \
-           openfoam2406-dev
+       uses: gerlero/apt-install@v1
+       with:
+         packages: >-
+           ninja-build
+           clang-16
+           gcc-10
+           libomp-16-dev
+           python3
+           python3-dev
+           build-essential
+           libopenmpi-dev
+           openmpi-bin
 
      - name: Get versions
        run: |
