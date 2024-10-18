@@ -11,7 +11,7 @@
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
-#include "NeoFOAM/dsl/timeIntegration/ddt.hpp"
+#include "NeoFOAM/dsl/ddt.hpp"
 
 
 TEST_CASE("TimeIntegration")

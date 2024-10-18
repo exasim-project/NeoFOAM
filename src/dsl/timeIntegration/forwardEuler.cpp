@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "NeoFOAM/dsl/timeIntegration/forwardEuler.hpp"
+#include "NeoFOAM/timeIntegration/forwardEuler.hpp"
 #include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred

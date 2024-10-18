@@ -12,7 +12,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
-#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
 
 namespace NeoFOAM::dsl

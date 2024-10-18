@@ -7,7 +7,7 @@
 #include <functional>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
 namespace NeoFOAM::dsl
 {
