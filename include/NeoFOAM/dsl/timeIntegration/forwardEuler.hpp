@@ -30,7 +30,7 @@ public:
 
     static std::string schema() { return "none"; }
 
-    virtual void solve(Equation& eqn, SolutionType& sol) const override
+    virtual void solve(Expression& eqn, SolutionType& sol) const override
     {
         scalar dt = eqn.getDt();
         Field<scalar> phi(sol.exec(), sol.size(), 0.0);

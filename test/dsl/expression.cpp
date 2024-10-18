@@ -3,11 +3,11 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 #include "common.hpp"
-#include "NeoFOAM/dsl/equation.hpp"
+#include "NeoFOAM/dsl/expression.hpp"
 
-using Equation = NeoFOAM::dsl::Equation;
+using Expression = NeoFOAM::dsl::Expression;
 
-TEST_CASE("Equation")
+TEST_CASE("Expression")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -32,7 +32,7 @@ TEST_CASE("Equation")
     {
         auto eqnA = a + b;
         auto eqnB = fB * Dummy(exec, vf) + 2 * Dummy(exec, vf);
-        auto eqnC = Equation(2 * a - b);
+        auto eqnC = Expression(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);
         auto eqnF = (2 * a - b) - (2 * a - b);

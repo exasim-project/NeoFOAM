@@ -11,7 +11,7 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/equation.hpp"
+#include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 
 
@@ -19,7 +19,7 @@ namespace NeoFOAM::dsl
 {
 template<typename FieldType>
 void solve(
-    Equation& eqn, FieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution
+    Expression& eqn, FieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution
 )
 {
     /* @brief solve an equation

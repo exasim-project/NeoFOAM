@@ -8,7 +8,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
-#include "NeoFOAM/dsl/equation.hpp"
+#include "NeoFOAM/dsl/expression.hpp"
 
 namespace NeoFOAM::dsl
 {
@@ -32,7 +32,7 @@ public:
     virtual ~TimeIntegrationFactory() {}
 
     virtual void
-    solve(Equation& eqn, SolutionType& sol) const = 0; // Pure virtual function for solving
+    solve(Expression& eqn, SolutionType& sol) const = 0; // Pure virtual function for solving
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<TimeIntegrationFactory> clone() const = 0;
@@ -64,7 +64,7 @@ public:
             TimeIntegrationFactory<SolutionType>::create(dict.get<std::string>("type"), dict)
         ) {};
 
-    void solve(Equation& eqn, SolutionType& sol) { timeIntegratorStrategy_->solve(eqn, sol); }
+    void solve(Expression& eqn, SolutionType& sol) { timeIntegratorStrategy_->solve(eqn, sol); }
 
 private:
 

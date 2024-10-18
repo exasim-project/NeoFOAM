@@ -18,11 +18,11 @@ namespace NeoFOAM::dsl
 {
 
 
-class Equation
+class Expression
 {
 public:
 
-    Equation(const Executor& exec, std::size_t nCells)
+    Expression(const Executor& exec, std::size_t nCells)
         : exec_(exec), nCells_(nCells), temporalOperators_(), implicitOperators_(),
           explicitOperators_()
     {}
@@ -60,7 +60,7 @@ public:
         }
     }
 
-    void addEquation(const Equation& equation)
+    void addExpression(const Expression& equation)
     {
         for (auto& Operator : equation.temporalOperators_)
         {
@@ -119,29 +119,29 @@ private:
     std::vector<Operator> explicitOperators_;
 };
 
-Equation operator+(Equation lhs, const Equation& rhs)
+Expression operator+(Expression lhs, const Expression& rhs)
 {
-    lhs.addEquation(rhs);
+    lhs.addExpression(rhs);
     return lhs;
 }
 
-Equation operator+(Equation lhs, const Operator& rhs)
+Expression operator+(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(rhs);
     return lhs;
 }
 
-Equation operator+(const Operator& lhs, const Operator& rhs)
+Expression operator+(const Operator& lhs, const Operator& rhs)
 {
-    Equation equation(lhs.exec(), lhs.getSize());
+    Expression equation(lhs.exec(), lhs.getSize());
     equation.addOperator(lhs);
     equation.addOperator(rhs);
     return equation;
 }
 
-Equation operator*(scalar scale, const Equation& es)
+Expression operator*(scalar scale, const Expression& es)
 {
-    Equation results(es.exec(), es.nCells());
+    Expression results(es.exec(), es.nCells());
     for (const auto& Operator : es.temporalOperators())
     {
         results.addOperator(scale * Operator);
@@ -157,21 +157,21 @@ Equation operator*(scalar scale, const Equation& es)
     return results;
 }
 
-Equation operator-(Equation lhs, const Equation& rhs)
+Expression operator-(Expression lhs, const Expression& rhs)
 {
-    lhs.addEquation(-1.0 * rhs);
+    lhs.addExpression(-1.0 * rhs);
     return lhs;
 }
 
-Equation operator-(Equation lhs, const Operator& rhs)
+Expression operator-(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
-Equation operator-(const Operator& lhs, const Operator& rhs)
+Expression operator-(const Operator& lhs, const Operator& rhs)
 {
-    Equation equation(lhs.exec(), lhs.getSize());
+    Expression equation(lhs.exec(), lhs.getSize());
     equation.addOperator(lhs);
     equation.addOperator(Coeff(-1) * rhs);
     return equation;
@@ -179,7 +179,7 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
 
 /* @brief free function to solve an equation
  *
- * @param eqn - Equation to solve
+ * @param eqn - Expression to solve
  * @param solutionField - Field for which the equation is to be solved
  * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
  * @param fvSolution - Dictionary containing linear solver properties
