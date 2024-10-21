@@ -79,7 +79,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [this, &ptr, size](const auto& concreteExec)
+            [&ptr, size](const auto& concreteExec)
             { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
             exec_
         );
@@ -413,7 +413,13 @@ private:
     void validateOtherField(const Field<ValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-        NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
+
+        std::string execName = std::visit([](auto e) { return e.print(); }, exec());
+        std::string rhsExecName = std::visit([](auto e) { return e.print(); }, rhs.exec());
+        NF_DEBUG_ASSERT(
+            exec() == rhs.exec(),
+            "Executors: " + execName + " and " + rhsExecName + " are not the same."
+        );
     }
 };
 

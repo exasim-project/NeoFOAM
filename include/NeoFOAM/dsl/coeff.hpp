@@ -2,12 +2,12 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-namespace NeoFOAM::DSL
+namespace NeoFOAM::dsl
 {
 
 /**
  * @class Coeff
- * @brief A class that represents a coefficient for the NeoFOAM DSL.
+ * @brief A class that represents a coefficient for the NeoFOAM dsl.
  *
  * This class stores a single scalar coefficient and optionally span of values.
  * It is used to delay the evaluation of a scalar multiplication with a field to
@@ -107,4 +107,4 @@ inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
     return result;
 }
 
-} // namespace NeoFOAM::DSL
+} // namespace NeoFOAM::dsl
