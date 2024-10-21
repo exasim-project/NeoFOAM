@@ -89,27 +89,27 @@ $(function() {
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160; </div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespaceNeoFOAM_1_1dsl.html">NeoFOAM::dsl</a></div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;{</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="keyword">template</span>&lt;<span class="keyword">typename</span> FieldType&gt;</div>
-<div class="line"><a name="l00021"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1dsl.html#a823b6fa1261b24da6186c2cce13b1fec">   21</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceNeoFOAM_1_1dsl.html#a823b6fa1261b24da6186c2cce13b1fec">solve</a>(</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html">Expression</a>&amp; eqn, FieldType&amp; solution, <span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Dictionary.html">Dictionary</a>&amp; fvSchemes, <span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Dictionary.html">Dictionary</a>&amp; fvSolution</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;)</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;{</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    <span class="comment">/* @brief solve an equation</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">     *</span></div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="comment">     * @param solutionField - Field for which the equation is to be solved</span></div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment">     * @param fvSchemes - Dictionary containing spatial operator and time  integration properties</span></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">     * @param fvSolution - Dictionary containing linear solver properties</span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">     * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="comment">     */</span></div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <span class="keywordflow">if</span> (eqn.<a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html#a26c16e4cd5f5d066f5314c84b48a4611">temporalOperators</a>().size() == 0 &amp;&amp; eqn.<a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html#aadcaeb59de0e249a3e749760b198c30f">implicitOperators</a>().size() == 0)</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    <span class="comment">/* @brief solve an expresion</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">     *</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="comment">     * @param exp - Expression which is to be solved/updated.</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="comment">     * @param solution - Solution field, where the solution will be &#39;written to&#39;.</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="comment">     * @param fvSchemes - Dictionary containing spatial operator and time  integration properties</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="comment">     * @param fvSolution - Dictionary containing linear solver properties</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">     */</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="keyword">template</span>&lt;<span class="keyword">typename</span> FieldType&gt;</div>
+<div class="line"><a name="l00028"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1dsl.html#afee1fac0e1bfbf0798f1e9d6b403b853">   28</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="namespaceNeoFOAM_1_1dsl.html#afee1fac0e1bfbf0798f1e9d6b403b853">solve</a>(</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    <a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html">Expression</a>&amp; exp, FieldType&amp; solution, <span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Dictionary.html">Dictionary</a>&amp; fvSchemes, <span class="keyword">const</span> <a class="code" href="classNeoFOAM_1_1Dictionary.html">Dictionary</a>&amp; fvSolution</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;)</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;{</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <span class="keywordflow">if</span> (exp.<a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html#a26c16e4cd5f5d066f5314c84b48a4611">temporalOperators</a>().size() == 0 &amp;&amp; exp.<a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html#aadcaeb59de0e249a3e749760b198c30f">implicitOperators</a>().size() == 0)</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    {</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        <a class="code" href="error_8hpp.html#a8b8fc4329e5e6dfc3731ca28605a8a49">NF_ERROR_EXIT</a>(<span class="stringliteral">&quot;No temporal or implicit terms to solve.&quot;</span>);</div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    }</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <span class="keywordflow">if</span> (eqn.<a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html#a26c16e4cd5f5d066f5314c84b48a4611">temporalOperators</a>().size() &gt; 0)</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <span class="keywordflow">if</span> (exp.<a class="code" href="classNeoFOAM_1_1dsl_1_1Expression.html#a26c16e4cd5f5d066f5314c84b48a4611">temporalOperators</a>().size() &gt; 0)</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    {</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        <span class="comment">// integrate equations in time</span></div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        <a class="code" href="classNeoFOAM_1_1dsl_1_1TimeIntegration.html">TimeIntegration&lt;FieldType&gt;</a> timeIntegrator(fvSchemes.<a class="code" href="classNeoFOAM_1_1Dictionary.html#a80d832aea07daa2c48fe8ace44854463">subDict</a>(<span class="stringliteral">&quot;ddtSchemes&quot;</span>));</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        timeIntegrator.<a class="code" href="classNeoFOAM_1_1dsl_1_1TimeIntegration.html#ab12d869affbd0d9f9981617175d62297">solve</a>(eqn, solution);</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        timeIntegrator.<a class="code" href="classNeoFOAM_1_1dsl_1_1TimeIntegration.html#ab12d869affbd0d9f9981617175d62297">solve</a>(exp, solution);</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    }</div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    <span class="keywordflow">else</span></div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    {</div>
@@ -131,7 +131,7 @@ $(function() {
 <div class="ttc" id="afield_8hpp_html"><div class="ttname"><a href="field_8hpp.html">field.hpp</a></div></div>
 <div class="ttc" id="ainput_8hpp_html"><div class="ttname"><a href="input_8hpp.html">input.hpp</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_1_1dsl_html"><div class="ttname"><a href="namespaceNeoFOAM_1_1dsl.html">NeoFOAM::dsl</a></div><div class="ttdef"><b>Definition:</b> <a href="coeff_8hpp_source.html#l00005">coeff.hpp:6</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_1_1dsl_html_a823b6fa1261b24da6186c2cce13b1fec"><div class="ttname"><a href="namespaceNeoFOAM_1_1dsl.html#a823b6fa1261b24da6186c2cce13b1fec">NeoFOAM::dsl::solve</a></div><div class="ttdeci">void solve(Expression &amp;eqn, FieldType &amp;solution, const Dictionary &amp;fvSchemes, const Dictionary &amp;fvSolution)</div><div class="ttdef"><b>Definition:</b> <a href="solver_8hpp_source.html#l00021">solver.hpp:21</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_1_1dsl_html_afee1fac0e1bfbf0798f1e9d6b403b853"><div class="ttname"><a href="namespaceNeoFOAM_1_1dsl.html#afee1fac0e1bfbf0798f1e9d6b403b853">NeoFOAM::dsl::solve</a></div><div class="ttdeci">void solve(Expression &amp;exp, FieldType &amp;solution, const Dictionary &amp;fvSchemes, const Dictionary &amp;fvSolution)</div><div class="ttdef"><b>Definition:</b> <a href="solver_8hpp_source.html#l00028">solver.hpp:28</a></div></div>
 <div class="ttc" id="ascalar_8hpp_html"><div class="ttname"><a href="scalar_8hpp.html">scalar.hpp</a></div></div>
 <div class="ttc" id="atimeIntegration_8hpp_html"><div class="ttname"><a href="timeIntegration_8hpp.html">timeIntegration.hpp</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
