@@ -177,13 +177,5 @@ Expression operator-(const Operator& lhs, const Operator& rhs)
     return equation;
 }
 
-/* @brief free function to solve an equation
- *
- * @param eqn - Expression to solve
- * @param solutionField - Field for which the equation is to be solved
- * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
- * @param fvSolution - Dictionary containing linear solver properties
- * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
- */
 
 } // namespace NeoFOAM::dsl

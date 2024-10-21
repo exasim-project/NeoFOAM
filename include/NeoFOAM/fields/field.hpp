@@ -418,7 +418,7 @@ private:
         std::string rhsExecName = std::visit([](auto e) { return e.print(); }, rhs.exec());
         NF_DEBUG_ASSERT(
             exec() == rhs.exec(),
-            "Executors: " + execName + " and " + rhsExecName + " are not the same"
+            "Executors: " + execName + " and " + rhsExecName + " are not the same."
         );
     }
 };

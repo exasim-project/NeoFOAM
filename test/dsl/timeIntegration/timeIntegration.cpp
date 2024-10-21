@@ -37,7 +37,7 @@ TEST_CASE("TimeIntegration")
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     auto vf = VolumeField(exec, mesh, fA, bf, bcs);
 
-    SECTION("Create equation and perform explicitOperation on " + execName)
+    SECTION("Create expression and perform explicitOperation on " + execName)
     {
         auto dummy = Dummy(exec, vf);
         Operator ddtOperator = NeoFOAM::dsl::temporal::Ddt(exec, vf);

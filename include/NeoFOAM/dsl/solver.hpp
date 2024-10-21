@@ -17,27 +17,27 @@
 
 namespace NeoFOAM::dsl
 {
-template<typename FieldType>
-void solve(
-    Expression& eqn, FieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution
-)
-{
-    /* @brief solve an equation
+    /* @brief solve an expresion
      *
-     * @param solutionField - Field for which the equation is to be solved
+     * @param exp - Expression which is to be solved/updated.
+     * @param solution - Solution field, where the solution will be 'written to'.
      * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
      * @param fvSolution - Dictionary containing linear solver properties
-     * @tparam FieldType - type of the underlying field, e.g. VolumeField or plain Field
      */
-    if (eqn.temporalOperators().size() == 0 && eqn.implicitOperators().size() == 0)
+template<typename FieldType>
+void solve(
+    Expression& exp, FieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution
+)
+{
+    if (exp.temporalOperators().size() == 0 && exp.implicitOperators().size() == 0)
     {
         NF_ERROR_EXIT("No temporal or implicit terms to solve.");
     }
-    if (eqn.temporalOperators().size() > 0)
+    if (exp.temporalOperators().size() > 0)
     {
         // integrate equations in time
         TimeIntegration<FieldType> timeIntegrator(fvSchemes.subDict("ddtSchemes"));
-        timeIntegrator.solve(eqn, solution);
+        timeIntegrator.solve(exp, solution);
     }
     else
     {
