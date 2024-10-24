@@ -36,7 +36,7 @@ public:
      * @param faceCells A field with the neighbouring cell of each boundary
      * face.
      * @param Cf A field of face centres.
-     * @param Cn A field of face normals.
+     * @param Cn A field of neighbor cell centers.
      * @param Sf A field of face areas normals.
      * @param magSf A field of magnitudes of face areas normals.
      * @param nf A field of face unit normals.

@@ -82,7 +82,7 @@ UnstructuredMesh createSingleCellMesh(const Executor exec)
         faceAreasVectors,                                                               // cn,
         faceAreasVectors,                                                               // sf,
         magFaceAreas,                                                                   // magSf,
-        faceAreasVectors,                                                               //
+        faceAreasVectors,                                                               // nf,
         {exec, {{0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}, {-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
         {exec, {2.0, 2.0, 2.0, 2.0}}, // deltaCoeffs --> mag(1 / delta)
