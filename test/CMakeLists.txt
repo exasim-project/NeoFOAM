@@ -6,7 +6,8 @@ list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 # has to be first since it adds the main target
 add_subdirectory(catch2)
 
-# This function creates unit tests. It allows the following keywords:
+# include "NeoFOAM/core/parallelAlgorithms.hpp" This function creates unit tests. It provides the
+# following keywords:
 #
 # * MPI_SIZE: the number of MPI processors to be used, defaults to 1 if not set
 # * COMMAND: the test command (same behavior as for CMake's add_test), defaults to the test name
