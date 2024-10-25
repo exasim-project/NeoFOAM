@@ -17,25 +17,23 @@ namespace NeoFOAM::dsl
  * using NeoFOAMs runTimeFactory mechanism
  */
 template<typename SolutionType>
-class TimeIntegrationFactory :
-    public RuntimeSelectionFactory<
-        TimeIntegrationFactory<SolutionType>,
-        Parameters<const Dictionary&>>
+class TimeIntegratorBase :
+    public RuntimeSelectionFactory<TimeIntegratorBase<SolutionType>, Parameters<const Dictionary&>>
 {
 
 public:
 
     static std::string name() { return "timeIntegrationFactory"; }
 
-    TimeIntegrationFactory(const Dictionary& dict) : dict_(dict) {}
+    TimeIntegratorBase(const Dictionary& dict) : dict_(dict) {}
 
-    virtual ~TimeIntegrationFactory() {}
+    virtual ~TimeIntegratorBase() {}
 
     virtual void solve(Expression& eqn, SolutionType& sol, scalar dt)
         const = 0; // Pure virtual function for solving
 
     // Pure virtual function for cloning
-    virtual std::unique_ptr<TimeIntegrationFactory> clone() const = 0;
+    virtual std::unique_ptr<TimeIntegratorBase> clone() const = 0;
 
 protected:
 
@@ -61,7 +59,7 @@ public:
 
     TimeIntegration(const Dictionary& dict)
         : timeIntegratorStrategy_(
-            TimeIntegrationFactory<SolutionType>::create(dict.get<std::string>("type"), dict)
+            TimeIntegratorBase<SolutionType>::create(dict.get<std::string>("type"), dict)
         ) {};
 
     void solve(Expression& eqn, SolutionType& sol, scalar dt)
@@ -71,7 +69,7 @@ public:
 
 private:
 
-    std::unique_ptr<TimeIntegrationFactory<SolutionType>> timeIntegratorStrategy_;
+    std::unique_ptr<TimeIntegratorBase<SolutionType>> timeIntegratorStrategy_;
 };
 
 

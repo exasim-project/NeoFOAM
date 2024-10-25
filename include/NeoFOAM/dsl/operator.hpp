@@ -200,7 +200,7 @@ auto operator*(const Coeff& coeff, const Operator& rhs)
 
 template<typename CoeffFunction>
     requires std::invocable<CoeffFunction&, size_t>
-Operator operator*(CoeffFunction coeffFunc, const Operator& lhs)
+Operator operator*([[maybe_unused]] CoeffFunction coeffFunc, const Operator& lhs)
 {
     // TODO implement
     NF_ERROR_EXIT("Not implemented");
