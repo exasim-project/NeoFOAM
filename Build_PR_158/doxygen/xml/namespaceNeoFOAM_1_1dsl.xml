@@ -7,7 +7,7 @@
     <innerclass refid="classNeoFOAM_1_1dsl_1_1Operator" prot="public">NeoFOAM::dsl::Operator</innerclass>
     <innerclass refid="classNeoFOAM_1_1dsl_1_1OperatorMixin" prot="public">NeoFOAM::dsl::OperatorMixin</innerclass>
     <innerclass refid="classNeoFOAM_1_1dsl_1_1ForwardEuler" prot="public">NeoFOAM::dsl::ForwardEuler</innerclass>
-    <innerclass refid="classNeoFOAM_1_1dsl_1_1TimeIntegrationFactory" prot="public">NeoFOAM::dsl::TimeIntegrationFactory</innerclass>
+    <innerclass refid="classNeoFOAM_1_1dsl_1_1TimeIntegratorBase" prot="public">NeoFOAM::dsl::TimeIntegratorBase</innerclass>
     <innerclass refid="classNeoFOAM_1_1dsl_1_1TimeIntegration" prot="public">NeoFOAM::dsl::TimeIntegration</innerclass>
     <innernamespace refid="namespaceNeoFOAM_1_1dsl_1_1detail">NeoFOAM::dsl::detail</innernamespace>
     <innernamespace refid="namespaceNeoFOAM_1_1dsl_1_1temporal">NeoFOAM::dsl::temporal</innernamespace>
@@ -291,7 +291,7 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/operator.hpp" line="194" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/operator.hpp" bodystart="194" bodyend="199"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1dsl_1a82b0ce5617f254c42fa4a34521a1b089" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1dsl_1a839c525155797f33df54e48363f2cc33" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
             <type>typename CoeffFunction</type>
@@ -299,10 +299,11 @@
         </templateparamlist>
         <type>requires std::invocable&lt; CoeffFunction &amp;, <ref refid="namespaceNeoFOAM_1aa8ea339f1c9a4f2232da876ead30a82c" kindref="member">size_t</ref> &gt; <ref refid="classNeoFOAM_1_1dsl_1_1Operator" kindref="compound">Operator</ref></type>
         <definition>requires std::invocable&lt;CoeffFunction&amp;, size_t&gt; Operator NeoFOAM::dsl::operator*</definition>
-        <argsstring>(CoeffFunction coeffFunc, const Operator &amp;lhs)</argsstring>
+        <argsstring>([[maybe_unused]] CoeffFunction coeffFunc, const Operator &amp;lhs)</argsstring>
         <name>operator*</name>
         <param>
-          <type>CoeffFunction</type>
+          <attributes>[[maybe_unused]</attributes>
+          <type>] CoeffFunction</type>
           <declname>coeffFunc</declname>
         </param>
         <param>
