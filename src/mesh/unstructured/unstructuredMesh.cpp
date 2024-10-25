@@ -105,4 +105,91 @@ UnstructuredMesh createSingleCellMesh(const Executor exec)
         boundaryMesh
     );
 }
+
+UnstructuredMesh create1DUniformMesh(
+    const Executor exec, const Vector leftBoundary, const Vector rightBoundary, const size_t nCells
+)
+{
+    // a 1D mesh in 3D space
+    // each cell has left and right faces
+    // the 1D mesh is aligned with the x coordinate of Cartesian coordinate sytstem
+
+    double meshSpacing = (rightBoundary[0] - leftBoundary[0]) / nCells;
+    vectorField meshPoints(exec, nCells + 1, {0.0, 0.0, 0.0});
+    meshPoints[0] = leftBoundary;
+    meshPoints[nCells] = leftBoundary;
+
+    for (size_t i = 1; i < nCells; i++) // loop over internal mesh points
+    {
+        meshPoints[i][0] = leftBoundary[0] + i * meshSpacing;
+    }
+
+    scalarField cellVolumes(exec, nCells, meshSpacing);
+
+    vectorField cellCenters(exec, nCells, {0.0, 0.0, 0.0});
+    for (size_t i = 0; i < nCells; i++)
+    {
+        cellCenters[i][0] = 0.5 * (meshPoints[i][0] + meshPoints[i + 1][0]);
+    }
+
+    vectorField faceAreas(exec, nCells + 1, {1.0, 0.0, 0.0});
+    faceAreas[0] = {-1.0, 0.0, 0.0}; // left boundary face
+
+    vectorField faceCenters(exec, meshPoints);
+    scalarField magFaceAreas(exec, nCells + 1, 1.0);
+
+    labelField faceOwner(exec, nCells + 1);
+    faceOwner[0] = 0;                       // left boundary face
+    for (size_t i = 1; i < nCells + 1; i++) // loop over internal faces and right boundary face
+    {
+        faceOwner[i] = i - 1;
+    }
+
+    labelField faceNeighbor(exec, nCells + 1);
+    faceNeighbor[0] = {};
+    faceNeighbor[nCells] = {};
+    for (size_t i = 0; i < nCells; i++)
+    {
+        faceNeighbor[i] = i;
+    }
+
+    vectorField delta(exec, 2);
+    delta[0] = {leftBoundary[0] - cellCenters[0][0], 0.0, 0.0};
+    delta[1] = {rightBoundary[0] - cellCenters[nCells - 1][0], 0.0, 0.0};
+
+    scalarField deltaCoeffs(exec, 2);
+    deltaCoeffs[0] = 1 / mag(delta[0]);
+    deltaCoeffs[1] = 1 / mag(delta[1]);
+
+    BoundaryMesh boundaryMesh(
+        exec,
+        {exec, {0, nCells - 1}},
+        {exec, {leftBoundary, rightBoundary}},
+        {exec, {cellCenters[0], cellCenters[nCells - 1]}},
+        {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
+        {exec, {1.0, 1.0}},
+        {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
+        delta,
+        {exec, {1.0, 1.0}},
+        deltaCoeffs,
+        {0, 1, 2}
+    );
+
+    return UnstructuredMesh(
+        meshPoints,
+        cellVolumes,
+        cellCenters,
+        faceAreas,
+        faceCenters,
+        magFaceAreas,
+        faceOwner,
+        faceNeighbor,
+        nCells,
+        nCells - 1,
+        2,
+        2,
+        nCells + 1,
+        boundaryMesh
+    );
+}
 } // namespace NeoFOAM
