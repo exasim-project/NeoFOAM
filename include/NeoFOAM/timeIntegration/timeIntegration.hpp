@@ -31,8 +31,8 @@ public:
 
     virtual ~TimeIntegrationFactory() {}
 
-    virtual void
-    solve(Expression& eqn, SolutionType& sol) const = 0; // Pure virtual function for solving
+    virtual void solve(Expression& eqn, SolutionType& sol, scalar dt)
+        const = 0; // Pure virtual function for solving
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<TimeIntegrationFactory> clone() const = 0;
@@ -64,7 +64,10 @@ public:
             TimeIntegrationFactory<SolutionType>::create(dict.get<std::string>("type"), dict)
         ) {};
 
-    void solve(Expression& eqn, SolutionType& sol) { timeIntegratorStrategy_->solve(eqn, sol); }
+    void solve(Expression& eqn, SolutionType& sol, scalar dt)
+    {
+        timeIntegratorStrategy_->solve(eqn, sol, dt);
+    }
 
 private:
 

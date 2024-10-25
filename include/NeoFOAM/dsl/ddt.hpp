@@ -24,12 +24,15 @@ public:
 
     std::string getName() const { return "TimeOperator"; }
 
-    void explicitOperation(Field<scalar>& source, scalar scale)
+    void explicitOperation([[maybe_unused]] Field<scalar>& source, [[maybe_unused]] scalar scale)
     {
         NF_ERROR_EXIT("Not implemented");
     }
 
-    void implicitOperation(Field<scalar>& phi) { NF_ERROR_EXIT("Not implemented"); }
+    void implicitOperation([[maybe_unused]] Field<scalar>& phi)
+    {
+        NF_ERROR_EXIT("Not implemented");
+    }
 
 private:
 };

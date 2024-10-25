@@ -43,15 +43,12 @@ TEST_CASE("TimeIntegration")
 
         // ddt(U) = f
         auto eqn = ddtOperator + dummy;
-        eqn.setDt(2.0);
+        double dt {2.0};
 
         // int(ddt(U)) + f = 0
         // (U^1-U^0)/dt = -f
         // U^1 = - f * dt + U^0, where dt = 2, f=1, U^0=2.0 -> U^1=-2.0
-        solve(eqn, vf, fvSchemes, fvSolution);
+        solve(eqn, vf, dt, fvSchemes, fvSolution);
         REQUIRE(getField(vf.internalField()) == -2.0);
     }
-
-    // auto fB = Field(exec, 1, 4.0);
-    // fvcc::TimeIntegration timeIntergrator(eqnSys, dict);
 }

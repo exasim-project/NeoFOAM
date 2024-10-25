@@ -97,13 +97,7 @@ public:
 
     const Executor& exec() const { return exec_; }
 
-    scalar getDt() const { return dt_; }
-
-    void setDt(scalar dt) { dt_ = dt; }
-
 private:
-
-    scalar dt_ = 0;
 
     const Executor exec_;
 

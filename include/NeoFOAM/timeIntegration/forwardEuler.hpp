@@ -30,9 +30,8 @@ public:
 
     static std::string schema() { return "none"; }
 
-    virtual void solve(Expression& eqn, SolutionType& sol) const override
+    virtual void solve(Expression& eqn, SolutionType& sol, scalar dt) const override
     {
-        auto dt = eqn.getDt();
         auto source = eqn.explicitOperation(sol.size());
 
         sol.internalField() -= source * dt;
