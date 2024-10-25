@@ -26,6 +26,7 @@ Table of Contents
    contributing
    basics/index
    finiteVolume/cellCentred/index
+   DSL/index
    api/index
 
 Compatibility with OpenFOAM
