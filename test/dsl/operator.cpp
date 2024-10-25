@@ -23,7 +23,7 @@ TEST_CASE("Operator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, mesh, fA, bf, bcs);
-        auto b = Dummy(exec, vf);
+        auto b = Dummy(vf);
 
         REQUIRE(b.getName() == "Dummy");
         REQUIRE(b.getType() == Operator::Type::Explicit);
@@ -38,9 +38,9 @@ TEST_CASE("Operator")
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, mesh, fA, bf, bcs);
 
-        auto c = 2 * Dummy(exec, vf);
-        auto d = fB * Dummy(exec, vf);
-        auto e = Coeff(-3, fB) * Dummy(exec, vf);
+        auto c = 2 * Dummy(vf);
+        auto d = fB * Dummy(vf);
+        auto e = Coeff(-3, fB) * Dummy(vf);
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();

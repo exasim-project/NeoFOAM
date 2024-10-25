@@ -17,13 +17,14 @@
 
 namespace NeoFOAM::dsl
 {
-    /* @brief solve an expresion
-     *
-     * @param exp - Expression which is to be solved/updated.
-     * @param solution - Solution field, where the solution will be 'written to'.
-     * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
-     * @param fvSolution - Dictionary containing linear solver properties
-     */
+
+/* @brief solve an expression
+ *
+ * @param exp - Expression which is to be solved/updated.
+ * @param solution - Solution field, where the solution will be 'written to'.
+ * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
+ * @param fvSolution - Dictionary containing linear solver properties
+ */
 template<typename FieldType>
 void solve(
     Expression& exp, FieldType& solution, const Dictionary& fvSchemes, const Dictionary& fvSolution

@@ -11,43 +11,36 @@
 namespace NeoFOAM::dsl::temporal
 {
 
-class Ddt : public OperatorMixin
+
+// TODO add free factory function
+template<typename FieldType>
+class Ddt : public OperatorMixin<FieldType>
 {
 
 public:
 
-    Ddt(const Executor& exec, VolumeField& field) : OperatorMixin(exec), field_(field) {}
+    Ddt(FieldType& field) : OperatorMixin<FieldType>(field.exec(), field, Operator::Type::Temporal)
+    {}
 
     std::string getName() const { return "TimeOperator"; }
 
-    Operator::Type getType() const { return Operator::Type::Temporal; }
-
     void explicitOperation(Field<scalar>& source, scalar scale)
     {
-        auto sourceField = source.span();
-        parallelFor(
-            source.exec(),
-            source.range(),
-            KOKKOS_LAMBDA(const size_t i) { sourceField[i] += 1 * scale; }
-        );
+        NF_ERROR_EXIT("Not implemented");
     }
 
-    void temporalOperation(Field<scalar>& phi)
-    {
-        auto phiSpan = phi.span();
-        auto fieldSpan = field_.internalField().span();
-        parallelFor(
-            phi.exec(), phi.range(), KOKKOS_LAMBDA(const size_t i) { fieldSpan[i] += phiSpan[i]; }
-        );
-    }
-
-    VolumeField& volumeField() const { return field_; }
-
-    size_t getSize() const { return field_.internalField().size(); }
+    void implicitOperation(Field<scalar>& phi) { NF_ERROR_EXIT("Not implemented"); }
 
 private:
+};
 
-    VolumeField& field_;
+// see
+// https://github.com/exasim-project/NeoFOAM/blob/dsl/operatorIntergration/include/NeoFOAM/finiteVolume/cellCentred/operators/explicitOperators/expOp.hpp
+
+template<typename FieldType>
+Ddt<FieldType> ddt(FieldType& in)
+{
+    return Ddt(in);
 };
 
 

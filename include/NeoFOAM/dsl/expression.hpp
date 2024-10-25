@@ -22,15 +22,14 @@ class Expression
 {
 public:
 
-    Expression(const Executor& exec, std::size_t nCells)
-        : exec_(exec), nCells_(nCells), temporalOperators_(), implicitOperators_(),
-          explicitOperators_()
+    Expression(const Executor& exec)
+        : exec_(exec), temporalOperators_(), implicitOperators_(), explicitOperators_()
     {}
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<scalar> explicitOperation() const
+    Field<scalar> explicitOperation(size_t nCells) const
     {
-        Field<scalar> source(exec_, nCells_, 0.0);
+        Field<scalar> source(exec_, nCells, 0.0);
         return explicitOperation(source);
     }
 
@@ -98,8 +97,6 @@ public:
 
     const Executor& exec() const { return exec_; }
 
-    std::size_t nCells() const { return nCells_; }
-
     scalar getDt() const { return dt_; }
 
     void setDt(scalar dt) { dt_ = dt; }
@@ -109,8 +106,6 @@ private:
     scalar dt_ = 0;
 
     const Executor exec_;
-
-    const std::size_t nCells_;
 
     std::vector<Operator> temporalOperators_;
 
@@ -133,28 +128,28 @@ Expression operator+(Expression lhs, const Operator& rhs)
 
 Expression operator+(const Operator& lhs, const Operator& rhs)
 {
-    Expression equation(lhs.exec(), lhs.getSize());
-    equation.addOperator(lhs);
-    equation.addOperator(rhs);
-    return equation;
+    Expression expr(lhs.exec());
+    expr.addOperator(lhs);
+    expr.addOperator(rhs);
+    return expr;
 }
 
 Expression operator*(scalar scale, const Expression& es)
 {
-    Expression results(es.exec(), es.nCells());
+    Expression expr(es.exec());
     for (const auto& Operator : es.temporalOperators())
     {
-        results.addOperator(scale * Operator);
+        expr.addOperator(scale * Operator);
     }
     for (const auto& Operator : es.implicitOperators())
     {
-        results.addOperator(scale * Operator);
+        expr.addOperator(scale * Operator);
     }
     for (const auto& Operator : es.explicitOperators())
     {
-        results.addOperator(scale * Operator);
+        expr.addOperator(scale * Operator);
     }
-    return results;
+    return expr;
 }
 
 Expression operator-(Expression lhs, const Expression& rhs)
@@ -171,10 +166,10 @@ Expression operator-(Expression lhs, const Operator& rhs)
 
 Expression operator-(const Operator& lhs, const Operator& rhs)
 {
-    Expression equation(lhs.exec(), lhs.getSize());
-    equation.addOperator(lhs);
-    equation.addOperator(Coeff(-1) * rhs);
-    return equation;
+    Expression expr(lhs.exec());
+    expr.addOperator(lhs);
+    expr.addOperator(Coeff(-1) * rhs);
+    return expr;
 }
 
 

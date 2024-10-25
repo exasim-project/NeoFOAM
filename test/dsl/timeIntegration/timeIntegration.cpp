@@ -13,7 +13,6 @@
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
 
-
 TEST_CASE("TimeIntegration")
 {
     NeoFOAM::Executor exec = GENERATE(
@@ -39,8 +38,8 @@ TEST_CASE("TimeIntegration")
 
     SECTION("Create expression and perform explicitOperation on " + execName)
     {
-        auto dummy = Dummy(exec, vf);
-        Operator ddtOperator = NeoFOAM::dsl::temporal::Ddt(exec, vf);
+        auto dummy = Dummy(vf);
+        Operator ddtOperator = NeoFOAM::dsl::temporal::ddt(vf);
 
         // ddt(U) = f
         auto eqn = ddtOperator + dummy;

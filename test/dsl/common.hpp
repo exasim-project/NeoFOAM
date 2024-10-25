@@ -17,9 +17,9 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
 using Operator = NeoFOAM::dsl::Operator;
-using OperatorMixin = NeoFOAM::dsl::OperatorMixin;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
+using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
 using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
 
 /* A dummy implementation of a Operator
@@ -29,7 +29,7 @@ class Dummy : public OperatorMixin
 
 public:
 
-    Dummy(const Executor& exec, VolumeField& field) : OperatorMixin(exec), field_(field) {}
+    Dummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
 
     void explicitOperation(Field& source) const
     {
@@ -44,18 +44,6 @@ public:
     }
 
     std::string getName() const { return "Dummy"; }
-
-    const VolumeField& volumeField() const { return field_; }
-
-    VolumeField& volumeField() { return field_; }
-
-    Operator::Type getType() const { return Operator::Type::Explicit; }
-
-    size_t getSize() const { return field_.internalField().size(); }
-
-private:
-
-    VolumeField& field_;
 };
 
 NeoFOAM::scalar getField(const NeoFOAM::Field<NeoFOAM::scalar>& source)

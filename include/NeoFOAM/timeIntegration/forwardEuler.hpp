@@ -32,23 +32,17 @@ public:
 
     virtual void solve(Expression& eqn, SolutionType& sol) const override
     {
-        scalar dt = eqn.getDt();
-        Field<scalar> phi(sol.exec(), sol.size(), 0.0);
-        Field<scalar> source = eqn.explicitOperation();
+        auto dt = eqn.getDt();
+        auto source = eqn.explicitOperation(sol.size());
 
-        // phi += source*dt;
-        // for (auto& op : eqn.temporalOperators())
-        // {
-        //     op.temporalOperation(phi);
-        // }
         sol.internalField() -= source * dt;
         sol.correctBoundaryConditions();
 
         // check if executor is GPU
-        // if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqnSystem_.exec()))
-        // {
-        //     Kokkos::fence();
-        // }
+        if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))
+        {
+            Kokkos::fence();
+        }
     };
 
     std::unique_ptr<TimeIntegrationFactory<SolutionType>> clone() const override

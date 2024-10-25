@@ -18,20 +18,21 @@ TEST_CASE("Expression")
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
 
-    Field fA(exec, 1, 2.0);
+    const size_t size {1};
+    Field fA(exec, size, 2.0);
     BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     auto vf = VolumeField(exec, mesh, fA, bf, bcs);
     auto fB = Field(exec, 1, 4.0);
 
-    auto a = Dummy(exec, vf);
-    auto b = Dummy(exec, vf);
+    auto a = Dummy(vf);
+    auto b = Dummy(vf);
 
     SECTION("Create equation and perform explicitOperation on " + execName)
     {
         auto eqnA = a + b;
-        auto eqnB = fB * Dummy(exec, vf) + 2 * Dummy(exec, vf);
+        auto eqnB = fB * Dummy(vf) + 2 * Dummy(vf);
         auto eqnC = Expression(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);
@@ -41,11 +42,11 @@ TEST_CASE("Expression")
         REQUIRE(eqnB.size() == 2);
         REQUIRE(eqnC.size() == 2);
 
-        REQUIRE(getField(eqnA.explicitOperation()) == 4);
-        REQUIRE(getField(eqnB.explicitOperation()) == 12);
-        REQUIRE(getField(eqnC.explicitOperation()) == 2);
-        REQUIRE(getField(eqnD.explicitOperation()) == 6);
-        REQUIRE(getField(eqnE.explicitOperation()) == 4);
-        REQUIRE(getField(eqnF.explicitOperation()) == 0);
+        REQUIRE(getField(eqnA.explicitOperation(size)) == 4);
+        REQUIRE(getField(eqnB.explicitOperation(size)) == 12);
+        REQUIRE(getField(eqnC.explicitOperation(size)) == 2);
+        REQUIRE(getField(eqnD.explicitOperation(size)) == 6);
+        REQUIRE(getField(eqnE.explicitOperation(size)) == 4);
+        REQUIRE(getField(eqnF.explicitOperation(size)) == 0);
     }
 }
