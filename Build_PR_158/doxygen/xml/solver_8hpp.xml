@@ -47,6 +47,8 @@
         </childnode>
         <childnode refid="40" relation="include">
         </childnode>
+        <childnode refid="41" relation="include">
+        </childnode>
       </node>
       <node id="45">
         <label>NeoFOAM/mesh/unstructured/unstructuredMesh.hpp</label>
@@ -548,36 +550,37 @@
 <codeline lineno="17"><highlight class="normal"></highlight></codeline>
 <codeline lineno="18"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1dsl" kindref="compound">NeoFOAM::dsl</ref></highlight></codeline>
 <codeline lineno="19"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/>@brief<sp/>solve<sp/>an<sp/>expresion</highlight></codeline>
-<codeline lineno="21"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*</highlight></codeline>
-<codeline lineno="22"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*<sp/>@param<sp/>exp<sp/>-<sp/>Expression<sp/>which<sp/>is<sp/>to<sp/>be<sp/>solved/updated.</highlight></codeline>
-<codeline lineno="23"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*<sp/>@param<sp/>solution<sp/>-<sp/>Solution<sp/>field,<sp/>where<sp/>the<sp/>solution<sp/>will<sp/>be<sp/>&apos;written<sp/>to&apos;.</highlight></codeline>
-<codeline lineno="24"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*<sp/>@param<sp/>fvSchemes<sp/>-<sp/>Dictionary<sp/>containing<sp/>spatial<sp/>operator<sp/>and<sp/>time<sp/><sp/>integration<sp/>properties</highlight></codeline>
-<codeline lineno="25"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*<sp/>@param<sp/>fvSolution<sp/>-<sp/>Dictionary<sp/>containing<sp/>linear<sp/>solver<sp/>properties</highlight></codeline>
-<codeline lineno="26"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="27"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>FieldType&gt;</highlight></codeline>
-<codeline lineno="28" refid="namespaceNeoFOAM_1_1dsl_1afee1fac0e1bfbf0798f1e9d6b403b853" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1dsl_1afee1fac0e1bfbf0798f1e9d6b403b853" kindref="member">solve</ref>(</highlight></codeline>
-<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1dsl_1_1Expression" kindref="compound">Expression</ref>&amp;<sp/>exp,<sp/>FieldType&amp;<sp/>solution,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>&amp;<sp/>fvSchemes,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>&amp;<sp/>fvSolution</highlight></codeline>
-<codeline lineno="30"><highlight class="normal">)</highlight></codeline>
-<codeline lineno="31"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp.<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a26c16e4cd5f5d066f5314c84b48a4611" kindref="member">temporalOperators</ref>().size()<sp/>==<sp/>0<sp/>&amp;&amp;<sp/>exp.<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1aadcaeb59de0e249a3e749760b198c30f" kindref="member">implicitOperators</ref>().size()<sp/>==<sp/>0)</highlight></codeline>
-<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1a8b8fc4329e5e6dfc3731ca28605a8a49" kindref="member">NF_ERROR_EXIT</ref>(</highlight><highlight class="stringliteral">&quot;No<sp/>temporal<sp/>or<sp/>implicit<sp/>terms<sp/>to<sp/>solve.&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp.<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a26c16e4cd5f5d066f5314c84b48a4611" kindref="member">temporalOperators</ref>().size()<sp/>&gt;<sp/>0)</highlight></codeline>
-<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>integrate<sp/>equations<sp/>in<sp/>time</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1dsl_1_1TimeIntegration" kindref="compound">TimeIntegration&lt;FieldType&gt;</ref><sp/>timeIntegrator(fvSchemes.<ref refid="classNeoFOAM_1_1Dictionary_1a80d832aea07daa2c48fe8ace44854463" kindref="member">subDict</ref>(</highlight><highlight class="stringliteral">&quot;ddtSchemes&quot;</highlight><highlight class="normal">));</highlight></codeline>
-<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>timeIntegrator.<ref refid="classNeoFOAM_1_1dsl_1_1TimeIntegration_1ab12d869affbd0d9f9981617175d62297" kindref="member">solve</ref>(exp,<sp/>solution);</highlight></codeline>
-<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1a8b8fc4329e5e6dfc3731ca28605a8a49" kindref="member">NF_ERROR_EXIT</ref>(</highlight><highlight class="stringliteral">&quot;Not<sp/>implemented.&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>solve<sp/>sparse<sp/>matrix<sp/>system</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="47"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="48"><highlight class="normal"></highlight></codeline>
-<codeline lineno="49"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM::dsl</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>solve<sp/>an<sp/>expression</highlight></codeline>
+<codeline lineno="22"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="23"><highlight class="comment"><sp/>*<sp/>@param<sp/>exp<sp/>-<sp/>Expression<sp/>which<sp/>is<sp/>to<sp/>be<sp/>solved/updated.</highlight></codeline>
+<codeline lineno="24"><highlight class="comment"><sp/>*<sp/>@param<sp/>solution<sp/>-<sp/>Solution<sp/>field,<sp/>where<sp/>the<sp/>solution<sp/>will<sp/>be<sp/>&apos;written<sp/>to&apos;.</highlight></codeline>
+<codeline lineno="25"><highlight class="comment"><sp/>*<sp/>@param<sp/>fvSchemes<sp/>-<sp/>Dictionary<sp/>containing<sp/>spatial<sp/>operator<sp/>and<sp/>time<sp/><sp/>integration<sp/>properties</highlight></codeline>
+<codeline lineno="26"><highlight class="comment"><sp/>*<sp/>@param<sp/>fvSolution<sp/>-<sp/>Dictionary<sp/>containing<sp/>linear<sp/>solver<sp/>properties</highlight></codeline>
+<codeline lineno="27"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>FieldType&gt;</highlight></codeline>
+<codeline lineno="29" refid="namespaceNeoFOAM_1_1dsl_1afee1fac0e1bfbf0798f1e9d6b403b853" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1dsl_1afee1fac0e1bfbf0798f1e9d6b403b853" kindref="member">solve</ref>(</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1dsl_1_1Expression" kindref="compound">Expression</ref>&amp;<sp/>exp,<sp/>FieldType&amp;<sp/>solution,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>&amp;<sp/>fvSchemes,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>&amp;<sp/>fvSolution</highlight></codeline>
+<codeline lineno="31"><highlight class="normal">)</highlight></codeline>
+<codeline lineno="32"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp.<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a26c16e4cd5f5d066f5314c84b48a4611" kindref="member">temporalOperators</ref>().size()<sp/>==<sp/>0<sp/>&amp;&amp;<sp/>exp.<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1aadcaeb59de0e249a3e749760b198c30f" kindref="member">implicitOperators</ref>().size()<sp/>==<sp/>0)</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1a8b8fc4329e5e6dfc3731ca28605a8a49" kindref="member">NF_ERROR_EXIT</ref>(</highlight><highlight class="stringliteral">&quot;No<sp/>temporal<sp/>or<sp/>implicit<sp/>terms<sp/>to<sp/>solve.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp.<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a26c16e4cd5f5d066f5314c84b48a4611" kindref="member">temporalOperators</ref>().size()<sp/>&gt;<sp/>0)</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>integrate<sp/>equations<sp/>in<sp/>time</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1dsl_1_1TimeIntegration" kindref="compound">TimeIntegration&lt;FieldType&gt;</ref><sp/>timeIntegrator(fvSchemes.<ref refid="classNeoFOAM_1_1Dictionary_1a80d832aea07daa2c48fe8ace44854463" kindref="member">subDict</ref>(</highlight><highlight class="stringliteral">&quot;ddtSchemes&quot;</highlight><highlight class="normal">));</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>timeIntegrator.<ref refid="classNeoFOAM_1_1dsl_1_1TimeIntegration_1ab12d869affbd0d9f9981617175d62297" kindref="member">solve</ref>(exp,<sp/>solution);</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1a8b8fc4329e5e6dfc3731ca28605a8a49" kindref="member">NF_ERROR_EXIT</ref>(</highlight><highlight class="stringliteral">&quot;Not<sp/>implemented.&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>solve<sp/>sparse<sp/>matrix<sp/>system</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="48"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM::dsl</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/solver.hpp"/>
   </compounddef>

@@ -20,5 +20,5 @@ var searchData=
   ['boundarytypes_25',['boundaryTypes',['../classNeoFOAM_1_1BoundaryFields.html#a4c45954c49ac41ba3f5e051ff02b95f6',1,'NeoFOAM::BoundaryFields']]],
   ['bufferhash_26',['bufferHash',['../namespaceNeoFOAM_1_1mpi.html#a9c3c67ea5fefe92c9f5b59fe2c3e7ca8',1,'NeoFOAM::mpi']]],
   ['buffertype_27',['bufferType',['../classNeoFOAM_1_1Communicator.html#a4a1ac74a693e7cee71c1615e66a9b6ca',1,'NeoFOAM::Communicator']]],
-  ['build_28',['build',['../classNeoFOAM_1_1dsl_1_1OperatorMixin.html#ae4326b764ea36eb2ded27729417b590b',1,'NeoFOAM::dsl::OperatorMixin::build()'],['../classNeoFOAM_1_1dsl_1_1Operator.html#a8df454b597b24eb6ad8c2a35633da3d7',1,'NeoFOAM::dsl::Operator::build()']]]
+  ['build_28',['build',['../classNeoFOAM_1_1dsl_1_1Operator.html#a8df454b597b24eb6ad8c2a35633da3d7',1,'NeoFOAM::dsl::Operator::build()'],['../classNeoFOAM_1_1dsl_1_1OperatorMixin.html#a50080b2d0a93d9341005118a31de862b',1,'NeoFOAM::dsl::OperatorMixin::build()']]]
 ];
