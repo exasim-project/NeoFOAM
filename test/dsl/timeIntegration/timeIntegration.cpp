@@ -10,6 +10,7 @@
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
+#include "NeoFOAM/timeIntegration/forwardEuler.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
 
