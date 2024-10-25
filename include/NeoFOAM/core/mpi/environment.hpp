@@ -2,12 +2,18 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#ifdef NF_WITH_MPI_SUPPORT
 #include <mpi.h>
+#endif
+
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/info.hpp"
 
+
 namespace NeoFOAM
 {
+
+#ifdef NF_WITH_MPI_SUPPORT
 
 namespace mpi
 {
@@ -106,5 +112,7 @@ private:
 };
 
 } // namespace mpi
+
+#endif
 
 } // namespace NeoFOAM

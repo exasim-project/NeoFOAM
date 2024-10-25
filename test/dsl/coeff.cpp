@@ -13,8 +13,6 @@
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
 
-namespace detail = NeoFOAM::dsl::detail;
-
 
 TEST_CASE("Coeff")
 {

@@ -8,13 +8,17 @@
 
 
 #include "NeoFOAM/fields/field.hpp"
+
+#ifdef NF_WITH_MPI_SUPPORT
 #include "NeoFOAM/core/mpi/fullDuplexCommBuffer.hpp"
 #include "NeoFOAM/core/mpi/operators.hpp"
 #include "NeoFOAM/core/mpi/environment.hpp"
+#endif
 
 namespace NeoFOAM
 {
 
+#ifdef NF_WITH_MPI_SUPPORT
 /**
  * @brief Represents a pair of indices for rank local and global indexing.
  */
@@ -160,5 +164,6 @@ private:
      */
     bufferType* createNewDuplexBuffer();
 };
+#endif
 
 } // namespace NeoFOAM
