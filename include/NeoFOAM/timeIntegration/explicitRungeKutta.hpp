@@ -184,20 +184,21 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& eqn, SolutionType& sol, scalar dt) const override {
+    void solve(Expression& exp, SolutionType& sol, scalar dt) override
+    {
 
-        // data_->system_ = eqn; // This should be a construction/init thing, but I
+        data_->system_ =
+            std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
         //  don't have the equation on construction anymore.
 
-        // while (time_ < data_->endTime_)
+        while (time_ < data_->endTime_)
         {
-            // time_ += data_->fixedStepSize_;
-            // ARKStepEvolve(
-            //     arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_,
-            //     ARK_ONE_STEP
-            // );
-            // sunrealtype* solution = N_VGetArrayPointer(solution_);
-            // std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
+            time_ += data_->fixedStepSize_;
+            ARKStepEvolve(
+                arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
+            );
+            sunrealtype* solution = N_VGetArrayPointer(solution_);
+            std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
         }
     };
 
