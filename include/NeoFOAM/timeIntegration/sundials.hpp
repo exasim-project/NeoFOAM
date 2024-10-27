@@ -37,6 +37,7 @@ SUNAdaptController createController(ARKAdaptControllerType controller, SUNContex
         return SUNAdaptController_ImExGus(context);
     default:
         NF_ERROR_EXIT("Invalid ARKAdaptControllerType");
+        return nullptr; // avoids compiler warnings
     }
 }
 
