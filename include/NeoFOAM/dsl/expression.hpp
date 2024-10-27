@@ -26,6 +26,11 @@ public:
         : exec_(exec), temporalOperators_(), implicitOperators_(), explicitOperators_()
     {}
 
+    Expression(const Expression& exp)
+        : exec_(exp.exec_), temporalOperators_(exp.temporalOperators_),
+          implicitOperators_(exp.implicitOperators_), explicitOperators_(exp.explicitOperators_)
+    {}
+
     /* @brief perform all explicit operation and accumulate the result */
     Field<scalar> explicitOperation(size_t nCells) const
     {

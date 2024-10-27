@@ -3,15 +3,10 @@
 
 #pragma once
 
-#include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
-
 #include <functional>
 #include <memory>
 
 // possibly useful headers.
-
 #include <nvector/nvector_serial.h>
 #include <nvector/nvector_kokkos.hpp>
 #include <sundials/sundials_nvector.h>
@@ -20,11 +15,9 @@
 // #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "timeIntegration.hpp"
+#include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "sundials.hpp"
 
-#include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/dsl/expression.hpp"
 
 #if defined(USE_CUDA)
 using ExecSpace = Kokkos::Cuda;
@@ -41,12 +34,39 @@ using ExecSpace = Kokkos::Serial;
 #endif
 
 
-// Where to put?
-namespace NeoFOAM::dsl
-{
-
 struct NFData
 {
+    NFData() = default;
+    ~NFData() = default;
+
+    NFData(const NFData& other)
+    {
+        // Final time
+        tf = other.tf;
+
+        // Integrator settings
+        realTol_ = other.realTol_;             // relative tolerance
+        absTol_ = other.absTol_;               // absolute tolerance
+        fixedStepSize_ = other.fixedStepSize_; // fixed step size
+        endTime_ = other.endTime_;             // end time
+        order = other.order;                   // ARKode method order
+                                               // -> fixed step size controller number ignored)
+        maxsteps = other.maxsteps;             // max number of steps between outputs
+        timeStep = other.timeStep;             // time step number
+
+        system_ = std::make_unique<NeoFOAM::dsl::Expression>(other.system_->exec()
+        ); // system of equations
+
+        // Output variables
+        output = other.output; // output level
+        nout = other.nout;     // number of output times
+
+        // Timing variables
+        timing = other.timing; // print timings
+        evolvetime = other.evolvetime;
+        nodes = other.nodes;
+    }
+
     // Final time
     sunrealtype tf;
 
@@ -60,7 +80,7 @@ struct NFData
     int maxsteps;               // max number of steps between outputs
     int timeStep;               // time step number
 
-    Expression system_; // system of equations // causing issues - cyclic
+    std::unique_ptr<NeoFOAM::dsl::Expression> system_ {nullptr}; // system of equations
 
     // Output variables
     int output; // output level
@@ -107,13 +127,16 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // refField->correctBoundaryConditions();
 
     // check if execturo is GPU
-    if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_.exec()))
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_->exec()))
     {
         Kokkos::fence();
     }
     return 0;
 }
 
+// Where to put?
+namespace NeoFOAM::dsl
+{
 
 template<typename SolutionType>
 class ExplicitRungeKutta :
@@ -134,20 +157,20 @@ public:
 
     ExplicitRungeKutta(const Dictionary& dict) : Base(dict) {}
 
-    // ExplicitRungeKutta(const ExplicitRungeKutta& other)
-    //     : Base(other), data_(
-    //                        other.data_ ? std::make_unique<NFData>(*other.data_) : nullptr
-    //                    ) // Deep copy of unique_ptr
-    // {
-    //     solution_ = other.solution_;
-    //     context_ = other.context_;
-    // }
+    ExplicitRungeKutta(const ExplicitRungeKutta& other)
+        : Base(other), data_(
+                           other.data_ ? std::make_unique<NFData>(*other.data_) : nullptr
+                       ) // Deep copy of unique_ptr
+    {
+        solution_ = other.solution_;
+        context_ = other.context_;
+    }
 
-    // inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
-    // {
-    //     *this = ExplicitRungeKutta(other);
-    //     return *this;
-    // };
+    inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
+    {
+        *this = ExplicitRungeKutta(other);
+        return *this;
+    };
 
     // ExplicitRungeKutta(EquationType eqnSystem, const Dictionary& dict)
     //     : TimeIntegrationFactory::Register<ExplicitRungeKutta>(eqnSystem, dict)
@@ -188,78 +211,77 @@ private:
 
     // double timeStepSize_;
     double time_;
-    // VecType kokkosSolution_;
-    // VecType kokkosInitialConditions_;
-    // N_Vector initialConditions_;
-    // N_Vector solution_;
-    // SUNContext context_;
-    // std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
-    //                                      // store the next best thing.
-    // std::unique_ptr<NFData> data_;
+    VecType kokkosSolution_;
+    VecType kokkosInitialConditions_;
+    N_Vector initialConditions_;
+    N_Vector solution_;
+    SUNContext context_;
+    std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
+                                         // store the next best thing.
+    std::unique_ptr<NFData> data_;
 
-    // void initSUNERKSolver()
-    // {
-    //     // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for
-    //     order
-    //     // of initialization.
-    //     initNFData();
+    void initSUNERKSolver()
+    {
+        // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order
+        // of initialization.
+        initNFData();
 
-    //     // Initialize SUNdials solver;
-    //     initSUNContext();
-    //     initSUNDimension();
-    //     initSUNInitialConditions();
-    //     initSUNCreateERK();
-    //     initSUNTolerances();
-    // }
+        // Initialize SUNdials solver;
+        initSUNContext();
+        initSUNDimension();
+        initSUNInitialConditions();
+        initSUNCreateERK();
+        initSUNTolerances();
+    }
 
-    // void initNFData()
-    // {
-    //     data_ = std::make_unique<NFData>();
-    //     auto erkDict = this->dict_.template get<Dictionary>("ddtSchemes");
-    //     data_->realTol_ = erkDict.template get<scalar>("Relative Tolerance");
-    //     data_->absTol_ = erkDict.template get<scalar>("Absolute Tolerance");
-    //     data_->fixedStepSize_ =
-    //         erkDict.template get<scalar>("Fixed Step Size"); // zero for adaptive
-    //     data_->endTime_ = erkDict.template get<scalar>("End Time");
-    //     data_->nodes = 1;
-    //     data_->maxsteps = 1;
-    // }
+    void initNFData()
+    {
+        data_ = std::make_unique<NFData>();
+        auto erkDict = this->dict_.template get<Dictionary>("ddtSchemes");
+        data_->realTol_ = erkDict.template get<scalar>("Relative Tolerance");
+        data_->absTol_ = erkDict.template get<scalar>("Absolute Tolerance");
+        data_->fixedStepSize_ =
+            erkDict.template get<scalar>("Fixed Step Size"); // zero for adaptive
+        data_->endTime_ = erkDict.template get<scalar>("End Time");
+        data_->nodes = 1;
+        data_->maxsteps = 1;
+    }
 
-    // void initSUNContext()
-    // {
-    //     int flag = SUNContext_Create(SUN_COMM_NULL, &context_);
-    //     NF_ASSERT(flag == 0, "SUNContext_Create failed");
-    // }
+    void initSUNContext()
+    {
+        int flag = SUNContext_Create(SUN_COMM_NULL, &context_);
+        NF_ASSERT(flag == 0, "SUNContext_Create failed");
+    }
 
-    // void initSUNDimension()
-    // {
-    //     kokkosSolution_ = VecType(data_->nodes, context_);
-    //     kokkosInitialConditions_ = VecType(data_->nodes, context_);
-    //     solution_ = kokkosSolution_;
-    //     initialConditions_ = kokkosInitialConditions_;
-    // }
+    void initSUNDimension()
+    {
+        kokkosSolution_ = VecType(data_->nodes, context_);
+        kokkosInitialConditions_ = VecType(data_->nodes, context_);
+        solution_ = kokkosSolution_;
+        initialConditions_ = kokkosInitialConditions_;
+    }
 
-    // void initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }
+    void initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }
 
-    // void initSUNCreateERK()
-    // {
-    //     arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
-    //         explicitSolveWrapperFreeFunction<EquationType>, 0.0, initialConditions_, context_
-    //     )));
-    //     void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+    void initSUNCreateERK()
+    {
+        // arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
+        //     explicitSolveWrapperFreeFunction<EquationType>, 0.0, initialConditions_, context_
+        // )));
+        void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
-    //     // Initialize ERKStep solver
-    //     ERKStepSetUserData(ark, NULL);
-    //     ERKStepSetInitStep(ark, data_->fixedStepSize_);
-    //     ERKStepSetFixedStep(ark, data_->fixedStepSize_);
-    //     ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
-    //     ARKodeSetUserData(ark, data_.get());
-    // }
+        // Initialize ERKStep solver
+        ERKStepSetUserData(ark, NULL);
+        ERKStepSetInitStep(ark, data_->fixedStepSize_);
+        ERKStepSetFixedStep(ark, data_->fixedStepSize_);
+        ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
+        ARKodeSetUserData(ark, data_.get());
+    }
 
-    // void initSUNTolerances()
-    // {
-    //     ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
-    // }
+    void initSUNTolerances()
+    {
+        ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
+    }
 };
 
 template class ExplicitRungeKutta<finiteVolume::cellCentred::VolumeField<scalar>>;
