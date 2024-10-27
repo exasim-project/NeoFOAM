@@ -6,9 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "../common.hpp"
-
-#include "../common.hpp"
+#include "../dsl/common.hpp"
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"

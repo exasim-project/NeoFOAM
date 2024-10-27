@@ -7,12 +7,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "../common.hpp"
+#include "../dsl/common.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/dsl/equation.hpp"
-#include "NeoFOAM/dsl/timeIntegration/ddt.hpp"
-#include "NeoFOAM/dsl/timeIntegration/explicitRungeKutta.hpp"
+#include "NeoFOAM/dsl/expression.hpp"
+#include "NeoFOAM/dsl/ddt.hpp"
+#include "NeoFOAM/timeIntegration/explicitRungeKutta.hpp"
 
 TEST_CASE("TimeIntegration")
 {

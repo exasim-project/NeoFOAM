@@ -5,7 +5,6 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 
 #include <functional>
@@ -21,11 +20,11 @@
 // #include <sunmatrix/sunmatrix_kokkosdense.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
-#include "NeoFOAM/dsl/timeIntegration/sundials.hpp"
+#include "timeIntegration.hpp"
+#include "sundials.hpp"
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "../equation.hpp" // TODO: This is a cyclic dependency
+#include "NeoFOAM/dsl/expression.hpp"
 
 #if defined(USE_CUDA)
 using ExecSpace = Kokkos::Cuda;
