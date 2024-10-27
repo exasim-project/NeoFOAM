@@ -9,11 +9,11 @@ The `Operator` implementation uses Type Erasure (more details `[1] <https://medi
 Example:
     .. code-block:: cpp
 
-        NeoFOAM::DSL::Operator<NeoFOAM::scalar> divTerm =
-            Divergence(NeoFOAM::DSL::Operator<NeoFOAM::scalar>::Type::Explicit, exec, ...);
+        NeoFOAM::dsl::Operator<NeoFOAM::scalar> divTerm =
+            Divergence(NeoFOAM::dsl::Operator<NeoFOAM::scalar>::Type::Explicit, exec, ...);
 
-        NeoFOAM::DSL::Operator<NeoFOAM::scalar> ddtTerm =
-            TimeTerm(NeoFOAM::DSL::Operator<NeoFOAM::scalar>::Type::Temporal, exec, ..);
+        NeoFOAM::dsl::Operator<NeoFOAM::scalar> ddtTerm =
+            TimeTerm(NeoFOAM::dsl::Operator<NeoFOAM::scalar>::Type::Temporal, exec, ..);
 
 
 To fit the specification of the EqnSystem (storage in a vector), the Operator needs to be able to be scaled:
