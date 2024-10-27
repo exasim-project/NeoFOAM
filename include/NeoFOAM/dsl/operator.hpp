@@ -31,38 +31,6 @@ concept HasExplicitOperator = requires(T t) {
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
-
-/* @class OperatorMixin
- * @brief A mixin class to represent simplify implementations of concrete operators in NeoFOAMs dsl.
- *
- * @ingroup dsl
- */
-class OperatorMixin
-{
-
-public:
-
-    OperatorMixin(const Executor exec) : exec_(exec), coeffs_() {};
-
-    virtual ~OperatorMixin() = default;
-
-    const Executor& exec() const { return exec_; }
-
-    Coeff& getCoefficient() { return coeffs_; }
-
-    const Coeff& getCoefficient() const { return coeffs_; }
-
-    /* @brief Given an input this function reads required coeffs */
-    void build([[maybe_unused]] const Input& input) {}
-
-protected:
-
-    const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
-
-    Coeff coeffs_;
-};
-
-
 /* @class Operator
  * @brief A class to represent an operator in NeoFOAMs dsl
  *
