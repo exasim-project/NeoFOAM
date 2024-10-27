@@ -75,25 +75,21 @@ $(function() {
 <div class="title">explicitRungeKutta.hpp File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="field_8hpp_source.html">NeoFOAM/fields/field.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="executor_8hpp_source.html">NeoFOAM/core/executor/executor.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="unstructured_8hpp_source.html">NeoFOAM/mesh/unstructured.hpp</a>&quot;</code><br />
-<code>#include &lt;functional&gt;</code><br />
+<div class="textblock"><code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;nvector/nvector_serial.h&gt;</code><br />
 <code>#include &lt;nvector/nvector_kokkos.hpp&gt;</code><br />
 <code>#include &lt;sundials/sundials_nvector.h&gt;</code><br />
 <code>#include &lt;sundials/sundials_core.hpp&gt;</code><br />
-<code>#include &quot;<a class="el" href="timeIntegration_8hpp_source.html">timeIntegration.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="field_8hpp_source.html">NeoFOAM/fields/field.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="timeIntegration_8hpp_source.html">NeoFOAM/timeIntegration/timeIntegration.hpp</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="scalar_8hpp_source.html">NeoFOAM/core/primitives/scalar.hpp</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="expression_8hpp_source.html">NeoFOAM/dsl/expression.hpp</a>&quot;</code><br />
 </div>
 <p><a href="explicitRungeKutta_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structNeoFOAM_1_1dsl_1_1NFData.html">NeoFOAM::dsl::NFData</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structNFData.html">NFData</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1dsl_1_1ExplicitRungeKutta.html">NeoFOAM::dsl::ExplicitRungeKutta&lt; SolutionType &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -112,8 +108,8 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a2c4b296a1126397107afac1d0bd93eb6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1dsl.html#a2c4b296a1126397107afac1d0bd93eb6">NeoFOAM::dsl::explicitSolveWrapperFreeFunction</a> (sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)</td></tr>
-<tr class="separator:a2c4b296a1126397107afac1d0bd93eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ed5241c774bde15cfb177103c5b1f38"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="explicitRungeKutta_8hpp.html#a9ed5241c774bde15cfb177103c5b1f38">explicitSolveWrapperFreeFunction</a> (sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)</td></tr>
+<tr class="separator:a9ed5241c774bde15cfb177103c5b1f38"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="a1f565be38561f0bb8646508c78e116cc"></a>
@@ -128,7 +124,50 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="explicitRungeKutta_8hpp_source.html#l00040">40</a> of file <a class="el" href="explicitRungeKutta_8hpp_source.html">explicitRungeKutta.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="explicitRungeKutta_8hpp_source.html#l00033">33</a> of file <a class="el" href="explicitRungeKutta_8hpp_source.html">explicitRungeKutta.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a9ed5241c774bde15cfb177103c5b1f38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ed5241c774bde15cfb177103c5b1f38">&#9670;&nbsp;</a></span>explicitSolveWrapperFreeFunction()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int explicitSolveWrapperFreeFunction </td>
+          <td>(</td>
+          <td class="paramtype">sunrealtype&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">N_Vector&#160;</td>
+          <td class="paramname"><em>y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">N_Vector&#160;</td>
+          <td class="paramname"><em>ydot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>user_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="explicitRungeKutta_8hpp_source.html#l00095">95</a> of file <a class="el" href="explicitRungeKutta_8hpp_source.html">explicitRungeKutta.hpp</a>.</p>
 
 </div>
 </div>

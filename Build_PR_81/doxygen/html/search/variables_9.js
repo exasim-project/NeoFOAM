@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['order_752',['order',['../structNeoFOAM_1_1dsl_1_1NFData.html#ab5e2ffb23557d0ffaf0a116831732090',1,'NeoFOAM::dsl::NFData']]],
-  ['output_753',['output',['../structNeoFOAM_1_1dsl_1_1NFData.html#a18fae8f013caf25a0b97874364630ac3',1,'NeoFOAM::dsl::NFData']]]
+  ['order_755',['order',['../structNFData.html#a48efd3de8e964f11bd5f25c51d974d70',1,'NFData']]],
+  ['output_756',['output',['../structNFData.html#a06b6f9a789bbc9ff69cf7ef5c82dc4bf',1,'NFData']]]
 ];
