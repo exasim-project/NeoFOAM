@@ -9,18 +9,11 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
-// TODO redundant name
-#include "NeoFOAM/dsl/timeIntegration/timeIntegration.hpp"
+#include "NeoFOAM/DSL/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-#include "NeoFOAM/dsl/timeIntegration/forwardEuler.hpp"
-#include "NeoFOAM/dsl/timeIntegration/explicitRungeKutta.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-
-namespace NeoFOAM::dsl
+namespace NeoFOAM::DSL
 {
-
 
 class Equation
 {
@@ -80,8 +73,7 @@ public:
         }
     }
 
-    template<typename SolutionFieldType>
-    void solve(SolutionFieldType& solution, const Dictionary& solverProperties)
+    void solve()
     {
         if (temporalOperators_.size() == 0 && implicitOperators_.size() == 0)
         {
@@ -89,10 +81,8 @@ public:
         }
         if (temporalOperators_.size() > 0)
         {
+            NF_ERROR_EXIT("Not implemented.");
             // integrate equations in time
-            TimeIntegration<Equation, finiteVolume::cellCentred::VolumeField<scalar>>
-                timeIntegrator(solverProperties.subDict("ddtSchemes"));
-            // timeIntegrator.solve(solution, solverProperties);
         }
         else
         {
@@ -122,7 +112,7 @@ public:
 
     const Executor& exec() const { return exec_; }
 
-    std::size_t nCells() const { return nCells_; }
+    const std::size_t nCells() const { return nCells_; }
 
     scalar getDt() const { return dt_; }
 
@@ -199,7 +189,4 @@ Equation operator-(const Operator& lhs, const Operator& rhs)
     return equation;
 }
 
-template class ForwardEuler<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
-template class ExplicitRungeKutta<Equation, finiteVolume::cellCentred::VolumeField<scalar>>;
-
-} // namespace NeoFOAM::dsl
+} // namespace NeoFOAM::DSL

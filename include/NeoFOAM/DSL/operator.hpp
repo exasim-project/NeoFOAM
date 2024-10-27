@@ -10,11 +10,15 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/coeff.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/DSL/coeff.hpp"
 
-namespace NeoFOAM::dsl
+
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
+
+namespace NeoFOAM::DSL
 {
 
 template<typename T>
@@ -33,9 +37,11 @@ concept HasExplicitOperator = requires(T t) {
 
 
 /* @class OperatorMixin
- * @brief A mixin class to represent simplify implementations of concrete operators in NeoFOAMs dsl.
+ * @brief A mixin class to represent simplify implementations of concrete operators
+ * in NeoFOAMs DSL
  *
- * @ingroup dsl
+ *
+ * @ingroup DSL
  */
 class OperatorMixin
 {
@@ -53,7 +59,7 @@ public:
     const Coeff& getCoefficient() const { return coeffs_; }
 
     /* @brief Given an input this function reads required coeffs */
-    void build([[maybe_unused]] const Input& input) {}
+    void build(const Input& input) {}
 
 protected:
 
@@ -64,7 +70,7 @@ protected:
 
 
 /* @class Operator
- * @brief A class to represent an operator in NeoFOAMs dsl
+ * @brief A class to represent a operator in NeoFOAMs DSL
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw
@@ -73,7 +79,7 @@ protected:
  * of Operators e.g Divergence, Laplacian, etc can be stored in a vector of
  * Operators
  *
- * @ingroup dsl
+ * @ingroup DSL
  */
 class Operator
 {
@@ -106,7 +112,7 @@ public:
     Coeff getCoefficient() const { return model_->getCoefficient(); }
 
     /* get the corresponding field size over which the operator operates */
-    // size_t getSize() const { return model_->getSize(); }
+    size_t getSize() const { return model_->getSize(); }
 
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) { model_->build(input); }
@@ -137,7 +143,7 @@ private:
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
         virtual Operator::Type getType() const = 0;
 
-        // virtual size_t getSize() const = 0;
+        virtual size_t getSize() const = 0;
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() = 0;
@@ -194,7 +200,7 @@ private:
         virtual Coeff getCoefficient() const override { return concreteOp_.getCoefficient(); }
 
         /* @brief get the associated coefficient for this term */
-        // virtual size_t getSize() const override { return concreteOp_.getSize(); }
+        virtual size_t getSize() const override { return concreteOp_.getSize(); }
 
         // The Prototype Design Pattern
         std::unique_ptr<OperatorConcept> clone() const override
@@ -232,7 +238,7 @@ auto operator*(const Coeff& coeff, const Operator& rhs)
 
 template<typename CoeffFunction>
     requires std::invocable<CoeffFunction&, size_t>
-Operator operator*([[maybe_unused]] CoeffFunction coeffFunc, const Operator& lhs)
+Operator operator*(CoeffFunction coeffFunc, const Operator& lhs)
 {
     // TODO implement
     NF_ERROR_EXIT("Not implemented");
@@ -245,47 +251,4 @@ Operator operator*([[maybe_unused]] CoeffFunction coeffFunc, const Operator& lhs
     return result;
 }
 
-/* @class OperatorMixin
- * @brief A mixin class to represent simplify implementations of concrete operators
- * in NeoFOAMs dsl
- *
- *
- * @ingroup dsl
- */
-template<typename FieldType>
-class OperatorMixin
-{
-
-public:
-
-    OperatorMixin(const Executor exec, FieldType& field, Operator::Type type)
-        : exec_(exec), coeffs_(), field_(field), type_(type) {};
-
-    Operator::Type getType() const { return type_; }
-
-    virtual ~OperatorMixin() = default;
-
-    virtual const Executor& exec() const final { return exec_; }
-
-    Coeff& getCoefficient() { return coeffs_; }
-
-    const Coeff& getCoefficient() const { return coeffs_; }
-
-    FieldType& getField() { return field_; }
-
-    const FieldType& getField() const { return field_; }
-
-    /* @brief Given an input this function reads required coeffs */
-    void build([[maybe_unused]] const Input& input) {}
-
-protected:
-
-    const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
-
-    Coeff coeffs_;
-
-    FieldType& field_;
-
-    Operator::Type type_;
-};
-} // namespace NeoFOAM::dsl
+} // namespace NeoFOAM::DSL

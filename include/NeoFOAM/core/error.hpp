@@ -4,10 +4,13 @@
 
 #include <exception>
 #include <iostream>
-#include <mpi.h>
 #include <string>
 #include <sstream>
 #include <iostream>
+
+#ifdef NF_WITH_MPI_SUPPORT
+#include <mpi.h>
+#endif
 
 // compiling with clang and cuda fails to
 // find source location
@@ -91,6 +94,8 @@ private:
  *
  * @param message The error message to be printed.
  */
+
+#ifdef NF_WITH_MPI_SUPPORT
 #define NF_ERROR_EXIT(message)                                                                     \
     do                                                                                             \
     {                                                                                              \
@@ -98,6 +103,14 @@ private:
         MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     }                                                                                              \
     while (false)
+#else
+#define NF_ERROR_EXIT(message)                                                                     \
+    do                                                                                             \
+    {                                                                                              \
+        std::cerr << NF_ERROR_MESSAGE(message);                                                    \
+    }                                                                                              \
+    while (false)
+#endif
 
 /**
  * @def NF_THROW

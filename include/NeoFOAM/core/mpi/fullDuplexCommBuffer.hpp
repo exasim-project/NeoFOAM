@@ -12,6 +12,8 @@
 namespace NeoFOAM
 {
 
+#ifdef NF_WITH_MPI_SUPPORT
+
 namespace mpi
 {
 
@@ -150,6 +152,8 @@ private:
     HalfDuplexCommBuffer receive_; /**< The receive buffer. */
 };
 
-}
+} // namespace mpi
+
+#endif
 
 }

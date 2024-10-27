@@ -79,6 +79,13 @@ public:
     Field<ValueType>& internalField() { return field_.internalField(); }
 
     /**
+     * @brief Returns the size of the internal field
+     *
+     * @return The size of the internal field
+     */
+    size_t size() const { return field_.internalField().size(); }
+
+    /**
      * @brief Returns a const reference to the boundary field.
      *
      * @return The const reference to the boundary field.
