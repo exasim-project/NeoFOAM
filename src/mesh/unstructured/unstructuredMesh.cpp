@@ -106,31 +106,40 @@ UnstructuredMesh createSingleCellMesh(const Executor exec)
     );
 }
 
-UnstructuredMesh create1DUniformMesh(
-    const Executor exec, const Vector leftBoundary, const Vector rightBoundary, const size_t nCells
-)
+//!
+//! A 1D mesh in 3D space in which each cell has a left and a right face.
+//! The 1D mesh is aligned with the x coordinate of Cartesian coordinate system.
+//!
+UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 {
-    // a 1D mesh in 3D space
-    // each cell has left and right faces
-    // the 1D mesh is aligned with the x coordinate of Cartesian coordinate sytstem
-
-    double meshSpacing = (rightBoundary[0] - leftBoundary[0]) / nCells;
+    const Vector leftBoundary = {0.0, 0.0, 0.0};
+    const Vector rightBoundary = {1.0, 0.0, 0.0};
+    scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / nCells;
     vectorField meshPoints(exec, nCells + 1, {0.0, 0.0, 0.0});
     meshPoints[0] = leftBoundary;
     meshPoints[nCells] = leftBoundary;
 
-    for (size_t i = 1; i < nCells; i++) // loop over internal mesh points
-    {
-        meshPoints[i][0] = leftBoundary[0] + i * meshSpacing;
-    }
+    // loop over internal mesh points
+    auto meshPointsSpan = meshPoints.span();
+    auto leftBoundaryX = leftBoundary[0];
+    parallelFor(
+        exec,
+        {1, nCells},
+        KOKKOS_LAMBDA(const size_t i) { meshPointsSpan[i][0] = leftBoundaryX + i * meshSpacing; }
+    );
+
 
     scalarField cellVolumes(exec, nCells, meshSpacing);
 
     vectorField cellCenters(exec, nCells, {0.0, 0.0, 0.0});
-    for (size_t i = 0; i < nCells; i++)
-    {
-        cellCenters[i][0] = 0.5 * (meshPoints[i][0] + meshPoints[i + 1][0]);
-    }
+    auto cellCentersSpan = cellCenters.span();
+    parallelFor(
+        exec,
+        {0, nCells},
+        KOKKOS_LAMBDA(const size_t i) {
+            cellCentersSpan[i][0] = 0.5 * (meshPointsSpan[i][0] + meshPointsSpan[i + 1][0]);
+        }
+    );
 
     vectorField faceAreas(exec, nCells + 1, {1.0, 0.0, 0.0});
     faceAreas[0] = {-1.0, 0.0, 0.0}; // left boundary face
@@ -139,19 +148,23 @@ UnstructuredMesh create1DUniformMesh(
     scalarField magFaceAreas(exec, nCells + 1, 1.0);
 
     labelField faceOwner(exec, nCells + 1);
-    faceOwner[0] = 0;                       // left boundary face
-    for (size_t i = 1; i < nCells + 1; i++) // loop over internal faces and right boundary face
-    {
-        faceOwner[i] = i - 1;
-    }
+    faceOwner[0] = 0; // left boundary face
+
+    // loop over internal faces and right boundary face
+    auto faceOwnerSpan = faceOwner.span();
+    parallelFor(
+        exec, {1, nCells + 1}, KOKKOS_LAMBDA(const size_t i) { faceOwnerSpan[i] = i - 1; }
+    );
+
 
     labelField faceNeighbor(exec, nCells + 1);
     faceNeighbor[0] = {};
     faceNeighbor[nCells] = {};
-    for (size_t i = 0; i < nCells; i++)
-    {
-        faceNeighbor[i] = i;
-    }
+
+    auto faceNeighborSpan = faceNeighbor.span();
+    parallelFor(
+        exec, {0, nCells}, KOKKOS_LAMBDA(const size_t i) { faceNeighborSpan[i] = i; }
+    );
 
     vectorField delta(exec, 2);
     delta[0] = {leftBoundary[0] - cellCenters[0][0], 0.0, 0.0};
