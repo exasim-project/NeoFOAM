@@ -38,4 +38,17 @@ TEST_CASE("Unstructured Mesh")
 
         REQUIRE(domainField.boundaryField().offset().size() == 5);
     }
+
+    SECTION("Can create a 1D uniform mesh" + execName)
+    {
+        size_t nCells = 4;
+
+        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, nCells);
+
+        REQUIRE(mesh.nCells() == 4);
+        REQUIRE(mesh.nBoundaryFaces() == 2);
+        REQUIRE(mesh.nInternalFaces() == 3);
+        REQUIRE(mesh.nBoundaries() == 2);
+        REQUIRE(mesh.nFaces() == 5);
+    }
 }
