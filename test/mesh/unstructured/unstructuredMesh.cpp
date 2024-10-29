@@ -50,7 +50,38 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(mesh.nInternalFaces() == 3);
         REQUIRE(mesh.nBoundaries() == 2);
         REQUIRE(mesh.nFaces() == 5);
+
+        // Verify mesh points
         REQUIRE(mesh.points()[0][0] == 0.0);
-        REQUIRE(mesh.points()[4][0] == 0.0);
+        REQUIRE(mesh.points()[nCells][0] == 1.0);
+        REQUIRE(mesh.points()[1][0] == 0.25);
+        REQUIRE(mesh.points()[2][0] == 0.5);
+        REQUIRE(mesh.points()[3][0] == 0.75);
+
+        // Verify cell centers
+        REQUIRE(mesh.cellCentres()[0][0] == 0.125);
+        REQUIRE(mesh.cellCentres()[1][0] == 0.375);
+        REQUIRE(mesh.cellCentres()[2][0] == 0.625);
+        REQUIRE(mesh.cellCentres()[3][0] == 0.875);
+
+        // Verify face owners
+        REQUIRE(mesh.faceOwner()[0] == 0);
+        REQUIRE(mesh.faceOwner()[1] == 0);
+        REQUIRE(mesh.faceOwner()[2] == 1);
+        REQUIRE(mesh.faceOwner()[3] == 2);
+        REQUIRE(mesh.faceOwner()[4] == 3);
+
+        // Verify face neighbors
+        REQUIRE(mesh.faceNeighbour()[1] == 1);
+        REQUIRE(mesh.faceNeighbour()[2] == 2);
+        REQUIRE(mesh.faceNeighbour()[3] == 3);
+
+        // Verify boundary mesh
+        REQUIRE(mesh.boundaryMesh().faceCells()[0] == 0);
+        REQUIRE(mesh.boundaryMesh().faceCells()[1] == 3);
+        REQUIRE(mesh.boundaryMesh().cn()[0][0] == 0.125);
+        REQUIRE(mesh.boundaryMesh().cn()[1][0] == 0.875);
+        REQUIRE(mesh.boundaryMesh().delta()[0][0] == -0.125);
+        REQUIRE(mesh.boundaryMesh().delta()[1][0] == 0.125);
     }
 }

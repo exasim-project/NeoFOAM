@@ -118,7 +118,7 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / nCells;
     vectorField meshPoints(exec, nCells + 1, {0.0, 0.0, 0.0});
     meshPoints[0] = leftBoundary;
-    meshPoints[nCells] = leftBoundary;
+    meshPoints[nCells] = rightBoundary;
 
     // loop over internal mesh points
     auto meshPointsSpan = meshPoints.span();
