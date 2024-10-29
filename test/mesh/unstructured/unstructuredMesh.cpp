@@ -50,5 +50,7 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(mesh.nInternalFaces() == 3);
         REQUIRE(mesh.nBoundaries() == 2);
         REQUIRE(mesh.nFaces() == 5);
+        REQUIRE(mesh.points()[0][0] == 0.0);
+        REQUIRE(mesh.points()[4][0] == 0.0);
     }
 }
