@@ -177,7 +177,7 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
     BoundaryMesh boundaryMesh(
         exec,
-        {exec, {0, nCells - 1}},
+        {exec, {0, static_cast<int>(nCells) - 1}},
         {exec, {leftBoundary, rightBoundary}},
         {exec, {cellCenters[0], cellCenters[nCells - 1]}},
         {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
