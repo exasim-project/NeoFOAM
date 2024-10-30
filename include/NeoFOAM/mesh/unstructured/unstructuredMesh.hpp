@@ -280,6 +280,12 @@ private:
  * and four boundaries one left, right, top, bottom
  */
 UnstructuredMesh createSingleCellMesh(const Executor exec);
+
+/** @brief A factory function for a 1D mesh
+ *
+ * A 1D mesh in 3D space in which each cell has a left and a right face.
+ * The 1D mesh is aligned with the x coordinate of Cartesian coordinate system.
+ */
 UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells);
 
 } // namespace NeoFOAM
