@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <functional>
-
 #include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
