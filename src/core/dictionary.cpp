@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include <numeric>
-#include <iostream>  // for operator<<, basic_ostream, endl, cerr, ostream
+#include <iostream> // for operator<<, basic_ostream, endl, cerr, ostream
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/error.hpp"
