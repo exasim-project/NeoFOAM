@@ -12,7 +12,6 @@ target_sources(
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/tokenList.cpp"
-          "core/kokkos.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
