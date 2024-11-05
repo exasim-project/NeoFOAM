@@ -152,7 +152,7 @@ public:
 
     ExplicitRungeKutta() = default;
 
-    ~ExplicitRungeKutta() = default;
+    ~ExplicitRungeKutta() { SUNContext_Free(&context_); };
 
     ExplicitRungeKutta(const Dictionary& dict) : Base(dict) {}
 
@@ -185,11 +185,10 @@ public:
 
     void solve(Expression& exp, SolutionType& sol, scalar dt) override
     {
-        if (data_ == nullptr) initNFData();
+        if (data_ == nullptr) initSUNERKSolver();
         data_->system_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
                                                //  don't have the equation on construction anymore.
-
         data_->fixedStepSize_ = dt;
         time_ += data_->fixedStepSize_;
         ARKStepEvolve(
@@ -262,9 +261,9 @@ private:
 
     void initSUNCreateERK()
     {
-        // arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
-        //     explicitSolveWrapperFreeFunction<EquationType>, 0.0, initialConditions_, context_
-        // )));
+        arkodeMemory_.reset(reinterpret_cast<char*>(
+            ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initialConditions_, context_)
+        ));
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
         // Initialize ERKStep solver

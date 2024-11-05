@@ -36,18 +36,18 @@ TEST_CASE("TimeIntegration")
 
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
+
+    double dt {1.0e-3};
     ddtSchemes.insert("type", std::string("explicitRungeKutta"));
     ddtSchemes.insert("Relative Tolerance", NeoFOAM::scalar(1.e-5));
     ddtSchemes.insert("Absolute Tolerance", NeoFOAM::scalar(1.e-10));
-    ddtSchemes.insert("Fixed Step Size", NeoFOAM::scalar(1.0e-3));
+    ddtSchemes.insert("Fixed Step Size", NeoFOAM::scalar(dt));
     ddtSchemes.insert("End Time", NeoFOAM::scalar(0.005));
     fvSchemes.insert("ddtSchemes", ddtSchemes);
     NeoFOAM::Dictionary fvSolution;
 
-
     Operator ddtOp = Ddt(vf);
     auto dumb = Dummy(vf);
-    auto eqn = ddtOp + dummy;
-    double dt {0.1};                           // here the time integrator will deal with this.
+    auto eqn = ddtOp + dummy;                  // here the time integrator will deal with this.
     solve(eqn, vf, dt, fvSchemes, fvSolution); // perform 1 step.
 }
