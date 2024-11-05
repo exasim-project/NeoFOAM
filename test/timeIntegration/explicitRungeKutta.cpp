@@ -14,6 +14,8 @@
 #include "NeoFOAM/dsl/ddt.hpp"
 #include "NeoFOAM/timeIntegration/explicitRungeKutta.hpp"
 
+using namespace NeoFOAM::dsl::temporal;
+
 TEST_CASE("TimeIntegration")
 {
     auto exec = NeoFOAM::SerialExecutor();
@@ -38,7 +40,8 @@ TEST_CASE("TimeIntegration")
     subDict.insert("End Time", NeoFOAM::scalar(0.005));
     dict.insert("ddtSchemes", subDict);
 
-    // Operator ddtOperator = NeoFOAM::dsl::temporal::Ddt(exec, vf);
-    // auto eqn = ddtOperator + dummy;
-    // eqn.solve(vf, dict);
+    Operator ddtOp = Ddt(vf);
+    auto dumb = Dummy(vf);
+    auto eqn = ddtOp + dummy;
+    // solve(eqn, vf, dt, fvSchemes, fvSolution);
 }
