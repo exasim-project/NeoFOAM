@@ -111,7 +111,8 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // TODO: copy the field to the solution
 
     // solve the spacial terms
-    // Field<scalar> source = nfData->system_.explicitOperation();
+    NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1);
+    source = nfData->system_->explicitOperation(source);
     for (std::size_t i = 0; i < nfData->nodes; ++i)
     {
         ydotarray[i] = -1.0 * yarray[i]; // replace with source[i]
@@ -191,11 +192,12 @@ public:
                                                //  don't have the equation on construction anymore.
         data_->fixedStepSize_ = dt;
         time_ += data_->fixedStepSize_;
-        ARKStepEvolve(
+        auto stepReturn = ARKStepEvolve(
             arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
         );
         sunrealtype* solution = N_VGetArrayPointer(solution_);
-        std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
+        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\t" << solution[0]
+                  << std::endl;
     }
 
     std::unique_ptr<TimeIntegratorBase<SolutionType>> clone() const
