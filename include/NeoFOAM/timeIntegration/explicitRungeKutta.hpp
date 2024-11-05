@@ -189,18 +189,15 @@ public:
 
         data_->system_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
-        //  don't have the equation on construction anymore.
-
-        while (time_ < data_->endTime_)
-        {
-            time_ += data_->fixedStepSize_;
-            ARKStepEvolve(
-                arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
-            );
-            sunrealtype* solution = N_VGetArrayPointer(solution_);
-            std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
-        }
-    };
+                                               //  don't have the equation on construction anymore.
+        data_->fixedStepSize_ = dt;
+        time_ += data_->fixedStepSize_;
+        ARKStepEvolve(
+            arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
+        );
+        sunrealtype* solution = N_VGetArrayPointer(solution_);
+        std::cout << "Step t = " << time_ << "\t" << solution[0] << std::endl;
+    }
 
     std::unique_ptr<TimeIntegratorBase<SolutionType>> clone() const
     {

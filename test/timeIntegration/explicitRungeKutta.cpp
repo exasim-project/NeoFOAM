@@ -12,9 +12,12 @@
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
+#include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/timeIntegration/explicitRungeKutta.hpp"
 
 using namespace NeoFOAM::dsl::temporal;
+using namespace NeoFOAM::dsl;
+
 
 TEST_CASE("TimeIntegration")
 {
@@ -31,17 +34,20 @@ TEST_CASE("TimeIntegration")
     auto fB = Field(exec, 1, 4.0);
     auto dummy = Dummy(vf);
 
-    NeoFOAM::Dictionary dict;
-    NeoFOAM::Dictionary subDict;
-    subDict.insert("type", std::string("explicitRungeKutta"));
-    subDict.insert("Relative Tolerance", NeoFOAM::scalar(1.e-5));
-    subDict.insert("Absolute Tolerance", NeoFOAM::scalar(1.e-10));
-    subDict.insert("Fixed Step Size", NeoFOAM::scalar(1.0e-3));
-    subDict.insert("End Time", NeoFOAM::scalar(0.005));
-    dict.insert("ddtSchemes", subDict);
+    NeoFOAM::Dictionary fvSchemes;
+    NeoFOAM::Dictionary ddtSchemes;
+    ddtSchemes.insert("type", std::string("explicitRungeKutta"));
+    ddtSchemes.insert("Relative Tolerance", NeoFOAM::scalar(1.e-5));
+    ddtSchemes.insert("Absolute Tolerance", NeoFOAM::scalar(1.e-10));
+    ddtSchemes.insert("Fixed Step Size", NeoFOAM::scalar(1.0e-3));
+    ddtSchemes.insert("End Time", NeoFOAM::scalar(0.005));
+    fvSchemes.insert("ddtSchemes", ddtSchemes);
+    NeoFOAM::Dictionary fvSolution;
+
 
     Operator ddtOp = Ddt(vf);
     auto dumb = Dummy(vf);
     auto eqn = ddtOp + dummy;
-    // solve(eqn, vf, dt, fvSchemes, fvSolution);
+    double dt {0.1};                           // here the time integrator will deal with this.
+    solve(eqn, vf, dt, fvSchemes, fvSolution); // perform 1 step.
 }
