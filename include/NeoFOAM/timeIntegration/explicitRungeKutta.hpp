@@ -112,7 +112,6 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
 
     // solve the spacial terms
     // Field<scalar> source = nfData->system_.explicitOperation();
-
     for (std::size_t i = 0; i < nfData->nodes; ++i)
     {
         ydotarray[i] = -1.0 * yarray[i]; // replace with source[i]
@@ -186,10 +185,11 @@ public:
 
     void solve(Expression& exp, SolutionType& sol, scalar dt) override
     {
-
+        if (data_ == nullptr) initNFData();
         data_->system_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
                                                //  don't have the equation on construction anymore.
+
         data_->fixedStepSize_ = dt;
         time_ += data_->fixedStepSize_;
         ARKStepEvolve(
@@ -235,12 +235,11 @@ private:
     void initNFData()
     {
         data_ = std::make_unique<NFData>();
-        auto erkDict = this->dict_.template get<Dictionary>("ddtSchemes");
-        data_->realTol_ = erkDict.template get<scalar>("Relative Tolerance");
-        data_->absTol_ = erkDict.template get<scalar>("Absolute Tolerance");
+        data_->realTol_ = this->dict_.template get<scalar>("Relative Tolerance");
+        data_->absTol_ = this->dict_.template get<scalar>("Absolute Tolerance");
         data_->fixedStepSize_ =
-            erkDict.template get<scalar>("Fixed Step Size"); // zero for adaptive
-        data_->endTime_ = erkDict.template get<scalar>("End Time");
+            this->dict_.template get<scalar>("Fixed Step Size"); // zero for adaptive
+        data_->endTime_ = this->dict_.template get<scalar>("End Time");
         data_->nodes = 1;
         data_->maxsteps = 1;
     }
