@@ -115,15 +115,9 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     source = nfData->system_->explicitOperation(source);
     for (std::size_t i = 0; i < nfData->nodes; ++i)
     {
-        ydotarray[i] = -1.0 * yarray[i]; // replace with source[i]
+        ydotarray[i] = -1.0 * source[i];
     }
 
-    // for (auto& eqnTerm : eqnSystem_.temporalTerms())
-    // {
-    //     eqnTerm.temporalOperation(Phi);
-    // }
-    // Phi += source*dt;
-    // refField->internalField() -= source * dt;
     // refField->correctBoundaryConditions();
 
     // check if execturo is GPU
@@ -138,17 +132,18 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
 namespace NeoFOAM::dsl
 {
 
-template<typename SolutionType>
+template<typename SolutionFieldType>
 class ExplicitRungeKutta :
-    public TimeIntegratorBase<SolutionType>::template Register<ExplicitRungeKutta<SolutionType>>
+    public TimeIntegratorBase<SolutionFieldType>::template Register<
+        ExplicitRungeKutta<SolutionFieldType>>
 {
     using VecType = ::sundials::kokkos::Vector<ExecSpace>;
     using SizeType = VecType::size_type;
 
 public:
 
-    using Base =
-        TimeIntegratorBase<SolutionType>::template Register<ExplicitRungeKutta<SolutionType>>;
+    using Base = TimeIntegratorBase<SolutionFieldType>::template Register<
+        ExplicitRungeKutta<SolutionFieldType>>;
     using Base::dict_;
 
     ExplicitRungeKutta() = default;
@@ -184,23 +179,37 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& exp, SolutionType& sol, scalar dt) override
+    void solve(Expression& exp, SolutionFieldType& solutionField, scalar dt) override
     {
         if (data_ == nullptr) initSUNERKSolver();
         data_->system_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
                                                //  don't have the equation on construction anymore.
+
+        // Load the current solution for temporal integration
+        sunrealtype* solution = N_VGetArrayPointer(solution_);
+        auto& field = solutionField.internalField();
+        for (size_t i = 0; i < solutionField.size(); ++i)
+        {
+            solution[i] = field[i];
+        }
+
         data_->fixedStepSize_ = dt;
-        time_ += data_->fixedStepSize_;
         auto stepReturn = ARKStepEvolve(
             arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
         );
-        sunrealtype* solution = N_VGetArrayPointer(solution_);
-        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\t" << solution[0]
+
+        // Copy sundials solution back to the solution container.
+        for (size_t i = 0; i < solutionField.size(); ++i)
+        {
+            field[i] = solution[i];
+        }
+
+        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\t" << field[0]
                   << std::endl;
     }
 
-    std::unique_ptr<TimeIntegratorBase<SolutionType>> clone() const
+    std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const
     {
         return std::make_unique<ExplicitRungeKutta>(*this);
     }
