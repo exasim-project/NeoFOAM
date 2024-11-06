@@ -56,8 +56,6 @@ public:
         return Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(ptr, size);
     }
 
-    std::string print() const { return std::string(exec::name()); }
-
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
 
     std::string name() const { return "CPUExecutor"; };

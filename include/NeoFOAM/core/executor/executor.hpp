@@ -5,6 +5,8 @@
 #include "NeoFOAM/core/executor/serialExecutor.hpp"
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
 #include "NeoFOAM/core/executor/CPUExecutor.hpp"
+#include "NeoFOAM/core/error.hpp"
+#include <string>
 #include <variant>
 
 namespace NeoFOAM
@@ -51,3 +53,31 @@ using Executor = std::variant<CPUExecutor, GPUExecutor, SerialExecutor>;
 };
 
 } // namespace NeoFOAM
+
+// extension of the standard namespace so we can specialise to_string.
+namespace std
+{
+/**
+ * @brief Returns the name of the executor in std::string from.
+ * @param executor The Executor whose name will be converted to a std::string.
+ */
+[[nodiscard]] inline std::string to_string(const NeoFOAM::Executor& executor)
+{
+    if (std::holds_alternative<NeoFOAM::CPUExecutor>(executor))
+    {
+        return std::get<NeoFOAM::CPUExecutor>(executor).name();
+    }
+    else if (std::holds_alternative<NeoFOAM::GPUExecutor>(executor))
+    {
+        return std::get<NeoFOAM::GPUExecutor>(executor).name();
+    }
+    else if (std::holds_alternative<NeoFOAM::SerialExecutor>(executor))
+    {
+        return std::get<NeoFOAM::SerialExecutor>(executor).name();
+    }
+    else
+    {
+        return "Unknown Executor.";
+    }
+}
+}

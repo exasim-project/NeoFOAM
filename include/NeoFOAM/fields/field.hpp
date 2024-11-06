@@ -413,12 +413,10 @@ private:
     void validateOtherField(const Field<ValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-
-        std::string execName = std::visit([](auto e) { return e.print(); }, exec());
-        std::string rhsExecName = std::visit([](auto e) { return e.print(); }, rhs.exec());
         NF_DEBUG_ASSERT(
             exec() == rhs.exec(),
-            "Executors: " + execName + " and " + rhsExecName + " are not the same."
+            "Executors: " + std::to_string(exec_) + " and " + std::to_string(rhs.exec_)
+                + " are not the same."
         );
     }
 };
