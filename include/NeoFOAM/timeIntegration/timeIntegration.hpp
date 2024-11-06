@@ -43,9 +43,9 @@ protected:
 /* @class Factory class to create time integration method by a given name
  * using NeoFOAMs runTimeFactory mechanism
  *
- * @tparam SolutionType Type of the solution field eg, volumeField or just a plain Field
+ * @tparam SolutionFieldType Type of the solution field eg, volumeField or just a plain Field
  */
-template<typename SolutionType>
+template<typename SolutionFieldType>
 class TimeIntegration
 {
 
@@ -59,17 +59,17 @@ public:
 
     TimeIntegration(const Dictionary& dict)
         : timeIntegratorStrategy_(
-            TimeIntegratorBase<SolutionType>::create(dict.get<std::string>("type"), dict)
+            TimeIntegratorBase<SolutionFieldType>::create(dict.get<std::string>("type"), dict)
         ) {};
 
-    void solve(Expression& eqn, SolutionType& sol, scalar dt)
+    void solve(Expression& eqn, SolutionFieldType& sol, scalar dt)
     {
         timeIntegratorStrategy_->solve(eqn, sol, dt);
     }
 
 private:
 
-    std::unique_ptr<TimeIntegratorBase<SolutionType>> timeIntegratorStrategy_;
+    std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> timeIntegratorStrategy_;
 };
 
 
