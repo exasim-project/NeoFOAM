@@ -77,6 +77,10 @@
         </childnode>
         <childnode refid="13" relation="include">
         </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
         <childnode refid="14" relation="include">
         </childnode>
       </node>
@@ -767,7 +771,7 @@
 <codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ensures<sp/>no<sp/>return<sp/>a<sp/>span<sp/>of<sp/>a<sp/>temporary<sp/>object<sp/>--&gt;<sp/>invalid<sp/>memory<sp/>access</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="356" refid="classNeoFOAM_1_1Field_1a8d2599353d87f5d68a435cbade674455" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;const<sp/>ValueType&gt;<sp/><ref refid="classNeoFOAM_1_1Field_1a8d2599353d87f5d68a435cbade674455" kindref="member">span</ref>()<sp/>const&amp;&amp;<sp/>=<sp/>delete;</highlight></codeline>
 <codeline lineno="357"><highlight class="normal"></highlight></codeline>
-<codeline lineno="362" refid="classNeoFOAM_1_1Field_1a6f3f4f0dbd16309de3786a4d92bf0564" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::<ref refid="classNeoFOAM_1_1Field_1a565eec5f60f4e057792069c2f4832448" kindref="member">span</ref>&lt;ValueType&gt;<sp/><ref refid="classNeoFOAM_1_1Field_1a565eec5f60f4e057792069c2f4832448" kindref="member">span</ref>()<sp/>&amp;<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>std::span&lt;ValueType&gt;(data_,<sp/>size_);<sp/>}</highlight></codeline>
+<codeline lineno="362" refid="classNeoFOAM_1_1Field_1a6f3f4f0dbd16309de3786a4d92bf0564" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="namespacestd" kindref="compound">std</ref>::<ref refid="classNeoFOAM_1_1Field_1a565eec5f60f4e057792069c2f4832448" kindref="member">span</ref>&lt;ValueType&gt;<sp/><ref refid="classNeoFOAM_1_1Field_1a565eec5f60f4e057792069c2f4832448" kindref="member">span</ref>()<sp/>&amp;<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>std::span&lt;ValueType&gt;(data_,<sp/>size_);<sp/>}</highlight></codeline>
 <codeline lineno="363"><highlight class="normal"></highlight></codeline>
 <codeline lineno="368" refid="classNeoFOAM_1_1Field_1a3780518723a1d3843b86f35542004b89" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::span&lt;const<sp/>ValueType&gt;<sp/><ref refid="classNeoFOAM_1_1Field_1a3780518723a1d3843b86f35542004b89" kindref="member">span</ref>()<sp/>const&amp;</highlight></codeline>
 <codeline lineno="369"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
@@ -801,31 +805,29 @@
 <codeline lineno="413"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>validateOtherField(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Field&lt;ValueType&gt;&amp;<sp/>rhs)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
 <codeline lineno="414"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
 <codeline lineno="415"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1af1af39ea56903b56ed322432441511b5" kindref="member">NF_DEBUG_ASSERT</ref>(<ref refid="classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e" kindref="member">size</ref>()<sp/>==<sp/>rhs.size(),<sp/></highlight><highlight class="stringliteral">&quot;Fields<sp/>are<sp/>not<sp/>the<sp/>same<sp/>size.&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="416"><highlight class="normal"></highlight></codeline>
-<codeline lineno="417"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::string<sp/>execName<sp/>=<sp/>std::visit([](</highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>e)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>e.print();<sp/>},<sp/><ref refid="classNeoFOAM_1_1Field_1adf7e27c2661a7c1edfd919f1e33e964a" kindref="member">exec</ref>());</highlight></codeline>
-<codeline lineno="418"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::string<sp/>rhsExecName<sp/>=<sp/>std::visit([](</highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>e)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>e.print();<sp/>},<sp/>rhs.exec());</highlight></codeline>
-<codeline lineno="419"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1af1af39ea56903b56ed322432441511b5" kindref="member">NF_DEBUG_ASSERT</ref>(</highlight></codeline>
-<codeline lineno="420"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field_1adf7e27c2661a7c1edfd919f1e33e964a" kindref="member">exec</ref>()<sp/>==<sp/>rhs.exec(),</highlight></codeline>
-<codeline lineno="421"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;Executors:<sp/>&quot;</highlight><highlight class="normal"><sp/>+<sp/>execName<sp/>+<sp/></highlight><highlight class="stringliteral">&quot;<sp/>and<sp/>&quot;</highlight><highlight class="normal"><sp/>+<sp/>rhsExecName<sp/>+<sp/></highlight><highlight class="stringliteral">&quot;<sp/>are<sp/>not<sp/>the<sp/>same.&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="422"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="423"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="424"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="425"><highlight class="normal"></highlight></codeline>
-<codeline lineno="432"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
-<codeline lineno="433" refid="namespaceNeoFOAM_1a413f6a0c9a42b08e621a25f23c72dcd1" refkind="member"><highlight class="normal">[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/><ref refid="namespaceNeoFOAM_1a413f6a0c9a42b08e621a25f23c72dcd1" kindref="member">operator+</ref>(<ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/>lhs,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref>&amp;<sp/>rhs)</highlight></codeline>
-<codeline lineno="434"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="435"><highlight class="normal"><sp/><sp/><sp/><sp/>lhs<sp/>+=<sp/>rhs;</highlight></codeline>
-<codeline lineno="436"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>lhs;</highlight></codeline>
-<codeline lineno="437"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="438"><highlight class="normal"></highlight></codeline>
-<codeline lineno="445"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
-<codeline lineno="446" refid="namespaceNeoFOAM_1a2aee7a8bd5a4e339456ee8e31f92a852" refkind="member"><highlight class="normal">[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/><ref refid="namespaceNeoFOAM_1a2aee7a8bd5a4e339456ee8e31f92a852" kindref="member">operator-</ref>(<ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/>lhs,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref>&amp;<sp/>rhs)</highlight></codeline>
-<codeline lineno="447"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="448"><highlight class="normal"><sp/><sp/><sp/><sp/>lhs<sp/>-=<sp/>rhs;</highlight></codeline>
-<codeline lineno="449"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>lhs;</highlight></codeline>
-<codeline lineno="450"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="451"><highlight class="normal"></highlight></codeline>
-<codeline lineno="452"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="416"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1af1af39ea56903b56ed322432441511b5" kindref="member">NF_DEBUG_ASSERT</ref>(</highlight></codeline>
+<codeline lineno="417"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field_1adf7e27c2661a7c1edfd919f1e33e964a" kindref="member">exec</ref>()<sp/>==<sp/>rhs.exec(),</highlight></codeline>
+<codeline lineno="418"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;Executors:<sp/>&quot;</highlight><highlight class="normal"><sp/>+<sp/><ref refid="namespacestd_1a95eafc7a1ea00fb719b6f6ccef1b24d8" kindref="member">std::to_string</ref>(exec_)<sp/>+<sp/></highlight><highlight class="stringliteral">&quot;<sp/>and<sp/>&quot;</highlight><highlight class="normal"><sp/>+<sp/><ref refid="namespacestd_1a95eafc7a1ea00fb719b6f6ccef1b24d8" kindref="member">std::to_string</ref>(rhs.exec_)</highlight></codeline>
+<codeline lineno="419"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>+<sp/></highlight><highlight class="stringliteral">&quot;<sp/>are<sp/>not<sp/>the<sp/>same.&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="420"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="421"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="422"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="423"><highlight class="normal"></highlight></codeline>
+<codeline lineno="430"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="431" refid="namespaceNeoFOAM_1a413f6a0c9a42b08e621a25f23c72dcd1" refkind="member"><highlight class="normal">[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/><ref refid="namespaceNeoFOAM_1a413f6a0c9a42b08e621a25f23c72dcd1" kindref="member">operator+</ref>(<ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/>lhs,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref>&amp;<sp/>rhs)</highlight></codeline>
+<codeline lineno="432"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="433"><highlight class="normal"><sp/><sp/><sp/><sp/>lhs<sp/>+=<sp/>rhs;</highlight></codeline>
+<codeline lineno="434"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>lhs;</highlight></codeline>
+<codeline lineno="435"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="436"><highlight class="normal"></highlight></codeline>
+<codeline lineno="443"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="444" refid="namespaceNeoFOAM_1a2aee7a8bd5a4e339456ee8e31f92a852" refkind="member"><highlight class="normal">[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/><ref refid="namespaceNeoFOAM_1a2aee7a8bd5a4e339456ee8e31f92a852" kindref="member">operator-</ref>(<ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref><sp/>lhs,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;T&gt;</ref>&amp;<sp/>rhs)</highlight></codeline>
+<codeline lineno="445"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="446"><highlight class="normal"><sp/><sp/><sp/><sp/>lhs<sp/>-=<sp/>rhs;</highlight></codeline>
+<codeline lineno="447"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>lhs;</highlight></codeline>
+<codeline lineno="448"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="449"><highlight class="normal"></highlight></codeline>
+<codeline lineno="450"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp"/>
   </compounddef>
