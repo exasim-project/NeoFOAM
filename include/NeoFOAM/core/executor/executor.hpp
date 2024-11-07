@@ -58,7 +58,7 @@ using Executor = std::variant<CPUExecutor, GPUExecutor, SerialExecutor>;
 namespace std
 {
 /**
- * @brief Returns the name of the executor in std::string from.
+ * @brief Returns the name of the executor as std::string.
  * @param executor The Executor whose name will be converted to a std::string.
  */
 [[nodiscard]] inline std::string to_string(const NeoFOAM::Executor& executor)
