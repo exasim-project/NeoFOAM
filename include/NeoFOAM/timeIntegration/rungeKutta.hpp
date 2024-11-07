@@ -23,14 +23,13 @@ struct NFData
         tf = other.tf;
 
         // Integrator settings
-        realTol_ = other.realTol_;             // relative tolerance
-        absTol_ = other.absTol_;               // absolute tolerance
-        fixedStepSize_ = other.fixedStepSize_; // fixed step size
-        endTime_ = other.endTime_;             // end time
-        order = other.order;                   // ARKode method order
-                                               // -> fixed step size controller number ignored)
-        maxsteps = other.maxsteps;             // max number of steps between outputs
-        timeStep = other.timeStep;             // time step number
+        realTol_ = other.realTol_; // relative tolerance
+        absTol_ = other.absTol_;   // absolute tolerance
+        endTime_ = other.endTime_; // end time
+        order = other.order;       // ARKode method order
+                                   // -> fixed step size controller number ignored)
+        maxsteps = other.maxsteps; // max number of steps between outputs
+        timeStep = other.timeStep; // time step number
 
         system_ = std::make_unique<NeoFOAM::dsl::Expression>(other.system_->exec()
         ); // system of equations
@@ -49,14 +48,13 @@ struct NFData
     sunrealtype tf;
 
     // Integrator settings
-    sunrealtype realTol_;       // relative tolerance
-    sunrealtype absTol_;        // absolute tolerance
-    sunrealtype fixedStepSize_; // fixed step size
-    sunrealtype endTime_;       // end time
-    int order;                  // ARKode method order
-                                // -> fixed step size controller number ignored)
-    int maxsteps;               // max number of steps between outputs
-    int timeStep;               // time step number
+    sunrealtype realTol_; // relative tolerance
+    sunrealtype absTol_;  // absolute tolerance
+    sunrealtype endTime_; // end time
+    int order;            // ARKode method order
+                          // -> fixed step size controller number ignored)
+    int maxsteps;         // max number of steps between outputs
+    int timeStep;         // time step number
 
     std::unique_ptr<NeoFOAM::dsl::Expression> system_ {nullptr}; // system of equations
 
@@ -137,6 +135,7 @@ public:
     {
         solution_ = other.solution_;
         context_ = other.context_;
+        time_ = other.time_;
     }
 
     inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
@@ -151,9 +150,9 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& exp, SolutionFieldType& solutionField, scalar dt) override
+    void solve(Expression& exp, SolutionFieldType& solutionField, const scalar dt) override
     {
-        if (data_ == nullptr) initSUNERKSolver(exp, solutionField);
+        if (data_ == nullptr) initSUNERKSolver(exp, solutionField, dt);
 
         // Load the current solution for temporal integration
         sunrealtype* solution = N_VGetArrayPointer(solution_);
@@ -163,18 +162,19 @@ public:
             solution[i] = field[i];
         }
 
-        data_->fixedStepSize_ = dt;
-        auto stepReturn = ARKStepEvolve(
-            arkodeMemory_.get(), time_ + data_->fixedStepSize_, solution_, &time_, ARK_ONE_STEP
-        );
+        sunrealtype timeNext;
+        ERKStepSetFixedStep(reinterpret_cast<void*>(arkodeMemory_.get()), dt);
+        auto stepReturn =
+            ARKStepEvolve(arkodeMemory_.get(), time_ + dt, solution_, &timeNext, ARK_ONE_STEP);
 
         // Copy sundials solution back to the solution container.
         for (size_t i = 0; i < solutionField.size(); ++i)
         {
             field[i] = solution[i];
         }
-
-        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\t" << field[0]
+        std::cout << "\n" << timeNext;
+        time_ = timeNext;
+        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << field[0]
                   << std::endl;
     }
 
@@ -187,7 +187,7 @@ public:
 private:
 
     // double timeStepSize_;
-    double time_;
+    sunrealtype time_;
     VectorType kokkosSolution_;
     VectorType kokkosInitialConditions_;
     N_Vector initialConditions_;
@@ -197,7 +197,7 @@ private:
                                          // store the next best thing.
     std::unique_ptr<NFData> data_;
 
-    void initSUNERKSolver(Expression& exp, SolutionFieldType& solutionField)
+    void initSUNERKSolver(Expression& exp, SolutionFieldType& solutionField, const scalar dt)
     {
         // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order
         // of initialization.
@@ -207,7 +207,7 @@ private:
         initSUNContext();
         initSUNDimension();
         initSUNInitialConditions();
-        initSUNCreateERK();
+        initSUNCreateERK(dt);
         initSUNTolerances();
     }
 
@@ -219,8 +219,6 @@ private:
                                                //  don't have the equation on construction anymore.
         data_->realTol_ = this->dict_.template get<scalar>("Relative Tolerance");
         data_->absTol_ = this->dict_.template get<scalar>("Absolute Tolerance");
-        data_->fixedStepSize_ =
-            this->dict_.template get<scalar>("Fixed Step Size"); // zero for adaptive
         data_->endTime_ = this->dict_.template get<scalar>("End Time");
         data_->nodes = 1;
         data_->maxsteps = 1;
@@ -242,7 +240,7 @@ private:
 
     void initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }
 
-    void initSUNCreateERK()
+    void initSUNCreateERK(const scalar dt)
     {
         arkodeMemory_.reset(reinterpret_cast<char*>(
             ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initialConditions_, context_)
@@ -251,8 +249,7 @@ private:
 
         // Initialize ERKStep solver
         ERKStepSetUserData(ark, NULL);
-        ERKStepSetInitStep(ark, data_->fixedStepSize_);
-        ERKStepSetFixedStep(ark, data_->fixedStepSize_);
+        ERKStepSetInitStep(ark, dt);
         ERKStepSetTableNum(
             ark,
             NeoFOAM::sundials::stringToERKTable(

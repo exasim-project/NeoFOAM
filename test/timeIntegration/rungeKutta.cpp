@@ -98,4 +98,6 @@ TEST_CASE("TimeIntegration")
     solve(eqn, vf, dt, fvSchemes, fvSolution); // perform 1 step.
     divOp.update(dt);
     solve(eqn, vf, dt, fvSchemes, fvSolution); // perform 1 step.
+    divOp.update(0.01);
+    solve(eqn, vf, 0.01, fvSchemes, fvSolution); // perform 1 step.
 }
