@@ -83,7 +83,8 @@ TEST_CASE("TimeIntegration")
     double dt {1.0e-3};
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
-    ddtSchemes.insert("type", std::string("explicitRungeKutta"));
+    ddtSchemes.insert("type", std::string("Runge-Kutta"));
+    ddtSchemes.insert("Runge-Kutta Method", std::string("Forward Euler"));
     ddtSchemes.insert("Relative Tolerance", NeoFOAM::scalar(1.e-5));
     ddtSchemes.insert("Absolute Tolerance", NeoFOAM::scalar(1.e-10));
     ddtSchemes.insert("Fixed Step Size", NeoFOAM::scalar(dt));

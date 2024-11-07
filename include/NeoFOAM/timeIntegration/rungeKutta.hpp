@@ -6,34 +6,12 @@
 #include <functional>
 #include <memory>
 
-// possibly useful headers.
-#include <nvector/nvector_serial.h>
-#include <nvector/nvector_kokkos.hpp>
-#include <sundials/sundials_nvector.h>
-#include <sundials/sundials_core.hpp>
-// #include <sunlinsol/sunlinsol_kokkosdense.hpp>
-// #include <sunmatrix/sunmatrix_kokkosdense.hpp>
-
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
-#include "sundials.hpp"
+#include "NeoFOAM/timeIntegration/sundials.hpp"
 
 
-#if defined(USE_CUDA)
-using ExecSpace = Kokkos::Cuda;
-#elif defined(USE_HIP)
-#if KOKKOS_VERSION / 10000 > 3
-using ExecSpace = Kokkos::HIP;
-#else
-using ExecSpace = Kokkos::Experimental::HIP;
-#endif
-#elif defined(USE_OPENMP)
-using ExecSpace = Kokkos::OpenMP;
-#else
-using ExecSpace = Kokkos::Serial;
-#endif
-
-
+// Where to put?
 struct NFData
 {
     NFData() = default;
@@ -137,8 +115,8 @@ class ExplicitRungeKutta :
     public TimeIntegratorBase<SolutionFieldType>::template Register<
         ExplicitRungeKutta<SolutionFieldType>>
 {
-    using VecType = ::sundials::kokkos::Vector<ExecSpace>;
-    using SizeType = VecType::size_type;
+    using VectorType = NeoFOAM::sundials::SKVectorType;
+    using SKSizeType = NeoFOAM::sundials::SKSizeType;
 
 public:
 
@@ -167,13 +145,7 @@ public:
         return *this;
     };
 
-    // ExplicitRungeKutta(EquationType eqnSystem, const Dictionary& dict)
-    //     : TimeIntegrationFactory::Register<ExplicitRungeKutta>(eqnSystem, dict)
-    // {
-    //     initSUNERKSolver();
-    // }
-
-    static std::string name() { return "explicitRungeKutta"; }
+    static std::string name() { return "Runge-Kutta"; }
 
     static std::string doc() { return "Explicit time integration using the Runge-Kutta method."; }
 
@@ -181,10 +153,7 @@ public:
 
     void solve(Expression& exp, SolutionFieldType& solutionField, scalar dt) override
     {
-        if (data_ == nullptr) initSUNERKSolver();
-        data_->system_ =
-            std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
-                                               //  don't have the equation on construction anymore.
+        if (data_ == nullptr) initSUNERKSolver(exp, solutionField);
 
         // Load the current solution for temporal integration
         sunrealtype* solution = N_VGetArrayPointer(solution_);
@@ -219,8 +188,8 @@ private:
 
     // double timeStepSize_;
     double time_;
-    VecType kokkosSolution_;
-    VecType kokkosInitialConditions_;
+    VectorType kokkosSolution_;
+    VectorType kokkosInitialConditions_;
     N_Vector initialConditions_;
     N_Vector solution_;
     SUNContext context_;
@@ -228,11 +197,11 @@ private:
                                          // store the next best thing.
     std::unique_ptr<NFData> data_;
 
-    void initSUNERKSolver()
+    void initSUNERKSolver(Expression& exp, SolutionFieldType& solutionField)
     {
         // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order
         // of initialization.
-        initNFData();
+        initNFData(exp);
 
         // Initialize SUNdials solver;
         initSUNContext();
@@ -242,9 +211,12 @@ private:
         initSUNTolerances();
     }
 
-    void initNFData()
+    void initNFData(Expression& exp)
     {
         data_ = std::make_unique<NFData>();
+        data_->system_ =
+            std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
+                                               //  don't have the equation on construction anymore.
         data_->realTol_ = this->dict_.template get<scalar>("Relative Tolerance");
         data_->absTol_ = this->dict_.template get<scalar>("Absolute Tolerance");
         data_->fixedStepSize_ =
@@ -262,8 +234,8 @@ private:
 
     void initSUNDimension()
     {
-        kokkosSolution_ = VecType(data_->nodes, context_);
-        kokkosInitialConditions_ = VecType(data_->nodes, context_);
+        kokkosSolution_ = VectorType(data_->nodes, context_);
+        kokkosInitialConditions_ = VectorType(data_->nodes, context_);
         solution_ = kokkosSolution_;
         initialConditions_ = kokkosInitialConditions_;
     }
@@ -281,7 +253,12 @@ private:
         ERKStepSetUserData(ark, NULL);
         ERKStepSetInitStep(ark, data_->fixedStepSize_);
         ERKStepSetFixedStep(ark, data_->fixedStepSize_);
-        ERKStepSetTableNum(ark, ARKODE_FORWARD_EULER_1_1);
+        ERKStepSetTableNum(
+            ark,
+            NeoFOAM::sundials::stringToERKTable(
+                this->dict_.template get<std::string>("Runge-Kutta Method")
+            )
+        );
         ARKodeSetUserData(ark, data_.get());
     }
 
