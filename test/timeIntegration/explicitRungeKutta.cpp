@@ -54,7 +54,6 @@ public:
                 sourceSpan[i] += coeff[i] * fieldSpan[i] + internalTimeSpan[i];
             }
         );
-        std::cout << "\n" << __LINE__ << std::flush;
     }
 
     void update(NeoFOAM::scalar dt)
