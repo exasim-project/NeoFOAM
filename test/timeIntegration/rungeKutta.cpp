@@ -16,7 +16,7 @@
 #include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/timeIntegration/explicitRungeKutta.hpp"
+#include "NeoFOAM/timeIntegration/rungeKutta.hpp"
 
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
