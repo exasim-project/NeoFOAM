@@ -19,14 +19,6 @@
 #include "NeoFOAM/timeIntegration/explicitRungeKutta.hpp"
 
 
-// using Field = NeoFOAM::Field<NeoFOAM::scalar>;
-// using Coeff = NeoFOAM::dsl::Coeff;
-// using Operator = NeoFOAM::dsl::Operator;
-// using Executor = NeoFOAM::Executor;
-// using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
-// using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
-// using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
-
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
