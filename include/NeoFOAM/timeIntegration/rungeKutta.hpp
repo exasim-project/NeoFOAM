@@ -12,66 +12,29 @@
 
 
 // Where to put?
+template<typename SolutionFieldType>
 struct NFData
 {
     NFData() = default;
     ~NFData() = default;
 
+    // Need to make move constructors
     NFData(const NFData& other)
     {
-        // Final time
-        tf = other.tf;
-
-        // Integrator settings
-        realTol_ = other.realTol_; // relative tolerance
-        absTol_ = other.absTol_;   // absolute tolerance
-        endTime_ = other.endTime_; // end time
-        order = other.order;       // ARKode method order
-                                   // -> fixed step size controller number ignored)
-        maxsteps = other.maxsteps; // max number of steps between outputs
-        timeStep = other.timeStep; // time step number
-
         system_ = std::make_unique<NeoFOAM::dsl::Expression>(other.system_->exec()
         ); // system of equations
-
-        // Output variables
-        output = other.output; // output level
-        nout = other.nout;     // number of output times
-
-        // Timing variables
-        timing = other.timing; // print timings
-        evolvetime = other.evolvetime;
-        nodes = other.nodes;
+        solution_ = std::make_unique<SolutionFieldType>(*other.solution_.get());
     }
 
-    // Final time
-    sunrealtype tf;
-
-    // Integrator settings
-    sunrealtype realTol_; // relative tolerance
-    sunrealtype absTol_;  // absolute tolerance
-    sunrealtype endTime_; // end time
-    int order;            // ARKode method order
-                          // -> fixed step size controller number ignored)
-    int maxsteps;         // max number of steps between outputs
-    int timeStep;         // time step number
-
     std::unique_ptr<NeoFOAM::dsl::Expression> system_ {nullptr}; // system of equations
-
-    // Output variables
-    int output; // output level
-    int nout;   // number of output times
-
-    // Timing variables
-    bool timing; // print timings
-    double evolvetime;
-    size_t nodes;
+    std::unique_ptr<SolutionFieldType> solution_ {nullptr};
 };
 
+template<typename SolutionFieldType>
 int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
     // Pointer wrangling
-    NFData* nfData = reinterpret_cast<NFData*>(user_data);
+    NFData<SolutionFieldType>* nfData = reinterpret_cast<NFData<SolutionFieldType>*>(user_data);
     sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
     sunrealtype* yarray = N_VGetArrayPointer(y);
 
@@ -89,7 +52,7 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // solve the spacial terms
     NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1);
     source = nfData->system_->explicitOperation(source);
-    for (std::size_t i = 0; i < nfData->nodes; ++i)
+    for (std::size_t i = 0; i < source.size(); ++i)
     {
         ydotarray[i] = -1.0 * source[i];
     }
@@ -129,9 +92,10 @@ public:
     ExplicitRungeKutta(const Dictionary& dict) : Base(dict) {}
 
     ExplicitRungeKutta(const ExplicitRungeKutta& other)
-        : Base(other), data_(
-                           other.data_ ? std::make_unique<NFData>(*other.data_) : nullptr
-                       ) // Deep copy of unique_ptr
+        : Base(other),
+          data_(
+              other.data_ ? std::make_unique<NFData<SolutionFieldType>>(*other.data_) : nullptr
+          ) // Deep copy of unique_ptr
     {
         solution_ = other.solution_;
         context_ = other.context_;
@@ -162,18 +126,15 @@ public:
             solution[i] = field[i];
         }
 
-        sunrealtype timeNext;
-        ERKStepSetFixedStep(reinterpret_cast<void*>(arkodeMemory_.get()), dt);
-        auto stepReturn =
-            ARKStepEvolve(arkodeMemory_.get(), time_ + dt, solution_, &timeNext, ARK_ONE_STEP);
+        void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+        ERKStepSetFixedStep(ark, dt);
+        auto stepReturn = ARKStepEvolve(ark, time_ + dt, solution_, &time_, ARK_ONE_STEP);
 
         // Copy sundials solution back to the solution container.
         for (size_t i = 0; i < solutionField.size(); ++i)
         {
             field[i] = solution[i];
         }
-        std::cout << "\n" << timeNext;
-        time_ = timeNext;
         std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << field[0]
                   << std::endl;
     }
@@ -195,7 +156,7 @@ private:
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
                                          // store the next best thing.
-    std::unique_ptr<NFData> data_;
+    std::unique_ptr<NFData<SolutionFieldType>> data_;
 
     void initSUNERKSolver(Expression& exp, SolutionFieldType& solutionField, const scalar dt)
     {
@@ -205,7 +166,7 @@ private:
 
         // Initialize SUNdials solver;
         initSUNContext();
-        initSUNDimension();
+        initSUNDimension(solutionField);
         initSUNInitialConditions();
         initSUNCreateERK(dt);
         initSUNTolerances();
@@ -213,15 +174,10 @@ private:
 
     void initNFData(Expression& exp)
     {
-        data_ = std::make_unique<NFData>();
+        data_ = std::make_unique<NFData<SolutionFieldType>>();
         data_->system_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
                                                //  don't have the equation on construction anymore.
-        data_->realTol_ = this->dict_.template get<scalar>("Relative Tolerance");
-        data_->absTol_ = this->dict_.template get<scalar>("Absolute Tolerance");
-        data_->endTime_ = this->dict_.template get<scalar>("End Time");
-        data_->nodes = 1;
-        data_->maxsteps = 1;
     }
 
     void initSUNContext()
@@ -230,10 +186,10 @@ private:
         NF_ASSERT(flag == 0, "SUNContext_Create failed");
     }
 
-    void initSUNDimension()
+    void initSUNDimension(SolutionFieldType solutionField)
     {
-        kokkosSolution_ = VectorType(data_->nodes, context_);
-        kokkosInitialConditions_ = VectorType(data_->nodes, context_);
+        kokkosSolution_ = VectorType(solutionField.internalField().size(), context_);
+        kokkosInitialConditions_ = VectorType(solutionField.internalField().size(), context_);
         solution_ = kokkosSolution_;
         initialConditions_ = kokkosInitialConditions_;
     }
@@ -242,9 +198,9 @@ private:
 
     void initSUNCreateERK(const scalar dt)
     {
-        arkodeMemory_.reset(reinterpret_cast<char*>(
-            ERKStepCreate(explicitSolveWrapperFreeFunction, 0.0, initialConditions_, context_)
-        ));
+        arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
+            explicitSolveWrapperFreeFunction<SolutionFieldType>, 0.0, initialConditions_, context_
+        )));
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
         // Initialize ERKStep solver
@@ -261,7 +217,7 @@ private:
 
     void initSUNTolerances()
     {
-        ARKStepSStolerances(arkodeMemory_.get(), data_->realTol_, data_->absTol_);
+        ARKStepSStolerances(arkodeMemory_.get(), 1.0, 1.0); // If we want ARK we will revisit.
     }
 };
 
