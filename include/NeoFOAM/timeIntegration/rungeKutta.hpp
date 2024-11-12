@@ -48,18 +48,17 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
         return -1;
     }
 
-    // TODO: copy the field to the solution
-
-    // solve the spacial terms
+    // Copy initial value from y to source.
     NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1);
-    source = nfData->system_->explicitOperation(source);
+    auto sourceData = source.data();
     parallelFor(
-        source.exec(),
-        {0, source.size()},
-        KOKKOS_LAMBDA(const size_t i) { ydotarray[i] = source[i]; }
+        source.exec(), source.range(), KOKKOS_LAMBDA(const size_t i) { sourceData[i] = yarray[i]; }
     );
 
-    // refField->correctBoundaryConditions();
+    source = nfData->system_->explicitOperation(source);
+    parallelFor(
+        source.exec(), source.range(), KOKKOS_LAMBDA(const size_t i) { ydotarray[i] = source[i]; }
+    );
 
     // check if execturo is GPU
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_->exec()))
@@ -119,33 +118,30 @@ public:
     void solve(Expression& exp, SolutionFieldType& solutionField, const scalar dt) override
     {
         if (data_ == nullptr) initSUNERKSolver(exp, solutionField, dt);
-        std::cout << "\nHERE!:";
+
         // Load the current solution for temporal integration
         sunrealtype* solution = N_VGetArrayPointer(solution_);
         auto& field = solutionField.internalField();
 
+        // only done because I have no way to do initial conditions.
         parallelFor(
-            field.exec(),
-            {0, field.size()},
-            KOKKOS_LAMBDA(const size_t i) { solution[i] = field[i]; }
+            field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { solution[i] = field[i]; }
         );
 
-        std::cout << "\nHERE!:";
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
         ERKStepSetFixedStep(ark, dt);
         auto stepReturn = ARKStepEvolve(ark, time_ + dt, solution_, &time_, ARK_ONE_STEP);
-        std::cout << "\nHERE!:";
 
         auto fieldData = solutionField.internalField().data();
         parallelFor(
             field.exec(),
-            {0, field.size()},
+            field.range(),
             KOKKOS_LAMBDA(const size_t i) { fieldData[i] = solution[i]; }
         );
 
-        auto f = field.copyToHost();
-        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << f[0]
-                  << std::endl;
+        // auto f = field.copyToHost();
+        // std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << f[0]
+        //           << std::endl;
     }
 
     std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const
@@ -197,6 +193,8 @@ private:
 
     void initSUNDimension(SolutionFieldType solutionField)
     {
+        // see
+        // https://sundials.readthedocs.io/en/latest/nvectors/NVector_links.html#the-nvector-kokkos-module
         kokkosSolution_ = VectorType(solutionField.internalField().size(), context_);
         kokkosInitialConditions_ = VectorType(solutionField.internalField().size(), context_);
         solution_ = kokkosSolution_;

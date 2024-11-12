@@ -35,65 +35,55 @@ class DivLikeOpper : public OperatorMixin
 
 public:
 
-    DivLikeOpper(VolumeField& field, NeoFOAM::scalar timeOffset)
-        : OperatorMixin(field.exec(), field, Operator::Type::Explicit),
-          internalTime_(field.exec(), field.size(), timeOffset)
+    DivLikeOpper(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit)
     {}
 
     void explicitOperation(Field& source) const
     {
         auto sourceSpan = source.span();
         auto fieldSpan = field_.internalField().span();
-        auto coeff = getCoefficient();
-        auto internalTimeSpan = internalTime_.span();
 
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
-            KOKKOS_LAMBDA(const size_t i) {
-                sourceSpan[i] += coeff[i] * fieldSpan[i] + internalTimeSpan[i];
-            }
+            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += source[i] * source[i]; }
         );
     }
 
-    void update(NeoFOAM::scalar dt)
-    {
-        internalTime_ += Field(internalTime_.exec(), internalTime_.size(), dt);
-    } // I am a bad person
-
     std::string getName() const { return "DivLikeOpper"; }
-
-
-private:
-
-    Field internalTime_;
 };
 
-TEST_CASE("TimeIntegration")
+TEST_CASE("TimeIntegration - Runge Kutta")
 {
-    auto exec = NeoFOAM::SerialExecutor();
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+
+    NeoFOAM::Dictionary fvSchemes;
+    NeoFOAM::Dictionary ddtSchemes;
+    ddtSchemes.insert("type", std::string("Runge-Kutta"));
+    ddtSchemes.insert("Runge-Kutta Method", std::string("Heun"));
+    fvSchemes.insert("ddtSchemes", ddtSchemes);
+    NeoFOAM::Dictionary fvSolution;
 
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
-
-    Field fA(exec, 1, 2.0);
+    Field fA(exec, 1.0, 2.0);
     BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     auto vf = VolumeField(exec, mesh, fA, bf, bcs);
 
-    double dt {1.0e-3};
-    NeoFOAM::Dictionary fvSchemes;
-    NeoFOAM::Dictionary ddtSchemes;
-    ddtSchemes.insert("type", std::string("Runge-Kutta"));
-    ddtSchemes.insert("Runge-Kutta Method", std::string("Forward Euler"));
-    fvSchemes.insert("ddtSchemes", ddtSchemes);
-    NeoFOAM::Dictionary fvSolution;
-
-    Operator ddtOp = Ddt(vf);
-    auto divOp = DivLikeOpper(vf, 1.0);
-    auto eqn = ddtOp + divOp;                  // here the time integrator will deal with this.
-    solve(eqn, vf, dt, fvSchemes, fvSolution); // perform 1 step.
-    divOp.update(dt);
-    solve(eqn, vf, dt, fvSchemes, fvSolution); // perform 1 step.
-    divOp.update(0.01);
-    solve(eqn, vf, 0.01, fvSchemes, fvSolution); // perform 1 step.
+    SECTION("Solve on " + execName)
+    {
+        std::cout << "\n";
+        Operator ddtOp = Ddt(vf);
+        auto divOp = DivLikeOpper(vf);
+        auto eqn = ddtOp + divOp; // here the time integrator will deal with this.
+        for (auto i = 0; i < 10; i++)
+            solve(eqn, vf, 0.001, fvSchemes, fvSolution); // perform 1 step.
+        std::cout << "Numerical: " << std::setprecision(10) << vf.internalField().copyToHost()[0]
+                  << " Analytical: " << 1.0 / (1.0 - 0.01);
+    }
 }
