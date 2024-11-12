@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/timeIntegration/sundials.hpp"
@@ -52,10 +53,11 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     // solve the spacial terms
     NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1);
     source = nfData->system_->explicitOperation(source);
-    for (std::size_t i = 0; i < source.size(); ++i)
-    {
-        ydotarray[i] = -1.0 * source[i];
-    }
+    parallelFor(
+        source.exec(),
+        {0, source.size()},
+        KOKKOS_LAMBDA(const size_t i) { ydotarray[i] = source[i]; }
+    );
 
     // refField->correctBoundaryConditions();
 
@@ -117,25 +119,32 @@ public:
     void solve(Expression& exp, SolutionFieldType& solutionField, const scalar dt) override
     {
         if (data_ == nullptr) initSUNERKSolver(exp, solutionField, dt);
-
+        std::cout << "\nHERE!:";
         // Load the current solution for temporal integration
         sunrealtype* solution = N_VGetArrayPointer(solution_);
         auto& field = solutionField.internalField();
-        for (size_t i = 0; i < solutionField.size(); ++i)
-        {
-            solution[i] = field[i];
-        }
 
+        parallelFor(
+            field.exec(),
+            {0, field.size()},
+            KOKKOS_LAMBDA(const size_t i) { solution[i] = field[i]; }
+        );
+
+        std::cout << "\nHERE!:";
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
         ERKStepSetFixedStep(ark, dt);
         auto stepReturn = ARKStepEvolve(ark, time_ + dt, solution_, &time_, ARK_ONE_STEP);
+        std::cout << "\nHERE!:";
 
-        // Copy sundials solution back to the solution container.
-        for (size_t i = 0; i < solutionField.size(); ++i)
-        {
-            field[i] = solution[i];
-        }
-        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << field[0]
+        auto fieldData = solutionField.internalField().data();
+        parallelFor(
+            field.exec(),
+            {0, field.size()},
+            KOKKOS_LAMBDA(const size_t i) { fieldData[i] = solution[i]; }
+        );
+
+        auto f = field.copyToHost();
+        std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << f[0]
                   << std::endl;
     }
 
