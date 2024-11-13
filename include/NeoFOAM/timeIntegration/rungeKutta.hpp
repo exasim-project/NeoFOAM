@@ -13,7 +13,7 @@
 
 
 // Where to put?
-template<typename SolutionFieldType>
+template<typename FieldType>
 struct NFData
 {
     NFData() = default;
@@ -24,11 +24,11 @@ struct NFData
     {
         system_ = std::make_unique<NeoFOAM::dsl::Expression>(other.system_->exec()
         ); // system of equations
-        solution_ = std::make_unique<SolutionFieldType>(*other.solution_.get());
+        solution_ = std::make_unique<FieldType>(*other.solution_.get());
     }
 
     std::unique_ptr<NeoFOAM::dsl::Expression> system_ {nullptr}; // system of equations
-    std::unique_ptr<SolutionFieldType> solution_ {nullptr};
+    std::unique_ptr<FieldType> solution_ {nullptr};
 };
 
 template<typename SolutionFieldType>
@@ -49,22 +49,14 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     }
 
     // Copy initial value from y to source.
-    NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1);
-    auto sourceData = source.data();
-    parallelFor(
-        source.exec(), source.range(), KOKKOS_LAMBDA(const size_t i) { sourceData[i] = yarray[i]; }
-    );
-
-    source = nfData->system_->explicitOperation(source);
-    parallelFor(
-        source.exec(), source.range(), KOKKOS_LAMBDA(const size_t i) { ydotarray[i] = source[i]; }
-    );
-
-    // check if execturo is GPU
+    NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1, 0.0);
+    source = nfData->system_->explicitOperation(source); // compute spacial
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_->exec()))
     {
         Kokkos::fence();
     }
+    NeoFOAM::sundials::fieldToNVector(source, ydot); // assign rhs to ydot.
+
     return 0;
 }
 

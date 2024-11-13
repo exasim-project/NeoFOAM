@@ -41,10 +41,11 @@ public:
     void explicitOperation(Field& source) const
     {
         auto sourceSpan = source.span();
+        auto fieldData = field_.internalField().data();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
-            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += source[i] * source[i]; }
+            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += fieldData[i] * fieldData[i]; }
         );
     }
 
@@ -63,7 +64,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
     ddtSchemes.insert("type", std::string("Runge-Kutta"));
-    ddtSchemes.insert("Runge-Kutta Method", std::string("Heun"));
+    ddtSchemes.insert("Runge-Kutta Method", std::string("Forward Euler"));
     fvSchemes.insert("ddtSchemes", ddtSchemes);
     NeoFOAM::Dictionary fvSolution;
 
@@ -73,7 +74,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     auto vf = VolumeField(exec, mesh, fA, bf, bcs);
     double time = 0.0;
-    double deltaTime = 0.01;
+    double deltaTime = 0.001;
 
     SECTION("Solve on " + execName)
     {
@@ -88,7 +89,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             time += deltaTime;
             std::cout << "\ta: " << vf.internalField().copyToHost()[0];
         }
-        std::cout << "Numerical: " << std::setprecision(10) << vf.internalField().copyToHost()[0]
-                  << " Analytical: " << 1.0 / (1.0 - 0.01);
+        std::cout << "\nNumerical: " << std::setprecision(10) << vf.internalField().copyToHost()[0]
+                  << " Analytical: " << 1.0 / (1.0 - time);
     }
 }
