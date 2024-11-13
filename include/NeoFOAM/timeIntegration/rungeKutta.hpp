@@ -31,45 +31,46 @@ public:
 
     RungeKutta() = default;
 
-    ~RungeKutta() { SUNContext_Free(&context_); };
+    ~RungeKutta() = default;
 
     RungeKutta(const Dictionary& dict) : Base(dict) {}
 
+    /**
+     * note: sundial kokkos vectors have copy constructors.
+     * N_Vectors should be constructed from the kokkos vectors.
+     */
     RungeKutta(const RungeKutta& other)
-        : Base(other),
+        : Base(other), kokkosSolution_(other.kokkosSolution_),
+          kokkosInitialConditions_(other.kokkosInitialConditions_), solution_(kokkosSolution_),
+          initialConditions_(kokkosInitialConditions_),
           PDEExpr_(
               other.PDEExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.PDEExpr_->exec())
                              : nullptr
           )
     {
-        solution_ = other.solution_;
-        context_ = other.context_;
+        sunrealtype timeCurrent;
+        void* ark = reinterpret_cast<void*>(other.ODEMemory_.get());
+        ERKStepGetCurrentTime(ark, &timeCurrent);
+        initODEMemory(timeCurrent); // will finalise construction of the ode memory.
     }
 
     /**
      * @brief Move Constructor
-     * @brief other The
+     * @param other The RungeKutta instance.
      */
     RungeKutta(RungeKutta&& other)
         : Base(std::move(other)), kokkosSolution_(std::move(other.kokkosSolution_)),
           kokkosInitialConditions_(std::move(other.kokkosInitialConditions_)),
           initialConditions_(std::move(other.initialConditions_)),
           solution_(std::move(other.solution_)), context_(std::move(other.context_)),
-          arkodeMemory_(std::move(other.arkodeMemory_)), PDEExpr_(std::move(other.PDEExpr_))
+          ODEMemory_(std::move(other.ODEMemory_)), PDEExpr_(std::move(other.PDEExpr_))
     {}
 
+    // deleted because base class method deleted.
+    RungeKutta& operator=(const RungeKutta& other) = delete;
 
-    inline RungeKutta& operator=(const RungeKutta& other)
-    {
-        if (this == &other) return *this;
-        *this = RungeKutta(other);
-        return *this;
-    };
-
-    RungeKutta& operator=(RungeKutta&& other)
-    {
-        if (this == &other) return *this;
-    }
+    // deleted because base class method deleted.
+    RungeKutta& operator=(RungeKutta&& other) = delete;
 
     static std::string name() { return "Runge-Kutta"; }
 
@@ -83,7 +84,7 @@ public:
         // Setup sundials if required, load the current solution for temporal integration
         if (PDEExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t, dt);
         NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_);
-        void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+        void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
         // Perform time integration
         ARKodeSetFixedStep(ark, dt);
@@ -110,9 +111,9 @@ private:
     VectorType kokkosInitialConditions_ {};
     N_Vector initialConditions_ {nullptr};
     N_Vector solution_ {nullptr};
-    SUNContext context_ {};
-    std::unique_ptr<char> arkodeMemory_ {nullptr}; // this should be void* but that is not stl
-                                                   // compliant, we store the next best thing.
+    std::shared_ptr<SUNContext_> context_ {nullptr, sundials::SUNContextDeleter}; // see type def
+    std::unique_ptr<char> ODEMemory_ {nullptr}; // this should be void* but that is not stl
+                                                // compliant, we store the next best thing.
     std::unique_ptr<NeoFOAM::dsl::Expression> PDEExpr_ {nullptr};
 
     void initSUNERKSolver(
@@ -125,13 +126,12 @@ private:
 
         // Initialize SUNdials solver;
         initSUNContext();
-        initSUNDimension(solutionField.internalField().size());
+        initSUNVector(solutionField.internalField().size());
         initSUNInitialConditions(solutionField);
-        initSUNCreateERK(t, dt);
-        initSUNTolerances();
+        initODEMemory(t);
     }
 
-    void initExpression(Expression& exp)
+    void initExpression(const Expression& exp)
     {
         PDEExpr_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
@@ -140,16 +140,22 @@ private:
 
     void initSUNContext()
     {
-        int flag = SUNContext_Create(SUN_COMM_NULL, &context_);
-        NF_ASSERT(flag == 0, "SUNContext_Create failed");
+        if (!context_)
+        {
+            SUNContext rawContext;
+            int flag = SUNContext_Create(SUN_COMM_NULL, &rawContext);
+            NF_ASSERT(flag == 0, "SUNContext_Create failed");
+            context_.reset(rawContext, sundials::SUNContextDeleter);
+        }
     }
 
-    void initSUNDimension(size_t size)
+    void initSUNVector(size_t size)
     {
         // see
         // https://sundials.readthedocs.io/en/latest/nvectors/NVector_links.html#the-nvector-kokkos-module
-        kokkosSolution_ = VectorType(size, context_);
-        kokkosInitialConditions_ = VectorType(size, context_);
+        NF_DEBUG_ASSERT(context_, "SUNContext is a nullptr.");
+        kokkosSolution_ = VectorType(size, context_.get());
+        kokkosInitialConditions_ = VectorType(size, context_.get());
         solution_ = kokkosSolution_;
         initialConditions_ = kokkosInitialConditions_;
     }
@@ -159,16 +165,20 @@ private:
         NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), initialConditions_);
     }
 
-    void initSUNCreateERK(const scalar t, const scalar dt)
+    void initODEMemory(const scalar t)
     {
-        arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
-            NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>, t, initialConditions_, context_
+        NF_DEBUG_ASSERT(context_, "SUNContext is a nullptr.");
+        NF_DEBUG_ASSERT(PDEExpr_, "PDE expression is a nullptr.");
+
+        ODEMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
+            NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>,
+            t,
+            initialConditions_,
+            context_.get()
         )));
-        void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
+        void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
         // Initialize ERKStep solver
-        ARKodeSetUserData(ark, NULL);
-        ARKodeSetInitStep(ark, dt);
         ERKStepSetTableNum(
             ark,
             NeoFOAM::sundials::stringToERKTable(
@@ -176,11 +186,7 @@ private:
             )
         );
         ARKodeSetUserData(ark, PDEExpr_.get());
-    }
-
-    void initSUNTolerances()
-    {
-        ARKodeSStolerances(arkodeMemory_.get(), 1.0, 1.0); // If we want ARK we will revisit.
+        ARKodeSStolerances(ODEMemory_.get(), 1.0, 1.0); // If we want ARK we will revisit.
     }
 };
 

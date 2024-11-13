@@ -36,6 +36,18 @@ using SKVectorType = ::sundials::kokkos::Vector<ExecSpace>;
 using SKSizeType = SKVectorType::size_type;
 
 /**
+ * Custom deleter for SUNContext_ shared pointers, frees the context if last context.
+ * @param[in] ctx Pointer to the SUNContext_ to be freed, can be nullptr.
+ */
+auto SUNContextDeleter = [](SUNContext_* ctx)
+{
+    if (ctx != nullptr)
+    {
+        SUNContext_Free(&ctx);
+    }
+};
+
+/**
  * @brief Function to map dictionary key-words to sundials RKButcher tableau.
  * @param key The key, name, of the explicit Runge-Kutta method to use.
  * @return The id of the assocaied Sundails RK Butcher tableau.
@@ -116,7 +128,7 @@ int explicitRKSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
     sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
     sunrealtype* yarray = N_VGetArrayPointer(y);
 
-    if (ydotarray == NULL || yarray == NULL || PDEExpre == nullptr)
+    if (ydotarray == nullptr || yarray == nullptr || PDEExpre == nullptr)
     {
         std::cerr << NF_ERROR_MESSAGE("Failed to dereference pointers in sundails.");
         return -1;
