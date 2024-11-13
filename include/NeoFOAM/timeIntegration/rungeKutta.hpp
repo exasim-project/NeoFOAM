@@ -120,24 +120,11 @@ public:
         if (data_ == nullptr) initSUNERKSolver(exp, solutionField, dt);
 
         // Load the current solution for temporal integration
-        sunrealtype* solution = N_VGetArrayPointer(solution_);
-        auto& field = solutionField.internalField();
-
-        // only done because I have no way to do initial conditions.
-        parallelFor(
-            field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { solution[i] = field[i]; }
-        );
-
+        NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_);
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
         ERKStepSetFixedStep(ark, dt);
         auto stepReturn = ARKStepEvolve(ark, time_ + dt, solution_, &time_, ARK_ONE_STEP);
-
-        auto fieldData = solutionField.internalField().data();
-        parallelFor(
-            field.exec(),
-            field.range(),
-            KOKKOS_LAMBDA(const size_t i) { fieldData[i] = solution[i]; }
-        );
+        NeoFOAM::sundials::NVectorToField(solution_, solutionField.internalField());
 
         // auto f = field.copyToHost();
         // std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << f[0]
@@ -199,6 +186,7 @@ private:
         kokkosInitialConditions_ = VectorType(solutionField.internalField().size(), context_);
         solution_ = kokkosSolution_;
         initialConditions_ = kokkosInitialConditions_;
+        NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), initialConditions_);
     }
 
     void initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }

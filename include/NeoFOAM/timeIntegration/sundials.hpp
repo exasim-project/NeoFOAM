@@ -12,6 +12,8 @@
 #include "arkode/arkode_arkstep.h" // access to ARKStep
 #include "arkode/arkode_erkstep.h"
 #include "NeoFOAM/core/error.hpp"
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
+#include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM::sundials
 {
@@ -76,5 +78,39 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
     NF_ERROR_EXIT("Unsupported Runge-Kutta time inteation method selectied: " + key);
     return ARKODE_ERK_NONE; // avoids compiler warnings.
 }
+
+/**
+ * @brief Converts a NeoFOAM Field to a SUNDIALS N_Vector
+ * @tparam ValueType The data type of the field elements (e.g., double, float)
+ * @param[in] field Source NeoFOAM Field containing the data to be copied
+ * @param[out] vector Destination SUNDIALS N_Vector to receive the field data
+ * @warning Assumes everything is correctly initialised, sized, correct executore etc.
+ */
+template<typename ValueType>
+void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
+{
+    // Load the current solution for temporal integration
+    sunrealtype* vectData = N_VGetArrayPointer(vector);
+    NeoFOAM::parallelFor(
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { vectData[i] = field[i]; }
+    );
+};
+
+/**
+ * @brief Converts a SUNDIALS N_Vector back to a NeoFOAM Field
+ * @tparam ValueType The data type of the field elements (e.g., double, float)
+ * @param[in] vector Source SUNDIALS N_Vector containing the data to be copied
+ * @param[out] field Destination NeoFOAM Field to receive the vector data
+ * @warning Assumes everything is correctly initialised, sized, correct executore etc.
+ */
+template<typename ValueType>
+void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
+{
+    sunrealtype* vectData = N_VGetArrayPointer(vector);
+    ValueType* fieldData = field.data();
+    NeoFOAM::parallelFor(
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { fieldData[i] = vectData[i]; }
+    );
+};
 
 }
