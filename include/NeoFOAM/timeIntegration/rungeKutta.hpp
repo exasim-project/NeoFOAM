@@ -11,40 +11,11 @@
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/timeIntegration/sundials.hpp"
 
-
-template<typename SolutionFieldType>
-int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
-{
-    // Pointer wrangling
-    NeoFOAM::dsl::Expression* PDEExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
-    sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
-    sunrealtype* yarray = N_VGetArrayPointer(y);
-
-    if (ydotarray == NULL)
-    {
-        return -1;
-    }
-    if (yarray == NULL)
-    {
-        return -1;
-    }
-
-    // Copy initial value from y to source.
-    NeoFOAM::Field<NeoFOAM::scalar> source(PDEExpre->exec(), 1, 0.0);
-    source = PDEExpre->explicitOperation(source); // compute spacial
-    if (std::holds_alternative<NeoFOAM::GPUExecutor>(PDEExpre->exec()))
-    {
-        Kokkos::fence();
-    }
-    NeoFOAM::sundials::fieldToNVector(source, ydot); // assign rhs to ydot.
-
-    return 0;
-}
-
-// Where to put?
 namespace NeoFOAM::dsl
 {
 
+// as per sundails manual, once we create kokkos vectors and convert to N_Vectors we only
+// interact with the N_vectors
 template<typename SolutionFieldType>
 class ExplicitRungeKutta :
     public TimeIntegratorBase<SolutionFieldType>::template Register<
@@ -70,7 +41,7 @@ public:
           PDEExpr_(
               other.PDEExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.PDEExpr_->exec())
                              : nullptr
-          ) // Deep copy of unique_ptr
+          )
     {
         solution_ = other.solution_;
         context_ = other.context_;
@@ -173,7 +144,7 @@ private:
     void initSUNCreateERK(const scalar t, const scalar dt)
     {
         arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
-            explicitSolveWrapperFreeFunction<SolutionFieldType>, t, initialConditions_, context_
+            NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>, t, initialConditions_, context_
         )));
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
