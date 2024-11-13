@@ -3,6 +3,8 @@
 
 // possibly useful headers.
 #include <string>
+#include <functional>
+#include <memory>
 
 #include "nvector/nvector_serial.h"
 #include "nvector/nvector_kokkos.hpp"
@@ -112,5 +114,4 @@ void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
         field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { fieldData[i] = vectData[i]; }
     );
 };
-
 }

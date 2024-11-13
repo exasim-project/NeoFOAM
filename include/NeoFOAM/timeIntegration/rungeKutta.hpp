@@ -12,30 +12,11 @@
 #include "NeoFOAM/timeIntegration/sundials.hpp"
 
 
-// Where to put?
-template<typename FieldType>
-struct NFData
-{
-    NFData() = default;
-    ~NFData() = default;
-
-    // Need to make move constructors
-    NFData(const NFData& other)
-    {
-        system_ = std::make_unique<NeoFOAM::dsl::Expression>(other.system_->exec()
-        ); // system of equations
-        solution_ = std::make_unique<FieldType>(*other.solution_.get());
-    }
-
-    std::unique_ptr<NeoFOAM::dsl::Expression> system_ {nullptr}; // system of equations
-    std::unique_ptr<FieldType> solution_ {nullptr};
-};
-
 template<typename SolutionFieldType>
 int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
     // Pointer wrangling
-    NFData<SolutionFieldType>* nfData = reinterpret_cast<NFData<SolutionFieldType>*>(user_data);
+    NeoFOAM::dsl::Expression* PDEExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
     sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
     sunrealtype* yarray = N_VGetArrayPointer(y);
 
@@ -49,9 +30,9 @@ int explicitSolveWrapperFreeFunction(sunrealtype t, N_Vector y, N_Vector ydot, v
     }
 
     // Copy initial value from y to source.
-    NeoFOAM::Field<NeoFOAM::scalar> source(nfData->system_->exec(), 1, 0.0);
-    source = nfData->system_->explicitOperation(source); // compute spacial
-    if (std::holds_alternative<NeoFOAM::GPUExecutor>(nfData->system_->exec()))
+    NeoFOAM::Field<NeoFOAM::scalar> source(PDEExpre->exec(), 1, 0.0);
+    source = PDEExpre->explicitOperation(source); // compute spacial
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(PDEExpre->exec()))
     {
         Kokkos::fence();
     }
@@ -86,8 +67,9 @@ public:
 
     ExplicitRungeKutta(const ExplicitRungeKutta& other)
         : Base(other),
-          data_(
-              other.data_ ? std::make_unique<NFData<SolutionFieldType>>(*other.data_) : nullptr
+          PDEExpr_(
+              other.PDEExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.PDEExpr_->exec())
+                             : nullptr
           ) // Deep copy of unique_ptr
     {
         solution_ = other.solution_;
@@ -110,7 +92,7 @@ public:
     solve(Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt) override
     {
         // Setup sundials if required, load the current solution for temporal integration
-        if (data_ == nullptr) initSUNERKSolver(exp, solutionField, t, dt);
+        if (PDEExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t, dt);
         NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_);
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
@@ -142,7 +124,7 @@ private:
     SUNContext context_;
     std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
                                          // store the next best thing.
-    std::unique_ptr<NFData<SolutionFieldType>> data_;
+    std::unique_ptr<NeoFOAM::dsl::Expression> PDEExpr_;
 
     void initSUNERKSolver(
         Expression& exp, SolutionFieldType& solutionField, const scalar t, const scalar dt
@@ -150,7 +132,7 @@ private:
     {
         // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order
         // of initialization.
-        initNFData(exp);
+        initExpression(exp);
 
         // Initialize SUNdials solver;
         initSUNContext();
@@ -160,10 +142,9 @@ private:
         initSUNTolerances();
     }
 
-    void initNFData(Expression& exp)
+    void initExpression(Expression& exp)
     {
-        data_ = std::make_unique<NFData<SolutionFieldType>>();
-        data_->system_ =
+        PDEExpr_ =
             std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
                                                //  don't have the equation on construction anymore.
     }
@@ -205,7 +186,7 @@ private:
                 this->dict_.template get<std::string>("Runge-Kutta Method")
             )
         );
-        ARKodeSetUserData(ark, data_.get());
+        ARKodeSetUserData(ark, PDEExpr_.get());
     }
 
     void initSUNTolerances()
