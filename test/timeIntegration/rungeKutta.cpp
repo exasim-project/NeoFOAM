@@ -41,8 +41,6 @@ public:
     void explicitOperation(Field& source) const
     {
         auto sourceSpan = source.span();
-        auto fieldSpan = field_.internalField().span();
-
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
@@ -70,10 +68,12 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     NeoFOAM::Dictionary fvSolution;
 
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
-    Field fA(exec, 1.0, 2.0);
+    Field fA(exec, 1.0, 1.0);
     BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
     auto vf = VolumeField(exec, mesh, fA, bf, bcs);
+    double time = 0.0;
+    double deltaTime = 0.01;
 
     SECTION("Solve on " + execName)
     {
@@ -82,7 +82,12 @@ TEST_CASE("TimeIntegration - Runge Kutta")
         auto divOp = DivLikeOpper(vf);
         auto eqn = ddtOp + divOp; // here the time integrator will deal with this.
         for (auto i = 0; i < 10; i++)
-            solve(eqn, vf, 0.001, fvSchemes, fvSolution); // perform 1 step.
+        {
+            std::cout << "\nb: " << vf.internalField().copyToHost()[0];
+            solve(eqn, vf, time, deltaTime, fvSchemes, fvSolution); // perform 1 step.
+            time += deltaTime;
+            std::cout << "\ta: " << vf.internalField().copyToHost()[0];
+        }
         std::cout << "Numerical: " << std::setprecision(10) << vf.internalField().copyToHost()[0]
                   << " Analytical: " << 1.0 / (1.0 - 0.01);
     }

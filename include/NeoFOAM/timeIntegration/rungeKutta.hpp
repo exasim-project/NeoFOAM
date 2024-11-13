@@ -100,7 +100,6 @@ public:
     {
         solution_ = other.solution_;
         context_ = other.context_;
-        time_ = other.time_;
     }
 
     inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
@@ -115,20 +114,25 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& exp, SolutionFieldType& solutionField, const scalar dt) override
+    void
+    solve(Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt) override
     {
-        if (data_ == nullptr) initSUNERKSolver(exp, solutionField, dt);
-
-        // Load the current solution for temporal integration
+        // Setup sundials if required, load the current solution for temporal integration
+        if (data_ == nullptr) initSUNERKSolver(exp, solutionField, t, dt);
         NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_);
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
-        ERKStepSetFixedStep(ark, dt);
-        auto stepReturn = ARKStepEvolve(ark, time_ + dt, solution_, &time_, ARK_ONE_STEP);
-        NeoFOAM::sundials::NVectorToField(solution_, solutionField.internalField());
 
-        // auto f = field.copyToHost();
-        // std::cout << "Step t = " << time_ << "\tcode: " << stepReturn << "\tfield[0]: " << f[0]
-        //           << std::endl;
+        // Perform time integration
+        ERKStepSetFixedStep(ark, dt);
+        NeoFOAM::scalar timeOut;
+        auto stepReturn = ARKStepEvolve(ark, t + dt, solution_, &timeOut, ARK_ONE_STEP);
+
+        // Post step checks
+        NF_ASSERT_EQUAL(stepReturn, 0);
+        NF_ASSERT_EQUAL(t + dt, timeOut);
+
+        // Copy solution out. (Fence is in sundails free)
+        NeoFOAM::sundials::NVectorToField(solution_, solutionField.internalField());
     }
 
     std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const
@@ -139,8 +143,6 @@ public:
 
 private:
 
-    // double timeStepSize_;
-    sunrealtype time_;
     VectorType kokkosSolution_;
     VectorType kokkosInitialConditions_;
     N_Vector initialConditions_;
@@ -150,7 +152,9 @@ private:
                                          // store the next best thing.
     std::unique_ptr<NFData<SolutionFieldType>> data_;
 
-    void initSUNERKSolver(Expression& exp, SolutionFieldType& solutionField, const scalar dt)
+    void initSUNERKSolver(
+        Expression& exp, SolutionFieldType& solutionField, const scalar t, const scalar dt
+    )
     {
         // NOTE CHECK https://sundials.readthedocs.io/en/latest/arkode/Usage/Skeleton.html for order
         // of initialization.
@@ -158,9 +162,9 @@ private:
 
         // Initialize SUNdials solver;
         initSUNContext();
-        initSUNDimension(solutionField);
-        initSUNInitialConditions();
-        initSUNCreateERK(dt);
+        initSUNDimension(solutionField.internalField().size());
+        initSUNInitialConditions(solutionField);
+        initSUNCreateERK(t, dt);
         initSUNTolerances();
     }
 
@@ -178,23 +182,25 @@ private:
         NF_ASSERT(flag == 0, "SUNContext_Create failed");
     }
 
-    void initSUNDimension(SolutionFieldType solutionField)
+    void initSUNDimension(size_t size)
     {
         // see
         // https://sundials.readthedocs.io/en/latest/nvectors/NVector_links.html#the-nvector-kokkos-module
-        kokkosSolution_ = VectorType(solutionField.internalField().size(), context_);
-        kokkosInitialConditions_ = VectorType(solutionField.internalField().size(), context_);
+        kokkosSolution_ = VectorType(size, context_);
+        kokkosInitialConditions_ = VectorType(size, context_);
         solution_ = kokkosSolution_;
         initialConditions_ = kokkosInitialConditions_;
+    }
+
+    void initSUNInitialConditions(SolutionFieldType solutionField)
+    {
         NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), initialConditions_);
     }
 
-    void initSUNInitialConditions() { N_VConst(1.0, initialConditions_); }
-
-    void initSUNCreateERK(const scalar dt)
+    void initSUNCreateERK(const scalar t, const scalar dt)
     {
         arkodeMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
-            explicitSolveWrapperFreeFunction<SolutionFieldType>, 0.0, initialConditions_, context_
+            explicitSolveWrapperFreeFunction<SolutionFieldType>, t, initialConditions_, context_
         )));
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 

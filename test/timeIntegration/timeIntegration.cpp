@@ -45,11 +45,13 @@ TEST_CASE("TimeIntegration")
         // ddt(U) = f
         auto eqn = ddtOperator + dummy;
         double dt {2.0};
+        double time {1.0};
+
 
         // int(ddt(U)) + f = 0
         // (U^1-U^0)/dt = -f
         // U^1 = - f * dt + U^0, where dt = 2, f=1, U^0=2.0 -> U^1=-2.0
-        solve(eqn, vf, dt, fvSchemes, fvSolution);
+        solve(eqn, vf, time, dt, fvSchemes, fvSolution);
         REQUIRE(getField(vf.internalField()) == -2.0);
     }
 }

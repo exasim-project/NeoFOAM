@@ -29,8 +29,9 @@ public:
 
     virtual ~TimeIntegratorBase() {}
 
-    virtual void
-    solve(Expression& eqn, SolutionType& sol, scalar dt) = 0; // Pure virtual function for solving
+    virtual void solve(
+        Expression& eqn, SolutionType& sol, scalar t, scalar dt
+    ) = 0; // Pure virtual function for solving
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<TimeIntegratorBase> clone() const = 0;
@@ -62,9 +63,9 @@ public:
             TimeIntegratorBase<SolutionFieldType>::create(dict.get<std::string>("type"), dict)
         ) {};
 
-    void solve(Expression& eqn, SolutionFieldType& sol, scalar dt)
+    void solve(Expression& eqn, SolutionFieldType& sol, scalar t, scalar dt)
     {
-        timeIntegratorStrategy_->solve(eqn, sol, dt);
+        timeIntegratorStrategy_->solve(eqn, sol, t, dt);
     }
 
 private:

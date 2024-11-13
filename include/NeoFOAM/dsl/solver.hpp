@@ -22,6 +22,7 @@ namespace NeoFOAM::dsl
  *
  * @param exp - Expression which is to be solved/updated.
  * @param solution - Solution field, where the solution will be 'written to'.
+ * @param t - the time at the start of the time step.
  * @param dt - time step for the temporal integration
  * @param fvSchemes - Dictionary containing spatial operator and time  integration properties
  * @param fvSolution - Dictionary containing linear solver properties
@@ -30,6 +31,7 @@ template<typename FieldType>
 void solve(
     Expression& exp,
     FieldType& solution,
+    scalar t,
     scalar dt,
     [[maybe_unused]] const Dictionary& fvSchemes,
     [[maybe_unused]] const Dictionary& fvSolution
@@ -43,7 +45,7 @@ void solve(
     {
         // integrate equations in time
         TimeIntegration<FieldType> timeIntegrator(fvSchemes.subDict("ddtSchemes"));
-        timeIntegrator.solve(exp, solution, dt);
+        timeIntegrator.solve(exp, solution, t, dt);
     }
     else
     {
