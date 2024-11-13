@@ -17,26 +17,25 @@ namespace NeoFOAM::dsl
 // as per sundails manual, once we create kokkos vectors and convert to N_Vectors we only
 // interact with the N_vectors
 template<typename SolutionFieldType>
-class ExplicitRungeKutta :
-    public TimeIntegratorBase<SolutionFieldType>::template Register<
-        ExplicitRungeKutta<SolutionFieldType>>
+class RungeKutta :
+    public TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>
 {
     using VectorType = NeoFOAM::sundials::SKVectorType;
     using SKSizeType = NeoFOAM::sundials::SKSizeType;
 
 public:
 
-    using Base = TimeIntegratorBase<SolutionFieldType>::template Register<
-        ExplicitRungeKutta<SolutionFieldType>>;
+    using Base =
+        TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>;
     using Base::dict_;
 
-    ExplicitRungeKutta() = default;
+    RungeKutta() = default;
 
-    ~ExplicitRungeKutta() { SUNContext_Free(&context_); };
+    ~RungeKutta() { SUNContext_Free(&context_); };
 
-    ExplicitRungeKutta(const Dictionary& dict) : Base(dict) {}
+    RungeKutta(const Dictionary& dict) : Base(dict) {}
 
-    ExplicitRungeKutta(const ExplicitRungeKutta& other)
+    RungeKutta(const RungeKutta& other)
         : Base(other),
           PDEExpr_(
               other.PDEExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.PDEExpr_->exec())
@@ -47,11 +46,30 @@ public:
         context_ = other.context_;
     }
 
-    inline ExplicitRungeKutta& operator=(const ExplicitRungeKutta& other)
+    /**
+     * @brief Move Constructor
+     * @brief other The
+     */
+    RungeKutta(RungeKutta&& other)
+        : Base(std::move(other)), kokkosSolution_(std::move(other.kokkosSolution_)),
+          kokkosInitialConditions_(std::move(other.kokkosInitialConditions_)),
+          initialConditions_(std::move(other.initialConditions_)),
+          solution_(std::move(other.solution_)), context_(std::move(other.context_)),
+          arkodeMemory_(std::move(other.arkodeMemory_)), PDEExpr_(std::move(other.PDEExpr_))
+    {}
+
+
+    inline RungeKutta& operator=(const RungeKutta& other)
     {
-        *this = ExplicitRungeKutta(other);
+        if (this == &other) return *this;
+        *this = RungeKutta(other);
         return *this;
     };
+
+    RungeKutta& operator=(RungeKutta&& other)
+    {
+        if (this == &other) return *this;
+    }
 
     static std::string name() { return "Runge-Kutta"; }
 
@@ -68,9 +86,9 @@ public:
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
         // Perform time integration
-        ERKStepSetFixedStep(ark, dt);
+        ARKodeSetFixedStep(ark, dt);
         NeoFOAM::scalar timeOut;
-        auto stepReturn = ARKStepEvolve(ark, t + dt, solution_, &timeOut, ARK_ONE_STEP);
+        auto stepReturn = ARKodeEvolve(ark, t + dt, solution_, &timeOut, ARK_ONE_STEP);
 
         // Post step checks
         NF_ASSERT_EQUAL(stepReturn, 0);
@@ -82,20 +100,20 @@ public:
 
     std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const
     {
-        return std::make_unique<ExplicitRungeKutta>(*this);
+        return std::make_unique<RungeKutta>(*this);
     }
 
 
 private:
 
-    VectorType kokkosSolution_;
-    VectorType kokkosInitialConditions_;
-    N_Vector initialConditions_;
-    N_Vector solution_;
-    SUNContext context_;
-    std::unique_ptr<char> arkodeMemory_; // this should be void* but that is not stl compliant we
-                                         // store the next best thing.
-    std::unique_ptr<NeoFOAM::dsl::Expression> PDEExpr_;
+    VectorType kokkosSolution_ {};
+    VectorType kokkosInitialConditions_ {};
+    N_Vector initialConditions_ {nullptr};
+    N_Vector solution_ {nullptr};
+    SUNContext context_ {};
+    std::unique_ptr<char> arkodeMemory_ {nullptr}; // this should be void* but that is not stl
+                                                   // compliant, we store the next best thing.
+    std::unique_ptr<NeoFOAM::dsl::Expression> PDEExpr_ {nullptr};
 
     void initSUNERKSolver(
         Expression& exp, SolutionFieldType& solutionField, const scalar t, const scalar dt
@@ -149,8 +167,8 @@ private:
         void* ark = reinterpret_cast<void*>(arkodeMemory_.get());
 
         // Initialize ERKStep solver
-        ERKStepSetUserData(ark, NULL);
-        ERKStepSetInitStep(ark, dt);
+        ARKodeSetUserData(ark, NULL);
+        ARKodeSetInitStep(ark, dt);
         ERKStepSetTableNum(
             ark,
             NeoFOAM::sundials::stringToERKTable(
@@ -162,11 +180,11 @@ private:
 
     void initSUNTolerances()
     {
-        ARKStepSStolerances(arkodeMemory_.get(), 1.0, 1.0); // If we want ARK we will revisit.
+        ARKodeSStolerances(arkodeMemory_.get(), 1.0, 1.0); // If we want ARK we will revisit.
     }
 };
 
-template class ExplicitRungeKutta<finiteVolume::cellCentred::VolumeField<scalar>>;
+template class RungeKutta<finiteVolume::cellCentred::VolumeField<scalar>>;
 
 
 } // namespace NeoFOAM

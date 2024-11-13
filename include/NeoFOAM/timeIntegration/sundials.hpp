@@ -35,6 +35,11 @@ using ExecSpace = Kokkos::Serial;
 using SKVectorType = ::sundials::kokkos::Vector<ExecSpace>;
 using SKSizeType = SKVectorType::size_type;
 
+/**
+ * @brief Function to map dictionary key-words to sundials RKButcher tableau.
+ * @param key The key, name, of the explicit Runge-Kutta method to use.
+ * @return The id of the assocaied Sundails RK Butcher tableau.
+ */
 ARKODE_ERKTableID stringToERKTable(const std::string& key)
 {
     if (key == "Forward Euler") return ARKODE_FORWARD_EULER_1_1;
@@ -104,6 +109,8 @@ void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
 template<typename SolutionFieldType>
 int explicitRKSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
+    (void)(t); // removes compiler warnings about unused.
+
     // Pointer wrangling
     NeoFOAM::dsl::Expression* PDEExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
     sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
