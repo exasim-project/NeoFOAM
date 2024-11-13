@@ -98,7 +98,8 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); }, exec_
+            [&ptr, size](const auto& newExec) { ptr = newExec.alloc(size * sizeof(ValueType)); },
+            exec_
         );
         data_ = static_cast<ValueType*>(ptr);
         NeoFOAM::fill(*this, value);
@@ -157,7 +158,7 @@ public:
      */
     [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == exec_) return Field<ValueType>(*this);
+        if (dstExec == exec_) return *this;
 
         Field<ValueType> result(dstExec, size_);
         std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
