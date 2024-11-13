@@ -28,7 +28,11 @@ enum class \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a9115b6df7022059487c5f4
 SUNAdapt\+Controller \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a21e3b2bac3cd732e0fa2d75c9e01f88f}{create\+Controller}} (\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a9115b6df7022059487c5f4541267b7eb}{ARKAdapt\+Controller\+Type}} controller, SUNContext context)
 \item 
 ARKODE\+\_\+\+ERKTable\+ID \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_af26930dad82f552ea4b35cbea9a08dcb}{string\+To\+ERKTable}} (const std\+::string \&key)
-\end{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{field\+To\+NVector}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$ \&field, N\+\_\+\+Vector \&vector)
+\begin{DoxyCompactList}\small\item\em Converts a \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} to a SUNDIALS N\+\_\+\+Vector. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}{NVector\+To\+Field}} (const N\+\_\+\+Vector \&vector, \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$ \&field)
+\begin{DoxyCompactList}\small\item\em Converts a SUNDIALS N\+\_\+\+Vector back to a \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Typedef Documentation}
@@ -40,7 +44,7 @@ ARKODE\+\_\+\+ERKTable\+ID \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_af26930
 
 
 
-Definition at line 30 of file sundials.\+hpp.
+Definition at line 32 of file sundials.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_1_1sundials_a63626c57ed46ba2698c02116ccf60a0e}\label{namespaceNeoFOAM_1_1sundials_a63626c57ed46ba2698c02116ccf60a0e}} 
 \index{NeoFOAM::sundials@{NeoFOAM::sundials}!SKSizeType@{SKSizeType}}
@@ -50,7 +54,7 @@ Definition at line 30 of file sundials.\+hpp.
 
 
 
-Definition at line 35 of file sundials.\+hpp.
+Definition at line 37 of file sundials.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_1_1sundials_aff79b05420b2f8155db07475f1106c69}\label{namespaceNeoFOAM_1_1sundials_aff79b05420b2f8155db07475f1106c69}} 
 \index{NeoFOAM::sundials@{NeoFOAM::sundials}!SKVectorType@{SKVectorType}}
@@ -60,7 +64,7 @@ Definition at line 35 of file sundials.\+hpp.
 
 
 
-Definition at line 34 of file sundials.\+hpp.
+Definition at line 36 of file sundials.\+hpp.
 
 
 
@@ -99,7 +103,7 @@ IMEX\+\_\+\+GUS&\\
 \end{DoxyEnumFields}
 
 
-Definition at line 39 of file sundials.\+hpp.
+Definition at line 41 of file sundials.\+hpp.
 
 
 
@@ -112,7 +116,67 @@ Definition at line 39 of file sundials.\+hpp.
 
 
 
-Definition at line 49 of file sundials.\+hpp.
+Definition at line 51 of file sundials.\+hpp.
+
+\mbox{\Hypertarget{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}\label{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}} 
+\index{NeoFOAM::sundials@{NeoFOAM::sundials}!fieldToNVector@{fieldToNVector}}
+\index{fieldToNVector@{fieldToNVector}!NeoFOAM::sundials@{NeoFOAM::sundials}}
+\doxysubsubsection{\texorpdfstring{fieldToNVector()}{fieldToNVector()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void Neo\+FOAM\+::sundials\+::field\+To\+NVector (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$ \&}]{field,  }\item[{N\+\_\+\+Vector \&}]{vector }\end{DoxyParamCaption})}
+
+
+
+Converts a \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} to a SUNDIALS N\+\_\+\+Vector. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em Value\+Type} & The data type of the field elements (e.\+g., double, float) \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em field} & Source \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} containing the data to be copied \\
+\hline
+\mbox{\texttt{ out}}  & {\em vector} & Destination SUNDIALS N\+\_\+\+Vector to receive the field data \\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+Assumes everything is correctly initialised, sized, correct executore etc. 
+\end{DoxyWarning}
+
+
+Definition at line 90 of file sundials.\+hpp.
+
+\mbox{\Hypertarget{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}\label{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}} 
+\index{NeoFOAM::sundials@{NeoFOAM::sundials}!NVectorToField@{NVectorToField}}
+\index{NVectorToField@{NVectorToField}!NeoFOAM::sundials@{NeoFOAM::sundials}}
+\doxysubsubsection{\texorpdfstring{NVectorToField()}{NVectorToField()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void Neo\+FOAM\+::sundials\+::\+NVector\+To\+Field (\begin{DoxyParamCaption}\item[{const N\+\_\+\+Vector \&}]{vector,  }\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Neo\+FOAM\+::\+Field}}$<$ Value\+Type $>$ \&}]{field }\end{DoxyParamCaption})}
+
+
+
+Converts a SUNDIALS N\+\_\+\+Vector back to a \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em Value\+Type} & The data type of the field elements (e.\+g., double, float) \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em vector} & Source SUNDIALS N\+\_\+\+Vector containing the data to be copied \\
+\hline
+\mbox{\texttt{ out}}  & {\em field} & Destination \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}} \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}} to receive the vector data \\
+\hline
+\end{DoxyParams}
+\begin{DoxyWarning}{Warning}
+Assumes everything is correctly initialised, sized, correct executore etc. 
+\end{DoxyWarning}
+
+
+Definition at line 107 of file sundials.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_1_1sundials_af26930dad82f552ea4b35cbea9a08dcb}\label{namespaceNeoFOAM_1_1sundials_af26930dad82f552ea4b35cbea9a08dcb}} 
 \index{NeoFOAM::sundials@{NeoFOAM::sundials}!stringToERKTable@{stringToERKTable}}
@@ -122,5 +186,5 @@ Definition at line 49 of file sundials.\+hpp.
 
 
 
-Definition at line 71 of file sundials.\+hpp.
+Definition at line 73 of file sundials.\+hpp.
 
