@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
-// TODO For WIN builds, needs to be ifdef'ed out.
-#include <cxxabi.h>
-#include <string>
-#include <any>
-#include <iostream>
+
+#include <any>      // for bad_any_cast
+#include <iostream> // for operator<<, basic_ostream, cerr, endl, ostream
+#include <string>   // for operator<<, string
+#include <typeinfo> // for type_info
+
 namespace NeoFOAM
 {
 

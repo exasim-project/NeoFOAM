@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
-#include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred

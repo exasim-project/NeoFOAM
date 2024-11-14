@@ -3,6 +3,9 @@
 
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
+#include "NeoFOAM/core/primitives/vector.hpp" // for Vector
+
+
 namespace NeoFOAM
 {
 
