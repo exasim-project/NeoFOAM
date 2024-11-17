@@ -45,6 +45,10 @@ public:
 
     std::string name() const;
 
+    Database& db();
+
+    const Database& db() const;
+
 private:
 
     std::unordered_map<key, Document> documents_;

@@ -9,6 +9,11 @@ Collection::Collection(std::string type, std::string name, Database& db)
     : documents_(), type_(type), name_(name), db_(db)
 {}
 
+Database& Collection::db() { return db_; }
+
+const Database& Collection::db() const { return db_; }
+
+
 std::string Collection::name() const { return name_; }
 
 std::string Collection::type() const { return type_; }

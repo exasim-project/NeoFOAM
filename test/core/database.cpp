@@ -80,6 +80,11 @@ TEST_CASE("Database")
 
         auto& collection1 = db.getCollection("collection1");
 
+        SECTION("check database access from collection")
+        {
+            REQUIRE(&db == &collection1.db());
+        }
+
         REQUIRE(collection1.size() == 0);
 
         SECTION("get non existing collection") { REQUIRE_THROWS(db.getCollection("doesNotExist")); }

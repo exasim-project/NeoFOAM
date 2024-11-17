@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <string>
 #include <any>
+#include <memory>
 
 namespace NeoFOAM
 {
@@ -23,15 +24,16 @@ class Database
 {
 public:
 
-    void createCollection(std::string name, std::string type);
-    Collection& getCollection(const std::string& name);
-    const Collection& getCollection(const std::string& name) const;
+    void createCollection(key name, std::string type);
+    Collection& getCollection(const key& name);
+    const Collection& getCollection(const key& name) const;
 
+    std::shared_ptr<Collection> getCollectionPtr(const key& name);
     
 
 private:
 
-    std::unordered_map<key, Collection> collections_;
+    std::unordered_map<key, std::shared_ptr<Collection>> collections_;
 };
 
 } // namespace NeoFOAM
