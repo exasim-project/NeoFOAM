@@ -102,8 +102,8 @@ public:
     RungeKutta(RungeKutta&& other)
         : Base(std::move(other)), kokkosSolution_(std::move(other.kokkosSolution_)),
           kokkosInitialConditions_(std::move(other.kokkosInitialConditions_)),
-          initialConditions_(std::move(other.initialConditions_)),
           solution_(std::move(other.solution_)), context_(std::move(other.context_)),
+          initialConditions_(std::move(other.initialConditions_)),
           ODEMemory_(std::move(other.ODEMemory_)), PDEExpr_(std::move(other.PDEExpr_))
     {}
 
@@ -142,7 +142,7 @@ public:
     solve(Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt) override
     {
         // Setup sundials if required, load the current solution for temporal integration
-        if (PDEExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t, dt);
+        if (PDEExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t);
         NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_);
         void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
@@ -163,7 +163,7 @@ public:
      * @brief Return a copy of this instantiated class.
      * @return std::unique_ptr to the new copy.
      */
-    std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const
+    std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() override const
     {
         return std::make_unique<RungeKutta>(*this);
     }
@@ -191,8 +191,7 @@ private:
      * @param t The current time
      * @param dt The time step size
      */
-    void
-    initSUNERKSolver(Expression& exp, SolutionFieldType& field, const scalar t, const scalar dt)
+    void initSUNERKSolver(Expression& exp, SolutionFieldType& field, const scalar t)
     {
         initExpression(exp);
         initSUNContext();
