@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['neofoamexception_401',['NeoFOAMException',['../classNeoFOAM_1_1NeoFOAMException.html',1,'NeoFOAM']]]
+  ['neofoamexception_402',['NeoFOAMException',['../classNeoFOAM_1_1NeoFOAMException.html',1,'NeoFOAM']]]
 ];
