@@ -194,10 +194,7 @@ private:
     void
     initSUNERKSolver(Expression& exp, SolutionFieldType& field, const scalar t, const scalar dt)
     {
-
         initExpression(exp);
-
-        // Initialize SUNdials solver;
         initSUNContext();
         initSUNVector(field.internalField().size());
         initSUNInitialConditions(field);

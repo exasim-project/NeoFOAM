@@ -23,7 +23,7 @@ TEST_CASE("linear")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
     auto linear = SurfaceInterpolation(exec, mesh, "linear");
 
