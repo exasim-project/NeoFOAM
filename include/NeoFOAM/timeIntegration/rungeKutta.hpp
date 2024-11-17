@@ -163,7 +163,7 @@ public:
      * @brief Return a copy of this instantiated class.
      * @return std::unique_ptr to the new copy.
      */
-    std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() override const
+    std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const override
     {
         return std::make_unique<RungeKutta>(*this);
     }
