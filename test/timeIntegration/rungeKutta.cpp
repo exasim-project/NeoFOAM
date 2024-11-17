@@ -89,7 +89,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             time += deltaTime;
             std::cout << "\ta: " << vf.internalField().copyToHost()[0];
         }
-        std::cout << "\nNumerical: " << std::setprecision(10) << vf.internalField().copyToHost()[0]
-                  << " Analytical: " << 1.0 / (1.0 - time);
+        // std::cout << "\nNumerical: " << std::setprecision(10) <<
+        // vf.internalField().copyToHost()[0]
+        //           << " Analytical: " << 1.0 / (1.0 - time);
     }
 }

@@ -91,7 +91,7 @@ public:
     {
         sunrealtype timeCurrent;
         void* ark = reinterpret_cast<void*>(other.ODEMemory_.get());
-        ERKStepGetCurrentTime(ark, &timeCurrent);
+        ARKodeGetCurrentTime(ark, &timeCurrent);
         initODEMemory(timeCurrent); // will finalise construction of the ode memory.
     }
 
