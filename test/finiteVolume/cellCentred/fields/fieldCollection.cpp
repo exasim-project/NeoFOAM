@@ -30,6 +30,36 @@ createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
     return vf;
 }
 
+struct CreateField
+{
+    std::string name;
+    NeoFOAM::UnstructuredMesh mesh;
+    std::size_t timeIndex;
+    std::size_t iterationIndex;
+    std::int64_t subCycleIndex;
+    NeoFOAM::Document operator()(NeoFOAM::Database& db)
+    {
+        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        for (auto patchi : std::vector<size_t> {0, 1, 2, 3})
+        {
+            NeoFOAM::Dictionary dict;
+            dict.insert("type", std::string("fixedValue"));
+            dict.insert("fixedValue", 2.0);
+            bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
+        }
+        NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 1.0);
+        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, internalField, bcs, db);
+        return NeoFOAM::Document(
+            {{"name", vf.name},
+                {"timeIndex", timeIndex},
+                {"iterationIndex", iterationIndex},
+                {"subCycleIndex", subCycleIndex},
+                {"field", vf}},
+            fvcc::validateFieldDoc
+        );
+    }
+};
+
 
 TEST_CASE("Field Document")
 {
@@ -166,5 +196,23 @@ TEST_CASE("FieldCollection")
                 REQUIRE(fvcc::timeIndex(doc2) == 3);
             }
         }
+    }
+
+    SECTION("usage")
+    {
+        fvcc::FieldCollection::create(db, "testFieldCollection");
+
+        fvcc::FieldCollection fieldCollection = fvcc::FieldCollection::get(db, "testFieldCollection");
+        fvcc::VolumeField<NeoFOAM::scalar>& T = fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
+            CreateField{
+                .name = "T",
+                .mesh = mesh,
+                .timeIndex = 1,
+                .iterationIndex = 1,
+                .subCycleIndex = 1
+            }
+            );
+        REQUIRE(T.name == "T");
+        REQUIRE(T.hasDatabase());
     }
 }
