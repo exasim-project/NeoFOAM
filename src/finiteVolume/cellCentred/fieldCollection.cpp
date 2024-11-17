@@ -53,6 +53,11 @@ Document FieldDocument::doc()
     );
 }
 
+FieldCollection::FieldCollection(std::shared_ptr<NeoFOAM::Collection> collection)
+    : collection_(collection)
+{
+}
+
 const std::string FieldCollection::typeName() { return "FieldCollection"; }
 
 void FieldCollection::create(NeoFOAM::Database& db, std::string name)
@@ -70,5 +75,16 @@ FieldCollection::getCollection(const NeoFOAM::Database& db, std::string name)
 {
     return db.getCollection(name);
 }
+
+FieldCollection FieldCollection::get(NeoFOAM::Database& db, std::string name)
+{
+    return FieldCollection(db.getCollectionPtr(name));
+}
+
+// const NeoFOAM::FieldCollection
+// FieldCollection::getCollection(const NeoFOAM::Database& db, std::string name)
+// {
+//     return NeoFOAM::FieldCollection(db.getCollectionPtr(name));
+// }
 
 } // namespace NeoFOAM::finiteVolume::cellCentred
