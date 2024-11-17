@@ -26,7 +26,8 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
-          "finiteVolume/cellCentred/interpolation/upwind.cpp")
+          "finiteVolume/cellCentred/interpolation/upwind.cpp"
+          "timeIntegration/rungeKutta.cpp")
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
