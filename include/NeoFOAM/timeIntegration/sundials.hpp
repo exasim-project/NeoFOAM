@@ -39,7 +39,7 @@ using SKSizeType = SKVectorType::size_type;
  * Custom deleter for SUNContext_ shared pointers, frees the context if last context.
  * @param[in] ctx Pointer to the SUNContext_ to be freed, can be nullptr.
  */
-auto SUNContextDeleter = [](SUNContext_* ctx)
+auto SUN_CONTEXT_DELETER = [](SUNContext_* ctx)
 {
     if (ctx != nullptr)
     {

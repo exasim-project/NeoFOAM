@@ -30,13 +30,12 @@ using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
 using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
 using Ddt = NeoFOAM::dsl::temporal::Ddt<VolumeField>;
 
-class DivLikeOpper : public OperatorMixin
+class YSquared : public OperatorMixin
 {
 
 public:
 
-    DivLikeOpper(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit)
-    {}
+    YSquared(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
 
     void explicitOperation(Field& source) const
     {
@@ -49,7 +48,7 @@ public:
         );
     }
 
-    std::string getName() const { return "DivLikeOpper"; }
+    std::string getName() const { return "YSquared"; }
 };
 
 TEST_CASE("TimeIntegration - Runge Kutta")
@@ -61,6 +60,9 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
+    NeoFOAM::scalar convergenceTolerance = 1.0e-4; // how much lower we accept that expected order.
+
+    // Set up dictionary.
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
     ddtSchemes.insert("type", std::string("Runge-Kutta"));
@@ -68,29 +70,47 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     fvSchemes.insert("ddtSchemes", ddtSchemes);
     NeoFOAM::Dictionary fvSolution;
 
+    // Set up fields.
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
     Field fA(exec, 1.0, 1.0);
     BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-    auto vf = VolumeField(exec, mesh, fA, bf, bcs);
-    double time = 0.0;
-    double deltaTime = 0.001;
+
+    // Setup solve parameters.
+    NeoFOAM::scalar maxTime = 0.1;
+    std::array<NeoFOAM::scalar, 2> deltaTime = {0.001, 0.01};
 
     SECTION("Solve on " + execName)
     {
-        std::cout << "\n";
-        Operator ddtOp = Ddt(vf);
-        auto divOp = DivLikeOpper(vf);
-        auto eqn = ddtOp + divOp; // here the time integrator will deal with this.
-        for (auto i = 0; i < 10; i++)
+        int iTest = 0;
+        std::array<NeoFOAM::scalar, 2> error;
+        for (auto dt : deltaTime)
         {
-            std::cout << "\nb: " << vf.internalField().copyToHost()[0];
-            solve(eqn, vf, time, deltaTime, fvSchemes, fvSolution); // perform 1 step.
-            time += deltaTime;
-            std::cout << "\ta: " << vf.internalField().copyToHost()[0];
+            // reset
+            NeoFOAM::scalar time = 0.0;
+            auto vf = VolumeField(exec, mesh, fA, bf, bcs);
+
+            // Set expression
+            Operator ddtOp = Ddt(vf);
+            auto divOp = YSquared(vf);
+            auto eqn = ddtOp + divOp;
+
+            // solve.
+            while (time < maxTime)
+            {
+                solve(eqn, vf, time, dt, fvSchemes, fvSolution);
+                time += dt;
+            }
+
+            // check error.
+            NeoFOAM::scalar analytical = 1.0 / (1.0 - time);
+            error[iTest] = std::abs(vf.internalField().copyToHost()[0] - analytical);
+            iTest++;
         }
-        // std::cout << "\nNumerical: " << std::setprecision(10) <<
-        // vf.internalField().copyToHost()[0]
-        //           << " Analytical: " << 1.0 / (1.0 - time);
+
+        // check order of convergence.
+        NeoFOAM::scalar order = (std::log(error[1]) - std::log(error[0]))
+                              / (std::log(deltaTime[1]) - std::log(deltaTime[0]));
+        REQUIRE(order > (1.0 - convergenceTolerance));
     }
 }
