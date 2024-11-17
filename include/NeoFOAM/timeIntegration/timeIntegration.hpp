@@ -10,7 +10,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 
-namespace NeoFOAM::dsl
+namespace NeoFOAM::timeIntegration
 {
 
 /* @class Factory class to create time integration method by a given name
@@ -22,6 +22,8 @@ class TimeIntegratorBase :
 {
 
 public:
+
+    using Expression = NeoFOAM::dsl::Expression;
 
     static std::string name() { return "timeIntegrationFactory"; }
 
@@ -51,6 +53,8 @@ class TimeIntegration
 {
 
 public:
+
+    using Expression = NeoFOAM::dsl::Expression;
 
     TimeIntegration(const TimeIntegration& timeIntegrator)
         : timeIntegratorStrategy_(timeIntegrator.timeIntegratorStrategy_->clone()) {};

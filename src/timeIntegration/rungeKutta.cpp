@@ -3,7 +3,7 @@
 
 #include "NeoFOAM/timeIntegration/rungeKutta.hpp"
 
-namespace NeoFOAM::dsl
+namespace NeoFOAM::timeIntegration
 {
 
 template<typename SolutionFieldType>

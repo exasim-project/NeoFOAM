@@ -124,20 +124,20 @@ int explicitRKSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
     (void)(t); // removes compiler warnings about unused.
 
     // Pointer wrangling
-    NeoFOAM::dsl::Expression* PDEExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
-    sunrealtype* ydotarray = N_VGetArrayPointer(ydot);
-    sunrealtype* yarray = N_VGetArrayPointer(y);
+    NeoFOAM::dsl::Expression* pdeExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
+    sunrealtype* yDotArray = N_VGetArrayPointer(ydot);
+    sunrealtype* yArray = N_VGetArrayPointer(y);
 
-    if (ydotarray == nullptr || yarray == nullptr || PDEExpre == nullptr)
+    if (yDotArray == nullptr || yArray == nullptr || pdeExpre == nullptr)
     {
         std::cerr << NF_ERROR_MESSAGE("Failed to dereference pointers in sundails.");
         return -1;
     }
 
     // Copy initial value from y to source.
-    NeoFOAM::Field<NeoFOAM::scalar> source(PDEExpre->exec(), 1, 0.0);
-    source = PDEExpre->explicitOperation(source); // compute spacial
-    if (std::holds_alternative<NeoFOAM::GPUExecutor>(PDEExpre->exec()))
+    NeoFOAM::Field<NeoFOAM::scalar> source(pdeExpre->exec(), 1, 0.0);
+    source = pdeExpre->explicitOperation(source); // compute spacial
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(pdeExpre->exec()))
     {
         Kokkos::fence();
     }

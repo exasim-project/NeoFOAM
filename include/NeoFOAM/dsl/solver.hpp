@@ -44,7 +44,9 @@ void solve(
     if (exp.temporalOperators().size() > 0)
     {
         // integrate equations in time
-        TimeIntegration<FieldType> timeIntegrator(fvSchemes.subDict("ddtSchemes"));
+        NeoFOAM::timeIntegration::TimeIntegration<FieldType> timeIntegrator(
+            fvSchemes.subDict("ddtSchemes")
+        );
         timeIntegrator.solve(exp, solution, t, dt);
     }
     else

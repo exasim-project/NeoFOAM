@@ -9,7 +9,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
-namespace NeoFOAM::dsl
+namespace NeoFOAM::timeIntegration
 {
 
 template<typename SolutionFieldType>
@@ -19,6 +19,7 @@ class ForwardEuler :
 
 public:
 
+    using Expression = NeoFOAM::dsl::Expression;
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<ForwardEuler<SolutionFieldType>>;
 

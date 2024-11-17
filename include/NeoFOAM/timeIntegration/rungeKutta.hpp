@@ -11,7 +11,7 @@
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/timeIntegration/sundials.hpp"
 
-namespace NeoFOAM::dsl
+namespace NeoFOAM::timeIntegration
 {
 
 /**
@@ -54,6 +54,7 @@ class RungeKutta :
 
 public:
 
+    using Expression = NeoFOAM::dsl::Expression;
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>;
     using Base::dict_;
