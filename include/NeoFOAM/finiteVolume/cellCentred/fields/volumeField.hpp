@@ -7,6 +7,7 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/fields/geometricField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoFOAM/core/database.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -44,12 +45,12 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
-          boundaryConditions_(boundaryConditions)
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
+          boundaryConditions_(boundaryConditions), db_(std::nullopt)
     {}
 
     /* @brief Constructor for a VolumeField with a given internal field
@@ -60,16 +61,46 @@ public:
      */
     VolumeField(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const Field<ValueType>& internalField,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField}),
-          boundaryConditions_(boundaryConditions)
+        : GeometricFieldMixin<ValueType>(
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
+          boundaryConditions_(boundaryConditions), db_(std::nullopt)
+    {}
+
+    /* @brief Constructor for a VolumeField with a given internal field
+     *
+     * @param mesh The underlying mesh
+     * @param internalField the underlying internal field
+     * @param boundaryConditions a vector of boundary conditions
+     */
+    VolumeField(
+        const Executor& exec,
+        std::string name,
+        const UnstructuredMesh& mesh,
+        const Field<ValueType>& internalField,
+        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
+        Database& db
+    )
+        : GeometricFieldMixin<ValueType>(
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
+          boundaryConditions_(boundaryConditions), db_(&db)
     {}
 
     VolumeField(const VolumeField& other)
-        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
+        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_),
+          db_(other.db_)
     {}
 
     /**
@@ -86,9 +117,33 @@ public:
         }
     }
 
+    bool hasDatabase() const { return db_.has_value(); }
+
+    // non-const accessors database
+    Database& db()
+    {
+        if (!db_.has_value())
+        {
+            throw std::runtime_error("Database not set");
+        }
+        return *db_.value();
+    }
+
+    // const accessors database
+    const Database& db() const
+    {
+        if (!db_.has_value())
+        {
+            throw std::runtime_error("Database not set");
+        }
+        return *db_.value();
+    }
+
+
 private:
 
     std::vector<VolumeBoundary<ValueType>> boundaryConditions_; // The vector of boundary conditions
+    std::optional<Database*> db_; // The optional pointer to the database
 };
 
 } // namespace NeoFOAM
