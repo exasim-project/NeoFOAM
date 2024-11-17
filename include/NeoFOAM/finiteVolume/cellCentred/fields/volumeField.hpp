@@ -50,7 +50,7 @@ public:
               mesh,
               DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
           ),
-          boundaryConditions_(boundaryConditions), db_(std::nullopt)
+          boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""), fieldCollectionName("")
     {}
 
     /* @brief Constructor for a VolumeField with a given internal field
@@ -72,7 +72,7 @@ public:
               mesh,
               DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
           ),
-          boundaryConditions_(boundaryConditions), db_(std::nullopt)
+          boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""), fieldCollectionName("")
     {}
 
     /* @brief Constructor for a VolumeField with a given internal field
@@ -87,7 +87,9 @@ public:
         const UnstructuredMesh& mesh,
         const Field<ValueType>& internalField,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
-        Database& db
+        Database& db,
+        std::string key,
+        std::string fieldCollectionName
     )
         : GeometricFieldMixin<ValueType>(
               exec,
@@ -95,12 +97,12 @@ public:
               mesh,
               DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
           ),
-          boundaryConditions_(boundaryConditions), db_(&db)
+          boundaryConditions_(boundaryConditions), db_(&db), key(key), fieldCollectionName(fieldCollectionName)
     {}
 
     VolumeField(const VolumeField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_),
-          db_(other.db_)
+          db_(other.db_), key(other.key), fieldCollectionName(other.fieldCollectionName)
     {}
 
     /**
@@ -139,6 +141,10 @@ public:
         return *db_.value();
     }
 
+    std::vector<VolumeBoundary<ValueType>> boundaryConditions() const { return boundaryConditions_; }
+
+    std::string key;
+    std::string fieldCollectionName;
 
 private:
 

@@ -81,6 +81,15 @@ FieldCollection FieldCollection::get(NeoFOAM::Database& db, std::string name)
     return FieldCollection(db.getCollectionPtr(name));
 }
 
+std::vector<key> FieldCollection::find(const std::function<bool(const Document&)>& predicate) const
+{
+    return collection_->find(predicate);
+}
+
+NeoFOAM::Document& FieldCollection::get(const key& id) { return collection_->get(id); }
+
+const NeoFOAM::Document& FieldCollection::get(const key& id) const { return collection_->get(id); }
+
 // const NeoFOAM::FieldCollection
 // FieldCollection::getCollection(const NeoFOAM::Database& db, std::string name)
 // {

@@ -47,8 +47,8 @@ struct CreateField
             dict.insert("fixedValue", 2.0);
             bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
-        NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 1.0);
-        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, internalField, bcs, db);
+        NeoFOAM::Field internalField = NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0);
+        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, internalField, bcs, db, "", "");
         return NeoFOAM::Document(
             {{"name", vf.name},
                 {"timeIndex", timeIndex},

@@ -48,6 +48,31 @@ const VolumeField<ValueType>& volField(const Document& doc)
 
 using CreateFunction = std::function<Document(NeoFOAM::Database& db)>;
 
+template<typename geoField>
+class CreateFromExistingField
+{
+public:
+
+    std::string name;
+    std::size_t timeIndex;
+    std::size_t iterationIndex;
+    std::int64_t subCycleIndex;
+    const geoField& field;
+
+    Document operator()(Database& db)
+    {
+        VolumeField<scalar> vf(field.exec(), name, field.mesh(), field.internalField(), field.boundaryConditions(), db, "", "");
+        return NeoFOAM::Document(
+             {{"name", vf.name},
+             {"timeIndex", timeIndex},
+             {"iterationIndex", iterationIndex},
+             {"subCycleIndex", subCycleIndex},
+             {"field", vf}},
+            validateFieldDoc
+        );
+    }
+};
+
 class FieldDocument
 {
 public:
@@ -80,7 +105,12 @@ public:
 
     static FieldCollection get(NeoFOAM::Database& db, std::string name);
 
+    Document& get(const key& id);
+
+    const Document& get(const key& id) const;
+
     // static const FieldCollection get(const NeoFOAM::Database& db, std::string name);
+    std::vector<key> find(const std::function<bool(const Document&)>& predicate) const;
 
     template<class Field>
     Field& registerField(CreateFunction createFunc)
@@ -93,7 +123,10 @@ public:
 
         auto key = collection_->insert(doc);
         auto& fieldDoc = collection_->get(key);
-        return fieldDoc.get<Field>("field");
+        auto& field = fieldDoc.get<Field&>("field");
+        field.key = key;
+        field.fieldCollectionName = collection_->name();
+        return field;
     }
 
 private:
