@@ -17,10 +17,13 @@
 #include <iostream>
 #include <functional>
 #include "error.hpp"
-#include "lookupTable.hpp"
+#include "dictionary.hpp"
 
 namespace NeoFOAM
 {
+
+std::unordered_map<std::string, Dictionary>& singletonLookupTable();
+
 
 /**
  * @class BaseClassData
@@ -194,8 +197,8 @@ public:
 
     friend Base;
 
-    using LookupTable = LookupTable<Base, Args...>;
-    using CreatorFunc = LookupTable::CreatorFunc;
+    using LookupTable = Dictionary;
+    using CreatorFunc = std::function<std::unique_ptr<Base>(Args...)>;
     using ClassDocTable = std::unordered_map<std::string, DerivedClassDocumentation>;
 
     /**
@@ -230,7 +233,7 @@ public:
      *
      * @return A vector of strings containing all entries in the runtime selection factory.
      */
-    static std::vector<std::string> entries() { return table().entries(); }
+    static std::vector<std::string> entries() { return table().keys(); }
 
 
     /**
@@ -249,7 +252,7 @@ public:
     static std::unique_ptr<Base> create(const std::string& key, Args... args)
     {
         keyExistsOrError(key);
-        auto ptr = table().get(key)(std::forward<Args>(args)...);
+        auto ptr = table().get<CreatorFunc>(key)(std::forward<Args>(args)...);
         return ptr;
     }
 
@@ -304,7 +307,7 @@ public:
         {
             CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
             { return std::unique_ptr<Base>(new derivedClass(std::forward<Args>(args)...)); };
-            RuntimeSelectionFactory::table().set(derivedClass::name(), func);
+            RuntimeSelectionFactory::table().insert(derivedClass::name(), func);
 
             DerivedClassDocumentation childData;
             childData.doc = []() -> std::string { return derivedClass::doc(); };
@@ -372,7 +375,7 @@ private:
         {
             auto msg = std::string(" Could not find constructor for ") + name + "\n";
             msg += "valid constructors are: \n";
-            for (const auto& name : tbl.entries())
+            for (const auto& name : tbl.keys())
             {
                 msg += " - " + name + "\n";
             }

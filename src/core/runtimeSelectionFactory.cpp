@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "NeoFOAM/core/lookupTable.hpp"
+#include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 
 std::unordered_map<std::string, NeoFOAM::Dictionary>& NeoFOAM::singletonLookupTable()
 {
