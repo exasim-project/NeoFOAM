@@ -17,6 +17,7 @@
 #include <iostream>
 #include <functional>
 #include "error.hpp"
+#include "lookupTable.hpp"
 
 namespace NeoFOAM
 {
@@ -193,8 +194,8 @@ public:
 
     friend Base;
 
-    using CreatorFunc = std::function<std::unique_ptr<Base>(Args...)>;
-    using LookupTable = std::unordered_map<std::string, CreatorFunc>;
+    using LookupTable = LookupTable<Base, Args...>;
+    using CreatorFunc = LookupTable::CreatorFunc;
     using ClassDocTable = std::unordered_map<std::string, DerivedClassDocumentation>;
 
     /**
@@ -229,15 +230,7 @@ public:
      *
      * @return A vector of strings containing all entries in the runtime selection factory.
      */
-    static std::vector<std::string> entries()
-    {
-        std::vector<std::string> entries;
-        for (const auto& it : table())
-        {
-            entries.push_back(it.first);
-        }
-        return entries;
-    }
+    static std::vector<std::string> entries() { return table().entries(); }
 
 
     /**
@@ -256,7 +249,7 @@ public:
     static std::unique_ptr<Base> create(const std::string& key, Args... args)
     {
         keyExistsOrError(key);
-        auto ptr = table().at(key)(std::forward<Args>(args)...);
+        auto ptr = table().get(key)(std::forward<Args>(args)...);
         return ptr;
     }
 
@@ -311,7 +304,7 @@ public:
         {
             CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
             { return std::unique_ptr<Base>(new derivedClass(std::forward<Args>(args)...)); };
-            RuntimeSelectionFactory::table()[derivedClass::name()] = func;
+            RuntimeSelectionFactory::table().set(derivedClass::name(), func);
 
             DerivedClassDocumentation childData;
             childData.doc = []() -> std::string { return derivedClass::doc(); };
@@ -323,12 +316,8 @@ public:
 
         ~Register() override
         {
-            if (REGISTERED)
-            {
-                const auto& tbl = RuntimeSelectionFactory::table();
-                const auto it = tbl.find(derivedClass::name());
-                REGISTERED = (it != tbl.end());
-            }
+            REGISTERED =
+                REGISTERED && RuntimeSelectionFactory::table().contains(derivedClass::name());
         }
 
     private:
@@ -379,13 +368,13 @@ private:
     static void keyExistsOrError(const std::string& name)
     {
         const auto& tbl = table();
-        if (tbl.find(name) == tbl.end())
+        if (!tbl.contains(name))
         {
             auto msg = std::string(" Could not find constructor for ") + name + "\n";
             msg += "valid constructors are: \n";
-            for (const auto& it : tbl)
+            for (const auto& name : tbl.entries())
             {
-                msg += " - " + it.first + "\n";
+                msg += " - " + name + "\n";
             }
             NF_ERROR_EXIT(msg);
         }

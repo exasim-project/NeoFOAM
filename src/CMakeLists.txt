@@ -10,6 +10,7 @@ set(NeoFOAM_SRCS
     "core/primitives/vector.cpp"
     "core/time.cpp"
     "core/dictionary.cpp"
+    "core/lookupTable.cpp"
     "core/demangle.cpp"
     "core/tokenList.cpp"
     "core/kokkos.cpp"
