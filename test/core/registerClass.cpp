@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 
+#include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 
 class BaseClass : public NeoFOAM::RuntimeSelectionFactory<BaseClass, NeoFOAM::Parameters<>>
@@ -79,6 +80,6 @@ TEST_CASE("Register")
         }
     }
 
-    CHECK(BaseClass::table().size() == 1);
-    CHECK(BaseClass2::table().size() == 1);
+    CHECK(BaseClass::table().getMap().size() == 1);
+    CHECK(BaseClass2::table().getMap().size() == 1);
 }
