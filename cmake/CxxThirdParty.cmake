@@ -32,9 +32,9 @@ cpmaddpackage(
   NAME
   cpptrace
   URL
-  https://github.com/jeremy-rifkin/cpptrace/archive/refs/tags/v0.5.4.zip
+  https://github.com/jeremy-rifkin/cpptrace/archive/refs/tags/v0.7.3.zip
   VERSION
-  0.5.4
+  0.7.3
   SYSTEM)
 
 cpmaddpackage(
