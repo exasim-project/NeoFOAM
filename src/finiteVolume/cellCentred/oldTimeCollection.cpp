@@ -8,8 +8,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 OldTimeCollection::OldTimeCollection(std::shared_ptr<NeoFOAM::Collection> collection)
     : collection_(collection)
-{
-}
+{}
 
 void OldTimeCollection::create(NeoFOAM::Database& db, std::string name)
 {
@@ -25,6 +24,11 @@ const NeoFOAM::Collection&
 OldTimeCollection::getCollection(const NeoFOAM::Database& db, std::string name)
 {
     return db.getCollection(name);
+}
+
+OldTimeCollection OldTimeCollection::get(NeoFOAM::Database& db, std::string name)
+{
+    return OldTimeCollection(db.getCollectionPtr(name));
 }
 
 const std::string OldTimeCollection::typeName() { return "OldTimeCollection"; }

@@ -35,9 +35,10 @@ struct CreateField
 {
     std::string name;
     NeoFOAM::UnstructuredMesh mesh;
-    std::size_t timeIndex;
-    std::size_t iterationIndex;
-    std::int64_t subCycleIndex;
+    std::size_t timeIndex = 0;
+    std::size_t iterationIndex = 0;
+    std::int64_t subCycleIndex = 0;
+
     NeoFOAM::Document operator()(NeoFOAM::Database& db)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
@@ -49,13 +50,15 @@ struct CreateField
             bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
         NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 1.0);
-        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, internalField, bcs, db, "", "");
+        fvcc::VolumeField<NeoFOAM::scalar> vf(
+            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
+        );
         return NeoFOAM::Document(
             {{"name", vf.name},
-                {"timeIndex", timeIndex},
-                {"iterationIndex", iterationIndex},
-                {"subCycleIndex", subCycleIndex},
-                {"field", vf}},
+             {"timeIndex", timeIndex},
+             {"iterationIndex", iterationIndex},
+             {"subCycleIndex", subCycleIndex},
+             {"field", vf}},
             fvcc::validateFieldDoc
         );
     }
@@ -78,16 +81,19 @@ TEST_CASE("FieldCollection")
     {
         fvcc::FieldCollection::create(db, "testFieldCollection");
 
-        fvcc::FieldCollection fieldCollection = fvcc::FieldCollection::get(db, "testFieldCollection");
-        fvcc::VolumeField<NeoFOAM::scalar>& T = fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-            CreateField{
-                .name = "T",
-                .mesh = mesh,
-                .timeIndex = 1,
-                .iterationIndex = 1,
-                .subCycleIndex = 1
-            }
-        );
+        fvcc::FieldCollection fieldCollection =
+            fvcc::FieldCollection::get(db, "testFieldCollection");
+        fvcc::VolumeField<NeoFOAM::scalar>& T =
+            fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
+                CreateField {.name = "T", .mesh = mesh}
+            );
+        // find the field by name and check the document key
+        auto res =
+            fieldCollection.find([](const NeoFOAM::Document& doc) { return name(doc) == "T"; });
+
+        REQUIRE(res.size() == 1);
+        REQUIRE(T.key == res[0]);
+        REQUIRE(T.fieldCollectionName == "testFieldCollection");
 
         REQUIRE(T.name == "T");
         REQUIRE(T.hasDatabase());
@@ -96,14 +102,16 @@ TEST_CASE("FieldCollection")
         {
             fvcc::OldTimeCollection::create(db, "testOldTimeCollection");
         }
+
         SECTION("create oldTimeCollection: " + execName)
         {
             fvcc::OldTimeCollection::create(db, "testOldTimeCollection");
 
-            auto& oldTimeCollection = fvcc::OldTimeCollection::getCollection(db, "testOldTimeCollection");
+            auto& oldTimeCollection =
+                fvcc::OldTimeCollection::getCollection(db, "testOldTimeCollection");
             REQUIRE(oldTimeCollection.size() == 0);
         }
-        
+
         SECTION("usage")
         {
             auto& Told = fvcc::oldTime(T);
@@ -123,6 +131,5 @@ TEST_CASE("FieldCollection")
             // check if the same field is returned
             REQUIRE(&Told2 == &sameTold2);
         }
-        
     }
 }
