@@ -55,8 +55,7 @@ Document FieldDocument::doc()
 
 FieldCollection::FieldCollection(std::shared_ptr<NeoFOAM::Collection> collection)
     : collection_(collection)
-{
-}
+{}
 
 const std::string FieldCollection::typeName() { return "FieldCollection"; }
 
@@ -85,6 +84,8 @@ std::vector<key> FieldCollection::find(const std::function<bool(const Document&)
 {
     return collection_->find(predicate);
 }
+
+std::size_t FieldCollection::size() const { return collection_->size(); }
 
 NeoFOAM::Document& FieldCollection::get(const key& id) { return collection_->get(id); }
 

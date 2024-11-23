@@ -34,9 +34,9 @@ struct CreateField
 {
     std::string name;
     NeoFOAM::UnstructuredMesh mesh;
-    std::size_t timeIndex;
-    std::size_t iterationIndex;
-    std::int64_t subCycleIndex;
+    std::size_t timeIndex = 0;
+    std::size_t iterationIndex = 0;
+    std::int64_t subCycleIndex = 0;
     NeoFOAM::Document operator()(NeoFOAM::Database& db)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
@@ -47,14 +47,17 @@ struct CreateField
             dict.insert("fixedValue", 2.0);
             bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
-        NeoFOAM::Field internalField = NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0);
-        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, internalField, bcs, db, "", "");
+        NeoFOAM::Field internalField =
+            NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0);
+        fvcc::VolumeField<NeoFOAM::scalar> vf(
+            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
+        );
         return NeoFOAM::Document(
             {{"name", vf.name},
-                {"timeIndex", timeIndex},
-                {"iterationIndex", iterationIndex},
-                {"subCycleIndex", subCycleIndex},
-                {"field", vf}},
+             {"timeIndex", timeIndex},
+             {"iterationIndex", iterationIndex},
+             {"subCycleIndex", subCycleIndex},
+             {"field", vf}},
             fvcc::validateFieldDoc
         );
     }
@@ -135,7 +138,7 @@ TEST_CASE("FieldCollection")
         REQUIRE(fieldCollection.size() == 0);
     }
 
-    SECTION("add FieldDocument to FieldCollection")
+    SECTION("add FieldDocument to FieldCollection" + execName)
     {
         fvcc::FieldCollection::create(db, "testFieldCollection");
 
@@ -172,7 +175,7 @@ TEST_CASE("FieldCollection")
 
         REQUIRE(fieldCollection.size() == 3);
 
-        SECTION("query FieldDocument from FieldCollection")
+        SECTION("query FieldDocument from FieldCollection" + execName)
         {
             SECTION("query by timeIndex")
             {
@@ -198,21 +201,64 @@ TEST_CASE("FieldCollection")
         }
     }
 
-    SECTION("usage")
+    SECTION("usage " + execName)
     {
         fvcc::FieldCollection::create(db, "testFieldCollection");
+        fvcc::FieldCollection fieldCollection =
+            fvcc::FieldCollection::get(db, "testFieldCollection");
 
-        fvcc::FieldCollection fieldCollection = fvcc::FieldCollection::get(db, "testFieldCollection");
-        fvcc::VolumeField<NeoFOAM::scalar>& T = fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-            CreateField{
-                .name = "T",
-                .mesh = mesh,
-                .timeIndex = 1,
-                .iterationIndex = 1,
-                .subCycleIndex = 1
-            }
-            );
+        fvcc::VolumeField<NeoFOAM::scalar>& T =
+            fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(CreateField {
+                .name = "T", .mesh = mesh, .timeIndex = 1, .iterationIndex = 1, .subCycleIndex = 1
+            });
+
         REQUIRE(T.name == "T");
         REQUIRE(T.hasDatabase());
+
+        // find the field by name and check the document key
+        auto res =
+            fieldCollection.find([](const NeoFOAM::Document& doc) { return name(doc) == "T"; });
+
+        REQUIRE(res.size() == 1);
+        REQUIRE(T.key == res[0]);
+        REQUIRE(T.fieldCollectionName == "testFieldCollection");
+
+        // with default values
+        fvcc::VolumeField<NeoFOAM::scalar>& T2 =
+            fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
+                CreateField {.name = "T2", .mesh = mesh}
+            );
+
+        REQUIRE(T2.name == "T2");
+        REQUIRE(T2.hasDatabase());
+
+        // find the field by name and check the document key
+        res = fieldCollection.find([](const NeoFOAM::Document& doc) { return name(doc) == "T2"; });
+
+        REQUIRE(res.size() == 1);
+        REQUIRE(T2.key == res[0]);
+        REQUIRE(T2.fieldCollectionName == "testFieldCollection");
+
+
+        SECTION("Construct from Field")
+        {
+            fvcc::FieldCollection fieldCollection2(T);
+            REQUIRE(fieldCollection2.size() == 2);
+        }
+        SECTION("register from existing field")
+        {
+
+            fvcc::VolumeField<NeoFOAM::scalar>& T3 =
+                fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
+                    fvcc::CreateFromExistingField {.name = "T3", .field = T}
+                );
+
+            const auto& docT = fieldCollection.get(T3.key);
+            const auto& docT3 = fieldCollection.get(T.key);
+
+            REQUIRE(fvcc::timeIndex(docT) == fvcc::timeIndex(docT3));
+            REQUIRE(fvcc::iterationIndex(docT) == fvcc::iterationIndex(docT3));
+            REQUIRE(fvcc::subCycleIndex(docT) == fvcc::subCycleIndex(docT3));
+        }
     }
 }
