@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #include <stdexcept>
 
 #include "NeoFOAM/core/database.hpp"
@@ -20,8 +23,6 @@ Collection& Database::getCollection(const std::string& name)
     }
     throw std::runtime_error("Collection not found");
 }
-
-
 
 const Collection& Database::getCollection(const std::string& name) const
 {

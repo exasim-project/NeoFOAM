@@ -92,13 +92,11 @@ public:
     std::string name; // The name of the field
 
 
-
 protected:
 
     Executor exec_;                // The executor object
     const UnstructuredMesh& mesh_; // The unstructured mesh object
     DomainField<ValueType> field_; // The domain field object
-
 };
 
 } // namespace NeoFOAM
