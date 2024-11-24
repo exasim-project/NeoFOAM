@@ -25,9 +25,11 @@ class Database
 {
 public:
 
-    Collection& createCollection(const key& name, Collection col);
+    Collection& insert(const key& name, const Collection& col);
 
-    bool foundCollection(const key& name) const;
+    bool contains(const key& name) const;
+
+    bool remove(const key& name);
 
     Collection& getCollection(const key& name);
     const Collection& getCollection(const key& name) const;
@@ -38,6 +40,8 @@ public:
         Collection& collection = getCollection(name);
         return collection.as<CollectionType>();
     }
+
+    std::size_t size() const;
 
 private:
 

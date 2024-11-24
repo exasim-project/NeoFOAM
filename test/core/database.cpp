@@ -13,222 +13,97 @@
 
 #include "customTestCollection.hpp"
 
-TEST_CASE("Document")
+CustomDocument createDoc(std::string name, int value)
 {
-
-    SECTION("create empty document")
-    {
-        NeoFOAM::Document doc;
-        REQUIRE(doc.keys().size() == 1);
-    }
-
-    SECTION("create document")
-    {
-        NeoFOAM::Document doc({{"key1", std::string("value1")}, {"key2", 2.0}});
-        REQUIRE(doc.keys().size() == 3);
-        REQUIRE(doc.id().substr(0, 4) == "doc_");
-        REQUIRE(doc.get<std::string>("key1") == "value1");
-        REQUIRE(doc.get<double>("key2") == 2.0);
-
-        SECTION("insert values")
-        {
-            doc.insert("key3", std::string("value3"));
-            doc.insert("key4", 4.0);
-            REQUIRE(doc.keys().size() == 5);
-            REQUIRE(doc.get<std::string>("key3") == "value3");
-            REQUIRE(doc.get<double>("key4") == 4.0);
-        }
-    }
-
-    SECTION("custom validator")
-    {
-        auto validator = [](const NeoFOAM::Dictionary& dict)
-        { return dict.contains("key1") && dict.contains("key2"); };
-
-        SECTION("valid document")
-        {
-            NeoFOAM::Document doc({{"key1", std::string("value1")}, {"key2", 2.0}}, validator);
-            REQUIRE_NOTHROW(doc.validate());
-            REQUIRE(doc.keys().size() == 3);
-            REQUIRE(doc.get<std::string>("key1") == "value1");
-            REQUIRE(doc.get<double>("key2") == 2.0);
-        }
-
-        SECTION("invalid document")
-        {
-            REQUIRE_THROWS(
-                NeoFOAM::Document({{"key1", std::string("value1")}}, validator).validate()
-            );
-        }
-    }
+    return CustomDocument(NeoFOAM::Document({{"name", name}, {"testValue", value}}));
 }
-
-
-class CustomCollection
-{
-public:
-
-    CustomCollection(NeoFOAM::Database& db, std::string name) : db_(db), name_(name) {}
-
-    void insert(const NeoFOAM::Document& doc)
-    {
-        std::string key = "doc_" + std::to_string(docs_.size());
-        docs_[key] = doc;
-    }
-
-    const NeoFOAM::Document& get(const std::string& key) const { return docs_.at(key); }
-
-    std::size_t size() const { return docs_.size(); }
-
-    const NeoFOAM::Database& db() const { return db_; }
-
-    const std::string& name() const { return name_; }
-
-private:
-
-    NeoFOAM::Database& db_;
-    std::string name_;
-    std::unordered_map<std::string, NeoFOAM::Document> docs_;
-};
-
 
 TEST_CASE("Database")
 {
     NeoFOAM::Database db;
 
-    // SECTION("createCollection")
-    // {
-    //     db.createCollection("collection1", "testCollection");
-    //     db.createCollection("collection2", "testCollection");
-    // }
+    SECTION("insert")
+    {
+        db.insert("collection1", CustomCollection(db, "collection1"));
+        db.insert("collection2", CustomCollection(db, "collection2"));
+        REQUIRE(db.contains("collection1"));
+        REQUIRE(db.contains("collection2"));
+        REQUIRE_FALSE(db.contains("collection3"));
+        REQUIRE(db.size() == 2);
+    }
 
-    // SECTION("getCollection")
-    // {
-    //     db.createCollection("collection1", "testCollection");
+    SECTION("getCollection")
+    {
+        auto& collection1 = db.insert("collection1", CustomCollection(db, "collection1"));
 
-    //     auto& collection1 = db.getCollection("collection1");
+        auto& collection2 = db.getCollection("collection1");
 
-    //     SECTION("check database access from collection") { REQUIRE(&db == &collection1.db()); }
+        REQUIRE(&collection1 == &collection2);
 
-    //     REQUIRE(collection1.size() == 0);
+        SECTION("check database access from collection") { REQUIRE(&db == &collection1.db()); }
 
-    //     SECTION("get non existing collection") {
-    //     REQUIRE_THROWS(db.getCollection("doesNotExist")); }
+        REQUIRE(collection1.size() == 0);
 
-    //     NeoFOAM::Document doc;
-    //     doc.insert("key1", std::string("value1"));
-    //     auto doc1Id = collection1.insert(doc);
+        SECTION("get non existing collection") { REQUIRE_THROWS(db.getCollection("doesNotExist")); }
+    }
 
-    //     auto& retrievedDoc = collection1.get(doc1Id);
-    //     REQUIRE(retrievedDoc.get<std::string>("key1") == "value1");
+    SECTION("erase")
+    {
+        db.insert("collection1", CustomCollection(db, "collection1"));
+        db.insert("collection2", CustomCollection(db, "collection2"));
 
-    //     REQUIRE(collection1.size() == 1);
-    // }
+        REQUIRE(db.size() == 2);
 
-    // SECTION("query Documents")
-    // {
-    //     db.createCollection("collection1", "testCollection");
+        REQUIRE(db.remove("collection1"));
+        REQUIRE_FALSE(db.contains("collection1"));
+        REQUIRE(db.size() == 1);
 
-    //     auto& collection1 = db.getCollection("collection1");
+        REQUIRE_FALSE(db.remove("collection1"));
+        REQUIRE(db.size() == 1);
+    }
 
-    //     NeoFOAM::Document doc1;
-    //     doc1.insert("key1", std::string("value1"));
-    //     collection1.insert(doc1);
 
-    //     NeoFOAM::Document doc2;
-    //     doc2.insert("key1", std::string("value2"));
-    //     collection1.insert(doc2);
+    SECTION("query")
+    {
+        db.insert("collection1", CustomCollection(db, "collection1"));
+        db.insert("collection2", CustomCollection(db, "collection2"));
 
-    //     NeoFOAM::Document doc3;
-    //     doc3.insert("key2", std::string("value3"));
-    //     collection1.insert(doc3);
+        REQUIRE(db.get<CustomCollection>("collection1").size() == 0);
+        REQUIRE(db.get<CustomCollection>("collection2").size() == 0);
 
-    //     auto results = collection1.find(
-    //         [](const NeoFOAM::Document& doc)
-    //         { return doc.contains("key1") && doc.get<std::string>("key1") == "value2"; }
-    //     );
+        auto& collection1 = db.get<CustomCollection>("collection1");
+        auto& collection2 = db.get<CustomCollection>("collection2");
 
-    //     REQUIRE(results.size() == 1);
+        collection1.insert(createDoc("doc1", 42));
+        collection1.insert(createDoc("doc2", 42));
+        collection2.insert(createDoc("doc3", 42));
 
-    //     REQUIRE(collection1.get(results[0]).get<std::string>("key1") == "value2");
-    // }
+        REQUIRE(collection1.size() == 2);
+        REQUIRE(collection2.size() == 1);
 
-    // SECTION("custom Document")
-    // {
-    //     auto doc = CustomTestDocument::create("name1", 1.0);
-    //     REQUIRE(name(doc) == "name1");
-    //     REQUIRE(value(doc) == 1.0);
-    // }
+        REQUIRE(collection1.name() == "collection1");
+        REQUIRE(collection2.name() == "collection2");
 
-    // SECTION("custom Collection")
-    // {
-    //     CustomTestCollection::create("customCollection", db);
+        SECTION("find by name")
+        {
 
-    //     NeoFOAM::Collection& customCollection =
-    //         CustomTestCollection::getCollection(db, "customCollection");
+            std::vector<std::string> foundKeys =
+                collection1.find([](const NeoFOAM::Document& doc)
+                                 { return doc.get<std::string>("name") == "doc1"; });
 
-    //     REQUIRE(customCollection.name() == "customCollection");
-    //     REQUIRE(customCollection.size() == 0);
+            REQUIRE(foundKeys.size() == 1);
+            REQUIRE(foundKeys[0].substr(0, 4) == "doc_");
+            std::vector<std::string> keys = collection1.keys();
+            std::sort(keys.begin(), keys.end());
+            REQUIRE(keys == std::vector<std::string> {"doc_0", "doc_1"});
 
-    //     SECTION("insert document")
-    //     {
-    //         auto doc1 = CustomTestDocument::create("name1", 1.0);
-    //         REQUIRE(doc1.id().substr(0, 4) == "doc_");
-    //         auto keyDoc1 = customCollection.insert(doc1);
+            REQUIRE_NOTHROW(collection1.get(foundKeys[0]));
 
-    //         REQUIRE(customCollection.size() == 1);
+            std::vector<std::string> foundKeys2 =
+                collection1.find([](const NeoFOAM::Document& doc)
+                                 { return doc.get<int>("testValue") == 42; });
 
-    //         SECTION("get existing document")
-    //         {
-    //             auto& testDoc = customCollection.get(keyDoc1);
-
-    //             REQUIRE(name(testDoc) == "name1");
-    //             REQUIRE(value(testDoc) == 1.0);
-    //         }
-
-    //         SECTION("modify document")
-    //         {
-    //             auto& testDoc = customCollection.get(keyDoc1);
-    //             value(testDoc) = 3.0;
-
-    //             auto& testDoc2 = customCollection.get(keyDoc1);
-    //             REQUIRE(value(testDoc2) == 3.0);
-
-    //             // update without id
-    //             value(testDoc) = 4.0;
-
-    //             auto& testDoc3 = customCollection.get(keyDoc1);
-    //             REQUIRE(value(testDoc3) == 4.0);
-    //         }
-
-    //         SECTION("get non existing document")
-    //         {
-    //             REQUIRE_THROWS(customCollection.get("doesNotExist"));
-    //         }
-
-    //         SECTION("query existing document")
-    //         {
-    //             // query documents
-    //             auto results =
-    //                 customCollection.find([](const NeoFOAM::Document& doc)
-    //                                       { return doc.contains("name") && name(doc) == "name1";
-    //                                       });
-
-    //             REQUIRE(results.size() == 1);
-    //         }
-
-    //         SECTION("query non existing document")
-    //         {
-    //             // query documents
-    //             auto results = customCollection.find(
-    //                 [](const NeoFOAM::Document& doc) {
-    //                     return doc.contains("notValidKey")
-    //                         && doc.get<std::string>("notValidKey") == "name3";
-    //                 }
-    //             );
-
-    //             REQUIRE(results.size() == 0);
-    //         }
-    //     }
-    // }
+            REQUIRE(foundKeys2.size() == 2);
+        }
+    }
 }

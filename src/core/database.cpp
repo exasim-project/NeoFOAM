@@ -9,35 +9,23 @@
 namespace NeoFOAM
 {
 
-Collection& Database::createCollection(const std::string& name, Collection col)
+Collection& Database::insert(const std::string& name, const Collection& col)
 {
     collections_.emplace(name, col);
     return collections_.at(name);
 }
 
-bool Database::foundCollection(const std::string& name) const
-{
-    return collections_.contains(name);
-}
+bool Database::contains(const std::string& name) const { return collections_.contains(name); }
 
-Collection& Database::getCollection(const std::string& name)
-{
-    auto it = collections_.find(name);
-    if (it != collections_.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Collection not found");
-}
+Collection& Database::getCollection(const std::string& name) { return collections_.at(name); }
 
 const Collection& Database::getCollection(const std::string& name) const
 {
-    auto it = collections_.find(name);
-    if (it != collections_.end())
-    {
-        return it->second;
-    }
-    throw std::runtime_error("Collection not found");
+    return collections_.at(name);
 }
+
+std::size_t Database::size() const { return collections_.size(); }
+
+bool Database::remove(const std::string& name) { return collections_.erase(name) > 0; }
 
 } // namespace NeoFOAM

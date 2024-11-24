@@ -22,7 +22,7 @@ public:
 
     template<typename CollectionType>
     Collection(CollectionType collection)
-        : impl_(std::make_unique<Model<CollectionType>>(collection))
+        : impl_(std::make_unique<Model<CollectionType>>(std::move(collection)))
     {}
 
     Collection(const Collection& other) : impl_(other.impl_->clone()) {}

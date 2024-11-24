@@ -11,34 +11,9 @@
 #include "NeoFOAM/core/collection.hpp"
 #include "NeoFOAM/core/document.hpp"
 
-class CustomDocument
-{
-public:
+#include "customTestCollection.hpp"
 
-    NeoFOAM::Document& doc() { return doc_; }
-
-    const NeoFOAM::Document& doc() const { return doc_; }
-
-    std::string id() const { return doc_.id(); }
-
-    static std::string typeName() { return "CustomDocument"; }
-
-private:
-
-    NeoFOAM::Document doc_;
-};
-
-class CustomCollection : public NeoFOAM::CollectionMixin<CustomDocument>
-{
-public:
-
-    CustomCollection(NeoFOAM::Database& db, std::string name)
-        : NeoFOAM::CollectionMixin<CustomDocument>(db, name)
-    {}
-};
-
-
-TEST_CASE("Collection")
+TEST_CASE("CustomCollection")
 {
     NeoFOAM::Database db;
     NeoFOAM::Collection collection = CustomCollection(db, "testCollection");
@@ -48,11 +23,25 @@ TEST_CASE("Collection")
     REQUIRE(customCollection.name() == "testCollection");
     REQUIRE(customCollection.type() == "CustomDocument");
 
-    CustomCollection& customCollection2 = db.get<CustomCollection>("testCollection");
+    CustomCollection& customCollection2 = CustomCollection::instance(db, "testCollection");
 
-    // SECTION("get")
-    // {
-    //     auto& doc = customCollection.get("doc1");
-    //     REQUIRE(doc.id() == "doc1");
-    // }
+    CustomCollection& customCollection3 = db.get<CustomCollection>("testCollection");
+
+    REQUIRE(&customCollection3 == &customCollection2);
+}
+
+TEST_CASE("CustomDocument")
+{
+    CustomDocument doc;
+    REQUIRE(doc.id().find("doc_") != std::string::npos);
+    REQUIRE(doc.typeName() == "CustomDocument");
+
+    REQUIRE(doc.doc().id().find("doc_") != std::string::npos);
+
+    CustomDocument doc2(NeoFOAM::Document({{"name", std::string("doc2")}, {"testValue", 42}}));
+
+    REQUIRE(doc2.doc().id().find("doc_") != std::string::npos);
+    REQUIRE(doc2.typeName() == "CustomDocument");
+    REQUIRE(doc2.doc().get<std::string>("name") == "doc2");
+    REQUIRE(doc2.doc().get<int>("testValue") == 42);
 }
