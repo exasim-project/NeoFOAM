@@ -26,12 +26,13 @@ Document::Document(const Dictionary& dict, DocumentValidator validator)
     validate();
 }
 
-void Document::validate()
+bool Document::validate() const
 {
     if (!validator_(*this))
     {
         throw std::runtime_error("Document validation failed");
     }
+    return true;
 }
 
 const std::string& name(const NeoFOAM::Document& doc) { return doc.get<std::string>("name"); }

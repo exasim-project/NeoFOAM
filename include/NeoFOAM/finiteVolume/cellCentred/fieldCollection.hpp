@@ -21,110 +21,122 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 bool validateFieldDoc(const Document& doc);
 
-// const versions
-std::size_t timeIndex(const Document& doc);
-
-std::size_t iterationIndex(const Document& doc);
-
-std::int64_t subCycleIndex(const Document& doc);
-
-// non-const versions
-std::size_t& timeIndex(Document& doc);
-
-std::size_t& iterationIndex(Document& doc);
-
-std::int64_t& subCycleIndex(Document& doc);
-
-template<typename ValueType>
-VolumeField<ValueType>& volField(Document& doc)
-{
-    return doc.get<VolumeField<ValueType>>("field");
-}
-
-template<typename ValueType>
-const VolumeField<ValueType>& volField(const Document& doc)
-{
-    return doc.get<VolumeField<ValueType>>("field");
-}
-
-using CreateFunction = std::function<Document(NeoFOAM::Database& db)>;
-
 
 class FieldDocument
 {
 public:
 
-    std::string name;
-    std::size_t timeIndex;
-    std::size_t iterationIndex;
-    std::int64_t subCycleIndex;
-    std::any field;
-
-    static Document create(FieldDocument fDoc);
-
-    Document doc();
-};
-
-
-class FieldCollection
-{
-public:
-
-    FieldCollection(std::shared_ptr<NeoFOAM::Collection> collection);
-
-    template<class registeredGeoField>
-    FieldCollection(registeredGeoField& field)
-        : collection_(
-            field.registered() ? field.db().getCollectionPtr(field.fieldCollectionName)
-                               : throw std::runtime_error("field is not registered")
+    template<class geoField>
+    FieldDocument(
+        const geoField& field,
+        std::size_t timeIndex,
+        std::size_t iterationIndex,
+        std::int64_t subCycleIndex
+    )
+        : doc_(
+            Document(
+                {{"name", field.name},
+                 {"timeIndex", timeIndex},
+                 {"iterationIndex", iterationIndex},
+                 {"subCycleIndex", subCycleIndex},
+                 {"field", field}}
+            ),
+            validateFieldDoc
         )
     {}
 
-    static const std::string typeName();
+    FieldDocument(const Document& doc);
 
-    static void create(NeoFOAM::Database& db, std::string name);
+    Document& doc();
 
-    static NeoFOAM::Collection& getCollection(NeoFOAM::Database& db, std::string name);
+    const Document& doc() const;
 
-    static const NeoFOAM::Collection& getCollection(const NeoFOAM::Database& db, std::string name);
+    std::string id() const;
 
-    template<class registeredGeoField>
-    static const NeoFOAM::Collection& getCollection(const registeredGeoField& field)
+    static std::string typeName();
+
+    template<class geoField>
+    geoField& field()
     {
-        const Database& db = field.db();
-        return db.getCollection(field.fieldCollectionName);
+        return doc_.get<geoField&>("field");
     }
 
-    static FieldCollection get(NeoFOAM::Database& db, std::string name);
-
-    Document& get(const key& id);
-
-    const Document& get(const key& id) const;
-
-    std::vector<key> find(const std::function<bool(const Document&)>& predicate) const;
-
-    size_t size() const;
-
-    template<class Field>
-    Field& registerField(CreateFunction createFunc)
+    template<class geoField>
+    const geoField& field() const
     {
-        auto doc = createFunc(collection_->db());
-        if (!validateFieldDoc(doc))
+        return doc_.get<const geoField&>("field");
+    }
+
+    std::string name() const;
+
+    std::string& name();
+
+    std::size_t timeIndex() const;
+
+    std::size_t& timeIndex();
+
+    std::size_t iterationIndex() const;
+
+    std::size_t& iterationIndex();
+
+    std::int64_t subCycleIndex() const;
+
+    std::int64_t& subCycleIndex();
+
+private:
+
+    Document doc_;
+};
+
+using CreateFunction = std::function<FieldDocument(NeoFOAM::Database& db)>;
+
+class FieldCollection : public CollectionMixin<FieldDocument>
+{
+public:
+
+    FieldCollection(NeoFOAM::Database& db, std::string name);
+
+    bool contains(const std::string& id) const;
+
+    std::string insert(const FieldDocument& cc);
+
+    FieldDocument& fieldDoc(const key& id);
+
+    const FieldDocument& fieldDoc(const key& id) const;
+
+    static FieldCollection& instance(NeoFOAM::Database& db, std::string name);
+
+    template<class geoField>
+    static FieldCollection& instance(geoField& field)
+    {
+        return instance(field.db(), field.fieldCollectionName);
+    }
+
+    template<class geoField>
+    static const FieldCollection& instance(const geoField& field)
+    {
+        const Database& db = field.db();
+        const Collection& collection = db.getCollection(field.fieldCollectionName);
+        return collection.as<FieldCollection>();
+        // return instance(field.db(), field.fieldCollectionName);
+    }
+
+    template<class geoField>
+    geoField& registerField(CreateFunction createFunc)
+    {
+        FieldDocument doc = createFunc(db());
+        if (!validateFieldDoc(doc.doc()))
         {
             throw std::runtime_error("Document is not valid");
         }
 
-        auto key = collection_->insert(doc);
-        auto& fieldDoc = collection_->get(key);
-        auto& field = fieldDoc.get<Field&>("field");
+        std::string key = insert(doc);
+        FieldDocument& fd = fieldDoc(key);
+        geoField& field = fd.field<geoField>();
         field.key = key;
-        field.fieldCollectionName = collection_->name();
+        field.fieldCollectionName = name();
         return field;
     }
-
-private:
-
-    std::shared_ptr<NeoFOAM::Collection> collection_;
 };
 
 
@@ -139,7 +151,7 @@ public:
     std::size_t iterationIndex = std::numeric_limits<std::size_t>::max();
     std::int64_t subCycleIndex = std::numeric_limits<std::int64_t>::max();
 
-    Document operator()(Database& db)
+    FieldDocument operator()(Database& db)
     {
         VolumeField<scalar> vf(
             field.exec(),
@@ -151,13 +163,22 @@ public:
             "",
             ""
         );
-        if (timeIndex == std::numeric_limits<std::size_t>::max())
+        if (field.registered())
         {
-            const Collection& fieldCollection = FieldCollection::getCollection(field);
-            const Document& fieldDoc = fieldCollection.get(field.key);
-            timeIndex = NeoFOAM::finiteVolume::cellCentred::timeIndex(fieldDoc);
-            iterationIndex = NeoFOAM::finiteVolume::cellCentred::iterationIndex(fieldDoc);
-            subCycleIndex = NeoFOAM::finiteVolume::cellCentred::subCycleIndex(fieldDoc);
+            const FieldCollection& fieldCollection = FieldCollection::instance(field);
+            const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
+            if (timeIndex == std::numeric_limits<std::size_t>::max())
+            {
+                timeIndex = fieldDoc.timeIndex();
+            }
+            if (iterationIndex == std::numeric_limits<std::size_t>::max())
+            {
+                iterationIndex = fieldDoc.iterationIndex();
+            }
+            if (subCycleIndex == std::numeric_limits<std::int64_t>::max())
+            {
+                subCycleIndex = fieldDoc.subCycleIndex();
+            }
         }
         return NeoFOAM::Document(
             {{"name", vf.name},

@@ -27,7 +27,7 @@ public:
 
     Document(const Dictionary& dict, DocumentValidator validator = hasId);
 
-    void validate();
+    bool validate() const;
 
     std::string id() const { return get<std::string>("id"); }
 

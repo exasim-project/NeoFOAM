@@ -27,8 +27,8 @@ public:
 
     Collection(const Collection& other) : impl_(other.impl_->clone()) {}
 
-    Document& get(const key& id);
-    const Document& get(const key& id) const;
+    Document& doc(const key& id);
+    const Document& doc(const key& id) const;
     std::vector<key> find(const std::function<bool(const Document&)>& predicate) const;
     size_t size() const;
     std::string type() const;
@@ -47,13 +47,24 @@ public:
         return derived->collection_;
     }
 
+    template<typename CollectionType>
+    const CollectionType& as() const
+    {
+        auto derived = dynamic_cast<Model<CollectionType>*>(impl_.get());
+        if (!derived)
+        {
+            throw std::bad_cast();
+        }
+        return derived->collection_;
+    }
+
 private:
 
     struct Concept
     {
         virtual ~Concept() = default;
-        virtual Document& get(const key& id) = 0;
-        virtual const Document& get(const key& id) const = 0;
+        virtual Document& doc(const key& id) = 0;
+        virtual const Document& doc(const key& id) const = 0;
         virtual std::vector<key> find(const std::function<bool(const Document&)>& predicate
         ) const = 0;
         virtual size_t size() const = 0;
@@ -70,9 +81,9 @@ private:
     {
         Model(CollectionType collection) : collection_(std::move(collection)) {}
 
-        Document& get(const key& id) override { return collection_.get(id); }
+        Document& doc(const key& id) override { return collection_.doc(id); }
 
-        const Document& get(const key& id) const override { return collection_.get(id); }
+        const Document& doc(const key& id) const override { return collection_.doc(id); }
 
         std::vector<key> find(const std::function<bool(const Document&)>& predicate) const override
         {
@@ -105,9 +116,9 @@ public:
 
     CollectionMixin(NeoFOAM::Database& db, std::string name) : docs_(), db_(db), name_(name) {}
 
-    Document& get(const key& id) { return docs_.at(id).doc(); }
+    Document& doc(const key& id) { return docs_.at(id).doc(); }
 
-    const Document& get(const key& id) const { return docs_.at(id).doc(); }
+    const Document& doc(const key& id) const { return docs_.at(id).doc(); }
 
     std::vector<std::string> find(const std::function<bool(const Document&)>& predicate) const
     {

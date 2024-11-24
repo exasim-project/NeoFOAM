@@ -78,41 +78,51 @@ TEST_CASE("Field Document")
 
     SECTION("create FieldDocument: " + execName)
     {
-        auto doc = fvcc::FieldDocument::create(
-            {.name = "T",
-             .timeIndex = 1,
-             .iterationIndex = 2,
-             .subCycleIndex = 3,
-             .field = createVolumeField(mesh, "T")}
-        );
+
+        fvcc::FieldDocument fieldDoc(createVolumeField(mesh, "T"), 1, 2, 3);
+
 
         SECTION("validate FieldDocument")
         {
+            REQUIRE(fieldDoc.doc().validate());
+            REQUIRE_NOTHROW(fieldDoc.doc().validate());
+
+            REQUIRE(fieldDoc.doc().keys().size() == 6);
+            REQUIRE(fieldDoc.id().substr(0, 4) == "doc_");
+            REQUIRE(fieldDoc.timeIndex() == 1);
+            REQUIRE(fieldDoc.iterationIndex() == 2);
+            REQUIRE(fieldDoc.subCycleIndex() == 3);
+            REQUIRE(fieldDoc.name() == "T");
+
+
+            NeoFOAM::Document& doc = fieldDoc.doc();
+            REQUIRE(doc.validate());
             REQUIRE_NOTHROW(doc.validate());
             REQUIRE(doc.keys().size() == 6);
             REQUIRE(doc.id().substr(0, 4) == "doc_");
-            REQUIRE(name(doc) == "T");
-            const auto& volField = fvcc::volField<NeoFOAM::scalar>(doc);
+
+
+            // REQUIRE(name(doc) == "T");
+            const auto& constVolField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
+            auto& volField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
 
             REQUIRE(volField.name == "T");
             REQUIRE(volField.internalField().copyToHost()[0] == 1.0);
-            REQUIRE(fvcc::timeIndex(doc) == 1);
-            REQUIRE(fvcc::iterationIndex(doc) == 2);
-            REQUIRE(fvcc::subCycleIndex(doc) == 3);
+            REQUIRE(&volField == &constVolField);
         }
 
         SECTION("modify fieldDocument")
         {
-            fvcc::timeIndex(doc) = 4;
-            fvcc::iterationIndex(doc) = 5;
-            fvcc::subCycleIndex(doc) = 6;
-            auto& volField = fvcc::volField<NeoFOAM::scalar>(doc);
+            fieldDoc.timeIndex() = 4;
+            fieldDoc.iterationIndex() = 5;
+            fieldDoc.subCycleIndex() = 6;
+            auto& volField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
             NeoFOAM::fill(volField.internalField(), 2.0);
 
             REQUIRE(volField.internalField().copyToHost()[0] == 2.0);
-            REQUIRE(fvcc::timeIndex(doc) == 4);
-            REQUIRE(fvcc::iterationIndex(doc) == 5);
-            REQUIRE(fvcc::subCycleIndex(doc) == 6);
+            REQUIRE(fieldDoc.timeIndex() == 4);
+            REQUIRE(fieldDoc.iterationIndex() == 5);
+            REQUIRE(fieldDoc.subCycleIndex() == 6);
         }
     }
 }
@@ -132,80 +142,79 @@ TEST_CASE("FieldCollection")
 
     SECTION("create FieldCollection: " + execName)
     {
-        fvcc::FieldCollection::create(db, "testFieldCollection");
-
-        auto& fieldCollection = fvcc::FieldCollection::getCollection(db, "testFieldCollection");
+        fvcc::FieldCollection fieldCollection(db, "testFieldCollection");
         REQUIRE(fieldCollection.size() == 0);
     }
 
     SECTION("add FieldDocument to FieldCollection" + execName)
     {
-        fvcc::FieldCollection::create(db, "testFieldCollection");
+        fvcc::FieldCollection fieldCollection =
+            fvcc::FieldCollection::instance(db, "testFieldCollection");
+        REQUIRE(db.size() == 1);
 
-        auto& fieldCollection = fvcc::FieldCollection::getCollection(db, "testFieldCollection");
-        auto doc1 = fvcc::FieldDocument::create(
-            {.name = "T1",
-             .timeIndex = 1,
-             .iterationIndex = 1,
-             .subCycleIndex = 1,
-             .field = createVolumeField(mesh, "T1")}
+        fvcc::FieldDocument fieldDoc(createVolumeField(mesh, "T1"), 1, 2, 3);
+
+        REQUIRE(fieldCollection.insert(fieldDoc) != std::string(""));
+        REQUIRE(
+            fieldCollection.insert(fvcc::FieldDocument(createVolumeField(mesh, "T2"), 1, 2, 3))
+            != std::string("")
         );
-
-        std::string keyDoc1 = fieldCollection.insert(doc1);
-
-        auto doc2 = fvcc::FieldDocument::create(
-            {.name = "T2",
-             .timeIndex = 2,
-             .iterationIndex = 2,
-             .subCycleIndex = 2,
-             .field = createVolumeField(mesh, "T2")}
+        REQUIRE(
+            fieldCollection.insert(fvcc::FieldDocument(createVolumeField(mesh, "T3"), 1, 2, 3))
+            != std::string("")
         );
-
-        std::string keyDoc2 = fieldCollection.insert(doc2);
-
-        auto doc3 = fvcc::FieldDocument::create(
-            {.name = "T3",
-             .timeIndex = 3,
-             .iterationIndex = 3,
-             .subCycleIndex = 3,
-             .field = createVolumeField(mesh, "T3")}
-        );
-
-        std::string keyDoc3 = fieldCollection.insert(doc3);
 
         REQUIRE(fieldCollection.size() == 3);
 
-        SECTION("query FieldDocument from FieldCollection" + execName)
+        SECTION("get FieldDocument from FieldCollection")
         {
-            SECTION("query by timeIndex")
-            {
-                auto resTimeIndex = fieldCollection.find([](const NeoFOAM::Document& doc)
-                                                         { return fvcc::timeIndex(doc) == 2; });
+            fvcc::FieldDocument& doc = fieldCollection.fieldDoc(fieldDoc.id());
+            REQUIRE(doc.doc().validate());
+            REQUIRE(doc.doc().keys().size() == 6);
+            REQUIRE(doc.id().substr(0, 4) == "doc_");
+            REQUIRE(doc.timeIndex() == 1);
+            REQUIRE(doc.iterationIndex() == 2);
+            REQUIRE(doc.subCycleIndex() == 3);
+            REQUIRE(doc.name() == "T1");
 
-                REQUIRE(resTimeIndex.size() == 1);
+            const auto& constVolField = doc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
+            auto& volField = doc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
 
-                const auto& doc = fieldCollection.get(resTimeIndex[0]);
-                REQUIRE(name(doc) == "T2");
-            }
+            REQUIRE(volField.name == "T1");
+            REQUIRE(volField.internalField().copyToHost()[0] == 1.0);
+            REQUIRE(&volField == &constVolField);
+        }
 
-            SECTION("query by name")
-            {
-                auto resName = fieldCollection.find([](const NeoFOAM::Document& doc)
-                                                    { return name(doc) == "T3"; });
+        SECTION("query")
+        {
+            auto resTimeIndex =
+                fieldCollection.find([](const NeoFOAM::Document& doc)
+                                     { return doc.get<std::size_t>("timeIndex") == 1; });
 
-                REQUIRE(resName.size() == 1);
+            REQUIRE(resTimeIndex.size() == 3);
 
-                const auto& doc2 = fieldCollection.get(resName[0]);
-                REQUIRE(fvcc::timeIndex(doc2) == 3);
-            }
+            auto resSubCycleIndex =
+                fieldCollection.find([](const NeoFOAM::Document& doc)
+                                     { return doc.get<std::int64_t>("subCycleIndex") == 5; });
+
+            REQUIRE(resSubCycleIndex.size() == 0);
+
+            auto resName = fieldCollection.find([](const NeoFOAM::Document& doc)
+                                                { return doc.get<std::string>("name") == "T3"; });
+
+            REQUIRE(resName.size() == 1);
+
+            const auto& fieldDoc2 = fieldCollection.fieldDoc(resName[0]);
+            REQUIRE(fieldDoc2.timeIndex() == 1);
         }
     }
 
-    SECTION("usage " + execName)
+    SECTION("register " + execName)
     {
-        fvcc::FieldCollection::create(db, "testFieldCollection");
-        fvcc::FieldCollection fieldCollection =
-            fvcc::FieldCollection::get(db, "testFieldCollection");
+
+        fvcc::FieldCollection& fieldCollection =
+            fvcc::FieldCollection::instance(db, "newTestFieldCollection");
+        REQUIRE(db.size() == 1);
 
         fvcc::VolumeField<NeoFOAM::scalar>& T =
             fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(CreateField {
@@ -214,51 +223,33 @@ TEST_CASE("FieldCollection")
 
         REQUIRE(T.name == "T");
         REQUIRE(T.hasDatabase());
-
-        // find the field by name and check the document key
-        auto res =
-            fieldCollection.find([](const NeoFOAM::Document& doc) { return name(doc) == "T"; });
-
-        REQUIRE(res.size() == 1);
-        REQUIRE(T.key == res[0]);
-        REQUIRE(T.fieldCollectionName == "testFieldCollection");
-
-        // with default values
-        fvcc::VolumeField<NeoFOAM::scalar>& T2 =
-            fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-                CreateField {.name = "T2", .mesh = mesh}
-            );
-
-        REQUIRE(T2.name == "T2");
-        REQUIRE(T2.hasDatabase());
-
-        // find the field by name and check the document key
-        res = fieldCollection.find([](const NeoFOAM::Document& doc) { return name(doc) == "T2"; });
-
-        REQUIRE(res.size() == 1);
-        REQUIRE(T2.key == res[0]);
-        REQUIRE(T2.fieldCollectionName == "testFieldCollection");
-
+        REQUIRE(T.internalField().copyToHost()[0] == 1.0);
+        REQUIRE(T.registered());
 
         SECTION("Construct from Field")
         {
-            fvcc::FieldCollection fieldCollection2(T);
-            REQUIRE(fieldCollection2.size() == 2);
+            fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(T);
+            REQUIRE(fieldCollection.size() == 1);
+            const fvcc::VolumeField<NeoFOAM::scalar>& constT = T;
+            const fvcc::FieldCollection& fieldCollection3 = fvcc::FieldCollection::instance(constT);
+            REQUIRE(fieldCollection3.size() == 1);
         }
+
+
         SECTION("register from existing field")
         {
-
+            fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(T);
             fvcc::VolumeField<NeoFOAM::scalar>& T3 =
                 fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
                     fvcc::CreateFromExistingField {.name = "T3", .field = T}
                 );
 
-            const auto& docT = fieldCollection.get(T3.key);
-            const auto& docT3 = fieldCollection.get(T.key);
+            const fvcc::FieldDocument& docT = fieldCollection.fieldDoc(T3.key);
+            const fvcc::FieldDocument& docT3 = fieldCollection.fieldDoc(T.key);
 
-            REQUIRE(fvcc::timeIndex(docT) == fvcc::timeIndex(docT3));
-            REQUIRE(fvcc::iterationIndex(docT) == fvcc::iterationIndex(docT3));
-            REQUIRE(fvcc::subCycleIndex(docT) == fvcc::subCycleIndex(docT3));
+            REQUIRE(docT.timeIndex() == docT3.timeIndex());
+            REQUIRE(docT.iterationIndex() == docT3.iterationIndex());
+            REQUIRE(docT.subCycleIndex() == docT3.subCycleIndex());
         }
     }
 }

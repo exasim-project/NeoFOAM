@@ -96,7 +96,7 @@ TEST_CASE("Database")
             std::vector<std::string> keys = collection1.sortedKeys();
             REQUIRE(keys == std::vector<std::string> {"doc_0", "doc_1"});
 
-            REQUIRE_NOTHROW(collection1.get(foundKeys[0]));
+            REQUIRE_NOTHROW(collection1.doc(foundKeys[0]));
 
             std::vector<std::string> foundKeys2 =
                 collection1.find([](const NeoFOAM::Document& doc)

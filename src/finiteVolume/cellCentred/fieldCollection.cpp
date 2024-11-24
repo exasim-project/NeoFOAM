@@ -6,32 +6,6 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-// const versions
-std::size_t timeIndex(const NeoFOAM::Document& doc) { return doc.get<std::size_t>("timeIndex"); }
-
-std::size_t iterationIndex(const NeoFOAM::Document& doc)
-{
-    return doc.get<std::size_t>("iterationIndex");
-}
-
-std::int64_t subCycleIndex(const NeoFOAM::Document& doc)
-{
-    return doc.get<std::int64_t>("subCycleIndex");
-}
-
-// non-const versions
-std::size_t& timeIndex(NeoFOAM::Document& doc) { return doc.get<std::size_t>("timeIndex"); }
-
-std::size_t& iterationIndex(NeoFOAM::Document& doc)
-{
-    return doc.get<std::size_t>("iterationIndex");
-}
-
-std::int64_t& subCycleIndex(NeoFOAM::Document& doc)
-{
-    return doc.get<std::int64_t>("subCycleIndex");
-}
-
 // Initialize the static member
 bool validateFieldDoc(const Document& doc)
 {
@@ -39,62 +13,64 @@ bool validateFieldDoc(const Document& doc)
         && doc.contains("subCycleIndex") && hasId(doc) && doc.contains("field");
 }
 
-Document FieldDocument::create(FieldDocument fDoc) { return fDoc.doc(); }
+FieldDocument::FieldDocument(const Document& doc) : doc_(doc, validateFieldDoc) {}
 
-Document FieldDocument::doc()
+std::string FieldDocument::id() const { return doc_.id(); }
+
+std::string FieldDocument::typeName() { return "FieldDocument"; }
+
+Document& FieldDocument::doc() { return doc_; }
+
+const Document& FieldDocument::doc() const { return doc_; }
+
+std::string FieldDocument::name() const { return doc_.get<std::string>("name"); }
+
+std::string& FieldDocument::name() { return doc_.get<std::string>("name"); }
+
+std::size_t FieldDocument::timeIndex() const { return doc_.get<std::size_t>("timeIndex"); }
+
+std::size_t& FieldDocument::timeIndex() { return doc_.get<std::size_t>("timeIndex"); }
+
+std::size_t FieldDocument::iterationIndex() const
 {
-    return Document(
-        {{"name", name},
-         {"timeIndex", timeIndex},
-         {"iterationIndex", iterationIndex},
-         {"subCycleIndex", subCycleIndex},
-         {"field", field}},
-        validateFieldDoc
-    );
+    return doc_.get<std::size_t>("iterationIndex");
 }
 
-FieldCollection::FieldCollection(std::shared_ptr<NeoFOAM::Collection> collection)
-    : collection_(collection)
+std::size_t& FieldDocument::iterationIndex() { return doc_.get<std::size_t>("iterationIndex"); }
+
+std::int64_t FieldDocument::subCycleIndex() const
+{
+    return doc_.get<std::int64_t>("subCycleIndex");
+}
+
+std::int64_t& FieldDocument::subCycleIndex() { return doc_.get<std::int64_t>("subCycleIndex"); }
+
+
+FieldCollection::FieldCollection(NeoFOAM::Database& db, std::string name)
+    : NeoFOAM::CollectionMixin<FieldDocument>(db, name)
 {}
 
-const std::string FieldCollection::typeName() { return "FieldCollection"; }
+bool FieldCollection::contains(const std::string& id) const { return docs_.contains(id); }
 
-void FieldCollection::create(NeoFOAM::Database& db, std::string name)
+std::string FieldCollection::insert(const FieldDocument& cc)
 {
-    db.createCollection(name, FieldCollection::typeName());
+    std::string id = cc.id();
+    if (contains(id))
+    {
+        return "";
+    }
+    docs_.emplace(id, cc);
+    return id;
 }
 
-NeoFOAM::Collection& FieldCollection::getCollection(NeoFOAM::Database& db, std::string name)
+FieldDocument& FieldCollection::fieldDoc(const key& id) { return docs_.at(id); }
+
+const FieldDocument& FieldCollection::fieldDoc(const key& id) const { return docs_.at(id); }
+
+FieldCollection& FieldCollection::instance(NeoFOAM::Database& db, std::string name)
 {
-    return db.getCollection(name);
+    NeoFOAM::Collection& col = db.insert(name, FieldCollection(db, name));
+    return col.as<FieldCollection>();
 }
-
-const NeoFOAM::Collection&
-FieldCollection::getCollection(const NeoFOAM::Database& db, std::string name)
-{
-    return db.getCollection(name);
-}
-
-FieldCollection FieldCollection::get(NeoFOAM::Database& db, std::string name)
-{
-    return FieldCollection(db.getCollectionPtr(name));
-}
-
-std::vector<key> FieldCollection::find(const std::function<bool(const Document&)>& predicate) const
-{
-    return collection_->find(predicate);
-}
-
-std::size_t FieldCollection::size() const { return collection_->size(); }
-
-NeoFOAM::Document& FieldCollection::get(const key& id) { return collection_->get(id); }
-
-const NeoFOAM::Document& FieldCollection::get(const key& id) const { return collection_->get(id); }
-
-// const NeoFOAM::FieldCollection
-// FieldCollection::getCollection(const NeoFOAM::Database& db, std::string name)
-// {
-//     return NeoFOAM::FieldCollection(db.getCollectionPtr(name));
-// }
 
 } // namespace NeoFOAM::finiteVolume::cellCentred
