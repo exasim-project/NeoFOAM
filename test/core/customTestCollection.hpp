@@ -27,16 +27,4 @@ double& value(NeoFOAM::Document& doc) { return doc.get<double>("value"); }
 class CustomTestCollection
 {
 public:
-
-    static const std::string typeName() { return "CustomTestCollection"; }
-
-    static void create(std::string name, NeoFOAM::Database& db)
-    {
-        db.createCollection(name, CustomTestCollection::typeName());
-    }
-
-    static NeoFOAM::Collection& getCollection(NeoFOAM::Database& db, std::string name)
-    {
-        return db.getCollection(name);
-    }
 };

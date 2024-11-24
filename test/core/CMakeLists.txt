@@ -4,6 +4,7 @@
 add_subdirectory(mpi)
 add_subdirectory(primitives)
 
+neofoam_unit_test(collection)
 neofoam_unit_test(database)
 neofoam_unit_test(dictionary)
 neofoam_unit_test(tokenList)

@@ -101,7 +101,6 @@ public:
 
     const Document& get(const key& id) const;
 
-    // static const FieldCollection get(const NeoFOAM::Database& db, std::string name);
     std::vector<key> find(const std::function<bool(const Document&)>& predicate) const;
 
     size_t size() const;

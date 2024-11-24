@@ -9,32 +9,18 @@
 namespace NeoFOAM
 {
 
-void Database::createCollection(std::string name, std::string type)
+Collection& Database::createCollection(const std::string& name, Collection col)
 {
-    collections_.emplace(name, std::make_shared<Collection>(type, name, *this));
+    collections_.emplace(name, col);
+    return collections_.at(name);
+}
+
+bool Database::foundCollection(const std::string& name) const
+{
+    return collections_.contains(name);
 }
 
 Collection& Database::getCollection(const std::string& name)
-{
-    auto it = collections_.find(name);
-    if (it != collections_.end())
-    {
-        return *(it->second);
-    }
-    throw std::runtime_error("Collection not found");
-}
-
-const Collection& Database::getCollection(const std::string& name) const
-{
-    auto it = collections_.find(name);
-    if (it != collections_.end())
-    {
-        return *(it->second);
-    }
-    throw std::runtime_error("Collection not found");
-}
-
-std::shared_ptr<Collection> Database::getCollectionPtr(const std::string& name)
 {
     auto it = collections_.find(name);
     if (it != collections_.end())
@@ -44,5 +30,14 @@ std::shared_ptr<Collection> Database::getCollectionPtr(const std::string& name)
     throw std::runtime_error("Collection not found");
 }
 
+const Collection& Database::getCollection(const std::string& name) const
+{
+    auto it = collections_.find(name);
+    if (it != collections_.end())
+    {
+        return it->second;
+    }
+    throw std::runtime_error("Collection not found");
+}
 
 } // namespace NeoFOAM
