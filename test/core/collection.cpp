@@ -28,6 +28,13 @@ TEST_CASE("CustomCollection")
     CustomCollection& customCollection3 = db.get<CustomCollection>("testCollection");
 
     REQUIRE(&customCollection3 == &customCollection2);
+
+    SECTION("new collection")
+    {
+        CustomCollection& newCollection = CustomCollection::instance(db, "newCollection");
+
+        REQUIRE(db.size() == 2);
+    }
 }
 
 TEST_CASE("CustomDocument")
