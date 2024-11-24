@@ -132,6 +132,16 @@ public:
 
     std::string type() const { return DocumentType::typeName(); }
 
+    std::vector<std::string> sortedKeys() const
+    {
+        std::vector<std::string> result;
+        for (const auto& [key, doc] : docs_)
+        {
+            result.push_back(key);
+        }
+        std::sort(result.begin(), result.end());
+        return result;
+    }
 
 protected:
 

@@ -55,14 +55,4 @@ public:
         NeoFOAM::Collection& col = db.insert(name, CustomCollection(db, name));
         return col.as<CustomCollection>();
     }
-
-    std::vector<std::string> keys() const
-    {
-        std::vector<std::string> result;
-        for (const auto& [key, doc] : docs_)
-        {
-            result.push_back(key);
-        }
-        return result;
-    }
 };

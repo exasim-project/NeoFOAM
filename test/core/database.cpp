@@ -93,8 +93,7 @@ TEST_CASE("Database")
 
             REQUIRE(foundKeys.size() == 1);
             REQUIRE(foundKeys[0].substr(0, 4) == "doc_");
-            std::vector<std::string> keys = collection1.keys();
-            std::sort(keys.begin(), keys.end());
+            std::vector<std::string> keys = collection1.sortedKeys();
             REQUIRE(keys == std::vector<std::string> {"doc_0", "doc_1"});
 
             REQUIRE_NOTHROW(collection1.get(foundKeys[0]));
