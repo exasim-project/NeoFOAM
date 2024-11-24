@@ -79,13 +79,11 @@ TEST_CASE("FieldCollection")
 
     SECTION("oldTime")
     {
-        fvcc::FieldCollection::create(db, "testFieldCollection");
-
-        fvcc::FieldCollection fieldCollection =
-            fvcc::FieldCollection::get(db, "testFieldCollection");
+        fvcc::FieldCollection& fieldCollection =
+            fvcc::FieldCollection::instance(db, "testFieldCollection");
         fvcc::VolumeField<NeoFOAM::scalar>& T =
             fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-                CreateField {.name = "T", .mesh = mesh}
+                CreateField {.name = "T", .mesh = mesh, .timeIndex = 2}
             );
         // find the field by name and check the document key
         auto res =
@@ -97,20 +95,14 @@ TEST_CASE("FieldCollection")
 
         REQUIRE(T.name == "T");
         REQUIRE(T.hasDatabase());
-
-        SECTION("oldTimeCollection")
-        {
-            fvcc::OldTimeCollection::create(db, "testOldTimeCollection");
-        }
-
-        SECTION("create oldTimeCollection: " + execName)
-        {
-            fvcc::OldTimeCollection::create(db, "testOldTimeCollection");
-
-            auto& oldTimeCollection =
-                fvcc::OldTimeCollection::getCollection(db, "testOldTimeCollection");
-            REQUIRE(oldTimeCollection.size() == 0);
-        }
+        REQUIRE(T.internalField().copyToHost()[0] == 1.0);
+        REQUIRE(T.registered());
+        fvcc::FieldDocument& docT = fieldCollection.fieldDoc(T.key);
+        // without the timeIndex smaller than 2 the timeIndex overflows if we subtract 1
+        // Note: we  are also checking oldTime oldTime(T) in the next section
+        REQUIRE(docT.timeIndex() == 2);
+        REQUIRE(docT.iterationIndex() == 0);
+        REQUIRE(docT.subCycleIndex() == 0);
 
         SECTION("usage")
         {

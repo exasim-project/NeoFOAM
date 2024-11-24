@@ -163,6 +163,11 @@ public:
             "",
             ""
         );
+        std::cout << "Field name: " << vf.name << std::endl;
+        std::cout << "Field timeIndex: " << timeIndex << std::endl;
+        std::cout << "Field iterationIndex: " << iterationIndex << std::endl;
+        std::cout << "Field subCycleIndex: " << subCycleIndex << std::endl;
+
         if (field.registered())
         {
             const FieldCollection& fieldCollection = FieldCollection::instance(field);
