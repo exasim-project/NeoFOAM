@@ -35,8 +35,7 @@ public:
 private:
 };
 
-// see
-// https://github.com/exasim-project/NeoFOAM/blob/dsl/operatorIntergration/include/NeoFOAM/finiteVolume/cellCentred/operators/explicitOperators/expOp.hpp
+/* @brief factory function to create a Ddt term as ddt() */
 template<typename FieldType>
 Ddt<FieldType> ddt(FieldType& in)
 {
