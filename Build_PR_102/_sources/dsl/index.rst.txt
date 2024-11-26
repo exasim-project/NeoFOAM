@@ -3,8 +3,8 @@
 Domain Specific Language (DSL)
 ==============================
 
-The concept of a Domain Specific Language (DSL) allows to dramatically simplify the process of implementing and solving equations in a given programming language like C++.
-Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required.
+The concept of a Domain Specific Language (DSL) allows to simplify the process of implementing and solving equations in a given programming language like C++.
+Engineers can express equations in a concise and readable form, closely resembling their mathematical representation, while no or little knowledge of the numerical schemes and implementation is required.
 This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.
 
 The Navier-Stokes equations can be expressed in the DSL in OpenFOAM as follows:
