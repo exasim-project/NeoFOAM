@@ -291,7 +291,8 @@ This approach allows engineers to focus on the physics of the problem rather tha
 <blockquote>
 <div><ul class="simple">
 <li><p>the solution system is always a sparse matrix</p></li>
-<li><p>the sparse matrix is always a LDU matrix that is not supported by external linear solvers</p></li>
+<li><p>individual terms are eagerly evaluated, resulting in unnecessary use of temporaries</p></li>
+<li><p>the sparse matrix is always an LDU matrix that is not supported by external linear solvers</p></li>
 <li><p>Only cell-centred discretisation is supported</p></li>
 </ul>
 </div></blockquote>
@@ -303,17 +304,17 @@ This approach allows engineers to focus on the physics of the problem rather tha
 <li><p>Support for standard matrix formats like COO and CSR, to simplify the use of external linear solvers</p></li>
 </ul>
 </div></blockquote>
-<p>The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
+<p>The use of standard matrix formats combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
 The equation system can be passed to <strong>sundials</strong> and be integrated by <strong>RK methods</strong> and <strong>BDF methods</strong> on heterogeneous architectures.</p>
 <p>The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adoption should be possible with minimal effort and the same equation from above should read:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">dsl</span><span class="o">::</span><span class="n">Equation</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">UEqn</span>
 <span class="p">(</span>
-<span class="w">    </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-<span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
-<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">fvcc</span><span class="o">::</span><span class="n">impOp</span><span class="o">::</span><span class="n">laplacian</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="n">dsl</span><span class="o">::</span><span class="n">temporal</span><span class="o">::</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="o">+</span><span class="w"> </span><span class="n">dsl</span><span class="o">::</span><span class="n">implicit</span><span class="o">::</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
+<span class="w">    </span><span class="o">-</span><span class="w"> </span><span class="n">dsl</span><span class="o">::</span><span class="n">implicit</span><span class="o">::</span><span class="n">laplacian</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span><span class="w"> </span><span class="n">U</span><span class="p">)</span>
 <span class="p">)</span>
 
-<span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">fvcc</span><span class="o">::</span><span class="n">expOp</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">));</span>
+<span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="n">dsl</span><span class="o">::</span><span class="k">explicit</span><span class="o">::</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">),</span><span class="w"> </span><span class="n">U</span><span class="p">,</span><span class="w"> </span><span class="n">fvSchemes</span><span class="p">,</span><span class="w"> </span><span class="n">fvSolution</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>In contrast to OpenFOAM, here the majority of the work is done in the solve step.

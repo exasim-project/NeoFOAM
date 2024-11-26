@@ -269,7 +269,7 @@
           <section id="operator">
 <h1>Operator<a class="headerlink" href="#operator" title="Link to this heading">¶</a></h1>
 <p>The <cite>Operator</cite> class represents a term in an equation and can be instantiated with different value types.
-An <cite>Operator</cite> is either explicit, implicit or temporal, and can be scalable by a an additional coefficient, for example a scalar value or a further field.
+An <cite>Operator</cite> is either explicit, implicit or temporal, and can be scalable by an additional coefficient, for example a scalar value or a further field.
 The <cite>Operator</cite> implementation uses Type Erasure (more details <a class="reference external" href="https://medium.com/&#64;gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0">[1]</a> <a class="reference external" href="https://www.youtube.com/watch?v=4eeESJQk-mw">[2]</a> <a class="reference external" href="https://www.youtube.com/watch?v=qn6OqefuH08">[3]</a>) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:</p>
 <dl>
 <dt>Example:</dt><dd><div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">dsl</span><span class="o">::</span><span class="n">Operator</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">divTerm</span><span class="w"> </span><span class="o">=</span>
@@ -306,10 +306,8 @@ The <cite>Operator</cite> implementation uses Type Erasure (more details <a clas
 <li><p>build: build the term</p></li>
 <li><p>explicitOperation: perform the explicit operation</p></li>
 <li><p>implicitOperation: perform the implicit operation</p></li>
-<li><p>display: display the term</p></li>
 <li><p>getType: get the type of the term</p></li>
 <li><p>exec: get the executor</p></li>
-<li><p>nCells: get the number of cells</p></li>
 <li><p>volumeField: get the volume field</p></li>
 </ul>
 </div></blockquote>
@@ -368,18 +366,7 @@ The <cite>Operator</cite> implementation uses Type Erasure (more details <a clas
 <span class="p">};</span>
 </pre></div>
 </div>
-<p>The required scaling of the term is handle by the <cite>scaleField</cite> function, provided by <cite>OperatorMixin</cite>. The <cite>scaleField</cite> function returns the ‘ScalingField’ class that is used to scale by fields and scalars.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ValueType</span><span class="o">&gt;</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ScalingField</span>
-<span class="p">{</span>
-
-<span class="w">    </span><span class="c1">// the span is only used if it is defined</span>
-<span class="w">    </span><span class="n">KOKKOS_INLINE_FUNCTION</span>
-<span class="w">    </span><span class="n">ValueType</span><span class="w"> </span><span class="k">operator</span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">useSpan</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="p">}</span>
-</pre></div>
-</div>
+<p>The required scaling of the term is handled by the <cite>Coeff</cite> type which can be retrieved by the <cite>getCoefficient</cite> function of <cite>Operator</cite>.</p>
 </section>
 
         </article>
