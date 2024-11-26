@@ -31,8 +31,6 @@ public:
     {
         NF_ERROR_EXIT("Not implemented");
     }
-
-private:
 };
 
 /* @brief factory function to create a Ddt term as ddt() */
