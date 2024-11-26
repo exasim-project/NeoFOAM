@@ -57,7 +57,7 @@ The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adop
     solve(UEqn == -dsl::explicit::grad(p), U, fvSchemes, fvSolution);
 
 
-In contrast to OpenFOAM, here the majority of the work is done in the solve step.
+In contrast to OpenFOAM, the matrix assembly is deferred till the solve step. Hence the majority of the computational work is performed during the solve step.
 That is 1. assemble the system and 2. solve the system.
 After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.
 

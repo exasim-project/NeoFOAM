@@ -313,59 +313,7 @@ The <cite>Operator</cite> implementation uses Type Erasure (more details <a clas
 </div></blockquote>
 </dd>
 </dl>
-<p>An example is given below:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CustomOperator</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">dsl</span><span class="o">::</span><span class="n">OperatorMixin</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span>
-<span class="p">{</span>
-
-<span class="k">public</span><span class="o">:</span>
-
-<span class="w">    </span><span class="c1">// constructors ..</span>
-<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Input</span><span class="o">&amp;</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// ..</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">build</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Input</span><span class="o">&amp;</span><span class="w"> </span><span class="n">input</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">input</span><span class="p">);</span>
-<span class="w">        </span><span class="n">termEvaluated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">display</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s">&quot;Laplacian&quot;</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">explicitOperation</span><span class="p">(</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">source</span><span class="p">)</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">        </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="w"> </span><span class="n">setValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
-<span class="w">        </span><span class="c1">// scaleField is defined in OperatorMixin</span>
-<span class="w">        </span><span class="c1">// and accounts for the scaling of the terms</span>
-<span class="w">        </span><span class="c1">// and considers scaling by fields and scalars</span>
-<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scaleField</span><span class="p">();</span>
-<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">sourceField</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">source</span><span class="p">.</span><span class="n">span</span><span class="p">();</span>
-<span class="w">        </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">parallelFor</span><span class="p">(</span>
-<span class="w">            </span><span class="n">source</span><span class="p">.</span><span class="n">exec</span><span class="p">(),</span>
-<span class="w">            </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">.</span><span class="n">size</span><span class="p">()},</span>
-<span class="w">            </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sourceField</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">scale</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">setValue</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-<span class="w">        </span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="c1">// other helper functions</span>
-<span class="w">    </span><span class="n">dsl</span><span class="o">::</span><span class="n">Operator</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="w"> </span><span class="n">getType</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">termType_</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Executor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">exec_</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">nCells</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">nCells_</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">fvcc</span><span class="o">::</span><span class="n">VolumeField</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">volumeField</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-
-<span class="w">    </span><span class="n">dsl</span><span class="o">::</span><span class="n">Operator</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;::</span><span class="n">Type</span><span class="w"> </span><span class="n">termType_</span><span class="p">;</span>
-
-
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Executor</span><span class="w"> </span><span class="n">exec_</span><span class="p">;</span>
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">nCells_</span><span class="p">;</span>
-<span class="w">    </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
-<span class="p">};</span>
-</pre></div>
-</div>
+<p>An example can be found in <cite>test/dsl/operator.cpp</cite>.</p>
 <p>The required scaling of the term is handled by the <cite>Coeff</cite> type which can be retrieved by the <cite>getCoefficient</cite> function of <cite>Operator</cite>.</p>
 </section>
 
