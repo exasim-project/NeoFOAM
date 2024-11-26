@@ -3,11 +3,11 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" />
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/finiteVolume/DSL.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Operator" href="operator.html" /><link rel="prev" title="Domain Specific Language (DSL)" href="index.html" />
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/dsl/equation.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>Domain Specific Language - NeoFOAM documentation</title>
+        <title>Expression - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -200,7 +200,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
+  <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
@@ -215,10 +215,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../basics/fields.html">Fields</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cellCentred/operators.html">Operators</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cellCentred/stencil.html">Stencil</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Domain Specific Language (DSL)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Expression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operator.html">Operator</a></li>
 </ul>
 </li>
 </ul>
@@ -241,7 +246,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/finiteVolume/DSL.rst.txt" title="View this page">
+  <a class="muted-link" href="../_sources/dsl/equation.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -261,8 +266,67 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="domain-specific-language">
-<span id="fvcc-dsl"></span><h1>Domain Specific Language<a class="headerlink" href="#domain-specific-language" title="Link to this heading">¶</a></h1>
+          <section id="expression">
+<h1>Expression<a class="headerlink" href="#expression" title="Link to this heading">¶</a></h1>
+<p>The <cite>Expression</cite> class in NeoFOAM holds a set of operators to express an expression and ultimately helps to formulate equations.
+Its core responsibility lies in the answering of the following questions:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>How to discretize the spatial terms?</dt><dd><ul>
+<li><p>In OpenFOAM this information is provided in <strong>fvSchemes</strong></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>How to integrate the system in time?</dt><dd><ul>
+<li><p>In OpenFOAM this information is provided in <strong>fvSchemes</strong></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>How to solve the system?</dt><dd><ul>
+<li><p>In OpenFOAM this information is provided in <strong>fvSolution</strong></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>The main difference between NeoFOAM and OpenFOAM is that the DSL is evaluated lazily, i.e. evaluation is not performed on construction by default.
+Since, the evaluation is not tied to the construction but rather delayed, other numerical integration strategies (e.g. RK methods or even sub-stepping within an the equation) are possible.</p>
+<p>To implement lazy evaluation, the <cite>Expression</cite> stores 3 vectors:</p>
+<pre  class="mermaid">
+        classDiagram
+    class Operator {
+        +explicitOperation(...)
+        +implicitOperation(...)
+    }
+    class DivOperator {
+        +explicitOperation(...)
+        +implicitOperation(...)
+    }
+    class TemporalOperator {
+        +explicitOperation(...)
+        +implicitOperation(...)
+    }
+    class Others[&quot;...&quot;] {
+        +explicitOperation(...)
+        +implicitOperation(...)
+    }
+    class Expression {
+        +temporalTerms_: vector~Operator~
+        +implicitTerms_: vector~Operator~
+        +explicitTerms_: vector~Operator~
+    }
+    Operator &lt;|-- DivOperator
+    Operator &lt;|-- TemporalOperator
+    Operator &lt;|-- Others
+    Expression &lt;|-- Operator
+    </pre><p>Thus, an <cite>Expression</cite> consists of multiple <cite>Operators</cite> which are either explicit, implicit, or temporal.
+Consequently, addition, subtraction, and scaling with a field needs to be handled by the <cite>Operator</cite>.</p>
 </section>
 
         </article>
@@ -270,8 +334,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="operator.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Operator</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Domain Specific Language (DSL)</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -300,5 +382,13 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
+window.addEventListener("load", () => mermaid.run());
+</script>
     </body>
 </html>
