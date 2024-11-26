@@ -11,8 +11,6 @@
 #include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-
 namespace NeoFOAM::dsl
 {
 

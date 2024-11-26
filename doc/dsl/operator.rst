@@ -3,7 +3,7 @@ Operator
 
 
 The `Operator` class represents a term in an equation and can be instantiated with different value types.
-An `Operator` is either explicit, implicit or temporal, and can be scalable by a an additional coefficient, for example a scalar value or a further field.
+An `Operator` is either explicit, implicit or temporal, and can be scalable by an additional coefficient, for example a scalar value or a further field.
 The `Operator` implementation uses Type Erasure (more details `[1] <https://medium.com/@gealleh/type-erasure-idiom-in-c-0d1cb4f61cf0>`_ `[2] <https://www.youtube.com/watch?v=4eeESJQk-mw>`_ `[3] <https://www.youtube.com/watch?v=qn6OqefuH08>`_) to achieve polymorphism without inheritance. Consequently, the class needs only to implement the interface which is used in the DSL and which is shown in the below example:
 
 Example:
@@ -42,10 +42,8 @@ To add a user-defined `Operator`, a new derived class must be created, inheritin
     - build: build the term
     - explicitOperation: perform the explicit operation
     - implicitOperation: perform the implicit operation
-    - display: display the term
     - getType: get the type of the term
     - exec: get the executor
-    - nCells: get the number of cells
     - volumeField: get the volume field
 
 An example is given below:
@@ -103,16 +101,4 @@ An example is given below:
         NeoFOAM::scalar value = 1.0;
     };
 
-The required scaling of the term is handle by the `scaleField` function, provided by `OperatorMixin`. The `scaleField` function returns the 'ScalingField' class that is used to scale by fields and scalars.
-
-.. code-block:: cpp
-
-    template <typename ValueType>
-    class ScalingField
-    {
-
-        // the span is only used if it is defined
-        KOKKOS_INLINE_FUNCTION
-        ValueType operator[](const size_t i) const { return useSpan ? values[i] * value : value; }
-
-    }
+The required scaling of the term is handled by the `Coeff` type which can be retrieved by the `getCoefficient` function of `Operator`.
