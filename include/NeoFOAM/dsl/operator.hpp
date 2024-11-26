@@ -73,9 +73,6 @@ public:
 
     Coeff getCoefficient() const { return model_->getCoefficient(); }
 
-    /* get the corresponding field size over which the operator operates */
-    // size_t getSize() const { return model_->getSize(); }
-
     /* @brief Given an input this function reads required coeffs */
     void build(const Input& input) { model_->build(input); }
 
@@ -104,8 +101,6 @@ private:
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
         virtual Operator::Type getType() const = 0;
-
-        // virtual size_t getSize() const = 0;
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() = 0;
@@ -160,9 +155,6 @@ private:
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff getCoefficient() const override { return concreteOp_.getCoefficient(); }
-
-        /* @brief get the associated coefficient for this term */
-        // virtual size_t getSize() const override { return concreteOp_.getSize(); }
 
         // The Prototype Design Pattern
         std::unique_ptr<OperatorConcept> clone() const override
