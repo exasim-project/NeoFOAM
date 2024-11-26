@@ -36,13 +36,13 @@ void computeDiv(
         for (size_t i = 0; i < nInternalFaces; i++)
         {
             scalar flux = surfFaceFlux[i] * surfPhif[i];
-            surfDivPhi[surfOwner[i]] += flux;
-            surfDivPhi[surfNeighbour[i]] -= flux;
+            surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
+            surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
-            int32_t own = surfFaceCells[i - nInternalFaces];
+            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
             surfDivPhi[own] += valueOwn;
         }
@@ -59,8 +59,8 @@ void computeDiv(
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 scalar flux = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[surfOwner[i]], flux);
-                Kokkos::atomic_sub(&surfDivPhi[surfNeighbour[i]], flux);
+                Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
+                Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
             }
         );
 
@@ -68,7 +68,7 @@ void computeDiv(
             exec,
             {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
-                int32_t own = surfFaceCells[i - nInternalFaces];
+                auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
             }
@@ -85,7 +85,7 @@ void computeDiv(
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp,
+    [[maybe_unused]] const SurfaceInterpolation& surfInterp,
     Field<scalar>& divPhi
 )
 {
@@ -104,7 +104,6 @@ void computeDiv(
     const auto surfFaceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
-
 
     // check if the executor is GPU
     if (std::holds_alternative<SerialExecutor>(exec))
