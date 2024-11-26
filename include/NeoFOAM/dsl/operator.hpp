@@ -214,9 +214,8 @@ Operator operator*([[maybe_unused]] CoeffFunction coeffFunc, const Operator& lhs
 }
 
 /* @class OperatorMixin
- * @brief A mixin class to represent simplify implementations of concrete operators
+ * @brief A mixin class to simplify implementations of concrete operators
  * in NeoFOAMs dsl
- *
  *
  * @ingroup dsl
  */

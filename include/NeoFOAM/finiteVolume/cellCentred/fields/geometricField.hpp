@@ -33,7 +33,7 @@ public:
      *
      * @param exec The executor object.
      * @param mesh The unstructured mesh object.
-     * @param field The domain field object.
+     * @param domainField The domain field object.
      */
     GeometricFieldMixin(
         const Executor& exec,
@@ -48,7 +48,8 @@ public:
      *
      * @param exec The executor object.
      * @param mesh The unstructured mesh object.
-     * @param field The domain field object.
+     * @param internalField The internal field object.
+     * @param boundaryFields The boundary field object.
      */
     GeometricFieldMixin(
         const Executor& exec,

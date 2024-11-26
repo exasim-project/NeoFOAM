@@ -49,7 +49,8 @@ public:
     /* @brief Constructor for a VolumeField with a given internal field
      *
      * @param mesh The underlying mesh
-     * @param internalField the underlying internal field
+     * @param domainField the underlying domain field i.e. combination of internal and boundary
+     * fields
      * @param boundaryConditions a vector of boundary conditions
      */
     VolumeField(
@@ -62,10 +63,11 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
-    /* @brief Constructor for a VolumeField with a given internal field
+    /* @brief Constructor for a VolumeField with a given internal and boundary field
      *
      * @param mesh The underlying mesh
      * @param internalField the underlying internal field
+     * @param boundaryFields the underlying boundary data fields
      * @param boundaryConditions a vector of boundary conditions
      */
     VolumeField(

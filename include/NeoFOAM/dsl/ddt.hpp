@@ -11,8 +11,6 @@
 namespace NeoFOAM::dsl::temporal
 {
 
-
-// TODO add free factory function
 template<typename FieldType>
 class Ddt : public OperatorMixin<FieldType>
 {
@@ -39,12 +37,10 @@ private:
 
 // see
 // https://github.com/exasim-project/NeoFOAM/blob/dsl/operatorIntergration/include/NeoFOAM/finiteVolume/cellCentred/operators/explicitOperators/expOp.hpp
-
 template<typename FieldType>
 Ddt<FieldType> ddt(FieldType& in)
 {
     return Ddt(in);
 };
-
 
 } // namespace NeoFOAM
