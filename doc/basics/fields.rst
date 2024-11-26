@@ -9,7 +9,7 @@ Fields
 Cell Centered Fields
 ^^^^^^^^^^^^^^^^^^^^
 
-The ``VolumeField`` stores the field values at cell centers and along boundaries, providing essential data for constructing the DSL (Domain Specific Language). This functionality also includes access to mesh data, integrating closely with the computational framework.
+The ``VolumeField`` stores the field values at cell centers and along boundaries, providing essential data for constructing the Domain Specific Language (DSL). This functionality also includes access to mesh data, integrating closely with the computational framework.
 
 ``DomainField`` acts as the fundamental data container within this structure, offering both read and write to the ``internalField`` and ``boundaryFields`` provided by the ``DomainField``. The ``correctBoundaryConditions`` member function updates the field's boundary conditions, which are specified at construction. It does not hold the data but rather modifies the ``DomainField`` or ``BoundaryField`` container.
 
@@ -26,7 +26,7 @@ Functionally, ``fvccVolField`` parallels several OpenFOAM classes such as ``volS
 Face Centered fields
 ^^^^^^^^^^^^^^^^^^^^
 
-The ``SurfaceField`` class stores the field values interpreted as face centers values.  Additionally, it stores boundaries for the corresponding boundary conditions. This provides essential data for constructing the DSL (Domain Specific Language). The functionality also includes access to mesh data, integrating closely with the computational framework.
+The ``SurfaceField`` class stores the field values interpreted as face centers values.  Additionally, it stores boundaries for the corresponding boundary conditions. This provides essential data for constructing the DSL. The functionality also includes access to mesh data, integrating closely with the computational framework.
 
 ``DomainField`` acts as the fundamental data container within this structure, offering both read and to the ``internalField`` and ``boundaryField`` provided by the ``DomainField``. The ``correctBoundaryConditions`` member function updates field's boundary conditions, which are specified at construction. It does not hold the data, but modify the ``DomainField`` or ``BoundaryField`` container.
 

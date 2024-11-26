@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <array>
 #include <vector>
 
 #include "NeoFOAM/core/primitives/label.hpp"

@@ -3,10 +3,6 @@
 
 #pragma once
 
-#include <array>
-#include <vector>
-
-#include "NeoFOAM/core/primitives/vector.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 #include "NeoFOAM/mesh/unstructured/boundaryMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/stencilDataBase.hpp"

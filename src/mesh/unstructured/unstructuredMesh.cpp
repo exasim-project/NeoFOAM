@@ -3,6 +3,9 @@
 
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
+#include "NeoFOAM/core/primitives/vector.hpp" // for Vector
+
+
 namespace NeoFOAM
 {
 
@@ -90,7 +93,7 @@ UnstructuredMesh createSingleCellMesh(const Executor exec)
     );
     return UnstructuredMesh(
         {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
-        {exec, {1}},                                          // cellVolumes
+        {exec, 1},                                            // cellVolumes
         {exec, {{0.5, 0.5, 0.0}}},                            // cellCentres
         faceAreasVectors,
         faceCentresVectors,
