@@ -165,7 +165,7 @@ GaussGreenDiv::GaussGreenDiv(
     [[maybe_unused]] const UnstructuredMesh& mesh,
     const SurfaceInterpolation& surfInterp
 )
-    : surfaceInterpolation_(surfInterp) {};
+    : DivOperatorFactory::Register<GaussGreenDiv>(exec, mesh), surfaceInterpolation_(surfInterp) {};
 
 void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
@@ -180,5 +180,11 @@ void GaussGreenDiv::div(
 {
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
+
+std::unique_ptr<DivOperatorFactory> GaussGreenDiv::clone() const
+{
+    return std::make_unique<GaussGreenDiv>(*this);
+}
+
 
 };
