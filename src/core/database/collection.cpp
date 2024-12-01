@@ -7,6 +7,7 @@
 namespace NeoFOAM
 {
 
+Collection::Collection(const Collection& other) : impl_(other.impl_->clone()) {}
 
 Document& Collection::doc(const std::string& id) { return impl_->doc(id); }
 

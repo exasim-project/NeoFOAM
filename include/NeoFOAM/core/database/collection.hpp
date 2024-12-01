@@ -37,7 +37,9 @@ public:
      * @param collection The collection instance to be wrapped.
      */
     template<typename CollectionType>
-    Collection(CollectionType collection);
+    Collection(CollectionType collection)
+        : impl_(std::make_unique<CollectionModel<CollectionType>>(std::move(collection)))
+    {}
 
     /**
      * @brief Copy constructor.
@@ -114,7 +116,16 @@ public:
      * @throws std::bad_cast if the cast fails.
      */
     template<typename CollectionType>
-    CollectionType& as();
+    CollectionType& as()
+    {
+        auto derived = dynamic_cast<CollectionModel<CollectionType>*>(impl_.get());
+        if (!derived)
+        {
+            throw std::bad_cast();
+        }
+        return derived->collection_;
+    }
+
 
     /**
      * @brief Casts the collection to a specific collection type (const version).
@@ -124,31 +135,68 @@ public:
      * @throws std::bad_cast if the cast fails.
      */
     template<typename CollectionType>
-    const CollectionType& as() const;
+    const CollectionType& as() const
+    {
+        auto derived = dynamic_cast<CollectionModel<CollectionType>*>(impl_.get());
+        if (!derived)
+        {
+            throw std::bad_cast();
+        }
+        return derived->collection_;
+    }
 
 private:
 
-    /**
-     * @brief The base class for the type-erased collection.
-     *
-     * This class defines the common interface that all collection types must implement.
-     */
-    struct Concept;
+    struct CollectionConcept
+    {
+        virtual ~CollectionConcept() = default;
+        virtual Document& doc(const std::string& id) = 0;
+        virtual const Document& doc(const std::string& id) const = 0;
+        virtual std::vector<std::string> find(const std::function<bool(const Document&)>& predicate
+        ) const = 0;
+        virtual size_t size() const = 0;
+        virtual std::string type() const = 0;
+        virtual std::string name() const = 0;
+        virtual Database& db() = 0;
+        virtual const Database& db() const = 0;
 
-    /**
-     * @brief The derived class template for the type-erased collection.
-     *
-     * This class template implements the Concept interface for a specific collection type.
-     *
-     * @tparam CollectionType The type of the collection.
-     */
+        virtual std::unique_ptr<CollectionConcept> clone() const = 0;
+    };
+
     template<typename CollectionType>
-    struct Model;
+    struct CollectionModel : CollectionConcept
+    {
+        CollectionModel(CollectionType collection) : collection_(std::move(collection)) {}
 
-    /**
-     * @brief A unique pointer to the type-erased collection implementation.
-     */
-    std::unique_ptr<Concept> impl_;
+        Document& doc(const std::string& id) override { return collection_.doc(id); }
+
+        const Document& doc(const std::string& id) const override { return collection_.doc(id); }
+
+        std::vector<std::string> find(const std::function<bool(const Document&)>& predicate
+        ) const override
+        {
+            return collection_.find(predicate);
+        }
+
+        size_t size() const override { return collection_.size(); }
+
+        std::string type() const override { return collection_.type(); }
+
+        std::string name() const override { return collection_.name(); }
+
+        Database& db() override { return collection_.db(); }
+
+        const Database& db() const override { return collection_.db(); }
+
+        std::unique_ptr<CollectionConcept> clone() const override
+        {
+            return std::make_unique<CollectionModel>(*this);
+        }
+
+        CollectionType collection_;
+    };
+
+    std::unique_ptr<CollectionConcept> impl_;
 };
 
 /**
@@ -169,7 +217,7 @@ public:
      * @param db The database reference.
      * @param name The name of the collection.
      */
-    CollectionMixin(NeoFOAM::Database& db, std::string name);
+    CollectionMixin(NeoFOAM::Database& db, std::string name) : docs_(), db_(db), name_(name) {}
 
     /**
      * @brief Retrieves a document by its ID.
@@ -177,7 +225,7 @@ public:
      * @param id The ID of the document.
      * @return Document& A reference to the document.
      */
-    Document& doc(const std::string& id);
+    Document& doc(const std::string& id) { return docs_.at(id).doc(); }
 
     /**
      * @brief Retrieves a document by its ID (const version).
@@ -185,7 +233,7 @@ public:
      * @param id The ID of the document.
      * @return const Document& A const reference to the document.
      */
-    const Document& doc(const std::string& id) const;
+    const Document& doc(const std::string& id) const { return docs_.at(id).doc(); }
 
     /**
      * @brief Finds documents that match a given predicate.
@@ -193,49 +241,69 @@ public:
      * @param predicate A function that takes a const reference to a Document and returns a bool.
      * @return std::vector<std::string> A vector of document IDs that match the predicate.
      */
-    std::vector<std::string> find(const std::function<bool(const Document&)>& predicate) const;
+    std::vector<std::string> find(const std::function<bool(const Document&)>& predicate) const
+    {
+        std::vector<std::string> result;
+        for (const auto& [key, doc] : docs_)
+        {
+            if (predicate(doc.doc()))
+            {
+                result.push_back(doc.id());
+            }
+        }
+        return result;
+    }
 
     /**
      * @brief Gets the number of documents in the collection.
      *
      * @return std::size_t The number of documents.
      */
-    std::size_t size() const;
+    std::size_t size() const { return docs_.size(); }
 
     /**
      * @brief Gets a const reference to the database.
      *
      * @return const NeoFOAM::Database& A const reference to the database.
      */
-    const NeoFOAM::Database& db() const;
+    const NeoFOAM::Database& db() const { return db_; }
 
     /**
      * @brief Gets a reference to the database.
      *
      * @return NeoFOAM::Database& A reference to the database.
      */
-    NeoFOAM::Database& db();
+    NeoFOAM::Database& db() { return db_; }
 
     /**
      * @brief Gets the name of the collection.
      *
      * @return const std::string& A const reference to the collection name.
      */
-    const std::string& name() const;
+    const std::string& name() const { return name_; }
 
     /**
      * @brief Gets the type name of the documents in the collection.
      *
      * @return std::string The type name of the documents.
      */
-    std::string type() const;
+    std::string type() const { return DocumentType::typeName(); }
 
     /**
      * @brief Gets the sorted keys of the documents in the collection.
      *
      * @return std::vector<std::string> A vector of sorted document keys.
      */
-    std::vector<std::string> sortedKeys() const;
+    std::vector<std::string> sortedKeys() const
+    {
+        std::vector<std::string> result;
+        for (const auto& [key, doc] : docs_)
+        {
+            result.push_back(key);
+        }
+        std::sort(result.begin(), result.end());
+        return result;
+    }
 
 protected:
 
