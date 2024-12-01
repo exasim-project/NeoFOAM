@@ -7,8 +7,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/fieldCollection.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/oldTimeCollection.hpp"
+#include "NeoFOAM/core/database/fieldCollection.hpp"
+#include "NeoFOAM/core/database/oldTimeCollection.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/core/database/database.hpp"

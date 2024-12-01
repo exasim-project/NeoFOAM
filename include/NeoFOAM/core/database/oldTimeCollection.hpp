@@ -14,7 +14,7 @@
 #include "NeoFOAM/core/database/document.hpp"
 
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fieldCollection.hpp"
+#include "NeoFOAM/core/database/fieldCollection.hpp"
 
 
 namespace NeoFOAM::finiteVolume::cellCentred

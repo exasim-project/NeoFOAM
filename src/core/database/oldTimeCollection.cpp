@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "NeoFOAM/finiteVolume/cellCentred/oldTimeCollection.hpp"
+#include "NeoFOAM/core/database/oldTimeCollection.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
