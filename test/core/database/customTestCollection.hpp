@@ -6,8 +6,8 @@
 #include <optional>
 #include <string>
 
-#include <NeoFOAM/core/database.hpp>
-#include "NeoFOAM/core/document.hpp"
+#include <NeoFOAM/core/database/database.hpp>
+#include "NeoFOAM/core/database/document.hpp"
 
 
 class CustomDocument

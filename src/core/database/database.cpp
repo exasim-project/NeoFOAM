@@ -3,8 +3,8 @@
 
 #include <stdexcept>
 
-#include "NeoFOAM/core/database.hpp"
-#include "NeoFOAM/core/collection.hpp"
+#include "NeoFOAM/core/database/database.hpp"
+#include "NeoFOAM/core/database/collection.hpp"
 
 namespace NeoFOAM
 {

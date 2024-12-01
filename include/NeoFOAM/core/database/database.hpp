@@ -7,7 +7,7 @@
 #include <string>
 #include <any>
 #include <memory>
-#include "NeoFOAM/core/collection.hpp"
+#include "NeoFOAM/core/database/collection.hpp"
 
 namespace NeoFOAM
 {

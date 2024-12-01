@@ -7,7 +7,7 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/fields/geometricField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/core/database.hpp"
+#include "NeoFOAM/core/database/database.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

@@ -11,7 +11,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred/oldTimeCollection.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/core/database.hpp"
+#include "NeoFOAM/core/database/database.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 

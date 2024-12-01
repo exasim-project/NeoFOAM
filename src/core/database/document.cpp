@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "NeoFOAM/core/document.hpp"
+#include "NeoFOAM/core/database/document.hpp"
 
 namespace NeoFOAM
 {
