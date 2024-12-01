@@ -71,7 +71,7 @@ geoField& oldTime(geoField& field)
 
     std::string oldTimeName = field.name + "_0";
 
-    std::vector<key> oldKeys = fieldCollection.find(
+    std::vector<std::string> oldKeys = fieldCollection.find(
         [oldTimeName, timeIdx](const Document& doc)
         {
             return doc.get<std::string>("name") == oldTimeName
@@ -119,7 +119,7 @@ const geoField& oldTime(const geoField& field)
 
     std::string oldTimeName = field.name + "_0";
 
-    std::vector<key> oldKeys = fieldCollection.find(
+    std::vector<std::string> oldKeys = fieldCollection.find(
         [oldTimeName, timeIdx](const Document& doc)
         {
             return doc.get<std::string>("name") == oldTimeName

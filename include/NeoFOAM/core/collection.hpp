@@ -12,8 +12,6 @@
 namespace NeoFOAM
 {
 
-using key = std::string;
-
 
 // forward declaration
 class Database;
@@ -29,9 +27,9 @@ public:
 
     Collection(const Collection& other) : impl_(other.impl_->clone()) {}
 
-    Document& doc(const key& id);
-    const Document& doc(const key& id) const;
-    std::vector<key> find(const std::function<bool(const Document&)>& predicate) const;
+    Document& doc(const std::string& id);
+    const Document& doc(const std::string& id) const;
+    std::vector<std::string> find(const std::function<bool(const Document&)>& predicate) const;
     size_t size() const;
     std::string type() const;
     std::string name() const;
@@ -65,9 +63,9 @@ private:
     struct Concept
     {
         virtual ~Concept() = default;
-        virtual Document& doc(const key& id) = 0;
-        virtual const Document& doc(const key& id) const = 0;
-        virtual std::vector<key> find(const std::function<bool(const Document&)>& predicate
+        virtual Document& doc(const std::string& id) = 0;
+        virtual const Document& doc(const std::string& id) const = 0;
+        virtual std::vector<std::string> find(const std::function<bool(const Document&)>& predicate
         ) const = 0;
         virtual size_t size() const = 0;
         virtual std::string type() const = 0;
@@ -83,11 +81,11 @@ private:
     {
         Model(CollectionType collection) : collection_(std::move(collection)) {}
 
-        Document& doc(const key& id) override { return collection_.doc(id); }
+        Document& doc(const std::string& id) override { return collection_.doc(id); }
 
-        const Document& doc(const key& id) const override { return collection_.doc(id); }
+        const Document& doc(const std::string& id) const override { return collection_.doc(id); }
 
-        std::vector<key> find(const std::function<bool(const Document&)>& predicate) const override
+        std::vector<std::string> find(const std::function<bool(const Document&)>& predicate) const override
         {
             return collection_.find(predicate);
         }
@@ -118,9 +116,9 @@ public:
 
     CollectionMixin(NeoFOAM::Database& db, std::string name) : docs_(), db_(db), name_(name) {}
 
-    Document& doc(const key& id) { return docs_.at(id).doc(); }
+    Document& doc(const std::string& id) { return docs_.at(id).doc(); }
 
-    const Document& doc(const key& id) const { return docs_.at(id).doc(); }
+    const Document& doc(const std::string& id) const { return docs_.at(id).doc(); }
 
     std::vector<std::string> find(const std::function<bool(const Document&)>& predicate) const
     {
@@ -158,7 +156,7 @@ public:
 
 protected:
 
-    std::unordered_map<key, DocumentType> docs_;
+    std::unordered_map<std::string, DocumentType> docs_;
     std::string name_;
     NeoFOAM::Database& db_;
 };

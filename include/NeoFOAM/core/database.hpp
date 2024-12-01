@@ -25,15 +25,15 @@ public:
 
     Collection& insert(const std::string& key, const Collection& col);
 
-    bool contains(const key& name) const;
+    bool contains(const std::string& name) const;
 
-    bool remove(const key& name);
+    bool remove(const std::string& name);
 
-    Collection& getCollection(const key& name);
-    const Collection& getCollection(const key& name) const;
+    Collection& getCollection(const std::string& name);
+    const Collection& getCollection(const std::string& name) const;
 
     template<typename CollectionType>
-    CollectionType& get(const key& name)
+    CollectionType& get(const std::string& name)
     {
         Collection& collection = getCollection(name);
         return collection.as<CollectionType>();
@@ -43,7 +43,7 @@ public:
 
 private:
 
-    std::unordered_map<key, Collection> collections_;
+    std::unordered_map<std::string, Collection> collections_;
 };
 
 } // namespace NeoFOAM

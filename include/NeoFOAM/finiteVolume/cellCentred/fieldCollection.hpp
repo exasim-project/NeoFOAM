@@ -100,9 +100,9 @@ public:
 
     std::string insert(const FieldDocument& cc);
 
-    FieldDocument& fieldDoc(const key& id);
+    FieldDocument& fieldDoc(const std::string& id);
 
-    const FieldDocument& fieldDoc(const key& id) const;
+    const FieldDocument& fieldDoc(const std::string& id) const;
 
     static FieldCollection& instance(NeoFOAM::Database& db, std::string name);
 

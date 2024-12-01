@@ -8,11 +8,11 @@ namespace NeoFOAM
 {
 
 
-Document& Collection::doc(const key& id) { return impl_->doc(id); }
+Document& Collection::doc(const std::string& id) { return impl_->doc(id); }
 
-const Document& Collection::doc(const key& id) const { return impl_->doc(id); }
+const Document& Collection::doc(const std::string& id) const { return impl_->doc(id); }
 
-std::vector<key> Collection::find(const std::function<bool(const Document&)>& predicate) const
+std::vector<std::string> Collection::find(const std::function<bool(const Document&)>& predicate) const
 {
     return impl_->find(predicate);
 }

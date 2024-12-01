@@ -63,9 +63,9 @@ std::string FieldCollection::insert(const FieldDocument& cc)
     return id;
 }
 
-FieldDocument& FieldCollection::fieldDoc(const key& id) { return docs_.at(id); }
+FieldDocument& FieldCollection::fieldDoc(const std::string& id) { return docs_.at(id); }
 
-const FieldDocument& FieldCollection::fieldDoc(const key& id) const { return docs_.at(id); }
+const FieldDocument& FieldCollection::fieldDoc(const std::string& id) const { return docs_.at(id); }
 
 FieldCollection& FieldCollection::instance(NeoFOAM::Database& db, std::string name)
 {
