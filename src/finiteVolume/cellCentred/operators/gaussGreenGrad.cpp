@@ -82,7 +82,8 @@ void computeGrad(
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
-    : surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {};
+    : mesh_(mesh),
+      surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh, Dictionary())) {};
 
 
 void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi)

@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
+#include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
@@ -20,10 +21,29 @@ namespace NeoFOAM::finiteVolume::cellCentred
 class DivOperatorFactory :
     public NeoFOAM::RuntimeSelectionFactory<
         DivOperatorFactory,
-        Parameters<const Executor&, const UnstructuredMesh&, const SurfaceInterpolation&>>
+        Parameters<const Executor&, const UnstructuredMesh&, const Input&>>
 {
 
 public:
+
+    static std::unique_ptr<DivOperatorFactory>
+    create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
+    {
+        std::string key;
+        // input is dictionary the key is "interpolation"
+        if (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
+        {
+            key = std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("DivOperator");
+        }
+        else
+        {
+            key = std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
+            std::get<NeoFOAM::TokenList>(inputs).remove(0);
+        }
+        keyExistsOrError(key);
+        auto ptr = table().at(key)(exec, uMesh, inputs);
+        return ptr;
+    }
 
     static std::string name() { return "DivOperatorFactory"; }
 
@@ -68,12 +88,9 @@ public:
     )
         : exec_(exec), mesh_(mesh), divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
-    // DivOperator(
-    //     const Executor& exec, const UnstructuredMesh& mesh, std::string interpolationScheme
-    // )
-    //     : exec_(exec), mesh_(mesh),
-    //       divOperatorStrategy_(DivOperatorFactory::create(interpolationScheme, exec, mesh)
-    //       ) {};
+    DivOperator(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
+        : exec_(exec), mesh_(mesh),
+          divOperatorStrategy_(DivOperatorFactory::create(exec, mesh, input)) {};
 
     void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
