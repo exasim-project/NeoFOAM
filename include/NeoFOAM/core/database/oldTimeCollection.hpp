@@ -60,7 +60,15 @@ namespace NeoFOAM::finiteVolume::cellCentred
 //     std::shared_ptr<NeoFOAM::Collection> collection_;
 // };
 
-
+/**
+ * @brief Retrieves the old time field of a given field.
+ *
+ * This function retrieves the old time field of a given field by looking up the field's name and
+ * time index in the FieldCollection.
+ *
+ * @param field The field to retrieve the old time field from.
+ * @return The old time field.
+ */
 template<typename geoField>
 geoField& oldTime(geoField& field)
 {
@@ -108,7 +116,15 @@ geoField& oldTime(geoField& field)
     return oldField;
 }
 
-
+/**
+ * @brief Retrieves the old time field of a given field (const version).
+ *
+ * This function retrieves the old time field of a given field by looking up the field's name and
+ * time index in the FieldCollection.
+ *
+ * @param field The field to retrieve the old time field from.
+ * @return The old time field.
+ */
 template<typename geoField>
 const geoField& oldTime(const geoField& field)
 {
