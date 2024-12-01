@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
 
-#include <unordered_map>
 #include <string>
-#include <any>
-#include <optional>
 #include <functional>
 #include <atomic>
+
 #include "NeoFOAM/core/dictionary.hpp"
 
 namespace NeoFOAM
 {
 
-using key = std::string;
 using DocumentValidator = std::function<bool(Dictionary)>;
 
 bool hasId(Dictionary doc);

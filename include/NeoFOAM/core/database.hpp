@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
 
 #include <unordered_map>
@@ -10,10 +11,7 @@
 
 namespace NeoFOAM
 {
-// forward declaration
-// class Collection;
 
-using key = std::string;
 
 /**
  * @class Database
@@ -25,7 +23,7 @@ class Database
 {
 public:
 
-    Collection& insert(const key& name, const Collection& col);
+    Collection& insert(const std::string& key, const Collection& col);
 
     bool contains(const key& name) const;
 

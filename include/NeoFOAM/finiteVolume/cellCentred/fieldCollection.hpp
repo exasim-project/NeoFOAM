@@ -7,9 +7,9 @@
 #include <any>
 #include <string>
 #include <functional>
+
 #include "NeoFOAM/core/demangle.hpp"
 #include "NeoFOAM/core/error.hpp"
-
 #include "NeoFOAM/core/database.hpp"
 #include "NeoFOAM/core/collection.hpp"
 #include "NeoFOAM/core/document.hpp"

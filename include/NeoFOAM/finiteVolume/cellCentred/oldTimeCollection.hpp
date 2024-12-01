@@ -83,9 +83,6 @@ geoField& oldTime(geoField& field)
     // print oldKeys
     for (auto key : fieldCollection.sortedKeys())
     {
-        std::cout << "  -- " << key << std::endl;
-        std::cout << "  -- " << fieldCollection.fieldDoc(key).name() << std::endl;
-        std::cout << "  -- " << fieldCollection.fieldDoc(key).timeIndex() << std::endl;
     }
     for (auto key : oldKeys)
     {

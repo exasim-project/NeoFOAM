@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
 
 #include <unordered_map>
 #include <string>
 #include <memory>
+
 #include "NeoFOAM/core/document.hpp"
 
 namespace NeoFOAM

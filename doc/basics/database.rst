@@ -3,7 +3,8 @@
 Database
 ========
 
-NeoFOAM uses a document-based database to store the data. This general purpose database stores data in a collection of documents. Each document is pair of strings and values that are validate with a custom validator function as shown in the the following class diagram:
+NeoFOAM uses a document-based database, which stores data in a collection of documents. 
+Each document is pair of strings and values that are validated with a custom validator function as shown in the the following class diagram:
 
 .. mermaid::
 

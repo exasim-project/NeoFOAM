@@ -12,10 +12,6 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-// // forward declaration
-template<typename GeoField>
-class SolutionFields;
-
 /**
  * @class VolumeField
  * @brief Represents a surface field in a finite volume method.

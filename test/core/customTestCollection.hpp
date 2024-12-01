@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
 
 #include <optional>
 #include <string>
+
 #include <NeoFOAM/core/database.hpp>
 #include "NeoFOAM/core/document.hpp"
 
