@@ -31,6 +31,7 @@ public:
     /* @brief Constructor for a uninitialized VolumeField
      *
      * @param exec The executor
+     * @param name The name of the field
      * @param mesh The underlying mesh
      * @param boundaryConditions a vector of boundary conditions
      */
@@ -41,17 +42,18 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
           boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
           fieldCollectionName("")
     {}
 
     /* @brief Constructor for a VolumeField with a given internal field
      *
+     * @param exec The executor
      * @param mesh The underlying mesh
      * @param internalField the underlying internal field
      * @param boundaryConditions a vector of boundary conditions
@@ -64,20 +66,25 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
           boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
           fieldCollectionName("")
     {}
 
-    /* @brief Constructor for a VolumeField with a given internal field
+    /* @brief Constructor for a VolumeField with a given internal field and database
      *
+     * @param exec The executor
+     * @param name The name of the field
      * @param mesh The underlying mesh
      * @param internalField the underlying internal field
      * @param boundaryConditions a vector of boundary conditions
+     * @param db The database
+     * @param key The key of the field in the database
+     * @param fieldCollectionName The name of the field collection in the database
      */
     VolumeField(
         const Executor& exec,
@@ -90,11 +97,11 @@ public:
         std::string fieldCollectionName
     )
         : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
           boundaryConditions_(boundaryConditions), db_(&db), key(key),
           fieldCollectionName(fieldCollectionName)
     {}
@@ -118,9 +125,18 @@ public:
         }
     }
 
+    /**
+     * @brief Returns true if the field has a database, false otherwise.
+     *
+     * @return true if the field has a database, false otherwise.
+     */
     bool hasDatabase() const { return db_.has_value(); }
 
-    // non-const accessors database
+    /**
+     * @brief Retrieves the database.
+     *
+     * @return Database& A reference to the database.
+     */
     Database& db()
     {
         if (!db_.has_value())
@@ -130,7 +146,11 @@ public:
         return *db_.value();
     }
 
-    // const accessors database
+    /**
+     * @brief Retrieves the database.
+     *
+     * @return const Database& A const reference to the database.
+     */
     const Database& db() const
     {
         if (!db_.has_value())
@@ -140,6 +160,11 @@ public:
         return *db_.value();
     }
 
+    /**
+     * @brief Returns true if the field is registered in the database, false otherwise.
+     *
+     * @return true if the field is registered in the database, false otherwise.
+     */
     bool registered() const { return key != "" && fieldCollectionName != "" && db_.has_value(); }
 
     std::vector<VolumeBoundary<ValueType>> boundaryConditions() const
@@ -147,8 +172,8 @@ public:
         return boundaryConditions_;
     }
 
-    std::string key;
-    std::string fieldCollectionName;
+    std::string key;                 // The key of the field in the database
+    std::string fieldCollectionName; // The name of the field collection in the database
 
 private:
 
