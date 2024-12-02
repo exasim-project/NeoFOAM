@@ -27,16 +27,16 @@ std::string FieldDocument::name() const { return doc_.get<std::string>("name"); 
 
 std::string& FieldDocument::name() { return doc_.get<std::string>("name"); }
 
-std::size_t FieldDocument::timeIndex() const { return doc_.get<std::size_t>("timeIndex"); }
+std::int64_t FieldDocument::timeIndex() const { return doc_.get<std::int64_t>("timeIndex"); }
 
-std::size_t& FieldDocument::timeIndex() { return doc_.get<std::size_t>("timeIndex"); }
+std::int64_t& FieldDocument::timeIndex() { return doc_.get<std::int64_t>("timeIndex"); }
 
-std::size_t FieldDocument::iterationIndex() const
+std::int64_t FieldDocument::iterationIndex() const
 {
-    return doc_.get<std::size_t>("iterationIndex");
+    return doc_.get<std::int64_t>("iterationIndex");
 }
 
-std::size_t& FieldDocument::iterationIndex() { return doc_.get<std::size_t>("iterationIndex"); }
+std::int64_t& FieldDocument::iterationIndex() { return doc_.get<std::int64_t>("iterationIndex"); }
 
 std::int64_t FieldDocument::subCycleIndex() const
 {

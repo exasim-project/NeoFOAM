@@ -34,8 +34,8 @@ struct CreateField
 {
     std::string name;
     NeoFOAM::UnstructuredMesh mesh;
-    std::size_t timeIndex = 0;
-    std::size_t iterationIndex = 0;
+    std::int64_t timeIndex = 0;
+    std::int64_t iterationIndex = 0;
     std::int64_t subCycleIndex = 0;
     NeoFOAM::Document operator()(NeoFOAM::Database& db)
     {
@@ -189,7 +189,7 @@ TEST_CASE("FieldCollection")
         {
             auto resTimeIndex =
                 fieldCollection.find([](const NeoFOAM::Document& doc)
-                                     { return doc.get<std::size_t>("timeIndex") == 1; });
+                                     { return doc.get<std::int64_t>("timeIndex") == 1; });
 
             REQUIRE(resTimeIndex.size() == 3);
 

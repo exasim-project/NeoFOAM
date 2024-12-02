@@ -51,8 +51,8 @@ public:
     template<class geoField>
     FieldDocument(
         const geoField& field,
-        std::size_t timeIndex,
-        std::size_t iterationIndex,
+        std::int64_t timeIndex,
+        std::int64_t iterationIndex,
         std::int64_t subCycleIndex
     )
         : doc_(
@@ -146,28 +146,28 @@ public:
      *
      * @return An integer representing the time index.
      */
-    std::size_t timeIndex() const;
+    std::int64_t timeIndex() const;
 
     /**
      * @brief Retrieves the time index of the field.
      *
      * @return An integer representing the time index.
      */
-    std::size_t& timeIndex();
+    std::int64_t& timeIndex();
 
     /**
      * @brief Retrieves the iteration index of the field.
      *
      * @return An integer representing the iteration index.
      */
-    std::size_t iterationIndex() const;
+    std::int64_t iterationIndex() const;
 
     /**
      * @brief Retrieves the iteration index of the field.
      *
      * @return An integer representing the iteration index.
      */
-    std::size_t& iterationIndex();
+    std::int64_t& iterationIndex();
 
     /**
      * @brief Retrieves the sub-cycle index of the field.
@@ -334,8 +334,8 @@ public:
 
     std::string name;
     const geoField& field;
-    std::size_t timeIndex = std::numeric_limits<std::size_t>::max();
-    std::size_t iterationIndex = std::numeric_limits<std::size_t>::max();
+    std::int64_t timeIndex = std::numeric_limits<std::int64_t>::max();
+    std::int64_t iterationIndex = std::numeric_limits<std::int64_t>::max();
     std::int64_t subCycleIndex = std::numeric_limits<std::int64_t>::max();
 
     FieldDocument operator()(Database& db)
@@ -355,11 +355,11 @@ public:
         {
             const FieldCollection& fieldCollection = FieldCollection::instance(field);
             const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
-            if (timeIndex == std::numeric_limits<std::size_t>::max())
+            if (timeIndex == std::numeric_limits<std::int64_t>::max())
             {
                 timeIndex = fieldDoc.timeIndex();
             }
-            if (iterationIndex == std::numeric_limits<std::size_t>::max())
+            if (iterationIndex == std::numeric_limits<std::int64_t>::max())
             {
                 iterationIndex = fieldDoc.iterationIndex();
             }

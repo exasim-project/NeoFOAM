@@ -53,7 +53,6 @@ public:
     double testValue() const { return doc_.get<double>("testValue"); }
 
     double& testValue() { return doc_.get<double>("testValue"); }
-    
 
     NeoFOAM::Document& doc() { return doc_; }
 
