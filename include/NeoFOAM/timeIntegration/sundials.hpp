@@ -119,9 +119,8 @@ void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
  * can be copied to this field.
  */
 template<typename SolutionFieldType>
-int explicitRKSolve(sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
+int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
-    (void)(t); // removes compiler warnings about unused.
 
     // Pointer wrangling
     NeoFOAM::dsl::Expression* pdeExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
