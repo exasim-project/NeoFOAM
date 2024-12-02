@@ -220,12 +220,35 @@ The ``FieldCollection`` allows us to access and find fields by their name, time 
     const auto& fieldDoc = fieldCollection.fieldDoc(resName[0]);
     const auto& constVolField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
 
+Query of document in a collection
+---------------------------------
+
+The ``Collection`` class provides a find method that allows the user to query the documents in the collection.
+
+.. sourcecode:: cpp
+
+    std::vector<std::string> keys = fieldCollection.find(
+        [](const Document& doc)
+        {
+            return doc.get<std::string>("name") == "someName";
+                && doc.get<std::size_t>("someValue") == 42.0;
+        }
+    );
+
+The developer can provide a lambda function that returns a boolean value to filter the documents in the collection.
+The find function returns a vector of keys that match the query.
+
 Adding a new collection and documents to the database
 -----------------------------------------------------
 
-The collection is a type erased interface that allows the simple extension by types and only requires that the correct function are implemented in the class.
-The collection than can return access to the custom documents that are stored in the collection.
-The developer can create a custom document that extends the ``Document`` and provides additional functionality as shown below:
+The database supports extensibility through a type-erased interface for collections.
+This design allows developers to create and manage collections of custom documents with minimal coupling.
+A collection provides access to its stored documents, and the only requirement for custom documents is that they extend the base Document class and implement the necessary functionality.
+
+Creating a Custom Document
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Custom documents extend the Document class and add domain-specific functionality. For example:
 
 
 .. sourcecode:: cpp
@@ -271,8 +294,18 @@ The developer can create a custom document that extends the ``Document`` and pro
         NeoFOAM::Document doc_;
     };
 
-The own datastructure can be stored in the documents and the member functions can be defined to access the data. 
-Enabling a simple extension of the database and the collection. The newly created Document can be stored in a custom collection as shown below:
+Here, the CustomDocument class:
+
+    1. Wraps the base Document with its own fields (name and testValue) and validates it.
+    2. Provides accessor functions for these variables
+
+The Document class can be easily wrapped with a custom class to provide additional functionality as shown below.
+
+Storing Custom Documents in a Custom Collection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Collections manage a set of user-defined documents and provide operations to query and modify them.
+The CollectionMixin template simplifies creating custom collections for user-defined documents. For instance:
 
 
 .. sourcecode:: cpp
@@ -305,6 +338,12 @@ Enabling a simple extension of the database and the collection. The newly create
         }
     };
 
-The CollectionMixin is a template class that simplifies the implementation of the collection and offer the possibility to store user-defined documents as shown below.
+In this example:
+
+    1. CustomCollection inherits from CollectionMixin<CustomDocument>, which already provides the necessary functionality for managing custom documents.
+    2. instance is a static method that returns the instance of the CustomCollection or creates a new one if it doesn't exist.
+
+This design allows developers to create custom collections with minimal boilerplate code and focus on the domain-specific functionality of the documents.
+
 
 
