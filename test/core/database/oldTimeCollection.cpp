@@ -35,8 +35,8 @@ struct CreateField
 {
     std::string name;
     NeoFOAM::UnstructuredMesh mesh;
-    std::size_t timeIndex = 0;
-    std::size_t iterationIndex = 0;
+    std::int64_t timeIndex = 0;
+    std::int64_t iterationIndex = 0;
     std::int64_t subCycleIndex = 0;
 
     NeoFOAM::Document operator()(NeoFOAM::Database& db)
@@ -64,7 +64,7 @@ struct CreateField
     }
 };
 
-TEST_CASE("FieldCollection")
+TEST_CASE("oldTimeCollection")
 {
     NeoFOAM::Database db;
 
@@ -77,13 +77,73 @@ TEST_CASE("FieldCollection")
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
+    SECTION("OldTimeDocument")
+    {
+        fvcc::OldTimeDocument oldTimeDoc(
+            "next",
+            "previous",
+            "current",
+            1
+        );
+
+        REQUIRE(oldTimeDoc.nextTime() == "next");
+        REQUIRE(oldTimeDoc.previousTime() == "previous");
+        REQUIRE(oldTimeDoc.currentTime() == "current");
+        REQUIRE(oldTimeDoc.level() == 1);
+        REQUIRE(oldTimeDoc.typeName() == "OldTimeDocument");
+    }
+
+    SECTION("OldTimeCollection from db and name")
+    {
+        fvcc::OldTimeCollection& oldTimeCollection =
+            fvcc::OldTimeCollection::instance(db, "testFieldCollection_oldTime", "testFieldCollection");
+
+        REQUIRE(oldTimeCollection.name() == "testFieldCollection_oldTime");
+        REQUIRE(oldTimeCollection.type() == "OldTimeDocument");
+        REQUIRE(oldTimeCollection.db().contains("testFieldCollection_oldTime"));
+        REQUIRE(oldTimeCollection.size() == 0);
+
+        fvcc::OldTimeDocument oldTimeDoc(
+            "nextTime",
+            "previousTime",
+            "currentTime",
+            1
+        );
+
+        oldTimeCollection.insert(oldTimeDoc);
+        std::string oldTimeDocKey = oldTimeDoc.id();
+
+        REQUIRE(oldTimeCollection.size() == 1);
+        REQUIRE(oldTimeCollection.contains(oldTimeDocKey));
+        REQUIRE(oldTimeCollection.findNextTime("nextTime") == oldTimeDocKey);
+        REQUIRE(oldTimeCollection.findPreviousTime("previousTime") == oldTimeDocKey);
+
+    }
+
+    SECTION("OldTimeCollection from FieldCollection")
+    {
+        fvcc::FieldCollection& fieldCollection =
+            fvcc::FieldCollection::instance(db, "testFieldCollection");
+
+        auto& oldTimeCollection = fvcc::OldTimeCollection::instance(fieldCollection);
+        REQUIRE(oldTimeCollection.name() == "testFieldCollection_oldTime");
+        REQUIRE(oldTimeCollection.type() == "OldTimeDocument");
+        REQUIRE(oldTimeCollection.db().contains("testFieldCollection_oldTime"));
+        REQUIRE(oldTimeCollection.size() == 0);
+
+        const auto& oldTimeCollectionConst = fvcc::OldTimeCollection::instance(fieldCollection);
+        REQUIRE(oldTimeCollectionConst.name() == "testFieldCollection_oldTime");
+
+        
+    }
+
     SECTION("oldTime")
     {
         fvcc::FieldCollection& fieldCollection =
             fvcc::FieldCollection::instance(db, "testFieldCollection");
         fvcc::VolumeField<NeoFOAM::scalar>& T =
             fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-                CreateField {.name = "T", .mesh = mesh, .timeIndex = 2}
+                CreateField {.name = "T", .mesh = mesh, .timeIndex = 1}
             );
         // find the field by name and check the document key
         auto res =
@@ -100,9 +160,10 @@ TEST_CASE("FieldCollection")
         fvcc::FieldDocument& docT = fieldCollection.fieldDoc(T.key);
         // without the timeIndex smaller than 2 the timeIndex overflows if we subtract 1
         // Note: we  are also checking oldTime oldTime(T) in the next section
-        REQUIRE(docT.timeIndex() == 2);
+        REQUIRE(docT.timeIndex() == 1);
         REQUIRE(docT.iterationIndex() == 0);
         REQUIRE(docT.subCycleIndex() == 0);
+        
 
         SECTION("usage")
         {
@@ -110,6 +171,8 @@ TEST_CASE("FieldCollection")
 
             REQUIRE(Told.name == "T_0");
             REQUIRE(Told.internalField().copyToHost()[0] == 1.0);
+            fvcc::FieldDocument& docTold = fieldCollection.fieldDoc(Told.key);
+            REQUIRE(docTold.timeIndex() == 0);
 
             auto& sameTold = fvcc::oldTime(T);
             // check if the same field is returned
@@ -118,6 +181,8 @@ TEST_CASE("FieldCollection")
             auto& Told2 = fvcc::oldTime(Told);
             REQUIRE(Told2.name == "T_0_0");
             REQUIRE(Told2.internalField().copyToHost()[0] == 1.0);
+            fvcc::FieldDocument& docTold2 = fieldCollection.fieldDoc(Told2.key);
+            REQUIRE(docTold2.timeIndex() == -1);
 
             auto& sameTold2 = fvcc::oldTime(Told);
             // check if the same field is returned

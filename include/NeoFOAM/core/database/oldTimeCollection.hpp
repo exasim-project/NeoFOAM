@@ -20,45 +20,110 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+class OldTimeDocument
+{
+public:
 
-// class OldTimeDocument
-// {
-// public:
+    OldTimeDocument(const Document& doc);
 
-//     std::string name;
-//     std::size_t timeIndex;
-//     std::size_t iterationIndex;
-//     std::int64_t subCycleIndex;
-//     std::any field;
+    OldTimeDocument(
+        std::string nextTime,
+        std::string previousTime,
+        std::string currentTime,
+        int32_t level
+    );
+
+    std::string& nextTime();
+
+    const std::string& nextTime() const;
+
+    std::string& previousTime();
+
+    const std::string& previousTime() const;
+
+    std::string& currentTime();
+
+    const std::string& currentTime() const;
+
+    int32_t& level();
+
+    const int32_t& level() const;
+  
+    Document& doc();
+
+    const Document& doc() const;
+
+    std::string id() const;
+
+    static std::string typeName();
+
+private:
+
+    Document doc_;
+};
 
 
-//     // static Document create(FieldDocument fDoc);
+class OldTimeCollection : public CollectionMixin<OldTimeDocument>
+{
+public:
 
-//     Document doc();
-// };
+    OldTimeCollection(Database& db, std::string name, std::string fieldCollectionName);
 
+    bool contains(const std::string& id) const;
 
-// class OldTimeCollection
-// {
-// public:
+    bool insert(const OldTimeDocument& cc);
 
-//     OldTimeCollection(std::shared_ptr<NeoFOAM::Collection> collection);
+    std::string findNextTime(std::string id) const;
 
-//     static const std::string typeName();
+    std::string findPreviousTime(std::string id) const;
 
-//     static void create(NeoFOAM::Database& db, std::string name);
+    OldTimeDocument& oldTimeDoc(const std::string& id);
 
-//     static NeoFOAM::Collection& getCollection(NeoFOAM::Database& db, std::string name);
+    const OldTimeDocument& oldTimeDoc(const std::string& id) const;
 
-//     static const NeoFOAM::Collection& getCollection(const NeoFOAM::Database& db, std::string
-//     name);
+    template<typename geoField>
+    geoField& getOrInsert(std::string IdOfNextField)
+    {
+        std::string nextId = findNextTime(IdOfNextField);
+        FieldCollection& fieldCollection = FieldCollection::instance(db(), fieldCollectionName_);
 
-//     static OldTimeCollection get(NeoFOAM::Database& db, std::string name);
+        if (nextId != "") // oldField is already registered
+        {
+            OldTimeDocument& otDoc = oldTimeDoc(nextId);
+            return fieldCollection.fieldDoc(otDoc.previousTime()).field<geoField>();
+        }
+        FieldDocument& fieldDoc = fieldCollection.fieldDoc(IdOfNextField);
 
-// private:
+        std::string oldTimeName = fieldDoc.field<geoField>().name + "_0";
+        geoField& oldField = fieldCollection.registerField<geoField>(CreateFromExistingField<geoField> {
+            .name = oldTimeName,
+            .field = fieldDoc.field<geoField>(),
+            .timeIndex = fieldDoc.timeIndex() - 1,
+            .iterationIndex = fieldDoc.iterationIndex(),
+            .subCycleIndex = fieldDoc.subCycleIndex()
+        });
+        OldTimeDocument oldTimeDoc(
+            IdOfNextField,
+            oldField.key,
+            "",
+            -1
+        );
+        insert(oldTimeDoc);
+        return oldField;
+    }
 
-//     std::shared_ptr<NeoFOAM::Collection> collection_;
-// };
+    static OldTimeCollection& instance(Database& db, std::string name, std::string fieldCollectionName);
+
+    static const OldTimeCollection& instance(const Database& db, std::string name);
+
+    static OldTimeCollection& instance(FieldCollection& fieldCollection);
+
+    static const OldTimeCollection& instance(const FieldCollection& fieldCollection);
+
+    private:
+
+        std::string fieldCollectionName_;
+};
 
 /**
  * @brief Retrieves the old time field of a given field.
@@ -73,9 +138,11 @@ template<typename geoField>
 geoField& oldTime(geoField& field)
 {
     FieldCollection& fieldCollection = FieldCollection::instance(field);
+    OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
+
     FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
 
-    std::size_t timeIdx = fieldDoc.timeIndex();
+    std::int64_t timeIdx = fieldDoc.timeIndex();
 
     std::string oldTimeName = field.name + "_0";
 
@@ -83,27 +150,17 @@ geoField& oldTime(geoField& field)
         [oldTimeName, timeIdx](const Document& doc)
         {
             return doc.get<std::string>("name") == oldTimeName
-                && doc.get<std::size_t>("timeIndex") == timeIdx - 1;
+                && doc.get<std::int64_t>("timeIndex") == timeIdx - 1;
         }
     );
 
     bool found = (oldKeys.size() == 1);
-    // print oldKeys
-    for (auto key : fieldCollection.sortedKeys())
-    {
-    }
-    for (auto key : oldKeys)
-    {
-        std::cout << "  -- " << key << std::endl;
-    }
     if (found)
     {
-        std::cout << "Found old field" << std::endl;
         FieldDocument& oldDoc = fieldCollection.fieldDoc(oldKeys[0]);
         geoField& oldField = oldDoc.field<geoField>();
         return oldField;
     }
-    std::cout << "not Found old field" << std::endl;
 
     // create oldTime field
     geoField& oldField = fieldCollection.registerField<geoField>(CreateFromExistingField<geoField> {
@@ -131,7 +188,7 @@ const geoField& oldTime(const geoField& field)
     const FieldCollection& fieldCollection = FieldCollection::instance(field);
     const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
 
-    std::size_t timeIdx = fieldDoc.timeIndex();
+    std::int64_t timeIdx = fieldDoc.timeIndex();
 
     std::string oldTimeName = field.name + "_0";
 
@@ -139,7 +196,7 @@ const geoField& oldTime(const geoField& field)
         [oldTimeName, timeIdx](const Document& doc)
         {
             return doc.get<std::string>("name") == oldTimeName
-                && doc.get<std::size_t>("timeIndex") == timeIdx - 1;
+                && doc.get<std::int64_t>("timeIndex") == timeIdx - 1;
         }
     );
 
