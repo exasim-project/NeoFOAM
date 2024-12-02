@@ -68,7 +68,8 @@ void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field,
     auto span = field.span();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-        for (size_t i = 0; i < field.size(); i++)
+	size_t fieldSize = field.size();
+        for (size_t i = 0; i < fieldSize; i++)
         {
             span[i] = kernel(i);
         }
@@ -129,7 +130,8 @@ void parallelReduce(
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-        for (size_t i = 0; i < field.size(); i++)
+	size_t fieldSize = field.size();
+        for (size_t i = 0; i < fieldSize; i++)
         {
             kernel(i, value);
         }
