@@ -220,3 +220,91 @@ The ``FieldCollection`` allows us to access and find fields by their name, time 
     const auto& fieldDoc = fieldCollection.fieldDoc(resName[0]);
     const auto& constVolField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
 
+Adding a new collection and documents to the database
+-----------------------------------------------------
+
+The collection is a type erased interface that allows the simple extension by types and only requires that the correct function are implemented in the class.
+The collection than can return access to the custom documents that are stored in the collection.
+The developer can create a custom document that extends the ``Document`` and provides additional functionality as shown below:
+
+
+.. sourcecode:: cpp
+
+    class CustomDocument
+    {
+    public:
+
+        CustomDocument(
+            const std::string& name,
+            const double& testValue
+        )
+            : doc_(
+                NeoFOAM::Document(
+                    {
+                        {"name", name},
+                        {"testValue", testValue}
+                    }
+                    , validateCustomDoc
+                )
+            )
+        {}
+
+        std::string& name() { return doc_.get<std::string>("name"); }
+
+        const std::string& name() const { return doc_.get<std::string>("name"); }
+
+        double testValue() const { return doc_.get<double>("testValue"); }
+
+        double& testValue() { return doc_.get<double>("testValue"); }
+        
+
+        NeoFOAM::Document& doc() { return doc_; }
+
+        const NeoFOAM::Document& doc() const { return doc_; }
+
+        std::string id() const { return doc_.id(); }
+
+        static std::string typeName() { return "CustomDocument"; }
+
+    private:
+
+        NeoFOAM::Document doc_;
+    };
+
+The own datastructure can be stored in the documents and the member functions can be defined to access the data. 
+Enabling a simple extension of the database and the collection. The newly created Document can be stored in a custom collection as shown below:
+
+
+.. sourcecode:: cpp
+
+    class CustomCollection : public NeoFOAM::CollectionMixin<CustomDocument>
+    {
+    public:
+
+        CustomCollection(NeoFOAM::Database& db, std::string name)
+            : NeoFOAM::CollectionMixin<CustomDocument>(db, name)
+        {}
+
+        bool contains(const std::string& id) const { return docs_.contains(id); }
+
+        bool insert(const CustomDocument& cc)
+        {
+            std::string id = cc.id();
+            if (contains(id))
+            {
+                return false;
+            }
+            docs_.emplace(id, cc);
+            return true;
+        }
+
+        static CustomCollection& instance(NeoFOAM::Database& db, std::string name)
+        {
+            NeoFOAM::Collection& col = db.insert(name, CustomCollection(db, name));
+            return col.as<CustomCollection>();
+        }
+    };
+
+The CollectionMixin is a template class that simplifies the implementation of the collection and offer the possibility to store user-defined documents as shown below.
+
+

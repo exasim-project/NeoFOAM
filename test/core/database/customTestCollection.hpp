@@ -10,13 +10,50 @@
 #include "NeoFOAM/core/database/document.hpp"
 
 
+bool validateCustomDoc(const NeoFOAM::Document& doc)
+{
+    return doc.contains("name") && doc.contains("testValue");
+}
+
 class CustomDocument
 {
 public:
 
-    CustomDocument() : doc_() {}
+    CustomDocument() : doc_(
+                NeoFOAM::Document(
+                  {
+                      {"name", ""},
+                      {"testValue", 0}
+                  }
+                  , validateCustomDoc
+              )
+    ) {}
 
     CustomDocument(const NeoFOAM::Document& doc) : doc_(doc) {}
+
+    CustomDocument(
+        const std::string& name,
+        const double& testValue
+    )
+        : doc_(
+              NeoFOAM::Document(
+                  {
+                      {"name", name},
+                      {"testValue", testValue}
+                  }
+                  , validateCustomDoc
+              )
+          )
+    {}
+
+    std::string& name() { return doc_.get<std::string>("name"); }
+
+    const std::string& name() const { return doc_.get<std::string>("name"); }
+
+    double testValue() const { return doc_.get<double>("testValue"); }
+
+    double& testValue() { return doc_.get<double>("testValue"); }
+    
 
     NeoFOAM::Document& doc() { return doc_; }
 
