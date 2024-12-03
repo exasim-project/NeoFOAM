@@ -304,8 +304,8 @@ public:
 protected:
 
     std::unordered_map<std::string, DocumentType> docs_; ///< The map of document IDs to documents.
-    std::string name_;                                   ///< The name of the collection.
     NeoFOAM::Database& db_;                              ///< The reference to the database.
+    std::string name_;                                   ///< The name of the collection.
 };
 
 } // namespace NeoFOAM

@@ -344,9 +344,9 @@ public:
 
     std::string name;
     const FieldType& field;
-    std::int64_t timeIndex;      // = std::numeric_limits<std::int64_t>::max();
-    std::int64_t iterationIndex; // = std::numeric_limits<std::int64_t>::max();
-    std::int64_t subCycleIndex;  // = std::numeric_limits<std::int64_t>::max();
+    std::int64_t timeIndex = std::numeric_limits<std::int64_t>::max();
+    std::int64_t iterationIndex = std::numeric_limits<std::int64_t>::max();
+    std::int64_t subCycleIndex = std::numeric_limits<std::int64_t>::max();
 
     FieldDocument operator()(Database& db)
     {

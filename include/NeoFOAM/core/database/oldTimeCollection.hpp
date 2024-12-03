@@ -86,8 +86,8 @@ public:
 
         if (nextId != "") // oldField is already registered
         {
-            OldTimeDocument& oldTimeDoc = oldTimeDoc(nextId);
-            return fieldCollection.fieldDoc(oldTimeDoc.previousTime()).field<FieldType>();
+            OldTimeDocument& oldTimeDocument = oldTimeDoc(nextId);
+            return fieldCollection.fieldDoc(oldTimeDocument.previousTime()).field<FieldType>();
         }
         FieldDocument& fieldDoc = fieldCollection.fieldDoc(IdOfNextField);
 
@@ -100,9 +100,9 @@ public:
                 .iterationIndex = fieldDoc.iterationIndex(),
                 .subCycleIndex = fieldDoc.subCycleIndex()
             });
-        OldTimeDocument oldTimeDoc(fieldDoc.field<FieldType>().key, oldField.key, "", -1);
-        setCurrentFieldAndLevel(oldTimeDoc);
-        insert(oldTimeDoc);
+        OldTimeDocument oldTimeDocument(fieldDoc.field<FieldType>().key, oldField.key, "", -1);
+        setCurrentFieldAndLevel(oldTimeDocument);
+        insert(oldTimeDocument);
         return oldField;
     }
 
@@ -115,8 +115,8 @@ public:
 
         if (nextId != "") // oldField has to be registered
         {
-            const OldTimeDocument& oldTimeDoc = oldTimeDoc(nextId);
-            return fieldCollection.fieldDoc(oldTimeDoc.previousTime()).field<FieldType>();
+            const OldTimeDocument& oldTimeDocument = oldTimeDoc(nextId);
+            return fieldCollection.fieldDoc(oldTimeDocument.previousTime()).field<FieldType>();
         }
         else
         {
