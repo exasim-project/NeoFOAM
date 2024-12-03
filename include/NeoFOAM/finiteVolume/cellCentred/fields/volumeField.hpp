@@ -51,22 +51,29 @@ public:
           fieldCollectionName("")
     {}
 
+
     /* @brief Constructor for a VolumeField with a given internal field
      *
      * @param exec The executor
      * @param mesh The underlying mesh
-     * @param domainField the underlying domain field i.e. combination of internal and boundary
-     * fields
+     * @param internalField the underlying internal field
      * @param boundaryConditions a vector of boundary conditions
      */
     VolumeField(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
-        const DomainField<ValueType>& domainField,
+        const Field<ValueType>& internalField,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(exec, mesh, domainField),
-          boundaryConditions_(boundaryConditions)
+        : GeometricFieldMixin<ValueType>(
+              exec,
+              name,
+              mesh,
+              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+          ),
+          boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
+          fieldCollectionName("")
     {}
 
     /* @brief Constructor for a VolumeField with a given internal and boundary field
@@ -123,8 +130,6 @@ public:
           ),
           boundaryConditions_(boundaryConditions), db_(&db), key(key),
           fieldCollectionName(fieldCollectionName)
-        : GeometricFieldMixin<ValueType>(exec, mesh, internalField, boundaryFields),
-          boundaryConditions_(boundaryConditions)
     {}
 
     VolumeField(const VolumeField& other)
