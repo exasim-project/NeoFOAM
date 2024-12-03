@@ -5,8 +5,8 @@
 
 #include <unordered_map>
 #include <string>
-#include <any>
 #include <memory>
+
 #include "NeoFOAM/core/database/collection.hpp"
 
 namespace NeoFOAM
@@ -54,7 +54,7 @@ public:
      * @param name The name of the collection to retrieve.
      * @return Collection& A reference to the collection with the specified name.
      */
-    Collection& getCollection(const std::string& name);
+    Collection& at(const std::string& name);
 
     /**
      * @brief Retrieves a collection by its name (const version).
@@ -66,7 +66,7 @@ public:
      * @param name The name of the collection to retrieve.
      * @return const Collection& A const reference to the collection with the specified name.
      */
-    const Collection& getCollection(const std::string& name) const;
+    const Collection& at(const std::string& name) const;
 
     /**
      * @brief Retrieves a collection by its name and casts it to the specified type.
@@ -78,12 +78,8 @@ public:
      * @param name The name of the collection to retrieve.
      * @return CollectionType& A reference to the collection cast to the specified type.
      */
-    template<typename CollectionType>
-    CollectionType& get(const std::string& name)
-    {
-        Collection& collection = getCollection(name);
-        return collection.as<CollectionType>();
-    }
+    template<typename CollectionType=Collection>
+    CollectionType& at(const std::string& name);
 
 
     /**

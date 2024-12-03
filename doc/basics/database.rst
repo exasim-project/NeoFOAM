@@ -94,9 +94,9 @@ The following class diagram illustrates the relationships between the ``Database
         CollectionB <-- DocumentD
         CollectionB <-- DocumentF
 
-A database can have 0 to N collection and each collection can have 0 to N documents. 
+A database can have 0 to N collections and each collection can have 0 to N documents. 
 At the lowest level is the ``Document`` class, which is a Dictionary with an ID and a validator function to ensure data integrity.
-This container similar to a python dictionary enables the storage of key-value pairs and therefore can be used to store any type of data.
+The Document container is similar to a python dictionary using key-value pairs and can be used to store any type of data.
 The following code snippet shows how to create a document and access its values:
 
 .. sourcecode:: cpp
@@ -108,7 +108,8 @@ The following code snippet shows how to create a document and access its values:
         REQUIRE(doc.get<double>("key2") == 2.0);
     };       
 
-``NeoFOAM::Document`` mainly extendes the ``Dictionary`` and offers the possibility to validate the data stored in the document. The following code snippet shows how to create a document with a custom validator function:
+``NeoFOAM::Document`` mainly extends the ``Dictionary`` class and offers the possibility to validate the data stored in the document. 
+The following code snippet shows how to create a document with a custom validator function:
 
 .. sourcecode:: cpp
 
@@ -118,9 +119,8 @@ The following code snippet shows how to create a document and access its values:
     NeoFOAM::Document doc({{"key1", std::string("value1")}, {"key2", 2.0}}, validator);
     REQUIRE_NOTHROW(doc.validate());
 
-As stated earlier, the Document are than stored in the collection that are stored in the database as shown in the class diagram above.
-This design allows the storage of the desired data but the usage would be inconvient as only document wouldn't have any additional functionality.
-Therefore, the developer can create a custom collection that provides additional functionality to the document that will be discussed in the last section.
+As stated earlier, the Documents are stored as part of a Collection which itself is stored in the central database as shown in the class diagram above.
+To enable custom functionalities the developer can create a custom collection that provides additional functionality to the document.
 This is done in the FieldCollection class that is used to store the field data in the database.
 
 
@@ -129,7 +129,7 @@ FieldCollection
 ---------------
 
 The ``FieldCollection`` stores all fields and provides additional functionality which is stored in a document.
-The ``FieldDocument`` stores the field itself in ``std::any`` and additional information like the time index, iteration index, and subcycle index.
+The ``FieldDocument`` keeps a reference to field as a ``std::any`` and stores additional metatdata like the time index, iteration index, and subcycle index.
 The following code snippet shows how to create a ``FieldDocument``:
 
 .. sourcecode:: cpp

@@ -23,8 +23,6 @@ class Database;
  * The Collection class provides a type-erased interface for different collection types.
  * It allows operations such as retrieving documents, finding documents based on predicates,
  * and accessing collection metadata.
- *
- * @tparam CollectionType The type of the underlying collection.
  */
 class Collection
 {
@@ -43,7 +41,6 @@ public:
 
     /**
      * @brief Copy constructor.
-     *
      * @param other The Collection instance to copy from.
      */
     Collection(const Collection& other);
@@ -159,7 +156,6 @@ private:
         virtual std::string name() const = 0;
         virtual Database& db() = 0;
         virtual const Database& db() const = 0;
-
         virtual std::unique_ptr<CollectionConcept> clone() const = 0;
     };
 
@@ -200,9 +196,9 @@ private:
 };
 
 /**
+ * @class CollectionMixin
  * @brief A mixin class for collection of documents in a database to simplify the implementation of
  * common operations.
- *
  * @tparam DocumentType The type of documents stored in the collection.
  */
 template<typename DocumentType>

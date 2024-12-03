@@ -2,9 +2,7 @@
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 #pragma once
 
-#include <unordered_map>
 #include <limits>
-#include <any>
 #include <string>
 #include <functional>
 
@@ -121,7 +119,7 @@ public:
      * @tparam geoField The type of the field.
      * @return A const reference to the field.
      */
-    template<class geoField>
+    template<class FieldType>
     const geoField& field() const
     {
         return doc_.get<const geoField&>("field");

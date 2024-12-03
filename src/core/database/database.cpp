@@ -11,8 +11,7 @@ namespace NeoFOAM
 
 Collection& Database::insert(const std::string& name, const Collection& col)
 {
-    collections_.emplace(name, col);
-    return collections_.at(name);
+    return *(collections_.emplace(name, col).first);
 }
 
 bool Database::contains(const std::string& name) const { return collections_.contains(name); }
