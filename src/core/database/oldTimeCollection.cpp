@@ -6,98 +6,57 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-OldTimeDocument::OldTimeDocument(const Document& doc)
-    : doc_(doc)
-{}
+OldTimeDocument::OldTimeDocument(const Document& doc) : doc_(doc) {}
 
 OldTimeDocument::OldTimeDocument(
-    std::string nextTime,
-    std::string previousTime,
-    std::string currentTime,
-    int32_t level
+    std::string nextTime, std::string previousTime, std::string currentTime, int32_t level
 )
-    : doc_(
-          Document(
-              {
-                  {"nextTime", nextTime},
-                  {"previousTime", previousTime},
-                  {"currentTime", currentTime},
-                  {"level", level}
-              }
-          )
-      )
+    : doc_(Document(
+        {{"nextTime", nextTime},
+         {"previousTime", previousTime},
+         {"currentTime", currentTime},
+         {"level", level}}
+    ))
 {}
 
-std::string& OldTimeDocument::nextTime()
-{
-    return doc_.get<std::string>("nextTime");
-}
+std::string& OldTimeDocument::nextTime() { return doc_.get<std::string>("nextTime"); }
 
-const std::string& OldTimeDocument::nextTime() const
-{
-    return doc_.get<std::string>("nextTime");
-}
+const std::string& OldTimeDocument::nextTime() const { return doc_.get<std::string>("nextTime"); }
 
-std::string& OldTimeDocument::previousTime()
-{
-    return doc_.get<std::string>("previousTime");
-}
+std::string& OldTimeDocument::previousTime() { return doc_.get<std::string>("previousTime"); }
 
 const std::string& OldTimeDocument::previousTime() const
 {
     return doc_.get<std::string>("previousTime");
 }
 
-std::string& OldTimeDocument::currentTime()
-{
-    return doc_.get<std::string>("currentTime");
-}
+std::string& OldTimeDocument::currentTime() { return doc_.get<std::string>("currentTime"); }
 
 const std::string& OldTimeDocument::currentTime() const
 {
     return doc_.get<std::string>("currentTime");
 }
 
-int32_t& OldTimeDocument::level()
-{
-    return doc_.get<int32_t>("level");
-}
+int32_t& OldTimeDocument::level() { return doc_.get<int32_t>("level"); }
 
-const int32_t& OldTimeDocument::level() const
-{
-    return doc_.get<int32_t>("level");
-}
+const int32_t& OldTimeDocument::level() const { return doc_.get<int32_t>("level"); }
 
-Document& OldTimeDocument::doc()
-{
-    return doc_;
-}
+Document& OldTimeDocument::doc() { return doc_; }
 
-const Document& OldTimeDocument::doc() const
-{
-    return doc_;   
-}
+const Document& OldTimeDocument::doc() const { return doc_; }
 
 
-std::string OldTimeDocument::id() const
-{
-    return doc_.id();
+std::string OldTimeDocument::id() const { return doc_.id(); }
 
-}
+std::string OldTimeDocument::typeName() { return "OldTimeDocument"; }
 
-std::string OldTimeDocument::typeName()
-{
-    return "OldTimeDocument";
-}
-
-OldTimeCollection::OldTimeCollection(Database& db, std::string name, std::string fieldCollectionName)
+OldTimeCollection::OldTimeCollection(
+    Database& db, std::string name, std::string fieldCollectionName
+)
     : CollectionMixin<OldTimeDocument>(db, name), fieldCollectionName_(fieldCollectionName)
 {}
 
-OldTimeDocument& OldTimeCollection::oldTimeDoc(const std::string& id)
-{
-    return docs_.at(id);
-}
+OldTimeDocument& OldTimeCollection::oldTimeDoc(const std::string& id) { return docs_.at(id); }
 
 const OldTimeDocument& OldTimeCollection::oldTimeDoc(const std::string& id) const
 {
@@ -119,11 +78,12 @@ void OldTimeCollection::setCurrentFieldAndLevel(OldTimeDocument& oldTimeDoc)
     auto& nextDoc = docs_.at(nextId);
     oldTimeDoc.currentTime() = nextDoc.currentTime();
     oldTimeDoc.level() = nextDoc.level() + 1;
-} 
+}
 
 bool OldTimeCollection::contains(const std::string& id) const
 {
-    return docs_.contains(id);;
+    return docs_.contains(id);
+    ;
 }
 
 bool OldTimeCollection::insert(const OldTimeDocument& otd)
@@ -139,12 +99,7 @@ bool OldTimeCollection::insert(const OldTimeDocument& otd)
 
 std::string OldTimeCollection::findNextTime(std::string id) const
 {
-    auto keys = find(
-        [id](const Document& doc)
-        {
-            return doc.get<std::string>("nextTime") == id;
-        }
-    );
+    auto keys = find([id](const Document& doc) { return doc.get<std::string>("nextTime") == id; });
     if (keys.size() == 1)
     {
         return keys[0];
@@ -154,12 +109,8 @@ std::string OldTimeCollection::findNextTime(std::string id) const
 
 std::string OldTimeCollection::findPreviousTime(std::string id) const
 {
-    auto keys = find(
-        [id](const Document& doc)
-        {
-            return doc.get<std::string>("previousTime") == id;
-        }
-    );
+    auto keys =
+        find([id](const Document& doc) { return doc.get<std::string>("previousTime") == id; });
     if (keys.size() == 1)
     {
         return keys[0];
@@ -167,9 +118,10 @@ std::string OldTimeCollection::findPreviousTime(std::string id) const
     return "";
 }
 
-OldTimeCollection& OldTimeCollection::instance(Database& db, std::string name, std::string fieldCollectionName)
+OldTimeCollection&
+OldTimeCollection::instance(Database& db, std::string name, std::string fieldCollectionName)
 {
-    Collection& col = db.insert(name, OldTimeCollection(db, name,fieldCollectionName));
+    Collection& col = db.insert(name, OldTimeCollection(db, name, fieldCollectionName));
     return col.as<OldTimeCollection>();
 }
 
@@ -190,8 +142,6 @@ const OldTimeCollection& OldTimeCollection::instance(const FieldCollection& fiel
     std::string name = fieldCollection.name() + "_oldTime";
     return instance(fieldCollection.db(), name);
 }
-
-
 
 
 } // namespace NeoFOAM::finiteVolume::cellCentred

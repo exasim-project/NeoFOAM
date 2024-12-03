@@ -42,16 +42,16 @@ public:
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-              exec,
-              name,
-              mesh,
-              DomainField<ValueType>(
-                  exec,
-                  mesh.nInternalFaces() + mesh.nBoundaryFaces(),
-                  mesh.nBoundaryFaces(),
-                  mesh.nBoundaries()
-              )
-          ),
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(
+                exec,
+                mesh.nInternalFaces() + mesh.nBoundaryFaces(),
+                mesh.nBoundaryFaces(),
+                mesh.nBoundaries()
+            )
+        ),
           boundaryConditions_(boundaryConditions)
     {}
 

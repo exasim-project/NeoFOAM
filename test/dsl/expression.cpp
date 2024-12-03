@@ -23,7 +23,7 @@ TEST_CASE("Expression")
     BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-    auto vf = VolumeField(exec,"vf", mesh, fA, bf, bcs);
+    auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
     auto fB = Field(exec, 1, 4.0);
 
     auto a = Dummy(vf);

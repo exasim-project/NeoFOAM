@@ -79,12 +79,7 @@ TEST_CASE("oldTimeCollection")
 
     SECTION("OldTimeDocument")
     {
-        fvcc::OldTimeDocument oldTimeDoc(
-            "next",
-            "previous",
-            "current",
-            1
-        );
+        fvcc::OldTimeDocument oldTimeDoc("next", "previous", "current", 1);
 
         REQUIRE(oldTimeDoc.nextTime() == "next");
         REQUIRE(oldTimeDoc.previousTime() == "previous");
@@ -95,20 +90,16 @@ TEST_CASE("oldTimeCollection")
 
     SECTION("OldTimeCollection from db and name")
     {
-        fvcc::OldTimeCollection& oldTimeCollection =
-            fvcc::OldTimeCollection::instance(db, "testFieldCollection_oldTime", "testFieldCollection");
+        fvcc::OldTimeCollection& oldTimeCollection = fvcc::OldTimeCollection::instance(
+            db, "testFieldCollection_oldTime", "testFieldCollection"
+        );
 
         REQUIRE(oldTimeCollection.name() == "testFieldCollection_oldTime");
         REQUIRE(oldTimeCollection.type() == "OldTimeDocument");
         REQUIRE(oldTimeCollection.db().contains("testFieldCollection_oldTime"));
         REQUIRE(oldTimeCollection.size() == 0);
 
-        fvcc::OldTimeDocument oldTimeDoc(
-            "nextTime",
-            "previousTime",
-            "currentTime",
-            1
-        );
+        fvcc::OldTimeDocument oldTimeDoc("nextTime", "previousTime", "currentTime", 1);
 
         oldTimeCollection.insert(oldTimeDoc);
         std::string oldTimeDocKey = oldTimeDoc.id();
@@ -117,7 +108,6 @@ TEST_CASE("oldTimeCollection")
         REQUIRE(oldTimeCollection.contains(oldTimeDocKey));
         REQUIRE(oldTimeCollection.findNextTime("nextTime") == oldTimeDocKey);
         REQUIRE(oldTimeCollection.findPreviousTime("previousTime") == oldTimeDocKey);
-
     }
 
     SECTION("OldTimeCollection from FieldCollection")
@@ -133,8 +123,6 @@ TEST_CASE("oldTimeCollection")
 
         const auto& oldTimeCollectionConst = fvcc::OldTimeCollection::instance(fieldCollection);
         REQUIRE(oldTimeCollectionConst.name() == "testFieldCollection_oldTime");
-
-        
     }
 
     SECTION("oldTime")
@@ -163,7 +151,7 @@ TEST_CASE("oldTimeCollection")
         REQUIRE(docT.timeIndex() == 1);
         REQUIRE(docT.iterationIndex() == 0);
         REQUIRE(docT.subCycleIndex() == 0);
-        
+
 
         SECTION("usage")
         {
@@ -173,7 +161,8 @@ TEST_CASE("oldTimeCollection")
             REQUIRE(Told.internalField().copyToHost()[0] == 1.0);
             fvcc::FieldDocument& docTold = fieldCollection.fieldDoc(Told.key);
             REQUIRE(docTold.timeIndex() == 0);
-            fvcc::OldTimeCollection& oldTimeCollection = fvcc::OldTimeCollection::instance(fieldCollection);
+            fvcc::OldTimeCollection& oldTimeCollection =
+                fvcc::OldTimeCollection::instance(fieldCollection);
             REQUIRE(oldTimeCollection.size() == 1);
             auto& ToldDoc = oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(T.key));
             REQUIRE(ToldDoc.nextTime() == T.key);

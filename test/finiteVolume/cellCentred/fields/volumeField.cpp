@@ -41,9 +41,9 @@ TEST_CASE("volumeField")
         vf.correctBoundaryConditions();
 
         NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 1.0);
-        
+
         // check construction with internalField
-        fvcc::VolumeField<NeoFOAM::scalar> vf2(exec, "vf", mesh,internalField, bcs);
+        fvcc::VolumeField<NeoFOAM::scalar> vf2(exec, "vf", mesh, internalField, bcs);
         vf2.correctBoundaryConditions();
 
         REQUIRE(vf.exec() == exec);

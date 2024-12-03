@@ -55,5 +55,4 @@ TEST_CASE("CustomDocument")
     CustomDocument doc3 = CustomDocument("doc3", 3.14);
     REQUIRE(doc3.name() == "doc3");
     REQUIRE(doc3.testValue() == 3.14);
-
 }

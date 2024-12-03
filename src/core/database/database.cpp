@@ -18,10 +18,7 @@ bool Database::contains(const std::string& name) const { return collections_.con
 
 Collection& Database::at(const std::string& name) { return collections_.at(name); }
 
-const Collection& Database::at(const std::string& name) const
-{
-    return collections_.at(name);
-}
+const Collection& Database::at(const std::string& name) const { return collections_.at(name); }
 
 std::size_t Database::size() const { return collections_.size(); }
 

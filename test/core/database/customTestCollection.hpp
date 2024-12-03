@@ -19,31 +19,13 @@ class CustomDocument
 {
 public:
 
-    CustomDocument() : doc_(
-                NeoFOAM::Document(
-                  {
-                      {"name", ""},
-                      {"testValue", 0}
-                  }
-                  , validateCustomDoc
-              )
-    ) {}
+    CustomDocument() : doc_(NeoFOAM::Document({{"name", ""}, {"testValue", 0}}, validateCustomDoc))
+    {}
 
     CustomDocument(const NeoFOAM::Document& doc) : doc_(doc) {}
 
-    CustomDocument(
-        const std::string& name,
-        const double& testValue
-    )
-        : doc_(
-              NeoFOAM::Document(
-                  {
-                      {"name", name},
-                      {"testValue", testValue}
-                  }
-                  , validateCustomDoc
-              )
-          )
+    CustomDocument(const std::string& name, const double& testValue)
+        : doc_(NeoFOAM::Document({{"name", name}, {"testValue", testValue}}, validateCustomDoc))
     {}
 
     std::string& name() { return doc_.get<std::string>("name"); }

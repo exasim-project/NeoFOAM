@@ -42,11 +42,11 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-              exec,
-              name,
-              mesh,
-              DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
-          ),
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
+        ),
           boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
           fieldCollectionName("")
     {}
@@ -67,11 +67,11 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-              exec,
-              name,
-              mesh,
-              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-          ),
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+        ),
           boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
           fieldCollectionName("")
     {}
@@ -92,11 +92,11 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-              exec,
-              name,
-              mesh,
-              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-          ),
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+        ),
           boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
           fieldCollectionName("")
     {}
@@ -123,11 +123,11 @@ public:
         std::string fieldCollectionName
     )
         : GeometricFieldMixin<ValueType>(
-              exec,
-              name,
-              mesh,
-              DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-          ),
+            exec,
+            name,
+            mesh,
+            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+        ),
           boundaryConditions_(boundaryConditions), db_(&db), key(key),
           fieldCollectionName(fieldCollectionName)
     {}

@@ -21,22 +21,11 @@ if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
   endif()
 endif()
 
-if(NOT DEFINED Kokkos_ENABLE_CUDA)
-  check_language(CUDA)
+# if(NOT DEFINED Kokkos_ENABLE_CUDA) check_language(CUDA)
 
-  if(CMAKE_CUDA_COMPILER)
-    set(Kokkos_ENABLE_CUDA
-        ON
-        CACHE INTERNAL "")
-    set(Kokkos_ENABLE_CUDA_CONSTEXPR
-        ON
-        CACHE INTERNAL "")
-  else()
-    set(Kokkos_ENABLE_CUDA
-        OFF
-        CACHE INTERNAL "")
-  endif()
-endif()
+# if(CMAKE_CUDA_COMPILER) set(Kokkos_ENABLE_CUDA ON CACHE INTERNAL "")
+# set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE INTERNAL "") else() set(Kokkos_ENABLE_CUDA OFF CACHE
+# INTERNAL "") endif() endif()
 
 if(NOT DEFINED Kokkos_ENABLE_HIP)
   check_language(HIP)
