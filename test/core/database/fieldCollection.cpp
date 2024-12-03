@@ -241,7 +241,9 @@ TEST_CASE("FieldCollection")
             fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(T);
             fvcc::VolumeField<NeoFOAM::scalar>& T3 =
                 fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-                    fvcc::CreateFromExistingField {.name = "T3", .field = T}
+                    fvcc::CreateFromExistingField<fvcc::VolumeField<NeoFOAM::scalar>> {
+                        .name = "T3", .field = T
+                    }
                 );
 
             const fvcc::FieldDocument& docT = fieldCollection.fieldDoc(T3.key);
