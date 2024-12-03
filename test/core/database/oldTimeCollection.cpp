@@ -173,6 +173,13 @@ TEST_CASE("oldTimeCollection")
             REQUIRE(Told.internalField().copyToHost()[0] == 1.0);
             fvcc::FieldDocument& docTold = fieldCollection.fieldDoc(Told.key);
             REQUIRE(docTold.timeIndex() == 0);
+            fvcc::OldTimeCollection& oldTimeCollection = fvcc::OldTimeCollection::instance(fieldCollection);
+            REQUIRE(oldTimeCollection.size() == 1);
+            auto& ToldDoc = oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(T.key));
+            REQUIRE(ToldDoc.nextTime() == T.key);
+            REQUIRE(ToldDoc.previousTime() == Told.key);
+            REQUIRE(ToldDoc.currentTime() == T.key);
+            REQUIRE(ToldDoc.level() == 1);
 
             auto& sameTold = fvcc::oldTime(T);
             // check if the same field is returned
@@ -183,6 +190,12 @@ TEST_CASE("oldTimeCollection")
             REQUIRE(Told2.internalField().copyToHost()[0] == 1.0);
             fvcc::FieldDocument& docTold2 = fieldCollection.fieldDoc(Told2.key);
             REQUIRE(docTold2.timeIndex() == -1);
+            REQUIRE(oldTimeCollection.size() == 2);
+            auto& ToldDoc2 = oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(Told.key));
+            REQUIRE(ToldDoc2.nextTime() == Told.key);
+            REQUIRE(ToldDoc2.previousTime() == Told2.key);
+            REQUIRE(ToldDoc2.currentTime() == T.key);
+            REQUIRE(ToldDoc2.level() == 2);
 
             auto& sameTold2 = fvcc::oldTime(Told);
             // check if the same field is returned

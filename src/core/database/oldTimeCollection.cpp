@@ -78,6 +78,7 @@ const Document& OldTimeDocument::doc() const
     return doc_;   
 }
 
+
 std::string OldTimeDocument::id() const
 {
     return doc_.id();
@@ -92,6 +93,33 @@ std::string OldTimeDocument::typeName()
 OldTimeCollection::OldTimeCollection(Database& db, std::string name, std::string fieldCollectionName)
     : CollectionMixin<OldTimeDocument>(db, name), fieldCollectionName_(fieldCollectionName)
 {}
+
+OldTimeDocument& OldTimeCollection::oldTimeDoc(const std::string& id)
+{
+    return docs_.at(id);
+}
+
+const OldTimeDocument& OldTimeCollection::oldTimeDoc(const std::string& id) const
+{
+    return docs_.at(id);
+}
+
+void OldTimeCollection::setCurrentFieldAndLevel(OldTimeDocument& oldTimeDoc)
+{
+    // find the document which has the previousTime identical to the nextTime
+    // so the document on above in the chain
+    std::string nextId = findPreviousTime(oldTimeDoc.nextTime());
+    if (nextId == "") // not registered yet
+    {
+        oldTimeDoc.currentTime() = oldTimeDoc.nextTime();
+        oldTimeDoc.level() = 1;
+        return;
+    }
+    // get the next document and set the current field and level
+    auto& nextDoc = docs_.at(nextId);
+    oldTimeDoc.currentTime() = nextDoc.currentTime();
+    oldTimeDoc.level() = nextDoc.level() + 1;
+} 
 
 bool OldTimeCollection::contains(const std::string& id) const
 {

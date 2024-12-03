@@ -261,6 +261,18 @@ public:
      */
     static FieldCollection& instance(NeoFOAM::Database& db, std::string name);
 
+
+    /**
+     * @brief Retrieves the instance of the FieldCollection with the given name (const version).
+     *
+     * creates the FieldCollection if it does not exist.
+     *
+     * @param db The database to retrieve the FieldCollection from.
+     * @param name The name of the FieldCollection.
+     * @return const FieldCollection& A const reference to the FieldCollection.
+     */
+    static const FieldCollection& instance(const NeoFOAM::Database& db, std::string name);
+
     /**
      * @brief Retrieves the instance of the FieldCollection from a const registered geoField
      *

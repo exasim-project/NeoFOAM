@@ -73,4 +73,10 @@ FieldCollection& FieldCollection::instance(NeoFOAM::Database& db, std::string na
     return col.as<FieldCollection>();
 }
 
+const FieldCollection& FieldCollection::instance(const NeoFOAM::Database& db, std::string name)
+{
+    const NeoFOAM::Collection& col = db.getCollection(name);
+    return col.as<FieldCollection>();
+}
+
 } // namespace NeoFOAM::finiteVolume::cellCentred

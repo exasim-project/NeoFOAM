@@ -103,13 +103,31 @@ public:
             .subCycleIndex = fieldDoc.subCycleIndex()
         });
         OldTimeDocument oldTimeDoc(
-            IdOfNextField,
+            fieldDoc.field<geoField>().key,
             oldField.key,
             "",
             -1
         );
+        setCurrentFieldAndLevel(oldTimeDoc);
         insert(oldTimeDoc);
         return oldField;
+    }
+
+    template<typename geoField>
+    const geoField& get(std::string IdOfNextField) const
+    {
+        std::string nextId = findNextTime(IdOfNextField);
+        const FieldCollection& fieldCollection = FieldCollection::instance(db(), fieldCollectionName_);
+
+        if (nextId != "") // oldField has to be registered
+        {
+            const OldTimeDocument& otDoc = oldTimeDoc(nextId);
+            return fieldCollection.fieldDoc(otDoc.previousTime()).field<geoField>();
+        }
+        else
+        {
+            NF_THROW("Old field not found");
+        }
     }
 
     static OldTimeCollection& instance(Database& db, std::string name, std::string fieldCollectionName);
@@ -122,14 +140,16 @@ public:
 
     private:
 
+        /** */
+        void setCurrentFieldAndLevel(OldTimeDocument& oldTimeDoc);
+
         std::string fieldCollectionName_;
 };
 
 /**
  * @brief Retrieves the old time field of a given field.
  *
- * This function retrieves the old time field of a given field by looking up the field's name and
- * time index in the FieldCollection.
+ * This function retrieves the old time field of a given field
  *
  * @param field The field to retrieve the old time field from.
  * @return The old time field.
@@ -142,42 +162,13 @@ geoField& oldTime(geoField& field)
 
     FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
 
-    std::int64_t timeIdx = fieldDoc.timeIndex();
-
-    std::string oldTimeName = field.name + "_0";
-
-    std::vector<std::string> oldKeys = fieldCollection.find(
-        [oldTimeName, timeIdx](const Document& doc)
-        {
-            return doc.get<std::string>("name") == oldTimeName
-                && doc.get<std::int64_t>("timeIndex") == timeIdx - 1;
-        }
-    );
-
-    bool found = (oldKeys.size() == 1);
-    if (found)
-    {
-        FieldDocument& oldDoc = fieldCollection.fieldDoc(oldKeys[0]);
-        geoField& oldField = oldDoc.field<geoField>();
-        return oldField;
-    }
-
-    // create oldTime field
-    geoField& oldField = fieldCollection.registerField<geoField>(CreateFromExistingField<geoField> {
-        .name = oldTimeName,
-        .field = field,
-        .timeIndex = timeIdx - 1,
-        .iterationIndex = fieldDoc.iterationIndex(),
-        .subCycleIndex = fieldDoc.subCycleIndex()
-    });
-    return oldField;
+    return oldTimeCollection.getOrInsert<geoField>(field.key);
 }
 
 /**
  * @brief Retrieves the old time field of a given field (const version).
  *
- * This function retrieves the old time field of a given field by looking up the field's name and
- * time index in the FieldCollection.
+ * This function retrieves the old time field of a given field
  *
  * @param field The field to retrieve the old time field from.
  * @return The old time field.
@@ -186,31 +177,11 @@ template<typename geoField>
 const geoField& oldTime(const geoField& field)
 {
     const FieldCollection& fieldCollection = FieldCollection::instance(field);
+    const OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
+
     const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
 
-    std::int64_t timeIdx = fieldDoc.timeIndex();
-
-    std::string oldTimeName = field.name + "_0";
-
-    std::vector<std::string> oldKeys = fieldCollection.find(
-        [oldTimeName, timeIdx](const Document& doc)
-        {
-            return doc.get<std::string>("name") == oldTimeName
-                && doc.get<std::int64_t>("timeIndex") == timeIdx - 1;
-        }
-    );
-
-    bool found = (oldKeys.size() == 1);
-    if (found)
-    {
-        const FieldDocument& oldDoc = fieldCollection.fieldDoc(oldKeys[0]);
-        const geoField& oldField = oldDoc.field<geoField>();
-        return oldField;
-    }
-    else
-    {
-        NF_THROW("Old field not found");
-    }
+    return oldTimeCollection.get<geoField>(field.key);
 }
 
 } // namespace NeoFOAM
