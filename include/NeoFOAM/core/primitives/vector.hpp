@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 #pragma once
 
-#include <Kokkos_Core.hpp>
+#include <Kokkos_Core.hpp> // IWYU pragma: keep
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"

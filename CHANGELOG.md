@@ -1,4 +1,6 @@
 # Version 0.1.0 (unreleased)
+- Implement a basic DSL interface [#102](https://github.com/exasim-project/NeoFOAM/pull/102)
+- faster project configuration [#179](https://github.com/exasim-project/NeoFOAM/pull/179)
 - improved error handling and addition of tokenList and Input [#134](https://github.com/exasim-project/NeoFOAM/pull/134)
 - disable span from temporary objects and simplification related to fields [#139](https://github.com/exasim-project/NeoFOAM/pull/139)
 - added launch json to debug unit test in vscode [#135](https://github.com/exasim-project/NeoFOAM/pull/135)

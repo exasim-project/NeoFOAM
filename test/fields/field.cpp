@@ -274,7 +274,6 @@ TEST_CASE("getSpans")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-
     NeoFOAM::Field<NeoFOAM::scalar> a(exec, 3, 1.0);
     NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
     NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);

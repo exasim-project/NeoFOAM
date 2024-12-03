@@ -65,7 +65,7 @@ public:
     {}
 
 
-    DomainField(const ::NeoFOAM::DomainField<ValueType>& rhs)
+    DomainField(const DomainField<ValueType>& rhs)
         : exec_(rhs.exec_), internalField_(rhs.internalField_), boundaryFields_(rhs.boundaryFields_)
     {}
 
@@ -76,7 +76,7 @@ public:
     {}
 
 
-    DomainField<ValueType>& operator=(const ::NeoFOAM::DomainField<ValueType>& rhs)
+    DomainField<ValueType>& operator=(const DomainField<ValueType>& rhs)
     {
         internalField_ = rhs.internalField_;
         boundaryFields_ = rhs.boundaryFields_;
