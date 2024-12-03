@@ -40,29 +40,29 @@ public:
     /**
      * @brief Constructs a FieldDocument with the given field and metadata.
      *
-     * @tparam geoField The type of the field.
+     * @tparam FieldType The type of the field.
      * @param field The field to store in the document.
      * @param timeIndex The time index of the field.
      * @param iterationIndex The iteration index of the field.
      * @param subCycleIndex The sub-cycle index of the field.
      */
-    template<class geoField>
+    template<class FieldType>
     FieldDocument(
-        const geoField& field,
+        const FieldType& field,
         std::int64_t timeIndex,
         std::int64_t iterationIndex,
         std::int64_t subCycleIndex
     )
         : doc_(
-              Document(
-                  {{"name", field.name},
-                   {"timeIndex", timeIndex},
-                   {"iterationIndex", iterationIndex},
-                   {"subCycleIndex", subCycleIndex},
-                   {"field", field}}
-              ),
-              validateFieldDoc
-          )
+            Document(
+                {{"name", field.name},
+                 {"timeIndex", timeIndex},
+                 {"iterationIndex", iterationIndex},
+                 {"subCycleIndex", subCycleIndex},
+                 {"field", field}}
+            ),
+            validateFieldDoc
+        )
     {}
 
     /**
@@ -104,19 +104,19 @@ public:
     /**
      * @brief Retrieves the field from the document.
      *
-     * @tparam geoField The type of the field.
+     * @tparam FieldType The type of the field.
      * @return A reference to the field.
      */
-    template<class geoField>
-    geoField& field()
+    template<class FieldType>
+    FieldType& field()
     {
-        return doc_.get<geoField&>("field");
+        return doc_.get<FieldType&>("field");
     }
 
     /**
      * @brief Retrieves the field from the document (const version).
      *
-     * @tparam geoField The type of the field.
+     * @tparam FieldType The type of the field.
      * @return A const reference to the field.
      */
     template<class FieldType>
@@ -190,7 +190,7 @@ private:
  * @brief A function type for creating a FieldDocument.
  *
  * This function type is used to create a FieldDocument and creates a
- * registered geoField
+ * registered FieldType
  *
  * @param db The database to create the FieldDocument in.
  * @return The created FieldDocument.
@@ -272,25 +272,25 @@ public:
     static const FieldCollection& instance(const NeoFOAM::Database& db, std::string name);
 
     /**
-     * @brief Retrieves the instance of the FieldCollection from a const registered geoField
+     * @brief Retrieves the instance of the FieldCollection from a const registered FieldType
      *
-     * @param field A registered geoField
+     * @param field A registered FieldType
      * @return FieldCollection& A reference to the FieldCollection.
      */
-    template<class geoField>
-    static FieldCollection& instance(geoField& field)
+    template<class FieldType>
+    static FieldCollection& instance(FieldType& field)
     {
         return instance(field.db(), field.fieldCollectionName);
     }
 
     /**
-     * @brief Retrieves the instance of the FieldCollection from a const registered geoField
+     * @brief Retrieves the instance of the FieldCollection from a const registered FieldType
      *
-     * @param field A registered geoField
+     * @param field A registered FieldType
      * @return FieldCollection& A reference to the FieldCollection.
      */
-    template<class geoField>
-    static const FieldCollection& instance(const geoField& field)
+    template<class FieldType>
+    static const FieldCollection& instance(const FieldType& field)
     {
         const Database& db = field.db();
         const Collection& collection = db.at(field.fieldCollectionName);
@@ -301,12 +301,12 @@ public:
     /**
      * @brief Registers a field in the collection.
      *
-     * @tparam geoField The type of the field to register.
+     * @tparam FieldType The type of the field to register.
      * @param createFunc The function to create the field document.
      * @return A reference to the registered field.
      */
-    template<class geoField>
-    geoField& registerField(CreateFunction createFunc)
+    template<class FieldType>
+    FieldType& registerField(CreateFunction createFunc)
     {
         FieldDocument doc = createFunc(db());
         if (!validateFieldDoc(doc.doc()))
@@ -316,7 +316,7 @@ public:
 
         std::string key = insert(doc);
         FieldDocument& fd = fieldDoc(key);
-        geoField& field = fd.field<geoField>();
+        FieldType& field = fd.field<FieldType>();
         field.key = key;
         field.fieldCollectionName = name();
         return field;
@@ -329,7 +329,7 @@ public:
  *
  * This function creates a FieldDocument from an existing field.
  *
- * @tparam geoField The type of the field.
+ * @tparam FieldType The type of the field.
  * @param name The name of the field document.
  * @param field The field to create the document from.
  * @param timeIndex The time index of the field document.
@@ -337,16 +337,16 @@ public:
  * @param subCycleIndex The sub-cycle index of the field document.
  * @return The created FieldDocument.
  */
-template<typename geoField>
+template<typename FieldType>
 class CreateFromExistingField
 {
 public:
 
     std::string name;
-    const geoField& field;
-    std::int64_t timeIndex = std::numeric_limits<std::int64_t>::max();
-    std::int64_t iterationIndex = std::numeric_limits<std::int64_t>::max();
-    std::int64_t subCycleIndex = std::numeric_limits<std::int64_t>::max();
+    const FieldType& field;
+    std::int64_t timeIndex;      // = std::numeric_limits<std::int64_t>::max();
+    std::int64_t iterationIndex; // = std::numeric_limits<std::int64_t>::max();
+    std::int64_t subCycleIndex;  // = std::numeric_limits<std::int64_t>::max();
 
     FieldDocument operator()(Database& db)
     {

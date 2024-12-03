@@ -95,7 +95,7 @@ The following class diagram illustrates the relationships between the ``Database
         CollectionB <-- DocumentD
         CollectionB <-- DocumentF
 
-A database can have 0 to N collections and each collection can have 0 to N documents. 
+A database can have 0 to N collections and each collection can have 0 to N documents.
 At the lowest level is the ``Document`` class, which is a Dictionary with an ID and a validator function to ensure data integrity.
 The Document container is similar to a python dictionary using key-value pairs and can be used to store any type of data.
 The following code snippet shows how to create a document and access its values:
@@ -107,9 +107,9 @@ The following code snippet shows how to create a document and access its values:
         REQUIRE(doc.id().substr(0, 4) == "doc_");
         REQUIRE(doc.get<std::string>("key1") == "value1");
         REQUIRE(doc.get<double>("key2") == 2.0);
-    };       
+    };
 
-``NeoFOAM::Document`` mainly extends the ``Dictionary`` class and offers the possibility to validate the data stored in the document. 
+``NeoFOAM::Document`` mainly extends the ``Dictionary`` class and offers the possibility to validate the data stored in the document.
 The following code snippet shows how to create a document with a custom validator function:
 
 .. sourcecode:: cpp
@@ -130,14 +130,14 @@ FieldCollection
 ---------------
 
 The ``FieldCollection`` stores all fields and provides additional functionality which is stored in a document.
-The ``FieldDocument`` keeps a reference to field as a ``std::any`` and stores additional metatdata like the time index, iteration index, and subcycle index.
+The ``FieldDocument`` keeps a reference to field as a ``std::any`` and stores additional metadata like the time index, iteration index, and subcycle index.
 The following code snippet shows how to create a ``FieldDocument``:
 
 .. sourcecode:: cpp
 
-    template<class geoField>
+    template<class FieldType>
     FieldDocument(
-        const geoField& field,
+        const FieldType& field,
         std::size_t timeIndex,
         std::size_t iterationIndex,
         std::int64_t subCycleIndex
@@ -154,7 +154,7 @@ The following code snippet shows how to create a ``FieldDocument``:
           )
     {}
 
-The ``FieldDocument`` stores its data in a ``Document`` and provide the approiate getters and setters for the data.
+The ``FieldDocument`` stores its data in a ``Document`` and provide the appropriate getters and setters for the data.
 The user will most likely not directly create FieldDocument but use the ``FieldCollection`` to register Field.
 
 .. sourcecode:: cpp
@@ -206,14 +206,14 @@ The createFunction could look as followed:
         }
     };
 
-This design can be easilty extended to create and read fields.
+This design can be easily extended to create and read fields.
 The ``FieldCollection`` allows us to access and find fields by their name, time index, iteration index, or subcycle index.
 
 .. sourcecode:: cpp
 
     fvcc::FieldCollection& fieldCollection =
         fvcc::FieldCollection::instance(db, "newTestFieldCollection");
-    
+
     auto resName = fieldCollection.find([](const NeoFOAM::Document& doc)
                                     { return doc.get<std::string>("name") == "T"; });
 
@@ -280,7 +280,7 @@ Custom documents extend the Document class and add domain-specific functionality
         double testValue() const { return doc_.get<double>("testValue"); }
 
         double& testValue() { return doc_.get<double>("testValue"); }
-        
+
 
         NeoFOAM::Document& doc() { return doc_; }
 
@@ -345,6 +345,3 @@ In this example:
     2. instance is a static method that returns the instance of the CustomCollection or creates a new one if it doesn't exist.
 
 This design allows developers to create custom collections with minimal boilerplate code and focus on the domain-specific functionality of the documents.
-
-
-

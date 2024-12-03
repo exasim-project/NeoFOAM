@@ -27,10 +27,7 @@ public:
     OldTimeDocument(const Document& doc);
 
     OldTimeDocument(
-        std::string nextTime,
-        std::string previousTime,
-        std::string currentTime,
-        int32_t level
+        std::string nextTime, std::string previousTime, std::string currentTime, int32_t level
     );
 
     std::string& nextTime();
@@ -48,7 +45,7 @@ public:
     int32_t& level();
 
     const int32_t& level() const;
-  
+
     Document& doc();
 
     const Document& doc() const;
@@ -81,48 +78,45 @@ public:
 
     const OldTimeDocument& oldTimeDoc(const std::string& id) const;
 
-    template<typename geoField>
-    geoField& getOrInsert(std::string IdOfNextField)
+    template<typename FieldType>
+    FieldType& getOrInsert(std::string IdOfNextField)
     {
         std::string nextId = findNextTime(IdOfNextField);
         FieldCollection& fieldCollection = FieldCollection::instance(db(), fieldCollectionName_);
 
         if (nextId != "") // oldField is already registered
         {
-            OldTimeDocument& otDoc = oldTimeDoc(nextId);
-            return fieldCollection.fieldDoc(otDoc.previousTime()).field<geoField>();
+            OldTimeDocument& oldTimeDoc = oldTimeDoc(nextId);
+            return fieldCollection.fieldDoc(oldTimeDoc.previousTime()).field<FieldType>();
         }
         FieldDocument& fieldDoc = fieldCollection.fieldDoc(IdOfNextField);
 
-        std::string oldTimeName = fieldDoc.field<geoField>().name + "_0";
-        geoField& oldField = fieldCollection.registerField<geoField>(CreateFromExistingField<geoField> {
-            .name = oldTimeName,
-            .field = fieldDoc.field<geoField>(),
-            .timeIndex = fieldDoc.timeIndex() - 1,
-            .iterationIndex = fieldDoc.iterationIndex(),
-            .subCycleIndex = fieldDoc.subCycleIndex()
-        });
-        OldTimeDocument oldTimeDoc(
-            fieldDoc.field<geoField>().key,
-            oldField.key,
-            "",
-            -1
-        );
+        std::string oldTimeName = fieldDoc.field<FieldType>().name + "_0";
+        FieldType& oldField =
+            fieldCollection.registerField<FieldType>(CreateFromExistingField<FieldType> {
+                .name = oldTimeName,
+                .field = fieldDoc.field<FieldType>(),
+                .timeIndex = fieldDoc.timeIndex() - 1,
+                .iterationIndex = fieldDoc.iterationIndex(),
+                .subCycleIndex = fieldDoc.subCycleIndex()
+            });
+        OldTimeDocument oldTimeDoc(fieldDoc.field<FieldType>().key, oldField.key, "", -1);
         setCurrentFieldAndLevel(oldTimeDoc);
         insert(oldTimeDoc);
         return oldField;
     }
 
-    template<typename geoField>
-    const geoField& get(std::string IdOfNextField) const
+    template<typename FieldType>
+    const FieldType& get(std::string IdOfNextField) const
     {
         std::string nextId = findNextTime(IdOfNextField);
-        const FieldCollection& fieldCollection = FieldCollection::instance(db(), fieldCollectionName_);
+        const FieldCollection& fieldCollection =
+            FieldCollection::instance(db(), fieldCollectionName_);
 
         if (nextId != "") // oldField has to be registered
         {
-            const OldTimeDocument& otDoc = oldTimeDoc(nextId);
-            return fieldCollection.fieldDoc(otDoc.previousTime()).field<geoField>();
+            const OldTimeDocument& oldTimeDoc = oldTimeDoc(nextId);
+            return fieldCollection.fieldDoc(oldTimeDoc.previousTime()).field<FieldType>();
         }
         else
         {
@@ -130,7 +124,8 @@ public:
         }
     }
 
-    static OldTimeCollection& instance(Database& db, std::string name, std::string fieldCollectionName);
+    static OldTimeCollection&
+    instance(Database& db, std::string name, std::string fieldCollectionName);
 
     static const OldTimeCollection& instance(const Database& db, std::string name);
 
@@ -138,12 +133,12 @@ public:
 
     static const OldTimeCollection& instance(const FieldCollection& fieldCollection);
 
-    private:
+private:
 
-        /** */
-        void setCurrentFieldAndLevel(OldTimeDocument& oldTimeDoc);
+    /** */
+    void setCurrentFieldAndLevel(OldTimeDocument& oldTimeDoc);
 
-        std::string fieldCollectionName_;
+    std::string fieldCollectionName_;
 };
 
 /**
@@ -154,15 +149,15 @@ public:
  * @param field The field to retrieve the old time field from.
  * @return The old time field.
  */
-template<typename geoField>
-geoField& oldTime(geoField& field)
+template<typename FieldType>
+FieldType& oldTime(FieldType& field)
 {
     FieldCollection& fieldCollection = FieldCollection::instance(field);
     OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
 
     FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
 
-    return oldTimeCollection.getOrInsert<geoField>(field.key);
+    return oldTimeCollection.getOrInsert<FieldType>(field.key);
 }
 
 /**
@@ -173,15 +168,15 @@ geoField& oldTime(geoField& field)
  * @param field The field to retrieve the old time field from.
  * @return The old time field.
  */
-template<typename geoField>
-const geoField& oldTime(const geoField& field)
+template<typename FieldType>
+const FieldType& oldTime(const FieldType& field)
 {
     const FieldCollection& fieldCollection = FieldCollection::instance(field);
     const OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
 
     const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
 
-    return oldTimeCollection.get<geoField>(field.key);
+    return oldTimeCollection.get<FieldType>(field.key);
 }
 
 } // namespace NeoFOAM
