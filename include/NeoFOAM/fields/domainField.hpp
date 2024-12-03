@@ -49,16 +49,6 @@ public:
         : exec_(exec), internalField_(exec, internalField), boundaryFields_(exec, boundaryFields)
     {}
 
-    DomainField(
-        const Executor& exec,
-        const Field<ValueType>& internalField,
-        size_t nBoundaryFaces,
-        size_t nBoundaries
-    )
-        : exec_(exec), internalField_(exec, internalField),
-          boundaryFields_(exec, nBoundaryFaces, nBoundaries)
-    {}
-
     DomainField(const Executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), internalField_(exec, mesh.nCells()),
           boundaryFields_(exec, mesh.nBoundaryFaces(), mesh.nBoundaries())

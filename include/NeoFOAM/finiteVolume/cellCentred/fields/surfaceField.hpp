@@ -27,31 +27,21 @@ class SurfaceField : public GeometricFieldMixin<ValueType>
 
 public:
 
-    /**
-     * @brief Constructor for a surfaceField with a given name and mesh.
-     *
-     * @param exec The executor
-     * @param name The name of the field
-     * @param mesh The underlying mesh
-     * @param boundaryConditions a vector of boundary conditions
-     */
     SurfaceField(
         const Executor& exec,
-        std::string name,
         const UnstructuredMesh& mesh,
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
-              exec,
-              name,
-              mesh,
-              DomainField<ValueType>(
-                  exec,
-                  mesh.nInternalFaces() + mesh.nBoundaryFaces(),
-                  mesh.nBoundaryFaces(),
-                  mesh.nBoundaries()
-              )
-          ),
+            exec,
+            mesh,
+            DomainField<ValueType>(
+                exec,
+                mesh.nInternalFaces() + mesh.nBoundaryFaces(),
+                mesh.nBoundaryFaces(),
+                mesh.nBoundaries()
+            )
+        ),
           boundaryConditions_(boundaryConditions)
     {}
 
@@ -90,11 +80,6 @@ public:
           boundaryConditions_(boundaryConditions)
     {}
 
-    /**
-     * @brief Copy constructor for a surface field.
-     *
-     * @param other The surface field to copy.
-     */
     SurfaceField(const SurfaceField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
     {}
@@ -112,7 +97,6 @@ public:
             boundaryCondition.correctBoundaryCondition(this->field_);
         }
     }
-
 
 private:
 

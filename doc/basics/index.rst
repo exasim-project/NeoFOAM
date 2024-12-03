@@ -16,4 +16,3 @@ Basics
     macros.rst
     mpi_architecture.rst
     fields.rst
-    database.rst
