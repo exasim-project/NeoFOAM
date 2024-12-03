@@ -175,7 +175,7 @@ OldTimeCollection& OldTimeCollection::instance(Database& db, std::string name, s
 
 const OldTimeCollection& OldTimeCollection::instance(const Database& db, std::string name)
 {
-    const Collection& col = db.getCollection(name);
+    const Collection& col = db.at(name);
     return col.as<OldTimeCollection>();
 }
 

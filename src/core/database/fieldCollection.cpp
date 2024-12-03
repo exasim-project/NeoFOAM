@@ -75,7 +75,7 @@ FieldCollection& FieldCollection::instance(NeoFOAM::Database& db, std::string na
 
 const FieldCollection& FieldCollection::instance(const NeoFOAM::Database& db, std::string name)
 {
-    const NeoFOAM::Collection& col = db.getCollection(name);
+    const NeoFOAM::Collection& col = db.at(name);
     return col.as<FieldCollection>();
 }
 

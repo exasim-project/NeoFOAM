@@ -79,7 +79,11 @@ public:
      * @return CollectionType& A reference to the collection cast to the specified type.
      */
     template<typename CollectionType=Collection>
-    CollectionType& at(const std::string& name);
+    CollectionType& at(const std::string& name)    
+    {
+        Collection& collection = at(name);
+        return collection.as<CollectionType>();
+    }
 
 
     /**

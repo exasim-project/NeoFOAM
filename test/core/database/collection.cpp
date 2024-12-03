@@ -25,7 +25,7 @@ TEST_CASE("CustomCollection")
 
     CustomCollection& customCollection2 = CustomCollection::instance(db, "testCollection");
 
-    CustomCollection& customCollection3 = db.get<CustomCollection>("testCollection");
+    CustomCollection& customCollection3 = db.at<CustomCollection>("testCollection");
 
     REQUIRE(&customCollection3 == &customCollection2);
 

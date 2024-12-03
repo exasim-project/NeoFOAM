@@ -120,9 +120,9 @@ public:
      * @return A const reference to the field.
      */
     template<class FieldType>
-    const geoField& field() const
+    const FieldType& field() const
     {
-        return doc_.get<const geoField&>("field");
+        return doc_.get<const FieldType&>("field");
     }
 
     /**
@@ -293,7 +293,7 @@ public:
     static const FieldCollection& instance(const geoField& field)
     {
         const Database& db = field.db();
-        const Collection& collection = db.getCollection(field.fieldCollectionName);
+        const Collection& collection = db.at(field.fieldCollectionName);
         return collection.as<FieldCollection>();
         // return instance(field.db(), field.fieldCollectionName);
     }

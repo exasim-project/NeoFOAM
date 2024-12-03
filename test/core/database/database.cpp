@@ -32,11 +32,11 @@ TEST_CASE("Database")
         REQUIRE(db.size() == 2);
     }
 
-    SECTION("getCollection")
+    SECTION("get collections")
     {
         auto& collection1 = db.insert("collection1", CustomCollection(db, "collection1"));
 
-        auto& collection2 = db.getCollection("collection1");
+        auto& collection2 = db.at("collection1");
 
         REQUIRE(&collection1 == &collection2);
 
@@ -44,7 +44,7 @@ TEST_CASE("Database")
 
         REQUIRE(collection1.size() == 0);
 
-        SECTION("get non existing collection") { REQUIRE_THROWS(db.getCollection("doesNotExist")); }
+        SECTION("get non existing collection") { REQUIRE_THROWS(db.at("doesNotExist")); }
     }
 
     SECTION("erase")
@@ -68,11 +68,11 @@ TEST_CASE("Database")
         db.insert("collection1", CustomCollection(db, "collection1"));
         db.insert("collection2", CustomCollection(db, "collection2"));
 
-        REQUIRE(db.get<CustomCollection>("collection1").size() == 0);
-        REQUIRE(db.get<CustomCollection>("collection2").size() == 0);
+        REQUIRE(db.at<CustomCollection>("collection1").size() == 0);
+        REQUIRE(db.at<CustomCollection>("collection2").size() == 0);
 
-        auto& collection1 = db.get<CustomCollection>("collection1");
-        auto& collection2 = db.get<CustomCollection>("collection2");
+        auto& collection1 = db.at<CustomCollection>("collection1");
+        auto& collection2 = db.at<CustomCollection>("collection2");
 
         collection1.insert(createDoc("doc1", 42));
         collection1.insert(createDoc("doc2", 42));
