@@ -101,8 +101,9 @@ public:
 
     SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField) const
     {
+        std::string name = "interpolated_" + volField.name;
         SurfaceField<scalar> surfaceField(
-            exec_, mesh_, SurfaceBoundary<scalar>::calculatedBCs(mesh_)
+            exec_, name, mesh_, SurfaceBoundary<scalar>::calculatedBCs(mesh_)
         );
         interpolate(surfaceField, volField);
         return surfaceField;
@@ -120,8 +121,9 @@ public:
     SurfaceField<scalar>
     interpolate(const SurfaceField<scalar>& faceFlux, const VolumeField<scalar>& volField) const
     {
+        std::string name = "interpolated_" + volField.name;
         SurfaceField<scalar> surfaceField(
-            exec_, mesh_, SurfaceBoundary<scalar>::calculatedBCs(mesh_)
+            exec_,name, mesh_, SurfaceBoundary<scalar>::calculatedBCs(mesh_)
         );
         interpolate(faceFlux, volField,surfaceField);
         return surfaceField;

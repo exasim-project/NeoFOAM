@@ -186,7 +186,8 @@ void GaussGreenDiv::div(
 
 VolumeField<scalar> GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi)
 {
-    VolumeField<scalar> divPhi(exec_, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_));
+    std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
+    VolumeField<scalar> divPhi(exec_,name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_));
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
     return divPhi;
 };
