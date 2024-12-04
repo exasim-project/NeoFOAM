@@ -414,10 +414,7 @@ private:
     void validateOtherField(const Field<ValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-        NF_DEBUG_ASSERT(
-            exec() == rhs.exec(),
-            "Executors: " + exec_.name() + " and " + rhs.exec_.name() + " are not the same."
-        );
+        NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
     }
 };
 
