@@ -18,7 +18,7 @@ TEST_CASE("Unstructured Mesh")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Can create single cell mesh " + execName)
     {
