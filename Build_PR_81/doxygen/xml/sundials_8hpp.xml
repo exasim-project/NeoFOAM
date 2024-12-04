@@ -50,7 +50,7 @@
       <node id="30">
         <label>cstdint</label>
       </node>
-      <node id="23">
+      <node id="20">
         <label>variant</label>
       </node>
       <node id="7">
@@ -89,17 +89,17 @@
       <node id="19">
         <label>NeoFOAM/core/executor/executor.hpp</label>
         <link refid="executor_8hpp"/>
+        <childnode refid="13" relation="include">
+        </childnode>
         <childnode refid="20" relation="include">
         </childnode>
         <childnode refid="21" relation="include">
         </childnode>
         <childnode refid="22" relation="include">
         </childnode>
-        <childnode refid="10" relation="include">
-        </childnode>
-        <childnode refid="13" relation="include">
-        </childnode>
         <childnode refid="23" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
         </childnode>
       </node>
       <node id="17">
@@ -142,7 +142,7 @@
       <node id="14">
         <label>sstream</label>
       </node>
-      <node id="20">
+      <node id="21">
         <label>NeoFOAM/core/executor/serialExecutor.hpp</label>
         <link refid="serialExecutor_8hpp"/>
         <childnode refid="17" relation="include">
@@ -196,7 +196,7 @@
         <childnode refid="19" relation="include">
         </childnode>
       </node>
-      <node id="21">
+      <node id="22">
         <label>NeoFOAM/core/executor/GPUExecutor.hpp</label>
         <link refid="GPUExecutor_8hpp"/>
         <childnode refid="17" relation="include">
@@ -216,7 +216,7 @@
         <childnode refid="16" relation="include">
         </childnode>
       </node>
-      <node id="22">
+      <node id="23">
         <label>NeoFOAM/core/executor/CPUExecutor.hpp</label>
         <link refid="CPUExecutor_8hpp"/>
         <childnode refid="17" relation="include">
@@ -328,33 +328,31 @@
 <codeline lineno="104"><highlight class="normal">};</highlight></codeline>
 <codeline lineno="105"><highlight class="normal"></highlight></codeline>
 <codeline lineno="121"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>SolutionFieldType&gt;</highlight></codeline>
-<codeline lineno="122" refid="namespaceNeoFOAM_1_1sundials_1ae2307f054819116cd2bc34265966c1ff" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1sundials_1ae2307f054819116cd2bc34265966c1ff" kindref="member">explicitRKSolve</ref>(sunrealtype<sp/>t,<sp/>N_Vector<sp/>y,<sp/>N_Vector<sp/>ydot,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*<sp/>user_data)</highlight></codeline>
+<codeline lineno="122" refid="namespaceNeoFOAM_1_1sundials_1a7b718ed3dc094cf2e5ad212169ec50a4" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1sundials_1a7b718ed3dc094cf2e5ad212169ec50a4" kindref="member">explicitRKSolve</ref>([[maybe_unused]]<sp/>sunrealtype<sp/>t,<sp/>N_Vector<sp/>y,<sp/>N_Vector<sp/>ydot,<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*<sp/>user_data)</highlight></codeline>
 <codeline lineno="123"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="124"><highlight class="normal"><sp/><sp/><sp/><sp/>(void)(t);<sp/></highlight><highlight class="comment">//<sp/>removes<sp/>compiler<sp/>warnings<sp/>about<sp/>unused.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="125"><highlight class="normal"></highlight></codeline>
-<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Pointer<sp/>wrangling</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1dsl_1_1Expression" kindref="compound">NeoFOAM::dsl::Expression</ref>*<sp/>pdeExpre<sp/>=<sp/></highlight><highlight class="keyword">reinterpret_cast&lt;</highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1dsl_1_1Expression" kindref="compound">NeoFOAM::dsl::Expression</ref>*</highlight><highlight class="keyword">&gt;</highlight><highlight class="normal">(user_data);</highlight></codeline>
-<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/>sunrealtype*<sp/>yDotArray<sp/>=<sp/>N_VGetArrayPointer(ydot);</highlight></codeline>
-<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/>sunrealtype*<sp/>yArray<sp/>=<sp/>N_VGetArrayPointer(y);</highlight></codeline>
-<codeline lineno="130"><highlight class="normal"></highlight></codeline>
-<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(yDotArray<sp/>==<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal"><sp/>||<sp/>yArray<sp/>==<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal"><sp/>||<sp/>pdeExpre<sp/>==<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal">)</highlight></codeline>
-<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cerr<sp/>&lt;&lt;<sp/><ref refid="error_8hpp_1ab49651cd484e1f86f3b7f8b880fac692" kindref="member">NF_ERROR_MESSAGE</ref>(</highlight><highlight class="stringliteral">&quot;Failed<sp/>to<sp/>dereference<sp/>pointers<sp/>in<sp/>sundails.&quot;</highlight><highlight class="normal">);</highlight></codeline>
-<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>-1;</highlight></codeline>
-<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="136"><highlight class="normal"></highlight></codeline>
-<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Copy<sp/>initial<sp/>value<sp/>from<sp/>y<sp/>to<sp/>source.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field&lt;NeoFOAM::scalar&gt;</ref><sp/>source(pdeExpre-&gt;<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a1527fde27b8af33a0bbc1881810cf945" kindref="member">exec</ref>(),<sp/>1,<sp/>0.0);</highlight></codeline>
-<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/><sp/>source<sp/>=<sp/>pdeExpre-&gt;<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a5cc861b9fdfe016b5110c6c1faf99185" kindref="member">explicitOperation</ref>(source);<sp/></highlight><highlight class="comment">//<sp/>compute<sp/>spacial</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(std::holds_alternative&lt;NeoFOAM::GPUExecutor&gt;(pdeExpre-&gt;<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a1527fde27b8af33a0bbc1881810cf945" kindref="member">exec</ref>()))</highlight></codeline>
-<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Kokkos::fence();</highlight></codeline>
-<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1_1sundials_1a91de57c82fd9e44bbcc73a5f135d0b0f" kindref="member">NeoFOAM::sundials::fieldToNVector</ref>(source,<sp/>ydot);<sp/></highlight><highlight class="comment">//<sp/>assign<sp/>rhs<sp/>to<sp/>ydot.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Pointer<sp/>wrangling</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1dsl_1_1Expression" kindref="compound">NeoFOAM::dsl::Expression</ref>*<sp/>pdeExpre<sp/>=<sp/></highlight><highlight class="keyword">reinterpret_cast&lt;</highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1dsl_1_1Expression" kindref="compound">NeoFOAM::dsl::Expression</ref>*</highlight><highlight class="keyword">&gt;</highlight><highlight class="normal">(user_data);</highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/>sunrealtype*<sp/>yDotArray<sp/>=<sp/>N_VGetArrayPointer(ydot);</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"><sp/><sp/><sp/><sp/>sunrealtype*<sp/>yArray<sp/>=<sp/>N_VGetArrayPointer(y);</highlight></codeline>
+<codeline lineno="129"><highlight class="normal"></highlight></codeline>
+<codeline lineno="130"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="error_8hpp_1aecc669a189db22f652ffb9788f01a99b" kindref="member">NF_ASSERT</ref>(</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>yDotArray<sp/>!=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal"><sp/>&amp;&amp;<sp/>yArray<sp/>!=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal"><sp/>&amp;&amp;<sp/>pdeExpre<sp/>!=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;Failed<sp/>to<sp/>dereference<sp/>pointers<sp/>in<sp/>sundails.&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Copy<sp/>initial<sp/>value<sp/>from<sp/>y<sp/>to<sp/>source.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field&lt;NeoFOAM::scalar&gt;</ref><sp/>source(pdeExpre-&gt;<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a1527fde27b8af33a0bbc1881810cf945" kindref="member">exec</ref>(),<sp/>1,<sp/>0.0);</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/>source<sp/>=<sp/>pdeExpre-&gt;<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a5cc861b9fdfe016b5110c6c1faf99185" kindref="member">explicitOperation</ref>(source);<sp/></highlight><highlight class="comment">//<sp/>compute<sp/>spacial</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(std::holds_alternative&lt;NeoFOAM::GPUExecutor&gt;(pdeExpre-&gt;<ref refid="classNeoFOAM_1_1dsl_1_1Expression_1a1527fde27b8af33a0bbc1881810cf945" kindref="member">exec</ref>()))</highlight></codeline>
+<codeline lineno="139"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Kokkos::fence();</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1_1sundials_1a91de57c82fd9e44bbcc73a5f135d0b0f" kindref="member">NeoFOAM::sundials::fieldToNVector</ref>(source,<sp/>ydot);<sp/></highlight><highlight class="comment">//<sp/>assign<sp/>rhs<sp/>to<sp/>ydot.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0;</highlight></codeline>
+<codeline lineno="144"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"></highlight></codeline>
 <codeline lineno="146"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="147"><highlight class="normal"></highlight></codeline>
-<codeline lineno="148"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp"/>
   </compounddef>

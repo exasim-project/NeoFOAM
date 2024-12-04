@@ -16,6 +16,14 @@
 \doxysubsection*{Classes}
 \begin{DoxyCompactItemize}
 \item 
+class \mbox{\hyperlink{classNeoFOAM_1_1Collection}{Collection}}
+\begin{DoxyCompactList}\small\item\em A type-\/erased interface collection types. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Collection\+Mixin}}
+\begin{DoxyCompactList}\small\item\em A mixin class for collection of documents in a database to simplify the implementation of common operations. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1Database}{Database}}
+\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}
+\begin{DoxyCompactList}\small\item\em A class representing a document in a database. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}
 \begin{DoxyCompactList}\small\item\em A class representing a dictionary that stores key-\/value pairs. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1NeoFOAMException}{Neo\+FOAMException}}
@@ -69,6 +77,8 @@ class \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}}
 \doxysubsection*{Typedefs}
 \begin{DoxyCompactItemize}
 \item 
+using \mbox{\hyperlink{namespaceNeoFOAM_a8031b90f392da83903614bb0d9da7355}{Document\+Validator}} = std\+::function$<$ bool(\mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}})$>$
+\begin{DoxyCompactList}\small\item\em A type alias for a function that validates a \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object. \end{DoxyCompactList}\item 
 using \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} = std\+::variant$<$ \mbox{\hyperlink{classNeoFOAM_1_1CPUExecutor}{CPUExecutor}}, \mbox{\hyperlink{classNeoFOAM_1_1GPUExecutor}{GPUExecutor}}, \mbox{\hyperlink{classNeoFOAM_1_1SerialExecutor}{Serial\+Executor}} $>$
 \item 
 using \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}} = std\+::variant$<$ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}, \mbox{\hyperlink{classNeoFOAM_1_1TokenList}{Token\+List}} $>$
@@ -96,6 +106,12 @@ using \mbox{\hyperlink{namespaceNeoFOAM_a9a20b7f140d2b360241253a62b685754}{vecto
 \doxysubsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_a19b432970d4c56c440ca5f4bc6670b43}{has\+Id}} (\mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} doc)
+\begin{DoxyCompactList}\small\item\em Checks if a \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object has an \char`\"{}id\char`\"{} key. \end{DoxyCompactList}\item 
+const std\+::string \& \mbox{\hyperlink{namespaceNeoFOAM_aca79e89a7764167bb986f17d1dd7c18f}{name}} (const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Neo\+FOAM\+::\+Document}} \&doc)
+\begin{DoxyCompactList}\small\item\em Retrieves the name of a \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}. \end{DoxyCompactList}\item 
+std\+::string \& \mbox{\hyperlink{namespaceNeoFOAM_a30a10765404e06047bda75167039092f}{name}} (\mbox{\hyperlink{classNeoFOAM_1_1Document}{Neo\+FOAM\+::\+Document}} \&doc)
+\begin{DoxyCompactList}\small\item\em Retrieves the name of a \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}. \end{DoxyCompactList}\item 
 std\+::string \mbox{\hyperlink{namespaceNeoFOAM_a9ecd7090c554081dd6200a92fb0f6b85}{demangle}} (const char $\ast$mangled\+Name)
 \item 
 {\footnotesize template$<$typename T , typename Container , typename Key $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ad0a06ebc4aa82a65353cdc36eb19810e}{log\+Bad\+Any\+Cast}} (const std\+::bad\+\_\+any\+\_\+cast \&e, const Key \&key, const Container \&data)
@@ -165,7 +181,9 @@ std\+::ostream \& \mbox{\hyperlink{namespaceNeoFOAM_a1a4d22c38abaa5c1954a0d5925f
 template$<$$>$ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} \mbox{\hyperlink{namespaceNeoFOAM_abb0c8601a46eedab6970aa13093fec6f}{sum}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} $>$ \&field)
 \item 
 \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}} \mbox{\hyperlink{namespaceNeoFOAM_a99bff8ff2aa41c8015bdb6c509ee5567}{create\+Single\+Cell\+Mesh}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} exec)
-\begin{DoxyCompactList}\small\item\em creates a mesh containing only a single cell @warn currently this is only a 2D mesh \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em creates a mesh containing only a single cell @warn currently this is only a 2D mesh \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}} \mbox{\hyperlink{namespaceNeoFOAM_afdb9b151e2c17ce2b8065fe66989ce3e}{create1\+DUniform\+Mesh}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} exec, const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} n\+Cells)
+\begin{DoxyCompactList}\small\item\em A factory function for a 1D mesh. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
@@ -178,6 +196,30 @@ constexpr \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{s
 
 
 \doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{namespaceNeoFOAM_a8031b90f392da83903614bb0d9da7355}\label{namespaceNeoFOAM_a8031b90f392da83903614bb0d9da7355}} 
+\index{NeoFOAM@{NeoFOAM}!DocumentValidator@{DocumentValidator}}
+\index{DocumentValidator@{DocumentValidator}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{DocumentValidator}{DocumentValidator}}
+{\footnotesize\ttfamily \mbox{\hyperlink{namespaceNeoFOAM_a8031b90f392da83903614bb0d9da7355}{Neo\+FOAM\+::\+Document\+Validator}}}
+
+
+
+A type alias for a function that validates a \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object. 
+
+This type alias represents a function that takes a \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object as an argument and returns a boolean value indicating whether the \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} is valid or not.
+
+Example usage\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{namespaceNeoFOAM_a8031b90f392da83903614bb0d9da7355}{DocumentValidator}} validator = [](Dictionary dict) -\/> \textcolor{keywordtype}{bool} \{}
+\DoxyCodeLine{    \textcolor{comment}{// Validation logic here}}
+\DoxyCodeLine{    \textcolor{keywordflow}{return} \textcolor{keyword}{true}; \textcolor{comment}{// or false based on validation}}
+\DoxyCodeLine{\};}
+
+\end{DoxyCode}
+ 
+
+Definition at line 30 of file document.\+hpp.
+
 \mbox{\Hypertarget{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}\label{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}} 
 \index{NeoFOAM@{NeoFOAM}!Executor@{Executor}}
 \index{Executor@{Executor}!NeoFOAM@{NeoFOAM}}
@@ -186,7 +228,7 @@ constexpr \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{s
 
 
 
-Definition at line 15 of file executor.\+hpp.
+Definition at line 16 of file executor.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_a73c71713ed444647b0229233de51650c}\label{namespaceNeoFOAM_a73c71713ed444647b0229233de51650c}} 
 \index{NeoFOAM@{NeoFOAM}!globalIdx@{globalIdx}}
@@ -323,7 +365,17 @@ auto Neo\+FOAM\+::copy\+To\+Hosts (\begin{DoxyParamCaption}\item[{Args \&...}]{f
 
 Definition at line 100 of file operations\+Macros.\+hpp.
 
-\mbox{\Hypertarget{namespaceNeoFOAM_a99bff8ff2aa41c8015bdb6c509ee5567}\label{namespaceNeoFOAM_a99bff8ff2aa41c8015bdb6c509ee5567}} 
+\mbox{\Hypertarget{namespaceNeoFOAM_afdb9b151e2c17ce2b8065fe66989ce3e}\label{namespaceNeoFOAM_afdb9b151e2c17ce2b8065fe66989ce3e}} 
+\index{NeoFOAM@{NeoFOAM}!create1DUniformMesh@{create1DUniformMesh}}
+\index{create1DUniformMesh@{create1DUniformMesh}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{create1DUniformMesh()}{create1DUniformMesh()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}} Neo\+FOAM\+::create1\+DUniform\+Mesh (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}}}]{exec,  }\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}}]{n\+Cells }\end{DoxyParamCaption})}
+
+
+
+A factory function for a 1D mesh. 
+
+A 1D mesh in 3D space in which each cell has a left and a right face. The 1D mesh is aligned with the x coordinate of Cartesian coordinate system. \mbox{\Hypertarget{namespaceNeoFOAM_a99bff8ff2aa41c8015bdb6c509ee5567}\label{namespaceNeoFOAM_a99bff8ff2aa41c8015bdb6c509ee5567}} 
 \index{NeoFOAM@{NeoFOAM}!createSingleCellMesh@{createSingleCellMesh}}
 \index{createSingleCellMesh@{createSingleCellMesh}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{createSingleCellMesh()}{createSingleCellMesh()}}
@@ -383,6 +435,26 @@ void Neo\+FOAM\+::fill (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeo
 
 Definition at line 27 of file operations\+Macros.\+hpp.
 
+\mbox{\Hypertarget{namespaceNeoFOAM_a19b432970d4c56c440ca5f4bc6670b43}\label{namespaceNeoFOAM_a19b432970d4c56c440ca5f4bc6670b43}} 
+\index{NeoFOAM@{NeoFOAM}!hasId@{hasId}}
+\index{hasId@{hasId}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{hasId()}{hasId()}}
+{\footnotesize\ttfamily bool Neo\+FOAM\+::has\+Id (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}}]{doc }\end{DoxyParamCaption})}
+
+
+
+Checks if a \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object has an \char`\"{}id\char`\"{} key. 
+
+This function checks if the given \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object has an \char`\"{}id\char`\"{} key.
+
+
+\begin{DoxyParams}{Parameters}
+{\em doc} & The \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object to check. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+true if the \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} has an \char`\"{}id\char`\"{} key, false otherwise. 
+\end{DoxyReturn}
 \mbox{\Hypertarget{namespaceNeoFOAM_ad0a06ebc4aa82a65353cdc36eb19810e}\label{namespaceNeoFOAM_ad0a06ebc4aa82a65353cdc36eb19810e}} 
 \index{NeoFOAM@{NeoFOAM}!logBadAnyCast@{logBadAnyCast}}
 \index{logBadAnyCast@{logBadAnyCast}!NeoFOAM@{NeoFOAM}}
@@ -432,6 +504,46 @@ void Neo\+FOAM\+::mul (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoF
 
 Definition at line 86 of file operations\+Macros.\+hpp.
 
+\mbox{\Hypertarget{namespaceNeoFOAM_aca79e89a7764167bb986f17d1dd7c18f}\label{namespaceNeoFOAM_aca79e89a7764167bb986f17d1dd7c18f}} 
+\index{NeoFOAM@{NeoFOAM}!name@{name}}
+\index{name@{name}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily const std\+::string\& Neo\+FOAM\+::name (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Neo\+FOAM\+::\+Document}} \&}]{doc }\end{DoxyParamCaption})}
+
+
+
+Retrieves the name of a \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}. 
+
+This function retrieves the name of the \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} by looking up the \char`\"{}name\char`\"{} key in the \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}\textquotesingle{}s \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object.
+
+
+\begin{DoxyParams}{Parameters}
+{\em doc} & The \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} to retrieve the name from. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::string The name of the \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{namespaceNeoFOAM_a30a10765404e06047bda75167039092f}\label{namespaceNeoFOAM_a30a10765404e06047bda75167039092f}} 
+\index{NeoFOAM@{NeoFOAM}!name@{name}}
+\index{name@{name}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily std\+::string\& Neo\+FOAM\+::name (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Document}{Neo\+FOAM\+::\+Document}} \&}]{doc }\end{DoxyParamCaption})}
+
+
+
+Retrieves the name of a \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}. 
+
+This function retrieves the name of the \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} by looking up the \char`\"{}name\char`\"{} key in the \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}\textquotesingle{}s \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}} object.
+
+
+\begin{DoxyParams}{Parameters}
+{\em doc} & The \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} to retrieve the name from. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::string The name of the \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}. 
+\end{DoxyReturn}
 \mbox{\Hypertarget{namespaceNeoFOAM_a4354d14390c6cd1d3a813869a7aff63b}\label{namespaceNeoFOAM_a4354d14390c6cd1d3a813869a7aff63b}} 
 \index{NeoFOAM@{NeoFOAM}!operator"!=@{operator"!=}}
 \index{operator"!=@{operator"!=}!NeoFOAM@{NeoFOAM}}
@@ -454,7 +566,7 @@ True if the executors not are equal, false otherwise.
 \end{DoxyReturn}
 
 
-Definition at line 50 of file executor.\+hpp.
+Definition at line 51 of file executor.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_ae0612f5f17d093a87670be33b3d0608f}\label{namespaceNeoFOAM_ae0612f5f17d093a87670be33b3d0608f}} 
 \index{NeoFOAM@{NeoFOAM}!operator\&@{operator\&}}
@@ -499,7 +611,7 @@ The result of the addition.
 \end{DoxyReturn}
 
 
-Definition at line 432 of file field.\+hpp.
+Definition at line 431 of file field.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_a2aee7a8bd5a4e339456ee8e31f92a852}\label{namespaceNeoFOAM_a2aee7a8bd5a4e339456ee8e31f92a852}} 
 \index{NeoFOAM@{NeoFOAM}!operator-\/@{operator-\/}}
@@ -524,7 +636,7 @@ The result of the subtraction.
 \end{DoxyReturn}
 
 
-Definition at line 445 of file field.\+hpp.
+Definition at line 444 of file field.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_a1a4d22c38abaa5c1954a0d5925f75f9a}\label{namespaceNeoFOAM_a1a4d22c38abaa5c1954a0d5925f75f9a}} 
 \index{NeoFOAM@{NeoFOAM}!operator$<$$<$@{operator$<$$<$}}
@@ -554,7 +666,7 @@ True if the executors are equal, false otherwise.
 \end{DoxyReturn}
 
 
-Definition at line 23 of file executor.\+hpp.
+Definition at line 24 of file executor.\+hpp.
 
 \mbox{\Hypertarget{namespaceNeoFOAM_adc9840896f54c66ca5b2b1465ebecd79}\label{namespaceNeoFOAM_adc9840896f54c66ca5b2b1465ebecd79}} 
 \index{NeoFOAM@{NeoFOAM}!parallelFor@{parallelFor}}
