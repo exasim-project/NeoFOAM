@@ -6,6 +6,7 @@ if(NEOFOAM_ENABLE_MPI_SUPPORT)
 endif()
 
 add_subdirectory(primitives)
+add_subdirectory(database)
 
 neofoam_unit_test(dictionary)
 neofoam_unit_test(tokenList)
