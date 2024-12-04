@@ -1,0 +1,318 @@
+\hypertarget{classNeoFOAM_1_1CollectionMixin}{}\doxysection{Neo\+FOAM\+::Collection\+Mixin$<$ Document\+Type $>$ Class Template Reference}
+\label{classNeoFOAM_1_1CollectionMixin}\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+
+
+A mixin class for collection of documents in a database to simplify the implementation of common operations.  
+
+
+
+
+{\ttfamily \#include $<$collection.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a707ef9e4021e9a310f6d11bc9e42e11d}{Collection\+Mixin}} (\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}} \&\mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_acaeb663e08da3e2ab1d76b09a652458c}{db}}, std\+::string \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_ac2f1b95f43fab9647e7bad88374c624d}{name}})
+\begin{DoxyCompactList}\small\item\em Constructs a \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Collection\+Mixin}} with the given database and collection name. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} \& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a57c98cf3975039ee49c65103ba083e5a}{doc}} (const std\+::string \&id)
+\begin{DoxyCompactList}\small\item\em Retrieves a document by its ID. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} \& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a1ea28ccb155e726d69c232872ca0315f}{doc}} (const std\+::string \&id) const
+\begin{DoxyCompactList}\small\item\em Retrieves a document by its ID (const version). \end{DoxyCompactList}\item 
+std\+::vector$<$ std\+::string $>$ \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a648f9f977b0f4879241bd6d552de3b51}{find}} (const std\+::function$<$ bool(const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} \&)$>$ \&predicate) const
+\begin{DoxyCompactList}\small\item\em Finds documents that match a given predicate. \end{DoxyCompactList}\item 
+std\+::size\+\_\+t \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a4d73b8172dc3ea83cbc538a788d6df50}{size}} () const
+\begin{DoxyCompactList}\small\item\em Gets the number of documents in the collection. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}} \& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_acaeb663e08da3e2ab1d76b09a652458c}{db}} () const
+\begin{DoxyCompactList}\small\item\em Gets a const reference to the database. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}} \& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_ae1fd77d6e4f718c17d4756bb7108161a}{db}} ()
+\begin{DoxyCompactList}\small\item\em Gets a reference to the database. \end{DoxyCompactList}\item 
+const std\+::string \& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_ac2f1b95f43fab9647e7bad88374c624d}{name}} () const
+\begin{DoxyCompactList}\small\item\em Gets the name of the collection. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a61a14c4b443deea24692fce3fe3ea12b}{type}} () const
+\begin{DoxyCompactList}\small\item\em Gets the type name of the documents in the collection. \end{DoxyCompactList}\item 
+std\+::vector$<$ std\+::string $>$ \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_afc8d4654be74fb485441dcb0ba878840}{sorted\+Keys}} () const
+\begin{DoxyCompactList}\small\item\em Gets the sorted keys of the documents in the collection. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+std\+::unordered\+\_\+map$<$ std\+::string, Document\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a1522617c4fb1edcc03aced8a87b8e38a}{docs\+\_\+}}
+\begin{DoxyCompactList}\small\item\em The map of document IDs to documents. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}} \& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a6d93ee4df562eb900011d15f67462b13}{db\+\_\+}}
+\begin{DoxyCompactList}\small\item\em The reference to the database. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin_a834f7380ff352406e86f80d5a395dcc0}{name\+\_\+}}
+\begin{DoxyCompactList}\small\item\em The name of the collection. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\subsubsection*{template$<$typename Document\+Type$>$\newline
+class Neo\+FOAM\+::\+Collection\+Mixin$<$ Document\+Type $>$}
+
+A mixin class for collection of documents in a database to simplify the implementation of common operations. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em Document\+Type} & The type of documents stored in the collection. \\
+\hline
+\end{DoxyTemplParams}
+
+
+Definition at line 205 of file collection.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a707ef9e4021e9a310f6d11bc9e42e11d}\label{classNeoFOAM_1_1CollectionMixin_a707ef9e4021e9a310f6d11bc9e42e11d}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!CollectionMixin@{CollectionMixin}}
+\index{CollectionMixin@{CollectionMixin}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{CollectionMixin()}{CollectionMixin()}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::\mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Collection\+Mixin}} (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}} \&}]{db,  }\item[{std\+::string}]{name }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Constructs a \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Collection\+Mixin}} with the given database and collection name. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em db} & The database reference. \\
+\hline
+{\em name} & The name of the collection. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 216 of file collection.\+hpp.
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_ae1fd77d6e4f718c17d4756bb7108161a}\label{classNeoFOAM_1_1CollectionMixin_ae1fd77d6e4f718c17d4756bb7108161a}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!db@{db}}
+\index{db@{db}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{db()}{db()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}}\& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::db (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a reference to the database. 
+
+\begin{DoxyReturn}{Returns}
+\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}}\& A reference to the database. 
+\end{DoxyReturn}
+
+
+Definition at line 272 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_acaeb663e08da3e2ab1d76b09a652458c}\label{classNeoFOAM_1_1CollectionMixin_acaeb663e08da3e2ab1d76b09a652458c}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!db@{db}}
+\index{db@{db}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{db()}{db()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+const \mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}}\& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::db (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets a const reference to the database. 
+
+\begin{DoxyReturn}{Returns}
+const \mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}}\& A const reference to the database. 
+\end{DoxyReturn}
+
+
+Definition at line 265 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a57c98cf3975039ee49c65103ba083e5a}\label{classNeoFOAM_1_1CollectionMixin_a57c98cf3975039ee49c65103ba083e5a}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!doc@{doc}}
+\index{doc@{doc}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}\& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::doc (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{id }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Retrieves a document by its ID. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em id} & The ID of the document. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}\& A reference to the document. 
+\end{DoxyReturn}
+
+
+Definition at line 224 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a1ea28ccb155e726d69c232872ca0315f}\label{classNeoFOAM_1_1CollectionMixin_a1ea28ccb155e726d69c232872ca0315f}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!doc@{doc}}
+\index{doc@{doc}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}\& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::doc (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{id }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Retrieves a document by its ID (const version). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em id} & The ID of the document. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}}\& A const reference to the document. 
+\end{DoxyReturn}
+
+
+Definition at line 232 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a648f9f977b0f4879241bd6d552de3b51}\label{classNeoFOAM_1_1CollectionMixin_a648f9f977b0f4879241bd6d552de3b51}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!find@{find}}
+\index{find@{find}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{find()}{find()}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+std\+::vector$<$std\+::string$>$ \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::find (\begin{DoxyParamCaption}\item[{const std\+::function$<$ bool(const \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} \&)$>$ \&}]{predicate }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Finds documents that match a given predicate. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em predicate} & A function that takes a const reference to a \mbox{\hyperlink{classNeoFOAM_1_1Document}{Document}} and returns a bool. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::vector$<$std\+::string$>$ A vector of document IDs that match the predicate. 
+\end{DoxyReturn}
+
+
+Definition at line 240 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_ac2f1b95f43fab9647e7bad88374c624d}\label{classNeoFOAM_1_1CollectionMixin_ac2f1b95f43fab9647e7bad88374c624d}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!name@{name}}
+\index{name@{name}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+const std\+::string\& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the name of the collection. 
+
+\begin{DoxyReturn}{Returns}
+const std\+::string\& A const reference to the collection name. 
+\end{DoxyReturn}
+
+
+Definition at line 279 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a4d73b8172dc3ea83cbc538a788d6df50}\label{classNeoFOAM_1_1CollectionMixin_a4d73b8172dc3ea83cbc538a788d6df50}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!size@{size}}
+\index{size@{size}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{size()}{size()}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+std\+::size\+\_\+t \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::size (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the number of documents in the collection. 
+
+\begin{DoxyReturn}{Returns}
+std\+::size\+\_\+t The number of documents. 
+\end{DoxyReturn}
+
+
+Definition at line 258 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_afc8d4654be74fb485441dcb0ba878840}\label{classNeoFOAM_1_1CollectionMixin_afc8d4654be74fb485441dcb0ba878840}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!sortedKeys@{sortedKeys}}
+\index{sortedKeys@{sortedKeys}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{sortedKeys()}{sortedKeys()}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+std\+::vector$<$std\+::string$>$ \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::sorted\+Keys (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the sorted keys of the documents in the collection. 
+
+\begin{DoxyReturn}{Returns}
+std\+::vector$<$std\+::string$>$ A vector of sorted document keys. 
+\end{DoxyReturn}
+
+
+Definition at line 293 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a61a14c4b443deea24692fce3fe3ea12b}\label{classNeoFOAM_1_1CollectionMixin_a61a14c4b443deea24692fce3fe3ea12b}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!type@{type}}
+\index{type@{type}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{type()}{type()}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+std\+::string \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets the type name of the documents in the collection. 
+
+\begin{DoxyReturn}{Returns}
+std\+::string The type name of the documents. 
+\end{DoxyReturn}
+
+
+Definition at line 286 of file collection.\+hpp.
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a6d93ee4df562eb900011d15f67462b13}\label{classNeoFOAM_1_1CollectionMixin_a6d93ee4df562eb900011d15f67462b13}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!db\_@{db\_}}
+\index{db\_@{db\_}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{db\_}{db\_}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Database}{Neo\+FOAM\+::\+Database}}\& \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::db\+\_\+\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+The reference to the database. 
+
+
+
+Definition at line 307 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a1522617c4fb1edcc03aced8a87b8e38a}\label{classNeoFOAM_1_1CollectionMixin_a1522617c4fb1edcc03aced8a87b8e38a}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!docs\_@{docs\_}}
+\index{docs\_@{docs\_}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{docs\_}{docs\_}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+std\+::unordered\+\_\+map$<$std\+::string, Document\+Type$>$ \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::docs\+\_\+\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+The map of document IDs to documents. 
+
+
+
+Definition at line 306 of file collection.\+hpp.
+
+\mbox{\Hypertarget{classNeoFOAM_1_1CollectionMixin_a834f7380ff352406e86f80d5a395dcc0}\label{classNeoFOAM_1_1CollectionMixin_a834f7380ff352406e86f80d5a395dcc0}} 
+\index{NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}!name\_@{name\_}}
+\index{name\_@{name\_}!NeoFOAM::CollectionMixin$<$ DocumentType $>$@{NeoFOAM::CollectionMixin$<$ DocumentType $>$}}
+\doxysubsubsection{\texorpdfstring{name\_}{name\_}}
+{\footnotesize\ttfamily template$<$typename Document\+Type $>$ \\
+std\+::string \mbox{\hyperlink{classNeoFOAM_1_1CollectionMixin}{Neo\+FOAM\+::\+Collection\+Mixin}}$<$ Document\+Type $>$\+::name\+\_\+\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+The name of the collection. 
+
+
+
+Definition at line 308 of file collection.\+hpp.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/core/database/\mbox{\hyperlink{collection_8hpp}{collection.\+hpp}}\end{DoxyCompactItemize}
