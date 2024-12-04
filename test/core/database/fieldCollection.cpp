@@ -216,21 +216,21 @@ TEST_CASE("FieldCollection")
             fvcc::FieldCollection::instance(db, "newTestFieldCollection");
         REQUIRE(db.size() == 1);
 
-        fvcc::VolumeField<NeoFOAM::scalar>& T =
+        fvcc::VolumeField<NeoFOAM::scalar>& t =
             fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(CreateField {
                 .name = "T", .mesh = mesh, .timeIndex = 1, .iterationIndex = 1, .subCycleIndex = 1
             });
 
-        REQUIRE(T.name == "T");
-        REQUIRE(T.hasDatabase());
-        REQUIRE(T.internalField().copyToHost()[0] == 1.0);
-        REQUIRE(T.registered());
+        REQUIRE(t.name == "T");
+        REQUIRE(t.hasDatabase());
+        REQUIRE(t.internalField().copyToHost()[0] == 1.0);
+        REQUIRE(t.registered());
 
         SECTION("Construct from Field")
         {
-            fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(T);
+            fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(t);
             REQUIRE(fieldCollection2.size() == 1);
-            const fvcc::VolumeField<NeoFOAM::scalar>& constT = T;
+            const fvcc::VolumeField<NeoFOAM::scalar>& constT = t;
             const fvcc::FieldCollection& fieldCollection3 = fvcc::FieldCollection::instance(constT);
             REQUIRE(fieldCollection3.size() == 1);
         }
@@ -238,16 +238,16 @@ TEST_CASE("FieldCollection")
 
         SECTION("register from existing field")
         {
-            fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(T);
-            fvcc::VolumeField<NeoFOAM::scalar>& T3 =
+            fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(t);
+            fvcc::VolumeField<NeoFOAM::scalar>& t3 =
                 fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
                     fvcc::CreateFromExistingField<fvcc::VolumeField<NeoFOAM::scalar>> {
-                        .name = "T3", .field = T
+                        .name = "T3", .field = t
                     }
                 );
 
-            const fvcc::FieldDocument& docT = fieldCollection.fieldDoc(T3.key);
-            const fvcc::FieldDocument& docT3 = fieldCollection.fieldDoc(T.key);
+            const fvcc::FieldDocument& docT = fieldCollection.fieldDoc(t3.key);
+            const fvcc::FieldDocument& docT3 = fieldCollection.fieldDoc(t.key);
 
             REQUIRE(docT.timeIndex() == docT3.timeIndex());
             REQUIRE(docT.iterationIndex() == docT3.iterationIndex());

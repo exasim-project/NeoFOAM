@@ -79,9 +79,9 @@ public:
     const OldTimeDocument& oldTimeDoc(const std::string& id) const;
 
     template<typename FieldType>
-    FieldType& getOrInsert(std::string IdOfNextField)
+    FieldType& getOrInsert(std::string idOfNextField)
     {
-        std::string nextId = findNextTime(IdOfNextField);
+        std::string nextId = findNextTime(idOfNextField);
         FieldCollection& fieldCollection = FieldCollection::instance(db(), fieldCollectionName_);
 
         if (nextId != "") // oldField is already registered
@@ -89,7 +89,7 @@ public:
             OldTimeDocument& oldTimeDocument = oldTimeDoc(nextId);
             return fieldCollection.fieldDoc(oldTimeDocument.previousTime()).field<FieldType>();
         }
-        FieldDocument& fieldDoc = fieldCollection.fieldDoc(IdOfNextField);
+        FieldDocument& fieldDoc = fieldCollection.fieldDoc(idOfNextField);
 
         std::string oldTimeName = fieldDoc.field<FieldType>().name + "_0";
         FieldType& oldField =
@@ -107,9 +107,9 @@ public:
     }
 
     template<typename FieldType>
-    const FieldType& get(std::string IdOfNextField) const
+    const FieldType& get(std::string idOfNextField) const
     {
-        std::string nextId = findNextTime(IdOfNextField);
+        std::string nextId = findNextTime(idOfNextField);
         const FieldCollection& fieldCollection =
             FieldCollection::instance(db(), fieldCollectionName_);
 
