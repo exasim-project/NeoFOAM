@@ -416,8 +416,7 @@ private:
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
         NF_DEBUG_ASSERT(
             exec() == rhs.exec(),
-            "Executors: " + std::to_string(exec_) + " and " + std::to_string(rhs.exec_)
-                + " are not the same."
+            "Executors: " + exec_.name() + " and " + rhs.exec_.name() + " are not the same."
         );
     }
 };

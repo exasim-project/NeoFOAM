@@ -127,11 +127,10 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
     sunrealtype* yDotArray = N_VGetArrayPointer(ydot);
     sunrealtype* yArray = N_VGetArrayPointer(y);
 
-    if (yDotArray == nullptr || yArray == nullptr || pdeExpre == nullptr)
-    {
-        std::cerr << NF_ERROR_MESSAGE("Failed to dereference pointers in sundails.");
-        return -1;
-    }
+    NF_ASSERT(
+        yDotArray != nullptr && yArray != nullptr && pdeExpre != nullptr,
+        "Failed to dereference pointers in sundails."
+    );
 
     // Copy initial value from y to source.
     NeoFOAM::Field<NeoFOAM::scalar> source(pdeExpre->exec(), 1, 0.0);
