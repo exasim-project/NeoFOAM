@@ -274,11 +274,29 @@
         <article role="main" id="furo-main-content">
           <section id="time-integration">
 <span id="timeintegration-index"></span><h1>Time Integration<a class="headerlink" href="#time-integration" title="Link to this heading">¶</a></h1>
-<p>There are two approaches to time integration in NeoFOAM, the first is a ‘native’ Euler Forward method and the second is using Runge-Kutta methods via the <cite>Sundails</cite> library.</p>
+<p>NeoFOAM provides flexible time integration capabilities for solving partial differential equations (PDEs). The framework implements two distinct approaches to time integration - a native Forward Euler method and advanced Runge-Kutta methods via Sundials integration.</p>
+<p>The native Forward Euler implementation serves two key purposes: it provides a lightweight, dependency-free option for basic time integration, and it acts as a fallback when Sundials is not available in the build environment. This implementation directly integrates with NeoFOAM’s field operations and requires no external libraries.</p>
+<p>For more demanding and flexible applications, the Sundials-based Runge-Kutta implementation offers higher-order explicit time integration with Kokkos support. This integration combines the robustness of Sundials’ time integration capabilities with NeoFOAM’s field operations.</p>
+<p>Both approaches are implemented through the common <code class="docutils literal notranslate"><span class="pre">TimeIntegratorBase</span></code> interface, allowing seamless switching between methods through runtime configuration:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">Dictionary</span><span class="w"> </span><span class="n">timeDict</span><span class="p">;</span>
+<span class="n">timeDict</span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="s">&quot;type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;forwardEuler&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">// or &quot;Runge-Kutta&quot;</span>
+<span class="n">TimeIntegration</span><span class="o">&lt;</span><span class="n">VolumeField</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">integrator</span><span class="p">(</span><span class="n">time</span>
+</pre></div>
+</div>
+<p>The following sections provide detailed information about each implementation:</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="forwardEuler.html">Forward Euler</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rungeKutta.html">Runge Kutta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="forwardEuler.html">Forward Euler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="forwardEuler.html#implementation">Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forwardEuler.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forwardEuler.html#considerations">Considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rungeKutta.html">Runge Kutta</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rungeKutta.html#implementation">Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rungeKutta.html#usage">Usage</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </section>
@@ -336,5 +354,6 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

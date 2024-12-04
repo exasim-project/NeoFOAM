@@ -180,7 +180,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -266,7 +266,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -274,6 +274,37 @@
         <article role="main" id="furo-main-content">
           <section id="runge-kutta">
 <span id="timeintegration-rungekutta"></span><h1>Runge Kutta<a class="headerlink" href="#runge-kutta" title="Link to this heading">¶</a></h1>
+<p>The Runge-Kutta implementation in NeoFOAM leverages the Sundials library to provide high-order explicit time integration methods. This integration combines the robustness of Sundials with NeoFOAM’s field operations and Kokkos-based parallel execution capabilities.</p>
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">RungeKutta</span></code> class template provides a RAII-based wrapper around Sundials’ ERKStep module, managing all necessary resources for time integration. The implementation handles the conversion between NeoFOAM’s Kokkos-based fields and Sundials’ vector representations:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SolutionFieldType</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">solve</span><span class="p">(</span><span class="n">Expression</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exp</span><span class="p">,</span><span class="w"> </span><span class="n">SolutionFieldType</span><span class="o">&amp;</span><span class="w"> </span><span class="n">solutionField</span><span class="p">,</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">dt</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pdeExpr_</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="n">initSUNERKSolver</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span><span class="w"> </span><span class="n">solutionField</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// ... time integration logic</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The class manages several key components:
+- Sundials context and memory management through RAII
+- Conversion between NeoFOAM fields and Sundials vectors
+- Integration with Kokkos execution spaces
+- Configuration of specific Runge-Kutta methods</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<p>Configure and use the Runge-Kutta integrator through a dictionary:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">Dictionary</span><span class="w"> </span><span class="n">timeDict</span><span class="p">;</span>
+<span class="n">timeDict</span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="s">&quot;type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Runge-Kutta&quot;</span><span class="p">);</span>
+<span class="n">timeDict</span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="s">&quot;Runge-Kutta Method&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Forward Euler&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">// Choose RK method</span>
+<span class="n">TimeIntegration</span><span class="o">&lt;</span><span class="n">VolumeField</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">integrator</span><span class="p">(</span><span class="n">timeDict</span><span class="p">);</span>
+
+<span class="c1">// Solve for one timestep</span>
+<span class="n">integrator</span><span class="p">.</span><span class="n">solve</span><span class="p">(</span><span class="n">equation</span><span class="p">,</span><span class="w"> </span><span class="n">solutionField</span><span class="p">,</span><span class="w"> </span><span class="n">currentTime</span><span class="p">,</span><span class="w"> </span><span class="n">deltaT</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
 </section>
 
         </article>
@@ -311,8 +342,28 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Runge Kutta</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

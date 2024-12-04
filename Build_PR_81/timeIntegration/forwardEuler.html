@@ -180,7 +180,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -266,7 +266,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -274,6 +274,41 @@
         <article role="main" id="furo-main-content">
           <section id="forward-euler">
 <span id="timeintegration-forward-euler"></span><h1>Forward Euler<a class="headerlink" href="#forward-euler" title="Link to this heading">¶</a></h1>
+<p>The Forward Euler implementation in NeoFOAM provides a dependency-free first-order explicit time integration method. It advances the solution from time step n to n+1 using:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[y_{n+1} = y_n + \Delta t \cdot f(t_n, y_n)\]</div>
+</div>
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h2>
+<p>The implementation is entirely self-contained within NeoFOAM, requiring no external libraries. The <code class="docutils literal notranslate"><span class="pre">ForwardEuler</span></code> class template inherits from <code class="docutils literal notranslate"><span class="pre">TimeIntegratorBase</span></code> and implements straightforward time-stepping functionality through its <code class="docutils literal notranslate"><span class="pre">solve</span></code> method:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SolutionFieldType</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">solve</span><span class="p">(</span><span class="n">Expression</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eqn</span><span class="p">,</span><span class="w"> </span><span class="n">SolutionFieldType</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sol</span><span class="p">,</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">dt</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eqn</span><span class="p">.</span><span class="n">explicitOperation</span><span class="p">(</span><span class="n">sol</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="w">    </span><span class="n">sol</span><span class="p">.</span><span class="n">internalField</span><span class="p">()</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">source</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dt</span><span class="p">;</span>
+<span class="w">    </span><span class="n">sol</span><span class="p">.</span><span class="n">correctBoundaryConditions</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This lightweight implementation operates directly on NeoFOAM fields and expressions, providing a guaranteed time integration option regardless of build environment constraints.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<p>To use the Forward Euler integrator, configure it through a dictionary:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">Dictionary</span><span class="w"> </span><span class="n">timeDict</span><span class="p">;</span>
+<span class="n">timeDict</span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="s">&quot;type&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;forwardEuler&quot;</span><span class="p">);</span>
+<span class="n">TimeIntegration</span><span class="o">&lt;</span><span class="n">VolumeField</span><span class="o">&lt;</span><span class="n">scalar</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">integrator</span><span class="p">(</span><span class="n">timeDict</span><span class="p">);</span>
+
+<span class="c1">// Solve for one timestep</span>
+<span class="n">integrator</span><span class="p">.</span><span class="n">solve</span><span class="p">(</span><span class="n">equation</span><span class="p">,</span><span class="w"> </span><span class="n">solutionField</span><span class="p">,</span><span class="w"> </span><span class="n">currentTime</span><span class="p">,</span><span class="w"> </span><span class="n">deltaT</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="considerations">
+<h2>Considerations<a class="headerlink" href="#considerations" title="Link to this heading">¶</a></h2>
+<p>The Forward Euler method serves as both a simple first-order integration option and a fallback when external time integration libraries are unavailable. While it has minimal computational overhead and no external dependencies, its first-order accuracy means it may require smaller time steps compared to higher-order methods. For GPU computations, the solver automatically handles execution space synchronization after each time step when required.</p>
+</section>
 </section>
 
         </article>
@@ -319,8 +354,29 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Forward Euler</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#considerations">Considerations</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
@@ -329,5 +385,6 @@
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>
