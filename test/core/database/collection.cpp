@@ -31,7 +31,8 @@ TEST_CASE("CustomCollection")
 
     SECTION("new collection")
     {
-        CustomCollection& newCollection = CustomCollection::instance(db, "newCollection");
+        [[maybe_unused]] CustomCollection& newCollection =
+            CustomCollection::instance(db, "newCollection");
 
         REQUIRE(db.size() == 2);
     }

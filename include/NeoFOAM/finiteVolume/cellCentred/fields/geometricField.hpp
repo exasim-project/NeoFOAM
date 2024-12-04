@@ -45,7 +45,7 @@ public:
         const UnstructuredMesh& mesh,
         const DomainField<ValueType>& field
     )
-        : exec_(exec), name(fieldName), mesh_(mesh), field_(field)
+        : name(fieldName), exec_(exec), mesh_(mesh), field_(field)
     {}
 
     /**
@@ -58,11 +58,12 @@ public:
      */
     GeometricFieldMixin(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const Field<ValueType>& internalField,
         const BoundaryFields<ValueType>& boundaryFields
     )
-        : exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
+        : name(name), exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
     {
         if (mesh.nCells() != internalField.size())
         {
@@ -120,7 +121,6 @@ public:
     const UnstructuredMesh& mesh() const { return mesh_; }
 
     std::string name; // The name of the field
-
 
 protected:
 

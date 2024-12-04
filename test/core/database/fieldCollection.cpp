@@ -228,8 +228,8 @@ TEST_CASE("FieldCollection")
 
         SECTION("Construct from Field")
         {
-            fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(T);
-            REQUIRE(fieldCollection.size() == 1);
+            fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(T);
+            REQUIRE(fieldCollection2.size() == 1);
             const fvcc::VolumeField<NeoFOAM::scalar>& constT = T;
             const fvcc::FieldCollection& fieldCollection3 = fvcc::FieldCollection::instance(constT);
             REQUIRE(fieldCollection3.size() == 1);

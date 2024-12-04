@@ -14,7 +14,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 /**
  * @class VolumeField
- * @brief Represents a surface field in a finite volume method.
+ * @brief Represents a volume field in a finite volume method.
  *
  * The VolumeField class is a template class that represents a cell-centered field in a finite
  * volume method. It inherits from the GeometricFieldMixin class and provides methods for correcting
@@ -47,8 +47,8 @@ public:
             mesh,
             DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
-          boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
-          fieldCollectionName("")
+          key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
+          db_(std::nullopt)
     {}
 
 
@@ -72,8 +72,8 @@ public:
             mesh,
             DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
-          boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
-          fieldCollectionName("")
+          key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
+          db_(std::nullopt)
     {}
 
     /* @brief Constructor for a VolumeField with a given internal and boundary field
@@ -91,14 +91,8 @@ public:
         const BoundaryFields<ValueType>& boundaryFields,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
-          boundaryConditions_(boundaryConditions), db_(std::nullopt), key(""),
-          fieldCollectionName("")
+        : GeometricFieldMixin<ValueType>(exec, name, mesh, internalField, boundaryFields), key(""),
+          fieldCollectionName(""), boundaryConditions_(boundaryConditions), db_(std::nullopt)
     {}
 
     /* @brief Constructor for a VolumeField with a given internal field and database
@@ -128,13 +122,14 @@ public:
             mesh,
             DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
-          boundaryConditions_(boundaryConditions), db_(&db), key(key),
-          fieldCollectionName(fieldCollectionName)
+          key(key), fieldCollectionName(fieldCollectionName),
+          boundaryConditions_(boundaryConditions), db_(&db)
     {}
 
     VolumeField(const VolumeField& other)
-        : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_),
-          db_(other.db_), key(other.key), fieldCollectionName(other.fieldCollectionName)
+        : GeometricFieldMixin<ValueType>(other), key(other.key),
+          fieldCollectionName(other.fieldCollectionName),
+          boundaryConditions_(other.boundaryConditions_), db_(other.db_)
     {}
 
     /**

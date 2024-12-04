@@ -154,9 +154,6 @@ FieldType& oldTime(FieldType& field)
 {
     FieldCollection& fieldCollection = FieldCollection::instance(field);
     OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
-
-    FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
-
     return oldTimeCollection.getOrInsert<FieldType>(field.key);
 }
 
@@ -173,9 +170,6 @@ const FieldType& oldTime(const FieldType& field)
 {
     const FieldCollection& fieldCollection = FieldCollection::instance(field);
     const OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
-
-    const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
-
     return oldTimeCollection.get<FieldType>(field.key);
 }
 
