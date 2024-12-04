@@ -4,14 +4,17 @@
 #pragma once
 
 #include <vector>
+#include <optional>
+#include <functional>
+
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
+
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-
 
 /**
  * @class GeometricFieldMixin
@@ -32,15 +35,17 @@ public:
      * @brief Constructor for GeometricFieldMixin.
      *
      * @param exec The executor object.
+     * @param fieldName The name of the field.
      * @param mesh The unstructured mesh object.
-     * @param field The domain field object.
+     * @param domainField The domain field object.
      */
     GeometricFieldMixin(
         const Executor& exec,
+        std::string fieldName,
         const UnstructuredMesh& mesh,
-        const DomainField<ValueType>& domainField
+        const DomainField<ValueType>& field
     )
-        : exec_(exec), mesh_(mesh), field_(domainField)
+        : name(fieldName), exec_(exec), mesh_(mesh), field_(field)
     {}
 
     /**
@@ -48,15 +53,17 @@ public:
      *
      * @param exec The executor object.
      * @param mesh The unstructured mesh object.
-     * @param field The domain field object.
+     * @param internalField The internal field object.
+     * @param boundaryFields The boundary field object.
      */
     GeometricFieldMixin(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const Field<ValueType>& internalField,
         const BoundaryFields<ValueType>& boundaryFields
     )
-        : exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
+        : name(name), exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
     {
         if (mesh.nCells() != internalField.size())
         {
@@ -112,6 +119,8 @@ public:
      * @return The const reference to the unstructured mesh object.
      */
     const UnstructuredMesh& mesh() const { return mesh_; }
+
+    std::string name; // The name of the field
 
 protected:
 

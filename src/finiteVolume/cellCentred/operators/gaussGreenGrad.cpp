@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <functional>
-
 #include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
@@ -18,7 +16,7 @@ void computeGrad(
 {
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();

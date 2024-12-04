@@ -278,13 +278,18 @@ TEST_CASE("getSpans")
     NeoFOAM::Field<NeoFOAM::scalar> b(exec, 3, 2.0);
     NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
 
+    auto [hostA, hostB, hostC] = NeoFOAM::copyToHosts(a, b, c);
     auto [spanA, spanB, spanC] = NeoFOAM::spans(a, b, c);
+
+    REQUIRE(hostA[0] == 1.0);
+    REQUIRE(hostB[0] == 2.0);
+    REQUIRE(hostC[0] == 3.0);
 
     NeoFOAM::parallelFor(
         a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
     );
 
-    auto [hostA] = NeoFOAM::copyToHosts(a);
+    std::tie(hostA) = NeoFOAM::copyToHosts(a);
 
     for (auto value : hostA.span())
     {

@@ -44,17 +44,17 @@ include(cmake/CPM.cmake)
 cpmaddpackage(
   NAME
   cpptrace
-  GITHUB_REPOSITORY
-  jeremy-rifkin/cpptrace
+  URL
+  https://github.com/jeremy-rifkin/cpptrace/archive/refs/tags/v0.7.3.zip
   VERSION
-  0.5.4
+  0.7.3
   SYSTEM)
 
 cpmaddpackage(
   NAME
   nlohmann_json
-  GITHUB_REPOSITORY
-  nlohmann/json
+  URL
+  https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   VERSION
   3.11.3
   SYSTEM)
@@ -71,8 +71,8 @@ cpmaddpackage(
 cpmaddpackage(
   NAME
   spdlog
-  GITHUB_REPOSITORY
-  gabime/spdlog
+  URL
+  https://github.com/gabime/spdlog/archive/refs/tags/v1.13.0.zip
   VERSION
   1.13.0
   SYSTEM)
@@ -80,8 +80,8 @@ cpmaddpackage(
 cpmaddpackage(
   NAME
   cxxopts
-  GITHUB_REPOSITORY
-  jarro2783/cxxopts
+  URL
+  https://github.com/jarro2783/cxxopts/archive/refs/tags/v3.2.0.zip
   VERSION
   3.2.0
   SYSTEM)
@@ -90,8 +90,8 @@ if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(
     NAME
     Catch2
-    GITHUB_REPOSITORY
-    catchorg/Catch2
+    URL
+    https://github.com/catchorg/Catch2/archive/refs/tags/v3.4.0.zip
     VERSION
     3.4.0
     SYSTEM)

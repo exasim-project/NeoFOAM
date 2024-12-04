@@ -2,8 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <Kokkos_Core.hpp>
-#include <iostream>
+#include <Kokkos_Core.hpp> // IWYU pragma: keep
 
 namespace NeoFOAM
 {

@@ -3,8 +3,8 @@
 Domain Specific Language (DSL)
 ==============================
 
-The concept of a Domain Specific Language (DSL) allows to dramatically simplify the process of implementing and solving equations in a given programming language like C++.
-Engineers can express equations in a concise and readable form, closely resembling their mathematical representation and no or little knowledge of the numerical schemes and implementation is required.
+The concept of a Domain Specific Language (DSL) allows to simplify the process of implementing and solving equations in a given programming language like C++.
+Engineers can express equations in a concise and readable form, closely resembling their mathematical representation, while no or little knowledge of the numerical schemes and implementation is required.
 This approach allows engineers to focus on the physics of the problem rather than the numerical implementation and helps in reducing the time and effort required to develop and maintain complex simulations.
 
 The Navier-Stokes equations can be expressed in the DSL in OpenFOAM as follows:
@@ -30,7 +30,8 @@ To solve the continuity equation in OpenFOAM with the PISO or SIMPLE algorithm, 
 This approach is readable and easy to understand for engineers familiar with OpenFOAM. However, it has several limitations due to its implementation in OpenFOAM:
 
     - the solution system is always a sparse matrix
-    - the sparse matrix is always a LDU matrix that is not supported by external linear solvers
+    - individual terms are eagerly evaluated, resulting in unnecessary use of temporaries
+    - the sparse matrix is always an LDU matrix that is not supported by external linear solvers
     - Only cell-centred discretisation is supported
 
 NeoFOAM DSL tries to address these issues by providing:
@@ -39,7 +40,7 @@ NeoFOAM DSL tries to address these issues by providing:
     - a more modular design
     - Support for standard matrix formats like COO and CSR, to simplify the use of external linear solvers
 
-The use of standard matrix format combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
+The use of standard matrix formats combined with lazy evaluation allows for the use of external libraries to integrate PDEs in time and space.
 The equation system can be passed to **sundials** and be integrated by **RK methods** and **BDF methods** on heterogeneous architectures.
 
 The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adoption should be possible with minimal effort and the same equation from above should read:
@@ -48,18 +49,17 @@ The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adop
 
     dsl::Equation<NeoFOAM::scalar> UEqn
     (
-        fvcc::impOp::ddt(U)
-        + fvcc::impOp::div(phi, U)
-        - fvcc::impOp::laplacian(nu, U)
+        dsl::temporal::ddt(U)
+        + dsl::implicit::div(phi, U)
+        - dsl::implicit::laplacian(nu, U)
     )
 
-    solve(UEqn == -fvcc::expOp::grad(p));
+    solve(UEqn == -dsl::explicit::grad(p), U, fvSchemes, fvSolution);
 
 
-In contrast to OpenFOAM, here the majority of the work is done in the solve step.
+In contrast to OpenFOAM, the matrix assembly is deferred till the solve step. Hence the majority of the computational work is performed during the solve step.
 That is 1. assemble the system and 2. solve the system.
 After the system is assembled or solved, it provides access to the linear system for the SIMPLE and PISO algorithms.
-
 
 
 

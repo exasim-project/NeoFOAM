@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <functional>
-
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -20,7 +17,7 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = divPhi.mesh();
     const auto exec = divPhi.exec();
-    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(faceFlux, phi, phif);
 
@@ -39,13 +36,13 @@ void computeDiv(
         for (size_t i = 0; i < nInternalFaces; i++)
         {
             scalar flux = surfFaceFlux[i] * surfPhif[i];
-            surfDivPhi[surfOwner[i]] += flux;
-            surfDivPhi[surfNeighbour[i]] -= flux;
+            surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
+            surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
         {
-            int32_t own = surfFaceCells[i - nInternalFaces];
+            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
             surfDivPhi[own] += valueOwn;
         }
@@ -62,8 +59,8 @@ void computeDiv(
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 scalar flux = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[surfOwner[i]], flux);
-                Kokkos::atomic_sub(&surfDivPhi[surfNeighbour[i]], flux);
+                Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
+                Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
             }
         );
 
@@ -71,7 +68,7 @@ void computeDiv(
             exec,
             {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
-                int32_t own = surfFaceCells[i - nInternalFaces];
+                auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
             }
@@ -88,16 +85,18 @@ void computeDiv(
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp,
+    [[maybe_unused]] const SurfaceInterpolation& surfInterp,
     Field<scalar>& divPhi
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    // FIXME not implemented
-    // surfInterp.interpolate(phif, faceFlux, phi);
+
+    // TODO check if copy can be avoided
+    auto faceFluxCopy = SurfaceField<scalar>(faceFlux);
+    surfInterp.interpolate(phif, phi, faceFluxCopy);
 
     auto surfDivPhi = divPhi.span();
 
@@ -107,7 +106,6 @@ void computeDiv(
     const auto surfFaceFlux = faceFlux.internalField().span();
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
-
 
     // check if the executor is GPU
     if (std::holds_alternative<SerialExecutor>(exec))

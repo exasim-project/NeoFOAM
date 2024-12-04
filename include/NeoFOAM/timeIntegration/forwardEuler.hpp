@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <functional>
-
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
