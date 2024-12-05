@@ -5,6 +5,7 @@ env:
   OMPI_ALLOW_RUN_AS_ROOT: 1
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
   OMPI_MCA_rmaps_base_oversubscribe: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 on:
   pull_request:
     types: [opened, synchronize]
@@ -52,7 +53,10 @@ jobs:
                  sudo amazon-linux-extras install epel -y
                  sudo yum install Lmod -y
                  sudo systemctl enable docker
-                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+                 export NVM_DIR="$HOME/.nvm"
+                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                 nvm install 16.20.0
                  sudo mkfs -t xfs /dev/sda1
                  sudo mkdir -p /share
                  sudo mount /dev/sda1 /share
@@ -61,14 +65,23 @@ jobs:
                  sudo ./postinstall_github > ~/install.log
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
-                 export ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: ["develop", "production"]
     steps:
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
+      - name: Set up cache
+        uses: actions/cache@v3
+        if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
+        with:
+          path: build
+          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
@@ -78,10 +91,11 @@ jobs:
           module spider libfabric-aws
           module load cmake
           cmake --version
-          cmake --preset ninja-kokkos-cuda-all \
+          cmake --preset ${{matrix.preset}} \
+            -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
             -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
-          cmake --build --preset ninja-kokkos-cuda-all
+          cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
         run: |
@@ -89,7 +103,7 @@ jobs:
           module load clang/16
           module load libfabric-aws
           module load cmake
-          ctest --test-dir build/ReleaseCudaAll/test
+          ctest --preset ${{matrix.preset}}
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
