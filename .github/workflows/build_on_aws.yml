@@ -86,9 +86,8 @@ jobs:
           nvm -v
           nvm install v16.20.2
           node -v
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 16
+          rm /share/software/actions-runner/externals/node20/bin/node
+          ln -s /share/ec2-user/.nvm/versions/node/v16.20.2/bin/node /share/software/actions-runner/externals/node20/bin/node
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Set up cache
