@@ -67,8 +67,8 @@ jobs:
                  sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                  nvm install v16.20.2
-                 echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
-                 echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
+                 sudo rm /share/software/actions-runner/externals/node20/bin/node
+                 ln -s /share/ec2-user/.nvm/versions/node/v16.20.2/bin/node /share/software/actions-runner/externals/node20/bin/nod
                  
   build-on-aws:
     name: Build on aws
@@ -79,15 +79,6 @@ jobs:
       matrix:
         preset: ["develop", "production"]
     steps:
-      - name: Prepare environment
-        shell: bash -i {0}
-        run: |
-          . /share/ec2-user/.nvm/nvm.sh
-          nvm -v
-          nvm install v16.20.2
-          node -v
-          sudo rm /share/software/actions-runner/externals/node20/bin/node
-          ln -s /share/ec2-user/.nvm/versions/node/v16.20.2/bin/node /share/software/actions-runner/externals/node20/bin/node
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Set up cache
