@@ -56,7 +56,8 @@ jobs:
                  sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
                  export NVM_DIR="$HOME/.nvm"
                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                 nvm install 16.20.0
+                 nvm install v16.20.0
+                 nvm use v16.20.0
                  sudo mkfs -t xfs /dev/sda1
                  sudo mkdir -p /share
                  sudo mount /dev/sda1 /share
@@ -104,27 +105,3 @@ jobs:
           module load libfabric-aws
           module load cmake
           ctest --preset ${{matrix.preset}}
-  stop-runner:
-    name: Stop self-hosted EC2 runner
-    needs:
-      - start-runner # required to get output from the start-runner job
-      - build-on-aws # required to wait when the main job is done
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    # only try to run the stop job if the start runner hasn't been skipped
-    if: ${{ always() && needs.start-runner.result != 'skipped' }}
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::308634587211:role/Github-OIDC-Role-29bocUD8VBZr
-          aws-region: us-east-1
-      - name: Stop EC2 runner
-        uses: HendriceH/ec2-github-runner@v1.10
-        with:
-          mode: stop
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
