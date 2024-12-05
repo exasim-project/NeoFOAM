@@ -66,6 +66,8 @@ jobs:
                  export NVM_DIR="/share/ec-user/.nvm"
                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                  nvm install v16.20.2
+                 echo "NVM_DIR=/share/ec-user/.nvm" >> $GITHUB_ENV
+                 echo "NVM_BIN=/share/ec-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
                  
   build-on-aws:
     name: Build on aws
@@ -76,6 +78,10 @@ jobs:
       matrix:
         preset: ["develop", "production"]
     steps:
+      - name: Prepare environment
+        shell: bash -i {0}
+        run: |
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Set up cache
