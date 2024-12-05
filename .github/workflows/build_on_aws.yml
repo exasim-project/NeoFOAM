@@ -63,12 +63,12 @@ jobs:
                  export USER=ec2-user
                  cd /share/ec2-user
                  mkdir .nvm
-                 export NVM_DIR=/share/ec-user/.nvm
+                 export NVM_DIR=/share/ec2-user/.nvm
                  sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                  nvm install v16.20.2
-                 echo "NVM_DIR=/share/ec-user/.nvm" >> $GITHUB_ENV
-                 echo "NVM_BIN=/share/ec-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
+                 echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
+                 echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
                  
   build-on-aws:
     name: Build on aws
@@ -82,7 +82,7 @@ jobs:
       - name: Prepare environment
         shell: bash -i {0}
         run: |
-          . /share/ec-user/.nvm/nvm.sh
+          . /share/ec2-user/.nvm/nvm.sh
           nvm -v
           node -v
       - name: Checkout NeoFOAM
