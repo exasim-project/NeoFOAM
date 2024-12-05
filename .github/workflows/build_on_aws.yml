@@ -69,7 +69,6 @@ jobs:
                  nvm install v16.20.2
                  echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
                  echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
-                 echo "PATH=/share/ec2-user/.nvm/versions/node/v16.20.2/bin:$PATH" >> $GITHUB_ENV
                  
   build-on-aws:
     name: Build on aws
@@ -85,7 +84,7 @@ jobs:
         run: |
           . /share/ec2-user/.nvm/nvm.sh
           nvm -v
-          export PATH=/share/ec2-user/.nvm/versions/node/v16.20.2/bin:$PATH
+          nvm install v16.20.2
           node -v
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
