@@ -53,11 +53,6 @@ jobs:
                  sudo amazon-linux-extras install epel -y
                  sudo yum install Lmod -y
                  sudo systemctl enable docker
-                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-                 export NVM_DIR="$HOME/.nvm"
-                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                 nvm install v16.20.0
-                 nvm use v16.20.0
                  sudo mkfs -t xfs /dev/sda1
                  sudo mkdir -p /share
                  sudo mount /dev/sda1 /share
@@ -66,6 +61,12 @@ jobs:
                  sudo ./postinstall_github > ~/install.log
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
+                 cd /share/ec2-user
+                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+                 export NVM_DIR="/share/ec-user/.nvm"
+                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                 nvm install v16.20.2
+                 
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
