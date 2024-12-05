@@ -62,8 +62,9 @@ jobs:
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
                  cd /share/ec2-user
-                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+                 mkdir .nvm
                  export NVM_DIR="/share/ec-user/.nvm"
+                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
                  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                  nvm install v16.20.2
                  echo "NVM_DIR=/share/ec-user/.nvm" >> $GITHUB_ENV
@@ -81,7 +82,7 @@ jobs:
       - name: Prepare environment
         shell: bash -i {0}
         run: |
-          . "$NVM_DIR/nvm.sh"
+          . /share/ec-user/.nvm/nvm.sh
           nvm -v
           node -v
       - name: Checkout NeoFOAM
