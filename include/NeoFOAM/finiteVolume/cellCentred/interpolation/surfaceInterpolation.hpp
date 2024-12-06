@@ -28,20 +28,14 @@ public:
     static std::unique_ptr<SurfaceInterpolationFactory>
     create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
     {
-        std::string key;
         // input is dictionary the key is "interpolation"
-        if (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
-        {
-            key = std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("surfaceInterpolation");
-        }
-        else
-        {
-            key = std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
-        }
+        std::string key =
+            (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
+                ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("surfaceInterpolation")
+                : std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
 
         keyExistsOrError(key);
-        auto ptr = table().at(key)(exec, uMesh, inputs);
-        return ptr;
+        return table().at(key)(exec, uMesh, inputs);
     }
 
     static std::string name() { return "SurfaceInterpolationFactory"; }
