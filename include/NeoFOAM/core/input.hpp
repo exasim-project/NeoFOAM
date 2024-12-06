@@ -15,7 +15,7 @@ using Input = std::variant<Dictionary, TokenList>;
 template<class DataClass>
 DataClass read(Input input)
 {
-    return std::visit([](const auto& i) { return dataClass::read(i); }, input);
+    return std::visit([](const auto& i) { return DataClass::read(i); }, input);
 }
 
 }
