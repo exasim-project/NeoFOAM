@@ -16,7 +16,7 @@ NeoFOAM has the following requirements
 *  _Kokkos 4.3.0_
 
 For NVIDIA GPU support
-* cuda
+* cuda _12+_
 
 For development it is required to use [pre-commit](https://pre-commit.com/).
 
