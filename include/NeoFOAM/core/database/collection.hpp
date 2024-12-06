@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <algorithm> // for std::sort
 
 #include "NeoFOAM/core/database/document.hpp"
 

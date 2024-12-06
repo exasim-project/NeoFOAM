@@ -113,10 +113,12 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 {
     const Vector leftBoundary = {0.0, 0.0, 0.0};
     const Vector rightBoundary = {1.0, 0.0, 0.0};
-    scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / nCells;
-    vectorField meshPoints(exec, nCells + 1, {0.0, 0.0, 0.0});
-    meshPoints[0] = leftBoundary;
-    meshPoints[nCells] = rightBoundary;
+    scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / static_cast<scalar>(nCells);
+    auto hostExec = SerialExecutor {};
+    vectorField meshPointsHost(hostExec, nCells + 1, {0.0, 0.0, 0.0});
+    meshPointsHost[0] = leftBoundary;
+    meshPointsHost[nCells] = rightBoundary;
+    auto meshPoints = meshPointsHost.copyToExecutor(exec);
 
     // loop over internal mesh points
     auto meshPointsSpan = meshPoints.span();
@@ -124,9 +126,10 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     parallelFor(
         exec,
         {1, nCells},
-        KOKKOS_LAMBDA(const size_t i) { meshPointsSpan[i][0] = leftBoundaryX + i * meshSpacing; }
+        KOKKOS_LAMBDA(const size_t i) {
+            meshPointsSpan[i][0] = leftBoundaryX + static_cast<scalar>(i) * meshSpacing;
+        }
     );
-
 
     scalarField cellVolumes(exec, nCells, meshSpacing);
 
@@ -140,44 +143,51 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
         }
     );
 
-    vectorField faceAreas(exec, nCells + 1, {1.0, 0.0, 0.0});
-    faceAreas[0] = {-1.0, 0.0, 0.0}; // left boundary face
+
+    vectorField faceAreasHost(hostExec, nCells + 1, {1.0, 0.0, 0.0});
+    faceAreasHost[0] = {-1.0, 0.0, 0.0}; // left boundary face
+    auto faceAreas = faceAreasHost.copyToExecutor(exec);
 
     vectorField faceCenters(exec, meshPoints);
     scalarField magFaceAreas(exec, nCells + 1, 1.0);
 
-    labelField faceOwner(exec, nCells + 1);
-    faceOwner[0] = 0; // left boundary face
+    labelField faceOwnerHost(hostExec, nCells + 1);
+    faceOwnerHost[0] = 0; // left boundary face
+    auto faceOwner = faceOwnerHost.copyToExecutor(exec);
 
     // loop over internal faces and right boundary face
     auto faceOwnerSpan = faceOwner.span();
     parallelFor(
-        exec, {1, nCells + 1}, KOKKOS_LAMBDA(const size_t i) { faceOwnerSpan[i] = i - 1; }
+        exec,
+        {1, nCells + 1},
+        KOKKOS_LAMBDA(const size_t i) { faceOwnerSpan[i] = static_cast<label>(i - 1); }
     );
 
-
     labelField faceNeighbor(exec, nCells + 1);
-    faceNeighbor[0] = {};
-    faceNeighbor[nCells] = {};
 
     auto faceNeighborSpan = faceNeighbor.span();
     parallelFor(
-        exec, {0, nCells}, KOKKOS_LAMBDA(const size_t i) { faceNeighborSpan[i] = i; }
+        exec,
+        {0, nCells},
+        KOKKOS_LAMBDA(const size_t i) { faceNeighborSpan[i] = static_cast<label>(i); }
     );
 
-    vectorField delta(exec, 2);
-    delta[0] = {leftBoundary[0] - cellCenters[0][0], 0.0, 0.0};
-    delta[1] = {rightBoundary[0] - cellCenters[nCells - 1][0], 0.0, 0.0};
+    vectorField deltaHost(hostExec, 2);
+    auto cellCentersHost = cellCenters.copyToHost();
+    deltaHost[0] = {leftBoundary[0] - cellCentersHost[0][0], 0.0, 0.0};
+    deltaHost[1] = {rightBoundary[0] - cellCentersHost[nCells - 1][0], 0.0, 0.0};
+    auto delta = deltaHost.copyToExecutor(exec);
 
-    scalarField deltaCoeffs(exec, 2);
-    deltaCoeffs[0] = 1 / mag(delta[0]);
-    deltaCoeffs[1] = 1 / mag(delta[1]);
+    scalarField deltaCoeffsHost(hostExec, 2);
+    deltaCoeffsHost[0] = 1 / mag(deltaHost[0]);
+    deltaCoeffsHost[1] = 1 / mag(deltaHost[1]);
+    auto deltaCoeffs = deltaCoeffsHost.copyToExecutor(exec);
 
     BoundaryMesh boundaryMesh(
         exec,
         {exec, {0, static_cast<int>(nCells) - 1}},
         {exec, {leftBoundary, rightBoundary}},
-        {exec, {cellCenters[0], cellCenters[nCells - 1]}},
+        {exec, {cellCentersHost[0], cellCentersHost[nCells - 1]}},
         {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
         {exec, {1.0, 1.0}},
         {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
