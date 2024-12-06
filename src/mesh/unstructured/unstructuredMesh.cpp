@@ -126,7 +126,9 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     parallelFor(
         exec,
         {1, nCells},
-        KOKKOS_LAMBDA(const size_t i) { meshPointsSpan[i][0] = leftBoundaryX + static_cast<scalar>(i) * meshSpacing; }
+        KOKKOS_LAMBDA(const size_t i) {
+            meshPointsSpan[i][0] = leftBoundaryX + static_cast<scalar>(i) * meshSpacing;
+        }
     );
 
     scalarField cellVolumes(exec, nCells, meshSpacing);
