@@ -91,11 +91,7 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-<<<<<<< HEAD
     SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
-=======
-    SurfaceField<scalar> phif(exec, mesh, SurfaceBoundary<scalar>::calculatedBCs(mesh));
->>>>>>> e34a2272 (calculated BC is a static member of volumeBoundary and surfaceBoundary)
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
 
     // TODO check if copy can be avoided
@@ -184,10 +180,11 @@ void GaussGreenDiv::div(
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
 
-VolumeField<scalar> GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi)
+VolumeField<scalar>
+GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi)
 {
     std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
-    VolumeField<scalar> divPhi(exec_,name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_));
+    VolumeField<scalar> divPhi(exec_, name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_));
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
     return divPhi;
 };
