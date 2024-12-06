@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
+message(STATUS "Auto detecting accelerator devices")
 include(CheckLanguage)
 
 if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
   find_package(Threads QUIET)
 
   if(Threads_FOUND)
+    message(STATUS "Set Kokkos_ENABLE_Threads=ON")
     set(Kokkos_ENABLE_THREADS
         ON
         CACHE INTERNAL "")
@@ -14,6 +16,7 @@ if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
     find_package(OpenMP QUIET)
 
     if(OpenMP_FOUND)
+      message(STATUS "Set Kokkos_ENABLE_OPENMP=ON")
       set(Kokkos_ENABLE_OPENMP
           ON
           CACHE INTERNAL "")
@@ -21,16 +24,29 @@ if(NOT DEFINED Kokkos_ENABLE_OPENMP AND NOT DEFINED Kokkos_ENABLE_THREADS)
   endif()
 endif()
 
-# if(NOT DEFINED Kokkos_ENABLE_CUDA) check_language(CUDA)
-
-# if(CMAKE_CUDA_COMPILER) set(Kokkos_ENABLE_CUDA ON CACHE INTERNAL "")
-# set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE INTERNAL "") else() set(Kokkos_ENABLE_CUDA OFF CACHE
-# INTERNAL "") endif() endif()
+if(NOT DEFINED Kokkos_ENABLE_CUDA)
+  check_language(CUDA)
+  if(CMAKE_CUDA_COMPILER)
+    message(STATUS "Set Kokkos_ENABLE_CUDA=ON")
+    set(Kokkos_ENABLE_CUDA
+        ON
+        CACHE INTERNAL "")
+    set(Kokkos_ENABLE_CUDA_CONSTEXPR
+        ON
+        CACHE INTERNAL "")
+  else()
+    set(Kokkos_ENABLE_CUDA
+        OFF
+        CACHE INTERNAL "")
+  endif()
+else()
+  message(STATUS "Skip CUDA detection Kokkos_ENABLE_CUDA=${Kokko_ENABLE_CUDA}")
+endif()
 
 if(NOT DEFINED Kokkos_ENABLE_HIP)
   check_language(HIP)
-
   if(CMAKE_HIP_COMPILER)
+    message(STATUS "Set Kokkos_ENABLE_HIP=ON")
     set(Kokkos_ENABLE_HIP
         ON
         CACHE INTERNAL "")
@@ -39,4 +55,6 @@ if(NOT DEFINED Kokkos_ENABLE_HIP)
         OFF
         CACHE INTERNAL "")
   endif()
+else()
+  message(STATUS "Skip HIP detection Kokkos_ENABLE_HIP=${Kokko_ENABLE_HIP}")
 endif()

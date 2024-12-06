@@ -108,7 +108,8 @@ jobs:
           cmake --preset ${{matrix.preset}} \
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DKokkos_ENABLE_CUDA=ON
           cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
