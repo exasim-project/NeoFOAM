@@ -65,19 +65,6 @@ public:
         boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
     }
 
-    static std::vector<SurfaceBoundary<ValueType>> calculatedBCs(const UnstructuredMesh& mesh)
-    {
-        const auto& bMesh = mesh.boundaryMesh();
-        std::vector<SurfaceBoundary<ValueType>> bcs;
-
-        for (int patchID = 0; patchID < mesh.nBoundaries(); patchID++)
-        {
-            Dictionary patchDict({{"type", std::string("calculated")}});
-            bcs.push_back(SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
-        }
-
-        return bcs;
-    };
 
 private:
 
@@ -87,6 +74,9 @@ private:
 };
 
 // free functions
+
+/* @brief creates a vector of boundary conditions of type calculated for every boundary
+ */
 template<typename ValueType>
 std::vector<SurfaceBoundary<ValueType>> createCalculatedBCs(const UnstructuredMesh& mesh)
 {
