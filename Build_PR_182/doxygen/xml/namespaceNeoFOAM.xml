@@ -2,6 +2,10 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM" kind="namespace" language="C++">
     <compoundname>NeoFOAM</compoundname>
+    <innerclass refid="classNeoFOAM_1_1Collection" prot="public">NeoFOAM::Collection</innerclass>
+    <innerclass refid="classNeoFOAM_1_1CollectionMixin" prot="public">NeoFOAM::CollectionMixin</innerclass>
+    <innerclass refid="classNeoFOAM_1_1Database" prot="public">NeoFOAM::Database</innerclass>
+    <innerclass refid="classNeoFOAM_1_1Document" prot="public">NeoFOAM::Document</innerclass>
     <innerclass refid="classNeoFOAM_1_1Dictionary" prot="public">NeoFOAM::Dictionary</innerclass>
     <innerclass refid="classNeoFOAM_1_1NeoFOAMException" prot="public">NeoFOAM::NeoFOAMException</innerclass>
     <innerclass refid="classNeoFOAM_1_1CPUExecutor" prot="public">NeoFOAM::CPUExecutor</innerclass>
@@ -31,6 +35,26 @@
     <innernamespace refid="namespaceNeoFOAM_1_1dsl">NeoFOAM::dsl</innernamespace>
     <innernamespace refid="namespaceNeoFOAM_1_1finiteVolume">NeoFOAM::finiteVolume</innernamespace>
       <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="namespaceNeoFOAM_1a8031b90f392da83903614bb0d9da7355" prot="public" static="no">
+        <type>std::function&lt; bool(<ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>)&gt;</type>
+        <definition>NeoFOAM::DocumentValidator</definition>
+        <argsstring></argsstring>
+        <name>DocumentValidator</name>
+        <briefdescription>
+<para>A type alias for a function that validates a <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This type alias represents a function that takes a <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object as an argument and returns a boolean value indicating whether the <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> is valid or not.</para>
+<para>Example usage: <programlisting><codeline><highlight class="normal">DocumentValidator<sp/>validator<sp/>=<sp/>[](Dictionary<sp/>dict)<sp/>-&gt;<sp/>bool<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>//<sp/>Validation<sp/>logic<sp/>here</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>return<sp/>true;<sp/>//<sp/>or<sp/>false<sp/>based<sp/>on<sp/>validation</highlight></codeline>
+<codeline><highlight class="normal">};</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" line="30" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" bodystart="30" bodyend="-1"/>
+      </memberdef>
       <memberdef kind="typedef" id="namespaceNeoFOAM_1ad8645a25cba2275ee5bea619093da91e" prot="public" static="no">
         <type>std::variant&lt; <ref refid="classNeoFOAM_1_1CPUExecutor" kindref="compound">CPUExecutor</ref>, <ref refid="classNeoFOAM_1_1GPUExecutor" kindref="compound">GPUExecutor</ref>, <ref refid="classNeoFOAM_1_1SerialExecutor" kindref="compound">SerialExecutor</ref> &gt;</type>
         <definition>using NeoFOAM::Executor = typedef std::variant&lt;CPUExecutor, GPUExecutor, SerialExecutor&gt;</definition>
@@ -254,6 +278,99 @@
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">
+      <memberdef kind="function" id="namespaceNeoFOAM_1a19b432970d4c56c440ca5f4bc6670b43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool NeoFOAM::hasId</definition>
+        <argsstring>(Dictionary doc)</argsstring>
+        <name>hasId</name>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref></type>
+          <declname>doc</declname>
+        </param>
+        <briefdescription>
+<para>Checks if a <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object has an &quot;id&quot; key. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function checks if the given <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object has an &quot;id&quot; key.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>doc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object to check. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if the <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> has an &quot;id&quot; key, false otherwise. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" line="40" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" declline="40" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1aca79e89a7764167bb986f17d1dd7c18f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>const std::string &amp;</type>
+        <definition>const std::string&amp; NeoFOAM::name</definition>
+        <argsstring>(const NeoFOAM::Document &amp;doc)</argsstring>
+        <name>name</name>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Document" kindref="compound">NeoFOAM::Document</ref> &amp;</type>
+          <declname>doc</declname>
+        </param>
+        <briefdescription>
+<para>Retrieves the name of a <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref>. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function retrieves the name of the <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref> by looking up the &quot;name&quot; key in the <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref>&apos;s <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>doc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref> to retrieve the name from. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>std::string The name of the <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref>. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" line="109" column="19" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" declline="109" declcolumn="19"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a30a10765404e06047bda75167039092f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string &amp;</type>
+        <definition>std::string&amp; NeoFOAM::name</definition>
+        <argsstring>(NeoFOAM::Document &amp;doc)</argsstring>
+        <name>name</name>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1Document" kindref="compound">NeoFOAM::Document</ref> &amp;</type>
+          <declname>doc</declname>
+        </param>
+        <briefdescription>
+<para>Retrieves the name of a <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref>. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function retrieves the name of the <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref> by looking up the &quot;name&quot; key in the <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref>&apos;s <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref> object.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>doc</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref> to retrieve the name from. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>std::string The name of the <ref refid="classNeoFOAM_1_1Document" kindref="compound">Document</ref>. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" line="120" column="13" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/document.hpp" declline="120" declcolumn="13"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a9ecd7090c554081dd6200a92fb0f6b85" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>std::string</type>
         <definition>std::string NeoFOAM::demangle</definition>
@@ -1307,6 +1424,6 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/demangle.hpp" line="11" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/collection.hpp" line="13" column="1"/>
   </compounddef>
 </doxygen>
