@@ -69,7 +69,7 @@ jobs:
                  nvm install v16.20.2
                  echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
                  echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
-                 
+
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
@@ -108,7 +108,8 @@ jobs:
           cmake --preset ${{matrix.preset}} \
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DKokkos_ENABLE_CUDA=ON
           cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
