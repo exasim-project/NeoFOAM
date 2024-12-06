@@ -113,7 +113,7 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 {
     const Vector leftBoundary = {0.0, 0.0, 0.0};
     const Vector rightBoundary = {1.0, 0.0, 0.0};
-    scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / nCells;
+    scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / static_cast<scalar>(nCells);
     auto hostExec = SerialExecutor {};
     vectorField meshPointsHost(hostExec, nCells + 1, {0.0, 0.0, 0.0});
     meshPointsHost[0] = leftBoundary;
@@ -126,7 +126,7 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     parallelFor(
         exec,
         {1, nCells},
-        KOKKOS_LAMBDA(const size_t i) { meshPointsSpan[i][0] = leftBoundaryX + i * meshSpacing; }
+        KOKKOS_LAMBDA(const size_t i) { meshPointsSpan[i][0] = leftBoundaryX + static_cast<scalar>(i) * meshSpacing; }
     );
 
     scalarField cellVolumes(exec, nCells, meshSpacing);
