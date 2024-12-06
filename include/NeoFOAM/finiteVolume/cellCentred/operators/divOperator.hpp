@@ -109,7 +109,7 @@ public:
     {
         std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
         VolumeField<scalar> divPhi(
-            exec_, name,mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_)
+            exec_, name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_)
         );
         NeoFOAM::fill(divPhi.internalField(), 0.0);
         NeoFOAM::fill(divPhi.boundaryField().value(), 0.0);
