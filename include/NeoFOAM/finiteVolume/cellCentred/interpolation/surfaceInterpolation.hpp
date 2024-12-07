@@ -3,16 +3,15 @@
 
 #pragma once
 
+#include <functional>
+
+#include <Kokkos_Core.hpp>
+
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
-
-#include <Kokkos_Core.hpp>
-
-#include <functional>
-
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -22,6 +21,7 @@ class SurfaceInterpolationFactory :
         SurfaceInterpolationFactory,
         Parameters<const Executor&, const UnstructuredMesh&, Input>>
 {
+    using ScalarSurfaceField = SurfaceField<scalar>;
 
 public:
 
@@ -46,12 +46,12 @@ public:
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
     virtual void
-    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const = 0;
+    interpolate(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const = 0;
 
     virtual void interpolate(
-        const SurfaceField<scalar>& faceFlux,
+        const ScalarSurfaceField& faceFlux,
         const VolumeField<scalar>& volField,
-        SurfaceField<scalar>& surfaceField
+        ScalarSurfaceField& surfaceField
     ) const = 0;
 
     // Pure virtual function for cloning
@@ -65,6 +65,7 @@ protected:
 
 class SurfaceInterpolation
 {
+    using ScalarSurfaceField = SurfaceField<scalar>;
 
 public:
 
@@ -88,33 +89,37 @@ public:
           interpolationKernel_(SurfaceInterpolationFactory::create(exec, mesh, input)) {};
 
 
-    void interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const
+    void interpolate(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const
     {
         interpolationKernel_->interpolate(volField, surfaceField);
     }
 
-    SurfaceField<scalar> interpolate(const VolumeField<scalar>& volField) const
+    ScalarSurfaceField interpolate(const VolumeField<scalar>& volField) const
     {
         std::string name = "interpolated_" + volField.name;
-        SurfaceField<scalar> surfaceField(exec_, name, mesh_, createCalculatedBCs<scalar>(mesh_));
+        ScalarSurfaceField surfaceField(
+            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        );
         interpolate(surfaceField, volField);
         return surfaceField;
     }
 
     void interpolate(
-        const SurfaceField<scalar>& faceFlux,
+        const ScalarSurfaceField& faceFlux,
         const VolumeField<scalar>& volField,
-        SurfaceField<scalar>& surfaceField
+        ScalarSurfaceField& surfaceField
     ) const
     {
         interpolationKernel_->interpolate(faceFlux, volField, surfaceField);
     }
 
-    SurfaceField<scalar>
-    interpolate(const SurfaceField<scalar>& faceFlux, const VolumeField<scalar>& volField) const
+    ScalarSurfaceField
+    interpolate(const ScalarSurfaceField& faceFlux, const VolumeField<scalar>& volField) const
     {
         std::string name = "interpolated_" + volField.name;
-        SurfaceField<scalar> surfaceField(exec_, name, mesh_, createCalculatedBCs<scalar>(mesh_));
+        ScalarSurfaceField surfaceField(
+            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        );
         interpolate(faceFlux, volField, surfaceField);
         return surfaceField;
     }

@@ -16,7 +16,9 @@ void computeGrad(
 {
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();

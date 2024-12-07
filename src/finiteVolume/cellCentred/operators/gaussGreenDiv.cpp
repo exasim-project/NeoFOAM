@@ -17,7 +17,9 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = divPhi.mesh();
     const auto exec = divPhi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(faceFlux, phi, phif);
 
@@ -91,7 +93,9 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
 
     // TODO check if copy can be avoided
@@ -184,7 +188,9 @@ VolumeField<scalar>
 GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi)
 {
     std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
-    VolumeField<scalar> divPhi(exec_, name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_));
+    VolumeField<scalar> divPhi(
+        exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
+    );
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
     return divPhi;
 };

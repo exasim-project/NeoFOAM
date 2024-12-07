@@ -63,6 +63,7 @@ public:
 protected:
 
     const Executor exec_;
+
     const UnstructuredMesh& mesh_;
 };
 
@@ -104,7 +105,7 @@ public:
     {
         std::string name = std::format("div({},{})", faceFlux.name, phi.name);
         VolumeField<scalar> divPhi(
-            exec_, name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_)
+            exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
         );
         fill(divPhi.internalField(), 0.0);
         fill(divPhi.boundaryField().value(), 0.0);
