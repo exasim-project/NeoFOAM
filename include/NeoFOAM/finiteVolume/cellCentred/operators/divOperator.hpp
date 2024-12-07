@@ -21,11 +21,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 /* @class Factory class to create divergence operators by a given name using
  * using NeoFOAMs runTimeFactory mechanism
- *
- *
  */
 class DivOperatorFactory :
-    public NeoFOAM::RuntimeSelectionFactory<
+    public RuntimeSelectionFactory<
         DivOperatorFactory,
         Parameters<const Executor&, const UnstructuredMesh&, const Input&>>
 {
@@ -35,9 +33,9 @@ public:
     static std::unique_ptr<DivOperatorFactory>
     create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
     {
-        std::string key = (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
-                            ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("DivOperator")
-                            : std::get<NeoFOAM::TokenList>(inputs).pop_front<std::string>();
+        std::string key = (std::holds_alternative<Dictionary>(inputs))
+                            ? std::get<Dictionary>(inputs).get<std::string>("DivOperator")
+                            : std::get<TokenList>(inputs).pop_front<std::string>();
         keyExistsOrError(key);
         return table().at(key)(exec, uMesh, inputs);
     }
@@ -73,22 +71,22 @@ class DivOperator
 
 public:
 
-    DivOperator(const DivOperator& divOperator)
-        : exec_(divOperator.exec_), mesh_(divOperator.mesh_),
+    DivOperator(const DivOperator& op)
+        : exec_(op.exec_), mesh_(op.mesh_),
           divOperatorStrategy_(
-              divOperator.divOperatorStrategy_ ? divOperator.divOperatorStrategy_->clone() : nullptr
+              op.divOperatorStrategy_ ? op.divOperatorStrategy_->clone() : nullptr
           ) {};
 
-    DivOperator(DivOperator&& divOperator)
-        : exec_(divOperator.exec_), mesh_(divOperator.mesh_),
-          divOperatorStrategy_(std::move(divOperator.divOperatorStrategy_)) {};
+    DivOperator(DivOperator&& op)
+        : exec_(op.exec_), mesh_(op.mesh_),
+          divOperatorStrategy_(std::move(op.divOperatorStrategy_)) {};
 
     DivOperator(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::unique_ptr<DivOperatorFactory> divOperatorStrategy
+        std::unique_ptr<DivOperatorFactory> opStrategy
     )
-        : exec_(exec), mesh_(mesh), divOperatorStrategy_(std::move(divOperatorStrategy)) {};
+        : exec_(exec), mesh_(mesh), divOperatorStrategy_(std::move(opStrategy)) {};
 
     DivOperator(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
         : exec_(exec), mesh_(mesh),
@@ -104,12 +102,12 @@ public:
 
     VolumeField<scalar> div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
     {
-        std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
+        std::string name = std::format("div({},{})", faceFlux.name, phi.name);
         VolumeField<scalar> divPhi(
             exec_, name, mesh_, VolumeBoundary<scalar>::calculatedBCs(mesh_)
         );
-        NeoFOAM::fill(divPhi.internalField(), 0.0);
-        NeoFOAM::fill(divPhi.boundaryField().value(), 0.0);
+        fill(divPhi.internalField(), 0.0);
+        fill(divPhi.boundaryField().value(), 0.0);
         divOperatorStrategy_->div(divPhi, faceFlux, phi);
         return divPhi;
     }
