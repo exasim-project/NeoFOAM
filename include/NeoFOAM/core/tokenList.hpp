@@ -64,7 +64,7 @@ public:
     ReturnType pop_front()
     {
         ReturnType ret {get<ReturnType>(0)};
-        remove(0);
+        data_.erase(data_.begin());
         return ret;
     }
 

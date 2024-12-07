@@ -28,17 +28,30 @@ TEST_CASE("tokenList")
     SECTION("RemoveToken")
     {
         tokenList.remove(1);
+        REQUIRE(tokenList.size() == 2);
         REQUIRE(tokenList.get<NeoFOAM::label>(0) == 1);
         REQUIRE(tokenList.get<std::string>(1) == "string");
-    }
-
-    SECTION("Access out of bound index")
-    {
-        REQUIRE_THROWS_AS(tokenList.get<NeoFOAM::label>(3), std::out_of_range);
     }
 
     SECTION("check bad any cast")
     {
         REQUIRE_THROWS_AS(tokenList.get<std::string>(0), std::bad_any_cast);
+    }
+
+    SECTION("PopToken")
+    {
+        REQUIRE(tokenList.size() == 3);
+        auto firstToken = tokenList.pop_front<NeoFOAM::label>();
+        auto secondToken = tokenList.pop_front<NeoFOAM::scalar>();
+        auto thirdToken = tokenList.pop_front<std::string>();
+        REQUIRE(firstToken == 1);
+        REQUIRE(secondToken == 2.0);
+        REQUIRE(thirdToken == "string");
+        REQUIRE(tokenList.size() == 0);
+    }
+
+    SECTION("Access out of bound index")
+    {
+        REQUIRE_THROWS_AS(tokenList.get<NeoFOAM::label>(3), std::out_of_range);
     }
 }
