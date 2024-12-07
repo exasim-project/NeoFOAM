@@ -17,7 +17,7 @@ class Ddt : public OperatorMixin<FieldType>
 
 public:
 
-    Ddt(FieldType& field) : OperatorMixin<FieldType>(field.exec(), field, Operator::Type::Temporal)
+    Ddt(FieldType& field, Operator::Type termType) : OperatorMixin<FieldType>(field.exec(), field, termType)
     {}
 
     std::string getName() const { return "TimeOperator"; }
@@ -35,9 +35,9 @@ public:
 
 /* @brief factory function to create a Ddt term as ddt() */
 template<typename FieldType>
-Ddt<FieldType> ddt(FieldType& in)
+Ddt<FieldType> ddt(FieldType& in, Operator::Type termType)
 {
-    return Ddt(in);
+    return Ddt(in, termType);
 };
 
 } // namespace NeoFOAM

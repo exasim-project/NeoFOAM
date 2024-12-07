@@ -6,6 +6,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
@@ -61,63 +62,94 @@ protected:
     const UnstructuredMesh& mesh_;
 };
 
-class DivOperator
+class DivOperator : public dsl::OperatorMixin<VolumeField<scalar>>
 {
 
 public:
 
-    DivOperator(const DivOperator& op)
-        : exec_(op.exec_), mesh_(op.mesh_),
-          divOperatorStrategy_(
-              op.divOperatorStrategy_ ? op.divOperatorStrategy_->clone() : nullptr
-          ) {};
-
-    DivOperator(DivOperator&& op)
-        : exec_(op.exec_), mesh_(op.mesh_),
-          divOperatorStrategy_(std::move(op.divOperatorStrategy_)) {};
+    // copy constructor
+    DivOperator(const DivOperator& divOp)
+        : dsl::OperatorMixin<VolumeField<scalar>>(divOp.exec_, divOp.field_, divOp.type_),
+          faceFlux_(divOp.faceFlux_),
+          divOperatorStrategy_(divOp.divOperatorStrategy_ ? divOp.divOperatorStrategy_->clone() : nullptr) {};
 
     DivOperator(
-        const Executor& exec,
-        const UnstructuredMesh& mesh,
-        std::unique_ptr<DivOperatorFactory> opStrategy
+        dsl::Operator::Type termType,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& Phi,
+        Input input
     )
-        : exec_(exec), mesh_(mesh), divOperatorStrategy_(std::move(opStrategy)) {};
+        : dsl::OperatorMixin<VolumeField<scalar>>(Phi.exec(), Phi, termType),
+          faceFlux_(faceFlux),
+          divOperatorStrategy_(DivOperatorFactory::create(exec_, Phi.mesh(), input)) {};
 
-    DivOperator(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
-        : exec_(exec), mesh_(mesh),
-          divOperatorStrategy_(DivOperatorFactory::create(exec, mesh, input)) {};
+    DivOperator(
+        dsl::Operator::Type termType,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& Phi,
+        std::unique_ptr<DivOperatorFactory> divOperatorStrategy
+    )
+        : dsl::OperatorMixin<VolumeField<scalar>>(Phi.exec(), Phi, termType),
+          faceFlux_(faceFlux),
+          divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
-    DivOperator(const Executor& exec, const UnstructuredMesh& mesh)
-        : exec_(exec), mesh_(mesh), divOperatorStrategy_() {};
+    DivOperator(
+        dsl::Operator::Type termType,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& Phi
+    )
+        : dsl::OperatorMixin<VolumeField<scalar>>(Phi.exec(), Phi, termType),
+          faceFlux_(faceFlux),
+          divOperatorStrategy_(nullptr) {};
+
+
+    void explicitOperation(Field<scalar>& source)
+    {
+        if (divOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
+        }
+        NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
+        divOperatorStrategy_->div(tmpsource, faceFlux_, field_);
+        source += tmpsource;
+    }
+
+    void div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
+    {
+        divOperatorStrategy_->div(divPhi, faceFlux, phi);
+    }
+
+    void div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
+    {
+        divOperatorStrategy_->div(divPhi, faceFlux, phi);
+    }
+
+
 
     void build(const Input& input)
     {
-        divOperatorStrategy_ = DivOperatorFactory::create(exec_, mesh_, input);
+        const UnstructuredMesh& mesh = field_.mesh();
+        if (std::holds_alternative<NeoFOAM::Dictionary>(input))
+        {
+            auto dict = std::get<NeoFOAM::Dictionary>(input);
+            std::string schemeName = "div(" + faceFlux_.name + "," + field_.name + ")";
+            auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
+            divOperatorStrategy_ = DivOperatorFactory::create(exec(), mesh, tokens);
+        }
+        else
+        {
+            auto tokens = std::get<NeoFOAM::TokenList>(input);
+            divOperatorStrategy_ = DivOperatorFactory::create(exec(), mesh, tokens);
+        }
     }
 
-    VolumeField<scalar> div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
-    {
-        std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
-        VolumeField<scalar> divPhi(
-            exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
-        );
-        fill(divPhi.internalField(), 0.0);
-        fill(divPhi.boundaryField().value(), 0.0);
-        divOperatorStrategy_->div(divPhi, faceFlux, phi);
-        return divPhi;
-    }
+    std::string getName() const { return "DivOperator"; }
 
-    void
-    div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
-    {
-        divOperatorStrategy_->div(divPhi, faceFlux, phi);
-    }
-
+    const SurfaceField<NeoFOAM::scalar>& faceFlux_;
+    std::unique_ptr<DivOperatorFactory> divOperatorStrategy_;
 private:
 
-    const Executor exec_;
-    const UnstructuredMesh& mesh_;
-    std::unique_ptr<DivOperatorFactory> divOperatorStrategy_;
+
 };
 
 

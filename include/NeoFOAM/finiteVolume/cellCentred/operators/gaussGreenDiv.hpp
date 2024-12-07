@@ -28,8 +28,6 @@ public:
 
     GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs);
 
-    GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, SurfaceInterpolation surfaceInterpolation);
-
     void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) override;
