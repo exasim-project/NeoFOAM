@@ -3,15 +3,12 @@
 
 #pragma once
 
-#include <format>
-
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
-
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -100,7 +97,7 @@ public:
 
     VolumeField<scalar> div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
     {
-        std::string name = std::format("div({},{})", faceFlux.name, phi.name);
+        std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
         VolumeField<scalar> divPhi(
             exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
         );

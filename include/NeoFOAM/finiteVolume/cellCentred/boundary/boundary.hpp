@@ -19,13 +19,11 @@ template<typename BoundaryType>
 std::vector<BoundaryType> createCalculatedBCs(const UnstructuredMesh& mesh)
 {
     std::vector<BoundaryType> bcs;
-
     for (size_t patchID = 0; patchID < mesh.nBoundaries(); patchID++)
     {
         Dictionary patchDict({{"type", std::string("calculated")}});
         bcs.push_back(BoundaryType(mesh, patchDict, patchID));
     }
-
     return bcs;
 };
 
