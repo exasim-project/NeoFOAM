@@ -23,6 +23,22 @@ public:
         : exec_(exec), temporalOperators_(), implicitOperators_(), explicitOperators_()
     {}
 
+    void build(const NeoFOAM::Dictionary& input)
+    {
+        for (auto& op : temporalOperators_)
+        {
+            op.build(input);
+        }
+        for (auto& op : implicitOperators_)
+        {
+            op.build(input);
+        }
+        for (auto& op : explicitOperators_)
+        {
+            op.build(input);
+        }
+    }
+
     /* @brief perform all explicit operation and accumulate the result */
     Field<scalar> explicitOperation(size_t nCells)
     {
