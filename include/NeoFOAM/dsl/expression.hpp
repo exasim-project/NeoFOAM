@@ -24,14 +24,14 @@ public:
     {}
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<scalar> explicitOperation(size_t nCells) const
+    Field<scalar> explicitOperation(size_t nCells)
     {
         Field<scalar> source(exec_, nCells, 0.0);
         return explicitOperation(source);
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<scalar> explicitOperation(Field<scalar>& source) const
+    Field<scalar> explicitOperation(Field<scalar>& source)
     {
         for (auto& Operator : explicitOperators_)
         {

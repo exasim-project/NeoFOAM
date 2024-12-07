@@ -17,6 +17,8 @@ target_sources(
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/tokenList.cpp"
+          "dsl/coeff.cpp"
+          "dsl/operator.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
