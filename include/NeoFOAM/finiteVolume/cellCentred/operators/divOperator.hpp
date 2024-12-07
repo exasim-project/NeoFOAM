@@ -3,10 +3,7 @@
 
 #pragma once
 
-
-#include <functional>
-
-#include <Kokkos_Core.hpp>
+#include <format>
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
