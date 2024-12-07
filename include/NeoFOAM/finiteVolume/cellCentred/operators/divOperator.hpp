@@ -3,6 +3,11 @@
 
 #pragma once
 
+
+#include <functional>
+
+#include <Kokkos_Core.hpp>
+
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
@@ -10,14 +15,15 @@
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
-#include <Kokkos_Core.hpp>
-
-#include <functional>
-
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+/* @class Factory class to create divergence operators by a given name using
+ * using NeoFOAMs runTimeFactory mechanism
+ *
+ *
+ */
 class DivOperatorFactory :
     public NeoFOAM::RuntimeSelectionFactory<
         DivOperatorFactory,
@@ -29,20 +35,11 @@ public:
     static std::unique_ptr<DivOperatorFactory>
     create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
     {
-        std::string key;
-        // input is dictionary the key is "interpolation"
-        if (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
-        {
-            key = std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("DivOperator");
-        }
-        else
-        {
-            key = std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
-            std::get<NeoFOAM::TokenList>(inputs).remove(0);
-        }
+        std::string key = (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
+                            ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("DivOperator")
+                            : std::get<NeoFOAM::TokenList>(inputs).pop_front<std::string>();
         keyExistsOrError(key);
-        auto ptr = table().at(key)(exec, uMesh, inputs);
-        return ptr;
+        return table().at(key)(exec, uMesh, inputs);
     }
 
     static std::string name() { return "DivOperatorFactory"; }
