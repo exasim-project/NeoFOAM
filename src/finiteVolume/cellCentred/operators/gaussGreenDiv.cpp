@@ -170,6 +170,12 @@ GaussGreenDiv::GaussGreenDiv(
     : DivOperatorFactory::Register<GaussGreenDiv>(exec, mesh),
       surfaceInterpolation_(exec, mesh, inputs) {};
 
+GaussGreenDiv::GaussGreenDiv(
+    const Executor& exec, const UnstructuredMesh& mesh, SurfaceInterpolation surfaceInterpolation
+)
+    : DivOperatorFactory::Register<GaussGreenDiv>(exec, mesh),
+      surfaceInterpolation_(surfaceInterpolation) {};
+
 void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
