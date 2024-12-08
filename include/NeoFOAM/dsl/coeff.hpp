@@ -2,6 +2,9 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/fields/field.hpp"
+
 namespace NeoFOAM::dsl
 {
 
@@ -20,45 +23,25 @@ class Coeff
 
 public:
 
-    Coeff() : coeff_(1.0), span_(), hasSpan_(false) {}
+    Coeff();
 
-    Coeff(scalar value) : coeff_(value), span_(), hasSpan_(false) {}
+    Coeff(scalar value);
 
-    Coeff(scalar coeff, const Field<scalar>& field)
-        : coeff_(coeff), span_(field.span()), hasSpan_(true)
-    {}
+    Coeff(scalar coeff, const Field<scalar>& field);
 
-    Coeff(const Field<scalar>& field) : coeff_(1.0), span_(field.span()), hasSpan_(true) {}
+    Coeff(const Field<scalar>& field);
 
     KOKKOS_INLINE_FUNCTION
     scalar operator[](const size_t i) const { return (hasSpan_) ? span_[i] * coeff_ : coeff_; }
 
-    bool hasSpan() { return hasSpan_; }
+    bool hasSpan();
 
-    std::span<const scalar> span() { return span_; }
+    std::span<const scalar> span();
 
-    Coeff& operator*=(scalar rhs)
-    {
-        coeff_ *= rhs;
-        return *this;
-    }
+    Coeff& operator*=(scalar rhs);
 
-    Coeff& operator*=(const Coeff& rhs)
-    {
-        if (hasSpan_ && rhs.hasSpan_)
-        {
-            NF_ERROR_EXIT("Not implemented");
-        }
 
-        if (!hasSpan_ && rhs.hasSpan_)
-        {
-            // Take over the span
-            span_ = rhs.span_;
-            hasSpan_ = true;
-        }
-
-        return this->operator*=(rhs.coeff_);
-    }
+    Coeff& operator*=(const Coeff& rhs);
 
 
 private:
@@ -71,40 +54,22 @@ private:
 };
 
 
-namespace detail
+[[nodiscard]] inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
+{
+    Coeff result = lhs;
+    result *= rhs;
+    return result;
+}
 
+namespace detail
 {
 /* @brief function to force evaluation to a field, the field will be resized to hold either a
  * single value or the full field
  *
  * @param field to store the result
  */
-void toField(Coeff& coeff, Field<scalar>& rhs)
-{
-    if (coeff.hasSpan())
-    {
-        rhs.resize(coeff.span().size());
-        fill(rhs, 1.0);
-        auto rhsSpan = rhs.span();
-        // otherwise we are unable to capture values in the lambda
-        parallelFor(
-            rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] *= coeff[i]; }
-        );
-    }
-    else
-    {
-        rhs.resize(1);
-        fill(rhs, coeff[0]);
-    }
-}
+void toField(Coeff& coeff, Field<scalar>& rhs);
 
-}
-
-inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
-{
-    Coeff result = lhs;
-    result *= rhs;
-    return result;
-}
+} // namespace detail
 
 } // namespace NeoFOAM::dsl

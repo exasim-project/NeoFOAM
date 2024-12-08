@@ -31,7 +31,7 @@ public:
 
     Dummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
 
-    void explicitOperation(Field& source) const
+    void explicitOperation(Field& source)
     {
         auto sourceSpan = source.span();
         auto fieldSpan = field_.internalField().span();

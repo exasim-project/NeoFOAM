@@ -56,7 +56,7 @@ void computeUpwindInterpolation(
     );
 }
 
-Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh)
+Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh, Input input)
     : SurfaceInterpolationFactory::Register<Upwind>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 

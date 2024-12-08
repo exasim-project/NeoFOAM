@@ -55,6 +55,20 @@ public:
     [[nodiscard]] bool empty() const;
 
     /**
+     * @brief Removes first entry of TokenList and returns it.
+     *
+     * @tparam T The type to cast the value to.
+     * @return The first value.
+     */
+    template<typename ReturnType>
+    ReturnType popFront()
+    {
+        ReturnType ret {get<ReturnType>(0)};
+        data_.erase(data_.begin());
+        return ret;
+    }
+
+    /**
      * @brief Retrieves the size of the token list.
      * @return The size of the token list.
      */
@@ -68,16 +82,16 @@ public:
      * @return A reference to the value associated with the index, casted to
      * type T.
      */
-    template<typename T>
-    [[nodiscard]] T& get(const size_t& idx)
+    template<typename ReturnType>
+    [[nodiscard]] ReturnType& get(const size_t& idx)
     {
         try
         {
-            return std::any_cast<T&>(data_.at(idx));
+            return std::any_cast<ReturnType&>(data_.at(idx));
         }
         catch (const std::bad_any_cast& e)
         {
-            logBadAnyCast<T>(e, idx, data_);
+            logBadAnyCast<ReturnType>(e, idx, data_);
             throw e;
         }
     }
@@ -91,16 +105,16 @@ public:
      * @return A const reference to the value associated with the index, casted to
      * type T.
      */
-    template<typename T>
-    [[nodiscard]] const T& get(const size_t& idx) const
+    template<typename ReturnType>
+    [[nodiscard]] const ReturnType& get(const size_t& idx) const
     {
         try
         {
-            return std::any_cast<const T&>(data_.at(idx));
+            return std::any_cast<const ReturnType&>(data_.at(idx));
         }
         catch (const std::bad_any_cast& e)
         {
-            logBadAnyCast<T>(e, idx, data_);
+            logBadAnyCast<ReturnType>(e, idx, data_);
             throw e;
         }
     }

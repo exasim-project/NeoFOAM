@@ -23,6 +23,8 @@ class Linear : public SurfaceInterpolationFactory::Register<Linear>
 
 public:
 
+    Linear(const Executor& exec, const UnstructuredMesh& mesh, Input input);
+
     Linear(const Executor& exec, const UnstructuredMesh& mesh);
 
     static std::string name() { return "linear"; }
