@@ -41,9 +41,9 @@ TEST_CASE("tokenList")
     SECTION("PopToken")
     {
         REQUIRE(tokenList.size() == 3);
-        auto firstToken = tokenList.pop_front<NeoFOAM::label>();
-        auto secondToken = tokenList.pop_front<NeoFOAM::scalar>();
-        auto thirdToken = tokenList.pop_front<std::string>();
+        auto firstToken = tokenList.popFront<NeoFOAM::label>();
+        auto secondToken = tokenList.popFront<NeoFOAM::scalar>();
+        auto thirdToken = tokenList.popFront<std::string>();
         REQUIRE(firstToken == 1);
         REQUIRE(secondToken == 2.0);
         REQUIRE(thirdToken == "string");
