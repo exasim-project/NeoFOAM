@@ -30,7 +30,7 @@ public:
     {
         std::string key = (std::holds_alternative<Dictionary>(inputs))
                             ? std::get<Dictionary>(inputs).get<std::string>("DivOperator")
-                            : std::get<TokenList>(inputs).pop_front<std::string>();
+                            : std::get<TokenList>(inputs).popFront<std::string>();
         keyExistsOrError(key);
         return table().at(key)(exec, uMesh, inputs);
     }
