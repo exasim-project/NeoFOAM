@@ -17,9 +17,6 @@ namespace NeoFOAM::dsl::imp
 {
 
 
-Operator ddt(fvcc::VolumeField<NeoFOAM::scalar>& phi)
-{
-    return dsl::temporal::ddt(phi, Operator::Type::Temporal);
-}
+Operator ddt(fvcc::VolumeField<NeoFOAM::scalar>& phi) { return dsl::temporal::ddt(phi); }
 
 } // namespace NeoFOAM
