@@ -71,35 +71,32 @@ public:
     DivOperator(const DivOperator& divOp)
         : dsl::OperatorMixin<VolumeField<scalar>>(divOp.exec_, divOp.field_, divOp.type_),
           faceFlux_(divOp.faceFlux_),
-          divOperatorStrategy_(divOp.divOperatorStrategy_ ? divOp.divOperatorStrategy_->clone() : nullptr) {};
+          divOperatorStrategy_(
+              divOp.divOperatorStrategy_ ? divOp.divOperatorStrategy_->clone() : nullptr
+          ) {};
 
     DivOperator(
         dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& Phi,
+        VolumeField<scalar>& phi,
         Input input
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(Phi.exec(), Phi, termType),
-          faceFlux_(faceFlux),
-          divOperatorStrategy_(DivOperatorFactory::create(exec_, Phi.mesh(), input)) {};
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
+          divOperatorStrategy_(DivOperatorFactory::create(exec_, phi.mesh(), input)) {};
 
     DivOperator(
         dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& Phi,
+        VolumeField<scalar>& phi,
         std::unique_ptr<DivOperatorFactory> divOperatorStrategy
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(Phi.exec(), Phi, termType),
-          faceFlux_(faceFlux),
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
     DivOperator(
-        dsl::Operator::Type termType,
-        const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& Phi
+        dsl::Operator::Type termType, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(Phi.exec(), Phi, termType),
-          faceFlux_(faceFlux),
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(nullptr) {};
 
 
@@ -114,16 +111,12 @@ public:
         source += tmpsource;
     }
 
-    void div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
-    {
-        divOperatorStrategy_->div(divPhi, faceFlux, phi);
-    }
+    void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }
 
-    void div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) const
+    void div(VolumeField<scalar>& divPhi)
     {
-        divOperatorStrategy_->div(divPhi, faceFlux, phi);
+        divOperatorStrategy_->div(divPhi, faceFlux_, getField());
     }
-
 
 
     void build(const Input& input)
@@ -145,11 +138,11 @@ public:
 
     std::string getName() const { return "DivOperator"; }
 
-    const SurfaceField<NeoFOAM::scalar>& faceFlux_;
-    std::unique_ptr<DivOperatorFactory> divOperatorStrategy_;
 private:
 
+    const SurfaceField<NeoFOAM::scalar>& faceFlux_;
 
+    std::unique_ptr<DivOperatorFactory> divOperatorStrategy_;
 };
 
 

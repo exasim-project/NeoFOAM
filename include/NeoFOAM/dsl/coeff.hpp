@@ -32,7 +32,7 @@ public:
     Coeff(const Field<scalar>& field);
 
     KOKKOS_INLINE_FUNCTION
-    scalar operator[](const size_t i) const;
+    scalar operator[](const size_t i) const { return (hasSpan_) ? span_[i] * coeff_ : coeff_; }
 
     bool hasSpan();
 
@@ -54,6 +54,13 @@ private:
 };
 
 
+[[nodiscard]] inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
+{
+    Coeff result = lhs;
+    result *= rhs;
+    return result;
+}
+
 namespace detail
 {
 /* @brief function to force evaluation to a field, the field will be resized to hold either a
@@ -62,9 +69,6 @@ namespace detail
  * @param field to store the result
  */
 void toField(Coeff& coeff, Field<scalar>& rhs);
-
-
-inline Coeff operator*(const Coeff& lhs, const Coeff& rhs);
 
 } // namespace detail
 

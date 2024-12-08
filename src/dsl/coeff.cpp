@@ -16,9 +16,6 @@ Coeff::Coeff(scalar coeff, const Field<scalar>& field)
 
 Coeff::Coeff(const Field<scalar>& field) : coeff_(1.0), span_(field.span()), hasSpan_(true) {}
 
-KOKKOS_INLINE_FUNCTION
-scalar Coeff::operator[](const size_t i) const { return (hasSpan_) ? span_[i] * coeff_ : coeff_; }
-
 bool Coeff::hasSpan() { return hasSpan_; }
 
 std::span<const scalar> Coeff::span() { return span_; }
@@ -66,14 +63,6 @@ void toField(Coeff& coeff, Field<scalar>& rhs)
         fill(rhs, coeff[0]);
     }
 }
-
-inline Coeff operator*(const Coeff& lhs, const Coeff& rhs)
-{
-    Coeff result = lhs;
-    result *= rhs;
-    return result;
-}
-
 } // namespace detail
 
 
