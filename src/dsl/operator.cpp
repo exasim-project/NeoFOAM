@@ -47,5 +47,4 @@ Operator operator*(const Coeff& coeff, Operator rhs)
 }
 
 
-
 } // namespace NeoFOAM::dsl

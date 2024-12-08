@@ -59,8 +59,8 @@ public:
 
     TimeIntegration(const Dictionary& dict)
         : timeIntegratorStrategy_(
-              TimeIntegratorBase<SolutionType>::create(dict.get<std::string>("type"), dict)
-          ) {};
+            TimeIntegratorBase<SolutionType>::create(dict.get<std::string>("type"), dict)
+        ) {};
 
     void solve(Expression& eqn, SolutionType& sol, scalar dt)
     {
