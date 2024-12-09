@@ -11,6 +11,8 @@
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
 
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+
 TEST_CASE("fixedGradient")
 {
     NeoFOAM::Executor exec = GENERATE(
