@@ -397,7 +397,9 @@ private:
 // Initialize the static variable and register the class
 template<class Base, class... Args>
 template<class derivedClass>
-bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::REGISTERED =
-    RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::addSubType();
+bool RuntimeSelectionFactory<Base, Parameters<Args...>>::template Register<
+    derivedClass>::REGISTERED =
+    RuntimeSelectionFactory<Base, Parameters<Args...>>::template Register<derivedClass>::addSubType(
+    );
 
 }; // namespace NeoFOAM
