@@ -50,7 +50,8 @@ void computeDiv(
             surfDivPhi[own] += valueOwn;
         }
 
-        for (size_t celli = 0; celli < mesh.nCells(); celli++)
+	size_t ncells = mesh.nCells();
+        for (size_t celli = 0; celli < ncells; celli++)
         {
             surfDivPhi[celli] *= 1 / surfV[celli];
         }
