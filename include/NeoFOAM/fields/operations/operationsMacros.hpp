@@ -27,7 +27,7 @@ template<typename ValueType>
 void fill(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
 {
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t) { return value; }
+        a, KOKKOS_LAMBDA(const size_t) { return value; }, "fill"
     );
 }
 
@@ -36,7 +36,7 @@ template<typename ValueType>
 void setField(Field<ValueType>& a, const std::span<const std::type_identity_t<ValueType>> b)
 {
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return b[i]; }
+        a, KOKKOS_LAMBDA(const size_t i) { return b[i]; }, "setField"
     );
 }
 
@@ -45,7 +45,7 @@ void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
 {
     auto spanA = a.span();
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return spanA[i] * value; }
+        a, KOKKOS_LAMBDA(const size_t i) { return spanA[i] * value; }, "scalarMul"
     );
 }
 
@@ -60,7 +60,7 @@ void fieldBinaryOp(
     auto spanA = a.span();
     auto spanB = b.span();
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return op(spanA[i], spanB[i]); }
+        a, KOKKOS_LAMBDA(const size_t i) { return op(spanA[i], spanB[i]); }, "fieldBinaryOp"
     );
 }
 }
