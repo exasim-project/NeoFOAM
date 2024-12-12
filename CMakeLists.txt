@@ -57,6 +57,15 @@ mark_as_advanced(NEOFOAM_ENABLE_WARNINGS)
 option(NEOFOAM_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 mark_as_advanced(NEOFOAM_WARNINGS_AS_ERRORS)
 
+if(WIN32)
+  set(NeoFOAM_LIB_TYPE "STATIC")
+else()
+  set(NeoFOAM_LIB_TYPE "SHARED")
+endif()
+set(NeoFOAM_LIB_TYPE
+    ${NeoFOAM_LIB_TYPE}
+    PARENT_SCOPE)
+
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
   message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")
   set(CPM_USE_LOCAL_PACKAGES ON)
