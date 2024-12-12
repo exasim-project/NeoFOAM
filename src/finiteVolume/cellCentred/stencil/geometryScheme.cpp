@@ -3,6 +3,7 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/basicGeometryScheme.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
 #include "NeoFOAM/core/error.hpp"
 #include <any>
 
@@ -47,13 +48,21 @@ GeometryScheme::GeometryScheme(
     std::unique_ptr<GeometrySchemeFactory> kernel
 )
     : exec_(exec), mesh_(mesh), kernel_(std::move(kernel)),
-      weights_(mesh.exec(), "weights", mesh, createCalculatedBCs<scalar>(mesh)),
-      deltaCoeffs_(mesh.exec(), "deltaCoeffs", mesh, createCalculatedBCs<scalar>(mesh)),
+      weights_(mesh.exec(), "weights", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)),
+      deltaCoeffs_(
+          mesh.exec(), "deltaCoeffs", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+      ),
       nonOrthDeltaCoeffs_(
-          mesh.exec(), "nonOrthDeltaCoeffs", mesh, createCalculatedBCs<scalar>(mesh)
+          mesh.exec(),
+          "nonOrthDeltaCoeffs",
+          mesh,
+          createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
       ),
       nonOrthCorrectionVectors_(
-          mesh.exec(), "nonOrthCorrectionVectors", mesh, createCalculatedBCs<Vector>(mesh)
+          mesh.exec(),
+          "nonOrthCorrectionVectors",
+          mesh,
+          createCalculatedBCs<SurfaceBoundary<Vector>>(mesh)
       )
 {
     if (kernel_ == nullptr)
@@ -66,13 +75,21 @@ GeometryScheme::GeometryScheme(
 GeometryScheme::GeometryScheme(const UnstructuredMesh& mesh)
     : exec_(mesh.exec()), mesh_(mesh),
       kernel_(std::make_unique<BasicGeometryScheme>(mesh)), // TODO add selection mechanism
-      weights_(mesh.exec(), "weights", mesh, createCalculatedBCs<scalar>(mesh)),
-      deltaCoeffs_(mesh.exec(), "deltaCoeffs", mesh, createCalculatedBCs<scalar>(mesh)),
+      weights_(mesh.exec(), "weights", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)),
+      deltaCoeffs_(
+          mesh.exec(), "deltaCoeffs", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+      ),
       nonOrthDeltaCoeffs_(
-          mesh.exec(), "nonOrthDeltaCoeffs", mesh, createCalculatedBCs<scalar>(mesh)
+          mesh.exec(),
+          "nonOrthDeltaCoeffs",
+          mesh,
+          createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
       ),
       nonOrthCorrectionVectors_(
-          mesh.exec(), "nonOrthCorrectionVectors", mesh, createCalculatedBCs<Vector>(mesh)
+          mesh.exec(),
+          "nonOrthCorrectionVectors",
+          mesh,
+          createCalculatedBCs<SurfaceBoundary<Vector>>(mesh)
       )
 {
     if (kernel_ == nullptr)

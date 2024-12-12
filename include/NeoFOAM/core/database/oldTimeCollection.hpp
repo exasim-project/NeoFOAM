@@ -120,7 +120,8 @@ public:
         }
         else
         {
-            NF_THROW("Old field not found");
+            // TODO replace with NF_THROW
+            NF_ERROR_EXIT("Old field not found");
         }
     }
 

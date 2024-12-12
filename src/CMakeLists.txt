@@ -17,6 +17,8 @@ target_sources(
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/tokenList.cpp"
+          "dsl/coeff.cpp"
+          "dsl/operator.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
@@ -30,6 +32,7 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
+          "timeIntegration/timeIntegration.cpp"
           "timeIntegration/rungeKutta.cpp")
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)

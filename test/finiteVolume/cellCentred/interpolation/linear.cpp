@@ -25,7 +25,8 @@ TEST_CASE("linear")
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
-    auto linear = SurfaceInterpolation(exec, mesh, "linear");
+    NeoFOAM::Input input = NeoFOAM::TokenList({std::string("linear")});
+    auto linear = SurfaceInterpolation(exec, mesh, input);
 
     auto in = VolumeField<NeoFOAM::scalar>(exec, "in", mesh, {});
     auto out = SurfaceField<NeoFOAM::scalar>(exec, "out", mesh, {});

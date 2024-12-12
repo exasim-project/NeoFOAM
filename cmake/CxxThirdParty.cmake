@@ -13,7 +13,6 @@ find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
   include(FetchContent)
-
   include(cmake/AutoEnableDevice.cmake)
 
   FetchContent_Declare(
@@ -24,7 +23,8 @@ if(NOT ${Kokkos_FOUND})
     GIT_TAG ${NEOFOAM_KOKKOS_CHECKOUT_VERSION})
 
   FetchContent_MakeAvailable(Kokkos)
-
+else()
+  message(STATUS "Found Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION}")
 endif()
 
 # set(KokkosKernels_ENABLE_PERFTESTS OFF CACHE BOOL "") set(KokkosKernels_ENABLED_COMPONENTS

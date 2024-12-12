@@ -65,6 +65,7 @@ public:
         boundaryCorrectionStrategy_->correctBoundaryCondition(domainField);
     }
 
+
 private:
 
     // NOTE needs full namespace to be not ambiguous
@@ -72,19 +73,5 @@ private:
         boundaryCorrectionStrategy_;
 };
 
-// free functions
-template<typename ValueType>
-std::vector<SurfaceBoundary<ValueType>> createCalculatedBCs(const UnstructuredMesh& mesh)
-{
-    std::vector<SurfaceBoundary<ValueType>> bcs;
-
-    for (size_t patchID = 0; patchID < mesh.nBoundaries(); patchID++)
-    {
-        Dictionary patchDict({{"type", std::string("calculated")}});
-        bcs.push_back(SurfaceBoundary<ValueType>(mesh, patchDict, patchID));
-    }
-
-    return bcs;
-};
 
 }

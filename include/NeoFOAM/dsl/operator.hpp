@@ -58,26 +58,26 @@ public:
     Operator(T cls) : model_(std::make_unique<OperatorModel<T>>(std::move(cls)))
     {}
 
-    Operator(const Operator& eqnOperator) : model_ {eqnOperator.model_->clone()} {}
+    Operator(const Operator& eqnOperator);
 
-    Operator(Operator&& eqnOperator) : model_ {std::move(eqnOperator.model_)} {}
+    Operator(Operator&& eqnOperator);
 
-    void explicitOperation(Field<scalar>& source) const { model_->explicitOperation(source); }
+    void explicitOperation(Field<scalar>& source);
 
-    void temporalOperation(Field<scalar>& field) { model_->temporalOperation(field); }
+    void temporalOperation(Field<scalar>& field);
 
     /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-    Operator::Type getType() const { return model_->getType(); }
+    Operator::Type getType() const;
 
-    Coeff& getCoefficient() { return model_->getCoefficient(); }
+    Coeff& getCoefficient();
 
-    Coeff getCoefficient() const { return model_->getCoefficient(); }
+    Coeff getCoefficient() const;
 
     /* @brief Given an input this function reads required coeffs */
-    void build(const Input& input) { model_->build(input); }
+    void build(const Input& input);
 
     /* @brief Get the executor */
-    const Executor& exec() const { return model_->exec(); }
+    const Executor& exec() const;
 
 
 private:
@@ -89,7 +89,7 @@ private:
     {
         virtual ~OperatorConcept() = default;
 
-        virtual void explicitOperation(Field<scalar>& source) const = 0;
+        virtual void explicitOperation(Field<scalar>& source) = 0;
 
         virtual void temporalOperation(Field<scalar>& field) = 0;
 
@@ -125,7 +125,7 @@ private:
         /* returns the name of the operator */
         std::string getName() const override { return concreteOp_.getName(); }
 
-        virtual void explicitOperation(Field<scalar>& source) const override
+        virtual void explicitOperation(Field<scalar>& source) override
         {
             if constexpr (HasExplicitOperator<ConcreteOperatorType>)
             {
@@ -169,26 +169,11 @@ private:
 };
 
 
-auto operator*(scalar scalarCoeff, const Operator& rhs)
-{
-    Operator result = rhs;
-    result.getCoefficient() *= scalarCoeff;
-    return result;
-}
+Operator operator*(scalar scalarCoeff, Operator rhs);
 
-auto operator*(const Field<scalar>& coeffField, const Operator& rhs)
-{
-    Operator result = rhs;
-    result.getCoefficient() *= Coeff(coeffField);
-    return result;
-}
+Operator operator*(const Field<scalar>& coeffField, Operator rhs);
 
-auto operator*(const Coeff& coeff, const Operator& rhs)
-{
-    Operator result = rhs;
-    result.getCoefficient() *= coeff;
-    return result;
-}
+Operator operator*(const Coeff& coeff, Operator rhs);
 
 template<typename CoeffFunction>
     requires std::invocable<CoeffFunction&, size_t>

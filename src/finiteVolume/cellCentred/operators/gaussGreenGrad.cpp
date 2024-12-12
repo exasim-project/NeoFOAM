@@ -16,7 +16,9 @@ void computeGrad(
 {
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    SurfaceField<scalar> phif(exec, "phif", mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();
@@ -82,7 +84,8 @@ void computeGrad(
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
-    : surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {};
+    : mesh_(mesh),
+      surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh, Dictionary())) {};
 
 
 void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi)
