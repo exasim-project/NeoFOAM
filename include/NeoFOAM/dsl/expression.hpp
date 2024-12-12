@@ -126,19 +126,19 @@ private:
     std::vector<Operator> explicitOperators_;
 };
 
-[[nodiscard]] Expression operator+(Expression lhs, const Expression& rhs)
+[[nodiscard]] inline Expression operator+(Expression lhs, const Expression& rhs)
 {
     lhs.addExpression(rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator+(Expression lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator+(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator+(const Operator& lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator+(const Operator& lhs, const Operator& rhs)
 {
     Expression expr(lhs.exec());
     expr.addOperator(lhs);
@@ -146,7 +146,7 @@ private:
     return expr;
 }
 
-[[nodiscard]] Expression operator*(scalar scale, const Expression& es)
+[[nodiscard]] inline Expression operator*(scalar scale, const Expression& es)
 {
     Expression expr(es.exec());
     for (const auto& Operator : es.temporalOperators())
@@ -164,19 +164,19 @@ private:
     return expr;
 }
 
-[[nodiscard]] Expression operator-(Expression lhs, const Expression& rhs)
+[[nodiscard]] inline Expression operator-(Expression lhs, const Expression& rhs)
 {
     lhs.addExpression(-1.0 * rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator-(Expression lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator-(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator-(const Operator& lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator-(const Operator& lhs, const Operator& rhs)
 {
     Expression expr(lhs.exec());
     expr.addOperator(lhs);

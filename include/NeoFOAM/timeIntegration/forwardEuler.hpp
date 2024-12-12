@@ -29,7 +29,7 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& eqn, SolutionType& sol, scalar t, scalar dt) override
+    void solve(Expression& eqn, SolutionFieldType& sol, scalar t, scalar dt) override
     {
         auto source = eqn.explicitOperation(sol.size());
 

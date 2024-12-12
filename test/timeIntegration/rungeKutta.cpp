@@ -88,7 +88,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
         {
             // reset
             NeoFOAM::scalar time = 0.0;
-            auto vf = VolumeField(exec, mesh, fA, bf, bcs);
+            auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
             // Set expression
             Operator ddtOp = Ddt(vf);
@@ -98,7 +98,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             // solve.
             while (time < maxTime)
             {
-                solve(eqn, vf, time, dt, fvSchemes, fvSolution);
+                NeoFOAM::dsl::solve(eqn, vf, time, dt, fvSchemes, fvSolution);
                 time += dt;
             }
 
