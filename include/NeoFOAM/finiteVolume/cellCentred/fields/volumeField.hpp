@@ -28,7 +28,8 @@ class VolumeField : public GeometricFieldMixin<ValueType>
 
 public:
 
-    /* @brief Constructor for a uninitialized VolumeField
+    /**
+     * @brief Constructor for a uninitialized VolumeField
      *
      * @param exec The executor
      * @param name The name of the field
@@ -52,9 +53,11 @@ public:
     {}
 
 
-    /* @brief Constructor for a VolumeField with a given internal field
+    /**
+     * @brief Constructor for a VolumeField with a given internal field
      *
      * @param exec The executor
+     * @param name The name of the field
      * @param mesh The underlying mesh
      * @param internalField the underlying internal field
      * @param boundaryConditions a vector of boundary conditions
@@ -76,8 +79,10 @@ public:
           db_(std::nullopt)
     {}
 
-    /* @brief Constructor for a VolumeField with a given internal and boundary field
+    /**
+     * @brief Constructor for a VolumeField with a given internal and boundary field
      *
+     * @param name The name of the field
      * @param mesh The underlying mesh
      * @param internalField the underlying internal field
      * @param boundaryFields the underlying boundary data fields
@@ -95,35 +100,36 @@ public:
           fieldCollectionName(""), boundaryConditions_(boundaryConditions), db_(std::nullopt)
     {}
 
-    /* @brief Constructor for a VolumeField with a given internal field and database
+    /**
+     * @brief Constructor for a VolumeField with a given internal field and database
      *
      * @param exec The executor
-     * @param name The name of the field
+     * @param fieldName The name of the field
      * @param mesh The underlying mesh
      * @param internalField the underlying internal field
      * @param boundaryConditions a vector of boundary conditions
      * @param db The database
-     * @param key The key of the field in the database
-     * @param fieldCollectionName The name of the field collection in the database
+     * @param dbKey The key of the field in the database
+     * @param CollectionName The name of the field collection in the database
      */
     VolumeField(
         const Executor& exec,
-        std::string name,
+        std::string fieldName,
         const UnstructuredMesh& mesh,
         const Field<ValueType>& internalField,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
         Database& db,
-        std::string key,
-        std::string fieldCollectionName
+        std::string dbKey,
+        std::string CollectionName
     )
         : GeometricFieldMixin<ValueType>(
             exec,
-            name,
+            fieldName,
             mesh,
             DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
-          key(key), fieldCollectionName(fieldCollectionName),
-          boundaryConditions_(boundaryConditions), db_(&db)
+          key(dbKey), fieldCollectionName(CollectionName), boundaryConditions_(boundaryConditions),
+          db_(&db)
     {}
 
     VolumeField(const VolumeField& other)
