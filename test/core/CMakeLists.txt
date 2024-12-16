@@ -7,6 +7,7 @@ endif()
 
 add_subdirectory(primitives)
 add_subdirectory(database)
+add_subdirectory(linearAlgebra)
 
 neofoam_unit_test(dictionary)
 neofoam_unit_test(tokenList)
