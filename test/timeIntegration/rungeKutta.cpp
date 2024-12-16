@@ -59,7 +59,6 @@ TEST_CASE("TimeIntegration - Runge Kutta")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
-
     NeoFOAM::scalar convergenceTolerance = 1.0e-4; // how much lower we accept that expected order.
 
     // Set up dictionary.
@@ -77,8 +76,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
 
     // Setup solve parameters.
-    NeoFOAM::scalar maxTime = 0.1;
-    std::array<NeoFOAM::scalar, 2> deltaTime = {0.001, 0.01};
+    const NeoFOAM::scalar maxTime = 0.1;
+    std::array<NeoFOAM::scalar, 2> deltaTime = {0.01, 0.001};
 
     SECTION("Solve on " + execName)
     {
@@ -103,14 +102,14 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             }
 
             // check error.
-            NeoFOAM::scalar analytical = 1.0 / (1.0 - time);
+            NeoFOAM::scalar analytical = 1.0 / (1.0 - maxTime);
             error[iTest] = std::abs(vf.internalField().copyToHost()[0] - analytical);
             iTest++;
         }
 
         // check order of convergence.
-        NeoFOAM::scalar order = (std::log(error[1]) - std::log(error[0]))
-                              / (std::log(deltaTime[1]) - std::log(deltaTime[0]));
+        NeoFOAM::scalar order = (std::log(error[0]) - std::log(error[1]))
+                              / (std::log(deltaTime[0]) - std::log(deltaTime[1]));
         REQUIRE(order > (1.0 - convergenceTolerance));
     }
 }

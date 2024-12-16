@@ -338,6 +338,7 @@ public:
         if (std::holds_alternative<NeoFOAM::SerialExecutor>(exec))
         {
             vector_.template emplace<SKVectorSerial>();
+            return;
         }
 
         NF_ERROR_EXIT(
