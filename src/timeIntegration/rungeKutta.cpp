@@ -32,22 +32,20 @@ void RungeKutta<SolutionFieldType>::solve(
     Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt
 )
 {
-    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     // Setup sundials if required, load the current solution for temporal integration
     if (pdeExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t);
-    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_.NVector());
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
-    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
+
     // Perform time integration
     ARKodeSetFixedStep(ark, dt);
     NeoFOAM::scalar timeOut;
     auto stepReturn = ARKodeEvolve(ark, t + dt, solution_.NVector(), &timeOut, ARK_ONE_STEP);
-    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
+
     // Post step checks
     NF_ASSERT_EQUAL(stepReturn, 0);
     NF_ASSERT_EQUAL(t + dt, timeOut);
-    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
+
     // Copy solution out. (Fence is in sundails free)
     NeoFOAM::sundials::NVectorToField(solution_.NVector(), solutionField.internalField());
 }
