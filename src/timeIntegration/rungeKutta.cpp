@@ -8,7 +8,7 @@ namespace NeoFOAM::timeIntegration
 
 template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& other)
-    : Base(other), solution_(other.solution_), initialConditions_(other.initialConditions_),
+    : Base(other),
       pdeExpr_(
           other.pdeExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.pdeExpr_->exec())
                          : nullptr
@@ -22,11 +22,9 @@ RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& o
 
 template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(RungeKutta<SolutionFieldType>&& other)
-    : Base(std::move(other)), solution_(std::move(other.solution_)),
-      context_(std::move(other.context_)), initialConditions_(std::move(other.initialConditions_)),
+    : Base(std::move(other)), context_(std::move(other.context_)),
       ODEMemory_(std::move(other.ODEMemory_)), pdeExpr_(std::move(other.pdeExpr_))
 {}
-
 
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::solve(
@@ -35,20 +33,20 @@ void RungeKutta<SolutionFieldType>::solve(
 {
     // Setup sundials if required, load the current solution for temporal integration
     if (pdeExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t);
-    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solutionnew_->NVector());
+    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_.NVector());
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
     // Perform time integration
     ARKodeSetFixedStep(ark, dt);
     NeoFOAM::scalar timeOut;
-    auto stepReturn = ARKodeEvolve(ark, t + dt, solutionnew_->NVector(), &timeOut, ARK_ONE_STEP);
+    auto stepReturn = ARKodeEvolve(ark, t + dt, solution_.NVector(), &timeOut, ARK_ONE_STEP);
 
     // Post step checks
     NF_ASSERT_EQUAL(stepReturn, 0);
     NF_ASSERT_EQUAL(t + dt, timeOut);
 
     // Copy solution out. (Fence is in sundails free)
-    NeoFOAM::sundials::NVectorToField(solutionnew_->NVector(), solutionField.internalField());
+    NeoFOAM::sundials::NVectorToField(solution_.NVector(), solutionField.internalField());
 }
 
 template<typename SolutionFieldType>
@@ -93,16 +91,15 @@ template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initSUNVector(size_t size)
 {
     NF_DEBUG_ASSERT(context_, "SUNContext is a nullptr.");
-    solutionnew_->initNVector(size, context_);
-    initialConditionsnew_->initNVector(size, context_);
+
+    solution_.initNVector(size, context_);
+    initialConditions_.initNVector(size, context_);
 }
 
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initSUNInitialConditions(const SolutionFieldType& solutionField)
 {
-    NeoFOAM::sundials::fieldToNVector(
-        solutionField.internalField(), initialConditionsnew_->NVector()
-    );
+    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), initialConditions_.NVector());
 }
 
 template<typename SolutionFieldType>
@@ -114,7 +111,7 @@ void RungeKutta<SolutionFieldType>::initODEMemory(const scalar t)
     ODEMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
         NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>,
         t,
-        initialConditionsnew_->NVector(),
+        initialConditions_.NVector(),
         context_.get()
     )));
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());

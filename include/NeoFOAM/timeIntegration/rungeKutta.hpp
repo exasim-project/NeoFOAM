@@ -51,6 +51,7 @@ class RungeKutta :
 {
 public:
 
+    using ValueType = SolutionFieldType::FieldValueType;
     using Expression = NeoFOAM::dsl::Expression;
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>;
@@ -128,15 +129,8 @@ public:
 
 private:
 
-    std::unique_ptr<NeoFOAM::sundials::SKVector> solutionnew_;
-    std::unique_ptr<NeoFOAM::sundials::SKVector> initialConditionsnew_;
-    // VectorType kokkosSolution_ {}; /**< The Sundails, kokkos solution vector (do not use).*/
-    // VectorType kokkosInitialConditions_ {
-    // }; /**< The Sundails, kokkos initial conditions vector (do not use).*/
-    N_Vector solution_ {nullptr
-    }; /**< The N_Vector for the solution. (wrapping the kokkos vector). */
-    N_Vector initialConditions_ {nullptr
-    }; /**< The N_Vector for the initial conditions. (wrapping the kokkos vector). */
+    NeoFOAM::sundials::SKVector<ValueType> solution_;
+    NeoFOAM::sundials::SKVector<ValueType> initialConditions_;
     std::shared_ptr<SUNContext_> context_ {nullptr, sundials::SUN_CONTEXT_DELETER}; // see type def
     std::unique_ptr<char> ODEMemory_ {nullptr}; /**< The 'memory' (sundails configuration) for the
                                                    solve. (note void* is not stl compliant). */

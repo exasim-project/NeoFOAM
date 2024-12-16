@@ -187,29 +187,81 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
     return 0;
 }
 
-// base class
-class SKVector
-{
-public:
 
-    virtual void initNVector(size_t, std::shared_ptr<SUNContext_>) = 0;
-    virtual const N_Vector& NVector() const = 0;
-    virtual N_Vector& NVector() = 0;
-};
+namespace detail
+{
+template<typename Vector>
+void initNVector(Vector& vec, size_t size, std::shared_ptr<SUNContext_> context)
+{
+    vec.initNVector(size, context);
+}
+
+template<typename Vector>
+const N_Vector& NVector(const Vector& vec)
+{
+    return vec.NVector();
+}
+
+template<typename Vector>
+N_Vector& NVector(Vector& vec)
+{
+    return vec.NVector();
+}
+}
 
 template<typename ValueType>
-class SKVectorDefault : public SKVector
+class SKVectorDefault
 {
 public:
 
     using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;
-    virtual void initNVector(size_t size, std::shared_ptr<SUNContext_> context) override
+
+    SKVectorDefault() = default;
+    ~SKVectorDefault() = default;
+    SKVectorDefault(const SKVectorDefault& other) : kvector_(other.kvector_)
+    {
+        if (other.svector_ != nullptr)
+        {
+            svector_ = kvector_;
+        }
+    }
+
+    SKVectorDefault& operator=(const SKVectorDefault& other)
+    {
+        if (this != &other)
+        {
+            kvector_ = other.kvector_;
+            if (other.svector_ != nullptr)
+            {
+                svector_ = kvector_;
+            }
+            else
+            {
+                svector_ = nullptr;
+            }
+        }
+        return *this;
+    }
+    SKVectorDefault(SKVectorDefault&& other) noexcept
+        : kvector_(std::move(other.kvector_)), svector_(std::exchange(other.svector_, nullptr))
+    {}
+    SKVectorDefault& operator=(SKVectorDefault&& other) noexcept
+    {
+        if (this != &other)
+        {
+            kvector_ = std::move(other.kvector_);
+            svector_ = std::exchange(other.svector_, nullptr);
+        }
+        return *this;
+    }
+
+    void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
         kvector_ = KVector(size, context.get());
         svector_ = kvector_;
     };
-    const N_Vector& NVector() const override { return svector_; };
-    N_Vector& NVector() override { return svector_; };
+    const N_Vector& NVector() const { return svector_; };
+    N_Vector& NVector() { return svector_; };
 
 private:
 
@@ -218,18 +270,57 @@ private:
 };
 
 template<typename ValueType>
-class SKVectorSerial : public SKVector
+class SKVectorSerial
 {
 public:
 
+    SKVectorSerial() = default;
+    ~SKVectorSerial() = default;
+    SKVectorSerial(const SKVectorSerial& other) : kvector_(other.kvector_)
+    {
+        if (other.svector_ != nullptr)
+        {
+            svector_ = kvector_;
+        }
+    }
+
+    SKVectorSerial& operator=(const SKVectorSerial& other)
+    {
+        if (this != &other)
+        {
+            kvector_ = other.kvector_;
+            if (other.svector_ != nullptr)
+            {
+                svector_ = kvector_;
+            }
+            else
+            {
+                svector_ = nullptr;
+            }
+        }
+        return *this;
+    }
+    SKVectorSerial(SKVectorSerial&& other) noexcept
+        : kvector_(std::move(other.kvector_)), svector_(std::exchange(other.svector_, nullptr))
+    {}
+    SKVectorSerial& operator=(SKVectorSerial&& other) noexcept
+    {
+        if (this != &other)
+        {
+            kvector_ = std::move(other.kvector_);
+            svector_ = std::exchange(other.svector_, nullptr);
+        }
+        return *this;
+    }
+
     using KVector = ::sundials::kokkos::Vector<Kokkos::Serial>;
-    virtual void initNVector(size_t size, std::shared_ptr<SUNContext_> context) override
+    void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
         kvector_ = KVector(size, context.get());
         svector_ = kvector_;
     };
-    const N_Vector& NVector() const override { return svector_; };
-    N_Vector& NVector() override { return svector_; };
+    const N_Vector& NVector() const { return svector_; };
+    N_Vector& NVector() { return svector_; };
 
 private:
 
@@ -237,25 +328,70 @@ private:
     N_Vector svector_ {nullptr};
 };
 
+// base class
 template<typename ValueType>
-std::unique_ptr<SKVector> makeSKVector(const NeoFOAM::Executor& exec)
+class SKVector
 {
-    if (std::holds_alternative<NeoFOAM::GPUExecutor>(exec))
-    {
-        return std::make_unique<SKVectorDefault<ValueType>>();
-    }
-    if (std::holds_alternative<NeoFOAM::CPUExecutor>(exec))
-    {
-        return std::make_unique<SKVectorDefault<ValueType>>();
-    }
-    if (std::holds_alternative<NeoFOAM::SerialExecutor>(exec))
-    {
-        return std::make_unique<SKVectorSerial<ValueType>>();
-    }
-    NF_ERROR_EXIT(
-        "Unsupported NeoFOAM executor "
-        << std::visit<Executor>([&](const auto& e) { return e.name(); }, exec) << "."
-    );
-}
+public:
 
+    using SKDefaultVector = SKVectorDefault<ValueType>;
+    using SKSerialVector = SKVectorSerial<ValueType>;
+
+    using SKVectorVariant = std::variant<SKDefaultVector, SKSerialVector>;
+
+    SKVector() : vector_(SKDefaultVector {}) {};
+    ~SKVector() = default;
+    SKVector(const SKVector&) = default;
+    SKVector& operator=(const SKVector&) = default;
+    SKVector(SKVector&&) noexcept = default;
+    SKVector& operator=(SKVector&&) noexcept = default;
+
+
+    explicit SKVector(const NeoFOAM::Executor& exec)
+    {
+        if (std::holds_alternative<NeoFOAM::GPUExecutor>(exec))
+        {
+            vector_.template emplace<SKDefaultVector>();
+        }
+        if (std::holds_alternative<NeoFOAM::CPUExecutor>(exec))
+        {
+            vector_.template emplace<SKDefaultVector>();
+        }
+        if (std::holds_alternative<NeoFOAM::SerialExecutor>(exec))
+        {
+            vector_.template emplace<SKSerialVector>();
+        }
+
+        NF_ERROR_EXIT(
+            "Unsupported NeoFOAM executor "
+            << std::visit([](const auto& e) { return e.name(); }, exec) << "."
+        );
+    }
+
+    void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
+    {
+        std::visit(
+            [size, &context](auto& vec) { detail::initNVector(vec, size, context); }, vector_
+        );
+    }
+
+    const N_Vector& NVector() const
+    {
+        return std::visit(
+            [](const auto& vec) -> const N_Vector& { return detail::NVector(vec); }, vector_
+        );
+    }
+
+    N_Vector& NVector()
+    {
+        return std::visit([](auto& vec) -> N_Vector& { return detail::NVector(vec); }, vector_);
+    }
+
+    const SKVectorVariant& variant() const { return vector_; }
+    SKVectorVariant& variant() { return vector_; }
+
+private:
+
+    SKVectorVariant vector_;
+};
 }
