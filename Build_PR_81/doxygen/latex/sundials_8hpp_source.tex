@@ -52,176 +52,291 @@
 \DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00065}00065\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SKVectorType,\ \textcolor{keyword}{typename}\ ValueType>}
 \DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00066}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a2729bd759116817fee9b83598648b605}{00066}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a2729bd759116817fee9b83598648b605}{fieldToNVectorImpl}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field,\ N\_Vector\&\ vector)}
 \DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00067}00067\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00068}00068\ \ \ \ \ \textcolor{comment}{//\ Load\ the\ current\ solution\ for\ temporal\ integration}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00069}00069\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ ::sundials::kokkos::GetVec<SKVectorType>(vector)-\/>View();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00070}00070\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{NeoFOAM::parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a1df824a46de3a2c0db14c4457ab8a34e}{range}}(),\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ view(i)\ =\ field[i];\ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00072}00072\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00073}00073\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00074}00074\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00075}00075\ \textcolor{comment}{//\ dispatcer\ For\ some\ reason\ we\ using\ DefaultExecutionSpace\ for\ both\ CPU\ and\ GPU}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00076}00076\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00077}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{00077}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{fieldToNVector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field,\ N\_Vector\&\ vector)}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00078}00078\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00079}00079\ \ \ \ \ \textcolor{comment}{//\ CHECK\ FOR\ N\_Vector\ on\ correct\ space\ in\ DEBUG}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00080}00080\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00081}00081\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00082}00082\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00083}00083\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ field,\ vector}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00088}00088\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00089}00089\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::CPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00090}00090\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ \ \ field,\ vector}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00095}00095\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00096}00096\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::SerialExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00097}00097\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00098}00098\ \ \ \ \ \ \ \ \ fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(field,\ vector);}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00100}00100\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00101}00101\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}Unsupported\ NeoFOAM\ executor\ for\ field."{}});}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00102}00102\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00103}00103\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00112}00112\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SKVectorType,\ \textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00113}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ad76c3fd58fe0982de97e9fda71cdff25}{00113}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ad76c3fd58fe0982de97e9fda71cdff25}{NVectorToFieldImpl}}(\textcolor{keyword}{const}\ N\_Vector\&\ vector,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field)}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00114}00114\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00115}00115\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ ::sundials::kokkos::GetVec<SKVectorType>(vector)-\/>View();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00116}00116\ \ \ \ \ ValueType*\ fieldData\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a756b2b776a6c4cc7ffe091e42e505efa}{data}}();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00117}00117\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{NeoFOAM::parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00118}00118\ \ \ \ \ \ \ \ \ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a1df824a46de3a2c0db14c4457ab8a34e}{range}}(),\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ fieldData[i]\ =\ view(i);\ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00119}00119\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00120}00120\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00121}00121\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00122}00122\ \textcolor{comment}{//\ dispatcer\ For\ some\ reason\ we\ using\ DefaultExecutionSpace\ for\ both\ CPU\ and\ GPU}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00123}00123\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00124}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}{00124}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}{NVectorToField}}(\textcolor{keyword}{const}\ N\_Vector\&\ vector,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field)}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00125}00125\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00126}00126\ \ \ \ \ \textcolor{comment}{//\ CHECK\ FOR\ N\_Vector\ on\ correct\ space\ in\ DEBUG}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00127}00127\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00128}00128\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00129}00129\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ vector,\ field}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00134}00134\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00135}00135\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::CPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00136}00136\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \ \ \ \ vector,\ field}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00139}00139\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00141}00141\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00142}00142\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::SerialExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00143}00143\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(vector,\ field);}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00146}00146\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00147}00147\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}Unsupported\ NeoFOAM\ executor\ for\ field."{}});}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00148}00148\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00149}00149\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00150}00150\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00166}00166\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SolutionFieldType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00167}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ae2307f054819116cd2bc34265966c1ff}{00167}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ae2307f054819116cd2bc34265966c1ff}{explicitRKSolve}}([[maybe\_unused]]\ sunrealtype\ t,\ N\_Vector\ y,\ N\_Vector\ ydot,\ \textcolor{keywordtype}{void}*\ user\_data)}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00168}00168\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00169}00169\ \ \ \ \ \textcolor{comment}{//\ Pointer\ wrangling}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00170}00170\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{NeoFOAM::dsl::Expression}}*\ pdeExpre\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{NeoFOAM::dsl::Expression}}*\textcolor{keyword}{>}(user\_data);}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00171}00171\ \ \ \ \ sunrealtype*\ yDotArray\ =\ N\_VGetArrayPointer(ydot);}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00172}00172\ \ \ \ \ sunrealtype*\ yArray\ =\ N\_VGetArrayPointer(y);}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00173}00173\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00174}00174\ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecc669a189db22f652ffb9788f01a99b}{NF\_ASSERT}}(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00175}00175\ \ \ \ \ \ \ \ \ yDotArray\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ yArray\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ pdeExpre\ !=\ \textcolor{keyword}{nullptr},}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Failed\ to\ dereference\ pointers\ in\ sundails."{}}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00177}00177\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00178}00178\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00179}00179\ \ \ \ \ \textcolor{comment}{//\ Copy\ initial\ value\ from\ y\ to\ source.}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00180}00180\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<NeoFOAM::scalar>}}\ source(pdeExpre-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a55331dad02254a7c6e8d727ccdd32c7c}{exec}}(),\ 1,\ 0.0);}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00181}00181\ \ \ \ \ source\ =\ pdeExpre-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a3abb6631b7932517b2aa1728bf14f8f6}{explicitOperation}}(source);\ \textcolor{comment}{//\ compute\ spacial}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00182}00182\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(pdeExpre-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a55331dad02254a7c6e8d727ccdd32c7c}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00183}00183\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00184}00184\ \ \ \ \ \ \ \ \ Kokkos::fence();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00185}00185\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00186}00186\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{NeoFOAM::sundials::fieldToNVector}}(source,\ ydot);\ \textcolor{comment}{//\ assign\ rhs\ to\ ydot.}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00187}00187\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00188}00188\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00068}00068\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ ::sundials::kokkos::GetVec<SKVectorType>(vector)-\/>View();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00069}00069\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{NeoFOAM::parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a1df824a46de3a2c0db14c4457ab8a34e}{range}}(),\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ view(i)\ =\ field[i];\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00071}00071\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00072}00072\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00074}00074\ \textcolor{comment}{//\ dispatcer\ For\ some\ reason\ we\ using\ DefaultExecutionSpace\ for\ both\ CPU\ and\ GPU}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00075}00075\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00076}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{00076}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{fieldToNVector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field,\ N\_Vector\&\ vector)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00077}00077\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00078}00078\ \ \ \ \ \textcolor{comment}{//\ CHECK\ FOR\ N\_Vector\ on\ correct\ space\ in\ DEBUG}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00079}00079\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00080}00080\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ field,\ vector}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00085}00085\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00086}00086\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::CPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00087}00087\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ field,\ vector}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00092}00092\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00093}00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::SerialExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00094}00094\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(field,\ vector);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00097}00097\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00098}00098\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}Unsupported\ NeoFOAM\ executor\ for\ field."{}});}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00099}00099\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00100}00100\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00109}00109\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SKVectorType,\ \textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00110}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ad76c3fd58fe0982de97e9fda71cdff25}{00110}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ad76c3fd58fe0982de97e9fda71cdff25}{NVectorToFieldImpl}}(\textcolor{keyword}{const}\ N\_Vector\&\ vector,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00111}00111\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00112}00112\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ ::sundials::kokkos::GetVec<SKVectorType>(vector)-\/>View();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00113}00113\ \ \ \ \ ValueType*\ fieldData\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a756b2b776a6c4cc7ffe091e42e505efa}{data}}();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00114}00114\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{NeoFOAM::parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a1df824a46de3a2c0db14c4457ab8a34e}{range}}(),\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ fieldData[i]\ =\ view(i);\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00116}00116\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00117}00117\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00119}00119\ \textcolor{comment}{//\ dispatcer\ For\ some\ reason\ we\ using\ DefaultExecutionSpace\ for\ both\ CPU\ and\ GPU}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00120}00120\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00121}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}{00121}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ac0883a3ea7524d64e7de04515395a859}{NVectorToField}}(\textcolor{keyword}{const}\ N\_Vector\&\ vector,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\&\ field)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00122}00122\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00123}00123\ \ \ \ \ \textcolor{comment}{//\ CHECK\ FOR\ N\_Vector\ on\ correct\ space\ in\ DEBUG}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00125}00125\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00126}00126\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ vector,\ field}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00131}00131\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00132}00132\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::CPUExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00133}00133\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00134}00134\ \ \ \ \ \ \ \ \ NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \ \ \ \ vector,\ field}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00136}00136\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00138}00138\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00139}00139\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::SerialExecutor>(field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00140}00140\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(vector,\ field);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00143}00143\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00144}00144\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}Unsupported\ NeoFOAM\ executor\ for\ field."{}});}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00145}00145\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00146}00146\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00147}00147\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00164}00164\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SolutionFieldType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00165}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ae2307f054819116cd2bc34265966c1ff}{00165}}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ae2307f054819116cd2bc34265966c1ff}{explicitRKSolve}}([[maybe\_unused]]\ sunrealtype\ t,\ N\_Vector\ y,\ N\_Vector\ ydot,\ \textcolor{keywordtype}{void}*\ user\_data)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00166}00166\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00167}00167\ \ \ \ \ \textcolor{comment}{//\ Pointer\ wrangling}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00168}00168\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{NeoFOAM::dsl::Expression}}*\ pdeExpre\ =\ \textcolor{keyword}{reinterpret\_cast<}\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{NeoFOAM::dsl::Expression}}*\textcolor{keyword}{>}(user\_data);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00169}00169\ \ \ \ \ sunrealtype*\ yDotArray\ =\ N\_VGetArrayPointer(ydot);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00170}00170\ \ \ \ \ sunrealtype*\ yArray\ =\ N\_VGetArrayPointer(y);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00171}00171\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00172}00172\ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecc669a189db22f652ffb9788f01a99b}{NF\_ASSERT}}(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ yDotArray\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ yArray\ !=\ \textcolor{keyword}{nullptr}\ \&\&\ pdeExpre\ !=\ \textcolor{keyword}{nullptr},}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Failed\ to\ dereference\ pointers\ in\ sundails."{}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00175}00175\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00176}00176\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00177}00177\ \ \ \ \ \textcolor{comment}{//\ Copy\ initial\ value\ from\ y\ to\ source.}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00178}00178\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<NeoFOAM::scalar>}}\ source(pdeExpre-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a55331dad02254a7c6e8d727ccdd32c7c}{exec}}(),\ 1,\ 0.0);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00179}00179\ \ \ \ \ source\ =\ pdeExpre-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a3abb6631b7932517b2aa1728bf14f8f6}{explicitOperation}}(source);\ \textcolor{comment}{//\ compute\ spacial}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00180}00180\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(pdeExpre-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a55331dad02254a7c6e8d727ccdd32c7c}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00181}00181\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00182}00182\ \ \ \ \ \ \ \ \ Kokkos::fence();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00183}00183\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00184}00184\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_a91de57c82fd9e44bbcc73a5f135d0b0f}{NeoFOAM::sundials::fieldToNVector}}(source,\ ydot);\ \textcolor{comment}{//\ assign\ rhs\ to\ ydot.}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00185}00185\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00186}00186\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00187}00187\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00188}00188\ \textcolor{comment}{//\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
 \DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00189}00189\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00190}00190\ \textcolor{comment}{//\ base\ class}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00191}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{00191}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00192}00192\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00193}00193\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00194}00194\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00195}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a82d7a357d1fff38ff7961b30ccff0967}{00195}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a82d7a357d1fff38ff7961b30ccff0967}{initNVector}}(\textcolor{keywordtype}{size\_t},\ std::shared\_ptr<SUNContext\_>)\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00196}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_afeb82d1ef8200dabb963e5a050481573}{00196}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_afeb82d1ef8200dabb963e5a050481573}{NVector}}()\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00197}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ab2e255fda650114aa9d3c8931a11ace5}{00197}}\ \ \ \ \ \textcolor{keyword}{virtual}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ab2e255fda650114aa9d3c8931a11ace5}{NVector}}()\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00198}00198\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00199}00199\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00200}00200\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00201}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{00201}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00202}00202\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00203}00203\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00204}00204\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00205}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{00205}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{KVector}}\ =\ ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00206}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a5cb4de2406294d3bfa78358de7f077fa}{00206}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a5cb4de2406294d3bfa78358de7f077fa}{initNVector}}(\textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)\textcolor{keyword}{\ override}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00207}00207\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00208}00208\ \ \ \ \ \ \ \ \ kvector\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{KVector}}(size,\ context.get());}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ svector\_\ =\ kvector\_;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00210}00210\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00211}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a4a1f3350f6661564d5ad3e83f1ee7de4}{00211}}\ \ \ \ \ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a4a1f3350f6661564d5ad3e83f1ee7de4}{NVector}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00212}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a2c04d0fd7b56063db7e331a5265d897a}{00212}}\ \ \ \ \ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a2c04d0fd7b56063db7e331a5265d897a}{NVector}}()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00213}00213\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00214}00214\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00190}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail}{00190}}\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00191}00191\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00192}00192\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Vector>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00193}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a0d21b2a06243d7a662f573d95177b05f}{00193}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a0d21b2a06243d7a662f573d95177b05f}{initNVector}}(\mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}}\&\ vec,\ \textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00194}00194\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00195}00195\ \ \ \ \ vec.initNVector(size,\ context);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00196}00196\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00197}00197\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00198}00198\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Vector>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00199}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a55dea1f6c0afa8355bbc665ecbed8519}{00199}}\ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a55dea1f6c0afa8355bbc665ecbed8519}{NVector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}}\&\ vec)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00200}00200\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00201}00201\ \ \ \ \ \textcolor{keywordflow}{return}\ vec.NVector();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00202}00202\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00204}00204\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Vector>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00205}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a184d3e6037f786fccef6fde24c62349f}{00205}}\ N\_Vector\&\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a55dea1f6c0afa8355bbc665ecbed8519}{NVector}}(\mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}}\&\ vec)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00206}00206\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00207}00207\ \ \ \ \ \textcolor{keywordflow}{return}\ vec.NVector();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00208}00208\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00209}00209\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00210}00210\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00211}00211\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00212}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{00212}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00213}00213\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00214}00214\ \textcolor{keyword}{public}:}
 \DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00215}00215\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00216}00216\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{KVector}}\ kvector\_\ \{\};\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00217}00217\ \ \ \ \ N\_Vector\ svector\_\ \{\textcolor{keyword}{nullptr}\};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00218}00218\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00219}00219\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00220}00220\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00221}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{00221}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00222}00222\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00223}00223\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00224}00224\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00225}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{00225}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{KVector}}\ =\ ::sundials::kokkos::Vector<Kokkos::Serial>;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00226}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a59c40619a41b44ddc745867bc7cdd1d1}{00226}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a59c40619a41b44ddc745867bc7cdd1d1}{initNVector}}(\textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)\textcolor{keyword}{\ override}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00227}00227\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ kvector\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{KVector}}(size,\ context.get());}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00229}00229\ \ \ \ \ \ \ \ \ svector\_\ =\ kvector\_;}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00230}00230\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00231}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ac99a9707dfcf09c8f16d60c1d76f58c9}{00231}}\ \ \ \ \ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ac99a9707dfcf09c8f16d60c1d76f58c9}{NVector}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00232}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ae66445587a3904fcc8fb6a2d06ad9d22}{00232}}\ \ \ \ \ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ae66445587a3904fcc8fb6a2d06ad9d22}{NVector}}()\textcolor{keyword}{\ override\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00233}00233\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00234}00234\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00216}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a2ba83f258037db946da14324e8c313eb}{00216}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a2ba83f258037db946da14324e8c313eb}{SKVectorSerial}}()\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00217}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_acea0fcc25859c43f6ed7393da522d898}{00217}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_acea0fcc25859c43f6ed7393da522d898}{\string~SKVectorSerial}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00218}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_aa5878a4d1f62ac07e1dfe4c0500edb9c}{00218}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_aa5878a4d1f62ac07e1dfe4c0500edb9c}{SKVectorSerial}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\&\ other)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ :\ kvector\_(other.kvector\_),\ svector\_(other.kvector\_)\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00220}00220\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00221}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_aea850b0dc3f3a336e89f7317e74c2831}{00221}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_aea850b0dc3f3a336e89f7317e74c2831}{SKVectorSerial}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\&\&\ other)\ noexcept}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00222}00222\ \ \ \ \ \ \ \ \ :\ kvector\_(std::move(other.kvector\_)),\ svector\_(std::move(other.svector\_))\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00223}00223\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00224}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_af94a4b40561b775b088375b1ebc7cb66}{00224}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_af94a4b40561b775b088375b1ebc7cb66}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\&\ other)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00225}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ac2459d264836ba526dc13393a18e21b0}{00225}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ac2459d264836ba526dc13393a18e21b0}{operator=}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial}{SKVectorSerial}}\&\&\ other)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00226}00226\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00227}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{00227}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{KVector}}\ =\ ::sundials::kokkos::Vector<Kokkos::Serial>;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00228}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ae602b8b941b0fa74d12978c9725554fc}{00228}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_ae602b8b941b0fa74d12978c9725554fc}{initNVector}}(\textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00229}00229\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ kvector\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{KVector}}(size,\ context.get());}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ svector\_\ =\ kvector\_;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00232}00232\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00233}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a0d40472feed85d735767e9e44a7767a2}{00233}}\ \ \ \ \ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a0d40472feed85d735767e9e44a7767a2}{NVector}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00234}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_aed9445e4cf1ddbf4d39683354fd9fde9}{00234}}\ \ \ \ \ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_aed9445e4cf1ddbf4d39683354fd9fde9}{NVector}}()\ \{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
 \DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00235}00235\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00236}00236\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{KVector}}\ kvector\_\ \{\};\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00237}00237\ \ \ \ \ N\_Vector\ svector\_\ \{\textcolor{keyword}{nullptr}\};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00238}00238\ \};}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00239}00239\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00240}00240\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00241}\mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ab980a8b3bde1a7ec731866c758bd57d5}{00241}}\ std::unique\_ptr<SKVector>\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_ab980a8b3bde1a7ec731866c758bd57d5}{makeSKVector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{NeoFOAM::Executor}}\&\ exec)}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00242}00242\ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00243}00243\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(exec))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00244}00244\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<SKVectorDefault<ValueType>>();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00246}00246\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00247}00247\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::CPUExecutor>(exec))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00248}00248\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<SKVectorDefault<ValueType>>();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00250}00250\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00251}00251\ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::SerialExecutor>(exec))}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00252}00252\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00253}00253\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<SKVectorSerial<ValueType>>();}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00254}00254\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00255}00255\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Unsupported\ NeoFOAM\ executor\ "{}}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ <<\ std::visit<Executor>([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \textcolor{keywordflow}{return}\ e.name();\ \},\ exec)\ <<\ \textcolor{stringliteral}{"{}."{}}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00258}00258\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00259}00259\ \}}
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00260}00260\ }
-\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00261}00261\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00236}00236\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00237}00237\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00238}00238\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorSerial_a6a10aa392a2458d60df6c658b1859f82}{KVector}}\ kvector\_\ \{\};\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00239}00239\ \ \ \ \ N\_Vector\ svector\_\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00240}00240\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00241}00241\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00242}00242\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00243}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{00243}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00244}00244\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00245}00245\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00246}00246\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00247}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_abca9b4d52fbc125e55f0d1dafeb96088}{00247}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_abca9b4d52fbc125e55f0d1dafeb96088}{KVector}}\ =\ ::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00248}00248\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00249}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a2eeca8360e8fc7c3be408a62b7073f5a}{00249}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a2eeca8360e8fc7c3be408a62b7073f5a}{SKVectorHostDefault}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00250}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_aa5306b247b3b3c569f6c6fc79b1d1775}{00250}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_aa5306b247b3b3c569f6c6fc79b1d1775}{\string~SKVectorHostDefault}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00251}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a1dcbbfc57d674872fc05fb0a6d2bd0fd}{00251}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a1dcbbfc57d674872fc05fb0a6d2bd0fd}{SKVectorHostDefault}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}\&\ other)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ :\ kvector\_(other.kvector\_),\ svector\_(other.kvector\_)\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00253}00253\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00254}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a47429e35a832468e12c939899c3355d5}{00254}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a47429e35a832468e12c939899c3355d5}{SKVectorHostDefault}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}\&\&\ other)\ noexcept}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00255}00255\ \ \ \ \ \ \ \ \ :\ kvector\_(std::move(other.kvector\_)),\ svector\_(std::move(other.svector\_))\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00256}00256\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00257}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_ad953df237a6bd8851377645f6ff3e37d}{00257}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_ad953df237a6bd8851377645f6ff3e37d}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}\&\ other)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00258}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_ad299e13816b8c37a826a4bc6ce364050}{00258}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_ad299e13816b8c37a826a4bc6ce364050}{operator=}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault}{SKVectorHostDefault}}\&\&\ other)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00260}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_ab5789e8253a784b7ec105aa4ca74d302}{00260}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_ab5789e8253a784b7ec105aa4ca74d302}{initNVector}}(\textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00261}00261\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00262}00262\ \ \ \ \ \ \ \ \ kvector\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_abca9b4d52fbc125e55f0d1dafeb96088}{KVector}}(size,\ context.get());}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00263}00263\ \ \ \ \ \ \ \ \ svector\_\ =\ kvector\_;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00264}00264\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00265}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a38061c43cebb979ed4d66f038371618f}{00265}}\ \ \ \ \ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a38061c43cebb979ed4d66f038371618f}{NVector}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00266}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a1f726463d19f6ac54fb88837cc0f2d1e}{00266}}\ \ \ \ \ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_a1f726463d19f6ac54fb88837cc0f2d1e}{NVector}}()\ \{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00267}00267\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00268}00268\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00269}00269\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00270}00270\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorHostDefault_abca9b4d52fbc125e55f0d1dafeb96088}{KVector}}\ kvector\_\ \{\};\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00271}00271\ \ \ \ \ N\_Vector\ svector\_\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00272}00272\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00273}00273\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00274}00274\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00275}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{00275}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00276}00276\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00277}00277\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00278}00278\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00279}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{00279}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{KVector}}\ =\ ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00280}00280\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00281}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac7f8ab9eab2642d96d2d9f8935e03b64}{00281}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac7f8ab9eab2642d96d2d9f8935e03b64}{SKVectorDefault}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00282}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a72cce4d624e7312ba6d8b5d1915d7f2c}{00282}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a72cce4d624e7312ba6d8b5d1915d7f2c}{\string~SKVectorDefault}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00283}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a47b899e3959690ef9c1d1d43f5e4b7b9}{00283}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a47b899e3959690ef9c1d1d43f5e4b7b9}{SKVectorDefault}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\&\ other)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00284}00284\ \ \ \ \ \ \ \ \ :\ kvector\_(other.kvector\_),\ svector\_(other.kvector\_)\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00285}00285\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00286}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a18f928fee8337f181ff1d93bbbd9f07c}{00286}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a18f928fee8337f181ff1d93bbbd9f07c}{SKVectorDefault}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\&\&\ other)\ noexcept}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00287}00287\ \ \ \ \ \ \ \ \ :\ kvector\_(std::move(other.kvector\_)),\ svector\_(std::move(other.svector\_))\ \{\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00288}00288\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00289}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a28a83f6c81082de3e6bc75f1e72cb38e}{00289}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a28a83f6c81082de3e6bc75f1e72cb38e}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\&\ other)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00290}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_aaac0666e7d87322f710eecca175c8f1e}{00290}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_aaac0666e7d87322f710eecca175c8f1e}{operator=}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault}}\&\&\ other)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00291}00291\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00292}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_afaf80741dc8fd4cd4a52741e0bb56df2}{00292}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_afaf80741dc8fd4cd4a52741e0bb56df2}{initNVector}}(\textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00293}00293\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00294}00294\ \ \ \ \ \ \ \ \ kvector\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{KVector}}(size,\ context.get());}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00295}00295\ \ \ \ \ \ \ \ \ svector\_\ =\ kvector\_;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00296}00296\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00297}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a00eb0d56f044ac97e52a72fe15e436cb}{00297}}\ \ \ \ \ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a00eb0d56f044ac97e52a72fe15e436cb}{NVector}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00298}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a68906dfd6775c7f53a0b7dba062c8c0d}{00298}}\ \ \ \ \ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_a68906dfd6775c7f53a0b7dba062c8c0d}{NVector}}()\ \{\ \textcolor{keywordflow}{return}\ svector\_;\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00299}00299\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00300}00300\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00301}00301\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00302}00302\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault_ac654d823b1a3271d798b47cdb38f29a3}{KVector}}\ kvector\_\ \{\};\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00303}00303\ \ \ \ \ N\_Vector\ svector\_\ \{\textcolor{keyword}{nullptr}\};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00304}00304\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00305}00305\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00306}00306\ \textcolor{comment}{//\ base\ class}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00307}00307\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00308}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{00308}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00309}00309\ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00310}00310\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00311}00311\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00312}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a93533c7d6c07f08e4e06860f709c66a1}{00312}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a93533c7d6c07f08e4e06860f709c66a1}{SKVectorSerial}}\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a93533c7d6c07f08e4e06860f709c66a1}{SKVectorSerial<ValueType>}};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00313}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_abfe6ce93a16a6788c8ee6275456ed19e}{00313}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_abfe6ce93a16a6788c8ee6275456ed19e}{SKVectorHostDefault}}\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_abfe6ce93a16a6788c8ee6275456ed19e}{SKVectorHostDefault<ValueType>}};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00314}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a19bb0aac418388a137df68a569206efd}{00314}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKDefaultVector}}\ =\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVectorDefault}{SKVectorDefault<ValueType>}};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00315}00315\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00316}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{00316}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{SKVectorVariant}}\ =\ std::variant<SKVectorSerial,\ SKVectorHostDefault,\ SKDefaultVector>;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00317}00317\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00318}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_adbc33f89b17f2e321ecb9e683f75d649}{00318}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_adbc33f89b17f2e321ecb9e683f75d649}{SKVector}}()\ \{\ vector\_.template\ emplace<SKVectorHostDefault>();\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00319}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a0cac59becf864abe63f3a487f13fd65c}{00319}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a0cac59becf864abe63f3a487f13fd65c}{\string~SKVector}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00320}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a8e5ffbdec81b30ed9b5af1e1f42442fa}{00320}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a8e5ffbdec81b30ed9b5af1e1f42442fa}{SKVector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}\&)\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00321}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ac84d064eac8a53f23a542a1b54206774}{00321}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ac84d064eac8a53f23a542a1b54206774}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}\&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00322}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a2741276881e77ed713b6d371cbc9a4c4}{00322}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a2741276881e77ed713b6d371cbc9a4c4}{SKVector}}(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}\&\&)\ noexcept\ =\ default;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00323}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_af4ceb4a926279ea83671a40d18ab0ef8}{00323}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}\&\ operator=(\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}\&\&)\ noexcept\ =\ delete;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00324}00324\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00325}00325\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00326}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a9e1aeefea2ded93e8153fec3edbd027f}{00326}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a9e1aeefea2ded93e8153fec3edbd027f}{setExecutor}}(const\ \mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}::\mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}}\&\ exec)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00327}00327\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00328}00328\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(exec))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00329}00329\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00330}00330\ \ \ \ \ \ \ \ \ \ \ \ \ vector\_.template\ emplace<SKDefaultVector>();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00331}00331\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00332}00332\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00333}00333\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::CPUExecutor>(exec))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00334}00334\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00335}00335\ \ \ \ \ \ \ \ \ \ \ \ \ vector\_.template\ emplace<SKVectorHostDefault>();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00336}00336\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00337}00337\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00338}00338\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::SerialExecutor>(exec))}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00339}00339\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00340}00340\ \ \ \ \ \ \ \ \ \ \ \ \ vector\_.template\ emplace<SKVectorSerial>();}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00341}00341\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00342}00342\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00343}00343\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00344}00344\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00345}00345\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Unsupported\ NeoFOAM\ executor:\ "{}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00346}00346\ \ \ \ \ \ \ \ \ \ \ \ \ <<\ std::visit([](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \textcolor{keywordflow}{return}\ e.name();\ \},\ exec)\ <<\ \textcolor{stringliteral}{"{}."{}}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00347}00347\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00348}00348\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00349}00349\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00350}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a4760b00e2605ceade108039259cbc075}{00350}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a4760b00e2605ceade108039259cbc075}{initNVector}}(\textcolor{keywordtype}{size\_t}\ size,\ std::shared\_ptr<SUNContext\_>\ context)}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00351}00351\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00352}00352\ \ \ \ \ \ \ \ \ std::visit(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00353}00353\ \ \ \ \ \ \ \ \ \ \ \ \ [size,\ \&context](\textcolor{keyword}{auto}\&\ vec)\ \{\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a0d21b2a06243d7a662f573d95177b05f}{detail::initNVector}}(vec,\ size,\ context);\ \},\ vector\_}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00354}00354\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00355}00355\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00356}00356\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00357}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a05966b772c81c9944584d82b3b2fc2c2}{00357}}\ \ \ \ \ \textcolor{keyword}{const}\ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a05966b772c81c9944584d82b3b2fc2c2}{NVector}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00358}00358\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00359}00359\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit(}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \ \ \ \ [](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ vec)\ -\/>\ \textcolor{keyword}{const}\ N\_Vector\&\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a55dea1f6c0afa8355bbc665ecbed8519}{detail::NVector}}(vec);\ \},\ vector\_}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00361}00361\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00362}00362\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00363}00363\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00364}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_abd13660030e666aed5a45f6cf3eb38d6}{00364}}\ \ \ \ \ N\_Vector\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_abd13660030e666aed5a45f6cf3eb38d6}{NVector}}()}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00365}00365\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00366}00366\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit([](\textcolor{keyword}{auto}\&\ vec)\ -\/>\ N\_Vector\&\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials_1_1detail_a55dea1f6c0afa8355bbc665ecbed8519}{detail::NVector}}(vec);\ \},\ vector\_);}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00367}00367\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00368}00368\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00369}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a239f9c974bc4297b67e201a339f1ad11}{00369}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{SKVectorVariant}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a239f9c974bc4297b67e201a339f1ad11}{variant}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ vector\_;\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00370}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a95d9594b1e1dbbbf79ac64050e89cdcc}{00370}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{SKVectorVariant}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a95d9594b1e1dbbbf79ac64050e89cdcc}{variant}}()\ \{\ \textcolor{keywordflow}{return}\ vector\_;\ \}}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00371}00371\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00372}00372\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00373}00373\ }
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00374}00374\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{SKVectorVariant}}\ vector\_;}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00375}00375\ \};}
+\DoxyCodeLine{\Hypertarget{sundials_8hpp_source_l00376}00376\ \}}
 
 \end{DoxyCode}
