@@ -349,6 +349,8 @@
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1a74d5500791915dfe8d663523e5f3f117" kind="function"><name>explicitOperators</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1a55331dad02254a7c6e8d727ccdd32c7c" kind="function"><name>exec</name></member>
   </compound>
+  <compound refid="classFactory" kind="class"><name>Factory</name>
+  </compound>
   <compound refid="classNeoFOAM_1_1Field" kind="class"><name>NeoFOAM::Field</name>
     <member refid="classNeoFOAM_1_1Field_1a4448dad85c0348167844faaf076c01fe" kind="variable"><name>size_</name></member>
     <member refid="classNeoFOAM_1_1Field_1ad8da4b64627522d2cf5078f1701af863" kind="variable"><name>data_</name></member>
@@ -661,12 +663,10 @@
     <member refid="structNeoFOAM_1_1RegisterDocumentation_1abb5234fdfde649b1bf70904d94189960" kind="function"><name>init</name></member>
   </compound>
   <compound refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta" kind="class"><name>NeoFOAM::timeIntegration::RungeKutta</name>
-    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a751fa02a1a7e9cac2f6c35223329ab36" kind="typedef"><name>VectorType</name></member>
-    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a64bc923b7d55b539f0aee9d431f2a97f" kind="typedef"><name>SKSizeType</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a8b5d1f851bc102e7462ef2690392f4f0" kind="typedef"><name>Expression</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1ae97fdabc9a160c94a47523e267f0538a" kind="typedef"><name>Base</name></member>
-    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a2a6879ab5ce60f6ced5df0f5c63238dd" kind="variable"><name>kokkosSolution_</name></member>
-    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a362b45fb4baf6987a57392a652217ab4" kind="variable"><name>kokkosInitialConditions_</name></member>
+    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1af990cd226f4a60908a7cee47c58d72b6" kind="variable"><name>solutionnew_</name></member>
+    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1ab5e0621fe83101289703d552ffdcbaaf" kind="variable"><name>initialConditionsnew_</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1aafc321a438192158f580f1bfb3ab2ea3" kind="variable"><name>solution_</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a738b9ecae1172c115a8539604da7eaea" kind="variable"><name>initialConditions_</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a6aea6f7441bc2e61a04666e83141f676" kind="variable"><name>context_</name></member>
@@ -688,7 +688,7 @@
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a3c4465cd72aa610b814a4c245f7cdb65" kind="function"><name>initExpression</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1acefdbec834ea9f16a683e6e556c2c8dc" kind="function"><name>initSUNContext</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a134ec57bbecd1289932d2f50cfb95b3f" kind="function"><name>initSUNVector</name></member>
-    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a3be383738c625bc70e066ff236b7a43e" kind="function"><name>initSUNInitialConditions</name></member>
+    <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a9a9be09fd5e7328229470f29c14ea022" kind="function"><name>initSUNInitialConditions</name></member>
     <member refid="classNeoFOAM_1_1timeIntegration_1_1RungeKutta_1a61beab290d5061635e7db8728e6ea132" kind="function"><name>initODEMemory</name></member>
   </compound>
   <compound refid="classNeoFOAM_1_1RuntimeSelectionFactory" kind="class"><name>NeoFOAM::RuntimeSelectionFactory</name>
@@ -721,6 +721,27 @@
     <member refid="classNeoFOAM_1_1SerialExecutor_1adcf233a0c77f3715058bfa822f2e5ad6" kind="function"><name>realloc</name></member>
     <member refid="classNeoFOAM_1_1SerialExecutor_1a41babf287d2b38b85e2f9274afa346bb" kind="function"><name>free</name></member>
     <member refid="classNeoFOAM_1_1SerialExecutor_1a2c898b2cf614ff29bb11076e5e4fdf8c" kind="function"><name>name</name></member>
+  </compound>
+  <compound refid="classNeoFOAM_1_1sundials_1_1SKVector" kind="class"><name>NeoFOAM::sundials::SKVector</name>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVector_1a82d7a357d1fff38ff7961b30ccff0967" kind="function"><name>initNVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVector_1afeb82d1ef8200dabb963e5a050481573" kind="function"><name>NVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVector_1ab2e255fda650114aa9d3c8931a11ace5" kind="function"><name>NVector</name></member>
+  </compound>
+  <compound refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault" kind="class"><name>NeoFOAM::sundials::SKVectorDefault</name>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault_1ac654d823b1a3271d798b47cdb38f29a3" kind="typedef"><name>KVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault_1a03ed3dd80edaf551b4d810468aa411a7" kind="variable"><name>kvector_</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault_1a346af648ec7a06f059e918b3c879ed64" kind="variable"><name>svector_</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault_1a5cb4de2406294d3bfa78358de7f077fa" kind="function"><name>initNVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault_1a4a1f3350f6661564d5ad3e83f1ee7de4" kind="function"><name>NVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorDefault_1a2c04d0fd7b56063db7e331a5265d897a" kind="function"><name>NVector</name></member>
+  </compound>
+  <compound refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial" kind="class"><name>NeoFOAM::sundials::SKVectorSerial</name>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial_1a6a10aa392a2458d60df6c658b1859f82" kind="typedef"><name>KVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial_1a0de738a3f9715678131f3d30f0da8247" kind="variable"><name>kvector_</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial_1a35ebd15757fa20a84fe9082e8a81bf9a" kind="variable"><name>svector_</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial_1a59c40619a41b44ddc745867bc7cdd1d1" kind="function"><name>initNVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial_1ac99a9707dfcf09c8f16d60c1d76f58c9" kind="function"><name>NVector</name></member>
+    <member refid="classNeoFOAM_1_1sundials_1_1SKVectorSerial_1ae66445587a3904fcc8fb6a2d06ad9d22" kind="function"><name>NVector</name></member>
   </compound>
   <compound refid="classNeoFOAM_1_1StencilDataBase" kind="class"><name>NeoFOAM::StencilDataBase</name>
     <member refid="classNeoFOAM_1_1StencilDataBase_1a88823f15266dfa23b08d377a444cd788" kind="variable"><name>stencilDB_</name></member>
@@ -902,6 +923,7 @@
     <member refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeBoundaryFactory_1a6ee309edbd5cbf75e3497d8a76063377" kind="function"><name>clone</name></member>
   </compound>
   <compound refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField" kind="class"><name>NeoFOAM::finiteVolume::cellCentred::VolumeField</name>
+    <member refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField_1aab5df39dd7bae7f52200abdc3b82ad91" kind="typedef"><name>FieldValueType</name></member>
     <member refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField_1a30e98b030165f9dd24fa264c166acadb" kind="variable"><name>key</name></member>
     <member refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField_1ad695dfb4c8ec53642ec7da06189daffc" kind="variable"><name>fieldCollectionName</name></member>
     <member refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField_1a055dc1fc6b3834bce63d7497484fbf12" kind="variable"><name>boundaryConditions_</name></member>
@@ -1035,14 +1057,14 @@
     <member refid="namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1af96b0b8b27555706bc3d37a28186e54e" kind="function"><name>setFixedValue</name></member>
   </compound>
   <compound refid="namespaceNeoFOAM_1_1sundials" kind="namespace"><name>NeoFOAM::sundials</name>
-    <member refid="namespaceNeoFOAM_1_1sundials_1a875a67b9f039bbb067821249a99ba5cd" kind="typedef"><name>ExecSpace</name></member>
-    <member refid="namespaceNeoFOAM_1_1sundials_1aff79b05420b2f8155db07475f1106c69" kind="typedef"><name>SKVectorType</name></member>
-    <member refid="namespaceNeoFOAM_1_1sundials_1a63626c57ed46ba2698c02116ccf60a0e" kind="typedef"><name>SKSizeType</name></member>
     <member refid="namespaceNeoFOAM_1_1sundials_1adf0e6744d854e97d0972cdd17aa13bf7" kind="variable"><name>SUN_CONTEXT_DELETER</name></member>
     <member refid="namespaceNeoFOAM_1_1sundials_1af26930dad82f552ea4b35cbea9a08dcb" kind="function"><name>stringToERKTable</name></member>
+    <member refid="namespaceNeoFOAM_1_1sundials_1a2729bd759116817fee9b83598648b605" kind="function"><name>fieldToNVectorImpl</name></member>
     <member refid="namespaceNeoFOAM_1_1sundials_1a91de57c82fd9e44bbcc73a5f135d0b0f" kind="function"><name>fieldToNVector</name></member>
+    <member refid="namespaceNeoFOAM_1_1sundials_1ad76c3fd58fe0982de97e9fda71cdff25" kind="function"><name>NVectorToFieldImpl</name></member>
     <member refid="namespaceNeoFOAM_1_1sundials_1ac0883a3ea7524d64e7de04515395a859" kind="function"><name>NVectorToField</name></member>
     <member refid="namespaceNeoFOAM_1_1sundials_1ae2307f054819116cd2bc34265966c1ff" kind="function"><name>explicitRKSolve</name></member>
+    <member refid="namespaceNeoFOAM_1_1sundials_1ab980a8b3bde1a7ec731866c758bd57d5" kind="function"><name>makeSKVector</name></member>
   </compound>
   <compound refid="namespaceNeoFOAM_1_1timeIntegration" kind="namespace"><name>NeoFOAM::timeIntegration</name>
   </compound>
