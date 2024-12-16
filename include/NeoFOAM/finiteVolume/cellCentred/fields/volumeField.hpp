@@ -28,6 +28,9 @@ class VolumeField : public GeometricFieldMixin<ValueType>
 
 public:
 
+    using FieldValueType = ValueType;
+
+
     /**
      * @brief Constructor for a uninitialized VolumeField
      *

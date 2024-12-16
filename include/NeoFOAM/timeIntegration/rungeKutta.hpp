@@ -49,9 +49,6 @@ template<typename SolutionFieldType>
 class RungeKutta :
     public TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>
 {
-    using VectorType = NeoFOAM::sundials::SKVectorType;
-    using SKSizeType = NeoFOAM::sundials::SKSizeType;
-
 public:
 
     using Expression = NeoFOAM::dsl::Expression;
@@ -131,9 +128,11 @@ public:
 
 private:
 
-    VectorType kokkosSolution_ {}; /**< The Sundails, kokkos solution vector (do not use).*/
-    VectorType kokkosInitialConditions_ {
-    }; /**< The Sundails, kokkos initial conditions vector (do not use).*/
+    std::unique_ptr<NeoFOAM::sundials::SKVector> solutionnew_;
+    std::unique_ptr<NeoFOAM::sundials::SKVector> initialConditionsnew_;
+    // VectorType kokkosSolution_ {}; /**< The Sundails, kokkos solution vector (do not use).*/
+    // VectorType kokkosInitialConditions_ {
+    // }; /**< The Sundails, kokkos initial conditions vector (do not use).*/
     N_Vector solution_ {nullptr
     }; /**< The N_Vector for the solution. (wrapping the kokkos vector). */
     N_Vector initialConditions_ {nullptr
@@ -174,7 +173,7 @@ private:
      * @brief Initializes the initial conditions for the solver.
      * @param solutionField The field containing the initial conditions
      */
-    void initSUNInitialConditions(SolutionFieldType solutionField);
+    void initSUNInitialConditions(const SolutionFieldType& solutionField);
 
     /**
      * @brief Initializes the ODE memory and solver parameters.

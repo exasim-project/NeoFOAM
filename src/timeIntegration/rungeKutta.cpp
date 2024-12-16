@@ -8,9 +8,7 @@ namespace NeoFOAM::timeIntegration
 
 template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& other)
-    : Base(other), kokkosSolution_(other.kokkosSolution_),
-      kokkosInitialConditions_(other.kokkosInitialConditions_), solution_(kokkosSolution_),
-      initialConditions_(kokkosInitialConditions_),
+    : Base(other), solution_(other.solution_), initialConditions_(other.initialConditions_),
       pdeExpr_(
           other.pdeExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.pdeExpr_->exec())
                          : nullptr
@@ -24,10 +22,8 @@ RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& o
 
 template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(RungeKutta<SolutionFieldType>&& other)
-    : Base(std::move(other)), kokkosSolution_(std::move(other.kokkosSolution_)),
-      kokkosInitialConditions_(std::move(other.kokkosInitialConditions_)),
-      solution_(std::move(other.solution_)), context_(std::move(other.context_)),
-      initialConditions_(std::move(other.initialConditions_)),
+    : Base(std::move(other)), solution_(std::move(other.solution_)),
+      context_(std::move(other.context_)), initialConditions_(std::move(other.initialConditions_)),
       ODEMemory_(std::move(other.ODEMemory_)), pdeExpr_(std::move(other.pdeExpr_))
 {}
 
@@ -39,20 +35,20 @@ void RungeKutta<SolutionFieldType>::solve(
 {
     // Setup sundials if required, load the current solution for temporal integration
     if (pdeExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t);
-    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_);
+    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solutionnew_->NVector());
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
     // Perform time integration
     ARKodeSetFixedStep(ark, dt);
     NeoFOAM::scalar timeOut;
-    auto stepReturn = ARKodeEvolve(ark, t + dt, solution_, &timeOut, ARK_ONE_STEP);
+    auto stepReturn = ARKodeEvolve(ark, t + dt, solutionnew_->NVector(), &timeOut, ARK_ONE_STEP);
 
     // Post step checks
     NF_ASSERT_EQUAL(stepReturn, 0);
     NF_ASSERT_EQUAL(t + dt, timeOut);
 
     // Copy solution out. (Fence is in sundails free)
-    NeoFOAM::sundials::NVectorToField(solution_, solutionField.internalField());
+    NeoFOAM::sundials::NVectorToField(solutionnew_->NVector(), solutionField.internalField());
 }
 
 template<typename SolutionFieldType>
@@ -97,16 +93,16 @@ template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initSUNVector(size_t size)
 {
     NF_DEBUG_ASSERT(context_, "SUNContext is a nullptr.");
-    kokkosSolution_ = VectorType(size, context_.get());
-    kokkosInitialConditions_ = VectorType(size, context_.get());
-    solution_ = kokkosSolution_;
-    initialConditions_ = kokkosInitialConditions_;
+    solutionnew_->initNVector(size, context_);
+    initialConditionsnew_->initNVector(size, context_);
 }
 
 template<typename SolutionFieldType>
-void RungeKutta<SolutionFieldType>::initSUNInitialConditions(SolutionFieldType solutionField)
+void RungeKutta<SolutionFieldType>::initSUNInitialConditions(const SolutionFieldType& solutionField)
 {
-    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), initialConditions_);
+    NeoFOAM::sundials::fieldToNVector(
+        solutionField.internalField(), initialConditionsnew_->NVector()
+    );
 }
 
 template<typename SolutionFieldType>
@@ -116,7 +112,10 @@ void RungeKutta<SolutionFieldType>::initODEMemory(const scalar t)
     NF_DEBUG_ASSERT(pdeExpr_, "PDE expression is a nullptr.");
 
     ODEMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
-        NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>, t, initialConditions_, context_.get()
+        NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>,
+        t,
+        initialConditionsnew_->NVector(),
+        context_.get()
     )));
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
@@ -132,5 +131,4 @@ void RungeKutta<SolutionFieldType>::initODEMemory(const scalar t)
 }
 
 template class RungeKutta<finiteVolume::cellCentred::VolumeField<scalar>>;
-
 }

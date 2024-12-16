@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
+#include <concepts>
 #include <functional>
 #include <memory>
 
@@ -17,23 +18,6 @@
 
 namespace NeoFOAM::sundials
 {
-
-// Sundials-Kokkos typing
-#if defined(USE_CUDA)
-using ExecSpace = Kokkos::Cuda;
-#elif defined(USE_HIP)
-#if KOKKOS_VERSION / 10000 > 3
-using ExecSpace = Kokkos::HIP;
-#else
-using ExecSpace = Kokkos::Experimental::HIP;
-#endif
-#elif defined(USE_OPENMP)
-using ExecSpace = Kokkos::OpenMP;
-#else
-using ExecSpace = Kokkos::Serial;
-#endif
-using SKVectorType = ::sundials::kokkos::Vector<ExecSpace>;
-using SKSizeType = SKVectorType::size_type;
 
 /**
  * Custom deleter for SUNContext_ shared pointers, frees the context if last context.
@@ -69,39 +53,100 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
     return ARKODE_ERK_NONE; // avoids compiler warnings.
 }
 
+
 /**
  * @brief Converts a NeoFOAM Field to a SUNDIALS N_Vector
+ * FIX ME
  * @tparam ValueType The data type of the field elements (e.g., double, float)
  * @param[in] field Source NeoFOAM Field containing the data to be copied
  * @param[out] vector Destination SUNDIALS N_Vector to receive the field data
  * @warning Assumes everything is correctly initialised, sized, correct executore etc.
  */
+template<typename SKVectorType, typename ValueType>
+void fieldToNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
+{
+    // Load the current solution for temporal integration
+    auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
+    NeoFOAM::parallelFor(
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { view(i) = field[i]; }
+    );
+};
+
+// dispatcer For some reason we using DefaultExecutionSpace for both CPU and GPU
 template<typename ValueType>
 void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
-    // Load the current solution for temporal integration
-    sunrealtype* vectData = N_VGetArrayPointer(vector);
-    NeoFOAM::parallelFor(
-        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { vectData[i] = field[i]; }
-    );
+    // CHECK FOR N_Vector on correct space in DEBUG
+
+
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(field.exec()))
+    {
+        fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
+            field, vector
+        );
+        return;
+    }
+    if (std::holds_alternative<NeoFOAM::CPUExecutor>(field.exec()))
+    {
+        fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(
+            field, vector
+        );
+        return;
+    }
+    if (std::holds_alternative<NeoFOAM::SerialExecutor>(field.exec()))
+    {
+        fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(field, vector);
+        return;
+    }
+    NF_ERROR_EXIT("Unsupported NeoFOAM executor for field.");
 };
 
 /**
  * @brief Converts a SUNDIALS N_Vector back to a NeoFOAM Field
+ * * FIX ME
  * @tparam ValueType The data type of the field elements (e.g., double, float)
  * @param[in] vector Source SUNDIALS N_Vector containing the data to be copied
  * @param[out] field Destination NeoFOAM Field to receive the vector data
  * @warning Assumes everything is correctly initialised, sized, correct executore etc.
  */
+template<typename SKVectorType, typename ValueType>
+void NVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
+{
+    auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
+    ValueType* fieldData = field.data();
+    NeoFOAM::parallelFor(
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { fieldData[i] = view(i); }
+    );
+};
+
+// dispatcer For some reason we using DefaultExecutionSpace for both CPU and GPU
 template<typename ValueType>
 void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
 {
-    sunrealtype* vectData = N_VGetArrayPointer(vector);
-    ValueType* fieldData = field.data();
-    NeoFOAM::parallelFor(
-        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { fieldData[i] = vectData[i]; }
-    );
+    // CHECK FOR N_Vector on correct space in DEBUG
+
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(field.exec()))
+    {
+        NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
+            vector, field
+        );
+        return;
+    }
+    if (std::holds_alternative<NeoFOAM::CPUExecutor>(field.exec()))
+    {
+        NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(
+            vector, field
+        );
+        return;
+    }
+    if (std::holds_alternative<NeoFOAM::SerialExecutor>(field.exec()))
+    {
+        NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(vector, field);
+        return;
+    }
+    NF_ERROR_EXIT("Unsupported NeoFOAM executor for field.");
 };
+
 
 /**
  * @brief Performs an iteration/stage of explicit Runge-Kutta with sundails and an expression.
@@ -121,7 +166,6 @@ void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
 template<typename SolutionFieldType>
 int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
 {
-
     // Pointer wrangling
     NeoFOAM::dsl::Expression* pdeExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
     sunrealtype* yDotArray = N_VGetArrayPointer(ydot);
@@ -141,6 +185,77 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
     }
     NeoFOAM::sundials::fieldToNVector(source, ydot); // assign rhs to ydot.
     return 0;
+}
+
+// base class
+class SKVector
+{
+public:
+
+    virtual void initNVector(size_t, std::shared_ptr<SUNContext_>) = 0;
+    virtual const N_Vector& NVector() const = 0;
+    virtual N_Vector& NVector() = 0;
+};
+
+template<typename ValueType>
+class SKVectorDefault : public SKVector
+{
+public:
+
+    using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;
+    virtual void initNVector(size_t size, std::shared_ptr<SUNContext_> context) override
+    {
+        kvector_ = KVector(size, context.get());
+        svector_ = kvector_;
+    };
+    const N_Vector& NVector() const override { return svector_; };
+    N_Vector& NVector() override { return svector_; };
+
+private:
+
+    KVector kvector_ {}; /**< The Sundails, kokkos initial conditions vector (do not use).*/
+    N_Vector svector_ {nullptr};
+};
+
+template<typename ValueType>
+class SKVectorSerial : public SKVector
+{
+public:
+
+    using KVector = ::sundials::kokkos::Vector<Kokkos::Serial>;
+    virtual void initNVector(size_t size, std::shared_ptr<SUNContext_> context) override
+    {
+        kvector_ = KVector(size, context.get());
+        svector_ = kvector_;
+    };
+    const N_Vector& NVector() const override { return svector_; };
+    N_Vector& NVector() override { return svector_; };
+
+private:
+
+    KVector kvector_ {}; /**< The Sundails, kokkos initial conditions vector (do not use).*/
+    N_Vector svector_ {nullptr};
+};
+
+template<typename ValueType>
+std::unique_ptr<SKVector> makeSKVector(const NeoFOAM::Executor& exec)
+{
+    if (std::holds_alternative<NeoFOAM::GPUExecutor>(exec))
+    {
+        return std::make_unique<SKVectorDefault<ValueType>>();
+    }
+    if (std::holds_alternative<NeoFOAM::CPUExecutor>(exec))
+    {
+        return std::make_unique<SKVectorDefault<ValueType>>();
+    }
+    if (std::holds_alternative<NeoFOAM::SerialExecutor>(exec))
+    {
+        return std::make_unique<SKVectorSerial<ValueType>>();
+    }
+    NF_ERROR_EXIT(
+        "Unsupported NeoFOAM executor "
+        << std::visit<Executor>([&](const auto& e) { return e.name(); }, exec) << "."
+    );
 }
 
 }

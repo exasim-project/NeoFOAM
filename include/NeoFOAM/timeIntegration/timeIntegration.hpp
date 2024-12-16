@@ -43,7 +43,8 @@ protected:
     const Dictionary& dict_;
 };
 
-/* @class Factory class to create time integration method by a given name
+/**
+ * @class Factory class to create time integration method by a given name
  * using NeoFOAMs runTimeFactory mechanism
  *
  * @tparam SolutionFieldType Type of the solution field eg, volumeField or just a plain Field
