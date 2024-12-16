@@ -8,7 +8,7 @@ namespace NeoFOAM::timeIntegration
 
 template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& other)
-    : Base(other),
+    : Base(other), solution_(other.solution_), initialConditions_(other.initialConditions_),
       pdeExpr_(
           other.pdeExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.pdeExpr_->exec())
                          : nullptr
@@ -22,7 +22,8 @@ RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& o
 
 template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(RungeKutta<SolutionFieldType>&& other)
-    : Base(std::move(other)), context_(std::move(other.context_)),
+    : Base(std::move(other)), solution_(std::move(other.solution_)),
+      initialConditions_(std::move(other.initialConditions_)), context_(std::move(other.context_)),
       ODEMemory_(std::move(other.ODEMemory_)), pdeExpr_(std::move(other.pdeExpr_))
 {}
 
@@ -31,20 +32,22 @@ void RungeKutta<SolutionFieldType>::solve(
     Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt
 )
 {
+    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     // Setup sundials if required, load the current solution for temporal integration
     if (pdeExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t);
+    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_.NVector());
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
-
+    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     // Perform time integration
     ARKodeSetFixedStep(ark, dt);
     NeoFOAM::scalar timeOut;
     auto stepReturn = ARKodeEvolve(ark, t + dt, solution_.NVector(), &timeOut, ARK_ONE_STEP);
-
+    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     // Post step checks
     NF_ASSERT_EQUAL(stepReturn, 0);
     NF_ASSERT_EQUAL(t + dt, timeOut);
-
+    std::cout << "\n" << __FILE__ << ":" << __LINE__ << std::flush;
     // Copy solution out. (Fence is in sundails free)
     NeoFOAM::sundials::NVectorToField(solution_.NVector(), solutionField.internalField());
 }
@@ -62,7 +65,7 @@ void RungeKutta<SolutionFieldType>::initSUNERKSolver(
 {
     initExpression(exp);
     initSUNContext();
-    initSUNVector(field.internalField().size());
+    initSUNVector(field.exec(), field.internalField().size());
     initSUNInitialConditions(field);
     initODEMemory(t);
 }
@@ -88,17 +91,19 @@ void RungeKutta<SolutionFieldType>::initSUNContext()
 }
 
 template<typename SolutionFieldType>
-void RungeKutta<SolutionFieldType>::initSUNVector(size_t size)
+void RungeKutta<SolutionFieldType>::initSUNVector(const Executor& exec, size_t size)
 {
     NF_DEBUG_ASSERT(context_, "SUNContext is a nullptr.");
-
+    solution_.setExecutor(exec);
     solution_.initNVector(size, context_);
+    initialConditions_.setExecutor(exec);
     initialConditions_.initNVector(size, context_);
 }
 
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initSUNInitialConditions(const SolutionFieldType& solutionField)
 {
+
     NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), initialConditions_.NVector());
 }
 

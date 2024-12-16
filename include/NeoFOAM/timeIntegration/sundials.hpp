@@ -65,7 +65,6 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
 template<typename SKVectorType, typename ValueType>
 void fieldToNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
-    // Load the current solution for temporal integration
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
     NeoFOAM::parallelFor(
         field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { view(i) = field[i]; }
@@ -77,8 +76,6 @@ template<typename ValueType>
 void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
     // CHECK FOR N_Vector on correct space in DEBUG
-
-
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(field.exec()))
     {
         fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
@@ -147,6 +144,7 @@ void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
     NF_ERROR_EXIT("Unsupported NeoFOAM executor for field.");
 };
 
+// ------------------
 
 /**
  * @brief Performs an iteration/stage of explicit Runge-Kutta with sundails and an expression.
@@ -187,6 +185,7 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
     return 0;
 }
 
+// ------------------
 
 namespace detail
 {
@@ -210,50 +209,53 @@ N_Vector& NVector(Vector& vec)
 }
 
 template<typename ValueType>
-class SKVectorDefault
+class SKVectorSerial
 {
 public:
 
-    using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;
+    SKVectorSerial() {};
+    ~SKVectorSerial() = default;
+    SKVectorSerial(const SKVectorSerial& other)
+        : kvector_(other.kvector_), svector_(other.kvector_) {};
 
-    SKVectorDefault() = default;
-    ~SKVectorDefault() = default;
-    SKVectorDefault(const SKVectorDefault& other) : kvector_(other.kvector_)
-    {
-        if (other.svector_ != nullptr)
-        {
-            svector_ = kvector_;
-        }
-    }
+    SKVectorSerial(SKVectorSerial&& other) noexcept
+        : kvector_(std::move(other.kvector_)), svector_(std::move(other.svector_)) {};
 
-    SKVectorDefault& operator=(const SKVectorDefault& other)
+    SKVectorSerial& operator=(const SKVectorSerial& other) = delete;
+    SKVectorSerial& operator=(SKVectorSerial&& other) = delete;
+
+    using KVector = ::sundials::kokkos::Vector<Kokkos::Serial>;
+    void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
-        if (this != &other)
-        {
-            kvector_ = other.kvector_;
-            if (other.svector_ != nullptr)
-            {
-                svector_ = kvector_;
-            }
-            else
-            {
-                svector_ = nullptr;
-            }
-        }
-        return *this;
-    }
-    SKVectorDefault(SKVectorDefault&& other) noexcept
-        : kvector_(std::move(other.kvector_)), svector_(std::exchange(other.svector_, nullptr))
-    {}
-    SKVectorDefault& operator=(SKVectorDefault&& other) noexcept
-    {
-        if (this != &other)
-        {
-            kvector_ = std::move(other.kvector_);
-            svector_ = std::exchange(other.svector_, nullptr);
-        }
-        return *this;
-    }
+        kvector_ = KVector(size, context.get());
+        svector_ = kvector_;
+    };
+    const N_Vector& NVector() const { return svector_; };
+    N_Vector& NVector() { return svector_; };
+
+private:
+
+    KVector kvector_ {}; /**< The Sundails, kokkos initial conditions vector (do not use).*/
+    N_Vector svector_ {nullptr};
+};
+
+template<typename ValueType>
+class SKVectorHostDefault
+{
+public:
+
+    using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>;
+
+    SKVectorHostDefault() = default;
+    ~SKVectorHostDefault() = default;
+    SKVectorHostDefault(const SKVectorHostDefault& other)
+        : kvector_(other.kvector_), svector_(other.kvector_) {};
+
+    SKVectorHostDefault(SKVectorHostDefault&& other) noexcept
+        : kvector_(std::move(other.kvector_)), svector_(std::move(other.svector_)) {};
+
+    SKVectorHostDefault& operator=(const SKVectorHostDefault& other) = delete;
+    SKVectorHostDefault& operator=(SKVectorHostDefault&& other) = delete;
 
     void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
@@ -270,50 +272,23 @@ private:
 };
 
 template<typename ValueType>
-class SKVectorSerial
+class SKVectorDefault
 {
 public:
 
-    SKVectorSerial() = default;
-    ~SKVectorSerial() = default;
-    SKVectorSerial(const SKVectorSerial& other) : kvector_(other.kvector_)
-    {
-        if (other.svector_ != nullptr)
-        {
-            svector_ = kvector_;
-        }
-    }
+    using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;
 
-    SKVectorSerial& operator=(const SKVectorSerial& other)
-    {
-        if (this != &other)
-        {
-            kvector_ = other.kvector_;
-            if (other.svector_ != nullptr)
-            {
-                svector_ = kvector_;
-            }
-            else
-            {
-                svector_ = nullptr;
-            }
-        }
-        return *this;
-    }
-    SKVectorSerial(SKVectorSerial&& other) noexcept
-        : kvector_(std::move(other.kvector_)), svector_(std::exchange(other.svector_, nullptr))
-    {}
-    SKVectorSerial& operator=(SKVectorSerial&& other) noexcept
-    {
-        if (this != &other)
-        {
-            kvector_ = std::move(other.kvector_);
-            svector_ = std::exchange(other.svector_, nullptr);
-        }
-        return *this;
-    }
+    SKVectorDefault() = default;
+    ~SKVectorDefault() = default;
+    SKVectorDefault(const SKVectorDefault& other)
+        : kvector_(other.kvector_), svector_(other.kvector_) {};
 
-    using KVector = ::sundials::kokkos::Vector<Kokkos::Serial>;
+    SKVectorDefault(SKVectorDefault&& other) noexcept
+        : kvector_(std::move(other.kvector_)), svector_(std::move(other.svector_)) {};
+
+    SKVectorDefault& operator=(const SKVectorDefault& other) = delete;
+    SKVectorDefault& operator=(SKVectorDefault&& other) = delete;
+
     void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
         kvector_ = KVector(size, context.get());
@@ -334,36 +309,39 @@ class SKVector
 {
 public:
 
+    using SKVectorSerial = SKVectorSerial<ValueType>;
+    using SKVectorHostDefault = SKVectorHostDefault<ValueType>;
     using SKDefaultVector = SKVectorDefault<ValueType>;
-    using SKSerialVector = SKVectorSerial<ValueType>;
 
-    using SKVectorVariant = std::variant<SKDefaultVector, SKSerialVector>;
+    using SKVectorVariant = std::variant<SKVectorSerial, SKVectorHostDefault, SKDefaultVector>;
 
-    SKVector() : vector_(SKDefaultVector {}) {};
+    SKVector() { vector_.template emplace<SKVectorHostDefault>(); };
     ~SKVector() = default;
     SKVector(const SKVector&) = default;
-    SKVector& operator=(const SKVector&) = default;
+    SKVector& operator=(const SKVector&) = delete;
     SKVector(SKVector&&) noexcept = default;
-    SKVector& operator=(SKVector&&) noexcept = default;
+    SKVector& operator=(SKVector&&) noexcept = delete;
 
 
-    explicit SKVector(const NeoFOAM::Executor& exec)
+    void setExecutor(const NeoFOAM::Executor& exec)
     {
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(exec))
         {
             vector_.template emplace<SKDefaultVector>();
+            return;
         }
         if (std::holds_alternative<NeoFOAM::CPUExecutor>(exec))
         {
-            vector_.template emplace<SKDefaultVector>();
+            vector_.template emplace<SKVectorHostDefault>();
+            return;
         }
         if (std::holds_alternative<NeoFOAM::SerialExecutor>(exec))
         {
-            vector_.template emplace<SKSerialVector>();
+            vector_.template emplace<SKVectorSerial>();
         }
 
         NF_ERROR_EXIT(
-            "Unsupported NeoFOAM executor "
+            "Unsupported NeoFOAM executor: "
             << std::visit([](const auto& e) { return e.name(); }, exec) << "."
         );
     }

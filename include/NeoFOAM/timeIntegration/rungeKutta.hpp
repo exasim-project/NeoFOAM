@@ -159,9 +159,10 @@ private:
 
     /**
      * @brief Initializes the Sundials vectors for solution storage.
+     * //fix me
      * @param size The size of the vectors to be initialized
      */
-    void initSUNVector(size_t size);
+    void initSUNVector(const Executor& exec, size_t size);
 
     /**
      * @brief Initializes the initial conditions for the solver.
