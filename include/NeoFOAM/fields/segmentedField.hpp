@@ -8,6 +8,73 @@ namespace NeoFOAM
 {
 
 /**
+ * @brief A class representing a segment of indices.
+ *
+ * @tparam IndexType The type of the indices.
+ */
+template<typename IndexType>
+class Segment
+{
+public:
+
+    /**
+     * @brief A span of indices representing the segments.
+     */
+    std::span<IndexType> segments;
+
+    /**
+     * @brief Get the bounds of a segment.
+     *
+     * @param segI The index of the segment.
+     * @return A pair of indices representing the start and end of the segment.
+     */
+    KOKKOS_INLINE_FUNCTION
+    Kokkos::pair<IndexType, IndexType> bounds(std::size_t segI) const
+    {
+        return Kokkos::pair<IndexType, IndexType> {segments[segI], segments[segI + 1]};
+    }
+
+    /**
+     * @brief Get the range of a segment.
+     *
+     * @param segI The index of the segment.
+     * @return A pair of indices representing the start and length of the segment.
+     */
+    KOKKOS_INLINE_FUNCTION
+    Kokkos::pair<IndexType, IndexType> range(std::size_t segI) const
+    {
+        return Kokkos::pair<IndexType, IndexType> {
+            segments[segI], segments[segI + 1] - segments[segI]
+        };
+    }
+
+    /**
+     * @brief Get a subspan of values corresponding to a segment.
+     *
+     * @tparam ValueType The type of the values.
+     * @param values A span of values.
+     * @param segI The index of the segment.
+     * @return A subspan of values corresponding to the segment.
+     */
+    template<typename ValueType>
+    KOKKOS_INLINE_FUNCTION std::span<ValueType>
+    subspan(std::span<ValueType> values, std::size_t segI) const
+    {
+        auto [start, length] = range(segI);
+        return values.subspan(start, length);
+    }
+
+    /**
+     * @brief Access an element of the segments.
+     *
+     * @param i The index of the element.
+     * @return The value of the element at the specified index.
+     */
+    KOKKOS_INLINE_FUNCTION
+    IndexType operator[](std::size_t i) const { return segments[i]; }
+};
+
+/**
  * @class SegmentedField
  * @brief Data structure that stores a segmented fields or a vector of vectors
  *
@@ -63,9 +130,9 @@ public:
      * @brief get the spans of the segmented field
      * @return Span of the fields
      */
-    std::pair<std::span<ValueType>, std::span<IndexType>> spans()
+    std::pair<std::span<ValueType>, Segment<IndexType>> spans()
     {
-        return {values.span(), segments.span()};
+        return {values.span(), Segment<IndexType>(segments.span())};
     }
 };
 

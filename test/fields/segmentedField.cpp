@@ -62,20 +62,38 @@ TEST_CASE("segmentedField")
 
         SECTION("loop over segments")
         {
-            auto [valueSpan, segmentSpan] = segField.spans();
+            auto [valueSpan, segment] = segField.spans();
             NeoFOAM::Field<NeoFOAM::label> result(exec, 5);
+
             NeoFOAM::fill(result, 0);
             auto resultSpan = result.span();
+
 
             parallelFor(
                 exec,
                 {0, segField.numSegments()},
                 KOKKOS_LAMBDA(const size_t segI) {
                     // add all values in the segment
-                    auto values = valueSpan.subspan(
-                        segmentSpan[segI], segmentSpan[segI + 1] - segmentSpan[segI]
-                    );
-                    for (auto& val : values)
+
+                    // check if it works with bounds
+                    auto [bStart, bEnd] = segment.bounds(segI);
+                    auto bVals = valueSpan.subspan(bStart, bEnd - bStart);
+                    for (auto& val : bVals)
+                    {
+                        resultSpan[segI] += val;
+                    }
+
+                    // check if it works with range
+                    auto [rStart, rLength] = segment.range(segI);
+                    auto rVals = valueSpan.subspan(rStart, rLength);
+                    for (auto& val : rVals)
+                    {
+                        resultSpan[segI] += val;
+                    }
+
+                    // check with subspan
+                    auto vals = segment.subspan(valueSpan, segI);
+                    for (auto& val : vals)
                     {
                         resultSpan[segI] += val;
                     }
@@ -83,11 +101,11 @@ TEST_CASE("segmentedField")
             );
 
             auto hostResult = result.copyToHost();
-            REQUIRE(hostResult[0] == 1);
-            REQUIRE(hostResult[1] == 5);
-            REQUIRE(hostResult[2] == 9);
-            REQUIRE(hostResult[3] == 13);
-            REQUIRE(hostResult[4] == 17);
+            REQUIRE(hostResult[0] == 1 * 3);
+            REQUIRE(hostResult[1] == 5 * 3);
+            REQUIRE(hostResult[2] == 9 * 3);
+            REQUIRE(hostResult[3] == 13 * 3);
+            REQUIRE(hostResult[4] == 17 * 3);
         }
     }
 }
