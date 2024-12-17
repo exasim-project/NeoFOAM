@@ -15,7 +15,7 @@ neofoam_unit_test(parallelAlgorithms)
 
 # The registerClass test has to be created without linking against neofoam. Otherwise, it will pick
 # up the factories registered in neofoam, which will make the test hard to maintain.
-add_library(testRegister SHARED)
+add_library(testRegister ${NeoFOAM_LIB_TYPE})
 target_sources(testRegister PRIVATE "testRegister.cpp")
 target_link_libraries(testRegister PRIVATE NeoFOAM_public_api cpptrace::cpptrace NeoFOAM)
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
