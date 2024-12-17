@@ -3,8 +3,8 @@
 find_package(Doxygen REQUIRED)
 find_package(Sphinx REQUIRED)
 
-# Macro: NEOFAM_BUILD_DOCS build documentation with doxygen and sphinx
-macro(NEOFAM_BUILD_DOCS)
+# Macro: NEOFOAM_BUILD_DOCS build documentation with doxygen and sphinx
+macro(NEOFOAM_BUILD_DOCS)
 
   set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/doc)
   set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/docs_build)

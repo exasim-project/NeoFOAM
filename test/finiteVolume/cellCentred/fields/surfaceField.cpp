@@ -10,6 +10,8 @@
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
 
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+
 template<typename T>
 using I = std::initializer_list<T>;
 
