@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
+#include <numeric>
+#include <iostream> // for operator<<, basic_ostream, endl, cerr, ostream
+
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/error.hpp"
-#include <numeric>
 
 namespace NeoFOAM
 {
@@ -13,6 +15,7 @@ void logOutRange(
     const std::unordered_map<std::string, std::any>& data
 )
 {
+    // TODO use NeoFOAM error here
     std::cerr << "Key not found: " << key << " \n"
               << "available keys are: \n"
               << std::accumulate(

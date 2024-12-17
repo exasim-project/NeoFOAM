@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <array>
 #include <vector>
 
 #include "NeoFOAM/core/primitives/label.hpp"
@@ -36,10 +35,10 @@ public:
      * @param faceCells A field with the neighbouring cell of each boundary
      * face.
      * @param Cf A field of face centres.
-     * @param Cn A field of face normals.
+     * @param Cn A field of neighbor cell centers.
      * @param Sf A field of face areas normals.
      * @param magSf A field of magnitudes of face areas normals.
-     * @param nf A field of face normals.
+     * @param nf A field of face unit normals.
      * @param delta A field of delta vectors.
      * @param weights A field of weights used in cell to face interpolation.
      * @param deltaCoeffs A field of cell to face distances.
@@ -139,17 +138,17 @@ public:
     std::span<const scalar> magSf(const localIdx i) const;
 
     /**
-     * @brief Get the field of face normals.
+     * @brief Get the field of face unit normals.
      *
-     * @return A constant reference to the field of face normals.
+     * @return A constant reference to the field of face unit normals.
      */
     const vectorField& nf() const;
 
     /**
-     * @brief Get a span of face normals for a specific boundary face.
+     * @brief Get a span of face unit normals for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of face normals for the specified boundary face.
+     * @return A span of face unit normals for the specified boundary face.
      */
     std::span<const Vector> nf(const localIdx i) const;
 
@@ -241,9 +240,7 @@ private:
     scalarField magSf_;
 
     /**
-     * @brief Field of face normals.
-     *
-     * The magnitude of the face normal is equal to 1.
+     * @brief Field of face unit normals.
      */
     vectorField nf_;
 

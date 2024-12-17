@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-# add_subdirectory(DSL)
 
 add_library(NeoFOAM ${NeoFOAM_LIB_TYPE})
 
@@ -9,16 +8,21 @@ include(GNUInstallDirs)
 set(NeoFOAM_SRCS
     "core/primitives/vector.cpp"
     "core/time.cpp"
+    "core/database/database.cpp"
+    "core/database/collection.cpp"
+    "core/database/document.cpp"
+    "core/database/fieldCollection.cpp"
+    "core/database/oldTimeCollection.cpp"
     "core/dictionary.cpp"
     "core/demangle.cpp"
     "core/tokenList.cpp"
-    "core/kokkos.cpp"
+    "dsl/coeff.cpp"
+    "dsl/operator.cpp"
     "executor/CPUExecutor.cpp"
     "executor/GPUExecutor.cpp"
     "executor/serialExecutor.cpp"
     "mesh/unstructured/boundaryMesh.cpp"
     "mesh/unstructured/unstructuredMesh.cpp"
-    "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
     "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
     "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
     "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
@@ -26,13 +30,15 @@ set(NeoFOAM_SRCS
     "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
     "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
     "finiteVolume/cellCentred/interpolation/linear.cpp"
-    "finiteVolume/cellCentred/interpolation/upwind.cpp")
+    "finiteVolume/cellCentred/interpolation/upwind.cpp"
+    "timeIntegration/timeIntegration.cpp")
 
 target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
 
 if(NEOFOAM_ENABLE_CUDA)
   set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
 endif()
+
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
                                  "mesh/unstructured/communicator.cpp")

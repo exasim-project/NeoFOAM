@@ -39,7 +39,7 @@ TEST_CASE("surfaceField")
             bcs.push_back(fvcc::SurfaceBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
 
-        fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, mesh, bcs);
+        fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, "sf", mesh, bcs);
         // the internal field is 4 because the mesh has 4 boundaryFaces
         NeoFOAM::fill(sf.internalField(), 1.0);
 

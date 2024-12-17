@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-
 #include "NeoFOAM/core/primitives/vector.hpp"
-#include "NeoFOAM/core/primitives/scalar.hpp"
 
 namespace NeoFOAM
 {

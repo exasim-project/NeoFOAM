@@ -5,6 +5,7 @@ env:
   OMPI_ALLOW_RUN_AS_ROOT: 1
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
   OMPI_MCA_rmaps_base_oversubscribe: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 on:
   pull_request:
     types: [opened, synchronize]
@@ -24,7 +25,7 @@ jobs:
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::308634587211:role/Github-OIDC-Role-29bocUD8VBZr
           aws-region: us-east-1
@@ -52,7 +53,6 @@ jobs:
                  sudo amazon-linux-extras install epel -y
                  sudo yum install Lmod -y
                  sudo systemctl enable docker
-                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
                  sudo mkfs -t xfs /dev/sda1
                  sudo mkdir -p /share
                  sudo mount /dev/sda1 /share
@@ -61,7 +61,15 @@ jobs:
                  sudo ./postinstall_github > ~/install.log
                  mkdir -p /share/ec2-user
                  export USER=ec2-user
-                 export ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true
+                 cd /share/ec2-user
+                 mkdir .nvm
+                 export NVM_DIR=/share/ec2-user/.nvm
+                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                 nvm install v16.20.2
+                 echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
+                 echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
+
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
@@ -71,6 +79,15 @@ jobs:
       matrix:
         preset: ["develop", "production"]
     steps:
+      - name: Prepare environment
+        shell: bash -i {0}
+        run: |
+          . /share/ec2-user/.nvm/nvm.sh
+          nvm -v
+          nvm install v16.20.2
+          node -v
+          sudo rm /share/software/actions-runner/externals/node20/bin/node
+          ln -s /share/ec2-user/.nvm/versions/node/v16.20.2/bin/node /share/software/actions-runner/externals/node20/bin/node
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Set up cache
@@ -91,7 +108,8 @@ jobs:
           cmake --preset ${{matrix.preset}} \
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DKokkos_ENABLE_CUDA=ON
           cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}

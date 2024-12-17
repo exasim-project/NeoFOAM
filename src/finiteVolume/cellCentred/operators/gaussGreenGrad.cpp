@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <functional>
-
 #include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
@@ -18,7 +16,9 @@ void computeGrad(
 {
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    SurfaceField<scalar> phif(exec, mesh, createCalculatedBCs<scalar>(mesh));
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();
@@ -32,7 +32,7 @@ void computeGrad(
 
     const auto surfV = mesh.cellVolumes().span();
 
-    if (std::holds_alternative<CPUExecutor>(exec))
+    if (std::holds_alternative<SerialExecutor>(exec))
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
@@ -84,7 +84,8 @@ void computeGrad(
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
-    : surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh)) {};
+    : mesh_(mesh),
+      surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh, Dictionary())) {};
 
 
 void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi)

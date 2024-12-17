@@ -27,13 +27,23 @@ class SurfaceField : public GeometricFieldMixin<ValueType>
 
 public:
 
+    /**
+     * @brief Constructor for a surfaceField with a given name and mesh.
+     *
+     * @param exec The executor
+     * @param name The name of the field
+     * @param mesh The underlying mesh
+     * @param boundaryConditions a vector of boundary conditions
+     */
     SurfaceField(
         const Executor& exec,
+        std::string name,
         const UnstructuredMesh& mesh,
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
+            name,
             mesh,
             DomainField<ValueType>(
                 exec,
@@ -55,14 +65,36 @@ public:
     SurfaceField(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        const Field<ValueType>& internalField,
+        const DomainField<ValueType>& domainField,
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
-        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField}),
+        : GeometricFieldMixin<ValueType>(exec, mesh, domainField),
           boundaryConditions_(boundaryConditions)
     {}
 
+    /* @brief Constructor for a surfaceField with a given internal field
+     *
+     * @param exec The executor
+     * @param mesh The underlying mesh
+     * @param internalField the underlying internal field
+     * @param boundaryConditions a vector of boundary conditions
+     */
+    SurfaceField(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const Field<ValueType>& internalField,
+        const BoundaryFields<ValueType>& boundaryFields,
+        const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
+    )
+        : GeometricFieldMixin<ValueType>(exec, mesh, {exec, mesh, internalField, boundaryFields}),
+          boundaryConditions_(boundaryConditions)
+    {}
 
+    /**
+     * @brief Copy constructor for a surface field.
+     *
+     * @param other The surface field to copy.
+     */
     SurfaceField(const SurfaceField& other)
         : GeometricFieldMixin<ValueType>(other), boundaryConditions_(other.boundaryConditions_)
     {}
@@ -80,6 +112,7 @@ public:
             boundaryCondition.correctBoundaryCondition(this->field_);
         }
     }
+
 
 private:
 

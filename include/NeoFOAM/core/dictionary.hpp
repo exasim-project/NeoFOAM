@@ -5,11 +5,9 @@
 #include <unordered_map>
 #include <any>
 #include <string>
-#include <iostream>
 #include <vector>
 
 #include "NeoFOAM/core/demangle.hpp"
-#include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM
 {
@@ -161,6 +159,12 @@ public:
      * @return A const reference to the underlying unordered map.
      */
     const std::unordered_map<std::string, std::any>& getMap() const;
+
+    /**
+     * @brief Checks whether the dictionary is empty
+     * @return A bool indicating if the dictionary is empty
+     */
+    bool empty() const { return data_.empty(); }
 
 private:
 

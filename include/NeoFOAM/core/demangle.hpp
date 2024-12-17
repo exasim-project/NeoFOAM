@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
+
 #pragma once
 // TODO For WIN builds, needs to be ifdef'ed out.
 #ifdef __GNUC__
@@ -8,6 +9,7 @@
 #include <string>
 #include <any>
 #include <iostream>
+
 namespace NeoFOAM
 {
 

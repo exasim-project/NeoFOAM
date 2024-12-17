@@ -9,7 +9,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
-#include "Kokkos_Core.hpp"
+#include <Kokkos_Core.hpp>
 
 #include <functional>
 
@@ -21,7 +21,7 @@ class Upwind : public SurfaceInterpolationFactory::Register<Upwind>
 
 public:
 
-    Upwind(const Executor& exec, const UnstructuredMesh& mesh);
+    Upwind(const Executor& exec, const UnstructuredMesh& mesh, Input input);
 
     static std::string name() { return "upwind"; }
 
