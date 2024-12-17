@@ -38,10 +38,10 @@ TEST_CASE("getType")
     REQUIRE(getType<float>() == MPI_FLOAT);
     REQUIRE(getType<double>() == MPI_DOUBLE);
     REQUIRE(getType<long double>() == MPI_LONG_DOUBLE);
-    REQUIRE(getType<bool>() == MPI_INT);
-    // REQUIRE(getType<std::complex<float>>() == MPI_CXX_FLOAT_COMPLEX);
-    // REQUIRE(getType<std::complex<double>>() == MPI_CXX_DOUBLE_COMPLEX);
-    // REQUIRE(getType<std::complex<long double>>() == MPI_CXX_LONG_DOUBLE_COMPLEX);
+    REQUIRE(getType<bool>() == MPI_CXX_BOOL);
+    REQUIRE(getType<std::complex<float>>() == MPI_CXX_FLOAT_COMPLEX);
+    REQUIRE(getType<std::complex<double>>() == MPI_CXX_DOUBLE_COMPLEX);
+    REQUIRE(getType<std::complex<long double>>() == MPI_CXX_LONG_DOUBLE_COMPLEX);
 }
 
 TEST_CASE("allReduce value")
