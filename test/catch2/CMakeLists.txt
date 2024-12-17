@@ -20,11 +20,3 @@ endif()
 target_link_libraries(neofoam_catch_main PUBLIC Catch2::Catch2 cpptrace::cpptrace Kokkos::kokkos
                                                 NeoFOAM)
 target_link_libraries(neofoam_catch_main PRIVATE neofoam_warnings neofoam_options)
-if(MSVC)
-  add_custom_command(
-    TARGET neofoam_catch_main
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/NeoFOAM.dll
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/NeoFOAM.dll
-    COMMENT "Copy NeoFOAM.dll, test programs need it on Windows.")
-endif()

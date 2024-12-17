@@ -11,7 +11,10 @@ project(
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
-
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=lld")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fuse-ld=lld")
+endif()
 # Add the cmake folder so the find_package command finds custom packages
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -20,9 +23,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Tell cmake we want it to automate generating export symbols for the dll
-if(MSVC)
+if(WIN32)
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+  if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+  endif()
 endif()
 
 # Eventhough we compile NeoFOAM as SHARED library we need to explicitly enable PIC for all targets
@@ -51,6 +56,15 @@ option(NEOFOAM_ENABLE_WARNINGS "Treat compiler warnings as errors" OFF)
 mark_as_advanced(NEOFOAM_ENABLE_WARNINGS)
 option(NEOFOAM_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 mark_as_advanced(NEOFOAM_WARNINGS_AS_ERRORS)
+
+if(WIN32)
+  set(NeoFOAM_LIB_TYPE "STATIC")
+else()
+  set(NeoFOAM_LIB_TYPE "SHARED")
+endif()
+set(NeoFOAM_LIB_TYPE
+    ${NeoFOAM_LIB_TYPE}
+    PARENT_SCOPE)
 
 if(NOT DEFINED CPM_USE_LOCAL_PACKAGES)
   message(STATUS "Set CPM_USE_LOCAL_PACKAGES=ON by default.")

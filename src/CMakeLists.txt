@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 # add_subdirectory(DSL)
 
-add_library(NeoFOAM SHARED)
+add_library(NeoFOAM ${NeoFOAM_LIB_TYPE})
 
 include(GNUInstallDirs)
 
@@ -52,7 +52,7 @@ target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos cpptrace:
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM PUBLIC MPI::MPI_CXX)
 endif()
-if(MSVC)
+if(WIN32)
   set_target_properties(
     NeoFOAM
     PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<0:>
