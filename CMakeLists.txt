@@ -11,10 +11,7 @@ project(
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=lld")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fuse-ld=lld")
-endif()
+
 # Add the cmake folder so the find_package command finds custom packages
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -49,7 +46,6 @@ option(NEOFOAM_ENABLE_CPP_CHECK "Enable cpp check static analyzer" OFF)
 option(NEOFOAM_ENABLE_CLANG_TIDY "Enable clang tidy static analyzer" OFF)
 option(NEOFOAM_ENABLE_PCH "Enable precompiled header" OFF)
 option(NEOFOAM_ENABLE_IWYU "Enable iwyu checks" OFF)
-option(NEOFOAM_ENABLE_CUDA "Enable CUDA" OFF)
 option(NEOFOAM_ENABLE_MPI "Enable MPI" ON)
 option(NEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT "Enable MPI with threading support" OFF)
 option(NEOFOAM_ENABLE_WARNINGS "Treat compiler warnings as errors" OFF)
