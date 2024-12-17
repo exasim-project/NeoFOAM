@@ -7,6 +7,9 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
+  if(WIN32)
+    message(FATAL_ERROR "NEOFOAM_ENABLE_MPI_SUPPORT not supported on Windows")
+  endif()
   find_package(MPI 3.1 REQUIRED)
 endif()
 find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
@@ -24,11 +27,6 @@ if(NOT ${Kokkos_FOUND})
 
   FetchContent_MakeAvailable(Kokkos)
 else()
-  if(DEFINED Kokkos_ENABLE_CUDA)
-    set(NEOFOAM_ENABLE_CUDA
-        ON
-        CACHE INTERNAL "")
-  endif()
   message(STATUS "Found Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION}")
 endif()
 
