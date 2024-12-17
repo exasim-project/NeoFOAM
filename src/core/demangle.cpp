@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#elif defined(__GNUC__)
+#ifdef __GNUC__
 #include <cxxabi.h> // for __cxa_demangle
 #endif
 #include <stdlib.h> // for free
