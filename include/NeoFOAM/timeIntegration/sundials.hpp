@@ -53,7 +53,6 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
     return ARKODE_ERK_NONE; // avoids compiler warnings.
 }
 
-
 /**
  * @brief Converts a NeoFOAM Field to a SUNDIALS N_Vector
  * FIX ME
@@ -176,7 +175,7 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
 
     // Copy initial value from y to source.
     NeoFOAM::Field<NeoFOAM::scalar> source(pdeExpre->exec(), 1, 0.0);
-    source = pdeExpre->explicitOperation(source); // compute spacial
+    source = pdeExpre->explicitOperation(source); // compute spatial
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(pdeExpre->exec()))
     {
         Kokkos::fence();

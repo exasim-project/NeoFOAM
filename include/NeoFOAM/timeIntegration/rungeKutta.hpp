@@ -6,10 +6,13 @@
 #include <functional>
 #include <memory>
 
+#include "NeoFOAM/core/database/fieldCollection.hpp"
+#include "NeoFOAM/core/database/oldTimeCollection.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/timeIntegration/sundials.hpp"
+
 
 namespace NeoFOAM::timeIntegration
 {

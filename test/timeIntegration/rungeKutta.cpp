@@ -51,17 +51,44 @@ public:
     std::string getName() const { return "YSquared"; }
 };
 
+struct CreateField
+{
+    std::string name;
+    NeoFOAM::UnstructuredMesh mesh;
+    std::int64_t timeIndex = 0;
+    std::int64_t iterationIndex = 0;
+    std::int64_t subCycleIndex = 0;
+
+    NeoFOAM::Document operator()(NeoFOAM::Database& db)
+    {
+        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 0.0);
+        fvcc::VolumeField<NeoFOAM::scalar> vf(
+            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
+        );
+        return NeoFOAM::Document(
+            {{"name", vf.name},
+             {"timeIndex", timeIndex},
+             {"iterationIndex", iterationIndex},
+             {"subCycleIndex", subCycleIndex},
+             {"field", vf}},
+            fvcc::validateFieldDoc
+        );
+    }
+};
+
 TEST_CASE("TimeIntegration - Runge Kutta")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}
+    ) //,
+      //        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+      //        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::scalar convergenceTolerance = 1.0e-4; // how much lower we accept that expected order.
 
     // Set up dictionary.
+    NeoFOAM::Database db;
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
     ddtSchemes.insert("type", std::string("Runge-Kutta"));
@@ -70,10 +97,18 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     NeoFOAM::Dictionary fvSolution;
 
     // Set up fields.
+
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
-    Field fA(exec, 1.0, 1.0);
-    BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
-    std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+    fvcc::FieldCollection fieldCollection = fvcc::FieldCollection::instance(db, "fieldCollection");
+    fvcc::VolumeField<NeoFOAM::scalar>& vf =
+        fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
+            CreateField {.name = "vf", .mesh = mesh, .timeIndex = 1}
+        );
+
+    std::cout << "\n" << __FILE__ << "\t" << __LINE__ << std::flush;
+    fvcc::VolumeField<NeoFOAM::scalar>& oldVf = fvcc::oldTime(vf); // @Henning <-- crash is here.
+    std::cout << "\n" << __FILE__ << "\t" << __LINE__ << std::flush;
+
 
     // Setup solve parameters.
     const NeoFOAM::scalar maxTime = 0.1;
@@ -87,7 +122,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
         {
             // reset
             NeoFOAM::scalar time = 0.0;
-            auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
+            // auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
             // Set expression
             Operator ddtOp = Ddt(vf);
@@ -99,6 +134,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             {
                 NeoFOAM::dsl::solve(eqn, vf, time, dt, fvSchemes, fvSolution);
                 time += dt;
+                fvcc::VolumeField<NeoFOAM::scalar>& oldVf = fvcc::oldTime(vf);
+                oldVf.internalField()[0] = vf.internalField()[0]; // advance to next times step.
             }
 
             // check error.

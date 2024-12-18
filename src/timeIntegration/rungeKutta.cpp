@@ -33,8 +33,10 @@ void RungeKutta<SolutionFieldType>::solve(
 )
 {
     // Setup sundials if required, load the current solution for temporal integration
-    if (pdeExpr_ == nullptr) initSUNERKSolver(exp, solutionField, t);
-    NeoFOAM::sundials::fieldToNVector(solutionField.internalField(), solution_.NVector());
+    SolutionFieldType& oldSolutionField =
+        NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
+    if (pdeExpr_ == nullptr) initSUNERKSolver(exp, oldSolutionField, t);
+    NeoFOAM::sundials::fieldToNVector(oldSolutionField.internalField(), solution_.NVector());
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
     // Perform time integration
