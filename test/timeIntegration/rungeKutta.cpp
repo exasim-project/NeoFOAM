@@ -79,10 +79,10 @@ struct CreateField
 
 TEST_CASE("TimeIntegration - Runge Kutta")
 {
-    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}
-    ) //,
-      //        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-      //        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::scalar convergenceTolerance = 1.0e-4; // how much lower we accept that expected order.
@@ -97,21 +97,16 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     NeoFOAM::Dictionary fvSolution;
 
     // Set up fields.
-
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
-    fvcc::FieldCollection fieldCollection = fvcc::FieldCollection::instance(db, "fieldCollection");
+    fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(db, "fieldCollection");
     fvcc::VolumeField<NeoFOAM::scalar>& vf =
         fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
             CreateField {.name = "vf", .mesh = mesh, .timeIndex = 1}
         );
 
-    std::cout << "\n" << __FILE__ << "\t" << __LINE__ << std::flush;
-    fvcc::VolumeField<NeoFOAM::scalar>& oldVf = fvcc::oldTime(vf); // @Henning <-- crash is here.
-    std::cout << "\n" << __FILE__ << "\t" << __LINE__ << std::flush;
-
-
     // Setup solve parameters.
     const NeoFOAM::scalar maxTime = 0.1;
+    const NeoFOAM::scalar initialValue = 1.0;
     std::array<NeoFOAM::scalar, 2> deltaTime = {0.01, 0.001};
 
     SECTION("Solve on " + execName)
@@ -121,12 +116,14 @@ TEST_CASE("TimeIntegration - Runge Kutta")
         for (auto dt : deltaTime)
         {
             // reset
+            auto& vfOld = fvcc::oldTime(vf);
             NeoFOAM::scalar time = 0.0;
-            // auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
+            vf.internalField() = initialValue;
+            vfOld.internalField() = initialValue;
 
             // Set expression
-            Operator ddtOp = Ddt(vf);
-            auto divOp = YSquared(vf);
+            Operator ddtOp = Ddt(vfOld);
+            auto divOp = YSquared(vfOld);
             auto eqn = ddtOp + divOp;
 
             // solve.
@@ -134,12 +131,12 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             {
                 NeoFOAM::dsl::solve(eqn, vf, time, dt, fvSchemes, fvSolution);
                 time += dt;
-                fvcc::VolumeField<NeoFOAM::scalar>& oldVf = fvcc::oldTime(vf);
-                oldVf.internalField()[0] = vf.internalField()[0]; // advance to next times step.
+                fvcc::oldTime(vf).internalField() =
+                    vf.internalField(); // advance to next times step.
             }
 
             // check error.
-            NeoFOAM::scalar analytical = 1.0 / (1.0 - maxTime);
+            NeoFOAM::scalar analytical = 1.0 / (initialValue - maxTime);
             error[iTest] = std::abs(vf.internalField().copyToHost()[0] - analytical);
             iTest++;
         }
