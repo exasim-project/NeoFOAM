@@ -19,7 +19,7 @@ TEST_CASE("Field Constructors")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Copy Constructor " + execName)
     {
@@ -79,7 +79,7 @@ TEST_CASE("Field Operator Overloads")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Field Operator+= " + execName)
     {
@@ -159,7 +159,7 @@ TEST_CASE("Field Container Operations")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("empty, size, range" + execName)
     {
@@ -227,7 +227,7 @@ TEST_CASE("Field Operations")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Field_" + execName)
     {

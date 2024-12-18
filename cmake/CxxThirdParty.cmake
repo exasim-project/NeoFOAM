@@ -5,10 +5,10 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     "4.3.00"
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
-
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   find_package(MPI 3.1 REQUIRED)
 endif()
+
 find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
@@ -16,7 +16,7 @@ if(NOT ${Kokkos_FOUND})
   include(cmake/AutoEnableDevice.cmake)
 
   FetchContent_Declare(
-    kokkos
+    Kokkos
     SYSTEM QUITE
     GIT_SHALLOW ON
     GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
@@ -26,6 +26,18 @@ if(NOT ${Kokkos_FOUND})
 else()
   message(STATUS "Found Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION}")
 endif()
+
+# set(KokkosKernels_ENABLE_PERFTESTS OFF CACHE BOOL "") set(KokkosKernels_ENABLED_COMPONENTS
+# "BATCHED;BLAS" CACHE STRING "" FORCE) set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
+# set(KokkosKernels_ENABLE_BATCHED ON CACHE BOOL "") set(KokkosKernels_ENABLE_BLAS ON CACHE BOOL "")
+# set(KokkosKernels_ENABLE_LAPACK OFF CACHE BOOL "") set(KokkosKernels_ENABLE_GRAPH OFF CACHE BOOL
+# "") set(KokkosKernels_ENABLE_SPARSE OFF CACHE BOOL "") set(KokkosKernels_ENABLE_ODE OFF CACHE BOOL
+# "")
+
+# FetchContent_Declare( KokkosKernels SYSTEM QUITE GIT_SHALLOW ON GIT_REPOSITORY
+# "https://github.com/kokkos/kokkos-kernels.git" GIT_TAG ${NEOFOAM_KOKKOS_KERNELS_CHECKOUT_VERSION})
+
+# FetchContent_MakeAvailable(KokkosKernels)
 
 include(cmake/CPM.cmake)
 
@@ -45,6 +57,15 @@ cpmaddpackage(
   https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   VERSION
   3.11.3
+  SYSTEM)
+
+cpmaddpackage(
+  NAME
+  sundials
+  GITHUB_REPOSITORY
+  LLNL/sundials
+  VERSION
+  7.1.1
   SYSTEM)
 
 cpmaddpackage(

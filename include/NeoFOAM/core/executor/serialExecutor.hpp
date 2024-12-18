@@ -47,15 +47,12 @@ public:
         return Kokkos::View<ValueType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(ptr, size);
     }
 
-
     void* alloc(size_t size) const { return Kokkos::kokkos_malloc<exec>("Field", size); }
 
     void* realloc(void* ptr, size_t newSize) const
     {
         return Kokkos::kokkos_realloc<exec>(ptr, newSize);
     }
-
-    std::string print() const { return std::string(exec::name()); }
 
     void free(void* ptr) const noexcept { Kokkos::kokkos_free<exec>(ptr); };
 

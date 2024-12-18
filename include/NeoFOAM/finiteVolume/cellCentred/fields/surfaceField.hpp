@@ -31,19 +31,19 @@ public:
      * @brief Constructor for a surfaceField with a given name and mesh.
      *
      * @param exec The executor
-     * @param name The name of the field
+     * @param fieldName The name of the field
      * @param mesh The underlying mesh
      * @param boundaryConditions a vector of boundary conditions
      */
     SurfaceField(
         const Executor& exec,
-        std::string name,
+        std::string fieldName,
         const UnstructuredMesh& mesh,
         const std::vector<SurfaceBoundary<ValueType>>& boundaryConditions
     )
         : GeometricFieldMixin<ValueType>(
             exec,
-            name,
+            fieldName,
             mesh,
             DomainField<ValueType>(
                 exec,

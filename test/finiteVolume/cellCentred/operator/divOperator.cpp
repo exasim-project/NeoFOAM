@@ -25,7 +25,7 @@ TEST_CASE("DivOperator")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     // FIXME: take 1d mesh
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
