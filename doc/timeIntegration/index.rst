@@ -12,6 +12,8 @@ For more demanding and flexible applications, the Sundials-based Runge-Kutta imp
 
 Both approaches are implemented through the common ``TimeIntegratorBase`` interface, allowing seamless switching between methods through runtime configuration:
 
+NOTE: Native Forward Euler is WIP.
+
 .. code-block:: cpp
 
     Dictionary timeDict;

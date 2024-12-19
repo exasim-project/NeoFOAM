@@ -83,7 +83,7 @@ public:
      * the Kokkos vectors.
      */
     RungeKutta(const RungeKutta& other);
-    
+
     /**
      * @brief Move Constructor
      * @param other The RungeKutta instance to move from.
@@ -133,8 +133,10 @@ public:
 
 private:
 
-    NeoFOAM::sundials::SKVector<ValueType> solution_;
-    NeoFOAM::sundials::SKVector<ValueType> initialConditions_;
+    NeoFOAM::sundials::SKVector<ValueType>
+        solution_; /**< Solution vector, contains the sundails N_Vector. */
+    NeoFOAM::sundials::SKVector<ValueType>
+        initialConditions_; /**< Initial conditions vector, contains the sundails N_Vector. */
     std::shared_ptr<SUNContext_> context_ {nullptr, sundials::SUN_CONTEXT_DELETER}; // see type def
     std::unique_ptr<char> ODEMemory_ {nullptr}; /**< The 'memory' (sundails configuration) for the
                                                    solve. (note void* is not stl compliant). */
@@ -163,7 +165,7 @@ private:
 
     /**
      * @brief Initializes the Sundials vectors for solution storage.
-     * //fix me
+     * @param exec The executor of the field being integrated in time.
      * @param size The size of the vectors to be initialized
      */
     void initSUNVector(const Executor& exec, size_t size);

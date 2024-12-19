@@ -20,8 +20,9 @@ namespace NeoFOAM::sundials
 {
 
 /**
- * Custom deleter for SUNContext_ shared pointers, frees the context if last context.
- * @param[in] ctx Pointer to the SUNContext_ to be freed, can be nullptr.
+ * @brief Custom deleter for SUNContext shared pointers.
+ * @param ctx Pointer to the SUNContext to be freed, can be nullptr.
+ * @details Safely frees the context if it's the last reference.
  */
 auto SUN_CONTEXT_DELETER = [](SUNContext_* ctx)
 {
@@ -32,9 +33,10 @@ auto SUN_CONTEXT_DELETER = [](SUNContext_* ctx)
 };
 
 /**
- * @brief Function to map dictionary key-words to sundials RKButcher tableau.
- * @param key The key, name, of the explicit Runge-Kutta method to use.
- * @return The id of the assocaied Sundails RK Butcher tableau.
+ * @brief Maps dictionary keywords to SUNDIALS RKButcher tableau identifiers.
+ * @param key The name of the explicit Runge-Kutta method.
+ * @return ARKODE_ERKTableID for the corresponding Butcher tableau.
+ * @throws Runtime error for unsupported methods.
  */
 ARKODE_ERKTableID stringToERKTable(const std::string& key)
 {
@@ -54,12 +56,12 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
 }
 
 /**
- * @brief Converts a NeoFOAM Field to a SUNDIALS N_Vector
- * FIX ME
- * @tparam ValueType The data type of the field elements (e.g., double, float)
- * @param[in] field Source NeoFOAM Field containing the data to be copied
- * @param[out] vector Destination SUNDIALS N_Vector to receive the field data
- * @warning Assumes everything is correctly initialised, sized, correct executore etc.
+ * @brief Converts NeoFOAM Field data to SUNDIALS N_Vector format.
+ * @tparam SKVectorType The SUNDIALS Kokkos vector type
+ * @tparam ValueType The field data type
+ * @param field Source NeoFOAM field
+ * @param vector Target SUNDIALS N_Vector
+ * @warning Assumes matching initialization and size between field and vector
  */
 template<typename SKVectorType, typename ValueType>
 void fieldToNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
@@ -70,7 +72,13 @@ void fieldToNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector
     );
 };
 
-// dispatcer For some reason we using DefaultExecutionSpace for both CPU and GPU
+/**
+ * @brief Dispatcher for field to N_Vector conversion based on executor type.
+ * @tparam ValueType The field data type
+ * @param field Source NeoFOAM field
+ * @param vector Target SUNDIALS N_Vector
+ * @throws Runtime error for unsupported executors
+ */
 template<typename ValueType>
 void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
@@ -98,12 +106,12 @@ void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 };
 
 /**
- * @brief Converts a SUNDIALS N_Vector back to a NeoFOAM Field
- * * FIX ME
- * @tparam ValueType The data type of the field elements (e.g., double, float)
- * @param[in] vector Source SUNDIALS N_Vector containing the data to be copied
- * @param[out] field Destination NeoFOAM Field to receive the vector data
- * @warning Assumes everything is correctly initialised, sized, correct executore etc.
+ * @brief Converts SUNDIALS N_Vector data back to NeoFOAM Field format.
+ * @tparam SKVectorType The SUNDIALS Kokkos vector type
+ * @tparam ValueType The field data type
+ * @param vector Source SUNDIALS N_Vector
+ * @param field Target NeoFOAM field
+ * @warning Assumes matching initialization and size between vector and field
  */
 template<typename SKVectorType, typename ValueType>
 void NVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
@@ -115,44 +123,40 @@ void NVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& field
     );
 };
 
-// dispatcer For some reason we using DefaultExecutionSpace for both CPU and GPU
+/**
+ * @brief Dispatcher for N_Vector to field conversion based on executor type.
+ * @tparam ValueType The field data type
+ * @param vector Source SUNDIALS N_Vector
+ * @param field Target NeoFOAM field
+ */
 template<typename ValueType>
 void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
 {
-    // CHECK FOR N_Vector on correct space in DEBUG
-
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(field.exec()))
     {
-        NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
-            vector, field
-        );
+        NVectorToFieldImpl<SKVectorDefault::KVector>(vector, field);
         return;
     }
     if (std::holds_alternative<NeoFOAM::CPUExecutor>(field.exec()))
     {
-        NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(
-            vector, field
-        );
+        NVectorToFieldImpl<SKVectorHostDefault::KVector>(vector, field);
         return;
     }
     if (std::holds_alternative<NeoFOAM::SerialExecutor>(field.exec()))
     {
-        NVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(vector, field);
+        NVectorToFieldImpl<KVector::KVector>(vector, field);
         return;
     }
     NF_ERROR_EXIT("Unsupported NeoFOAM executor for field.");
 };
 
-// ------------------
-
 /**
- * @brief Performs an iteration/stage of explicit Runge-Kutta with sundails and an expression.
- * @param t The current value of the independent variable
- * @param y The current value of the dependent variable vector
- * @param ydont The output vector that forms [a portion of] the ODE RHS, f(t, y).
- * @param user_data he user_data pointer that was passed to ARKodeSetUserData().
- *
- * @note https://sundials.readthedocs.io/en/latest/arkode/Usage/User_supplied.html#c.ARKRhsFn
+ * @brief Performs a single explicit Runge-Kutta stage evaluation.
+ * @param t Current time value
+ * @param y Current solution vector
+ * @param ydot Output RHS vector
+ * @param user_data Pointer to Expression object
+ * @return 0 on success, non-zero on error
  *
  * @details This is our implementation of the RHS of explicit spacital integration, to be integrated
  * in time. In our case user_data is a unique_ptr to an expression. In this function a 'working
@@ -184,22 +188,40 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
     return 0;
 }
 
-// ------------------
-
 namespace detail
 {
+
+/**
+ * @brief Initializes a vector wrapper with specified size and context.
+ * @tparam Vector Vector wrapper type implementing initNVector interface
+ * @param[in,out] vec Vector to initialize
+ * @param[in] size Number of elements
+ * @param[in] context SUNDIALS context for vector operations
+ */
 template<typename Vector>
 void initNVector(Vector& vec, size_t size, std::shared_ptr<SUNContext_> context)
 {
     vec.initNVector(size, context);
 }
 
+/**
+ * @brief Provides const access to underlying N_Vector.
+ * @tparam Vector Vector wrapper type implementing NVector interface
+ * @param vec Source vector wrapper
+ * @return Const reference to wrapped N_Vector
+ */
 template<typename Vector>
 const N_Vector& NVector(const Vector& vec)
 {
     return vec.NVector();
 }
 
+/**
+ * @brief Provides mutable access to underlying N_Vector.
+ * @tparam Vector Vector wrapper type implementing NVector interface
+ * @param[in,out] vec Source vector wrapper
+ * @return Mutable reference to wrapped N_Vector
+ */
 template<typename Vector>
 N_Vector& NVector(Vector& vec)
 {
@@ -207,6 +229,11 @@ N_Vector& NVector(Vector& vec)
 }
 }
 
+/**
+ * @brief Serial executor SUNDIALS Kokkos vector wrapper.
+ * @tparam ValueType The vector data type
+ * @details Provides RAII management of SUNDIALS Kokkos vectors for serial execution.
+ */
 template<typename ValueType>
 class SKVectorSerial
 {
@@ -216,10 +243,8 @@ public:
     ~SKVectorSerial() = default;
     SKVectorSerial(const SKVectorSerial& other)
         : kvector_(other.kvector_), svector_(other.kvector_) {};
-
     SKVectorSerial(SKVectorSerial&& other) noexcept
         : kvector_(std::move(other.kvector_)), svector_(std::move(other.svector_)) {};
-
     SKVectorSerial& operator=(const SKVectorSerial& other) = delete;
     SKVectorSerial& operator=(SKVectorSerial&& other) = delete;
 
@@ -238,6 +263,11 @@ private:
     N_Vector svector_ {nullptr};
 };
 
+/**
+ * @brief Host default executor SUNDIALS Kokkos vector wrapper.
+ * @tparam ValueType The vector data type
+ * @details Provides RAII management of SUNDIALS Kokkos vectors for CPU execution.
+ */
 template<typename ValueType>
 class SKVectorHostDefault
 {
@@ -249,10 +279,8 @@ public:
     ~SKVectorHostDefault() = default;
     SKVectorHostDefault(const SKVectorHostDefault& other)
         : kvector_(other.kvector_), svector_(other.kvector_) {};
-
     SKVectorHostDefault(SKVectorHostDefault&& other) noexcept
         : kvector_(std::move(other.kvector_)), svector_(std::move(other.svector_)) {};
-
     SKVectorHostDefault& operator=(const SKVectorHostDefault& other) = delete;
     SKVectorHostDefault& operator=(SKVectorHostDefault&& other) = delete;
 
@@ -270,6 +298,11 @@ private:
     N_Vector svector_ {nullptr};
 };
 
+/**
+ * @brief Default executor SUNDIALS Kokkos vector wrapper.
+ * @tparam ValueType The vector data type
+ * @details Provides RAII management of SUNDIALS Kokkos vectors for GPU execution.
+ */
 template<typename ValueType>
 class SKVectorDefault
 {
@@ -281,10 +314,8 @@ public:
     ~SKVectorDefault() = default;
     SKVectorDefault(const SKVectorDefault& other)
         : kvector_(other.kvector_), svector_(other.kvector_) {};
-
     SKVectorDefault(SKVectorDefault&& other) noexcept
         : kvector_(std::move(other.kvector_)), svector_(std::move(other.svector_)) {};
-
     SKVectorDefault& operator=(const SKVectorDefault& other) = delete;
     SKVectorDefault& operator=(SKVectorDefault&& other) = delete;
 
@@ -293,7 +324,9 @@ public:
         kvector_ = KVector(size, context.get());
         svector_ = kvector_;
     };
+
     const N_Vector& NVector() const { return svector_; };
+
     N_Vector& NVector() { return svector_; };
 
 private:
@@ -302,7 +335,12 @@ private:
     N_Vector svector_ {nullptr};
 };
 
-// base class
+/**
+ * @brief Unified interface for SUNDIALS Kokkos vector management.
+ * @tparam ValueType The vector data type
+ * @details Manages executor-specific vector implementations through variant storage.
+ * Provides common interface for vector initialization and access.
+ */
 template<typename ValueType>
 class SKVector
 {
@@ -311,17 +349,44 @@ public:
     using SKVectorSerial = SKVectorSerial<ValueType>;
     using SKVectorHostDefault = SKVectorHostDefault<ValueType>;
     using SKDefaultVector = SKVectorDefault<ValueType>;
-
     using SKVectorVariant = std::variant<SKVectorSerial, SKVectorHostDefault, SKDefaultVector>;
 
+    /**
+     * @brief Default constructor. Initializes with host-default vector.
+     */
     SKVector() { vector_.template emplace<SKVectorHostDefault>(); };
+
+    /**
+     * @brief Default destructor.
+     */
     ~SKVector() = default;
+
+    /**
+     * @brief Copy constructor.
+     * @param[in] other Source SKVector to copy from
+     */
     SKVector(const SKVector&) = default;
+
+    /**
+     * @brief Copy assignment operator (deleted).
+     */
     SKVector& operator=(const SKVector&) = delete;
+
+    /**
+     * @brief Move constructor.
+     * @param[in] other Source SKVector to move from
+     */
     SKVector(SKVector&&) noexcept = default;
+
+    /**
+     * @brief Move assignment operator (deleted).
+     */
     SKVector& operator=(SKVector&&) noexcept = delete;
 
-
+    /**
+     * @brief Sets appropriate vector implementation based on executor type.
+     * @param[in] exec NeoFOAM executor specifying computation space
+     */
     void setExecutor(const NeoFOAM::Executor& exec)
     {
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(exec))
@@ -346,6 +411,11 @@ public:
         );
     }
 
+    /**
+     * @brief Initializes underlying vector with given size and context.
+     * @param size Number of vector elements
+     * @param context SUNDIALS context for vector operations
+     */
     void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
         std::visit(
@@ -353,6 +423,10 @@ public:
         );
     }
 
+    /**
+     * @brief Gets const reference to underlying N_Vector.
+     * @return Const reference to wrapped SUNDIALS N_Vector
+     */
     const N_Vector& NVector() const
     {
         return std::visit(
@@ -360,16 +434,29 @@ public:
         );
     }
 
+    /**
+     * @brief Gets mutable reference to underlying N_Vector.
+     * @return Mutable reference to wrapped SUNDIALS N_Vector
+     */
     N_Vector& NVector()
     {
         return std::visit([](auto& vec) -> N_Vector& { return detail::NVector(vec); }, vector_);
     }
 
+    /**
+     * @brief Gets const reference to variant storing implementation.
+     * @return Const reference to vector variant
+     */
     const SKVectorVariant& variant() const { return vector_; }
+
+    /**
+     * @brief Gets mutable reference to variant storing implementation.
+     * @return Mutable reference to vector variant
+     */
     SKVectorVariant& variant() { return vector_; }
 
 private:
 
-    SKVectorVariant vector_;
+    SKVectorVariant vector_; /**< Variant storing executor-specific vector implementation */
 };
 }
