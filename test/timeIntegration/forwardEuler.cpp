@@ -53,7 +53,7 @@ class TimeTerm
 
 public:
 
-    std::string display() const { return "TimeTerm"; }
+    std::string name() const { return "TimeTerm"; }
 
     void explicitOperation(NeoFOAM::Field<NeoFOAM::scalar>& source, NeoFOAM::scalar scale)
     {
