@@ -74,8 +74,7 @@ template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initExpression(const Expression& exp)
 {
     pdeExpr_ =
-        std::make_unique<Expression>(exp); // This should be a construction/init thing, but I
-                                           //  don't have the equation on construction anymore.
+        std::make_unique<Expression>(exp); 
 }
 
 template<typename SolutionFieldType>

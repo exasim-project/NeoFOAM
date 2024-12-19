@@ -5,7 +5,7 @@ Time Integration
 ================
 
 NeoFOAM provides flexible time integration capabilities for solving partial differential equations (PDEs).
-The framework implements two distinct approaches to time integration - a native Forward Euler method and advanced Runge-Kutta methods via Sundials integration.
+Currently the framework implements two distinct approaches to time integration - a native Forward Euler method and advanced Runge-Kutta methods via Sundials integration.
 
 The native Forward Euler implementation serves two key purposes: it provides a lightweight, dependency-free option for basic time integration, and it acts as a fallback when Sundials is not available in the build environment.
 This implementation directly integrates with NeoFOAM's field operations and requires no external libraries.
