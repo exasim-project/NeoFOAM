@@ -83,6 +83,7 @@ public:
      * the Kokkos vectors.
      */
     RungeKutta(const RungeKutta& other);
+    
     /**
      * @brief Move Constructor
      * @param other The RungeKutta instance to move from.

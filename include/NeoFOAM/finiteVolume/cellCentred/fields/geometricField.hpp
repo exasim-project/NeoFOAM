@@ -52,7 +52,8 @@ public:
      * @brief Constructor for GeometricFieldMixin.
      *
      * @param exec The executor object.
-     * @param fieldName The unstructured mesh object.
+     * @param fieldName The name of the corresponding field.
+     * @param mesh The unstructured mesh object.
      * @param internalField The internal field object.
      * @param boundaryFields The boundary field object.
      */
