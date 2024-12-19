@@ -70,7 +70,6 @@ public:
 
     void solve(Expression& eqn, SolutionFieldType& sol, scalar t, scalar dt)
     {
-        NF_ERROR_EXIT("Class still WIP.")
         timeIntegratorStrategy_->solve(eqn, sol, t, dt);
     }
 

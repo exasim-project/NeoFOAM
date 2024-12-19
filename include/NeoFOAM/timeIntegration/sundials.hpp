@@ -64,7 +64,7 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
  * @warning Assumes matching initialization and size between field and vector
  */
 template<typename SKVectorType, typename ValueType>
-void fieldToNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
+void fieldToSunNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
     NeoFOAM::parallelFor(
@@ -80,26 +80,26 @@ void fieldToNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector
  * @throws Runtime error for unsupported executors
  */
 template<typename ValueType>
-void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
+void fieldToSunNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
     // CHECK FOR N_Vector on correct space in DEBUG
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(field.exec()))
     {
-        fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
+        fieldToSunNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
             field, vector
         );
         return;
     }
     if (std::holds_alternative<NeoFOAM::CPUExecutor>(field.exec()))
     {
-        fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(
+        fieldToSunNVectorImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(
             field, vector
         );
         return;
     }
     if (std::holds_alternative<NeoFOAM::SerialExecutor>(field.exec()))
     {
-        fieldToNVectorImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(field, vector);
+        fieldToSunNVectorImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(field, vector);
         return;
     }
     NF_ERROR_EXIT("Unsupported NeoFOAM executor for field.");
@@ -114,7 +114,7 @@ void fieldToNVector(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
  * @warning Assumes matching initialization and size between vector and field
  */
 template<typename SKVectorType, typename ValueType>
-void NVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
+void sunNVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
 {
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
     ValueType* fieldData = field.data();
@@ -130,21 +130,25 @@ void NVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& field
  * @param field Target NeoFOAM field
  */
 template<typename ValueType>
-void NVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
+void sunNVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
 {
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(field.exec()))
     {
-        NVectorToFieldImpl<SKVectorDefault::KVector>(vector, field);
+        sunNVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>>(
+            vector, field
+        );
         return;
     }
     if (std::holds_alternative<NeoFOAM::CPUExecutor>(field.exec()))
     {
-        NVectorToFieldImpl<SKVectorHostDefault::KVector>(vector, field);
+        sunNVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::DefaultHostExecutionSpace>>(
+            vector, field
+        );
         return;
     }
     if (std::holds_alternative<NeoFOAM::SerialExecutor>(field.exec()))
     {
-        NVectorToFieldImpl<KVector::KVector>(vector, field);
+        sunNVectorToFieldImpl<::sundials::kokkos::Vector<Kokkos::Serial>>(vector, field);
         return;
     }
     NF_ERROR_EXIT("Unsupported NeoFOAM executor for field.");
@@ -184,7 +188,7 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
     {
         Kokkos::fence();
     }
-    NeoFOAM::sundials::fieldToNVector(source, ydot); // assign rhs to ydot.
+    NeoFOAM::sundials::fieldToSunNVector(source, ydot); // assign rhs to ydot.
     return 0;
 }
 
@@ -211,9 +215,9 @@ void initNVector(Vector& vec, size_t size, std::shared_ptr<SUNContext_> context)
  * @return Const reference to wrapped N_Vector
  */
 template<typename Vector>
-const N_Vector& NVector(const Vector& vec)
+const N_Vector& sunNVector(const Vector& vec)
 {
-    return vec.NVector();
+    return vec.sunNVector();
 }
 
 /**
@@ -223,9 +227,9 @@ const N_Vector& NVector(const Vector& vec)
  * @return Mutable reference to wrapped N_Vector
  */
 template<typename Vector>
-N_Vector& NVector(Vector& vec)
+N_Vector& sunNVector(Vector& vec)
 {
-    return vec.NVector();
+    return vec.sunNVector();
 }
 }
 
@@ -248,14 +252,15 @@ public:
     SKVectorSerial& operator=(const SKVectorSerial& other) = delete;
     SKVectorSerial& operator=(SKVectorSerial&& other) = delete;
 
+
     using KVector = ::sundials::kokkos::Vector<Kokkos::Serial>;
     void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
         kvector_ = KVector(size, context.get());
         svector_ = kvector_;
     };
-    const N_Vector& NVector() const { return svector_; };
-    N_Vector& NVector() { return svector_; };
+    const N_Vector& sunNVector() const { return svector_; };
+    N_Vector& sunNVector() { return svector_; };
 
 private:
 
@@ -289,8 +294,8 @@ public:
         kvector_ = KVector(size, context.get());
         svector_ = kvector_;
     };
-    const N_Vector& NVector() const { return svector_; };
-    N_Vector& NVector() { return svector_; };
+    const N_Vector& sunNVector() const { return svector_; };
+    N_Vector& sunNVector() { return svector_; };
 
 private:
 
@@ -325,9 +330,9 @@ public:
         svector_ = kvector_;
     };
 
-    const N_Vector& NVector() const { return svector_; };
+    const N_Vector& sunNVector() const { return svector_; };
 
-    N_Vector& NVector() { return svector_; };
+    N_Vector& sunNVector() { return svector_; };
 
 private:
 
@@ -427,10 +432,10 @@ public:
      * @brief Gets const reference to underlying N_Vector.
      * @return Const reference to wrapped SUNDIALS N_Vector
      */
-    const N_Vector& NVector() const
+    const N_Vector& sunNVector() const
     {
         return std::visit(
-            [](const auto& vec) -> const N_Vector& { return detail::NVector(vec); }, vector_
+            [](const auto& vec) -> const N_Vector& { return detail::sunNVector(vec); }, vector_
         );
     }
 
@@ -438,9 +443,9 @@ public:
      * @brief Gets mutable reference to underlying N_Vector.
      * @return Mutable reference to wrapped SUNDIALS N_Vector
      */
-    N_Vector& NVector()
+    N_Vector& sunNVector()
     {
-        return std::visit([](auto& vec) -> N_Vector& { return detail::NVector(vec); }, vector_);
+        return std::visit([](auto& vec) -> N_Vector& { return detail::sunNVector(vec); }, vector_);
     }
 
     /**

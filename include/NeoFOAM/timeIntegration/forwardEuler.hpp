@@ -31,6 +31,7 @@ public:
 
     void solve(Expression& eqn, SolutionFieldType& sol, scalar t, scalar dt) override
     {
+        NF_ERROR_EXIT("Class still WIP.");
         auto source = eqn.explicitOperation(sol.size());
 
         sol.internalField() -= source * dt;
