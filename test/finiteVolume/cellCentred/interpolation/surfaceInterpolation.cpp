@@ -22,7 +22,7 @@ TEST_CASE("SurfaceInterpolation")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     std::string interpolation = GENERATE(std::string("linear"), std::string("upwind"));
 

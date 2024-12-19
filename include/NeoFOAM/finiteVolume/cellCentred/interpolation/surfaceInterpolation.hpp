@@ -96,9 +96,9 @@ public:
 
     ScalarSurfaceField interpolate(const VolumeField<scalar>& volField) const
     {
-        std::string name = "interpolated_" + volField.name;
+        std::string nameInterpolated = "interpolated_" + volField.name;
         ScalarSurfaceField surfaceField(
-            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
         );
         interpolate(surfaceField, volField);
         return surfaceField;

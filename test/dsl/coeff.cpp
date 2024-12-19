@@ -23,7 +23,7 @@ TEST_CASE("Coeff")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Coefficient evaluation on " + execName)
     {
