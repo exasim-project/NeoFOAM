@@ -159,7 +159,7 @@ void sunNVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
  * @param t Current time value
  * @param y Current solution vector
  * @param ydot Output RHS vector
- * @param user_data Pointer to Expression object
+ * @param userData Pointer to Expression object
  * @return 0 on success, non-zero on error
  *
  * @details This is our implementation of the RHS of explicit spacital integration, to be integrated
@@ -169,10 +169,10 @@ void sunNVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
  * can be copied to this field.
  */
 template<typename SolutionFieldType>
-int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, void* user_data)
+int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, void* userData)
 {
     // Pointer wrangling
-    NeoFOAM::dsl::Expression* pdeExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(user_data);
+    NeoFOAM::dsl::Expression* pdeExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(userData);
     sunrealtype* yDotArray = N_VGetArrayPointer(ydot);
     sunrealtype* yArray = N_VGetArrayPointer(y);
 

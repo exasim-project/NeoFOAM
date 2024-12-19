@@ -113,7 +113,7 @@ public:
      * @param boundaryConditions a vector of boundary conditions
      * @param db The database
      * @param dbKey The key of the field in the database
-     * @param CollectionName The name of the field collection in the database
+     * @param collectionName The name of the field collection in the database
      */
     VolumeField(
         const Executor& exec,
@@ -123,7 +123,7 @@ public:
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
         Database& db,
         std::string dbKey,
-        std::string CollectionName
+        std::string collectionName
     )
         : GeometricFieldMixin<ValueType>(
             exec,
@@ -131,7 +131,7 @@ public:
             mesh,
             DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
         ),
-          key(dbKey), fieldCollectionName(CollectionName), boundaryConditions_(boundaryConditions),
+          key(dbKey), fieldCollectionName(collectionName), boundaryConditions_(boundaryConditions),
           db_(&db)
     {}
 
