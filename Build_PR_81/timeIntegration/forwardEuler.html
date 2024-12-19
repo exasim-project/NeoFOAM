@@ -274,14 +274,16 @@
         <article role="main" id="furo-main-content">
           <section id="forward-euler">
 <span id="timeintegration-forward-euler"></span><h1>Forward Euler<a class="headerlink" href="#forward-euler" title="Link to this heading">¶</a></h1>
-<p>The Forward Euler implementation in NeoFOAM provides a dependency-free first-order explicit time integration method. It advances the solution from time step n to n+1 using:</p>
+<p>The Forward Euler implementation in NeoFOAM provides a dependency-free first-order explicit time integration method.
+It advances the solution from time step n to n+1 using:</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[y_{n+1} = y_n + \Delta t \cdot f(t_n, y_n)\]</div>
 </div>
 <section id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h2>
-<p>The implementation is entirely self-contained within NeoFOAM, requiring no external libraries. The <code class="docutils literal notranslate"><span class="pre">ForwardEuler</span></code> class template inherits from <code class="docutils literal notranslate"><span class="pre">TimeIntegratorBase</span></code> and implements straightforward time-stepping functionality through its <code class="docutils literal notranslate"><span class="pre">solve</span></code> method:</p>
+<p>The implementation is entirely self-contained within NeoFOAM, requiring no external libraries.
+The <code class="docutils literal notranslate"><span class="pre">ForwardEuler</span></code> class template inherits from <code class="docutils literal notranslate"><span class="pre">TimeIntegratorBase</span></code> and implements straightforward time-stepping functionality through its <code class="docutils literal notranslate"><span class="pre">solve</span></code> method:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SolutionFieldType</span><span class="o">&gt;</span>
 <span class="kt">void</span><span class="w"> </span><span class="n">solve</span><span class="p">(</span><span class="n">Expression</span><span class="o">&amp;</span><span class="w"> </span><span class="n">eqn</span><span class="p">,</span><span class="w"> </span><span class="n">SolutionFieldType</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sol</span><span class="p">,</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">dt</span><span class="p">)</span>
 <span class="p">{</span>
@@ -307,7 +309,9 @@
 </section>
 <section id="considerations">
 <h2>Considerations<a class="headerlink" href="#considerations" title="Link to this heading">¶</a></h2>
-<p>The Forward Euler method serves as both a simple first-order integration option and a fallback when external time integration libraries are unavailable. While it has minimal computational overhead and no external dependencies, its first-order accuracy means it may require smaller time steps compared to higher-order methods. For GPU computations, the solver automatically handles execution space synchronization after each time step when required.</p>
+<p>The Forward Euler method serves as both a simple first-order integration option and a fallback when external time integration libraries are unavailable.
+While it has minimal computational overhead and no external dependencies, its first-order accuracy means it may require smaller time steps compared to higher-order methods.
+For GPU computations, the solver automatically handles execution space synchronization after each time step when required.</p>
 </section>
 </section>
 

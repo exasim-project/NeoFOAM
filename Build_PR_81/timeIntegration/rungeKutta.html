@@ -274,10 +274,12 @@
         <article role="main" id="furo-main-content">
           <section id="runge-kutta">
 <span id="timeintegration-rungekutta"></span><h1>Runge Kutta<a class="headerlink" href="#runge-kutta" title="Link to this heading">¶</a></h1>
-<p>The Runge-Kutta implementation in NeoFOAM leverages the Sundials library to provide high-order explicit time integration methods. This integration combines the robustness of Sundials with NeoFOAM’s field operations and Kokkos-based parallel execution capabilities.</p>
+<p>The Runge-Kutta implementation in NeoFOAM leverages the Sundials library to provide high-order explicit time integration methods.
+This integration combines the robustness of Sundials with NeoFOAM’s field operations and Kokkos-based parallel execution capabilities.</p>
 <section id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">RungeKutta</span></code> class template provides a RAII-based wrapper around Sundials’ ERKStep module, managing all necessary resources for time integration. The implementation handles the conversion between NeoFOAM’s Kokkos-based fields and Sundials’ vector representations:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RungeKutta</span></code> class template provides a RAII-based wrapper around Sundials’ ERKStep module, managing all necessary resources for time integration.
+The implementation handles the conversion between NeoFOAM’s Kokkos-based fields and Sundials’ vector representations:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SolutionFieldType</span><span class="o">&gt;</span>
 <span class="kt">void</span><span class="w"> </span><span class="n">solve</span><span class="p">(</span><span class="n">Expression</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exp</span><span class="p">,</span><span class="w"> </span><span class="n">SolutionFieldType</span><span class="o">&amp;</span><span class="w"> </span><span class="n">solutionField</span><span class="p">,</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">scalar</span><span class="w"> </span><span class="n">dt</span><span class="p">)</span>
 <span class="p">{</span>

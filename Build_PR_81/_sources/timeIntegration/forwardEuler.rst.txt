@@ -3,7 +3,8 @@
 Forward Euler
 =============
 
-The Forward Euler implementation in NeoFOAM provides a dependency-free first-order explicit time integration method. It advances the solution from time step n to n+1 using:
+The Forward Euler implementation in NeoFOAM provides a dependency-free first-order explicit time integration method.
+It advances the solution from time step n to n+1 using:
 
 .. math::
 
@@ -12,7 +13,8 @@ The Forward Euler implementation in NeoFOAM provides a dependency-free first-ord
 Implementation
 -------------
 
-The implementation is entirely self-contained within NeoFOAM, requiring no external libraries. The ``ForwardEuler`` class template inherits from ``TimeIntegratorBase`` and implements straightforward time-stepping functionality through its ``solve`` method:
+The implementation is entirely self-contained within NeoFOAM, requiring no external libraries.
+The ``ForwardEuler`` class template inherits from ``TimeIntegratorBase`` and implements straightforward time-stepping functionality through its ``solve`` method:
 
 .. code-block:: cpp
 
@@ -43,4 +45,6 @@ To use the Forward Euler integrator, configure it through a dictionary:
 Considerations
 -------------
 
-The Forward Euler method serves as both a simple first-order integration option and a fallback when external time integration libraries are unavailable. While it has minimal computational overhead and no external dependencies, its first-order accuracy means it may require smaller time steps compared to higher-order methods. For GPU computations, the solver automatically handles execution space synchronization after each time step when required.
+The Forward Euler method serves as both a simple first-order integration option and a fallback when external time integration libraries are unavailable.
+While it has minimal computational overhead and no external dependencies, its first-order accuracy means it may require smaller time steps compared to higher-order methods.
+For GPU computations, the solver automatically handles execution space synchronization after each time step when required.

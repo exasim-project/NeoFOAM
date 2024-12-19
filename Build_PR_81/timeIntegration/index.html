@@ -278,7 +278,8 @@
 Currently the framework implements two distinct approaches to time integration - a native Forward Euler method and advanced Runge-Kutta methods via Sundials integration.</p>
 <p>The native Forward Euler implementation serves two key purposes: it provides a lightweight, dependency-free option for basic time integration, and it acts as a fallback when Sundials is not available in the build environment.
 This implementation directly integrates with NeoFOAM’s field operations and requires no external libraries.</p>
-<p>For more demanding and flexible applications, the Sundials-based Runge-Kutta implementation offers higher-order explicit time integration with Kokkos support. This integration combines the robustness of Sundials’ time integration capabilities with NeoFOAM’s field operations.</p>
+<p>For more demanding and flexible applications, the Sundials-based Runge-Kutta implementation offers higher-order explicit time integration with Kokkos support.
+This integration combines the robustness of Sundials’ time integration capabilities with NeoFOAM’s field operations.</p>
 <p>Both approaches are implemented through the common <code class="docutils literal notranslate"><span class="pre">TimeIntegratorBase</span></code> interface, allowing seamless switching between methods through runtime configuration:</p>
 <p>NOTE: Native Forward Euler is WIP.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">Dictionary</span><span class="w"> </span><span class="n">timeDict</span><span class="p">;</span>
