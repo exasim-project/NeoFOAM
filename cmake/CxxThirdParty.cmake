@@ -27,18 +27,6 @@ else()
   message(STATUS "Found Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION}")
 endif()
 
-# set(KokkosKernels_ENABLE_PERFTESTS OFF CACHE BOOL "") set(KokkosKernels_ENABLED_COMPONENTS
-# "BATCHED;BLAS" CACHE STRING "" FORCE) set(KokkosKernels_ENABLE_ALL_COMPONENTS OFF CACHE BOOL "")
-# set(KokkosKernels_ENABLE_BATCHED ON CACHE BOOL "") set(KokkosKernels_ENABLE_BLAS ON CACHE BOOL "")
-# set(KokkosKernels_ENABLE_LAPACK OFF CACHE BOOL "") set(KokkosKernels_ENABLE_GRAPH OFF CACHE BOOL
-# "") set(KokkosKernels_ENABLE_SPARSE OFF CACHE BOOL "") set(KokkosKernels_ENABLE_ODE OFF CACHE BOOL
-# "")
-
-# FetchContent_Declare( KokkosKernels SYSTEM QUITE GIT_SHALLOW ON GIT_REPOSITORY
-# "https://github.com/kokkos/kokkos-kernels.git" GIT_TAG ${NEOFOAM_KOKKOS_KERNELS_CHECKOUT_VERSION})
-
-# FetchContent_MakeAvailable(KokkosKernels)
-
 include(cmake/CPM.cmake)
 
 cpmaddpackage(
@@ -59,6 +47,12 @@ cpmaddpackage(
   3.11.3
   SYSTEM)
 
+if(Kokkos_ENABLE_CUDA)
+  set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA ON" "SUNDIALS_BUILD_KOKKOS ON")
+else()
+  set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA OFF" "SUNDIALS_BUILD_KOKKOS ON")
+endif()
+
 cpmaddpackage(
   NAME
   sundials
@@ -66,6 +60,8 @@ cpmaddpackage(
   LLNL/sundials
   VERSION
   7.1.1
+  OPTIONS
+  ${SUNDIALS_CUDA_OPTIONS}
   SYSTEM)
 
 cpmaddpackage(
