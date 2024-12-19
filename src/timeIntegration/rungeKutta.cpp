@@ -73,8 +73,7 @@ void RungeKutta<SolutionFieldType>::initSUNERKSolver(
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initExpression(const Expression& exp)
 {
-    pdeExpr_ =
-        std::make_unique<Expression>(exp); 
+    pdeExpr_ = std::make_unique<Expression>(exp);
 }
 
 template<typename SolutionFieldType>
