@@ -22,22 +22,23 @@
     }
 }</initializer>
         <briefdescription>
+<para>Custom deleter for SUNContext shared pointers. </para>
         </briefdescription>
         <detaileddescription>
-<para>Custom deleter for SUNContext_ shared pointers, frees the context if last context. <parameterlist kind="param"><parameteritem>
+<para><parameterlist kind="param"><parameteritem>
 <parameternamelist>
-<parametername direction="in">ctx</parametername>
+<parametername>ctx</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>Pointer to the SUNContext_ to be freed, can be nullptr. </para>
+<para>Pointer to the SUNContext to be freed, can be nullptr.</para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
-</para>
+Safely frees the context if it&apos;s the last reference. </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="26" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="26" bodyend="32"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="27" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="27" bodyend="33"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="func">
@@ -52,7 +53,7 @@
           <declname>key</declname>
         </param>
         <briefdescription>
-<para>Function to map dictionary key-words to sundials RKButcher tableau. </para>
+<para>Maps dictionary keywords to SUNDIALS RKButcher tableau identifiers. </para>
         </briefdescription>
         <detaileddescription>
 <para><parameterlist kind="param"><parameteritem>
@@ -60,19 +61,28 @@
 <parametername>key</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The key, name, of the explicit Runge-Kutta method to use. </para>
+<para>The name of the explicit Runge-Kutta method. </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
-<simplesect kind="return"><para>The id of the assocaied Sundails RK Butcher tableau. </para>
+<simplesect kind="return"><para>ARKODE_ERKTableID for the corresponding Butcher tableau. </para>
 </simplesect>
+<parameterlist kind="exception"><parameteritem>
+<parameternamelist>
+<parametername>Runtime</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>error for unsupported methods. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
 </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="39" column="19" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="39" bodyend="54"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="41" column="19" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="41" bodyend="56"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1a2729bd759116817fee9b83598648b605" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1ab47f1ccabb77326bedfdc3632a5e9990" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
             <type>typename SKVectorType</type>
@@ -82,10 +92,10 @@
           </param>
         </templateparamlist>
         <type>void</type>
-        <definition>void NeoFOAM::sundials::fieldToNVectorImpl</definition>
+        <definition>void NeoFOAM::sundials::fieldToSunNVectorImpl</definition>
         <argsstring>(const NeoFOAM::Field&lt; ValueType &gt; &amp;field, N_Vector &amp;vector)</argsstring>
-        <name>fieldToNVectorImpl</name>
-        <qualifiedname>NeoFOAM::sundials::fieldToNVectorImpl</qualifiedname>
+        <name>fieldToSunNVectorImpl</name>
+        <qualifiedname>NeoFOAM::sundials::fieldToSunNVectorImpl</qualifiedname>
         <param>
           <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt; ValueType &gt; &amp;</type>
           <declname>field</declname>
@@ -95,7 +105,72 @@
           <declname>vector</declname>
         </param>
         <briefdescription>
-<para>Converts a <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref> to a SUNDIALS N_Vector FIX ME. </para>
+<para>Converts <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref> data to SUNDIALS N_Vector format. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>SKVectorType</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The SUNDIALS Kokkos vector type </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ValueType</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The field data type </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>field</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Source <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> field </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>vector</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Target SUNDIALS N_Vector </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="warning"><para>Assumes matching initialization and size between field and vector </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="67" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="67" bodyend="73"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1a9703c266d77ecd315070edc5715da65f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::sundials::fieldToSunNVector</definition>
+        <argsstring>(const NeoFOAM::Field&lt; ValueType &gt; &amp;field, N_Vector &amp;vector)</argsstring>
+        <name>fieldToSunNVector</name>
+        <qualifiedname>NeoFOAM::sundials::fieldToSunNVector</qualifiedname>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt; ValueType &gt; &amp;</type>
+          <declname>field</declname>
+        </param>
+        <param>
+          <type>N_Vector &amp;</type>
+          <declname>vector</declname>
+        </param>
+        <briefdescription>
+<para>Dispatcher for field to N_Vector conversion based on executor type. </para>
         </briefdescription>
         <detaileddescription>
 <para><parameterlist kind="templateparam"><parameteritem>
@@ -103,63 +178,43 @@
 <parametername>ValueType</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The data type of the field elements (e.g., double, float) </para>
+<para>The field data type </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
 <parameterlist kind="param"><parameteritem>
 <parameternamelist>
-<parametername direction="in">field</parametername>
+<parametername>field</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>Source <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref> containing the data to be copied </para>
+<para>Source <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> field </para>
 </parameterdescription>
 </parameteritem>
 <parameteritem>
 <parameternamelist>
-<parametername direction="out">vector</parametername>
+<parametername>vector</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>Destination SUNDIALS N_Vector to receive the field data </para>
+<para>Target SUNDIALS N_Vector </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
-<simplesect kind="warning"><para>Assumes everything is correctly initialised, sized, correct executore etc. </para>
-</simplesect>
+<parameterlist kind="exception"><parameteritem>
+<parameternamelist>
+<parametername>Runtime</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>error for unsupported executors </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
 </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="65" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="65" bodyend="71"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="83" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="83" bodyend="106"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1a91de57c82fd9e44bbcc73a5f135d0b0f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
-        <templateparamlist>
-          <param>
-            <type>typename ValueType</type>
-          </param>
-        </templateparamlist>
-        <type>void</type>
-        <definition>void NeoFOAM::sundials::fieldToNVector</definition>
-        <argsstring>(const NeoFOAM::Field&lt; ValueType &gt; &amp;field, N_Vector &amp;vector)</argsstring>
-        <name>fieldToNVector</name>
-        <qualifiedname>NeoFOAM::sundials::fieldToNVector</qualifiedname>
-        <param>
-          <type>const <ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field</ref>&lt; ValueType &gt; &amp;</type>
-          <declname>field</declname>
-        </param>
-        <param>
-          <type>N_Vector &amp;</type>
-          <declname>vector</declname>
-        </param>
-        <briefdescription>
-        </briefdescription>
-        <detaileddescription>
-        </detaileddescription>
-        <inbodydescription>
-        </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="75" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="75" bodyend="98"/>
-      </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1ad76c3fd58fe0982de97e9fda71cdff25" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1aa31219f1529a2ad5b859dccfbcbf1ce9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
             <type>typename SKVectorType</type>
@@ -169,10 +224,10 @@
           </param>
         </templateparamlist>
         <type>void</type>
-        <definition>void NeoFOAM::sundials::NVectorToFieldImpl</definition>
+        <definition>void NeoFOAM::sundials::sunNVectorToFieldImpl</definition>
         <argsstring>(const N_Vector &amp;vector, NeoFOAM::Field&lt; ValueType &gt; &amp;field)</argsstring>
-        <name>NVectorToFieldImpl</name>
-        <qualifiedname>NeoFOAM::sundials::NVectorToFieldImpl</qualifiedname>
+        <name>sunNVectorToFieldImpl</name>
+        <qualifiedname>NeoFOAM::sundials::sunNVectorToFieldImpl</qualifiedname>
         <param>
           <type>const N_Vector &amp;</type>
           <declname>vector</declname>
@@ -182,57 +237,62 @@
           <declname>field</declname>
         </param>
         <briefdescription>
-<para>Converts a SUNDIALS N_Vector back to a <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref>. </para>
+<para>Converts SUNDIALS N_Vector data back to <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref> format. </para>
         </briefdescription>
         <detaileddescription>
-<para><itemizedlist>
-<listitem><para>FIX ME <parameterlist kind="templateparam"><parameteritem>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>SKVectorType</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The SUNDIALS Kokkos vector type </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
 <parameternamelist>
 <parametername>ValueType</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The data type of the field elements (e.g., double, float) </para>
+<para>The field data type </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
 <parameterlist kind="param"><parameteritem>
 <parameternamelist>
-<parametername direction="in">vector</parametername>
+<parametername>vector</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>Source SUNDIALS N_Vector containing the data to be copied </para>
+<para>Source SUNDIALS N_Vector </para>
 </parameterdescription>
 </parameteritem>
 <parameteritem>
 <parameternamelist>
-<parametername direction="out">field</parametername>
+<parametername>field</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>Destination <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="classNeoFOAM_1_1Field" kindref="compound">Field</ref> to receive the vector data </para>
+<para>Target <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> field </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
-<simplesect kind="warning"><para>Assumes everything is correctly initialised, sized, correct executore etc. </para>
+<simplesect kind="warning"><para>Assumes matching initialization and size between vector and field </para>
 </simplesect>
-</para>
-</listitem></itemizedlist>
 </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="109" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="109" bodyend="116"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="117" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="117" bodyend="124"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1ac0883a3ea7524d64e7de04515395a859" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1a24cc64a2024e6b4ac7cb816cfd54050d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
             <type>typename ValueType</type>
           </param>
         </templateparamlist>
         <type>void</type>
-        <definition>void NeoFOAM::sundials::NVectorToField</definition>
+        <definition>void NeoFOAM::sundials::sunNVectorToField</definition>
         <argsstring>(const N_Vector &amp;vector, NeoFOAM::Field&lt; ValueType &gt; &amp;field)</argsstring>
-        <name>NVectorToField</name>
-        <qualifiedname>NeoFOAM::sundials::NVectorToField</qualifiedname>
+        <name>sunNVectorToField</name>
+        <qualifiedname>NeoFOAM::sundials::sunNVectorToField</qualifiedname>
         <param>
           <type>const N_Vector &amp;</type>
           <declname>vector</declname>
@@ -242,12 +302,40 @@
           <declname>field</declname>
         </param>
         <briefdescription>
+<para>Dispatcher for N_Vector to field conversion based on executor type. </para>
         </briefdescription>
         <detaileddescription>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>ValueType</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The field data type </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>vector</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Source SUNDIALS N_Vector </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>field</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Target <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> field </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="120" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="120" bodyend="144"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="133" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="133" bodyend="155"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1ae2307f054819116cd2bc34265966c1ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -277,7 +365,7 @@
           <declname>user_data</declname>
         </param>
         <briefdescription>
-<para>Performs an iteration/stage of explicit Runge-Kutta with sundails and an expression. </para>
+<para>Performs a single explicit Runge-Kutta stage evaluation. </para>
         </briefdescription>
         <detaileddescription>
 <para><parameterlist kind="param"><parameteritem>
@@ -285,7 +373,7 @@
 <parametername>t</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The current value of the independent variable </para>
+<para>Current time value </para>
 </parameterdescription>
 </parameteritem>
 <parameteritem>
@@ -293,15 +381,15 @@
 <parametername>y</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The current value of the dependent variable vector </para>
+<para>Current solution vector </para>
 </parameterdescription>
 </parameteritem>
 <parameteritem>
 <parameternamelist>
-<parametername>ydont</parametername>
+<parametername>ydot</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The output vector that forms [a portion of] the ODE RHS, f(t, y). </para>
+<para>Output RHS vector </para>
 </parameterdescription>
 </parameteritem>
 <parameteritem>
@@ -309,17 +397,17 @@
 <parametername>user_data</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>he user_data pointer that was passed to ARKodeSetUserData().</para>
+<para>Pointer to Expression object </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
-<simplesect kind="note"><para><ulink url="https://sundials.readthedocs.io/en/latest/arkode/Usage/User_supplied.html#c.ARKRhsFn">https://sundials.readthedocs.io/en/latest/arkode/Usage/User_supplied.html#c.ARKRhsFn</ulink></para>
+<simplesect kind="return"><para>0 on success, non-zero on error</para>
 </simplesect>
 This is our implementation of the RHS of explicit spacital integration, to be integrated in time. In our case user_data is a unique_ptr to an expression. In this function a &apos;working source&apos; vector is created and parsed to the explicitOperation, which should contain the field variable at the start of the time step. Currently &apos;multi-stage RK&apos; is not supported until y can be copied to this field. </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="164" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="164" bodyend="185"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" line="172" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/sundials.hpp" bodystart="172" bodyend="193"/>
       </memberdef>
     </sectiondef>
     <briefdescription>

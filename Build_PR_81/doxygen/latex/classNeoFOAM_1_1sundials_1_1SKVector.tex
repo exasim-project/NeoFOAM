@@ -2,6 +2,11 @@
 \hypertarget{classNeoFOAM_1_1sundials_1_1SKVector}{}\label{classNeoFOAM_1_1sundials_1_1SKVector}\index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
 
 
+Unified interface for SUNDIALS Kokkos vector management.  
+
+
+
+
 {\ttfamily \#include $<$sundials.\+hpp$>$}
 
 \doxysubsubsection*{Public Types}
@@ -19,37 +24,44 @@ using \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0
 \begin{DoxyCompactItemize}
 \item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_adbc33f89b17f2e321ecb9e683f75d649}{SKVector}} ()
-\item 
+\begin{DoxyCompactList}\small\item\em Default constructor. Initializes with host-\/default vector. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a0cac59becf864abe63f3a487f13fd65c}{\texorpdfstring{$\sim$}{\string~}\+SKVector}} ()=default
-\item 
+\begin{DoxyCompactList}\small\item\em Default destructor. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a8e5ffbdec81b30ed9b5af1e1f42442fa}{SKVector}} (const \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \&)=default
-\item 
+\begin{DoxyCompactList}\small\item\em Copy constructor. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ac84d064eac8a53f23a542a1b54206774}{operator=}} (const \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \&)=delete
-\item 
+\begin{DoxyCompactList}\small\item\em Copy assignment operator (deleted). \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a2741276881e77ed713b6d371cbc9a4c4}{SKVector}} (\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \&\&) noexcept=default
-\item 
+\begin{DoxyCompactList}\small\item\em Move constructor. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_af4ceb4a926279ea83671a40d18ab0ef8}{operator=}} (\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \&\&) noexcept=delete
-\item 
+\begin{DoxyCompactList}\small\item\em Move assignment operator (deleted). \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a9e1aeefea2ded93e8153fec3edbd027f}{set\+Executor}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Neo\+FOAM\+::\+Executor}} \&exec)
-\item 
+\begin{DoxyCompactList}\small\item\em Sets appropriate vector implementation based on executor type. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a4760b00e2605ceade108039259cbc075}{init\+NVector}} (\mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} size, std\+::shared\+\_\+ptr$<$ SUNContext\+\_\+ $>$ context)
-\item 
-const N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a05966b772c81c9944584d82b3b2fc2c2}{NVector}} () const
-\item 
-N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_abd13660030e666aed5a45f6cf3eb38d6}{NVector}} ()
-\item 
+\begin{DoxyCompactList}\small\item\em Initializes underlying vector with given size and context. \end{DoxyCompactList}\item 
+const N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ae853965fcef0dc414e58d308c81f6d61}{sun\+NVector}} () const
+\begin{DoxyCompactList}\small\item\em Gets const reference to underlying N\+\_\+\+Vector. \end{DoxyCompactList}\item 
+N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_ac64784dbc5a4dbd5abbc2991b92245cd}{sun\+NVector}} ()
+\begin{DoxyCompactList}\small\item\em Gets mutable reference to underlying N\+\_\+\+Vector. \end{DoxyCompactList}\item 
 const \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{SKVector\+Variant}} \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a239f9c974bc4297b67e201a339f1ad11}{variant}} () const
-\item 
+\begin{DoxyCompactList}\small\item\em Gets const reference to variant storing implementation. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}{SKVector\+Variant}} \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a95d9594b1e1dbbbf79ac64050e89cdcc}{variant}} ()
-\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Gets mutable reference to variant storing implementation. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
 \subsubsection*{template$<$typename Value\+Type$>$\newline
 class Neo\+FOAM\+::sundials\+::\+SKVector$<$ Value\+Type $>$}
+Unified interface for SUNDIALS Kokkos vector management. 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00307}{307}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+\begin{DoxyTemplParams}{Template Parameters}
+{\em Value\+Type} & The vector data type\\
+\hline
+\end{DoxyTemplParams}
+Manages executor-\/specific vector implementations through variant storage. Provides common interface for vector initialization and access. 
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00350}{350}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 
 
@@ -63,7 +75,7 @@ using \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundia
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00313}{313}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00356}{356}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_abfe6ce93a16a6788c8ee6275456ed19e}\label{classNeoFOAM_1_1sundials_1_1SKVector_abfe6ce93a16a6788c8ee6275456ed19e} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!SKVectorHostDefault@{SKVectorHostDefault}}
@@ -74,7 +86,7 @@ using \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundia
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00312}{312}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00355}{355}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a93533c7d6c07f08e4e06860f709c66a1}\label{classNeoFOAM_1_1sundials_1_1SKVector_a93533c7d6c07f08e4e06860f709c66a1} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!SKVectorSerial@{SKVectorSerial}}
@@ -85,7 +97,7 @@ using \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundia
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00311}{311}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00354}{354}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d}\label{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0efdf78bc57c2d} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!SKVectorVariant@{SKVectorVariant}}
@@ -96,7 +108,7 @@ using \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundia
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00315}{315}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00357}{357}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 
 
@@ -110,7 +122,11 @@ Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00315}{315}} of file \
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00317}{317}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Default constructor. Initializes with host-\/default vector. 
+
+
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00362}{362}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a0cac59becf864abe63f3a487f13fd65c}\label{classNeoFOAM_1_1sundials_1_1SKVector_a0cac59becf864abe63f3a487f13fd65c} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!````~SKVector@{\texorpdfstring{$\sim$}{\string~}SKVector}}
@@ -119,6 +135,10 @@ Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00317}{317}} of file \
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::\texorpdfstring{$\sim$}{\string~}\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [default]}}
 
+
+
+Default destructor. 
+
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a8e5ffbdec81b30ed9b5af1e1f42442fa}\label{classNeoFOAM_1_1sundials_1_1SKVector_a8e5ffbdec81b30ed9b5af1e1f42442fa} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!SKVector@{SKVector}}
 \index{SKVector@{SKVector}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
@@ -126,6 +146,15 @@ Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00317}{317}} of file \
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::\+SKVector (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}$<$ Value\+Type $>$ \&}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [default]}}
 
+
+
+Copy constructor. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em other} & Source \doxylink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector} to copy from \\
+\hline
+\end{DoxyParams}
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a2741276881e77ed713b6d371cbc9a4c4}\label{classNeoFOAM_1_1sundials_1_1SKVector_a2741276881e77ed713b6d371cbc9a4c4} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!SKVector@{SKVector}}
 \index{SKVector@{SKVector}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
@@ -133,6 +162,15 @@ Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00317}{317}} of file \
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::\+SKVector (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}$<$ Value\+Type $>$ \&\&}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [default]}, {\ttfamily [noexcept]}}
 
+
+
+Move constructor. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em other} & Source \doxylink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector} to move from \\
+\hline
+\end{DoxyParams}
 
 
 \doxysubsection{Member Function Documentation}
@@ -145,29 +183,18 @@ void \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundial
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00349}{349}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
-
-\Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_abd13660030e666aed5a45f6cf3eb38d6}\label{classNeoFOAM_1_1sundials_1_1SKVector_abd13660030e666aed5a45f6cf3eb38d6} 
-\index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!NVector@{NVector}}
-\index{NVector@{NVector}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
-\doxysubsubsection{\texorpdfstring{NVector()}{NVector()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
-N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::\+NVector (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+Initializes underlying vector with given size and context. 
 
 
-
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00363}{363}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
-
-\Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a05966b772c81c9944584d82b3b2fc2c2}\label{classNeoFOAM_1_1sundials_1_1SKVector_a05966b772c81c9944584d82b3b2fc2c2} 
-\index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!NVector@{NVector}}
-\index{NVector@{NVector}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
-\doxysubsubsection{\texorpdfstring{NVector()}{NVector()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
-const N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::\+NVector (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+\begin{DoxyParams}{Parameters}
+{\em size} & Number of vector elements \\
+\hline
+{\em context} & SUNDIALS context for vector operations \\
+\hline
+\end{DoxyParams}
 
 
-
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00356}{356}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00424}{424}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_ac84d064eac8a53f23a542a1b54206774}\label{classNeoFOAM_1_1sundials_1_1SKVector_ac84d064eac8a53f23a542a1b54206774} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!operator=@{operator=}}
@@ -176,12 +203,20 @@ Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00356}{356}} of file \
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::operator= (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}$<$ Value\+Type $>$ \&}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [delete]}}
 
+
+
+Copy assignment operator (deleted). 
+
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_af4ceb4a926279ea83671a40d18ab0ef8}\label{classNeoFOAM_1_1sundials_1_1SKVector_af4ceb4a926279ea83671a40d18ab0ef8} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!operator=@{operator=}}
 \index{operator=@{operator=}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
 \doxysubsubsection{\texorpdfstring{operator=()}{operator=()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}} \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::operator= (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{SKVector}}$<$ Value\+Type $>$ \&\&}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [delete]}, {\ttfamily [noexcept]}}
+
+
+
+Move assignment operator (deleted). 
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a9e1aeefea2ded93e8153fec3edbd027f}\label{classNeoFOAM_1_1sundials_1_1SKVector_a9e1aeefea2ded93e8153fec3edbd027f} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!setExecutor@{setExecutor}}
@@ -192,7 +227,52 @@ void \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundial
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00325}{325}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Sets appropriate vector implementation based on executor type. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em exec} & \doxylink{namespaceNeoFOAM}{Neo\+FOAM} executor specifying computation space \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00395}{395}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_ac64784dbc5a4dbd5abbc2991b92245cd}\label{classNeoFOAM_1_1sundials_1_1SKVector_ac64784dbc5a4dbd5abbc2991b92245cd} 
+\index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!sunNVector@{sunNVector}}
+\index{sunNVector@{sunNVector}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{sunNVector()}{sunNVector()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::sun\+NVector (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets mutable reference to underlying N\+\_\+\+Vector. 
+
+\begin{DoxyReturn}{Returns}
+Mutable reference to wrapped SUNDIALS N\+\_\+\+Vector 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00446}{446}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_ae853965fcef0dc414e58d308c81f6d61}\label{classNeoFOAM_1_1sundials_1_1SKVector_ae853965fcef0dc414e58d308c81f6d61} 
+\index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!sunNVector@{sunNVector}}
+\index{sunNVector@{sunNVector}!NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{sunNVector()}{sunNVector()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+const N\+\_\+\+Vector \& \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector}{Neo\+FOAM\+::sundials\+::\+SKVector}}$<$ Value\+Type $>$\+::sun\+NVector (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Gets const reference to underlying N\+\_\+\+Vector. 
+
+\begin{DoxyReturn}{Returns}
+Const reference to wrapped SUNDIALS N\+\_\+\+Vector 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00435}{435}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a95d9594b1e1dbbbf79ac64050e89cdcc}\label{classNeoFOAM_1_1sundials_1_1SKVector_a95d9594b1e1dbbbf79ac64050e89cdcc} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!variant@{variant}}
@@ -203,7 +283,14 @@ Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00325}{325}} of file \
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00369}{369}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Gets mutable reference to variant storing implementation. 
+
+\begin{DoxyReturn}{Returns}
+Mutable reference to vector variant 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00461}{461}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1sundials_1_1SKVector_a239f9c974bc4297b67e201a339f1ad11}\label{classNeoFOAM_1_1sundials_1_1SKVector_a239f9c974bc4297b67e201a339f1ad11} 
 \index{NeoFOAM::sundials::SKVector$<$ ValueType $>$@{NeoFOAM::sundials::SKVector$<$ ValueType $>$}!variant@{variant}}
@@ -214,7 +301,14 @@ const \mbox{\hyperlink{classNeoFOAM_1_1sundials_1_1SKVector_a11ecc3fe82f4c980be0
 
 
 
-Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00368}{368}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
+Gets const reference to variant storing implementation. 
+
+\begin{DoxyReturn}{Returns}
+Const reference to vector variant 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{sundials_8hpp_source_l00455}{455}} of file \mbox{\hyperlink{sundials_8hpp_source}{sundials.\+hpp}}.
 
 
 
