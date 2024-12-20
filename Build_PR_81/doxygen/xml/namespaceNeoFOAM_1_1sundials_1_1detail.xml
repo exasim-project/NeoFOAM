@@ -3,7 +3,7 @@
   <compounddef id="namespaceNeoFOAM_1_1sundials_1_1detail" kind="namespace" language="C++">
     <compoundname>NeoFOAM::sundials::detail</compoundname>
     <sectiondef kind="func">
-      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1_1detail_1a0d21b2a06243d7a662f573d95177b05f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1sundials_1_1detail_1a3e008d86b945f441d166f608d38f55a9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
             <type>typename Vector</type>
@@ -11,13 +11,9 @@
         </templateparamlist>
         <type>void</type>
         <definition>void NeoFOAM::sundials::detail::initNVector</definition>
-        <argsstring>(Vector &amp;vec, size_t size, std::shared_ptr&lt; SUNContext_ &gt; context)</argsstring>
+        <argsstring>(size_t size, std::shared_ptr&lt; SUNContext_ &gt; context, Vector &amp;vec)</argsstring>
         <name>initNVector</name>
         <qualifiedname>NeoFOAM::sundials::detail::initNVector</qualifiedname>
-        <param>
-          <type><ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> &amp;</type>
-          <declname>vec</declname>
-        </param>
         <param>
           <type><ref refid="namespaceNeoFOAM_1aa8ea339f1c9a4f2232da876ead30a82c" kindref="member">size_t</ref></type>
           <declname>size</declname>
@@ -25,6 +21,10 @@
         <param>
           <type>std::shared_ptr&lt; SUNContext_ &gt;</type>
           <declname>context</declname>
+        </param>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> &amp;</type>
+          <declname>vec</declname>
         </param>
         <briefdescription>
 <para>Initializes a vector wrapper with specified size and context. </para>
@@ -41,14 +41,6 @@
 </parameterlist>
 <parameterlist kind="param"><parameteritem>
 <parameternamelist>
-<parametername direction="inout">vec</parametername>
-</parameternamelist>
-<parameterdescription>
-<para><ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> to initialize </para>
-</parameterdescription>
-</parameteritem>
-<parameteritem>
-<parameternamelist>
 <parametername direction="in">size</parametername>
 </parameternamelist>
 <parameterdescription>
@@ -61,6 +53,14 @@
 </parameternamelist>
 <parameterdescription>
 <para>SUNDIALS context for vector operations </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="inout">vec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para><ref refid="classNeoFOAM_1_1Vector" kindref="compound">Vector</ref> to initialize </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
