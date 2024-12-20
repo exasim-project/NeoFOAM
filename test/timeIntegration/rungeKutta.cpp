@@ -92,7 +92,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
     ddtSchemes.insert("type", std::string("Runge-Kutta"));
-    ddtSchemes.insert("Runge-Kutta-Method", std::string("Forward Euler"));
+    ddtSchemes.insert("Runge-Kutta-Method", std::string("Forward-Euler"));
     fvSchemes.insert("ddtSchemes", ddtSchemes);
     NeoFOAM::Dictionary fvSolution;
 

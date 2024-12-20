@@ -52,7 +52,7 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
         return ARKODE_EXPLICIT_MIDPOINT_EULER_2_1_2;
     }
     NF_ERROR_EXIT(
-        "Unsupported Runge-Kutta time inteation method selectied: " + key + ".\n"
+        "Unsupported Runge-Kutta time integration method selectied: " + key + ".\n"
         + "Supported methods are: Forward-Euler, Heun, Midpoint."
     );
     return ARKODE_ERK_NONE; // avoids compiler warnings.
@@ -122,7 +122,7 @@ void sunNVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& fi
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
     ValueType* fieldData = field.data();
     NeoFOAM::parallelFor(
-        field, KOKKOS_LAMBDA(const size_t i) { fieldData[i] = view(i); }
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { fieldData[i] = view(i); }
     );
 };
 
@@ -202,12 +202,12 @@ namespace detail
 /**
  * @brief Initializes a vector wrapper with specified size and context.
  * @tparam Vector Vector wrapper type implementing initNVector interface
- * @param[in,out] vec Vector to initialize
  * @param[in] size Number of elements
  * @param[in] context SUNDIALS context for vector operations
+ * @param[in,out] vec Vector to initialize
  */
 template<typename Vector>
-void initNVector(Vector& vec, size_t size, std::shared_ptr<SUNContext_> context)
+void initNVector(size_t size, std::shared_ptr<SUNContext_> context, Vector& vec)
 {
     vec.initNVector(size, context);
 }
@@ -428,7 +428,7 @@ public:
     void initNVector(size_t size, std::shared_ptr<SUNContext_> context)
     {
         std::visit(
-            [size, &context](auto& vec) { detail::initNVector(vec, size, context); }, vector_
+            [size, &context](auto& vec) { detail::initNVector(size, context, vec); }, vector_
         );
     }
 
