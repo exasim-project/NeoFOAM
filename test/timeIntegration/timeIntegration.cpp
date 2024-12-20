@@ -14,6 +14,33 @@
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
 
+struct CreateField
+{
+    std::string name;
+    NeoFOAM::UnstructuredMesh mesh;
+    NeoFOAM::scalar value = 0;
+    std::int64_t timeIndex = 0;
+    std::int64_t iterationIndex = 0;
+    std::int64_t subCycleIndex = 0;
+
+    NeoFOAM::Document operator()(NeoFOAM::Database& db)
+    {
+        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), value);
+        fvcc::VolumeField<NeoFOAM::scalar> vf(
+            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
+        );
+        return NeoFOAM::Document(
+            {{"name", vf.name},
+             {"timeIndex", timeIndex},
+             {"iterationIndex", iterationIndex},
+             {"subCycleIndex", subCycleIndex},
+             {"field", vf}},
+            fvcc::validateFieldDoc
+        );
+    }
+};
+
 TEST_CASE("TimeIntegration")
 {
     NeoFOAM::Executor exec = GENERATE(
@@ -23,7 +50,10 @@ TEST_CASE("TimeIntegration")
     );
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+
+    NeoFOAM::Database db;
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
+    fvcc::FieldCollection& fieldCollection = fvcc::FieldCollection::instance(db, "fieldCollection");
 
     NeoFOAM::Dictionary fvSchemes;
     NeoFOAM::Dictionary ddtSchemes;
@@ -31,11 +61,10 @@ TEST_CASE("TimeIntegration")
     fvSchemes.insert("ddtSchemes", ddtSchemes);
     NeoFOAM::Dictionary fvSolution;
 
-    Field fA(exec, 1, 2.0);
-    BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
-
-    std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-    auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
+    fvcc::VolumeField<NeoFOAM::scalar>& vf =
+        fieldCollection.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
+            CreateField {.name = "vf", .mesh = mesh, .value = 2.0, .timeIndex = 1}
+        );
 
     SECTION("Create expression and perform explicitOperation on " + execName)
     {
