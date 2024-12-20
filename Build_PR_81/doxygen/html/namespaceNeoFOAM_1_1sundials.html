@@ -134,6 +134,9 @@ Variables</h2></td></tr>
 <tr class="memitem:adf0e6744d854e97d0972cdd17aa13bf7" id="r_adf0e6744d854e97d0972cdd17aa13bf7"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1sundials.html#adf0e6744d854e97d0972cdd17aa13bf7">SUN_CONTEXT_DELETER</a></td></tr>
 <tr class="memdesc:adf0e6744d854e97d0972cdd17aa13bf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Custom deleter for SUNContext shared pointers.  <br /></td></tr>
 <tr class="separator:adf0e6744d854e97d0972cdd17aa13bf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa11671597bf1deb9f45b5714f1e7a547" id="r_aa11671597bf1deb9f45b5714f1e7a547"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1sundials.html#aa11671597bf1deb9f45b5714f1e7a547">SUN_ARK_DELETER</a></td></tr>
+<tr class="memdesc:aa11671597bf1deb9f45b5714f1e7a547"><td class="mdescLeft">&#160;</td><td class="mdescRight">Custom deleter for explicit type RK solvers (ERK, ARK, etc) for the unique pointers.  <br /></td></tr>
+<tr class="separator:aa11671597bf1deb9f45b5714f1e7a547"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="ae96a2418673b302afba9e29356d29f86" name="ae96a2418673b302afba9e29356d29f86"></a>
@@ -189,7 +192,7 @@ template&lt;typename SolutionFieldType &gt; </div>
 <dl class="section return"><dt>Returns</dt><dd>0 on success, non-zero on error</dd></dl>
 <p>This is our implementation of the RHS of explicit spacial integration, to be integrated in time. In our case user_data is a unique_ptr to an expression. In this function a 'working source' vector is created and parsed to the explicitOperation, which should contain the field variable at the start of the time step. Currently 'multi-stage RK' is not supported until y can be copied to this field. </p>
 
-<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00175">175</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00189">189</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
 
 </div>
 </div>
@@ -242,7 +245,7 @@ template&lt;typename ValueType &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00086">86</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00100">100</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
 
 </div>
 </div>
@@ -291,7 +294,7 @@ template&lt;typename SKVectorType , typename ValueType &gt; </div>
 </dl>
 <dl class="section warning"><dt>Warning</dt><dd>Assumes matching initialization and size between field and vector </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00070">70</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00084">84</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
 
 </div>
 </div>
@@ -326,7 +329,7 @@ template&lt;typename SKVectorType , typename ValueType &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00041">41</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00055">55</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
 
 </div>
 </div>
@@ -373,7 +376,7 @@ template&lt;typename ValueType &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00136">136</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00150">150</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
 
 </div>
 </div>
@@ -422,11 +425,44 @@ template&lt;typename SKVectorType , typename ValueType &gt; </div>
 </dl>
 <dl class="section warning"><dt>Warning</dt><dd>Assumes matching initialization and size between vector and field </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00120">120</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00134">134</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
 
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
+<a id="aa11671597bf1deb9f45b5714f1e7a547" name="aa11671597bf1deb9f45b5714f1e7a547"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa11671597bf1deb9f45b5714f1e7a547">&#9670;&#160;</a></span>SUN_ARK_DELETER</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto NeoFOAM::sundials::SUN_ARK_DELETER</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= [](<span class="keywordtype">char</span>* ark)</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordflow">if</span> (ark != <span class="keyword">nullptr</span>)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordtype">void</span>* arkode_mem = <span class="keyword">reinterpret_cast&lt;</span><span class="keywordtype">void</span>*<span class="keyword">&gt;</span>(ark);</div>
+<div class="line">        ARKodeFree(&amp;arkode_mem);</div>
+<div class="line">    }</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+<p>Custom deleter for explicit type RK solvers (ERK, ARK, etc) for the unique pointers. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ark</td><td>Pointer to the ark memory to be freed, can be nullptr.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Safely frees the ark memory. </p>
+
+<p class="definition">Definition at line <a class="el" href="sundials_8hpp_source.html#l00040">40</a> of file <a class="el" href="sundials_8hpp_source.html">sundials.hpp</a>.</p>
+
+</div>
+</div>
 <a id="adf0e6744d854e97d0972cdd17aa13bf7" name="adf0e6744d854e97d0972cdd17aa13bf7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adf0e6744d854e97d0972cdd17aa13bf7">&#9670;&#160;</a></span>SUN_CONTEXT_DELETER</h2>
 
