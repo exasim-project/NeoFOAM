@@ -34,7 +34,8 @@ public:
     void solve(Expression& eqn, SolutionFieldType& solutionField, scalar t, scalar dt) override
     {
         auto source = eqn.explicitOperation(solutionField.size());
-        SolutionFieldType& oldSolutionField = NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
+        SolutionFieldType& oldSolutionField =
+            NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
 
         solutionField.internalField() = oldSolutionField.internalField() - source * dt;
         solutionField.correctBoundaryConditions();

@@ -280,7 +280,9 @@ public:
     template<class FieldType>
     static FieldCollection& instance(FieldType& field)
     {
-        validateRegistration(field, "attempting to retrieve FieldCollection from unregistered field");
+        validateRegistration(
+            field, "attempting to retrieve FieldCollection from unregistered field"
+        );
         return instance(field.db(), field.fieldCollectionName);
     }
 
@@ -293,7 +295,9 @@ public:
     template<class FieldType>
     static const FieldCollection& instance(const FieldType& field)
     {
-        validateRegistration(field, "attempting to retrieve FieldCollection from unregistered field");
+        validateRegistration(
+            field, "attempting to retrieve FieldCollection from unregistered field"
+        );
         const Database& db = field.db();
         const Collection& collection = db.at(field.fieldCollectionName);
         return collection.as<FieldCollection>();
