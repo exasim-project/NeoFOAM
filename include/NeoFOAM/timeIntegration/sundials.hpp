@@ -319,7 +319,7 @@ public:
     using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;
 
     SKVectorDefault() = default;
-    ~SKVectorDefault() = default;
+    ~SKVectorDefault();
     SKVectorDefault(const SKVectorDefault& other)
         : kvector_(other.kvector_), svector_(other.kvector_) {};
     SKVectorDefault(SKVectorDefault&& other) noexcept
