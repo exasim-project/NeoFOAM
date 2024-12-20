@@ -1,3 +1,2 @@
 # Motivation
-WHAT is it, WHY it is needed. :kissing_heart: 
-
+WHAT is it, WHY it is needed. :kissing_heart:
