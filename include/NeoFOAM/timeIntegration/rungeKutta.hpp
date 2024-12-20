@@ -137,7 +137,7 @@ private:
         solution_; /**< Solution vector, contains the sundails N_Vector. */
     NeoFOAM::sundials::SKVector<ValueType>
         initialConditions_; /**< Initial conditions vector, contains the sundails N_Vector. */
-    std::shared_ptr<SUNContext_> context_ {nullptr, sundials::SUN_CONTEXT_DELETER}; // see type def
+    std::shared_ptr<SUNContext> context_ {nullptr, sundials::SUN_CONTEXT_DELETER}; // see type def
     std::unique_ptr<char> ODEMemory_ {nullptr}; /**< The 'memory' (sundails configuration) for the
                                                    solve. (note void* is not stl compliant). */
     std::unique_ptr<NeoFOAM::dsl::Expression> pdeExpr_ {nullptr

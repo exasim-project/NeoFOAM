@@ -85,7 +85,8 @@ void RungeKutta<SolutionFieldType>::initSUNContext()
         SUNContext rawContext;
         int flag = SUNContext_Create(SUN_COMM_NULL, &rawContext);
         NF_ASSERT(flag == 0, "SUNContext_Create failed");
-        context_.reset(rawContext, sundials::SUN_CONTEXT_DELETER);
+        SUNContext* contextPtr = new SUNContext(rawContext);
+        context_.reset(contextPtr, sundials::SUN_CONTEXT_DELETER);
     }
 }
 
@@ -118,7 +119,7 @@ void RungeKutta<SolutionFieldType>::initODEMemory(const scalar t)
         NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>,
         t,
         initialConditions_.sunNVector(),
-        context_.get()
+        *context_
     )));
     void* ark = reinterpret_cast<void*>(ODEMemory_.get());
 
