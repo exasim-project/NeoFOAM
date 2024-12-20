@@ -41,8 +41,8 @@ auto SUN_ARK_DELETER = [](char* ark)
 {
     if (ark != nullptr)
     {
-        void* arkode_mem = reinterpret_cast<void*>(ark);
-        ARKodeFree(&arkode_mem);
+        void* arkodMem = reinterpret_cast<void*>(ark);
+        ARKodeFree(&arkodMem);
     }
 };
 
