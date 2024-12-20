@@ -182,7 +182,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keyword">auto</span> view = ::sundials::kokkos::GetVec&lt;SKVectorType&gt;(vector)-&gt;View();</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    ValueType* fieldData = field.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a756b2b776a6c4cc7ffe091e42e505efa">data</a>();</div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <a class="code hl_function" href="namespaceNeoFOAM.html#a79afdaeec93fc7fcd0d3ff1951cf45be">NeoFOAM::parallelFor</a>(</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        field.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a3669f86690a09efc721a5eb902f7aa28">exec</a>(), field.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a1df824a46de3a2c0db14c4457ab8a34e">range</a>(), KOKKOS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> i) { fieldData[i] = view(i); }</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>        field, KOKKOS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> i) { fieldData[i] = view(i); }</div>
 <div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    );</div>
 <div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>};</div>
 </div>
