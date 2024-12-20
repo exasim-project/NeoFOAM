@@ -26,7 +26,7 @@ TEST_CASE("DivOperator")
     );
 
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
-    // FIXME: take 1d mesh
+    // TODO: take 1d mesh
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
 
