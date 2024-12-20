@@ -184,8 +184,9 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
         "Failed to dereference pointers in sundails."
     );
 
+    size_t size = N_VGetLength(y);
     // Copy initial value from y to source.
-    NeoFOAM::Field<NeoFOAM::scalar> source(pdeExpre->exec(), 1, 0.0);
+    NeoFOAM::Field<NeoFOAM::scalar> source(pdeExpre->exec(), size, 0.0);
     source = pdeExpre->explicitOperation(source); // compute spatial
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(pdeExpre->exec()))
     {
