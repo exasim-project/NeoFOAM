@@ -125,7 +125,7 @@ void RungeKutta<SolutionFieldType>::initODEMemory(const scalar t)
     ERKStepSetTableNum(
         ark,
         NeoFOAM::sundials::stringToERKTable(
-            this->dict_.template get<std::string>("Runge-Kutta Method")
+            this->dict_.template get<std::string>("Runge-Kutta-Method")
         )
     );
     ARKodeSetUserData(ark, pdeExpr_.get());

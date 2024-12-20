@@ -40,7 +40,7 @@ auto SUN_CONTEXT_DELETER = [](SUNContext_* ctx)
  */
 ARKODE_ERKTableID stringToERKTable(const std::string& key)
 {
-    if (key == "Forward Euler") return ARKODE_FORWARD_EULER_1_1;
+    if (key == "Forward-Euler") return ARKODE_FORWARD_EULER_1_1;
     if (key == "Heun")
     {
         NF_ERROR_EXIT("Currently unsupported until field time step-stage indexing resolved.");
@@ -51,7 +51,10 @@ ARKODE_ERKTableID stringToERKTable(const std::string& key)
         NF_ERROR_EXIT("Currently unsupported until field time step-stage indexing resolved.");
         return ARKODE_EXPLICIT_MIDPOINT_EULER_2_1_2;
     }
-    NF_ERROR_EXIT("Unsupported Runge-Kutta time inteation method selectied: " + key);
+    NF_ERROR_EXIT(
+        "Unsupported Runge-Kutta time inteation method selectied: " + key + ".\n"
+        + "Supported methods are: Forward-Euler, Heun, Midpoint."
+    );
     return ARKODE_ERK_NONE; // avoids compiler warnings.
 }
 

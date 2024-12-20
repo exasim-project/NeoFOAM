@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "NeoFOAM/core/database/fieldCollection.hpp"
+#include "NeoFOAM/core/database/oldTimeCollection.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
@@ -29,19 +31,20 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& eqn, SolutionFieldType& sol, scalar t, scalar dt) override
+    void solve(Expression& eqn, SolutionFieldType& solutionField, scalar t, scalar dt) override
     {
-        NF_ERROR_EXIT("Class still WIP.");
-        auto source = eqn.explicitOperation(sol.size());
+        auto source = eqn.explicitOperation(solutionField.size());
+        SolutionFieldType& oldSolutionField = NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
 
-        sol.internalField() -= source * dt;
-        sol.correctBoundaryConditions();
+        solutionField.internalField() = oldSolutionField.internalField() - source * dt;
+        solutionField.correctBoundaryConditions();
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))
         {
             Kokkos::fence();
         }
+        oldSolutionField.internalField() = solutionField.internalField();
     };
 
     std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> clone() const override
