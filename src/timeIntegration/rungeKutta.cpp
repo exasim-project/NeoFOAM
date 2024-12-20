@@ -115,13 +115,13 @@ void RungeKutta<SolutionFieldType>::initODEMemory(const scalar t)
     NF_DEBUG_ASSERT(context_, "SUNContext is a nullptr.");
     NF_DEBUG_ASSERT(pdeExpr_, "PDE expression is a nullptr.");
 
-    ODEMemory_.reset(reinterpret_cast<char*>(ERKStepCreate(
+    void* ark = ERKStepCreate(
         NeoFOAM::sundials::explicitRKSolve<SolutionFieldType>,
         t,
         initialConditions_.sunNVector(),
         *context_
-    )));
-    void* ark = reinterpret_cast<void*>(ODEMemory_.get());
+    );
+    ODEMemory_.reset(reinterpret_cast<char*>(ark));
 
     // Initialize ERKStep solver
     ERKStepSetTableNum(

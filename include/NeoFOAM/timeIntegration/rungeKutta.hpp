@@ -137,9 +137,12 @@ private:
         solution_; /**< Solution vector, contains the sundails N_Vector. */
     NeoFOAM::sundials::SKVector<ValueType>
         initialConditions_; /**< Initial conditions vector, contains the sundails N_Vector. */
-    std::shared_ptr<SUNContext> context_ {nullptr, sundials::SUN_CONTEXT_DELETER}; // see type def
-    std::unique_ptr<char> ODEMemory_ {nullptr}; /**< The 'memory' (sundails configuration) for the
-                                                   solve. (note void* is not stl compliant). */
+    std::shared_ptr<SUNContext> context_ {
+        nullptr, sundials::SUN_CONTEXT_DELETER
+    }; /**< The SUNContext for the solve. */
+    std::unique_ptr<char, decltype(sundials::SUN_ARK_DELETER)> ODEMemory_ {
+        nullptr, sundials::SUN_ARK_DELETER
+    }; /**< The 'memory' sundails for the RK solver. (note void* is not stl compliant). */
     std::unique_ptr<NeoFOAM::dsl::Expression> pdeExpr_ {nullptr
     }; /**< Pointer to the pde system we are integrating in time. */
 

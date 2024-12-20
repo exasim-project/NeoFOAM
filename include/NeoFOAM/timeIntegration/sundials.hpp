@@ -33,6 +33,20 @@ auto SUN_CONTEXT_DELETER = [](SUNContext* ctx)
 };
 
 /**
+ * @brief Custom deleter for explicit type RK solvers (ERK, ARK, etc) for the unique pointers.
+ * @param ark Pointer to the ark memory to be freed, can be nullptr.
+ * @details Safely frees the ark memory.
+ */
+auto SUN_ARK_DELETER = [](char* ark)
+{
+    if (ark != nullptr)
+    {
+        void* arkode_mem = reinterpret_cast<void*>(ark);
+        ARKodeFree(&arkode_mem);
+    }
+};
+
+/**
  * @brief Maps dictionary keywords to SUNDIALS RKButcher tableau identifiers.
  * @param key The name of the explicit Runge-Kutta method.
  * @return ARKODE_ERKTableID for the corresponding Butcher tableau.
@@ -319,7 +333,7 @@ public:
     using KVector = ::sundials::kokkos::Vector<Kokkos::DefaultExecutionSpace>;
 
     SKVectorDefault() = default;
-    ~SKVectorDefault();
+    ~SKVectorDefault() = default;
     SKVectorDefault(const SKVectorDefault& other)
         : kvector_(other.kvector_), svector_(other.kvector_) {};
     SKVectorDefault(SKVectorDefault&& other) noexcept
