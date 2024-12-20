@@ -122,7 +122,7 @@ void sunNVectorToFieldImpl(const N_Vector& vector, NeoFOAM::Field<ValueType>& fi
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
     ValueType* fieldData = field.data();
     NeoFOAM::parallelFor(
-        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { fieldData[i] = view(i); }
+        field, KOKKOS_LAMBDA(const size_t i) { fieldData[i] = view(i); }
     );
 };
 
@@ -165,7 +165,7 @@ void sunNVectorToField(const N_Vector& vector, NeoFOAM::Field<ValueType>& field)
  * @param userData Pointer to Expression object
  * @return 0 on success, non-zero on error
  *
- * @details This is our implementation of the RHS of explicit spacital integration, to be integrated
+ * @details This is our implementation of the RHS of explicit spacial integration, to be integrated
  * in time. In our case user_data is a unique_ptr to an expression. In this function a 'working
  * source' vector is created and parsed to the explicitOperation, which should contain the field
  * variable at the start of the time step. Currently 'multi-stage RK' is not supported until y
