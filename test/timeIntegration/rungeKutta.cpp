@@ -131,8 +131,6 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             {
                 NeoFOAM::dsl::solve(eqn, vf, time, dt, fvSchemes, fvSolution);
                 time += dt;
-                fvcc::oldTime(vf).internalField() =
-                    vf.internalField(); // advance to next times step.
             }
 
             // check error.

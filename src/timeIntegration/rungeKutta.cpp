@@ -50,6 +50,7 @@ void RungeKutta<SolutionFieldType>::solve(
 
     // Copy solution out. (Fence is in sundails free)
     NeoFOAM::sundials::sunNVectorToField(solution_.sunNVector(), solutionField.internalField());
+    oldSolutionField.internalField() = solutionField.internalField();
 }
 
 template<typename SolutionFieldType>
