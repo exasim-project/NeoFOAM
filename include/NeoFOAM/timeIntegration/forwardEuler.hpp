@@ -31,7 +31,9 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void solve(Expression& eqn, SolutionFieldType& solutionField, scalar t, scalar dt) override
+    void solve(
+        Expression& eqn, SolutionFieldType& solutionField, [[maybe_unused]] scalar t, scalar dt
+    ) override
     {
         auto source = eqn.explicitOperation(solutionField.size());
         SolutionFieldType& oldSolutionField =

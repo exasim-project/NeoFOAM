@@ -39,14 +39,12 @@ TEST_CASE("DivOperator")
 
     SECTION("Construct from Token" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
         fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
     }
 
     SECTION("Construct from Dictionary" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::Dictionary(
             {{std::string("DivOperator"), std::string("Gauss")},
              {std::string("surfaceInterpolation"), std::string("linear")}}
