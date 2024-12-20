@@ -98,7 +98,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [&ptr, size](const auto& newExec) { ptr = newExec.alloc(size * sizeof(ValueType)); },
+            [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
             exec_
         );
         data_ = static_cast<ValueType*>(ptr);
