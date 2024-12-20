@@ -37,7 +37,7 @@ public:
         SolutionFieldType& oldSolutionField =
             NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
 
-        solutionField.internalField() = oldSolutionField.internalField() - source * dt;
+        solutionField.internalField() = oldSolutionField.internalField() + source * dt;
         solutionField.correctBoundaryConditions();
 
         // check if executor is GPU

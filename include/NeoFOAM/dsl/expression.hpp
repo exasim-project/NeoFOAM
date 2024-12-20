@@ -58,7 +58,7 @@ public:
         {
             oper.explicitOperation(source);
         }
-        return source;
+        return source * -1.0;
     }
 
     void addOperator(const Operator& oper)

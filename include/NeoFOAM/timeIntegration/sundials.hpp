@@ -186,8 +186,7 @@ int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, v
 
     size_t size = N_VGetLength(y);
     // Copy initial value from y to source.
-    NeoFOAM::Field<NeoFOAM::scalar> source(pdeExpre->exec(), size, 0.0);
-    source = pdeExpre->explicitOperation(source); // compute spatial
+    NeoFOAM::Field<NeoFOAM::scalar> source = pdeExpre->explicitOperation(size); // compute spatial
     if (std::holds_alternative<NeoFOAM::GPUExecutor>(pdeExpre->exec()))
     {
         Kokkos::fence();
