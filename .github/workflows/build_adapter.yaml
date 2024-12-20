@@ -35,10 +35,12 @@ jobs:
     steps:
      - name: Select branch to checkout
        run: |
-         if [[ $(git ls-remote --heads https://github.com/exasim-project/FoamAdapter ${{ github.head_ref }}) ]]
+         if [[ $(git ls-remote --exit-code --heads https://github.com/exasim-project/FoamAdapter ${{ github.head_ref }}) ]]
          then
-           echo checkout=${{ env.branch }} >> $GITHUB_ENV
+           echo "checkout ${{ github.head_ref }}"
+           echo checkout=${{ github.head_ref }} >> $GITHUB_ENV
          else
+           echo "checkout main"
            echo checkout=main >> $GITHUB_ENV
          fi
 
@@ -46,7 +48,7 @@ jobs:
        uses: actions/checkout@v4
        with:
         repository: exasim-project/FoamAdapter
-        ref: '${{ env.branch }}'
+        ref: '${{ env.checkout }}'
 
      - name: Checkout NeoFOAM submodule
        uses: actions/checkout@v4

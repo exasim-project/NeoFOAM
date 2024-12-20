@@ -304,8 +304,10 @@ public:
          */
         static bool addSubType()
         {
-            CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
-            { return std::unique_ptr<Base>(new derivedClass(std::forward<Args>(args)...)); };
+            CreatorFunc func = [](Args... args) -> std::unique_ptr<Base> {
+                return static_cast<std::unique_ptr<Base>>(new derivedClass(std::forward<Args>(args
+                )...));
+            };
             RuntimeSelectionFactory::table()[derivedClass::name()] = func;
 
             DerivedClassDocumentation childData;

@@ -25,7 +25,7 @@ TEST_CASE("DivOperator")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     // TODO take 1d mesh
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
@@ -39,14 +39,12 @@ TEST_CASE("DivOperator")
 
     SECTION("Construct from Token" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
         fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
     }
 
     SECTION("Construct from Dictionary" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::Dictionary(
             {{std::string("DivOperator"), std::string("Gauss")},
              {std::string("surfaceInterpolation"), std::string("linear")}}

@@ -107,4 +107,21 @@ private:
     std::unordered_map<std::string, Collection> collections_;
 };
 
+
+/**
+ * @brief Validates that a field is registered in the database.
+ *
+ * @tparam Type The type of the field.
+ * @param field The field to validate.
+ * @throws std::runtime_error if the field is not registered in the database.
+ */
+template<typename Type>
+void validateRegistration(const Type& obj, const std::string errorMessage)
+{
+    if (!obj.registered())
+    {
+        throw std::runtime_error(errorMessage);
+    }
+}
+
 } // namespace NeoFOAM
