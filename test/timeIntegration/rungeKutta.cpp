@@ -44,7 +44,7 @@ public:
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
-            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += fieldData[i] * fieldData[i]; }
+            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] -= fieldData[i] * fieldData[i]; }
         );
     }
 
