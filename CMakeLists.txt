@@ -86,11 +86,6 @@ include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizer.cmake)
 include(cmake/StaticAnalyzers.cmake)
 
-if(NEOFOAM_ENABLE_CUDA)
-  find_package(CUDAToolkit REQUIRED)
-  enable_language(CUDA)
-endif()
-
 add_library(neofoam_options INTERFACE)
 add_library(neofoam_warnings INTERFACE)
 if(NEOFOAM_ENABLE_WARNINGS)

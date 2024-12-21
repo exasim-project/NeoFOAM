@@ -143,7 +143,9 @@ struct RegisterDocumentation
 
     static bool REGISTERED; ///< Static variable used to trigger the registration of the class
                             ///< documentation.
+#ifdef _MSC_VER
     static_assert((bool)&REGISTERED);
+#endif
 };
 
 // Initialize the static variable and register the class
@@ -295,7 +297,9 @@ public:
 
         friend derivedClass;
         [[maybe_unused]] static bool REGISTERED;
+#ifdef _MSC_VER
         static_assert((bool)&REGISTERED);
+#endif
 
         /**
          * @brief Adds the derived class as a sub type.
@@ -331,9 +335,11 @@ public:
             }
         }
 
+#ifdef _MSC_VER
     private:
 
         Register() { (void)REGISTERED; }
+#endif
     };
 
     virtual ~RuntimeSelectionFactory() = default;
