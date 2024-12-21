@@ -34,6 +34,8 @@
     <innernamespace refid="namespaceNeoFOAM_1_1detail">NeoFOAM::detail</innernamespace>
     <innernamespace refid="namespaceNeoFOAM_1_1dsl">NeoFOAM::dsl</innernamespace>
     <innernamespace refid="namespaceNeoFOAM_1_1finiteVolume">NeoFOAM::finiteVolume</innernamespace>
+    <innernamespace refid="namespaceNeoFOAM_1_1sundials">NeoFOAM::sundials</innernamespace>
+    <innernamespace refid="namespaceNeoFOAM_1_1timeIntegration">NeoFOAM::timeIntegration</innernamespace>
     <sectiondef kind="typedef">
       <memberdef kind="typedef" id="namespaceNeoFOAM_1a8031b90f392da83903614bb0d9da7355" prot="public" static="no">
         <type>std::function&lt; bool(<ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>)&gt;</type>
@@ -68,7 +70,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="13" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="13" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="16" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="16" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" prot="public" static="no">
         <type>std::variant&lt; <ref refid="classNeoFOAM_1_1Dictionary" kindref="compound">Dictionary</ref>, <ref refid="classNeoFOAM_1_1TokenList" kindref="compound">TokenList</ref> &gt;</type>
@@ -243,6 +245,62 @@
       </memberdef>
     </sectiondef>
     <sectiondef kind="func">
+      <memberdef kind="function" id="namespaceNeoFOAM_1a43b162c158f916878dc09424dd4d37d1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Type</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::validateRegistration</definition>
+        <argsstring>(const Type &amp;obj, const std::string errorMessage)</argsstring>
+        <name>validateRegistration</name>
+        <qualifiedname>NeoFOAM::validateRegistration</qualifiedname>
+        <param>
+          <type>const Type &amp;</type>
+          <declname>obj</declname>
+        </param>
+        <param>
+          <type>const std::string</type>
+          <declname>errorMessage</declname>
+        </param>
+        <briefdescription>
+<para>Validates that a field is registered in the database. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>Type</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The type of the field. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>field</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The field to validate. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="exception"><parameteritem>
+<parameternamelist>
+<parametername>std::runtime_error</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>if the field is not registered in the database. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/database.hpp" line="119" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/database/database.hpp" bodystart="119" bodyend="125"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a19b432970d4c56c440ca5f4bc6670b43" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>bool</type>
         <definition>bool NeoFOAM::hasId</definition>
@@ -461,7 +519,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="21" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="21" bodyend="39"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="24" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="24" bodyend="42"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a4354d14390c6cd1d3a813869a7aff63b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
@@ -504,7 +562,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="48" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="48" bodyend="51"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" line="51" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/core/executor/executor.hpp" bodystart="51" bodyend="54"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a11cb8ffac85b2e8d34007c806b5edaf4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -959,7 +1017,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" line="433" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" bodystart="433" bodyend="437"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" line="427" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" bodystart="427" bodyend="431"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a7c9cbcc523297970cc4d1b13bde319d2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1007,7 +1065,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" line="446" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" bodystart="446" bodyend="450"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" line="440" column="8" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/field.hpp" bodystart="440" bodyend="444"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a9cb7eae57c041b049ff2dcd222cc9573" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
