@@ -5,39 +5,40 @@ add_library(NeoFOAM ${NeoFOAM_LIB_TYPE})
 
 include(GNUInstallDirs)
 
-set(NeoFOAM_SRCS
-    "core/primitives/vector.cpp"
-    "core/time.cpp"
-    "core/database/database.cpp"
-    "core/database/collection.cpp"
-    "core/database/document.cpp"
-    "core/database/fieldCollection.cpp"
-    "core/database/oldTimeCollection.cpp"
-    "core/dictionary.cpp"
-    "core/demangle.cpp"
-    "core/tokenList.cpp"
-    "dsl/coeff.cpp"
-    "dsl/operator.cpp"
-    "executor/CPUExecutor.cpp"
-    "executor/GPUExecutor.cpp"
-    "executor/serialExecutor.cpp"
-    "mesh/unstructured/boundaryMesh.cpp"
-    "mesh/unstructured/unstructuredMesh.cpp"
-    "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
-    "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
-    "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
-    "finiteVolume/cellCentred/boundary/boundary.cpp"
-    "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
-    "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
-    "finiteVolume/cellCentred/interpolation/linear.cpp"
-    "finiteVolume/cellCentred/interpolation/upwind.cpp"
-    "timeIntegration/timeIntegration.cpp")
-
 target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
 
 if(NEOFOAM_ENABLE_CUDA)
   set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
 endif()
+target_sources(
+  NeoFOAM
+  PRIVATE "core/primitives/vector.cpp"
+          "core/time.cpp"
+          "core/database/database.cpp"
+          "core/database/collection.cpp"
+          "core/database/document.cpp"
+          "core/database/fieldCollection.cpp"
+          "core/database/oldTimeCollection.cpp"
+          "core/dictionary.cpp"
+          "core/demangle.cpp"
+          "core/tokenList.cpp"
+          "dsl/coeff.cpp"
+          "dsl/operator.cpp"
+          "executor/CPUExecutor.cpp"
+          "executor/GPUExecutor.cpp"
+          "executor/serialExecutor.cpp"
+          "mesh/unstructured/boundaryMesh.cpp"
+          "mesh/unstructured/unstructuredMesh.cpp"
+          "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
+          "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
+          "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
+          "finiteVolume/cellCentred/boundary/boundary.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+          "finiteVolume/cellCentred/interpolation/linear.cpp"
+          "finiteVolume/cellCentred/interpolation/upwind.cpp"
+          "timeIntegration/timeIntegration.cpp"
+          "timeIntegration/rungeKutta.cpp")
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
@@ -54,7 +55,9 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
-target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos sundials_core
+                                     sundials_arkode sundials_nvecserial cpptrace::cpptrace)
+
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM PUBLIC MPI::MPI_CXX)
 endif()

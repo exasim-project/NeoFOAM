@@ -1,6 +1,7 @@
 # Version 0.1.0 (unreleased)
 - improve build with MSVC and Clang on Windows [#163](https://github.com/exasim-project/NeoFOAM/pull/163)
 - Add document based database [#155](https://github.com/exasim-project/NeoFOAM/pull/155)
+- Implement a DSL interface [#121](https://github.com/exasim-project/NeoFOAM/pull/121)
 - Implement a basic DSL interface [#102](https://github.com/exasim-project/NeoFOAM/pull/102)
 - faster project configuration [#179](https://github.com/exasim-project/NeoFOAM/pull/179)
 - improved error handling and addition of tokenList and Input [#134](https://github.com/exasim-project/NeoFOAM/pull/134)

@@ -125,3 +125,12 @@ jobs:
     - uses: dangoslen/changelog-enforcer@v3
       with:
         changeLogPath: CHANGELOG.md
+  fixmes:
+    name: FIXME check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: greole/action-fixme-check@master # or @ the latest release
+      with:
+        terms: 'FIXME' # optional, defaults to `FIXME`
+        case-sensitive: false  # optional, defaults to `true`

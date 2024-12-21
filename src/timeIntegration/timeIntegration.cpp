@@ -7,7 +7,7 @@
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-namespace NeoFOAM::dsl
+namespace NeoFOAM::timeIntegration
 {
 
 template class ForwardEuler<fvcc::VolumeField<scalar>>;

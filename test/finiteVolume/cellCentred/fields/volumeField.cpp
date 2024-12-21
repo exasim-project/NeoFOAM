@@ -25,7 +25,7 @@ TEST_CASE("volumeField")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};

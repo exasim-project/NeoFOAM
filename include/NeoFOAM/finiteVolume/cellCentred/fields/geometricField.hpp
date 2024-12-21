@@ -52,18 +52,19 @@ public:
      * @brief Constructor for GeometricFieldMixin.
      *
      * @param exec The executor object.
+     * @param fieldName The name of the corresponding field.
      * @param mesh The unstructured mesh object.
      * @param internalField The internal field object.
      * @param boundaryFields The boundary field object.
      */
     GeometricFieldMixin(
         const Executor& exec,
-        std::string name,
+        std::string fieldName,
         const UnstructuredMesh& mesh,
         const Field<ValueType>& internalField,
         const BoundaryFields<ValueType>& boundaryFields
     )
-        : name(name), exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
+        : name(fieldName), exec_(exec), mesh_(mesh), field_({exec, internalField, boundaryFields})
     {
         if (mesh.nCells() != internalField.size())
         {

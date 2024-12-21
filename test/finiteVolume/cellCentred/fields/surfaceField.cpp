@@ -25,7 +25,7 @@ TEST_CASE("surfaceField")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("can instantiate SurfaceField with fixedValues on: " + execName)
     {

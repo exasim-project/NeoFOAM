@@ -157,7 +157,7 @@ public:
      */
     [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == exec_) return Field<ValueType>(*this);
+        if (dstExec == exec_) return *this;
 
         Field<ValueType> result(dstExec, size_);
         std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
@@ -413,13 +413,7 @@ private:
     void validateOtherField(const Field<ValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-
-        std::string execName = std::visit([](auto e) { return e.print(); }, exec());
-        std::string rhsExecName = std::visit([](auto e) { return e.print(); }, rhs.exec());
-        NF_DEBUG_ASSERT(
-            exec() == rhs.exec(),
-            "Executors: " + execName + " and " + rhsExecName + " are not the same."
-        );
+        NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
     }
 };
 

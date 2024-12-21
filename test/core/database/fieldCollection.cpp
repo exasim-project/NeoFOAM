@@ -73,7 +73,7 @@ TEST_CASE("Field Document")
     );
 
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
     SECTION("create FieldDocument: " + execName)
@@ -137,7 +137,7 @@ TEST_CASE("FieldCollection")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
     SECTION("create FieldCollection: " + execName)

@@ -33,10 +33,22 @@ jobs:
             CXX: g++
     runs-on: ubuntu-24.04
     steps:
+     - name: Select branch to checkout
+       run: |
+         if [[ $(git ls-remote --exit-code --heads https://github.com/exasim-project/FoamAdapter ${{ github.head_ref }}) ]]
+         then
+           echo "checkout ${{ github.head_ref }}"
+           echo checkout=${{ github.head_ref }} >> $GITHUB_ENV
+         else
+           echo "checkout main"
+           echo checkout=main >> $GITHUB_ENV
+         fi
+
      - name: Checkout FoamAdapter
        uses: actions/checkout@v4
        with:
         repository: exasim-project/FoamAdapter
+        ref: '${{ env.checkout }}'
 
      - name: Checkout NeoFOAM submodule
        uses: actions/checkout@v4

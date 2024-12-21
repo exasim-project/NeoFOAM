@@ -2,10 +2,13 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <string>
+#include <variant>
+
 #include "NeoFOAM/core/executor/serialExecutor.hpp"
 #include "NeoFOAM/core/executor/GPUExecutor.hpp"
 #include "NeoFOAM/core/executor/CPUExecutor.hpp"
-#include <variant>
+#include "NeoFOAM/core/error.hpp"
 
 namespace NeoFOAM
 {
