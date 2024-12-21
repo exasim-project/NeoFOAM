@@ -43,10 +43,6 @@ target_sources(
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
                                  "mesh/unstructured/communicator.cpp")
-  if(NEOFOAM_ENABLE_CUDA)
-    set_source_files_properties("core/mpi/halfDuplexCommBuffer.cpp"
-                                "mesh/unstructured/communicator.cpp" PROPERTIES LANGUAGE CUDA)
-  endif()
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)

@@ -26,9 +26,6 @@ function(neofoam_unit_test TEST)
   endif()
 
   add_executable(${TEST} "${TEST}.cpp")
-  if(NEOFOAM_ENABLE_CUDA)
-    set_source_files_properties("${TEST}.cpp" PROPERTIES LANGUAGE CUDA)
-  endif()
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
   if(WIN32)
@@ -65,9 +62,6 @@ function(neofoam_unit_test_mpi TEST)
   endif()
 
   add_executable(${TEST} "${TEST}.cpp")
-  if(NEOFOAM_ENABLE_CUDA)
-    set_source_files_properties("${TEST}.cpp" PROPERTIES LANGUAGE CUDA)
-  endif()
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main_mpi neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
   if(WIN32)
