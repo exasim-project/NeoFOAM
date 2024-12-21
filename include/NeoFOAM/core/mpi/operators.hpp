@@ -106,7 +106,7 @@ constexpr MPI_Datatype getType()
     else if constexpr (std::is_same_v<valueType, long double>)
         return MPI_LONG_DOUBLE;
     else if constexpr (std::is_same_v<valueType, bool>)
-        return MPI_BOOL;
+        return MPI_CXX_BOOL;
     else if constexpr (std::is_same_v<valueType, std::complex<float>>)
         return MPI_CXX_FLOAT_COMPLEX;
     else if constexpr (std::is_same_v<valueType, std::complex<double>>)
