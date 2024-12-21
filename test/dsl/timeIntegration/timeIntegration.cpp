@@ -14,6 +14,9 @@
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
 
+// only needed for msvc
+template class NeoFOAM::dsl::ForwardEuler<VolumeField>;
+
 TEST_CASE("TimeIntegration")
 {
     NeoFOAM::Executor exec = GENERATE(

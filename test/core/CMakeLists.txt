@@ -40,7 +40,7 @@ target_link_libraries(runTimeSelectionFactory PRIVATE Catch2::Catch2WithMain cpp
                                             NeoFOAM_public_api)
 if(WIN32)
   set_target_properties(
-    registerClass
+    runTimeSelectionFactory
     PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/$<0:>
                LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/$<0:>
                ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/$<0:>)
