@@ -85,6 +85,44 @@ The code snippet also highlights another important aspect, the executor. The exe
     NeoFOAM::fill(GPUb, 2.0);
     auto GPUc = GPUa + GPUb;
 
+SegmentedField
+^^^^^^^^^^^^^^
+
+SegmentedField is a template class that represents a field divided into multiple segments and can represent vector of vector of a defined ValueType.
+It also allows the definition of an IndexType, so each segment of the vector can be addressed.
+It can be used to represent cell to cell stencil.
+
+.. code-block:: cpp
+
+    NeoFOAM::Field<NeoFOAM::label> values(exec, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, {0, 2, 4, 6, 8, 10});
+
+    NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(values, segments);
+    auto [valueSpan, segment] = segField.spans();
+
+    parallelFor(
+        exec,
+        {0, segField.numSegments()},
+        KOKKOS_LAMBDA(const size_t segI) {
+            // add all values in the segment
+
+            // check if it works with bounds
+            auto [bStart, bEnd] = segment.bounds(segI);
+            auto bVals = valueSpan.subspan(bStart, bEnd - bStart);
+            for (auto& val : bVals)
+            {
+                resultSpan[segI] += val;
+            }
+
+
+        }
+    );
+
+In this example, each of the five segments would have a size of two.
+This data allows the representation of stencils in a continuous memory layout, which can be beneficial for performance optimization in numerical simulations especially on GPUs.
+
+The spans method return the value span as well as the segment class that behaves similar to a span but provides additional features
+
 Interface
 ^^^^^^^^^
 
