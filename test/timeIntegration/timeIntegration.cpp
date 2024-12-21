@@ -14,6 +14,9 @@
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
 
+// only needed for msvc
+template class NeoFOAM::timeIntegration::ForwardEuler<VolumeField>;
+
 struct CreateField
 {
     std::string name;

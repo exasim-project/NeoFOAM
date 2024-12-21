@@ -6,6 +6,9 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
+  if(WIN32)
+    message(FATAL_ERROR "NEOFOAM_ENABLE_MPI_SUPPORT not supported on Windows")
+  endif()
   find_package(MPI 3.1 REQUIRED)
 endif()
 
@@ -41,10 +44,10 @@ cpmaddpackage(
 cpmaddpackage(
   NAME
   nlohmann_json
-  URL
-  https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   VERSION
   3.11.3
+  URL
+  https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
 
 if(${NEOFOAM_WITH_SUNDIALS})

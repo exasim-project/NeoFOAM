@@ -49,4 +49,6 @@ private:
     const std::shared_ptr<GeometryScheme> geometryScheme_;
 };
 
+class Linear;
+
 } // namespace NeoFOAM

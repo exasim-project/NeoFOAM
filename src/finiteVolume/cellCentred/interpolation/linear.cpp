@@ -75,4 +75,6 @@ std::unique_ptr<SurfaceInterpolationFactory> Linear::clone() const
     return std::make_unique<Linear>(*this);
 }
 
+class Linear;
+
 } // namespace NeoFOAM

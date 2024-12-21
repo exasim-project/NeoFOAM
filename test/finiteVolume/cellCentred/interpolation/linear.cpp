@@ -11,6 +11,8 @@
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
 
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 using NeoFOAM::finiteVolume::cellCentred::VolumeField;
 using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
