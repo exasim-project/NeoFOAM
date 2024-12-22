@@ -227,6 +227,11 @@
 <li class="toctree-l2"><a class="reference internal" href="dsl/operator.html">Operator</a></li>
 </ul>
 </li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="timeIntegration/index.html">Time Integration</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Time Integration</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="timeIntegration/forwardEuler.html">Forward Euler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timeIntegration/rungeKutta.html">Runge Kutta</a></li>
+</ul>
+</li>
 </ul>
 
 </div>
@@ -395,33 +400,6 @@ sudo<span class="w"> </span>ln<span class="w"> </span>-s<span class="w"> </span>
 sudo<span class="w"> </span>ln<span class="w"> </span>-s<span class="w"> </span>/usr/bin/clang++-16<span class="w"> </span>/usr/bin/clang++
 </pre></div>
 </div>
-<section id="windows">
-<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading">¶</a></h3>
-<p>To compile NeoFOAM on windows, mysys2 is required the installation is described in vscode user <a class="reference external" href="https://code.visualstudio.com/docs/cpp/config-mingw">guide</a></p>
-<p>Following package are required with pacman</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain</span>
-pacman<span class="w"> </span>-S<span class="w"> </span>mingw-w64-x86_64-clang
-pacman<span class="w"> </span>-S<span class="w"> </span>mingw-w64-x86_64-cmake
-pacman<span class="w"> </span>-S<span class="w"> </span>mingw-w64-x86_64-ninja
-pacman<span class="w"> </span>-S<span class="w"> </span>mingw-w64-x86_64-msmpi
-
-pacman<span class="w"> </span>-S<span class="w"> </span>mingw-w64-x86_64-clang<span class="w"> </span>mingw-w64-x86_64-cmake<span class="w"> </span>mingw-w64-x86_64-ninja<span class="w"> </span>mingw-w64-x86_64-msmpi<span class="w"> </span>mingw-w64-x86_64-python<span class="w"> </span>mingw-w64-x86_64-lld
-</pre></div>
-</div>
-<p>It also requires the addition of following User Path variables (see vscode guide), assuming the default installation path</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>C:<span class="se">\m</span>sys64<span class="se">\m</span>ingw64<span class="se">\b</span>in
-</pre></div>
-</div>
-<p>in vscode make sure clang (the current version of gcc installed with pacman is only 14.0 (7.9.24)) is selected by adding to set .vscode/settings.json</p>
-<blockquote>
-<div><dl class="simple">
-<dt>“cmake.environment”: {</dt><dd><p>“CC”: “clang”,
-“CXX”: “clang++”</p>
-</dd>
-</dl>
-<p>}</p>
-</div></blockquote>
-</section>
 </section>
 <section id="workflow-with-vscode">
 <h2>Workflow with vscode<a class="headerlink" href="#workflow-with-vscode" title="Link to this heading">¶</a></h2>
@@ -496,10 +474,7 @@ ms-vscode.cmake-tools
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#building-with-cmake-presets">Building with CMake Presets</a></li>
-<li><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
-<li><a class="reference internal" href="#windows">Windows</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li><a class="reference internal" href="#workflow-with-vscode">Workflow with vscode</a></li>
 </ul>
 </li>
