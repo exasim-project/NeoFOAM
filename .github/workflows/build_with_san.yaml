@@ -1,4 +1,4 @@
-name: Build NeoFOAM on ubuntu
+name: Build NeoFOAM with sanitizer
 run-name: 'Build workflow'
 
 on:
@@ -22,17 +22,17 @@ concurrency:
 jobs:
   build:
     if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci')}}
-    name: Build NeoFOAM on ubuntu
+    name: Build NeoFOAM with sanitizer
     strategy:
       fail-fast: false
       matrix:
         compiler:
           - CC: clang
             CXX: clang++
-        preset: ["DNEOFOAM_ENABLE_SANITIZE_ADDRESS",
-          "NEOFOAM_ENABLE_SANITIZE_LEAK",
-          "NEOFOAM_ENABLE_SANITIZE_UB",
-          "NEOFOAM_ENABLE_SANITIZE_MEMORY"
+        preset: ["DNEOFOAM_ENABLE_SANITIZE_ADDRESS=ON",
+          "NEOFOAM_ENABLE_SANITIZE_LEAK=ON",
+          "NEOFOAM_ENABLE_SANITIZE_UB=ON",
+          "NEOFOAM_ENABLE_SANITIZE_MEMORY=ON"
         ]
     runs-on: ubuntu-latest
     steps:
@@ -81,12 +81,12 @@ jobs:
        run: |
          CC=${{matrix.compiler.CC}} \
          CXX=${{matrix.compiler.CXX}} \
-         cmake --preset ${{matrix.preset}} \
+         cmake --preset develop -D${{matrix.preset}} \
            -DNEOFOAM_BUILD_TESTS=ON \
            -DNEOFOAM_DEVEL_TOOLS=OFF \
            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
-         cmake --build  --preset develop -D${{matrix.preset}}
+         cmake --build  --preset develop
 
      - name: Execute unit tests NeoFOAM
        run: |
-         ctest --preset ${{matrix.preset}}
+         ctest --preset develop
