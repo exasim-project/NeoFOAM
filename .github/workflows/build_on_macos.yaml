@@ -1,0 +1,68 @@
+name: Build NeoFOAM on MacOs
+run-name: 'Build workflow'
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    types: synchronize
+  schedule:
+    - cron: "* 0 * * 0"
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  OMPI_MCA_rmaps_base_oversubscribe: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
+    name: Build NeoFOAM on MacOs
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - CC: clang
+            CXX: clang++
+        preset: ["develop" ]
+    runs-on: macos-latest
+    steps:
+     - name: Checkout to repository
+       uses: actions/checkout@v4
+
+     - name: Set up cache
+       uses: actions/cache@v4
+       if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
+       with:
+         path: build
+         key: macos_build_PR_${{ github.event.pull_request.number }}_${{matrix.compiler.CC}}_${{matrix.preset}}
+
+     - name: Install dependencies
+       run: |
+         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+         brew install ninja cmake
+
+     - name: Get versions
+       run: |
+         clang --version
+         ninja --version
+         cmake --version
+
+     - name: Build NeoFOAM
+       run: |
+         CC=${{matrix.compiler.CC}} \
+         CXX=${{matrix.compiler.CXX}} \
+         cmake --preset ${{matrix.preset}} \
+           -DNEOFOAM_BUILD_TESTS=ON \
+           -DNEOFOAM_DEVEL_TOOLS=OFF \
+           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+         cmake --build  --preset ${{matrix.preset}}
+
+     - name: Execute unit tests NeoFOAM
+       run: |
+         ctest --preset ${{matrix.preset}}
