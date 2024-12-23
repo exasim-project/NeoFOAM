@@ -30,9 +30,6 @@ using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
 using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
 using Ddt = NeoFOAM::dsl::temporal::Ddt<VolumeField>;
 
-// only needed for mscv
-template class NeoFOAM::timeIntegration::RungeKutta<VolumeField>;
-
 class YSquared : public OperatorMixin
 {
 
