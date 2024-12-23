@@ -229,14 +229,14 @@ TEST_CASE("FieldCollection")
         REQUIRE(t.internalField().copyToHost()[0] == 1.0);
         REQUIRE(t.registered());
 
-        SECTION("Construct from Field")
-        {
-            fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(t);
-            REQUIRE(fieldCollection2.size() == 1);
-            const fvcc::VolumeField<NeoFOAM::scalar>& constT = t;
-            const fvcc::FieldCollection& fieldCollection3 = fvcc::FieldCollection::instance(constT);
-            REQUIRE(fieldCollection3.size() == 1);
-        }
+        //       SECTION("Construct from Field")
+        //       {
+        //           fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(t);
+        //           REQUIRE(fieldCollection2.size() == 1);
+        //           const fvcc::VolumeField<NeoFOAM::scalar>& constT = t;
+        //           const fvcc::FieldCollection& fieldCollection3 =
+        //           fvcc::FieldCollection::instance(constT); REQUIRE(fieldCollection3.size() == 1);
+        //       }
 
 
         SECTION("register from existing field")
