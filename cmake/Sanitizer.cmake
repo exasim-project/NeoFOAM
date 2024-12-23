@@ -73,7 +73,8 @@ function(
     if(NOT "${LIST_OF_SANITIZERS}" STREQUAL "")
       if(NOT MSVC)
         # message(FATAL_ERROR "${project_name} ${LIST_OF_SANITIZERS}")
-        target_compile_options(${project_name} PRIVATE -fsanitize=${LIST_OF_SANITIZERS})
+        target_compile_options(
+          ${project_name} PRIVATE -fsanitize=${LIST_OF_SANITIZERS})
         target_link_options(${project_name} PRIVATE -fsanitize=${LIST_OF_SANITIZERS})
       else()
         string(FIND "$ENV{PATH}" "$ENV{VSINSTALLDIR}" index_of_vs_install_dir)

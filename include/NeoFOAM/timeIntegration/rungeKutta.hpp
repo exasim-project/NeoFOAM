@@ -164,7 +164,7 @@ private:
     /**
      * @brief Initializes the Sundials context for the solver.
      */
-    void initSUNContext();
+    __attribute__((no_sanitize_leak)) void initSUNContext();
 
     /**
      * @brief Initializes the Sundials vectors for solution storage.

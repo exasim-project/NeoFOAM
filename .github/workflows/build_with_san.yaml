@@ -14,6 +14,8 @@ on:
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
   OMPI_MCA_rmaps_base_oversubscribe: 1
+  LSAN_OPTIONS: suppressions=/home/runner/work/NeoFOAM/NeoFOAM/scripts/san_ignores.txt
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
