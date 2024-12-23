@@ -68,7 +68,7 @@ public:
     /**
      * @brief Default destructor.
      */
-    ~RungeKutta() = default;
+    ~RungeKutta() {};
 
     /**
      * @brief Constructor that initializes the RungeKutta solver with a dictionary configuration.
