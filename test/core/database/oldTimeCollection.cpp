@@ -37,7 +37,7 @@ createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
 struct CreateField
 {
     std::string name;
-    NeoFOAM::UnstructuredMesh mesh;
+    const NeoFOAM::UnstructuredMesh& mesh;
     std::int64_t timeIndex = 0;
     std::int64_t iterationIndex = 0;
     std::int64_t subCycleIndex = 0;
