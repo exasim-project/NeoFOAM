@@ -82,11 +82,10 @@ void RungeKutta<SolutionFieldType>::initSUNContext()
 {
     if (!context_)
     {
-        SUNContext rawContext;
-        int flag = SUNContext_Create(SUN_COMM_NULL, &rawContext);
+        std::shared_ptr<SUNContext> context(new SUNContext(), sundials::SUN_CONTEXT_DELETER);
+        int flag = SUNContext_Create(SUN_COMM_NULL, context.get());
         NF_ASSERT(flag == 0, "SUNContext_Create failed");
-        auto p = std::make_shared<SUNContext>(rawContext, sundials::SUN_CONTEXT_DELETER);
-        context_.swap(p);
+        context_.swap(context);
     }
 }
 
