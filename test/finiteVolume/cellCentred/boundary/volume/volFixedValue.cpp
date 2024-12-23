@@ -11,6 +11,8 @@
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volume/fixedValue.hpp"
 
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+
 TEST_CASE("fixedValue")
 {
     NeoFOAM::Executor exec = GENERATE(

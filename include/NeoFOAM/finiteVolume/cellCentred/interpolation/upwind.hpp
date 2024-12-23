@@ -45,4 +45,6 @@ private:
     const std::shared_ptr<GeometryScheme> geometryScheme_;
 };
 
+class Upwind;
+
 } // namespace NeoFOAM

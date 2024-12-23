@@ -13,6 +13,9 @@
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 #include "NeoFOAM/core/database/database.hpp"
 
+// only needed for mscv
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 fvcc::VolumeField<NeoFOAM::scalar>
@@ -34,7 +37,7 @@ createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
 struct CreateField
 {
     std::string name;
-    NeoFOAM::UnstructuredMesh mesh;
+    const NeoFOAM::UnstructuredMesh& mesh;
     std::int64_t timeIndex = 0;
     std::int64_t iterationIndex = 0;
     std::int64_t subCycleIndex = 0;
