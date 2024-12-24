@@ -333,7 +333,7 @@ public:
 /**
  * @brief Creates a FieldDocument from an existing field.
  *
- * This function creates a FieldDocument from an existing field.
+ * This functor creates a FieldDocument from an existing field.
  *
  * @tparam FieldType The type of the field.
  * @param name The name of the field document.
