@@ -110,7 +110,7 @@ required tools for compilation (ubuntu latest 24.04):
 
 Windows
 """""""
-
+NeoFOAM provides experimental support for Windows.
 To compile NeoFOAM on windows, mysys2 is required the installation is described in vscode user guide_
 
 .. _guide: https://code.visualstudio.com/docs/cpp/config-mingw
@@ -120,29 +120,11 @@ Following package are required with pacman
 
 .. code-block:: bash
 
-   #pacman -S --needed base-devel mingw-w64-ucrt-x86_64-toolchain
    pacman -S mingw-w64-x86_64-clang
    pacman -S mingw-w64-x86_64-cmake
    pacman -S mingw-w64-x86_64-ninja
-   pacman -S mingw-w64-x86_64-msmpi
 
-   pacman -S mingw-w64-x86_64-clang mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-msmpi mingw-w64-x86_64-python mingw-w64-x86_64-lld
-
-
-It also requires the addition of following User Path variables (see vscode guide), assuming the default installation path
-
-.. code-block:: bash
-
-   C:\msys64\mingw64\bin
-
-in vscode make sure clang (the current version of gcc installed with pacman is only 14.0 (7.9.24)) is selected by adding to set .vscode/settings.json
-
-  "cmake.environment": {
-    "CC": "clang",
-    "CXX": "clang++"
-  }
-
-
+After that the default cmake procedure to build NeoFOAM should work.
 
 
 Workflow with vscode
