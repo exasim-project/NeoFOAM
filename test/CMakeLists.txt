@@ -28,6 +28,10 @@ function(neofoam_unit_test TEST)
   add_executable(${TEST} "${TEST}.cpp")
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
+
+  if(NEOFOAM_WITH_SUNDIALS)
+    target_link_libraries(${TEST} PRIVATE SUNDIALS::arkode)
+  endif()
   if(WIN32)
     set_target_properties(
       ${TEST}
