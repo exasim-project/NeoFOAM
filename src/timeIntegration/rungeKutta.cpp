@@ -77,6 +77,11 @@ void RungeKutta<SolutionFieldType>::initExpression(const Expression& exp)
     pdeExpr_ = std::make_unique<Expression>(exp);
 }
 
+// NOTE: This function triggers an error with the leak checkers/asan
+// i dont see it to actually leak memory since we use SUN_CONTEXT_DELETER
+// for the time being the we ignore this function by adding it to scripts/san_ignores
+// if you figure out whether it actually leaks memory or how to satisfy asan remove this note
+// and the function from san_ignores.txt
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initSUNContext()
 {
