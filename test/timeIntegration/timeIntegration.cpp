@@ -17,7 +17,7 @@
 struct CreateField
 {
     std::string name;
-    NeoFOAM::UnstructuredMesh mesh;
+    const NeoFOAM::UnstructuredMesh& mesh;
     NeoFOAM::scalar value = 0;
     std::int64_t timeIndex = 0;
     std::int64_t iterationIndex = 0;
