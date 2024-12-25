@@ -31,7 +31,7 @@ using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
 using Ddt = NeoFOAM::dsl::temporal::Ddt<VolumeField>;
 
 // only for msvc
-template class RungeKutta<VolumeField>;
+template class NeoFOAM::timeIntegration::RungeKutta<VolumeField>;
 
 class YSquared : public OperatorMixin
 {
