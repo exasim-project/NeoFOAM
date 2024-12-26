@@ -97,7 +97,7 @@ cpmaddpackage(
   3.2.0
   SYSTEM)
 
-if(NEOFOAM_WITH_GINKGO)
+if(${NEOFOAM_WITH_GINKGO})
   set(GINKGO_BUILD_TESTS
       OFF
       CACHE INTERNAL "")
@@ -113,13 +113,13 @@ if(NEOFOAM_WITH_GINKGO)
     GITHUB_REPOSITORY
     ginkgo-project/ginkgo
     GIT_TAG
-    batch-optim
+    develop
     VERSION
     1.9.0
     SYSTEM)
 endif()
 
-if(NEOFOAM_WITH_PETSC)
+if(${NEOFOAM_WITH_PETSC})
   find_package(PkgConfig REQUIRED)
   pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
 endif()
