@@ -2,9 +2,9 @@
 **[Compilation](#Compilation)** |
 **[Documentation](https://exasim-project.com/NeoFOAM/latest)** |
 
-[![workflows/github-linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yml?query=branch%3Amaster)
-[![workflows/github-OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yml?query=branch%3Amaster)
-[![workflows/github-windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yml?query=branch%3Amaster)
+[![workflows/github-linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml?query=branch%3Amaster)
+[![workflows/github-OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml?query=branch%3Amaster)
+[![workflows/github-windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml?query=branch%3Amaster)
 
 # NeoFOAM
 
@@ -31,7 +31,7 @@ The cmake build process will prefer system wide installed C++ dependencies like 
 
 ### Documentation build
 
-For building the documentation further dependencies like doxygen and sphinx are requirement. The list of requirements can be found [here](https://github.com/exasim-project/NeoFOAM/actions/workflows/doc.yml)
+For building the documentation further dependencies like doxygen and sphinx are requirement. The list of requirements can be found [here](https://github.com/exasim-project/NeoFOAM/actions/workflows/build_doc.yaml)
 
 ## Compilation procedure
 
