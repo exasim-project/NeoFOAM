@@ -26,39 +26,37 @@
 \DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00022}00022\ \textcolor{comment}{\ *}}
 \DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00023}00023\ \textcolor{comment}{\ *\ @param\ exp\ -\/\ Expression\ which\ is\ to\ be\ solved/updated.}}
 \DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00024}00024\ \textcolor{comment}{\ *\ @param\ solution\ -\/\ Solution\ field,\ where\ the\ solution\ will\ be\ 'written\ to'.}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00025}00025\ \textcolor{comment}{\ *\ @param\ t\ -\/\ the\ time\ at\ the\ start\ of\ the\ time\ step.}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00026}00026\ \textcolor{comment}{\ *\ @param\ dt\ -\/\ time\ step\ for\ the\ temporal\ integration}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00027}00027\ \textcolor{comment}{\ *\ @param\ fvSchemes\ -\/\ Dictionary\ containing\ spatial\ operator\ and\ time\ \ integration\ properties}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00028}00028\ \textcolor{comment}{\ *\ @param\ fvSolution\ -\/\ Dictionary\ containing\ linear\ solver\ properties}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00029}00029\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00030}00030\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FieldType>}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00031}\mbox{\hyperlink{namespaceNeoFOAM_1_1dsl_a9a6f044ece388893b4d20b1e3e620ca5}{00031}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl_a9a6f044ece388893b4d20b1e3e620ca5}{solve}}(}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00032}00032\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{Expression}}\&\ exp,}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00033}00033\ \ \ \ \ FieldType\&\ solution,}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00034}00034\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}\ t,}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00035}00035\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}\ dt,}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00036}00036\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSchemes,}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00037}00037\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSolution}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00038}00038\ )}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00039}00039\ \{}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00040}00040\ \ \ \ \ \textcolor{keywordflow}{if}\ (exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a1040391c27affdb4fa17d3e10d706619}{temporalOperators}}().size()\ ==\ 0\ \&\&\ exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a2d726d7e7c9b22cfd39bc02be97c95e8}{implicitOperators}}().size()\ ==\ 0)}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00041}00041\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}No\ temporal\ or\ implicit\ terms\ to\ solve."{}});}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00043}00043\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00044}00044\ \ \ \ \ exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_ac83cc5d8919c1b5125f687b1da1f9dfe}{build}}(fvSchemes);}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00045}00045\ \ \ \ \ \textcolor{keywordflow}{if}\ (exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a1040391c27affdb4fa17d3e10d706619}{temporalOperators}}().size()\ >\ 0)}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00046}00046\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ integrate\ equations\ in\ time}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1TimeIntegration}{timeIntegration::TimeIntegration<FieldType>}}\ timeIntegrator(fvSchemes.subDict(\textcolor{stringliteral}{"{}ddtSchemes"{}}));}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ timeIntegrator.\mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1TimeIntegration_ac59bd31b41b21b3665f80121b4f9b591}{solve}}(exp,\ solution,\ t,\ dt);}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00050}00050\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00051}00051\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00052}00052\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}Not\ implemented."{}});}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solve\ sparse\ matrix\ system}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00055}00055\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00056}00056\ \}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00057}00057\ }
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00058}00058\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM::dsl}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00025}00025\ \textcolor{comment}{\ *\ @param\ dt\ -\/\ time\ step\ for\ the\ temporal\ integration}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00026}00026\ \textcolor{comment}{\ *\ @param\ fvSchemes\ -\/\ Dictionary\ containing\ spatial\ operator\ and\ time\ \ integration\ properties}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00027}00027\ \textcolor{comment}{\ *\ @param\ fvSolution\ -\/\ Dictionary\ containing\ linear\ solver\ properties}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00028}00028\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00029}00029\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FieldType>}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00030}\mbox{\hyperlink{namespaceNeoFOAM_1_1dsl_a6b80be5f715b88130fe7892bfc8c1811}{00030}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl_a6b80be5f715b88130fe7892bfc8c1811}{solve}}(}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00031}00031\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{Expression}}\&\ exp,}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00032}00032\ \ \ \ \ FieldType\&\ solution,}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00033}00033\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}\ dt,}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00034}00034\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSchemes,}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00035}00035\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSolution}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00036}00036\ )}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00037}00037\ \{}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keywordflow}{if}\ (exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a1040391c27affdb4fa17d3e10d706619}{temporalOperators}}().size()\ ==\ 0\ \&\&\ exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a2d726d7e7c9b22cfd39bc02be97c95e8}{implicitOperators}}().size()\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00039}00039\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}No\ temporal\ or\ implicit\ terms\ to\ solve."{}});}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00041}00041\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00042}00042\ \ \ \ \ exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_ac83cc5d8919c1b5125f687b1da1f9dfe}{build}}(fvSchemes);}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00043}00043\ \ \ \ \ \textcolor{keywordflow}{if}\ (exp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a1040391c27affdb4fa17d3e10d706619}{temporalOperators}}().size()\ >\ 0)}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00044}00044\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ integrate\ equations\ in\ time}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1TimeIntegration}{TimeIntegration<FieldType>}}\ timeIntegrator(fvSchemes.subDict(\textcolor{stringliteral}{"{}ddtSchemes"{}}));}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ timeIntegrator.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1TimeIntegration_a9b95607bbe298ec7d6d7743a03382363}{solve}}(exp,\ solution,\ dt);}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00048}00048\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00049}00049\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00050}00050\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}Not\ implemented."{}});}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solve\ sparse\ matrix\ system}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00053}00053\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00054}00054\ \}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00056}00056\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM::dsl}}
 
 \end{DoxyCode}

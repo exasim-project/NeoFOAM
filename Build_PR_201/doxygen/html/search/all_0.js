@@ -2,7 +2,7 @@ var searchData=
 [
   ['add_0',['add',['../namespaceNeoFOAM.html#a44787ff1266d4f5ebd1660b821eee43e',1,'NeoFOAM']]],
   ['addexpression_1',['addExpression',['../classNeoFOAM_1_1dsl_1_1Expression.html#af313e6ab82947b615550bd71d8050234',1,'NeoFOAM::dsl::Expression']]],
-  ['addoperator_2',['addOperator',['../classNeoFOAM_1_1dsl_1_1Expression.html#a0b82fd0686a5abb7c9d86621d1d14ece',1,'NeoFOAM::dsl::Expression']]],
+  ['addoperator_2',['addOperator',['../classNeoFOAM_1_1dsl_1_1Expression.html#aee6082759c68f013cc47d51ae8f0e7f6',1,'NeoFOAM::dsl::Expression']]],
   ['addsubtype_3',['addSubType',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register.html#ac4c3db223760839982dfb215e891ee95',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::Register']]],
   ['alloc_4',['alloc',['../classNeoFOAM_1_1CPUExecutor.html#a9b8c5c40fb0a0a0ab699497feee0f7cb',1,'NeoFOAM::CPUExecutor::alloc(size_t size) const'],['../classNeoFOAM_1_1CPUExecutor.html#acc715f6ba7ae359fc490933c1116ad44',1,'NeoFOAM::CPUExecutor::alloc(size_t size) const'],['../classNeoFOAM_1_1GPUExecutor.html#aff2ce76b18b1fa15c82e226738b4bd9b',1,'NeoFOAM::GPUExecutor::alloc(size_t size) const'],['../classNeoFOAM_1_1GPUExecutor.html#a976ab277e32746190cfa766fc3a35cfd',1,'NeoFOAM::GPUExecutor::alloc(size_t size) const'],['../classNeoFOAM_1_1SerialExecutor.html#ac81e518adfac37daf5c1609df000731a',1,'NeoFOAM::SerialExecutor::alloc(size_t size) const'],['../classNeoFOAM_1_1SerialExecutor.html#ad700272ac722d7560f95791b0bb19185',1,'NeoFOAM::SerialExecutor::alloc(size_t size) const']]],
   ['apply_5',['apply',['../classNeoFOAM_1_1Field.html#ab3d5f8f8a4a7b07d5873f767978c0be7',1,'NeoFOAM::Field']]],

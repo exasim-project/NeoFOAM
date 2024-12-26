@@ -177,74 +177,72 @@
 \DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00294}00294\ }
 \DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00305}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register_ac4c3db223760839982dfb215e891ee95}{00305}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register_ac4c3db223760839982dfb215e891ee95}{addSubType}}()}
 \DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00306}00306\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a5bd8629bcc51a562093648882a61aa7e}{CreatorFunc}}\ func\ =\ [](Args...\ args)\ -\/>\ std::unique\_ptr<Base>\ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00308}00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}std::unique\_ptr<Base>\textcolor{keyword}{>}(\textcolor{keyword}{new}\ derivedClass(std::forward<Args>(args}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )...));}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \ \ \ \ RuntimeSelectionFactory::table()[derivedClass::name()]\ =\ func;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00312}00312\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1DerivedClassDocumentation}{DerivedClassDocumentation}}\ childData;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \ \ \ \ childData.\mbox{\hyperlink{classNeoFOAM_1_1DerivedClassDocumentation_ae856a3541d5917dab6a7c6c2cf553d9b}{doc}}\ =\ []()\ -\/>\ std::string\ \{\ \textcolor{keywordflow}{return}\ derivedClass::doc();\ \};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \ \ \ \ childData.\mbox{\hyperlink{classNeoFOAM_1_1DerivedClassDocumentation_a3aa5b38a6ace930938551e35d1eb0d65}{schema}}\ =\ []()\ -\/>\ std::string\ \{\ \textcolor{keywordflow}{return}\ derivedClass::schema();\ \};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \ \ \ \ RuntimeSelectionFactory::docTable()[derivedClass::name()]\ =\ childData;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00317}00317\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00318}00318\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00320}00320\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00321}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register_a2218ee132a8f492507c3516639061274}{00321}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register_a2218ee132a8f492507c3516639061274}{\string~Register}}()\textcolor{keyword}{\ override}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00322}00322\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (REGISTERED)}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00324}00324\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00325}00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ tbl\ =\ RuntimeSelectionFactory::table();}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00326}00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ it\ =\ tbl.find(derivedClass::name());}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00327}00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ REGISTERED\ =\ (it\ !=\ tbl.end());}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00328}00328\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00329}00329\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00330}00330\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a5bd8629bcc51a562093648882a61aa7e}{CreatorFunc}}\ func\ =\ [](Args...\ args)\ -\/>\ std::unique\_ptr<Base>}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00308}00308\ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ std::unique\_ptr<Base>(\textcolor{keyword}{new}\ derivedClass(std::forward<Args>(args)...));\ \};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \ \ \ \ RuntimeSelectionFactory::table()[derivedClass::name()]\ =\ func;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00310}00310\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1DerivedClassDocumentation}{DerivedClassDocumentation}}\ childData;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00312}00312\ \ \ \ \ \ \ \ \ \ \ \ \ childData.\mbox{\hyperlink{classNeoFOAM_1_1DerivedClassDocumentation_ae856a3541d5917dab6a7c6c2cf553d9b}{doc}}\ =\ []()\ -\/>\ std::string\ \{\ \textcolor{keywordflow}{return}\ derivedClass::doc();\ \};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \ \ \ \ childData.\mbox{\hyperlink{classNeoFOAM_1_1DerivedClassDocumentation_a3aa5b38a6ace930938551e35d1eb0d65}{schema}}\ =\ []()\ -\/>\ std::string\ \{\ \textcolor{keywordflow}{return}\ derivedClass::schema();\ \};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \ \ \ \ RuntimeSelectionFactory::docTable()[derivedClass::name()]\ =\ childData;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00315}00315\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00318}00318\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00319}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register_a2218ee132a8f492507c3516639061274}{00319}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register_a2218ee132a8f492507c3516639061274}{\string~Register}}()\textcolor{keyword}{\ override}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00320}00320\ \textcolor{keyword}{\ \ \ \ \ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (REGISTERED)}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00322}00322\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ tbl\ =\ RuntimeSelectionFactory::table();}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00324}00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ it\ =\ tbl.find(derivedClass::name());}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00325}00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ REGISTERED\ =\ (it\ !=\ tbl.end());}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00326}00326\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00327}00327\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00328}00328\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00329}00329\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00330}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a203cea16f8b1cb5249fcd9d4acbe508d}{00330}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a203cea16f8b1cb5249fcd9d4acbe508d}{\string~RuntimeSelectionFactory}}()\ =\ \textcolor{keywordflow}{default};}
 \DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00331}00331\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00332}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a203cea16f8b1cb5249fcd9d4acbe508d}{00332}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a203cea16f8b1cb5249fcd9d4acbe508d}{\string~RuntimeSelectionFactory}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00332}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_aed36c06d25950414de6d97419c64cede}{00332}}\ \ \ \ \ \textcolor{keyword}{static}\ std::size\_t\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_aed36c06d25950414de6d97419c64cede}{size}}()\ \{\ \textcolor{keywordflow}{return}\ table().size();\ \}}
 \DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00333}00333\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00334}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_aed36c06d25950414de6d97419c64cede}{00334}}\ \ \ \ \ \textcolor{keyword}{static}\ std::size\_t\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_aed36c06d25950414de6d97419c64cede}{size}}()\ \{\ \textcolor{keywordflow}{return}\ table().size();\ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00335}00335\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00344}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a6af2aaf0df8805abcc81bca434bda089}{00344}}\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a14a85d6de971973e4372608c63250231}{LookupTable}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a6af2aaf0df8805abcc81bca434bda089}{table}}()}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00345}00345\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00346}00346\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a14a85d6de971973e4372608c63250231}{LookupTable}}\ tbl;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00347}00347\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tbl;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00348}00348\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00349}00349\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00358}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a9147f24cd6528e8b1249e64288b07ff8}{00358}}\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a117e64dfa20be9f610ec5bc1b890d2bc}{ClassDocTable}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a9147f24cd6528e8b1249e64288b07ff8}{docTable}}()}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00359}00359\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00360}00360\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a117e64dfa20be9f610ec5bc1b890d2bc}{ClassDocTable}}\ tbl;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00361}00361\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tbl;}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00362}00362\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00342}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a6af2aaf0df8805abcc81bca434bda089}{00342}}\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a14a85d6de971973e4372608c63250231}{LookupTable}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a6af2aaf0df8805abcc81bca434bda089}{table}}()}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00343}00343\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00344}00344\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a14a85d6de971973e4372608c63250231}{LookupTable}}\ tbl;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00345}00345\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tbl;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00346}00346\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00347}00347\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00356}\mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a9147f24cd6528e8b1249e64288b07ff8}{00356}}\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a117e64dfa20be9f610ec5bc1b890d2bc}{ClassDocTable}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a9147f24cd6528e8b1249e64288b07ff8}{docTable}}()}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00357}00357\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00358}00358\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_a117e64dfa20be9f610ec5bc1b890d2bc}{ClassDocTable}}\ tbl;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00359}00359\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ tbl;}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00360}00360\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00361}00361\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00362}00362\ \textcolor{keyword}{private}:}
 \DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00363}00363\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00364}00364\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00365}00365\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00366}00366\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00372}00372\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ keyExistsOrError(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}})}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00373}00373\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00374}00374\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ tbl\ =\ table();}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tbl.find(\mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}})\ ==\ tbl.end())}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00377}00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ msg\ =\ std::string(\textcolor{stringliteral}{"{}\ Could\ not\ find\ constructor\ for\ "{}})\ +\ \mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}}\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \ \ \ \ msg\ +=\ \textcolor{stringliteral}{"{}valid\ constructors\ are:\ \(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00379}00379\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ it\ :\ tbl)}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00380}00380\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00381}00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ msg\ +=\ \textcolor{stringliteral}{"{}\ -\/\ "{}}\ +\ it.first\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00382}00382\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00383}00383\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(msg);}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00384}00384\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00385}00385\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00386}00386\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00387}00387\ \ \ \ \ RuntimeSelectionFactory()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00388}00388\ \};}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00389}00389\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00390}00390\ \textcolor{comment}{//\ Initialize\ the\ static\ variable\ and\ register\ the\ class}}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00391}00391\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Base,\ \textcolor{keyword}{class}...\ Args>}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00392}00392\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ derivedClass>}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00393}00393\ \textcolor{keywordtype}{bool}\ RuntimeSelectionFactory<Base,\ Parameters<Args...>>\mbox{\hyperlink{classRuntimeSelectionFactory_1_1Register}{::Register<derivedClass>::REGISTERED}}\ =}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00394}00394\ \ \ \ \ RuntimeSelectionFactory<Base,\ Parameters<Args...>>\mbox{\hyperlink{classRuntimeSelectionFactory_1_1Register}{::Register<derivedClass>::addSubType}}();}
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00395}00395\ }
-\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00396}00396\ \};\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00364}00364\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00370}00370\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ keyExistsOrError(\textcolor{keyword}{const}\ std::string\&\ \mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}})}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00371}00371\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00372}00372\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ tbl\ =\ table();}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00373}00373\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tbl.find(\mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}})\ ==\ tbl.end())}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00374}00374\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00375}00375\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ msg\ =\ std::string(\textcolor{stringliteral}{"{}\ Could\ not\ find\ constructor\ for\ "{}})\ +\ \mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}}\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00376}00376\ \ \ \ \ \ \ \ \ \ \ \ \ msg\ +=\ \textcolor{stringliteral}{"{}valid\ constructors\ are:\ \(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00377}00377\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ it\ :\ tbl)}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00378}00378\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00379}00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ msg\ +=\ \textcolor{stringliteral}{"{}\ -\/\ "{}}\ +\ it.first\ +\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00380}00380\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00381}00381\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(msg);}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00382}00382\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00383}00383\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00384}00384\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00385}00385\ \ \ \ \ RuntimeSelectionFactory()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00386}00386\ \};}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00387}00387\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00388}00388\ \textcolor{comment}{//\ Initialize\ the\ static\ variable\ and\ register\ the\ class}}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00389}00389\ \textcolor{keyword}{template}<\textcolor{keyword}{class\ }Base,\ \textcolor{keyword}{class}...\ Args>}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00390}00390\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ derivedClass>}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00391}00391\ \textcolor{keywordtype}{bool}\ RuntimeSelectionFactory<Base,\ Parameters<Args...>>\mbox{\hyperlink{classRuntimeSelectionFactory_1_1Register}{::Register<derivedClass>::REGISTERED}}\ =}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00392}00392\ \ \ \ \ RuntimeSelectionFactory<Base,\ Parameters<Args...>>\mbox{\hyperlink{classRuntimeSelectionFactory_1_1Register}{::Register<derivedClass>::addSubType}}();}
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00393}00393\ }
+\DoxyCodeLine{\Hypertarget{runtimeSelectionFactory_8hpp_source_l00394}00394\ \};\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
