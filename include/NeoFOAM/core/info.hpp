@@ -30,3 +30,12 @@
 #else
 #define NF_DINFO(message) ((void)0)
 #endif
+
+/**
+ * @def PING()
+ * @brief Prints a very clear message that the code reaches a certain file and line.
+ */
+#ifdef NF_DEBUG
+#define NF_PING()                                                                                  \
+    std::cout << std::endl << "\tGot to " << __FILE__ << " : " << __LINE__ << std::endl
+#endif
