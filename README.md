@@ -1,6 +1,11 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
 **[Documentation](https://exasim-project.com/NeoFOAM/latest)** |
+
+[![workflows/github-linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yml?query=branch%3Amaster)
+[![workflows/github-OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yml?query=branch%3Amaster)
+[![workflows/github-windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yml?query=branch%3Amaster)
+
 # NeoFOAM
 
 > [!IMPORTANT]
