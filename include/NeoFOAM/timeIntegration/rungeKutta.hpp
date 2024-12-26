@@ -82,19 +82,19 @@ public:
      * @note Sundials Kokkos vectors have copy constructors, N_Vectors should be constructed from
      * the Kokkos vectors.
      */
-    RungeKutta(const RungeKutta<SolutionFieldType>& other);
+    RungeKutta(const RungeKutta& other);
 
     /**
      * @brief Move Constructor
      * @param other The RungeKutta instance to move from.
      */
-    RungeKutta(RungeKutta<SolutionFieldType>&& other);
+    RungeKutta(RungeKutta&& other);
 
     // deleted because base class method deleted.
-    RungeKutta& operator=(const RungeKutta<SolutionFieldType>& other) = delete;
+    RungeKutta& operator=(const RungeKutta& other) = delete;
 
     // deleted because base class method deleted.
-    RungeKutta& operator=(RungeKutta<SolutionFieldType>&& other) = delete;
+    RungeKutta& operator=(RungeKutta&& other) = delete;
 
     /**
      * @brief Returns the name of the class.
