@@ -1,10 +1,10 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
+**[Integration](#integration-with-openfoam)** |
 **[Documentation](https://exasim-project.com/NeoFOAM/latest)** |
+**[Roadmap](https://github.com/orgs/exasim-project/projects/1/views/8)** |
 
-[![workflows/github-linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml?query=branch%3Amaster)
-[![workflows/github-OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml?query=branch%3Amaster)
-[![workflows/github-windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml?query=branch%3Amaster)
+[![c++ standard](https://img.shields.io/badge/c%2B%2B-20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization) [![Gitter](https://img.shields.io/badge/Gitter-8A2BE2)](https://matrix.to/#/#NeoFOAM:gitter.im)
 
 # NeoFOAM
 
@@ -27,18 +27,18 @@ For development it is required to use [pre-commit](https://pre-commit.com/).
 
 ### C++ dependencies
 
-The cmake build process will prefer system wide installed C++ dependencies like Kokkos, cxxopts, etc. If you prefer to clone, configure and build dependencies your self consider setting `-DCPM_USE_LOCAL_PACKAGES = OFF`, see [CPM](https://github.com/cpm-cmake/CPM.cmake) for more details.
+C++ dependencies like Kokkos are handled via [CPM](https://github.com/cpm-cmake/CPM.cmake) and are cloned at the configuration step.
+However, the cmake build process will prefer system wide installed C++ dependencies like Kokkos, cxxopts, etc.
+If you prefer to clone, configure and build dependencies your self consider setting `-DCPM_USE_LOCAL_PACKAGES = OFF`, see [CPM](https://github.com/cpm-cmake/CPM.cmake) for more details.
 
-### Documentation build
+## Compilation
 
-For building the documentation further dependencies like doxygen and sphinx are requirement. The list of requirements can be found [here](https://github.com/exasim-project/NeoFOAM/actions/workflows/build_doc.yaml)
+[![workflows/Build on linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml?query=branch%3Amaster)
+[![workflows/Build on OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml?query=branch%3Amaster)
+[![workflows/Build on windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml?query=branch%3Amaster)
 
-## Compilation procedure
-
-[![Build NeoFOAM](https://github.com/exasim-project/NeoFOAM/actions/workflows/build_on_ubuntu.yaml/badge.svg)](https://github.com/exasim-project/NeoFOAM/actions/workflows/build_on_ubuntu.yaml)
-[![Gitter](https://img.shields.io/badge/Gitter-8A2BE2)](https://matrix.to/#/#NeoFOAM:gitter.im)
-
-NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From a build directory you can execute
+NeoFOAM uses cmake to build, thus the standard cmake procedure should work.
+From a build directory you can execute
 
     cmake <DesiredBuildFlags> ..
     cmake --build .
@@ -47,18 +47,25 @@ NeoFOAM uses cmake to build, thus the standard cmake procedure should work. From
 Additionally, we provide several Cmake presets to set commmonly required flags if you compile NeoFoam in combination with Kokkos.
 
     cmake --list-presets # To list existing presets
-    cmake --preset production # To compile for production use
+    cmake --preset production # To configure for production use
+    cmake --build --preset production # To compile for production use
 
 
+### Executing Tests
 
-## Executing Benchmarks
-
-NeoFOAM provides a set of benchmarks which can be executed and plotted by the following commands
-
-    cmake --build . --target execute_benchmarks # runs the benchmark suite
-    cmake --build . --target execute_plot_benchmark # plots the benchmark results
-
-
-## Executing Tests
+We provide a set of unit tests which can be execute via ctest or
 
     cmake --build . --target test
+
+
+## Integration with OpenFOAM
+
+Currently, NeoFOAM is not a standalone CFD Framework.
+It is designed to be used within OpenFOAM.
+Examples how to integrate NeoFOAM into OpenFOAM and howto write applications is demonstrated in the [FoamAdapter](https://github.com/exasim-project/FoamAdapter) repository.
+
+## Documentation
+
+An online documentation can be found [here](https://exasim-project.com/NeoFOAM/latest), be cautious since this repository is currently evolving the documentation might not always reflect the latest stage.
+For building the documentation further dependencies like doxygen and sphinx are requirement.
+The list of requirements can be found [here](https://github.com/exasim-project/NeoFOAM/actions/workflows/build_doc.yaml)
