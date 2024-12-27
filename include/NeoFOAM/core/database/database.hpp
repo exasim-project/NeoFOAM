@@ -12,7 +12,6 @@
 namespace NeoFOAM
 {
 
-
 class Database
 {
 public:
