@@ -7,9 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/database/database.hpp"
-#include "NeoFOAM/core/database/collection.hpp"
-#include "NeoFOAM/core/database/document.hpp"
+#include "NeoFOAM/core.hpp"
 
 #include "customTestCollection.hpp"
 

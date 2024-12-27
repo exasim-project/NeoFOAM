@@ -8,11 +8,7 @@
 
 #include "../dsl/common.hpp"
 
-#include "NeoFOAM/core/dictionary.hpp"
-#include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/timeIntegration/forwardEuler.hpp"
-#include "NeoFOAM/dsl/solver.hpp"
-#include "NeoFOAM/dsl/ddt.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 // only needed for msvc
 template class NeoFOAM::timeIntegration::ForwardEuler<VolumeField>;

@@ -7,11 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 // only needed for mscv
 #include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"

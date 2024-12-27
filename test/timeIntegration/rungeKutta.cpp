@@ -9,14 +9,8 @@
 #include <string>
 
 #include "../dsl/common.hpp"
-#include "NeoFOAM/core/dictionary.hpp"
-#include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/dsl/ddt.hpp"
-#include "NeoFOAM/dsl/expression.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
-#include "NeoFOAM/dsl/solver.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/timeIntegration/rungeKutta.hpp"
+
+#include "NeoFOAM/NeoFOAM.hpp"
 
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;

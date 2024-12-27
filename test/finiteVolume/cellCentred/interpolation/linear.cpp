@@ -7,9 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/dictionary.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
