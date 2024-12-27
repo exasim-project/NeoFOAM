@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['scalar_0',['scalar',['../namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b',1,'NeoFOAM']]],
-  ['scalarfield_1',['scalarField',['../namespaceNeoFOAM.html#aa8e48fef95ea5b70125d375ba497ff8c',1,'NeoFOAM']]],
-  ['size_5ft_2',['size_t',['../namespaceNeoFOAM.html#aa8ea339f1c9a4f2232da876ead30a82c',1,'NeoFOAM']]]
+  ['mpi_5flabel_5ft_0',['mpi_label_t',['../namespaceNeoFOAM.html#a6340adc783ef78803a50be602055fba6',1,'NeoFOAM']]]
 ];

@@ -18,13 +18,13 @@
         <childnode refid="10" relation="include">
         </childnode>
       </node>
-      <node id="14">
+      <node id="15">
         <label>NeoFOAM/core/executor/CPUExecutor.hpp</label>
         <link refid="CPUExecutor_8hpp"/>
         <childnode refid="3" relation="include">
         </childnode>
       </node>
-      <node id="13">
+      <node id="14">
         <label>NeoFOAM/core/executor/GPUExecutor.hpp</label>
         <link refid="GPUExecutor_8hpp"/>
         <childnode refid="3" relation="include">
@@ -33,6 +33,8 @@
       <node id="11">
         <label>NeoFOAM/core/executor/executor.hpp</label>
         <link refid="executor_8hpp"/>
+        <childnode refid="8" relation="include">
+        </childnode>
         <childnode refid="12" relation="include">
         </childnode>
         <childnode refid="13" relation="include">
@@ -41,8 +43,10 @@
         </childnode>
         <childnode refid="15" relation="include">
         </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
       </node>
-      <node id="12">
+      <node id="13">
         <label>NeoFOAM/core/executor/serialExecutor.hpp</label>
         <link refid="serialExecutor_8hpp"/>
         <childnode refid="3" relation="include">
@@ -163,11 +167,11 @@
       <node id="23">
         <label>type_traits</label>
       </node>
-      <node id="15">
+      <node id="12">
         <label>variant</label>
       </node>
     </incdepgraph>
-    <innerclass refid="classNeoFOAM_1_1Segment" prot="public">NeoFOAM::Segment</innerclass>
+    <innerclass refid="classNeoFOAM_1_1SegmentedFieldView" prot="public">NeoFOAM::SegmentedFieldView</innerclass>
     <innerclass refid="classNeoFOAM_1_1SegmentedField" prot="public">NeoFOAM::SegmentedField</innerclass>
     <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
     <briefdescription>
@@ -184,69 +188,111 @@
 <codeline lineno="7"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
 <codeline lineno="8"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="9"><highlight class="normal"></highlight></codeline>
-<codeline lineno="15"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType&gt;</highlight></codeline>
-<codeline lineno="16" refid="classNeoFOAM_1_1Segment" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Segment" kindref="compound">Segment</ref></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType&gt;</highlight></codeline>
+<codeline lineno="16" refid="classNeoFOAM_1_1SegmentedFieldView" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1SegmentedFieldView" kindref="compound">SegmentedFieldView</ref></highlight></codeline>
 <codeline lineno="17"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="18"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
 <codeline lineno="19"><highlight class="normal"></highlight></codeline>
-<codeline lineno="23" refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>;</highlight></codeline>
+<codeline lineno="23" refid="classNeoFOAM_1_1SegmentedFieldView_1a3f4b90a95afb76e87a54b394bd810ab2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;ValueType&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a3f4b90a95afb76e87a54b394bd810ab2" kindref="member">values</ref>;</highlight></codeline>
 <codeline lineno="24"><highlight class="normal"></highlight></codeline>
-<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION</highlight></codeline>
-<codeline lineno="32" refid="classNeoFOAM_1_1Segment_1a19a5f3dd2809bbdc5e47a0dfcbb6c5f5" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Segment_1a19a5f3dd2809bbdc5e47a0dfcbb6c5f5" kindref="member">bounds</ref>(std::size_t<sp/>segI)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
-<codeline lineno="33"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
-<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/>{<ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>[segI],<sp/><ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>[segI<sp/>+<sp/>1]};</highlight></codeline>
-<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="36"><highlight class="normal"></highlight></codeline>
-<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION</highlight></codeline>
-<codeline lineno="44" refid="classNeoFOAM_1_1Segment_1a36e8b157c40d621216c25f5a5f31a402" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Segment_1a36e8b157c40d621216c25f5a5f31a402" kindref="member">range</ref>(std::size_t<sp/>segI)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
-<codeline lineno="45"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
-<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/>{</highlight></codeline>
-<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>[segI],<sp/><ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>[segI<sp/>+<sp/>1]<sp/>-<sp/><ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>[segI]</highlight></codeline>
-<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>};</highlight></codeline>
-<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="50"><highlight class="normal"></highlight></codeline>
-<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType&gt;</highlight></codeline>
-<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION<sp/>std::span&lt;ValueType&gt;</highlight></codeline>
-<codeline lineno="61" refid="classNeoFOAM_1_1Segment_1a513e447d6c812753cf593ada64d04fc2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Segment_1a513e447d6c812753cf593ada64d04fc2" kindref="member">subspan</ref>(std::span&lt;ValueType&gt;<sp/>values,<sp/>std::size_t<sp/>segI)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
-<codeline lineno="62"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
-<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>[start,<sp/>length]<sp/>=<sp/><ref refid="classNeoFOAM_1_1Segment_1a36e8b157c40d621216c25f5a5f31a402" kindref="member">range</ref>(segI);</highlight></codeline>
-<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>values.subspan(start,<sp/>length);</highlight></codeline>
-<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="66"><highlight class="normal"></highlight></codeline>
-<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION</highlight></codeline>
-<codeline lineno="74" refid="classNeoFOAM_1_1Segment_1a0ed3558ab26d1058807e5315a79d8a78" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>IndexType<sp/><ref refid="classNeoFOAM_1_1Segment_1a0ed3558ab26d1058807e5315a79d8a78" kindref="member">operator[]</ref>(std::size_t<sp/>i)</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Segment_1a1edd695acdd5de3a1799064857d22479" kindref="member">segments</ref>[i];<sp/>}</highlight></codeline>
-<codeline lineno="75"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="76"><highlight class="normal"></highlight></codeline>
-<codeline lineno="83"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType&gt;</highlight></codeline>
-<codeline lineno="84" refid="classNeoFOAM_1_1SegmentedField" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1SegmentedField" kindref="compound">SegmentedField</ref></highlight></codeline>
-<codeline lineno="85"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="86"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="87"><highlight class="normal"></highlight></codeline>
-<codeline lineno="88" refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>;</highlight></codeline>
-<codeline lineno="89" refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>;</highlight></codeline>
+<codeline lineno="28" refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>;</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION</highlight></codeline>
+<codeline lineno="37" refid="classNeoFOAM_1_1SegmentedFieldView_1a48565c43e9695f7a480d244a4b22cc8f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a48565c43e9695f7a480d244a4b22cc8f" kindref="member">bounds</ref>(std::size_t<sp/>segI)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
+<codeline lineno="38"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/>{<ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>[segI],<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>[segI<sp/>+<sp/>1]};</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION</highlight></codeline>
+<codeline lineno="49" refid="classNeoFOAM_1_1SegmentedFieldView_1ae422a43d0bd8ab10ce4f3929afc60ff9" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1ae422a43d0bd8ab10ce4f3929afc60ff9" kindref="member">range</ref>(std::size_t<sp/>segI)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
+<codeline lineno="50"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>Kokkos::pair&lt;IndexType,<sp/>IndexType&gt;<sp/>{</highlight></codeline>
+<codeline lineno="52"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>[segI],<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>[segI<sp/>+<sp/>1]<sp/>-<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>[segI]</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight></codeline>
+<codeline lineno="64" refid="classNeoFOAM_1_1SegmentedFieldView_1aadfba172e55d796a21fb1b157d3ddff8" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION<sp/>std::span&lt;ValueType&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1aadfba172e55d796a21fb1b157d3ddff8" kindref="member">subspan</ref>(std::size_t<sp/>segI)</highlight><highlight class="keyword"><sp/>const</highlight></codeline>
+<codeline lineno="65"><highlight class="keyword"><sp/><sp/><sp/><sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>[start,<sp/>length]<sp/>=<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1ae422a43d0bd8ab10ce4f3929afc60ff9" kindref="member">range</ref>(segI);</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a3f4b90a95afb76e87a54b394bd810ab2" kindref="member">values</ref>.subspan(start,<sp/>length);</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/>KOKKOS_INLINE_FUNCTION</highlight></codeline>
+<codeline lineno="77" refid="classNeoFOAM_1_1SegmentedFieldView_1a0b1eb0e7b49d20aeb591481aa75a94dc" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>IndexType<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a0b1eb0e7b49d20aeb591481aa75a94dc" kindref="member">operator[]</ref>(std::size_t<sp/>i)</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView_1a7064033d741bfcb38cf6b3b0e87545c1" kindref="member">segments</ref>[i];<sp/>}</highlight></codeline>
+<codeline lineno="78"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType&gt;</highlight></codeline>
+<codeline lineno="87" refid="classNeoFOAM_1_1SegmentedField" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1SegmentedField" kindref="compound">SegmentedField</ref></highlight></codeline>
+<codeline lineno="88"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
 <codeline lineno="90"><highlight class="normal"></highlight></codeline>
-<codeline lineno="97" refid="classNeoFOAM_1_1SegmentedField_1ae5e9a2ce49a0bbdbbfe55353c94ea9ef" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ae5e9a2ce49a0bbdbbfe55353c94ea9ef" kindref="member">SegmentedField</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ad8645a25cba2275ee5bea619093da91e" kindref="member">Executor</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" kindref="member">numSegments</ref>)</highlight></codeline>
-<codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>(<ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>,<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>),<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>(<ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>,<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" kindref="member">numSegments</ref><sp/>+<sp/>1)</highlight></codeline>
-<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/>{}</highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight></codeline>
-<codeline lineno="106" refid="classNeoFOAM_1_1SegmentedField_1a7b0dfb251d6fdfdc40d7e7f087b41b24" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a7b0dfb251d6fdfdc40d7e7f087b41b24" kindref="member">SegmentedField</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>)</highlight></codeline>
-<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>(<ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>),<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>(<ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>)</highlight></codeline>
-<codeline lineno="108"><highlight class="normal"><sp/><sp/><sp/><sp/>{}</highlight></codeline>
-<codeline lineno="109"><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight></codeline>
+<codeline lineno="98" refid="classNeoFOAM_1_1SegmentedField_1ae5e9a2ce49a0bbdbbfe55353c94ea9ef" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ae5e9a2ce49a0bbdbbfe55353c94ea9ef" kindref="member">SegmentedField</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ad8645a25cba2275ee5bea619093da91e" kindref="member">Executor</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" kindref="member">numSegments</ref>)</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>values_(<ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>,<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>),<sp/>segments_(<ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>,<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" kindref="member">numSegments</ref><sp/>+<sp/>1)</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/>{}</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="103"><highlight class="comment"><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104" refid="classNeoFOAM_1_1SegmentedField_1aef257e4899d2ff6eea4d27211b915ea4" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1aef257e4899d2ff6eea4d27211b915ea4" kindref="member">SegmentedField</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref>&amp;<sp/>intervals)</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>values_(intervals.<ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>(),<sp/>0),</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>segments_(intervals.<ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>(),<sp/>intervals.<ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>()<sp/>+<sp/>1,<sp/>IndexType(0))</highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>segSpan<sp/>=<sp/>segments_.<ref refid="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479" kindref="member">span</ref>();</highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>intSpan<sp/>=<sp/>intervals.<ref refid="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479" kindref="member">span</ref>();</highlight></codeline>
 <codeline lineno="110"><highlight class="normal"></highlight></codeline>
-<codeline lineno="115" refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ad8645a25cba2275ee5bea619093da91e" kindref="member">Executor</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>.exec();<sp/>}</highlight></codeline>
-<codeline lineno="116"><highlight class="normal"></highlight></codeline>
-<codeline lineno="121" refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>.size();<sp/>}</highlight></codeline>
-<codeline lineno="122"><highlight class="normal"></highlight></codeline>
-<codeline lineno="127" refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" kindref="member">numSegments</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>.<ref refid="classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e" kindref="member">size</ref>()<sp/>-<sp/>1;<sp/>}</highlight></codeline>
-<codeline lineno="128"><highlight class="normal"></highlight></codeline>
-<codeline lineno="133" refid="classNeoFOAM_1_1SegmentedField_1a4c96911f6605bb632c53fdb9dc2d309d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::pair&lt;std::span&lt;ValueType&gt;,<sp/><ref refid="classNeoFOAM_1_1Segment" kindref="compound">Segment&lt;IndexType&gt;</ref>&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a4c96911f6605bb632c53fdb9dc2d309d" kindref="member">spans</ref>()</highlight></codeline>
-<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>{<ref refid="classNeoFOAM_1_1SegmentedField_1a4f907c40a626ae841b4cae98a2f42c21" kindref="member">values</ref>.span(),<sp/><ref refid="classNeoFOAM_1_1Segment" kindref="compound">Segment&lt;IndexType&gt;</ref>(<ref refid="classNeoFOAM_1_1SegmentedField_1a059904766b4a9ec32f2c01630ec77a68" kindref="member">segments</ref>.<ref refid="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479" kindref="member">span</ref>())};</highlight></codeline>
-<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="137"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="138"><highlight class="normal"></highlight></codeline>
-<codeline lineno="139"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">NeoFOAM::parallelScan</ref>(</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>intervals.<ref refid="classNeoFOAM_1_1Field_1a3669f86690a09efc721a5eb902f7aa28" kindref="member">exec</ref>(),</highlight></codeline>
+<codeline lineno="113"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>segSpan.size()},</highlight></codeline>
+<codeline lineno="114"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::size_t<sp/>i,<sp/><ref refid="namespaceNeoFOAM_1a95525d89d661b88aaa4548bdf2766842" kindref="member">NeoFOAM::localIdx</ref>&amp;<sp/>update,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">final</highlight><highlight class="normal">)<sp/>{</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>update<sp/>+=<sp/>intSpan[i<sp/>-<sp/>1];</highlight></codeline>
+<codeline lineno="116"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keyword">final</highlight><highlight class="normal">)</highlight></codeline>
+<codeline lineno="117"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="118"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>segSpan[i]<sp/>=<sp/>update;</highlight></codeline>
+<codeline lineno="119"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="121"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>values_<sp/>=<sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref>(intervals.<ref refid="classNeoFOAM_1_1Field_1a3669f86690a09efc721a5eb902f7aa28" kindref="member">exec</ref>(),<sp/>segSpan.back());</highlight></codeline>
+<codeline lineno="123"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="124"><highlight class="normal"></highlight></codeline>
+<codeline lineno="130" refid="classNeoFOAM_1_1SegmentedField_1a7b0dfb251d6fdfdc40d7e7f087b41b24" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a7b0dfb251d6fdfdc40d7e7f087b41b24" kindref="member">SegmentedField</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a6167ec6a9b7c731cfe45f457fdc42d19" kindref="member">values</ref>,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a640aa7f21915160647c52ff5deb615b1" kindref="member">segments</ref>)</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>values_(<ref refid="classNeoFOAM_1_1SegmentedField_1a6167ec6a9b7c731cfe45f457fdc42d19" kindref="member">values</ref>),<sp/>segments_(<ref refid="classNeoFOAM_1_1SegmentedField_1a640aa7f21915160647c52ff5deb615b1" kindref="member">segments</ref>)</highlight></codeline>
+<codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/>{}</highlight></codeline>
+<codeline lineno="133"><highlight class="normal"></highlight></codeline>
+<codeline lineno="134"><highlight class="normal"></highlight></codeline>
+<codeline lineno="139" refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ad8645a25cba2275ee5bea619093da91e" kindref="member">Executor</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a05cf2c0d30a5586b5bae1c6238490b0a" kindref="member">exec</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>values_.exec();<sp/>}</highlight></codeline>
+<codeline lineno="140"><highlight class="normal"></highlight></codeline>
+<codeline lineno="145" refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1af8e30cefded32f244bcd0e519873c41d" kindref="member">size</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>values_.size();<sp/>}</highlight></codeline>
+<codeline lineno="146"><highlight class="normal"></highlight></codeline>
+<codeline lineno="151" refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1ad41c05f17db58a093e6c3c838428cb0c" kindref="member">numSegments</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>segments_.<ref refid="classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e" kindref="member">size</ref>()<sp/>-<sp/>1;<sp/>}</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"></highlight></codeline>
+<codeline lineno="158" refid="classNeoFOAM_1_1SegmentedField_1a2c246e8fc0e72435ad4c1c7d7f78d0d6" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView" kindref="compound">SegmentedFieldView&lt;ValueType, IndexType&gt;</ref><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a2c246e8fc0e72435ad4c1c7d7f78d0d6" kindref="member">view</ref>()<sp/>&amp;</highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView" kindref="compound">SegmentedFieldView&lt;ValueType, IndexType&gt;</ref><sp/>{values_.span(),<sp/>segments_.<ref refid="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479" kindref="member">span</ref>()};</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"></highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ensures<sp/>no<sp/>return<sp/>a<sp/>span<sp/>of<sp/>a<sp/>temporary<sp/>object<sp/>--&gt;<sp/>invalid<sp/>memory<sp/>access</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="164" refid="classNeoFOAM_1_1SegmentedField_1a7bf09b77f7b24b06d758f74a3d43a6fe" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classNeoFOAM_1_1SegmentedFieldView" kindref="compound">SegmentedFieldView&lt;ValueType, IndexType&gt;</ref><sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a7bf09b77f7b24b06d758f74a3d43a6fe" kindref="member">view</ref>()<sp/>&amp;&amp;<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="165"><highlight class="normal"></highlight></codeline>
+<codeline lineno="170" refid="classNeoFOAM_1_1SegmentedField_1a60757f414dc84e25eaa32936b03903eb" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::pair&lt;std::span&lt;ValueType&gt;,<sp/>std::span&lt;IndexType&gt;&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a60757f414dc84e25eaa32936b03903eb" kindref="member">spans</ref>()<sp/>&amp;</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>{values_.span(),<sp/>segments_.<ref refid="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479" kindref="member">span</ref>()};</highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"></highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ensures<sp/>no<sp/>return<sp/>a<sp/>span<sp/>of<sp/>a<sp/>temporary<sp/>object<sp/>--&gt;<sp/>invalid<sp/>memory<sp/>access</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="176" refid="classNeoFOAM_1_1SegmentedField_1acf563c6affc620939025f3139394112b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::pair&lt;std::span&lt;ValueType&gt;,<sp/>std::span&lt;IndexType&gt;&gt;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1acf563c6affc620939025f3139394112b" kindref="member">spans</ref>()<sp/>&amp;&amp;<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"></highlight></codeline>
+<codeline lineno="178" refid="classNeoFOAM_1_1SegmentedField_1a6167ec6a9b7c731cfe45f457fdc42d19" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a6167ec6a9b7c731cfe45f457fdc42d19" kindref="member">values</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>values_;<sp/>}</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"></highlight></codeline>
+<codeline lineno="180" refid="classNeoFOAM_1_1SegmentedField_1a640aa7f21915160647c52ff5deb615b1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref>&amp;<sp/><ref refid="classNeoFOAM_1_1SegmentedField_1a640aa7f21915160647c52ff5deb615b1" kindref="member">segments</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>segments_;<sp/>}</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="183"><highlight class="normal"></highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref><sp/>values_;</highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref><sp/>segments_;</highlight></codeline>
+<codeline lineno="186"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"></highlight></codeline>
+<codeline lineno="188"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/segmentedField.hpp"/>
   </compounddef>
