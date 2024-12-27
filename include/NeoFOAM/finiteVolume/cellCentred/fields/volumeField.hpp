@@ -56,34 +56,6 @@ public:
           db_(std::nullopt)
     {}
 
-
-    // /**
-    //  * @brief Constructor for a VolumeField with a given internal field
-    //  *
-    //  * @param exec The executor
-    //  * @param name The name of the field
-    //  * @param mesh The underlying mesh
-    //  * @param internalField the underlying internal field
-    //  * @param boundaryConditions a vector of boundary conditions
-    //  */
-    // VolumeField(
-    //     const Executor& exec,
-    //     std::string name,
-    //     const UnstructuredMesh& mesh,
-    //     const Field<ValueType>& internalField,
-    //     const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
-    // )
-    //     : GeometricFieldMixin<ValueType>(
-    //         exec,
-    //         name,
-    //         mesh,
-    //         DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(),
-    //         mesh.nBoundaries())
-    //     ),
-    //       key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
-    //       db_(std::nullopt)
-    // {}
-
     /**
      * @brief Constructor for a VolumeField with a given internal and boundary field
      *
