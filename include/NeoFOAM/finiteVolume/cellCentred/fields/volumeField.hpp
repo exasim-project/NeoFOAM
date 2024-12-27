@@ -12,9 +12,10 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+
 /**
  * @class VolumeField
- * @brief Represents a volume field in a finite volume method.
+ * @brief Represents the finite volume specific version of a GeometricField.
  *
  * The VolumeField class is a template class that represents a cell-centered field in a finite
  * volume method. It inherits from the GeometricFieldMixin class and provides methods for correcting
@@ -56,31 +57,32 @@ public:
     {}
 
 
-    /**
-     * @brief Constructor for a VolumeField with a given internal field
-     *
-     * @param exec The executor
-     * @param name The name of the field
-     * @param mesh The underlying mesh
-     * @param internalField the underlying internal field
-     * @param boundaryConditions a vector of boundary conditions
-     */
-    VolumeField(
-        const Executor& exec,
-        std::string name,
-        const UnstructuredMesh& mesh,
-        const Field<ValueType>& internalField,
-        const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
-    )
-        : GeometricFieldMixin<ValueType>(
-            exec,
-            name,
-            mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
-          key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
-          db_(std::nullopt)
-    {}
+    // /**
+    //  * @brief Constructor for a VolumeField with a given internal field
+    //  *
+    //  * @param exec The executor
+    //  * @param name The name of the field
+    //  * @param mesh The underlying mesh
+    //  * @param internalField the underlying internal field
+    //  * @param boundaryConditions a vector of boundary conditions
+    //  */
+    // VolumeField(
+    //     const Executor& exec,
+    //     std::string name,
+    //     const UnstructuredMesh& mesh,
+    //     const Field<ValueType>& internalField,
+    //     const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
+    // )
+    //     : GeometricFieldMixin<ValueType>(
+    //         exec,
+    //         name,
+    //         mesh,
+    //         DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(),
+    //         mesh.nBoundaries())
+    //     ),
+    //       key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
+    //       db_(std::nullopt)
+    // {}
 
     /**
      * @brief Constructor for a VolumeField with a given internal and boundary field
@@ -119,20 +121,13 @@ public:
         const Executor& exec,
         std::string fieldName,
         const UnstructuredMesh& mesh,
-        const Field<ValueType>& internalField,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
         Database& db,
         std::string dbKey,
         std::string collectionName
     )
-        : GeometricFieldMixin<ValueType>(
-            exec,
-            fieldName,
-            mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
-          key(dbKey), fieldCollectionName(collectionName), boundaryConditions_(boundaryConditions),
-          db_(&db)
+        : GeometricFieldMixin<ValueType>(exec, fieldName, mesh), key(dbKey),
+          fieldCollectionName(collectionName), boundaryConditions_(boundaryConditions), db_(&db)
     {}
 
     VolumeField(const VolumeField& other)
