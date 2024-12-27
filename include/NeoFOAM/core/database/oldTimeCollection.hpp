@@ -2,18 +2,11 @@
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 #pragma once
 
-#include <unordered_map>
-#include <any>
 #include <string>
-#include <functional>
-#include "NeoFOAM/core/demangle.hpp"
-#include "NeoFOAM/core/error.hpp"
 
 #include "NeoFOAM/core/database/database.hpp"
 #include "NeoFOAM/core/database/collection.hpp"
 #include "NeoFOAM/core/database/document.hpp"
-
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/core/database/fieldCollection.hpp"
 
 
