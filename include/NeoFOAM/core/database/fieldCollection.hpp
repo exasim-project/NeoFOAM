@@ -16,6 +16,7 @@
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
+
 /**
  * @brief Validates a FieldDocument.
  *
@@ -357,14 +358,7 @@ public:
     FieldDocument operator()(Database& db)
     {
         VolumeField<scalar> vf(
-            field.exec(),
-            name,
-            field.mesh(),
-            field.internalField(),
-            field.boundaryConditions(),
-            db,
-            "",
-            ""
+            field.exec(), name, field.mesh(), field.boundaryConditions(), db, "", ""
         );
 
         if (field.registered())
