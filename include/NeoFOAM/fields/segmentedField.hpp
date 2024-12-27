@@ -12,10 +12,15 @@ namespace NeoFOAM
  *
  * @tparam IndexType The type of the indices.
  */
-template<typename IndexType>
-class Segment
+template<typename ValueType, typename IndexType>
+class SegmentedFieldView
 {
 public:
+
+    /**
+     * @brief A span with the values.
+     */
+    std::span<ValueType> values;
 
     /**
      * @brief A span of indices representing the segments.
@@ -56,9 +61,7 @@ public:
      * @param segI The index of the segment.
      * @return A subspan of values corresponding to the segment.
      */
-    template<typename ValueType>
-    KOKKOS_INLINE_FUNCTION std::span<ValueType>
-    subspan(std::span<ValueType> values, std::size_t segI) const
+    KOKKOS_INLINE_FUNCTION std::span<ValueType> subspan(std::size_t segI) const
     {
         auto [start, length] = range(segI);
         return values.subspan(start, length);
@@ -85,8 +88,6 @@ class SegmentedField
 {
 public:
 
-    Field<ValueType> values;
-    Field<IndexType> segments;
 
     /**
      * @brief Create a segmented field with a given size and number of segments.
@@ -95,8 +96,31 @@ public:
      * @param numSegments  number of segments
      */
     SegmentedField(const Executor& exec, size_t size, size_t numSegments)
-        : values(exec, size), segments(exec, numSegments + 1)
+        : values_(exec, size), segments_(exec, numSegments + 1)
     {}
+
+    /*
+     */
+    SegmentedField(const Field<IndexType>& intervals)
+        : values_(intervals.exec(), 0),
+          segments_(intervals.exec(), intervals.size() + 1, IndexType(0))
+    {
+        auto segSpan = segments_.span();
+        const auto intSpan = intervals.span();
+
+        NeoFOAM::parallelScan(
+            intervals.exec(),
+            {0, segSpan.size()},
+            KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
+                update += intSpan[i - 1];
+                if (final)
+                {
+                    segSpan[i] = update;
+                }
+            }
+        );
+        values_ = Field<ValueType>(intervals.exec(), segSpan.back());
+    }
 
     /**
      * @brief Create a segmented field from two fields.
@@ -104,7 +128,7 @@ public:
      * @param segments The segments of the segmented field.
      */
     SegmentedField(const Field<ValueType>& values, const Field<IndexType>& segments)
-        : values(values), segments(segments)
+        : values_(values), segments_(segments)
     {}
 
 
@@ -112,28 +136,53 @@ public:
      * @brief Get the executor associated with the segmented field.
      * @return Reference to the executor.
      */
-    const Executor& exec() const { return values.exec(); }
+    const Executor& exec() const { return values_.exec(); }
 
     /**
      * @brief Get the size of the segmented field.
      * @return The size of the segmented field.
      */
-    size_t size() const { return values.size(); }
+    size_t size() const { return values_.size(); }
 
     /**
      * @brief Get the number of segments in the segmented field.
      * @return The number of segments.
      */
-    size_t numSegments() const { return segments.size() - 1; }
+    size_t numSegments() const { return segments_.size() - 1; }
+
 
     /**
      * @brief get the spans of the segmented field
      * @return Span of the fields
      */
-    std::pair<std::span<ValueType>, Segment<IndexType>> spans()
+    [[nodiscard]] SegmentedFieldView<ValueType, IndexType> view() &
     {
-        return {values.span(), Segment<IndexType>(segments.span())};
+        return SegmentedFieldView<ValueType, IndexType> {values_.span(), segments_.span()};
     }
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    [[nodiscard]] SegmentedFieldView<ValueType, IndexType> view() && = delete;
+
+    /**
+     * @brief get the spans of the segmented field
+     * @return Span of the fields
+     */
+    [[nodiscard]] std::pair<std::span<ValueType>, std::span<IndexType>> spans() &
+    {
+        return {values_.span(), segments_.span()};
+    }
+
+    // ensures no return a span of a temporary object --> invalid memory access
+    [[nodiscard]] std::pair<std::span<ValueType>, std::span<IndexType>> spans() && = delete;
+
+    const Field<ValueType>& values() const { return values_; }
+
+    const Field<IndexType>& segments() const { return segments_; }
+
+private:
+
+    Field<ValueType> values_;
+    Field<IndexType> segments_;
 };
 
 } // namespace NeoFOAM

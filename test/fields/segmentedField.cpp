@@ -9,6 +9,7 @@
 
 #include "NeoFOAM/fields/segmentedField.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"
+#include <Kokkos_Core.hpp>
 
 TEST_CASE("segmentedField")
 {
@@ -23,22 +24,13 @@ TEST_CASE("segmentedField")
     SECTION("Constructor from sizes " + execName)
     {
         NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(exec, 10, 5);
-        NeoFOAM::fill(segField.values, 0);
-        NeoFOAM::fill(segField.segments, 0);
+        auto [values, segments] = segField.spans();
 
-        REQUIRE(segField.values.size() == 10);
-        REQUIRE(segField.segments.size() == 6);
-
-        REQUIRE(segField.values.exec() == exec);
+        REQUIRE(values.size() == 10);
+        REQUIRE(segments.size() == 6);
 
         REQUIRE(segField.numSegments() == 5);
         REQUIRE(segField.size() == 10);
-
-        auto hostValues = segField.values.copyToHost();
-        auto hostSegments = segField.segments.copyToHost();
-
-        REQUIRE(hostValues[0] == 0);
-        REQUIRE(hostSegments[0] == 0);
     }
 
     SECTION("Constructor from field " + execName)
@@ -48,14 +40,14 @@ TEST_CASE("segmentedField")
 
         NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(values, segments);
 
-        REQUIRE(segField.values.size() == 10);
-        REQUIRE(segField.segments.size() == 6);
+        REQUIRE(segField.values().size() == 10);
+        REQUIRE(segField.segments().size() == 6);
         REQUIRE(segField.numSegments() == 5);
 
-        REQUIRE(segField.values.exec() == exec);
+        REQUIRE(segField.values().exec() == exec);
 
-        auto hostValues = segField.values.copyToHost();
-        auto hostSegments = segField.segments.copyToHost();
+        auto hostValues = segField.values().copyToHost();
+        auto hostSegments = segField.segments().copyToHost();
 
         REQUIRE(hostValues[5] == 5);
         REQUIRE(hostSegments[2] == 4);
@@ -63,6 +55,8 @@ TEST_CASE("segmentedField")
         SECTION("loop over segments")
         {
             auto [valueSpan, segment] = segField.spans();
+            NeoFOAM::SegmentedFieldView<NeoFOAM::label, NeoFOAM::localIdx> segView =
+                segField.view();
             NeoFOAM::Field<NeoFOAM::label> result(exec, 5);
 
             NeoFOAM::fill(result, 0);
@@ -76,7 +70,7 @@ TEST_CASE("segmentedField")
                     // add all values in the segment
 
                     // check if it works with bounds
-                    auto [bStart, bEnd] = segment.bounds(segI);
+                    auto [bStart, bEnd] = segView.bounds(segI);
                     auto bVals = valueSpan.subspan(bStart, bEnd - bStart);
                     for (auto& val : bVals)
                     {
@@ -84,7 +78,7 @@ TEST_CASE("segmentedField")
                     }
 
                     // check if it works with range
-                    auto [rStart, rLength] = segment.range(segI);
+                    auto [rStart, rLength] = segView.range(segI);
                     auto rVals = valueSpan.subspan(rStart, rLength);
                     for (auto& val : rVals)
                     {
@@ -92,7 +86,7 @@ TEST_CASE("segmentedField")
                     }
 
                     // check with subspan
-                    auto vals = segment.subspan(valueSpan, segI);
+                    auto vals = segView.subspan(segI);
                     for (auto& val : vals)
                     {
                         resultSpan[segI] += val;
@@ -106,6 +100,68 @@ TEST_CASE("segmentedField")
             REQUIRE(hostResult[2] == 9 * 3);
             REQUIRE(hostResult[3] == 13 * 3);
             REQUIRE(hostResult[4] == 17 * 3);
+        }
+    }
+
+    SECTION("Constructor from list with intervals " + execName)
+    {
+        NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
+        NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(intervals);
+
+        auto hostSegments = segField.segments().copyToHost();
+        REQUIRE(hostSegments[0] == 0);
+        REQUIRE(hostSegments[1] == 1);
+        REQUIRE(hostSegments[2] == 3);
+        REQUIRE(hostSegments[3] == 6);
+        REQUIRE(hostSegments[4] == 10);
+        REQUIRE(hostSegments[5] == 15);
+
+        auto hostIntervals = intervals.copyToHost();
+        REQUIRE(intervals[0] == 1);
+        REQUIRE(intervals[1] == 2);
+        REQUIRE(intervals[2] == 3);
+        REQUIRE(intervals[3] == 4);
+        REQUIRE(intervals[4] == 5);
+
+        REQUIRE(segField.size() == 15);
+
+        SECTION("update values")
+        {
+            NeoFOAM::SegmentedFieldView<NeoFOAM::label, NeoFOAM::localIdx> segView =
+                segField.view();
+            NeoFOAM::Field<NeoFOAM::label> result(exec, 5);
+
+            NeoFOAM::fill(result, 0);
+            auto resultSpan = result.span();
+
+
+            parallelFor(
+                exec,
+                {0, segField.numSegments()},
+                KOKKOS_LAMBDA(const size_t segI) {
+                    // add all values in the segment
+
+                    // fill values
+                    auto vals = segView.subspan(segI);
+                    for (auto& val : vals)
+                    {
+                        val = segI;
+                    }
+
+                    // accumulate values
+                    for (const auto& val : vals)
+                    {
+                        resultSpan[segI] += val;
+                    }
+                }
+            );
+
+            auto hostResult = result.copyToHost();
+            REQUIRE(hostResult[0] == 0 * 1);
+            REQUIRE(hostResult[1] == 1 * 2);
+            REQUIRE(hostResult[2] == 2 * 3);
+            REQUIRE(hostResult[3] == 3 * 4);
+            REQUIRE(hostResult[4] == 4 * 5);
         }
     }
 }
