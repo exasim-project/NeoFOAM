@@ -15,7 +15,8 @@ set_property(
 
 if(NEOFOAM_WITH_GINKGO)
   target_link_libraries(NeoFOAM_public_api INTERFACE Ginkgo::ginkgo)
-  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_GINKGO=1)
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_GINKGO=1 KOKKOS_ENABLE_SERIAL=1)
+  # set_property( TARGET Ginkgo::ginkgo APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS )
 else()
   target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_GINKGO=0)
 endif()
