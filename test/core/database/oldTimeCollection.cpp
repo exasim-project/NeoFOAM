@@ -9,9 +9,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-// only needed for mscv
-#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
-
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 fvcc::VolumeField<NeoFOAM::scalar>

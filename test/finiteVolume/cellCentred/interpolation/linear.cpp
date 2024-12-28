@@ -9,10 +9,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-// only needed for msvc
-#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
-
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 using NeoFOAM::finiteVolume::cellCentred::VolumeField;
 using NeoFOAM::finiteVolume::cellCentred::SurfaceField;

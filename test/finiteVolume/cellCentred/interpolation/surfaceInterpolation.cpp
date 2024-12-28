@@ -9,12 +9,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-// only needed for mscv
-#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/surface/calculated.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/upwind.hpp"
-
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 

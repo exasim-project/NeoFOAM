@@ -9,8 +9,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
-
 TEST_CASE("fixedValue")
 {
     NeoFOAM::Executor exec = GENERATE(
