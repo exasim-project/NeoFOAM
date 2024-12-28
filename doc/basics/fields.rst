@@ -33,7 +33,7 @@ The ``SurfaceField`` class stores the field values interpreted as face centers v
 Functionally, fvccVolField parallels several OpenFOAM classes such as ``surfaceScalarField``, ``surfaceVectorField``, and ``surfaceTensorField``.
 However, the ``internalField`` also contains the boundary values, so no branches (if) are required when iterating over all cell faces. Thus the size of the ``internalField`` in NeoFOAM differs from that of OpenFOAM.
 
-.. doxygenclass:: NeoFOAM::fvccSurfaceField
+.. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::SurfaceField
     :members:
         field_,
         fvccSurfaceField,
