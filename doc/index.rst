@@ -40,18 +40,6 @@ This means that NeoFOAM won't produce a `libfiniteVolume.so` and `libOpenFOAM.so
 Instead, we aim for source compatibility, i.e. the possibility to compile application OpenFOAM code like pimpleFoam and others against the NeoFOAM libraries.
 This approach is demonstrated in the `FoamAdapter <https://github.com/exasim-project/FoamAdapter>`_ repository.
 
-Building OpenFOAM Applications with NeoFOAM
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Currently, the support for building applications is very limited.
-The simplest way to build applications
-with the NeoFOAM core is by adopting the CMake build procedure showcased in our `applications <https://github.com/exasim-project/NeoFOAM/tree/main/applications>`_
-folder.
-For now, we only have a `minimal <https://github.com/exasim-project/NeoFOAM/tree/main/applications/solver/minimal>`_ example as we are still working on the basic implementations.
-But we will gradually add example applications as we move along.
-Most likely we will initially work on porting solver applications, since pre- and postprocessing tools that work on a file-level basis are trivially interoperable.
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
