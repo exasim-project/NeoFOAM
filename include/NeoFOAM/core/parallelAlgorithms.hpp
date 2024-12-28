@@ -24,7 +24,9 @@ concept parallelForKernel = requires(Kernel t, size_t i) {
 };
 
 template<typename Executor, parallelForKernel Kernel>
-void parallelFor(const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
+void parallelFor(
+    [[maybe_unused]] const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel
+)
 {
     auto [start, end] = range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
@@ -61,7 +63,7 @@ concept parallelForFieldKernel = requires(Kernel t, ValueType val, size_t i) {
 };
 
 template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
-void parallelFor(const Executor& exec, Field<ValueType>& field, Kernel kernel)
+void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel)
 {
     auto span = field.span();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
@@ -90,7 +92,9 @@ void parallelFor(Field<ValueType>& field, Kernel kernel)
 
 
 template<typename Executor, typename Kernel, typename T>
-void parallelReduce(const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value)
+void parallelReduce(
+    [[maybe_unused]] const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value
+)
 {
     auto [start, end] = range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
@@ -119,7 +123,9 @@ void parallelReduce(
 
 
 template<typename Executor, typename ValueType, typename Kernel, typename T>
-void parallelReduce(const Executor& exec, Field<ValueType>& field, Kernel kernel, T& value)
+void parallelReduce(
+    [[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel, T& value
+)
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
