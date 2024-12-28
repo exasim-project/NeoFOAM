@@ -105,6 +105,8 @@ jobs:
           module spider libfabric-aws
           module load cmake
           cmake --version
+          CC=clang \
+          CXX=clang++ \
           cmake --preset ${{matrix.preset}} \
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
