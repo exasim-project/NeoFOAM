@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "cellCentred/boundary/boundary.hpp"
+#include "cellCentred/boundary.hpp"
 #include "cellCentred/boundary/surface/calculated.hpp"
 
 #include "cellCentred/boundary/boundaryPatchMixin.hpp"
@@ -15,7 +15,5 @@
 #include "cellCentred/operators/divOperator.hpp"
 #include "cellCentred/operators/gaussGreenDiv.hpp"
 
-#include "cellCentred/interpolation/linear.hpp"
-#include "cellCentred/interpolation/upwind.hpp"
 #include "cellCentred/interpolation/linear.hpp"
 #include "cellCentred/interpolation/upwind.hpp"

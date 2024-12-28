@@ -5,7 +5,7 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/basicGeometryScheme.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

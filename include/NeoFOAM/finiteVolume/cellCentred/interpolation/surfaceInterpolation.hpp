@@ -13,7 +13,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
