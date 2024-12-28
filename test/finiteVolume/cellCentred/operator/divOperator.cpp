@@ -13,6 +13,14 @@
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
+// only needed for mscv
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surface/calculated.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/interpolation/linear.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/interpolation/upwind.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/surface/calculated.hpp"
+
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Operator = NeoFOAM::dsl::Operator;
