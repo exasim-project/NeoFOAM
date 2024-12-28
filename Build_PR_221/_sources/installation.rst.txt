@@ -37,7 +37,7 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the CMake com
 | NEOFOAM_BUILD_TESTS       | Build NeoFOAM with tests          | OFF     |
 +---------------------------+-----------------------------------+---------+
 
-The browse the full list of build options it is recommended to use a build tool like ``ccmake``.
+To browse the full list of build options it is recommended to use a build tool like ``ccmake``.
 By opening the the project with cmake-gui you can easily set these flags and configure the build.
 NeoFOAM specific build flags are prefixed by ``NEOFOAM_``.
 
