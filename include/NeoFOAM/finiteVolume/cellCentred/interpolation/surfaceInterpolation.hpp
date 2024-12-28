@@ -7,11 +7,13 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
