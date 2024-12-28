@@ -29,7 +29,6 @@ function(neofoam_unit_test TEST)
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
   set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
-
   add_test(
     NAME ${TEST}
     COMMAND ${neofoam_COMMAND}
@@ -75,5 +74,6 @@ add_subdirectory(core)
 add_subdirectory(dsl)
 add_subdirectory(fields)
 add_subdirectory(finiteVolume)
+add_subdirectory(linearAlgebra)
 add_subdirectory(mesh)
 add_subdirectory(timeIntegration)

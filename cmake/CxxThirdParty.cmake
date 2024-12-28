@@ -47,6 +47,62 @@ cpmaddpackage(
   3.11.3
   SYSTEM)
 
+cpmaddpackage(
+  NAME
+  spdlog
+  URL
+  https://github.com/gabime/spdlog/archive/refs/tags/v1.13.0.zip
+  VERSION
+  1.13.0
+  SYSTEM)
+
+cpmaddpackage(
+  NAME
+  cxxopts
+  URL
+  https://github.com/jarro2783/cxxopts/archive/refs/tags/v3.2.0.zip
+  VERSION
+  3.2.0
+  SYSTEM)
+
+if(${NEOFOAM_WITH_GINKGO})
+  set(GINKGO_BUILD_TESTS
+      OFF
+      CACHE INTERNAL "")
+  set(GINKGO_BUILD_BENCHMARKS
+      OFF
+      CACHE INTERNAL "")
+  set(GINKGO_BUILD_EXAMPLES
+      OFF
+      CACHE INTERNAL "")
+  cpmaddpackage(
+    NAME
+    Ginkgo
+    GITHUB_REPOSITORY
+    ginkgo-project/ginkgo
+    GIT_TAG
+    develop
+    VERSION
+    1.9.0
+    SYSTEM)
+endif()
+
+if(${NEOFOAM_WITH_PETSC})
+  find_package(PkgConfig REQUIRED)
+  pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
+endif()
+
+if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
+  cpmaddpackage(
+    NAME
+    Catch2
+    URL
+    https://github.com/catchorg/Catch2/archive/refs/tags/v3.4.0.zip
+    VERSION
+    3.4.0
+    SYSTEM)
+endif()
+
 if(${NEOFOAM_WITH_SUNDIALS})
   set(SUNDIALS_OPTIONS
       "BUILD_TESTING OFF"
@@ -76,34 +132,5 @@ if(${NEOFOAM_WITH_SUNDIALS})
     OPTIONS
     ${SUNDIALS_OPTIONS}
     ${SUNDIALS_CUDA_OPTIONS}
-    SYSTEM)
-endif()
-
-cpmaddpackage(
-  NAME
-  spdlog
-  URL
-  https://github.com/gabime/spdlog/archive/refs/tags/v1.13.0.zip
-  VERSION
-  1.13.0
-  SYSTEM)
-
-cpmaddpackage(
-  NAME
-  cxxopts
-  URL
-  https://github.com/jarro2783/cxxopts/archive/refs/tags/v3.2.0.zip
-  VERSION
-  3.2.0
-  SYSTEM)
-
-if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
-  cpmaddpackage(
-    NAME
-    Catch2
-    URL
-    https://github.com/catchorg/Catch2/archive/refs/tags/v3.4.0.zip
-    VERSION
-    3.4.0
     SYSTEM)
 endif()
