@@ -18,7 +18,6 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-// FIXME this should be merged with other boundary.hpp
 /* @brief creates a vector of boundary conditions of type calculated for every boundary
  *
  * @tparam Type of the Boundary ie SurfaceBoundary<scalar>
