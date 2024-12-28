@@ -15,7 +15,7 @@ The ``VolumeField`` stores the field values at cell centers and along boundaries
 
 Functionally, ``fvccVolField`` parallels several OpenFOAM classes such as ``volScalarField``, ``volVectorField``, and ``volTensorField``. Note: "fvcc" represents "Finite Volume Cell Centered".
 
-.. doxygenclass:: NeoFOAM::fvccVolField
+.. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::VolumeField
     :members:
         field_,
         fvccVolField,
