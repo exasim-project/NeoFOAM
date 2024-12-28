@@ -33,9 +33,9 @@ If you prefer to clone, configure and build dependencies your self consider sett
 
 ## Compilation
 
-[![workflows/Build on linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml?query=branch%3Amaster)
-[![workflows/Build on OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml?query=branch%3Amaster)
-[![workflows/Build on windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml/badge.svg?branch=master)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml?query=branch%3Amaster)
+[![workflows/Build on linux](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml/badge.svg?branch=main)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_ubuntu.yaml?query=branch%3Amain)
+[![workflows/Build on OSX](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml/badge.svg?branch=main)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_macos.yaml?query=branch%3Amain)
+[![workflows/Build on windows](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml/badge.svg?branch=main)](https://github.com/exasim-project/neofoam/actions/workflows/build_on_windows.yaml?query=branch%3Amain)
 
 NeoFOAM uses cmake to build, thus the standard cmake procedure should work.
 From a build directory you can execute
