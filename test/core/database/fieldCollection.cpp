@@ -219,8 +219,8 @@ TEST_CASE("FieldCollection")
                     }
                 );
 
-            const fvcc::FieldDocument& docT = fieldCollection2.fieldDoc(t3.key);
-            const fvcc::FieldDocument& docT3 = fieldCollection2.fieldDoc(t.key);
+            const fvcc::FieldDocument& docT = fieldCollection2.fieldDoc(t3.key());
+            const fvcc::FieldDocument& docT3 = fieldCollection2.fieldDoc(t.key());
 
             REQUIRE(docT.timeIndex() == docT3.timeIndex());
             REQUIRE(docT.iterationIndex() == docT3.iterationIndex());

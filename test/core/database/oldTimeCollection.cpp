@@ -107,14 +107,14 @@ TEST_CASE("oldTimeCollection")
             fieldCollection.find([](const NeoFOAM::Document& doc) { return name(doc) == "T"; });
 
         REQUIRE(res.size() == 1);
-        REQUIRE(t.key == res[0]);
-        REQUIRE(t.fieldCollectionName == "testFieldCollection");
+        REQUIRE(t.key() == res[0]);
+        REQUIRE(t.fieldCollectionName() == "testFieldCollection");
 
         REQUIRE(t.name == "T");
         REQUIRE(t.hasDatabase());
         REQUIRE(t.internalField().copyToHost()[0] == 1.0);
         REQUIRE(t.registered());
-        fvcc::FieldDocument& docT = fieldCollection.fieldDoc(t.key);
+        fvcc::FieldDocument& docT = fieldCollection.fieldDoc(t.key());
         // without the timeIndex smaller than 2 the timeIndex overflows if we subtract 1
         // Note: we  are also checking oldTime oldTime(T) in the next section
         REQUIRE(docT.timeIndex() == 1);
@@ -128,15 +128,15 @@ TEST_CASE("oldTimeCollection")
 
             REQUIRE(tOld.name == "T_0");
             REQUIRE(tOld.internalField().copyToHost()[0] == 1.0);
-            fvcc::FieldDocument& doctOld = fieldCollection.fieldDoc(tOld.key);
+            fvcc::FieldDocument& doctOld = fieldCollection.fieldDoc(tOld.key());
             REQUIRE(doctOld.timeIndex() == 0);
             fvcc::OldTimeCollection& oldTimeCollection =
                 fvcc::OldTimeCollection::instance(fieldCollection);
             REQUIRE(oldTimeCollection.size() == 1);
-            auto& tOldDoc = oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(t.key));
-            REQUIRE(tOldDoc.nextTime() == t.key);
-            REQUIRE(tOldDoc.previousTime() == tOld.key);
-            REQUIRE(tOldDoc.currentTime() == t.key);
+            auto& tOldDoc = oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(t.key()));
+            REQUIRE(tOldDoc.nextTime() == t.key());
+            REQUIRE(tOldDoc.previousTime() == tOld.key());
+            REQUIRE(tOldDoc.currentTime() == t.key());
             REQUIRE(tOldDoc.level() == 1);
 
             auto& sametOld = fvcc::oldTime(t);
@@ -146,13 +146,14 @@ TEST_CASE("oldTimeCollection")
             auto& tOld2 = fvcc::oldTime(tOld);
             REQUIRE(tOld2.name == "T_0_0");
             REQUIRE(tOld2.internalField().copyToHost()[0] == 1.0);
-            fvcc::FieldDocument& doctOld2 = fieldCollection.fieldDoc(tOld2.key);
+            fvcc::FieldDocument& doctOld2 = fieldCollection.fieldDoc(tOld2.key());
             REQUIRE(doctOld2.timeIndex() == -1);
             REQUIRE(oldTimeCollection.size() == 2);
-            auto& tOldDoc2 = oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(tOld.key));
-            REQUIRE(tOldDoc2.nextTime() == tOld.key);
-            REQUIRE(tOldDoc2.previousTime() == tOld2.key);
-            REQUIRE(tOldDoc2.currentTime() == t.key);
+            auto& tOldDoc2 =
+                oldTimeCollection.oldTimeDoc(oldTimeCollection.findNextTime(tOld.key()));
+            REQUIRE(tOldDoc2.nextTime() == tOld.key());
+            REQUIRE(tOldDoc2.previousTime() == tOld2.key());
+            REQUIRE(tOldDoc2.currentTime() == t.key());
             REQUIRE(tOldDoc2.level() == 2);
 
             auto& sametOld2 = fvcc::oldTime(tOld);
