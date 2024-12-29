@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/containers.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.08.06 -->
-        <title>Containers - NeoFOAM documentation</title>
+        <title>&lt;no title&gt; - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
@@ -180,7 +180,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -200,13 +200,12 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul class="current">
+  <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Basics</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="index.html">Basics</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="executor.html">Executor</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Containers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
@@ -266,293 +265,13 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="containers">
-<span id="basics-containers"></span><h1>Containers<a class="headerlink" href="#containers" title="Link to this heading">¶</a></h1>
-<section id="fields">
-<h2>Fields<a class="headerlink" href="#fields" title="Link to this heading">¶</a></h2>
-<p>The Field classes are the central elements for implementing a platform portable CFD framework. Fields are able to perform basic algebraic operations such as addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar. The Field classes store the data in a platform-independent way and the executor, which is used to dispatch the operations to the correct device. The Field classes are implemented in the <code class="docutils literal notranslate"><span class="pre">Field.hpp</span></code> header file and mainly store a pointer to the data, the size of the data, and the executor.</p>
-<dl class="cpp class">
-<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM5FieldE">
-<span id="_CPPv3I0EN7NeoFOAM5FieldE"></span><span id="_CPPv2I0EN7NeoFOAM5FieldE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1Field"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>A class to contain the data and executors for a field and define some basic operations. </p>
-<div class="breathe-sectiondef docutils container">
-<p class="breathe-sectiondef-title rubric" id="breathe-section-title-private-members">Private Members</p>
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5size_E">
-<span id="_CPPv3N7NeoFOAM5Field5size_E"></span><span id="_CPPv2N7NeoFOAM5Field5size_E"></span><span id="NeoFOAM::Field::size___s"></span><span class="target" id="classNeoFOAM_1_1Field_1a4448dad85c0348167844faaf076c01fe"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5size_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Size of the field. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5data_E">
-<span id="_CPPv3N7NeoFOAM5Field5data_E"></span><span id="_CPPv2N7NeoFOAM5Field5data_E"></span><span id="NeoFOAM::Field::data___ValueTypeP"></span><span class="target" id="classNeoFOAM_1_1Field_1ad8da4b64627522d2cf5078f1701af863"></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="k"><span class="pre">nullptr</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5data_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Pointer to the field data. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5exec_E">
-<span id="_CPPv3N7NeoFOAM5Field5exec_E"></span><span id="_CPPv2N7NeoFOAM5Field5exec_E"></span><span id="NeoFOAM::Field::exec___ExecutorC"></span><span class="target" id="classNeoFOAM_1_1Field_1ac51548bd9bf092b14f8164d2bc742fd5"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exec_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5exec_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Executor associated with the field. (CPU, GPU, openMP, etc.) </p>
-</dd></dl>
-
-</div>
-</dd></dl>
-
-<p>To run a function on the GPU, the data and function need to be trivially copyable. This is not the case with the existing OpenFOAM Field class , and it can be viewed as a wrapper around the data. To solve this issue, the  NeoFOAM field class has a public member function called <code class="docutils literal notranslate"><span class="pre">field()</span></code> that returns a span that can be used to access the data on the CPU and GPU.</p>
-<dl class="cpp class">
-<dt class="sig sig-object cpp">
-<span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1Field"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><br /></dt>
-<dd><p>A class to contain the data and executors for a field and define some basic operations. </p>
-</dd></dl>
-
-<p>The following example shows how to use the field function to access the data of a field and set all the values to 1.0. However, the for loop is only executed on the single CPU core and not on the GPU.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">SerialExecutor</span><span class="w"> </span><span class="n">cpuExec</span><span class="w"> </span><span class="p">{};</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">a</span><span class="p">(</span><span class="n">cpuExec</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
-<span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
-<span class="c1">// for loop</span>
-<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">sA</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="w">     </span><span class="n">sA</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>To run the for loop on the GPU is a bit more complicated and is based on the Kokkos library that simplifies the process and support parallelization strategies for different GPU vendors and  OpenMP  support for CPU targets. The following example shows how to set all the values of a field to 1.0 on the GPU.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">GPUExecutor</span><span class="w"> </span><span class="n">gpuExec</span><span class="w"> </span><span class="p">{};</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">b</span><span class="p">(</span><span class="n">gpuExec</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
-<span class="n">std</span><span class="o">::</span><span class="n">span</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">sB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
-<span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span>
-<span class="w">     </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">RangePolicy</span><span class="o">&lt;</span><span class="n">gpuExec</span><span class="o">::</span><span class="n">exec</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">sB</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span>
-<span class="w">     </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sB</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
-<span class="p">);</span>
-</pre></div>
-</div>
-<p>Kokkos requires the knowledge of where to run the code and the range of the loop. The range is defined by the size of the data and the executor. The <cite>KOKKOS_LAMBDA</cite> is required to mark the function so it is also compiled for the GPU. This approach however is not very user-friendly and requires the knowledge of the Kokkos library. To simplify the process, the Field class stores the executor and the field independent of the device can be set to 1.0 with the following code.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">c</span><span class="p">(</span><span class="n">gpuExec</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>The fill function uses the <cite>std::visit</cite> function to call the correct function based on the executor as described in the previous section.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">Operation</span><span class="w"> </span><span class="n">op</span><span class="p">{};</span>
-<span class="n">std</span><span class="o">::</span><span class="n">visit</span><span class="p">([</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">exec</span><span class="p">)</span>
-<span class="w">           </span><span class="p">{</span><span class="w"> </span><span class="n">op</span><span class="p">(</span><span class="n">exec</span><span class="p">);</span><span class="w"> </span><span class="p">},</span>
-<span class="w">           </span><span class="n">exec</span><span class="p">);</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>TODO
-organize the FieldOperation so the can be easily shown here</p>
-</div>
-</section>
-<section id="fieldgraph">
-<h2>FieldGraph<a class="headerlink" href="#fieldgraph" title="Link to this heading">¶</a></h2>
-<p>The Field can now be used to compose  more complex data structures. To solve PDE’s, information about the neighbors is required. This is usually done with the following approach:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">nCells</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
-<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">cellToCellStencil</span><span class="p">(</span><span class="n">nCells</span><span class="p">);</span>
-
-<span class="n">cellToCellStencil</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">});</span>
-<span class="n">cellToCellStencil</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">});</span>
-<span class="n">cellToCellStencil</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">});</span>
-
-<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">for</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">cell</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">cellToCellStencil</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="w">     </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">neibour</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">cell</span><span class="p">)</span>
-<span class="w">     </span><span class="p">{</span>
-<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">neibour</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="p">;</span>
-<span class="w">     </span><span class="p">}</span>
-<span class="w">     </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>Now we can loop over each cell and access the neighbors with a nested for loop. However, this approach is not suited for GPUs. Instead of the  vector of vector approach, the neighborhood  is stored  with two fields (described with std::vector to simplify the example):</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="n">nCells</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
-<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">};</span>
-<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">offset_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">};</span>
-
-<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">nCells</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
-<span class="p">{</span>
-<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">offset_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">offset_</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
-<span class="w">     </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">start</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">end</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="p">)</span>
-<span class="w">     </span><span class="p">{</span>
-<span class="w">          </span><span class="kt">int</span><span class="w"> </span><span class="n">neibour</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">neibour</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; &quot;</span><span class="p">;</span>
-<span class="w">     </span><span class="p">}</span>
-<span class="w">     </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-<p>The same approach is used in the <code class="docutils literal notranslate"><span class="pre">FieldGraph</span></code> class (we had a better name for this but i forgot). That implements the above approach using the Field class.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>TODO
-implement the FieldGraph class</p>
-</div>
-</section>
-<section id="boundaryfields">
-<h2>BoundaryFields<a class="headerlink" href="#boundaryfields" title="Link to this heading">¶</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">BoundaryFields</span></code> class is used to store all the boundary conditions of a <code class="docutils literal notranslate"><span class="pre">DomainField</span></code>. The <code class="docutils literal notranslate"><span class="pre">BoundaryFields</span></code> class is implemented in the <code class="docutils literal notranslate"><span class="pre">boundaryFields.hpp</span></code> header file and stores the boundary conditions in a generic container that can be used to represent different boundary conditions: Dirichlet, Neumann, and Robin.</p>
-<dl class="cpp class">
-<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM14BoundaryFieldsE">
-<span id="_CPPv3I0EN7NeoFOAM14BoundaryFieldsE"></span><span id="_CPPv2I0EN7NeoFOAM14BoundaryFieldsE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1BoundaryFields"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">BoundaryFields</span></span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Represents the boundary fields for a computational domain. </p>
-<p>The <a class="reference internal" href="#classNeoFOAM_1_1BoundaryFields"><span class="std std-ref">BoundaryFields</span></a> class stores the boundary conditions and related information for a computational domain. It provides access to the computed values, reference values, value fractions, reference gradients, boundary types, offsets, and the number of boundaries and boundary faces.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueType</strong> – The type of the underlying field values </p>
-</dd>
-</dl>
-<div class="breathe-sectiondef docutils container">
-<p class="breathe-sectiondef-title rubric" id="breathe-section-title-private-members">Private Members</p>
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields6value_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields6value_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields6value_E"></span><span id="NeoFOAM::BoundaryFields::value___NeoFOAM::Field:T:"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a93cc243d0dde4043825a0472f3972e32"></span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">value_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields6value_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The <a class="reference internal" href="fields.html#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> storing the computed values from the boundary condition. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields9refValue_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields9refValue_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields9refValue_E"></span><span id="NeoFOAM::BoundaryFields::refValue___NeoFOAM::Field:T:"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a6f6f526c7098dbf9e131fc9756deb702"></span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">refValue_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields9refValue_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The <a class="reference internal" href="fields.html#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> storing the Dirichlet boundary values. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields14valueFraction_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields14valueFraction_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields14valueFraction_E"></span><span id="NeoFOAM::BoundaryFields::valueFraction___NeoFOAM::Field:scalar:"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1ae86d552f4f9fb13ddf498c7e4ab9abeb"></span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">scalar</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">valueFraction_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields14valueFraction_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The <a class="reference internal" href="fields.html#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> storing the fraction of the boundary value. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields8refGrad_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields8refGrad_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields8refGrad_E"></span><span id="NeoFOAM::BoundaryFields::refGrad___NeoFOAM::Field:T:"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a927facfd6f06ea820330968e02abf773"></span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">refGrad_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields8refGrad_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The <a class="reference internal" href="fields.html#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> storing the Neumann boundary values. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields14boundaryTypes_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields14boundaryTypes_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields14boundaryTypes_E"></span><span id="NeoFOAM::BoundaryFields::boundaryTypes___NeoFOAM::Field:i:"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a57d6607e7ae0f66c305a190053a7d61a"></span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">boundaryTypes_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields14boundaryTypes_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The <a class="reference internal" href="fields.html#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> storing the boundary types. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields7offset_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields7offset_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields7offset_E"></span><span id="NeoFOAM::BoundaryFields::offset___NeoFOAM::Field:localIdx:"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1aae2536ad8fa691b81ac2ae23041ef13c"></span><span class="n"><span class="pre">NeoFOAM</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">localIdx</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">offset_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields7offset_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The <a class="reference internal" href="fields.html#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> storing the offsets of each boundary. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields12nBoundaries_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields12nBoundaries_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields12nBoundaries_E"></span><span id="NeoFOAM::BoundaryFields::nBoundaries___s"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a84342ff8b5af7d818f9ee836bf3cfeac"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nBoundaries_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields12nBoundaries_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The number of boundaries. </p>
-</dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM14BoundaryFields15nBoundaryFaces_E">
-<span id="_CPPv3N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"></span><span id="_CPPv2N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"></span><span id="NeoFOAM::BoundaryFields::nBoundaryFaces___s"></span><span class="target" id="classNeoFOAM_1_1BoundaryFields_1a7fa04c9abc880f5088018046204ea8bf"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nBoundaryFaces_</span></span></span><a class="headerlink" href="#_CPPv4N7NeoFOAM14BoundaryFields15nBoundaryFaces_E" title="Link to this definition">¶</a><br /></dt>
-<dd><p>The number of boundary faces. </p>
-</dd></dl>
-
-</div>
-</dd></dl>
-
-</section>
-<section id="domainfield">
-<h2>DomainField<a class="headerlink" href="#domainfield" title="Link to this heading">¶</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">DomainField</span></code> is a data class which stores both the <code class="docutils literal notranslate"><span class="pre">InternalField</span></code> and <code class="docutils literal notranslate"><span class="pre">BoundaryFields</span></code> in a single container. Together, it fully defines a discrete topologically closed physical field, for a given mesh.</p>
-<dl class="cpp class">
-<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM11DomainFieldE">
-<span id="_CPPv3I0EN7NeoFOAM11DomainFieldE"></span><span id="_CPPv2I0EN7NeoFOAM11DomainFieldE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1DomainField"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Represents the domain fields for a computational domain. </p>
-<p>The <a class="reference internal" href="#classNeoFOAM_1_1DomainField"><span class="std std-ref">DomainField</span></a> class stores the internal fields and boundary information for a computational domain. It provides access to the computed values, reference values, value fractions, reference gradients, boundary types, offsets, and the number of boundaries and boundary faces.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ValueType</strong> – The type of the underlying field values </p>
-</dd>
-</dl>
-<div class="breathe-sectiondef docutils container">
-<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8Executor"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8Executor"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a7c969f6c7d4262f1beaa728ed08c6851"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR.s.s.s"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a98fe71b9eb5dc6e7e569123ba0d1227c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nCells</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaryFaces</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaries</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeERK14BoundaryFieldsI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeERK14BoundaryFieldsI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeERK14BoundaryFieldsI9ValueTypeE"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR.Field:ValueType:CR.BoundaryFields:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a6850c1a9826f261eee5502e5ae2e84f8"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">internalField</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields"><span class="n"><span class="pre">BoundaryFields</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">boundaryFields</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeERK14BoundaryFieldsI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeE6size_t6size_t">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeE6size_t6size_t"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeE6size_t6size_t"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR.Field:ValueType:CR.s.s"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a4eabb1090e2045149deaa7378d6fd3ac"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">internalField</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaryFaces</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nBoundaries</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeE6size_t6size_t" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK16UnstructuredMesh">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK16UnstructuredMesh"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK16UnstructuredMesh"></span><span id="NeoFOAM::DomainField::DomainField__ExecutorCR.UnstructuredMeshCR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a08022ffaa11b3405fb7b07ae41a9b816"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="unstructuredMesh.html#_CPPv4N7NeoFOAM16UnstructuredMeshE" title="NeoFOAM::UnstructuredMesh"><span class="n"><span class="pre">UnstructuredMesh</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">mesh</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK16UnstructuredMesh" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERK11DomainFieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERK11DomainFieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERK11DomainFieldI9ValueTypeE"></span><span id="NeoFOAM::DomainField::DomainField__DomainField:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a833249733baecb923cc096ee24420380"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK11DomainFieldI9ValueTypeE" title="NeoFOAM::DomainField::DomainField"><span class="n"><span class="pre">DomainField</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK11DomainFieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE"></span><span id="NeoFOAM::DomainField::DomainField__DomainField:ValueType:RR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a8c5657b752367e8595477410235ca0cc"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DomainField</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE" title="NeoFOAM::DomainField::DomainField"><span class="n"><span class="pre">DomainField</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainFieldaSERK11DomainFieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM11DomainFieldaSERK11DomainFieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM11DomainFieldaSERK11DomainFieldI9ValueTypeE"></span><span id="NeoFOAM::DomainField::assign-operator__DomainField:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a9e8949da47e8fea7aa7e65239e086fd4"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField"><span class="n"><span class="pre">DomainField</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField"><span class="n"><span class="pre">DomainField</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainFieldaSERK11DomainFieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainFieldaSERR11DomainFieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM11DomainFieldaSERR11DomainFieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM11DomainFieldaSERR11DomainFieldI9ValueTypeE"></span><span id="NeoFOAM::DomainField::assign-operator__DomainField:ValueType:RR"></span><span class="target" id="classNeoFOAM_1_1DomainField_1ab953192efe476c2d4ee8ced0b05f5500"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField"><span class="n"><span class="pre">DomainField</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField"><span class="n"><span class="pre">DomainField</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainFieldaSERR11DomainFieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM11DomainField13internalFieldEv">
-<span id="_CPPv3NK7NeoFOAM11DomainField13internalFieldEv"></span><span id="_CPPv2NK7NeoFOAM11DomainField13internalFieldEv"></span><span id="NeoFOAM::DomainField::internalFieldC"></span><span class="target" id="classNeoFOAM_1_1DomainField_1af05959974fceab7c39565f3a3314be9f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">internalField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM11DomainField13internalFieldEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField13internalFieldEv">
-<span id="_CPPv3N7NeoFOAM11DomainField13internalFieldEv"></span><span id="_CPPv2N7NeoFOAM11DomainField13internalFieldEv"></span><span id="NeoFOAM::DomainField::internalField"></span><span class="target" id="classNeoFOAM_1_1DomainField_1ac4b5541f7d6b3aec609ea7c99afb7a91"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">internalField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField13internalFieldEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM11DomainField13boundaryFieldEv">
-<span id="_CPPv3NK7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="_CPPv2NK7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="NeoFOAM::DomainField::boundaryFieldC"></span><span class="target" id="classNeoFOAM_1_1DomainField_1aac8ed3340a7bb5fa7e1572bdbf8d463d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields"><span class="n"><span class="pre">BoundaryFields</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">boundaryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM11DomainField13boundaryFieldEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM11DomainField13boundaryFieldEv">
-<span id="_CPPv3N7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="_CPPv2N7NeoFOAM11DomainField13boundaryFieldEv"></span><span id="NeoFOAM::DomainField::boundaryField"></span><span class="target" id="classNeoFOAM_1_1DomainField_1aa055b1a333c4a4144deeacf3ea9c9249"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE" title="NeoFOAM::BoundaryFields"><span class="n"><span class="pre">BoundaryFields</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE" title="NeoFOAM::DomainField::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">boundaryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM11DomainField13boundaryFieldEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM11DomainField4execEv">
-<span id="_CPPv3NK7NeoFOAM11DomainField4execEv"></span><span id="_CPPv2NK7NeoFOAM11DomainField4execEv"></span><span id="NeoFOAM::DomainField::execC"></span><span class="target" id="classNeoFOAM_1_1DomainField_1a155439d3bfa1906bfa64e5e1852cecf0"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM11DomainField4execEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-</div>
-</dd></dl>
-
-</section>
-</section>
-
+          
         </article>
       </div>
       <footer>
@@ -596,70 +315,8 @@ implement the FieldGraph class</p>
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            On this page
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">Containers</a><ul>
-<li><a class="reference internal" href="#fields">Fields</a><ul>
-<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE"><code class="docutils literal notranslate"><span class="pre">Field</span></code></a><ul>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5size_E"><code class="docutils literal notranslate"><span class="pre">Field::size_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5data_E"><code class="docutils literal notranslate"><span class="pre">Field::data_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5exec_E"><code class="docutils literal notranslate"><span class="pre">Field::exec_</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#fieldgraph">FieldGraph</a></li>
-<li><a class="reference internal" href="#boundaryfields">BoundaryFields</a><ul>
-<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM14BoundaryFieldsE"><code class="docutils literal notranslate"><span class="pre">BoundaryFields</span></code></a><ul>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields6value_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::value_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields9refValue_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::refValue_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields14valueFraction_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::valueFraction_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields8refGrad_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::refGrad_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields14boundaryTypes_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::boundaryTypes_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields7offset_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::offset_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields12nBoundaries_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::nBoundaries_</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM14BoundaryFields15nBoundaryFaces_E"><code class="docutils literal notranslate"><span class="pre">BoundaryFields::nBoundaryFaces_</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#domainfield">DomainField</a><ul>
-<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM11DomainFieldE"><code class="docutils literal notranslate"><span class="pre">DomainField</span></code></a><ul>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8Executor6size_t6size_t6size_t"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeERK14BoundaryFieldsI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK5FieldI9ValueTypeE6size_t6size_t"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK8ExecutorRK16UnstructuredMesh"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERK11DomainFieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField11DomainFieldERR11DomainFieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">DomainField::DomainField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainFieldaSERK11DomainFieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">DomainField::operator=()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainFieldaSERR11DomainFieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">DomainField::operator=()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM11DomainField13internalFieldEv"><code class="docutils literal notranslate"><span class="pre">DomainField::internalField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField13internalFieldEv"><code class="docutils literal notranslate"><span class="pre">DomainField::internalField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM11DomainField13boundaryFieldEv"><code class="docutils literal notranslate"><span class="pre">DomainField::boundaryField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM11DomainField13boundaryFieldEv"><code class="docutils literal notranslate"><span class="pre">DomainField::boundaryField()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM11DomainField4execEv"><code class="docutils literal notranslate"><span class="pre">DomainField::exec()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>
