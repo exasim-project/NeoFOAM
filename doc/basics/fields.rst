@@ -54,6 +54,7 @@ The ``fieldBinaryOp``  is implemented using our parallelFor implementations whic
     }
 
 A simplified version of the ``parallelFor`` function is shown below.
+
 .. code-block:: cpp
     template<typename Executor, parallelForKernel Kernel>
     void parallelFor(
