@@ -6,11 +6,10 @@ UnstructuredMesh
 The `unstructuredMesh` in the current implementation stores the relevant data for the `unstructuredMesh` on the selected executor. So it is currently a data container for mesh data.
 
 .. warning::
-   - unable to read the mesh from disc
-   - mesh data needs to be provided by the user
+   - Currently no method to read meshes from disc is implemented. Thus
+     mesh data needs to be provided by the user or a converter such as FoamAdapter needs do be used.
 
-.. doxygenclass:: NeoFOAM::UnstructuredMesh
-   :members:
+Further details `unstructuredMesh  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1UnstructuredMesh.html>`_
 
 BoundaryMesh
 ^^^^^^^^^^^^
@@ -21,8 +20,7 @@ The boundaryMesh in the current implementation stores the relevant data for the 
    - unable to read the boundary mesh from disc
    - boundary mesh data needs to be provided by the user
 
-.. doxygenclass:: NeoFOAM::BoundaryMesh
-   :members:
+Further details `unstructuredMesh <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1BoundaryMesh.html>`_
 
 StencilDataBase
 ^^^^^^^^^^^^^^^
@@ -31,10 +29,3 @@ Offers the ability to register additional stencil data for the `unstructuredMesh
 
 .. warning::
    `StencilDataBas` is currently a placeholder based on dictionary. The implementation is not yet complete and requires the additional of additional members functions that are linked to the implementation of the operators
-
-.. warning::
-   - unable to read the boundary mesh from disc
-   - boundary mesh data needs to be provided by the user
-
-.. doxygenclass:: NeoFOAM::StencilDataBase
-   :members:
