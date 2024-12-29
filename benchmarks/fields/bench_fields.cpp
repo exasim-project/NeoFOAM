@@ -15,7 +15,6 @@
 #include <catch2/reporters/catch_reporter_streaming_base.hpp>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/fields/operations/operationsMacros.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 
 
