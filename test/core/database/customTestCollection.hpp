@@ -6,8 +6,7 @@
 #include <optional>
 #include <string>
 
-#include <NeoFOAM/core/database/database.hpp>
-#include "NeoFOAM/core/database/document.hpp"
+#include "NeoFOAM/core.hpp"
 
 
 bool validateCustomDoc(const NeoFOAM::Document& doc)

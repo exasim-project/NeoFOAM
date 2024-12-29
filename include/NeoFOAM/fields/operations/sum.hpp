@@ -11,7 +11,7 @@ namespace NeoFOAM
 struct SumKernel
 {
     template<typename T>
-    void operator()(const GPUExecutor& exec, const Field<T>& field, T& sum) const
+    void operator()([[maybe_unused]] const GPUExecutor& exec, const Field<T>& field, T& sum) const
     {
         using executor = typename GPUExecutor::exec;
         auto field_f = field.span();
@@ -25,7 +25,7 @@ struct SumKernel
     }
 
     template<typename T>
-    void operator()(const CPUExecutor& exec, const Field<T>& field, T& sum)
+    void operator()([[maybe_unused]] const CPUExecutor& exec, const Field<T>& field, T& sum)
     {
         using executor = typename CPUExecutor::exec;
         auto field_f = field.span();
@@ -39,7 +39,7 @@ struct SumKernel
     }
 
     template<typename T>
-    void operator()(const SerialExecutor& exec, const Field<T>& field, T& sum)
+    void operator()([[maybe_unused]] const SerialExecutor& exec, const Field<T>& field, T& sum)
     {
         using executor = typename SerialExecutor::exec;
         auto field_f = field.span();

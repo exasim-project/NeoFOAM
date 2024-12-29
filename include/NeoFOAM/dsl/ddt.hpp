@@ -5,8 +5,7 @@
 #pragma once
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
 
 namespace NeoFOAM::dsl::temporal
 {

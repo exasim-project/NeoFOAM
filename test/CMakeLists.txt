@@ -28,7 +28,19 @@ function(neofoam_unit_test TEST)
   add_executable(${TEST} "${TEST}.cpp")
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-  set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+
+  if(NEOFOAM_WITH_SUNDIALS)
+    target_link_libraries(${TEST} PRIVATE SUNDIALS::arkode)
+  endif()
+  if(WIN32)
+    set_target_properties(
+      ${TEST}
+      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
+  else()
+    set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  endif()
 
   add_test(
     NAME ${TEST}
@@ -56,7 +68,15 @@ function(neofoam_unit_test_mpi TEST)
   add_executable(${TEST} "${TEST}.cpp")
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main_mpi neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-  set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  if(WIN32)
+    set_target_properties(
+      ${TEST}
+      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
+                 ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
+  else()
+    set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+  endif()
 
   add_test(
     NAME ${TEST}

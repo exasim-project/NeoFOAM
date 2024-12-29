@@ -7,10 +7,7 @@
 #include <catch2/generators/catch_generators_all.hpp>
 #include <catch2/benchmark/catch_benchmark.hpp>
 
-#include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/dsl/coeff.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 

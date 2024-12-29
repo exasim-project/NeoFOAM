@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include <stdexcept>
-
 #include "NeoFOAM/core/database/database.hpp"
 #include "NeoFOAM/core/database/collection.hpp"
 

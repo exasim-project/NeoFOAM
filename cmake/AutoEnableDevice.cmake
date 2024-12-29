@@ -27,6 +27,9 @@ endif()
 if(NOT DEFINED Kokkos_ENABLE_CUDA)
   check_language(CUDA)
   if(CMAKE_CUDA_COMPILER)
+    set(NEOFOAM_ENABLE_CUDA
+        ON
+        CACHE INTERNAL "")
     message(STATUS "Set Kokkos_ENABLE_CUDA=ON")
     set(Kokkos_ENABLE_CUDA
         ON
@@ -35,6 +38,10 @@ if(NOT DEFINED Kokkos_ENABLE_CUDA)
         ON
         CACHE INTERNAL "")
   else()
+    set(NEOFOAM_ENABLE_CUDA
+        OFF
+        CACHE INTERNAL "")
+
     set(Kokkos_ENABLE_CUDA
         OFF
         CACHE INTERNAL "")
