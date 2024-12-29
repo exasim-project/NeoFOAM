@@ -319,36 +319,7 @@ The <code class="docutils literal notranslate"><span class="pre">fieldBinaryOp</
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>A simplified version of the <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code> function is shown below.
-.. code-block:: cpp</p>
-<blockquote>
-<div><p>template&lt;typename Executor, parallelForKernel Kernel&gt;
-void parallelFor(</p>
-<blockquote>
-<div><p>[[maybe_unused]] const Executor&amp; exec, std::pair&lt;size_t, size_t&gt; range, Kernel kernel</p>
-</div></blockquote>
-<blockquote>
-<div><p>auto [start, end] = range;
-if constexpr (std::is_same&lt;std::remove_reference_t&lt;Executor&gt;, SerialExecutor&gt;::value)
-{
-…
-}
-else
-{</p>
-<blockquote>
-<div><p>using runOn = typename Executor::exec;
-Kokkos::parallel_for(</p>
-<blockquote>
-<div><p>“parallelFor”,
-Kokkos::RangePolicy&lt;runOn&gt;(start, end),
-KOKKOS_LAMBDA(const size_t i) { kernel(i); }</p>
-</div></blockquote>
-<p>);</p>
-</div></blockquote>
-<p>}</p>
-</div></blockquote>
-<p>}</p>
-</div></blockquote>
+<p>A simplified version of the <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code> function is shown below.</p>
 <p>The code snippet highlights another important aspect, the executor.
 The executor defines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy</span></code>, see  <a class="reference external" href="https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md">Kokkos Programming Model</a>.
 Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory.
