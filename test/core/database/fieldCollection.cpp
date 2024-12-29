@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
+#include "../../common.hpp"
 #include "NeoFOAM/NeoFOAM.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
@@ -26,39 +27,6 @@ createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
     NeoFOAM::fill(vf.internalField(), 1.0);
     return vf;
 }
-
-struct CreateField
-{
-    std::string name;
-    const NeoFOAM::UnstructuredMesh& mesh;
-    std::int64_t timeIndex = 0;
-    std::int64_t iterationIndex = 0;
-    std::int64_t subCycleIndex = 0;
-    NeoFOAM::Document operator()(NeoFOAM::Database& db)
-    {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        for (auto patchi : std::vector<size_t> {0, 1, 2, 3})
-        {
-            NeoFOAM::Dictionary dict;
-            dict.insert("type", std::string("fixedValue"));
-            dict.insert("fixedValue", 2.0);
-            bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
-        }
-        NeoFOAM::Field internalField =
-            NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0);
-        fvcc::VolumeField<NeoFOAM::scalar> vf(
-            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
-        );
-        return NeoFOAM::Document(
-            {{"name", vf.name},
-             {"timeIndex", timeIndex},
-             {"iterationIndex", iterationIndex},
-             {"subCycleIndex", subCycleIndex},
-             {"field", vf}},
-            fvcc::validateFieldDoc
-        );
-    }
-};
 
 
 TEST_CASE("Field Document")
@@ -215,7 +183,12 @@ TEST_CASE("FieldCollection")
 
         fvcc::VolumeField<NeoFOAM::scalar>& t =
             fieldCollection1.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(CreateField {
-                .name = "T", .mesh = mesh, .timeIndex = 1, .iterationIndex = 1, .subCycleIndex = 1
+                .name = "T",
+                .mesh = mesh,
+                .value = 1,
+                .timeIndex = 1,
+                .iterationIndex = 1,
+                .subCycleIndex = 1
             });
 
         REQUIRE(t.name == "T");
@@ -243,8 +216,8 @@ TEST_CASE("FieldCollection")
                     }
                 );
 
-            const fvcc::FieldDocument& docT = fieldCollection2.fieldDoc(t3.key);
-            const fvcc::FieldDocument& docT3 = fieldCollection2.fieldDoc(t.key);
+            const fvcc::FieldDocument& docT = fieldCollection2.fieldDoc(t3.key());
+            const fvcc::FieldDocument& docT3 = fieldCollection2.fieldDoc(t.key());
 
             REQUIRE(docT.timeIndex() == docT3.timeIndex());
             REQUIRE(docT.iterationIndex() == docT3.iterationIndex());

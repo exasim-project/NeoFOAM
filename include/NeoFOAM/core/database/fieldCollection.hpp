@@ -11,9 +11,11 @@
 #include "NeoFOAM/core/database/database.hpp"
 #include "NeoFOAM/core/database/collection.hpp"
 #include "NeoFOAM/core/database/document.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
+
 /**
  * @brief Validates a FieldDocument.
  *
@@ -281,7 +283,7 @@ public:
         validateRegistration(
             field, "attempting to retrieve FieldCollection from unregistered field"
         );
-        return instance(field.db(), field.fieldCollectionName);
+        return instance(field.db(), field.fieldCollectionName());
     }
 
     /**
@@ -297,9 +299,8 @@ public:
             field, "attempting to retrieve FieldCollection from unregistered field"
         );
         const Database& db = field.db();
-        const Collection& collection = db.at(field.fieldCollectionName);
+        const Collection& collection = db.at(field.fieldCollectionName());
         return collection.as<FieldCollection>();
-        // return instance(field.db(), field.fieldCollectionName);
     }
 
     /**
@@ -321,8 +322,8 @@ public:
         std::string key = insert(doc);
         FieldDocument& fd = fieldDoc(key);
         FieldType& field = fd.field<FieldType>();
-        field.key = key;
-        field.fieldCollectionName = name();
+        field.key() = key;
+        field.fieldCollectionName() = name();
         return field;
     }
 };
@@ -359,16 +360,16 @@ public:
             name,
             field.mesh(),
             field.internalField(),
+            field.boundaryField(),
             field.boundaryConditions(),
-            db,
-            "",
-            ""
+            DataBaseInfo(db, "", "")
         );
+
 
         if (field.registered())
         {
             const FieldCollection& fieldCollection = FieldCollection::instance(field);
-            const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
+            const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key());
             if (timeIndex == std::numeric_limits<std::int64_t>::max())
             {
                 timeIndex = fieldDoc.timeIndex();

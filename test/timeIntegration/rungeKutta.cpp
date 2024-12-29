@@ -9,6 +9,7 @@
 #include <string>
 
 #include "../dsl/common.hpp"
+#include "../common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -48,31 +49,6 @@ public:
     std::string getName() const { return "YSquared"; }
 };
 
-struct CreateField
-{
-    std::string name;
-    const NeoFOAM::UnstructuredMesh& mesh;
-    std::int64_t timeIndex = 0;
-    std::int64_t iterationIndex = 0;
-    std::int64_t subCycleIndex = 0;
-
-    NeoFOAM::Document operator()(NeoFOAM::Database& db)
-    {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 0.0);
-        fvcc::VolumeField<NeoFOAM::scalar> vf(
-            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
-        );
-        return NeoFOAM::Document(
-            {{"name", vf.name},
-             {"timeIndex", timeIndex},
-             {"iterationIndex", iterationIndex},
-             {"subCycleIndex", subCycleIndex},
-             {"field", vf}},
-            fvcc::validateFieldDoc
-        );
-    }
-};
 
 TEST_CASE("TimeIntegration - Runge Kutta")
 {

@@ -93,7 +93,7 @@ public:
                 .iterationIndex = fieldDoc.iterationIndex(),
                 .subCycleIndex = fieldDoc.subCycleIndex()
             });
-        OldTimeDocument oldTimeDocument(fieldDoc.field<FieldType>().key, oldField.key, "", -1);
+        OldTimeDocument oldTimeDocument(fieldDoc.field<FieldType>().key(), oldField.key(), "", -1);
         setCurrentFieldAndLevel(oldTimeDocument);
         insert(oldTimeDocument);
         return oldField;
@@ -148,7 +148,7 @@ FieldType& oldTime(FieldType& field)
 {
     FieldCollection& fieldCollection = FieldCollection::instance(field);
     OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
-    return oldTimeCollection.getOrInsert<FieldType>(field.key);
+    return oldTimeCollection.getOrInsert<FieldType>(field.key());
 }
 
 /**
@@ -164,7 +164,7 @@ const FieldType& oldTime(const FieldType& field)
 {
     const FieldCollection& fieldCollection = FieldCollection::instance(field);
     const OldTimeCollection& oldTimeCollection = OldTimeCollection::instance(fieldCollection);
-    return oldTimeCollection.get<FieldType>(field.key);
+    return oldTimeCollection.get<FieldType>(field.key());
 }
 
 } // namespace NeoFOAM

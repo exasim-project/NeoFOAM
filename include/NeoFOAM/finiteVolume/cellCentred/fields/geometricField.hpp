@@ -28,6 +28,18 @@ class GeometricFieldMixin
 public:
 
     /**
+     * @brief Constructor for an uninitialized GeometricFieldMixin.
+     *
+     * @param exec The executor object.
+     * @param fieldName The name of the field.
+     * @param mesh The unstructured mesh object.
+     * @param domainField The domain field object.
+     */
+    GeometricFieldMixin(const Executor& exec, std::string fieldName, const UnstructuredMesh& mesh)
+        : name(fieldName), exec_(exec), mesh_(mesh), field_(exec, mesh)
+    {}
+
+    /**
      * @brief Constructor for GeometricFieldMixin.
      *
      * @param exec The executor object.
@@ -123,7 +135,8 @@ protected:
 
     Executor exec_;                // The executor object
     const UnstructuredMesh& mesh_; // The unstructured mesh object
-    DomainField<ValueType> field_; // The domain field object
+    DomainField<ValueType>
+        field_; // The domain field object, ie combination of internal and boundary data
 };
 
 } // namespace NeoFOAM
