@@ -84,40 +84,23 @@ See our `documentation  <https://exasim-project.com/NeoFOAM/latest/basics/execut
 
 Further `Details  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1Field.html>`_.
 
-Cell Centered Fields
-^^^^^^^^^^^^^^^^^^^^
+Cell Centred Specific Fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``VolumeField`` stores the field values at cell centers and along boundaries, providing essential data for constructing the Domain Specific Language (DSL). This functionality also includes access to mesh data, integrating closely with the computational framework.
+Within in the ``finiteVolume/cellCentred`` folder and the namespace
+``NeoFOAM::finiteVolume::cellCentred`` two specific field types, namely the ``VolumeField`` and the ``SurfaceField`` are implemented.
+Both derive from the ``GeometricFieldMixin`` a mixin class which handles that all derived fields contain geometric information via the mesh data member and field specific data via the ``DomainField`` data member.
 
-``DomainField`` acts as the fundamental data container within this structure, offering both read and write to the ``internalField`` and ``boundaryFields`` provided by the ``DomainField``. The ``correctBoundaryConditions`` member function updates the field's boundary conditions, which are specified at construction. It does not hold the data but rather modifies the ``DomainField`` or ``BoundaryField`` container.
+``DomainField`` acts as the fundamental data container within this structure, offering both read and write to the ``internalField`` and  ``boundaryFields`` data structure holding actual boundary data.
 
-Functionally, ``fvccVolField`` parallels several OpenFOAM classes such as ``volScalarField``, ``volVectorField``, and ``volTensorField``. Note: "fvcc" represents "Finite Volume Cell Centered".
+The ``VolumeField`` and the ``SurfaceField`` hold a vector of boundary conditions implemented in ``finiteVolume/cellCentred/boundary`` and a  ``correctBoundaryConditions`` member function that updates the field's boundary condition.
 
-.. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::VolumeField
-    :members:
-        field_,
-        fvccVolField,
-        internalField,
-        boundaryField,
-        correctBoundaryConditions
+Functionally, the ``VolumeField`` and the ``SurfaceField`` classes are comparable to OpenFOAM classes such as ``volScalarField``, ``volVectorField``, and ``volTensorField`` or ``surfaceScalarField``, ``surfaceVectorField``, and ``surfaceTensorField`` respectively.
 
-Face Centered fields
-^^^^^^^^^^^^^^^^^^^^
+A difference in the SurfaceField implementation is that the ``internalField`` also contains the boundary values, so no branches (if) are required when iterating over all cell faces.
+Thus the size of the ``internalField`` in NeoFOAM differs from that of OpenFOAM.
 
-The ``SurfaceField`` class stores the field values interpreted as face centers values.  Additionally, it stores boundaries for the corresponding boundary conditions. This provides essential data for constructing the DSL. The functionality also includes access to mesh data, integrating closely with the computational framework.
-
-``DomainField`` acts as the fundamental data container within this structure, offering both read and to the ``internalField`` and ``boundaryField`` provided by the ``DomainField``. The ``correctBoundaryConditions`` member function updates field's boundary conditions, which are specified at construction. It does not hold the data, but modify the ``DomainField`` or ``BoundaryField`` container.
-
-Functionally, fvccVolField parallels several OpenFOAM classes such as ``surfaceScalarField``, ``surfaceVectorField``, and ``surfaceTensorField``.
-However, the ``internalField`` also contains the boundary values, so no branches (if) are required when iterating over all cell faces. Thus the size of the ``internalField`` in NeoFOAM differs from that of OpenFOAM.
-
-.. doxygenclass:: NeoFOAM::finiteVolume::cellCentred::SurfaceField
-    :members:
-        field_,
-        fvccSurfaceField,
-        internalField,
-        boundaryField,
-        correctBoundaryConditions
-
+Further details `VolumeField  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField.html>`_ and
+ `ScalarField  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1ScalarField.html>`_.
 
 .. _api_fields:
