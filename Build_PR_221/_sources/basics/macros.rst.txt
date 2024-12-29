@@ -17,7 +17,7 @@ Info.hpp
 The ``Info.hpp`` header defines macros for debug and informational messaging:
 
 - ``NF_DEBUG_MESSAGING``: Enables debug messaging if either ``NF_DEBUG`` or ``NF_DEBUG_INFO`` is defined.
-- ``NF_INFO`(message)`: Prints the given message to the standard output stream.
+- ``NF_INFO`(message)``: Prints the given message to the standard output stream.
 - ``NF_DINFO(message)``: Prints the given debug message to the standard output stream if ``NF_DEBUG_MESSAGING`` is enabled.
 
 Example usage:
