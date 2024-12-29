@@ -7,37 +7,13 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "../dsl/common.hpp"
+#include "../common.hpp"
 
 #include "NeoFOAM/core/dictionary.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/timeIntegration/forwardEuler.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
-
-struct CreateField
-{
-    std::string name;
-    const NeoFOAM::UnstructuredMesh& mesh;
-    NeoFOAM::scalar value = 0;
-    std::int64_t timeIndex = 0;
-    std::int64_t iterationIndex = 0;
-    std::int64_t subCycleIndex = 0;
-
-    NeoFOAM::Document operator()(NeoFOAM::Database& db)
-    {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, bcs, db, "", "");
-        NeoFOAM::fill(vf.internalField(), value);
-        return NeoFOAM::Document(
-            {{"name", vf.name},
-             {"timeIndex", timeIndex},
-             {"iterationIndex", iterationIndex},
-             {"subCycleIndex", subCycleIndex},
-             {"field", vf}},
-            fvcc::validateFieldDoc
-        );
-    }
-};
 
 TEST_CASE("TimeIntegration")
 {
@@ -78,6 +54,7 @@ TEST_CASE("TimeIntegration")
         // int(ddt(U)) + f = 0
         // (U^1-U^0)/dt = -f
         // U^1 = - f * dt + U^0, where dt = 2, f=1, U^0=2.0 -> U^1=-2.0
+        REQUIRE(getField(vf.internalField()) == 2.0);
         NeoFOAM::dsl::solve(eqn, vf, time, dt, fvSchemes, fvSolution);
         REQUIRE(getField(vf.internalField()) == -2.0);
     }

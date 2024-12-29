@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
+#include "../../common.hpp"
 #include "NeoFOAM/core/database/fieldCollection.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
@@ -29,35 +30,6 @@ createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
     NeoFOAM::fill(vf.internalField(), 1.0);
     return vf;
 }
-
-struct CreateField
-{
-    std::string name;
-    const NeoFOAM::UnstructuredMesh& mesh;
-    std::int64_t timeIndex = 0;
-    std::int64_t iterationIndex = 0;
-    std::int64_t subCycleIndex = 0;
-    NeoFOAM::Document operator()(NeoFOAM::Database& db)
-    {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        for (auto patchi : std::vector<size_t> {0, 1, 2, 3})
-        {
-            NeoFOAM::Dictionary dict;
-            dict.insert("type", std::string("fixedValue"));
-            dict.insert("fixedValue", 2.0);
-            bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
-        }
-        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, bcs, db, "", "");
-        return NeoFOAM::Document(
-            {{"name", vf.name},
-             {"timeIndex", timeIndex},
-             {"iterationIndex", iterationIndex},
-             {"subCycleIndex", subCycleIndex},
-             {"field", vf}},
-            fvcc::validateFieldDoc
-        );
-    }
-};
 
 
 TEST_CASE("Field Document")
@@ -214,7 +186,12 @@ TEST_CASE("FieldCollection")
 
         fvcc::VolumeField<NeoFOAM::scalar>& t =
             fieldCollection1.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(CreateField {
-                .name = "T", .mesh = mesh, .timeIndex = 1, .iterationIndex = 1, .subCycleIndex = 1
+                .name = "T",
+                .mesh = mesh,
+                .value = 1,
+                .timeIndex = 1,
+                .iterationIndex = 1,
+                .subCycleIndex = 1
             });
 
         REQUIRE(t.name == "T");
