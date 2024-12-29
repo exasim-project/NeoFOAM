@@ -294,8 +294,10 @@
 </section>
 <section id="the-field-valuetype-class">
 <h2>The Field&lt;ValueType&gt; class<a class="headerlink" href="#the-field-valuetype-class" title="Link to this heading">¶</a></h2>
-<p>The Field classes are the central elements for implementing a platform portable CFD framework. Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.</p>
-<p>In the following, we will explain the implementation details of the field operations using the additions operator as an example. The block of code below shows an example implementation of the addition operator.</p>
+<p>The Field class is the basic container class and is the central elements for implementing a platform portable CFD framework.
+Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.</p>
+<p>In the following, some implementation details of the field operations are detailed using the additions operator as an example.
+The block of code below shows an example implementation of the addition operator.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span>
 <span class="p">{</span>
 <span class="w">    </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="p">(</span><span class="n">exec_</span><span class="p">,</span><span class="w"> </span><span class="n">size_</span><span class="p">);</span>
@@ -305,460 +307,53 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Besides creating a temporary for the result it mainly calls the free standing <code class="docutils literal notranslate"><span class="pre">add</span></code> function which is implemented in <code class="docutils literal notranslate"><span class="pre">FieldOperations.hpp</span></code>. This, in turn, dispatches to the <code class="docutils literal notranslate"><span class="pre">addOp</span></code> functor, that holds the actual addition kernels. In the case of addition this is implemented as a  <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> function, see <a class="reference external" href="https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html">Kokkos documentation</a> for more details.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">Executor</span><span class="o">::</span><span class="n">exec</span><span class="p">;</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">a_f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">b_f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">field</span><span class="p">();</span>
-<span class="n">Kokkos</span><span class="o">::</span><span class="n">parallel_for</span><span class="p">(</span>
-<span class="w">   </span><span class="n">Kokkos</span><span class="o">::</span><span class="n">RangePolicy</span><span class="o">&lt;</span><span class="n">executor</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">a_f</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span>
-<span class="w">   </span><span class="n">KOKKOS_CLASS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">a_f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a_f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b_f</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w"> </span><span class="p">}</span>
-<span class="p">);</span>
+<p>Besides creating a temporary for the result it mainly calls the free standing <code class="docutils literal notranslate"><span class="pre">add</span></code> function which is implemented in <code class="docutils literal notranslate"><span class="pre">include/NeoFOAM/field/fieldFreeFunctions.hpp</span></code>.
+This, in turn, dispatches to the <code class="docutils literal notranslate"><span class="pre">fieldBinaryOp</span></code> function, passing the actual kernel as lambda.
+The <code class="docutils literal notranslate"><span class="pre">fieldBinaryOp</span></code>  is implemented using our parallelFor implementations which ultimately dispatch to the <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> function, see <a class="reference external" href="https://kokkos.org/kokkos-core-wiki/API/core/parallel-dispatch/parallel_for.html">Kokkos documentation</a> for more details.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">ValueType</span><span class="o">&gt;</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">add</span><span class="p">(</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">type_identity_t</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;&gt;&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="n">detail</span><span class="o">::</span><span class="n">fieldBinaryOp</span><span class="p">(</span>
+<span class="w">      </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="n">ValueType</span><span class="w"> </span><span class="n">va</span><span class="p">,</span><span class="w"> </span><span class="n">ValueType</span><span class="w"> </span><span class="n">vb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">va</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">vb</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">}</span>
 </pre></div>
 </div>
-<p>The code snippet also highlights another important aspect, the executor. The executor, here defines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy</span></code>, see  <a class="reference external" href="https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md">Kokkos Programming Model</a>. Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory. A full example of using NeoFOAMs fields with a GPU executor could be implemented as</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">GPUExecutor</span><span class="w"> </span><span class="n">GPUExec</span><span class="w"> </span><span class="p">{};</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GPUa</span><span class="p">(</span><span class="n">GPUExec</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">GPUa</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">Field</span><span class="o">&lt;</span><span class="n">NeoFOAM</span><span class="o">::</span><span class="n">scalar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GPUb</span><span class="p">(</span><span class="n">GPUExec</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">);</span>
-<span class="n">NeoFOAM</span><span class="o">::</span><span class="n">fill</span><span class="p">(</span><span class="n">GPUb</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">);</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">GPUc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GPUa</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">GPUb</span><span class="p">;</span>
-</pre></div>
-</div>
-</section>
-<section id="interface">
-<h2>Interface<a class="headerlink" href="#interface" title="Link to this heading">¶</a></h2>
-<dl class="cpp class">
-<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM5FieldE">
-<span id="_CPPv3I0EN7NeoFOAM5FieldE"></span><span id="_CPPv2I0EN7NeoFOAM5FieldE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ValueType</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1Field"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>A class to contain the data and executors for a field and define some basic operations. </p>
-<div class="breathe-sectiondef docutils container">
-<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t">
-<span id="_CPPv3N7NeoFOAM5Field5FieldERK8Executor6size_t"></span><span id="_CPPv2N7NeoFOAM5Field5FieldERK8Executor6size_t"></span><span id="NeoFOAM::Field::Field__ExecutorCR.s"></span><span class="target" id="classNeoFOAM_1_1Field_1a6900cfd42fa127eda30b27dd0cebd9a6"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Create an uninitialized <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> with a given size on an executor. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>exec</strong> – Executor associated to the matrix </p></li>
-<li><p><strong>size</strong> – size of the matrix </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorPK9ValueType6size_t8Executor">
-<span id="_CPPv3N7NeoFOAM5Field5FieldERK8ExecutorPK9ValueType6size_t8Executor"></span><span id="_CPPv2N7NeoFOAM5Field5FieldERK8ExecutorPK9ValueType6size_t8Executor"></span><span id="NeoFOAM::Field::Field__ExecutorCR.ValueTypeCP.s.Executor"></span><span class="target" id="classNeoFOAM_1_1Field_1a4320bbd12b6f44bee464a5f3aeef646c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">in</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span>, <span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">hostExec</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">SerialExecutor</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorPK9ValueType6size_t8Executor" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Create a <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> with a given size from existing memory on an executor. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>exec</strong> – Executor associated to the matrix </p></li>
-<li><p><strong>size</strong> – size of the matrix </p></li>
-<li><p><strong>in</strong> – Pointer to existing data </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t9ValueType">
-<span id="_CPPv3N7NeoFOAM5Field5FieldERK8Executor6size_t9ValueType"></span><span id="_CPPv2N7NeoFOAM5Field5FieldERK8Executor6size_t9ValueType"></span><span id="NeoFOAM::Field::Field__ExecutorCR.s.ValueType"></span><span class="target" id="classNeoFOAM_1_1Field_1ac25179c81371894f06f4c974fcdf081b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span>, <a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">value</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t9ValueType" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Create a <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> with a given size on an executor and uniform value. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>exec</strong> – Executor associated to the matrix </p></li>
-<li><p><strong>size</strong> – size of the matrix </p></li>
-<li><p><strong>value</strong> – the default value </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorNSt6vectorI9ValueTypeEE">
-<span id="_CPPv3N7NeoFOAM5Field5FieldERK8ExecutorNSt6vectorI9ValueTypeEE"></span><span id="_CPPv2N7NeoFOAM5Field5FieldERK8ExecutorNSt6vectorI9ValueTypeEE"></span><span id="NeoFOAM::Field::Field__ExecutorCR.std::vector:ValueType:"></span><span class="target" id="classNeoFOAM_1_1Field_1ac615ca8777f8e5ce7d5d9cb64cc58441"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">in</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorNSt6vectorI9ValueTypeEE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Create a <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> with a given size on an executor. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>exec</strong> – Executor associated to the matrix </p></li>
-<li><p><strong>in</strong> – a vector of elements to copy over </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorRK5FieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM5Field5FieldERK8ExecutorRK5FieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM5Field5FieldERK8ExecutorRK5FieldI9ValueTypeE"></span><span id="NeoFOAM::Field::Field__ExecutorCR.Field:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1abe03d8f86919e510953bcaeee32ce6ad"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">exec</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorRK5FieldI9ValueTypeE" title="NeoFOAM::Field::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">in</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorRK5FieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Create a <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> as a copy of a <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> on a specified executor. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>exec</strong> – Executor associated to the matrix </p></li>
-<li><p><strong>in</strong> – a vector of elements to copy over </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field5FieldERK5FieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM5Field5FieldERK5FieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM5Field5FieldERK5FieldI9ValueTypeE"></span><span id="NeoFOAM::Field::Field__Field:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1ab17560942b395479c075549c15188709"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK5FieldI9ValueTypeE" title="NeoFOAM::Field::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field5FieldERK5FieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Copy constructor, creates a new field with the same size and data as the parsed field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The field to copy from. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldD0Ev">
-<span id="_CPPv3N7NeoFOAM5FieldD0Ev"></span><span id="_CPPv2N7NeoFOAM5FieldD0Ev"></span><span id="NeoFOAM::Field::~Field"></span><span class="target" id="classNeoFOAM_1_1Field_1a7cad3648ef3dbb9efd4429fd9ddc4860"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">~Field</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldD0Ev" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Destroy the <a class="reference internal" href="#classNeoFOAM_1_1Field"><span class="std std-ref">Field</span></a> object. </p>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4I0EN7NeoFOAM5Field5applyEv4func">
-<span id="_CPPv3I0EN7NeoFOAM5Field5applyE4func"></span><span id="_CPPv2I0EN7NeoFOAM5Field5applyE4func"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">func</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classNeoFOAM_1_1Field_1ab3d5f8f8a4a7b07d5873f767978c0be7"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">apply</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5Field5applyEv4func" title="NeoFOAM::Field::apply::func"><span class="n"><span class="pre">func</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN7NeoFOAM5Field5applyEv4func" title="Link to this definition">¶</a><br /></dt>
-<dd><p>applies a functor, transformation, to the field </p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Ideally the f should be a KOKKOS_LAMBA </p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>f</strong> – The functor to map over the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field14copyToExecutorE8Executor">
-<span id="_CPPv3NK7NeoFOAM5Field14copyToExecutorE8Executor"></span><span id="_CPPv2NK7NeoFOAM5Field14copyToExecutorE8Executor"></span><span id="NeoFOAM::Field::copyToExecutor__ExecutorC"></span><span class="target" id="classNeoFOAM_1_1Field_1ae4fd24bda6f5d58b89d2c6e633e87359"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">copyToExecutor</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dstExec</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field14copyToExecutorE8Executor" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Copies the data to a new field on a specific executor. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>dstExec</strong> – The executor on which the data should be copied. </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A copy of the field on the host. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field10copyToHostEv">
-<span id="_CPPv3NK7NeoFOAM5Field10copyToHostEv"></span><span id="_CPPv2NK7NeoFOAM5Field10copyToHostEv"></span><span id="NeoFOAM::Field::copyToHostC"></span><span class="target" id="classNeoFOAM_1_1Field_1a3c6cef7853ecc075f375c2ecbf2f9d86"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">copyToHost</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field10copyToHostEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Returns a copy of the field back to the host. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A copy of the field on the host. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field10copyToHostER5FieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM5Field10copyToHostER5FieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM5Field10copyToHostER5FieldI9ValueTypeE"></span><span id="NeoFOAM::Field::copyToHost__Field:ValueType:R"></span><span class="target" id="classNeoFOAM_1_1Field_1a4e66ce8a5aca4acb78041a8b94ff9734"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">copyToHost</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">result</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field10copyToHostER5FieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Copies the data (from anywhere) to a parsed host field. </p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>exits if the size of the result field is not the same as the source field. </p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>result</strong> – The field into which the data must be copied. Must be sized.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp">
-<span class="target" id="classNeoFOAM_1_1Field_1a4c8a681a158daca58bddb0d05526ac2c"></span><span class="sig-name descname"><span class="pre">inline</span> <span class="pre">KOKKOS_INLINE_FUNCTION</span> <span class="pre">ValueType</span> <span class="pre">&amp;</span> <span class="pre">operator[]</span> <span class="pre">(const</span> <span class="pre">size_t</span> <span class="pre">i)</span></span></dt>
-<dd><p>Subscript operator. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>i</strong> – The index of cell in the field </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The value at the index i </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp">
-<span class="target" id="classNeoFOAM_1_1Field_1a7a860e0e97c3f23ec7b5166fefb858cd"></span><span class="sig-name descname"><span class="pre">inline</span> <span class="pre">KOKKOS_INLINE_FUNCTION</span> <span class="pre">const</span> <span class="pre">ValueType</span> <span class="pre">&amp;</span> <span class="pre">operator[]</span> <span class="pre">(const</span> <span class="pre">size_t</span> <span class="pre">i)</span> <span class="pre">const</span></span></dt>
-<dd><p>Subscript operator. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>i</strong> – The index of cell in the field </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The value at the index i </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp">
-<span class="target" id="classNeoFOAM_1_1Field_1a3851f772004b74cc93b6590fcfeac026"></span><span class="sig-name descname"><span class="pre">inline</span> <span class="pre">KOKKOS_INLINE_FUNCTION</span> <span class="pre">ValueType</span> <span class="pre">&amp;</span> <span class="pre">operator()</span> <span class="pre">(const</span> <span class="pre">size_t</span> <span class="pre">i)</span></span></dt>
-<dd><p>Function call operator. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>i</strong> – The index of cell in the field </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The value at the index i </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp">
-<span class="target" id="classNeoFOAM_1_1Field_1ac7c5fa8c0a190ffdd3df78da97c626e9"></span><span class="sig-name descname"><span class="pre">inline</span> <span class="pre">KOKKOS_INLINE_FUNCTION</span> <span class="pre">const</span> <span class="pre">ValueType</span> <span class="pre">&amp;</span> <span class="pre">operator()</span> <span class="pre">(const</span> <span class="pre">size_t</span> <span class="pre">i)</span> <span class="pre">const</span></span></dt>
-<dd><p>Function call operator. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>i</strong> – The index of cell in the field </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The value at the index i </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldaSERK9ValueType">
-<span id="_CPPv3N7NeoFOAM5FieldaSERK9ValueType"></span><span id="_CPPv2N7NeoFOAM5FieldaSERK9ValueType"></span><span id="NeoFOAM::Field::assign-operator__ValueTypeCR"></span><span class="target" id="classNeoFOAM_1_1Field_1a274696665d8efadef9091750fe3950db"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldaSERK9ValueType" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Assignment operator, Sets the field values to that of the passed value. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The value to set the field to. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldaSERK5FieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM5FieldaSERK5FieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM5FieldaSERK5FieldI9ValueTypeE"></span><span id="NeoFOAM::Field::assign-operator__Field:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1a8bd676379e963159ca6fdd3c5ce55f9e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldaSERK5FieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Assignment operator, Sets the field values to that of the parsed field. </p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This field will be sized to the size of the parsed field. </p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The field to copy from.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldpLERK5FieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM5FieldpLERK5FieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM5FieldpLERK5FieldI9ValueTypeE"></span><span id="NeoFOAM::Field::add-assign-operator__Field:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1abf3510745e3c8e874c92f74a6b8800a5"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">+=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldpLERK5FieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Arithmetic add operator, addition of a second field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The field to add with this field. </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The result of the addition. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldmIERK5FieldI9ValueTypeE">
-<span id="_CPPv3N7NeoFOAM5FieldmIERK5FieldI9ValueTypeE"></span><span id="_CPPv2N7NeoFOAM5FieldmIERK5FieldI9ValueTypeE"></span><span id="NeoFOAM::Field::sub-assign-operator__Field:ValueType:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1a043a0b776ba57671edba01e5533f092a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">-=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldmIERK5FieldI9ValueTypeE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Arithmetic subtraction operator, subtraction by a second field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The field to subtract from this field. </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The result of the subtraction. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldmlERK5FieldI6scalarE">
-<span id="_CPPv3N7NeoFOAM5FieldmlERK5FieldI6scalarE"></span><span id="_CPPv2N7NeoFOAM5FieldmlERK5FieldI6scalarE"></span><span id="NeoFOAM::Field::mul-operator__Field:scalar:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1abcfb8d60bc581722fe51fac0af7c1a32"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">*</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">scalar</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldmlERK5FieldI6scalarE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Arithmetic multiply operator, multiply by a second field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The field to subtract from this field. </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The result of the multiply. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5FieldmlEK6scalar">
-<span id="_CPPv3N7NeoFOAM5FieldmlEK6scalar"></span><span id="_CPPv2N7NeoFOAM5FieldmlEK6scalar"></span><span id="NeoFOAM::Field::mul-operator__scalarC"></span><span class="target" id="classNeoFOAM_1_1Field_1a14d497baa1b35c3503d6cc4d40b6560c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field"><span class="n"><span class="pre">Field</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">*</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">scalar</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5FieldmlEK6scalar" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Arithmetic multiply operator, multiplies every cell in the field by a scalar. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>rhs</strong> – The scalar to multiply with the field. </p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The result of the multiplication. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field6resizeEK6size_t">
-<span id="_CPPv3N7NeoFOAM5Field6resizeEK6size_t"></span><span id="_CPPv2N7NeoFOAM5Field6resizeEK6size_t"></span><span id="NeoFOAM::Field::resize__sC"></span><span class="target" id="classNeoFOAM_1_1Field_1a1c9e4d097ea90596f696bbc491587391"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">resize</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">size</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field6resizeEK6size_t" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Resizes the field to a new size. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>size</strong> – The new size to set the field to. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N7NeoFOAM5Field4dataEv">
-<span id="_CPPv3N7NeoFOAM5Field4dataEv"></span><span id="_CPPv2N7NeoFOAM5Field4dataEv"></span><span id="NeoFOAM::Field::data"></span><span class="target" id="classNeoFOAM_1_1Field_1a756b2b776a6c4cc7ffe091e42e505efa"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N7NeoFOAM5Field4dataEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Direct access to the underlying field data. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Pointer to the first cell data in the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field4dataEv">
-<span id="_CPPv3NK7NeoFOAM5Field4dataEv"></span><span id="_CPPv2NK7NeoFOAM5Field4dataEv"></span><span id="NeoFOAM::Field::dataC"></span><span class="target" id="classNeoFOAM_1_1Field_1a787ac6e0c134314a02d6ab9eb8b45d92"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">data</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field4dataEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Direct access to the underlying field data. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Pointer to the first cell data in the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field4execEv">
-<span id="_CPPv3NK7NeoFOAM5Field4execEv"></span><span id="_CPPv2NK7NeoFOAM5Field4execEv"></span><span id="NeoFOAM::Field::execC"></span><span class="target" id="classNeoFOAM_1_1Field_1a3669f86690a09efc721a5eb902f7aa28"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Executor</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field4execEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets the executor associated with the field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Reference to the executor. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field4sizeEv">
-<span id="_CPPv3NK7NeoFOAM5Field4sizeEv"></span><span id="_CPPv2NK7NeoFOAM5Field4sizeEv"></span><span id="NeoFOAM::Field::sizeC"></span><span class="target" id="classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field4sizeEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets the size of the field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The size of the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field5emptyEv">
-<span id="_CPPv3NK7NeoFOAM5Field5emptyEv"></span><span id="_CPPv2NK7NeoFOAM5Field5emptyEv"></span><span id="NeoFOAM::Field::emptyC"></span><span class="target" id="classNeoFOAM_1_1Field_1a1009e73d13b7ba45b4faaf25bb5802de"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">empty</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field5emptyEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Checks if the field is empty. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True if the field is empty, false otherwise. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NO7NeoFOAM5Field4spanEv">
-<span id="_CPPv3NO7NeoFOAM5Field4spanEv"></span><span id="_CPPv2NO7NeoFOAM5Field4spanEv"></span><span id="NeoFOAM::Field::spanO"></span><span class="target" id="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">&amp;&amp;</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4NO7NeoFOAM5Field4spanEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NKO7NeoFOAM5Field4spanEv">
-<span id="_CPPv3NKO7NeoFOAM5Field4spanEv"></span><span id="_CPPv2NKO7NeoFOAM5Field4spanEv"></span><span id="NeoFOAM::Field::spanCO"></span><span class="target" id="classNeoFOAM_1_1Field_1aad313181c8bf9dfdefbaba763fc2bddc"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;&amp;</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4NKO7NeoFOAM5Field4spanEv" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NR7NeoFOAM5Field4spanEv">
-<span id="_CPPv3NR7NeoFOAM5Field4spanEv"></span><span id="_CPPv2NR7NeoFOAM5Field4spanEv"></span><span id="NeoFOAM::Field::spanR"></span><span class="target" id="classNeoFOAM_1_1Field_1ab1d927c60a3fbb4db75368efca991aa3"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><a class="headerlink" href="#_CPPv4NR7NeoFOAM5Field4spanEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets the field as a span. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Span of the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NKR7NeoFOAM5Field4spanEv">
-<span id="_CPPv3NKR7NeoFOAM5Field4spanEv"></span><span id="_CPPv2NKR7NeoFOAM5Field4spanEv"></span><span id="NeoFOAM::Field::spanCR"></span><span class="target" id="classNeoFOAM_1_1Field_1ac1188e358f00791db9a0a84dadf0ef2a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><a class="headerlink" href="#_CPPv4NKR7NeoFOAM5Field4spanEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets the field as a span. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Span of the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE">
-<span id="_CPPv3NO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="_CPPv2NO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="NeoFOAM::Field::span__std::pair:s.s:O"></span><span class="target" id="classNeoFOAM_1_1Field_1ac73f1f939f0457d2ab190334e78024b0"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">range</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">&amp;&amp;</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4NO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NKO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE">
-<span id="_CPPv3NKO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="_CPPv2NKO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="NeoFOAM::Field::span__std::pair:s.s:CO"></span><span class="target" id="classNeoFOAM_1_1Field_1ab75713644c33226e654ca3a4b560cccf"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">range</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;&amp;</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4NKO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE" title="Link to this definition">¶</a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE">
-<span id="_CPPv3NR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="_CPPv2NR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="NeoFOAM::Field::span__std::pair:s.s:R"></span><span class="target" id="classNeoFOAM_1_1Field_1a5bcb6f0c9c4b9517d48f721c118f081d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">range</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><a class="headerlink" href="#_CPPv4NR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets a sub view of the field as a span. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Span of the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NKR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE">
-<span id="_CPPv3NKR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="_CPPv2NKR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"></span><span id="NeoFOAM::Field::span__std::pair:s.s:CR"></span><span class="target" id="classNeoFOAM_1_1Field_1a8ef0065a9899d1c4bba84685d110009e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">span</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE" title="NeoFOAM::Field::ValueType"><span class="n"><span class="pre">ValueType</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">span</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">range</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><a class="headerlink" href="#_CPPv4NKR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets a sub view of the field as a span. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Span of the field. </p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK7NeoFOAM5Field5rangeEv">
-<span id="_CPPv3NK7NeoFOAM5Field5rangeEv"></span><span id="_CPPv2NK7NeoFOAM5Field5rangeEv"></span><span id="NeoFOAM::Field::rangeC"></span><span class="target" id="classNeoFOAM_1_1Field_1a1df824a46de3a2c0db14c4457ab8a34e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">range</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK7NeoFOAM5Field5rangeEv" title="Link to this definition">¶</a><br /></dt>
-<dd><p>Gets the range of the field. </p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The range of the field {0, <a class="reference internal" href="#classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e"><span class="std std-ref">size()</span></a>}. </p>
-</dd>
-</dl>
-</dd></dl>
-
-</div>
-</dd></dl>
-
+<p>A simplified version of the <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code> function is shown below.
+.. code-block:: cpp</p>
+<blockquote>
+<div><p>template&lt;typename Executor, parallelForKernel Kernel&gt;
+void parallelFor(</p>
+<blockquote>
+<div><p>[[maybe_unused]] const Executor&amp; exec, std::pair&lt;size_t, size_t&gt; range, Kernel kernel</p>
+</div></blockquote>
+<blockquote>
+<div><p>auto [start, end] = range;
+if constexpr (std::is_same&lt;std::remove_reference_t&lt;Executor&gt;, SerialExecutor&gt;::value)
+{
+…
+}
+else
+{</p>
+<blockquote>
+<div><p>using runOn = typename Executor::exec;
+Kokkos::parallel_for(</p>
+<blockquote>
+<div><p>“parallelFor”,
+Kokkos::RangePolicy&lt;runOn&gt;(start, end),
+KOKKOS_LAMBDA(const size_t i) { kernel(i); }</p>
+</div></blockquote>
+<p>);</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>The code snippet highlights another important aspect, the executor.
+The executor defines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy</span></code>, see  <a class="reference external" href="https://github.com/kokkos/kokkos-core-wiki/blob/main/docs/source/ProgrammingGuide/ProgrammingModel.md">Kokkos Programming Model</a>.
+Besides defining the RangePolicy, the executor also holds functions for allocating and deallocationg memory.
+See our <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/basics/executor.html">documentation</a> for more details on the executor model.</p>
+<p>Further <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1Field.html">Details</a>.</p>
 </section>
 <section id="cell-centered-fields">
 <h2>Cell Centered Fields<a class="headerlink" href="#cell-centered-fields" title="Link to this heading">¶</a></h2>
@@ -877,44 +472,6 @@ However, the <code class="docutils literal notranslate"><span class="pre">intern
 <li><a class="reference internal" href="#">Fields</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#the-field-valuetype-class">The Field&lt;ValueType&gt; class</a></li>
-<li><a class="reference internal" href="#interface">Interface</a><ul>
-<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5FieldE"><code class="docutils literal notranslate"><span class="pre">Field</span></code></a><ul>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorPK9ValueType6size_t8Executor"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8Executor6size_t9ValueType"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorNSt6vectorI9ValueTypeEE"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK8ExecutorRK5FieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field5FieldERK5FieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">Field::Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldD0Ev"><code class="docutils literal notranslate"><span class="pre">Field::~Field()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM5Field5applyEv4func"><code class="docutils literal notranslate"><span class="pre">Field::apply()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field14copyToExecutorE8Executor"><code class="docutils literal notranslate"><span class="pre">Field::copyToExecutor()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field10copyToHostEv"><code class="docutils literal notranslate"><span class="pre">Field::copyToHost()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field10copyToHostER5FieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">Field::copyToHost()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldaSERK9ValueType"><code class="docutils literal notranslate"><span class="pre">Field::operator=()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldaSERK5FieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">Field::operator=()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldpLERK5FieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">Field::operator+=()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldmIERK5FieldI9ValueTypeE"><code class="docutils literal notranslate"><span class="pre">Field::operator-=()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldmlERK5FieldI6scalarE"><code class="docutils literal notranslate"><span class="pre">Field::operator*()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5FieldmlEK6scalar"><code class="docutils literal notranslate"><span class="pre">Field::operator*()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field6resizeEK6size_t"><code class="docutils literal notranslate"><span class="pre">Field::resize()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4N7NeoFOAM5Field4dataEv"><code class="docutils literal notranslate"><span class="pre">Field::data()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field4dataEv"><code class="docutils literal notranslate"><span class="pre">Field::data()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field4execEv"><code class="docutils literal notranslate"><span class="pre">Field::exec()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field4sizeEv"><code class="docutils literal notranslate"><span class="pre">Field::size()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field5emptyEv"><code class="docutils literal notranslate"><span class="pre">Field::empty()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NO7NeoFOAM5Field4spanEv"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NKO7NeoFOAM5Field4spanEv"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NR7NeoFOAM5Field4spanEv"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NKR7NeoFOAM5Field4spanEv"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NKO7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NKR7NeoFOAM5Field4spanENSt4pairI6size_t6size_tEE"><code class="docutils literal notranslate"><span class="pre">Field::span()</span></code></a></li>
-<li><a class="reference internal" href="#_CPPv4NK7NeoFOAM5Field5rangeEv"><code class="docutils literal notranslate"><span class="pre">Field::range()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
 <li><a class="reference internal" href="#cell-centered-fields">Cell Centered Fields</a><ul>
 <li><a class="reference internal" href="#_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred11VolumeFieldE"><code class="docutils literal notranslate"><span class="pre">VolumeField</span></code></a><ul>
 <li><a class="reference internal" href="#_CPPv4N7NeoFOAM12finiteVolume11cellCentred11VolumeField25correctBoundaryConditionsEv"><code class="docutils literal notranslate"><span class="pre">VolumeField::correctBoundaryConditions()</span></code></a></li>
