@@ -217,8 +217,6 @@
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/operators.html">Operators</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/stencil.html">Stencil</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../dsl/index.html">Domain Specific Language (DSL)</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -283,7 +281,8 @@ Additionally, it simplifies the runtime selection of a specific class. The deriv
 <span class="w">    </span><span class="n">baseClass</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;Name of derivedClass&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Additional arguments&quot;</span><span class="p">,...);</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> class is a template class that manages the registration of the derived classes and stores the map of the registered classes. The map associates a function with a string that is used to create the derived class.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RuntimeSelectionFactory</span></code> class is a template class that manages the registration of the derived classes and stores the map of the registered classes.
+The map associates a function with a string that is used to create the derived class.</p>
 <p>Further details <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1RuntimeSelectionFactory.html">RuntimeSelectionFactory</a>.</p>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
@@ -303,7 +302,8 @@ Additionally, it simplifies the runtime selection of a specific class. The deriv
 <span class="p">};</span>
 </pre></div>
 </div>
-<p>To register a class, derive from the BaseClass::Register class and pass the derived class as a template argument. The derived class must implement the static functions <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">doc</span></code>, and <code class="docutils literal notranslate"><span class="pre">schema</span></code>.</p>
+<p>To register a class, derive from the BaseClass::Register class and pass the derived class as a template argument.
+The derived class must implement the static functions <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">doc</span></code>, and <code class="docutils literal notranslate"><span class="pre">schema</span></code>.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DerivedClass</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">BaseClass</span><span class="o">::</span><span class="n">Register</span><span class="o">&lt;</span><span class="n">DerivedClass</span><span class="o">&gt;</span>
 <span class="p">{</span>
 <span class="k">public</span><span class="o">:</span>
@@ -318,7 +318,7 @@ Additionally, it simplifies the runtime selection of a specific class. The deriv
 <span class="p">};</span>
 </pre></div>
 </div>
-<p>After the classes have been defined,  the <code class="docutils literal notranslate"><span class="pre">create</span></code> function can be used to instantiate the derived classes based on the name provided.</p>
+<p>After the classes have been defined, the <code class="docutils literal notranslate"><span class="pre">create</span></code> function can be used to instantiate the derived classes based on the name provided.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">BaseClass</span><span class="o">&gt;</span><span class="w"> </span><span class="n">testDerived</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseClass</span><span class="o">::</span><span class="n">create</span><span class="p">(</span><span class="s">&quot;DerivedClass&quot;</span><span class="p">);</span>
 </pre></div>
 </div>

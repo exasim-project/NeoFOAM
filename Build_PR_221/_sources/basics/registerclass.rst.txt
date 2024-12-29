@@ -16,7 +16,8 @@ Additionally, it simplifies the runtime selection of a specific class. The deriv
     std::unique_ptr<baseClass> derivedClass =
         baseClass::create("Name of derivedClass", "Additional arguments",...);
 
-The ``RuntimeSelectionFactory`` class is a template class that manages the registration of the derived classes and stores the map of the registered classes. The map associates a function with a string that is used to create the derived class.
+The ``RuntimeSelectionFactory`` class is a template class that manages the registration of the derived classes and stores the map of the registered classes.
+The map associates a function with a string that is used to create the derived class.
 
 Further details `RuntimeSelectionFactory  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1RuntimeSelectionFactory.html>`_.
 
@@ -43,7 +44,8 @@ The static function ``create`` returns a ``std::unique_ptr`` to its base class a
 
     };
 
-To register a class, derive from the BaseClass::Register class and pass the derived class as a template argument. The derived class must implement the static functions ``name``, ``doc``, and ``schema``.
+To register a class, derive from the BaseClass::Register class and pass the derived class as a template argument.
+The derived class must implement the static functions ``name``, ``doc``, and ``schema``.
 
 .. code-block:: cpp
 
@@ -61,7 +63,7 @@ To register a class, derive from the BaseClass::Register class and pass the deri
     };
 
 
-After the classes have been defined,  the ``create`` function can be used to instantiate the derived classes based on the name provided.
+After the classes have been defined, the ``create`` function can be used to instantiate the derived classes based on the name provided.
 
 .. code-block:: cpp
 
