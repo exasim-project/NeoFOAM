@@ -3,6 +3,9 @@
 
 #pragma once
 
+#include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
+
 #include "boundary/volume/empty.hpp"
 #include "boundary/volume/calculated.hpp"
 #include "boundary/volume/fixedValue.hpp"
@@ -11,6 +14,27 @@
 #include "boundary/surface/empty.hpp"
 #include "boundary/surface/calculated.hpp"
 #include "boundary/surface/fixedValue.hpp"
+
+namespace NeoFOAM::finiteVolume::cellCentred
+{
+
+/* @brief creates a vector of boundary conditions of type calculated for every boundary
+ *
+ * @tparam Type of the Boundary ie SurfaceBoundary<scalar>
+ */
+template<typename BoundaryType>
+std::vector<BoundaryType> createCalculatedBCs(const UnstructuredMesh& mesh)
+{
+    std::vector<BoundaryType> bcs;
+    for (size_t patchID = 0; patchID < mesh.nBoundaries(); patchID++)
+    {
+        Dictionary patchDict({{"type", std::string("calculated")}});
+        bcs.push_back(BoundaryType(mesh, patchDict, patchID));
+    }
+    return bcs;
+};
+
+}
 
 namespace NeoFOAM
 {

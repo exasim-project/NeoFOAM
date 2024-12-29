@@ -7,9 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/fields/fieldTypeDefs.hpp"
-#include "NeoFOAM/fields/operations/operationsMacros.hpp"
-#include "NeoFOAM/fields/operations/comparison.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 TEST_CASE("Field Constructors")
 {

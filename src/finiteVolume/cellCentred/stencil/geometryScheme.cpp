@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/finiteVolume/cellCentred/stencil/basicGeometryScheme.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
-#include "NeoFOAM/core/error.hpp"
 #include <any>
+
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/stencil/basicGeometryScheme.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

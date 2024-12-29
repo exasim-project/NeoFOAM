@@ -2,17 +2,13 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #pragma once
 
-#include <iostream>
 #include <memory>
-#include <type_traits>
-#include <utility>
 #include <concepts>
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/coeff.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 namespace NeoFOAM::dsl
 {

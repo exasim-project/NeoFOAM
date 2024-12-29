@@ -12,8 +12,6 @@
 #include "NeoFOAM/core/database/collection.hpp"
 #include "NeoFOAM/core/database/document.hpp"
 
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 /**
@@ -356,7 +354,7 @@ public:
 
     FieldDocument operator()(Database& db)
     {
-        VolumeField<scalar> vf(
+        FieldType vf(
             field.exec(),
             name,
             field.mesh(),
