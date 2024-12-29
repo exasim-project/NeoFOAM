@@ -275,16 +275,17 @@
 <span id="id1"></span><h1>Macro Definitions<a class="headerlink" href="#macro-definitions" title="Link to this heading">¶</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>NeoFOAM provides a set of macros for handling debug messaging, error reporting, and assertions. These macros are defined in two header files: <cite>Info.hpp</cite> and <cite>Error.hpp</cite>, and offer standardized mechanisms for logging information and handling errors across the library.</p>
-<p><cite>NF_DEBUG</cite> is active when <cite>CMAKE_BUILD_TYPE</cite> is set to <cite>Debug</cite>, and <cite>NF_DEBUG_INFO</cite> is active when <cite>CMAKE_BUILD_TYPE</cite> is set to <cite>RelWithDebInfo</cite>.</p>
+<p>NeoFOAM provides a set of macros for handling debug messaging, error reporting, and assertions.
+These macros are defined in two header files: <code class="docutils literal notranslate"><span class="pre">Info.hpp</span></code> and <code class="docutils literal notranslate"><span class="pre">Error.hpp</span></code>, and offer standardized mechanisms for logging information and handling errors across the library.</p>
+<p><code class="docutils literal notranslate"><span class="pre">NF_DEBUG</span></code> is active when <code class="docutils literal notranslate"><span class="pre">CMAKE_BUILD_TYPE</span></code> is set to <code class="docutils literal notranslate"><span class="pre">Debug</span></code>, and <code class="docutils literal notranslate"><span class="pre">NF_DEBUG_INFO</span></code> is active when <code class="docutils literal notranslate"><span class="pre">CMAKE_BUILD_TYPE</span></code> is set to <code class="docutils literal notranslate"><span class="pre">RelWithDebInfo</span></code>.</p>
 </section>
 <section id="info-hpp">
 <h2>Info.hpp<a class="headerlink" href="#info-hpp" title="Link to this heading">¶</a></h2>
-<p>The <cite>Info.hpp</cite> header defines macros for debug and informational messaging:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Info.hpp</span></code> header defines macros for debug and informational messaging:</p>
 <ul class="simple">
-<li><p><cite>NF_DEBUG_MESSAGING</cite>: Enables debug messaging if either <cite>NF_DEBUG</cite> or <cite>NF_DEBUG_INFO</cite> is defined.</p></li>
-<li><p><cite>NF_INFO(message)</cite>: Prints the given message to the standard output stream.</p></li>
-<li><p><cite>NF_DINFO(message)</cite>: Prints the given debug message to the standard output stream if <cite>NF_DEBUG_MESSAGING</cite> is enabled.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_DEBUG_MESSAGING</span></code>: Enables debug messaging if either <code class="docutils literal notranslate"><span class="pre">NF_DEBUG</span></code> or <code class="docutils literal notranslate"><span class="pre">NF_DEBUG_INFO</span></code> is defined.</p></li>
+<li><p><a href="#id2"><span class="problematic" id="id3">``</span></a>NF_INFO`(message)`: Prints the given message to the standard output stream.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_DINFO(message)</span></code>: Prints the given debug message to the standard output stream if <code class="docutils literal notranslate"><span class="pre">NF_DEBUG_MESSAGING</span></code> is enabled.</p></li>
 </ul>
 <p>Example usage:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">NF_INFO</span><span class="p">(</span><span class="s">&quot;This is an informational message.&quot;</span><span class="p">);</span>
@@ -294,21 +295,21 @@
 </section>
 <section id="error-hpp">
 <h2>Error.hpp<a class="headerlink" href="#error-hpp" title="Link to this heading">¶</a></h2>
-<p>The <cite>Error.hpp</cite> header defines macros for error handling and assertions:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Error.hpp</span></code> header defines macros for error handling and assertions:</p>
 <ul class="simple">
-<li><p><cite>NF_ERROR_EXIT(message)</cite>: Prints an error message and aborts the program.</p></li>
-<li><p><cite>NF_THROW(message)</cite>: Throws a <cite>NeoFOAMException</cite> with the specified error message.</p></li>
-<li><p><cite>NF_ASSERT(condition, message)</cite>: Checks a condition and, if false, prints an error message and aborts the program.</p></li>
-<li><p><cite>NF_ASSERT_THROW(condition, message)</cite>: Checks a condition and, if false, throws a <cite>NeoFOAMException</cite>.</p></li>
-<li><p><cite>NF_DEBUG_ASSERT(condition, message)</cite> and <cite>NF_DEBUG_ASSERT_THROW(condition, message)</cite>: Debug versions of <cite>NF_ASSERT</cite> and <cite>NF_ASSERT_THROW</cite> that are no-ops in release builds.</p></li>
-<li><p><cite>NF_DEBUG_ASSERT_THROW(condition, message)</cite>: Debug version of <cite>NF_ASSERT_THROW</cite> that throws a <cite>NeoFOAMException</cite> if the condition is false.</p></li>
-<li><p><cite>NF_ASSERT_EQUAL(a, b)</cite>: Asserts that two values are equal and prints an error message if they are not.</p></li>
-<li><p><cite>NF_DEBUG_ASSERT_EQUAL(a, b)</cite>: Debug version of <cite>NF_ASSERT_EQUAL</cite> that is a no-op in release builds.</p></li>
-<li><p><cite>NF_ASSERT_EQUAL_THROW(a, b)</cite>: Asserts that two values are equal and throws a <cite>NeoFOAMException</cite> if they are not.</p></li>
-<li><p><cite>NF_DEBUG_ASSERT_EQUAL_THROW(a, b)</cite>: Debug version of <cite>NF_ASSERT_EQUAL</cite> that throws a <cite>NeoFOAMException</cite> if the values are not equal.</p></li>
-<li><p><cite>NF_PING()</cite>: Used (in debug only) for determining where if the code reaches a certain file and line, purely for convenience.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_ERROR_EXIT(message)</span></code>: Prints an error message and aborts the program.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_THROW(message)</span></code>: Throws a <code class="docutils literal notranslate"><span class="pre">NeoFOAMException</span></code> with the specified error message.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_ASSERT(condition,</span> <span class="pre">message)</span></code>: Checks a condition and, if false, prints an error message and aborts the program.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_ASSERT_THROW(condition,</span> <span class="pre">message)</span></code>: Checks a condition and, if false, throws a <code class="docutils literal notranslate"><span class="pre">NeoFOAMException</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_DEBUG_ASSERT(condition,</span> <span class="pre">message)</span></code> and <code class="docutils literal notranslate"><span class="pre">NF_DEBUG_ASSERT_THROW(condition,</span> <span class="pre">message)</span></code>: Debug versions of <code class="docutils literal notranslate"><span class="pre">NF_ASSERT</span></code> and <code class="docutils literal notranslate"><span class="pre">NF_ASSERT_THROW</span></code> that are no-ops in release builds.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_DEBUG_ASSERT_THROW(condition,</span> <span class="pre">message)</span></code>: Debug version of <code class="docutils literal notranslate"><span class="pre">NF_ASSERT_THROW</span></code> that throws a <code class="docutils literal notranslate"><span class="pre">NeoFOAMException</span></code> if the condition is false.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_ASSERT_EQUAL(a,</span> <span class="pre">b)</span></code>: Asserts that two values are equal and prints an error message if they are not.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_DEBUG_ASSERT_EQUAL(a,</span> <span class="pre">b)</span></code>: Debug version of <code class="docutils literal notranslate"><span class="pre">NF_ASSERT_EQUAL</span></code> that is a no-op in release builds.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_ASSERT_EQUAL_THROW(a,</span> <span class="pre">b)</span></code>: Asserts that two values are equal and throws a <code class="docutils literal notranslate"><span class="pre">NeoFOAMException</span></code> if they are not.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_DEBUG_ASSERT_EQUAL_THROW(a,</span> <span class="pre">b)</span></code>: Debug version of <code class="docutils literal notranslate"><span class="pre">NF_ASSERT_EQUAL</span></code> that throws a <code class="docutils literal notranslate"><span class="pre">NeoFOAMException</span></code> if the values are not equal.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NF_PING()</span></code>: Used (in debug only) for determining where if the code reaches a certain file and line, purely for convenience.</p></li>
 </ul>
-<p>When <cite>NF_DEBUG_MESSAGING</cite> is enabled, a stack trace is generated by <a class="reference external" href="https://github.com/jeremy-rifkin/cpptrace">cpptrace</a>.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">NF_DEBUG_MESSAGING</span></code> is enabled, a stack trace is generated by <a class="reference external" href="https://github.com/jeremy-rifkin/cpptrace">cpptrace</a>.</p>
 <p>Example usage:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// Error handling</span>
 <span class="n">NF_ERROR_EXIT</span><span class="p">(</span><span class="s">&quot;A critical error occurred.&quot;</span><span class="p">);</span>
