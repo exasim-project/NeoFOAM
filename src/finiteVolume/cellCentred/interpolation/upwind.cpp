@@ -51,7 +51,7 @@ void computeUpwindInterpolation(
             {
                 sfield[facei] = sWeight[facei] * sBField[facei - nInternalFaces];
             }
-        }
+        }, "computeUpwindInterpolation"
     );
 }
 
