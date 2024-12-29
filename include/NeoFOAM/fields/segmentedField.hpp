@@ -7,6 +7,30 @@
 namespace NeoFOAM
 {
 
+
+template<typename IndexType>
+IndexType segmentsFromIntervals(
+    const Field<IndexType>& intervals,
+    const std::span<const IndexType> intSpan,
+    std::span<IndexType> segSpan
+)
+{
+    IndexType finalValue = 0;
+    NeoFOAM::parallelScan(
+        intervals.exec(),
+        {0, segSpan.size()},
+        KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
+            update += intSpan[i - 1];
+            if (final)
+            {
+                segSpan[i] = update;
+            }
+        },
+        finalValue
+    );
+    return finalValue;
+}
+
 /**
  * @brief A class representing a segment of indices.
  *
@@ -105,22 +129,13 @@ public:
         : values_(intervals.exec(), 0),
           segments_(intervals.exec(), intervals.size() + 1, IndexType(0))
     {
-        auto segSpan = segments_.span();
-        const auto intSpan = intervals.span();
+        std::span<IndexType> segSpan = segments_.span();
+        const std::span<const IndexType> intSpan = intervals.span();
 
-        NeoFOAM::parallelScan(
-            intervals.exec(),
-            {0, segSpan.size()},
-            KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
-                update += intSpan[i - 1];
-                if (final)
-                {
-                    segSpan[i] = update;
-                }
-            }
-        );
-        values_ = Field<ValueType>(intervals.exec(), segSpan.back());
+        IndexType valueSize = segmentsFromIntervals(intervals, intSpan, segSpan);
+        values_ = Field<ValueType>(intervals.exec(), valueSize);
     }
+
 
     /**
      * @brief Create a segmented field from two fields.

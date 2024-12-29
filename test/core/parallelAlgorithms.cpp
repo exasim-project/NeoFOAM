@@ -127,12 +127,12 @@ TEST_CASE("parallelScan")
     );
     std::string execName = std::visit([](auto e) { return e.print(); }, exec);
 
-    SECTION("parallelScan_" + execName)
+    SECTION("parallelScan_withoutReturn" + execName)
     {
         NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
         NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, intervals.size() + 1, 0);
         auto segSpan = segments.span();
-        auto intSpan = intervals.span();
+        const auto intSpan = intervals.span();
 
         NeoFOAM::parallelScan(
             exec,
@@ -155,10 +155,49 @@ TEST_CASE("parallelScan")
         REQUIRE(hostSegments[5] == 15);
 
         auto hostIntervals = intervals.copyToHost();
-        REQUIRE(intervals[0] == 1);
-        REQUIRE(intervals[1] == 2);
-        REQUIRE(intervals[2] == 3);
-        REQUIRE(intervals[3] == 4);
-        REQUIRE(intervals[4] == 5);
+        REQUIRE(hostIntervals[0] == 1);
+        REQUIRE(hostIntervals[1] == 2);
+        REQUIRE(hostIntervals[2] == 3);
+        REQUIRE(hostIntervals[3] == 4);
+        REQUIRE(hostIntervals[4] == 5);
+    }
+
+    SECTION("parallelScan_withReturn" + execName)
+    {
+        NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
+        NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, intervals.size() + 1, 0);
+        auto segSpan = segments.span();
+        const auto intSpan = intervals.span();
+        NeoFOAM::localIdx finalValue = 0;
+
+        NeoFOAM::parallelScan(
+            exec,
+            {0, segSpan.size()},
+            KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
+                update += intSpan[i - 1];
+                if (final)
+                {
+                    segSpan[i] = update;
+                }
+            },
+            finalValue
+        );
+
+        REQUIRE(finalValue == 15);
+
+        auto hostSegments = segments.copyToHost();
+        REQUIRE(hostSegments[0] == 0);
+        REQUIRE(hostSegments[1] == 1);
+        REQUIRE(hostSegments[2] == 3);
+        REQUIRE(hostSegments[3] == 6);
+        REQUIRE(hostSegments[4] == 10);
+        REQUIRE(hostSegments[5] == 15);
+
+        auto hostIntervals = intervals.copyToHost();
+        REQUIRE(hostIntervals[0] == 1);
+        REQUIRE(hostIntervals[1] == 2);
+        REQUIRE(hostIntervals[2] == 3);
+        REQUIRE(hostIntervals[3] == 4);
+        REQUIRE(hostIntervals[4] == 5);
     }
 };

@@ -117,11 +117,11 @@ TEST_CASE("segmentedField")
         REQUIRE(hostSegments[5] == 15);
 
         auto hostIntervals = intervals.copyToHost();
-        REQUIRE(intervals[0] == 1);
-        REQUIRE(intervals[1] == 2);
-        REQUIRE(intervals[2] == 3);
-        REQUIRE(intervals[3] == 4);
-        REQUIRE(intervals[4] == 5);
+        REQUIRE(hostIntervals[0] == 1);
+        REQUIRE(hostIntervals[1] == 2);
+        REQUIRE(hostIntervals[2] == 3);
+        REQUIRE(hostIntervals[3] == 4);
+        REQUIRE(hostIntervals[4] == 5);
 
         REQUIRE(segField.size() == 15);
 

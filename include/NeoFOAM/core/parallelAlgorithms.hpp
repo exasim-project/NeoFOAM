@@ -163,7 +163,35 @@ void parallelScan(
 template<typename Kernel>
 void parallelScan(const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
 {
-    return std::visit([&](const auto& e) { return parallelScan(e, range, kernel); }, exec);
+    std::visit([&](const auto& e) { parallelScan(e, range, kernel); }, exec);
+}
+
+template<typename Executor, typename Kernel, typename ReturnType>
+void parallelScan(
+    [[maybe_unused]] const Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    ReturnType& return_value
+)
+{
+    auto [start, end] = range;
+    using runOn = typename Executor::exec;
+    Kokkos::parallel_scan(
+        "parallelScan", Kokkos::RangePolicy<runOn>(start, end), kernel, return_value
+    );
+}
+
+template<typename Kernel, typename ReturnType>
+void parallelScan(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    ReturnType& return_value
+)
+{
+    return std::visit(
+        [&](const auto& e) { return parallelScan(e, range, kernel, return_value); }, exec
+    );
 }
 
 
