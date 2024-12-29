@@ -10,7 +10,7 @@
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/operations/operationsMacros.hpp"
+#include "NeoFOAM/fields/fieldFreeFunctions.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 
 namespace NeoFOAM
