@@ -9,11 +9,10 @@ Basics
     :glob:
 
     executor.rst
-    containers.rst
+    fields.rst
     unstructuredMesh.rst
     dictionary.rst
     registerclass.rst
     macros.rst
     mpi_architecture.rst
-    fields.rst
     database.rst
