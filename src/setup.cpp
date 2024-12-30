@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
+#include <limits>
+
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/setup.hpp"
 
@@ -26,7 +28,7 @@ scalar computeCoNum(
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
 
-    scalar maxCoNum = 0.0;
+    scalar maxCoNum = std::numeric_limits<scalar>::lowest();
     scalar meanCoNum = 0.0;
     if (std::holds_alternative<SerialExecutor>(exec))
     {
@@ -44,10 +46,29 @@ scalar computeCoNum(
             volPhi[own] += flux;
         }
 
-        // TODO: Correct boundary conditions
-	//       In simple scalarAdvection case BC are trivial for now.
+        // FIXME: Correct boundary conditions
+	//phi.correctBoundaryConditions();
 
-	// FIXME: Implement for maxCoNum and meanCoNum calculations.
+        for (size_t i = 0; i < mesh.nCells(); i++)
+	{
+            double val = (volPhi[i] / surfV[i]);
+            if( val > maxCoNum ) maxCoNum = val;
+	}
+
+        scalar totalPhi = 0.0;
+        for (size_t i = 0; i < mesh.nCells(); i++)
+	{
+            totalPhi += volPhi[i];
+	}
+
+        scalar totalVol = 0.0;
+        for (size_t i = 0; i < mesh.nCells(); i++)
+	{
+            totalVol += surfV[i];
+	}
+
+        maxCoNum *= 0.5 * dt;
+        meanCoNum = 0.5 * (totalPhi / totalVol) * dt;
     }
     else
     {
@@ -73,27 +94,28 @@ scalar computeCoNum(
             "sumFluxesBoundary"
         );
 
-        // TODO: Correct boundary conditions.
-	//       In simple scalarAdvection case BC are trivial for now.
 
-	// FIXME: Reduction is not working properly. Find the bug.
+	// FIXME: Correct boundary conditions.
+	//phi.correctBoundaryConditions();
+
+	scalar maxValue;
+	Kokkos::Max<NeoFOAM::scalar> maxReducer(maxValue);
         parallelReduce(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli, double& lmax) {
-                double val = (volPhi[celli] / surfV[celli]);
+            KOKKOS_LAMBDA(const size_t celli, NeoFOAM::scalar& lmax) {
+	        NeoFOAM::scalar val = (volPhi[celli] / surfV[celli]);
                 if( val > lmax ) lmax = val;
-                //printf("max %ld %.10e \n", celli, lmax);
+                printf("volPhi %ld %.10e \n", celli, volPhi[celli]);
+                //printf("surfV %ld %.10e \n", celli, surfV[celli]);
             },
-            maxCoNum
+            maxReducer
         );
-        //std::cout << "maxCoNum " << maxCoNum << std::endl;
 
 	// TODO: Is calculation of the mean really necessary?
-	//       It is only printed and maybe needed for the user?
-
-	// FIXME: Reduction is not working properly. Find the bug.
-        scalar sumPhi = 0.0;
+	//       It is only printed and maybe needed for the user.
+        scalar totalPhi = 0.0;
+	Kokkos::Sum<NeoFOAM::scalar> sumPhi(totalPhi);
         parallelReduce(
             exec,
             {0, mesh.nCells()},
@@ -101,20 +123,20 @@ scalar computeCoNum(
             sumPhi
         );
 
-	// FIXME: Reduction is not working properly. Find the bug.
-        scalar sumV = 0.0;
+        scalar totalVol = 0.0;
+	Kokkos::Sum<NeoFOAM::scalar> sumVol(totalVol);
         parallelReduce(
             exec,
             {0, mesh.nCells()},
             KOKKOS_LAMBDA(const size_t celli, double& lsum) { lsum += surfV[celli]; },
-            sumV
+            sumVol
         );
 
-        maxCoNum *= 0.5 * dt;
-        meanCoNum = 0.5 * (sumPhi / sumV) * dt;
+        maxCoNum  = maxReducer.reference() * 0.5 * dt;
+        meanCoNum = 0.5 * (sumPhi.reference() / sumVol.reference()) * dt;
     }
 
-    std::cout << "Courant Number mean: " << meanCoNum << " max: " << maxCoNum  << " " << dt << std::endl;
+    std::cout << "Courant Number mean: " << meanCoNum << " max: " << maxCoNum  << std::endl;
 
     return maxCoNum;
 }
