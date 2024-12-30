@@ -133,9 +133,9 @@ bool \mbox{\hyperlink{namespaceNeoFOAM_a4354d14390c6cd1d3a813869a7aff63b}{operat
 \begin{DoxyCompactList}\small\item\em Checks if two executors are not equal, i.\+e. they are not of the same type. \end{DoxyCompactList}\item 
 {\footnotesize template$<$class Data\+Class $>$ }\\Data\+Class \mbox{\hyperlink{namespaceNeoFOAM_a11cb8ffac85b2e8d34007c806b5edaf4}{read}} (\mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}} input)
 \item 
-{\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a3fad3a97027b163a807c0fe8ab8ed3ea}{add}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&exec, OpA \&a, OpB b)
+{\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a1ce421dc2f7693ffa3c0a3e5381ea876}{threadsafe\+Add}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&exec, OpA \texorpdfstring{$\ast$}{*}a, OpB b)
 \item 
-{\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ac6f328ecc662a1749cb19c3d188990bb}{sub}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&exec, OpA \&a, const OpB b)
+{\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a8666d2d7dd3ea60f4a358f64b7d7cc2b}{threadsafe\+Sub}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&exec, OpA \texorpdfstring{$\ast$}{*}a, const OpB b)
 \item 
 {\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , parallel\+For\+Kernel Kernel$>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallel\+For}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel)
 \item 
@@ -352,21 +352,10 @@ Definition at line \mbox{\hyperlink{time_8hpp_source_l00015}{15}} of file \mbox{
 
 
 \doxysubsection{Function Documentation}
-\Hypertarget{namespaceNeoFOAM_a3fad3a97027b163a807c0fe8ab8ed3ea}\label{namespaceNeoFOAM_a3fad3a97027b163a807c0fe8ab8ed3ea} 
-\index{NeoFOAM@{NeoFOAM}!add@{add}}
-\index{add@{add}!NeoFOAM@{NeoFOAM}}
-\doxysubsubsection{\texorpdfstring{add()}{add()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ \\
-void Neo\+FOAM\+::add (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{OpA \&}]{a,  }\item[{OpB}]{b }\end{DoxyParamCaption})}
-
-
-
-Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00019}{19}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
-
 \Hypertarget{namespaceNeoFOAM_a44787ff1266d4f5ebd1660b821eee43e}\label{namespaceNeoFOAM_a44787ff1266d4f5ebd1660b821eee43e} 
 \index{NeoFOAM@{NeoFOAM}!add@{add}}
 \index{add@{add}!NeoFOAM@{NeoFOAM}}
-\doxysubsubsection{\texorpdfstring{add()}{add()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+\doxysubsubsection{\texorpdfstring{add()}{add()}}
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 void Neo\+FOAM\+::add (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{a,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ \&}]{b }\end{DoxyParamCaption})}
 
@@ -820,21 +809,10 @@ auto Neo\+FOAM\+::spans (\begin{DoxyParamCaption}\item[{Args \&...}]{fields }\en
 
 Definition at line \mbox{\hyperlink{operationsMacros_8hpp_source_l00094}{94}} of file \mbox{\hyperlink{operationsMacros_8hpp_source}{operations\+Macros.\+hpp}}.
 
-\Hypertarget{namespaceNeoFOAM_ac6f328ecc662a1749cb19c3d188990bb}\label{namespaceNeoFOAM_ac6f328ecc662a1749cb19c3d188990bb} 
-\index{NeoFOAM@{NeoFOAM}!sub@{sub}}
-\index{sub@{sub}!NeoFOAM@{NeoFOAM}}
-\doxysubsubsection{\texorpdfstring{sub()}{sub()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ \\
-void Neo\+FOAM\+::sub (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{OpA \&}]{a,  }\item[{const OpB}]{b }\end{DoxyParamCaption})}
-
-
-
-Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00032}{32}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
-
 \Hypertarget{namespaceNeoFOAM_a9f396f6dfb0e34f0d24af75126fa8389}\label{namespaceNeoFOAM_a9f396f6dfb0e34f0d24af75126fa8389} 
 \index{NeoFOAM@{NeoFOAM}!sub@{sub}}
 \index{sub@{sub}!NeoFOAM@{NeoFOAM}}
-\doxysubsubsection{\texorpdfstring{sub()}{sub()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+\doxysubsubsection{\texorpdfstring{sub()}{sub()}}
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
 void Neo\+FOAM\+::sub (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{a,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ \&}]{b }\end{DoxyParamCaption})}
 
@@ -863,6 +841,28 @@ T Neo\+FOAM\+::sum (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classN
 
 
 Definition at line \mbox{\hyperlink{sum_8hpp_source_l00058}{58}} of file \mbox{\hyperlink{sum_8hpp_source}{sum.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a1ce421dc2f7693ffa3c0a3e5381ea876}\label{namespaceNeoFOAM_a1ce421dc2f7693ffa3c0a3e5381ea876} 
+\index{NeoFOAM@{NeoFOAM}!threadsafeAdd@{threadsafeAdd}}
+\index{threadsafeAdd@{threadsafeAdd}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{threadsafeAdd()}{threadsafeAdd()}}
+{\footnotesize\ttfamily template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ \\
+void Neo\+FOAM\+::threadsafe\+Add (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{OpA \texorpdfstring{$\ast$}{*}}]{a,  }\item[{OpB}]{b }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00019}{19}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a8666d2d7dd3ea60f4a358f64b7d7cc2b}\label{namespaceNeoFOAM_a8666d2d7dd3ea60f4a358f64b7d7cc2b} 
+\index{NeoFOAM@{NeoFOAM}!threadsafeSub@{threadsafeSub}}
+\index{threadsafeSub@{threadsafeSub}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{threadsafeSub()}{threadsafeSub()}}
+{\footnotesize\ttfamily template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} , typename OpA , typename OpB $>$ \\
+void Neo\+FOAM\+::threadsafe\+Sub (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad8645a25cba2275ee5bea619093da91e}{Executor}} \&}]{exec,  }\item[{OpA \texorpdfstring{$\ast$}{*}}]{a,  }\item[{const OpB}]{b }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00032}{32}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a43b162c158f916878dc09424dd4d37d1}\label{namespaceNeoFOAM_a43b162c158f916878dc09424dd4d37d1} 
 \index{NeoFOAM@{NeoFOAM}!validateRegistration@{validateRegistration}}

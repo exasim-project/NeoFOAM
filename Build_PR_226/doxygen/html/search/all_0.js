@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['add_0',['add',['../namespaceNeoFOAM.html#a44787ff1266d4f5ebd1660b821eee43e',1,'NeoFOAM::add(Field&lt; ValueType &gt; &amp;a, const Field&lt; std::type_identity_t&lt; ValueType &gt; &gt; &amp;b)'],['../namespaceNeoFOAM.html#a3fad3a97027b163a807c0fe8ab8ed3ea',1,'NeoFOAM::add(const Executor &amp;exec, OpA &amp;a, OpB b)']]],
+  ['add_0',['add',['../namespaceNeoFOAM.html#a44787ff1266d4f5ebd1660b821eee43e',1,'NeoFOAM']]],
   ['addexpression_1',['addExpression',['../classNeoFOAM_1_1dsl_1_1Expression.html#af313e6ab82947b615550bd71d8050234',1,'NeoFOAM::dsl::Expression']]],
   ['addoperator_2',['addOperator',['../classNeoFOAM_1_1dsl_1_1Expression.html#a0b82fd0686a5abb7c9d86621d1d14ece',1,'NeoFOAM::dsl::Expression']]],
   ['addsubtype_3',['addSubType',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register.html#ac4c3db223760839982dfb215e891ee95',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::Register']]],
