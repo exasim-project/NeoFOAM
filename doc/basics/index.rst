@@ -16,3 +16,4 @@ Basics
     macros.rst
     mpi_architecture.rst
     database.rst
+    first_kernel.rst
