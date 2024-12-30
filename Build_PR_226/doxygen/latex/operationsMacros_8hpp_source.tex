@@ -1,0 +1,111 @@
+\doxysection{operations\+Macros.\+hpp}
+\hypertarget{operationsMacros_8hpp_source}{}\label{operationsMacros_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/operations/operationsMacros.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/operations/operationsMacros.hpp}}
+\mbox{\hyperlink{operationsMacros_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ MIT}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2023\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00003}00003\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ <tuple>}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <Kokkos\_Core.hpp>}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{label_8hpp}{NeoFOAM/core/primitives/label.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exceptions_8hpp}{NeoFOAM/helpers/exceptions.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{parallelAlgorithms_8hpp}{NeoFOAM/core/parallelAlgorithms.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00011}00011\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00012}00012\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00013}00013\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00014}00014\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00015}00015\ \textcolor{comment}{//\ Forward\ declaration}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00016}00016\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00017}00017\ \textcolor{keyword}{class\ }Field;}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00019}00019\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00020}00020\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ Inner>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00021}\mbox{\hyperlink{namespaceNeoFOAM_a33ee4264037f5c9c9d7e2b8db186814b}{00021}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a33ee4264037f5c9c9d7e2b8db186814b}{map}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<T>}}\&\ a,\ \textcolor{keyword}{const}\ Inner\ inner)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00022}00022\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00023}00023\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(a,\ inner);}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00024}00024\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00026}00026\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00027}\mbox{\hyperlink{namespaceNeoFOAM_a59bbe30bafaeee43e28708c8a90ca415}{00027}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a59bbe30bafaeee43e28708c8a90ca415}{fill}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ std::type\_identity\_t<ValueType>\ value)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00028}00028\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00029}00029\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00030}00030\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t})\ \{\ \textcolor{keywordflow}{return}\ value;\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00031}00031\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00032}00032\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00035}00035\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00036}\mbox{\hyperlink{namespaceNeoFOAM_adcea63d5306a9fd32f2793d11d419ed4}{00036}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_adcea63d5306a9fd32f2793d11d419ed4}{setField}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ std::span<\textcolor{keyword}{const}\ std::type\_identity\_t<ValueType>>\ b)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00037}00037\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00038}00038\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00039}00039\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ b[i];\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00040}00040\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00041}00041\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00043}00043\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00044}\mbox{\hyperlink{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}{00044}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}{scalarMul}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ std::type\_identity\_t<ValueType>\ value)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00045}00045\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00046}00046\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a9ff92b9ff779eaae2e8bb6e9c38df479}{span}}();}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00047}00047\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ spanA[i]\ *\ value;\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00049}00049\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00050}00050\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00052}00052\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00053}00053\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00054}00054\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00055}\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a56ee4648092e5f74747d3ae550b0857b}{00055}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a56ee4648092e5f74747d3ae550b0857b}{fieldBinaryOp}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00056}00056\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}<std::type\_identity\_t<ValueType>>\&\ b,\ BinaryOp\ op}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00057}00057\ )}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00058}00058\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00059}00059\ \ \ \ \ \mbox{\hyperlink{exceptions_8hpp_a466d6d559414b6d1198021e94e31545e}{NeoFOAM\_ASSERT\_EQUAL\_LENGTH}}(a,\ b);}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00060}00060\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a9ff92b9ff779eaae2e8bb6e9c38df479}{span}}();}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{auto}\ spanB\ =\ b.span();}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00062}00062\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ op(spanA[i],\ spanB[i]);\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00064}00064\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00065}00065\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00066}00066\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00068}00068\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00069}\mbox{\hyperlink{namespaceNeoFOAM_a44787ff1266d4f5ebd1660b821eee43e}{00069}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a3fad3a97027b163a807c0fe8ab8ed3ea}{add}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}<std::type\_identity\_t<ValueType>>\&\ b)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00070}00070\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00071}00071\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a56ee4648092e5f74747d3ae550b0857b}{detail::fieldBinaryOp}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ a,\ b,\ KOKKOS\_LAMBDA(ValueType\ va,\ ValueType\ vb)\ \{\ \textcolor{keywordflow}{return}\ va\ +\ vb;\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00073}00073\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00074}00074\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00077}00077\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00078}\mbox{\hyperlink{namespaceNeoFOAM_a9f396f6dfb0e34f0d24af75126fa8389}{00078}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac6f328ecc662a1749cb19c3d188990bb}{sub}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}<std::type\_identity\_t<ValueType>>\&\ b)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00079}00079\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00080}00080\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a56ee4648092e5f74747d3ae550b0857b}{detail::fieldBinaryOp}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ a,\ b,\ KOKKOS\_LAMBDA(ValueType\ va,\ ValueType\ vb)\ \{\ \textcolor{keywordflow}{return}\ va\ -\/\ vb;\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00082}00082\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00083}00083\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00084}00084\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00085}00085\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00086}\mbox{\hyperlink{namespaceNeoFOAM_a335407c0e359f3a30480c61fb0aa491f}{00086}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a335407c0e359f3a30480c61fb0aa491f}{mul}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}<std::type\_identity\_t<ValueType>>\&\ b)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00087}00087\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00088}00088\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a56ee4648092e5f74747d3ae550b0857b}{detail::fieldBinaryOp}}(}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ a,\ b,\ KOKKOS\_LAMBDA(ValueType\ va,\ ValueType\ vb)\ \{\ \textcolor{keywordflow}{return}\ va\ *\ vb;\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00090}00090\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00091}00091\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00093}00093\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00094}\mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{00094}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{spans}}(Args\&...\ fields)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00095}00095\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00096}00096\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_tuple(fields.span()...);}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00097}00097\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00099}00099\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Args>}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00100}\mbox{\hyperlink{namespaceNeoFOAM_a374c57db6afb96ab76b48e6868082c81}{00100}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceNeoFOAM_a374c57db6afb96ab76b48e6868082c81}{copyToHosts}}(Args\&...\ fields)}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00101}00101\ \{}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00102}00102\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_tuple(fields.copyToHost()...);}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00103}00103\ \}}
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{operationsMacros_8hpp_source_l00105}00105\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
