@@ -74,6 +74,3 @@ The Dictionary class also provides a method to access a sub-dictionary. This is 
     // check if the value is modified
     NeoFOAM::Dictionary& sDict2 = dict.subDict("subDict");
     sDict2.get<int>("key1") == 100;
-
-.. doxygenclass:: NeoFOAM::Dictionary
-   :members:

@@ -310,10 +310,13 @@ These can be found in the following files:</p>
 </pre></div>
 </div>
 <p>based on the Executor type a kernel function is either run directly within a for loop or dispatched to <code class="docutils literal notranslate"><span class="pre">Kokkos::parallel_for</span></code> for all non <code class="docutils literal notranslate"><span class="pre">SerialExecutors</span></code>.
-The executor type determines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy&lt;runOn&gt;</span></code>, additionally we name the kernel as <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code> to improve identifiability in profiling tools like nsys.
+The executor type determines the <code class="docutils literal notranslate"><span class="pre">Kokkos::RangePolicy&lt;runOn&gt;</span></code> and thus dispatches to GPUs if a <code class="docutils literal notranslate"><span class="pre">GPUExecutor</span></code> was used.
+Additionally, we name the kernel as <code class="docutils literal notranslate"><span class="pre">&quot;parallelFor&quot;</span></code> to improve visibility in profiling tools like nsys.
 Finally, a <code class="docutils literal notranslate"><span class="pre">KOKKOS_LAMBDA</span></code> is dispatched assigning the result of the given kernel function to the span of the field.
-Here the span holds data pointers to the device data and defines the begin and end pointer of the data.</p>
+Here the span holds data pointers to the device data and defines the begin and end pointer of the data.
+Several overloads of the <code class="docutils literal notranslate"><span class="pre">parallelFor</span></code> functions exists to simplify running parallelFor on fields and spans with and without an explicitly defined data range.</p>
 <p>To learn more on how to use the algorithms it is recommended to check the corresponding <a class="reference external" href="https://github.com/exasim-project/NeoFOAM/blob/main/test/core/parallelAlgorithms.cpp">unit test</a>.</p>
+<p>Further details <a class="reference external" href="https://exasim-project.com/NeoFOAM/latest/doxygen/html/parallelAlgorithms_8hpp_source.html">parallelFor</a>.</p>
 </section>
 
         </article>
