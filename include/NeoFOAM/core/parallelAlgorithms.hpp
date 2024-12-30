@@ -16,11 +16,11 @@ class Field;
 
 
 template<typename Executor, typename OpA, typename OpB>
-void add([[maybe_unused]] const Executor& exec, OpA& a, OpB b)
+void threadsafeAdd([[maybe_unused]] const Executor& exec, OpA* a, OpB b)
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-        a + b;
+        *a += b;
     }
     else
     {
@@ -29,11 +29,11 @@ void add([[maybe_unused]] const Executor& exec, OpA& a, OpB b)
 }
 
 template<typename Executor, typename OpA, typename OpB>
-void sub([[maybe_unused]] const Executor& exec, OpA& a, const OpB b)
+void threadsafeSub([[maybe_unused]] const Executor& exec, OpA* a, const OpB b)
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-        a - b;
+        *a -= b;
     }
     else
     {

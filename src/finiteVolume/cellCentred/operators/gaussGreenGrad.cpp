@@ -8,18 +8,16 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+
 void computeGrad(
     const VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp,
-    VolumeField<Vector>& gradPhi
+    VolumeField<Vector>& gradPhi,
+    SurfaceField<scalar>& phif
 )
 {
     const UnstructuredMesh& mesh = gradPhi.mesh();
     const auto exec = gradPhi.exec();
-    // TODO move out of this function to enable a reusable cache
-    SurfaceField<scalar> phif(
-        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
-    );
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     const auto sBSf = mesh.boundaryMesh().sf().span();
     auto surfGradPhi = gradPhi.internalField().span();
@@ -38,8 +36,8 @@ void computeGrad(
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t i) {
             Vector flux = sSf[i] * surfPhif[i];
-            NeoFOAM::add(exec, &surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
-            NeoFOAM::sub(exec, &surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
+            NeoFOAM::threadsafeAdd(exec, &surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
+            NeoFOAM::threadsafeSub(exec, &surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
         }
     );
 
@@ -49,7 +47,7 @@ void computeGrad(
         KOKKOS_LAMBDA(const size_t i) {
             size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             Vector valueOwn = sSf[i] * surfPhif[i];
-            NeoFOAM::add(exec, &surfGradPhi[own], valueOwn);
+            NeoFOAM::threadsafeAdd(exec, &surfGradPhi[own], valueOwn);
         }
     );
 
@@ -58,6 +56,21 @@ void computeGrad(
         {0, mesh.nCells()},
         KOKKOS_LAMBDA(const size_t celli) { surfGradPhi[celli] *= 1 / surfV[celli]; }
     );
+}
+
+void computeGrad(
+    const VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp,
+    VolumeField<Vector>& gradPhi
+)
+{
+    const auto exec = gradPhi.exec();
+    const UnstructuredMesh& mesh = gradPhi.mesh();
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
+
+    computeGrad(phi, surfInterp, gradPhi, phif);
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
