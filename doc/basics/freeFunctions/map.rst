@@ -1,8 +1,8 @@
-.. _basic_functions_fill:
+.. _basic_functions_map:
 
 
-``fill``
---------
+``map``
+-------
 
 Header: ``"NeoFOAM/fields/fieldFreeFunctions.hpp"``
 
@@ -10,13 +10,13 @@ Header: ``"NeoFOAM/fields/fieldFreeFunctions.hpp"``
 Description
 ^^^^^^^^^^^
 
-The function ``fill`` fills the entire field with a given value or a subfield with a given value if a range is defined.
+The function ``map`` applies a function to each element of the field or a subfield if a range is defined.
 
 
 Definition
 ^^^^^^^^^^
 
-.. doxygenfunction:: NeoFOAM::fill
+.. doxygenfunction:: NeoFOAM::map
 
 Example
 ^^^^^^^
@@ -27,8 +27,8 @@ Example
     NeoFOAM::Executor = NeoFOAM::GPUExecutor{};
 
     NeoFOAM::Field<NeoFOAM::scalar> field(exec, 2);
-    NeoFOAM::fill(field, 1.0);
-    NeoFOAM::fill(field, 2.0, {1, 2}); // fill a subfield with a value
+    NeoFOAM::map(field, KOKKOS_LAMBDA(const std::size_t i) { return 1.0; });
+    NeoFOAM::map(field, KOKKOS_LAMBDA(const std::size_t i) { return 2.0; }, {1, 2}); // apply a function to a subfield
     // copy to host
     auto hostField = field.copyToHost();
     for (auto i = 0; i < field.size(); ++i)

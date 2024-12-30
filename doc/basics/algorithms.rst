@@ -60,3 +60,5 @@ Currently, the following free functions are implemented:
    :maxdepth: 1
 
    ./freeFunctions/fill.rst
+   ./freeFunctions/map.rst
+   ./freeFunctions/setField.rst

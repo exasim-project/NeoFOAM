@@ -18,10 +18,23 @@ template<typename ValueType>
 class Field;
 
 
+/**
+ * @brief Map a field using a specific executor.
+ *
+ * @param a The field to map.
+ * @param inner The function to apply to each element of the field.
+ * @param range The range to map the field in. If not provided, the whole field is mapped.
+ */
 template<typename T, typename Inner>
-void map(Field<T>& a, const Inner inner)
+void map(
+    Field<T>& a, const Inner inner, std::optional<std::pair<size_t, size_t>> range = std::nullopt
+)
 {
-    parallelFor(a, inner);
+    auto [start, end] = range.value_or(std::pair<size_t, size_t>(0, a.size()));
+    auto spanA = a.span();
+    parallelFor(
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = inner(i); }
+    );
 }
 
 /**
@@ -29,34 +42,41 @@ void map(Field<T>& a, const Inner inner)
  *
  * @param field The field to fill.
  * @param value The scalar value to fill the field with.
- * @param interval The interval to fill the field in. If not provided, the whole field is filled.
+ * @param range The range to fill the field in. If not provided, the whole field is filled.
  */
 template<typename ValueType>
 void fill(
     Field<ValueType>& a,
     const std::type_identity_t<ValueType> value,
-    std::optional<std::pair<size_t, size_t>> interval = std::nullopt
+    std::optional<std::pair<size_t, size_t>> range = std::nullopt
 )
 {
-    std::size_t start = 0;
-    std::size_t end = a.size();
-    if (interval.has_value())
-    {
-        start = interval->first;
-        end = interval->second;
-    }
-    auto span = a.span();
+    auto [start, end] = range.value_or(std::pair<size_t, size_t>(0, a.size()));
+    auto spanA = a.span();
     parallelFor(
-        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { span[i] = value; }
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = value; }
     );
 }
 
 
+/**
+ * @brief Set the field with a span of values using a specific executor.
+ *
+ * @param a The field to set.
+ * @param b The span of values to set the field with.
+ * @param range The range to set the field in. If not provided, the whole field is set.
+ */
 template<typename ValueType>
-void setField(Field<ValueType>& a, const std::span<const std::type_identity_t<ValueType>> b)
+void setField(
+    Field<ValueType>& a,
+    const std::span<const std::type_identity_t<ValueType>> b,
+    std::optional<std::pair<size_t, size_t>> range = std::nullopt
+)
 {
+    auto [start, end] = range.value_or(std::pair<size_t, size_t>(0, a.size()));
+    auto spanA = a.span();
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return b[i]; }
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = b[i]; }
     );
 }
 
