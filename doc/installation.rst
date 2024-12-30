@@ -96,24 +96,6 @@ required tools for compilation (ubuntu latest 24.04):
     sudo ln -s /usr/bin/clang-16 /usr/bin/clang
     sudo ln -s /usr/bin/clang++-16 /usr/bin/clang++
 
-Windows
-"""""""
-NeoFOAM provides experimental support for Windows.
-To compile NeoFOAM on windows, mysys2 is required the installation is described in vscode user guide_
-
-.. _guide: https://code.visualstudio.com/docs/cpp/config-mingw
-
-
-Following package are required with pacman
-
-.. code-block:: bash
-
-   pacman -S mingw-w64-x86_64-clang
-   pacman -S mingw-w64-x86_64-cmake
-   pacman -S mingw-w64-x86_64-ninja
-
-After that the default cmake procedure to build NeoFOAM should work.
-
 
 Workflow with vscode
 ^^^^^^^^^^^^^^^^^^^^

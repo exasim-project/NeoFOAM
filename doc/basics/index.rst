@@ -10,6 +10,7 @@ Basics
 
     executor.rst
     fields.rst
+    algorithms.rst
     unstructuredMesh.rst
     dictionary.rst
     registerclass.rst
