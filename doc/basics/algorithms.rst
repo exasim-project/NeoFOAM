@@ -43,10 +43,13 @@ The following code block shows the implementation of a parallelFor for fields
 
 
 based on the Executor type a kernel function is either run directly within a for loop or dispatched to ``Kokkos::parallel_for`` for all non ``SerialExecutors``.
-The executor type determines the ``Kokkos::RangePolicy<runOn>``, additionally we name the kernel as ``parallelFor`` to improve identifiability in profiling tools like nsys.
+The executor type determines the ``Kokkos::RangePolicy<runOn>`` and thus dispatches to GPUs if a ``GPUExecutor`` was used.
+Additionally, we name the kernel as ``"parallelFor"`` to improve visibility in profiling tools like nsys.
 Finally, a ``KOKKOS_LAMBDA`` is dispatched assigning the result of the given kernel function to the span of the field.
 Here the span holds data pointers to the device data and defines the begin and end pointer of the data.
-
+Several overloads of the ``parallelFor`` functions exists to simplify running parallelFor on fields and spans with and without an explicitly defined data range.
 
 
 To learn more on how to use the algorithms it is recommended to check the corresponding `unit test <https://github.com/exasim-project/NeoFOAM/blob/main/test/core/parallelAlgorithms.cpp>`_.
+
+Further details `parallelFor <https://exasim-project.com/NeoFOAM/latest/doxygen/html/parallelAlgorithms_8hpp_source.html>`_.
