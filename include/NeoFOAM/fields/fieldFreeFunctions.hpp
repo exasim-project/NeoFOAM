@@ -24,11 +24,30 @@ void map(Field<T>& a, const Inner inner)
     parallelFor(a, inner);
 }
 
+/**
+ * @brief Fill the field with a scalar value using a specific executor.
+ *
+ * @param field The field to fill.
+ * @param value The scalar value to fill the field with.
+ * @param interval The interval to fill the field in. If not provided, the whole field is filled.
+ */
 template<typename ValueType>
-void fill(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+void fill(
+    Field<ValueType>& a,
+    const std::type_identity_t<ValueType> value,
+    std::optional<std::pair<size_t, size_t>> interval = std::nullopt
+)
 {
+    std::size_t start = 0;
+    std::size_t end = a.size();
+    if (interval.has_value())
+    {
+        start = interval->first;
+        end = interval->second;
+    }
+    auto span = a.span();
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t) { return value; }
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { span[i] = value; }
     );
 }
 
