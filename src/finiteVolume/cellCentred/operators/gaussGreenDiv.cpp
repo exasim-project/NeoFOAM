@@ -7,21 +7,16 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp,
-    Field<scalar>& divPhi
+    Field<scalar>& divPhi,
+    SurfaceField<scalar>& phif
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-    // TODO move out of this function to enable a reusable cache
-    SurfaceField<scalar> phif(
-        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
-    );
-    fill(phif.internalField(), 0.0);
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(faceFlux, phi, phif);
 
@@ -39,8 +34,8 @@ void computeDiv(
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t i) {
             scalar flux = surfFaceFlux[i] * surfPhif[i];
-            NeoFOAM::add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
-            NeoFOAM::sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
+            NeoFOAM::threadsafeAdd(exec, &surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
+            NeoFOAM::threadsafeSub(exec, &surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
         }
     );
 
@@ -50,7 +45,7 @@ void computeDiv(
         KOKKOS_LAMBDA(const size_t i) {
             auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
-            NeoFOAM::add(&surfDivPhi[own], valueOwn);
+            NeoFOAM::threadsafeAdd(exec, &surfDivPhi[own], valueOwn);
         }
     );
 
@@ -60,6 +55,24 @@ void computeDiv(
         KOKKOS_LAMBDA(const size_t celli) { surfDivPhi[celli] *= 1 / surfV[celli]; }
     );
 }
+
+void computeDiv(
+    const SurfaceField<scalar>& faceFlux,
+    const VolumeField<scalar>& phi,
+    const SurfaceInterpolation& surfInterp,
+    Field<scalar>& divPhi
+)
+{
+    const UnstructuredMesh& mesh = phi.mesh();
+    const auto exec = phi.exec();
+    SurfaceField<scalar> phif(
+        exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
+    );
+    fill(phif.internalField(), 0.0);
+
+    computeDiv(faceFlux, phi, surfInterp, divPhi, phif);
+}
+
 
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
