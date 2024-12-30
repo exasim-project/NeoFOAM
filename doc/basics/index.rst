@@ -11,10 +11,6 @@ Basics
     executor.rst
     fields.rst
     algorithms.rst
-    unstructuredMesh.rst
-    dictionary.rst
+    first_kernel.rst
     registerclass.rst
     macros.rst
-    mpi_architecture.rst
-    database.rst
-    first_kernel.rst

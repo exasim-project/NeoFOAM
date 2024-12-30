@@ -26,10 +26,11 @@ Table of Contents
    installation
    contributing
    basics/index
-   finiteVolume/cellCentred/index
    dsl/index
    timeIntegration/index
-   api/index
+   finiteVolume/cellCentred/index
+   datastructures/index
+   mpi_architecture
 
 Compatibility with OpenFOAM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
