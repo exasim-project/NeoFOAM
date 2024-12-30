@@ -12,8 +12,7 @@ void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp,
-    Field<scalar>& divPhi,
-    SurfaceField<scalar>& phif
+    Field<scalar>& divPhi
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
