@@ -51,7 +51,7 @@ scalar computeCoNum(
 
         for (size_t i = 0; i < mesh.nCells(); i++)
 	{
-            double val = (volPhi[i] / surfV[i]);
+            double val = volPhi[i] / surfV[i];
             if( val > maxCoNum ) maxCoNum = val;
 	}
 
