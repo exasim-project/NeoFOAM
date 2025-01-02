@@ -38,20 +38,20 @@ and the internal field part is implemented in OpenFOAM as
         igGrad[neighbour[facei]] -= Sfssf;
     }
 
- the corresponnding NeoFOAM version is implemented as
+ the corresponding NeoFOAM version is implemented as
 
 .. code-block:: cpp
-        parallelFor(
-            exec,
-            {0, nInternalFaces},
-            KOKKOS_LAMBDA(const size_t i) {
-                scalar flux = surfFaceFlux[i] * surfPhif[i];
-                NeoFOAM::threadsafe_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
-                NeoFOAM::threadsafe_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-            }
-        );
+    parallelFor(
+        exec,
+        {0, nInternalFaces},
+        KOKKOS_LAMBDA(const size_t i) {
+            scalar flux = surfFaceFlux[i]surfPhif[i];
+            threadsafe_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
+            threadsafe_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
+        }
+    );
 
 Here, the following changes have been applied
 
-- replace the forAll macro with the NeoFOAM::parallelFor function which takes the executor, the range, and the loop body as arguments.
-- calls to += and -= are replaced by the threadsafe_add and threadsafe_sub function which takes the lhs and rhs as arguments.
+- replace the ``forAll`` macro with the ``NeoFOAM::parallelFor`` function which takes the executor, the range, and the loop body as arguments.
+- calls to ``+=`` and ``-=`` are replaced by the ``threadsafe_add`` and ``threadsafe_sub`` function which takes the lhs and rhs as arguments.
