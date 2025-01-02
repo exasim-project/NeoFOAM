@@ -19,11 +19,26 @@ The ``GaussGreenDiv::div`` member calls a free standing function ``computeDiv`` 
 In NeoFOAM it is a common pattern to use free standing functions since they are easier to test and communicate all dependencies explicitly via the function arguments.
 
 
+The discretized version of the divergence term can be written as
 
 .. math::
 
    \int \nabla \phi dV = \int dS\cdot\phi = \sum_f S_f\cdot\phi_f
 
+
+and the internal field part is implemented in OpenFOAM as
+
+.. code-block:: cpp
+
+    forAll(owner, facei)
+    {
+        const GradType Sfssf = Sf[facei]*issf[facei];
+
+        igGrad[owner[facei]] += Sfssf;
+        igGrad[neighbour[facei]] -= Sfssf;
+    }
+
+ the corresponnding NeoFOAM version is implemented as
 
 .. code-block:: cpp
         parallelFor(
@@ -31,7 +46,12 @@ In NeoFOAM it is a common pattern to use free standing functions since they are 
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 scalar flux = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
-                Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
+                NeoFOAM::threadsafe_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
+                NeoFOAM::threadsafe_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
             }
         );
+
+Here, the following changes have been applied
+
+- replace the forAll macro with the NeoFOAM::parallelFor function which takes the executor, the range, and the loop body as arguments.
+- calls to += and -= are replaced by the threadsafe_add and threadsafe_sub function which takes the lhs and rhs as arguments.
