@@ -298,17 +298,16 @@ In NeoFOAM it is a common pattern to use free standing functions since they are 
 \[\int \nabla \phi dV = \int dS\cdot\phi = \sum_f S_f\cdot\phi_f\]</div>
 </div>
 <p>and the internal field part is implemented in OpenFOAM as</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="n">forAll</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span><span class="w"> </span><span class="n">facei</span><span class="p">)</span>
-<span class="w">   </span><span class="p">{</span>
-<span class="w">       </span><span class="k">const</span><span class="w"> </span><span class="n">GradType</span><span class="w"> </span><span class="n">Sfssf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Sf</span><span class="p">[</span><span class="n">facei</span><span class="p">]</span><span class="o">*</span><span class="n">issf</span><span class="p">[</span><span class="n">facei</span><span class="p">];</span>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">forAll</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span><span class="w"> </span><span class="n">facei</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">GradType</span><span class="w"> </span><span class="n">Sfssf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Sf</span><span class="p">[</span><span class="n">facei</span><span class="p">]</span><span class="o">*</span><span class="n">issf</span><span class="p">[</span><span class="n">facei</span><span class="p">];</span>
 
-<span class="w">       </span><span class="n">igGrad</span><span class="p">[</span><span class="n">owner</span><span class="p">[</span><span class="n">facei</span><span class="p">]]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">Sfssf</span><span class="p">;</span>
-<span class="w">       </span><span class="n">igGrad</span><span class="p">[</span><span class="n">neighbour</span><span class="p">[</span><span class="n">facei</span><span class="p">]]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">Sfssf</span><span class="p">;</span>
-<span class="w">   </span><span class="p">}</span>
-
-<span class="n">the</span><span class="w"> </span><span class="n">corresponding</span><span class="w"> </span><span class="n">NeoFOAM</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">implemented</span><span class="w"> </span><span class="n">as</span>
+<span class="w">    </span><span class="n">igGrad</span><span class="p">[</span><span class="n">owner</span><span class="p">[</span><span class="n">facei</span><span class="p">]]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">Sfssf</span><span class="p">;</span>
+<span class="w">    </span><span class="n">igGrad</span><span class="p">[</span><span class="n">neighbour</span><span class="p">[</span><span class="n">facei</span><span class="p">]]</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">Sfssf</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
+<p>the corresponding NeoFOAM version is implemented as</p>
 <p>Here, the following changes have been applied</p>
 <ul class="simple">
 <li><p>replace the <code class="docutils literal notranslate"><span class="pre">forAll</span></code> macro with the <code class="docutils literal notranslate"><span class="pre">NeoFOAM::parallelFor</span></code> function which takes the executor, the range, and the loop body as arguments.</p></li>

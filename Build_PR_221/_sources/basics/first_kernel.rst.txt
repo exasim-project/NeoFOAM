@@ -38,14 +38,15 @@ and the internal field part is implemented in OpenFOAM as
         igGrad[neighbour[facei]] -= Sfssf;
     }
 
- the corresponding NeoFOAM version is implemented as
+
+the corresponding NeoFOAM version is implemented as
 
 .. code-block:: cpp
     parallelFor(
         exec,
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t i) {
-            scalar flux = surfFaceFlux[i]surfPhif[i];
+            scalar flux = surfFaceFlux[i]*surfPhif[i];
             threadsafe_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
             threadsafe_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
         }
