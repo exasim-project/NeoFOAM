@@ -49,21 +49,13 @@ scalar computeCoNum(
         // FIXME: Correct boundary conditions
 	//phi.correctBoundaryConditions();
 
+        scalar totalPhi = 0.0;
+        scalar totalVol = 0.0;
         for (size_t i = 0; i < mesh.nCells(); i++)
 	{
             double val = volPhi[i] / surfV[i];
             if( val > maxCoNum ) maxCoNum = val;
-	}
-
-        scalar totalPhi = 0.0;
-        for (size_t i = 0; i < mesh.nCells(); i++)
-	{
             totalPhi += volPhi[i];
-	}
-
-        scalar totalVol = 0.0;
-        for (size_t i = 0; i < mesh.nCells(); i++)
-	{
             totalVol += surfV[i];
 	}
 
