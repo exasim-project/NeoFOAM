@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="cellCenteredFiniteVolume" href="../finiteVolume/cellCentred/index.html" /><link rel="prev" title="Database" href="database.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="UnstructuredMesh" href="unstructuredMesh.html" /><link rel="prev" title="setField" href="freeFunctions/setField.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/basics/first_kernel.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2024.08.06 -->
@@ -214,16 +214,16 @@
 <li class="toctree-l3"><a class="reference internal" href="freeFunctions/setField.html"><code class="docutils literal notranslate"><span class="pre">setField</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Implementing your first kernel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="unstructuredMesh.html">UnstructuredMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dictionary.html">Dictionary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="macros.html">Macro Definitions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mpi_architecture.html">MPI Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="database.html">Database</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Implementing your first kernel</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">cellCenteredFiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of cellCenteredFiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../finiteVolume/cellCentred/index.html">FiniteVolume</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of FiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../finiteVolume/cellCentred/boundaryConditions.html">Boundary Conditions</a></li>
 </ul>
 </li>
@@ -310,7 +310,7 @@ In NeoFOAM it is a common pattern to use free standing functions since they are 
 <p>the corresponding NeoFOAM version is implemented as</p>
 <p>Here, the following changes have been applied</p>
 <ul class="simple">
-<li><p>replace the <code class="docutils literal notranslate"><span class="pre">forAll</span></code> macro with the <code class="docutils literal notranslate"><span class="pre">NeoFOAM::parallelFor</span></code> function which takes the executor, the range, and the loop body as arguments.</p></li>
+<li><p>replace the <code class="docutils literal notranslate"><span class="pre">forAll</span></code> macro with the <code class="docutils literal notranslate"><span class="pre">NeoFOAM::parallelFor</span></code> (<a class="reference external" href="https://exasim-project.com/NeoFOAM/Build_PR_221/basics/algorithms.html">see</a>.) function which takes the executor, the range, and the loop body as arguments.</p></li>
 <li><p>calls to <code class="docutils literal notranslate"><span class="pre">+=</span></code> and <code class="docutils literal notranslate"><span class="pre">-=</span></code> are replaced by the <code class="docutils literal notranslate"><span class="pre">threadsafe_add</span></code> and <code class="docutils literal notranslate"><span class="pre">threadsafe_sub</span></code> function which takes the lhs and rhs as arguments.</p></li>
 </ul>
 </section>
@@ -320,23 +320,23 @@ In NeoFOAM it is a common pattern to use free standing functions since they are 
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../finiteVolume/cellCentred/index.html">
+          <a class="next-page" href="unstructuredMesh.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">cellCenteredFiniteVolume</div>
+                <div class="title">UnstructuredMesh</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="database.html">
+          <a class="prev-page" href="freeFunctions/setField.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Database</div>
+                <div class="title"><code class="docutils literal notranslate"><span class="pre">setField</span></code></div>
                 
               </div>
             </a>
