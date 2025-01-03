@@ -39,15 +39,14 @@ scalar computeCoNum(
             volPhi[static_cast<size_t>(surfNeighbour[i])] += flux;
         }
 
-        for (size_t i = nInternalFaces; i < volPhi.size(); i++)
+        for (size_t i = nInternalFaces; i < faceFlux.size(); i++)
         {
             auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             scalar flux = surfFaceFlux[i] * surfFaceFlux[i];
             volPhi[own] += flux;
         }
 
-        // FIXME: Correct boundary conditions
-	//phi.correctBoundaryConditions();
+	phi.correctBoundaryConditions();
 
         scalar totalPhi = 0.0;
         scalar totalVol = 0.0;
