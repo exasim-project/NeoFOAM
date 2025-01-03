@@ -70,6 +70,7 @@ Prerequisites
 The following tools are used in the development of this project:
 
 required tools for documentation:
+
 .. code-block:: bash
 
     sudo apt install doxygen
@@ -89,12 +90,6 @@ required tools for compilation (ubuntu latest 24.04):
     python3 \
     python3-dev \
     build-essential
-    # installation of clang is optional
-    sudo apt remove clang-14
-    sudo rm /usr/bin/clang
-    sudo rm /usr/bin/clang++
-    sudo ln -s /usr/bin/clang-16 /usr/bin/clang
-    sudo ln -s /usr/bin/clang++-16 /usr/bin/clang++
 
 
 Workflow with vscode
