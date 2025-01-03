@@ -26,11 +26,13 @@ class Field;
  * @param range The range to map the field in. If not provided, the whole field is mapped.
  */
 template<typename T, typename Inner>
-void map(
-    Field<T>& a, const Inner inner, std::optional<std::pair<size_t, size_t>> range = std::nullopt
-)
+void map(Field<T>& a, const Inner inner, std::pair<size_t, size_t> range = {0, 0})
 {
-    auto [start, end] = range.value_or(std::pair<size_t, size_t>(0, a.size()));
+    auto [start, end] = range;
+    if (end == 0)
+    {
+        end = a.size();
+    }
     auto spanA = a.span();
     parallelFor(
         a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = inner(i); }
@@ -48,10 +50,14 @@ template<typename ValueType>
 void fill(
     Field<ValueType>& a,
     const std::type_identity_t<ValueType> value,
-    std::optional<std::pair<size_t, size_t>> range = std::nullopt
+    std::pair<size_t, size_t> range = {0, 0}
 )
 {
-    auto [start, end] = range.value_or(std::pair<size_t, size_t>(0, a.size()));
+    auto [start, end] = range;
+    if (end == 0)
+    {
+        end = a.size();
+    }
     auto spanA = a.span();
     parallelFor(
         a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = value; }
@@ -70,10 +76,14 @@ template<typename ValueType>
 void setField(
     Field<ValueType>& a,
     const std::span<const std::type_identity_t<ValueType>> b,
-    std::optional<std::pair<size_t, size_t>> range = std::nullopt
+    std::pair<size_t, size_t> range = {0, 0}
 )
 {
-    auto [start, end] = range.value_or(std::pair<size_t, size_t>(0, a.size()));
+    auto [start, end] = range;
+    if (end == 0)
+    {
+        end = a.size();
+    }
     auto spanA = a.span();
     parallelFor(
         a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = b[i]; }

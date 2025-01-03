@@ -131,6 +131,16 @@ public:
     }
 
     /**
+     * @brief Move constructor, moves the data from the parsed field to the new field.
+     * @param rhs The field to move from.
+     */
+    Field(Field<ValueType>&& rhs) noexcept : size_(rhs.size_), data_(rhs.data_), exec_(rhs.exec_)
+    {
+        rhs.data_ = nullptr;
+        rhs.size_ = 0;
+    }
+
+    /**
      * @brief Destroy the Field object.
      */
     ~Field()
