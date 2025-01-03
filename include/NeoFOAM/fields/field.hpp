@@ -52,8 +52,8 @@ public:
 
     /**
      * @brief Create an uninitialized Field with a given size on an executor
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param exec  Executor associated to the field
+     * @param size  size of the field
      */
     Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
     {
@@ -68,9 +68,10 @@ public:
 
     /**
      * @brief Create a Field with a given size from existing memory on an executor
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param exec  Executor associated to the field
      * @param in    Pointer to existing data
+     * @param size  size of the field
+     * @param hostExec Executor where the original data is located
      */
     Field(
         const Executor& exec, const ValueType* in, size_t size, Executor hostExec = SerialExecutor()
@@ -89,8 +90,8 @@ public:
 
     /**
      * @brief Create a Field with a given size on an executor and uniform value
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param exec  Executor associated to the field
+     * @param size  size of the field
      * @param value  the  default value
      */
     Field(const Executor& exec, size_t size, ValueType value)
@@ -105,16 +106,16 @@ public:
     }
 
     /**
-     * @brief Create a Field with a given size on an executor
-     * @param exec  Executor associated to the matrix
+     * @brief Create a Field from a given vector of values on an executor
+     * @param exec  Executor associated to the field
      * @param in a vector of elements to copy over
      */
     Field(const Executor& exec, std::vector<ValueType> in) : Field(exec, in.data(), in.size()) {}
 
     /**
      * @brief Create a Field as a copy of a Field on a specified executor
-     * @param exec  Executor associated to the matrix
-     * @param in a vector of elements to copy over
+     * @param exec  Executor associated to the field
+     * @param in a Field of elements to copy over
      */
     Field(const Executor& exec, const Field<ValueType>& in)
         : Field(exec, in.data(), in.size(), in.exec())
