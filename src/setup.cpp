@@ -63,6 +63,10 @@ scalar computeCoNum(
     }
     else
     {
+	// FIXME: If executor GPU the Courant numbers are off with origin in this parallelFor.
+	//        If executor CPU the values are correct.
+	//        If executor Serial (in if branch above) the values are correct.
+	// TODO:  Unit testing...
         parallelFor(
             exec,
             {0, nInternalFaces},
@@ -70,6 +74,7 @@ scalar computeCoNum(
                 scalar flux = Kokkos::sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
                 Kokkos::atomic_add(&volPhi[static_cast<size_t>(surfOwner[i])], flux);
                 Kokkos::atomic_add(&volPhi[static_cast<size_t>(surfNeighbour[i])], flux);
+                printf("nei own flux %d %d %ld %.10e \n", surfNeighbour[i], surfOwner[i], i, flux);
             }
         );
 
@@ -80,6 +85,7 @@ scalar computeCoNum(
                 auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar flux = Kokkos::sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
                 Kokkos::atomic_add(&volPhi[own], flux);
+                printf("own flux %ld %ld %.10e \n", own, i, flux);
             }
         );
 
