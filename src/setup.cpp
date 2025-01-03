@@ -83,9 +83,7 @@ scalar computeCoNum(
             }
         );
 
-
-	// FIXME: Correct boundary conditions.
-	//phi.correctBoundaryConditions();
+	phi.correctBoundaryConditions();
 
 	scalar maxValue;
 	Kokkos::Max<NeoFOAM::scalar> maxReducer(maxValue);
