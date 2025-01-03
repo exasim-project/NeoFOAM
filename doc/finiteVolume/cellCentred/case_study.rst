@@ -41,6 +41,7 @@ and the internal field part is implemented in OpenFOAM as
 the corresponding NeoFOAM version is implemented as
 
 .. code-block:: cpp
+
     parallelFor(
         exec,
         {0, nInternalFaces},
@@ -51,7 +52,8 @@ the corresponding NeoFOAM version is implemented as
         }
     );
 
+
 Here, the following changes have been applied
 
-- replace the ``forAll`` macro with the ``NeoFOAM::parallelFor`` (`see <https://exasim-project.com/NeoFOAM/Build_PR_221/basics/algorithms.html>`_.) function which takes the executor, the range, and the loop body as arguments.
+- replace the ``forAll`` macro with the ``NeoFOAM::parallelFor`` (see `parallelFor <https://exasim-project.com/NeoFOAM/Build_PR_221/basics/algorithms.html>`_.) function which takes the executor, the range, and the loop body as arguments.
 - calls to ``+=`` and ``-=`` are replaced by the ``threadsafe_add`` and ``threadsafe_sub`` function which takes the lhs and rhs as arguments.
