@@ -3,10 +3,6 @@
 
 #pragma once
 
-#include <Kokkos_Core.hpp>
-
-#include <functional>
-
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"

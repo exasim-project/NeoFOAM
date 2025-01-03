@@ -42,45 +42,45 @@ The following class diagram illustrates the relationships between the ``Database
         }
 
         class DocumentA{
-            +valdiate()
-            -std::string id_;
-            -std::function<bool(Dictionary)> validator;
-            -Dictionary dict
+            +validate() bool
+            -id_ : std::string
+            -validator : std::function
+            -dict : Dictionary
         }
 
         class DocumentB{
-            +valdiate()
-            -std::string id_;
-            -std::function<bool(Dictionary)> validator;
-            -Dictionary dict
+            +validate() bool
+            -id_ : std::string
+            -validator : std::function
+            -dict : Dictionary
         }
 
         class DocumentC{
-            +valdiate()
-            -std::string id_;
-            -std::function<bool(Dictionary)> validator;
-            -Dictionary dict
+            +validate() bool
+            -id_ : std::string
+            -validator : std::function
+            -dict : Dictionary
         }
 
         class DocumentD{
-            +valdiate()
-            -std::string id_;
-            -std::function<bool(Dictionary)> validator;
-            -Dictionary dict
+            +validate() bool
+            -id_ : std::string
+            -validator : std::function
+            -dict : Dictionary
         }
 
         class DocumentE["..."]{
-            +valdiate()
-            -std::string id_;
-            -std::function<bool(Dictionary)> validator;
-            -Dictionary dict
+            +validate() bool
+            -id_ : std::string
+            -validator : std::function
+            -dict : Dictionary
         }
 
         class DocumentF["..."]{
-            +valdiate()
-            -std::string id_;
-            -std::function<bool(Dictionary)> validator;
-            -Dictionary dict
+            +validate() bool
+            -id_ : std::string
+            -validator : std::function
+            -dict : Dictionary
         }
 
 

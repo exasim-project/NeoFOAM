@@ -6,11 +6,11 @@ Executor
 Overview
 ^^^^^^^^
 
-NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The `Executor` class uses Kokkos, provides an interface for memory management, and specifies where to execute the operations:
+NeoFOAM uses the MPI+X approach for parallelism, where X is the execution space used for device parallelism. The ``Executor`` class uses Kokkos, provides an interface for memory management, and specifies where to execute the operations:
 
-- `SerialExecutor`: run on the CPU with MPI
-- `CPUExecutor`: run on the CPU with either OpenMP or C++ Threads in Combination and MPI
-- `GPUExecutor`: run on the GPU with MPI
+- ``SerialExecutor``: run on the CPU with MPI
+- ``CPUExecutor``: run on the CPU with either OpenMP or C++ Threads in Combination and MPI
+- ``GPUExecutor``: run on the GPU with MPI
 
 Design
 ^^^^^^
@@ -28,7 +28,7 @@ One of the design goals is the ability to easily switch between different execut
         NeoFOAM::Field<NeoFOAM::scalar> CPUField(cpuExec, 10);
 
 
-The `Executor` is a `std::variant <https://en.cppreference.com/w/cpp/utility/variant>`_
+The ``Executor`` is a `std::variant <https://en.cppreference.com/w/cpp/utility/variant>`_
 
 .. code-block:: cpp
 
@@ -67,4 +67,4 @@ that are provided by a functor
 
 The visit pattern with the above functor would print different messages depending on the executor type. To extend the library with the additional features the above functor design should be used for the different implementations.
 
-One can check that two operators are 'of the same type', i.e. execute in the same execution space using the equality operators `==` and `!=`.
+One can check that two operators are 'of the same type', i.e. execute in the same execution space using the equality operators ``==`` and ``!=``.
