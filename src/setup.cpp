@@ -36,7 +36,7 @@ scalar computeCoNum(
         {
             scalar flux = sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
             volPhi[static_cast<size_t>(surfOwner[i])] += flux;
-            volPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
+            volPhi[static_cast<size_t>(surfNeighbour[i])] += flux;
         }
 
         for (size_t i = nInternalFaces; i < volPhi.size(); i++)
