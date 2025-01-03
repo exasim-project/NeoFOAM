@@ -310,6 +310,17 @@ In NeoFOAM it is a common pattern to use free standing functions since they are 
 </pre></div>
 </div>
 <p>the corresponding NeoFOAM version is implemented as</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">parallelFor</span><span class="p">(</span>
+<span class="w">    </span><span class="n">exec</span><span class="p">,</span>
+<span class="w">    </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">nInternalFaces</span><span class="p">},</span>
+<span class="w">    </span><span class="n">KOKKOS_LAMBDA</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">scalar</span><span class="w"> </span><span class="n">flux</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">surfFaceFlux</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">surfPhif</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">        </span><span class="n">threadsafe_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">surfDivPhi</span><span class="p">[</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">surfOwner</span><span class="p">[</span><span class="n">i</span><span class="p">])],</span><span class="w"> </span><span class="n">flux</span><span class="p">);</span>
+<span class="w">        </span><span class="n">threadsafe_sub</span><span class="p">(</span><span class="o">&amp;</span><span class="n">surfDivPhi</span><span class="p">[</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">surfNeighbour</span><span class="p">[</span><span class="n">i</span><span class="p">])],</span><span class="w"> </span><span class="n">flux</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">);</span>
+</pre></div>
+</div>
 <p>Here, the following changes have been applied</p>
 <ul class="simple">
 <li><p>replace the <code class="docutils literal notranslate"><span class="pre">forAll</span></code> macro with the <code class="docutils literal notranslate"><span class="pre">NeoFOAM::parallelFor</span></code> (<a class="reference external" href="https://exasim-project.com/NeoFOAM/Build_PR_221/basics/algorithms.html">see</a>.) function which takes the executor, the range, and the loop body as arguments.</p></li>
