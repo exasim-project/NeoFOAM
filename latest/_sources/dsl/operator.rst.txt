@@ -16,7 +16,7 @@ Example:
             TimeTerm(NeoFOAM::dsl::Operator<NeoFOAM::scalar>::Type::Temporal, exec, ..);
 
 
-To fit the specification of the EqnSystem (storage in a vector), the Operator needs to be able to be scaled:
+To fit the specification of the Expression (storage in a vector), the Operator needs to be able to be scaled:
 
 .. code-block:: cpp
 
