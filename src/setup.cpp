@@ -71,8 +71,7 @@ scalar computeCoNum(
                 scalar flux = Kokkos::sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
                 Kokkos::atomic_add(&volPhi[static_cast<size_t>(surfOwner[i])], flux);
                 Kokkos::atomic_add(&volPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-            },
-            "sumFluxesInternal"
+            }
         );
 
         parallelFor(
@@ -82,8 +81,7 @@ scalar computeCoNum(
                 auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar flux = Kokkos::sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
                 Kokkos::atomic_add(&volPhi[own], flux);
-            },
-            "sumFluxesBoundary"
+            }
         );
 
 
