@@ -50,6 +50,45 @@ cpmaddpackage(
   https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
 
+if(${NEOFOAM_WITH_PETSC})
+  include(ExternalProject)
+  if(CMAKE_CUDA_COMPILER)
+    set(PETSC_ENABLE_CUDA 1)
+  else()
+    set(PETSC_ENABLE_CUDA 0)
+  endif()
+
+  cmake_path(GET CMAKE_CUDA_COMPILER PARENT_PATH CUDA_PARTENT_PATH)
+  cmake_path(GET CUDA_PARTENT_PATH PARENT_PATH CUDA_PARENT_PARENT_PATH)
+  find_package(MPI)
+
+  if(MPI_FOUND)
+    set(PETSC_ENABLE_MPI 1)
+    set(PETSC_CXX_COMPILER ${MPI_CXX_COMPILER})
+    set(PETSC_C_COMPILER ${MPI_C_COMPILER})
+  else()
+    set(PETSC_ENABLE_MPI 0)
+    set(PETSC_CXX_COMPILER ${CMAKE_CXX_COMPILER})
+    set(PETSC_C_COMPILER ${CMAKE_CXX_COMPILER})
+  endif()
+
+  ExternalProject_Add(
+    petsc
+    GIT_SHALLOW ON
+    GIT_REPOSITORY "https://gitlab.com/petsc/petsc.git"
+    GIT_TAG v3.22.2
+    PREFIX ${CMAKE_BINARY_DIR}/petsc
+    BUILD_IN_SOURCE YES
+    CONFIGURE_COMMAND
+      ./configure --with-64-bit-indices=0 --with-precision=double --with-cuda=${PETSC_ENABLE_CUDA}
+      --with-cuda-dir=${CUDA_PARENT_PARENT_PATH} --with-mpi=${PETSC_ENABLE_MPI} --with-fc=0 --force
+      --with-32bits-pci-domain=1 --with-cc=${PETSC_C_COMPILER} --with-cxx=${PETSC_CXX_COMPILER}
+      --with-debugging=no --prefix=${CMAKE_BINARY_DIR}/petsc/opt/petsc
+    BUILD_COMMAND make PETSC_DIR=${CMAKE_BINARY_DIR}/petsc/src/petsc PETSC_ARCH=arch-linux-c-opt all
+    INSTALL_COMMAND make PETSC_DIR=${CMAKE_BINARY_DIR}/petsc/src/petsc PETSC_ARCH=arch-linux-c-opt
+                    install)
+endif()
+
 if(${NEOFOAM_WITH_SUNDIALS})
 
   set(SUNDIALS_OPTIONS
