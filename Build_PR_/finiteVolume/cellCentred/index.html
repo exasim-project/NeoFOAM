@@ -3,15 +3,16 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Boundary Conditions" href="boundaryConditions.html" /><link rel="prev" title="Runge Kutta" href="../../timeIntegration/rungeKutta.html" />
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/finiteVolume/cellCentred/index.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>cellCenteredFiniteVolume - NeoFOAM documentation</title>
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.08.06 -->
+        <title>FiniteVolume - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
-    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=6a4ff913" />
     
     
 
@@ -90,19 +91,6 @@
       <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
     </svg>
   </symbol>
-  <symbol id="svg-sun-half" viewBox="0 0 24 24">
-    <title>Auto light/dark mode</title>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M13 12h5" />
-      <path d="M13 15h4" />
-      <path d="M13 18h1" />
-      <path d="M13 9h4" />
-      <path d="M13 6h1" />
-    </svg>
-  </symbol>
   <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
     <title>Auto light/dark, in light mode</title>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -143,7 +131,7 @@
       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
       <path d="M13.5 6.5l4 4" />
       <path d="M20 21l2 -2l-2 -2" />
-      <path d="M17 17l-2 2l2 2" /
+      <path d="M17 17l-2 2l2 2" />
     </svg>
   </symbol>
   <symbol id="svg-eye" viewBox="0 0 24 24">
@@ -213,24 +201,45 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
+  <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../basics/index.html">Basics</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Basics</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/executor.html">Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../basics/containers.html">containers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../basics/unstructuredMesh.html">unstructuredMesh</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../basics/dictionary.html">Dictionary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../basics/fields.html">Fields</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../basics/algorithms.html">Parallel Algorithms</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Parallel Algorithms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../basics/freeFunctions/fill.html"><code class="docutils literal notranslate"><span class="pre">fill</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../basics/freeFunctions/map.html"><code class="docutils literal notranslate"><span class="pre">map</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../basics/freeFunctions/setField.html"><code class="docutils literal notranslate"><span class="pre">setField</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/registerclass.html">Derived class discovery at compile time</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../basics/macros.html">Macro Definitions</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/index.html">API</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../api/fields.html">Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../api/executor.html">Executor</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../dsl/index.html">Domain Specific Language (DSL)</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Domain Specific Language (DSL)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../dsl/equation.html">Expression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../dsl/operator.html">Operator</a></li>
 </ul>
 </li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../timeIntegration/index.html">Time Integration</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Time Integration</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../timeIntegration/forwardEuler.html">Forward Euler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../timeIntegration/rungeKutta.html">Runge Kutta</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">FiniteVolume</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of FiniteVolume</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="boundaryConditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case_study.html">Case Study: The Gauss Green Div Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../datastructures/index.html">Datastructures</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of Datastructures</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../datastructures/unstructuredMesh.html">UnstructuredMesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../datastructures/dictionary.html">Dictionary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../datastructures/database.html">Database</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../mpi_architecture.html">MPI Architecture</a></li>
 </ul>
 
 </div>
@@ -271,23 +280,20 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="cellcenteredfinitevolume">
-<span id="fvcc"></span><h1>cellCenteredFiniteVolume<a class="headerlink" href="#cellcenteredfinitevolume" title="Link to this heading">¶</a></h1>
+          <section id="finitevolume">
+<span id="fvcc"></span><h1>FiniteVolume<a class="headerlink" href="#finitevolume" title="Link to this heading">¶</a></h1>
+<p>NeoFOAM currently provides finite volume specific implementations.
+All finite volume specific algorithms and datastructures can be found
+<cite>include/finiteVolume/cellCentred</cite> and the corresponding namespace.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="fields.html">Fields (FVCC)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fields.html#cell-centered-fields">Cell Centered Fields</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fields.html#face-centered-fields">Face Centered fields</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="boundaryConditions.html">Boundary Conditions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="boundaryConditions.html#_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred14VolumeBoundaryE"><code class="docutils literal notranslate"><span class="pre">VolumeBoundary</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundaryConditions.html#_CPPv4I0EN7NeoFOAM12finiteVolume11cellCentred15SurfaceBoundaryE"><code class="docutils literal notranslate"><span class="pre">SurfaceBoundary</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="boundaryConditions.html#boundary-conditions-for-volumefield-s">Boundary Conditions for VolumeField’s</a></li>
-<li class="toctree-l2"><a class="reference internal" href="boundaryConditions.html#bc-for-surfacefield">BC for surfaceField</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="operators.html">Operators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stencil.html">Stencil</a></li>
+<li class="toctree-l1"><a class="reference internal" href="case_study.html">Case Study: The Gauss Green Div Kernel</a></li>
 </ul>
 </div>
 </section>
@@ -297,8 +303,26 @@
       <footer>
         
         <div class="related-pages">
-          
-          
+          <a class="next-page" href="boundaryConditions.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Boundary Conditions</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../../timeIntegration/rungeKutta.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Runge Kutta</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -324,8 +348,8 @@
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
+    <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
     </body>
 </html>
