@@ -61,13 +61,7 @@ The logic is implemented in the kernel classes:
 
 As the ``BoundaryFields`` class stores all data in a contiguous array, the boundary condition must only update the data in the range of the boundary specified by the `start_` and `end_` index. In the above simple boundary condition, the kernel only sets the values to a uniform/fixed value. The ``value`` field stores the current value of the boundary condition that is used by the explicit operators and the ``refValue`` stores the value of the boundary condition that is used by the implicit operators.
 
-Currently the following boundary conditions are implemented for volField for scalar:
-
-
-Currently the following boundary conditions are implemented for volField for Vector:
-
-
-BC for surfaceField
-^^^^^^^^^^^^^^^^^^^
-
-Currently the following boundary conditions are implemented for volField for scalar:
+Currently, the following boundary conditions are implemented for volField for scalar:
+- fixedValue
+- zeroGradient
+- calculated
