@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #pragma once
 
-#include <stdlib>
+#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <string>
