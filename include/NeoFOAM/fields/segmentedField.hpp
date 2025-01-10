@@ -8,7 +8,18 @@
 namespace NeoFOAM
 {
 
-
+/**
+ * @brief Compute the segments from intervals by accumulating the intervals.
+ *
+ * The segments are computed by accumulating the intervals. So, with given
+ * intervals are {1, 2, 3, 4, 5} would result in the segments {0, 1, 3, 6, 10, 15}.
+ * Note that the segments are one element longer than the intervals
+ * and are assumed to be zero
+ *
+ * @param intervals The intervals to compute the segments from.
+ * @param intSpan The span of intervals.
+ * @param segSpan The span to store the segments in.
+ */
 template<typename IndexType>
 IndexType segmentsFromIntervals(
     const Field<IndexType>& intervals,
