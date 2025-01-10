@@ -7,11 +7,13 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -96,9 +98,9 @@ public:
 
     ScalarSurfaceField interpolate(const VolumeField<scalar>& volField) const
     {
-        std::string name = "interpolated_" + volField.name;
+        std::string nameInterpolated = "interpolated_" + volField.name;
         ScalarSurfaceField surfaceField(
-            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
         );
         interpolate(surfaceField, volField);
         return surfaceField;

@@ -7,10 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/database/fieldCollection.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/core/database/database.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
@@ -33,7 +30,7 @@ createVolumeField(const NeoFOAM::UnstructuredMesh& mesh, std::string fieldName)
 struct CreateField
 {
     std::string name;
-    NeoFOAM::UnstructuredMesh mesh;
+    const NeoFOAM::UnstructuredMesh& mesh;
     std::int64_t timeIndex = 0;
     std::int64_t iterationIndex = 0;
     std::int64_t subCycleIndex = 0;
@@ -73,7 +70,7 @@ TEST_CASE("Field Document")
     );
 
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
     SECTION("create FieldDocument: " + execName)
@@ -137,7 +134,7 @@ TEST_CASE("FieldCollection")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
 
     SECTION("create FieldCollection: " + execName)

@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #pragma once
 
+#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <string>
@@ -108,6 +109,7 @@ private:
     do                                                                                             \
     {                                                                                              \
         std::cerr << NF_ERROR_MESSAGE(message);                                                    \
+        std::exit(1);                                                                              \
     }                                                                                              \
     while (false)
 #endif

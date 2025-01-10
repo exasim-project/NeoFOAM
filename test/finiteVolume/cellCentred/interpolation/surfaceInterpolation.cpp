@@ -7,9 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/dictionary.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
@@ -22,7 +20,7 @@ TEST_CASE("SurfaceInterpolation")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     std::string interpolation = GENERATE(std::string("linear"), std::string("upwind"));
 

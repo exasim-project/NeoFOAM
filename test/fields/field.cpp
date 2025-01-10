@@ -7,9 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/fields/fieldTypeDefs.hpp"
-#include "NeoFOAM/fields/operations/operationsMacros.hpp"
-#include "NeoFOAM/fields/operations/comparison.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 TEST_CASE("Field Constructors")
 {
@@ -19,7 +17,7 @@ TEST_CASE("Field Constructors")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Copy Constructor " + execName)
     {
@@ -79,7 +77,7 @@ TEST_CASE("Field Operator Overloads")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Field Operator+= " + execName)
     {
@@ -159,7 +157,7 @@ TEST_CASE("Field Container Operations")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("empty, size, range" + execName)
     {
@@ -186,7 +184,7 @@ TEST_CASE("Field Container Operations")
         REQUIRE(view[1] == 2);
         REQUIRE(view[2] == 3);
 
-        auto subView = hostA.span({1, 2});
+        auto subView = hostA.span({1, 3});
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
     }
@@ -201,7 +199,7 @@ TEST_CASE("Field Container Operations")
         REQUIRE(view[1] == NeoFOAM::Vector(2, 2, 2));
         REQUIRE(view[2] == NeoFOAM::Vector(3, 3, 3));
 
-        auto subView = hostA.span({1, 2});
+        auto subView = hostA.span({1, 3});
         REQUIRE(subView[0] == NeoFOAM::Vector(2, 2, 2));
         REQUIRE(subView[1] == NeoFOAM::Vector(3, 3, 3));
     }
@@ -227,7 +225,7 @@ TEST_CASE("Field Operations")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Field_" + execName)
     {

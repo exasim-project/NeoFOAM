@@ -23,6 +23,11 @@ public:
         : exec_(exec), temporalOperators_(), implicitOperators_(), explicitOperators_()
     {}
 
+    Expression(const Expression& exp)
+        : exec_(exp.exec_), temporalOperators_(exp.temporalOperators_),
+          implicitOperators_(exp.implicitOperators_), explicitOperators_(exp.explicitOperators_)
+    {}
+
     void build(const NeoFOAM::Dictionary& input)
     {
         for (auto& op : temporalOperators_)
@@ -49,42 +54,42 @@ public:
     /* @brief perform all explicit operation and accumulate the result */
     Field<scalar> explicitOperation(Field<scalar>& source)
     {
-        for (auto& Operator : explicitOperators_)
+        for (auto& oper : explicitOperators_)
         {
-            Operator.explicitOperation(source);
+            oper.explicitOperation(source);
         }
         return source;
     }
 
-    void addOperator(const Operator& Operator)
+    void addOperator(const Operator& oper)
     {
-        switch (Operator.getType())
+        switch (oper.getType())
         {
         case Operator::Type::Temporal:
-            temporalOperators_.push_back(Operator);
+            temporalOperators_.push_back(oper);
             break;
         case Operator::Type::Implicit:
-            implicitOperators_.push_back(Operator);
+            implicitOperators_.push_back(oper);
             break;
         case Operator::Type::Explicit:
-            explicitOperators_.push_back(Operator);
+            explicitOperators_.push_back(oper);
             break;
         }
     }
 
     void addExpression(const Expression& equation)
     {
-        for (auto& Operator : equation.temporalOperators_)
+        for (auto& oper : equation.temporalOperators_)
         {
-            temporalOperators_.push_back(Operator);
+            temporalOperators_.push_back(oper);
         }
-        for (auto& Operator : equation.implicitOperators_)
+        for (auto& oper : equation.implicitOperators_)
         {
-            implicitOperators_.push_back(Operator);
+            implicitOperators_.push_back(oper);
         }
-        for (auto& Operator : equation.explicitOperators_)
+        for (auto& oper : equation.explicitOperators_)
         {
-            explicitOperators_.push_back(Operator);
+            explicitOperators_.push_back(oper);
         }
     }
 
@@ -121,19 +126,19 @@ private:
     std::vector<Operator> explicitOperators_;
 };
 
-[[nodiscard]] Expression operator+(Expression lhs, const Expression& rhs)
+[[nodiscard]] inline Expression operator+(Expression lhs, const Expression& rhs)
 {
     lhs.addExpression(rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator+(Expression lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator+(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator+(const Operator& lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator+(const Operator& lhs, const Operator& rhs)
 {
     Expression expr(lhs.exec());
     expr.addOperator(lhs);
@@ -141,37 +146,37 @@ private:
     return expr;
 }
 
-[[nodiscard]] Expression operator*(scalar scale, const Expression& es)
+[[nodiscard]] inline Expression operator*(scalar scale, const Expression& es)
 {
     Expression expr(es.exec());
-    for (const auto& Operator : es.temporalOperators())
+    for (const auto& oper : es.temporalOperators())
     {
-        expr.addOperator(scale * Operator);
+        expr.addOperator(scale * oper);
     }
-    for (const auto& Operator : es.implicitOperators())
+    for (const auto& oper : es.implicitOperators())
     {
-        expr.addOperator(scale * Operator);
+        expr.addOperator(scale * oper);
     }
-    for (const auto& Operator : es.explicitOperators())
+    for (const auto& oper : es.explicitOperators())
     {
-        expr.addOperator(scale * Operator);
+        expr.addOperator(scale * oper);
     }
     return expr;
 }
 
-[[nodiscard]] Expression operator-(Expression lhs, const Expression& rhs)
+[[nodiscard]] inline Expression operator-(Expression lhs, const Expression& rhs)
 {
     lhs.addExpression(-1.0 * rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator-(Expression lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator-(Expression lhs, const Operator& rhs)
 {
     lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
-[[nodiscard]] Expression operator-(const Operator& lhs, const Operator& rhs)
+[[nodiscard]] inline Expression operator-(const Operator& lhs, const Operator& rhs)
 {
     Expression expr(lhs.exec());
     expr.addOperator(lhs);

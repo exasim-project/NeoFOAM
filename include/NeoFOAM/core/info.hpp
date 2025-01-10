@@ -26,7 +26,17 @@
  * @param message The debug message to be printed.
  */
 #ifdef NF_DEBUG_MESSAGING
-#define NF_DINFO(message) NF_INFO(message)
+#define NF_DINFO(message)                                                                          \
+    std::cout << std::endl << "[NF][" << __FILE__ << "::" << __LINE__ << "]: ";                    \
+    NF_INFO(message)
 #else
 #define NF_DINFO(message) ((void)0)
+#endif
+
+/**
+ * @def PING()
+ * @brief Prints a very clear message that the code reaches a certain file and line.
+ */
+#ifdef NF_DEBUG
+#define NF_PING() NF_DINFO("PING")
 #endif

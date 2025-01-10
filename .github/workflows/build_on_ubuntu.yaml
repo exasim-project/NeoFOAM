@@ -1,4 +1,4 @@
-name: Build NeoFOAM
+name: Build NeoFOAM on ubuntu
 run-name: 'Build workflow'
 
 on:
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
-    name: Build NeoFOAM
+    name: Build NeoFOAM on ubuntu
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +57,7 @@ jobs:
        if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
        with:
          path: build
-         key: build_PR_${{ github.event.pull_request.number }}_${{matrix.compiler.CC}}_${{matrix.preset}}
+         key: ubuntu_build_PR_${{ github.event.pull_request.number }}_${{matrix.compiler.CC}}_${{matrix.preset}}
 
      - name: Install dependencies
        run: |

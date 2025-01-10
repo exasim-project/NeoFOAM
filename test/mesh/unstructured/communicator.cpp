@@ -7,9 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/mesh/unstructured/communicator.hpp"
-#include "NeoFOAM/core/mpi/environment.hpp"
-#include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 using namespace NeoFOAM;
 

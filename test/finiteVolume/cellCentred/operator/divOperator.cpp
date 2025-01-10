@@ -7,11 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/boundary.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
@@ -25,8 +21,8 @@ TEST_CASE("DivOperator")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
-    // FIXME: take 1d mesh
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    // TODO take 1d mesh
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
 
@@ -39,14 +35,12 @@ TEST_CASE("DivOperator")
 
     SECTION("Construct from Token" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
         fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
     }
 
     SECTION("Construct from Dictionary" + execName)
     {
-        auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::Dictionary(
             {{std::string("DivOperator"), std::string("Gauss")},
              {std::string("surfaceInterpolation"), std::string("linear")}}

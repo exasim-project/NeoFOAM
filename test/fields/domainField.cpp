@@ -8,7 +8,6 @@
 
 #include "NeoFOAM/fields/boundaryFields.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
-#include "NeoFOAM/fields/operations/comparison.hpp"
 
 TEST_CASE("Boundaries")
 {
@@ -19,7 +18,7 @@ TEST_CASE("Boundaries")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("domainField_" + execName)
     {

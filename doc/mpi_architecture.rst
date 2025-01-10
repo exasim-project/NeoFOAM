@@ -1,4 +1,4 @@
-.. _basic_mpi_architecture:
+.. mpi_architecture:
 
 MPI Architecture
 ================

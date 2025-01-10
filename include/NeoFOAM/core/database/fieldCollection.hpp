@@ -12,8 +12,6 @@
 #include "NeoFOAM/core/database/collection.hpp"
 #include "NeoFOAM/core/database/document.hpp"
 
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 /**
@@ -280,6 +278,9 @@ public:
     template<class FieldType>
     static FieldCollection& instance(FieldType& field)
     {
+        validateRegistration(
+            field, "attempting to retrieve FieldCollection from unregistered field"
+        );
         return instance(field.db(), field.fieldCollectionName);
     }
 
@@ -292,6 +293,9 @@ public:
     template<class FieldType>
     static const FieldCollection& instance(const FieldType& field)
     {
+        validateRegistration(
+            field, "attempting to retrieve FieldCollection from unregistered field"
+        );
         const Database& db = field.db();
         const Collection& collection = db.at(field.fieldCollectionName);
         return collection.as<FieldCollection>();
@@ -327,7 +331,7 @@ public:
 /**
  * @brief Creates a FieldDocument from an existing field.
  *
- * This function creates a FieldDocument from an existing field.
+ * This functor creates a FieldDocument from an existing field.
  *
  * @tparam FieldType The type of the field.
  * @param name The name of the field document.
@@ -350,7 +354,7 @@ public:
 
     FieldDocument operator()(Database& db)
     {
-        VolumeField<scalar> vf(
+        FieldType vf(
             field.exec(),
             name,
             field.mesh(),

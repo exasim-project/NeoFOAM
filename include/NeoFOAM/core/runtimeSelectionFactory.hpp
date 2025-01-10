@@ -6,13 +6,17 @@
 // # from here                                                                  #
 // # https://github.com/Exawind/amr-wind/blob/v2.1.0/amr-wind/core/Factory.H    #
 // ##############################################################################
-
+// its quite tricky for multiple compilers that bool REGISTERED gets initialized
+// the static_assert helps to register the class
+// https://stackoverflow.com/questions/6420985/
+// how-to-force-a-static-member-to-be-initialized?noredirect=1&lq=1
 #pragma once
 
 #include <memory>
 #include <unordered_map>
 #include <iostream>
 #include <functional>
+
 #include "error.hpp"
 
 namespace NeoFOAM
@@ -140,6 +144,9 @@ struct RegisterDocumentation
 
     static bool REGISTERED; ///< Static variable used to trigger the registration of the class
                             ///< documentation.
+#ifdef _MSC_VER
+    static_assert((bool)&REGISTERED);
+#endif
 };
 
 // Initialize the static variable and register the class
@@ -291,6 +298,9 @@ public:
 
         friend derivedClass;
         [[maybe_unused]] static bool REGISTERED;
+#ifdef _MSC_VER
+        static_assert((bool)&REGISTERED);
+#endif
 
         /**
          * @brief Adds the derived class as a sub type.
@@ -304,8 +314,10 @@ public:
          */
         static bool addSubType()
         {
-            CreatorFunc func = [](Args... args) -> std::unique_ptr<Base>
-            { return std::unique_ptr<Base>(new derivedClass(std::forward<Args>(args)...)); };
+            CreatorFunc func = [](Args... args) -> std::unique_ptr<Base> {
+                return static_cast<std::unique_ptr<Base>>(new derivedClass(std::forward<Args>(args
+                )...));
+            };
             RuntimeSelectionFactory::table()[derivedClass::name()] = func;
 
             DerivedClassDocumentation childData;
@@ -325,6 +337,12 @@ public:
                 REGISTERED = (it != tbl.end());
             }
         }
+
+#ifdef _MSC_VER
+    private:
+
+        Register() { (void)REGISTERED; }
+#endif
     };
 
     virtual ~RuntimeSelectionFactory() = default;
@@ -388,7 +406,9 @@ private:
 // Initialize the static variable and register the class
 template<class Base, class... Args>
 template<class derivedClass>
-bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::REGISTERED =
-    RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::addSubType();
+bool RuntimeSelectionFactory<Base, Parameters<Args...>>::template Register<
+    derivedClass>::REGISTERED =
+    RuntimeSelectionFactory<Base, Parameters<Args...>>::template Register<derivedClass>::addSubType(
+    );
 
 }; // namespace NeoFOAM

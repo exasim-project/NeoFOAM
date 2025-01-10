@@ -7,9 +7,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/core/dictionary.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volume/fixedValue.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
+
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 TEST_CASE("fixedValue")
 {
@@ -19,7 +19,7 @@ TEST_CASE("fixedValue")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("TestDerivedClass" + execName)
     {

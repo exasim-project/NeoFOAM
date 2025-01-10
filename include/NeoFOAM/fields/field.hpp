@@ -10,7 +10,7 @@
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/operations/operationsMacros.hpp"
+#include "NeoFOAM/fields/fieldFreeFunctions.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 
 namespace NeoFOAM
@@ -52,8 +52,8 @@ public:
 
     /**
      * @brief Create an uninitialized Field with a given size on an executor
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param exec  Executor associated to the field
+     * @param size  size of the field
      */
     Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
     {
@@ -68,9 +68,10 @@ public:
 
     /**
      * @brief Create a Field with a given size from existing memory on an executor
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param exec  Executor associated to the field
      * @param in    Pointer to existing data
+     * @param size  size of the field
+     * @param hostExec Executor where the original data is located
      */
     Field(
         const Executor& exec, const ValueType* in, size_t size, Executor hostExec = SerialExecutor()
@@ -89,8 +90,8 @@ public:
 
     /**
      * @brief Create a Field with a given size on an executor and uniform value
-     * @param exec  Executor associated to the matrix
-     * @param size  size of the matrix
+     * @param exec  Executor associated to the field
+     * @param size  size of the field
      * @param value  the  default value
      */
     Field(const Executor& exec, size_t size, ValueType value)
@@ -105,16 +106,16 @@ public:
     }
 
     /**
-     * @brief Create a Field with a given size on an executor
-     * @param exec  Executor associated to the matrix
+     * @brief Create a Field from a given vector of values on an executor
+     * @param exec  Executor associated to the field
      * @param in a vector of elements to copy over
      */
     Field(const Executor& exec, std::vector<ValueType> in) : Field(exec, in.data(), in.size()) {}
 
     /**
      * @brief Create a Field as a copy of a Field on a specified executor
-     * @param exec  Executor associated to the matrix
-     * @param in a vector of elements to copy over
+     * @param exec  Executor associated to the field
+     * @param in a Field of elements to copy over
      */
     Field(const Executor& exec, const Field<ValueType>& in)
         : Field(exec, in.data(), in.size(), in.exec())
@@ -128,6 +129,16 @@ public:
     {
         resize(rhs.size_);
         setField(*this, rhs.span());
+    }
+
+    /**
+     * @brief Move constructor, moves the data from the parsed field to the new field.
+     * @param rhs The field to move from.
+     */
+    Field(Field<ValueType>&& rhs) noexcept : size_(rhs.size_), data_(rhs.data_), exec_(rhs.exec_)
+    {
+        rhs.data_ = nullptr;
+        rhs.size_ = 0;
     }
 
     /**
@@ -157,7 +168,7 @@ public:
      */
     [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == exec_) return Field<ValueType>(*this);
+        if (dstExec == exec_) return *this;
 
         Field<ValueType> result(dstExec, size_);
         std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
@@ -413,13 +424,7 @@ private:
     void validateOtherField(const Field<ValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
-
-        std::string execName = std::visit([](auto e) { return e.print(); }, exec());
-        std::string rhsExecName = std::visit([](auto e) { return e.print(); }, rhs.exec());
-        NF_DEBUG_ASSERT(
-            exec() == rhs.exec(),
-            "Executors: " + execName + " and " + rhsExecName + " are not the same."
-        );
+        NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
     }
 };
 

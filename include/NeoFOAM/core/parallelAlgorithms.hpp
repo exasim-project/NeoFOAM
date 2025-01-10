@@ -100,7 +100,14 @@ void parallelReduce(
     {
         for (size_t i = start; i < end; i++)
         {
-            kernel(i, value);
+            if constexpr (Kokkos::is_reducer<T>::value)
+            {
+                kernel(i, value.reference());
+            }
+            else
+            {
+                kernel(i, value);
+            }
         }
     }
     else
@@ -130,7 +137,14 @@ void parallelReduce(
     {
         for (size_t i = 0; i < field.size(); i++)
         {
-            kernel(i, value);
+            if constexpr (Kokkos::is_reducer<T>::value)
+            {
+                kernel(i, value.reference());
+            }
+            else
+            {
+                kernel(i, value);
+            }
         }
     }
     else

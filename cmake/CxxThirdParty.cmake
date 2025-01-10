@@ -5,10 +5,13 @@ set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
     "4.3.00"
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
-
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
+  if(WIN32)
+    message(FATAL_ERROR "NEOFOAM_ENABLE_MPI_SUPPORT not supported on Windows")
+  endif()
   find_package(MPI 3.1 REQUIRED)
 endif()
+
 find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
@@ -16,7 +19,7 @@ if(NOT ${Kokkos_FOUND})
   include(cmake/AutoEnableDevice.cmake)
 
   FetchContent_Declare(
-    kokkos
+    Kokkos
     SYSTEM QUITE
     GIT_SHALLOW ON
     GIT_REPOSITORY "https://github.com/kokkos/kokkos.git"
@@ -41,11 +44,51 @@ cpmaddpackage(
 cpmaddpackage(
   NAME
   nlohmann_json
-  URL
-  https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   VERSION
   3.11.3
+  URL
+  https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
+
+if(${NEOFOAM_WITH_SUNDIALS})
+
+  set(SUNDIALS_OPTIONS
+      "BUILD_TESTING OFF"
+      "EXAMPLES_INSTALL OFF"
+      "BUILD_ARKODE ON"
+      "BUILD_CVODE OFF"
+      "BUILD_CVODES OFF"
+      "BUILD_IDA OFF"
+      "BUILD_IDAS OFF"
+      "BUILD_KINSOL OFF"
+      "BUILD_CPODES OFF")
+
+  if(WIN32)
+    list(APPEND SUNDIALS_OPTIONS "BUILD_STATIC_LIBS ON")
+    list(APPEND SUNDIALS_OPTIONS "BUILD_SHARED_LIBS OFF")
+  else()
+    list(APPEND SUNDIALS_OPTIONS "BUILD_STATIC_LIBS OFF")
+    list(APPEND SUNDIALS_OPTIONS "BUILD_SHARED_LIBS ON")
+  endif()
+
+  if(Kokkos_ENABLE_CUDA)
+    set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA ON" "SUNDIALS_BUILD_KOKKOS ON")
+  else()
+    set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA OFF" "SUNDIALS_BUILD_KOKKOS ON")
+  endif()
+
+  cpmaddpackage(
+    NAME
+    sundials
+    GITHUB_REPOSITORY
+    LLNL/sundials
+    VERSION
+    7.1.1
+    OPTIONS
+    ${SUNDIALS_OPTIONS}
+    ${SUNDIALS_CUDA_OPTIONS}
+    SYSTEM)
+endif()
 
 cpmaddpackage(
   NAME

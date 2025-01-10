@@ -3,7 +3,7 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 #include "common.hpp"
-#include "NeoFOAM/dsl/expression.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 using Expression = NeoFOAM::dsl::Expression;
 
@@ -15,7 +15,7 @@ TEST_CASE("Expression")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
 
     const size_t size {1};

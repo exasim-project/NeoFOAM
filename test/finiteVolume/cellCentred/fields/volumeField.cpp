@@ -7,8 +7,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
+
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 template<typename T>
 using I = std::initializer_list<T>;
@@ -23,7 +24,7 @@ TEST_CASE("volumeField")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
     std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};

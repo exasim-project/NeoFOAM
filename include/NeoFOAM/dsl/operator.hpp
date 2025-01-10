@@ -2,17 +2,13 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #pragma once
 
-#include <iostream>
 #include <memory>
-#include <type_traits>
-#include <utility>
 #include <concepts>
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/coeff.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 
 namespace NeoFOAM::dsl
 {
@@ -32,7 +28,7 @@ concept HasExplicitOperator = requires(T t) {
 };
 
 /* @class Operator
- * @brief A class to represent a operator in NeoFOAMs dsl
+ * @brief A class to represent an operator in NeoFOAMs dsl
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw

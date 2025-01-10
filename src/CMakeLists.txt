@@ -1,10 +1,15 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-add_library(NeoFOAM SHARED)
+add_library(NeoFOAM ${NeoFOAM_LIB_TYPE})
 
 include(GNUInstallDirs)
 
+target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
+
+if(NEOFOAM_ENABLE_CUDA)
+  set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
+endif()
 target_sources(
   NeoFOAM
   PRIVATE "core/primitives/vector.cpp"
@@ -32,7 +37,8 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
-          "timeIntegration/timeIntegration.cpp")
+          "timeIntegration/timeIntegration.cpp"
+          "timeIntegration/rungeKutta.cpp")
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
@@ -45,7 +51,16 @@ enable_sanitizers(
   NEOFOAM_ENABLE_SANITIZE_THREAD NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
-target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos cpptrace::cpptrace)
+target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos sundials_core
+                                     sundials_arkode sundials_nvecserial cpptrace::cpptrace)
+
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM PUBLIC MPI::MPI_CXX)
+endif()
+if(WIN32)
+  set_target_properties(
+    NeoFOAM
+    PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<0:>
+               LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/$<0:>
+               ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/$<0:>)
 endif()
