@@ -64,7 +64,7 @@ public:
     }
 
     /**
-     * @brief Get the range of a segment.
+     * @brief Get the range, ie. [start,end), of a segment.
      *
      * @param segI The index of the segment.
      * @return A pair of indices representing the start and length of the segment.
@@ -81,11 +81,10 @@ public:
      * @brief Get a subspan of values corresponding to a segment.
      *
      * @tparam ValueType The type of the values.
-     * @param values A span of values.
      * @param segI The index of the segment.
      * @return A subspan of values corresponding to the segment.
      */
-    KOKKOS_INLINE_FUNCTION std::span<ValueType> subspan(std::size_t segI) const
+    KOKKOS_INLINE_FUNCTION std::span<ValueType> span(std::size_t segI) const
     {
         auto [start, length] = range(segI);
         return values.subspan(start, length);
@@ -138,7 +137,7 @@ public:
 
 
     /**
-     * @brief Create a segmented field from two fields.
+     * @brief Constructor to create a segmentedField from values and the segments.
      * @param values The values of the segmented field.
      * @param segments The segments of the segmented field.
      */
@@ -167,7 +166,7 @@ public:
 
 
     /**
-     * @brief get the spans of the segmented field
+     * @brief get a view of the segmented field
      * @return Span of the fields
      */
     [[nodiscard]] SegmentedFieldView<ValueType, IndexType> view() &
@@ -179,15 +178,15 @@ public:
     [[nodiscard]] SegmentedFieldView<ValueType, IndexType> view() && = delete;
 
     /**
-     * @brief get the spans of the segmented field
-     * @return Span of the fields
+     * @brief get the combined value and range spans of the segmented field
+     * @return Combined value and range spans of the fields
      */
     [[nodiscard]] std::pair<std::span<ValueType>, std::span<IndexType>> spans() &
     {
         return {values_.span(), segments_.span()};
     }
 
-    // ensures no return a span of a temporary object --> invalid memory access
+    // ensures not to return a span of a temporary object --> invalid memory access
     [[nodiscard]] std::pair<std::span<ValueType>, std::span<IndexType>> spans() && = delete;
 
     const Field<ValueType>& values() const { return values_; }
@@ -197,7 +196,7 @@ public:
 private:
 
     Field<ValueType> values_;
-    Field<IndexType> segments_;
+    Field<IndexType> segments_; //!< stores the [start, end) of segment i at index i, i+1
 };
 
 } // namespace NeoFOAM

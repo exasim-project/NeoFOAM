@@ -19,7 +19,7 @@ TEST_CASE("segmentedField")
         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
-    std::string execName = std::visit([](auto e) { return e.print(); }, exec);
+    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("Constructor from sizes " + execName)
     {
@@ -55,20 +55,16 @@ TEST_CASE("segmentedField")
         SECTION("loop over segments")
         {
             auto [valueSpan, segment] = segField.spans();
-            NeoFOAM::SegmentedFieldView<NeoFOAM::label, NeoFOAM::localIdx> segView =
-                segField.view();
+            auto segView = segField.view();
             NeoFOAM::Field<NeoFOAM::label> result(exec, 5);
 
             NeoFOAM::fill(result, 0);
             auto resultSpan = result.span();
 
-
             parallelFor(
                 exec,
                 {0, segField.numSegments()},
                 KOKKOS_LAMBDA(const size_t segI) {
-                    // add all values in the segment
-
                     // check if it works with bounds
                     auto [bStart, bEnd] = segView.bounds(segI);
                     auto bVals = valueSpan.subspan(bStart, bEnd - bStart);
@@ -127,8 +123,7 @@ TEST_CASE("segmentedField")
 
         SECTION("update values")
         {
-            NeoFOAM::SegmentedFieldView<NeoFOAM::label, NeoFOAM::localIdx> segView =
-                segField.view();
+            auto segView = segField.view();
             NeoFOAM::Field<NeoFOAM::label> result(exec, 5);
 
             NeoFOAM::fill(result, 0);
@@ -139,8 +134,6 @@ TEST_CASE("segmentedField")
                 exec,
                 {0, segField.numSegments()},
                 KOKKOS_LAMBDA(const size_t segI) {
-                    // add all values in the segment
-
                     // fill values
                     auto vals = segView.subspan(segI);
                     for (auto& val : vals)
