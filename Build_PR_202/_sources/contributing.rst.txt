@@ -17,26 +17,26 @@ Thus, this style guide doesn't list all stylistic rules explicitly but rather gi
  * We generally try to comply with the `C++ core guidelines <https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines>`_.
  * Use `camelCase` for functions and members and capitalized `CamelCase` for classes
  * Use descriptive template parameter names.
-   For example, prefer `template <class ValueType>` over `template <class T>` if the type can be a float or double.
- * Use `[[nodiscard]]` except for getters.
-   To indicate that a function simply returns a value instead of performing expensive computations, `[[nodiscard]]` can be omitted.
- * Use `final` except for abstract classes.
+   For example, prefer ``template <class ValueType>`` over ``template <class T>`` if the type can be a float or double.
+ * Use ``[[nodiscard]]`` except for getters.
+   To indicate that a function simply returns a value instead of performing expensive computations, ``[[nodiscard]]`` can be omitted.
+ * Use ``final`` except for abstract classes.
    NeoFOAMs aims at having a rather flat inheritance hierarchy and composition is generally preferred.
    To avoid unintended inheritance, using `final` is advised.
  * Avoid storing references as data members in classes.
-   An exception might be a `const Unstructured& mesh` as it will most likely outlive any other objects.
- * Private member variables should be suffixed with `_`.
+   An exception might be a ``const Unstructured& mesh`` as it will most likely outlive any other objects.
+ * Private member variables should be suffixed with ``_``.
  * Order of parameters to functions should be in, in-out, out.
-   E.g. `foo(const Type& in, Type& inOut, Type& out)` instead of `foo(Type& inOut,  Type& out, const Type& in)` or some other variation.
+   E.g. ``foo(const Type& in, Type& inOut, Type& out)`` instead of ``foo(Type& inOut,  Type& out, const Type& in)`` or some other variation.
  * Use US spelling
 
 Folder structure and file names:
 
  * Use `camelCase` for files and folder names
  * The location of implementation and header files should be consistent.
-   i.e. a file `src/model/a.cpp` should have a header file in `include/NeoFOAM/model/a.hpp` and the corresponding test implementation in `test/model/a.cpp`
- * File and folder names should not be redundant. Ie. `finiteVolume/cellCentred/geometryModel/finiteVolumecellCentredgeometryModel.hpp` should be
-   `finiteVolume/cellCentred/geometryModel/model.hpp`.
+   i.e. a file ``src/model/a.cpp`` should have a header file in ``include/NeoFOAM/model/a.hpp`` and the corresponding test implementation in ``test/model/a.cpp``
+ * File and folder names should not be redundant. Ie. ``finiteVolume/cellCentred/geometryModel/finiteVolumecellCentredgeometryModel.hpp`` should be
+   ``finiteVolume/cellCentred/geometryModel/model.hpp``.
 
 Collaboration via Pull Requests
 """"""""""""""""""""""""""""""
@@ -47,19 +47,20 @@ If you want to contribute a specific feature or fix, please don't hesitate to op
  * At least one (ideally two) approval(s) is/are required before a PR can be merged.
  * Make sure that all required pipelines succeed.
  * If you add new features, make sure to provide sufficient unit tests.
-   Also at some point before merging you can add the `full-ci` label to include build and tests on GPU hardware.
- * If you add a new feature or bug-fix, please add an entry to the `Changelog.md` file.
-   For pure refactor PRs, the `Skip-Changelog` label can be set.
- * If the PR should be merged in a specific order or if you don't have the permission to merge, add the `ready-to-merge` label.
- * Before merging, make sure to rebase your PR on to the latest state of `main`.
- * Make sure to add yourself to the `Authors.md` file.
+   Also at some point before merging you can add the ``full-ci`` label to include build and tests on GPU hardware.
+ * If you add a new feature or bug-fix, please add an entry to the ``Changelog.md`` file.
+   For pure refactor PRs, the ``Skip-Changelog`` label can be set.
+ * If the PR should be merged in a specific order or if you don't have the permission to merge, add the ``ready-to-merge`` label.
+ * Before merging, make sure to rebase your PR on to the latest state of ``main``.
+ * Make sure to add yourself to the ``Authors.md`` file.
  * To simplify the review process, small to medium sized PRs are preferred.
    If your PR exceeds 1000 lines of code changes, consider to break the PR up into smaller PRs which can be merged via `stacked PRs <https://graphite.dev/blog/stacked-prs>`_.
 
 Github Workflows and Labels
 """""""""""""""""""""""""""
 
-In order to influence the workflow pipeline and to structure the review process, several labels exist. The following labels and their meaning are discussed here:
+In order to influence the workflow pipeline and to structure the review process, several labels exist.
+The following labels and their meaning are discussed here:
 
  * ``ready-for-review``: Signal that the PR is ready for review.
  * ``ready-to-merge``: Signal that the work on this PR has been finished and can be merged.
@@ -68,6 +69,7 @@ In order to influence the workflow pipeline and to structure the review process,
  * ``Skip-cache``: Don't cache the build folders. Forces to rebuild the build folder after every push to GitHub.
  * ``full-ci``: Run tests on AWS.
 
+A full list of the labels can be found `here <https://github.com/exasim-project/NeoFOAM/labels>`_.
 
 Building the Documentation
 """"""""""""""""""""""""""
@@ -83,10 +85,10 @@ First, make sure that Sphinx and Doxygen are installed on your system. Second, e
     sphinx-build -b html ./doc ./docs_build
 
 
-The documentation will be built in the `docs_build` directory and can be viewed by opening the `index.html` file in a web browser.
+The documentation will be built in the ``docs_build`` directory and can be viewed by opening the ``index.html`` file in a web browser.
 
    .. code-block:: bash
 
     firefox docs_build/index.html
 
-Alternatively, the documentation can be built by just adding the `-DNEOFOAM_BUILD_DOC=ON` to the configuration step of the build process and then building the documentation using the `sphinx` target.
+Alternatively, the documentation can be built by just adding the ``-DNEOFOAM_BUILD_DOC=ON`` to the configuration step of the build process and then building the documentation using the ``sphinx`` target.
