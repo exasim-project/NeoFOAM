@@ -136,7 +136,7 @@ TEST_CASE("parallelScan")
 
         NeoFOAM::parallelScan(
             exec,
-            segments.range()
+            segments.range(),
             KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
                 update += intSpan[i - 1];
                 if (final)

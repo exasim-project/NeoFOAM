@@ -82,7 +82,7 @@ TEST_CASE("segmentedField")
                     }
 
                     // check with subspan
-                    auto vals = segView.subspan(segI);
+                    auto vals = segView.span(segI);
                     for (auto& val : vals)
                     {
                         resultSpan[segI] += val;
@@ -135,7 +135,7 @@ TEST_CASE("segmentedField")
                 {0, segField.numSegments()},
                 KOKKOS_LAMBDA(const size_t segI) {
                     // fill values
-                    auto vals = segView.subspan(segI);
+                    auto vals = segView.span(segI);
                     for (auto& val : vals)
                     {
                         val = segI;
