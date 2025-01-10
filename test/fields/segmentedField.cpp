@@ -99,10 +99,10 @@ TEST_CASE("segmentedField")
         }
     }
 
-    SECTION("Constructor from list with intervals " + execName)
+    SECTION("Constructor from list with offsets " + execName)
     {
-        NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
-        NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(intervals);
+        NeoFOAM::Field<NeoFOAM::localIdx> offsets(exec, {1, 2, 3, 4, 5});
+        NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(offsets);
 
         auto hostSegments = segField.segments().copyToHost();
         REQUIRE(hostSegments[0] == 0);
@@ -112,12 +112,12 @@ TEST_CASE("segmentedField")
         REQUIRE(hostSegments[4] == 10);
         REQUIRE(hostSegments[5] == 15);
 
-        auto hostIntervals = intervals.copyToHost();
-        REQUIRE(hostIntervals[0] == 1);
-        REQUIRE(hostIntervals[1] == 2);
-        REQUIRE(hostIntervals[2] == 3);
-        REQUIRE(hostIntervals[3] == 4);
-        REQUIRE(hostIntervals[4] == 5);
+        auto hostOffsets = offsets.copyToHost();
+        REQUIRE(hostOffsets[0] == 1);
+        REQUIRE(hostOffsets[1] == 2);
+        REQUIRE(hostOffsets[2] == 3);
+        REQUIRE(hostOffsets[3] == 4);
+        REQUIRE(hostOffsets[4] == 5);
 
         REQUIRE(segField.size() == 15);
 
