@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/fields/field.hpp"
 
 namespace NeoFOAM
@@ -36,7 +37,7 @@ IndexType segmentsFromIntervals(
  *
  * @tparam IndexType The type of the indices.
  */
-template<typename ValueType, typename IndexType>
+template<typename ValueType, typename IndexType = NeoFOAM::localIdx>
 class SegmentedFieldView
 {
 public:
