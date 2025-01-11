@@ -23,6 +23,12 @@ public:
 
     ~CSRMatrix() = default;
 
+    IndexType nRows() const { return rowPtrs_.size() - 1; }
+
+    IndexType nValues() const { return values_.size(); }
+
+    IndexType nColIdxs() const { return colIdxs_.size(); }
+
     [[nodiscard]] Field<ValueType>& values() { return values_; }
     [[nodiscard]] Field<IndexType>& colIdxs() { return colIdxs_; }
     [[nodiscard]] Field<IndexType>& rowPtrs() { return rowPtrs_; }

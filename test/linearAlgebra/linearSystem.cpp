@@ -29,6 +29,9 @@ TEST_CASE("LinearSystem")
     NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
 
     REQUIRE(linearSystem.matrix().values().size() == 9);
+    REQUIRE(linearSystem.matrix().nValues() == 9);
     REQUIRE(linearSystem.matrix().colIdxs().size() == 9);
+    REQUIRE(linearSystem.matrix().nColIdxs() == 9);
     REQUIRE(linearSystem.matrix().rowPtrs().size() == 4);
+    REQUIRE(linearSystem.matrix().nRows() == 3);
 }
