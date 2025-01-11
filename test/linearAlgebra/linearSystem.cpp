@@ -25,7 +25,7 @@ TEST_CASE("LinearSystem")
     NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
     NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-    NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 9, 0.0);
+    NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 0.0);
     NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
 
     REQUIRE(linearSystem.matrix().values().size() == 9);
@@ -34,4 +34,6 @@ TEST_CASE("LinearSystem")
     REQUIRE(linearSystem.matrix().nColIdxs() == 9);
     REQUIRE(linearSystem.matrix().rowPtrs().size() == 4);
     REQUIRE(linearSystem.matrix().nRows() == 3);
+
+    REQUIRE(linearSystem.rhs().size() == 3);
 }
