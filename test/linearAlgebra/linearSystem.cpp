@@ -3,12 +3,13 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
+#include <string>
+
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
-#include <string>
 
-#include "NeoFOAM/linearAlgebra/LinearSystem.hpp"
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 TEST_CASE("LinearSystem")
 {
