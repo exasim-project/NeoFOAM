@@ -9,35 +9,32 @@ namespace NeoFOAM
 {
 
 /**
- * @brief Compute segment offsets from an input field corresponding to lenghts by computing a prefix sum.
+ * @brief Compute segment offsets from an input field corresponding to lengths by computing a prefix
+ * sum.
  *
  * The offsets are computed by a prefix sum of the input values. So, with given
- * input of {1, 2, 3, 4, 5} the offets are {0, 1, 3, 6, 10, 15}.
- * Note that the length of offSpan must be  length of valSpan + 1 
+ * input of {1, 2, 3, 4, 5} the offsets are {0, 1, 3, 6, 10, 15}.
+ * Note that the length of offSpan must be  length of valSpan + 1
  * and are all elements of offSpan are required to be zero
  *
  * @param[in] in The values to compute the offsets from.
- * @param[in,out] offsets The field to store the resulting offsets in. 
+ * @param[in,out] offsets The field to store the resulting offsets in.
  */
 template<typename IndexType>
-IndexType segmentsFromIntervals(
-    const Field<IndexType>& intervals,
-    const std::span<const IndexType> intSpan,
-    std::span<IndexType> segSpan
-)
+IndexType segmentsFromIntervals(const Field<IndexType>& intervals, Field<IndexType>& offsets)
 {
-        IndexType finalValue = 0;
-        auto inSpan = in.span();
-        auto offsSpan = offs.span();
-        ASSERT_EQ(inSpan.size() + 1 , offsSpan.size());
+    IndexType finalValue = 0;
+    auto inSpan = intervals.span();
+    auto offsSpan = offsets.span();
+    NF_ASSERT_EQUAL(inSpan.size() + 1, offsSpan.size());
     NeoFOAM::parallelScan(
         intervals.exec(),
-        {0, segSpan.size()},
+        {0, offsSpan.size()},
         KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
-            update += intSpan[i - 1];
+            update += inSpan[i - 1];
             if (final)
             {
-                segSpan[i] = update;
+                offsSpan[i] = update;
             }
         },
         finalValue
@@ -142,10 +139,7 @@ public:
         : values_(intervals.exec(), 0),
           segments_(intervals.exec(), intervals.size() + 1, IndexType(0))
     {
-        std::span<IndexType> segSpan = segments_.span();
-        const std::span<const IndexType> intSpan = intervals.span();
-
-        IndexType valueSize = segmentsFromIntervals(intervals, intSpan, segSpan);
+        IndexType valueSize = segmentsFromIntervals(intervals, segments_);
         values_ = Field<ValueType>(intervals.exec(), valueSize);
     }
 
