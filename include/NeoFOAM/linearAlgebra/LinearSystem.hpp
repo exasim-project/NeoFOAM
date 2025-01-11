@@ -23,7 +23,11 @@ class LinearSystem
 public:
 
     LinearSystem(const CSRMatrix<ValueType, IndexType>& matrix, const Field<ValueType>& rhs)
-        : matrix_(matrix), rhs_(rhs) {};
+        : matrix_(matrix), rhs_(rhs)
+    {
+        NF_ASSERT(matrix.exec() == rhs.exec(), "Executors are not the same");
+        NF_ASSERT(matrix.nRows() == rhs.size(), "Matrix and RHS size mismatch");
+    };
 
     ~LinearSystem() = default;
 
@@ -32,6 +36,8 @@ public:
 
     [[nodiscard]] const CSRMatrix<ValueType, IndexType>& matrix() const { return matrix_; }
     [[nodiscard]] const Field<ValueType>& rhs() const { return rhs_; }
+
+    const Executor& exec() const { return matrix_.exec(); }
 
 private:
 

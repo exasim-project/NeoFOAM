@@ -19,15 +19,21 @@ public:
         const Field<IndexType>& colIdxs,
         const Field<IndexType>& rowPtrs
     )
-        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs) {};
+        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs)
+    {
+        NF_ASSERT(values.exec() == colIdxs.exec(), "Executors are not the same");
+        NF_ASSERT(values.exec() == rowPtrs.exec(), "Executors are not the same");
+    };
 
     ~CSRMatrix() = default;
 
-    IndexType nRows() const { return rowPtrs_.size() - 1; }
+    [[nodiscard]] const Executor& exec() const { return values_.exec(); }
 
-    IndexType nValues() const { return values_.size(); }
+    [[nodiscard]] IndexType nRows() const { return rowPtrs_.size() - 1; }
 
-    IndexType nColIdxs() const { return colIdxs_.size(); }
+    [[nodiscard]] IndexType nValues() const { return values_.size(); }
+
+    [[nodiscard]] IndexType nColIdxs() const { return colIdxs_.size(); }
 
     [[nodiscard]] Field<ValueType>& values() { return values_; }
     [[nodiscard]] Field<IndexType>& colIdxs() { return colIdxs_; }
