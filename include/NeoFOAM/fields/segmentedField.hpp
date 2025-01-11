@@ -9,16 +9,15 @@ namespace NeoFOAM
 {
 
 /**
- * @brief Compute the segments from intervals by accumulating the intervals.
+ * @brief Compute segment offsets from an input field corresponding to lenghts by computing a prefix sum.
  *
- * The segments are computed by accumulating the intervals. So, with given
- * intervals are {1, 2, 3, 4, 5} would result in the segments {0, 1, 3, 6, 10, 15}.
- * Note that the segments are one element longer than the intervals
- * and are assumed to be zero
+ * The offsets are computed by a prefix sum of the input values. So, with given
+ * input of {1, 2, 3, 4, 5} the offets are {0, 1, 3, 6, 10, 15}.
+ * Note that the length of offSpan must be  length of valSpan + 1 
+ * and are all elements of offSpan are required to be zero
  *
- * @param intervals The intervals to compute the segments from.
- * @param intSpan The span of intervals.
- * @param segSpan The span to store the segments in.
+ * @param[in] in The values to compute the offsets from.
+ * @param[in,out] offsets The field to store the resulting offsets in. 
  */
 template<typename IndexType>
 IndexType segmentsFromIntervals(
@@ -27,7 +26,10 @@ IndexType segmentsFromIntervals(
     std::span<IndexType> segSpan
 )
 {
-    IndexType finalValue = 0;
+        IndexType finalValue = 0;
+        auto inSpan = in.span();
+        auto offsSpan = offs.span();
+        ASSERT_EQ(inSpan.size() + 1 , offsSpan.size());
     NeoFOAM::parallelScan(
         intervals.exec(),
         {0, segSpan.size()},
