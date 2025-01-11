@@ -3,7 +3,7 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 #include "common.hpp"
-#include "NeoFOAM/dsl/expression.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 using Expression = NeoFOAM::dsl::Expression;
 

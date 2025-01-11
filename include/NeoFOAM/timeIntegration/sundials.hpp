@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
+#pragma once
+
 #include <concepts>
 #include <functional>
 #include <memory>
 
-#include "nvector/nvector_serial.h"
-#include "nvector/nvector_kokkos.hpp"
-#include "sundials/sundials_nvector.h"
-#include "sundials/sundials_core.hpp"
-#include "arkode/arkode_arkstep.h"
-#include "arkode/arkode_erkstep.h"
+#include <sundials/sundials_nvector.h>
+#include <sundials/sundials_core.hpp>
+#include <nvector/nvector_serial.h>
+#include <nvector/nvector_kokkos.hpp>
+#include <arkode/arkode_arkstep.h>
+#include <arkode/arkode_erkstep.h>
 
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
@@ -369,15 +371,15 @@ class SKVector
 {
 public:
 
-    using SKVectorSerial = SKVectorSerial<ValueType>;
-    using SKVectorHostDefault = SKVectorHostDefault<ValueType>;
-    using SKDefaultVector = SKVectorDefault<ValueType>;
-    using SKVectorVariant = std::variant<SKVectorSerial, SKVectorHostDefault, SKDefaultVector>;
+    using SKVectorSerialV = SKVectorSerial<ValueType>;
+    using SKVectorHostDefaultV = SKVectorHostDefault<ValueType>;
+    using SKDefaultVectorV = SKVectorDefault<ValueType>;
+    using SKVectorVariant = std::variant<SKVectorSerialV, SKVectorHostDefaultV, SKDefaultVectorV>;
 
     /**
      * @brief Default constructor. Initializes with host-default vector.
      */
-    SKVector() { vector_.template emplace<SKVectorHostDefault>(); };
+    SKVector() { vector_.template emplace<SKVectorHostDefaultV>(); };
 
     /**
      * @brief Default destructor.
@@ -414,17 +416,17 @@ public:
     {
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(exec))
         {
-            vector_.template emplace<SKDefaultVector>();
+            vector_.template emplace<SKDefaultVectorV>();
             return;
         }
         if (std::holds_alternative<NeoFOAM::CPUExecutor>(exec))
         {
-            vector_.template emplace<SKVectorHostDefault>();
+            vector_.template emplace<SKVectorHostDefaultV>();
             return;
         }
         if (std::holds_alternative<NeoFOAM::SerialExecutor>(exec))
         {
-            vector_.template emplace<SKVectorSerial>();
+            vector_.template emplace<SKVectorSerialV>();
             return;
         }
 

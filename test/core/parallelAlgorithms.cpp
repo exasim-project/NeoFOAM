@@ -7,6 +7,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
+#include <limits>
+#include <Kokkos_Core.hpp>
+
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
@@ -102,6 +105,27 @@ TEST_CASE("parallelReduce")
         REQUIRE(sum == 5.0);
     }
 
+    SECTION("parallelReduce_MaxValue" + execName)
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
+        NeoFOAM::fill(fieldA, 0.0);
+        NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
+        auto spanB = fieldB.span();
+        NeoFOAM::fill(fieldB, 1.0);
+        auto max = std::numeric_limits<NeoFOAM::scalar>::lowest();
+        Kokkos::Max<NeoFOAM::scalar> reducer(max);
+        NeoFOAM::parallelReduce(
+            exec,
+            {0, 5},
+            KOKKOS_LAMBDA(const size_t i, NeoFOAM::scalar& lmax) {
+                if (lmax < spanB[i]) lmax = spanB[i];
+            },
+            reducer
+        );
+
+        REQUIRE(max == 1.0);
+    }
+
     SECTION("parallelReduce_Field_" + execName)
     {
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
@@ -115,5 +139,25 @@ TEST_CASE("parallelReduce")
         );
 
         REQUIRE(sum == 5.0);
+    }
+
+    SECTION("parallelReduce_Field_MaxValue" + execName)
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
+        NeoFOAM::fill(fieldA, 0.0);
+        NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
+        auto spanB = fieldB.span();
+        NeoFOAM::fill(fieldB, 1.0);
+        auto max = std::numeric_limits<NeoFOAM::scalar>::lowest();
+        Kokkos::Max<NeoFOAM::scalar> reducer(max);
+        NeoFOAM::parallelReduce(
+            fieldA,
+            KOKKOS_LAMBDA(const size_t i, NeoFOAM::scalar& lmax) {
+                if (lmax < spanB[i]) lmax = spanB[i];
+            },
+            reducer
+        );
+
+        REQUIRE(max == 1.0);
     }
 };

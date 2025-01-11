@@ -13,7 +13,7 @@
 namespace NeoFOAM
 {
 
-using Executor = std::variant<CPUExecutor, GPUExecutor, SerialExecutor>;
+using Executor = std::variant<SerialExecutor, CPUExecutor, GPUExecutor>;
 
 /**
  * @brief Checks if two executors are equal, i.e. they are of the same type.

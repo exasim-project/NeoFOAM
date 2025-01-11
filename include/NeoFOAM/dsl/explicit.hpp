@@ -6,8 +6,12 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
+
+// TODO we should get rid of this include since it includes details
+// from a general implementation
+#include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 

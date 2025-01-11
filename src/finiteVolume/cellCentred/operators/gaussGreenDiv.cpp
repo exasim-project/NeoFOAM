@@ -11,7 +11,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
-    [[maybe_unused]] const SurfaceInterpolation& surfInterp,
+    const SurfaceInterpolation& surfInterp,
     Field<scalar>& divPhi
 )
 {

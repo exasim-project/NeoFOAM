@@ -1,0 +1,44 @@
+name: Build NeoFOAM on Windows
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    types: synchronize
+  schedule:
+    - cron: "* 0 * * 0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.head_ref && github.ref) || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  windows_msvc:
+    if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-build')}}
+    name: msvc
+    runs-on: [windows-latest]
+    steps:
+    - name: Checkout the latest code (shallow clone)
+      uses: actions/checkout@v4
+
+    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: seanmiddleditch/gha-setup-ninja@master
+    - name: configure
+      run: |
+        cmake --preset develop -DKokkos_DIR="D:/dev/Kokkos/lib/cmake/Kokkos" -DNEOFOAM_DEVEL_TOOLS=OFF -DNEOFOAM_ENABLE_MPI_SUPPORT=OFF
+      shell: cmd
+
+    - name: build
+      run: |
+        cmake --build --preset develop
+      shell: cmd
+
+    - name: test
+      run: |
+        cmake --build --preset develop --target test
+      shell: cmd
