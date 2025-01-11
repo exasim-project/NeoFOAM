@@ -1,5 +1,7 @@
 # Version 0.2.0 (unreleased)
+## Features
 - Adds a minimal implementation linear algebra functionality [#219](https://github.com/exasim-project/NeoFOAM/pull/219)
+## Fixes
 # Version 0.1.0
 - improve build with MSVC and Clang on Windows [#163](https://github.com/exasim-project/NeoFOAM/pull/163)
 - Add document based database [#155](https://github.com/exasim-project/NeoFOAM/pull/155)
