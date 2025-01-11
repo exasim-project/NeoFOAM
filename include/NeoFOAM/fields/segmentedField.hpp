@@ -134,6 +134,9 @@ public:
     {}
 
     /*
+     * @brief Create a segmented field from intervals.
+     * @param intervals The intervals to create the segmented field from.
+     * @note The intervals are the lengths of each segment
      */
     SegmentedField(const Field<IndexType>& intervals)
         : values_(intervals.exec(), 0),
