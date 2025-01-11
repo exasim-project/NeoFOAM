@@ -351,7 +351,7 @@ Functions</h2></td></tr>
 <tr class="separator:abb0c8601a46eedab6970aa13093fec6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ad47606c5942cadcda18808096f6ded" id="r_a1ad47606c5942cadcda18808096f6ded"><td class="memTemplParams" colspan="2">template&lt;typename IndexType &gt; </td></tr>
 <tr class="memitem:a1ad47606c5942cadcda18808096f6ded"><td class="memTemplItemLeft" align="right" valign="top">IndexType&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a1ad47606c5942cadcda18808096f6ded">segmentsFromIntervals</a> (const <a class="el" href="classNeoFOAM_1_1Field.html">Field</a>&lt; IndexType &gt; &amp;intervals, const std::span&lt; const IndexType &gt; intSpan, std::span&lt; IndexType &gt; segSpan)</td></tr>
-<tr class="memdesc:a1ad47606c5942cadcda18808096f6ded"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute the segments from intervals by accumulating the intervals.  <br /></td></tr>
+<tr class="memdesc:a1ad47606c5942cadcda18808096f6ded"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute segment offsets from an input field corresponding to lenghts by computing a prefix sum.  <br /></td></tr>
 <tr class="separator:a1ad47606c5942cadcda18808096f6ded"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99bff8ff2aa41c8015bdb6c509ee5567" id="r_a99bff8ff2aa41c8015bdb6c509ee5567"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classNeoFOAM_1_1UnstructuredMesh.html">UnstructuredMesh</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a99bff8ff2aa41c8015bdb6c509ee5567">createSingleCellMesh</a> (const <a class="el" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">Executor</a> exec)</td></tr>
 <tr class="memdesc:a99bff8ff2aa41c8015bdb6c509ee5567"><td class="mdescLeft">&#160;</td><td class="mdescRight">creates a mesh containing only a single cell @warn currently this is only a 2D mesh  <br /></td></tr>
@@ -1944,18 +1944,17 @@ template&lt;typename IndexType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Compute the segments from intervals by accumulating the intervals. </p>
-<p>The segments are computed by accumulating the intervals. So, with given intervals are {1, 2, 3, 4, 5} would result in the segments {0, 1, 3, 6, 10, 15}. Note that the segments are one element longer than the intervals and are assumed to be zero</p>
+<p>Compute segment offsets from an input field corresponding to lenghts by computing a prefix sum. </p>
+<p>The offsets are computed by a prefix sum of the input values. So, with given input of {1, 2, 3, 4, 5} the offets are {0, 1, 3, 6, 10, 15}. Note that the length of offSpan must be length of valSpan + 1 and are all elements of offSpan are required to be zero</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">intervals</td><td>The intervals to compute the segments from. </td></tr>
-    <tr><td class="paramname">intSpan</td><td>The span of intervals. </td></tr>
-    <tr><td class="paramname">segSpan</td><td>The span to store the segments in. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">in</td><td>The values to compute the offsets from. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">offsets</td><td>The field to store the resulting offsets in. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="segmentedField_8hpp_source.html#l00024">24</a> of file <a class="el" href="segmentedField_8hpp_source.html">segmentedField.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="segmentedField_8hpp_source.html#l00023">23</a> of file <a class="el" href="segmentedField_8hpp_source.html">segmentedField.hpp</a>.</p>
 
 </div>
 </div>
