@@ -154,7 +154,9 @@ public:
      */
     SegmentedField(const Field<ValueType>& values, const Field<IndexType>& segments)
         : values_(values), segments_(segments)
-    {}
+    {
+        NF_ASSERT(values.exec() == segments.exec(), "Executors are not the same.");
+    }
 
 
     /**
