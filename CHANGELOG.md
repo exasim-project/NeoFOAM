@@ -1,4 +1,5 @@
 # Version 0.1.0 (7 Jan 2025)
+- add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
 - improve build with MSVC and Clang on Windows [#163](https://github.com/exasim-project/NeoFOAM/pull/163)
 - Add document based database [#155](https://github.com/exasim-project/NeoFOAM/pull/155)
 - Implement a DSL interface [#121](https://github.com/exasim-project/NeoFOAM/pull/121)
