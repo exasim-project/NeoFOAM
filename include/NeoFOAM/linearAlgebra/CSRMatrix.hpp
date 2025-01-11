@@ -35,13 +35,13 @@ public:
 
     [[nodiscard]] IndexType nColIdxs() const { return colIdxs_.size(); }
 
-    [[nodiscard]] Field<ValueType>& values() { return values_; }
-    [[nodiscard]] Field<IndexType>& colIdxs() { return colIdxs_; }
-    [[nodiscard]] Field<IndexType>& rowPtrs() { return rowPtrs_; }
+    [[nodiscard]] std::span<ValueType> values() { return values_.span(); }
+    [[nodiscard]] std::span<IndexType> colIdxs() { return colIdxs_.span(); }
+    [[nodiscard]] std::span<IndexType> rowPtrs() { return rowPtrs_.span(); }
 
-    [[nodiscard]] const Field<ValueType>& values() const { return values_; }
-    [[nodiscard]] const Field<IndexType>& colIdxs() const { return colIdxs_; }
-    [[nodiscard]] const Field<IndexType>& rowPtrs() const { return rowPtrs_; }
+    [[nodiscard]] const std::span<const ValueType> values() const { return values_.span(); }
+    [[nodiscard]] const std::span<const IndexType> colIdxs() const { return colIdxs_.span(); }
+    [[nodiscard]] const std::span<const IndexType> rowPtrs() const { return rowPtrs_.span(); }
 
 
 private:
