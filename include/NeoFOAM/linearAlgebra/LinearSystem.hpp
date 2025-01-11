@@ -4,7 +4,6 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
-#include "NeoFOAM/linearAlgebra/COOMatrix.hpp"
 
 
 namespace NeoFOAM::la
