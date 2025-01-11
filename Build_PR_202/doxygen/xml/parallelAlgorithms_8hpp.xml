@@ -797,30 +797,30 @@
 <codeline lineno="181"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="182"><highlight class="normal"></highlight></codeline>
 <codeline lineno="183"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>Executor,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>Kernel,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ReturnType&gt;</highlight></codeline>
-<codeline lineno="184" refid="namespaceNeoFOAM_1a8a8c95b23aee20e3266d396be3bbd382" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">parallelScan</ref>(</highlight></codeline>
+<codeline lineno="184" refid="namespaceNeoFOAM_1afbfeb99db57b54fe06c59babef5e118c" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">parallelScan</ref>(</highlight></codeline>
 <codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/>[[maybe_unused]]<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref>&amp;<sp/>exec,</highlight></codeline>
 <codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/>std::pair&lt;size_t,<sp/>size_t&gt;<sp/>range,</highlight></codeline>
 <codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/>Kernel<sp/>kernel,</highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/>ReturnType&amp;<sp/>return_value</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/>ReturnType&amp;<sp/>returnValue</highlight></codeline>
 <codeline lineno="189"><highlight class="normal">)</highlight></codeline>
 <codeline lineno="190"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>[start,<sp/>end]<sp/>=<sp/>range;</highlight></codeline>
 <codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">runOn<sp/>=<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>Executor::exec;</highlight></codeline>
 <codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/>Kokkos::parallel_scan(</highlight></codeline>
-<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;parallelScan&quot;</highlight><highlight class="normal">,<sp/>Kokkos::RangePolicy&lt;runOn&gt;(start,<sp/>end),<sp/>kernel,<sp/>return_value</highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;parallelScan&quot;</highlight><highlight class="normal">,<sp/>Kokkos::RangePolicy&lt;runOn&gt;(start,<sp/>end),<sp/>kernel,<sp/>returnValue</highlight></codeline>
 <codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="196"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="197"><highlight class="normal"></highlight></codeline>
 <codeline lineno="198"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>Kernel,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ReturnType&gt;</highlight></codeline>
-<codeline lineno="199" refid="namespaceNeoFOAM_1a694725e379b14d4460c3e4d1be90426d" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">parallelScan</ref>(</highlight></codeline>
+<codeline lineno="199" refid="namespaceNeoFOAM_1a1fbe805af7f4710f16ec7fbf18b87741" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">parallelScan</ref>(</highlight></codeline>
 <codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">NeoFOAM::Executor</ref>&amp;<sp/>exec,</highlight></codeline>
 <codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/>std::pair&lt;size_t,<sp/>size_t&gt;<sp/>range,</highlight></codeline>
 <codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/>Kernel<sp/>kernel,</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/>ReturnType&amp;<sp/>return_value</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/>ReturnType&amp;<sp/>returnValue</highlight></codeline>
 <codeline lineno="204"><highlight class="normal">)</highlight></codeline>
 <codeline lineno="205"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>std::visit(</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[&amp;](</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>e)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">parallelScan</ref>(e,<sp/>range,<sp/>kernel,<sp/>return_value);<sp/>},<sp/>exec</highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[&amp;](</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>e)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ac261f9695ee3ef30f1aba6e5c44e67bd" kindref="member">parallelScan</ref>(e,<sp/>range,<sp/>kernel,<sp/>returnValue);<sp/>},<sp/>exec</highlight></codeline>
 <codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="209"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="210"><highlight class="normal"></highlight></codeline>

@@ -290,32 +290,32 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Executor, <span class="keyword">typename</span> Kernel, <span class="keyword">typename</span> ReturnType&gt;</div>
 <div class="foldopen" id="foldopen00184" data-start="{" data-end="}">
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a8a8c95b23aee20e3266d396be3bbd382">  184</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac261f9695ee3ef30f1aba6e5c44e67bd">parallelScan</a>(</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#afbfeb99db57b54fe06c59babef5e118c">  184</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac261f9695ee3ef30f1aba6e5c44e67bd">parallelScan</a>(</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    [[maybe_unused]] <span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">Executor</a>&amp; exec,</div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    std::pair&lt;size_t, size_t&gt; range,</div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    Kernel kernel,</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    ReturnType&amp; return_value</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    ReturnType&amp; returnValue</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>)</div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>{</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    <span class="keyword">auto</span> [start, end] = range;</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="keyword">using </span>runOn = <span class="keyword">typename</span> Executor::exec;</div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    Kokkos::parallel_scan(</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="stringliteral">&quot;parallelScan&quot;</span>, Kokkos::RangePolicy&lt;runOn&gt;(start, end), kernel, return_value</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="stringliteral">&quot;parallelScan&quot;</span>, Kokkos::RangePolicy&lt;runOn&gt;(start, end), kernel, returnValue</div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    );</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>}</div>
 </div>
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Kernel, <span class="keyword">typename</span> ReturnType&gt;</div>
 <div class="foldopen" id="foldopen00199" data-start="{" data-end="}">
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a694725e379b14d4460c3e4d1be90426d">  199</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac261f9695ee3ef30f1aba6e5c44e67bd">parallelScan</a>(</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a1fbe805af7f4710f16ec7fbf18b87741">  199</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac261f9695ee3ef30f1aba6e5c44e67bd">parallelScan</a>(</div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    <span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">NeoFOAM::Executor</a>&amp; exec,</div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    std::pair&lt;size_t, size_t&gt; range,</div>
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    Kernel kernel,</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    ReturnType&amp; return_value</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    ReturnType&amp; returnValue</div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>)</div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>{</div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    <span class="keywordflow">return</span> std::visit(</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        [&amp;](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; e) { <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac261f9695ee3ef30f1aba6e5c44e67bd">parallelScan</a>(e, range, kernel, return_value); }, exec</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        [&amp;](<span class="keyword">const</span> <span class="keyword">auto</span>&amp; e) { <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac261f9695ee3ef30f1aba6e5c44e67bd">parallelScan</a>(e, range, kernel, returnValue); }, exec</div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>    );</div>
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>}</div>
 </div>
