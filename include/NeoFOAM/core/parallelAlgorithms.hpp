@@ -16,7 +16,7 @@ class Field;
 
 
 template<typename Executor, typename OpA, typename OpB>
-void threadsafeAdd([[maybe_unused]] const Executor& exec, OpA* a, OpB b)
+KOKKOS_INLINE_FUNCTION void threadsafeAdd([[maybe_unused]] const Executor& exec, OpA* a, OpB b)
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
@@ -28,8 +28,44 @@ void threadsafeAdd([[maybe_unused]] const Executor& exec, OpA* a, OpB b)
     }
 }
 
+struct ThreadSafeAdd
+{
+    const Executor exec;
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA* a, OpB b) const
+    {
+        if (std::holds_alternative<SerialExecutor>(exec))
+        {
+            *a += b;
+        }
+        else
+        {
+            Kokkos::atomic_add(a, b);
+        }
+    }
+};
+
+struct ThreadSafeSub
+{
+    const Executor exec;
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA* a, OpB b) const
+    {
+        if (std::holds_alternative<SerialExecutor>(exec))
+        {
+            *a -= b;
+        }
+        else
+        {
+            Kokkos::atomic_sub(a, b);
+        }
+    }
+};
+
+
 template<typename Executor, typename OpA, typename OpB>
-void threadsafeSub([[maybe_unused]] const Executor& exec, OpA* a, const OpB b)
+KOKKOS_INLINE_FUNCTION void
+threadsafeSub([[maybe_unused]] const Executor& exec, OpA* a, const OpB b)
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
