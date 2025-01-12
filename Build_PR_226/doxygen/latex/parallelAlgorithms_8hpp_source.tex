@@ -23,15 +23,15 @@
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00019}00019\ \{}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00020}\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_a1ae8d6ca8157e18d00172244db5430a3}{00020}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_a1ae8d6ca8157e18d00172244db5430a3}{exec}};}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00021}00021\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OpA,\ \textcolor{keyword}{typename}\ OpB>}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00022}\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_af9896faef911de37f1f31d21a75f3c30}{00022}}\ \ \ \ \ KOKKOS\_INLINE\_FUNCTION\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_af9896faef911de37f1f31d21a75f3c30}{operator()}}(OpA*\ a,\ OpB\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00022}\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_a07bfc8597d75c0eff7c52fc7eb07def0}{00022}}\ \ \ \ \ KOKKOS\_INLINE\_FUNCTION\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_a07bfc8597d75c0eff7c52fc7eb07def0}{operator()}}(OpA\&\ a,\ \textcolor{keyword}{const}\ OpB\&\ b)\textcolor{keyword}{\ const}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00023}00023\ \textcolor{keyword}{\ \ \ \ }\{}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00024}00024\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<SerialExecutor>(\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeAdd_a1ae8d6ca8157e18d00172244db5430a3}{exec}}))}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00025}00025\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00026}00026\ \ \ \ \ \ \ \ \ \ \ \ \ *a\ +=\ b;}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00026}00026\ \ \ \ \ \ \ \ \ \ \ \ \ a\ +=\ b;}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00027}00027\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00028}00028\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00029}00029\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00030}00030\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(a,\ b);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00030}00030\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&a,\ b);}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00031}00031\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00032}00032\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00033}00033\ \};}
@@ -40,15 +40,15 @@
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00036}00036\ \{}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00037}\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_a12867f8f4815a5fe716f934567555e2d}{00037}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_a12867f8f4815a5fe716f934567555e2d}{exec}};}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OpA,\ \textcolor{keyword}{typename}\ OpB>}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00039}\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_aa9abc8b8132be8f8d3db4d0a74a8a455}{00039}}\ \ \ \ \ KOKKOS\_INLINE\_FUNCTION\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_aa9abc8b8132be8f8d3db4d0a74a8a455}{operator()}}(OpA*\ a,\ OpB\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00039}\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_a774c64414a26f846d9be6f084be8ecca}{00039}}\ \ \ \ \ KOKKOS\_INLINE\_FUNCTION\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_a774c64414a26f846d9be6f084be8ecca}{operator()}}(OpA\&\ a,\ \textcolor{keyword}{const}\ OpB\&\ b)\textcolor{keyword}{\ const}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00040}00040\ \textcolor{keyword}{\ \ \ \ }\{}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<SerialExecutor>(\mbox{\hyperlink{structNeoFOAM_1_1ThreadSafeSub_a12867f8f4815a5fe716f934567555e2d}{exec}}))}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \ \ *a\ -\/=\ b;}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \ \ a\ -\/=\ b;}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_sub(a,\ b);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_sub(\&a,\ b);}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00049}00049\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00050}00050\ \};}
