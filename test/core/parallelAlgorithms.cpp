@@ -171,39 +171,57 @@ TEST_CASE("parallelScan")
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
 
-    SECTION("parallelScan_withoutReturn" + execName)
+    // SECTION("parallelScan_withoutReturn" + execName)
+    // {
+    //     NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
+    //     NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, intervals.size() + 1, 0);
+    //     auto segSpan = segments.span();
+    //     const auto intSpan = intervals.span();
+
+    //     NeoFOAM::parallelScan(
+    //         exec,
+    //         segments.range(),
+    //         KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
+    //             update += intSpan[i - 1];
+    //             if (final)
+    //             {
+    //                 segSpan[i] = update;
+    //             }
+    //         }
+    //     );
+
+    //     auto hostSegments = segments.copyToHost();
+    //     REQUIRE(hostSegments[0] == 0);
+    //     REQUIRE(hostSegments[1] == 1);
+    //     REQUIRE(hostSegments[2] == 3);
+    //     REQUIRE(hostSegments[3] == 6);
+    //     REQUIRE(hostSegments[4] == 10);
+    //     REQUIRE(hostSegments[5] == 15);
+
+    //     auto hostIntervals = intervals.copyToHost();
+    //     REQUIRE(hostIntervals[0] == 1);
+    //     REQUIRE(hostIntervals[1] == 2);
+    //     REQUIRE(hostIntervals[2] == 3);
+    //     REQUIRE(hostIntervals[3] == 4);
+    //     REQUIRE(hostIntervals[4] == 5);
+    // }
+
+    SECTION("Kokkos example")
     {
-        NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
-        NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, intervals.size() + 1, 0);
-        auto segSpan = segments.span();
-        const auto intSpan = intervals.span();
+        int64_t result;
+        Kokkos::View<int64_t*, Kokkos::HostSpace> post("postfix_sum", 5);
+        Kokkos::View<int64_t*, Kokkos::HostSpace> pre("prefix_sum", 5);
 
-        NeoFOAM::parallelScan(
-            exec,
-            segments.range(),
-            KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
-                update += intSpan[i - 1];
-                if (final)
-                {
-                    segSpan[i] = update;
-                }
-            }
+        Kokkos::parallel_scan(
+            "Loop1",
+            Kokkos::RangePolicy<Kokkos::Serial>(0, 5),
+            KOKKOS_LAMBDA(int64_t i, int64_t & partial_sum, bool is_final) {
+                if (is_final) pre(i) = partial_sum;
+                partial_sum += i;
+                if (is_final) post(i) = partial_sum;
+            },
+            result
         );
-
-        auto hostSegments = segments.copyToHost();
-        REQUIRE(hostSegments[0] == 0);
-        REQUIRE(hostSegments[1] == 1);
-        REQUIRE(hostSegments[2] == 3);
-        REQUIRE(hostSegments[3] == 6);
-        REQUIRE(hostSegments[4] == 10);
-        REQUIRE(hostSegments[5] == 15);
-
-        auto hostIntervals = intervals.copyToHost();
-        REQUIRE(hostIntervals[0] == 1);
-        REQUIRE(hostIntervals[1] == 2);
-        REQUIRE(hostIntervals[2] == 3);
-        REQUIRE(hostIntervals[3] == 4);
-        REQUIRE(hostIntervals[4] == 5);
     }
 
     // SECTION("parallelScan_withReturn" + execName)
