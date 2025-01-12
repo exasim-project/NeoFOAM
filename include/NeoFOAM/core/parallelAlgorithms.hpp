@@ -15,19 +15,6 @@ template<typename ValueType>
 class Field;
 
 
-template<typename Executor, typename OpA, typename OpB>
-KOKKOS_INLINE_FUNCTION void threadsafeAdd([[maybe_unused]] const Executor& exec, OpA* a, OpB b)
-{
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
-    {
-        *a += b;
-    }
-    else
-    {
-        Kokkos::atomic_add(a, b);
-    }
-}
-
 struct ThreadSafeAdd
 {
     const Executor exec;
@@ -61,22 +48,6 @@ struct ThreadSafeSub
         }
     }
 };
-
-
-template<typename Executor, typename OpA, typename OpB>
-KOKKOS_INLINE_FUNCTION void
-threadsafeSub([[maybe_unused]] const Executor& exec, OpA* a, const OpB b)
-{
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
-    {
-        *a -= b;
-    }
-    else
-    {
-        Kokkos::atomic_sub(a, b);
-    }
-}
-
 
 // Concept to check if a callable is compatible with void(const size_t)
 template<typename Kernel>
