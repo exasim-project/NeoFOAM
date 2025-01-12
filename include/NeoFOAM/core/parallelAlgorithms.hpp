@@ -19,15 +19,15 @@ struct ThreadSafeAdd
 {
     const Executor exec;
     template<typename OpA, typename OpB>
-    KOKKOS_INLINE_FUNCTION void operator()(OpA* a, OpB b) const
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
     {
         if (std::holds_alternative<SerialExecutor>(exec))
         {
-            *a += b;
+            a += b;
         }
         else
         {
-            Kokkos::atomic_add(a, b);
+            Kokkos::atomic_add(&a, b);
         }
     }
 };
@@ -36,15 +36,15 @@ struct ThreadSafeSub
 {
     const Executor exec;
     template<typename OpA, typename OpB>
-    KOKKOS_INLINE_FUNCTION void operator()(OpA* a, OpB b) const
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
     {
         if (std::holds_alternative<SerialExecutor>(exec))
         {
-            *a -= b;
+            a -= b;
         }
         else
         {
-            Kokkos::atomic_sub(a, b);
+            Kokkos::atomic_sub(&a, b);
         }
     }
 };
