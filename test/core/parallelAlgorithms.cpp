@@ -171,6 +171,7 @@ TEST_CASE("parallelScan")
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
+
     // SECTION("parallelScan_withoutReturn" + execName)
     // {
     //     NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
