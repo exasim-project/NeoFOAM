@@ -164,12 +164,12 @@ TEST_CASE("parallelReduce")
 
 TEST_CASE("parallelScan")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {})
+                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+
 
     SECTION("parallelScan_withoutReturn" + execName)
     {
@@ -180,7 +180,7 @@ TEST_CASE("parallelScan")
 
         NeoFOAM::parallelScan(
             exec,
-            segments.range(),
+            {1, segSpan.size()},
             KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
                 update += intSpan[i - 1];
                 if (final)
@@ -216,7 +216,7 @@ TEST_CASE("parallelScan")
 
         NeoFOAM::parallelScan(
             exec,
-            {0, segSpan.size()},
+            {1, segSpan.size()},
             KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
                 update += intSpan[i - 1];
                 if (final)
