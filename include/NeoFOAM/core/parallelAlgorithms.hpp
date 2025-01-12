@@ -15,6 +15,10 @@ template<typename ValueType>
 class Field;
 
 
+/* @brief Functor to compute addition in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
 struct ThreadSafeAdd
 {
     const Executor exec;
@@ -32,6 +36,10 @@ struct ThreadSafeAdd
     }
 };
 
+/* @brief Functor to compute subtraction in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
 struct ThreadSafeSub
 {
     const Executor exec;
