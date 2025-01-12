@@ -38,8 +38,11 @@ public:
         auto source = eqn.explicitOperation(solutionField.size());
         SolutionFieldType& oldSolutionField =
             NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
-
-        solutionField.internalField() = oldSolutionField.internalField() - source * dt;
+        auto [sSource, sOldSolution] = NeoFOAM::spans(source, oldSolutionField.internalField());
+        map(
+            solutionField.internalField(),
+            KOKKOS_LAMBDA(const int i) { return sOldSolution[i] - sSource[i] * dt; }
+        );
         solutionField.correctBoundaryConditions();
 
         // check if executor is GPU

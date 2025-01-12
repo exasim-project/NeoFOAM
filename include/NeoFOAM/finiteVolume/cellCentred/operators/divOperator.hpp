@@ -108,6 +108,7 @@ public:
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
         divOperatorStrategy_->div(tmpsource, faceFlux_, field_);
         source += tmpsource;
+        // divOperatorStrategy_->div(source, faceFlux_, field_);
     }
 
     void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }
