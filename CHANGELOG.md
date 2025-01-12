@@ -1,4 +1,3 @@
-
 # Version 0.2.0 (unreleased)
 ## Features
 - add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
