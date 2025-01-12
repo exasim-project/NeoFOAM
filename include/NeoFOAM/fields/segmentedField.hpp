@@ -29,7 +29,7 @@ IndexType segmentsFromIntervals(const Field<IndexType>& intervals, Field<IndexTy
     NF_ASSERT_EQUAL(inSpan.size() + 1, offsSpan.size());
     NeoFOAM::parallelScan(
         intervals.exec(),
-        {0, offsSpan.size()},
+        {1, offsSpan.size()},
         KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
             update += inSpan[i - 1];
             if (final)
