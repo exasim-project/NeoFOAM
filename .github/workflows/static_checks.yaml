@@ -117,14 +117,6 @@ jobs:
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
         clang-tidy-16 --fix --extra-arg=-w -p build/develop $(cat files)
-    - name: Commit clang-tidy-fixes
-      if: ${{contains(github.event.pull_request.labels.*.name, 'auto-fix')}}
-      run: |
-         git config user.name github-actions
-         git config user.email github-actions@github.com
-         git add .
-         git commit -m 'fix format'
-         git push origin ${{ github.ref }}
     - name: Check for fixes
       run: |
         if [[ $(git ls-files -m | wc -l) -eq 0 ]]; then
@@ -134,6 +126,14 @@ jobs:
         echo "Please use your local clang-tidy or apply the following patch:"
         git diff -p
         exit 1
+    - name: Commit clang-tidy-fixes
+      if: ${{contains(github.event.pull_request.labels.*.name, 'auto-fix') && failure()}}
+      run: |
+         git config user.name github-actions
+         git config user.email github-actions@github.com
+         git add .
+         git commit -m 'fix format'
+         git push origin ${{ github.ref }}
   changelog:
     if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-Changelog')}}
     name: Changelog check
