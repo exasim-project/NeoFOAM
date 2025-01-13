@@ -61,6 +61,7 @@ struct CreateField
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, bcs, db, "", "");
         NeoFOAM::fill(vf.internalField(), 0.0);
+        vf.correctBoundaryCondition();
         return NeoFOAM::Document(
             {{"name", vf.name},
              {"timeIndex", timeIndex},

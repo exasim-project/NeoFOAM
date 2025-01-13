@@ -77,6 +77,27 @@ public:
           fieldCollectionName(""), boundaryConditions_(boundaryConditions), db_(std::nullopt)
     {}
 
+    // /**
+    //  * @brief Constructor for a VolumeField with a given internal and boundary field
+    //  *
+    //  * @param name The name of the field
+    //  * @param mesh The underlying mesh
+    //  * @param internalField the underlying internal field
+    //  * @param boundaryFields the underlying boundary data fields
+    //  * @param boundaryConditions a vector of boundary conditions
+    //  */
+    // VolumeField(
+    //     const Executor& exec,
+    //     std::string name,
+    //     const UnstructuredMesh& mesh,
+    //     const Field<ValueType>& internalField,
+    //     const std::vector<VolumeBoundary<ValueType>>& boundaryConditions
+    // )
+    //     : GeometricFieldMixin<ValueType>(exec, name, mesh, internalField, boundaryFields),
+    //     key(""),
+    //       fieldCollectionName(""), boundaryConditions_(boundaryConditions), db_(std::nullopt)
+    // {correctBoundaryConditions();}
+
     /**
      * @brief Constructor for a VolumeField with a given internal field and database
      *
@@ -102,6 +123,11 @@ public:
           fieldCollectionName(collectionName), boundaryConditions_(boundaryConditions), db_(&db)
     {}
 
+    /**
+     * @brief Copy constructor
+     *
+     * @param other The volumeField from which to copy
+     */
     VolumeField(const VolumeField& other)
         : GeometricFieldMixin<ValueType>(other), key(other.key),
           fieldCollectionName(other.fieldCollectionName),
