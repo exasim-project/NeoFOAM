@@ -25,10 +25,9 @@ struct CreateField
     NeoFOAM::Document operator()(NeoFOAM::Database& db)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), value);
-        fvcc::VolumeField<NeoFOAM::scalar> vf(
-            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
-        );
+        fvcc::VolumeField<NeoFOAM::scalar> vf(mesh.exec(), name, mesh, bcs, db, "", "");
+        NeoFOAM::fill(vf.internalField(), value);
+        vf.correctBoundaryConditions();
         return NeoFOAM::Document(
             {{"name", vf.name},
              {"timeIndex", timeIndex},
