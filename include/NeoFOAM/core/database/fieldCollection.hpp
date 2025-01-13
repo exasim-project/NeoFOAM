@@ -355,9 +355,7 @@ public:
 
     FieldDocument operator()(Database& db)
     {
-        VolumeField<scalar> vf(
-            field.exec(), name, field.mesh(), field.boundaryConditions(), db, "", ""
-        );
+        FieldType vf(field.exec(), name, field.mesh(), field.boundaryConditions(), db, "", "");
 
         if (field.registered())
         {
