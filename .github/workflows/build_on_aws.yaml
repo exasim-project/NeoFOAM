@@ -144,17 +144,17 @@ jobs:
             -DKokkos_ENABLE_CUDA=ON
           cmake --build --preset production
           cmake --build --preset production --target execute_benchmarks
-          mkdir ${{ github.ref_name }}
-          cat build/develop/benchmarks/fields.xml | yq -p xml -o json > ${{ github.ref_name }}/fields.json
-          cat ${{ github.ref_name }}/fields.json
-          lscpu > ${{ github.ref_name }}/lscpu.log
+          mkdir -p ${{github.event.number}}
+          cat build/production/benchmarks/fields.xml | yq -p xml -o json > ${{github.event.number}}/fields.json
+          cat ${{github.event.number}}/fields.json
+          lscpu > ${{github.event.number}}/lscpu.log
       - name: Push Benchmark Data
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: ${{ github.ref_name }}
-          destination-github-username: github-actions
+          source-directory: ${{github.event.number}}
+          destination-github-username: 'exasim-project'
           destination-repository-name: 'NeoFOAM-BenchmarkData'
           user-email: github-actions@github.com
           target-branch: main
