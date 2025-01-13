@@ -122,7 +122,7 @@ jobs:
           module load cmake
           ctest --preset ${{matrix.preset}}
   benchmark-on-aws:
-    name: Build on aws
+    name: Benchmark on aws
     needs: [start-runner, build-on-aws] # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
     steps:
@@ -134,6 +134,7 @@ jobs:
           module load libfabric-aws
           module spider libfabric-aws
           module load cmake
+          pip install yq
           cmake --version
           CC=clang \
           CXX=clang++ \
@@ -143,7 +144,20 @@ jobs:
             -DKokkos_ENABLE_CUDA=ON
           cmake --build --preset production
           cmake --build --preset production --target execute_benchmarks
-
+          mkdir ${{ github.ref_name }}
+          cat build/develop/benchmarks/fields.xml | yq -p xml -o json > ${{ github.ref_name }}/fields.json
+          cat ${{ github.ref_name }}/fields.json
+          lscpu > ${{ github.ref_name }}/lscpu.log
+      - name: Push Benchmark Data
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source-directory: ${{ github.ref_name }}
+          destination-github-username: github-actions
+          destination-repository-name: 'NeoFOAM-BenchmarkData'
+          user-email: github-actions@github.com
+          target-branch: main
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
