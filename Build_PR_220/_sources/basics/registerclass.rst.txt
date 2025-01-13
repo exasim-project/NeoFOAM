@@ -3,20 +3,23 @@
 Derived class discovery at compile time
 =======================================
 
-The ``RuntimeSelectionFactory`` class is a template class that allows to register derived classes into a map. This allows to instaniate derived classes from the base class by its name.  This mechanisem is similar to OpenFOAM's runtime selection mechanism. The classes are registered at compile time via static member initialization. Additional explanation can be found in the following two posts on Stack OverFlow: `Derived class discovery at compile time <https://stackoverflow.com/questions/52354538/derived-class-discovery-at-compile-time>`_ and  `How to automatically register a class on creation <https://stackoverflow.com/questions/10332725/how-to-automatically-register-a-class-on-creation>`_ .
+The ``RuntimeSelectionFactory`` class is a template class that allows to register derived classes for creation at runtime via a factory class by its name.
+This mechanism is similar to OpenFOAM's runtime selection mechanism.
+The classes are registered at compile time via static member initialization.
+Additional explanation can be found in the following two posts on Stack OverFlow: `Derived class discovery at compile time <https://stackoverflow.com/questions/52354538/derived-class-discovery-at-compile-time>`_ and  `How to automatically register a class on creation <https://stackoverflow.com/questions/10332725/how-to-automatically-register-a-class-on-creation>`_ .
 
-This approach allows to create a plugin architecture where a derived class can be loaded at runtime. Additionally, it simplifies the runtime selection of a specific class. The derived classes can be created by providing its  name, as shown below:
+This approach allows to create a plugin architecture where a derived class can be loaded at runtime.
+Additionally, it simplifies the runtime selection of a specific class. The derived classes can be created by providing its name, as shown below:
 
 .. code-block:: cpp
 
     std::unique_ptr<baseClass> derivedClass =
         baseClass::create("Name of derivedClass", "Additional arguments",...);
 
+The ``RuntimeSelectionFactory`` class is a template class that manages the registration of the derived classes and stores the map of the registered classes.
+The map associates a function with a string that is used to create the derived class.
 
-.. doxygenclass:: NeoFOAM::RuntimeSelectionFactory
-   :members:
-
-The ``RuntimeSelectionFactory`` class is a template class that manages the registration of the derived classes and stores the map of the registered classes. The map associates a function with a string that is used to create the derived class.
+Further details `RuntimeSelectionFactory  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1RuntimeSelectionFactory.html>`_.
 
 
 Usage
@@ -41,7 +44,8 @@ The static function ``create`` returns a ``std::unique_ptr`` to its base class a
 
     };
 
-To register a class, derive from the BaseClass::Register class and pass the derived class as a template argument. The derived class must implement the static functions ``name``, ``doc``, and ``schema``.
+To register a class, derive from the BaseClass::Register class and pass the derived class as a template argument.
+The derived class must implement the static functions ``name``, ``doc``, and ``schema``.
 
 .. code-block:: cpp
 
@@ -59,7 +63,7 @@ To register a class, derive from the BaseClass::Register class and pass the deri
     };
 
 
-After the classes have been defined,  the ``create`` function can be used to instantiate the derived classes based on the name provided.
+After the classes have been defined, the ``create`` function can be used to instantiate the derived classes based on the name provided.
 
 .. code-block:: cpp
 
