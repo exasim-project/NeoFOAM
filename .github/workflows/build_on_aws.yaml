@@ -121,11 +121,37 @@ jobs:
           module load libfabric-aws
           module load cmake
           ctest --preset ${{matrix.preset}}
+  benchmark-on-aws:
+    name: Build on aws
+    needs: [start-runner, build-on-aws] # required to start the main job when the runner is ready
+    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    steps:
+      - name: Build NeoFOAM
+        shell: bash -i {0}
+        run: |
+          export HOME=/share/ec2-user
+          module load clang/16
+          module load libfabric-aws
+          module spider libfabric-aws
+          module load cmake
+          cmake --version
+          CC=clang \
+          CXX=clang++ \
+          cmake --preset production \
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_BUILD_BENCHMARKS=ON \
+            -DKokkos_ENABLE_CUDA=ON
+          cmake --build --preset production
+      - name: Execute Benchmarks
+        shell: bash -i {0}
+        run: |
+          cmake --build --preset production --target execute_benchmarks
+
   stop-runner:
     name: Stop self-hosted EC2 runner
     needs:
       - start-runner # required to get output from the start-runner job
-      - build-on-aws # required to wait when the main job is done
+      - benchmark-on-aws # required to wait when the main job is done
     runs-on: ubuntu-latest
     permissions:
       id-token: write
