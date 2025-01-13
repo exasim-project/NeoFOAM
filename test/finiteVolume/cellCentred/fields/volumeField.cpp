@@ -71,10 +71,7 @@ TEST_CASE("volumeField")
     {
         NeoFOAM::Field<NeoFOAM::scalar> internalField(mesh.exec(), mesh.nCells(), 1.0);
 
-        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, "vf", mesh, bcs);
-        NeoFOAM::fill(vf.internalField(), 1.0);
-
-        vf.correctBoundaryConditions();
+        fvcc::VolumeField<NeoFOAM::scalar> vf(exec, "vf", mesh, internalField, bcs);
 
         auto internalValues = vf.internalField().copyToHost();
         for (size_t i = 0; i < internalValues.size(); ++i)
