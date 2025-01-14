@@ -134,19 +134,14 @@ jobs:
           module load libfabric-aws
           module spider libfabric-aws
           module load cmake
-          pip install yq
           cmake --version
           CC=clang \
           CXX=clang++ \
-          cmake --preset production \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-            -DNEOFOAM_BUILD_BENCHMARKS=ON \
-            -DKokkos_ENABLE_CUDA=ON
-          cmake --build --preset production
-          cmake --build --preset production --target execute_benchmarks
+          cmake --preset profiling
+          cmake --build --preset profiling
+          cmake --build --preset profiling --target execute_benchmarks
           mkdir -p ${{github.event.number}}
-          cat build/production/benchmarks/fields.xml | yq -p xml -o json > ${{github.event.number}}/fields.json
-          cat ${{github.event.number}}/fields.json
+          cp build/production/benchmarks/fields.xml ${{github.event.number}}/fields.xml
           lscpu > ${{github.event.number}}/lscpu.log
       - name: Push Benchmark Data
         uses: cpina/github-action-push-to-another-repository@main
