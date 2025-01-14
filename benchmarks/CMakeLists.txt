@@ -19,13 +19,15 @@ function(neofoam_benchmark TEST)
   if(NOT DEFINED "neofoam_COMMAND")
     set(neofoam_COMMAND bench_${TEST})
   endif()
+
   if(NOT DEFINED "neofoam_WORKING_DIRECTORY")
     set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/benchmarks)
   endif()
   add_test(
     NAME bench_${TEST}
-    COMMAND ${neofoam_COMMAND}
+    COMMAND sh -c "./${neofoam_COMMAND} -r xml > ${TEST}.xml"
     WORKING_DIRECTORY ${neofoam_WORKING_DIRECTORY})
 endfunction()
 
 add_subdirectory(fields)
+add_subdirectory(finiteVolume/cellCentred/operator)

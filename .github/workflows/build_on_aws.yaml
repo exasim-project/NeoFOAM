@@ -139,9 +139,9 @@ jobs:
           CXX=clang++ \
           cmake --preset profiling
           cmake --build --preset profiling
-          cmake --build --preset profiling --target execute_benchmarks
+          ctest --preset profiling
           mkdir -p ${{github.event.number}}
-          cp build/production/benchmarks/fields.xml ${{github.event.number}}/fields.xml
+          cp build/profiling/bin/benchmarks/*.xml ${{github.event.number}}/
           lscpu > ${{github.event.number}}/lscpu.log
       - name: Push Benchmark Data
         uses: cpina/github-action-push-to-another-repository@main
