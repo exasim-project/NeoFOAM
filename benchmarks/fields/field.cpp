@@ -3,37 +3,9 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <vector>
-#include <iostream>
 
-#include <catch2/benchmark/catch_benchmark.hpp>
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_test_case_info.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/reporters/catch_reporter_registrars.hpp>
-#include <catch2/reporters/catch_reporter_streaming_base.hpp>
-
+#include "../catch_main.hpp"
 #include "NeoFOAM/NeoFOAM.hpp"
-
-int main(int argc, char* argv[])
-{
-    // Initialize Catch2
-    Kokkos::initialize(argc, argv);
-    Catch::Session session;
-
-    // Specify command line options
-    int returnCode = session.applyCommandLine(argc, argv);
-    if (returnCode != 0) // Indicates a command line error
-        return returnCode;
-
-    int result = session.run();
-
-    // Run benchmarks if there are any
-    Kokkos::finalize();
-
-    return result;
-}
 
 TEST_CASE("Field<scalar>::addition", "[bench]")
 {

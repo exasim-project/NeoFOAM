@@ -140,12 +140,13 @@ jobs:
           cmake --preset profiling
           cmake --build --preset profiling
           ctest --preset profiling
-          mkdir -p ${{github.event.number}}/gdnxlarge
+          mkdir -p ${{github.event.number}}/
           cd build/profiling/bin/benchmarks
           python3 -m pip install xmltodict
           python3 ../../../../scripts/catch2json.py
-          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/gdnxlarge
-          lscpu > ${{github.event.number}}/gdnxlarge/lscpu.log
+          cd ../../../..
+          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/
+          lscpu > ${{github.event.number}}/lscpu.log
       - name: Push Benchmark Data
         uses: cpina/github-action-push-to-another-repository@main
         env:
