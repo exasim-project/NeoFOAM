@@ -37,11 +37,10 @@ int main(int argc, char* argv[])
     return result;
 }
 
-TEST_CASE("divOperator", "[bench]")
+TEST_CASE("DivOperator::div", "[bench]")
 {
 
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
-    CAPTURE(size); // Capture the value of size
 
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -63,12 +62,9 @@ TEST_CASE("divOperator", "[bench]")
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)
     {
-        {
-            NeoFOAM::Input input =
-                NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
-            auto op = fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+        NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
+        auto op = fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
 
-            BENCHMARK("DivOperator<scalar>::addition on " + execName) { return (op.div(divPhi)); };
-        }
+        BENCHMARK(std::string(execName)) { return (op.div(divPhi)); };
     }
 }
