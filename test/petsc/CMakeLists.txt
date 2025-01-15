@@ -19,5 +19,4 @@ function(petsc_test TEST)
   add_dependencies(${TEST} petsc)
 endfunction()
 
-petsc_test(test_petsc_ksp)
-petsc_test(test_vec_matrix_gpu)
+petsc_test(vectorMatrixMultiplication)
