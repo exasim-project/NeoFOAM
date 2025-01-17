@@ -136,8 +136,7 @@ int main(int argc, char** args)
     */
     PetscCall(PetscFinalize());
     return 0;
-} // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2025 NeoFOAM authors
+}
 
 
 static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
