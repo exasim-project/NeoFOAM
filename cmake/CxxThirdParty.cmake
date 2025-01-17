@@ -85,7 +85,7 @@ if(${NEOFOAM_WITH_PETSC})
       --with-32bits-pci-domain=1 --with-cc=${PETSC_C_COMPILER} --with-cxx=${PETSC_CXX_COMPILER}
       --with-debugging=no --prefix=${CMAKE_BINARY_DIR}/petsc/opt/petsc
     BUILD_COMMAND make PETSC_DIR=${CMAKE_BINARY_DIR}/petsc/src/petsc PETSC_ARCH=arch-linux-c-opt all
-    INSTALL_COMMAND make PETSC_DIR=${CMAKE_BINARY_DIR}/petsc/src/petsc PETSC_ARCH=arch-linux-c-opt
+    INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} PETSC_DIR=${CMAKE_BINARY_DIR}/petsc/src/petsc PETSC_ARCH=arch-linux-c-opt
                     install
     BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/petsc/opt/petsc/lib/libpetsc.so)
 
