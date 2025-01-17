@@ -9,6 +9,8 @@ namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}
 \item 
 namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume}{finite\+Volume}}
 \item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1la}{la}}
+\item 
 namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1sundials}{sundials}}
 \item 
 namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1timeIntegration}{time\+Integration}}
@@ -60,6 +62,10 @@ class \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory}{Runtime\+Selecti
 \begin{DoxyCompactList}\small\item\em A factory class for runtime selection of derived classes. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4}{Runtime\+Selection\+Factory$<$ Base, Parameters$<$ Args... $>$ $>$}}
 \item 
+class \mbox{\hyperlink{classNeoFOAM_1_1SegmentedField}{Segmented\+Field}}
+\begin{DoxyCompactList}\small\item\em Data structure that stores a segmented fields or a vector of vectors. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1SegmentedFieldView}{Segmented\+Field\+View}}
+\begin{DoxyCompactList}\small\item\em A class representing a segment of indices. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1SerialExecutor}{Serial\+Executor}}
 \begin{DoxyCompactList}\small\item\em Reference executor for serial CPU execution. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1StencilDataBase}{Stencil\+Data\+Base}}
@@ -149,6 +155,14 @@ bool \mbox{\hyperlink{namespaceNeoFOAM_a4354d14390c6cd1d3a813869a7aff63b}{operat
 \item 
 {\footnotesize template$<$typename Value\+Type , typename Kernel , typename T $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ae3937be91de80536a70f2e020edbdab7}{parallel\+Reduce}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&field, Kernel kernel, T \&value)
 \item 
+{\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} , typename Kernel $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallel\+Scan}} (const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel)
+\item 
+{\footnotesize template$<$typename Kernel $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a5b8d6853fc05246a8ed89db7d88badee}{parallel\+Scan}} (const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Neo\+FOAM\+::\+Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel)
+\item 
+{\footnotesize template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} , typename Kernel , typename Return\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_afbfeb99db57b54fe06c59babef5e118c}{parallel\+Scan}} (const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel, Return\+Type \&return\+Value)
+\item 
+{\footnotesize template$<$typename Kernel , typename Return\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a1fbe805af7f4710f16ec7fbf18b87741}{parallel\+Scan}} (const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Neo\+FOAM\+::\+Executor}} \&exec, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range, Kernel kernel, Return\+Type \&return\+Value)
+\item 
 KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION \mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}} \mbox{\hyperlink{namespaceNeoFOAM_ac48edf8d161ff1ee717e5fba3a93d770}{operator\texorpdfstring{$\ast$}{*}}} (const \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} \&sclr, \mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}} rhs)
 \item 
 KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION \mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}} \mbox{\hyperlink{namespaceNeoFOAM_ae0612f5f17d093a87670be33b3d0608f}{operator\&}} (const \mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}} \&lhs, \mbox{\hyperlink{classNeoFOAM_1_1Vector}{Vector}} rhs)
@@ -189,6 +203,8 @@ std\+::ostream \& \mbox{\hyperlink{namespaceNeoFOAM_a33d4783ebbf9904dce966898f9f
 \item 
 template$<$$>$ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} \mbox{\hyperlink{namespaceNeoFOAM_abb0c8601a46eedab6970aa13093fec6f}{sum}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}} $>$ \&field)
 \item 
+{\footnotesize template$<$typename Index\+Type $>$ }\\Index\+Type \mbox{\hyperlink{namespaceNeoFOAM_a3c93e0b750c8dc9feb1621daf2da6915}{segments\+From\+Intervals}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Index\+Type $>$ \&intervals, \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Index\+Type $>$ \&offsets)
+\begin{DoxyCompactList}\small\item\em Compute segment offsets from an input field corresponding to lengths by computing a prefix sum. \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}} \mbox{\hyperlink{namespaceNeoFOAM_a99bff8ff2aa41c8015bdb6c509ee5567}{create\+Single\+Cell\+Mesh}} (const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} exec)
 \begin{DoxyCompactList}\small\item\em creates a mesh containing only a single cell @warn currently this is only a 2D mesh \end{DoxyCompactList}\item 
 \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{Unstructured\+Mesh}} \mbox{\hyperlink{namespaceNeoFOAM_afdb9b151e2c17ce2b8065fe66989ce3e}{create1\+DUniform\+Mesh}} (const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} exec, const \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} n\+Cells)
@@ -752,7 +768,7 @@ void Neo\+FOAM\+::parallel\+Reduce (\begin{DoxyParamCaption}\item[{const \mbox{\
 
 
 
-Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00133}{133}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00132}{132}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9}\label{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9} 
 \index{NeoFOAM@{NeoFOAM}!parallelReduce@{parallelReduce}}
@@ -763,7 +779,7 @@ void Neo\+FOAM\+::parallel\+Reduce (\begin{DoxyParamCaption}\item[{const \mbox{\
 
 
 
-Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00095}{95}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00094}{94}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ac54afd3ca9f48982f18b894908855416}\label{namespaceNeoFOAM_ac54afd3ca9f48982f18b894908855416} 
 \index{NeoFOAM@{NeoFOAM}!parallelReduce@{parallelReduce}}
@@ -774,7 +790,7 @@ void Neo\+FOAM\+::parallel\+Reduce (\begin{DoxyParamCaption}\item[{const \mbox{\
 
 
 
-Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00124}{124}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00123}{123}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ae3937be91de80536a70f2e020edbdab7}\label{namespaceNeoFOAM_ae3937be91de80536a70f2e020edbdab7} 
 \index{NeoFOAM@{NeoFOAM}!parallelReduce@{parallelReduce}}
@@ -785,7 +801,51 @@ void Neo\+FOAM\+::parallel\+Reduce (\begin{DoxyParamCaption}\item[{\mbox{\hyperl
 
 
 
-Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00161}{161}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00160}{160}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}\label{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd} 
+\index{NeoFOAM@{NeoFOAM}!parallelScan@{parallelScan}}
+\index{parallelScan@{parallelScan}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{parallelScan()}{parallelScan()}\hspace{0.1cm}{\footnotesize\ttfamily [1/4]}}
+{\footnotesize\ttfamily template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} , typename Kernel $>$ \\
+void Neo\+FOAM\+::parallel\+Scan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} \&}]{exec,  }\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range,  }\item[{Kernel}]{kernel }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00168}{168}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_afbfeb99db57b54fe06c59babef5e118c}\label{namespaceNeoFOAM_afbfeb99db57b54fe06c59babef5e118c} 
+\index{NeoFOAM@{NeoFOAM}!parallelScan@{parallelScan}}
+\index{parallelScan@{parallelScan}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{parallelScan()}{parallelScan()}\hspace{0.1cm}{\footnotesize\ttfamily [2/4]}}
+{\footnotesize\ttfamily template$<$typename \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} , typename Kernel , typename Return\+Type $>$ \\
+void Neo\+FOAM\+::parallel\+Scan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}} \&}]{exec,  }\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range,  }\item[{Kernel}]{kernel,  }\item[{Return\+Type \&}]{return\+Value }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00184}{184}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a5b8d6853fc05246a8ed89db7d88badee}\label{namespaceNeoFOAM_a5b8d6853fc05246a8ed89db7d88badee} 
+\index{NeoFOAM@{NeoFOAM}!parallelScan@{parallelScan}}
+\index{parallelScan@{parallelScan}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{parallelScan()}{parallelScan()}\hspace{0.1cm}{\footnotesize\ttfamily [3/4]}}
+{\footnotesize\ttfamily template$<$typename Kernel $>$ \\
+void Neo\+FOAM\+::parallel\+Scan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Neo\+FOAM\+::\+Executor}} \&}]{exec,  }\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range,  }\item[{Kernel}]{kernel }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00178}{178}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a1fbe805af7f4710f16ec7fbf18b87741}\label{namespaceNeoFOAM_a1fbe805af7f4710f16ec7fbf18b87741} 
+\index{NeoFOAM@{NeoFOAM}!parallelScan@{parallelScan}}
+\index{parallelScan@{parallelScan}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{parallelScan()}{parallelScan()}\hspace{0.1cm}{\footnotesize\ttfamily [4/4]}}
+{\footnotesize\ttfamily template$<$typename Kernel , typename Return\+Type $>$ \\
+void Neo\+FOAM\+::parallel\+Scan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Neo\+FOAM\+::\+Executor}} \&}]{exec,  }\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range,  }\item[{Kernel}]{kernel,  }\item[{Return\+Type \&}]{return\+Value }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{parallelAlgorithms_8hpp_source_l00199}{199}} of file \mbox{\hyperlink{parallelAlgorithms_8hpp_source}{parallel\+Algorithms.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a11cb8ffac85b2e8d34007c806b5edaf4}\label{namespaceNeoFOAM_a11cb8ffac85b2e8d34007c806b5edaf4} 
 \index{NeoFOAM@{NeoFOAM}!read@{read}}
@@ -808,6 +868,30 @@ void Neo\+FOAM\+::scalar\+Mul (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{c
 
 
 Definition at line \mbox{\hyperlink{fieldFreeFunctions_8hpp_source_l00094}{94}} of file \mbox{\hyperlink{fieldFreeFunctions_8hpp_source}{field\+Free\+Functions.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a3c93e0b750c8dc9feb1621daf2da6915}\label{namespaceNeoFOAM_a3c93e0b750c8dc9feb1621daf2da6915} 
+\index{NeoFOAM@{NeoFOAM}!segmentsFromIntervals@{segmentsFromIntervals}}
+\index{segmentsFromIntervals@{segmentsFromIntervals}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{segmentsFromIntervals()}{segmentsFromIntervals()}}
+{\footnotesize\ttfamily template$<$typename Index\+Type $>$ \\
+Index\+Type Neo\+FOAM\+::segments\+From\+Intervals (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Index\+Type $>$ \&}]{intervals,  }\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Index\+Type $>$ \&}]{offsets }\end{DoxyParamCaption})}
+
+
+
+Compute segment offsets from an input field corresponding to lengths by computing a prefix sum. 
+
+The offsets are computed by a prefix sum of the input values. So, with given input of \{1, 2, 3, 4, 5\} the offsets are \{0, 1, 3, 6, 10, 15\}. Note that the length of off\+Span must be length of val\+Span + 1 and are all elements of off\+Span are required to be zero
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em in} & The values to compute the offsets from. \\
+\hline
+\mbox{\texttt{ in,out}}  & {\em offsets} & The field to store the resulting offsets in. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line \mbox{\hyperlink{segmentedField_8hpp_source_l00024}{24}} of file \mbox{\hyperlink{segmentedField_8hpp_source}{segmented\+Field.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45}\label{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45} 
 \index{NeoFOAM@{NeoFOAM}!setField@{setField}}
