@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2024 NeoFOAM authors
+# SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 set(CMAKE_C_COMPILER ${PETSC_C_COMPILER})
 set(CMAKE_CXX_COMPILER ${PETSC_CXX_COMPILER})
