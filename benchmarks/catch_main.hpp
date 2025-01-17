@@ -14,7 +14,7 @@
 int main(int argc, char* argv[])
 {
     // Initialize Catch2
-    Kokkos::initialize(argc, argv);
+    Kokkos::ScopeGuard guard(argc, argv);
     Catch::Session session;
 
     // Specify command line options
@@ -23,9 +23,6 @@ int main(int argc, char* argv[])
         return returnCode;
 
     int result = session.run();
-
-    // Run benchmarks if there are any
-    Kokkos::finalize();
 
     return result;
 }
