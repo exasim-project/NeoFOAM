@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
-
+// base on https://gitlab.com/petsc/petsc/-/blob/main/src/ksp/ksp/tutorials/ex1.c?ref_type=heads
 
 static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
 
