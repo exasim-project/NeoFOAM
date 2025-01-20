@@ -135,18 +135,30 @@ jobs:
           module spider libfabric-aws
           module load cmake
           cmake --version
+          python3 -m pip install xmltodict
+          CC=clang \
+          CXX=clang++ \
+          cmake --preset profilinj
+          cmake --build --preset profiling
+          ctest --preset profiling
+          mkdir -p ${{github.event.number}}/main
+          cd build/profiling/bin/benchmarks
+          python3 ../../../../scripts/catch2json.py
+          cd ../../../..
+          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/
+          lscpu > ${{github.event.number}}/lscpu.log
+          rm -rf build
+          git fetch origin
+          git checkout main
           CC=clang \
           CXX=clang++ \
           cmake --preset profiling
           cmake --build --preset profiling
           ctest --preset profiling
-          mkdir -p ${{github.event.number}}/
           cd build/profiling/bin/benchmarks
-          python3 -m pip install xmltodict
           python3 ../../../../scripts/catch2json.py
-          cd ../../../..
-          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/
-          lscpu > ${{github.event.number}}/lscpu.log
+          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/main/
+
       - name: Push Benchmark Data
         uses: cpina/github-action-push-to-another-repository@main
         env:
