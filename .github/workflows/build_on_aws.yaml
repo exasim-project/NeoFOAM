@@ -6,12 +6,18 @@ env:
   OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
   OMPI_MCA_rmaps_base_oversubscribe: true
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  DEBUG: ${{ github.event.inputs.debug }}
 on:
   pull_request:
     types: [opened, synchronize]
 
   # enable to manually trigger the tests
   workflow_dispatch:
+    inputs:
+        debug:
+          description: 'Enable debug mode (true/false)'
+          required: false
+          default: 'false'
 jobs:
   start-runner:
     if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci') || github.event_name == 'workflow_dispatch'}}
@@ -125,6 +131,7 @@ jobs:
     name: Benchmark on aws
     needs: [start-runner, build-on-aws] # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    if: env.DEBUG != 'true'
     steps:
       - name: Build NeoFOAM
         shell: bash -i {0}
@@ -181,7 +188,7 @@ jobs:
       id-token: write
       contents: read
     # only try to run the stop job if the start runner hasn't been skipped
-    if: ${{ always() && needs.start-runner.result != 'skipped' }}
+    if: ${{ always() && needs.start-runner.result != 'skipped' && env.DEBUG != 'true'}}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
