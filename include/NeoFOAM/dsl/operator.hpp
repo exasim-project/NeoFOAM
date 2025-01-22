@@ -7,8 +7,11 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/linearAlgebra.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/coeff.hpp"
+
+namespace la = NeoFOAM::la;
 
 namespace NeoFOAM::dsl
 {
@@ -24,6 +27,13 @@ template<typename T>
 concept HasExplicitOperator = requires(T t) {
     {
         t.explicitOperation(std::declval<Field<scalar>&>())
+    } -> std::same_as<void>; // Adjust return type and arguments as needed
+};
+
+template<typename T>
+concept HasImplicitOperator = requires(T t) {
+    {
+        t.implicitOperation(std::declval<la::LinearSystem<scalar, localIdx>&>())
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
@@ -62,6 +72,10 @@ public:
 
     void temporalOperation(Field<scalar>& field);
 
+    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls);
+
+    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const;
+
     /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
     Operator::Type getType() const;
 
@@ -88,6 +102,10 @@ private:
         virtual void explicitOperation(Field<scalar>& source) = 0;
 
         virtual void temporalOperation(Field<scalar>& field) = 0;
+
+        virtual void implicitOperation(la::LinearSystem<scalar, localIdx>& ls) = 0;
+
+        virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -135,6 +153,32 @@ private:
             {
                 concreteOp_.temporalOperation(field);
             }
+        }
+
+        virtual void implicitOperation(la::LinearSystem<scalar, localIdx>& ls) override
+        {
+            if constexpr (HasImplicitOperator<ConcreteOperatorType>)
+            {
+                concreteOp_.implicitOperation(ls);
+            }
+        }
+
+        virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override
+        {
+            if constexpr (HasImplicitOperator<ConcreteOperatorType>)
+            {
+                return concreteOp_.createEmptyLinearSystem();
+            }
+            // throw std::runtime_error("Implicit operation not implemented");
+            NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
+            NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
+            NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
+            NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
+                values, colIdx, rowPtrs
+            );
+
+            NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 3, 0.0);
+            return la::LinearSystem<scalar, localIdx>(csrMatrix, rhs, "custom");
         }
 
         /* @brief Given an input this function reads required coeffs */
