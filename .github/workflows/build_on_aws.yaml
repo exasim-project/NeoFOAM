@@ -131,7 +131,7 @@ jobs:
     name: Benchmark on aws
     needs: [start-runner, build-on-aws] # required to start the main job when the runner is ready
     runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
-    if: env.DEBUG != 'true'
+    if: github.event.inputs.debug != 'true'
     steps:
       - name: Build NeoFOAM
         shell: bash -i {0}
