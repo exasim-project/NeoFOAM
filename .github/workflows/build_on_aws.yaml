@@ -188,7 +188,7 @@ jobs:
       id-token: write
       contents: read
     # only try to run the stop job if the start runner hasn't been skipped
-    if: ${{ always() && needs.start-runner.result != 'skipped' && env.DEBUG != 'true'}}
+    if: always() && needs.start-runner.result != 'skipped' && env.DEBUG != 'true'
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
