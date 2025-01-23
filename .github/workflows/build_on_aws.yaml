@@ -41,7 +41,7 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-09850873fdddbce78
+          ec2-image-id: ami-03af087024bfdbbee
           ec2-instance-type: g4ad.xlarge
           iam-role-name: Role4Github
           subnet-id: subnet-87eb68a6
@@ -75,6 +75,18 @@ jobs:
                  nvm install v16.20.2
                  echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
                  echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
+                 # load rocm
+                 sudo cat > /etc/yum.repos.d/rocm.repo << EOF
+                 [ROCm]
+                 name=ROCm
+                 baseurl=https://repo.radeon.com/rocm/yum/6.2.4/main/
+                 enabled=1
+                 gpgcheck=1
+                 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
+                 EOF
+                 sudo yum install amdgpu -y
+                 sudo yum install rocm-libs -y
+                 cp /opt/rocm/lib/rocmmod /share/lmod/modulefiles/Compilers/rocm-6.2.4
 
   build-on-aws:
     name: Build on aws
