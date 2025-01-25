@@ -169,7 +169,10 @@ private:
             {
                 return concreteOp_.createEmptyLinearSystem();
             }
-            // throw std::runtime_error("Implicit operation not implemented");
+            throw std::runtime_error("Implicit operation not implemented");
+            // only need to avoid compiler warning about missing return statement
+            // this code path should never be reached as we call implicitOperation on an explicit
+            // operator
             NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
             NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
             NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
@@ -177,7 +180,7 @@ private:
                 values, colIdx, rowPtrs
             );
 
-            NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 3, 0.0);
+            NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 1, 0.0);
             return la::LinearSystem<scalar, localIdx>(csrMatrix, rhs, "custom");
         }
 
