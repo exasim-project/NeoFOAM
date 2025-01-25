@@ -28,6 +28,8 @@ public:
 
     Dummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
 
+    Dummy(VolumeField& field, Operator::Type type) : OperatorMixin(field.exec(), field, type) {}
+
     void explicitOperation(Field& source)
     {
         auto sourceSpan = source.span();
@@ -40,6 +42,44 @@ public:
         );
     }
 
+    void implicitOperation(la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& ls)
+    {
+        auto values = ls.matrix().values();
+        auto rhs = ls.rhs().span();
+        auto fieldSpan = field_.internalField().span();
+        auto coeff = getCoefficient();
+
+        // update diag
+        NeoFOAM::parallelFor(
+            exec(),
+            {0, values.size()},
+            KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldSpan[i]; }
+        );
+
+        // update rhs
+        NeoFOAM::parallelFor(
+            exec(),
+            ls.rhs().range(),
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldSpan[i]; }
+        );
+    }
+
+    la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> createEmptyLinearSystem() const
+    {
+        NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
+        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0.0);
+        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), {0, 1});
+        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
+            values, colIdx, rowPtrs
+        );
+
+        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 1, 0.0);
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
+            csrMatrix, rhs, "diagonal"
+        );
+        return linearSystem;
+    }
+
     std::string getName() const { return "Dummy"; }
 };
 
@@ -47,4 +87,17 @@ NeoFOAM::scalar getField(const NeoFOAM::Field<NeoFOAM::scalar>& source)
 {
     auto sourceField = source.copyToHost();
     return sourceField.span()[0];
+}
+
+
+NeoFOAM::scalar getDiag(const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls)
+{
+    auto hostLs = ls.copyToHost();
+    return hostLs.matrix().values()[0];
+}
+
+NeoFOAM::scalar getRhs(const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls)
+{
+    auto hostLs = ls.copyToHost();
+    return hostLs.rhs().span()[0];
 }

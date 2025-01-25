@@ -26,11 +26,12 @@ TEST_CASE("Expression")
     auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
     auto fB = Field(exec, 1, 4.0);
 
-    auto a = Dummy(vf);
-    auto b = Dummy(vf);
 
     SECTION("Create equation and perform explicitOperation on " + execName)
     {
+        auto a = Dummy(vf);
+        auto b = Dummy(vf);
+
         auto eqnA = a + b;
         auto eqnB = fB * Dummy(vf) + 2 * Dummy(vf);
         auto eqnC = Expression(2 * a - b);
@@ -48,5 +49,41 @@ TEST_CASE("Expression")
         REQUIRE(getField(eqnD.explicitOperation(size)) == 6);
         REQUIRE(getField(eqnE.explicitOperation(size)) == 4);
         REQUIRE(getField(eqnF.explicitOperation(size)) == 0);
+    }
+
+    SECTION("Create equation and perform implicitOperation on " + execName)
+    {
+        auto a = Dummy(vf, Operator::Type::Implicit);
+        auto b = Dummy(vf, Operator::Type::Implicit);
+
+        auto eqnA = a + b;
+        auto eqnB =
+            fB * Dummy(vf, Operator::Type::Implicit) + 2 * Dummy(vf, Operator::Type::Implicit);
+        auto eqnC = Expression(2 * a - b);
+        auto eqnD = 3 * (2 * a - b);
+        auto eqnE = (2 * a - b) + (2 * a - b);
+        auto eqnF = (2 * a - b) - (2 * a - b);
+
+        REQUIRE(eqnA.size() == 2);
+        REQUIRE(eqnB.size() == 2);
+        REQUIRE(eqnC.size() == 2);
+
+        REQUIRE(getDiag(eqnA.implicitOperation()) == 4);
+        REQUIRE(getRhs(eqnA.implicitOperation()) == 4);
+
+        REQUIRE(getDiag(eqnB.implicitOperation()) == 12);
+        REQUIRE(getRhs(eqnB.implicitOperation()) == 12);
+
+        REQUIRE(getDiag(eqnC.implicitOperation()) == 2);
+        REQUIRE(getRhs(eqnC.implicitOperation()) == 2);
+
+        REQUIRE(getDiag(eqnD.implicitOperation()) == 6);
+        REQUIRE(getRhs(eqnD.implicitOperation()) == 6);
+
+        REQUIRE(getDiag(eqnE.implicitOperation()) == 4);
+        REQUIRE(getRhs(eqnE.implicitOperation()) == 4);
+
+        REQUIRE(getDiag(eqnF.implicitOperation()) == 0);
+        REQUIRE(getRhs(eqnF.implicitOperation()) == 0);
     }
 }

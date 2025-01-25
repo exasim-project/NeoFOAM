@@ -8,8 +8,11 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/linearAlgebra.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
+
+namespace la = NeoFOAM::la;
 
 namespace NeoFOAM::dsl
 {
@@ -59,6 +62,21 @@ public:
             oper.explicitOperation(source);
         }
         return source;
+    }
+
+    /* @brief perform all implicit operation and accumulate the result */
+    la::LinearSystem<scalar, localIdx> implicitOperation()
+    {
+        if (implicitOperators_.empty())
+        {
+            NF_ERROR_EXIT("No implicit operators in the expression");
+        }
+        auto ls = implicitOperators_[0].createEmptyLinearSystem();
+        for (auto& oper : implicitOperators_)
+        {
+            oper.implicitOperation(ls);
+        }
+        return ls;
     }
 
     void addOperator(const Operator& oper)

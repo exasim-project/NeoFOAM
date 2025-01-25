@@ -15,6 +15,16 @@ void Operator::explicitOperation(Field<scalar>& source) { model_->explicitOperat
 
 void Operator::temporalOperation(Field<scalar>& field) { model_->temporalOperation(field); }
 
+void Operator::implicitOperation(la::LinearSystem<scalar, localIdx>& ls)
+{
+    model_->implicitOperation(ls);
+}
+
+la::LinearSystem<scalar, localIdx> Operator::createEmptyLinearSystem() const
+{
+    return model_->createEmptyLinearSystem();
+}
+
 Operator::Type Operator::getType() const { return model_->getType(); }
 
 Coeff& Operator::getCoefficient() { return model_->getCoefficient(); }
