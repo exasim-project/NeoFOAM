@@ -91,7 +91,7 @@ void SparsityPattern::update()
             size_t nFaces = nFacesPerCellSpan[static_cast<size_t>(celli)];
             diagOffsetSpan[celli] = nFaces;
             sColIdx[rowPtrs[celli] + nFaces] = celli;
-            return nFacesPerCellSpan[nFaces] + 1;
+            return nFaces + 1;
         }
     );
 
