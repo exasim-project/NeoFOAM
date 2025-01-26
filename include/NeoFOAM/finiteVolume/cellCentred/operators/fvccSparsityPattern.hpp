@@ -18,11 +18,26 @@ public:
 
     SparsityPattern(const UnstructuredMesh& mesh);
 
-    la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> compute() const;
+    void update();
+
+    const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& linearSystem() const;
+
+    const Field<uint8_t>& ownerOffset() const;
+
+    const Field<uint8_t>& neighbourOffset() const;
+
+    const Field<uint8_t>& diagOffset() const;
+
+    // add selection mechanism via dictionary later
+    static const std::shared_ptr<SparsityPattern> readOrCreate(const UnstructuredMesh& mesh);
 
 private:
 
     const UnstructuredMesh& mesh_;
+    la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls_;
+    Field<uint8_t> ownerOffset_;
+    Field<uint8_t> neighbourOffset_;
+    Field<uint8_t> diagOffset_;
 };
 
 } // namespace NeoFOAM::finiteVolume::cellCentred

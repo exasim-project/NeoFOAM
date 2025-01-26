@@ -7,9 +7,26 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-SparsityPattern::SparsityPattern(const UnstructuredMesh& mesh) : mesh_(mesh) {}
+SparsityPattern::SparsityPattern(const UnstructuredMesh& mesh)
+    : mesh_(mesh), ls_(mesh_.exec()), ownerOffset_(mesh_.exec(), mesh_.nInternalFaces(), 0),
+      neighbourOffset_(mesh_.exec(), mesh_.nInternalFaces(), 0),
+      diagOffset_(mesh_.exec(), mesh_.nCells(), 0)
+{
+    update();
+}
 
-la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> SparsityPattern::compute() const
+const std::shared_ptr<SparsityPattern> SparsityPattern::readOrCreate(const UnstructuredMesh& mesh)
+{
+    StencilDataBase& stencilDb = mesh.stencilDB();
+    if (!stencilDb.contains("SparsityPattern"))
+    {
+        stencilDb.insert(std::string("SparsityPattern"), std::make_shared<SparsityPattern>(mesh));
+    }
+    return stencilDb.get<std::shared_ptr<SparsityPattern>>("SparsityPattern");
+}
+
+
+void SparsityPattern::update()
 {
     const auto exec = mesh_.exec();
     const localIdx nCells = mesh_.nCells();
@@ -21,120 +38,99 @@ la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> SparsityPattern::compute() 
     // start with one to include the diagonal
     Field<localIdx> nFacesPerCell(exec, nCells, 1);
     std::span<localIdx> nFacesPerCellSpan = nFacesPerCell.span();
+    std::span<uint8_t> neighbourOffsetSpan = neighbourOffset_.span();
+    std::span<uint8_t> ownerOffsetSpan = ownerOffset_.span();
+    std::span<uint8_t> diagOffsetSpan = diagOffset_.span();
 
     // only the internalfaces define the sparsity pattern
+    // get the number of faces per cell to allocate the correct size
     parallelFor(
         exec,
         {0, nInternalFaces},
-        KOKKOS_LAMBDA(const size_t i) {
-            Kokkos::atomic_increment(&nFacesPerCellSpan[static_cast<size_t>(faceOwner[i])]
-            ); // hit on performance on serial
-            Kokkos::atomic_increment(&nFacesPerCellSpan[static_cast<size_t>(faceNeighbour[i])]);
+        KOKKOS_LAMBDA(const size_t facei) {
+            // hit on performance on serial
+            size_t owner = static_cast<size_t>(faceOwner[facei]);
+            size_t neighbour = static_cast<size_t>(faceNeighbour[facei]);
+
+            Kokkos::atomic_increment(&nFacesPerCellSpan[owner]);
+            Kokkos::atomic_increment(&nFacesPerCellSpan[neighbour]);
         }
     );
+
 
     Field<localIdx> rowPtrs(exec, nCells + 1, 0);
     auto nEntries = NeoFOAM::segmentsFromIntervals(nFacesPerCell, rowPtrs);
     NeoFOAM::Field<NeoFOAM::scalar> values(exec, nEntries, 0.0);
     NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, nEntries, 0);
     std::span<localIdx> sColIdx = colIdx.span();
+    fill(nFacesPerCell, 0); // reset nFacesPerCell
 
+    // compute the lower triangular part of the matrix
     parallelFor(
         exec,
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t facei) {
-            size_t owner = static_cast<size_t>(faceOwner[facei]);
             size_t neighbour = static_cast<size_t>(faceNeighbour[facei]);
+            size_t owner = static_cast<size_t>(faceOwner[facei]);
 
             // return the oldValues
-            size_t segIdxOwn = Kokkos::atomic_fetch_add(
-                &nFacesPerCellSpan[owner], 1
-            ); // hit on performance on serial
+            // hit on performance on serial
             size_t segIdxNei = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[neighbour], 1);
+            neighbourOffsetSpan[facei] = segIdxNei;
 
-            size_t startSegOwn = rowPtrs[owner];
             size_t startSegNei = rowPtrs[neighbour];
-
-            Kokkos::atomic_assign(&sColIdx[startSegOwn + segIdxOwn], owner);
-            Kokkos::atomic_assign(&sColIdx[startSegNei + segIdxNei], neighbour);
+            // neighbour --> current cell
+            // colIdx --> needs to be store the owner
+            Kokkos::atomic_assign(&sColIdx[startSegNei + segIdxNei], owner);
         }
     );
 
-    SegmentedField<localIdx, localIdx> sPattern(colIdx, rowPtrs); // guessed
-    auto sPatternView = sPattern.view();
+    map(
+        nFacesPerCell,
+        KOKKOS_LAMBDA(const size_t celli) {
+            size_t nFaces = nFacesPerCellSpan[static_cast<size_t>(celli)];
+            diagOffsetSpan[celli] = nFaces;
+            sColIdx[rowPtrs[celli] + nFaces] = celli;
+            return nFacesPerCellSpan[nFaces] + 1;
+        }
+    );
 
-    // parallelFor(
-    //     exec,
-    //     {0, sPattern.numSegments()},
-    //     KOKKOS_LAMBDA(const size_t segI) {
-    //         auto vals = sPatternView.span(segI);
-    //         // std::sort(vals.begin(), vals.end());
-    //     }
-    // );
+    // compute the upper triangular part of the matrix
+    parallelFor(
+        exec,
+        {0, nInternalFaces},
+        KOKKOS_LAMBDA(const size_t facei) {
+            size_t neighbour = static_cast<size_t>(faceNeighbour[facei]);
+            size_t owner = static_cast<size_t>(faceOwner[facei]);
 
-    // NeoFOAM::Field<NeoFOAM::scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-    // NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-    // NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
+            // return the oldValues
+            // hit on performance on serial
+            size_t segIdxOwn = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[owner], 1);
+            ownerOffsetSpan[facei] = segIdxOwn;
+
+            size_t startSegOwn = rowPtrs[owner];
+            // owner --> current cell
+            // colIdx --> needs to be store the neighbour
+            Kokkos::atomic_assign(&sColIdx[startSegOwn + segIdxOwn], neighbour);
+        }
+    );
+
     NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
     NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, nCells, 0.0);
-    NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
-    // parallelFor(
-    //     exec,
-    //     {0, faceFaceCells.size()},
-    //     KOKKOS_LAMBDA(const size_t i) {
-    //         Kokkos::atomic_increment(&nFacesPerCellSpan[faceFaceCells[i]]);
-    //     }
-    // );
-
-    // SegmentedField<localIdx, localIdx> stencil(nFacesPerCell); // guessed
-    // auto [stencilValues, segment] = stencil.spans();
-
-    // fill(nFacesPerCell, 0); // reset nFacesPerCell
-
-    // parallelFor(
-    //     exec,
-    //     {0, nInternalFaces},
-    //     KOKKOS_LAMBDA(const size_t facei) {
-    //         size_t owner = static_cast<size_t>(faceOwner[facei]);
-    //         size_t neighbour = static_cast<size_t>(faceNeighbour[facei]);
-
-    //         // return the oldValues
-    //         size_t segIdxOwn = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[owner], 1); // hit on
-    //         performance on serial size_t segIdxNei =
-    //         Kokkos::atomic_fetch_add(&nFacesPerCellSpan[neighbour], 1);
-
-    //         size_t startSegOwn = segment[owner];
-    //         size_t startSegNei = segment[neighbour];
-    //         Kokkos::atomic_assign(&stencilValues[startSegOwn + segIdxOwn], facei);
-    //         Kokkos::atomic_assign(&stencilValues[startSegNei + segIdxNei], facei);
-    //     }
-    // );
-
-    // parallelFor(
-    //     exec,
-    //     {nInternalFaces, nInternalFaces + faceFaceCells.size()},
-    //     KOKKOS_LAMBDA(const size_t facei) {
-    //         size_t owner = static_cast<size_t>(faceFaceCells[facei - nInternalFaces]);
-    //         // return the oldValues
-    //         size_t segIdxOwn = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[owner], 1); // hit on
-    //         performance on serial size_t startSegOwn = segment[owner];
-    //         Kokkos::atomic_assign(&stencilValues[startSegOwn + segIdxOwn], facei);
-    //     }
-    // );
-
-    // // print elements per cell
-    // auto stencilView = stencil.view();
-    // for (size_t i = 0; i < nCells; i++)
-    // {
-    //     std::cout << "Cell " << i << " has " << nFacesPerCellSpan[i] << " faces" << std::endl;
-    //     for (auto& values: stencilView.span(i))
-    //     {
-    //         std::cout << "Face " << values << std::endl;
-    //     }
-    // }
-
-    return linearSystem;
+    ls_ = NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>(csrMatrix, rhs);
 }
+
+const NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>&
+SparsityPattern::linearSystem() const
+{
+    return ls_;
+}
+
+const NeoFOAM::Field<uint8_t>& SparsityPattern::ownerOffset() const { return ownerOffset_; }
+
+const NeoFOAM::Field<uint8_t>& SparsityPattern::neighbourOffset() const { return neighbourOffset_; }
+
+const NeoFOAM::Field<uint8_t>& SparsityPattern::diagOffset() const { return diagOffset_; }
 
 } // namespace NeoFOAM::finiteVolume::cellCentred
