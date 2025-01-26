@@ -29,6 +29,8 @@ public:
         NF_ASSERT(matrix.nRows() == rhs.size(), "Matrix and RHS size mismatch");
     };
 
+    LinearSystem(const LinearSystem& ls) : matrix_(ls.matrix_), rhs_(ls.rhs_) {};
+
     LinearSystem(const Executor exec) : matrix_(exec), rhs_(exec, 0) {}
 
     ~LinearSystem() = default;
