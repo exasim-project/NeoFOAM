@@ -73,6 +73,43 @@ TEST_CASE("MatrixAssembly - Ginkgo")
             CHECK(hostOut[i] == expected[i]);
         }
     }
+
+    SECTION("Solve matrix " + execName)
+    {
+        NeoFOAM::la::ginkgo::MatrixBuilder<double> builder(exec, {3, 3}, 3 * 3);
+        auto kokkosAssembly = builder.startAssembly();
+        NeoFOAM::parallelFor(
+            exec,
+            {0, 3},
+            KOKKOS_LAMBDA(const int i) {
+                kokkosAssembly.insert(i * 3, {i, i - 1, i > 0 ? -1.0 : 0});
+                kokkosAssembly.insert(i * 3 + 1, {i, i, 2});
+                kokkosAssembly.insert(i * 3 + 2, {i, i + 1, (i < 3 - 1) ? -1.0 : 0});
+            }
+        );
+        NeoFOAM::la::ginkgo::Matrix matrix(std::move(builder));
+        NeoFOAM::Field<double> in(exec, {1, 1, 1});
+        NeoFOAM::Field<double> out(exec, {0, 0, 0});
+        NeoFOAM::Field<double> expected(NeoFOAM::SerialExecutor {}, {1, 0, 1});
+
+        // Create solver factory
+        auto solver_gen = gko::solver::cg::build()
+                              .with_criteria(
+                                  gko::stop::Iteration::build().with_max_iters(20u),
+                                  gko::stop::ResidualNorm<ValueType>::build().with_reduction_factor(
+                                      reduction_factor
+                                  )
+                              )
+                              // Add preconditioner, these 2 lines are the only
+                              // difference from the simple solver example
+                              // .with_preconditioner(bj::build().with_max_block_size(8u))
+                              .on(getGkoExecutor(exec));
+        // Create solver
+        // auto solver = solver_gen->generate(A);
+
+        // // Solve system
+        // solver->apply(b, x);
+    }
 }
 
 #endif
