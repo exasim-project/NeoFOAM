@@ -19,6 +19,7 @@ scalar computeCoNum(
     VolumeField<scalar> phi(
         exec, "phi", mesh, createCalculatedBCs<VolumeBoundary<scalar>>(mesh)
     );
+    fill(phi.internalField(), 0.0);
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
 
     const auto volPhi = phi.internalField().span();
@@ -63,9 +64,6 @@ scalar computeCoNum(
     }
     else
     {
-	// FIXME: If executor GPU the Courant numbers are off with origin in this parallelFor.
-	//        If executor CPU the values are correct.
-	//        If executor Serial (in if branch above) the values are correct.
 	// TODO:  Unit testing...
         parallelFor(
             exec,
@@ -74,7 +72,6 @@ scalar computeCoNum(
                 scalar flux = Kokkos::sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
                 Kokkos::atomic_add(&volPhi[static_cast<size_t>(surfOwner[i])], flux);
                 Kokkos::atomic_add(&volPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-                printf("nei own flux %d %d %ld %.10e \n", surfNeighbour[i], surfOwner[i], i, flux);
             }
         );
 
@@ -85,7 +82,6 @@ scalar computeCoNum(
                 auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar flux = Kokkos::sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
                 Kokkos::atomic_add(&volPhi[own], flux);
-                printf("own flux %ld %ld %.10e \n", own, i, flux);
             }
         );
 
@@ -99,8 +95,6 @@ scalar computeCoNum(
             KOKKOS_LAMBDA(const size_t celli, NeoFOAM::scalar& lmax) {
 	        NeoFOAM::scalar val = (volPhi[celli] / surfV[celli]);
                 if( val > lmax ) lmax = val;
-                printf("volPhi %ld %.10e \n", celli, volPhi[celli]);
-                //printf("surfV %ld %.10e \n", celli, surfV[celli]);
             },
             maxReducer
         );
