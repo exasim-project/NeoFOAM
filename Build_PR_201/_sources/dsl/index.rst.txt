@@ -49,12 +49,12 @@ The NeoFOAM DSL is designed as drop in replacement for OpenFOAM DSL and the adop
 
     dsl::Equation<NeoFOAM::scalar> UEqn
     (
-        dsl::temporal::ddt(U)
-        + dsl::implicit::div(phi, U)
-        - dsl::implicit::laplacian(nu, U)
+        dsl::imp::ddt(U)
+        + dsl::imp::div(phi, U)
+        - dsl::imp::laplacian(nu, U)
     )
 
-    solve(UEqn == -dsl::explicit::grad(p), U, fvSchemes, fvSolution);
+    solve(UEqn == -dsl::exp::grad(p), U, fvSchemes, fvSolution);
 
 
 In contrast to OpenFOAM, the matrix assembly is deferred till the solve step. Hence the majority of the computational work is performed during the solve step.
