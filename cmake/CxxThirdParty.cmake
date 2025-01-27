@@ -118,6 +118,9 @@ if(${NEOFOAM_WITH_GINKGO})
   set(GINKGO_BUILD_EXAMPLES
       OFF
       CACHE INTERNAL "")
+  set(GINKGO_BUILD_EXAMPLES
+      OFF
+      CACHE INTERNAL "")
   cpmaddpackage(
     NAME
     Ginkgo

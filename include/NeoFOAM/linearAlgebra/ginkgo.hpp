@@ -5,8 +5,6 @@
 
 #if NF_WITH_GINKGO
 
-#define KOKKOS_ENABLE_SERIAL 1
-
 #include <ginkgo/ginkgo.hpp>
 #include <ginkgo/extensions/kokkos.hpp>
 
