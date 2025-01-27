@@ -50,6 +50,22 @@ cpmaddpackage(
   https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
 
+if(${NEOFOAM_WITH_PETSC})
+  find_package(MPI) # make it REQUIRED, if you want
+  message("${MPI_CXX_COMPILER}")
+  message("${MPI_C_COMPILER}")
+  message("${MPI_FOUND}")
+  if(MPI_FOUND)
+    set(PETSC_CXX_COMPILER ${MPI_CXX_COMPILER})
+    set(PETSC_C_COMPILER ${MPI_C_COMPILER})
+  else()
+    set(PETSC_CXX_COMPILER ${CMAKE_CXX_COMPILER})
+    set(PETSC_C_COMPILER ${CMAKE_CXX_COMPILER})
+  endif()
+  find_package(PkgConfig REQUIRED)
+  pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
+endif()
+
 if(${NEOFOAM_WITH_SUNDIALS})
 
   set(SUNDIALS_OPTIONS
