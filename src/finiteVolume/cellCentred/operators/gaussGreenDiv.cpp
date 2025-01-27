@@ -8,11 +8,82 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
+/* @brief free standing function implementation of the divergence operator
+** ie computes \sum_f S_f \cdot \phi_f
+**
+** @param faceFlux
+*/
+template<typename ValueType>
+void computeDiv(
+    const Executor& exec,
+    size_t nInternalFaces,
+    size_t nBoundaryFaces,
+    const std::span<int> neighbour,
+    const std::span<int> owner,
+    const std::span<int> faceCells,
+    const std::span<ValueType> faceFlux,
+    const std::span<ValueType> phiF,
+    const std::span<scalar> V,
+    std::span<ValueType> divPhi
+)
+{
+    size_t nCells {V.size()};
+    // check if the executor is GPU
+    if (std::holds_alternative<SerialExecutor>(exec))
+    {
+        for (size_t i = 0; i < faceFlux.size(); i++)
+        {
+            scalar flux = faceFlux[i] * phiF[i];
+            divPhi[static_cast<size_t>(owner[i])] += flux;
+            divPhi[static_cast<size_t>(neighbour[i])] -= flux;
+        }
+
+        for (size_t i = nInternalFaces; i < nInternalFaces + nBoundaryFaces; i++)
+        {
+            auto own = static_cast<size_t>(faceCells[i - nInternalFaces]);
+            scalar valueOwn = faceFlux[i] * phiF[i];
+            divPhi[own] += valueOwn;
+        }
+
+        for (size_t celli = 0; celli < nCells; celli++)
+        {
+            divPhi[celli] *= 1 / V[celli];
+        }
+    }
+    else
+    {
+        parallelFor(
+            exec,
+            {0, nInternalFaces},
+            KOKKOS_LAMBDA(const size_t i) {
+                scalar flux = faceFlux[i] * phiF[i];
+                Kokkos::atomic_add(&divPhi[static_cast<size_t>(owner[i])], flux);
+                Kokkos::atomic_sub(&divPhi[static_cast<size_t>(neighbour[i])], flux);
+            }
+        );
+
+        parallelFor(
+            exec,
+            {nInternalFaces, nBoundaryFaces},
+            KOKKOS_LAMBDA(const size_t i) {
+                auto own = static_cast<size_t>(faceCells[i - nInternalFaces]);
+                scalar valueOwn = faceFlux[i] * phiF[i];
+                Kokkos::atomic_add(&divPhi[own], valueOwn);
+            }
+        );
+
+        parallelFor(
+            exec, {0, nCells}, KOKKOS_LAMBDA(const size_t celli) { divPhi[celli] *= 1 / V[celli]; }
+        );
+    }
+}
+
+
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp,
-    Field<scalar>& divPhi
+    VolumeField<scalar>& divPhi
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -30,69 +101,9 @@ void computeDiv(
     const auto surfOwner = mesh.faceOwner().span();
     const auto surfNeighbour = mesh.faceNeighbour().span();
     const auto surfFaceFlux = faceFlux.internalField().span();
-    size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
-
-    // check if the executor is GPU
-    if (std::holds_alternative<SerialExecutor>(exec))
-    {
-        for (size_t i = 0; i < nInternalFaces; i++)
-        {
-            scalar flux = surfFaceFlux[i] * surfPhif[i];
-            surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
-            surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
-        }
-
-        for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
-        {
-            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-            scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
-            surfDivPhi[own] += valueOwn;
-        }
-
-        for (size_t celli = 0; celli < mesh.nCells(); celli++)
-        {
-            surfDivPhi[celli] *= 1 / surfV[celli];
-        }
-    }
-    else
-    {
-        parallelFor(
-            exec,
-            {0, nInternalFaces},
-            KOKKOS_LAMBDA(const size_t i) {
-                scalar flux = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
-                Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {nInternalFaces, surfPhif.size()},
-            KOKKOS_LAMBDA(const size_t i) {
-                auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-                scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) { surfDivPhi[celli] *= 1 / surfV[celli]; }
-        );
-    }
-}
-
-void computeDiv(
-    const SurfaceField<scalar>& faceFlux,
-    const VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp,
-    VolumeField<scalar>& divPhi
-)
-{
     Field<scalar>& divPhiField = divPhi.internalField();
+    size_t nInternalFaces = mesh.nInternalFaces();
     computeDiv(faceFlux, phi, surfInterp, divPhiField);
 }
 
