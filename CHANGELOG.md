@@ -2,7 +2,6 @@
 ## Features
 - add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
 - Adds a minimal implementation linear algebra functionality [#219](https://github.com/exasim-project/NeoFOAM/pull/219)
-- add petsc as external library [#242] (https://github.com/exasim-project/NeoFOAM/pull/242)
 ## Fixes
 # Version 0.1.0
 - improve build with MSVC and Clang on Windows [#163](https://github.com/exasim-project/NeoFOAM/pull/163)
