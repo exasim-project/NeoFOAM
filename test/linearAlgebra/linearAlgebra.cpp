@@ -131,8 +131,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         // // Solve system
         solver->apply(gkoRhs, gkoX);
 
-        NeoFOAM::Field<NeoFOAM::scalar> outX(exec, gkoX->get_const_values(), nrows);
-        auto hostX = outX.copyToHost();
+        auto hostX = x.copyToHost();
         for (size_t i = 0; i < nrows; ++i)
         {
             CHECK(hostX[i] != 0.0);
