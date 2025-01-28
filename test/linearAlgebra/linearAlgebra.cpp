@@ -7,10 +7,7 @@
 
 #define KOKKOS_ENABLE_SERIAL
 
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
-#include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
-#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
-#include "NeoFOAM/core/parallelAlgorithms.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #if NF_WITH_GINKGO
 
@@ -59,48 +56,18 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs);
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
-        size_t nrows = linearSystem.rhs().size();
-        auto gkoExec = NeoFOAM::la::ginkgo::getGkoExecutor(exec);
-        auto gkoRhs = gko::matrix::Dense<NeoFOAM::scalar>::create(
-            gkoExec,
-            gko::dim<2> {nrows, 1},
-            gko::array<NeoFOAM::scalar>::view(gkoExec, nrows, linearSystem.rhs().data()),
-            1
-        );
-        auto gkoX = gko::matrix::Dense<NeoFOAM::scalar>::create(
-            gkoExec,
-            gko::dim<2> {nrows, 1},
-            gko::array<NeoFOAM::scalar>::view(gkoExec, nrows, x.data()),
-            1
-        );
+        NeoFOAM::Dictionary solverDict;
+        solverDict.insert("maxIters", 100);
+        solverDict.insert("relTol", float(1e-7));
 
-        auto valuesView = gko::array<NeoFOAM::scalar>::view(gkoExec, values.size(), values.data());
-        auto colIdxView = gko::array<int>::view(gkoExec, colIdx.size(), colIdx.data());
-        auto rowPtrView = gko::array<int>::view(gkoExec, rowPtrs.size(), rowPtrs.data());
-
-        auto gkoA = gko::share(gko::matrix::Csr<NeoFOAM::scalar, int>::create(
-            gkoExec, gko::dim<2> {nrows, nrows}, valuesView, colIdxView, rowPtrView
-        ));
-
-        // Create solver factory
-        auto solver_gen =
-            gko::solver::Cg<NeoFOAM::scalar>::build()
-                .with_criteria(
-                    gko::stop::Iteration::build().with_max_iters(20u),
-                    gko::stop::ResidualNorm<NeoFOAM::scalar>::build().with_reduction_factor(1e-07)
-                )
-                // Add preconditioner, these 2 lines are the only
-                // difference from the simple solver example
-                // .with_preconditioner(bj::build().with_max_block_size(8u))
-                .on(gkoExec);
         // Create solver
-        auto solver = solver_gen->generate(gkoA);
+        auto solver = NeoFOAM::la::ginkgo::CG<NeoFOAM::scalar>(exec, solverDict);
 
-        // // Solve system
-        solver->apply(gkoRhs, gkoX);
+        // Solve system
+        solver.solve(linearSystem, x);
 
         auto hostX = x.copyToHost();
-        for (size_t i = 0; i < nrows; ++i)
+        for (size_t i = 0; i < x.size(); ++i)
         {
             CHECK(hostX[i] != 0.0);
         }
