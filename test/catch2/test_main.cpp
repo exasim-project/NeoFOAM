@@ -10,10 +10,6 @@
 
 #include <Kokkos_Core.hpp>
 
-#if NF_WITH_PETSC
-#include <petsc.h>
-#endif
-
 int main(int argc, char* argv[])
 {
 
