@@ -128,8 +128,6 @@ if(${NEOFOAM_WITH_GINKGO})
     ginkgo-project/ginkgo
     GIT_TAG
     develop
-    VERSION
-    1.9.0
     SYSTEM)
 endif()
 
