@@ -20,11 +20,6 @@ int main(int argc, char* argv[])
     // Initialize Catch2
     Kokkos::initialize(argc, argv);
 
-    // Initialize Petsc
-#if NF_WITH_PETSC
-    PetscCall(PetscInitialize(&argc, &argv, nullptr, nullptr));
-#endif
-
     // ensure any kokkos initialization output will appear first
     std::cout << std::flush;
     std::cerr << std::flush;

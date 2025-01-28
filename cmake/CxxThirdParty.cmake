@@ -133,11 +133,6 @@ if(${NEOFOAM_WITH_GINKGO})
     SYSTEM)
 endif()
 
-if(${NEOFOAM_WITH_PETSC})
-  find_package(PkgConfig REQUIRED)
-  pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
-endif()
-
 if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(
     NAME
@@ -146,37 +141,5 @@ if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
     https://github.com/catchorg/Catch2/archive/refs/tags/v3.4.0.zip
     VERSION
     3.4.0
-    SYSTEM)
-endif()
-
-if(${NEOFOAM_WITH_SUNDIALS})
-  set(SUNDIALS_OPTIONS
-      "BUILD_TESTING OFF"
-      "EXAMPLES_INSTALL OFF"
-      "BUILD_STATIC_LIBS OFF"
-      "BUILD_SHARED_LIBS ON"
-      "BUILD_ARKODE ON"
-      "BUILD_CVODE OFF"
-      "BUILD_CVODES OFF"
-      "BUILD_IDA OFF"
-      "BUILD_IDAS OFF"
-      "BUILD_KINSOL OFF"
-      "BUILD_CPODES OFF")
-  if(Kokkos_ENABLE_CUDA)
-    set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA ON" "SUNDIALS_BUILD_KOKKOS ON")
-  else()
-    set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA OFF" "SUNDIALS_BUILD_KOKKOS ON")
-  endif()
-
-  cpmaddpackage(
-    NAME
-    sundials
-    GITHUB_REPOSITORY
-    LLNL/sundials
-    VERSION
-    7.1.1
-    OPTIONS
-    ${SUNDIALS_OPTIONS}
-    ${SUNDIALS_CUDA_OPTIONS}
     SYSTEM)
 endif()
