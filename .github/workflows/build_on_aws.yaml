@@ -37,11 +37,11 @@ jobs:
           aws-region: us-east-1
       - name: Start EC2 runner
         id: start-ec2-runner
-        uses: HendriceH/ec2-github-runner@v1.10  # Starts 60GB Root + 30 GB Share volume
+        uses: machulav/ec2-github-runner@v2.3.8
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-09850873fdddbce78
+          ec2-image-id: ami-016cbffe7e42b2547
           ec2-instance-type: g4ad.xlarge
           iam-role-name: Role4Github
           subnet-id: subnet-87eb68a6
@@ -54,29 +54,30 @@ jobs:
             ]
           pre-runner-script: |
                  #!/bin/bash
-                 sudo yum update -y && \
-                 sudo yum install docker git libicu ninja-build libasan10 -y
-                 sudo amazon-linux-extras install epel -y
-                 sudo yum install Lmod -y
-                 sudo systemctl enable docker
-                 sudo mkfs -t xfs /dev/sda1
-                 sudo mkdir -p /share
-                 sudo mount /dev/sda1 /share
-                 aws s3 cp s3://ucfd-share/pcluster/3.x/alinux2/x86_64/postinstall_github .
-                 chmod +x postinstall_github
-                 sudo ./postinstall_github > ~/install.log
-                 mkdir -p /share/ec2-user
-                 export USER=ec2-user
-                 cd /share/ec2-user
-                 mkdir .nvm
-                 export NVM_DIR=/share/ec2-user/.nvm
-                 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-                 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                 nvm install v16.20.2
-                 echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
-                 echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
+                 . /root/spack/share/spack/setup-env.sh 
+                 #sudo yum update -y && \
+                 #sudo yum install docker git libicu ninja-build libasan10 -y
+                 #sudo amazon-linux-extras install epel -y
+                 #sudo yum install Lmod -y
+                 #sudo systemctl enable docker
+                 #sudo mkfs -t xfs /dev/sda1
+                 #sudo mkdir -p /share
+                 #sudo mount /dev/sda1 /share
+                 #aws s3 cp s3://ucfd-share/pcluster/3.x/alinux2/x86_64/postinstall_github .
+                 #chmod +x postinstall_github
+                 #sudo ./postinstall_github > ~/install.log
+                 #mkdir -p /share/ec2-user
+                 #export USER=ec2-user
+                 #cd /share/ec2-user
+                 #mkdir .nvm
+                 #export NVM_DIR=/share/ec2-user/.nvm
+                 #sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+                 #[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                 #nvm install v16.20.2
+                 #echo "NVM_DIR=/share/ec2-user/.nvm" >> $GITHUB_ENV
+                 #echo "NVM_BIN=/share/ec2-user/.nvm/versions/node/v16.20.2/bin" >> $GITHUB_ENV
                  # load rocm
-                 echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/yum/6.2.4/main/\nenabled=1\ngpgcheck=1\ngpgkey=https://repo.radeon.com/rocm/rocm.gpg.key" | sudo tee /etc/yum.repos.d/rocm.repo > /dev/null
+                 #echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/yum/6.2.4/main/\nenabled=1\ngpgcheck=1\ngpgkey=https://repo.radeon.com/rocm/rocm.gpg.key" | sudo tee /etc/yum.repos.d/rocm.repo > /dev/null
                  #sudo yum install amdgpu -y
                  #sudo yum install rocm-libs -y
                  #cp /opt/rocm/lib/rocmmod /share/lmod/modulefiles/Compilers/rocm-6.2.4
@@ -90,15 +91,6 @@ jobs:
       matrix:
         preset: ["develop", "production"]
     steps:
-      - name: Prepare environment
-        shell: bash -i {0}
-        run: |
-          . /share/ec2-user/.nvm/nvm.sh
-          nvm -v
-          nvm install v16.20.2
-          node -v
-          sudo rm /share/software/actions-runner/externals/node20/bin/node
-          ln -s /share/ec2-user/.nvm/versions/node/v16.20.2/bin/node /share/software/actions-runner/externals/node20/bin/node
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Set up cache
@@ -110,11 +102,12 @@ jobs:
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
-          export HOME=/share/ec2-user
-          module load clang/16
-          module load libfabric-aws
-          module spider libfabric-aws
-          module load cmake
+          . /root/spack/share/spack/setup-env.sh
+          spack load cmake
+          spack load rocthrust
+          spack load hip
+          spack load kokkos
+          module load clang/17
           cmake --version
           CC=clang \
           CXX=clang++ \
@@ -122,15 +115,14 @@ jobs:
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
             -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-            -DKokkos_ENABLE_CUDA=ON
+            -DKokkos_ENABLE_HIP=ON
           cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
         run: |
-          export HOME=/share/ec2-user
-          module load clang/16
-          module load libfabric-aws
-          module load cmake
+          . /root/spack/share/spack/setup-env.sh
+          module load clang/17
+          spack load cmake
           ctest --preset ${{matrix.preset}}
   benchmark-on-aws:
     name: Benchmark on aws
@@ -141,11 +133,9 @@ jobs:
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
-          export HOME=/share/ec2-user
-          module load clang/16
-          module load libfabric-aws
-          module spider libfabric-aws
-          module load cmake
+          . /root/spack/share/spack/setup-env.sh
+          module load clang/17
+          spack load cmake
           cmake --version
           python3 -m pip install xmltodict
           CC=clang \
@@ -201,7 +191,7 @@ jobs:
           role-to-assume: arn:aws:iam::308634587211:role/Github-OIDC-Role-29bocUD8VBZr
           aws-region: us-east-1
       - name: Stop EC2 runner
-        uses: HendriceH/ec2-github-runner@v1.10
+        uses: machulav/ec2-github-runner@v2.3.8
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
