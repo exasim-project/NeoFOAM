@@ -56,6 +56,8 @@ jobs:
                  #!/bin/bash
                  . /root/spack/share/spack/setup-env.sh
                  spack install node-js
+                 echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
+                 echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
 
   build-on-aws:
     name: Build on aws
@@ -71,9 +73,8 @@ jobs:
         run: |
           sudo rm /actions-runner/externals/node20/bin/node
           sudo ln -s /root/spack/opt/spack/linux-centos7-x86_64_v3/gcc-10.5.0/node-js-22.11.0-mrucyknlrjtbai4kihv5widviflhliip/bin/node /actions-runner/externals/node20/bin/node
-          module use /usr/share/lmod/lmod/modulefiles/Compilers
       - name: Checkout NeoFOAM
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up cache
         uses: actions/cache@v3
         if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
@@ -101,7 +102,7 @@ jobs:
         shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
-          module load clang/17
+          module load gnu/11
           spack load cmake
           ctest --preset ${{matrix.preset}}
   benchmark-on-aws:
@@ -114,7 +115,7 @@ jobs:
         shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
-          module load clang/17
+          module load gnu/11
           spack load cmake
           cmake --version
           python3 -m pip install xmltodict
