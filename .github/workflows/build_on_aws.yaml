@@ -56,6 +56,7 @@ jobs:
                  #!/bin/bash
                  . /root/spack/share/spack/setup-env.sh
                  spack install node-js
+                 spack install kokkos@4.3.0
                  echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
                  echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
 
@@ -87,7 +88,7 @@ jobs:
           . /root/spack/share/spack/setup-env.sh
           spack load cmake
           spack load hip
-          spack load kokkos
+          spack load kokkos@4.3.0
           module load clang/17
           cmake --version
           CC=clang \
