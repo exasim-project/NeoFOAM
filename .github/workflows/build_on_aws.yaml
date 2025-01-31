@@ -46,18 +46,13 @@ jobs:
           iam-role-name: Role4Github
           subnet-id: subnet-87eb68a6
           security-group-id: sg-559f8967
+          runner-home-dir: /actions-runner
           aws-resource-tags: > # optional, requires additional permissions
             [
               {"Key": "ucfd-project", "Value": "BMBF_2022_EXASIM"},
               {"Key": "ucfd-client", "Value": "UCFD-RD"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
             ]
-          pre-runner-script: |
-                 #!/bin/bash
-                 #. /root/spack/share/spack/setup-env.sh
-                 #spack install node-js
-                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
-                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
 
   build-on-aws:
     name: Build on aws
