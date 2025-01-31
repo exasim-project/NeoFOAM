@@ -54,10 +54,10 @@ jobs:
             ]
           pre-runner-script: |
                  #!/bin/bash
-                 . /root/spack/share/spack/setup-env.sh
-                 spack install node-js
-                 echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
-                 echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
+                 #. /root/spack/share/spack/setup-env.sh
+                 #spack install node-js
+                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
+                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
 
   build-on-aws:
     name: Build on aws
@@ -71,8 +71,8 @@ jobs:
       - name: Prepare environment
         shell: bash -i {0}
         run: |
-          sudo rm /actions-runner/externals/node20/bin/node
-          sudo ln -s /root/spack/opt/spack/linux-centos7-x86_64_v3/gcc-10.5.0/node-js*/bin/node /actions-runner/externals/node20/bin/node
+          #sudo rm /actions-runner/externals/node20/bin/node
+          #sudo ln -s /root/spack/opt/spack/linux-centos7-x86_64_v3/gcc-10.5.0/node-js*/bin/node /actions-runner/externals/node20/bin/node
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
       - name: Set up cache
