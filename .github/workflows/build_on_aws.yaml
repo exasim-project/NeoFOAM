@@ -22,6 +22,12 @@ jobs:
   start-runner:
     if: ${{contains(github.event.pull_request.labels.*.name, 'full-ci') || github.event_name == 'workflow_dispatch'}}
     name: Start self-hosted EC2 runner
+    strategy:
+      fail-fast: false
+      matrix:
+        instance:
+          - TYPE: g4dn.xlarge
+            AMI: ami-03af087024bfdbbee
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -41,8 +47,8 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-016cbffe7e42b2547
-          ec2-instance-type: g4ad.xlarge
+          ec2-image-id: ${{matrix.instance.AMI}}
+          ec2-instance-type: ${{matrix.instance.TYPE}}
           iam-role-name: Role4Github
           subnet-id: subnet-87eb68a6
           security-group-id: sg-559f8967
@@ -54,10 +60,10 @@ jobs:
             ]
           pre-runner-script: |
                  #!/bin/bash
-                 . /root/spack/share/spack/setup-env.sh
-                 spack install node-js
-                 echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
-                 echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
+                 #. /root/spack/share/spack/setup-env.sh
+                 #spack install node-js
+                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
+                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
 
   build-on-aws:
     name: Build on aws
