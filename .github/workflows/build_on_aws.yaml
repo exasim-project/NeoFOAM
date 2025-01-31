@@ -41,18 +41,23 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-0007cfeca4e591545
+          ec2-image-id: ami-0db0656ca43d81052
           ec2-instance-type: g4ad.xlarge
           iam-role-name: Role4Github
           subnet-id: subnet-87eb68a6
           security-group-id: sg-559f8967
-          runner-home-dir: /actions-runner
           aws-resource-tags: > # optional, requires additional permissions
             [
               {"Key": "ucfd-project", "Value": "BMBF_2022_EXASIM"},
               {"Key": "ucfd-client", "Value": "UCFD-RD"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
             ]
+          pre-runner-script: |
+                 #!/bin/bash
+                 . /root/spack/share/spack/setup-env.sh
+                 #spack install node-js
+                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
+                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
 
   build-on-aws:
     name: Build on aws
@@ -67,6 +72,7 @@ jobs:
         shell: bash -i {0}
         run: |
           #sudo rm /actions-runner/externals/node20/bin/node
+          echo "LoL"
           #sudo ln -s /root/spack/opt/spack/linux-centos7-x86_64_v3/gcc-10.5.0/node-js*/bin/node /actions-runner/externals/node20/bin/node
       - name: Checkout NeoFOAM
         uses: actions/checkout@v2
