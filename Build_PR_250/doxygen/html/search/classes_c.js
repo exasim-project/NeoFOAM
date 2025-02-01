@@ -1,14 +1,22 @@
 var searchData=
 [
-  ['register_0',['register',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register.html',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::Register&lt; derivedClass &gt;'],['../classRuntimeSelectionFactory_1_1Register.html',1,'Register']]],
-  ['registerdocumentation_1',['RegisterDocumentation',['../structNeoFOAM_1_1RegisterDocumentation.html',1,'NeoFOAM']]],
-  ['registerdocumentation_3c_20base_20_3e_2',['RegisterDocumentation&lt; Base &gt;',['../structNeoFOAM_1_1RegisterDocumentation.html',1,'NeoFOAM']]],
-  ['rungekutta_3',['RungeKutta',['../classNeoFOAM_1_1timeIntegration_1_1RungeKutta.html',1,'NeoFOAM::timeIntegration']]],
-  ['runtimeselectionfactory_4',['RuntimeSelectionFactory',['../classNeoFOAM_1_1RuntimeSelectionFactory.html',1,'NeoFOAM']]],
-  ['runtimeselectionfactory_3c_20base_2c_20parameters_3c_20args_2e_2e_2e_20_3e_20_3e_5',['RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4.html',1,'NeoFOAM']]],
-  ['runtimeselectionfactory_3c_20divoperatorfactory_2c_20parameters_3c_20const_20executor_20_26_2c_20const_20unstructuredmesh_20_26_2c_20const_20input_20_26_20_3e_20_3e_6',['RuntimeSelectionFactory&lt; DivOperatorFactory, Parameters&lt; const Executor &amp;, const UnstructuredMesh &amp;, const Input &amp; &gt; &gt;',['../classNeoFOAM_1_1RuntimeSelectionFactory.html',1,'NeoFOAM']]],
-  ['runtimeselectionfactory_3c_20surfaceboundaryfactory_3c_20valuetype_20_3e_2c_20parameters_3c_20const_20unstructuredmesh_20_26_2c_20const_20dictionary_20_26_2c_20size_5ft_20_3e_20_3e_7',['RuntimeSelectionFactory&lt; SurfaceBoundaryFactory&lt; ValueType &gt;, Parameters&lt; const UnstructuredMesh &amp;, const Dictionary &amp;, size_t &gt; &gt;',['../classNeoFOAM_1_1RuntimeSelectionFactory.html',1,'NeoFOAM']]],
-  ['runtimeselectionfactory_3c_20surfaceinterpolationfactory_2c_20parameters_3c_20const_20executor_20_26_2c_20const_20unstructuredmesh_20_26_2c_20input_20_3e_20_3e_8',['RuntimeSelectionFactory&lt; SurfaceInterpolationFactory, Parameters&lt; const Executor &amp;, const UnstructuredMesh &amp;, Input &gt; &gt;',['../classNeoFOAM_1_1RuntimeSelectionFactory.html',1,'NeoFOAM']]],
-  ['runtimeselectionfactory_3c_20timeintegratorbase_3c_20solutiontype_20_3e_2c_20parameters_3c_20const_20dictionary_20_26_20_3e_20_3e_9',['RuntimeSelectionFactory&lt; TimeIntegratorBase&lt; SolutionType &gt;, Parameters&lt; const Dictionary &amp; &gt; &gt;',['../classNeoFOAM_1_1RuntimeSelectionFactory.html',1,'NeoFOAM']]],
-  ['runtimeselectionfactory_3c_20volumeboundaryfactory_3c_20valuetype_20_3e_2c_20parameters_3c_20const_20unstructuredmesh_20_26_2c_20const_20dictionary_20_26_2c_20size_5ft_20_3e_20_3e_10',['RuntimeSelectionFactory&lt; VolumeBoundaryFactory&lt; ValueType &gt;, Parameters&lt; const UnstructuredMesh &amp;, const Dictionary &amp;, size_t &gt; &gt;',['../classNeoFOAM_1_1RuntimeSelectionFactory.html',1,'NeoFOAM']]]
+  ['segmentedfield_0',['SegmentedField',['../classNeoFOAM_1_1SegmentedField.html',1,'NeoFOAM']]],
+  ['segmentedfieldview_1',['SegmentedFieldView',['../classNeoFOAM_1_1SegmentedFieldView.html',1,'NeoFOAM']]],
+  ['serialexecutor_2',['SerialExecutor',['../classNeoFOAM_1_1SerialExecutor.html',1,'NeoFOAM']]],
+  ['skvector_3',['SKVector',['../classNeoFOAM_1_1sundials_1_1SKVector.html',1,'NeoFOAM::sundials']]],
+  ['skvectordefault_4',['SKVectorDefault',['../classNeoFOAM_1_1sundials_1_1SKVectorDefault.html',1,'NeoFOAM::sundials']]],
+  ['skvectorhostdefault_5',['SKVectorHostDefault',['../classNeoFOAM_1_1sundials_1_1SKVectorHostDefault.html',1,'NeoFOAM::sundials']]],
+  ['skvectorserial_6',['SKVectorSerial',['../classNeoFOAM_1_1sundials_1_1SKVectorSerial.html',1,'NeoFOAM::sundials']]],
+  ['sourceterm_7',['SourceTerm',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['sparsitypattern_8',['SparsityPattern',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['stencildatabase_9',['StencilDataBase',['../classNeoFOAM_1_1StencilDataBase.html',1,'NeoFOAM']]],
+  ['sumkernel_10',['SumKernel',['../structNeoFOAM_1_1SumKernel.html',1,'NeoFOAM']]],
+  ['surfaceboundary_11',['SurfaceBoundary',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceBoundary.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfaceboundaryfactory_12',['SurfaceBoundaryFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceBoundaryFactory.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfacefield_13',['SurfaceField',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfacefield_3c_20neofoam_3a_3ascalar_20_3e_14',['SurfaceField&lt; NeoFOAM::scalar &gt;',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfacefield_3c_20neofoam_3a_3avector_20_3e_15',['SurfaceField&lt; NeoFOAM::Vector &gt;',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfacefield_3c_20scalar_20_3e_16',['SurfaceField&lt; scalar &gt;',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfaceinterpolation_17',['SurfaceInterpolation',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolation.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['surfaceinterpolationfactory_18',['SurfaceInterpolationFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolationFactory.html',1,'NeoFOAM::finiteVolume::cellCentred']]]
 ];
