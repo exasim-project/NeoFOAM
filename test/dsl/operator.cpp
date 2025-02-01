@@ -29,7 +29,7 @@ TEST_CASE("Operator")
         REQUIRE(b.getType() == Operator::Type::Explicit);
     }
 
-    SECTION("Supports Coefficients Explicit" + execName)
+    SECTION("Supports Coefficients Explicit " + execName)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
 
@@ -64,7 +64,7 @@ TEST_CASE("Operator")
         REQUIRE(hostSourceE.span()[0] == -2.0);
     }
 
-    SECTION("Implicit Operations" + execName)
+    SECTION("Implicit Operations " + execName)
     {
         Field fA(exec, 1, 2.0);
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
@@ -82,7 +82,7 @@ TEST_CASE("Operator")
         REQUIRE(ls.matrix().nRows() == 1);
     }
 
-    SECTION("Supports Coefficients Implicit" + execName)
+    SECTION("Supports Coefficients Implicit " + execName)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
 
@@ -110,7 +110,7 @@ TEST_CASE("Operator")
         REQUIRE(hostLsC.matrix().values()[0] == 4.0);
 
 
-        // // d= 2 * 2
+        // d= 2 * 2
         ls = d.createEmptyLinearSystem();
         d.implicitOperation(ls);
         auto hostRhsD = ls.rhs().copyToHost();
