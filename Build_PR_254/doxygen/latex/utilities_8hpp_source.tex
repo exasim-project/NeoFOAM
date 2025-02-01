@@ -1,0 +1,60 @@
+\doxysection{utilities.\+hpp}
+\hypertarget{utilities_8hpp_source}{}\label{utilities_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/utilities.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/utilities.hpp}}
+\mbox{\hyperlink{utilities_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ MIT}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2024-\/2025\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <ginkgo/ginkgo.hpp>}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <ginkgo/extensions/kokkos.hpp>}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{field_8hpp}{NeoFOAM/fields/field.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{dictionary_8hpp}{NeoFOAM/core/dictionary.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{linearSystem_8hpp}{NeoFOAM/linearAlgebra/linearSystem.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00014}00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM_1_1la}{NeoFOAM::la}}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00017}\mbox{\hyperlink{namespaceNeoFOAM_1_1la_afab25fbeecb9b497144bcee2e974f0a5}{00017}}\ std::shared\_ptr<gko::Executor>\ \mbox{\hyperlink{namespaceNeoFOAM_1_1la_afab25fbeecb9b497144bcee2e974f0a5}{getGkoExecutor}}(\mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ exec)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00018}00018\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00019}00019\ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00020}00020\ \ \ \ \ \ \ \ \ [](\textcolor{keyword}{auto}\ concreteExec)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00021}00021\ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ gko::ext::kokkos::create\_executor(concreteExec.underlyingExec());\ \},}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00022}00022\ \ \ \ \ \ \ \ \ exec}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00023}00023\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00024}00024\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00026}\mbox{\hyperlink{namespaceNeoFOAM_1_1la_1_1detail}{00026}}\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00027}00027\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00028}00028\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00029}00029\ std::shared\_ptr<gko::matrix::Csr<ValueType,\ IndexType>>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00030}\mbox{\hyperlink{namespaceNeoFOAM_1_1la_1_1detail_ae22ee9065966ba41b4176cb85c20e274}{00030}}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1la_1_1detail_ae22ee9065966ba41b4176cb85c20e274}{createGkoMtx}}(std::shared\_ptr<const\ gko::Executor>\ exec,\ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{LinearSystem<ValueType,\ IndexType>}}\&\ sys)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00031}00031\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00032}00032\ \ \ \ \ \textcolor{keyword}{auto}\&\ mtx\ =\ sys.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}();}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00033}00033\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ nrows\ =\ sys.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a4311d9a7dd8854afc26aa0e645c11193}{rhs}}().size();}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00035}00035\ \ \ \ \ \textcolor{keyword}{auto}\ valuesView\ =\ gko::array<scalar>::view(exec,\ mtx.values().size(),\ mtx.values().data());}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00036}00036\ \ \ \ \ \textcolor{keyword}{auto}\ colIdxView\ =\ gko::array<int>::view(exec,\ mtx.colIdxs().size(),\ mtx.colIdxs().data());}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00037}00037\ \ \ \ \ \textcolor{keyword}{auto}\ rowPtrView\ =\ gko::array<int>::view(exec,\ mtx.rowPtrs().size(),\ mtx.rowPtrs().data());}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00039}00039\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(gko::matrix::Csr<scalar,\ int>::create(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ exec,\ gko::dim<2>\ \{nrows,\ nrows\},\ valuesView,\ colIdxView,\ rowPtrView}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00041}00041\ \ \ \ \ ));}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00042}00042\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00044}00044\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00045}00045\ std::shared\_ptr<gko::matrix::Dense<ValueType>>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00046}\mbox{\hyperlink{namespaceNeoFOAM_1_1la_1_1detail_ac45277af71658ef44d94a552e457a84d}{00046}}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1la_1_1detail_ac45277af71658ef44d94a552e457a84d}{createGkoDense}}(std::shared\_ptr<const\ gko::Executor>\ exec,\ ValueType*\ ptr,\ \textcolor{keywordtype}{size\_t}\ size)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00047}00047\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(gko::matrix::Dense<ValueType>::create(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ exec,\ gko::dim<2>\ \{size,\ 1\},\ gko::array<scalar>::view(exec,\ size,\ ptr),\ 1}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00050}00050\ \ \ \ \ ));}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00051}00051\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00052}00052\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00054}00054\ \}}
+
+\end{DoxyCode}
