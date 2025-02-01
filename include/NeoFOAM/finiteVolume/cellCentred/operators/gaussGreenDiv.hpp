@@ -8,6 +8,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/fvccSparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -29,6 +30,11 @@ public:
     ) override;
 
     void
+    div(la::LinearSystem<scalar, localIdx>& ls,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi) override;
+
+    void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) override;
 
@@ -40,6 +46,7 @@ public:
 private:
 
     SurfaceInterpolation surfaceInterpolation_;
+    const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
 } // namespace NeoFOAM

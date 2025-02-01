@@ -33,6 +33,10 @@ public:
         NF_ASSERT(matrix.nRows() == rhs.size(), "Matrix and RHS size mismatch");
     };
 
+    LinearSystem(const LinearSystem& ls) : matrix_(ls.matrix_), rhs_(ls.rhs_) {};
+
+    LinearSystem(const Executor exec) : matrix_(exec), rhs_(exec, 0) {}
+
     ~LinearSystem() = default;
 
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
@@ -55,6 +59,35 @@ private:
     CSRMatrix<ValueType, IndexType> matrix_;
     Field<ValueType> rhs_;
     std::string sparsityPattern_;
+};
+
+
+template<typename ValueType, typename IndexType>
+Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& xfield)
+{
+    Field<ValueType> resultField(ls.exec(), ls.rhs().size(), 0.0);
+    auto [result, b, x] = spans(resultField, ls.rhs(), xfield);
+
+    std::span<ValueType> values = ls.matrix().values();
+    std::span<IndexType> colIdxs = ls.matrix().colIdxs();
+    std::span<IndexType> rowPtrs = ls.matrix().rowPtrs();
+
+    NeoFOAM::parallelFor(
+        ls.exec(),
+        {0, ls.matrix().nRows()},
+        KOKKOS_LAMBDA(const std::size_t rowi) {
+            IndexType rowStart = rowPtrs[rowi];
+            IndexType rowEnd = rowPtrs[rowi + 1];
+            ValueType sum = 0.0;
+            for (IndexType coli = rowStart; coli < rowEnd; coli++)
+            {
+                sum += values[coli] * x[colIdxs[coli]];
+            }
+            result[rowi] = sum - b[rowi];
+        }
+    );
+
+    return resultField;
 };
 
 } // namespace NeoFOAM::la
