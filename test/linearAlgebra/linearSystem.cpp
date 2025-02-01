@@ -31,7 +31,9 @@ TEST_CASE("LinearSystem")
         );
 
         NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 0.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
+            csrMatrix, rhs, "custom"
+        );
 
         REQUIRE(linearSystem.matrix().values().size() == 9);
         REQUIRE(linearSystem.matrix().nValues() == 9);
@@ -54,7 +56,9 @@ TEST_CASE("LinearSystem")
         );
 
         NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 0.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
+            csrMatrix, rhs, "testing"
+        );
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {1.0, 2.0, 3.0});
 
         NeoFOAM::Field<NeoFOAM::scalar> y = NeoFOAM::la::SpMV(linearSystem, x);
@@ -68,7 +72,7 @@ TEST_CASE("LinearSystem")
         // test with non-zero rhs
         NeoFOAM::Field<NeoFOAM::scalar> rhs2(exec, {1.0, 2.0, 3.0});
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem2(
-            csrMatrix, rhs2
+            csrMatrix, rhs2, "testing"
         );
         y = NeoFOAM::la::SpMV(linearSystem2, x);
         yHost = y.copyToHost();

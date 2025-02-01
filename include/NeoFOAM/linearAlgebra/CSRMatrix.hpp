@@ -37,6 +37,11 @@ public:
 
     [[nodiscard]] std::size_t nColIdxs() const { return colIdxs_.size(); }
 
+    [[nodiscard]] CSRMatrix copyToHost() const
+    {
+        return CSRMatrix(values_.copyToHost(), colIdxs_.copyToHost(), rowPtrs_.copyToHost());
+    }
+
     [[nodiscard]] std::span<ValueType> values() { return values_.span(); }
     [[nodiscard]] std::span<IndexType> colIdxs() { return colIdxs_.span(); }
     [[nodiscard]] std::span<IndexType> rowPtrs() { return rowPtrs_.span(); }
