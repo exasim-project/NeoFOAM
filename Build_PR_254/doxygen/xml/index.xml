@@ -225,6 +225,7 @@
     <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1a23c1e94228b7d96fd25b65750fd84d0c" kind="function"><name>nRows</name></member>
     <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1a40f1d3bbb9b33e3ef0c28dbc28e89f0f" kind="function"><name>nValues</name></member>
     <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1a8e6f1a62047d85290c261eb20aca3617" kind="function"><name>nColIdxs</name></member>
+    <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1a018d5c0334296900f3ecbb57ddcdeea9" kind="function"><name>copyToHost</name></member>
     <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1ae19e42f39730deb0ef5540ec71e2fca3" kind="function"><name>values</name></member>
     <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1a2b3ba6080764cea2476bff7c283f9406" kind="function"><name>colIdxs</name></member>
     <member refid="classNeoFOAM_1_1la_1_1CSRMatrix_1a962436693e6975d2891802f554432f5d" kind="function"><name>rowPtrs</name></member>
@@ -373,6 +374,7 @@
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1ac83cc5d8919c1b5125f687b1da1f9dfe" kind="function"><name>build</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1a3abb6631b7932517b2aa1728bf14f8f6" kind="function"><name>explicitOperation</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1ab6687f42b67a992747377a807e280a3c" kind="function"><name>explicitOperation</name></member>
+    <member refid="classNeoFOAM_1_1dsl_1_1Expression_1acbad9597be8e285f605141fffc5d05d7" kind="function"><name>implicitOperation</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1a0b82fd0686a5abb7c9d86621d1d14ece" kind="function"><name>addOperator</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1af313e6ab82947b615550bd71d8050234" kind="function"><name>addExpression</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Expression_1a96f277edda83384dc99926c79b09ceb9" kind="function"><name>size</name></member>
@@ -592,7 +594,8 @@
   <compound refid="classNeoFOAM_1_1la_1_1LinearSystem" kind="class"><name>NeoFOAM::la::LinearSystem</name>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a89b51bf355e3d3d84bdc101321bce53e" kind="variable"><name>matrix_</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a558ea9abe81c29d679d3cec246ac5cb4" kind="variable"><name>rhs_</name></member>
-    <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1aff2416fb13e1ba4c91bd8c9bb777b6b5" kind="function"><name>LinearSystem</name></member>
+    <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a63d3895abd97c4c83ba7689304287312" kind="variable"><name>sparsityPattern_</name></member>
+    <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a690a4c35a70e3f8e7875b2e20b1cc04b" kind="function"><name>LinearSystem</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a30b077c1c386bb39d09552b6c42c23ff" kind="function"><name>LinearSystem</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a42e09f6a6372f458bea322b41b5274d7" kind="function"><name>LinearSystem</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a53b928ffdb1cae61bf4b1ad26985bd2a" kind="function"><name>~LinearSystem</name></member>
@@ -600,6 +603,8 @@
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a4311d9a7dd8854afc26aa0e645c11193" kind="function"><name>rhs</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1ab47b9294212c8466cdb467a9dde24a25" kind="function"><name>matrix</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a9d7f85d4770e2dbdf397da4f92d36d13" kind="function"><name>rhs</name></member>
+    <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a815f095f6d110ff110844bc096f321e8" kind="function"><name>sparsityPattern</name></member>
+    <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a42e1e9172836fe0a4608fe0e5b40cdf6" kind="function"><name>copyToHost</name></member>
     <member refid="classNeoFOAM_1_1la_1_1LinearSystem_1a0b824eab2111c3db70123e51df96be3e" kind="function"><name>exec</name></member>
   </compound>
   <compound refid="classNeoFOAM_1_1NeoFOAMException" kind="class"><name>NeoFOAM::NeoFOAMException</name>
@@ -652,6 +657,8 @@
     <member refid="classNeoFOAM_1_1dsl_1_1Operator_1ac63c155154585a1e142cff91a060d2b8" kind="function"><name>Operator</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Operator_1af4b8ea1d1eeb883ebc0292f8a9687e09" kind="function"><name>explicitOperation</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Operator_1ad443b9c51f61c4ef4d4c5f8e3296a351" kind="function"><name>temporalOperation</name></member>
+    <member refid="classNeoFOAM_1_1dsl_1_1Operator_1a3d3d20279d8c6b4ad94759ea4a8c2710" kind="function"><name>implicitOperation</name></member>
+    <member refid="classNeoFOAM_1_1dsl_1_1Operator_1a365c55e5e4ca6e99da4c40d0a17b14fa" kind="function"><name>createEmptyLinearSystem</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Operator_1aa8c34c438914b4e6fa57c36f4eb86531" kind="function"><name>getType</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Operator_1aae1ebac0fb8653cd039819cb25a83f7e" kind="function"><name>getCoefficient</name></member>
     <member refid="classNeoFOAM_1_1dsl_1_1Operator_1ad27522052c7dc27338ea1cadd94f7b1a" kind="function"><name>getCoefficient</name></member>
@@ -662,6 +669,8 @@
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1ac9d0faf3f802f6ae56a9be43bd4567e2" kind="function"><name>~OperatorConcept</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1a5137f6cc3c1b2f6df796134f938b99b4" kind="function"><name>explicitOperation</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1ad0770f9c2ea502265c11aac12948583f" kind="function"><name>temporalOperation</name></member>
+    <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1ad29aec65f8473f3c3b2b4e3c1aeba4d9" kind="function"><name>implicitOperation</name></member>
+    <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1a466b7fedca510ac40283eed3b5c57836" kind="function"><name>createEmptyLinearSystem</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1a7fa65b6fc2577d8fed73066709ec9079" kind="function"><name>build</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1adfd70e6a8fcf1fc132b04fb8447083cd" kind="function"><name>getName</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorConcept_1a2e08081572402d0e07ae5ce16ce4274f" kind="function"><name>getType</name></member>
@@ -691,6 +700,8 @@
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1a11e5d9a1c7b547e88791b058ca28eb5c" kind="function"><name>getName</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1a457c1ed8dc979c3ee14a62d5dba21f85" kind="function"><name>explicitOperation</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1a21a3cde9985b5d1bd8e4a71e0f395a51" kind="function"><name>temporalOperation</name></member>
+    <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1ae0a61adf6edf60bf2715da9a12c15f7c" kind="function"><name>implicitOperation</name></member>
+    <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1ac6182dc803928260a3b3feef4eec830c" kind="function"><name>createEmptyLinearSystem</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1a8920eb35cba6867c5f5041221369c8e0" kind="function"><name>build</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1a592180852c956009044239388e784967" kind="function"><name>getType</name></member>
     <member refid="structNeoFOAM_1_1dsl_1_1Operator_1_1OperatorModel_1af35e386459f47b6d0b2c1c79231edbe6" kind="function"><name>exec</name></member>
@@ -1079,6 +1090,8 @@
     <member refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField_1a831d80705bf7e504c2c0403d98722ae1" kind="function"><name>boundaryConditions</name></member>
   </compound>
   <compound refid="conceptNeoFOAM_1_1dsl_1_1HasExplicitOperator" kind="concept"><name>NeoFOAM::dsl::HasExplicitOperator</name>
+  </compound>
+  <compound refid="conceptNeoFOAM_1_1dsl_1_1HasImplicitOperator" kind="concept"><name>NeoFOAM::dsl::HasImplicitOperator</name>
   </compound>
   <compound refid="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator" kind="concept"><name>NeoFOAM::dsl::HasTemporalOperator</name>
   </compound>
