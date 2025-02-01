@@ -17,7 +17,7 @@ var searchData=
   ['colidxs_14',['colidxs',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a2d4aa54392856be99602f6c0d5ef7ebb',1,'NeoFOAM::la::CSRMatrix::colIdxs() const'],['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a2b3ba6080764cea2476bff7c283f9406',1,'NeoFOAM::la::CSRMatrix::colIdxs()']]],
   ['collection_15',['collection',['../classNeoFOAM_1_1Collection.html#a3ba16f2893c8bacc3000d8f0e41e97c8',1,'NeoFOAM::Collection::Collection(const Collection &amp;other)'],['../classNeoFOAM_1_1Collection.html#aef5789130cba52804ceb6e17e99f3b88',1,'NeoFOAM::Collection::Collection(CollectionType collection)'],['../classNeoFOAM_1_1Collection.html',1,'NeoFOAM::Collection']]],
   ['collection_2ehpp_16',['collection.hpp',['../collection_8hpp.html',1,'']]],
-  ['collectionmixin_17',['collectionmixin',['../classNeoFOAM_1_1CollectionMixin.html#a707ef9e4021e9a310f6d11bc9e42e11d',1,'NeoFOAM::CollectionMixin::CollectionMixin()'],['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM::CollectionMixin&lt; DocumentType &gt;']]],
+  ['collectionmixin_17',['collectionmixin',['../classNeoFOAM_1_1CollectionMixin.html#abce8521eb327ecab433d18e91238f617',1,'NeoFOAM::CollectionMixin::CollectionMixin()'],['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM::CollectionMixin&lt; CollectionType &gt;']]],
   ['collectionmixin_3c_20fielddocument_20_3e_18',['CollectionMixin&lt; FieldDocument &gt;',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
   ['collectionmixin_3c_20oldtimedocument_20_3e_19',['CollectionMixin&lt; OldTimeDocument &gt;',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
   ['collectionmixin_3c_20sundailsdocument_20_3e_20',['CollectionMixin&lt; SundailsDocument &gt;',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
