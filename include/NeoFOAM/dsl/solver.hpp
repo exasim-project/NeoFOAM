@@ -44,7 +44,7 @@ void solve(
     exp.build(fvSchemes);
     if (exp.temporalOperators().size() > 0)
     {
-        // integrate equations in time
+        // integrate equations ifvSolutionn time
         timeIntegration::TimeIntegration<FieldType> timeIntegrator(fvSchemes.subDict("ddtSchemes"));
         timeIntegrator.solve(exp, solution, t, dt);
     }
