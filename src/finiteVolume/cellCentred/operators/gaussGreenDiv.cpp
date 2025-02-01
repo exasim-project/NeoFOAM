@@ -100,13 +100,61 @@ GaussGreenDiv::GaussGreenDiv(
     const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs
 )
     : DivOperatorFactory::Register<GaussGreenDiv>(exec, mesh),
-      surfaceInterpolation_(exec, mesh, inputs) {};
+      surfaceInterpolation_(exec, mesh, inputs),
+      sparsityPattern_(SparsityPattern::readOrCreate(mesh)) {};
 
 void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
+};
+
+void GaussGreenDiv::div(
+    la::LinearSystem<scalar, localIdx>& ls,
+    const SurfaceField<scalar>& faceFlux,
+    VolumeField<scalar>& phi
+)
+{
+    const UnstructuredMesh& mesh = phi.mesh();
+    const std::size_t nInternalFaces = mesh.nInternalFaces();
+    const auto exec = phi.exec();
+    const auto [sFaceFlux, owner, neighbour, diagOffs, ownOffs, neiOffs] = spans(
+        faceFlux.internalField(),
+        mesh.faceOwner(),
+        mesh.faceNeighbour(),
+        sparsityPattern_->diagOffset(),
+        sparsityPattern_->ownerOffset(),
+        sparsityPattern_->neighbourOffset()
+    );
+    const auto rowPtrs = ls.matrix().rowPtrs();
+    const auto colIdxs = ls.matrix().colIdxs();
+    const auto values = ls.matrix().values();
+
+    parallelFor(
+        exec,
+        {0, nInternalFaces},
+        KOKKOS_LAMBDA(const size_t facei) {
+            scalar flux = sFaceFlux[facei];
+            scalar weight = 0.5;
+            std::size_t own = static_cast<std::size_t>(owner[facei]);
+            std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
+
+            // lower triangular part
+
+            // add neighbour contribution
+            std::size_t rowNeiStart = rowPtrs[nei];
+            values[rowNeiStart + neiOffs[facei]] += -flux * weight;
+            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], -flux * weight);
+
+            // upper triangular part
+
+            // add owner contribution
+            std::size_t rowOwnStart = rowPtrs[own];
+            values[rowOwnStart + ownOffs[facei]] += flux * (1 - weight);
+            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux * (1 - weight));
+        }
+    );
 };
 
 void GaussGreenDiv::div(

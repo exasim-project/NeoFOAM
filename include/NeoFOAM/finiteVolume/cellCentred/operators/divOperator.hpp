@@ -4,6 +4,7 @@
 #pragma once
 
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/linearAlgebra.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
@@ -44,6 +45,11 @@ public:
     virtual void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) = 0;
+
+    virtual void
+    div(la::LinearSystem<scalar, localIdx>& ls,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi) = 0;
 
     virtual void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
@@ -111,6 +117,11 @@ public:
     }
 
     void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }
+
+    void div(la::LinearSystem<scalar, localIdx>& ls)
+    {
+        divOperatorStrategy_->div(ls, faceFlux_, getField());
+    };
 
     void div(VolumeField<scalar>& divPhi)
     {

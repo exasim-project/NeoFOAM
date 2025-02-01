@@ -1,6 +1,7 @@
 # Version 0.2.0 (unreleased)
 ## Features
 - Add basic Ginkgo solver interface [#250](https://github.com/exasim-project/NeoFOAM/pull/250)
+- support for implicit operators in the DSL [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
 - add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
 - Adds a minimal implementation linear algebra functionality [#219](https://github.com/exasim-project/NeoFOAM/pull/219)
 ## Fixes
