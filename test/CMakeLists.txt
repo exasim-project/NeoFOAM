@@ -41,7 +41,6 @@ function(neofoam_unit_test TEST)
   else()
     set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
   endif()
-
   add_test(
     NAME ${TEST}
     COMMAND ${neofoam_COMMAND}
