@@ -12,6 +12,8 @@
 #include "NeoFOAM/core/database/collection.hpp"
 #include "NeoFOAM/core/database/document.hpp"
 
+#include "sundials.hpp"
+
 namespace NeoFOAM::timeIntegration
 {
 
@@ -27,45 +29,44 @@ class SundailsDocument
 {
 public:
 
+    SundailsDocument() = default; // TODO delete or update, just for compile
+
     /**
      * TODO
      */
-    template<class FieldType>
-    SundailsDocument()
+    template<class ValueType>
+    SundailsDocument(
+        NeoFOAM::sundials::SKVector<ValueType> solution,
+        NeoFOAM::sundials::SKVector<ValueType> initialConditions
+    )
         : doc_(
-            Document(
-                {{
-                     "solutionNVector",
-                 },
-                 {
-                     "initialNVector",
-                 },
-                 {
-                     "GlobalContext",
-                 },
-                 {
-                     "RKSolver",
-                 },
-                 {
-                     "Expression",
-                 }}
-            ),
+            Document({
+                {"solutionNVector", solution}, {"initialNVector", initialConditions}
+                //  ,
+                //  {
+                //      "GlobalContext",
+                //  },
+                //  {
+                //      "RKSolver",
+                //  },
+                //  {
+                //      "Expression",
+                //  }
+            }),
             validateFieldDoc
         )
     {}
-
-    NeoFOAM::sundials::SKVector<ValueType>
-        solution_; /**< Solution vector, contains the sundails N_Vector. */
-    NeoFOAM::sundials::SKVector<ValueType>
-        initialConditions_; /**< Initial conditions vector, contains the sundails N_Vector. */
-    std::shared_ptr<SUNContext> context_ {
-        nullptr, sundials::SUN_CONTEXT_DELETER
-    }; /**< The SUNContext for the solve. */
-    std::unique_ptr<char, decltype(sundials::SUN_ARK_DELETER)> ODEMemory_ {
-        nullptr, sundials::SUN_ARK_DELETER
-    }; /**< The 'memory' sundails for the RK solver. (note void* is not stl compliant). */
-    std::unique_ptr<NeoFOAM::dsl::Expression> pdeExpr_ {nullptr
-    }; /**< Pointer to the pde system we are integrating in time. */
+    //      /**< Solution vector, contains the sundails N_Vector. */
+    // NeoFOAM::sundials::SKVector<ValueType>
+    //     initialConditions_; /**< Initial conditions vector, contains the sundails N_Vector. */
+    // std::shared_ptr<SUNContext> context_ {
+    //     nullptr, sundials::SUN_CONTEXT_DELETER
+    // }; /**< The SUNContext for the solve. */
+    // std::unique_ptr<char, decltype(sundials::SUN_ARK_DELETER)> ODEMemory_ {
+    //     nullptr, sundials::SUN_ARK_DELETER
+    // }; /**< The 'memory' sundails for the RK solver. (note void* is not stl compliant). */
+    // std::unique_ptr<NeoFOAM::dsl::Expression> pdeExpr_ {nullptr
+    // }; /**< Pointer to the pde system we are integrating in time. */
 
 
     /**
@@ -150,106 +151,104 @@ public:
     /**
      * TODO
      */
-    template<class FieldType>
-    static SundailsCollection& instance(FieldType& field)
-    {
-        validateRegistration(
-            field, "attempting to retrieve FieldCollection from unregistered field"
-        );
-        return instance(field.db(), field.fieldCollectionName);
-    }
+    // static SundailsCollection& instance(FieldType& field)
+    // {
+    //     validateRegistration(
+    //         field, "attempting to retrieve FieldCollection from unregistered field"
+    //     );
+    //     return instance(field.db(), field.fieldCollectionName);
+    // }
+
+    // /**
+    //  * TODO
+    //  */
+    // static const SundailsCollection& instance(const FieldType& field)
+    // {
+    //     validateRegistration(
+    //         field, "attempting to retrieve FieldCollection from unregistered field"
+    //     );
+    //     const Database& db = field.db();
+    //     const Collection& collection = db.at(field.fieldCollectionName);
+    //     return collection.as<FieldCollection>();
+    //     // return instance(field.db(), field.fieldCollectionName);
+    // }
 
     /**
      * TODO
      */
-    template<class FieldType>
-    static const SundailsCollection& instance(const FieldType& field)
-    {
-        validateRegistration(
-            field, "attempting to retrieve FieldCollection from unregistered field"
-        );
-        const Database& db = field.db();
-        const Collection& collection = db.at(field.fieldCollectionName);
-        return collection.as<FieldCollection>();
-        // return instance(field.db(), field.fieldCollectionName);
-    }
+    // template<class FieldType>
+    // FieldType& registerField(CreateFunction createFunc)
+    // {
+    //     FieldDocument doc = createFunc(db());
+    //     if (!validateFieldDoc(doc.doc()))
+    //     {
+    //         throw std::runtime_error("Document is not valid");
+    //     }
 
-    /**
-     * TODO
-     */
-    template<class FieldType>
-    FieldType& registerField(CreateFunction createFunc)
-    {
-        FieldDocument doc = createFunc(db());
-        if (!validateFieldDoc(doc.doc()))
-        {
-            throw std::runtime_error("Document is not valid");
-        }
-
-        std::string key = insert(doc);
-        FieldDocument& fd = fieldDoc(key);
-        FieldType& field = fd.field<FieldType>();
-        field.key = key;
-        field.fieldCollectionName = name();
-        return field;
-    }
+    //     std::string key = insert(doc);
+    //     FieldDocument& fd = fieldDoc(key);
+    //     FieldType& field = fd.field<FieldType>();
+    //     field.key = key;
+    //     field.fieldCollectionName = name();
+    //     return field;
+    // }
 };
 
 
 /**
  * TODO
  */
-template<typename FieldType>
-class CreateFromExistingField
-{
-public:
+// template<typename FieldType>
+// class CreateFromExistingField
+// {
+// public:
 
-    std::string name;
-    const FieldType& field;
-    std::int64_t timeIndex = std::numeric_limits<std::int64_t>::max();
-    std::int64_t iterationIndex = std::numeric_limits<std::int64_t>::max();
-    std::int64_t subCycleIndex = std::numeric_limits<std::int64_t>::max();
+//     std::string name;
+//     const FieldType& field;
+//     std::int64_t timeIndex = std::numeric_limits<std::int64_t>::max();
+//     std::int64_t iterationIndex = std::numeric_limits<std::int64_t>::max();
+//     std::int64_t subCycleIndex = std::numeric_limits<std::int64_t>::max();
 
-    FieldDocument operator()(Database& db)
-    {
-        FieldType vf(
-            field.exec(),
-            name,
-            field.mesh(),
-            field.internalField(),
-            field.boundaryConditions(),
-            db,
-            "",
-            ""
-        );
+//     FieldDocument operator()(Database& db)
+//     {
+//         FieldType vf(
+//             field.exec(),
+//             name,
+//             field.mesh(),
+//             field.internalField(),
+//             field.boundaryConditions(),
+//             db,
+//             "",
+//             ""
+//         );
 
-        if (field.registered())
-        {
-            const FieldCollection& fieldCollection = FieldCollection::instance(field);
-            const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
-            if (timeIndex == std::numeric_limits<std::int64_t>::max())
-            {
-                timeIndex = fieldDoc.timeIndex();
-            }
-            if (iterationIndex == std::numeric_limits<std::int64_t>::max())
-            {
-                iterationIndex = fieldDoc.iterationIndex();
-            }
-            if (subCycleIndex == std::numeric_limits<std::int64_t>::max())
-            {
-                subCycleIndex = fieldDoc.subCycleIndex();
-            }
-        }
-        return NeoFOAM::Document(
-            {{"name", vf.name},
-             {"timeIndex", timeIndex},
-             {"iterationIndex", iterationIndex},
-             {"subCycleIndex", subCycleIndex},
-             {"field", vf}},
-            validateFieldDoc
-        );
-    }
-};
+//         if (field.registered())
+//         {
+//             const FieldCollection& fieldCollection = FieldCollection::instance(field);
+//             const FieldDocument& fieldDoc = fieldCollection.fieldDoc(field.key);
+//             if (timeIndex == std::numeric_limits<std::int64_t>::max())
+//             {
+//                 timeIndex = fieldDoc.timeIndex();
+//             }
+//             if (iterationIndex == std::numeric_limits<std::int64_t>::max())
+//             {
+//                 iterationIndex = fieldDoc.iterationIndex();
+//             }
+//             if (subCycleIndex == std::numeric_limits<std::int64_t>::max())
+//             {
+//                 subCycleIndex = fieldDoc.subCycleIndex();
+//             }
+//         }
+//         return NeoFOAM::Document(
+//             {{"name", vf.name},
+//              {"timeIndex", timeIndex},
+//              {"iterationIndex", iterationIndex},
+//              {"subCycleIndex", subCycleIndex},
+//              {"field", vf}},
+//             validateFieldDoc
+//         );
+//     }
+// };
 
 
 } // namespace NeoFOAM
