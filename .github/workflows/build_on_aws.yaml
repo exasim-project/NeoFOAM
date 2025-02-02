@@ -120,6 +120,7 @@ jobs:
           #CXX=clang++ \
           cmake --preset profiling
           cmake --build --preset profiling
+          module load gnu/11
           ctest --preset profiling
           mkdir -p ${{github.event.number}}/main
           cd build/profiling/bin/benchmarks
@@ -132,8 +133,10 @@ jobs:
           git checkout main
           #CC=clang \
           #CXX=clang++ \
+          module load clang/17
           cmake --preset profiling
           cmake --build --preset profiling
+          module load gnu/11
           ctest --preset profiling
           cd build/profiling/bin/benchmarks
           python3 ../../../../scripts/catch2json.py
