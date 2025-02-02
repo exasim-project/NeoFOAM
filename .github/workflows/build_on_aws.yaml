@@ -87,8 +87,8 @@ jobs:
           spack load kokkos@4.3.00
           module load clang/17
           cmake --version
-          CC=clang \
-          CXX=clang++ \
+          #CC=clang \
+          #CXX=clang++ \
           cmake --preset ${{matrix.preset}} \
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
@@ -116,8 +116,8 @@ jobs:
           spack load cmake@3.30.5
           cmake --version
           python3 -m pip install xmltodict
-          CC=clang \
-          CXX=clang++ \
+          #CC=clang \
+          #CXX=clang++ \
           cmake --preset profiling
           cmake --build --preset profiling
           ctest --preset profiling
@@ -130,8 +130,8 @@ jobs:
           rm -rf build
           git fetch origin
           git checkout main
-          CC=clang \
-          CXX=clang++ \
+          #CC=clang \
+          #CXX=clang++ \
           cmake --preset profiling
           cmake --build --preset profiling
           ctest --preset profiling
