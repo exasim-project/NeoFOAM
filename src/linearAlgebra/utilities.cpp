@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024-2025 NeoFOAM authors
 
-#pragma once
-
 #include "NeoFOAM/linearAlgebra/utilities.hpp"
 
 

@@ -118,7 +118,7 @@ void SparsityPattern::update()
     NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
     NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, nCells, 0.0);
-    ls_ = NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>(csrMatrix, rhs);
+    ls_ = NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>(csrMatrix, rhs, "fvcc");
 }
 
 const NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>&

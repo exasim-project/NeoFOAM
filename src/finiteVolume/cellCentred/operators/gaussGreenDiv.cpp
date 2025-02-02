@@ -142,17 +142,23 @@ void GaussGreenDiv::div(
 
             // lower triangular part
 
-            // add neighbour contribution
+            // add neighbour contribution upper
             std::size_t rowNeiStart = rowPtrs[nei];
-            values[rowNeiStart + neiOffs[facei]] += -flux * weight;
-            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], -flux * weight);
+            // values[rowNeiStart + neiOffs[facei]] += -flux * weight;
+            // Kokkos::atomic_add(&values[rowNeiStart + diagOffs[nei]], -flux * weight);
+            NeoFOAM::scalar value = flux * (1 - weight);
+            values[rowNeiStart + neiOffs[facei]] += flux * (1 - weight);
+            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], flux * (1 - weight));
 
             // upper triangular part
 
-            // add owner contribution
+            // add owner contribution lower
             std::size_t rowOwnStart = rowPtrs[own];
-            values[rowOwnStart + ownOffs[facei]] += flux * (1 - weight);
-            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux * (1 - weight));
+            // values[rowOwnStart + ownOffs[facei]] += flux * (1 - weight);
+            // Kokkos::atomic_add(&values[rowOwnStart + diagOffs[own]], flux * (1 - weight));
+            value = -flux * weight;
+            values[rowOwnStart + ownOffs[facei]] += value;
+            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], value);
         }
     );
 };
