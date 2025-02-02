@@ -53,7 +53,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, int> csrMatrix(values, colIdx, rowPtrs);
 
         NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 2.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs);
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs, "custom");
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
         NeoFOAM::Dictionary solverDict;
