@@ -175,6 +175,8 @@
       <node id="34">
         <label>NeoFOAM/linearAlgebra/linearSystem.hpp</label>
         <link refid="linearSystem_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
         <childnode refid="4" relation="include">
         </childnode>
         <childnode refid="35" relation="include">
@@ -267,44 +269,37 @@
 <codeline lineno="14"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1la" kindref="compound">NeoFOAM::la</ref></highlight></codeline>
 <codeline lineno="15"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="16"><highlight class="normal"></highlight></codeline>
-<codeline lineno="17" refid="namespaceNeoFOAM_1_1la_1afab25fbeecb9b497144bcee2e974f0a5" refkind="member"><highlight class="normal">std::shared_ptr&lt;gko::Executor&gt;<sp/><ref refid="namespaceNeoFOAM_1_1la_1afab25fbeecb9b497144bcee2e974f0a5" kindref="member">getGkoExecutor</ref>(<ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref><sp/>exec)</highlight></codeline>
-<codeline lineno="18"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>std::visit(</highlight></codeline>
-<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[](</highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>concreteExec)</highlight></codeline>
-<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>gko::ext::kokkos::create_executor(concreteExec.underlyingExec());<sp/>},</highlight></codeline>
-<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec</highlight></codeline>
-<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="24"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="25"><highlight class="normal"></highlight></codeline>
-<codeline lineno="26" refid="namespaceNeoFOAM_1_1la_1_1detail" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal">detail</highlight></codeline>
-<codeline lineno="27"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="28"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType&gt;</highlight></codeline>
-<codeline lineno="29"><highlight class="normal">std::shared_ptr&lt;gko::matrix::Csr&lt;ValueType,<sp/>IndexType&gt;&gt;</highlight></codeline>
-<codeline lineno="30" refid="namespaceNeoFOAM_1_1la_1_1detail_1ae22ee9065966ba41b4176cb85c20e274" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1la_1_1detail_1ae22ee9065966ba41b4176cb85c20e274" kindref="member">createGkoMtx</ref>(std::shared_ptr&lt;const<sp/>gko::Executor&gt;<sp/>exec,<sp/><ref refid="classNeoFOAM_1_1la_1_1LinearSystem" kindref="compound">LinearSystem&lt;ValueType, IndexType&gt;</ref>&amp;<sp/>sys)</highlight></codeline>
-<codeline lineno="31"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>mtx<sp/>=<sp/>sys.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1abcd18e32cbc6b2acc80bb31209d912bf" kindref="member">matrix</ref>();</highlight></codeline>
-<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>nrows<sp/>=<sp/>sys.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1a4311d9a7dd8854afc26aa0e645c11193" kindref="member">rhs</ref>().size();</highlight></codeline>
-<codeline lineno="34"><highlight class="normal"></highlight></codeline>
-<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>valuesView<sp/>=<sp/>gko::array&lt;scalar&gt;::view(exec,<sp/>mtx.values().size(),<sp/>mtx.values().data());</highlight></codeline>
-<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>colIdxView<sp/>=<sp/>gko::array&lt;int&gt;::view(exec,<sp/>mtx.colIdxs().size(),<sp/>mtx.colIdxs().data());</highlight></codeline>
-<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>rowPtrView<sp/>=<sp/>gko::array&lt;int&gt;::view(exec,<sp/>mtx.rowPtrs().size(),<sp/>mtx.rowPtrs().data());</highlight></codeline>
-<codeline lineno="38"><highlight class="normal"></highlight></codeline>
-<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>gko::share(gko::matrix::Csr&lt;scalar,<sp/>int&gt;::create(</highlight></codeline>
-<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec,<sp/>gko::dim&lt;2&gt;<sp/>{nrows,<sp/>nrows},<sp/>valuesView,<sp/>colIdxView,<sp/>rowPtrView</highlight></codeline>
-<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/>));</highlight></codeline>
-<codeline lineno="42"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="43"><highlight class="normal"></highlight></codeline>
-<codeline lineno="44"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType&gt;</highlight></codeline>
-<codeline lineno="45"><highlight class="normal">std::shared_ptr&lt;gko::matrix::Dense&lt;ValueType&gt;&gt;</highlight></codeline>
-<codeline lineno="46" refid="namespaceNeoFOAM_1_1la_1_1detail_1ac45277af71658ef44d94a552e457a84d" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1la_1_1detail_1ac45277af71658ef44d94a552e457a84d" kindref="member">createGkoDense</ref>(std::shared_ptr&lt;const<sp/>gko::Executor&gt;<sp/>exec,<sp/>ValueType*<sp/>ptr,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>size)</highlight></codeline>
-<codeline lineno="47"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>gko::share(gko::matrix::Dense&lt;ValueType&gt;::create(</highlight></codeline>
-<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec,<sp/>gko::dim&lt;2&gt;<sp/>{size,<sp/>1},<sp/>gko::array&lt;scalar&gt;::view(exec,<sp/>size,<sp/>ptr),<sp/>1</highlight></codeline>
-<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/>));</highlight></codeline>
-<codeline lineno="51"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="52"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="53"><highlight class="normal"></highlight></codeline>
-<codeline lineno="54"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="17" refid="namespaceNeoFOAM_1_1la_1afab25fbeecb9b497144bcee2e974f0a5" refkind="member"><highlight class="normal">std::shared_ptr&lt;gko::Executor&gt;<sp/><ref refid="namespaceNeoFOAM_1_1la_1afab25fbeecb9b497144bcee2e974f0a5" kindref="member">getGkoExecutor</ref>(<ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref><sp/>exec);</highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight></codeline>
+<codeline lineno="19" refid="namespaceNeoFOAM_1_1la_1_1detail" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal">detail</highlight></codeline>
+<codeline lineno="20"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType&gt;</highlight></codeline>
+<codeline lineno="22"><highlight class="normal">std::shared_ptr&lt;gko::matrix::Csr&lt;ValueType,<sp/>IndexType&gt;&gt;</highlight></codeline>
+<codeline lineno="23" refid="namespaceNeoFOAM_1_1la_1_1detail_1ae22ee9065966ba41b4176cb85c20e274" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1la_1_1detail_1ae22ee9065966ba41b4176cb85c20e274" kindref="member">createGkoMtx</ref>(std::shared_ptr&lt;const<sp/>gko::Executor&gt;<sp/>exec,<sp/><ref refid="classNeoFOAM_1_1la_1_1LinearSystem" kindref="compound">LinearSystem&lt;ValueType, IndexType&gt;</ref>&amp;<sp/>sys)</highlight></codeline>
+<codeline lineno="24"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>mtx<sp/>=<sp/>sys.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1abcd18e32cbc6b2acc80bb31209d912bf" kindref="member">matrix</ref>();</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>nrows<sp/>=<sp/>sys.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1a4311d9a7dd8854afc26aa0e645c11193" kindref="member">rhs</ref>().size();</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>valuesView<sp/>=<sp/>gko::array&lt;scalar&gt;::view(exec,<sp/>mtx.values().size(),<sp/>mtx.values().data());</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>colIdxView<sp/>=<sp/>gko::array&lt;int&gt;::view(exec,<sp/>mtx.colIdxs().size(),<sp/>mtx.colIdxs().data());</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>rowPtrView<sp/>=<sp/>gko::array&lt;int&gt;::view(exec,<sp/>mtx.rowPtrs().size(),<sp/>mtx.rowPtrs().data());</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>gko::share(gko::matrix::Csr&lt;scalar,<sp/>int&gt;::create(</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec,<sp/>gko::dim&lt;2&gt;<sp/>{nrows,<sp/>nrows},<sp/>valuesView,<sp/>colIdxView,<sp/>rowPtrView</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/>));</highlight></codeline>
+<codeline lineno="35"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType&gt;</highlight></codeline>
+<codeline lineno="38"><highlight class="normal">std::shared_ptr&lt;gko::matrix::Dense&lt;ValueType&gt;&gt;</highlight></codeline>
+<codeline lineno="39" refid="namespaceNeoFOAM_1_1la_1_1detail_1ac45277af71658ef44d94a552e457a84d" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1la_1_1detail_1ac45277af71658ef44d94a552e457a84d" kindref="member">createGkoDense</ref>(std::shared_ptr&lt;const<sp/>gko::Executor&gt;<sp/>exec,<sp/>ValueType*<sp/>ptr,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>size)</highlight></codeline>
+<codeline lineno="40"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>gko::share(gko::matrix::Dense&lt;ValueType&gt;::create(</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec,<sp/>gko::dim&lt;2&gt;<sp/>{size,<sp/>1},<sp/>gko::array&lt;scalar&gt;::view(exec,<sp/>size,<sp/>ptr),<sp/>1</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>));</highlight></codeline>
+<codeline lineno="44"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="45"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/utilities.hpp"/>
   </compounddef>

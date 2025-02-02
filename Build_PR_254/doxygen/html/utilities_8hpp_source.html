@@ -98,62 +98,53 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM_1_1la.html">NeoFOAM::la</a></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>{</div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="foldopen" id="foldopen00017" data-start="{" data-end="}">
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la.html#afab25fbeecb9b497144bcee2e974f0a5">   17</a></span>std::shared_ptr&lt;gko::Executor&gt; <a class="code hl_function" href="namespaceNeoFOAM_1_1la.html#afab25fbeecb9b497144bcee2e974f0a5">getGkoExecutor</a>(<a class="code hl_typedef" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">Executor</a> exec)</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keywordflow">return</span> std::visit(</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>        [](<span class="keyword">auto</span> concreteExec)</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>        { <span class="keywordflow">return</span> gko::ext::kokkos::create_executor(concreteExec.underlyingExec()); },</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>        exec</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    );</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>}</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la.html#afab25fbeecb9b497144bcee2e974f0a5">   17</a></span>std::shared_ptr&lt;gko::Executor&gt; <a class="code hl_function" href="namespaceNeoFOAM_1_1la.html#afab25fbeecb9b497144bcee2e974f0a5">getGkoExecutor</a>(<a class="code hl_typedef" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">Executor</a> exec);</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="foldopen" id="foldopen00019" data-start="{" data-end="}">
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la_1_1detail.html">   19</a></span><span class="keyword">namespace </span>detail</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>{</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType&gt;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>std::shared_ptr&lt;gko::matrix::Csr&lt;ValueType, IndexType&gt;&gt;</div>
+<div class="foldopen" id="foldopen00023" data-start="{" data-end="}">
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la_1_1detail.html#ae22ee9065966ba41b4176cb85c20e274">   23</a></span><a class="code hl_function" href="namespaceNeoFOAM_1_1la_1_1detail.html#ae22ee9065966ba41b4176cb85c20e274">createGkoMtx</a>(std::shared_ptr&lt;const gko::Executor&gt; exec, <a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">LinearSystem&lt;ValueType, IndexType&gt;</a>&amp; sys)</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>{</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    <span class="keyword">auto</span>&amp; mtx = sys.<a class="code hl_function" href="classNeoFOAM_1_1la_1_1LinearSystem.html#abcd18e32cbc6b2acc80bb31209d912bf">matrix</a>();</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keywordtype">size_t</span> nrows = sys.<a class="code hl_function" href="classNeoFOAM_1_1la_1_1LinearSystem.html#a4311d9a7dd8854afc26aa0e645c11193">rhs</a>().size();</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">auto</span> valuesView = gko::array&lt;scalar&gt;::view(exec, mtx.values().size(), mtx.values().data());</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    <span class="keyword">auto</span> colIdxView = gko::array&lt;int&gt;::view(exec, mtx.colIdxs().size(), mtx.colIdxs().data());</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    <span class="keyword">auto</span> rowPtrView = gko::array&lt;int&gt;::view(exec, mtx.rowPtrs().size(), mtx.rowPtrs().data());</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keywordflow">return</span> gko::share(gko::matrix::Csr&lt;scalar, int&gt;::create(</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        exec, gko::dim&lt;2&gt; {nrows, nrows}, valuesView, colIdxView, rowPtrView</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    ));</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>}</div>
 </div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="foldopen" id="foldopen00026" data-start="{" data-end="}">
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la_1_1detail.html">   26</a></span><span class="keyword">namespace </span>detail</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>{</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType&gt;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>std::shared_ptr&lt;gko::matrix::Csr&lt;ValueType, IndexType&gt;&gt;</div>
-<div class="foldopen" id="foldopen00030" data-start="{" data-end="}">
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la_1_1detail.html#ae22ee9065966ba41b4176cb85c20e274">   30</a></span><a class="code hl_function" href="namespaceNeoFOAM_1_1la_1_1detail.html#ae22ee9065966ba41b4176cb85c20e274">createGkoMtx</a>(std::shared_ptr&lt;const gko::Executor&gt; exec, <a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">LinearSystem&lt;ValueType, IndexType&gt;</a>&amp; sys)</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>{</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <span class="keyword">auto</span>&amp; mtx = sys.<a class="code hl_function" href="classNeoFOAM_1_1la_1_1LinearSystem.html#abcd18e32cbc6b2acc80bb31209d912bf">matrix</a>();</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="keywordtype">size_t</span> nrows = sys.<a class="code hl_function" href="classNeoFOAM_1_1la_1_1LinearSystem.html#a4311d9a7dd8854afc26aa0e645c11193">rhs</a>().size();</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <span class="keyword">auto</span> valuesView = gko::array&lt;scalar&gt;::view(exec, mtx.values().size(), mtx.values().data());</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keyword">auto</span> colIdxView = gko::array&lt;int&gt;::view(exec, mtx.colIdxs().size(), mtx.colIdxs().data());</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    <span class="keyword">auto</span> rowPtrView = gko::array&lt;int&gt;::view(exec, mtx.rowPtrs().size(), mtx.rowPtrs().data());</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">return</span> gko::share(gko::matrix::Csr&lt;scalar, int&gt;::create(</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        exec, gko::dim&lt;2&gt; {nrows, nrows}, valuesView, colIdxView, rowPtrView</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    ));</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>}</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType&gt;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>std::shared_ptr&lt;gko::matrix::Dense&lt;ValueType&gt;&gt;</div>
+<div class="foldopen" id="foldopen00039" data-start="{" data-end="}">
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la_1_1detail.html#ac45277af71658ef44d94a552e457a84d">   39</a></span><a class="code hl_function" href="namespaceNeoFOAM_1_1la_1_1detail.html#ac45277af71658ef44d94a552e457a84d">createGkoDense</a>(std::shared_ptr&lt;const gko::Executor&gt; exec, ValueType* ptr, <span class="keywordtype">size_t</span> size)</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>{</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keywordflow">return</span> gko::share(gko::matrix::Dense&lt;ValueType&gt;::create(</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        exec, gko::dim&lt;2&gt; {size, 1}, gko::array&lt;scalar&gt;::view(exec, size, ptr), 1</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    ));</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>}</div>
 </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType&gt;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>std::shared_ptr&lt;gko::matrix::Dense&lt;ValueType&gt;&gt;</div>
-<div class="foldopen" id="foldopen00046" data-start="{" data-end="}">
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM_1_1la_1_1detail.html#ac45277af71658ef44d94a552e457a84d">   46</a></span><a class="code hl_function" href="namespaceNeoFOAM_1_1la_1_1detail.html#ac45277af71658ef44d94a552e457a84d">createGkoDense</a>(std::shared_ptr&lt;const gko::Executor&gt; exec, ValueType* ptr, <span class="keywordtype">size_t</span> size)</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>{</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">return</span> gko::share(gko::matrix::Dense&lt;ValueType&gt;::create(</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        exec, gko::dim&lt;2&gt; {size, 1}, gko::array&lt;scalar&gt;::view(exec, size, ptr), 1</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    ));</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>}</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>}</div>
 </div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>}</div>
-</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>}</div>
-<div class="ttc" id="aclassNeoFOAM_1_1la_1_1LinearSystem_html"><div class="ttname"><a href="classNeoFOAM_1_1la_1_1LinearSystem.html">NeoFOAM::la::LinearSystem</a></div><div class="ttdoc">A class representing a linear system of equations.</div><div class="ttdef"><b>Definition</b> <a href="linearSystem_8hpp_source.html#l00021">linearSystem.hpp:22</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1la_1_1LinearSystem_html_a4311d9a7dd8854afc26aa0e645c11193"><div class="ttname"><a href="classNeoFOAM_1_1la_1_1LinearSystem.html#a4311d9a7dd8854afc26aa0e645c11193">NeoFOAM::la::LinearSystem::rhs</a></div><div class="ttdeci">Field&lt; ValueType &gt; &amp; rhs()</div><div class="ttdef"><b>Definition</b> <a href="linearSystem_8hpp_source.html#l00043">linearSystem.hpp:43</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1la_1_1LinearSystem_html_abcd18e32cbc6b2acc80bb31209d912bf"><div class="ttname"><a href="classNeoFOAM_1_1la_1_1LinearSystem.html#abcd18e32cbc6b2acc80bb31209d912bf">NeoFOAM::la::LinearSystem::matrix</a></div><div class="ttdeci">CSRMatrix&lt; ValueType, IndexType &gt; &amp; matrix()</div><div class="ttdef"><b>Definition</b> <a href="linearSystem_8hpp_source.html#l00042">linearSystem.hpp:42</a></div></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>}</div>
+<div class="ttc" id="aclassNeoFOAM_1_1la_1_1LinearSystem_html"><div class="ttname"><a href="classNeoFOAM_1_1la_1_1LinearSystem.html">NeoFOAM::la::LinearSystem</a></div><div class="ttdoc">A class representing a linear system of equations.</div><div class="ttdef"><b>Definition</b> <a href="linearSystem_8hpp_source.html#l00022">linearSystem.hpp:23</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1la_1_1LinearSystem_html_a4311d9a7dd8854afc26aa0e645c11193"><div class="ttname"><a href="classNeoFOAM_1_1la_1_1LinearSystem.html#a4311d9a7dd8854afc26aa0e645c11193">NeoFOAM::la::LinearSystem::rhs</a></div><div class="ttdeci">Field&lt; ValueType &gt; &amp; rhs()</div><div class="ttdef"><b>Definition</b> <a href="linearSystem_8hpp_source.html#l00045">linearSystem.hpp:45</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1la_1_1LinearSystem_html_abcd18e32cbc6b2acc80bb31209d912bf"><div class="ttname"><a href="classNeoFOAM_1_1la_1_1LinearSystem.html#abcd18e32cbc6b2acc80bb31209d912bf">NeoFOAM::la::LinearSystem::matrix</a></div><div class="ttdeci">CSRMatrix&lt; ValueType, IndexType &gt; &amp; matrix()</div><div class="ttdef"><b>Definition</b> <a href="linearSystem_8hpp_source.html#l00044">linearSystem.hpp:44</a></div></div>
 <div class="ttc" id="adictionary_8hpp_html"><div class="ttname"><a href="dictionary_8hpp.html">dictionary.hpp</a></div></div>
 <div class="ttc" id="afield_8hpp_html"><div class="ttname"><a href="field_8hpp.html">field.hpp</a></div></div>
 <div class="ttc" id="alinearSystem_8hpp_html"><div class="ttname"><a href="linearSystem_8hpp.html">linearSystem.hpp</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_1_1la_1_1detail_html_ac45277af71658ef44d94a552e457a84d"><div class="ttname"><a href="namespaceNeoFOAM_1_1la_1_1detail.html#ac45277af71658ef44d94a552e457a84d">NeoFOAM::la::detail::createGkoDense</a></div><div class="ttdeci">std::shared_ptr&lt; gko::matrix::Dense&lt; ValueType &gt; &gt; createGkoDense(std::shared_ptr&lt; const gko::Executor &gt; exec, ValueType *ptr, size_t size)</div><div class="ttdef"><b>Definition</b> <a href="utilities_8hpp_source.html#l00046">utilities.hpp:46</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_1_1la_1_1detail_html_ae22ee9065966ba41b4176cb85c20e274"><div class="ttname"><a href="namespaceNeoFOAM_1_1la_1_1detail.html#ae22ee9065966ba41b4176cb85c20e274">NeoFOAM::la::detail::createGkoMtx</a></div><div class="ttdeci">std::shared_ptr&lt; gko::matrix::Csr&lt; ValueType, IndexType &gt; &gt; createGkoMtx(std::shared_ptr&lt; const gko::Executor &gt; exec, LinearSystem&lt; ValueType, IndexType &gt; &amp;sys)</div><div class="ttdef"><b>Definition</b> <a href="utilities_8hpp_source.html#l00030">utilities.hpp:30</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_1_1la_1_1detail_html_ac45277af71658ef44d94a552e457a84d"><div class="ttname"><a href="namespaceNeoFOAM_1_1la_1_1detail.html#ac45277af71658ef44d94a552e457a84d">NeoFOAM::la::detail::createGkoDense</a></div><div class="ttdeci">std::shared_ptr&lt; gko::matrix::Dense&lt; ValueType &gt; &gt; createGkoDense(std::shared_ptr&lt; const gko::Executor &gt; exec, ValueType *ptr, size_t size)</div><div class="ttdef"><b>Definition</b> <a href="utilities_8hpp_source.html#l00039">utilities.hpp:39</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_1_1la_1_1detail_html_ae22ee9065966ba41b4176cb85c20e274"><div class="ttname"><a href="namespaceNeoFOAM_1_1la_1_1detail.html#ae22ee9065966ba41b4176cb85c20e274">NeoFOAM::la::detail::createGkoMtx</a></div><div class="ttdeci">std::shared_ptr&lt; gko::matrix::Csr&lt; ValueType, IndexType &gt; &gt; createGkoMtx(std::shared_ptr&lt; const gko::Executor &gt; exec, LinearSystem&lt; ValueType, IndexType &gt; &amp;sys)</div><div class="ttdef"><b>Definition</b> <a href="utilities_8hpp_source.html#l00023">utilities.hpp:23</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_1_1la_html"><div class="ttname"><a href="namespaceNeoFOAM_1_1la.html">NeoFOAM::la</a></div><div class="ttdef"><b>Definition</b> <a href="CSRMatrix_8hpp_source.html#l00008">CSRMatrix.hpp:9</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_1_1la_html_afab25fbeecb9b497144bcee2e974f0a5"><div class="ttname"><a href="namespaceNeoFOAM_1_1la.html#afab25fbeecb9b497144bcee2e974f0a5">NeoFOAM::la::getGkoExecutor</a></div><div class="ttdeci">std::shared_ptr&lt; gko::Executor &gt; getGkoExecutor(Executor exec)</div><div class="ttdef"><b>Definition</b> <a href="utilities_8hpp_source.html#l00017">utilities.hpp:17</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_1_1la_html_afab25fbeecb9b497144bcee2e974f0a5"><div class="ttname"><a href="namespaceNeoFOAM_1_1la.html#afab25fbeecb9b497144bcee2e974f0a5">NeoFOAM::la::getGkoExecutor</a></div><div class="ttdeci">std::shared_ptr&lt; gko::Executor &gt; getGkoExecutor(Executor exec)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_aaa4d35d275559f501cb6a1eec717c905"><div class="ttname"><a href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">NeoFOAM::Executor</a></div><div class="ttdeci">std::variant&lt; SerialExecutor, CPUExecutor, GPUExecutor &gt; Executor</div><div class="ttdef"><b>Definition</b> <a href="executor_8hpp_source.html#l00016">executor.hpp:16</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
