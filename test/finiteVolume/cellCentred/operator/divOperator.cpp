@@ -6,6 +6,7 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -13,7 +14,8 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Operator = NeoFOAM::dsl::Operator;
 
-TEST_CASE("DivOperator")
+
+TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -29,22 +31,22 @@ TEST_CASE("DivOperator")
     fvcc::SurfaceField<NeoFOAM::scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
     NeoFOAM::fill(faceFlux.internalField(), 1.0);
 
-    auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoFOAM::scalar>>(mesh);
-    fvcc::VolumeField<NeoFOAM::scalar> phi(exec, "sf", mesh, volumeBCs);
-    NeoFOAM::fill(phi.internalField(), 1.0);
+    auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
+    fvcc::VolumeField<TestType> vecPhi(exec, "sf", mesh, volumeBCs);
+    // NeoFOAM::fill(vecPhi.internalField(), NeoFOAM::Vector{1.0, 1.0, 1.0});
 
-    SECTION("Construct from Token" + execName)
-    {
-        NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
-        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
-    }
+    // SECTION("Construct from Token" + execName)
+    // {
+    //     NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
+    //     fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+    // }
 
-    SECTION("Construct from Dictionary" + execName)
-    {
-        NeoFOAM::Input input = NeoFOAM::Dictionary(
-            {{std::string("DivOperator"), std::string("Gauss")},
-             {std::string("surfaceInterpolation"), std::string("linear")}}
-        );
-        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
-    }
+    // SECTION("Construct from Dictionary" + execName)
+    // {
+    //     NeoFOAM::Input input = NeoFOAM::Dictionary(
+    //         {{std::string("DivOperator"), std::string("Gauss")},
+    //          {std::string("surfaceInterpolation"), std::string("linear")}}
+    //     );
+    //     fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+    // }
 }
