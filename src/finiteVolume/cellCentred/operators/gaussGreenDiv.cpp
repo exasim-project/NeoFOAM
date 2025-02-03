@@ -18,12 +18,12 @@ void computeDiv(
     const Executor& exec,
     size_t nInternalFaces,
     size_t nBoundaryFaces,
-    const std::span<int> neighbour,
-    const std::span<int> owner,
-    const std::span<int> faceCells,
-    const std::span<ValueType> faceFlux,
-    const std::span<ValueType> phiF,
-    const std::span<scalar> V,
+    std::span<const int> neighbour,
+    std::span<const int> owner,
+    std::span<const int> faceCells,
+    std::span<const ValueType> faceFlux,
+    std::span<const ValueType> phiF,
+    std::span<const scalar> V,
     std::span<ValueType> divPhi
 )
 {
@@ -79,11 +79,12 @@ void computeDiv(
 }
 
 
+template<typename ValueType>
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp,
-    VolumeField<scalar>& divPhi
+    VolumeField<ValueType>& divPhi
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -92,19 +93,22 @@ void computeDiv(
         exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
     );
     fill(phif.internalField(), 0.0);
-    const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(faceFlux, phi, phif);
 
-    auto surfDivPhi = divPhi.span();
-
-    const auto surfPhif = phif.internalField().span();
-    const auto surfOwner = mesh.faceOwner().span();
-    const auto surfNeighbour = mesh.faceNeighbour().span();
-    const auto surfFaceFlux = faceFlux.internalField().span();
-    const auto surfV = mesh.cellVolumes().span();
-    Field<scalar>& divPhiField = divPhi.internalField();
     size_t nInternalFaces = mesh.nInternalFaces();
-    computeDiv(faceFlux, phi, surfInterp, divPhiField);
+    size_t nBoundaryFaces = mesh.nBoundaryFaces();
+    computeDiv<ValueType>(
+        exec,
+        nInternalFaces,
+        nBoundaryFaces,
+        mesh.faceNeighbour().span(),
+        mesh.faceOwner().span(),
+        mesh.boundaryMesh().faceCells().span(),
+        faceFlux.internalField().span(),
+        phif.internalField().span(),
+        mesh.cellVolumes().span(),
+        divPhi.internalField().span()
+    );
 }
 
 GaussGreenDiv::GaussGreenDiv(
@@ -117,14 +121,7 @@ void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
-    computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
-};
-
-void GaussGreenDiv::div(
-    Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-)
-{
-    computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
+    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
 
 VolumeField<scalar>
@@ -134,7 +131,7 @@ GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& ph
     VolumeField<scalar> divPhi(
         exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
     );
-    computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
+    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi);
     return divPhi;
 };
 
