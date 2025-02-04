@@ -37,8 +37,8 @@ jobs:
       id-token: write
       contents: read
     outputs:
-      label_${{ matrix.index }}: ${{ steps.start-ec2-runner.outputs.label }}  # Outputs JSON array of runner labels
-      ec2-instance-id_${{ matrix.index }}: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+      label_${{ matrix.instance.index }}: ${{ steps.start-ec2-runner.outputs.label }}  # Outputs JSON array of runner labels
+      ec2-instance-id_${{ matrix.instance.index }}: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
