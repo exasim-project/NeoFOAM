@@ -69,19 +69,56 @@ jobs:
                  sudo rm /usr/local/cuda-12.1
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
       - name: Store Runner Label
-        id: set-label
         run: |
-          echo "label_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_OUTPUT
-          echo "ec2-instance-id_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> $GITHUB_OUTPUT
-          echo "label_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_ENV
-          echo "ec2-instance-id_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> $GITHUB_ENV
-  aggregate:
-      needs: start-runner
-      runs-on: ubuntu-latest
-      steps:
-        - name: Aggregate Outputs
-          run: |
-            echo "Aggregated Labels: ${{ toJson(needs.start-runner.outputs) }}"
+          echo "${{ steps.start-ec2-runner.outputs.label }}" > label_${{ matrix.instance.index }}.txt
+          echo "${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> ec2-instance-id_${{ matrix.instance.index }}.txt
+      - name: Upload Label Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: labels
+          path: label_${{ matrix.instance.index }}.txt
+          retention-days: 1
+      - name: Upload EC2 Instance ID Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ec2-instance-ids
+          path: ec2-instance-id_${{ matrix.instance.index }}.txt
+          retention-days: 1
+  aggregate-labels:
+    needs: start-runner
+    runs-on: ubuntu-latest
+    outputs:
+      all_labels: ${{ steps.aggregate.outputs.labels }}
+      all_ec2_ids: ${{ steps.aggregate.outputs.ec2_ids }}
+
+    steps:
+      - name: Download Label Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: labels
+          path: labels
+
+      - name: Download EC2 ID Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ec2-instance-ids
+          path: ec2-instance-ids
+
+      - name: Aggregate Labels and EC2 IDs
+        id: aggregate
+        run: |
+          # Join all labels into a single space-separated string
+          LABELS=$(cat labels/*.txt | tr '\n' ' ')
+          echo "labels=$LABELS" >> $GITHUB_OUTPUT
+
+          # Join all EC2 instance IDs into a single space-separated string
+          EC2_IDS=$(cat ec2-instance-ids/*.txt | tr '\n' ' ')
+          echo "ec2_ids=$EC2_IDS" >> $GITHUB_OUTPUT
+
+      - name: Show Aggregated Data
+        run: |
+          echo "Aggregated Labels: ${{ steps.aggregate.outputs.labels }}"
+          echo "Aggregated EC2 Instance IDs: ${{ steps.aggregate.outputs.ec2_ids }}"
         
   build-on-aws:
     name: Build on aws
@@ -90,7 +127,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ "${{ needs.start-runner.outputs.label_0 }}" , "${{ needs.start-runner.outputs.label_1 }}" ]
+        runner: ${{ steps.aggregate.outputs.labels }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
