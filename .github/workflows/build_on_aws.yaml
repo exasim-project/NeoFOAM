@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.start-runner.outputs.labels) }}
+        runner: ${{ fromJson(needs.start-runner.outputs.label) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
@@ -121,7 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.start-runner.outputs.labels) }}
+        runner: ${{ fromJson(needs.start-runner.outputs.label) }}
     steps:
       - name: Build NeoFOAM
         shell: bash -i {0}
