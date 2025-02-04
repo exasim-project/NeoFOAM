@@ -81,6 +81,7 @@ jobs:
       - name: Aggregate All Labels into JSON
         id: aggregate-labels
         run: |
+          echo "${{ needs.start-runner.outputs.labels }}"
           echo "labels=$(jq -c -n '[${{ join(',', needs.start-runner.outputs.runner-labels) }}]')" >> $GITHUB_OUTPUT
         
   build-on-aws:
