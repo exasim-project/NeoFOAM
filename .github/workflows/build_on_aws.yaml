@@ -37,6 +37,7 @@ jobs:
     outputs:
       labels: ${{ steps.start-ec2-runner.outputs.label }}  # Outputs JSON array of runner labels
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+      runner-labels: ${{ steps.set-label.outputs.label }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -67,20 +68,20 @@ jobs:
                  sudo rm /usr/local/cuda-12.1
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
       - name: Store Label in File
-        run: echo "${{ steps.start-ec2-runner.outputs.label }}" >> /tmp/labels.txt
+        id: set-label
+        run: echo "label=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_OUTPUT
           
   collect-runner-labels:
     name: Collect Runner Labels
     needs: start-runner
     runs-on: ubuntu-latest
     outputs:
-      labels: ${{ steps.aggregate-labels.outputs.labels_json }}
+      labels: ${{ steps.aggregate-labels.outputs.labels }}
     steps:
       - name: Aggregate All Labels into JSON
         id: aggregate-labels
         run: |
-          LABELS=$(jq -R -s -c 'split("\n")[:-1]' /tmp/labels.txt)
-          echo "labels_json=$LABELS" >> $GITHUB_OUTPUT
+          echo "labels=$(jq -c -n '[${{ join(',', needs.start-runner.outputs.runner-labels) }}]')" >> $GITHUB_OUTPUT
         
   build-on-aws:
     name: Build on aws
