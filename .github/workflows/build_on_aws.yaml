@@ -66,11 +66,12 @@ jobs:
                  sudo rm /usr/local/cuda
                  sudo rm /usr/local/cuda-12.1
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
+      - name: Store Label in GitHub Variable
+        run: echo "RUNNER_LABEL=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_ENV
       - name: Collect runner labels
         id: collect-labels
         run: |
-          echo "labels_json=[\"${{ steps.start-ec2-runner.outputs.label }}\"]" >> $GITHUB_ENV
-          echo "Show label: ${{ steps.start-ec2-runner.outputs.label }}"
+          run: echo "labels_json=${{ steps.collect-labels.outputs.labels_json }} [\"${RUNNER_LABEL}\"]" >> $GITHUB_ENV
       - name: Debug output
         run: |
           echo "LABELS_JSON=${{ steps.collect-labels.outputs.labels_json }}"
