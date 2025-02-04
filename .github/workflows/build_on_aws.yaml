@@ -27,7 +27,7 @@ jobs:
       matrix:
         instance:
           - TYPE: g4dn.xlarge
-            AMI: ami-0ecaa2016453bc16b
+            AMI: ami-06615d18bfde0a1e7
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -60,10 +60,7 @@ jobs:
             ]
           pre-runner-script: |
                  #!/bin/bash
-                 #. /root/spack/share/spack/setup-env.sh
-                 #spack install node-js
-                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /root/.bashrc
-                 #echo 'module use /usr/share/lmod/lmod/modulefiles/Compilers' >> /ec2-user/.bashrc
+                 . /root/spack/share/spack/setup-env.sh
 
   build-on-aws:
     name: Build on aws
@@ -91,25 +88,24 @@ jobs:
         shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
-          spack load cmake
+          spack load cmake@3.30.5
           spack load hip
-          spack load kokkos
+          spack load kokkos@4.3.00
           module load clang/17
           cmake --version
-          CC=clang \
-          CXX=clang++ \
+          #CC=clang \
+          #CXX=clang++ \
           cmake --preset ${{matrix.preset}} \
             -DNEOFOAM_BUILD_TESTS=ON \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-            -DKokkos_ENABLE_HIP=ON
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
           cmake --build --preset ${{matrix.preset}}
       - name: Test NeoFOAM
         shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
           module load gnu/11
-          spack load cmake
+          spack load cmake@3.30.5
           ctest --preset ${{matrix.preset}}
   benchmark-on-aws:
     name: Benchmark on aws
@@ -121,14 +117,15 @@ jobs:
         shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
-          module load gnu/11
-          spack load cmake
+          module load clang/17
+          spack load cmake@3.30.5
           cmake --version
           python3 -m pip install xmltodict
-          CC=clang \
-          CXX=clang++ \
+          #CC=clang \
+          #CXX=clang++ \
           cmake --preset profiling
           cmake --build --preset profiling
+          module load gnu/11
           ctest --preset profiling
           mkdir -p ${{github.event.number}}/main
           cd build/profiling/bin/benchmarks
@@ -139,10 +136,12 @@ jobs:
           rm -rf build
           git fetch origin
           git checkout main
-          CC=clang \
-          CXX=clang++ \
+          #CC=clang \
+          #CXX=clang++ \
+          module load clang/17
           cmake --preset profiling
           cmake --build --preset profiling
+          module load gnu/11
           ctest --preset profiling
           cd build/profiling/bin/benchmarks
           python3 ../../../../scripts/catch2json.py
