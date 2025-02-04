@@ -64,15 +64,17 @@ jobs:
                  #!/bin/bash
                  . /root/spack/share/spack/setup-env.sh
                  sudo rm /usr/local/cuda
+                 sudo rm /usr/local/cuda-12.1
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
 
   build-on-aws:
     name: Build on aws
     needs: start-runner # required to start the main job when the runner is ready
-    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    runs-on: ${{ matrix.runner }} # run the job on the newly created runner
     strategy:
       fail-fast: false
       matrix:
+        runner: ${{ fromJson(needs.start-runner.outputs.labels) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
