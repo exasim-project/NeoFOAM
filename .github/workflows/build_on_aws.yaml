@@ -72,7 +72,7 @@ jobs:
         run: |
           echo "${{ steps.start-ec2-runner.outputs.label }}" > label_${{ matrix.instance.index }}.txt
           echo "${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" > ec2-instance-id_${{ matrix.instance.index }}.txt
-          echo "${{ steps.start-ec2-runner.ec2-instance-type }}" > type_${{ matrix.instance.index }}.txt
+          echo "${{ matrix.instance.TYPE }}" > type_${{ matrix.instance.index }}.txt
       - name: Upload Label Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -143,12 +143,13 @@ jobs:
   build-on-aws:
     name: Build on aws
     needs: aggregate-labels # required to start the main job when the runner is ready
-    runs-on: ${{ matrix.runner }} # run the job on the newly created runner
+    runs-on: ${{ matrix.instance.runner }} # run the job on the newly created runner
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
-        ec2-type: ${{ fromJson(needs.aggregate-labels.outputs.all_ec2_types) }}
+        instance:
+          - runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
+            ec2-type: ${{ fromJson(needs.aggregate-labels.outputs.all_ec2_types) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
@@ -163,7 +164,7 @@ jobs:
         if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
         with:
           path: build
-          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}_${{matrix.ec2-type}}
+          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}_${{matrix.instance.ec2-type}}
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
