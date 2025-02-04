@@ -92,6 +92,11 @@ jobs:
         run: |
           echo "LABELS_JSON=[]" >> $GITHUB_ENV
           echo "EC2_IDS_JSON=[]" >> $GITHUB_ENV
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: aggregated-data
+          path: downloaded_data
 
       - name: Loop Through Matrix Indices and Download Artifacts
         id: aggregate
@@ -101,18 +106,22 @@ jobs:
 
           for index in {0..10}; do  # Adjust max index if needed
             artifact_name="labels_${index}"
-            mkdir -p downloaded_artifacts/$artifact_name
+            echo "Attempting to download artifact: $artifact_name"
 
-            echo "Trying to download: $artifact_name"
-            # Attempt to download artifact (fails silently if not found)
-            echo "Downloading: $artifact_name"
-            curl -fsSLO --retry 3 https://github.com/${{ github.repository }}/actions/artifacts/$artifact_name || continue
-
-            LABEL=$(cat downloaded_artifacts/$artifact_name/label_${index}.txt)
-            EC2_ID=$(cat downloaded_artifacts/$artifact_name/ec2-instance-id_${index}.txt)
+            # Attempt to download artifact, ignore errors if not found
+            if gh run download --name "$artifact_name" --dir "downloaded_artifacts/$artifact_name"; then
+              echo "Downloaded: $artifact_name"
               
-            LABELS+=("\"$LABEL\"")
-            EC2_IDS+=("\"$EC2_ID\"")
+              # Read values from downloaded files
+              LABEL=$(cat downloaded_artifacts/$artifact_name/label_${index}.txt)
+              EC2_ID=$(cat downloaded_artifacts/$artifact_name/ec2-instance-id_${index}.txt)
+
+              # Append to arrays
+              LABELS+=("\"$LABEL\"")
+              EC2_IDS+=("\"$EC2_ID\"")
+            else
+              echo "Artifact $artifact_name not found, skipping."
+            fi
           done
 
           # Convert arrays to JSON
@@ -121,6 +130,8 @@ jobs:
 
           echo "labels=$LABELS_JSON" >> $GITHUB_OUTPUT
           echo "ec2_ids=$EC2_IDS_JSON" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
 
       - name: Show Aggregated Data
         run: |
