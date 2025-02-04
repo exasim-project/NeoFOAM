@@ -92,31 +92,29 @@ jobs:
         run: |
           echo "LABELS_JSON=[]" >> $GITHUB_ENV
           echo "EC2_IDS_JSON=[]" >> $GITHUB_ENV
-          
+      - name: Download Artifact 1
+        uses: actions/download-artifact@v4
+        with:
+          name: labels_0
+          path: downloaded_data
+      - name: Download Artifact 2
+        uses: actions/download-artifact@v4
+        with:
+          name: labels_1
+          path: downloaded_data
       - name: Loop Through Matrix Indices and Download Artifacts
         id: aggregate
         run: |
           LABELS=()
           EC2_IDS=()
+          for index in {0..1}; do  # Adjust max index if needed
+            # Read values from downloaded files
+            LABEL=$(cat downloaded_data/labels_${index}/label_${index}.txt)
+            EC2_ID=$(cat downloaded_data/labels_${index}/ec2-instance-id_${index}.txt)
 
-          for index in {0..10}; do  # Adjust max index if needed
-            artifact_name="labels_${index}"
-            echo "Attempting to download artifact: $artifact_name"
-
-            # Attempt to download artifact, ignore errors if not found
-            if gh run download --name "$artifact_name" --dir "downloaded_artifacts/$artifact_name"; then
-              echo "Downloaded: $artifact_name"
-              
-              # Read values from downloaded files
-              LABEL=$(cat downloaded_artifacts/$artifact_name/label_${index}.txt)
-              EC2_ID=$(cat downloaded_artifacts/$artifact_name/ec2-instance-id_${index}.txt)
-
-              # Append to arrays
-              LABELS+=("\"$LABEL\"")
-              EC2_IDS+=("\"$EC2_ID\"")
-            else
-              echo "Artifact $artifact_name not found, skipping."
-            fi
+            # Append to arrays
+            LABELS+=("\"$LABEL\"")
+            EC2_IDS+=("\"$EC2_ID\"")
           done
 
           # Convert arrays to JSON
@@ -125,8 +123,6 @@ jobs:
 
           echo "labels=$LABELS_JSON" >> $GITHUB_OUTPUT
           echo "ec2_ids=$EC2_IDS_JSON" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
 
       - name: Show Aggregated Data
         run: |
