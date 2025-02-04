@@ -35,7 +35,7 @@ jobs:
       id-token: write
       contents: read
     outputs:
-      labels: ${{ steps.collect-labels.outputs.json_labels }}  # Outputs JSON array of runner labels
+      labels: ${{ steps.collect-labels.outputs.labels_json }}  # Outputs JSON array of runner labels
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
@@ -69,8 +69,8 @@ jobs:
       - name: Collect runner labels
         id: collect-labels
         run: |
-          echo 'json_labels=["${{ steps.start-ec2-runner.outputs.label }}"]' >> $GITHUB_ENV
-        shell: bash
+          echo "labels_json=[\"${{ steps.start-ec2-runner.outputs.label }}\"]" >> $GITHUB_ENV
+          echo "Show label: ${{ steps.start-ec2-runner.outputs.label }}"
 
   build-on-aws:
     name: Build on aws
