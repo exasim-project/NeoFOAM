@@ -86,16 +86,11 @@ jobs:
     needs: start-runner
     runs-on: ubuntu-latest
     outputs:
-      all_labels: ${{ steps.aggregate.outputs.labels }}
-      all_ec2_ids: ${{ steps.aggregate.outputs.ec2_ids }}
-      all_ec2_types: ${{ steps.aggregate.outputs.ec2_types }}
-
+      matrix: ${{ steps.aggregate.outputs.matrix }}
     steps:
       - name: Initialize Empty JSON Arrays
         run: |
-          echo "LABELS_JSON=[]" >> $GITHUB_ENV
-          echo "EC2_IDS_JSON=[]" >> $GITHUB_ENV
-          echo "EC2_TYPES_JSON=[]" >> $GITHUB_ENV
+          echo "MATRIX_JSON=[]" >> $GITHUB_ENV
       - name: Download Artifact 1
         uses: actions/download-artifact@v4
         with:
@@ -109,36 +104,25 @@ jobs:
       - name: Loop Through Matrix Indices and Download Artifacts
         id: aggregate
         run: |
-          LABELS=()
-          EC2_IDS=()
-          EC2_TYPES=()
+          INSTANCES=()
           for index in {0..1}; do  # Adjust max index if needed
             # Read values from downloaded files
-            ls downloaded_data
             LABEL=$(cat downloaded_data/label_${index}.txt)
             EC2_ID=$(cat downloaded_data/ec2-instance-id_${index}.txt)
             EC2_TYPE=$(cat downloaded_data/type_${index}.txt)
 
-            # Append to arrays
-            LABELS+=("\"$LABEL\"")
-            EC2_IDS+=("\"$EC2_ID\"")
-            EC2_TYPES+=("\"$EC2_TYPE\"")
+            # Create JSON object for this instance
+            INSTANCES+=("{\"runner\":\"$LABEL\", \"ec2-id\":\"$EC2_ID\", \"ec2-type\":\"$EC2_TYPE\"}")
           done
 
           # Convert arrays to JSON
-          LABELS_JSON=$(echo "${LABELS[@]}" | jq -s . | jq -c .)
-          EC2_IDS_JSON=$(echo "${EC2_IDS[@]}" | jq -s . | jq -c .)
-          EC2_TYPES_JSON=$(echo "${EC2_TYPES[@]}" | jq -s . | jq -c .)
-
-          echo "labels=$LABELS_JSON" >> $GITHUB_OUTPUT
-          echo "ec2_ids=$EC2_IDS_JSON" >> $GITHUB_OUTPUT
-          echo "ec2_types=$EC2_TYPES_JSON" >> $GITHUB_OUTPUT
+          MATRIX_JSON=$(echo "${LABELS[@]}" | jq -s . | jq -c .)
+          echo $MATRIX_JSON
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
       - name: Show Aggregated Data
         run: |
-          echo "Aggregated Labels: ${{ steps.aggregate.outputs.labels }}"
-          echo "Aggregated EC2 Instance IDs: ${{ steps.aggregate.outputs.ec2_ids }}"
-          echo "Aggregated EC2 Instance Types: ${{ steps.aggregate.outputs.ec2_types }}"
+          run: echo "Matrix: ${{ steps.aggregate.outputs.matrix }}"
         
   build-on-aws:
     name: Build on aws
@@ -147,9 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        instance:
-          - runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
-            ec2-type: ${{ fromJson(needs.aggregate-labels.outputs.all_ec2_types) }}
+        instance: ${{ fromJson(needs.aggregate-labels.outputs.matrix) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
@@ -191,12 +173,12 @@ jobs:
   benchmark-on-aws:
     name: Benchmark on aws
     needs: [start-runner,aggregate-labels, build-on-aws] # required to start the main job when the runner is ready
-    runs-on: ${{ matrix.runner }} # run the job on the newly created runner
+    runs-on: ${{ matrix.instance.runner }} # run the job on the newly created runner
     if: github.event.inputs.debug != 'true'
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
+        instance: ${{ fromJson(needs.aggregate-labels.outputs.matrix) }}
     steps:
       - name: Build NeoFOAM
         shell: bash -i {0}
@@ -249,8 +231,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
-        ec2-ids: ${{ fromJson(needs.aggregate-labels.outputs.all_ec2_ids) }}
+        instance: ${{ fromJson(needs.aggregate-labels.outputs.matrix) }}
     needs:
       - start-runner # required to get output from the start-runner job
       - benchmark-on-aws # required to wait when the main job is done
@@ -272,5 +253,5 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ matrix.runner }}
-          ec2-instance-id: ${{ matrix.ec2-ids }}
+          label: ${{ matrix.instance.runner }}
+          ec2-instance-id: ${{ matrix.instance.ec2-id }}
