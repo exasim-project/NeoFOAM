@@ -119,8 +119,8 @@ jobs:
           done
 
           # Convert arrays to JSON
-          LABELS_JSON=$(echo "${LABELS[@]}" | jq -s .)
-          EC2_IDS_JSON=$(echo "${EC2_IDS[@]}" | jq -s .)
+          LABELS_JSON=$(echo "${LABELS[@]}" | jq -s . | jq -c .)
+          EC2_IDS_JSON=$(echo "${EC2_IDS[@]}" | jq -s . | jq -c .)
 
           echo $LABELS_JSON
 
