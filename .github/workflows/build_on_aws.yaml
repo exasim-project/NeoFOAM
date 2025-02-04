@@ -91,9 +91,6 @@ jobs:
           LABELS=$(jq -R -s -c 'split("\n")[:-1]' labels.txt)
           echo "labels_json=$LABELS" >> $GITHUB_ENV
           echo "::set-output name=labels_json::$LABELS"
-
-      - name: Debug Output
-        run: echo "Final JSON Labels: ${{ steps.set-labels.outputs.labels_json }}"
         
   build-on-aws:
     name: Build on aws
