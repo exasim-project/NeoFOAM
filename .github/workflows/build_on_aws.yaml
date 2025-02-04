@@ -36,9 +36,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    outputs:
-      label_${{ matrix.instance.index }}: ${{ steps.start-ec2-runner.outputs.label }}  # Outputs JSON array of runner labels
-      ec2-instance-id_${{ matrix.instance.index }}: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+    #outputs:
+    #  label_${{ matrix.instance.index }}: ${{ steps.start-ec2-runner.outputs.label }}  # Outputs JSON array of runner labels
+    #  ec2-instance-id_${{ matrix.instance.index }}: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -68,6 +68,11 @@ jobs:
                  sudo rm /usr/local/cuda
                  sudo rm /usr/local/cuda-12.1
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
+      - name: Store Runner Label
+        id: set-label
+        run: |
+          echo "label_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_OUTPUT
+          echo "ec2-instance-id_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> $GITHUB_OUTPUT
         
   build-on-aws:
     name: Build on aws
