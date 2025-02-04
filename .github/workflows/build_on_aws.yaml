@@ -154,7 +154,7 @@ jobs:
         if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
         with:
           path: build
-          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}
+          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}_${{matrix.runner}}
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
