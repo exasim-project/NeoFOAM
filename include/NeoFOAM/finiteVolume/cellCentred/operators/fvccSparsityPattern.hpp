@@ -4,7 +4,7 @@
 #pragma once
 
 #include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/linearAlgebra.hpp"
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 namespace la = NeoFOAM::la;
 

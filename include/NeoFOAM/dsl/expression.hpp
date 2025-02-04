@@ -8,7 +8,7 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/linearAlgebra.hpp"
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
