@@ -35,7 +35,7 @@ jobs:
       id-token: write
       contents: read
     outputs:
-      labels: ${{ steps.collect-labels.outputs.labels_json }}  # Outputs JSON array of runner labels
+      labels: ${{ steps.start-ec2-runner.outputs.label }}  # Outputs JSON array of runner labels
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
@@ -68,23 +68,41 @@ jobs:
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
       - name: Store Label in File
         run: echo "${{ steps.start-ec2-runner.outputs.label }}" >> /tmp/labels.txt
-      - name: Collect runner labels
-        id: collect-labels
+      - name: Store Labels as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: runner-labels
+          path: /tmp/labels.txt
+  collect-runner-labels:
+    name: Collect Runner Labels
+    needs: start-runner
+    runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.set-labels.outputs.labels_json }}
+    steps:
+      - name: Download Runner Labels
+        uses: actions/download-artifact@v3
+        with:
+          name: runner-labels
+          
+      - name: Convert Labels to JSON
+        id: set-labels
         run: |
-          LABELS=$(jq -R -s -c 'split("\n")[:-1]' /tmp/labels.txt)
-          echo "labels_json=$LABELS" >> $GITHUB_OUTPUT
-      - name: Debug output
-        run: |
-          echo "LABELS_JSON=${{ steps.collect-labels.outputs.labels_json }}"
+          LABELS=$(jq -R -s -c 'split("\n")[:-1]' labels.txt)
+          echo "labels_json=$LABELS" >> $GITHUB_ENV
+          echo "::set-output name=labels_json::$LABELS"
 
+      - name: Debug Output
+        run: echo "Final JSON Labels: ${{ steps.set-labels.outputs.labels_json }}"
+        
   build-on-aws:
     name: Build on aws
-    needs: start-runner # required to start the main job when the runner is ready
+    needs: [start-runner,collect-runner-labels] # required to start the main job when the runner is ready
     runs-on: ${{ matrix.runner }} # run the job on the newly created runner
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.start-runner.outputs.labels) }}
+        runner: ${{ fromJson(needs.collect-runner-labels.outputs.labels) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
