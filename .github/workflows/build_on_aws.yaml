@@ -73,6 +73,15 @@ jobs:
         run: |
           echo "label_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_OUTPUT
           echo "ec2-instance-id_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> $GITHUB_OUTPUT
+          echo "label_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.label }}" >> $GITHUB_ENV
+          echo "ec2-instance-id_${{ matrix.instance.index }}=${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> $GITHUB_ENV
+  aggregate:
+      needs: start-runner
+      runs-on: ubuntu-latest
+      steps:
+        - name: Aggregate Outputs
+          run: |
+            echo "Aggregated Labels: ${{ toJson(needs.start-runner.outputs) }}"
         
   build-on-aws:
     name: Build on aws
