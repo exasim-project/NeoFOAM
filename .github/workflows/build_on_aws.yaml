@@ -122,7 +122,7 @@ jobs:
         
   build-on-aws:
     name: Build on aws
-    needs: start-runner # required to start the main job when the runner is ready
+    needs: aggregate-labels # required to start the main job when the runner is ready
     runs-on: ${{ matrix.runner }} # run the job on the newly created runner
     strategy:
       fail-fast: false
@@ -168,13 +168,13 @@ jobs:
           ctest --preset ${{matrix.preset}}
   benchmark-on-aws:
     name: Benchmark on aws
-    needs: [start-runner, build-on-aws] # required to start the main job when the runner is ready
+    needs: [start-runner,aggregate-labels, build-on-aws] # required to start the main job when the runner is ready
     runs-on: ${{ matrix.runner }} # run the job on the newly created runner
     if: github.event.inputs.debug != 'true'
     strategy:
       fail-fast: false
       matrix:
-        runner: [ "${{ needs.start-runner.outputs.label_0 }}" , "${{ needs.start-runner.outputs.label_1 }}" ]
+        runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
     steps:
       - name: Build NeoFOAM
         shell: bash -i {0}
