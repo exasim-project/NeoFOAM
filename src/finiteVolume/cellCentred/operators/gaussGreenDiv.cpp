@@ -84,7 +84,7 @@ void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
     const SurfaceInterpolation& surfInterp,
-    VolumeField<ValueType>& divPhi
+    Field<ValueType>& divPhi
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -107,7 +107,7 @@ void computeDiv(
         faceFlux.internalField().span(),
         phif.internalField().span(),
         mesh.cellVolumes().span(),
-        divPhi.internalField().span()
+        divPhi.span()
     );
 }
 
@@ -121,6 +121,13 @@ void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
+    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi.internalField());
+};
+
+void GaussGreenDiv::div(
+    Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+)
+{
     computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
 
@@ -131,7 +138,7 @@ GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& ph
     VolumeField<scalar> divPhi(
         exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
     );
-    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi);
+    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi.internalField());
     return divPhi;
 };
 
