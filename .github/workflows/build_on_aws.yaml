@@ -104,13 +104,15 @@ jobs:
             mkdir -p downloaded_artifacts/$artifact_name
 
             echo "Trying to download: $artifact_name"
-            if gh run download --name "$artifact_name" --dir "downloaded_artifacts/$artifact_name"; then
-              LABEL=$(cat downloaded_artifacts/$artifact_name/label_${index}.txt)
-              EC2_ID=$(cat downloaded_artifacts/$artifact_name/ec2-instance-id_${index}.txt)
+            # Attempt to download artifact (fails silently if not found)
+            echo "Downloading: $artifact_name"
+            curl -fsSLO --retry 3 https://github.com/${{ github.repository }}/actions/artifacts/$artifact_name || continue
+
+            LABEL=$(cat downloaded_artifacts/$artifact_name/label_${index}.txt)
+            EC2_ID=$(cat downloaded_artifacts/$artifact_name/ec2-instance-id_${index}.txt)
               
-              LABELS+=("\"$LABEL\"")
-              EC2_IDS+=("\"$EC2_ID\"")
-            fi
+            LABELS+=("\"$LABEL\"")
+            EC2_IDS+=("\"$EC2_ID\"")
           done
 
           # Convert arrays to JSON
