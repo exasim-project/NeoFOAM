@@ -71,7 +71,8 @@ jobs:
       - name: Store Runner Label
         run: |
           echo "${{ steps.start-ec2-runner.outputs.label }}" > label_${{ matrix.instance.index }}.txt
-          echo "${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" >> ec2-instance-id_${{ matrix.instance.index }}.txt
+          echo "${{ steps.start-ec2-runner.outputs.ec2-instance-id }}" > ec2-instance-id_${{ matrix.instance.index }}.txt
+          echo "${{ steps.start-ec2-runner.ec2-instance-type }}" > type_${{ matrix.instance.index }}.txt
       - name: Upload Label Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +80,7 @@ jobs:
           path: |
             label_${{ matrix.instance.index }}.txt
             ec2-instance-id_${{ matrix.instance.index }}.txt
+            type_${{ matrix.instance.index }}.txt
           retention-days: 1
   aggregate-labels:
     needs: start-runner
@@ -86,12 +88,14 @@ jobs:
     outputs:
       all_labels: ${{ steps.aggregate.outputs.labels }}
       all_ec2_ids: ${{ steps.aggregate.outputs.ec2_ids }}
+      all_ec2_types: ${{ steps.aggregate.outputs.ec2_types }}
 
     steps:
       - name: Initialize Empty JSON Arrays
         run: |
           echo "LABELS_JSON=[]" >> $GITHUB_ENV
           echo "EC2_IDS_JSON=[]" >> $GITHUB_ENV
+          echo "EC2_TYPES_JSON=[]" >> $GITHUB_ENV
       - name: Download Artifact 1
         uses: actions/download-artifact@v4
         with:
@@ -107,30 +111,34 @@ jobs:
         run: |
           LABELS=()
           EC2_IDS=()
+          EC2_TYPES=()
           for index in {0..1}; do  # Adjust max index if needed
             # Read values from downloaded files
             ls downloaded_data
             LABEL=$(cat downloaded_data/label_${index}.txt)
             EC2_ID=$(cat downloaded_data/ec2-instance-id_${index}.txt)
+            EC2_TYPE=$(cat downloaded_data/type_${index}.txt)
 
             # Append to arrays
             LABELS+=("\"$LABEL\"")
             EC2_IDS+=("\"$EC2_ID\"")
+            EC2_TYPES+=("\"$EC2_TYPE\"")
           done
 
           # Convert arrays to JSON
           LABELS_JSON=$(echo "${LABELS[@]}" | jq -s . | jq -c .)
           EC2_IDS_JSON=$(echo "${EC2_IDS[@]}" | jq -s . | jq -c .)
-
-          echo $LABELS_JSON
+          EC2_TYPES_JSON=$(echo "${EC2_TYPES[@]}" | jq -s . | jq -c .)
 
           echo "labels=$LABELS_JSON" >> $GITHUB_OUTPUT
           echo "ec2_ids=$EC2_IDS_JSON" >> $GITHUB_OUTPUT
+          echo "ec2_types=$EC2_TYPES_JSON" >> $GITHUB_OUTPUT
 
       - name: Show Aggregated Data
         run: |
           echo "Aggregated Labels: ${{ steps.aggregate.outputs.labels }}"
           echo "Aggregated EC2 Instance IDs: ${{ steps.aggregate.outputs.ec2_ids }}"
+          echo "Aggregated EC2 Instance Types: ${{ steps.aggregate.outputs.ec2_types }}"
         
   build-on-aws:
     name: Build on aws
@@ -140,6 +148,7 @@ jobs:
       fail-fast: false
       matrix:
         runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
+        ec2-type: ${{ fromJson(needs.aggregate-labels.outputs.all_ec2_types) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
@@ -154,7 +163,7 @@ jobs:
         if: ${{!contains(github.event.pull_request.labels.*.name, 'Skip-cache')}}
         with:
           path: build
-          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}_${{matrix.runner}}
+          key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}_${{matrix.ec2-type}}
       - name: Build NeoFOAM
         shell: bash -i {0}
         run: |
@@ -236,9 +245,15 @@ jobs:
           target-branch: main
   stop-runner:
     name: Stop self-hosted EC2 runner
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
+        ec2-ids: ${{ fromJson(needs.aggregate-labels.outputs.all_ec2_ids) }}
     needs:
       - start-runner # required to get output from the start-runner job
       - benchmark-on-aws # required to wait when the main job is done
+      - aggregate-labels
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -256,5 +271,5 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          label: ${{ matrix.runner }}
+          ec2-instance-id: ${{ matrix.ec2-ids }}
