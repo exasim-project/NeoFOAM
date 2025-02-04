@@ -92,12 +92,7 @@ jobs:
         run: |
           echo "LABELS_JSON=[]" >> $GITHUB_ENV
           echo "EC2_IDS_JSON=[]" >> $GITHUB_ENV
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: aggregated-data
-          path: downloaded_data
-
+          
       - name: Loop Through Matrix Indices and Download Artifacts
         id: aggregate
         run: |
