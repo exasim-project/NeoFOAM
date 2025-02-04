@@ -104,16 +104,16 @@ jobs:
           name: ec2-instance-ids
           path: ec2-instance-ids
 
-      - name: Aggregate Labels and EC2 IDs
+      - name: Aggregate Labels and EC2 IDs as JSON
         id: aggregate
         run: |
-          # Join all labels into a single space-separated string
-          LABELS=$(cat labels/*.txt | tr '\n' ' ')
-          echo "labels=$LABELS" >> $GITHUB_OUTPUT
+          # Read labels and convert them into a JSON array
+          LABELS_JSON=$(jq -R . < labels/*.txt | jq -s .)
+          echo "labels=$LABELS_JSON" >> $GITHUB_OUTPUT
 
-          # Join all EC2 instance IDs into a single space-separated string
-          EC2_IDS=$(cat ec2-instance-ids/*.txt | tr '\n' ' ')
-          echo "ec2_ids=$EC2_IDS" >> $GITHUB_OUTPUT
+          # Read EC2 instance IDs and convert them into a JSON array
+          EC2_IDS_JSON=$(jq -R . < ec2-instance-ids/*.txt | jq -s .)
+          echo "ec2_ids=$EC2_IDS_JSON" >> $GITHUB_OUTPUT
 
       - name: Show Aggregated Data
         run: |
@@ -127,7 +127,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ steps.aggregate.outputs.labels }}
+        runner: ${{ fromJson(needs.aggregate-labels.outputs.all_labels) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
