@@ -109,6 +109,8 @@ jobs:
           EC2_IDS=()
           for index in {0..1}; do  # Adjust max index if needed
             # Read values from downloaded files
+            ls downloaded_data
+            unzip "downloaded_data/labels_${index}.zip" -d "downloaded_data"
             LABEL=$(cat downloaded_data/labels_${index}/label_${index}.txt)
             EC2_ID=$(cat downloaded_data/labels_${index}/ec2-instance-id_${index}.txt)
 
