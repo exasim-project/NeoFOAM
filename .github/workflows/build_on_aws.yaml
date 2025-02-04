@@ -71,7 +71,7 @@ jobs:
       - name: Collect runner labels
         id: collect-labels
         run: |
-          run: echo "labels_json=${{ steps.collect-labels.outputs.labels_json }} [\"${RUNNER_LABEL}\"]" >> $GITHUB_ENV
+          echo "labels_json=${{ steps.collect-labels.outputs.labels_json }} [\"${RUNNER_LABEL}\"]" >> $GITHUB_ENV
       - name: Debug output
         run: |
           echo "LABELS_JSON=${{ steps.collect-labels.outputs.labels_json }}"
