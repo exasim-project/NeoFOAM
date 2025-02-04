@@ -71,6 +71,9 @@ jobs:
         run: |
           echo "labels_json=[\"${{ steps.start-ec2-runner.outputs.label }}\"]" >> $GITHUB_ENV
           echo "Show label: ${{ steps.start-ec2-runner.outputs.label }}"
+      - name: Debug output
+        run: |
+          echo "LABELS_JSON=${{ steps.collect-labels.outputs.labels_json }}"
 
   build-on-aws:
     name: Build on aws
