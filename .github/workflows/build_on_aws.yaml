@@ -35,7 +35,7 @@ jobs:
       id-token: write
       contents: read
     outputs:
-      label: ${{ steps.start-ec2-runner.outputs.label }}
+      labels: ${{ steps.collect-labels.outputs.json_labels }}  # Outputs JSON array of runner labels
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
@@ -66,6 +66,11 @@ jobs:
                  sudo rm /usr/local/cuda
                  sudo rm /usr/local/cuda-12.1
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
+      - name: Collect runner labels
+        id: collect-labels
+        run: |
+          echo 'json_labels=["${{ steps.start-ec2-runner.outputs.label }}"]' >> $GITHUB_ENV
+        shell: bash
 
   build-on-aws:
     name: Build on aws
@@ -74,7 +79,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.start-runner.outputs.label) }}
+        runner: ${{ fromJson(needs.start-runner.outputs.labels) }}
         preset: ["develop", "production"]
     steps:
       - name: Prepare environment
@@ -121,7 +126,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ${{ fromJson(needs.start-runner.outputs.label) }}
+        runner: ${{ fromJson(needs.start-runner.outputs.labels) }}
     steps:
       - name: Build NeoFOAM
         shell: bash -i {0}
