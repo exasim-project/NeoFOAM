@@ -68,30 +68,19 @@ jobs:
                  sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
       - name: Store Label in File
         run: echo "${{ steps.start-ec2-runner.outputs.label }}" >> /tmp/labels.txt
-      - name: Store Labels as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: runner-labels
-          path: /tmp/labels.txt
           
   collect-runner-labels:
     name: Collect Runner Labels
     needs: start-runner
     runs-on: ubuntu-latest
     outputs:
-      labels: ${{ steps.set-labels.outputs.labels_json }}
+      labels: ${{ steps.aggregate-labels.outputs.labels_json }}
     steps:
-      - name: Download Runner Labels
-        uses: actions/download-artifact@v4
-        with:
-          name: runner-labels
-          
-      - name: Convert Labels to JSON
-        id: set-labels
+      - name: Aggregate All Labels into JSON
+        id: aggregate-labels
         run: |
-          LABELS=$(jq -R -s -c 'split("\n")[:-1]' labels.txt)
-          echo "labels_json=$LABELS" >> $GITHUB_ENV
-          echo "::set-output name=labels_json::$LABELS"
+          LABELS=$(jq -R -s -c 'split("\n")[:-1]' /tmp/labels.txt)
+          echo "labels_json=$LABELS" >> $GITHUB_OUTPUT
         
   build-on-aws:
     name: Build on aws
