@@ -118,7 +118,10 @@ if(${NEOFOAM_WITH_GINKGO})
   set(GINKGO_BUILD_EXAMPLES
       OFF
       CACHE INTERNAL "")
-  set(GINKGO_BUILD_EXAMPLES
+  set(GINKGO_BUILD_MPI
+      OFF
+      CACHE INTERNAL "")
+  set(GINKGO_ENABLE_HALF
       OFF
       CACHE INTERNAL "")
   cpmaddpackage(

@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <string>
+
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 
@@ -33,9 +35,10 @@ public:
         NF_ASSERT(matrix.nRows() == rhs.size(), "Matrix and RHS size mismatch");
     };
 
-    LinearSystem(const LinearSystem& ls) : matrix_(ls.matrix_), rhs_(ls.rhs_) {};
+    LinearSystem(const LinearSystem& ls)
+        : matrix_(ls.matrix_), rhs_(ls.rhs_), sparsityPattern_(ls.sparsityPattern_) {};
 
-    LinearSystem(const Executor exec) : matrix_(exec), rhs_(exec, 0) {}
+    LinearSystem(const Executor exec) : matrix_(exec), rhs_(exec, 0), sparsityPattern_() {}
 
     ~LinearSystem() = default;
 
