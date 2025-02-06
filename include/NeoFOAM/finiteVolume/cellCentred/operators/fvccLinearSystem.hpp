@@ -15,7 +15,7 @@ class LinearSystem
 public:
 
     LinearSystem(VolumeField<ValueType>& psi)
-        : psi_(psi), ls_(SparsityPattern::readOrCreate(psi.mesh()).linearSystem()),
+        : psi_(psi), ls_(SparsityPattern::readOrCreate(psi.mesh())->linearSystem()),
           sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh())) {
 
           };
