@@ -24,16 +24,27 @@ public:
 
     GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs);
 
-    void
+    virtual void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) override;
 
-    void
+    virtual void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) override;
 
-    VolumeField<scalar>
+    virtual VolumeField<scalar>
     div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) override;
+
+    virtual void
+    div(VolumeField<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
+    ) override;
+
+    virtual void
+    div(Field<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
+    ) override;
+
+    virtual VolumeField<Vector>
+    div(const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi) override;
 
     std::unique_ptr<DivOperatorFactory> clone() const override;
 

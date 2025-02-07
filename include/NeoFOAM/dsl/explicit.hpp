@@ -18,10 +18,9 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 namespace NeoFOAM::dsl::exp
 {
 
-Operator
-div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+Operator div(const fvcc::SurfaceField<scalar>& faceFlux, fvcc::VolumeField<scalar>& phi)
 {
-    return Operator(fvcc::DivOperator(dsl::Operator::Type::Explicit, faceFlux, phi));
+    return Operator(fvcc::DivOperator<scalar>(dsl::Operator::Type::Explicit, faceFlux, phi));
 }
 
 
