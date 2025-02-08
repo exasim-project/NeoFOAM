@@ -32,21 +32,21 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     NeoFOAM::fill(faceFlux.internalField(), 1.0);
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
-    fvcc::VolumeField<TestType> vecPhi(exec, "sf", mesh, volumeBCs);
+    fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
     // NeoFOAM::fill(vecPhi.internalField(), NeoFOAM::Vector{1.0, 1.0, 1.0});
 
-    // SECTION("Construct from Token" + execName)
-    // {
-    //     NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
-    //     fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
-    // }
+    SECTION("Construct from Token" + execName)
+    {
+        NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
+        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+    }
 
-    // SECTION("Construct from Dictionary" + execName)
-    // {
-    //     NeoFOAM::Input input = NeoFOAM::Dictionary(
-    //         {{std::string("DivOperator"), std::string("Gauss")},
-    //          {std::string("surfaceInterpolation"), std::string("linear")}}
-    //     );
-    //     fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
-    // }
+    SECTION("Construct from Dictionary" + execName)
+    {
+        NeoFOAM::Input input = NeoFOAM::Dictionary(
+            {{std::string("DivOperator"), std::string("Gauss")},
+             {std::string("surfaceInterpolation"), std::string("linear")}}
+        );
+        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+    }
 }
