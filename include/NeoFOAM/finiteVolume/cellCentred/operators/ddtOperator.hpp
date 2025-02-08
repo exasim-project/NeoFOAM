@@ -22,7 +22,9 @@ public:
 
     DdtOperator(dsl::Operator::Type termType, VolumeField<scalar>& field)
         : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), field, termType),
-          sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
+          sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {
+
+          };
 
     void explicitOperation(Field<scalar>& source)
     {
@@ -45,17 +47,21 @@ public:
 
     void implicitOperation(la::LinearSystem<scalar, localIdx>& ls)
     {
+        const scalar rDeltat = 1 / 1.0;
         const auto operatorScaling = getCoefficient();
         const auto [diagOffs, oldField] =
             spans(sparsityPattern_->diagOffset(), oldTime(field_).internalField());
         const auto rowPtrs = ls.matrix().rowPtrs();
         const auto colIdxs = ls.matrix().colIdxs();
         std::span<scalar> values = ls.matrix().values();
+        std::span<scalar> rhs = ls.rhs().span();
         NeoFOAM::parallelFor(
             ls.exec(),
-            {0, coeff.size()},
+            {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
                 std::size_t idx = rowPtrs[celli] + diagOffs[celli];
+                values[idx] += operatorScaling[celli] * rDeltat;
+                rhs[celli] += operatorScaling[celli] * rDeltat * oldField[celli];
             }
         );
     }
@@ -70,7 +76,7 @@ public:
 
 private:
 
-    const VolumeField<scalar>& coefficients_;
+    // const VolumeField<scalar>& coefficients_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 

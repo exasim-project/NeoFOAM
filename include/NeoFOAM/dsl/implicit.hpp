@@ -19,4 +19,14 @@ namespace NeoFOAM::dsl::imp
 
 Operator ddt(fvcc::VolumeField<NeoFOAM::scalar>& phi) { return dsl::temporal::ddt(phi); }
 
+Operator Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    return Operator(fvcc::SourceTerm(dsl::Operator::Type::Implicit, coeff, phi));
+}
+
+Operator div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    return Operator(fvcc::DivOperator(dsl::Operator::Type::Implicit, faceFlux, phi));
+}
+
 } // namespace NeoFOAM
