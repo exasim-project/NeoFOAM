@@ -108,6 +108,12 @@ public:
         interpolationKernel_->interpolate(volField, surfaceField);
     }
 
+    void interpolate(const VolumeField<Vector>& volField, SurfaceField<Vector>& surfaceField) const
+    {
+        interpolationKernel_->interpolate(volField, surfaceField);
+    }
+
+
     ScalarSurfaceField interpolate(const VolumeField<scalar>& volField) const
     {
         std::string nameInterpolated = "interpolated_" + volField.name;

@@ -6,6 +6,7 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -13,7 +14,7 @@ using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 using NeoFOAM::finiteVolume::cellCentred::VolumeField;
 using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
 
-TEST_CASE("linear")
+TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -26,8 +27,14 @@ TEST_CASE("linear")
     NeoFOAM::Input input = NeoFOAM::TokenList({std::string("linear")});
     auto linear = SurfaceInterpolation(exec, mesh, input);
 
-    auto in = VolumeField<NeoFOAM::scalar>(exec, "in", mesh, {});
-    auto out = SurfaceField<NeoFOAM::scalar>(exec, "out", mesh, {});
+    auto in = VolumeField<TestType>(exec, "in", mesh, {});
+    auto out = SurfaceField<TestType>(exec, "out", mesh, {});
+
+    // FIXME add fill
+    // fill(in.internalField(), 1);
 
     linear.interpolate(in, out);
+
+    // FIXME add fill
+    // REQUIRE(out.internalField()[0] == one<TestType>::value);
 }
