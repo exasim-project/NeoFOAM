@@ -84,7 +84,8 @@ void solve(
     [[maybe_unused]] const Dictionary& fvSolution
 )
 {
-    if (exp.temporalOperators().size() == 0 && exp.implicitOperators().size() == 0)
+    // todo fix
+    if (exp.temporalOperators().size() == 0 && exp.spatialOperators().size() == 0)
     {
         NF_ERROR_EXIT("No temporal or implicit terms to solve.");
     }

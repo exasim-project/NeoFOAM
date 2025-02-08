@@ -53,12 +53,12 @@ TEST_CASE("Expression")
 
     SECTION("Create equation and perform implicitOperation on " + execName)
     {
-        auto a = Dummy(vf, Operator::Type::Implicit);
-        auto b = Dummy(vf, Operator::Type::Implicit);
+        auto a = Dummy(vf, SpatialOperator::Type::Implicit);
+        auto b = Dummy(vf, SpatialOperator::Type::Implicit);
 
         auto eqnA = a + b;
-        auto eqnB =
-            fB * Dummy(vf, Operator::Type::Implicit) + 2 * Dummy(vf, Operator::Type::Implicit);
+        auto eqnB = fB * Dummy(vf, SpatialOperator::Type::Implicit)
+                  + 2 * Dummy(vf, SpatialOperator::Type::Implicit);
         auto eqnC = Expression(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);

@@ -4,7 +4,9 @@
                             // a custom main
 #include "common.hpp"
 
-TEST_CASE("Operator")
+namespace dsl = NeoFOAM::dsl;
+
+TEST_CASE("SpatialOperator")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -16,17 +18,17 @@ TEST_CASE("Operator")
 
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
 
-    SECTION("Operator creation on " + execName)
+    SECTION("SpatialOperator creation on " + execName)
     {
         Field fA(exec, 1, 2.0);
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        auto b = Dummy(vf);
+        dsl::SpatialOperator b = Dummy(vf);
 
         REQUIRE(b.getName() == "Dummy");
-        REQUIRE(b.getType() == Operator::Type::Explicit);
+        REQUIRE(b.getType() == SpatialOperator::Type::Explicit);
     }
 
     SECTION("Supports Coefficients Explicit " + execName)
@@ -38,9 +40,9 @@ TEST_CASE("Operator")
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        auto c = 2 * Dummy(vf);
-        auto d = fB * Dummy(vf);
-        auto e = Coeff(-3, fB) * Dummy(vf);
+        dsl::SpatialOperator c = 2.0 * dsl::SpatialOperator(Dummy(vf));
+        dsl::SpatialOperator d = fB * dsl::SpatialOperator(Dummy(vf));
+        dsl::SpatialOperator e = Coeff(-3, fB) * dsl::SpatialOperator(Dummy(vf));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();
@@ -71,10 +73,10 @@ TEST_CASE("Operator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        auto b = Dummy(vf, Operator::Type::Implicit);
+        dsl::SpatialOperator b = Dummy(vf, SpatialOperator::Type::Implicit);
 
         REQUIRE(b.getName() == "Dummy");
-        REQUIRE(b.getType() == Operator::Type::Implicit);
+        REQUIRE(b.getType() == SpatialOperator::Type::Implicit);
 
         auto ls = b.createEmptyLinearSystem();
         REQUIRE(ls.matrix().nValues() == 1);
@@ -91,9 +93,12 @@ TEST_CASE("Operator")
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        auto c = 2 * Dummy(vf, Operator::Type::Implicit);
-        auto d = fB * Dummy(vf, Operator::Type::Implicit);
-        auto e = Coeff(-3, fB) * Dummy(vf, Operator::Type::Implicit);
+        dsl::SpatialOperator c =
+            2 * dsl::SpatialOperator(Dummy(vf, SpatialOperator::Type::Implicit));
+        dsl::SpatialOperator d =
+            fB * dsl::SpatialOperator(Dummy(vf, SpatialOperator::Type::Implicit));
+        dsl::SpatialOperator e =
+            Coeff(-3, fB) * dsl::SpatialOperator(Dummy(vf, SpatialOperator::Type::Implicit));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();

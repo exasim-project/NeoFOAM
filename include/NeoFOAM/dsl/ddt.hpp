@@ -5,7 +5,7 @@
 #pragma once
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 
 namespace NeoFOAM::dsl::temporal
 {
@@ -16,17 +16,23 @@ class Ddt : public OperatorMixin<FieldType>
 
 public:
 
-    Ddt(FieldType& field) : OperatorMixin<FieldType>(field.exec(), field, Operator::Type::Temporal)
+    Ddt(FieldType& field)
+        : OperatorMixin<FieldType>(field.exec(), field, SpatialOperator::Type::Implicit)
     {}
 
     std::string getName() const { return "TimeOperator"; }
 
-    void explicitOperation([[maybe_unused]] Field<scalar>& source, [[maybe_unused]] scalar scale)
+    void
+    explicitOperation([[maybe_unused]] Field<scalar>& source, NeoFOAM::scalar t, NeoFOAM::scalar dt)
     {
         NF_ERROR_EXIT("Not implemented");
     }
 
-    void implicitOperation([[maybe_unused]] Field<scalar>& phi)
+    void implicitOperation(
+        la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& ls,
+        NeoFOAM::scalar t,
+        NeoFOAM::scalar dt
+    )
     {
         NF_ERROR_EXIT("Not implemented");
     }

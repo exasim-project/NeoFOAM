@@ -7,7 +7,7 @@
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
@@ -83,7 +83,7 @@ public:
           ) {};
 
     DivOperator(
-        dsl::Operator::Type termType,
+        dsl::SpatialOperator::Type termType,
         const SurfaceField<scalar>& faceFlux,
         VolumeField<scalar>& phi,
         Input input
@@ -92,7 +92,7 @@ public:
           divOperatorStrategy_(DivOperatorFactory::create(exec_, phi.mesh(), input)) {};
 
     DivOperator(
-        dsl::Operator::Type termType,
+        dsl::SpatialOperator::Type termType,
         const SurfaceField<scalar>& faceFlux,
         VolumeField<scalar>& phi,
         std::unique_ptr<DivOperatorFactory> divOperatorStrategy
@@ -101,7 +101,9 @@ public:
           divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
     DivOperator(
-        dsl::Operator::Type termType, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+        dsl::SpatialOperator::Type termType,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(nullptr) {};

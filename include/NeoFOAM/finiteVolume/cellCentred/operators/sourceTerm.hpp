@@ -6,7 +6,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/fvccSparsityPattern.hpp"
 
@@ -21,7 +21,9 @@ class SourceTerm : public dsl::OperatorMixin<VolumeField<scalar>>
 public:
 
     SourceTerm(
-        dsl::Operator::Type termType, VolumeField<scalar>& coefficients, VolumeField<scalar>& field
+        dsl::SpatialOperator::Type termType,
+        VolumeField<scalar>& coefficients,
+        VolumeField<scalar>& field
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), field, termType),
           coefficients_(coefficients),

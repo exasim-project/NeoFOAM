@@ -11,7 +11,7 @@
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
-using Operator = NeoFOAM::dsl::Operator;
+using SpatialOperator = NeoFOAM::dsl::SpatialOperator;
 
 TEST_CASE("DivOperator")
 {
@@ -36,7 +36,7 @@ TEST_CASE("DivOperator")
     SECTION("Construct from Token" + execName)
     {
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
-        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+        fvcc::DivOperator(SpatialOperator::Type::Explicit, faceFlux, phi, input);
     }
 
     SECTION("Construct from Dictionary" + execName)
@@ -45,6 +45,6 @@ TEST_CASE("DivOperator")
             {{std::string("DivOperator"), std::string("Gauss")},
              {std::string("surfaceInterpolation"), std::string("linear")}}
         );
-        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+        fvcc::DivOperator(SpatialOperator::Type::Explicit, faceFlux, phi, input);
     }
 }

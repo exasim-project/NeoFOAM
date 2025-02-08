@@ -10,74 +10,74 @@
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/coeff.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 
 namespace la = NeoFOAM::la;
 
 namespace NeoFOAM::dsl
 {
 
+
 template<typename T>
-concept HasTemporalOperator = requires(T t) {
+concept HasTemporalExplicitOperator = requires(T t) {
     {
-        t.temporalOperation(std::declval<Field<scalar>&>(), std::declval<scalar>())
+        t.explicitOperation(
+            std::declval<Field<NeoFOAM::scalar>&>(),
+            std::declval<NeoFOAM::scalar>(),
+            std::declval<NeoFOAM::scalar>()
+        )
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
 template<typename T>
-concept HasExplicitOperator = requires(T t) {
+concept HasTemporalImplicitOperator = requires(T t) {
     {
-        t.explicitOperation(std::declval<Field<scalar>&>())
+        t.implicitOperation(
+            std::declval<la::LinearSystem<scalar, localIdx>&>(),
+            std::declval<NeoFOAM::scalar>(),
+            std::declval<NeoFOAM::scalar>()
+        )
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
 template<typename T>
-concept HasImplicitOperator = requires(T t) {
-    {
-        t.implicitOperation(std::declval<la::LinearSystem<scalar, localIdx>&>())
-    } -> std::same_as<void>; // Adjust return type and arguments as needed
-};
+concept HasTemporalOperator = HasTemporalExplicitOperator<T> || HasTemporalImplicitOperator<T>;
 
-/* @class Operator
- * @brief A class to represent an operator in NeoFOAMs dsl
+/* @class TemporalOperator
+ * @brief A class to represent an TemporalOperator in NeoFOAMs dsl
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw
  *
  * Motivation for using type erasure is that concrete implementation
- * of Operators e.g Divergence, Laplacian, etc can be stored in a vector of
- * Operators
+ * of TemporalOperator e.g Divergence, Laplacian, etc can be stored in a vector of
+ * TemporalOperator
  *
  * @ingroup dsl
  */
-class Operator
+class TemporalOperator
 {
 public:
 
-    enum class Type
-    {
-        Temporal,
-        Implicit,
-        Explicit
-    };
 
-    template<typename T>
-    Operator(T cls) : model_(std::make_unique<OperatorModel<T>>(std::move(cls)))
+    template<HasTemporalOperator T>
+    TemporalOperator(T cls) : model_(std::make_unique<TemporalOperatorModel<T>>(std::move(cls)))
     {}
 
-    Operator(const Operator& eqnOperator);
+    TemporalOperator(const TemporalOperator& eqnOperator);
 
-    Operator(Operator&& eqnOperator);
+    TemporalOperator(TemporalOperator&& eqnOperator);
 
-    void explicitOperation(Field<scalar>& source);
+    void explicitOperation(Field<scalar>& source, scalar t, scalar dt);
 
-    void temporalOperation(Field<scalar>& field);
-
-    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls);
+    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt);
 
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const;
 
-    /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-    Operator::Type getType() const;
+    /* returns the fundamental type of an operator, ie explicit, implicit */
+    SpatialOperator::Type getType() const;
+
+    std::string getName() const;
 
     Coeff& getCoefficient();
 
@@ -95,15 +95,14 @@ private:
     /* @brief Base class defining the concept of a term. This effectively
      * defines what functions need to be implemented by a concrete Operator implementation
      * */
-    struct OperatorConcept
+    struct TemporalOperatorConcept
     {
-        virtual ~OperatorConcept() = default;
+        virtual ~TemporalOperatorConcept() = default;
 
-        virtual void explicitOperation(Field<scalar>& source) = 0;
+        virtual void explicitOperation(Field<scalar>& source, scalar t, scalar dt) = 0;
 
-        virtual void temporalOperation(Field<scalar>& field) = 0;
-
-        virtual void implicitOperation(la::LinearSystem<scalar, localIdx>& ls) = 0;
+        virtual void
+        implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt) = 0;
 
         virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
 
@@ -114,7 +113,7 @@ private:
         virtual std::string getName() const = 0;
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-        virtual Operator::Type getType() const = 0;
+        virtual SpatialOperator::Type getType() const = 0;
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() = 0;
@@ -126,49 +125,44 @@ private:
         virtual const Executor& exec() const = 0;
 
         // The Prototype Design Pattern
-        virtual std::unique_ptr<OperatorConcept> clone() const = 0;
+        virtual std::unique_ptr<TemporalOperatorConcept> clone() const = 0;
     };
 
     // Templated derived class to implement the type-specific behavior
-    template<typename ConcreteOperatorType>
-    struct OperatorModel : OperatorConcept
+    template<typename ConcreteTemporalOperatorType>
+    struct TemporalOperatorModel : TemporalOperatorConcept
     {
-        /* @brief build with concrete operator */
-        OperatorModel(ConcreteOperatorType concreteOp) : concreteOp_(std::move(concreteOp)) {}
+        /* @brief build with concrete TemporalOperator */
+        TemporalOperatorModel(ConcreteTemporalOperatorType concreteOp)
+            : concreteOp_(std::move(concreteOp))
+        {}
 
         /* returns the name of the operator */
         std::string getName() const override { return concreteOp_.getName(); }
 
-        virtual void explicitOperation(Field<scalar>& source) override
+        virtual void explicitOperation(Field<scalar>& source, scalar t, scalar dt) override
         {
-            if constexpr (HasExplicitOperator<ConcreteOperatorType>)
+            if constexpr (HasTemporalExplicitOperator<ConcreteTemporalOperatorType>)
             {
-                concreteOp_.explicitOperation(source);
+                concreteOp_.explicitOperation(source, t, dt);
             }
         }
 
-        virtual void temporalOperation(Field<scalar>& field) override
+        virtual void
+        implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt) override
         {
-            if constexpr (HasTemporalOperator<ConcreteOperatorType>)
+            if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
             {
-                concreteOp_.temporalOperation(field);
-            }
-        }
-
-        virtual void implicitOperation(la::LinearSystem<scalar, localIdx>& ls) override
-        {
-            if constexpr (HasImplicitOperator<ConcreteOperatorType>)
-            {
-                concreteOp_.implicitOperation(ls);
+                concreteOp_.implicitOperation(ls, t, dt);
             }
         }
 
         virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override
         {
-            if constexpr (HasImplicitOperator<ConcreteOperatorType>)
-            {
-                return concreteOp_.createEmptyLinearSystem();
-            }
+            // if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
+            // {
+            return concreteOp_.createEmptyLinearSystem();
+            // }
             throw std::runtime_error("Implicit operation not implemented");
             // only need to avoid compiler warning about missing return statement
             // this code path should never be reached as we call implicitOperation on an explicit
@@ -188,7 +182,7 @@ private:
         virtual void build(const Input& input) override { concreteOp_.build(input); }
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-        Operator::Type getType() const override { return concreteOp_.getType(); }
+        SpatialOperator::Type getType() const override { return concreteOp_.getType(); }
 
         /* @brief Get the executor */
         const Executor& exec() const override { return concreteOp_.exec(); }
@@ -200,31 +194,31 @@ private:
         virtual Coeff getCoefficient() const override { return concreteOp_.getCoefficient(); }
 
         // The Prototype Design Pattern
-        std::unique_ptr<OperatorConcept> clone() const override
+        std::unique_ptr<TemporalOperatorConcept> clone() const override
         {
-            return std::make_unique<OperatorModel>(*this);
+            return std::make_unique<TemporalOperatorModel>(*this);
         }
 
-        ConcreteOperatorType concreteOp_;
+        ConcreteTemporalOperatorType concreteOp_;
     };
 
-    std::unique_ptr<OperatorConcept> model_;
+    std::unique_ptr<TemporalOperatorConcept> model_;
 };
 
 
-Operator operator*(scalar scalarCoeff, Operator rhs);
+TemporalOperator operator*(scalar scalarCoeff, TemporalOperator rhs);
 
-Operator operator*(const Field<scalar>& coeffField, Operator rhs);
+TemporalOperator operator*(const Field<scalar>& coeffField, TemporalOperator rhs);
 
-Operator operator*(const Coeff& coeff, Operator rhs);
+TemporalOperator operator*(const Coeff& coeff, TemporalOperator rhs);
 
 template<typename CoeffFunction>
     requires std::invocable<CoeffFunction&, size_t>
-Operator operator*([[maybe_unused]] CoeffFunction coeffFunc, const Operator& lhs)
+TemporalOperator operator*([[maybe_unused]] CoeffFunction coeffFunc, const TemporalOperator& lhs)
 {
     // TODO implement
     NF_ERROR_EXIT("Not implemented");
-    Operator result = lhs;
+    TemporalOperator result = lhs;
     // if (!result.getCoefficient().useSpan)
     // {
     //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
@@ -233,46 +227,5 @@ Operator operator*([[maybe_unused]] CoeffFunction coeffFunc, const Operator& lhs
     return result;
 }
 
-/* @class OperatorMixin
- * @brief A mixin class to simplify implementations of concrete operators
- * in NeoFOAMs dsl
- *
- * @ingroup dsl
- */
-template<typename FieldType>
-class OperatorMixin
-{
 
-public:
-
-    OperatorMixin(const Executor exec, FieldType& field, Operator::Type type)
-        : exec_(exec), coeffs_(), field_(field), type_(type) {};
-
-    Operator::Type getType() const { return type_; }
-
-    virtual ~OperatorMixin() = default;
-
-    virtual const Executor& exec() const final { return exec_; }
-
-    Coeff& getCoefficient() { return coeffs_; }
-
-    const Coeff& getCoefficient() const { return coeffs_; }
-
-    FieldType& getField() { return field_; }
-
-    const FieldType& getField() const { return field_; }
-
-    /* @brief Given an input this function reads required coeffs */
-    void build([[maybe_unused]] const Input& input) {}
-
-protected:
-
-    const Executor exec_; //!< Executor associated with the field. (CPU, GPU, openMP, etc.)
-
-    Coeff coeffs_;
-
-    FieldType& field_;
-
-    Operator::Type type_;
-};
 } // namespace NeoFOAM::dsl
