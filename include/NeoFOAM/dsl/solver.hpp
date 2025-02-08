@@ -14,9 +14,56 @@
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
+#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+
 
 namespace NeoFOAM::dsl
 {
+
+template<typename FieldType>
+NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int>
+ginkgoMatrix(Expression& exp, FieldType& solution)
+{
+    using ValueType = typename FieldType::ElementType;
+    auto vol = solution.mesh().cellVolumes().span();
+    // la::CSRMatrix<ValueType, int> matrix(values, colIdxs, rowPtrs);
+    // return la::LinearSystem<ValueType, int>(matrix, rhs, sparsityPattern);
+    auto expSource = exp.explicitOperation(solution.mesh().nCells());
+    auto expSourceSpan = expSource.span();
+
+    auto ls = exp.implicitOperation();
+    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
+    auto rhsSpan = rhs.span();
+    // we subtract the explicit source term from the rhs
+    NeoFOAM::parallelFor(
+        solution.exec(),
+        {0, rhs.size()},
+        KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] -= expSourceSpan[i] * vol[i]; }
+    );
+
+    Field<ValueType> mValues(
+        solution.exec(), ls.matrix().values().data(), ls.matrix().values().size()
+    );
+    Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
+    auto mColIdxsSpan = ls.matrix().colIdxs();
+    NeoFOAM::parallelFor(
+        mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); }
+    );
+
+    Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
+    auto mRowPtrsSpan = ls.matrix().rowPtrs();
+    NeoFOAM::parallelFor(
+        mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); }
+    );
+
+    auto values = ls.matrix().values();
+
+
+    la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
+
+    NeoFOAM::la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
+    return convertedLs;
+}
 
 /* @brief solve an expression
  *
@@ -50,8 +97,13 @@ void solve(
     }
     else
     {
-        NF_ERROR_EXIT("Not implemented.");
         // solve sparse matrix system
+        using ValueType = typename FieldType::ElementType;
+        auto ls = ginkgoMatrix(exp, solution);
+
+
+        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solution.exec(), fvSolution);
+        solver.solve(ls, solution.internalField());
     }
 }
 
