@@ -12,6 +12,7 @@
 // TODO we should get rid of this include since it includes details
 // from a general implementation
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
@@ -22,6 +23,11 @@ Operator
 div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
     return Operator(fvcc::DivOperator(dsl::Operator::Type::Explicit, faceFlux, phi));
+}
+
+Operator Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    return Operator(fvcc::SourceTerm(dsl::Operator::Type::Explicit, coeff, phi));
 }
 
 
