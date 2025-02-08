@@ -42,6 +42,8 @@ public:
 
     virtual ~DivOperatorFactory() {} // Virtual destructor
 
+    virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
+
     virtual void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) = 0;
@@ -114,6 +116,24 @@ public:
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
         divOperatorStrategy_->div(tmpsource, faceFlux_, field_);
         source += tmpsource;
+    }
+
+    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const
+    {
+        if (divOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
+        }
+        return divOperatorStrategy_->createEmptyLinearSystem();
+    }
+
+    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls)
+    {
+        if (divOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
+        }
+        divOperatorStrategy_->div(ls, faceFlux_, field_);
     }
 
     void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }

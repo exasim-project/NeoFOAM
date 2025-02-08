@@ -25,6 +25,8 @@ public:
 
     GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs);
 
+    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override;
+
     void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) override;
