@@ -22,10 +22,12 @@ TEST_CASE("linear")
     );
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
-    auto mesh = NeoFOAM::createSingleCellMesh(exec);
+    auto mesh = NeoFOAM::create1DUniformMesh(exec, 10);
     NeoFOAM::Input input = NeoFOAM::TokenList({std::string("linear")});
     auto linear = SurfaceInterpolation(exec, mesh, input);
 
     auto in = VolumeField<NeoFOAM::scalar>(exec, "in", mesh, {});
     auto out = SurfaceField<NeoFOAM::scalar>(exec, "out", mesh, {});
+
+    linear.interpolate(in, out);
 }

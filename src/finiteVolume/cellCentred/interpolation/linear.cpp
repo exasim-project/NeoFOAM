@@ -58,7 +58,8 @@ Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
 void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
     const
 {
-    computeLinearInterpolation(volField, geometryScheme_, surfaceField);
+    // FIXME:
+    // computeLinearInterpolation(volField, geometryScheme_, surfaceField);
 }
 
 void Linear::interpolate(
@@ -69,6 +70,23 @@ void Linear::interpolate(
 {
     interpolate(volField, surfaceField);
 }
+
+void Linear::interpolate(const VolumeField<Vector>& volField, SurfaceField<Vector>& surfaceField)
+    const
+{
+    // FIXME:
+    // computeLinearInterpolation(volField, geometryScheme_, surfaceField);
+}
+
+void Linear::interpolate(
+    [[maybe_unused]] const SurfaceField<scalar>& faceFlux,
+    const VolumeField<Vector>& volField,
+    SurfaceField<Vector>& surfaceField
+) const
+{
+    interpolate(volField, surfaceField);
+}
+
 
 std::unique_ptr<SurfaceInterpolationFactory> Linear::clone() const
 {

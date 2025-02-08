@@ -73,7 +73,26 @@ void Upwind::interpolate(
     SurfaceField<scalar>& surfaceField
 ) const
 {
-    computeUpwindInterpolation(faceFlux, volField, geometryScheme_, surfaceField);
+    // FIXME:
+    // computeUpwindInterpolation(faceFlux, volField, geometryScheme_, surfaceField);
+}
+
+void Upwind::interpolate(
+    [[maybe_unused]] const VolumeField<Vector>& volField,
+    [[maybe_unused]] SurfaceField<Vector>& surfaceField
+) const
+{
+    NF_ERROR_EXIT("limited scheme require a faceFlux");
+}
+
+void Upwind::interpolate(
+    const SurfaceField<scalar>& faceFlux,
+    const VolumeField<Vector>& volField,
+    SurfaceField<Vector>& surfaceField
+) const
+{
+    // FIXME:
+    // computeUpwindInterpolation(faceFlux, volField, geometryScheme_, surfaceField);
 }
 
 std::unique_ptr<SurfaceInterpolationFactory> Upwind::clone() const
