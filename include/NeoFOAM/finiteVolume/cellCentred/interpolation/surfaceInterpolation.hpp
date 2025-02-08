@@ -18,8 +18,11 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+/* @class SurfaceInterpolationFactor
+**
+*/
 class SurfaceInterpolationFactory :
-    public NeoFOAM::RuntimeSelectionFactory<
+    public RuntimeSelectionFactory<
         SurfaceInterpolationFactory,
         Parameters<const Executor&, const UnstructuredMesh&, Input>>
 {
@@ -48,12 +51,21 @@ public:
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
     virtual void
-    interpolate(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const = 0;
+    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const = 0;
 
     virtual void interpolate(
         const ScalarSurfaceField& faceFlux,
         const VolumeField<scalar>& volField,
-        ScalarSurfaceField& surfaceField
+        SurfaceField<scalar>& surfaceField
+    ) const = 0;
+
+    virtual void
+    interpolate(const VolumeField<Vector>& volField, SurfaceField<Vector>& surfaceField) const = 0;
+
+    virtual void interpolate(
+        const ScalarSurfaceField& faceFlux,
+        const VolumeField<Vector>& volField,
+        SurfaceField<Vector>& surfaceField
     ) const = 0;
 
     // Pure virtual function for cloning
