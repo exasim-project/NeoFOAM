@@ -11,57 +11,25 @@
 
 TEST_CASE("Primitives")
 {
-    SECTION("Vector")
+    SECTION("Scalar", "[Traits]")
     {
-        SECTION("CPU")
-        {
-            NeoFOAM::Vector a(1.0, 2.0, 3.0);
-            REQUIRE(a(0) == 1.0);
-            REQUIRE(a(1) == 2.0);
-            REQUIRE(a(2) == 3.0);
+        auto one = NeoFOAM::one<NeoFOAM::scalar>::value;
 
-            NeoFOAM::Vector b(1.0, 2.0, 3.0);
-            REQUIRE(a == b);
+        REQUIRE(one == 1.0);
 
-            NeoFOAM::Vector c(2.0, 4.0, 6.0);
+        auto zero = NeoFOAM::zero<NeoFOAM::scalar>::value;
 
-            REQUIRE(a + b == c);
-
-            REQUIRE((a - b) == NeoFOAM::Vector(0.0, 0.0, 0.0));
-
-            a += b;
-            REQUIRE(a == c);
-
-            a -= b;
-            REQUIRE(a == b);
-            a *= 2;
-            REQUIRE(a == c);
-            a = b;
-
-            REQUIRE(a == b);
-
-            NeoFOAM::Vector d(4.0, 8.0, 12.0);
-            REQUIRE((a + a + a + a) == d);
-            REQUIRE((4 * a) == d);
-            REQUIRE((a * 4) == d);
-            REQUIRE((a + 3 * a) == d);
-            REQUIRE((a + 2 * a + a) == d);
-        }
+        REQUIRE(zero == 0.0);
     }
 
-    SECTION("Traits")
+    SECTION("LocalIdx", "[Traits]")
     {
+        auto one = NeoFOAM::one<NeoFOAM::localIdx>::value;
 
-        auto one = NeoFOAM::one<NeoFOAM::Vector>::value;
+        REQUIRE(one == 1);
 
-        REQUIRE(one(0) == 1.0);
-        REQUIRE(one(1) == 1.0);
-        REQUIRE(one(2) == 1.0);
+        auto zero = NeoFOAM::zero<NeoFOAM::localIdx>::value;
 
-        auto zero = NeoFOAM::zero<NeoFOAM::Vector>::value;
-
-        REQUIRE(zero(0) == 0.0);
-        REQUIRE(zero(1) == 0.0);
-        REQUIRE(zero(2) == 0.0);
+        REQUIRE(zero == 0);
     }
 }
