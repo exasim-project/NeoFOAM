@@ -11,7 +11,6 @@
 
 TEST_CASE("Primitives")
 {
-
     SECTION("Vector")
     {
         SECTION("CPU")
@@ -50,7 +49,7 @@ TEST_CASE("Primitives")
         }
     }
 
-    SECTION("Vector", "[Traits]")
+    SECTION("Traits")
     {
 
         auto one = NeoFOAM::one<NeoFOAM::Vector>::value;
