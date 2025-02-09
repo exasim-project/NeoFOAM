@@ -34,6 +34,6 @@ TEST_CASE("DivOperator::div", "[bench]")
     DYNAMIC_SECTION("" << size)
     {
 
-        BENCHMARK(std::string(execName)) {return (linear.interpolate(in, out); };
+        BENCHMARK(std::string(execName)) { return (linear.interpolate(in, out)); };
     }
 }
