@@ -50,22 +50,16 @@ public:
 
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
-    virtual void
-    interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const = 0;
+    virtual void interpolate(const VolumeField<scalar>& src, SurfaceField<scalar>& dst) const = 0;
 
     virtual void interpolate(
-        const ScalarSurfaceField& faceFlux,
-        const VolumeField<scalar>& volField,
-        SurfaceField<scalar>& surfaceField
+        const ScalarSurfaceField& flux, const VolumeField<scalar>& src, SurfaceField<scalar>& dst
     ) const = 0;
 
-    virtual void
-    interpolate(const VolumeField<Vector>& volField, SurfaceField<Vector>& surfaceField) const = 0;
+    virtual void interpolate(const VolumeField<Vector>& src, SurfaceField<Vector>& dst) const = 0;
 
     virtual void interpolate(
-        const ScalarSurfaceField& faceFlux,
-        const VolumeField<Vector>& volField,
-        SurfaceField<Vector>& surfaceField
+        const ScalarSurfaceField& flux, const VolumeField<Vector>& src, SurfaceField<Vector>& dst
     ) const = 0;
 
     // Pure virtual function for cloning
@@ -122,7 +116,7 @@ public:
     }
 
     void interpolate(
-        const ScalarSurfaceField& flux, const VolumeField<Vector>& src, VolumeField<Vector>& dst
+        const ScalarSurfaceField& flux, const VolumeField<Vector>& src, SurfaceField<Vector>& dst
     ) const
     {
         interpolationKernel_->interpolate(flux, src, dst);
@@ -130,7 +124,7 @@ public:
 
     ScalarSurfaceField interpolate(const VolumeField<scalar>& src) const
     {
-        std::string nameInterpolated = "interpolated_" + volField.name;
+        std::string nameInterpolated = "interpolated_" + src.name;
         ScalarSurfaceField dst(
             exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
         );
