@@ -13,11 +13,12 @@
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 using NeoFOAM::finiteVolume::cellCentred::VolumeField;
 using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
+using NeoFOAM::Input;
 
 template<typename T>
 using I = std::initializer_list<T>;
 
-TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -27,8 +28,8 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = NeoFOAM::create1DUniformMesh(exec, 10);
-    NeoFOAM::Input input = NeoFOAM::TokenList({std::string("linear")});
-    auto linear = SurfaceInterpolation(exec, mesh, input);
+    Input input = NeoFOAM::TokenList({std::string("upwind")});
+    auto upwind = SurfaceInterpolation(exec, mesh, input);
     std::vector<fvcc::SurfaceBoundary<TestType>> bcs {};
     for (auto patchi : I<size_t> {0, 1})
     {
@@ -39,14 +40,15 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     }
 
     auto in = VolumeField<TestType>(exec, "in", mesh, {});
+    auto flux = SurfaceField<NeoFOAM::scalar>(exec, "flux", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, bcs);
 
+    fill(flux.internalField(), NeoFOAM::one<NeoFOAM::scalar>::value);
     fill(in.internalField(), NeoFOAM::one<TestType>::value);
 
-    linear.interpolate(in, out);
+    upwind.interpolate(flux, in, out);
     out.correctBoundaryConditions();
 
-    // FIXME: needs to copy back to host
     for (int i = 0; i < out.internalField().size(); i++)
     {
         REQUIRE(out.internalField()[i] == NeoFOAM::one<TestType>::value);

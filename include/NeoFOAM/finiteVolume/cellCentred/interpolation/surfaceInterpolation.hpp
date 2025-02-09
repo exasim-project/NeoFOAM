@@ -103,45 +103,50 @@ public:
           interpolationKernel_(SurfaceInterpolationFactory::create(exec, mesh, input)) {};
 
 
-    void interpolate(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const
+    void interpolate(const VolumeField<scalar>& src, ScalarSurfaceField& dst) const
     {
-        interpolationKernel_->interpolate(volField, surfaceField);
+        interpolationKernel_->interpolate(src, dst);
     }
 
-    void interpolate(const VolumeField<Vector>& volField, SurfaceField<Vector>& surfaceField) const
+    void interpolate(const VolumeField<Vector>& src, SurfaceField<Vector>& dst) const
     {
-        interpolationKernel_->interpolate(volField, surfaceField);
+        interpolationKernel_->interpolate(src, dst);
     }
 
 
-    ScalarSurfaceField interpolate(const VolumeField<scalar>& volField) const
+    void interpolate(
+        const ScalarSurfaceField& flux, const VolumeField<scalar>& src, ScalarSurfaceField& dst
+    ) const
     {
-        std::string nameInterpolated = "interpolated_" + volField.name;
-        ScalarSurfaceField surfaceField(
-            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
-        );
-        interpolate(surfaceField, volField);
-        return surfaceField;
+        interpolationKernel_->interpolate(flux, src, dst);
     }
 
     void interpolate(
-        const ScalarSurfaceField& faceFlux,
-        const VolumeField<scalar>& volField,
-        ScalarSurfaceField& surfaceField
+        const ScalarSurfaceField& flux, const VolumeField<Vector>& src, VolumeField<Vector>& dst
     ) const
     {
-        interpolationKernel_->interpolate(faceFlux, volField, surfaceField);
+        interpolationKernel_->interpolate(flux, src, dst);
+    }
+
+    ScalarSurfaceField interpolate(const VolumeField<scalar>& src) const
+    {
+        std::string nameInterpolated = "interpolated_" + volField.name;
+        ScalarSurfaceField dst(
+            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        );
+        interpolate(dst, src);
+        return dst;
     }
 
     ScalarSurfaceField
-    interpolate(const ScalarSurfaceField& faceFlux, const VolumeField<scalar>& volField) const
+    interpolate(const ScalarSurfaceField& flux, const VolumeField<scalar>& src) const
     {
-        std::string name = "interpolated_" + volField.name;
-        ScalarSurfaceField surfaceField(
+        std::string name = "interpolated_" + src.name;
+        ScalarSurfaceField dst(
             exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
         );
-        interpolate(faceFlux, volField, surfaceField);
-        return surfaceField;
+        interpolate(flux, src, dst);
+        return dst;
     }
 
 private:
