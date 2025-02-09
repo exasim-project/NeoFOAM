@@ -14,7 +14,9 @@
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
+#if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#endif
 
 
 namespace NeoFOAM::dsl
@@ -84,7 +86,7 @@ void solve(
     [[maybe_unused]] const Dictionary& fvSolution
 )
 {
-    // todo fix
+    // FIXME:
     if (exp.temporalOperators().size() == 0 && exp.spatialOperators().size() == 0)
     {
         NF_ERROR_EXIT("No temporal or implicit terms to solve.");

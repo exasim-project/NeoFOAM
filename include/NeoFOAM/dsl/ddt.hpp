@@ -23,15 +23,15 @@ public:
     std::string getName() const { return "TimeOperator"; }
 
     void
-    explicitOperation([[maybe_unused]] Field<scalar>& source, NeoFOAM::scalar t, NeoFOAM::scalar dt)
+    explicitOperation([[maybe_unused]] Field<scalar>& source,  [[maybe_unused]] scalar t, [[maybe_unused]] scalar dt)
     {
         NF_ERROR_EXIT("Not implemented");
     }
 
     void implicitOperation(
-        la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& ls,
-        NeoFOAM::scalar t,
-        NeoFOAM::scalar dt
+        la::LinearSystem<scalar, localIdx>& ls,
+        scalar t,
+        scalar dt
     )
     {
         NF_ERROR_EXIT("Not implemented");

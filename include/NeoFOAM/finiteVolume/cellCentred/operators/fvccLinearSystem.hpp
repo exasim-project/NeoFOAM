@@ -56,10 +56,7 @@ public:
 
     void diag(Field<ValueType>& field)
     {
-        if (field.size() != sparsityPattern_->diagOffset().size())
-        {
-            NF_THROW("fvcc:LinearSystem:diag: field size mismatch");
-        }
+       NF_ASSERT_EQUAL(field.size() , sparsityPattern_->diagOffset().size());
         const auto diagOffset = sparsityPattern_->diagOffset().span();
         const auto rowPtrs = ls_.matrix().rowPtrs();
         std::span<ValueType> fieldSpan = field.span();
