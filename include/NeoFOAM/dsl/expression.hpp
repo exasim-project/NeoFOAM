@@ -54,14 +54,14 @@ public:
     {
         for (auto& oper : spatialOperators_)
         {
-            if (oper.getType() == SpatialOperator::Type::Explicit)
+            if (oper.getType() == Operator::Type::Explicit)
             {
                 oper.explicitOperation(source);
             }
         }
         // for (auto& oper : temporalOperators_)
         // {
-        //     if (oper.getType() == SpatialOperator::Type::Explicit)
+        //     if (oper.getType() == Operator::Type::Explicit)
         //     {
         //         oper.explicitOperation(source);
         //     }
@@ -80,7 +80,7 @@ public:
         auto ls = spatialOperators_[0].createEmptyLinearSystem();
         for (auto& oper : spatialOperators_)
         {
-            if (oper.getType() == SpatialOperator::Type::Implicit)
+            if (oper.getType() == Operator::Type::Implicit)
             {
                 oper.implicitOperation(ls);
             }

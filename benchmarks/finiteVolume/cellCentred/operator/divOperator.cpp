@@ -34,7 +34,7 @@ TEST_CASE("DivOperator::div", "[bench]")
     DYNAMIC_SECTION("" << size)
     {
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
-        auto op = fvcc::DivOperator(SpatialOperator::Type::Explicit, faceFlux, phi, input);
+        auto op = fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
 
         BENCHMARK(std::string(execName)) { return (op.div(divPhi)); };
     }

@@ -21,9 +21,7 @@ class SourceTerm : public dsl::OperatorMixin<VolumeField<scalar>>
 public:
 
     SourceTerm(
-        dsl::SpatialOperator::Type termType,
-        VolumeField<scalar>& coefficients,
-        VolumeField<scalar>& field
+        dsl::Operator::Type termType, VolumeField<scalar>& coefficients, VolumeField<scalar>& field
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), field, termType),
           coefficients_(coefficients),

@@ -13,7 +13,7 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
-using SpatialOperator = NeoFOAM::dsl::SpatialOperator;
+using Operator = NeoFOAM::dsl::Operator;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
 using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
@@ -26,11 +26,9 @@ class Dummy : public OperatorMixin
 
 public:
 
-    Dummy(VolumeField& field) : OperatorMixin(field.exec(), field, SpatialOperator::Type::Explicit)
-    {}
+    Dummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
 
-    Dummy(VolumeField& field, SpatialOperator::Type type) : OperatorMixin(field.exec(), field, type)
-    {}
+    Dummy(VolumeField& field, Operator::Type type) : OperatorMixin(field.exec(), field, type) {}
 
     void explicitOperation(Field& source)
     {
@@ -92,11 +90,10 @@ class TemporalDummy : public OperatorMixin
 
 public:
 
-    TemporalDummy(VolumeField& field)
-        : OperatorMixin(field.exec(), field, SpatialOperator::Type::Explicit)
+    TemporalDummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit)
     {}
 
-    TemporalDummy(VolumeField& field, SpatialOperator::Type type)
+    TemporalDummy(VolumeField& field, Operator::Type type)
         : OperatorMixin(field.exec(), field, type)
     {}
 

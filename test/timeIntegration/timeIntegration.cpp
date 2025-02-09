@@ -71,7 +71,7 @@ TEST_CASE("TimeIntegration")
         NeoFOAM::dsl::TemporalOperator ddtOperator = NeoFOAM::dsl::imp::ddt(vf);
 
         // ddt(U) = f
-        auto eqn = ddtOperator + dummy;
+        NeoFOAM::dsl::Expression eqn = ddtOperator + dummy;
         double dt {2.0};
         double time {1.0};
 

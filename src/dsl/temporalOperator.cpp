@@ -33,7 +33,7 @@ la::LinearSystem<scalar, localIdx> TemporalOperator::createEmptyLinearSystem() c
     return model_->createEmptyLinearSystem();
 }
 
-SpatialOperator::Type TemporalOperator::getType() const { return model_->getType(); }
+Operator::Type TemporalOperator::getType() const { return model_->getType(); }
 
 std::string TemporalOperator::getName() const { return model_->getName(); }
 

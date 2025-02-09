@@ -28,7 +28,7 @@ TEST_CASE("TemporalOperator")
         dsl::TemporalOperator b = TemporalDummy(vf);
 
         REQUIRE(b.getName() == "TemporalDummy");
-        REQUIRE(b.getType() == dsl::SpatialOperator::Type::Explicit);
+        REQUIRE(b.getType() == dsl::Operator::Type::Explicit);
     }
 
     SECTION("Supports Coefficients Explicit " + execName)
@@ -75,10 +75,10 @@ TEST_CASE("TemporalOperator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        dsl::TemporalOperator b = TemporalDummy(vf, SpatialOperator::Type::Implicit);
+        dsl::TemporalOperator b = TemporalDummy(vf, Operator::Type::Implicit);
 
         REQUIRE(b.getName() == "TemporalDummy");
-        REQUIRE(b.getType() == SpatialOperator::Type::Implicit);
+        REQUIRE(b.getType() == Operator::Type::Implicit);
 
         auto ls = b.createEmptyLinearSystem();
         REQUIRE(ls.matrix().nValues() == 1);
@@ -97,10 +97,9 @@ TEST_CASE("TemporalOperator")
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        auto c = 2 * dsl::TemporalOperator(TemporalDummy(vf, SpatialOperator::Type::Implicit));
-        auto d = fB * dsl::TemporalOperator(TemporalDummy(vf, SpatialOperator::Type::Implicit));
-        auto e = Coeff(-3, fB)
-               * dsl::TemporalOperator(TemporalDummy(vf, SpatialOperator::Type::Implicit));
+        auto c = 2 * dsl::TemporalOperator(TemporalDummy(vf, Operator::Type::Implicit));
+        auto d = fB * dsl::TemporalOperator(TemporalDummy(vf, Operator::Type::Implicit));
+        auto e = Coeff(-3, fB) * dsl::TemporalOperator(TemporalDummy(vf, Operator::Type::Implicit));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();

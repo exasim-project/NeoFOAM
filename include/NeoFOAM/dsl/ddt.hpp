@@ -16,23 +16,21 @@ class Ddt : public OperatorMixin<FieldType>
 
 public:
 
-    Ddt(FieldType& field)
-        : OperatorMixin<FieldType>(field.exec(), field, SpatialOperator::Type::Implicit)
+    Ddt(FieldType& field) : OperatorMixin<FieldType>(field.exec(), field, Operator::Type::Implicit)
     {}
 
     std::string getName() const { return "TimeOperator"; }
 
-    void
-    explicitOperation([[maybe_unused]] Field<scalar>& source,  [[maybe_unused]] scalar t, [[maybe_unused]] scalar dt)
+    void explicitOperation(
+        [[maybe_unused]] Field<scalar>& source,
+        [[maybe_unused]] scalar t,
+        [[maybe_unused]] scalar dt
+    )
     {
         NF_ERROR_EXIT("Not implemented");
     }
 
-    void implicitOperation(
-        la::LinearSystem<scalar, localIdx>& ls,
-        scalar t,
-        scalar dt
-    )
+    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt)
     {
         NF_ERROR_EXIT("Not implemented");
     }

@@ -10,7 +10,7 @@
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/coeff.hpp"
-#include "NeoFOAM/dsl/spatialOperator.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
 
 namespace la = NeoFOAM::la;
 
@@ -75,7 +75,7 @@ public:
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const;
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
-    SpatialOperator::Type getType() const;
+    Operator::Type getType() const;
 
     std::string getName() const;
 
@@ -113,7 +113,7 @@ private:
         virtual std::string getName() const = 0;
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-        virtual SpatialOperator::Type getType() const = 0;
+        virtual Operator::Type getType() const = 0;
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() = 0;
@@ -182,7 +182,7 @@ private:
         virtual void build(const Input& input) override { concreteOp_.build(input); }
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-        SpatialOperator::Type getType() const override { return concreteOp_.getType(); }
+        Operator::Type getType() const override { return concreteOp_.getType(); }
 
         /* @brief Get the executor */
         const Executor& exec() const override { return concreteOp_.exec(); }

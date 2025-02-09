@@ -10,6 +10,7 @@
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/coeff.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
 
 namespace la = NeoFOAM::la;
 
@@ -71,7 +72,7 @@ public:
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const;
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
-    SpatialOperator::Type getType() const;
+    Operator::Type getType() const;
 
     std::string getName() const;
 
@@ -108,7 +109,7 @@ private:
         virtual std::string getName() const = 0;
 
         /* returns the fundamental type of an operator, ie explicit, implicit */
-        virtual SpatialOperator::Type getType() const = 0;
+        virtual Operator::Type getType() const = 0;
 
         /* @brief get the associated coefficient for this term */
         virtual Coeff& getCoefficient() = 0;
@@ -174,7 +175,7 @@ private:
         virtual void build(const Input& input) override { concreteOp_.build(input); }
 
         /* returns the fundamental type of an operator, ie explicit, implicit, temporal */
-        SpatialOperator::Type getType() const override { return concreteOp_.getType(); }
+        Operator::Type getType() const override { return concreteOp_.getType(); }
 
         /* @brief Get the executor */
         const Executor& exec() const override { return concreteOp_.exec(); }
@@ -231,10 +232,10 @@ class OperatorMixin
 
 public:
 
-    OperatorMixin(const Executor exec, FieldType& field, SpatialOperator::Type type)
+    OperatorMixin(const Executor exec, FieldType& field, Operator::Type type)
         : exec_(exec), coeffs_(), field_(field), type_(type) {};
 
-    SpatialOperator::Type getType() const { return type_; }
+    Operator::Type getType() const { return type_; }
 
     virtual ~OperatorMixin() = default;
 
@@ -259,6 +260,6 @@ protected:
 
     FieldType& field_;
 
-    SpatialOperator::Type type_;
+    Operator::Type type_;
 };
 } // namespace NeoFOAM::dsl

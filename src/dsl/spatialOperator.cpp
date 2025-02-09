@@ -30,7 +30,7 @@ la::LinearSystem<scalar, localIdx> SpatialOperator::createEmptyLinearSystem() co
     return model_->createEmptyLinearSystem();
 }
 
-SpatialOperator::Type SpatialOperator::getType() const { return model_->getType(); }
+Operator::Type SpatialOperator::getType() const { return model_->getType(); }
 
 std::string SpatialOperator::getName() const { return model_->getName(); }
 

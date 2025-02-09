@@ -83,7 +83,7 @@ public:
           ) {};
 
     DivOperator(
-        dsl::SpatialOperator::Type termType,
+        dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
         VolumeField<scalar>& phi,
         Input input
@@ -92,7 +92,7 @@ public:
           divOperatorStrategy_(DivOperatorFactory::create(exec_, phi.mesh(), input)) {};
 
     DivOperator(
-        dsl::SpatialOperator::Type termType,
+        dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
         VolumeField<scalar>& phi,
         std::unique_ptr<DivOperatorFactory> divOperatorStrategy
@@ -101,9 +101,7 @@ public:
           divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
     DivOperator(
-        dsl::SpatialOperator::Type termType,
-        const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& phi
+        dsl::Operator::Type termType, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(nullptr) {};

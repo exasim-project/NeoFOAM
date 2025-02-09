@@ -22,13 +22,13 @@ namespace NeoFOAM::dsl::exp
 SpatialOperator
 div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    return SpatialOperator(fvcc::DivOperator(dsl::SpatialOperator::Type::Explicit, faceFlux, phi));
+    return SpatialOperator(fvcc::DivOperator(dsl::Operator::Type::Explicit, faceFlux, phi));
 }
 
 SpatialOperator
 Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    return SpatialOperator(fvcc::SourceTerm(dsl::SpatialOperator::Type::Explicit, coeff, phi));
+    return SpatialOperator(fvcc::SourceTerm(dsl::Operator::Type::Explicit, coeff, phi));
 }
 
 
