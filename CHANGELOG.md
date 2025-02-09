@@ -1,5 +1,6 @@
 # Version 0.2.0 (unreleased)
 ## Features
+- add vectorField implementation  []()
 - add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
 - Adds a minimal implementation linear algebra functionality [#219](https://github.com/exasim-project/NeoFOAM/pull/219)
 ## Fixes
