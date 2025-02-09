@@ -50,13 +50,6 @@ class SpatialOperator
 {
 public:
 
-    enum class Type
-    {
-        Temporal,
-        Implicit,
-        Explicit
-    };
-
     template<IsSpatialOperator T>
     SpatialOperator(T cls) : model_(std::make_unique<OperatorModel<T>>(std::move(cls)))
     {}
