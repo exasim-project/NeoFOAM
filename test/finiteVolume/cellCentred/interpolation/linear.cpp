@@ -30,11 +30,12 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto in = VolumeField<TestType>(exec, "in", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, {});
 
-    // FIXME add fill
-    // fill(in.internalField(), 1);
+    fill(in.internalField(), NeoFOAM::one<TestType>::value);
 
     linear.interpolate(in, out);
 
-    // FIXME add fill
-    // REQUIRE(out.internalField()[0] == one<TestType>::value);
+    for (int i = 0; i < out.internalField().size(); i++)
+    {
+        REQUIRE(out.internalField()[i] == NeoFOAM::one<TestType>::value);
+    }
 }

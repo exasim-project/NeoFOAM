@@ -9,10 +9,11 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+template<typename ValueType>
 void computeLinearInterpolation(
-    const VolumeField<scalar>& volField,
+    const VolumeField<ValueType>& volField,
     const std::shared_ptr<GeometryScheme> geometryScheme,
-    SurfaceField<scalar>& surfaceField
+    SurfaceField<ValueType>& surfaceField
 )
 {
     const UnstructuredMesh& mesh = surfaceField.mesh();
@@ -36,8 +37,12 @@ void computeLinearInterpolation(
             size_t nei = static_cast<size_t>(sNeighbour[facei]);
             if (facei < nInternalFaces)
             {
+                std::cout << __FILE__ << " sWeight" << sWeight[facei] << "\n";
+                std::cout << __FILE__ << " sVolfield[own]" << sVolField[own] << "\n";
+                std::cout << __FILE__ << " sVolfield[nei]" << sVolField[nei] << "\n";
                 sfield[facei] =
                     sWeight[facei] * sVolField[own] + (1 - sWeight[facei]) * sVolField[nei];
+                std::cout << __FILE__ << " sfield[facei]" << sfield[facei] << "\n";
             }
             else
             {
@@ -58,8 +63,7 @@ Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
 void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
     const
 {
-    // FIXME:
-    // computeLinearInterpolation(volField, geometryScheme_, surfaceField);
+    computeLinearInterpolation(volField, geometryScheme_, surfaceField);
 }
 
 void Linear::interpolate(
@@ -74,8 +78,7 @@ void Linear::interpolate(
 void Linear::interpolate(const VolumeField<Vector>& volField, SurfaceField<Vector>& surfaceField)
     const
 {
-    // FIXME:
-    // computeLinearInterpolation(volField, geometryScheme_, surfaceField);
+    computeLinearInterpolation(volField, geometryScheme_, surfaceField);
 }
 
 void Linear::interpolate(
