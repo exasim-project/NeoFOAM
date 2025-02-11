@@ -37,7 +37,7 @@ option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_BUILD_DOC "Build documentation" OFF)
 option(NEOFOAM_WITH_SUNDIALS "Build NeoFOAM with Sundials support [currently required]" ON)
-option(NEOFOAM_WITH_PETSC "Build NeoFOAM with petsc support" OFF)
+option(NEOFOAM_WITH_PETSC "Build NeoFOAM with petsc support" ON)
 
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" OFF)

@@ -23,6 +23,8 @@ static char help[] = "Solves a tridiagonal linear system with KSP.\n\n";
 #include <petscksp.h>
 #include <petscsys.h>
 #include <petscviewer.h>
+#include <petscmat.h>
+
 
 int main(int argc, char** args)
 {
@@ -64,7 +66,8 @@ int main(int argc, char** args)
     VecSetSizes(x, PETSC_DECIDE, n);
     //(VecSetFromOptions(x));
     //(VecSetType(x, VECSEQ));
-    VecSetType(x, VECCUDA);
+    // VecSetType(x, VECCUDA);
+    VecSetType(x, VECKOKKOS);
     VecDuplicate(x, &b);
     VecDuplicate(x, &u);
     PetscPrintf(PETSC_COMM_SELF, "Hallo");
@@ -81,7 +84,8 @@ int main(int argc, char** args)
     (MatCreate(PETSC_COMM_SELF, &A));
     (MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, n, n));
     //(MatSetFromOptions(A));
-    (MatSetType(A, MATSEQAIJCUSPARSE));
+    //(MatSetType(A, MATSEQAIJCUSPARSE));
+    (MatSetType(A, MATAIJKOKKOS));
     //(MatSetType(A, MATSEQBAIJ));
     (MatSetUp(A));
 
