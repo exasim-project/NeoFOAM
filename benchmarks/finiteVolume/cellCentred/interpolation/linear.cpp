@@ -12,7 +12,9 @@
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 using NeoFOAM::finiteVolume::cellCentred::VolumeField;
 using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
-using NeoFOAM::Input;
+
+namespace NeoFOAM
+{
 
 TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
 {
@@ -25,19 +27,21 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     );
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
-    NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, size);
+    UnstructuredMesh mesh = create1DUniformMesh(exec, size);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<TestType>>(mesh);
-    Input input = NeoFOAM::TokenList({std::string("linear")});
+    Input input = TokenList({std::string("linear")});
     auto linear = SurfaceInterpolation(exec, mesh, input);
 
     auto in = VolumeField<TestType>(exec, "in", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, surfaceBCs);
 
-    fill(in.internalField(), NeoFOAM::one<TestType>::value);
+    fill(in.internalField(), one<TestType>::value);
 
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)
     {
         BENCHMARK(std::string(execName)) { return (linear.interpolate(in, out)); };
     }
+}
+
 }
