@@ -7,12 +7,14 @@
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "../../../catch_main.hpp"
 
+#include <catch2/catch_template_test_macros.hpp>
+
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
 using NeoFOAM::finiteVolume::cellCentred::VolumeField;
 using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
 using NeoFOAM::Input;
 
-TEST_CASE("upwind", "[bench]")
+TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     using TestType = NeoFOAM::scalar;
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
@@ -25,7 +27,7 @@ TEST_CASE("upwind", "[bench]")
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, size);
-    auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
+    auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<TestType>>(mesh);
     Input input = NeoFOAM::TokenList({std::string("upwind")});
     auto upwind = SurfaceInterpolation(exec, mesh, input);
 
@@ -34,7 +36,7 @@ TEST_CASE("upwind", "[bench]")
     auto out = SurfaceField<TestType>(exec, "out", mesh, surfaceBCs);
 
     fill(flux.internalField(), NeoFOAM::one<NeoFOAM::scalar>::value);
-    fill(in.internalField(), NeoFOAM::one<NeoFOAM::scalar>::value);
+    fill(in.internalField(), NeoFOAM::one<NeoFOAM::TestType>::value);
 
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)
