@@ -33,7 +33,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
-    // NeoFOAM::fill(vecPhi.internalField(), NeoFOAM::Vector{1.0, 1.0, 1.0});
+    NeoFOAM::fill(phi.internalField(), NeoFOAM::one<TestType>::value);
 
     SECTION("Construct from Token" + execName)
     {

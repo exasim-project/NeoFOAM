@@ -92,10 +92,8 @@ void computeDiv(
     SurfaceField<ValueType> phif(
         exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh)
     );
-    // FIXME: needs a ValueType::zero
-    // fill(phif.internalField(), 0.0);
-    // FIXME: needs a interpolate for <Vector>
-    // surfInterp.interpolate(faceFlux, phi, phif);
+    fill(phif.internalField(), NeoFOAM::zero<ValueType>::value);
+    surfInterp.interpolate(faceFlux, phi, phif);
 
     size_t nInternalFaces = mesh.nInternalFaces();
     size_t nBoundaryFaces = mesh.nBoundaryFaces();
