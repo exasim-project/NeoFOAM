@@ -6,6 +6,7 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "../../../catch_main.hpp"
+
 #include <catch2/catch_template_test_macros.hpp>
 
 using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
