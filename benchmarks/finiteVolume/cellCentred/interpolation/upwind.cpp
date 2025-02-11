@@ -39,7 +39,6 @@ TEST_CASE("upwind", "[bench]")
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)
     {
-
         BENCHMARK(std::string(execName)) { return (upwind.interpolate(flux, in, out)); };
     }
 }

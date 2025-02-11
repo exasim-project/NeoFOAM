@@ -46,9 +46,9 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     linear.interpolate(in, out);
     out.correctBoundaryConditions();
 
-    // FIXME: needs to copy back to host
+    auto outHost = out.internalField().copyToHost();
     for (int i = 0; i < out.internalField().size(); i++)
     {
-        REQUIRE(out.internalField()[i] == NeoFOAM::one<TestType>::value);
+        REQUIRE(outHost[i] == NeoFOAM::one<TestType>::value);
     }
 }
