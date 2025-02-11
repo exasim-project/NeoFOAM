@@ -36,7 +36,7 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto out = SurfaceField<TestType>(exec, "out", mesh, surfaceBCs);
 
     fill(flux.internalField(), NeoFOAM::one<NeoFOAM::scalar>::value);
-    fill(in.internalField(), NeoFOAM::one<NeoFOAM::TestType>::value);
+    fill(in.internalField(), NeoFOAM::one<TestType>::value);
 
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)
