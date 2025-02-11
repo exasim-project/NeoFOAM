@@ -49,8 +49,9 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     upwind.interpolate(flux, in, out);
     out.correctBoundaryConditions();
 
+    auto outHost = out.internalField().copyToHost();
     for (int i = 0; i < out.internalField().size(); i++)
     {
-        REQUIRE(out.internalField()[i] == NeoFOAM::one<TestType>::value);
+        REQUIRE(outHost[i] == NeoFOAM::one<TestType>::value);
     }
 }
