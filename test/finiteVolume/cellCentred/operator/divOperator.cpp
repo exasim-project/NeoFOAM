@@ -14,6 +14,8 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Operator = NeoFOAM::dsl::Operator;
 
+namespace NeoFOAM
+{
 
 TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
@@ -25,7 +27,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     // TODO take 1d mesh
-    NeoFOAM::UnstructuredMesh mesh = NeoFOAM::createSingleCellMesh(exec);
+    auto mesh = create1DUniformMesh(exec, 10);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
 
     fvcc::SurfaceField<NeoFOAM::scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
@@ -34,6 +36,8 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
     NeoFOAM::fill(phi.internalField(), NeoFOAM::one<TestType>::value);
+
+    auto result = NeoFOAM::Field<TestType>(exec, phi.size());
 
     SECTION("Construct from Token" + execName)
     {
@@ -47,6 +51,9 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
             {{std::string("DivOperator"), std::string("Gauss")},
              {std::string("surfaceInterpolation"), std::string("linear")}}
         );
-        fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+        auto op = fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
+        op.div(result);
     }
+}
+
 }

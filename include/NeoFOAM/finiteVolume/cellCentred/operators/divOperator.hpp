@@ -125,12 +125,12 @@ public:
         source += tmpsource;
     }
 
-    void div(Field<scalar>& divPhi)
+    void div(Field<ValueType>& divPhi)
     {
         divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }
 
-    void div(VolumeField<scalar>& divPhi)
+    void div(VolumeField<ValueType>& divPhi)
     {
         divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }
