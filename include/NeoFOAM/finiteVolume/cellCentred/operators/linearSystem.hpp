@@ -3,8 +3,11 @@
 
 #pragma once
 
-#include "NeoFOAM/linearAlgebra.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/fvccSparsityPattern.hpp"
+#include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -56,7 +59,7 @@ public:
 
     void diag(Field<ValueType>& field)
     {
-       NF_ASSERT_EQUAL(field.size() , sparsityPattern_->diagOffset().size());
+        NF_ASSERT_EQUAL(field.size(), sparsityPattern_->diagOffset().size());
         const auto diagOffset = sparsityPattern_->diagOffset().span();
         const auto rowPtrs = ls_.matrix().rowPtrs();
         std::span<ValueType> fieldSpan = field.span();
