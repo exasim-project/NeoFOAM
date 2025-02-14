@@ -103,6 +103,12 @@ GaussGreenDiv::GaussGreenDiv(
       surfaceInterpolation_(exec, mesh, inputs),
       sparsityPattern_(SparsityPattern::readOrCreate(mesh)) {};
 
+
+la::LinearSystem<scalar, localIdx> GaussGreenDiv::createEmptyLinearSystem() const
+{
+    return sparsityPattern_->linearSystem();
+};
+
 void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
@@ -136,23 +142,27 @@ void GaussGreenDiv::div(
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t facei) {
             scalar flux = sFaceFlux[facei];
-            scalar weight = 0.5;
+            // scalar weight = 0.5;
+            scalar weight = flux >= 0 ? 1 : 0;
+            scalar value = 0;
             std::size_t own = static_cast<std::size_t>(owner[facei]);
             std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
 
-            // lower triangular part
-
-            // add neighbour contribution
+            // add neighbour contribution upper
             std::size_t rowNeiStart = rowPtrs[nei];
-            values[rowNeiStart + neiOffs[facei]] += -flux * weight;
-            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], -flux * weight);
+            std::size_t rowOwnStart = rowPtrs[own];
+
+            value = -weight * flux;
+            // scalar valueNei = (1 - weight) * flux;
+            values[rowNeiStart + neiOffs[facei]] += value;
+            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], value);
 
             // upper triangular part
 
-            // add owner contribution
-            std::size_t rowOwnStart = rowPtrs[own];
-            values[rowOwnStart + ownOffs[facei]] += flux * (1 - weight);
-            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux * (1 - weight));
+            // add owner contribution lower
+            value = flux * (1 - weight);
+            values[rowOwnStart + ownOffs[facei]] += value;
+            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], value);
         }
     );
 };

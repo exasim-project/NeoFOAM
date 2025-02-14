@@ -4,7 +4,9 @@
                             // a custom main
 #include "common.hpp"
 
-TEST_CASE("Operator")
+namespace dsl = NeoFOAM::dsl;
+
+TEST_CASE("TemporalOperator")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -23,43 +25,45 @@ TEST_CASE("Operator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        auto b = Dummy(vf);
+        dsl::TemporalOperator b = TemporalDummy(vf);
 
-        REQUIRE(b.getName() == "Dummy");
-        REQUIRE(b.getType() == Operator::Type::Explicit);
+        REQUIRE(b.getName() == "TemporalDummy");
+        REQUIRE(b.getType() == dsl::Operator::Type::Explicit);
     }
 
     SECTION("Supports Coefficients Explicit " + execName)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        NeoFOAM::scalar t = 0.0;
+        NeoFOAM::scalar dt = 0.1;
 
         Field fA(exec, 1, 2.0);
         Field fB(exec, 1, 2.0);
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        auto c = 2 * Dummy(vf);
-        auto d = fB * Dummy(vf);
-        auto e = Coeff(-3, fB) * Dummy(vf);
+        dsl::TemporalOperator c = 2 * dsl::TemporalOperator(TemporalDummy(vf));
+        dsl::TemporalOperator d = fB * dsl::TemporalOperator(TemporalDummy(vf));
+        dsl::TemporalOperator e = Coeff(-3, fB) * dsl::TemporalOperator(TemporalDummy(vf));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();
         [[maybe_unused]] auto coeffE = e.getCoefficient();
 
         Field source(exec, 1, 2.0);
-        c.explicitOperation(source);
+        c.explicitOperation(source, t, dt);
 
         // 2 += 2 * 2
         auto hostSourceC = source.copyToHost();
         REQUIRE(hostSourceC.span()[0] == 6.0);
 
         // 6 += 2 * 2
-        d.explicitOperation(source);
+        d.explicitOperation(source, t, dt);
         auto hostSourceD = source.copyToHost();
         REQUIRE(hostSourceD.span()[0] == 10.0);
 
         // 10 += - 6 * 2
-        e.explicitOperation(source);
+        e.explicitOperation(source, t, dt);
         auto hostSourceE = source.copyToHost();
         REQUIRE(hostSourceE.span()[0] == -2.0);
     }
@@ -71,9 +75,9 @@ TEST_CASE("Operator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        auto b = Dummy(vf, Operator::Type::Implicit);
+        dsl::TemporalOperator b = TemporalDummy(vf, Operator::Type::Implicit);
 
-        REQUIRE(b.getName() == "Dummy");
+        REQUIRE(b.getName() == "TemporalDummy");
         REQUIRE(b.getType() == Operator::Type::Implicit);
 
         auto ls = b.createEmptyLinearSystem();
@@ -85,15 +89,17 @@ TEST_CASE("Operator")
     SECTION("Supports Coefficients Implicit " + execName)
     {
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        NeoFOAM::scalar t = 0.0;
+        NeoFOAM::scalar dt = 0.1;
 
         Field fA(exec, 1, 2.0);
         Field fB(exec, 1, 2.0);
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        auto c = 2 * Dummy(vf, Operator::Type::Implicit);
-        auto d = fB * Dummy(vf, Operator::Type::Implicit);
-        auto e = Coeff(-3, fB) * Dummy(vf, Operator::Type::Implicit);
+        auto c = 2 * dsl::TemporalOperator(TemporalDummy(vf, Operator::Type::Implicit));
+        auto d = fB * dsl::TemporalOperator(TemporalDummy(vf, Operator::Type::Implicit));
+        auto e = Coeff(-3, fB) * dsl::TemporalOperator(TemporalDummy(vf, Operator::Type::Implicit));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();
@@ -101,7 +107,7 @@ TEST_CASE("Operator")
 
         // Field source(exec, 1, 2.0);
         auto ls = c.createEmptyLinearSystem();
-        c.implicitOperation(ls);
+        c.implicitOperation(ls, t, dt);
 
         // c = 2 * 2
         auto hostRhsC = ls.rhs().copyToHost();
@@ -112,7 +118,7 @@ TEST_CASE("Operator")
 
         // d= 2 * 2
         ls = d.createEmptyLinearSystem();
-        d.implicitOperation(ls);
+        d.implicitOperation(ls, t, dt);
         auto hostRhsD = ls.rhs().copyToHost();
         REQUIRE(hostRhsD.span()[0] == 4.0);
         auto hostLsD = ls.copyToHost();
@@ -121,7 +127,7 @@ TEST_CASE("Operator")
 
         // e = - -3 * 2 * 2 = -12
         ls = e.createEmptyLinearSystem();
-        e.implicitOperation(ls);
+        e.implicitOperation(ls, t, dt);
         auto hostRhsE = ls.rhs().copyToHost();
         REQUIRE(hostRhsE.span()[0] == -12.0);
         auto hostLsE = ls.copyToHost();

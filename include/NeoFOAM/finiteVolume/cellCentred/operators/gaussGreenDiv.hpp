@@ -8,7 +8,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/fvccSparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -24,6 +24,8 @@ public:
     static std::string schema() { return "none"; }
 
     GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs);
+
+    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override;
 
     void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi

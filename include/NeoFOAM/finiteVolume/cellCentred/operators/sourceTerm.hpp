@@ -6,9 +6,9 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/fvccSparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -30,6 +30,7 @@ public:
     void explicitOperation(Field<scalar>& source)
     {
         auto operatorScaling = getCoefficient();
+        const auto vol = coefficients_.mesh().cellVolumes().span();
         auto [sourceSpan, fieldSpan, coeff] =
             spans(source, field_.internalField(), coefficients_.internalField());
         NeoFOAM::parallelFor(
@@ -49,6 +50,7 @@ public:
     void implicitOperation(la::LinearSystem<scalar, localIdx>& ls)
     {
         const auto operatorScaling = getCoefficient();
+        const auto vol = coefficients_.mesh().cellVolumes().span();
         const auto [diagOffs, coeff] =
             spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
         const auto rowPtrs = ls.matrix().rowPtrs();
@@ -59,7 +61,7 @@ public:
             {0, coeff.size()},
             KOKKOS_LAMBDA(const size_t celli) {
                 std::size_t idx = rowPtrs[celli] + diagOffs[celli];
-                values[idx] += operatorScaling[celli] * coeff[celli];
+                values[idx] += operatorScaling[celli] * coeff[celli] * vol[celli];
             }
         );
     }

@@ -14,6 +14,8 @@
 
 #include "cellCentred/operators/divOperator.hpp"
 #include "cellCentred/operators/gaussGreenDiv.hpp"
+#include "cellCentred/operators/ddtOperator.hpp"
+#include "cellCentred/operators/sourceTerm.hpp"
 
 #include "cellCentred/interpolation/linear.hpp"
 #include "cellCentred/interpolation/upwind.hpp"
