@@ -23,6 +23,35 @@ namespace NeoFOAM::dsl
 {
 
 template<typename FieldType>
+NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
+    NeoFOAM::la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution
+)
+{
+    using ValueType = typename FieldType::ElementType;
+    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
+
+    Field<ValueType> mValues(
+        solution.exec(), ls.matrix().values().data(), ls.matrix().values().size()
+    );
+    Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
+    auto mColIdxsSpan = ls.matrix().colIdxs();
+    NeoFOAM::parallelFor(
+        mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); }
+    );
+
+    Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
+    auto mRowPtrsSpan = ls.matrix().rowPtrs();
+    NeoFOAM::parallelFor(
+        mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); }
+    );
+
+    la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
+
+    NeoFOAM::la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
+    return convertedLs;
+}
+
+template<typename FieldType>
 NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int>
 ginkgoMatrix(Expression& exp, FieldType& solution)
 {
@@ -95,7 +124,9 @@ void solve(
     if (exp.temporalOperators().size() > 0)
     {
         // integrate equations in time
-        timeIntegration::TimeIntegration<FieldType> timeIntegrator(fvSchemes.subDict("ddtSchemes"));
+        timeIntegration::TimeIntegration<FieldType> timeIntegrator(
+            fvSchemes.subDict("ddtSchemes"), fvSolution
+        );
         timeIntegrator.solve(exp, solution, t, dt);
     }
     else
