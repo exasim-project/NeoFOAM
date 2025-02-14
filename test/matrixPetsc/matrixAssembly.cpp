@@ -8,6 +8,7 @@
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/NeoFOAM.hpp"
+#include <Kokkos_Core.hpp>
 #include <petscvec_kokkos.hpp>
 #include <petscmat.h>
 
@@ -26,7 +27,6 @@ TEST_CASE("Field Constructors")
     {
 
         NeoFOAM::size_t size = 10;
-
         NeoFOAM::Field<NeoFOAM::scalar> values(
             exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
         );
@@ -45,10 +45,6 @@ TEST_CASE("Field Constructors")
         MatSetSizes(A, size, size, PETSC_DECIDE, PETSC_DECIDE);
         MatSetPreallocationCOO(A, size, colIdx, rowIdx);
         // PetscFree2(oor, ooc);
-
-        std::cout << "hallo"
-                  << "\n";
-        MatView(A, PETSC_VIEWER_STDOUT_WORLD);
 
         MatSetValuesCOO(A, values.data(), ADD_VALUES);
 

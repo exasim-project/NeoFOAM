@@ -32,8 +32,6 @@ function(neofoam_unit_test TEST)
   if(NEOFOAM_WITH_SUNDIALS)
     target_link_libraries(${TEST} PRIVATE SUNDIALS::arkode)
   endif()
-  # if(NEOFOAM_WITH_PETSC) target_include_directories(${TEST} PRIVATE ${PETSc_INCLUDE_DIRS})
-  # link_directories(${PETSc_LIBRARY_DIRS}) target_link_libraries(${TEST} PRIVATE petsc) endif()
   if(WIN32)
     set_target_properties(
       ${TEST}

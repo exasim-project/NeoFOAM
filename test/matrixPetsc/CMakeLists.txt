@@ -14,27 +14,23 @@ function(neofoam_unit_test_petsc TEST)
     set(neofoam_COMMAND ${TEST})
   endif()
 
+  add_definitions(${PETSc_DEFINITIONS})
   add_executable(${TEST} "${TEST}.cpp")
-  target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
-                                        Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
-
-  if(NEOFOAM_WITH_SUNDIALS)
-    target_link_libraries(${TEST} PRIVATE SUNDIALS::arkode)
-  endif()
-  if(NEOFOAM_WITH_PETSC)
-    target_include_directories(${TEST} PRIVATE ${PETSc_INCLUDE_DIRS})
-    link_directories(${PETSc_LIBRARY_DIRS})
-    target_link_libraries(${TEST} PRIVATE petsc)
-  endif()
-  if(WIN32)
-    set_target_properties(
-      ${TEST}
-      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
-                 LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
-                 ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
-  else()
-    set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
-  endif()
+  target_link_libraries(
+    ${TEST}
+    PRIVATE ${PETSc_LIBRARIES}
+            neofoam_catch_main
+            neofoam_warnings
+            neofoam_options
+            Kokkos::kokkos
+            NeoFOAM
+            cpptrace::cpptrace
+            ${PETSc_LIBRARIES}
+            ${PETSc_LIBRARY_DIRS}/libkokkoscore.so.4.4)
+  target_include_directories(${TEST} PRIVATE ${PETSc_INCLUDE_DIRS})
+  target_link_directories(${TEST} PRIVATE ${PETSc_LIBRARY_DIRS})
+  link_directories(${PETSc_LIBRARY_DIRS})
+  set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
 
   add_test(
     NAME ${TEST}
