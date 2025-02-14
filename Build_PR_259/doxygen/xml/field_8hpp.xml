@@ -31,7 +31,7 @@
     <includedby refid="gaussGreenDiv_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp</includedby>
     <includedby refid="sourceTerm_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp</includedby>
     <includedby refid="CSRMatrix_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/CSRMatrix.hpp</includedby>
-    <includedby refid="linearSystem_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/linearSystem.hpp</includedby>
+    <includedby refid="linearAlgebra_2linearSystem_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/linearSystem.hpp</includedby>
     <includedby refid="utilities_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/utilities.hpp</includedby>
     <includedby refid="communicator_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/mesh/unstructured/communicator.hpp</includedby>
     <includedby refid="backwardEuler_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/backwardEuler.hpp</includedby>
@@ -591,22 +591,6 @@
         <childnode refid="19" relation="include">
         </childnode>
       </node>
-      <node id="49">
-        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/fvccLinearSystem.hpp</label>
-        <link refid="fvccLinearSystem_8hpp"/>
-      </node>
-      <node id="48">
-        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/fvccSparsityPattern.hpp</label>
-        <link refid="fvccSparsityPattern_8hpp"/>
-        <childnode refid="16" relation="include">
-        </childnode>
-        <childnode refid="49" relation="include">
-        </childnode>
-        <childnode refid="19" relation="include">
-        </childnode>
-        <childnode refid="20" relation="include">
-        </childnode>
-      </node>
       <node id="19">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp</label>
         <link refid="gaussGreenDiv_8hpp"/>
@@ -617,12 +601,28 @@
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp</label>
         <link refid="gaussGreenGrad_8hpp"/>
       </node>
+      <node id="49">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/linearSystem.hpp</label>
+        <link refid="finiteVolume_2cellCentred_2operators_2linearSystem_8hpp"/>
+      </node>
       <node id="20">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp</label>
         <link refid="sourceTerm_8hpp"/>
         <childnode refid="8" relation="include">
         </childnode>
         <childnode refid="17" relation="include">
+        </childnode>
+      </node>
+      <node id="48">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp</label>
+        <link refid="sparsityPattern_8hpp"/>
+        <childnode refid="16" relation="include">
+        </childnode>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="49" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
         </childnode>
       </node>
       <node id="36">
@@ -648,12 +648,12 @@
         <link refid="linearAlgebra_8hpp"/>
         <childnode refid="4" relation="include">
         </childnode>
-        <childnode refid="49" relation="include">
-        </childnode>
       </node>
       <node id="53">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/CSRMatrix.hpp</label>
         <link refid="CSRMatrix_8hpp"/>
+        <childnode refid="49" relation="include">
+        </childnode>
         <childnode refid="54" relation="include">
         </childnode>
         <childnode refid="55" relation="include">
@@ -661,7 +661,7 @@
       </node>
       <node id="55">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/linearSystem.hpp</label>
-        <link refid="linearSystem_8hpp"/>
+        <link refid="linearAlgebra_2linearSystem_8hpp"/>
         <childnode refid="9" relation="include">
         </childnode>
         <childnode refid="5" relation="include">
@@ -669,6 +669,8 @@
         <childnode refid="21" relation="include">
         </childnode>
         <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="49" relation="include">
         </childnode>
         <childnode refid="48" relation="include">
         </childnode>
@@ -712,13 +714,13 @@
         </childnode>
         <childnode refid="18" relation="include">
         </childnode>
-        <childnode refid="48" relation="include">
-        </childnode>
         <childnode refid="19" relation="include">
         </childnode>
         <childnode refid="32" relation="include">
         </childnode>
         <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="48" relation="include">
         </childnode>
         <childnode refid="36" relation="include">
         </childnode>
