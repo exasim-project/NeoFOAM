@@ -142,7 +142,8 @@ void GaussGreenDiv::div(
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t facei) {
             scalar flux = sFaceFlux[facei];
-            scalar weight = 0.5;
+            // scalar weight = 0.5;
+            scalar weight = flux >= 0 ? 1 : 0;
             scalar value = 0;
             std::size_t own = static_cast<std::size_t>(owner[facei]);
             std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
