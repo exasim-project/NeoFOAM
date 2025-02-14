@@ -14,7 +14,7 @@ namespace NeoFOAM
  *
  * The offsets are computed by a prefix sum of the input values. So, with given
  * input of {1, 2, 3, 4, 5} the offsets are {0, 1, 3, 6, 10, 15}.
- * Note that the length of offSpan must be  length of valSpan + 1
+ * Note that the length of offSpan must be  length of intervals + 1
  * and are all elements of offSpan are required to be zero
  *
  * @param[in] in The values to compute the offsets from.
@@ -24,14 +24,16 @@ template<typename IndexType>
 IndexType segmentsFromIntervals(const Field<IndexType>& intervals, Field<IndexType>& offsets)
 {
     IndexType finalValue = 0;
-    auto inSpan = intervals.span();
-    auto offsSpan = offsets.span();
-    NF_ASSERT_EQUAL(inSpan.size() + 1, offsSpan.size());
+    const auto inSpan = intervals.span();
+    // skip the first element of the offsets
+    // assumed to be zero
+    auto offsSpan = offsets.span().subspan(1);
+    NF_ASSERT_EQUAL(inSpan.size(), offsSpan.size());
     NeoFOAM::parallelScan(
         intervals.exec(),
-        {1, offsSpan.size()},
-        KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
-            update += inSpan[i - 1];
+        {0, offsSpan.size()},
+        KOKKOS_LAMBDA(const std::size_t i, IndexType& update, const bool final) {
+            update += inSpan[i];
             if (final)
             {
                 offsSpan[i] = update;
