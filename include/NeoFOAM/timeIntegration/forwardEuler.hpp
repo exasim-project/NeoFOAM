@@ -23,7 +23,9 @@ public:
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<ForwardEuler<SolutionFieldType>>;
 
-    ForwardEuler(const Dictionary& dict) : Base(dict) {}
+    ForwardEuler(const Dictionary& schemeDict, const Dictionary& solutionDict)
+        : Base(schemeDict, solutionDict)
+    {}
 
     static std::string name() { return "forwardEuler"; }
 

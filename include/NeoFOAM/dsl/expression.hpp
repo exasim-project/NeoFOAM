@@ -52,41 +52,53 @@ public:
     /* @brief perform all explicit operation and accumulate the result */
     Field<scalar> explicitOperation(Field<scalar>& source)
     {
-        for (auto& oper : spatialOperators_)
+        for (auto& op : spatialOperators_)
         {
-            if (oper.getType() == Operator::Type::Explicit)
+            if (op.getType() == Operator::Type::Explicit)
             {
-                oper.explicitOperation(source);
+                op.explicitOperation(source);
             }
         }
-        // for (auto& oper : temporalOperators_)
-        // {
-        //     if (oper.getType() == Operator::Type::Explicit)
-        //     {
-        //         oper.explicitOperation(source);
-        //     }
-        // }
+        return source;
+    }
+
+    Field<scalar> explicitOperation(Field<scalar>& source, scalar t, scalar dt)
+    {
+        for (auto& op : temporalOperators_)
+        {
+            if (op.getType() == Operator::Type::Explicit)
+            {
+                op.explicitOperation(source, t, dt);
+            }
+        }
         return source;
     }
 
     /* @brief perform all implicit operation and accumulate the result */
     la::LinearSystem<scalar, localIdx> implicitOperation()
     {
-        // TODO: implement
-        // if (implicitOperators_.empty())
-        // {
-        //     NF_ERROR_EXIT("No implicit operators in the expression");
-        // }
         auto ls = spatialOperators_[0].createEmptyLinearSystem();
-        for (auto& oper : spatialOperators_)
+        for (auto& op : spatialOperators_)
         {
-            if (oper.getType() == Operator::Type::Implicit)
+            if (op.getType() == Operator::Type::Implicit)
             {
-                oper.implicitOperation(ls);
+                op.implicitOperation(ls);
             }
         }
         return ls;
     }
+
+    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt)
+    {
+        for (auto& op : temporalOperators_)
+        {
+            if (op.getType() == Operator::Type::Implicit)
+            {
+                op.implicitOperation(ls, t, dt);
+            }
+        }
+    }
+
 
     void addOperator(const SpatialOperator& oper) { spatialOperators_.push_back(oper); }
 

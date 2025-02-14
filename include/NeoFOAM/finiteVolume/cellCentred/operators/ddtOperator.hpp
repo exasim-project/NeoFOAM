@@ -29,6 +29,7 @@ public:
     void explicitOperation(Field<scalar>& source, scalar t, scalar dt)
     {
         const scalar rDeltat = 1 / dt;
+        const auto vol = getField().mesh().cellVolumes().span();
         auto operatorScaling = getCoefficient();
         auto [sourceSpan, field, oldField] =
             spans(source, field_.internalField(), oldTime(field_).internalField());
@@ -36,7 +37,7 @@ public:
             source.exec(),
             source.range(),
             KOKKOS_LAMBDA(const size_t celli) {
-                sourceSpan[celli] += rDeltat * (field[celli] - oldField[celli]);
+                sourceSpan[celli] += rDeltat * (field[celli] - oldField[celli]) * vol[celli];
             }
         );
     }
@@ -49,6 +50,7 @@ public:
     void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt)
     {
         const scalar rDeltat = 1 / dt;
+        const auto vol = getField().mesh().cellVolumes().span();
         const auto operatorScaling = getCoefficient();
         const auto [diagOffs, oldField] =
             spans(sparsityPattern_->diagOffset(), oldTime(field_).internalField());
@@ -61,8 +63,8 @@ public:
             {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
                 std::size_t idx = rowPtrs[celli] + diagOffs[celli];
-                values[idx] += operatorScaling[celli] * rDeltat;
-                rhs[celli] += operatorScaling[celli] * rDeltat * oldField[celli];
+                values[idx] += operatorScaling[celli] * rDeltat * vol[celli];
+                rhs[celli] += operatorScaling[celli] * rDeltat * oldField[celli] * vol[celli];
             }
         );
     }
@@ -73,7 +75,7 @@ public:
         // do nothing
     }
 
-    std::string getName() const { return "DivOperator"; }
+    std::string getName() const { return "DdtOperator"; }
 
 private:
 
