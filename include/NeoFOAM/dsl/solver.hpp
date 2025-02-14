@@ -57,8 +57,6 @@ ginkgoMatrix(Expression& exp, FieldType& solution)
 {
     using ValueType = typename FieldType::ElementType;
     auto vol = solution.mesh().cellVolumes().span();
-    // la::CSRMatrix<ValueType, int> matrix(values, colIdxs, rowPtrs);
-    // return la::LinearSystem<ValueType, int>(matrix, rhs, sparsityPattern);
     auto expSource = exp.explicitOperation(solution.mesh().nCells());
     auto expSourceSpan = expSource.span();
 
@@ -92,8 +90,7 @@ ginkgoMatrix(Expression& exp, FieldType& solution)
 
     la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
 
-    NeoFOAM::la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
-    return convertedLs;
+    return {matrix, rhs, ls.sparsityPattern()};
 }
 
 /* @brief solve an expression

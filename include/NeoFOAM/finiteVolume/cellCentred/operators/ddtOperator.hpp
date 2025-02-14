@@ -79,7 +79,6 @@ public:
 
 private:
 
-    // const VolumeField<scalar>& coefficients_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
