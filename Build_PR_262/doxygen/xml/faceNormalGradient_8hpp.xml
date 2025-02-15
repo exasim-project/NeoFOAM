@@ -12,6 +12,7 @@
     <includes refid="volumeField_8hpp" local="yes">NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp</includes>
     <includes refid="boundary_8hpp" local="yes">NeoFOAM/finiteVolume/cellCentred/boundary.hpp</includes>
     <includedby refid="uncorrected_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/faceNormalGradient/uncorrected.hpp</includedby>
+    <includedby refid="gaussGreenLaplacian_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenLaplacian.hpp</includedby>
     <incdepgraph>
       <node id="57">
         <label>NeoFOAM/core.hpp</label>
@@ -779,10 +780,18 @@
         <link refid="faceNormalGradient_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
       </node>
       <node id="2">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/faceNormalGradient/uncorrected.hpp</label>
         <link refid="uncorrected_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="13">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenLaplacian.hpp</label>
+        <link refid="gaussGreenLaplacian_8hpp"/>
         <childnode refid="3" relation="include">
         </childnode>
       </node>
@@ -856,20 +865,20 @@
 <codeline lineno="21" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory" kindref="compound">FaceNormalGradientFactory</ref><sp/>:</highlight></codeline>
 <codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1RuntimeSelectionFactory" kindref="compound">NeoFOAM::RuntimeSelectionFactory</ref>&lt;</highlight></codeline>
 <codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>FaceNormalGradientFactory,</highlight></codeline>
-<codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Parameters&lt;const<sp/>Executor&amp;,<sp/>const<sp/>UnstructuredMesh&amp;,<sp/>Input&gt;&gt;</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Parameters&lt;const<sp/>Executor&amp;,<sp/>const<sp/>UnstructuredMesh&amp;,<sp/>const<sp/>Input&amp;&gt;&gt;</highlight></codeline>
 <codeline lineno="25"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField" kindref="compound">ScalarSurfaceField</ref><sp/>=<sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField" kindref="compound">SurfaceField&lt;scalar&gt;</ref>;</highlight></codeline>
 <codeline lineno="27"><highlight class="normal"></highlight></codeline>
 <codeline lineno="28"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
 <codeline lineno="29"><highlight class="normal"></highlight></codeline>
 <codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>std::unique_ptr&lt;FaceNormalGradientFactory&gt;</highlight></codeline>
-<codeline lineno="31" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_1a7d7a521904ed08e9e88234e7f0cb3810" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_1a7d7a521904ed08e9e88234e7f0cb3810" kindref="member">create</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref>&amp;<sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1UnstructuredMesh" kindref="compound">UnstructuredMesh</ref>&amp;<sp/>uMesh,<sp/><ref refid="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" kindref="member">Input</ref><sp/>inputs)</highlight></codeline>
+<codeline lineno="31" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_1aa893b7ec2c8694a06a90a64fb1f4436b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_1aa893b7ec2c8694a06a90a64fb1f4436b" kindref="member">create</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref>&amp;<sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1UnstructuredMesh" kindref="compound">UnstructuredMesh</ref>&amp;<sp/>uMesh,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" kindref="member">Input</ref>&amp;<sp/>inputs)</highlight></codeline>
 <codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>input<sp/>is<sp/>dictionary<sp/>the<sp/>key<sp/>is<sp/>&quot;interpolation&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::string<sp/>key<sp/>=</highlight></codeline>
 <codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>(std::holds_alternative&lt;NeoFOAM::Dictionary&gt;(inputs))</highlight></codeline>
 <codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>?<sp/>std::get&lt;NeoFOAM::Dictionary&gt;(inputs).get&lt;std::string&gt;(</highlight><highlight class="stringliteral">&quot;faceNormalGradient&quot;</highlight><highlight class="normal">)</highlight></codeline>
-<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>std::get&lt;NeoFOAM::TokenList&gt;(inputs).get&lt;std::string&gt;(0);</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>std::get&lt;NeoFOAM::TokenList&gt;(inputs).next&lt;std::string&gt;();</highlight></codeline>
 <codeline lineno="38"><highlight class="normal"></highlight></codeline>
 <codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>keyExistsOrError(key);</highlight></codeline>
 <codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>table().at(key)(exec,<sp/>uMesh,<sp/>inputs);</highlight></codeline>
@@ -900,13 +909,13 @@
 <codeline lineno="65"><highlight class="normal"></highlight></codeline>
 <codeline lineno="66"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
 <codeline lineno="67"><highlight class="normal"></highlight></codeline>
-<codeline lineno="68" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a67ab52e200b72fe8c27f65a97e949554" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a67ab52e200b72fe8c27f65a97e949554" kindref="member">FaceNormalGradient</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient" kindref="compound">FaceNormalGradient</ref>&amp;<sp/>surfInterp)</highlight></codeline>
-<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>exec_(surfInterp.exec_),<sp/>mesh_(surfInterp.mesh_),</highlight></codeline>
-<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>faceNormalGradKernel_(surfInterp.faceNormalGradKernel_-&gt;clone())<sp/>{};</highlight></codeline>
+<codeline lineno="68" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1ae7379bd51330f20aa29d92e701616771" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1ae7379bd51330f20aa29d92e701616771" kindref="member">FaceNormalGradient</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient" kindref="compound">FaceNormalGradient</ref>&amp;<sp/>faceNGrad)</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>exec_(faceNGrad.exec_),<sp/>mesh_(faceNGrad.mesh_),</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>faceNormalGradKernel_(faceNGrad.faceNormalGradKernel_-&gt;clone())<sp/>{};</highlight></codeline>
 <codeline lineno="71"><highlight class="normal"></highlight></codeline>
-<codeline lineno="72" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1af8f172c843e148f27903df8983ba5ef7" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1af8f172c843e148f27903df8983ba5ef7" kindref="member">FaceNormalGradient</ref>(<ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient" kindref="compound">FaceNormalGradient</ref>&amp;&amp;<sp/>surfInterp)</highlight></codeline>
-<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>exec_(surfInterp.exec_),<sp/>mesh_(surfInterp.mesh_),</highlight></codeline>
-<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>faceNormalGradKernel_(std::move(surfInterp.faceNormalGradKernel_))<sp/>{};</highlight></codeline>
+<codeline lineno="72" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a84defa6ca51306794079a8298d3ba696" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a84defa6ca51306794079a8298d3ba696" kindref="member">FaceNormalGradient</ref>(<ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient" kindref="compound">FaceNormalGradient</ref>&amp;&amp;<sp/>faceNGrad)</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>exec_(faceNGrad.exec_),<sp/>mesh_(faceNGrad.mesh_),</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>faceNormalGradKernel_(std::move(faceNGrad.faceNormalGradKernel_))<sp/>{};</highlight></codeline>
 <codeline lineno="75"><highlight class="normal"></highlight></codeline>
 <codeline lineno="76" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a5670068be7bed40b459591c54c2eb505" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a5670068be7bed40b459591c54c2eb505" kindref="member">FaceNormalGradient</ref>(</highlight></codeline>
 <codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref>&amp;<sp/>exec,</highlight></codeline>
@@ -915,7 +924,7 @@
 <codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/>)</highlight></codeline>
 <codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>exec_(exec),<sp/>mesh_(mesh),<sp/>faceNormalGradKernel_(std::move(interpolationKernel))<sp/>{};</highlight></codeline>
 <codeline lineno="82"><highlight class="normal"></highlight></codeline>
-<codeline lineno="83" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1ab9455c82c114eee8efb308ab7c3378bc" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1ab9455c82c114eee8efb308ab7c3378bc" kindref="member">FaceNormalGradient</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref>&amp;<sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1UnstructuredMesh" kindref="compound">UnstructuredMesh</ref>&amp;<sp/>mesh,<sp/><ref refid="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" kindref="member">Input</ref><sp/>input)</highlight></codeline>
+<codeline lineno="83" refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a6018472abac5a1f1d2abbdd2b1eba0a1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_1a6018472abac5a1f1d2abbdd2b1eba0a1" kindref="member">FaceNormalGradient</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref>&amp;<sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1UnstructuredMesh" kindref="compound">UnstructuredMesh</ref>&amp;<sp/>mesh,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a161184af07a233e2513b53451edc6b39" kindref="member">Input</ref>&amp;<sp/>input)</highlight></codeline>
 <codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>exec_(exec),<sp/>mesh_(mesh),</highlight></codeline>
 <codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>faceNormalGradKernel_(<ref refid="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory" kindref="compound">FaceNormalGradientFactory</ref>::create(exec,<sp/>mesh,<sp/>input))<sp/>{};</highlight></codeline>
 <codeline lineno="86"><highlight class="normal"></highlight></codeline>
