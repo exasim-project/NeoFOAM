@@ -36,8 +36,10 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
     NeoFOAM::fill(phi.internalField(), NeoFOAM::one<TestType>::value);
+    phi.correctBoundaryConditions();
 
     auto result = NeoFOAM::Field<TestType>(exec, phi.size());
+    NeoFOAM::fill(result, NeoFOAM::zero<TestType>::value);
 
     SECTION("Construct from Token" + execName)
     {
@@ -53,6 +55,14 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         );
         auto op = fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
         op.div(result);
+
+        // divergence of a uniform field should be zero
+        auto outHost = result.copyToHost();
+        for (int i = 0; i < result.size(); i++)
+        {
+            std::cout << "outHost[" << i << "]" << outHost[i] << "\n";
+            REQUIRE(outHost[i] == zero<TestType>::value);
+        }
     }
 }
 
