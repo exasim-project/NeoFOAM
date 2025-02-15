@@ -21,6 +21,7 @@ using I = std::initializer_list<T>;
 
 TEST_CASE("laplacianOperator")
 {
+    const size_t nCells = 10;
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -29,21 +30,40 @@ TEST_CASE("laplacianOperator")
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
-    auto mesh = create1DUniformMesh(exec, 10);
+    auto mesh = create1DUniformMesh(exec, nCells);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
 
-    fvcc::SurfaceField<NeoFOAM::scalar> gamma(exec, "sf", mesh, surfaceBCs);
-    NeoFOAM::fill(gamma.internalField(), 1.0);
+    fvcc::SurfaceField<NeoFOAM::scalar> gamma(exec, "gamma", mesh, surfaceBCs);
+    fill(gamma.internalField(), 2.0);
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoFOAM::scalar>>(mesh);
-    fvcc::VolumeField<NeoFOAM::scalar> phi(exec, "sf", mesh, volumeBCs);
-    NeoFOAM::fill(phi.internalField(), 1.0);
-    // Input input = TokenList({std::string("linear")});
+    fvcc::VolumeField<NeoFOAM::scalar> phi(exec, "phi", mesh, volumeBCs);
+    NeoFOAM::parallelFor(
+        phi.internalField(), KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1); }
+    );
+    phi.boundaryField().value() = NeoFOAM::Field<NeoFOAM::scalar>(exec, {0.5, 9.5});
 
     SECTION("Construct from Token" + execName)
     {
-        NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
+        NeoFOAM::Input input = NeoFOAM::TokenList(
+            {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
+        );
         fvcc::LaplacianOperator(dsl::Operator::Type::Implicit, gamma, phi, input);
+    }
+
+    SECTION("explicit laplacian operator" + execName)
+    {
+        NeoFOAM::Input input = NeoFOAM::TokenList(
+            {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
+        );
+        fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Explicit, gamma, phi, input);
+        Field<NeoFOAM::scalar> source(exec, nCells, 0.0);
+        lapOp.explicitOperation(source);
+        auto sourceHost = source.copyToHost();
+        for (size_t i = 0; i < nCells; i++)
+        {
+            REQUIRE(sourceHost[i] == 2.0);
+        }
     }
     // auto linear = SurfaceInterpolation(exec, mesh, input);
     // std::vector<fvcc::SurfaceBoundary<TestType>> bcs {};

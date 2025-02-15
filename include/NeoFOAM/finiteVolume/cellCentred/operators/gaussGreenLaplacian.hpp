@@ -8,6 +8,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/laplacianOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/faceNormalGradient/faceNormalGradient.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -31,11 +32,16 @@ public:
         VolumeField<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
     ) override;
 
+    virtual void laplacian(
+        Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+    ) override;
+
     std::unique_ptr<LaplacianOperatorFactory> clone() const override;
 
 private:
 
     SurfaceInterpolation surfaceInterpolation_;
+    FaceNormalGradient faceNormalGradient_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 

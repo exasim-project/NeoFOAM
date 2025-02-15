@@ -27,11 +27,11 @@ class LaplacianOperatorFactory :
 public:
 
     static std::unique_ptr<LaplacianOperatorFactory>
-    create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
+    create(const Executor& exec, const UnstructuredMesh& uMesh, const Input& inputs)
     {
         std::string key = (std::holds_alternative<Dictionary>(inputs))
                             ? std::get<Dictionary>(inputs).get<std::string>("LaplacianOperator")
-                            : std::get<TokenList>(inputs).popFront<std::string>();
+                            : std::get<TokenList>(inputs).next<std::string>();
         keyExistsOrError(key);
         return table().at(key)(exec, uMesh, inputs);
     }
@@ -49,6 +49,9 @@ public:
         VolumeField<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
     ) = 0;
 
+    virtual void laplacian(
+        Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+    ) = 0;
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<LaplacianOperatorFactory> clone() const = 0;
@@ -100,13 +103,13 @@ public:
 
     void explicitOperation(Field<scalar>& source)
     {
-        // if (laplacianOperatorStrategy_ == nullptr)
-        // {
-        //     NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
-        // }
-        // NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
-        // laplacianOperatorStrategy_->div(tmpsource, gamma_, field_);
-        // source += tmpsource;
+        if (laplacianOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
+        }
+        NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
+        laplacianOperatorStrategy_->laplacian(tmpsource, gamma_, field_);
+        source += tmpsource;
     }
 
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const

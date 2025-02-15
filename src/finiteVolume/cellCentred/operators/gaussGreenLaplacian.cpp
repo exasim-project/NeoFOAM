@@ -12,8 +12,10 @@ GaussGreenLaplacian::GaussGreenLaplacian(
     const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs
 )
     : LaplacianOperatorFactory::Register<GaussGreenLaplacian>(exec, mesh),
-      surfaceInterpolation_(exec, mesh, inputs),
-      sparsityPattern_(SparsityPattern::readOrCreate(mesh)) {};
+      surfaceInterpolation_(exec, mesh, inputs), faceNormalGradient_(exec, mesh, inputs),
+      sparsityPattern_(SparsityPattern::readOrCreate(mesh)) {
+
+      };
 
 
 la::LinearSystem<scalar, localIdx> GaussGreenLaplacian::createEmptyLinearSystem() const
@@ -23,6 +25,12 @@ la::LinearSystem<scalar, localIdx> GaussGreenLaplacian::createEmptyLinearSystem(
 
 void GaussGreenLaplacian::laplacian(
     VolumeField<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+) {
+    // computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
+};
+
+void GaussGreenLaplacian::laplacian(
+    Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
 ) {
     // computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
 };

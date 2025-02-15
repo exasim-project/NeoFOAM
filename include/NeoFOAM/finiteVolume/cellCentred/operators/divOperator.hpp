@@ -26,11 +26,11 @@ class DivOperatorFactory :
 public:
 
     static std::unique_ptr<DivOperatorFactory>
-    create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
+    create(const Executor& exec, const UnstructuredMesh& uMesh, const Input& inputs)
     {
         std::string key = (std::holds_alternative<Dictionary>(inputs))
                             ? std::get<Dictionary>(inputs).get<std::string>("DivOperator")
-                            : std::get<TokenList>(inputs).popFront<std::string>();
+                            : std::get<TokenList>(inputs).next<std::string>();
         keyExistsOrError(key);
         return table().at(key)(exec, uMesh, inputs);
     }

@@ -69,9 +69,11 @@ void BasicGeometryScheme::updateDeltaCoeffs(
         }
     );
 
+    const size_t nInternalFaces = mesh_.nInternalFaces();
+
     parallelFor(
         exec,
-        {nInternalFaces, nonOrthDeltaCoeff.size()},
+        {nInternalFaces, deltaCoeff.size()},
         KOKKOS_LAMBDA(const size_t facei) {
             auto own = static_cast<size_t>(surfFaceCells[facei - nInternalFaces]);
             Vector cellToCellDist = cf[facei] - cellCentre[own];

@@ -21,20 +21,20 @@ namespace NeoFOAM::finiteVolume::cellCentred
 class FaceNormalGradientFactory :
     public NeoFOAM::RuntimeSelectionFactory<
         FaceNormalGradientFactory,
-        Parameters<const Executor&, const UnstructuredMesh&, Input>>
+        Parameters<const Executor&, const UnstructuredMesh&, const Input&>>
 {
     using ScalarSurfaceField = SurfaceField<scalar>;
 
 public:
 
     static std::unique_ptr<FaceNormalGradientFactory>
-    create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
+    create(const Executor& exec, const UnstructuredMesh& uMesh, const Input& inputs)
     {
         // input is dictionary the key is "interpolation"
         std::string key =
             (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
                 ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("faceNormalGradient")
-                : std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
+                : std::get<NeoFOAM::TokenList>(inputs).next<std::string>();
 
         keyExistsOrError(key);
         return table().at(key)(exec, uMesh, inputs);
@@ -65,13 +65,13 @@ class FaceNormalGradient
 
 public:
 
-    FaceNormalGradient(const FaceNormalGradient& surfInterp)
-        : exec_(surfInterp.exec_), mesh_(surfInterp.mesh_),
-          faceNormalGradKernel_(surfInterp.faceNormalGradKernel_->clone()) {};
+    FaceNormalGradient(const FaceNormalGradient& faceNGrad)
+        : exec_(faceNGrad.exec_), mesh_(faceNGrad.mesh_),
+          faceNormalGradKernel_(faceNGrad.faceNormalGradKernel_->clone()) {};
 
-    FaceNormalGradient(FaceNormalGradient&& surfInterp)
-        : exec_(surfInterp.exec_), mesh_(surfInterp.mesh_),
-          faceNormalGradKernel_(std::move(surfInterp.faceNormalGradKernel_)) {};
+    FaceNormalGradient(FaceNormalGradient&& faceNGrad)
+        : exec_(faceNGrad.exec_), mesh_(faceNGrad.mesh_),
+          faceNormalGradKernel_(std::move(faceNGrad.faceNormalGradKernel_)) {};
 
     FaceNormalGradient(
         const Executor& exec,
@@ -80,7 +80,7 @@ public:
     )
         : exec_(exec), mesh_(mesh), faceNormalGradKernel_(std::move(interpolationKernel)) {};
 
-    FaceNormalGradient(const Executor& exec, const UnstructuredMesh& mesh, Input input)
+    FaceNormalGradient(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
         : exec_(exec), mesh_(mesh),
           faceNormalGradKernel_(FaceNormalGradientFactory::create(exec, mesh, input)) {};
 
