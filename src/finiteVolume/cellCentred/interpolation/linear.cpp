@@ -41,10 +41,10 @@ void computeLinearInterpolation(
         exec,
         {0, dstS.size()},
         KOKKOS_LAMBDA(const size_t facei) {
-            size_t own = static_cast<size_t>(ownerS[facei]);
-            size_t nei = static_cast<size_t>(neighS[facei]);
             if (facei < nInternalFaces)
             {
+                size_t own = static_cast<size_t>(ownerS[facei]);
+                size_t nei = static_cast<size_t>(neighS[facei]);
                 dstS[facei] = weightS[facei] * srcS[own] + (1 - weightS[facei]) * srcS[nei];
             }
             else
