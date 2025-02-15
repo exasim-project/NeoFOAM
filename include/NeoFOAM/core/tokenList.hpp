@@ -28,7 +28,7 @@ public:
      * @brief Construct a TokenList object from a vector of std::any.
      * @param data A vector of std::any.
      */
-    TokenList(const std::vector<std::any>& data);
+    TokenList(const std::vector<std::any>& data, size_t nextIndex = 0);
 
     /**
      * @brief Construct a TokenList object from an initializer list of std::any.
@@ -96,6 +96,20 @@ public:
         }
     }
 
+    /**
+     * @brief Retrieves the value associated with the nextIndex, casting it to
+     * the specified type.
+     * @tparam T The type to cast the value to.
+     * @return A reference to the value associated with the index, casted to
+     * type T.
+     */
+    template<typename ReturnType>
+    ReturnType& next()
+    {
+        ReturnType& retValue = get<ReturnType&>(nextIndex_);
+        nextIndex_++;
+        return retValue;
+    }
 
     /**
      * @brief Retrieves the value associated with the given index, casting it to
@@ -120,6 +134,21 @@ public:
     }
 
     /**
+     * @brief Retrieves the value associated with the nextIndex, casting it to
+     * the specified type.
+     * @tparam T The type to cast the value to.
+     * @return A const reference to the value associated with the index, casted to
+     * type T.
+     */
+    template<typename ReturnType>
+    const ReturnType& next() const
+    {
+        const ReturnType& retValue = get<ReturnType>(nextIndex_);
+        nextIndex_++;
+        return retValue;
+    }
+
+    /**
      * @brief Retrieves the value associated with the given index.
      * @param idx The index to retrieve the value for.
      * @return A reference to the value associated with the index.
@@ -132,6 +161,7 @@ public:
 private:
 
     std::vector<std::any> data_;
+    mutable size_t nextIndex_;
 };
 
 } // namespace NeoFOAM

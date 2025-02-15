@@ -50,6 +50,17 @@ TEST_CASE("tokenList")
         REQUIRE(tokenList.size() == 0);
     }
 
+    SECTION("Next Token")
+    {
+        tokenList =
+            NeoFOAM::TokenList({NeoFOAM::label(1), NeoFOAM::scalar(2.0), std::string("string")});
+        REQUIRE(tokenList.size() == 3);
+        REQUIRE(tokenList.next<NeoFOAM::label>() == 1);
+        REQUIRE(tokenList.next<NeoFOAM::scalar>() == 2.0);
+        REQUIRE(tokenList.next<std::string>() == "string");
+        REQUIRE_THROWS_AS(tokenList.next<NeoFOAM::label>(), std::out_of_range);
+    }
+
     SECTION("Access out of bound index")
     {
         REQUIRE_THROWS_AS(tokenList.get<NeoFOAM::label>(3), std::out_of_range);

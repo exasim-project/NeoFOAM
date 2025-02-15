@@ -6,7 +6,13 @@
 namespace NeoFOAM
 {
 
-TokenList::TokenList(const std::initializer_list<std::any>& initList) : data_(initList) {}
+TokenList::TokenList(const std::vector<std::any>& data, size_t nextIndex)
+    : data_(data), nextIndex_(nextIndex)
+{}
+
+TokenList::TokenList(const std::initializer_list<std::any>& initList)
+    : data_(initList), nextIndex_(0)
+{}
 
 void TokenList::insert(const std::any& value) { data_.push_back(value); }
 
