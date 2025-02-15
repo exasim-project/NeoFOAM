@@ -43,6 +43,15 @@ TEST_CASE("Field Constructors")
 
         MatCreate(PETSC_COMM_WORLD, &A);
         MatSetSizes(A, size, size, PETSC_DECIDE, PETSC_DECIDE);
+        std::cout << execName << "\n";
+        if (execName == "GPUExecutor")
+        {
+            MatSetType(A, MATAIJKOKKOS);
+        }
+        else
+        {
+            MatSetType(A, MATSEQAIJ);
+        }
         MatSetPreallocationCOO(A, size, colIdx, rowIdx);
         // PetscFree2(oor, ooc);
 
