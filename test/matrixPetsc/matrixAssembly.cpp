@@ -32,14 +32,14 @@ TEST_CASE("Field Constructors")
         );
         PetscInt colIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         PetscInt rowIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        PetscScalar v[10];
+        PetscScalar w[1];
         // NeoFOAM::Field<PetscInt> colIdx(exec, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
         // NeoFOAM::Field<PetscInt> rowIdx(exec, {0, 1, 2, 4, 4, 5, 6, 7, 8, 9});
 
         Mat A;
 
         PetscInitialize(NULL, NULL, NULL, NULL);
-
-        std::cout << values.data() << "\n";
 
         MatCreate(PETSC_COMM_WORLD, &A);
         MatSetSizes(A, size, size, PETSC_DECIDE, PETSC_DECIDE);
@@ -57,8 +57,30 @@ TEST_CASE("Field Constructors")
 
         MatSetValuesCOO(A, values.data(), ADD_VALUES);
 
-        std::cout << "after set MatSetValuesC00"
-                  << "\n";
-        MatView(A, PETSC_VIEWER_STDOUT_WORLD);
+        // MatView(A, PETSC_VIEWER_STDOUT_WORLD);
+        // MatGetValues(A, size, rowIdx, 1, colIdx, v);
+        for (int i = 1; i < size; i++)
+        {
+            PetscInt idr[1];
+            PetscInt idc[1];
+
+            idr[0] = rowIdx[i];
+            idc[0] = colIdx[i];
+
+            MatGetValues(A, 1, idr, 1, idc, w);
+            v[i] = w[0];
+        }
+        // PetscScalarView(size, v, PETSC_VIEWER_STDOUT_WORLD);
+
+        REQUIRE(v[0] == 1.);
+        REQUIRE(v[1] == 2.);
+        REQUIRE(v[2] == 3.);
+        REQUIRE(v[3] == 4.);
+        REQUIRE(v[4] == 5.);
+        REQUIRE(v[5] == 6.);
+        REQUIRE(v[6] == 7.);
+        REQUIRE(v[7] == 8.);
+        REQUIRE(v[8] == 9.);
+        REQUIRE(v[9] == 10.);
     }
 }
