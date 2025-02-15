@@ -52,7 +52,14 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     out.correctBoundaryConditions();
 
     auto outHost = out.internalField().copyToHost();
-    for (int i = 0; i < out.internalField().size(); i++)
+    auto nInternal = mesh.nInternalFaces();
+    auto nBoundary = mesh.nBoundaryFaces();
+    for (int i = 0; i < nInternal; i++)
+    {
+        REQUIRE(outHost[i] == one<TestType>::value);
+    }
+
+    for (int i = nInternal; i < nInternal + nBoundary; i++)
     {
         REQUIRE(outHost[i] == one<TestType>::value);
     }

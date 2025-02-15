@@ -32,25 +32,35 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto mesh = create1DUniformMesh(exec, 10);
     Input input = TokenList({std::string("linear")});
     auto linear = SurfaceInterpolation(exec, mesh, input);
-    std::vector<fvcc::SurfaceBoundary<TestType>> bcs {};
+    std::vector<fvcc::VolumeBoundary<TestType>> vbcs {};
+    std::vector<fvcc::SurfaceBoundary<TestType>> sbcs {};
     for (auto patchi : I<size_t> {0, 1})
     {
         Dictionary dict;
         dict.insert("type", std::string("fixedValue"));
         dict.insert("fixedValue", one<TestType>::value);
-        bcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
+        sbcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
+        vbcs.push_back(fvcc::VolumeBoundary<TestType>(mesh, dict, patchi));
     }
 
-    auto in = VolumeField<TestType>(exec, "in", mesh, {});
-    auto out = SurfaceField<TestType>(exec, "out", mesh, bcs);
+    auto in = VolumeField<TestType>(exec, "in", mesh, vbcs);
+    auto out = SurfaceField<TestType>(exec, "out", mesh, sbcs);
 
     fill(in.internalField(), one<TestType>::value);
+    in.correctBoundaryConditions();
 
     linear.interpolate(in, out);
     out.correctBoundaryConditions();
 
     auto outHost = out.internalField().copyToHost();
-    for (int i = 0; i < out.internalField().size(); i++)
+    auto nInternal = mesh.nInternalFaces();
+    auto nBoundary = mesh.nBoundaryFaces();
+    for (int i = 0; i < nInternal; i++)
+    {
+        REQUIRE(outHost[i] == one<TestType>::value);
+    }
+
+    for (int i = nInternal; i < nInternal + nBoundary; i++)
     {
         REQUIRE(outHost[i] == one<TestType>::value);
     }
