@@ -25,13 +25,10 @@ void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scala
         exec,
         {0, mesh_.nInternalFaces()},
         KOKKOS_LAMBDA(const size_t facei) {
-            // Note: mag in the dot-product.
-            // For all valid meshes, the non-orthogonality will be less than
-            // 90 deg and the dot-product will be positive.  For invalid
-            // meshes (d & s <= 0), this will stabilise the calculation
-            // but the result will be poor.
-            scalar sfdOwn = mag(sf[facei] & (cf[facei] - c[static_cast<size_t>(owner[facei])]));
-            scalar sfdNei = mag(sf[facei] & (c[static_cast<size_t>(neighbour[facei])] - cf[facei]));
+            scalar sfdOwn =
+                std::abs(sf[facei] & (cf[facei] - c[static_cast<size_t>(owner[facei])]));
+            scalar sfdNei =
+                std::abs(sf[facei] & (c[static_cast<size_t>(neighbour[facei])] - cf[facei]));
 
             if (std::abs(sfdOwn + sfdNei) > ROOTVSMALL)
             {
@@ -55,7 +52,33 @@ void BasicGeometryScheme::updateDeltaCoeffs(
     [[maybe_unused]] const Executor& exec, [[maybe_unused]] SurfaceField<scalar>& deltaCoeffs
 )
 {
-    NF_ERROR_EXIT("Not implemented");
+    const auto [owner, neighbour, surfFaceCells] =
+        spans(mesh_.faceOwner(), mesh_.faceNeighbour(), mesh_.boundaryMesh().faceCells());
+
+
+    const auto [cf, cellCentre] = spans(mesh_.faceCentres(), mesh_.cellCentres());
+
+    auto deltaCoeff = deltaCoeffs.internalField().span();
+
+    parallelFor(
+        exec,
+        {0, mesh_.nInternalFaces()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            Vector cellToCellDist = cellCentre[neighbour[facei]] - cellCentre[owner[facei]];
+            deltaCoeff[facei] = 1.0 / mag(cellToCellDist);
+        }
+    );
+
+    parallelFor(
+        exec,
+        {nInternalFaces, nonOrthDeltaCoeff.size()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            auto own = static_cast<size_t>(surfFaceCells[facei - nInternalFaces]);
+            Vector cellToCellDist = cf[facei] - cellCentre[own];
+
+            deltaCoeff[facei] = 1.0 / mag(cellToCellDist);
+        }
+    );
 }
 
 
@@ -63,7 +86,46 @@ void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
     [[maybe_unused]] const Executor& exec, [[maybe_unused]] SurfaceField<scalar>& nonOrthDeltaCoeffs
 )
 {
-    NF_ERROR_EXIT("Not implemented");
+    const auto [owner, neighbour, surfFaceCells] =
+        spans(mesh_.faceOwner(), mesh_.faceNeighbour(), mesh_.boundaryMesh().faceCells());
+
+
+    const auto [cf, cellCentre, faceAreaVector, faceArea] =
+        spans(mesh_.faceCentres(), mesh_.cellCentres(), mesh_.faceAreas(), mesh_.magFaceAreas());
+
+    auto nonOrthDeltaCoeff = nonOrthDeltaCoeffs.internalField().span();
+    fill(nonOrthDeltaCoeffs.internalField(), 0.0);
+
+    const size_t nInternalFaces = mesh_.nInternalFaces();
+
+    parallelFor(
+        exec,
+        {0, nInternalFaces},
+        KOKKOS_LAMBDA(const size_t facei) {
+            Vector cellToCellDist = cellCentre[neighbour[facei]] - cellCentre[owner[facei]];
+            Vector faceNormal = 1 / faceArea[facei] * faceAreaVector[facei];
+
+            scalar orthoDist = faceNormal & cellToCellDist;
+
+
+            nonOrthDeltaCoeff[facei] = 1.0 / std::max(orthoDist, 0.05 * mag(cellToCellDist));
+        }
+    );
+
+    parallelFor(
+        exec,
+        {nInternalFaces, nonOrthDeltaCoeff.size()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            auto own = static_cast<size_t>(surfFaceCells[facei - nInternalFaces]);
+            Vector cellToCellDist = cf[facei] - cellCentre[own];
+            Vector faceNormal = 1 / faceArea[facei] * faceAreaVector[facei];
+
+            scalar orthoDist = faceNormal & cellToCellDist;
+
+
+            nonOrthDeltaCoeff[facei] = 1.0 / std::max(orthoDist, 0.05 * mag(cellToCellDist));
+        }
+    );
 }
 
 
