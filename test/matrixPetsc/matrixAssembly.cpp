@@ -13,7 +13,7 @@
 #include <petscmat.h>
 
 
-TEST_CASE("Field Constructors")
+TEST_CASE("matrix assembly")
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
