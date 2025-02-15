@@ -28,11 +28,13 @@ void computeLinearInterpolation(
 {
     const auto exec = dst.exec();
     auto dstS = dst.internalField().span();
-    const auto srcS = src.internalField().span();
-    const auto weightS = weights.internalField().span();
-    const auto ownerS = dst.mesh().faceOwner().span();
-    const auto neighS = dst.mesh().faceNeighbour().span();
-    const auto boundS = src.boundaryField().value().span();
+    const auto [srcS, weightS, ownerS, neighS, boundS] = spans(
+        src.internalField(),
+        weights.internalField(),
+        dst.mesh().faceOwner(),
+        dst.mesh().faceNeighbour(),
+        src.boundaryField().value()
+    );
     size_t nInternalFaces = dst.mesh().nInternalFaces();
 
     NeoFOAM::parallelFor(
