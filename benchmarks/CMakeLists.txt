@@ -5,6 +5,7 @@ function(neofoam_benchmark BENCH)
 
   add_executable(bench_${BENCH} "${BENCH}.cpp")
   target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 NeoFOAM)
+  target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
 
   if(WIN32)
     set_target_properties(

@@ -9,14 +9,11 @@
 
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
+#include "executorGenerator.hpp"
 
 TEST_CASE("Unstructured Mesh")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
+    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
