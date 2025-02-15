@@ -38,9 +38,11 @@ target_sources(
           "finiteVolume/cellCentred/boundary/boundary.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenLaplacian.cpp"
           "finiteVolume/cellCentred/operators/sparsityPattern.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
+          "finiteVolume/cellCentred/faceNormalGradient/uncorrected.cpp"
           "timeIntegration/timeIntegration.cpp"
           "timeIntegration/rungeKutta.cpp")
 
