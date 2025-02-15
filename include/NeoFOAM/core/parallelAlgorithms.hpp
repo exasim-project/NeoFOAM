@@ -15,6 +15,48 @@ template<typename ValueType>
 class Field;
 
 
+/* @brief Functor to compute addition in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
+struct ThreadSafeAdd
+{
+    const Executor exec;
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
+    {
+        if (std::holds_alternative<SerialExecutor>(exec))
+        {
+            a += b;
+        }
+        else
+        {
+            Kokkos::atomic_add(&a, b);
+        }
+    }
+};
+
+/* @brief Functor to compute subtraction in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
+struct ThreadSafeSub
+{
+    const Executor exec;
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
+    {
+        if (std::holds_alternative<SerialExecutor>(exec))
+        {
+            a -= b;
+        }
+        else
+        {
+            Kokkos::atomic_sub(&a, b);
+        }
+    }
+};
+
 // Concept to check if a callable is compatible with void(const size_t)
 template<typename Kernel>
 concept parallelForKernel = requires(Kernel t, size_t i) {
