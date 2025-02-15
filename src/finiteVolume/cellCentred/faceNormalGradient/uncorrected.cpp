@@ -46,7 +46,7 @@ void computeFaceNormalGrad(
             auto faceBCI = facei - nInternalFaces;
             auto own = static_cast<size_t>(surfFaceCells[faceBCI]);
 
-            phif[facei] = nonOrthDeltaCoeffs[facei] * (phi[own] - phiBCValue[faceBCI]);
+            phif[facei] = nonOrthDeltaCoeffs[facei] * (phiBCValue[faceBCI] - phi[own]);
         }
     );
 }
