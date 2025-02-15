@@ -6,6 +6,8 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
+#include <catch2/catch_approx.hpp>
+
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -41,7 +43,7 @@ TEST_CASE("laplacianOperator")
     NeoFOAM::parallelFor(
         phi.internalField(), KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1); }
     );
-    phi.boundaryField().value() = NeoFOAM::Field<NeoFOAM::scalar>(exec, {0.5, 9.5});
+    phi.boundaryField().value() = NeoFOAM::Field<NeoFOAM::scalar>(exec, {0.5, 10.5});
 
     SECTION("Construct from Token" + execName)
     {
@@ -60,33 +62,12 @@ TEST_CASE("laplacianOperator")
         Field<NeoFOAM::scalar> source(exec, nCells, 0.0);
         lapOp.explicitOperation(source);
         auto sourceHost = source.copyToHost();
+        auto sSource = sourceHost.span();
         for (size_t i = 0; i < nCells; i++)
         {
-            REQUIRE(sourceHost[i] == 2.0);
+            // the laplacian of a linear function is 0
+            REQUIRE(sourceHost[i] == Catch::Approx(0.0).margin(1e-8));
         }
     }
-    // auto linear = SurfaceInterpolation(exec, mesh, input);
-    // std::vector<fvcc::SurfaceBoundary<TestType>> bcs {};
-    // for (auto patchi : I<size_t> {0, 1})
-    // {
-    //     Dictionary dict;
-    //     dict.insert("type", std::string("fixedValue"));
-    //     dict.insert("fixedValue", one<TestType>::value);
-    //     bcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
-    // }
-
-    // auto in = VolumeField<TestType>(exec, "in", mesh, {});
-    // auto out = SurfaceField<TestType>(exec, "out", mesh, bcs);
-
-    // fill(in.internalField(), one<TestType>::value);
-
-    // linear.interpolate(in, out);
-    // out.correctBoundaryConditions();
-
-    // auto outHost = out.internalField().copyToHost();
-    // for (int i = 0; i < out.internalField().size(); i++)
-    // {
-    //     REQUIRE(outHost[i] == one<TestType>::value);
-    // }
 }
 }
