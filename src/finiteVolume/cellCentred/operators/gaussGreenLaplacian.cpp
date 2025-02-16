@@ -22,6 +22,12 @@ void computeLaplacian(
     const auto [owner, neighbour, surfFaceCells] =
         spans(mesh.faceOwner(), mesh.faceNeighbour(), mesh.boundaryMesh().faceCells());
 
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        phi.boundaryField().refGrad(),
+        phi.boundaryField().value(),
+        phi.boundaryField().valueFraction(),
+        phi.boundaryField().refValue()
+    );
 
     const auto [result, faceArea, fnGrad, vol] =
         spans(lapPhi, mesh.magFaceAreas(), faceNormalGrad.internalField(), mesh.cellVolumes());
@@ -109,6 +115,86 @@ void GaussGreenLaplacian::laplacian(
 )
 {
     computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi);
+};
+
+void GaussGreenLaplacian::laplacian(
+    la::LinearSystem<scalar, localIdx>& ls,
+    const SurfaceField<scalar>& gamma,
+    VolumeField<scalar>& phi
+)
+{
+    const UnstructuredMesh& mesh = phi.mesh();
+    const std::size_t nInternalFaces = mesh.nInternalFaces();
+    const auto exec = phi.exec();
+    const auto [owner, neighbour, surfFaceCells, diagOffs, ownOffs, neiOffs] = spans(
+        mesh.faceOwner(),
+        mesh.faceNeighbour(),
+        mesh.boundaryMesh().faceCells(),
+        sparsityPattern_->diagOffset(),
+        sparsityPattern_->ownerOffset(),
+        sparsityPattern_->neighbourOffset()
+    );
+
+    const auto [sGamma, deltaCoeffs, magFaceArea] = spans(
+        gamma.internalField(),
+        faceNormalGradient_.deltaCoeffs().internalField(),
+        mesh.magFaceAreas()
+    );
+
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        phi.boundaryField().refGrad(),
+        phi.boundaryField().value(),
+        phi.boundaryField().valueFraction(),
+        phi.boundaryField().refValue()
+    );
+
+    const auto rowPtrs = ls.matrix().rowPtrs();
+    const auto colIdxs = ls.matrix().colIdxs();
+    auto values = ls.matrix().values();
+    auto rhs = ls.rhs().span();
+
+    parallelFor(
+        exec,
+        {0, nInternalFaces},
+        KOKKOS_LAMBDA(const size_t facei) {
+            scalar flux = deltaCoeffs[facei] * sGamma[facei] * magFaceArea[facei];
+
+            std::size_t own = static_cast<std::size_t>(owner[facei]);
+            std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
+
+            // add neighbour contribution upper
+            std::size_t rowNeiStart = rowPtrs[nei];
+            std::size_t rowOwnStart = rowPtrs[own];
+
+            // scalar valueNei = (1 - weight) * flux;
+            values[rowNeiStart + neiOffs[facei]] += flux;
+            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux);
+
+            // upper triangular part
+
+            // add owner contribution lower
+            values[rowOwnStart + ownOffs[facei]] += flux;
+            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], flux);
+        }
+    );
+    // valueFraction_* this->patch().deltaCoeffs() * refValue_ + (1.0 - valueFraction_) * refGrad_;
+    parallelFor(
+        exec,
+        {nInternalFaces, sGamma.size()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            std::size_t bcfacei = facei - nInternalFaces;
+            scalar flux = sGamma[facei] * magFaceArea[facei];
+
+            std::size_t own = static_cast<std::size_t>(surfFaceCells[bcfacei]);
+            std::size_t rowOwnStart = rowPtrs[own];
+
+            values[rowOwnStart + diagOffs[own]] -=
+                flux * valueFraction[bcfacei] * deltaCoeffs[facei];
+            rhs[own] -= flux
+                      * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]
+                         + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei]);
+        }
+    );
 };
 
 

@@ -68,6 +68,11 @@ void Uncorrected::faceNormalGrad(
     computeFaceNormalGrad(volField, geometryScheme_, surfaceField);
 }
 
+const SurfaceField<scalar>& Uncorrected::deltaCoeffs() const
+{
+    return geometryScheme_->nonOrthDeltaCoeffs();
+}
+
 
 std::unique_ptr<FaceNormalGradientFactory> Uncorrected::clone() const
 {
