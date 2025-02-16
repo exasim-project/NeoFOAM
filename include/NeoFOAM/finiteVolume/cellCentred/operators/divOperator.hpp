@@ -43,7 +43,7 @@ public:
     virtual ~DivOperatorFactory() {} // Virtual destructor
 
     virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
-    
+
     // NOTE currently simple overloading is used here, because templating the virtual function
     // does not work and we cant template the entire class because the static create function
     // cannot access keyExistsOrError and table anymore.
@@ -116,7 +116,9 @@ public:
           divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
     DivOperator(
-        dsl::Operator::Type termType, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+        dsl::Operator::Type termType,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<ValueType>& phi
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(nullptr) {};
@@ -138,7 +140,6 @@ public:
         divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }
 
-
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const
     {
         if (divOperatorStrategy_ == nullptr)
@@ -154,14 +155,13 @@ public:
         {
             NF_ERROR_EXIT("DivOperatorStrategy not initialized");
         }
-        divOperatorStrategy_->div(ls, faceFlux_, field_);
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField());
     }
 
-    void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }
 
     void div(la::LinearSystem<scalar, localIdx>& ls)
     {
-        divOperatorStrategy_->div(ls, faceFlux_, getField());
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField());
     };
 
     void div(VolumeField<scalar>& divPhi)
