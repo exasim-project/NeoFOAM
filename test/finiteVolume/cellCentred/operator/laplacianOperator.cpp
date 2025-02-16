@@ -38,12 +38,28 @@ TEST_CASE("laplacianOperator")
     fvcc::SurfaceField<NeoFOAM::scalar> gamma(exec, "gamma", mesh, surfaceBCs);
     fill(gamma.internalField(), 2.0);
 
-    auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoFOAM::scalar>>(mesh);
-    fvcc::VolumeField<NeoFOAM::scalar> phi(exec, "phi", mesh, volumeBCs);
+
+    std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs;
+    bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(
+        mesh,
+        NeoFOAM::Dictionary(
+            {{"type", std::string("fixedValue")}, {"fixedValue", NeoFOAM::scalar(0.5)}}
+        ),
+        0
+    ));
+    bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(
+        mesh,
+        NeoFOAM::Dictionary(
+            {{"type", std::string("fixedValue")}, {"fixedValue", NeoFOAM::scalar(10.5)}}
+        ),
+        1
+    ));
+
+    fvcc::VolumeField<NeoFOAM::scalar> phi(exec, "phi", mesh, bcs);
     NeoFOAM::parallelFor(
         phi.internalField(), KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1); }
     );
-    phi.boundaryField().value() = NeoFOAM::Field<NeoFOAM::scalar>(exec, {0.5, 10.5});
+    phi.correctBoundaryConditions();
 
     SECTION("Construct from Token" + execName)
     {
@@ -54,6 +70,23 @@ TEST_CASE("laplacianOperator")
     }
 
     SECTION("explicit laplacian operator" + execName)
+    {
+        NeoFOAM::Input input = NeoFOAM::TokenList(
+            {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
+        );
+        fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Explicit, gamma, phi, input);
+        Field<NeoFOAM::scalar> source(exec, nCells, 0.0);
+        lapOp.explicitOperation(source);
+        auto sourceHost = source.copyToHost();
+        auto sSource = sourceHost.span();
+        for (size_t i = 0; i < nCells; i++)
+        {
+            // the laplacian of a linear function is 0
+            REQUIRE(sourceHost[i] == Catch::Approx(0.0).margin(1e-8));
+        }
+    }
+
+    SECTION("implicit laplacian operator" + execName)
     {
         NeoFOAM::Input input = NeoFOAM::TokenList(
             {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
