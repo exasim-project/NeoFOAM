@@ -27,12 +27,12 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = create1DUniformMesh(exec, 10);
-    auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
+    auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<scalar>>(mesh);
 
     // compute corresponding uniform faceFlux
     // TODO this should be handled outside of the unit test
-    fvcc::SurfaceField<NeoFOAM::scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
-    NeoFOAM::fill(faceFlux.internalField(), 1.0);
+    fvcc::SurfaceField<scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
+    fill(faceFlux.internalField(), 1.0);
     auto boundFaceFlux = faceFlux.internalField().span();
     // face on the left side has different orientation
     parallelFor(
@@ -43,22 +43,22 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
-    NeoFOAM::fill(phi.internalField(), NeoFOAM::one<TestType>::value);
-    NeoFOAM::fill(phi.boundaryField().value(), NeoFOAM::one<TestType>::value);
+    fill(phi.internalField(), one<TestType>::value);
+    fill(phi.boundaryField().value(), one<TestType>::value);
     phi.correctBoundaryConditions();
 
-    auto result = NeoFOAM::Field<TestType>(exec, phi.size());
-    NeoFOAM::fill(result, NeoFOAM::zero<TestType>::value);
+    auto result = Field<TestType>(exec, phi.size());
+    fill(result, zero<TestType>::value);
 
     SECTION("Construct from Token" + execName)
     {
-        NeoFOAM::Input input = NeoFOAM::TokenList({std::string("Gauss"), std::string("linear")});
+        Input input = TokenList({std::string("Gauss"), std::string("linear")});
         fvcc::DivOperator(Operator::Type::Explicit, faceFlux, phi, input);
     }
 
     SECTION("Construct from Dictionary" + execName)
     {
-        NeoFOAM::Input input = NeoFOAM::Dictionary(
+        Input input = Dictionary(
             {{std::string("DivOperator"), std::string("Gauss")},
              {std::string("surfaceInterpolation"), std::string("linear")}}
         );
