@@ -7,6 +7,8 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/core/primitives/traits.hpp"
+
 
 namespace NeoFOAM
 {
@@ -152,5 +154,20 @@ KOKKOS_INLINE_FUNCTION
 scalar mag(const Vector& vec) { return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]); }
 
 std::ostream& operator<<(std::ostream& out, const Vector& vec);
+
+
+// traits for vector
+template<>
+struct one<Vector>
+{
+    static const inline Vector value = {1.0, 1.0, 1.0};
+};
+
+
+template<>
+struct zero<Vector>
+{
+    static const inline Vector value = {0.0, 0.0, 0.0};
+};
 
 } // namespace NeoFOAM
