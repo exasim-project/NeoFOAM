@@ -17,7 +17,8 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
-using Operator = NeoFOAM::dsl::Operator;
+using SpatialOperator = NeoFOAM::dsl::SpatialOperator;
+using TemporalOperator = NeoFOAM::dsl::TemporalOperator;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
 using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
@@ -119,7 +120,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             vfOld.internalField() = initialValue;
 
             // Set expression
-            Operator ddtOp = Ddt(vfOld);
+            TemporalOperator ddtOp = NeoFOAM::dsl::imp::ddt(vfOld);
+
             auto divOp = YSquared(vfOld);
             auto eqn = ddtOp + divOp;
 

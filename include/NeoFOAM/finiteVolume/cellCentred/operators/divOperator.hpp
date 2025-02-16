@@ -4,9 +4,10 @@
 #pragma once
 
 #include "NeoFOAM/fields/field.hpp"
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
@@ -41,12 +42,19 @@ public:
 
     virtual ~DivOperatorFactory() {} // Virtual destructor
 
+    virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
+    
     // NOTE currently simple overloading is used here, because templating the virtual function
     // does not work and we cant template the entire class because the static create function
     // cannot access keyExistsOrError and table anymore.
     virtual void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) = 0;
+
+    virtual void
+    div(la::LinearSystem<scalar, localIdx>& ls,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi) = 0;
 
     virtual void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
@@ -130,7 +138,33 @@ public:
         divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }
 
-    void div(VolumeField<ValueType>& divPhi)
+
+    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const
+    {
+        if (divOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
+        }
+        return divOperatorStrategy_->createEmptyLinearSystem();
+    }
+
+    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls)
+    {
+        if (divOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
+        }
+        divOperatorStrategy_->div(ls, faceFlux_, field_);
+    }
+
+    void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }
+
+    void div(la::LinearSystem<scalar, localIdx>& ls)
+    {
+        divOperatorStrategy_->div(ls, faceFlux_, getField());
+    };
+
+    void div(VolumeField<scalar>& divPhi)
     {
         divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }

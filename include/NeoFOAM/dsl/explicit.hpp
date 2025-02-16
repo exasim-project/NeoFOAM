@@ -5,22 +5,31 @@
 #pragma once
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
 
 // TODO we should get rid of this include since it includes details
 // from a general implementation
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 namespace NeoFOAM::dsl::exp
 {
 
-Operator div(const fvcc::SurfaceField<scalar>& faceFlux, fvcc::VolumeField<scalar>& phi)
+
+SpatialOperator
+div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    return Operator(fvcc::DivOperator<scalar>(dsl::Operator::Type::Explicit, faceFlux, phi));
+    return SpatialOperator(fvcc::DivOperator(dsl::Operator::Type::Explicit, faceFlux, phi));
+}
+
+SpatialOperator
+Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    return SpatialOperator(fvcc::SourceTerm(dsl::Operator::Type::Explicit, coeff, phi));
 }
 
 
