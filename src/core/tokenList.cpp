@@ -5,6 +5,18 @@
 
 namespace NeoFOAM
 {
+void logOutRange(
+    const std::out_of_range& e, const std::size_t& key, const std::vector<std::any>& data
+)
+{
+    std::cerr << "Index is out of bounds: " << key << " \n"
+              << "the size is :" << data.size() << " \n"
+              << e.what() << std::endl;
+}
+
+TokenList::TokenList() : data_(), nextIndex_(0) {}
+
+TokenList::TokenList(const TokenList& other) : data_(other.data_), nextIndex_(other.nextIndex_) {}
 
 TokenList::TokenList(const std::vector<std::any>& data, size_t nextIndex)
     : data_(data), nextIndex_(nextIndex)

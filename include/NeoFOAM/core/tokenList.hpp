@@ -11,6 +11,11 @@ namespace NeoFOAM
 {
 
 
+void logOutRange(
+    const std::out_of_range& e, const std::size_t& key, const std::vector<std::any>& data
+);
+
+
 /**
  * @class TokenList
  * @brief A class representing a list of tokens.
@@ -22,7 +27,9 @@ class TokenList
 {
 public:
 
-    TokenList() = default;
+    TokenList();
+
+    TokenList(const TokenList&);
 
     /**
      * @brief Construct a TokenList object from a vector of std::any.
@@ -94,6 +101,11 @@ public:
             logBadAnyCast<ReturnType>(e, idx, data_);
             throw e;
         }
+        catch (const std::out_of_range& e)
+        {
+            logOutRange(e, idx, data_);
+            throw e;
+        }
     }
 
     /**
@@ -129,6 +141,11 @@ public:
         catch (const std::bad_any_cast& e)
         {
             logBadAnyCast<ReturnType>(e, idx, data_);
+            throw e;
+        }
+        catch (const std::out_of_range& e)
+        {
+            logOutRange(e, idx, data_);
             throw e;
         }
     }
