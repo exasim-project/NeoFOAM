@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -20,7 +20,7 @@ namespace NeoFOAM
 template<typename T>
 using I = std::initializer_list<T>;
 
-TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -30,26 +30,25 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = create1DUniformMesh(exec, 10);
-    Input input = TokenList({std::string("linear")});
-    auto linear = SurfaceInterpolation(exec, mesh, input);
-    std::vector<fvcc::VolumeBoundary<TestType>> vbcs {};
-    std::vector<fvcc::SurfaceBoundary<TestType>> sbcs {};
+    Input input = TokenList({std::string("upwind")});
+    auto upwind = SurfaceInterpolation(exec, mesh, input);
+    std::vector<fvcc::SurfaceBoundary<TestType>> bcs {};
     for (auto patchi : I<size_t> {0, 1})
     {
         Dictionary dict;
         dict.insert("type", std::string("fixedValue"));
         dict.insert("fixedValue", one<TestType>::value);
-        sbcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
-        vbcs.push_back(fvcc::VolumeBoundary<TestType>(mesh, dict, patchi));
+        bcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
     }
 
-    auto in = VolumeField<TestType>(exec, "in", mesh, vbcs);
-    auto out = SurfaceField<TestType>(exec, "out", mesh, sbcs);
+    auto in = VolumeField<TestType>(exec, "in", mesh, {});
+    auto flux = SurfaceField<scalar>(exec, "flux", mesh, {});
+    auto out = SurfaceField<TestType>(exec, "out", mesh, bcs);
 
+    fill(flux.internalField(), one<scalar>::value);
     fill(in.internalField(), one<TestType>::value);
-    in.correctBoundaryConditions();
 
-    linear.interpolate(in, out);
+    upwind.interpolate(flux, in, out);
     out.correctBoundaryConditions();
 
     auto outHost = out.internalField().copyToHost();
@@ -65,4 +64,5 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
         REQUIRE(outHost[i] == one<TestType>::value);
     }
 }
+
 }
