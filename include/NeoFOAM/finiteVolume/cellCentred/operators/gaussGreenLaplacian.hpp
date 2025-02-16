@@ -36,6 +36,12 @@ public:
         Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
     ) override;
 
+    virtual void laplacian(
+        la::LinearSystem<scalar, localIdx>& ls,
+        const SurfaceField<scalar>& gamma,
+        VolumeField<scalar>& phi
+    ) override;
+
     std::unique_ptr<LaplacianOperatorFactory> clone() const override;
 
 private:

@@ -37,6 +37,8 @@ public:
         const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField
     ) const override;
 
+    virtual const SurfaceField<scalar>& deltaCoeffs() const override;
+
     std::unique_ptr<FaceNormalGradientFactory> clone() const override;
 
 private:

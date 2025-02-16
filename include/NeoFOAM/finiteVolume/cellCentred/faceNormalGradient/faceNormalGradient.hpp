@@ -23,7 +23,6 @@ class FaceNormalGradientFactory :
         FaceNormalGradientFactory,
         Parameters<const Executor&, const UnstructuredMesh&, const Input&>>
 {
-    using ScalarSurfaceField = SurfaceField<scalar>;
 
 public:
 
@@ -47,9 +46,11 @@ public:
 
     virtual ~FaceNormalGradientFactory() {} // Virtual destructor
 
-    virtual void
-    faceNormalGrad(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const = 0;
+    virtual void faceNormalGrad(
+        const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField
+    ) const = 0;
 
+    virtual const SurfaceField<scalar>& deltaCoeffs() const = 0;
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<FaceNormalGradientFactory> clone() const = 0;
@@ -90,6 +91,9 @@ public:
     {
         faceNormalGradKernel_->faceNormalGrad(volField, surfaceField);
     }
+
+    const SurfaceField<scalar>& deltaCoeffs() const { return faceNormalGradKernel_->deltaCoeffs(); }
+
 
     SurfaceField<scalar> faceNormalGrad(const VolumeField<scalar>& volField) const
     {

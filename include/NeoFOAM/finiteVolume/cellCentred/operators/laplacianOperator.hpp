@@ -53,6 +53,12 @@ public:
         Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
     ) = 0;
 
+    virtual void laplacian(
+        la::LinearSystem<scalar, localIdx>& ls,
+        const SurfaceField<scalar>& gamma,
+        VolumeField<scalar>& phi
+    ) = 0;
+
     // Pure virtual function for cloning
     virtual std::unique_ptr<LaplacianOperatorFactory> clone() const = 0;
 
@@ -123,11 +129,11 @@ public:
 
     void implicitOperation(la::LinearSystem<scalar, localIdx>& ls)
     {
-        // if (laplacianOperatorStrategy_ == nullptr)
-        // {
-        //     NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
-        // }
-        // laplacianOperatorStrategy_->div(ls, gamma_, field_);
+        if (laplacianOperatorStrategy_ == nullptr)
+        {
+            NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
+        }
+        laplacianOperatorStrategy_->laplacian(ls, gamma_, field_);
     }
 
     // void laplacian(Field<scalar>& lapPhi)

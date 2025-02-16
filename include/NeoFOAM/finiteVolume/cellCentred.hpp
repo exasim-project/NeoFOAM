@@ -12,6 +12,7 @@
 #include "cellCentred/fields/surfaceField.hpp"
 #include "cellCentred/fields/volumeField.hpp"
 
+#include "cellCentred/operators/linearSystem.hpp"
 #include "cellCentred/operators/divOperator.hpp"
 #include "cellCentred/operators/gaussGreenDiv.hpp"
 
