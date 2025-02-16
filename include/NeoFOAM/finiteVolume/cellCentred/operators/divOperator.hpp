@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
 #pragma once
 
@@ -44,6 +44,9 @@ public:
 
     virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
 
+    // NOTE currently simple overloading is used here, because templating the virtual function
+    // does not work and we cant template the entire class because the static create function
+    // cannot access keyExistsOrError and table anymore.
     virtual void
     div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
     ) = 0;
@@ -56,8 +59,18 @@ public:
     virtual void
     div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
 
+    virtual void
+    div(VolumeField<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
+    ) = 0;
+
+    virtual void
+    div(Field<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi) = 0;
+
     virtual VolumeField<scalar>
     div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
+
+    virtual VolumeField<Vector>
+    div(const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi) = 0;
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<DivOperatorFactory> clone() const = 0;
@@ -69,14 +82,15 @@ protected:
     const UnstructuredMesh& mesh_;
 };
 
-class DivOperator : public dsl::OperatorMixin<VolumeField<scalar>>
+template<typename ValueType>
+class DivOperator : public dsl::OperatorMixin<VolumeField<ValueType>>
 {
 
 public:
 
     // copy constructor
     DivOperator(const DivOperator& divOp)
-        : dsl::OperatorMixin<VolumeField<scalar>>(divOp.exec_, divOp.field_, divOp.type_),
+        : dsl::OperatorMixin<VolumeField<ValueType>>(divOp.exec_, divOp.field_, divOp.type_),
           faceFlux_(divOp.faceFlux_),
           divOperatorStrategy_(
               divOp.divOperatorStrategy_ ? divOp.divOperatorStrategy_->clone() : nullptr
@@ -85,23 +99,26 @@ public:
     DivOperator(
         dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& phi,
+        VolumeField<ValueType>& phi,
         Input input
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
-          divOperatorStrategy_(DivOperatorFactory::create(exec_, phi.mesh(), input)) {};
+        : dsl::OperatorMixin<VolumeField<ValueType>>(phi.exec(), phi, termType),
+          faceFlux_(faceFlux),
+          divOperatorStrategy_(DivOperatorFactory::create(phi.exec(), phi.mesh(), input)) {};
 
     DivOperator(
         dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& phi,
+        VolumeField<ValueType>& phi,
         std::unique_ptr<DivOperatorFactory> divOperatorStrategy
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
     DivOperator(
-        dsl::Operator::Type termType, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+        dsl::Operator::Type termType,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<ValueType>& phi
     )
         : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
           divOperatorStrategy_(nullptr) {};
@@ -114,8 +131,13 @@ public:
             NF_ERROR_EXIT("DivOperatorStrategy not initialized");
         }
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
-        divOperatorStrategy_->div(tmpsource, faceFlux_, field_);
+        divOperatorStrategy_->div(tmpsource, faceFlux_, this->getField());
         source += tmpsource;
+    }
+
+    void div(Field<ValueType>& divPhi)
+    {
+        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }
 
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const
@@ -133,36 +155,35 @@ public:
         {
             NF_ERROR_EXIT("DivOperatorStrategy not initialized");
         }
-        divOperatorStrategy_->div(ls, faceFlux_, field_);
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField());
     }
 
-    void div(Field<scalar>& divPhi) { divOperatorStrategy_->div(divPhi, faceFlux_, getField()); }
 
     void div(la::LinearSystem<scalar, localIdx>& ls)
     {
-        divOperatorStrategy_->div(ls, faceFlux_, getField());
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField());
     };
 
     void div(VolumeField<scalar>& divPhi)
     {
-        divOperatorStrategy_->div(divPhi, faceFlux_, getField());
+        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
     }
 
 
     void build(const Input& input)
     {
-        const UnstructuredMesh& mesh = field_.mesh();
+        const UnstructuredMesh& mesh = this->getField().mesh();
         if (std::holds_alternative<NeoFOAM::Dictionary>(input))
         {
             auto dict = std::get<NeoFOAM::Dictionary>(input);
-            std::string schemeName = "div(" + faceFlux_.name + "," + field_.name + ")";
+            std::string schemeName = "div(" + faceFlux_.name + "," + this->getField().name + ")";
             auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
-            divOperatorStrategy_ = DivOperatorFactory::create(exec(), mesh, tokens);
+            divOperatorStrategy_ = DivOperatorFactory::create(this->exec(), mesh, tokens);
         }
         else
         {
             auto tokens = std::get<NeoFOAM::TokenList>(input);
-            divOperatorStrategy_ = DivOperatorFactory::create(exec(), mesh, tokens);
+            divOperatorStrategy_ = DivOperatorFactory::create(this->exec(), mesh, tokens);
         }
     }
 
