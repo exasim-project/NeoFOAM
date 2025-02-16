@@ -18,7 +18,9 @@ namespace NeoFOAM::timeIntegration
  */
 template<typename SolutionType>
 class TimeIntegratorBase :
-    public RuntimeSelectionFactory<TimeIntegratorBase<SolutionType>, Parameters<const Dictionary&>>
+    public RuntimeSelectionFactory<
+        TimeIntegratorBase<SolutionType>,
+        Parameters<const Dictionary&, const Dictionary&>>
 {
 
 public:
@@ -27,7 +29,9 @@ public:
 
     static std::string name() { return "timeIntegrationFactory"; }
 
-    TimeIntegratorBase(const Dictionary& dict) : dict_(dict) {}
+    TimeIntegratorBase(const Dictionary& schemeDict, const Dictionary& solutionDict)
+        : schemeDict_(schemeDict), solutionDict_(solutionDict)
+    {}
 
     virtual ~TimeIntegratorBase() {}
 
@@ -40,7 +44,8 @@ public:
 
 protected:
 
-    const Dictionary& dict_;
+    const Dictionary& schemeDict_;
+    const Dictionary& solutionDict_;
 };
 
 /**
@@ -63,10 +68,10 @@ public:
     TimeIntegration(TimeIntegration&& timeIntegrator)
         : timeIntegratorStrategy_(std::move(timeIntegrator.timeIntegratorStrategy_)) {};
 
-    TimeIntegration(const Dictionary& dict)
-        : timeIntegratorStrategy_(
-            TimeIntegratorBase<SolutionFieldType>::create(dict.get<std::string>("type"), dict)
-        ) {};
+    TimeIntegration(const Dictionary& schemeDict, const Dictionary& solutionDict)
+        : timeIntegratorStrategy_(TimeIntegratorBase<SolutionFieldType>::create(
+            schemeDict.get<std::string>("type"), schemeDict, solutionDict
+        )) {};
 
     void solve(Expression& eqn, SolutionFieldType& sol, scalar t, scalar dt)
     {

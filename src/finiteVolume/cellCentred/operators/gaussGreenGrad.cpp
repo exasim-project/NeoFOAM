@@ -8,35 +8,43 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+/* @brief free standing function implementation of the explicit gradient operator
+** ie computes \sum_f \phi_f
+**
+** @param[in] in - Field on which the gradient should be computed
+** @param[in,out] out - Field to hold the result
+*/
 void computeGrad(
-    const VolumeField<scalar>& phi,
-    const SurfaceInterpolation& surfInterp,
-    VolumeField<Vector>& gradPhi
+    const VolumeField<scalar>& in, const SurfaceInterpolation& surfInterp, VolumeField<Vector>& out
 )
 {
-    const UnstructuredMesh& mesh = gradPhi.mesh();
-    const auto exec = gradPhi.exec();
+    const UnstructuredMesh& mesh = out.mesh();
+    const auto exec = out.exec();
     SurfaceField<scalar> phif(
         exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh)
     );
-    const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
-    const auto sBSf = mesh.boundaryMesh().sf().span();
-    auto surfGradPhi = gradPhi.internalField().span();
+    surfInterp.interpolate(in, phif);
 
-    surfInterp.interpolate(phi, phif);
-    const auto surfPhif = phif.internalField().span();
-    const auto surfOwner = mesh.faceOwner().span();
-    const auto surfNeighbour = mesh.faceNeighbour().span();
-    const auto sSf = mesh.faceAreas().span();
+    auto surfGradPhi = out.internalField().span();
+
+    const auto [surfFaceCells, sBSf, surfPhif, surfOwner, surfNeighbour, faceAreaS, surfV] = spans(
+        mesh.boundaryMesh().faceCells(),
+        mesh.boundaryMesh().sf(),
+        phif.internalField(),
+        mesh.faceOwner(),
+        mesh.faceNeighbour(),
+        mesh.faceAreas(),
+        mesh.cellVolumes()
+    );
+
     size_t nInternalFaces = mesh.nInternalFaces();
 
-    const auto surfV = mesh.cellVolumes().span();
 
     if (std::holds_alternative<SerialExecutor>(exec))
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            Vector flux = sSf[i] * surfPhif[i];
+            Vector flux = faceAreaS[i] * surfPhif[i];
             surfGradPhi[static_cast<size_t>(surfOwner[i])] += flux;
             surfGradPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
         }
@@ -59,7 +67,7 @@ void computeGrad(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                Vector flux = sSf[i] * surfPhif[i];
+                Vector flux = faceAreaS[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
                 Kokkos::atomic_sub(&surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
             }
@@ -70,7 +78,7 @@ void computeGrad(
             {nInternalFaces, surfPhif.size()},
             KOKKOS_LAMBDA(const size_t i) {
                 size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-                Vector valueOwn = sSf[i] * surfPhif[i];
+                Vector valueOwn = faceAreaS[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
             }
         );

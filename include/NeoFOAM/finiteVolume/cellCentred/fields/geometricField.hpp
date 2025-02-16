@@ -27,6 +27,9 @@ class GeometricFieldMixin
 {
 public:
 
+
+    typedef ValueType ElementType;
+
     /**
      * @brief Constructor for GeometricFieldMixin.
      *

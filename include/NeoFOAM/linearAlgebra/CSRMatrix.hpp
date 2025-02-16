@@ -25,15 +25,22 @@ public:
         NF_ASSERT(values.exec() == rowPtrs.exec(), "Executors are not the same");
     };
 
+    CSRMatrix(const Executor exec) : values_(exec, 0), colIdxs_(exec, 0), rowPtrs_(exec, 0) {}
+
     ~CSRMatrix() = default;
 
     [[nodiscard]] const Executor& exec() const { return values_.exec(); }
 
-    [[nodiscard]] IndexType nRows() const { return rowPtrs_.size() - 1; }
+    [[nodiscard]] std::size_t nRows() const { return rowPtrs_.size() - 1; }
 
-    [[nodiscard]] IndexType nValues() const { return values_.size(); }
+    [[nodiscard]] std::size_t nValues() const { return values_.size(); }
 
-    [[nodiscard]] IndexType nColIdxs() const { return colIdxs_.size(); }
+    [[nodiscard]] std::size_t nColIdxs() const { return colIdxs_.size(); }
+
+    [[nodiscard]] CSRMatrix copyToHost() const
+    {
+        return CSRMatrix(values_.copyToHost(), colIdxs_.copyToHost(), rowPtrs_.copyToHost());
+    }
 
     [[nodiscard]] std::span<ValueType> values() { return values_.span(); }
     [[nodiscard]] std::span<IndexType> colIdxs() { return colIdxs_.span(); }

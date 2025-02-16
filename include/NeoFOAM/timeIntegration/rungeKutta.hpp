@@ -58,7 +58,6 @@ public:
     using Expression = NeoFOAM::dsl::Expression;
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>;
-    using Base::dict_;
 
     /**
      * @brief Default constructor.
@@ -74,7 +73,9 @@ public:
      * @brief Constructor that initializes the RungeKutta solver with a dictionary configuration.
      * @param dict The dictionary containing configuration parameters.
      */
-    RungeKutta(const Dictionary& dict) : Base(dict) {}
+    RungeKutta(const Dictionary& schemeDict, const Dictionary& solutionDict)
+        : Base(schemeDict, solutionDict)
+    {}
 
     /**
      * @brief Copy constructor.
