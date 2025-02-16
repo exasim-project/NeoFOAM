@@ -26,16 +26,21 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     );
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
-    // TODO take 1d mesh
     auto mesh = create1DUniformMesh(exec, 10);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
 
+    // compute correspondin uniform faceFlux
     fvcc::SurfaceField<NeoFOAM::scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
     NeoFOAM::fill(faceFlux.internalField(), 1.0);
+    auto boundFaceFlux = faceFlux.internalField().span();
+    // face on the left side has different orientation
+    boundFaceFlux[9] = -1.0;
+
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
     NeoFOAM::fill(phi.internalField(), NeoFOAM::one<TestType>::value);
+    NeoFOAM::fill(phi.boundaryField().value(), NeoFOAM::one<TestType>::value);
     phi.correctBoundaryConditions();
 
     auto result = NeoFOAM::Field<TestType>(exec, phi.size());

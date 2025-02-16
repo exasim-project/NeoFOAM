@@ -9,9 +9,15 @@ namespace NeoFOAM::finiteVolume::cellCentred
 
 
 /* @brief free standing function implementation of the divergence operator
-** ie computes \sum_f S_f \cdot \phi_f
+** ie computes 1/V \sum_f S_f \cdot \phi_f
+** where S_f is the face normal flux of a given face
+**  phi_f is the face interpolate value
+**
 **
 ** @param faceFlux
+** @param neighbour - mapping from face id to neighbour cell id
+** @param owner - mapping from face id to owner cell id
+** @param faceCells - mapping from boundary face id to owner cell id
 */
 template<typename ValueType>
 void computeDiv(
@@ -24,30 +30,31 @@ void computeDiv(
     std::span<const scalar> faceFlux,
     std::span<const ValueType> phiF,
     std::span<const scalar> V,
-    std::span<ValueType> divPhi
+    std::span<ValueType> res
 )
 {
     size_t nCells {V.size()};
     // check if the executor is GPU
     if (std::holds_alternative<SerialExecutor>(exec))
     {
-        for (size_t i = 0; i < faceFlux.size(); i++)
+        for (size_t i = 0; i < nInternalFaces; i++)
         {
             ValueType flux = faceFlux[i] * phiF[i];
-            divPhi[static_cast<size_t>(owner[i])] += flux;
-            divPhi[static_cast<size_t>(neighbour[i])] -= flux;
+            res[static_cast<size_t>(owner[i])] += flux;
+            res[static_cast<size_t>(neighbour[i])] -= flux;
         }
 
         for (size_t i = nInternalFaces; i < nInternalFaces + nBoundaryFaces; i++)
         {
             auto own = static_cast<size_t>(faceCells[i - nInternalFaces]);
             ValueType valueOwn = faceFlux[i] * phiF[i];
-            divPhi[own] += valueOwn;
+            res[own] += valueOwn;
         }
 
+        // TODO does it make sense to store invVol and multiply?
         for (size_t celli = 0; celli < nCells; celli++)
         {
-            divPhi[celli] *= 1 / V[celli];
+            res[celli] *= 1 / V[celli];
         }
     }
     else
@@ -57,23 +64,23 @@ void computeDiv(
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 ValueType flux = faceFlux[i] * phiF[i];
-                Kokkos::atomic_add(&divPhi[static_cast<size_t>(owner[i])], flux);
-                Kokkos::atomic_sub(&divPhi[static_cast<size_t>(neighbour[i])], flux);
+                Kokkos::atomic_add(&res[static_cast<size_t>(owner[i])], flux);
+                Kokkos::atomic_sub(&res[static_cast<size_t>(neighbour[i])], flux);
             }
         );
 
         parallelFor(
             exec,
-            {nInternalFaces, nBoundaryFaces},
+            {nInternalFaces, nInternalFaces + nBoundaryFaces},
             KOKKOS_LAMBDA(const size_t i) {
                 auto own = static_cast<size_t>(faceCells[i - nInternalFaces]);
                 ValueType valueOwn = faceFlux[i] * phiF[i];
-                Kokkos::atomic_add(&divPhi[own], valueOwn);
+                Kokkos::atomic_add(&res[own], valueOwn);
             }
         );
 
         parallelFor(
-            exec, {0, nCells}, KOKKOS_LAMBDA(const size_t celli) { divPhi[celli] *= 1 / V[celli]; }
+            exec, {0, nCells}, KOKKOS_LAMBDA(const size_t celli) { res[celli] *= 1 / V[celli]; }
         );
     }
 }
@@ -92,8 +99,11 @@ void computeDiv(
     SurfaceField<ValueType> phif(
         exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh)
     );
-    fill(phif.internalField(), NeoFOAM::zero<ValueType>::value);
+    // fill(phif.internalField(), NeoFOAM::zero<ValueType>::value);
     surfInterp.interpolate(faceFlux, phi, phif);
+
+    // FIXME: currently we just copy the boundary values over
+    phif.boundaryField().value() = phi.boundaryField().value();
 
     size_t nInternalFaces = mesh.nInternalFaces();
     size_t nBoundaryFaces = mesh.nBoundaryFaces();
