@@ -8,7 +8,7 @@ var searchData=
   ['_7egeometryscheme_5',['~GeometryScheme',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#afadfe4d66e253c2d4f6ee9758fe8c849',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
   ['_7egeometryschemefactory_6',['~GeometrySchemeFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometrySchemeFactory.html#a575d8a195f0f5e9c2466a333fb865aa3',1,'NeoFOAM::finiteVolume::cellCentred::GeometrySchemeFactory']]],
   ['_7egpuexecutor_7',['~GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html#aa76970303961fc978a34620964b8abd3',1,'NeoFOAM::GPUExecutor']]],
-  ['_7elinearsystem_8',['~LinearSystem',['../classNeoFOAM_1_1la_1_1LinearSystem.html#a53b928ffdb1cae61bf4b1ad26985bd2a',1,'NeoFOAM::la::LinearSystem']]],
+  ['_7elinearsystem_8',['~linearsystem',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LinearSystem.html#a164b383ad9e1df7cf5fa245a36411bf7',1,'NeoFOAM::finiteVolume::cellCentred::LinearSystem::~LinearSystem()'],['../classNeoFOAM_1_1la_1_1LinearSystem.html#a53b928ffdb1cae61bf4b1ad26985bd2a',1,'NeoFOAM::la::LinearSystem::~LinearSystem()']]],
   ['_7eoperatormixin_9',['~OperatorMixin',['../classNeoFOAM_1_1dsl_1_1OperatorMixin.html#a626493634204b902b29486a48fbc8475',1,'NeoFOAM::dsl::OperatorMixin']]],
   ['_7eregister_10',['~Register',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4_1_1Register.html#a2218ee132a8f492507c3516639061274',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;::Register']]],
   ['_7erungekutta_11',['~RungeKutta',['../classNeoFOAM_1_1timeIntegration_1_1RungeKutta.html#ae16a6ca7cfa6ae32a132f9ab86fcf49f',1,'NeoFOAM::timeIntegration::RungeKutta']]],

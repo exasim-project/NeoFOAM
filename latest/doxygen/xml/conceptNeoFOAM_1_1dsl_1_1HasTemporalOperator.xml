@@ -2,22 +2,18 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
   <compounddef id="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator" kind="concept">
     <compoundname>NeoFOAM::dsl::HasTemporalOperator</compoundname>
-    <includes refid="operator_8hpp" local="no">operator.hpp</includes>
+    <includes refid="temporalOperator_8hpp" local="no">temporalOperator.hpp</includes>
     <templateparamlist>
       <param>
         <type>typename T</type>
       </param>
     </templateparamlist>
     <initializer>template&lt;typename T&gt;
-concept <ref refid="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator" kindref="compound">NeoFOAM::dsl::HasTemporalOperator</ref> =  requires(T t) {
-    {
-        t.temporalOperation(std::declval&lt;Field&lt;scalar&gt;&amp;&gt;(), std::declval&lt;scalar&gt;())
-    } -&gt; std::same_as&lt;void&gt;; 
-}    </initializer>
+concept <ref refid="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator" kindref="compound">NeoFOAM::dsl::HasTemporalOperator</ref> =  HasTemporalExplicitOperator&lt;T&gt; || HasTemporalImplicitOperator&lt;T&gt;    </initializer>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/operator.hpp" line="17" column="1"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/temporalOperator.hpp" line="44" column="1"/>
   </compounddef>
 </doxygen>
