@@ -41,3 +41,4 @@ function(neofoam_unit_test_petsc TEST)
 endfunction()
 
 neofoam_unit_test_petsc(matrixAssembly)
+neofoam_unit_test_petsc(solutionLinearSystem)
