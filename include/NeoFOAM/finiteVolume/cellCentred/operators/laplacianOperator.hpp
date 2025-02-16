@@ -158,8 +158,8 @@ public:
         if (std::holds_alternative<NeoFOAM::Dictionary>(input))
         {
             auto dict = std::get<NeoFOAM::Dictionary>(input);
-            std::string schemeName = "div(" + gamma_.name + "," + field_.name + ")";
-            auto tokens = dict.subDict("divSchemes").get<NeoFOAM::TokenList>(schemeName);
+            std::string schemeName = "laplacian(" + gamma_.name + "," + field_.name + ")";
+            auto tokens = dict.subDict("laplacianSchemes").get<NeoFOAM::TokenList>(schemeName);
             laplacianOperatorStrategy_ = LaplacianOperatorFactory::create(exec(), mesh, tokens);
         }
         else
