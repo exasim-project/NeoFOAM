@@ -29,13 +29,17 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     auto mesh = create1DUniformMesh(exec, 10);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
 
-    // compute correspondin uniform faceFlux
+    // compute corresponding uniform faceFlux
+    // TODO this should be handled outside of the unit test
     fvcc::SurfaceField<NeoFOAM::scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
     NeoFOAM::fill(faceFlux.internalField(), 1.0);
     auto boundFaceFlux = faceFlux.internalField().span();
     // face on the left side has different orientation
-    boundFaceFlux[9] = -1.0;
-
+    parallelFor(
+        exec,
+        {mesh.nCells() - 1, mesh.nCells()},
+        KOKKOS_LAMBDA(const size_t i) { boundFaceFlux[i] = -1.0; }
+    );
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
