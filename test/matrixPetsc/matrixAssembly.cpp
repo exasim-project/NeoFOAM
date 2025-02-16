@@ -83,4 +83,48 @@ TEST_CASE("matrix assembly")
         REQUIRE(v[8] == 9.);
         REQUIRE(v[9] == 10.);
     }
+
+    SECTION("rhs assembly" + execName)
+    {
+
+        NeoFOAM::size_t size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> values(
+            exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
+        );
+        PetscInt rowIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        PetscScalar v[10];
+
+        Vec b;
+
+        PetscInitialize(NULL, NULL, NULL, NULL);
+
+        VecCreate(PETSC_COMM_SELF, &b);
+        VecSetSizes(b, PETSC_DECIDE, size);
+
+        std::cout << execName << "\n";
+        if (execName == "GPUExecutor")
+        {
+            VecSetType(b, VECKOKKOS);
+        }
+        else
+        {
+            VecSetType(b, VECSEQ);
+        }
+
+        VecSetPreallocationCOO(b, size, rowIdx);
+        VecSetValuesCOO(b, values.data(), ADD_VALUES);
+
+        VecGetValues(b, size, rowIdx, v);
+
+        REQUIRE(v[0] == 1.);
+        REQUIRE(v[1] == 2.);
+        REQUIRE(v[2] == 3.);
+        REQUIRE(v[3] == 4.);
+        REQUIRE(v[4] == 5.);
+        REQUIRE(v[5] == 6.);
+        REQUIRE(v[6] == 7.);
+        REQUIRE(v[7] == 8.);
+        REQUIRE(v[8] == 9.);
+        REQUIRE(v[9] == 10.);
+    }
 }

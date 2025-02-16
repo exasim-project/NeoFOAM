@@ -26,7 +26,8 @@ function(neofoam_unit_test_petsc TEST)
             NeoFOAM
             cpptrace::cpptrace
             ${PETSc_LIBRARIES}
-            ${PETSc_LIBRARY_DIRS}/libkokkoscore.so.4.4)
+            ${PETSc_LIBRARY_DIRS}/libkokkoscore.so.4.4
+            mpi)
   target_include_directories(${TEST} PRIVATE ${PETSc_INCLUDE_DIRS})
   target_link_directories(${TEST} PRIVATE ${PETSc_LIBRARY_DIRS})
   link_directories(${PETSc_LIBRARY_DIRS})
