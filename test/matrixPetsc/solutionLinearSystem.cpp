@@ -76,13 +76,15 @@ TEST_CASE("solution linear system")
         // KSPSetTolerances(ksp, 1.e-9, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
         KSPSetFromOptions(ksp);
         // KSPSetUp(ksp);
-        KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
+
 
         std::cout << "before"
                   << "\n";
+        KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
         ierr = KSPSolve(ksp, b, x);
         std::cout << "after"
                   << "\n";
+        KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
         VecView(x, PETSC_VIEWER_STDOUT_WORLD);
 
         VecGetValues(x, size, rowIdx, v);
