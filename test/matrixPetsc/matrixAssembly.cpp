@@ -43,7 +43,6 @@ TEST_CASE("matrix assembly")
 
         MatCreate(PETSC_COMM_WORLD, &A);
         MatSetSizes(A, size, size, PETSC_DECIDE, PETSC_DECIDE);
-        std::cout << execName << "\n";
         if (execName == "GPUExecutor")
         {
             MatSetType(A, MATAIJKOKKOS);
@@ -101,7 +100,6 @@ TEST_CASE("matrix assembly")
         VecCreate(PETSC_COMM_SELF, &b);
         VecSetSizes(b, PETSC_DECIDE, size);
 
-        std::cout << execName << "\n";
         if (execName == "GPUExecutor")
         {
             VecSetType(b, VECKOKKOS);
@@ -126,5 +124,59 @@ TEST_CASE("matrix assembly")
         REQUIRE(v[7] == 8.);
         REQUIRE(v[8] == 9.);
         REQUIRE(v[9] == 10.);
+    }
+
+    SECTION("vector matrix multiplication" + execName)
+    {
+
+        NeoFOAM::size_t size = 10;
+        NeoFOAM::Field<NeoFOAM::scalar> values(
+            exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
+        );
+        PetscInt rowIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        PetscInt colIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        PetscScalar v[10];
+
+        Vec b, u;
+        Mat A;
+
+        PetscInitialize(NULL, NULL, NULL, NULL);
+
+        VecCreate(PETSC_COMM_SELF, &b);
+        VecSetSizes(b, PETSC_DECIDE, size);
+        MatCreate(PETSC_COMM_WORLD, &A);
+        MatSetSizes(A, size, size, PETSC_DECIDE, PETSC_DECIDE);
+
+        if (execName == "GPUExecutor")
+        {
+            VecSetType(b, VECKOKKOS);
+            MatSetType(A, MATAIJKOKKOS);
+        }
+        else
+        {
+            VecSetType(b, VECSEQ);
+            MatSetType(A, MATSEQAIJ);
+        }
+        VecDuplicate(b, &u);
+
+        VecSetPreallocationCOO(b, size, rowIdx);
+        VecSetValuesCOO(b, values.data(), ADD_VALUES);
+
+        MatSetPreallocationCOO(A, size, colIdx, rowIdx);
+        MatSetValuesCOO(A, values.data(), ADD_VALUES);
+
+        MatMult(A, b, u);
+        VecGetValues(u, size, rowIdx, v);
+
+        REQUIRE(v[0] == 1.);
+        REQUIRE(v[1] == 4.);
+        REQUIRE(v[2] == 9.);
+        REQUIRE(v[3] == 16.);
+        REQUIRE(v[4] == 25.);
+        REQUIRE(v[5] == 36.);
+        REQUIRE(v[6] == 49.);
+        REQUIRE(v[7] == 64.);
+        REQUIRE(v[8] == 81.);
+        REQUIRE(v[9] == 100.);
     }
 }
