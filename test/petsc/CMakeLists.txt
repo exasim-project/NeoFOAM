@@ -14,6 +14,9 @@ message("${PETSc_INCLUDE_DIRS}")
 message("CMAKE_C_COMPILER")
 message("${CMAKE_CXX_COMPILER}")
 
+message("prefix")
+message("${PETSc_PREFIX}")
+
 function(petsc_test TEST)
   include_directories(${PETSc_INCLUDE_DIRS})
   add_definitions(${PETSC_DEFINITIONS})
