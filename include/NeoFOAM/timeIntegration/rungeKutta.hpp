@@ -13,6 +13,8 @@
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/timeIntegration/sundials.hpp"
 
+#include "sundailsCollection.hpp"
+
 
 namespace NeoFOAM::timeIntegration
 {
@@ -132,6 +134,8 @@ public:
 
 
 private:
+
+    SundailsDocument sunDoc_;
 
     NeoFOAM::sundials::SKVector<ValueType>
         solution_; /**< Solution vector, contains the sundails N_Vector. */
