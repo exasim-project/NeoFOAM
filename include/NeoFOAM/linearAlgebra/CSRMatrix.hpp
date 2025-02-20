@@ -8,6 +8,13 @@
 namespace NeoFOAM::la
 {
 
+enum BlockStructType
+{
+    cell,
+    component
+}
+
+
 template<typename ValueType, typename IndexType>
 class CSRMatrix
 {
@@ -43,9 +50,37 @@ public:
     [[nodiscard]] const std::span<const IndexType> colIdxs() const { return colIdxs_.span(); }
     [[nodiscard]] const std::span<const IndexType> rowPtrs() const { return rowPtrs_.span(); }
 
+    const ValueType& entry(IndexType i, IndexType j)
+    {
+        for (indexType iColumn = 0; iColumn < (colIdxs_[i + 1] - colIdxs_[i]); ++iColumn)
+        {
+            if (colIdxs_[rowPtrs_[i] + iColumn] == j)
+            {
+                return rowPtrs_[rowPtrs_[i] + iColumn];
+            }
+        }
+        NF_ERROR_EXIT("Matrix entry " << i << ", " << j << " has not been allocated, cannot get.");
+    }
+
+    const ValueType& entry(const IndexType i, const IndexType j)
+    {
+        for (indexType iColumn = 0; iColumn < (colIdxs_[i + 1] - colIdxs_[i]); ++iColumn)
+        {
+            if (colIdxs_[rowPtrs_[i] + iColumn] == j)
+            {
+                return rowPtrs_[rowPtrs_[i] + iColumn];
+            }
+
+            if (colIdxs_[rowPtrs_[i] + iColumn] > j)
+            {
+                // Insert
+            }
+        }
+    };
 
 private:
 
+    BlockStructType {cell};
     Field<ValueType> values_;
     Field<IndexType> colIdxs_;
     Field<IndexType> rowPtrs_;
