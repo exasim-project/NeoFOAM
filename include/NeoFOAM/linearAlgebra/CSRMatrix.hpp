@@ -74,6 +74,7 @@ public:
             if (colIdxs_[rowPtrs_[i] + iColumn] > j)
             {
                 // Insert
+                NF_ERROR_EXIT("Not implemented must allocate " << i << ", " << j << ".");
             }
         }
     };
