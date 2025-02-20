@@ -53,7 +53,6 @@ TEST_CASE("solution linear system")
         VecCreate(PETSC_COMM_SELF, &b);
         VecSetSizes(b, PETSC_DECIDE, size);
 
-        std::cout << execName << "\n";
         if (execName == "GPUExecutor")
         {
             VecSetType(b, VECKOKKOS);
@@ -78,20 +77,8 @@ TEST_CASE("solution linear system")
         KSPSetFromOptions(ksp);
         // KSPSetUp(ksp);
 
-        MatView(A, PETSC_VIEWER_STDOUT_WORLD);
-        VecView(b, PETSC_VIEWER_STDOUT_WORLD);
-
-
-        std::cout << "before"
-                  << "\n";
-        KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
         PetscCallVoid(KSPSolve(ksp, b, x));
         // PetscCall(ierr);
-        std::cout << "after"
-                  << "\n";
-        KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
-        VecView(x, PETSC_VIEWER_STDOUT_WORLD);
-
         VecGetValues(x, size, rowIdx, v);
 
 
@@ -105,7 +92,6 @@ TEST_CASE("solution linear system")
         REQUIRE(v[7] == 1.);
         REQUIRE(v[8] == 1.);
         REQUIRE(v[9] == 1.);
-
 
         MatDestroy(&A);
         VecDestroy(&x);

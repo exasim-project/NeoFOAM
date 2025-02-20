@@ -81,6 +81,8 @@ TEST_CASE("matrix assembly")
         REQUIRE(v[7] == 8.);
         REQUIRE(v[8] == 9.);
         REQUIRE(v[9] == 10.);
+
+        MatDestroy(&A);
     }
 
     SECTION("rhs assembly" + execName)
@@ -124,6 +126,8 @@ TEST_CASE("matrix assembly")
         REQUIRE(v[7] == 8.);
         REQUIRE(v[8] == 9.);
         REQUIRE(v[9] == 10.);
+
+        VecDestroy(&b);
     }
 
     SECTION("vector matrix multiplication" + execName)
@@ -178,5 +182,9 @@ TEST_CASE("matrix assembly")
         REQUIRE(v[7] == 64.);
         REQUIRE(v[8] == 81.);
         REQUIRE(v[9] == 100.);
+
+        MatDestroy(&A);
+        VecDestroy(&u);
+        VecDestroy(&b);
     }
 }
