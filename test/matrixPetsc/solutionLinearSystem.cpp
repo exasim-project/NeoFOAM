@@ -27,7 +27,17 @@ TEST_CASE("solution linear system")
     SECTION("ksp" + execName)
     {
 
-        NeoFOAM::size_t size = 10;
+        Vec x, b, u; /* approx solution, RHS, exact solution */
+        Mat A;       /* linear system matrix */
+        KSP ksp;     /* linear solver context */
+        PC pc;       /* preconditioner context */
+        PetscErrorCode ierr;
+
+        PetscInitialize(NULL, NULL, 0, NULL);
+        // ierr = PetscInitialize(&argc, &argv, 0, help);
+
+        // NeoFOAM::size_t size = 10;
+        PetscInt size = 10;
         NeoFOAM::Field<NeoFOAM::scalar> values(
             exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
         );
@@ -37,15 +47,6 @@ TEST_CASE("solution linear system")
         PetscScalar w[1];
         // NeoFOAM::Field<PetscInt> colIdx(exec, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
         // NeoFOAM::Field<PetscInt> rowIdx(exec, {0, 1, 2, 4, 4, 5, 6, 7, 8, 9});
-
-        Vec x, b, u; /* approx solution, RHS, exact solution */
-        Mat A;       /* linear system matrix */
-        KSP ksp;     /* linear solver context */
-        PC pc;       /* preconditioner context */
-        PetscErrorCode ierr;
-
-        PetscInitialize(NULL, NULL, NULL, NULL);
-
 
         MatCreate(PETSC_COMM_WORLD, &A);
         MatSetSizes(A, size, size, PETSC_DECIDE, PETSC_DECIDE);
@@ -77,11 +78,15 @@ TEST_CASE("solution linear system")
         KSPSetFromOptions(ksp);
         // KSPSetUp(ksp);
 
+        MatView(A, PETSC_VIEWER_STDOUT_WORLD);
+        VecView(b, PETSC_VIEWER_STDOUT_WORLD);
+
 
         std::cout << "before"
                   << "\n";
         KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
-        ierr = KSPSolve(ksp, b, x);
+        PetscCallVoid(KSPSolve(ksp, b, x));
+        // PetscCall(ierr);
         std::cout << "after"
                   << "\n";
         KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD);
@@ -100,5 +105,12 @@ TEST_CASE("solution linear system")
         REQUIRE(v[7] == 1.);
         REQUIRE(v[8] == 1.);
         REQUIRE(v[9] == 1.);
+
+
+        MatDestroy(&A);
+        VecDestroy(&x);
+        VecDestroy(&b);
+        // VecDestroy(&u);
+        KSPDestroy(&ksp);
     }
 }

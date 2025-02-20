@@ -21,8 +21,8 @@ function(petsc_test TEST)
   target_compile_options(${TEST} PRIVATE --extended-lambda -c -ccbin mpicxx)
   target_link_directories(${TEST} PRIVATE ${PETSc_LIBRARY_DIRS})
   # link_directories(${PETSc_LIBRARY_DIRS})
-  target_link_libraries(${TEST} PRIVATE ${PETSc_LIBRARIES}
-                                        ${PETSc_LIBRARY_DIRS}/libkokkoscore.so.4.4 mpi)
+  target_link_libraries(${TEST} PRIVATE ${PETSc_LIBRARIES} ${PETSc_LIBRARY_DIRS}/libkokkoscore.so
+                                        mpi)
 endfunction()
 
 petsc_test(test_petsc_ksp)

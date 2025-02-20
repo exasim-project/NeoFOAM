@@ -78,6 +78,12 @@ int main(int argc, char** argv)
     PetscInt colIdx[n];
     PetscInt rowIdx[n];
 
+    for (int i = 0; i < n; i++)
+    {
+        colIdx[i] = i;
+        rowIdx[i] = i;
+    }
+
     MatCreate(PETSC_COMM_WORLD, &A);
     MatSetSizes(A, n, n, PETSC_DECIDE, PETSC_DECIDE);
     MatSetType(A, MATAIJKOKKOS);
@@ -86,11 +92,6 @@ int main(int argc, char** argv)
     VecSetSizes(b, PETSC_DECIDE, n);
     VecSetType(b, VECKOKKOS);
 
-    for (int i = 0; i < n; i++)
-    {
-        colIdx[i] = i;
-        rowIdx[i] = i;
-    }
 
     printf("hallo\n");
     MatSetPreallocationCOO(A, n, colIdx, rowIdx);
