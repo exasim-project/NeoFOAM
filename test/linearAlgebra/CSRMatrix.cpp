@@ -4,15 +4,13 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
-#include <string>
-
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 
-TEST_CASE("LinearSystem")
+TEST_CASE("CSRMatrix")
 {
 
     NeoFOAM::Executor exec = GENERATE(
@@ -58,5 +56,13 @@ TEST_CASE("LinearSystem")
     );
 
 
-    SECTION("Const Entry on " + execName) { sparseMatrixConst.entry() }
+    SECTION("Const Entry on " + execName)
+    {
+
+        const auto sparseMatrixConstHost = sparseMatrixConst.copyToHost();
+        REQUIRE(sparseMatrixConstHost.entry(0, 0) == 1.0);
+        REQUIRE(sparseMatrixConstHost.entry(1, 1) == 5.0);
+        REQUIRE(sparseMatrixConstHost.entry(1, 2) == 6.0);
+        REQUIRE(sparseMatrixConstHost.entry(2, 1) == 8.0);
+    }
 }

@@ -12,7 +12,7 @@ enum BlockStructType
 {
     cell,
     component
-}
+};
 
 
 template<typename ValueType, typename IndexType>
@@ -50,38 +50,58 @@ public:
     [[nodiscard]] const std::span<const IndexType> colIdxs() const { return colIdxs_.span(); }
     [[nodiscard]] const std::span<const IndexType> rowPtrs() const { return rowPtrs_.span(); }
 
-    const ValueType& entry(IndexType i, IndexType j)
+
+    [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToExecutor(Executor dstExec) const
     {
-        for (indexType iColumn = 0; iColumn < (colIdxs_[i + 1] - colIdxs_[i]); ++iColumn)
+        if (dstExec == values_.exec()) return *this;
+        CSRMatrix<ValueType, IndexType> result(
+            values_.copyToHost(), colIdxs_.copyToHost(), rowPtrs_.copyToHost()
+        );
+        result.type_ = type_;
+        return result;
+    }
+
+    [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToHost() const
+    {
+        return copyToExecutor(SerialExecutor());
+    }
+
+    const ValueType& entry(const IndexType i, const IndexType j) const
+    {
+        const auto& vals = values();
+        const auto& cols = colIdxs();
+        const auto& rows = rowPtrs();
+        for (IndexType ic = 0; ic < (rows[i + 1] - rows[i]); ++ic)
         {
-            if (colIdxs_[rowPtrs_[i] + iColumn] == j)
+            if (cols[rows[i] + ic] == j)
             {
-                return rowPtrs_[rowPtrs_[i] + iColumn];
+                return vals[rows[i] + ic];
             }
+            if (cols[rows[i] + ic] > j) break;
         }
         NF_ERROR_EXIT("Matrix entry " << i << ", " << j << " has not been allocated, cannot get.");
     }
 
-    const ValueType& entry(const IndexType i, const IndexType j)
+    ValueType& entry(const IndexType i, const IndexType j)
     {
-        for (indexType iColumn = 0; iColumn < (colIdxs_[i + 1] - colIdxs_[i]); ++iColumn)
+        for (IndexType iColumn = 0; iColumn < (colIdxs()[i + 1] - colIdxs()[i]); ++iColumn)
         {
-            if (colIdxs_[rowPtrs_[i] + iColumn] == j)
+            if (colIdxs()[rowPtrs()[i] + iColumn] == j)
             {
-                return rowPtrs_[rowPtrs_[i] + iColumn];
+                return values()[rowPtrs()[i] + iColumn];
             }
 
-            if (colIdxs_[rowPtrs_[i] + iColumn] > j)
+            if (colIdxs()[rowPtrs()[i] + iColumn] > j)
             {
                 // Insert
                 NF_ERROR_EXIT("Not implemented must allocate " << i << ", " << j << ".");
             }
         }
-    };
+    }
 
 private:
 
-    BlockStructType {cell};
+    BlockStructType type_ {cell};
     Field<ValueType> values_;
     Field<IndexType> colIdxs_;
     Field<IndexType> rowPtrs_;
