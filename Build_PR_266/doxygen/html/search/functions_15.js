@@ -2,7 +2,7 @@ var searchData=
 [
   ['_7eboundarypatchmixin_0',['~BoundaryPatchMixin',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1BoundaryPatchMixin.html#a923cf29ee11bb548424f6a8106e8ab4e',1,'NeoFOAM::finiteVolume::cellCentred::BoundaryPatchMixin']]],
   ['_7ecpuexecutor_1',['~CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html#a96176dcaa399677d193aa5c7219624a9',1,'NeoFOAM::CPUExecutor']]],
-  ['_7ecsrmatrix_2',['~CSRMatrix',['../namespaceNeoFOAM_1_1la.html#a270cf36069cb71a9b0e2867c3ef10f32',1,'NeoFOAM::la']]],
+  ['_7ecsrmatrix_2',['~CSRMatrix',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a9bd72d19a65381bcb0b610ef65230ede',1,'NeoFOAM::la::CSRMatrix']]],
   ['_7edivoperatorfactory_3',['~DivOperatorFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1DivOperatorFactory.html#af29c4965528280c3d1e8d4f1a8a4a395',1,'NeoFOAM::finiteVolume::cellCentred::DivOperatorFactory']]],
   ['_7efield_4',['~Field',['../classNeoFOAM_1_1Field.html#a7cad3648ef3dbb9efd4429fd9ddc4860',1,'NeoFOAM::Field']]],
   ['_7egeometryscheme_5',['~GeometryScheme',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#afadfe4d66e253c2d4f6ee9758fe8c849',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
