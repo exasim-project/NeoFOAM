@@ -59,7 +59,7 @@ TEST_CASE("CSRMatrix")
     );
 
 
-    SECTION("Const Entry on " + execName)
+    SECTION("Read entry on " + execName)
     {
         // Sparse
         NeoFOAM::Field<NeoFOAM::scalar> checkSparse(exec, 4);
@@ -109,5 +109,24 @@ TEST_CASE("CSRMatrix")
         REQUIRE(checkHost.span()[6] == 7.0);
         REQUIRE(checkHost.span()[7] == 8.0);
         REQUIRE(checkHost.span()[8] == 9.0);
+    }
+
+    SECTION("Update existing entry on " + execName)
+    {
+        // Sparse
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t i) {
+                sparseMatrix.entry(0, 0) = -1.0;
+                sparseMatrix.entry(1, 1) = -5.0;
+            }
+        );
+
+        // auto checkHost = checkSparse.copyToHost();
+        // REQUIRE(checkHost.span()[0] == 1.0);
+        // REQUIRE(checkHost.span()[1] == 5.0);
+        // REQUIRE(checkHost.span()[2] == 6.0);
+        // REQUIRE(checkHost.span()[3] == 8.0);
     }
 }

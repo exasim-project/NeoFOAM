@@ -79,21 +79,21 @@ public:
         Kokkos::abort("Memory not allocated for CSR matrix component.");
     }
 
-    ValueType& entry(const IndexType i, const IndexType j)
+    KOKKOS_INLINE_FUNCTION
+    ValueType& entry(IndexType i, IndexType j)
     {
-        for (IndexType iColumn = 0; iColumn < (colIdxs()[i + 1] - colIdxs()[i]); ++iColumn)
+        for (IndexType ic = 0; ic < (rowPtrs_[i + 1] - rowPtrs_[i]); ++ic)
         {
-            if (colIdxs()[rowPtrs()[i] + iColumn] == j)
+            if (colIdxs_[rowPtrs_[i] + ic] == j)
             {
-                return values()[rowPtrs()[i] + iColumn];
+                return values_[rowPtrs_[i] + ic];
             }
-
-            if (colIdxs()[rowPtrs()[i] + iColumn] > j)
+            if (colIdxs_[rowPtrs_[i] + ic] > j)
             {
-                // Insert
-                NF_ERROR_EXIT("Not implemented must allocate " << i << ", " << j << ".");
-            }
+                Kokkos::abort("WIP.");
+            };
         }
+        Kokkos::abort("Memory not allocated for CSR matrix component.");
     }
 
 private:
