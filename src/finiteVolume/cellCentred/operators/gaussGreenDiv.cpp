@@ -30,7 +30,8 @@ void computeDiv(
     std::span<const scalar> faceFlux,
     std::span<const ValueType> phiF,
     std::span<const scalar> V,
-    std::span<ValueType> res
+    std::span<ValueType> res,
+    const dsl::Coeff operatorScaling
 )
 {
     size_t nCells {V.size()};
@@ -54,7 +55,7 @@ void computeDiv(
         // TODO does it make sense to store invVol and multiply?
         for (size_t celli = 0; celli < nCells; celli++)
         {
-            res[celli] *= 1 / V[celli];
+            res[celli] *= operatorScaling[celli] / V[celli];
         }
     }
     else
@@ -80,7 +81,9 @@ void computeDiv(
         );
 
         parallelFor(
-            exec, {0, nCells}, KOKKOS_LAMBDA(const size_t celli) { res[celli] *= 1 / V[celli]; }
+            exec,
+            {0, nCells},
+            KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / V[celli]; }
         );
     }
 }
@@ -91,7 +94,8 @@ void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<ValueType>& phi,
     const SurfaceInterpolation& surfInterp,
-    Field<ValueType>& divPhi
+    Field<ValueType>& divPhi,
+    const dsl::Coeff operatorScaling
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -117,7 +121,9 @@ void computeDiv(
         faceFlux.internalField().span(),
         phif.internalField().span(),
         mesh.cellVolumes().span(),
-        divPhi.span()
+        divPhi.span(),
+        operatorScaling
+
     );
 }
 
@@ -135,16 +141,22 @@ la::LinearSystem<scalar, localIdx> GaussGreenDiv::createEmptyLinearSystem() cons
 };
 
 void GaussGreenDiv::div(
-    VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+    VolumeField<scalar>& divPhi,
+    const SurfaceField<scalar>& faceFlux,
+    VolumeField<scalar>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
-    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi.internalField());
+    computeDiv<scalar>(
+        faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
+    );
 };
 
 void GaussGreenDiv::div(
     la::LinearSystem<scalar, localIdx>& ls,
     const SurfaceField<scalar>& faceFlux,
-    VolumeField<scalar>& phi
+    VolumeField<scalar>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -161,6 +173,8 @@ void GaussGreenDiv::div(
     const auto rowPtrs = ls.matrix().rowPtrs();
     const auto colIdxs = ls.matrix().colIdxs();
     const auto values = ls.matrix().values();
+    auto rhs = ls.rhs().span();
+
 
     parallelFor(
         exec,
@@ -190,49 +204,78 @@ void GaussGreenDiv::div(
             Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], value);
         }
     );
+
+    parallelFor(
+        exec,
+        {0, rhs.size()},
+        KOKKOS_LAMBDA(const size_t celli) {
+            rhs[celli] *= operatorScaling[celli];
+            for (size_t i = rowPtrs[celli]; i < rowPtrs[celli + 1]; i++)
+            {
+                values[i] *= operatorScaling[celli];
+            }
+        }
+    );
 };
 
 void GaussGreenDiv::div(
-    Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
+    Field<scalar>& divPhi,
+    const SurfaceField<scalar>& faceFlux,
+    VolumeField<scalar>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
-    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi);
+    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi, operatorScaling);
 };
 
-VolumeField<scalar>
-GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi)
+VolumeField<scalar> GaussGreenDiv::div(
+    const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi, const dsl::Coeff operatorScaling
+)
 {
     std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
     VolumeField<scalar> divPhi(
         exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<scalar>>(mesh_)
     );
-    computeDiv<scalar>(faceFlux, phi, surfaceInterpolation_, divPhi.internalField());
+    computeDiv<scalar>(
+        faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
+    );
     return divPhi;
 };
 
 
 void GaussGreenDiv::div(
-    VolumeField<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
+    VolumeField<Vector>& divPhi,
+    const SurfaceField<scalar>& faceFlux,
+    VolumeField<Vector>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
-    computeDiv<Vector>(faceFlux, phi, surfaceInterpolation_, divPhi.internalField());
+    computeDiv<Vector>(
+        faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
+    );
 };
 
 void GaussGreenDiv::div(
-    Field<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
+    Field<Vector>& divPhi,
+    const SurfaceField<scalar>& faceFlux,
+    VolumeField<Vector>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
-    computeDiv<Vector>(faceFlux, phi, surfaceInterpolation_, divPhi);
+    computeDiv<Vector>(faceFlux, phi, surfaceInterpolation_, divPhi, operatorScaling);
 };
 
-VolumeField<Vector>
-GaussGreenDiv::div(const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi)
+VolumeField<Vector> GaussGreenDiv::div(
+    const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi, const dsl::Coeff operatorScaling
+)
 {
     std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
     VolumeField<Vector> divPhi(
         exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<Vector>>(mesh_)
     );
-    computeDiv<Vector>(faceFlux, phi, surfaceInterpolation_, divPhi.internalField());
+    computeDiv<Vector>(
+        faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
+    );
     return divPhi;
 };
 

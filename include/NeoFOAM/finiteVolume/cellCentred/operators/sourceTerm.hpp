@@ -23,7 +23,7 @@ public:
     SourceTerm(
         dsl::Operator::Type termType, VolumeField<scalar>& coefficients, VolumeField<scalar>& field
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), field, termType),
+        : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), dsl::Coeff(1.0), field, termType),
           coefficients_(coefficients),
           sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
 

@@ -195,6 +195,15 @@ template<typename leftOperator, typename rightOperator>
     return lhs;
 }
 
+template<typename leftOperator, typename rightOperator>
+[[nodiscard]] inline Expression operator-(leftOperator lhs, rightOperator rhs)
+{
+    Expression expr(lhs.exec());
+    expr.addOperator(lhs);
+    expr.addOperator(Coeff(-1) * rhs);
+    return expr;
+}
+
 [[nodiscard]] inline Expression operator-(const SpatialOperator& lhs, const SpatialOperator& rhs)
 {
     Expression expr(lhs.exec());

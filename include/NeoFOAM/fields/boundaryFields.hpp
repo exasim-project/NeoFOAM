@@ -90,7 +90,7 @@ public:
      * @brief Get the view storing the fraction of the boundary value.
      * @return The view storing the fraction of the boundary value.
      */
-    NeoFOAM::Field<scalar>& valueFraction() { return refValue_; }
+    NeoFOAM::Field<scalar>& valueFraction() { return valueFraction_; }
 
     /** @copydoc BoundaryFields::refGrad()*/
     const NeoFOAM::Field<T>& refGrad() const { return refGrad_; }

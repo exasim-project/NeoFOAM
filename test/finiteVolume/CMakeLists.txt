@@ -4,4 +4,5 @@
 add_subdirectory(cellCentred/fields)
 add_subdirectory(cellCentred/boundary)
 add_subdirectory(cellCentred/interpolation)
+add_subdirectory(cellCentred/faceNormalGradient)
 add_subdirectory(cellCentred/operator)

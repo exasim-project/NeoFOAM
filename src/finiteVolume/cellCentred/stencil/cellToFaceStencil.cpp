@@ -77,17 +77,6 @@ SegmentedField<localIdx, localIdx> CellToFaceStencil::computeStencil() const
         }
     );
 
-    // // print elements per cell
-    // auto stencilView = stencil.view();
-    // for (size_t i = 0; i < nCells; i++)
-    // {
-    //     std::cout << "Cell " << i << " has " << nFacesPerCellSpan[i] << " faces" << std::endl;
-    //     for (auto& values: stencilView.span(i))
-    //     {
-    //         std::cout << "Face " << values << std::endl;
-    //     }
-    // }
-
     return stencil;
 }
 
