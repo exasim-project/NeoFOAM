@@ -92,7 +92,32 @@ TEST_CASE("laplacianOperator fixedValue")
             NeoFOAM::Input input = NeoFOAM::TokenList(
                 {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
             );
-            fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Explicit, gamma, phi, input);
+            fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Implicit, gamma, phi, input);
+            auto ls = lapOp.createEmptyLinearSystem();
+            lapOp.implicitOperation(ls);
+            fvcc::LinearSystem<NeoFOAM::scalar> ls2(
+                phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
+            );
+
+
+            auto result = ls2 & phi;
+            auto resultHost = result.internalField().copyToHost();
+            auto sResult = resultHost.span();
+            for (size_t celli = 0; celli < sResult.size(); celli++)
+            {
+                // the laplacian of a linear function is 0
+                REQUIRE(sResult[celli] == Catch::Approx(0.0).margin(1e-8));
+            }
+        }
+
+        SECTION("implicit laplacian operator scale" + execName)
+        {
+            NeoFOAM::Input input = NeoFOAM::TokenList(
+                {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
+            );
+            dsl::SpatialOperator lapOp = dsl::imp::laplacian(gamma, phi);
+            lapOp.build(input);
+            lapOp = dsl::Coeff(-0.5) * lapOp;
             auto ls = lapOp.createEmptyLinearSystem();
             lapOp.implicitOperation(ls);
             fvcc::LinearSystem<NeoFOAM::scalar> ls2(

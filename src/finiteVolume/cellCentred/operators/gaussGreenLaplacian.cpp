@@ -11,7 +11,8 @@ void computeLaplacian(
     const FaceNormalGradient& faceNormalGradient,
     const SurfaceField<scalar>& gamma,
     VolumeField<scalar>& phi,
-    Field<scalar>& lapPhi
+    Field<scalar>& lapPhi,
+    const dsl::Coeff operatorScaling
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -54,7 +55,7 @@ void computeLaplacian(
 
         for (size_t celli = 0; celli < mesh.nCells(); celli++)
         {
-            result[celli] *= 1 / vol[celli];
+            result[celli] *= operatorScaling[celli] / vol[celli];
         }
     }
     else
@@ -82,7 +83,9 @@ void computeLaplacian(
         parallelFor(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) { result[celli] *= 1 / vol[celli]; }
+            KOKKOS_LAMBDA(const size_t celli) {
+                result[celli] *= operatorScaling[celli] / vol[celli];
+            }
         );
     }
 }
@@ -104,23 +107,30 @@ la::LinearSystem<scalar, localIdx> GaussGreenLaplacian::createEmptyLinearSystem(
 };
 
 void GaussGreenLaplacian::laplacian(
-    VolumeField<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+    VolumeField<scalar>& lapPhi,
+    const SurfaceField<scalar>& gamma,
+    VolumeField<scalar>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
-    computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi.internalField());
+    computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi.internalField(), operatorScaling);
 };
 
 void GaussGreenLaplacian::laplacian(
-    Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+    Field<scalar>& lapPhi,
+    const SurfaceField<scalar>& gamma,
+    VolumeField<scalar>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
-    computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi);
+    computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi, operatorScaling);
 };
 
 void GaussGreenLaplacian::laplacian(
     la::LinearSystem<scalar, localIdx>& ls,
     const SurfaceField<scalar>& gamma,
-    VolumeField<scalar>& phi
+    VolumeField<scalar>& phi,
+    const dsl::Coeff operatorScaling
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
@@ -193,6 +203,18 @@ void GaussGreenLaplacian::laplacian(
             rhs[own] -= flux
                       * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]
                          + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei]);
+        }
+    );
+
+    parallelFor(
+        exec,
+        {0, rhs.size()},
+        KOKKOS_LAMBDA(const size_t celli) {
+            rhs[celli] *= operatorScaling[celli];
+            for (size_t i = rowPtrs[celli]; i < rowPtrs[celli + 1]; i++)
+            {
+                values[i] *= operatorScaling[celli];
+            }
         }
     );
 };

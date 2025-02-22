@@ -29,17 +29,24 @@ public:
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override;
 
     virtual void laplacian(
-        VolumeField<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+        VolumeField<scalar>& lapPhi,
+        const SurfaceField<scalar>& gamma,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling
     ) override;
 
     virtual void laplacian(
-        Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+        Field<scalar>& lapPhi,
+        const SurfaceField<scalar>& gamma,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling
     ) override;
 
     virtual void laplacian(
         la::LinearSystem<scalar, localIdx>& ls,
         const SurfaceField<scalar>& gamma,
-        VolumeField<scalar>& phi
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling
     ) override;
 
     std::unique_ptr<LaplacianOperatorFactory> clone() const override;

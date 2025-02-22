@@ -48,29 +48,44 @@ public:
     // does not work and we cant template the entire class because the static create function
     // cannot access keyExistsOrError and table anymore.
     virtual void
-    div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    ) = 0;
+    div(VolumeField<scalar>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     virtual void
     div(la::LinearSystem<scalar, localIdx>& ls,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& phi) = 0;
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     virtual void
-    div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
+    div(Field<scalar>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     virtual void
-    div(VolumeField<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
-    ) = 0;
+    div(VolumeField<Vector>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     virtual void
-    div(Field<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi) = 0;
+    div(Field<Vector>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     virtual VolumeField<scalar>
-    div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) = 0;
+    div(const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     virtual VolumeField<Vector>
-    div(const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi) = 0;
+    div(const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) = 0;
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<DivOperatorFactory> clone() const = 0;
@@ -90,7 +105,9 @@ public:
 
     // copy constructor
     DivOperator(const DivOperator& divOp)
-        : dsl::OperatorMixin<VolumeField<ValueType>>(divOp.exec_, divOp.field_, divOp.type_),
+        : dsl::OperatorMixin<VolumeField<ValueType>>(
+            divOp.exec_, divOp.coeffs_, divOp.field_, divOp.type_
+        ),
           faceFlux_(divOp.faceFlux_),
           divOperatorStrategy_(
               divOp.divOperatorStrategy_ ? divOp.divOperatorStrategy_->clone() : nullptr
@@ -102,7 +119,7 @@ public:
         VolumeField<ValueType>& phi,
         Input input
     )
-        : dsl::OperatorMixin<VolumeField<ValueType>>(phi.exec(), phi, termType),
+        : dsl::OperatorMixin<VolumeField<ValueType>>(phi.exec(), dsl::Coeff(1.0), phi, termType),
           faceFlux_(faceFlux),
           divOperatorStrategy_(DivOperatorFactory::create(phi.exec(), phi.mesh(), input)) {};
 
@@ -112,16 +129,16 @@ public:
         VolumeField<ValueType>& phi,
         std::unique_ptr<DivOperatorFactory> divOperatorStrategy
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
-          divOperatorStrategy_(std::move(divOperatorStrategy)) {};
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), dsl::Coeff(1.0), phi, termType),
+          faceFlux_(faceFlux), divOperatorStrategy_(std::move(divOperatorStrategy)) {};
 
     DivOperator(
         dsl::Operator::Type termType,
         const SurfaceField<scalar>& faceFlux,
         VolumeField<ValueType>& phi
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), faceFlux_(faceFlux),
-          divOperatorStrategy_(nullptr) {};
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), dsl::Coeff(1.0), phi, termType),
+          faceFlux_(faceFlux), divOperatorStrategy_(nullptr) {};
 
 
     void explicitOperation(Field<scalar>& source)
@@ -131,13 +148,15 @@ public:
             NF_ERROR_EXIT("DivOperatorStrategy not initialized");
         }
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
-        divOperatorStrategy_->div(tmpsource, faceFlux_, this->getField());
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(tmpsource, faceFlux_, this->getField(), operatorScaling);
         source += tmpsource;
     }
 
     void div(Field<ValueType>& divPhi)
     {
-        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField(), operatorScaling);
     }
 
     la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const
@@ -155,18 +174,21 @@ public:
         {
             NF_ERROR_EXIT("DivOperatorStrategy not initialized");
         }
-        divOperatorStrategy_->div(ls, faceFlux_, this->getField());
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField(), operatorScaling);
     }
 
 
     void div(la::LinearSystem<scalar, localIdx>& ls)
     {
-        divOperatorStrategy_->div(ls, faceFlux_, this->getField());
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField(), operatorScaling);
     };
 
     void div(VolumeField<scalar>& divPhi)
     {
-        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField());
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField(), operatorScaling);
     }
 
 

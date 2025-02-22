@@ -46,17 +46,24 @@ public:
     virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
 
     virtual void laplacian(
-        VolumeField<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+        VolumeField<scalar>& lapPhi,
+        const SurfaceField<scalar>& gamma,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling
     ) = 0;
 
     virtual void laplacian(
-        Field<scalar>& lapPhi, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
+        Field<scalar>& lapPhi,
+        const SurfaceField<scalar>& gamma,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling
     ) = 0;
 
     virtual void laplacian(
         la::LinearSystem<scalar, localIdx>& ls,
         const SurfaceField<scalar>& gamma,
-        VolumeField<scalar>& phi
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling
     ) = 0;
 
     // Pure virtual function for cloning
@@ -75,11 +82,13 @@ class LaplacianOperator : public dsl::OperatorMixin<VolumeField<scalar>>
 public:
 
     // copy constructor
-    LaplacianOperator(const LaplacianOperator& divOp)
-        : dsl::OperatorMixin<VolumeField<scalar>>(divOp.exec_, divOp.field_, divOp.type_),
-          gamma_(divOp.gamma_),
+    LaplacianOperator(const LaplacianOperator& lapOp)
+        : dsl::OperatorMixin<VolumeField<scalar>>(
+            lapOp.exec_, lapOp.coeffs_, lapOp.field_, lapOp.type_
+        ),
+          gamma_(lapOp.gamma_),
           laplacianOperatorStrategy_(
-              divOp.laplacianOperatorStrategy_ ? divOp.laplacianOperatorStrategy_->clone() : nullptr
+              lapOp.laplacianOperatorStrategy_ ? lapOp.laplacianOperatorStrategy_->clone() : nullptr
           ) {};
 
     LaplacianOperator(
@@ -88,7 +97,8 @@ public:
         VolumeField<scalar>& phi,
         Input input
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), gamma_(gamma),
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), dsl::Coeff(1.0), phi, termType),
+          gamma_(gamma),
           laplacianOperatorStrategy_(LaplacianOperatorFactory::create(exec_, phi.mesh(), input)) {};
 
     LaplacianOperator(
@@ -97,14 +107,14 @@ public:
         VolumeField<scalar>& phi,
         std::unique_ptr<LaplacianOperatorFactory> laplacianOperatorStrategy
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), gamma_(gamma),
-          laplacianOperatorStrategy_(std::move(laplacianOperatorStrategy)) {};
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), dsl::Coeff(1.0), phi, termType),
+          gamma_(gamma), laplacianOperatorStrategy_(std::move(laplacianOperatorStrategy)) {};
 
     LaplacianOperator(
         dsl::Operator::Type termType, const SurfaceField<scalar>& gamma, VolumeField<scalar>& phi
     )
-        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), phi, termType), gamma_(gamma),
-          laplacianOperatorStrategy_(nullptr) {};
+        : dsl::OperatorMixin<VolumeField<scalar>>(phi.exec(), dsl::Coeff(1.0), phi, termType),
+          gamma_(gamma), laplacianOperatorStrategy_(nullptr) {};
 
 
     void explicitOperation(Field<scalar>& source)
@@ -113,8 +123,9 @@ public:
         {
             NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
         }
+        const auto operatorScaling = getCoefficient();
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
-        laplacianOperatorStrategy_->laplacian(tmpsource, gamma_, field_);
+        laplacianOperatorStrategy_->laplacian(tmpsource, gamma_, field_, operatorScaling);
         source += tmpsource;
     }
 
@@ -133,7 +144,9 @@ public:
         {
             NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
         }
-        laplacianOperatorStrategy_->laplacian(ls, gamma_, field_);
+        const auto operatorScaling = getCoefficient();
+        std::cout << "implicitOperation operatorScaling[0] = " << operatorScaling[0] << std::endl;
+        laplacianOperatorStrategy_->laplacian(ls, gamma_, field_, operatorScaling);
     }
 
     // void laplacian(Field<scalar>& lapPhi)
@@ -148,7 +161,8 @@ public:
 
     void laplacian(VolumeField<scalar>& lapPhi)
     {
-        laplacianOperatorStrategy_->laplacian(lapPhi, gamma_, getField());
+        const auto operatorScaling = getCoefficient();
+        laplacianOperatorStrategy_->laplacian(lapPhi, gamma_, getField(), operatorScaling);
     }
 
 
