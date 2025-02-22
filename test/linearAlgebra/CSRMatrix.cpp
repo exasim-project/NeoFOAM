@@ -8,6 +8,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
+#include <Kokkos_Core.hpp>
+
+#include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 
 TEST_CASE("CSRMatrix")
@@ -58,11 +61,24 @@ TEST_CASE("CSRMatrix")
 
     SECTION("Const Entry on " + execName)
     {
+        NeoFOAM::Field<NeoFOAM::scalar> checkValues(exec, 4);
+        auto checkSpan = checkValues.span();
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t i) {
+                checkSpan[0] = sparseMatrixConst.entry(0, 0);
+                checkSpan[1] = sparseMatrixConst.entry(1, 1);
+                checkSpan[2] = sparseMatrixConst.entry(1, 2);
+                checkSpan[3] = sparseMatrixConst.entry(2, 1);
+            }
+        );
 
-        const auto sparseMatrixConstHost = sparseMatrixConst.copyToHost();
-        REQUIRE(sparseMatrixConstHost.entry(0, 0) == 1.0);
-        REQUIRE(sparseMatrixConstHost.entry(1, 1) == 5.0);
-        REQUIRE(sparseMatrixConstHost.entry(1, 2) == 6.0);
-        REQUIRE(sparseMatrixConstHost.entry(2, 1) == 8.0);
+        auto checkHost = checkValues.copyToHost();
+        auto checkHostSpan = checkHost.span();
+        REQUIRE(checkHostSpan[0] == 1.0);
+        REQUIRE(checkHostSpan[1] == 5.0);
+        REQUIRE(checkHostSpan[2] == 6.0);
+        REQUIRE(checkHostSpan[3] == 8.0);
     }
 }

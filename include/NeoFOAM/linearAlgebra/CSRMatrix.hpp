@@ -14,7 +14,6 @@ enum BlockStructType
     component
 };
 
-
 template<typename ValueType, typename IndexType>
 class CSRMatrix
 {
@@ -66,20 +65,18 @@ public:
         return copyToExecutor(SerialExecutor());
     }
 
+    KOKKOS_INLINE_FUNCTION
     const ValueType& entry(const IndexType i, const IndexType j) const
     {
-        const auto& vals = values();
-        const auto& cols = colIdxs();
-        const auto& rows = rowPtrs();
-        for (IndexType ic = 0; ic < (rows[i + 1] - rows[i]); ++ic)
+        for (IndexType ic = 0; ic < (rowPtrs_[i + 1] - rowPtrs_[i]); ++ic)
         {
-            if (cols[rows[i] + ic] == j)
+            if (colIdxs_[rowPtrs_[i] + ic] == j)
             {
-                return vals[rows[i] + ic];
+                return values_[rowPtrs_[i] + ic];
             }
-            if (cols[rows[i] + ic] > j) break;
+            if (colIdxs_[rowPtrs_[i] + ic] > j) break;
         }
-        NF_ERROR_EXIT("Matrix entry " << i << ", " << j << " has not been allocated, cannot get.");
+        Kokkos::abort("Memory not allocated for CSR matrix component.");
     }
 
     ValueType& entry(const IndexType i, const IndexType j)
