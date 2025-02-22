@@ -61,24 +61,53 @@ TEST_CASE("CSRMatrix")
 
     SECTION("Const Entry on " + execName)
     {
-        NeoFOAM::Field<NeoFOAM::scalar> checkValues(exec, 4);
-        auto checkSpan = checkValues.span();
+        // Sparse
+        NeoFOAM::Field<NeoFOAM::scalar> checkSparse(exec, 4);
+        auto checkSparseSpan = checkSparse.span();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t i) {
-                checkSpan[0] = sparseMatrixConst.entry(0, 0);
-                checkSpan[1] = sparseMatrixConst.entry(1, 1);
-                checkSpan[2] = sparseMatrixConst.entry(1, 2);
-                checkSpan[3] = sparseMatrixConst.entry(2, 1);
+                checkSparseSpan[0] = sparseMatrixConst.entry(0, 0);
+                checkSparseSpan[1] = sparseMatrixConst.entry(1, 1);
+                checkSparseSpan[2] = sparseMatrixConst.entry(1, 2);
+                checkSparseSpan[3] = sparseMatrixConst.entry(2, 1);
             }
         );
 
-        auto checkHost = checkValues.copyToHost();
-        auto checkHostSpan = checkHost.span();
-        REQUIRE(checkHostSpan[0] == 1.0);
-        REQUIRE(checkHostSpan[1] == 5.0);
-        REQUIRE(checkHostSpan[2] == 6.0);
-        REQUIRE(checkHostSpan[3] == 8.0);
+        auto checkHost = checkSparse.copyToHost();
+        REQUIRE(checkHost.span()[0] == 1.0);
+        REQUIRE(checkHost.span()[1] == 5.0);
+        REQUIRE(checkHost.span()[2] == 6.0);
+        REQUIRE(checkHost.span()[3] == 8.0);
+
+        // dense
+        NeoFOAM::Field<NeoFOAM::scalar> checkDense(exec, 9);
+        auto checkDenseSpan = checkDense.span();
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t i) {
+                checkDenseSpan[0] = denseMatrixConst.entry(0, 0);
+                checkDenseSpan[1] = denseMatrixConst.entry(0, 1);
+                checkDenseSpan[2] = denseMatrixConst.entry(0, 2);
+                checkDenseSpan[3] = denseMatrixConst.entry(1, 0);
+                checkDenseSpan[4] = denseMatrixConst.entry(1, 1);
+                checkDenseSpan[5] = denseMatrixConst.entry(1, 2);
+                checkDenseSpan[6] = denseMatrixConst.entry(2, 0);
+                checkDenseSpan[7] = denseMatrixConst.entry(2, 1);
+                checkDenseSpan[8] = denseMatrixConst.entry(2, 2);
+            }
+        );
+        checkHost = checkDense.copyToHost();
+        REQUIRE(checkHost.span()[0] == 1.0);
+        REQUIRE(checkHost.span()[1] == 2.0);
+        REQUIRE(checkHost.span()[2] == 3.0);
+        REQUIRE(checkHost.span()[3] == 4.0);
+        REQUIRE(checkHost.span()[4] == 5.0);
+        REQUIRE(checkHost.span()[5] == 6.0);
+        REQUIRE(checkHost.span()[6] == 7.0);
+        REQUIRE(checkHost.span()[7] == 8.0);
+        REQUIRE(checkHost.span()[8] == 9.0);
     }
 }
