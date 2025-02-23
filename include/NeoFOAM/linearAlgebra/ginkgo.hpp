@@ -49,7 +49,7 @@ public:
             gkoExec_,
             detail::createGkoMtx(gkoExec_, sys),
             size_t(solverDict_.get<int>("maxIters")),
-            solverDict_.get<float>("relTol")
+            float(solverDict_.get<double>("relTol"))
         );
 
         auto rhs = detail::createGkoDense(gkoExec_, sys.rhs().data(), nrows);

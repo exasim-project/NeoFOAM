@@ -56,14 +56,8 @@ public:
         eqn.implicitOperation(ls, t, dt);
         auto ginkgoLs = NeoFOAM::dsl::ginkgoMatrix(ls, solutionField);
 
-        NeoFOAM::Dictionary fvSolutionDict {};
-        fvSolutionDict.insert("maxIters", 100);
-        fvSolutionDict.insert("relTol", float(1e-8));
 
-        auto internalFieldSpan = solutionField.internalField().span();
-
-
-        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), fvSolutionDict);
+        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ginkgoLs, solutionField.internalField());
 
         // check if executor is GPU

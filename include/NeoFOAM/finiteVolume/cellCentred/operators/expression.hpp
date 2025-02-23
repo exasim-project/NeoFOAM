@@ -6,34 +6,42 @@
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#include "NeoFOAM/dsl/expression.hpp"
+#include "NeoFOAM/dsl/solver.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/setReferenceValue.hpp"
+
 
 #include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
+
+namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType, typename IndexType = localIdx>
-class LinearSystem
+class Expression
 {
 public:
 
-    LinearSystem(VolumeField<ValueType>& psi)
-        : psi_(psi), ls_(SparsityPattern::readOrCreate(psi.mesh())->linearSystem()),
-          sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh())) {
-
-          };
-
-    LinearSystem(
+    Expression(
+        dsl::Expression expr,
         VolumeField<ValueType>& psi,
-        const la::LinearSystem<ValueType, IndexType>& ls,
-        std::shared_ptr<SparsityPattern> sparsityPattern
+        [[maybe_unused]] const Dictionary& fvSchemes,
+        [[maybe_unused]] const Dictionary& fvSolution
     )
-        : psi_(psi), ls_(ls), sparsityPattern_(sparsityPattern) {};
+        : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
+          ls_(SparsityPattern::readOrCreate(psi.mesh())->linearSystem()),
+          sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh()))
+    {
+        expr_.build(fvSchemes_);
+        assemble();
+    };
 
-    LinearSystem(const LinearSystem& ls)
-        : psi_(ls.psi_), ls_(ls.ls_), sparsityPattern_(ls.sparsityPattern_) {};
+    Expression(const Expression& ls)
+        : psi_(ls.psi_), expr_(ls.expr_), fvSchemes_(ls.fvSchemes), fvSolution_(ls.fvSolution),
+          ls_(ls.ls_), sparsityPattern_(ls.sparsityPattern_) {};
 
-    ~LinearSystem() = default;
+    ~Expression() = default;
 
     [[nodiscard]] la::LinearSystem<ValueType, IndexType>& linearSystem() { return ls_; }
     [[nodiscard]] SparsityPattern& sparsityPattern()
@@ -44,6 +52,10 @@ public:
         }
         return *sparsityPattern_;
     }
+
+    VolumeField<ValueType>& getField() { return psi_; }
+
+    const VolumeField<ValueType>&& getField() const { return psi_; }
 
     [[nodiscard]] const la::LinearSystem<ValueType, IndexType>& linearSystem() const { return ls_; }
     [[nodiscard]] const SparsityPattern& sparsityPattern() const
@@ -74,6 +86,63 @@ public:
         );
     }
 
+    void assemble()
+    {
+        if (expr_.temporalOperators().size() == 0 && expr_.spatialOperators().size() == 0)
+        {
+            NF_ERROR_EXIT("No temporal or implicit terms to solve.");
+        }
+
+        if (expr_.temporalOperators().size() > 0)
+        {
+            // integrate equations in time
+            // NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
+            //     fvSchemes_.subDict("ddtSchemes"), fvSolution_
+            // );
+            // timeIntegrator.solve(expr_, psi_, t, dt);
+        }
+        else
+        {
+            // solve sparse matrix system
+            auto vol = psi_.mesh().cellVolumes().span();
+            auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
+            auto expSourceSpan = expSource.span();
+
+            ls_ = expr_.implicitOperation();
+            auto rhs = ls_.rhs().span();
+            // we subtract the explicit source term from the rhs
+            NeoFOAM::parallelFor(
+                exec(),
+                {0, rhs.size()},
+                KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSourceSpan[i] * vol[i]; }
+            );
+        }
+    }
+
+    void solve(scalar t, scalar dt)
+    {
+        // dsl::solve(expr_, psi_, t, dt, fvSchemes_, fvSolution_);
+        // FIXME:
+        if (expr_.temporalOperators().size() == 0 && expr_.spatialOperators().size() == 0)
+        {
+            NF_ERROR_EXIT("No temporal or implicit terms to solve.");
+        }
+        if (expr_.temporalOperators().size() > 0)
+        {
+            //     // integrate equations in time
+            //     NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
+            //         fvSchemes_.subDict("ddtSchemes"), fvSolution_
+            //     );
+            //     timeIntegrator.solve(expr_, psi_, t, dt);
+        }
+        else
+        {
+            NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(psi_.exec(), fvSolution_);
+            auto convertedLS = convertLinearSystem(ls_);
+            solver.solve(convertedLS, psi_.internalField());
+        }
+    }
+
     Field<IndexType> diagIndex()
     {
         Field<IndexType> diagIndex(exec(), sparsityPattern_->diagOffset().size());
@@ -90,16 +159,25 @@ public:
         return diagIndex;
     }
 
+    void setReference(const IndexType refCell, ValueType refValue)
+    {
+        SetReferenceValue<ValueType> setReferenceValue(getField(), refValue, refCell);
+        expr_.addOperator(setReferenceValue);
+    }
+
 private:
 
     VolumeField<ValueType>& psi_;
+    dsl::Expression expr_;
+    const Dictionary& fvSchemes_;
+    const Dictionary& fvSolution_;
     la::LinearSystem<ValueType, IndexType> ls_;
     std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
 template<typename ValueType, typename IndexType = localIdx>
 VolumeField<ValueType>
-operator&(const LinearSystem<ValueType, IndexType> ls, const VolumeField<ValueType>& psi)
+operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType>& psi)
 {
     VolumeField<ValueType> resultField(
         psi.exec(),

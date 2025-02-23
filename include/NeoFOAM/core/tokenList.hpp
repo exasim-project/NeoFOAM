@@ -11,6 +11,11 @@ namespace NeoFOAM
 {
 
 
+void logOutRange(
+    const std::out_of_range& e, const std::size_t& key, const std::vector<std::any>& data
+);
+
+
 /**
  * @class TokenList
  * @brief A class representing a list of tokens.
@@ -22,13 +27,15 @@ class TokenList
 {
 public:
 
-    TokenList() = default;
+    TokenList();
+
+    TokenList(const TokenList&);
 
     /**
      * @brief Construct a TokenList object from a vector of std::any.
      * @param data A vector of std::any.
      */
-    TokenList(const std::vector<std::any>& data);
+    TokenList(const std::vector<std::any>& data, size_t nextIndex = 0);
 
     /**
      * @brief Construct a TokenList object from an initializer list of std::any.
@@ -94,8 +101,27 @@ public:
             logBadAnyCast<ReturnType>(e, idx, data_);
             throw e;
         }
+        catch (const std::out_of_range& e)
+        {
+            logOutRange(e, idx, data_);
+            throw e;
+        }
     }
 
+    /**
+     * @brief Retrieves the value associated with the nextIndex, casting it to
+     * the specified type.
+     * @tparam T The type to cast the value to.
+     * @return A reference to the value associated with the index, casted to
+     * type T.
+     */
+    template<typename ReturnType>
+    ReturnType& next()
+    {
+        ReturnType& retValue = get<ReturnType&>(nextIndex_);
+        nextIndex_++;
+        return retValue;
+    }
 
     /**
      * @brief Retrieves the value associated with the given index, casting it to
@@ -117,6 +143,26 @@ public:
             logBadAnyCast<ReturnType>(e, idx, data_);
             throw e;
         }
+        catch (const std::out_of_range& e)
+        {
+            logOutRange(e, idx, data_);
+            throw e;
+        }
+    }
+
+    /**
+     * @brief Retrieves the value associated with the nextIndex, casting it to
+     * the specified type.
+     * @tparam T The type to cast the value to.
+     * @return A const reference to the value associated with the index, casted to
+     * type T.
+     */
+    template<typename ReturnType>
+    const ReturnType& next() const
+    {
+        const ReturnType& retValue = get<ReturnType>(nextIndex_);
+        nextIndex_++;
+        return retValue;
     }
 
     /**
@@ -132,6 +178,7 @@ public:
 private:
 
     std::vector<std::any> data_;
+    mutable size_t nextIndex_;
 };
 
 } // namespace NeoFOAM

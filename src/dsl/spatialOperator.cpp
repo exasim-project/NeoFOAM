@@ -15,6 +15,12 @@ SpatialOperator::SpatialOperator(SpatialOperator&& eqnOperator)
     : model_ {std::move(eqnOperator.model_)}
 {}
 
+SpatialOperator& SpatialOperator::operator=(const SpatialOperator& eqnOperator)
+{
+    model_ = eqnOperator.model_->clone();
+    return *this;
+}
+
 void SpatialOperator::explicitOperation(Field<scalar>& source)
 {
     model_->explicitOperation(source);
