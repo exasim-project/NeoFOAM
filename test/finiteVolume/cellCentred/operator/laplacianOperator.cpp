@@ -95,7 +95,7 @@ TEST_CASE("laplacianOperator fixedValue")
             fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Implicit, gamma, phi, input);
             auto ls = lapOp.createEmptyLinearSystem();
             lapOp.implicitOperation(ls);
-            fvcc::LinearSystem<NeoFOAM::scalar> ls2(
+            fvcc::Expression<NeoFOAM::scalar> ls2(
                 phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
             );
 
@@ -120,7 +120,7 @@ TEST_CASE("laplacianOperator fixedValue")
             lapOp = dsl::Coeff(-0.5) * lapOp;
             auto ls = lapOp.createEmptyLinearSystem();
             lapOp.implicitOperation(ls);
-            fvcc::LinearSystem<NeoFOAM::scalar> ls2(
+            fvcc::Expression<NeoFOAM::scalar> ls2(
                 phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
             );
 
@@ -211,7 +211,7 @@ TEST_CASE("laplacianOperator fixedGradient")
             fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Explicit, gamma, phi, input);
             auto ls = lapOp.createEmptyLinearSystem();
             lapOp.implicitOperation(ls);
-            fvcc::LinearSystem<NeoFOAM::scalar> ls2(
+            fvcc::Expression<NeoFOAM::scalar> ls2(
                 phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
             );
 
