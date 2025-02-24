@@ -3,3 +3,4 @@
 
 neofoam_unit_test(field)
 neofoam_unit_test(domainField)
+neofoam_unit_test(segmentedField)

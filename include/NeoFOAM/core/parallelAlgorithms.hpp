@@ -90,7 +90,6 @@ void parallelFor(Field<ValueType>& field, Kernel kernel)
     std::visit([&](const auto& e) { parallelFor(e, field, kernel); }, field.exec());
 }
 
-
 template<typename Executor, typename Kernel, typename T>
 void parallelReduce(
     [[maybe_unused]] const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value
@@ -162,6 +161,50 @@ void parallelReduce(Field<ValueType>& field, Kernel kernel, T& value)
 {
     return std::visit(
         [&](const auto& e) { return parallelReduce(e, field, kernel, value); }, field.exec()
+    );
+}
+
+template<typename Executor, typename Kernel>
+void parallelScan(
+    [[maybe_unused]] const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel
+)
+{
+    auto [start, end] = range;
+    using runOn = typename Executor::exec;
+    Kokkos::parallel_scan("parallelScan", Kokkos::RangePolicy<runOn>(start, end), kernel);
+}
+
+template<typename Kernel>
+void parallelScan(const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
+{
+    std::visit([&](const auto& e) { parallelScan(e, range, kernel); }, exec);
+}
+
+template<typename Executor, typename Kernel, typename ReturnType>
+void parallelScan(
+    [[maybe_unused]] const Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    ReturnType& returnValue
+)
+{
+    auto [start, end] = range;
+    using runOn = typename Executor::exec;
+    Kokkos::parallel_scan(
+        "parallelScan", Kokkos::RangePolicy<runOn>(start, end), kernel, returnValue
+    );
+}
+
+template<typename Kernel, typename ReturnType>
+void parallelScan(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    ReturnType& returnValue
+)
+{
+    return std::visit(
+        [&](const auto& e) { return parallelScan(e, range, kernel, returnValue); }, exec
     );
 }
 

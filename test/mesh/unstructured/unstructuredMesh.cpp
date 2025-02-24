@@ -52,12 +52,13 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(mesh.nFaces() == 5);
 
         // Verify mesh points
+        // bc  [   internal  ]  bc
+        // 0.0 [ 0.25 | 0.50 ] 1.0
         auto hostPoints = mesh.points().copyToHost();
-        REQUIRE(hostPoints[0][0] == 0.0);
+        REQUIRE(hostPoints[0][0] == 0.25);
+        REQUIRE(hostPoints[1][0] == 0.5);
+        REQUIRE(hostPoints[3][0] == 0.0);
         REQUIRE(hostPoints[nCells][0] == 1.0);
-        REQUIRE(hostPoints[1][0] == 0.25);
-        REQUIRE(hostPoints[2][0] == 0.5);
-        REQUIRE(hostPoints[3][0] == 0.75);
 
         // Verify cell centers
         auto hostCellCentres = mesh.cellCentres().copyToHost();
@@ -67,18 +68,20 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(hostCellCentres[3][0] == 0.875);
 
         // Verify face owners
+        // |_3 0 |_0 1 |_1 2 |_2 3 |_4
         auto hostFaceOwner = mesh.faceOwner().copyToHost();
         REQUIRE(hostFaceOwner[0] == 0);
-        REQUIRE(hostFaceOwner[1] == 0);
-        REQUIRE(hostFaceOwner[2] == 1);
-        REQUIRE(hostFaceOwner[3] == 2);
+        REQUIRE(hostFaceOwner[1] == 1);
+        REQUIRE(hostFaceOwner[2] == 2);
+        REQUIRE(hostFaceOwner[3] == 0);
         REQUIRE(hostFaceOwner[4] == 3);
 
         // Verify face neighbors
+        // |_3 0 |_0 1 |_1 2 |_2 3 |_4
         auto hostFaceNeighbour = mesh.faceNeighbour().copyToHost();
-        REQUIRE(hostFaceNeighbour[1] == 1);
-        REQUIRE(hostFaceNeighbour[2] == 2);
-        REQUIRE(hostFaceNeighbour[3] == 3);
+        REQUIRE(hostFaceNeighbour[0] == 1);
+        REQUIRE(hostFaceNeighbour[1] == 2);
+        REQUIRE(hostFaceNeighbour[2] == 3);
 
         // Verify boundary mesh
         auto hostBoundaryFaceCells = mesh.boundaryMesh().faceCells().copyToHost();
