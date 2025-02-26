@@ -114,17 +114,21 @@ TEST_CASE("CSRMatrix")
     SECTION("Update existing entry on " + execName)
     {
         // Sparse
+        auto csrSpan = denseMatrix.span();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t i) {
-                sparseMatrix.entry(0, 0) = -1.0;
-                sparseMatrix.entry(1, 1) = -5.0;
+                csrSpan.entry(0, 0) = -1.0;
+                // sparseMatrix.entry(1, 1) = -5.0;
             }
         );
 
-        // auto checkHost = checkSparse.copyToHost();
-        // REQUIRE(checkHost.span()[0] == 1.0);
+
+        REQUIRE(denseMatrix.copyToHost().values()[0] == -1.0);
+
+        // auto checkHost = denseMatrixConst.values.copyToHost();
+        // REQUIRE(denseMatrixConst.values()[0] == -1.0);
         // REQUIRE(checkHost.span()[1] == 5.0);
         // REQUIRE(checkHost.span()[2] == 6.0);
         // REQUIRE(checkHost.span()[3] == 8.0);

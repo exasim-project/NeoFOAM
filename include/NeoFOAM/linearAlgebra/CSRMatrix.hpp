@@ -15,6 +15,50 @@ enum BlockStructType
 };
 
 template<typename ValueType, typename IndexType>
+class CSRMatrixSpan
+{
+public:
+
+    // Constructor for non-const spans
+    CSRMatrixSpan(
+        const std::span<ValueType>& values,
+        const std::span<IndexType>& colIdxs,
+        const std::span<IndexType>& rowPtrs
+    )
+        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs) {};
+
+    // Constructor for const spans - needed for const matrix objects
+    CSRMatrixSpan(
+        const std::span<const ValueType>& values,
+        const std::span<const IndexType>& colIdxs,
+        const std::span<const IndexType>& rowPtrs
+    )
+        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs) {};
+
+    ~CSRMatrixSpan() = default;
+
+    KOKKOS_INLINE_FUNCTION
+    ValueType& entry(const IndexType i, const IndexType j) const
+    {
+        for (IndexType ic = 0; ic < (rowPtrs_[i + 1] - rowPtrs_[i]); ++ic)
+        {
+            if (colIdxs_[rowPtrs_[i] + ic] == j)
+            {
+                return values_[rowPtrs_[i] + ic];
+            }
+            if (colIdxs_[rowPtrs_[i] + ic] > j) break;
+        }
+        Kokkos::abort("Memory not allocated for CSR matrix component.");
+    }
+
+private:
+
+    std::span<ValueType> values_;
+    std::span<IndexType> colIdxs_;
+    std::span<IndexType> rowPtrs_;
+};
+
+template<typename ValueType, typename IndexType>
 class CSRMatrix
 {
 
@@ -49,7 +93,6 @@ public:
     [[nodiscard]] const std::span<const IndexType> colIdxs() const { return colIdxs_.span(); }
     [[nodiscard]] const std::span<const IndexType> rowPtrs() const { return rowPtrs_.span(); }
 
-
     [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToExecutor(Executor dstExec) const
     {
         if (dstExec == values_.exec()) return *this;
@@ -65,35 +108,14 @@ public:
         return copyToExecutor(SerialExecutor());
     }
 
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& entry(const IndexType i, const IndexType j) const
+    [[nodiscard]] CSRMatrixSpan<ValueType, IndexType> span()
     {
-        for (IndexType ic = 0; ic < (rowPtrs_[i + 1] - rowPtrs_[i]); ++ic)
-        {
-            if (colIdxs_[rowPtrs_[i] + ic] == j)
-            {
-                return values_[rowPtrs_[i] + ic];
-            }
-            if (colIdxs_[rowPtrs_[i] + ic] > j) break;
-        }
-        Kokkos::abort("Memory not allocated for CSR matrix component.");
+        return CSRMatrixSpan(values_.span(), colIdxs_.span(), rowPtrs_.span());
     }
 
-    KOKKOS_INLINE_FUNCTION
-    ValueType& entry(IndexType i, IndexType j)
+    [[nodiscard]] const CSRMatrixSpan<const ValueType, const IndexType> span() const
     {
-        for (IndexType ic = 0; ic < (rowPtrs_[i + 1] - rowPtrs_[i]); ++ic)
-        {
-            if (colIdxs_[rowPtrs_[i] + ic] == j)
-            {
-                return values_[rowPtrs_[i] + ic];
-            }
-            if (colIdxs_[rowPtrs_[i] + ic] > j)
-            {
-                Kokkos::abort("WIP.");
-            };
-        }
-        Kokkos::abort("Memory not allocated for CSR matrix component.");
+        return CSRMatrixSpan(values_.span(), colIdxs_.span(), rowPtrs_.span());
     }
 
 private:
