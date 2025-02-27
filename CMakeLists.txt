@@ -36,10 +36,9 @@ option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" OFF)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_BUILD_DOC "Build documentation" OFF)
-
 option(NEOFOAM_WITH_SUNDIALS "Build NeoFOAM with Sundials support [currently required]" ON)
-option(NEOFOAM_WITH_GINKGO "Enable using Ginkgo as linear algebra backend." ON)
-
+option(NEOFOAM_WITH_GINKGO "Enable using Ginkgo as linear algebra backend." OFF)
+option(NEOFOAM_WITH_PETSC "Build NeoFOAM with petsc support" ON)
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(NEOFOAM_ENABLE_SANITIZE_LEAK "Enable leak sanitizer" OFF)
 option(NEOFOAM_ENABLE_SANITIZE_UB "Enable undefined behaviour sanitizer" OFF)

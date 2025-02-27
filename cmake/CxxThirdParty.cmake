@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
-    "4.3.00"
+    "4.4.01"
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
@@ -12,6 +12,25 @@ if(NEOFOAM_ENABLE_MPI_SUPPORT)
   find_package(MPI 3.1 REQUIRED)
 endif()
 
+if(${NEOFOAM_WITH_PETSC})
+  find_package(MPI) # make it REQUIRED, if you want
+  message("${MPI_CXX_COMPILER}")
+  message("${MPI_C_COMPILER}")
+  message("${MPI_FOUND}")
+  if(MPI_FOUND)
+    set(PETSC_CXX_COMPILER ${MPI_CXX_COMPILER})
+    set(PETSC_C_COMPILER ${MPI_C_COMPILER})
+  else()
+    set(PETSC_CXX_COMPILER ${CMAKE_CXX_COMPILER})
+    set(PETSC_C_COMPILER ${CMAKE_CXX_COMPILER})
+  endif()
+  find_package(PkgConfig REQUIRED)
+  pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
+  set(Kokkos_ROOT ${PETSc_PREFIX})
+  set(CMAKE_CUDA_STANDARD 17)
+endif()
+
+set(Kokkos_ROOT_DIR ${PETSc_PREFIX})
 find_package(Kokkos ${NEOFOAM_KOKKOS_CHECKOUT_VERSION} QUIET)
 
 if(NOT ${Kokkos_FOUND})
