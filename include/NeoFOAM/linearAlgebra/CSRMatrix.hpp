@@ -8,7 +8,6 @@
 namespace NeoFOAM::la
 {
 
-
 /**
  * @class CSRMatrixSpan
  * @brief A helper class to allow easy read/write on all executors.
@@ -67,7 +66,7 @@ public:
      * @return Reference to the matrix element if it exists.
      */
     KOKKOS_INLINE_FUNCTION
-    ValueType& directValue(const IndexType offset) const { values_[offset]; }
+    ValueType& directValue(const IndexType offset) const { return values_[offset]; }
 
 private:
 

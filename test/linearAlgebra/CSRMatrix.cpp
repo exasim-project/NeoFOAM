@@ -117,7 +117,8 @@ TEST_CASE("CSRMatrix")
             }
         );
 
-        auto checkHost = sparseMatrix.copyToHost().values();
+        auto hostMatrix = sparseMatrix.copyToHost();
+        auto checkHost = hostMatrix.values();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -5.0);
         REQUIRE(checkHost[2] == -6.0);
@@ -141,7 +142,115 @@ TEST_CASE("CSRMatrix")
             }
         );
 
-        checkHost = denseMatrix.copyToHost().values();
+        hostMatrix = denseMatrix.copyToHost();
+        checkHost = hostMatrix.values();
+        REQUIRE(checkHost[0] == -1.0);
+        REQUIRE(checkHost[1] == -2.0);
+        REQUIRE(checkHost[2] == -3.0);
+        REQUIRE(checkHost[3] == -4.0);
+        REQUIRE(checkHost[4] == -5.0);
+        REQUIRE(checkHost[5] == -6.0);
+        REQUIRE(checkHost[6] == -7.0);
+        REQUIRE(checkHost[7] == -8.0);
+        REQUIRE(checkHost[8] == -9.0);
+    }
+
+    SECTION("Read directValue on " + execName)
+    {
+        // Sparse
+        NeoFOAM::Field<NeoFOAM::scalar> checkSparse(exec, 4);
+        auto checkSparseSpan = checkSparse.span();
+        auto csrSparseSpan = sparseMatrixConst.span();
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t) {
+                checkSparseSpan[0] = csrSparseSpan.directValue(0);
+                checkSparseSpan[1] = csrSparseSpan.directValue(1);
+                checkSparseSpan[2] = csrSparseSpan.directValue(2);
+                checkSparseSpan[3] = csrSparseSpan.directValue(3);
+            }
+        );
+        auto checkHost = checkSparse.copyToHost();
+        REQUIRE(checkHost.span()[0] == 1.0);
+        REQUIRE(checkHost.span()[1] == 5.0);
+        REQUIRE(checkHost.span()[2] == 6.0);
+        REQUIRE(checkHost.span()[3] == 8.0);
+
+        // Dense
+        NeoFOAM::Field<NeoFOAM::scalar> checkDense(exec, 9);
+        auto checkDenseSpan = checkDense.span();
+        auto csrDenseSpan = denseMatrixConst.span();
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t) {
+                checkDenseSpan[0] = csrDenseSpan.directValue(0);
+                checkDenseSpan[1] = csrDenseSpan.directValue(1);
+                checkDenseSpan[2] = csrDenseSpan.directValue(2);
+                checkDenseSpan[3] = csrDenseSpan.directValue(3);
+                checkDenseSpan[4] = csrDenseSpan.directValue(4);
+                checkDenseSpan[5] = csrDenseSpan.directValue(5);
+                checkDenseSpan[6] = csrDenseSpan.directValue(6);
+                checkDenseSpan[7] = csrDenseSpan.directValue(7);
+                checkDenseSpan[8] = csrDenseSpan.directValue(8);
+            }
+        );
+        checkHost = checkDense.copyToHost();
+        REQUIRE(checkHost.span()[0] == 1.0);
+        REQUIRE(checkHost.span()[1] == 2.0);
+        REQUIRE(checkHost.span()[2] == 3.0);
+        REQUIRE(checkHost.span()[3] == 4.0);
+        REQUIRE(checkHost.span()[4] == 5.0);
+        REQUIRE(checkHost.span()[5] == 6.0);
+        REQUIRE(checkHost.span()[6] == 7.0);
+        REQUIRE(checkHost.span()[7] == 8.0);
+        REQUIRE(checkHost.span()[8] == 9.0);
+    }
+
+    SECTION("Update existing directValue on " + execName)
+    {
+        // Sparse
+        auto csrSparseSpan = sparseMatrix.span();
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t) {
+                csrSparseSpan.directValue(0) = -1.0;
+                csrSparseSpan.directValue(1) = -5.0;
+                csrSparseSpan.directValue(2) = -6.0;
+                csrSparseSpan.directValue(3) = -8.0;
+            }
+        );
+
+
+        auto hostMatrix = sparseMatrix.copyToHost();
+        auto checkHost = hostMatrix.values();
+        REQUIRE(checkHost[0] == -1.0);
+        REQUIRE(checkHost[1] == -5.0);
+        REQUIRE(checkHost[2] == -6.0);
+        REQUIRE(checkHost[3] == -8.0);
+
+        // Dense
+        auto csrDenseSpan = denseMatrix.span();
+        parallelFor(
+            exec,
+            {0, 1},
+            KOKKOS_LAMBDA(const size_t) {
+                csrDenseSpan.directValue(0) = -1.0;
+                csrDenseSpan.directValue(1) = -2.0;
+                csrDenseSpan.directValue(2) = -3.0;
+                csrDenseSpan.directValue(3) = -4.0;
+                csrDenseSpan.directValue(4) = -5.0;
+                csrDenseSpan.directValue(5) = -6.0;
+                csrDenseSpan.directValue(6) = -7.0;
+                csrDenseSpan.directValue(7) = -8.0;
+                csrDenseSpan.directValue(8) = -9.0;
+            }
+        );
+
+        hostMatrix = denseMatrix.copyToHost();
+        checkHost = hostMatrix.values();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -2.0);
         REQUIRE(checkHost[2] == -3.0);
