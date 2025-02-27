@@ -43,7 +43,6 @@ public:
      * @param i The row index.
      * @param j The column index.
      * @return Reference to the matrix element if it exists.
-     * @note If the element doesn't exist, the function will abort with an error message.
      */
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType i, const IndexType j) const
@@ -61,6 +60,14 @@ public:
         Kokkos::abort("Memory not allocated for CSR matrix component.");
         return values_[values_.size()]; // compiler warning suppression.
     }
+
+    /**
+     * @brief Direct access to a value given the offset.
+     * @param offset The offset, from 0, to the value.
+     * @return Reference to the matrix element if it exists.
+     */
+    KOKKOS_INLINE_FUNCTION
+    ValueType& directValue(const IndexType offset) const { values_[offset]; }
 
 private:
 
