@@ -56,9 +56,15 @@ public:
         eqn.implicitOperation(ls, t, dt);
         auto ginkgoLs = NeoFOAM::dsl::ginkgoMatrix(ls, solutionField);
 
-
+#if NF_WITH_GINKGO
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ginkgoLs, solutionField.internalField());
+#elif NF_WITH_PETSC
+// placeholder for petsc solver --> include runtime selection in future
+// should look like this
+//   NeoFOAM::la::petscSolver<ValueType> solver(solution.exec(), fvSolution);
+//        solver.solve(ls, solution.internalField());
+#endif
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))

@@ -137,9 +137,16 @@ public:
         }
         else
         {
+#if NF_WITH_GINKGO
             NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(psi_.exec(), fvSolution_);
             auto convertedLS = convertLinearSystem(ls_);
             solver.solve(convertedLS, psi_.internalField());
+#elif NF_WITH_PETSC
+// placeholder for petsc solver --> include runtime selection in future
+// should look like this
+//   NeoFOAM::la::petscSolver<ValueType> solver(solution.exec(), fvSolution);
+//        solver.solve(ls, solution.internalField());
+#endif
         }
     }
 

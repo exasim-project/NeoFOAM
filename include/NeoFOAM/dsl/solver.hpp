@@ -132,9 +132,15 @@ void solve(
         using ValueType = typename FieldType::ElementType;
         auto ls = ginkgoMatrix(exp, solution);
 
-
+#if NF_WITH_GINKGO
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
+#elif NF_WITH_PETSC
+// placeholder for petsc solver --> include runtime selection in future
+// should look like this
+//   NeoFOAM::la::petscSolver<ValueType> solver(solution.exec(), fvSolution);
+//        solver.solve(ls, solution.internalField());
+#endif
     }
 }
 
