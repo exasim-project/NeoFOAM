@@ -23,17 +23,6 @@ TEST_CASE("CSRMatrix")
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
-    // empty matrix
-    NeoFOAM::Field<NeoFOAM::scalar> valuesEmpty(exec, {});
-    NeoFOAM::Field<NeoFOAM::localIdx> colIdxEmpty(exec, {});
-    NeoFOAM::Field<NeoFOAM::localIdx> rowPtrsEmpty(exec, {});
-    NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> emptyMatrix(
-        valuesEmpty, colIdxEmpty, rowPtrsEmpty
-    );
-    NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> emptyMatrixConst(
-        valuesEmpty, colIdxEmpty, rowPtrsEmpty
-    );
-
     // sparse matrix
     NeoFOAM::Field<NeoFOAM::scalar> valuesSparse(exec, {1.0, 5.0, 6.0, 8.0});
     NeoFOAM::Field<NeoFOAM::localIdx> colIdxSparse(exec, {0, 1, 2, 1});
@@ -135,20 +124,20 @@ TEST_CASE("CSRMatrix")
         REQUIRE(checkHost[3] == -8.0);
 
         // Dense
-        auto csrSpan = denseMatrix.span();
+        auto csrDenseSpan = denseMatrix.span();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrSpan.entry(0, 0) = -1.0;
-                csrSpan.entry(0, 1) = -2.0;
-                csrSpan.entry(0, 2) = -3.0;
-                csrSpan.entry(1, 0) = -4.0;
-                csrSpan.entry(1, 1) = -5.0;
-                csrSpan.entry(1, 2) = -6.0;
-                csrSpan.entry(2, 0) = -7.0;
-                csrSpan.entry(2, 1) = -8.0;
-                csrSpan.entry(2, 2) = -9.0;
+                csrDenseSpan.entry(0, 0) = -1.0;
+                csrDenseSpan.entry(0, 1) = -2.0;
+                csrDenseSpan.entry(0, 2) = -3.0;
+                csrDenseSpan.entry(1, 0) = -4.0;
+                csrDenseSpan.entry(1, 1) = -5.0;
+                csrDenseSpan.entry(1, 2) = -6.0;
+                csrDenseSpan.entry(2, 0) = -7.0;
+                csrDenseSpan.entry(2, 1) = -8.0;
+                csrDenseSpan.entry(2, 2) = -9.0;
             }
         );
 
