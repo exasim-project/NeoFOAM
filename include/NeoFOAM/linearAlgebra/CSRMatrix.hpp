@@ -66,7 +66,7 @@ public:
      * @return Reference to the matrix element if it exists.
      */
     KOKKOS_INLINE_FUNCTION
-    ValueType& directValue(const IndexType offset) const { return values_[offset]; }
+    ValueType& entry(const IndexType offset) const { return values_[offset]; }
 
 private:
 
@@ -170,7 +170,10 @@ public:
      */
     [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == values_.exec()) return *this;
+        if (dstExec == values_.exec())
+        {
+            return *this;
+        }
         CSRMatrix<ValueType, IndexType> other(
             values_.copyToHost(), colIdxs_.copyToHost(), rowPtrs_.copyToHost()
         );

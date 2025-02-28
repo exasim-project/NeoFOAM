@@ -165,10 +165,10 @@ TEST_CASE("CSRMatrix")
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                checkSparseSpan[0] = csrSparseSpan.directValue(0);
-                checkSparseSpan[1] = csrSparseSpan.directValue(1);
-                checkSparseSpan[2] = csrSparseSpan.directValue(2);
-                checkSparseSpan[3] = csrSparseSpan.directValue(3);
+                checkSparseSpan[0] = csrSparseSpan.entry(0);
+                checkSparseSpan[1] = csrSparseSpan.entry(1);
+                checkSparseSpan[2] = csrSparseSpan.entry(2);
+                checkSparseSpan[3] = csrSparseSpan.entry(3);
             }
         );
         auto checkHost = checkSparse.copyToHost();
@@ -185,15 +185,15 @@ TEST_CASE("CSRMatrix")
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                checkDenseSpan[0] = csrDenseSpan.directValue(0);
-                checkDenseSpan[1] = csrDenseSpan.directValue(1);
-                checkDenseSpan[2] = csrDenseSpan.directValue(2);
-                checkDenseSpan[3] = csrDenseSpan.directValue(3);
-                checkDenseSpan[4] = csrDenseSpan.directValue(4);
-                checkDenseSpan[5] = csrDenseSpan.directValue(5);
-                checkDenseSpan[6] = csrDenseSpan.directValue(6);
-                checkDenseSpan[7] = csrDenseSpan.directValue(7);
-                checkDenseSpan[8] = csrDenseSpan.directValue(8);
+                checkDenseSpan[0] = csrDenseSpan.entry(0);
+                checkDenseSpan[1] = csrDenseSpan.entry(1);
+                checkDenseSpan[2] = csrDenseSpan.entry(2);
+                checkDenseSpan[3] = csrDenseSpan.entry(3);
+                checkDenseSpan[4] = csrDenseSpan.entry(4);
+                checkDenseSpan[5] = csrDenseSpan.entry(5);
+                checkDenseSpan[6] = csrDenseSpan.entry(6);
+                checkDenseSpan[7] = csrDenseSpan.entry(7);
+                checkDenseSpan[8] = csrDenseSpan.entry(8);
             }
         );
         checkHost = checkDense.copyToHost();
@@ -216,10 +216,10 @@ TEST_CASE("CSRMatrix")
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrSparseSpan.directValue(0) = -1.0;
-                csrSparseSpan.directValue(1) = -5.0;
-                csrSparseSpan.directValue(2) = -6.0;
-                csrSparseSpan.directValue(3) = -8.0;
+                csrSparseSpan.entry(0) = -1.0;
+                csrSparseSpan.entry(1) = -5.0;
+                csrSparseSpan.entry(2) = -6.0;
+                csrSparseSpan.entry(3) = -8.0;
             }
         );
 
@@ -237,15 +237,15 @@ TEST_CASE("CSRMatrix")
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrDenseSpan.directValue(0) = -1.0;
-                csrDenseSpan.directValue(1) = -2.0;
-                csrDenseSpan.directValue(2) = -3.0;
-                csrDenseSpan.directValue(3) = -4.0;
-                csrDenseSpan.directValue(4) = -5.0;
-                csrDenseSpan.directValue(5) = -6.0;
-                csrDenseSpan.directValue(6) = -7.0;
-                csrDenseSpan.directValue(7) = -8.0;
-                csrDenseSpan.directValue(8) = -9.0;
+                csrDenseSpan.entry(0) = -1.0;
+                csrDenseSpan.entry(1) = -2.0;
+                csrDenseSpan.entry(2) = -3.0;
+                csrDenseSpan.entry(3) = -4.0;
+                csrDenseSpan.entry(4) = -5.0;
+                csrDenseSpan.entry(5) = -6.0;
+                csrDenseSpan.entry(6) = -7.0;
+                csrDenseSpan.entry(7) = -8.0;
+                csrDenseSpan.entry(8) = -9.0;
             }
         );
 
