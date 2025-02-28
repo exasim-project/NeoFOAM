@@ -18,8 +18,10 @@ A helper class to allow easy read/write on all executors.
 \begin{DoxyCompactList}\small\item\em Default destructor. \end{DoxyCompactList}\item 
 KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan_a788e96aa0c842b128ec75b0cb18b882e}{entry}} (const Index\+Type i, const Index\+Type j) const
 \begin{DoxyCompactList}\small\item\em Retrieve a reference to the matrix element at position (i,j). \end{DoxyCompactList}\item 
-KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan_aa7bc50c05a3076ab062eba70b3398cac}{direct\+Value}} (const Index\+Type offset) const
-\begin{DoxyCompactList}\small\item\em Direct access to a value given the offset. \end{DoxyCompactList}\end{DoxyCompactItemize}
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan_a4d20b35762e46c3023cfa9c57c732cef}{entry}} (const Index\+Type offset) const
+\begin{DoxyCompactList}\small\item\em Direct access to a value given the offset. \end{DoxyCompactList}\item 
+std\+::tuple$<$ std\+::span$<$ Value\+Type $>$, std\+::span$<$ Index\+Type $>$, std\+::span$<$ Index\+Type $>$ $>$ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan_abb3ff1204631734d8feb445deacff604}{span}} ()
+\begin{DoxyCompactList}\small\item\em Returns a structured binding of all containers. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -36,7 +38,7 @@ A helper class to allow easy read/write on all executors.
 \end{DoxyTemplParams}
 
 
-Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00018}{18}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
+Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00020}{20}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
 
 
 
@@ -63,7 +65,7 @@ Constructor for \doxylink{classNeoFOAM_1_1la_1_1CSRMatrixSpan}{CSRMatrix\+Span}.
 \end{DoxyParams}
 
 
-Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00028}{28}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
+Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00030}{30}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1la_1_1CSRMatrixSpan_ad7cfe7f82c340eb48164c7dace9b32e4}\label{classNeoFOAM_1_1la_1_1CSRMatrixSpan_ad7cfe7f82c340eb48164c7dace9b32e4} 
 \index{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}!````~CSRMatrixSpan@{\texorpdfstring{$\sim$}{\string~}CSRMatrixSpan}}
@@ -79,33 +81,10 @@ Default destructor.
 
 
 \doxysubsection{Member Function Documentation}
-\Hypertarget{classNeoFOAM_1_1la_1_1CSRMatrixSpan_aa7bc50c05a3076ab062eba70b3398cac}\label{classNeoFOAM_1_1la_1_1CSRMatrixSpan_aa7bc50c05a3076ab062eba70b3398cac} 
-\index{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}!directValue@{directValue}}
-\index{directValue@{directValue}!NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}}
-\doxysubsubsection{\texorpdfstring{directValue()}{directValue()}}
-{\footnotesize\ttfamily template$<$typename Value\+Type , typename Index\+Type $>$ \\
-KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan}{Neo\+FOAM\+::la\+::\+CSRMatrix\+Span}}$<$ Value\+Type, Index\+Type $>$\+::direct\+Value (\begin{DoxyParamCaption}\item[{const Index\+Type}]{offset }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
-
-
-
-Direct access to a value given the offset. 
-
-
-\begin{DoxyParams}{Parameters}
-{\em offset} & The offset, from 0, to the value. \\
-\hline
-\end{DoxyParams}
-\begin{DoxyReturn}{Returns}
-Reference to the matrix element if it exists. 
-\end{DoxyReturn}
-
-
-Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00069}{69}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
-
 \Hypertarget{classNeoFOAM_1_1la_1_1CSRMatrixSpan_a788e96aa0c842b128ec75b0cb18b882e}\label{classNeoFOAM_1_1la_1_1CSRMatrixSpan_a788e96aa0c842b128ec75b0cb18b882e} 
 \index{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}!entry@{entry}}
 \index{entry@{entry}!NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}}
-\doxysubsubsection{\texorpdfstring{entry()}{entry()}}
+\doxysubsubsection{\texorpdfstring{entry()}{entry()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
 {\footnotesize\ttfamily template$<$typename Value\+Type , typename Index\+Type $>$ \\
 KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan}{Neo\+FOAM\+::la\+::\+CSRMatrix\+Span}}$<$ Value\+Type, Index\+Type $>$\+::entry (\begin{DoxyParamCaption}\item[{const Index\+Type}]{i,  }\item[{const Index\+Type}]{j }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
 
@@ -125,7 +104,48 @@ Reference to the matrix element if it exists.
 \end{DoxyReturn}
 
 
-Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00047}{47}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
+Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00049}{49}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1la_1_1CSRMatrixSpan_a4d20b35762e46c3023cfa9c57c732cef}\label{classNeoFOAM_1_1la_1_1CSRMatrixSpan_a4d20b35762e46c3023cfa9c57c732cef} 
+\index{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}!entry@{entry}}
+\index{entry@{entry}!NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{entry()}{entry()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Index\+Type $>$ \\
+KOKKOS\+\_\+\+INLINE\+\_\+\+FUNCTION Value\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan}{Neo\+FOAM\+::la\+::\+CSRMatrix\+Span}}$<$ Value\+Type, Index\+Type $>$\+::entry (\begin{DoxyParamCaption}\item[{const Index\+Type}]{offset }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Direct access to a value given the offset. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em offset} & The offset, from 0, to the value. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Reference to the matrix element if it exists. 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00071}{71}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1la_1_1CSRMatrixSpan_abb3ff1204631734d8feb445deacff604}\label{classNeoFOAM_1_1la_1_1CSRMatrixSpan_abb3ff1204631734d8feb445deacff604} 
+\index{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}!span@{span}}
+\index{span@{span}!NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$@{NeoFOAM::la::CSRMatrixSpan$<$ ValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{span()}{span()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Index\+Type $>$ \\
+std\+::tuple$<$ std\+::span$<$ Value\+Type $>$, std\+::span$<$ Index\+Type $>$, std\+::span$<$ Index\+Type $>$ $>$ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrixSpan}{Neo\+FOAM\+::la\+::\+CSRMatrix\+Span}}$<$ Value\+Type, Index\+Type $>$\+::span (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns a structured binding of all containers. 
+
+\begin{DoxyReturn}{Returns}
+std\+::tuple\texorpdfstring{$<$}{<}std\+::span$<$\+Value\+Type$>$, std\+::span$<$\+Index\+Type$>$, std\+::span$<$\+Index\+Type$>$\texorpdfstring{$>$}{>} 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{CSRMatrix_8hpp_source_l00077}{77}} of file \mbox{\hyperlink{CSRMatrix_8hpp_source}{CSRMatrix.\+hpp}}.
 
 
 
