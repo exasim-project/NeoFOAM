@@ -261,4 +261,27 @@ TEST_CASE("CSRMatrix")
         REQUIRE(checkHost[7] == -8.0);
         REQUIRE(checkHost[8] == -9.0);
     }
+
+    SECTION("Span " + execName)
+    {
+        auto hostMatrix = sparseMatrix.copyToHost();
+        auto [value, column, row] = hostMatrix.span().span();
+        auto hostvaluesSparse = valuesSparse.copyToHost();
+        auto hostcolIdxSparse = colIdxSparse.copyToHost();
+        auto hostrowPtrsSparse = rowPtrsSparse.copyToHost();
+
+        REQUIRE(hostvaluesSparse.span().size() == value.size());
+        REQUIRE(hostcolIdxSparse.span().size() == column.size());
+        REQUIRE(hostrowPtrsSparse.span().size() == row.size());
+
+        for (size_t i = 0; i < value.size(); ++i)
+        {
+            REQUIRE(hostvaluesSparse.span()[i] == value[i]);
+            REQUIRE(hostcolIdxSparse.span()[i] == column[i]);
+        }
+        for (size_t i = 0; i < row.size(); ++i)
+        {
+            REQUIRE(hostrowPtrsSparse.span()[i] == row[i]);
+        }
+    }
 }

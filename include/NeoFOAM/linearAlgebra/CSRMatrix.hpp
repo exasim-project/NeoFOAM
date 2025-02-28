@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <tuple>
+
 #include "NeoFOAM/fields/field.hpp"
 
 
@@ -68,6 +70,15 @@ public:
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType offset) const { return values_[offset]; }
 
+    /**
+     * @brief Returns a structured binding of all containers.
+     * @return std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>>
+     */
+    std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>> span()
+    {
+        return {values_, colIdxs_, rowPtrs_};
+    }
+
 private:
 
     std::span<ValueType> values_;  //!< Span to the values of the CSR matrix.
@@ -119,13 +130,7 @@ public:
      * @brief Get the number of non-zero values in the matrix.
      * @return Number of non-zero values.
      */
-    [[nodiscard]] IndexType nValues() const { return values_.size(); }
-
-    /**
-     * @brief Get the number of column indices in the matrix.
-     * @return Number of column indices.
-     */
-    [[nodiscard]] IndexType nColIdxs() const { return colIdxs_.size(); }
+    [[nodiscard]] IndexType nNonZeros() const { return values_.size(); }
 
     /**
      * @brief Get a span to the values array.
