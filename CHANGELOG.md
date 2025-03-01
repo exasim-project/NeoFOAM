@@ -1,5 +1,6 @@
 # Version 0.2.0 (unreleased)
 ## Features
+- implicit BCs and Laplacian operator [#262](https://github.com/exasim-project/NeoFOAM/pull/262)
 - add basic vectorField implementation  [#260](https://github.com/exasim-project/NeoFOAM/pull/260)
 - add temporal operators inside expressions and the ability to solve linear system [#259 ](https://github.com/exasim-project/NeoFOAM/pull/259)
 - Add basic Ginkgo solver interface [#250](https://github.com/exasim-project/NeoFOAM/pull/250)

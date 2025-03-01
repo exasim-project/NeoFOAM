@@ -35,4 +35,10 @@ div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::sc
     return SpatialOperator(fvcc::DivOperator(dsl::Operator::Type::Implicit, faceFlux, phi));
 }
 
+SpatialOperator
+laplacian(fvcc::SurfaceField<NeoFOAM::scalar>& gamma, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+{
+    return SpatialOperator(fvcc::LaplacianOperator(dsl::Operator::Type::Implicit, gamma, phi));
+}
+
 } // namespace NeoFOAM

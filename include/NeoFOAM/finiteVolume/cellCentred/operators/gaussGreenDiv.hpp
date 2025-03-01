@@ -29,31 +29,44 @@ public:
 
 
     virtual void
-    div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    ) override;
+    div(VolumeField<scalar>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     virtual void
     div(la::LinearSystem<scalar, localIdx>& ls,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<scalar>& phi) override;
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     virtual void
-    div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    ) override;
+    div(Field<scalar>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     virtual VolumeField<scalar>
-    div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) override;
+    div(const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     virtual void
-    div(VolumeField<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
-    ) override;
+    div(VolumeField<Vector>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     virtual void
-    div(Field<Vector>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi
-    ) override;
+    div(Field<Vector>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     virtual VolumeField<Vector>
-    div(const SurfaceField<scalar>& faceFlux, VolumeField<Vector>& phi) override;
+    div(const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     std::unique_ptr<DivOperatorFactory> clone() const override;
 
