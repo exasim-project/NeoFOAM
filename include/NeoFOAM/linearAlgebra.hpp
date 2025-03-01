@@ -4,3 +4,4 @@
 #include "linearAlgebra/CSRMatrix.hpp"
 #include "linearAlgebra/linearSystem.hpp"
 #include "linearAlgebra/ginkgo.hpp"
+#include "linearAlgebra/petscSolver.hpp"
