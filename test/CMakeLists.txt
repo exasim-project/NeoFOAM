@@ -29,6 +29,8 @@ function(neofoam_unit_test TEST)
   target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
                                         Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
 
+  target_include_directories(${TEST} PRIVATE "${CMAKE_SOURCE_DIR}/test/catch2")
+
   if(NEOFOAM_WITH_SUNDIALS)
     target_link_libraries(${TEST} PRIVATE SUNDIALS::arkode)
   endif()
