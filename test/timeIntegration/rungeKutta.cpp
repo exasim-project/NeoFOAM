@@ -33,7 +33,9 @@ class YSquared : public OperatorMixin
 
 public:
 
-    YSquared(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
+    YSquared(VolumeField& field)
+        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
+    {}
 
     void explicitOperation(Field& source) const
     {
