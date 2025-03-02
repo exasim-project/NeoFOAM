@@ -106,22 +106,14 @@ TEST_CASE("MatrixAssembly - Petsc")
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
         NeoFOAM::Dictionary solverDict;
-        solverDict.insert("maxIters", 100);
-        solverDict.insert("relTol", float(1e-7));
+        // solverDict.insert("maxIters", 100);
+        // solverDict.insert("relTol", float(1e-7));
 
         // Create solver
         auto solver = NeoFOAM::la::petscSolver::petscSolver<NeoFOAM::scalar>(exec, solverDict);
 
         // Solve system
         solver.solve(linearSystem, x);
-
-        /*
-                auto hostX = x.copyToHost();
-                for (size_t i = 0; i < x.size(); ++i)
-                {
-                    CHECK(hostX[i] != 0.0);
-                }
-        */
     }
 }
 
