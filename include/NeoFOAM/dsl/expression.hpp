@@ -46,7 +46,7 @@ public:
     /* @brief perform all explicit operation and accumulate the result */
     Field<ValueType> explicitOperation(size_t nCells)
     {
-        Field<ValueType> source(exec_, nCells, 0.0);
+        Field<ValueType> source(exec_, nCells, zero<ValueType>::value);
         return explicitOperation(source);
     }
 

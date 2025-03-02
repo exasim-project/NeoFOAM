@@ -168,20 +168,22 @@ public:
     std::string getName() const { return "TemporalDummy"; }
 };
 
-NeoFOAM::scalar getField(const NeoFOAM::Field<NeoFOAM::scalar>& source)
+template<typename ValueType>
+ValueType getField(const NeoFOAM::Field<ValueType>& source)
 {
     auto sourceField = source.copyToHost();
     return sourceField.span()[0];
 }
 
-
-NeoFOAM::scalar getDiag(const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls)
+template<typename ValueType>
+ValueType getDiag(const la::LinearSystem<ValueType, NeoFOAM::localIdx> ls)
 {
     auto hostLs = ls.copyToHost();
     return hostLs.matrix().values()[0];
 }
 
-NeoFOAM::scalar getRhs(const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls)
+template<typename ValueType>
+ValueType getRhs(const la::LinearSystem<ValueType, NeoFOAM::localIdx> ls)
 {
     auto hostLs = ls.copyToHost();
     return hostLs.rhs().span()[0];
