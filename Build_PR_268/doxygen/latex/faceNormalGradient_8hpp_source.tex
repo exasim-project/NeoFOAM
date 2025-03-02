@@ -22,101 +22,104 @@
 \DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00018}00018\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred}{NeoFOAM::finiteVolume::cellCentred}}}
 \DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00019}00019\ \{}
 \DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00020}00020\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00021}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{00021}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory}}\ :}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00022}00022\ \ \ \ \ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory}{NeoFOAM::RuntimeSelectionFactory}}<}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00023}00023\ \ \ \ \ \ \ \ \ FaceNormalGradientFactory,}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00024}00024\ \ \ \ \ \ \ \ \ Parameters<const\ Executor\&,\ const\ UnstructuredMesh\&,\ const\ Input\&>>}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00025}00025\ \{}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00026}00026\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00027}00027\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00028}00028\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{keyword}{static}\ std::unique\_ptr<FaceNormalGradientFactory>}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00030}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_aa893b7ec2c8694a06a90a64fb1f4436b}{00030}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_aa893b7ec2c8694a06a90a64fb1f4436b}{create}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ uMesh,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ inputs)}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00031}00031\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00032}00032\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ input\ is\ dictionary\ the\ key\ is\ "{}interpolation"{}}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ std::string\ key\ =}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \ \ \ \ (std::holds\_alternative<NeoFOAM::Dictionary>(inputs))}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ std::get<NeoFOAM::Dictionary>(inputs).get<std::string>(\textcolor{stringliteral}{"{}faceNormalGradient"{}})}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::get<NeoFOAM::TokenList>(inputs).next<std::string>();}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00037}00037\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ keyExistsOrError(key);}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00039}00039\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ table().at(key)(exec,\ uMesh,\ inputs);}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00040}00040\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00041}00041\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00042}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a81116d7fa3b355eeb9867f7db16eb939}{00042}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a81116d7fa3b355eeb9867f7db16eb939}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}FaceNormalGradientFactory"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00043}00043\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00044}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a9fa297998e5d6f995310c1cd5b611035}{00044}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a9fa297998e5d6f995310c1cd5b611035}{FaceNormalGradientFactory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh)}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a7de7597f3d1695a99db7e15fc4cf4207}{exec\_}}(exec),\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_adfbc67e0bc91ac89c916d186a6e01f1b}{mesh\_}}(mesh)\ \{\};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00046}00046\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00047}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a323c26b60ec24c1302c4b60929826417}{00047}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a323c26b60ec24c1302c4b60929826417}{\string~FaceNormalGradientFactory}}()\ \{\}\ \textcolor{comment}{//\ Virtual\ destructor}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00048}00048\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00049}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a6d99ec623dd861f4dfba848a2b196ec2}{00049}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a6d99ec623dd861f4dfba848a2b196ec2}{faceNormalGrad}}(}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ volField,\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ surfaceField}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00051}00051\ \ \ \ \ )\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00052}00052\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00053}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a531ebecb00bb4c834cfe03cb62e1a8cc}{00053}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a531ebecb00bb4c834cfe03cb62e1a8cc}{deltaCoeffs}}()\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00054}00054\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00055}00055\ \ \ \ \ \textcolor{comment}{//\ Pure\ virtual\ function\ for\ cloning}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00056}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ae3301bb473ef47e124c526fbb13308eb}{00056}}\ \ \ \ \ \textcolor{keyword}{virtual}\ std::unique\_ptr<FaceNormalGradientFactory>\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ae3301bb473ef47e124c526fbb13308eb}{clone}}()\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00057}00057\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00058}00058\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00059}00059\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00060}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a7de7597f3d1695a99db7e15fc4cf4207}{00060}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a7de7597f3d1695a99db7e15fc4cf4207}{exec\_}};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00061}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_adfbc67e0bc91ac89c916d186a6e01f1b}{00061}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_adfbc67e0bc91ac89c916d186a6e01f1b}{mesh\_}};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00062}00062\ \};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00063}00063\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00064}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{00064}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient}}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00065}00065\ \{}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00066}00066\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00067}00067\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00021}00021\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00022}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{00022}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory}}\ :}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00023}00023\ \ \ \ \ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory}{NeoFOAM::RuntimeSelectionFactory}}<}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00024}00024\ \ \ \ \ \ \ \ \ FaceNormalGradientFactory<ValueType>,}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00025}00025\ \ \ \ \ \ \ \ \ Parameters<const\ Executor\&,\ const\ UnstructuredMesh\&,\ const\ Input\&>>}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00026}00026\ \{}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00027}00027\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00028}00028\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00029}00029\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{static}\ std::unique\_ptr<FaceNormalGradientFactory>}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00031}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a3a82942bd6859844043c680e10092090}{00031}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a3a82942bd6859844043c680e10092090}{create}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ uMesh,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ inputs)}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00032}00032\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ input\ is\ dictionary\ the\ key\ is\ "{}interpolation"{}}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ std::string\ key\ =}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ \ \ (std::holds\_alternative<NeoFOAM::Dictionary>(inputs))}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ std::get<NeoFOAM::Dictionary>(inputs).get<std::string>(\textcolor{stringliteral}{"{}faceNormalGradient"{}})}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::get<NeoFOAM::TokenList>(inputs).next<std::string>();}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00038}00038\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00039}00039\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory<ValueType>::keyExistsOrError}}(key);}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory<ValueType>::table}}().at(key)(exec,\ uMesh,\ inputs);}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00041}00041\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00043}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ad38ca8403c2098656c7af3e05c95752a}{00043}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ad38ca8403c2098656c7af3e05c95752a}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}FaceNormalGradientFactory"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00045}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_aed821507d443a878c257174b6f3f1074}{00045}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_aed821507d443a878c257174b6f3f1074}{FaceNormalGradientFactory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh)}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a9f89b927876cd6c2e1f0f4147d2f4fc6}{exec\_}}(exec),\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ae113a47d575069c06df3cfa66eab5693}{mesh\_}}(mesh)\ \{\};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00048}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a5f8e971286c37ab5e5398b6e59bbb4d4}{00048}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a5f8e971286c37ab5e5398b6e59bbb4d4}{\string~FaceNormalGradientFactory}}()\ \{\}\ \textcolor{comment}{//\ Virtual\ destructor}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00050}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a8375c6c6fd6f2db2a95987caf1238c79}{00050}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a8375c6c6fd6f2db2a95987caf1238c79}{faceNormalGrad}}(}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ volField,\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<ValueType>}}\&\ surfaceField}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00052}00052\ \ \ \ \ )\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00054}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ac9d8ba96a87a72cd7c3a141433ef5704}{00054}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ac9d8ba96a87a72cd7c3a141433ef5704}{deltaCoeffs}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{comment}{//\ Pure\ virtual\ function\ for\ cloning}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00057}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a035f789820e90bfe7b425d98a5c7665a}{00057}}\ \ \ \ \ \textcolor{keyword}{virtual}\ std::unique\_ptr<FaceNormalGradientFactory<ValueType>>\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a035f789820e90bfe7b425d98a5c7665a}{clone}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00059}00059\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00061}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a9f89b927876cd6c2e1f0f4147d2f4fc6}{00061}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_a9f89b927876cd6c2e1f0f4147d2f4fc6}{exec\_}};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00062}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ae113a47d575069c06df3cfa66eab5693}{00062}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory_ae113a47d575069c06df3cfa66eab5693}{mesh\_}};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00063}00063\ \};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00065}00065\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00066}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{00066}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient}}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00067}00067\ \{}
 \DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00068}00068\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00069}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_ae7379bd51330f20aa29d92e701616771}{00069}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_ae7379bd51330f20aa29d92e701616771}{FaceNormalGradient}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient}}\&\ faceNGrad)}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ :\ exec\_(faceNGrad.exec\_),\ mesh\_(faceNGrad.mesh\_),}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ faceNormalGradKernel\_(faceNGrad.faceNormalGradKernel\_-\/>clone())\ \{\};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00072}00072\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00073}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a84defa6ca51306794079a8298d3ba696}{00073}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a84defa6ca51306794079a8298d3ba696}{FaceNormalGradient}}(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient}}\&\&\ faceNGrad)}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ :\ exec\_(faceNGrad.exec\_),\ mesh\_(faceNGrad.mesh\_),}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ faceNormalGradKernel\_(std::move(faceNGrad.faceNormalGradKernel\_))\ \{\};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00076}00076\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00077}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a5670068be7bed40b459591c54c2eb505}{00077}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a5670068be7bed40b459591c54c2eb505}{FaceNormalGradient}}(}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh,}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ std::unique\_ptr<FaceNormalGradientFactory>\ interpolationKernel}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00081}00081\ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ :\ exec\_(exec),\ mesh\_(mesh),\ faceNormalGradKernel\_(std::move(interpolationKernel))\ \{\};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00083}00083\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00084}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a6018472abac5a1f1d2abbdd2b1eba0a1}{00084}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a6018472abac5a1f1d2abbdd2b1eba0a1}{FaceNormalGradient}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ input)}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ :\ exec\_(exec),\ mesh\_(mesh),}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ faceNormalGradKernel\_(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory}}::create(exec,\ mesh,\ input))\ \{\};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00087}00087\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00088}00088\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00089}00089\ \ \ \ \ \textcolor{keywordtype}{void}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00090}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a2bfebbb103217c4d5241ffee119480a5}{00090}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a2bfebbb103217c4d5241ffee119480a5}{faceNormalGrad}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ volField,\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ surfaceField)\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00091}00091\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ faceNormalGradKernel\_-\/>faceNormalGrad(volField,\ surfaceField);}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00093}00093\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00094}00094\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00095}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_aa08845982df055b39a72b959e34eae50}{00095}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_aa08845982df055b39a72b959e34eae50}{deltaCoeffs}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ faceNormalGradKernel\_-\/>deltaCoeffs();\ \}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00069}00069\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00071}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_ad6cec571a3840f09409e856f01d1529a}{00071}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_ad6cec571a3840f09409e856f01d1529a}{FaceNormalGradient}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient}}\&\ faceNGrad)}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ :\ exec\_(faceNGrad.exec\_),\ mesh\_(faceNGrad.mesh\_),}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ faceNormalGradKernel\_(faceNGrad.faceNormalGradKernel\_-\/>clone())\ \{\};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00075}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a6f2e14cbc0f86effc906a1c848d258cf}{00075}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a6f2e14cbc0f86effc906a1c848d258cf}{FaceNormalGradient}}(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient}}\&\&\ faceNGrad)}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ :\ exec\_(faceNGrad.exec\_),\ mesh\_(faceNGrad.mesh\_),}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ faceNormalGradKernel\_(std::move(faceNGrad.faceNormalGradKernel\_))\ \{\};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00079}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a1035ed928dd1afa071e8f8711c08e361}{00079}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a1035ed928dd1afa071e8f8711c08e361}{FaceNormalGradient}}(}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh,}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ std::unique\_ptr<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory<ValueType>}}>\ faceNormalGradient}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00083}00083\ \ \ \ \ )}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ :\ exec\_(exec),\ mesh\_(mesh),\ faceNormalGradKernel\_(std::move(faceNormalGradient))\ \{\};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00086}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a40674edddcb4ef454faa66f54d795cab}{00086}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a40674edddcb4ef454faa66f54d795cab}{FaceNormalGradient}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ input)}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ :\ exec\_(exec),\ mesh\_(mesh),}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ faceNormalGradKernel\_(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory}{FaceNormalGradientFactory}}<ValueType>::create(exec,\ mesh,\ input))\ \{\};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00090}00090\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00091}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_acd4fd52a7ae1d64191bf15b7d61b33f2}{00091}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_acd4fd52a7ae1d64191bf15b7d61b33f2}{faceNormalGrad}}(}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ volField,\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<ValueType>}}\&\ surfaceField}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00093}00093\ \ \ \ \ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00094}00094\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ faceNormalGradKernel\_-\/>faceNormalGrad(volField,\ surfaceField);}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00096}00096\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00097}00097\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00098}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_af6dc8e926aea94160dbdae0e48663793}{00098}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_af6dc8e926aea94160dbdae0e48663793}{faceNormalGrad}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ volField)\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00099}00099\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00100}00100\ \ \ \ \ \ \ \ \ std::string\ nameInterpolated\ =\ \textcolor{stringliteral}{"{}interpolated\_"{}}\ +\ volField.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a34822743f4c8549b6573fc3abae17b76}{name}};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\ surfaceField(}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ \ \ exec\_,\ nameInterpolated,\ mesh\_,\ \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_ae3a73bdcd36c3ff302987bac9671ed1d}{createCalculatedBCs}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceBoundary}{SurfaceBoundary<scalar>}}>(mesh\_)}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00103}00103\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a2bfebbb103217c4d5241ffee119480a5}{faceNormalGrad}}(volField,\ surfaceField);}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ surfaceField;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00106}00106\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00107}00107\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00108}00108\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00109}00109\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00110}00110\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ exec\_;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00111}00111\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh\_;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00112}00112\ \ \ \ \ std::unique\_ptr<FaceNormalGradientFactory>\ faceNormalGradKernel\_;}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00113}00113\ \};}
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00114}00114\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00115}00115\ }
-\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00116}00116\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00098}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a0a4d8eb5e7b0d518680276abd3261e2d}{00098}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a0a4d8eb5e7b0d518680276abd3261e2d}{deltaCoeffs}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ faceNormalGradKernel\_-\/>deltaCoeffs();\ \}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00099}00099\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00100}00100\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00101}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a61b0c576cc20dee072ff17acb9f1a0b5}{00101}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<ValueType>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_a61b0c576cc20dee072ff17acb9f1a0b5}{faceNormalGrad}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ volField)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00102}00102\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00103}00103\ \ \ \ \ \ \ \ \ std::string\ nameInterpolated\ =\ \textcolor{stringliteral}{"{}interpolated\_"{}}\ +\ volField.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a34822743f4c8549b6573fc3abae17b76}{name}};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\ surfaceField(}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \ \ \ \ exec\_,\ nameInterpolated,\ mesh\_,\ \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_ae3a73bdcd36c3ff302987bac9671ed1d}{createCalculatedBCs}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceBoundary}{SurfaceBoundary<scalar>}}>(mesh\_)}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient_acd4fd52a7ae1d64191bf15b7d61b33f2}{faceNormalGrad}}(volField,\ surfaceField);}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ surfaceField;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00109}00109\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00110}00110\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00111}00111\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00112}00112\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00113}00113\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ exec\_;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00114}00114\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00115}00115\ \ \ \ \ std::unique\_ptr<FaceNormalGradientFactory<ValueType>>\ faceNormalGradKernel\_;}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00116}00116\ \};}
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00117}00117\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{faceNormalGradient_8hpp_source_l00119}00119\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
