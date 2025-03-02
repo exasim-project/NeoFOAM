@@ -81,6 +81,8 @@ class LaplacianOperator : public dsl::OperatorMixin<VolumeField<scalar>>
 
 public:
 
+    using FieldValueType = scalar;
+
     // copy constructor
     LaplacianOperator(const LaplacianOperator& lapOp)
         : dsl::OperatorMixin<VolumeField<scalar>>(

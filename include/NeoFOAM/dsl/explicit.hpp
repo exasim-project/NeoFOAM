@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
@@ -21,21 +22,21 @@ namespace NeoFOAM::dsl::exp
 {
 
 
-SpatialOperator
+SpatialOperator<scalar>
 div(const fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    return SpatialOperator(fvcc::DivOperator(dsl::Operator::Type::Explicit, faceFlux, phi));
+    return SpatialOperator<scalar>(fvcc::DivOperator(dsl::Operator::Type::Explicit, faceFlux, phi));
 }
 
-SpatialOperator div(const fvcc::SurfaceField<NeoFOAM::scalar>& flux)
+SpatialOperator<scalar> div(const fvcc::SurfaceField<NeoFOAM::scalar>& flux)
 {
-    return SpatialOperator(fvcc::SurfaceIntegrate(flux));
+    return SpatialOperator<scalar>(fvcc::SurfaceIntegrate<scalar>(flux));
 }
 
-SpatialOperator
+SpatialOperator<scalar>
 Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
-    return SpatialOperator(fvcc::SourceTerm(dsl::Operator::Type::Explicit, coeff, phi));
+    return SpatialOperator<scalar>(fvcc::SourceTerm(dsl::Operator::Type::Explicit, coeff, phi));
 }
 
 

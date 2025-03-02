@@ -20,6 +20,8 @@ class SourceTerm : public dsl::OperatorMixin<VolumeField<scalar>>
 
 public:
 
+    using FieldValueType = scalar;
+
     SourceTerm(
         dsl::Operator::Type termType, VolumeField<scalar>& coefficients, VolumeField<scalar>& field
     )

@@ -19,15 +19,17 @@ namespace NeoFOAM::dsl
 
 template<typename T>
 concept HasExplicitOperator = requires(T t) {
+    // using ValueType = typename T::FieldValueType;
     {
-        t.explicitOperation(std::declval<Field<scalar>&>())
+        t.explicitOperation(std::declval<Field<typename T::FieldValueType>&>())
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
 template<typename T>
 concept HasImplicitOperator = requires(T t) {
+    // using ValueType = typename T::FieldValueType;
     {
-        t.implicitOperation(std::declval<la::LinearSystem<scalar, localIdx>&>())
+        t.implicitOperation(std::declval<la::LinearSystem<typename T::FieldValueType, localIdx>&>())
     } -> std::same_as<void>; // Adjust return type and arguments as needed
 };
 
@@ -46,40 +48,54 @@ concept IsSpatialOperator = HasExplicitOperator<T> || HasImplicitOperator<T>;
  *
  * @ingroup dsl
  */
+template<typename ValueType>
 class SpatialOperator
 {
 public:
+
+    using FieldValueType = ValueType;
 
     template<IsSpatialOperator T>
     SpatialOperator(T cls) : model_(std::make_unique<OperatorModel<T>>(std::move(cls)))
     {}
 
-    SpatialOperator(const SpatialOperator& eqnOperator);
+    SpatialOperator(const SpatialOperator& eqnOperator) : model_(eqnOperator.model_->clone()) {}
 
-    SpatialOperator(SpatialOperator&& eqnOperator);
+    SpatialOperator(SpatialOperator&& eqnOperator) : model_(std::move(eqnOperator.model_)) {}
 
-    SpatialOperator& operator=(const SpatialOperator& eqnOperator);
+    SpatialOperator& operator=(const SpatialOperator& eqnOperator)
+    {
+        model_ = eqnOperator.model_->clone();
+        return *this;
+    }
 
-    void explicitOperation(Field<scalar>& source);
+    void explicitOperation(Field<ValueType>& source) { model_->explicitOperation(source); }
 
-    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls);
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
+    {
+        model_->implicitOperation(ls);
+    }
 
-    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const;
+    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
+    {
+        return model_->createEmptyLinearSystem();
+    }
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
-    Operator::Type getType() const;
+    Operator::Type getType() const { return model_->getType(); }
 
-    std::string getName() const;
+    std::string getName() const { return model_->getName(); }
 
-    Coeff& getCoefficient();
 
-    Coeff getCoefficient() const;
+    Coeff& getCoefficient() { return model_->getCoefficient(); }
+
+    Coeff getCoefficient() const { return model_->getCoefficient(); }
 
     /* @brief Given an input this function reads required coeffs */
-    void build(const Input& input);
+    void build(const Input& input) { model_->build(input); }
 
     /* @brief Get the executor */
-    const Executor& exec() const;
+    const Executor& exec() const { return model_->exec(); }
 
 
 private:
@@ -91,11 +107,11 @@ private:
     {
         virtual ~OperatorConcept() = default;
 
-        virtual void explicitOperation(Field<scalar>& source) = 0;
+        virtual void explicitOperation(Field<ValueType>& source) = 0;
 
-        virtual void implicitOperation(la::LinearSystem<scalar, localIdx>& ls) = 0;
+        virtual void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls) = 0;
 
-        virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
+        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -129,7 +145,7 @@ private:
         /* returns the name of the operator */
         std::string getName() const override { return concreteOp_.getName(); }
 
-        virtual void explicitOperation(Field<scalar>& source) override
+        virtual void explicitOperation(Field<ValueType>& source) override
         {
             if constexpr (HasExplicitOperator<ConcreteOperatorType>)
             {
@@ -137,7 +153,7 @@ private:
             }
         }
 
-        virtual void implicitOperation(la::LinearSystem<scalar, localIdx>& ls) override
+        virtual void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls) override
         {
             if constexpr (HasImplicitOperator<ConcreteOperatorType>)
             {
@@ -145,7 +161,7 @@ private:
             }
         }
 
-        virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override
+        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
         {
             if constexpr (HasImplicitOperator<ConcreteOperatorType>)
             {
@@ -155,15 +171,13 @@ private:
             // only need to avoid compiler warning about missing return statement
             // this code path should never be reached as we call implicitOperation on an explicit
             // operator
-            NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
-            NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
+            NeoFOAM::Field<ValueType> values(exec(), 1, 0.0);
+            Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
             NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
-            NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-                values, colIdx, rowPtrs
-            );
+            NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-            NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 1, 0.0);
-            return la::LinearSystem<scalar, localIdx>(csrMatrix, rhs, "custom");
+            NeoFOAM::Field<ValueType> rhs(exec(), 1, 0.0);
+            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs, "custom");
         }
 
         /* @brief Given an input this function reads required coeffs */
@@ -194,25 +208,44 @@ private:
 };
 
 
-SpatialOperator operator*(scalar scalarCoeff, SpatialOperator rhs);
-
-SpatialOperator operator*(const Field<scalar>& coeffField, SpatialOperator rhs);
-
-SpatialOperator operator*(const Coeff& coeff, SpatialOperator rhs);
-
-template<typename CoeffFunction>
-    requires std::invocable<CoeffFunction&, size_t>
-SpatialOperator operator*([[maybe_unused]] CoeffFunction coeffFunc, const SpatialOperator& lhs)
+template<typename ValueType>
+SpatialOperator<ValueType> operator*(scalar scalarCoeff, SpatialOperator<ValueType> rhs)
 {
-    // TODO implement
-    NF_ERROR_EXIT("Not implemented");
-    SpatialOperator result = lhs;
-    // if (!result.getCoefficient().useSpan)
-    // {
-    //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
-    // }
-    // map(result.exec(), result.getCoefficient().values, scaleFunc);
+    SpatialOperator<ValueType> result = rhs;
+    result.getCoefficient() *= scalarCoeff;
     return result;
 }
+
+template<typename ValueType>
+SpatialOperator<ValueType>
+operator*(const Field<scalar>& coeffField, SpatialOperator<ValueType> rhs)
+{
+    SpatialOperator<ValueType> result = rhs;
+    result.getCoefficient() *= Coeff(coeffField);
+    return result;
+}
+
+template<typename ValueType>
+SpatialOperator<ValueType> operator*(const Coeff& coeff, SpatialOperator<ValueType> rhs)
+{
+    SpatialOperator<ValueType> result = rhs;
+    result.getCoefficient() *= coeff;
+    return result;
+}
+
+// template<typename CoeffFunction>
+//     requires std::invocable<CoeffFunction&, size_t>
+// SpatialOperator operator*([[maybe_unused]] CoeffFunction coeffFunc, const SpatialOperator& lhs)
+// {
+//     // TODO implement
+//     NF_ERROR_EXIT("Not implemented");
+//     SpatialOperator result = lhs;
+//     // if (!result.getCoefficient().useSpan)
+//     // {
+//     //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
+//     // }
+//     // map(result.exec(), result.getCoefficient().values, scaleFunc);
+//     return result;
+// }
 
 } // namespace NeoFOAM::dsl

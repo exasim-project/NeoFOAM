@@ -23,7 +23,7 @@ class Expression
 public:
 
     Expression(
-        dsl::Expression expr,
+        dsl::Expression<ValueType> expr,
         VolumeField<ValueType>& psi,
         [[maybe_unused]] const Dictionary& fvSchemes,
         [[maybe_unused]] const Dictionary& fvSolution
@@ -231,7 +231,7 @@ public:
 private:
 
     VolumeField<ValueType>& psi_;
-    dsl::Expression expr_;
+    dsl::Expression<ValueType> expr_;
     const Dictionary& fvSchemes_;
     const Dictionary& fvSolution_;
     la::LinearSystem<ValueType, IndexType> ls_;

@@ -26,6 +26,8 @@ class Dummy : public OperatorMixin
 
 public:
 
+    using FieldValueType = NeoFOAM::scalar;
+
     Dummy(VolumeField& field)
         : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
     {}
@@ -93,6 +95,8 @@ class TemporalDummy : public OperatorMixin
 {
 
 public:
+
+    using FieldValueType = NeoFOAM::scalar;
 
     TemporalDummy(VolumeField& field)
         : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)

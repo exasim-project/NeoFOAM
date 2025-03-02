@@ -25,7 +25,7 @@ TEST_CASE("SpatialOperator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        dsl::SpatialOperator b = Dummy(vf);
+        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy(vf);
 
         REQUIRE(b.getName() == "Dummy");
         REQUIRE(b.getType() == Operator::Type::Explicit);
@@ -40,9 +40,9 @@ TEST_CASE("SpatialOperator")
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        dsl::SpatialOperator c = 2.0 * dsl::SpatialOperator(Dummy(vf));
-        dsl::SpatialOperator d = fB * dsl::SpatialOperator(Dummy(vf));
-        dsl::SpatialOperator e = Coeff(-3, fB) * dsl::SpatialOperator(Dummy(vf));
+        dsl::SpatialOperator c = 2.0 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
+        dsl::SpatialOperator d = fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
+        dsl::SpatialOperator e = Coeff(-3, fB) * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();
@@ -73,7 +73,7 @@ TEST_CASE("SpatialOperator")
 
         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        dsl::SpatialOperator b = Dummy(vf, Operator::Type::Implicit);
+        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy(vf, Operator::Type::Implicit);
 
         REQUIRE(b.getName() == "Dummy");
         REQUIRE(b.getType() == Operator::Type::Implicit);
@@ -93,10 +93,13 @@ TEST_CASE("SpatialOperator")
         BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
-        dsl::SpatialOperator c = 2 * dsl::SpatialOperator(Dummy(vf, Operator::Type::Implicit));
-        dsl::SpatialOperator d = fB * dsl::SpatialOperator(Dummy(vf, Operator::Type::Implicit));
+        dsl::SpatialOperator c =
+            2 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
+        dsl::SpatialOperator d =
+            fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
         dsl::SpatialOperator e =
-            Coeff(-3, fB) * dsl::SpatialOperator(Dummy(vf, Operator::Type::Implicit));
+            Coeff(-3, fB)
+            * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();

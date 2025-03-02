@@ -19,6 +19,7 @@ namespace NeoFOAM::dsl
 {
 
 
+template<typename ValueType>
 class Expression
 {
 public:
@@ -43,14 +44,14 @@ public:
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<scalar> explicitOperation(size_t nCells)
+    Field<ValueType> explicitOperation(size_t nCells)
     {
-        Field<scalar> source(exec_, nCells, 0.0);
+        Field<ValueType> source(exec_, nCells, 0.0);
         return explicitOperation(source);
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<scalar> explicitOperation(Field<scalar>& source)
+    Field<ValueType> explicitOperation(Field<ValueType>& source)
     {
         for (auto& op : spatialOperators_)
         {
@@ -62,7 +63,7 @@ public:
         return source;
     }
 
-    Field<scalar> explicitOperation(Field<scalar>& source, scalar t, scalar dt)
+    Field<ValueType> explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
     {
         for (auto& op : temporalOperators_)
         {
@@ -75,7 +76,7 @@ public:
     }
 
     /* @brief perform all implicit operation and accumulate the result */
-    la::LinearSystem<scalar, localIdx> implicitOperation()
+    la::LinearSystem<ValueType, localIdx> implicitOperation()
     {
         auto ls = spatialOperators_[0].createEmptyLinearSystem();
         for (auto& op : spatialOperators_)
@@ -88,7 +89,7 @@ public:
         return ls;
     }
 
-    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt)
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
     {
         for (auto& op : temporalOperators_)
         {
@@ -100,9 +101,12 @@ public:
     }
 
 
-    void addOperator(const SpatialOperator& oper) { spatialOperators_.push_back(oper); }
+    void addOperator(const SpatialOperator<ValueType>& oper) { spatialOperators_.push_back(oper); }
 
-    void addOperator(const TemporalOperator& oper) { temporalOperators_.push_back(oper); }
+    void addOperator(const TemporalOperator<ValueType>& oper)
+    {
+        temporalOperators_.push_back(oper);
+    }
 
     void addExpression(const Expression& equation)
     {
@@ -121,13 +125,19 @@ public:
     size_t size() const { return temporalOperators_.size() + spatialOperators_.size(); }
 
     // getters
-    const std::vector<TemporalOperator>& temporalOperators() const { return temporalOperators_; }
+    const std::vector<TemporalOperator<ValueType>>& temporalOperators() const
+    {
+        return temporalOperators_;
+    }
 
-    const std::vector<SpatialOperator>& spatialOperators() const { return spatialOperators_; }
+    const std::vector<SpatialOperator<ValueType>>& spatialOperators() const
+    {
+        return spatialOperators_;
+    }
 
-    std::vector<TemporalOperator>& temporalOperators() { return temporalOperators_; }
+    std::vector<TemporalOperator<ValueType>>& temporalOperators() { return temporalOperators_; }
 
-    std::vector<SpatialOperator>& spatialOperators() { return spatialOperators_; }
+    std::vector<SpatialOperator<ValueType>>& spatialOperators() { return spatialOperators_; }
 
     const Executor& exec() const { return exec_; }
 
@@ -135,43 +145,50 @@ private:
 
     const Executor exec_;
 
-    std::vector<TemporalOperator> temporalOperators_;
+    std::vector<TemporalOperator<ValueType>> temporalOperators_;
 
-    std::vector<SpatialOperator> spatialOperators_;
+    std::vector<SpatialOperator<ValueType>> spatialOperators_;
 };
 
-[[nodiscard]] inline Expression operator+(Expression lhs, const Expression& rhs)
+template<typename ValueType>
+[[nodiscard]] inline Expression<ValueType>
+operator+(Expression<ValueType> lhs, const Expression<ValueType>& rhs)
 {
     lhs.addExpression(rhs);
     return lhs;
 }
 
-[[nodiscard]] inline Expression operator+(Expression lhs, const SpatialOperator& rhs)
+template<typename ValueType>
+[[nodiscard]] inline Expression<ValueType>
+operator+(Expression<ValueType> lhs, const SpatialOperator<ValueType>& rhs)
 {
     lhs.addOperator(rhs);
     return lhs;
 }
 
 template<typename leftOperator, typename rightOperator>
-[[nodiscard]] inline Expression operator+(leftOperator lhs, rightOperator rhs)
+[[nodiscard]] inline Expression<typename leftOperator::FieldValueType>
+operator+(leftOperator lhs, rightOperator rhs)
 {
-    Expression expr(lhs.exec());
+    using ValueType = typename leftOperator::FieldValueType;
+    Expression<ValueType> expr(lhs.exec());
     expr.addOperator(lhs);
     expr.addOperator(rhs);
     return expr;
 }
 
-[[nodiscard]] inline Expression operator+(const SpatialOperator& lhs, const SpatialOperator& rhs)
-{
-    Expression expr(lhs.exec());
-    expr.addOperator(lhs);
-    expr.addOperator(rhs);
-    return expr;
-}
+// [[nodiscard]] inline Expression operator+(const SpatialOperator& lhs, const SpatialOperator& rhs)
+// {
+//     Expression expr(lhs.exec());
+//     expr.addOperator(lhs);
+//     expr.addOperator(rhs);
+//     return expr;
+// }
 
-[[nodiscard]] inline Expression operator*(scalar scale, const Expression& es)
+template<typename ValueType>
+[[nodiscard]] inline Expression<ValueType> operator*(scalar scale, const Expression<ValueType>& es)
 {
-    Expression expr(es.exec());
+    Expression<ValueType> expr(es.exec());
     for (const auto& oper : es.temporalOperators())
     {
         expr.addOperator(scale * oper);
@@ -183,34 +200,41 @@ template<typename leftOperator, typename rightOperator>
     return expr;
 }
 
-[[nodiscard]] inline Expression operator-(Expression lhs, const Expression& rhs)
+
+template<typename ValueType>
+[[nodiscard]] inline Expression<ValueType>
+operator-(Expression<ValueType> lhs, const Expression<ValueType>& rhs)
 {
     lhs.addExpression(-1.0 * rhs);
     return lhs;
 }
 
-[[nodiscard]] inline Expression operator-(Expression lhs, const SpatialOperator& rhs)
+template<typename ValueType>
+[[nodiscard]] inline Expression<ValueType>
+operator-(Expression<ValueType> lhs, const SpatialOperator<ValueType>& rhs)
 {
     lhs.addOperator(-1.0 * rhs);
     return lhs;
 }
 
 template<typename leftOperator, typename rightOperator>
-[[nodiscard]] inline Expression operator-(leftOperator lhs, rightOperator rhs)
+[[nodiscard]] inline Expression<typename leftOperator::FieldValueType>
+operator-(leftOperator lhs, rightOperator rhs)
 {
-    Expression expr(lhs.exec());
+    using ValueType = typename leftOperator::FieldValueType;
+    Expression<ValueType> expr(lhs.exec());
     expr.addOperator(lhs);
     expr.addOperator(Coeff(-1) * rhs);
     return expr;
 }
 
-[[nodiscard]] inline Expression operator-(const SpatialOperator& lhs, const SpatialOperator& rhs)
-{
-    Expression expr(lhs.exec());
-    expr.addOperator(lhs);
-    expr.addOperator(Coeff(-1) * rhs);
-    return expr;
-}
+// [[nodiscard]] inline Expression operator-(const SpatialOperator& lhs, const SpatialOperator& rhs)
+// {
+//     Expression expr(lhs.exec());
+//     expr.addOperator(lhs);
+//     expr.addOperator(Coeff(-1) * rhs);
+//     return expr;
+// }
 
 
 } // namespace NeoFOAM::dsl

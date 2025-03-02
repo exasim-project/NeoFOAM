@@ -22,7 +22,7 @@ template<typename T>
 concept HasTemporalExplicitOperator = requires(T t) {
     {
         t.explicitOperation(
-            std::declval<Field<NeoFOAM::scalar>&>(),
+            std::declval<Field<typename T::FieldValueType>&>(),
             std::declval<NeoFOAM::scalar>(),
             std::declval<NeoFOAM::scalar>()
         )
@@ -33,7 +33,7 @@ template<typename T>
 concept HasTemporalImplicitOperator = requires(T t) {
     {
         t.implicitOperation(
-            std::declval<la::LinearSystem<scalar, localIdx>&>(),
+            std::declval<la::LinearSystem<typename T::FieldValueType, localIdx>&>(),
             std::declval<NeoFOAM::scalar>(),
             std::declval<NeoFOAM::scalar>()
         )
@@ -55,39 +55,50 @@ concept HasTemporalOperator = HasTemporalExplicitOperator<T> || HasTemporalImpli
  *
  * @ingroup dsl
  */
+template<typename ValueType>
 class TemporalOperator
 {
 public:
 
+    using FieldValueType = ValueType;
 
     template<HasTemporalOperator T>
     TemporalOperator(T cls) : model_(std::make_unique<TemporalOperatorModel<T>>(std::move(cls)))
     {}
 
-    TemporalOperator(const TemporalOperator& eqnOperator);
+    TemporalOperator(const TemporalOperator& eqnOperator) : model_ {eqnOperator.model_->clone()} {}
 
-    TemporalOperator(TemporalOperator&& eqnOperator);
+    TemporalOperator(TemporalOperator&& eqnOperator) : model_ {std::move(eqnOperator.model_)} {}
 
-    void explicitOperation(Field<scalar>& source, scalar t, scalar dt);
+    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
+    {
+        model_->explicitOperation(source, t, dt);
+    }
 
-    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt);
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
+    {
+        model_->implicitOperation(ls, t, dt);
+    }
 
-    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const;
+    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
+    {
+        return model_->createEmptyLinearSystem();
+    }
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
-    Operator::Type getType() const;
+    Operator::Type getType() const { return model_->getType(); }
 
-    std::string getName() const;
+    std::string getName() const { return model_->getName(); }
 
-    Coeff& getCoefficient();
+    Coeff& getCoefficient() { return model_->getCoefficient(); }
 
-    Coeff getCoefficient() const;
+    Coeff getCoefficient() const { return model_->getCoefficient(); }
 
     /* @brief Given an input this function reads required coeffs */
-    void build(const Input& input);
+    void build(const Input& input) { model_->build(input); }
 
     /* @brief Get the executor */
-    const Executor& exec() const;
+    const Executor& exec() const { return model_->exec(); }
 
 
 private:
@@ -99,12 +110,12 @@ private:
     {
         virtual ~TemporalOperatorConcept() = default;
 
-        virtual void explicitOperation(Field<scalar>& source, scalar t, scalar dt) = 0;
+        virtual void explicitOperation(Field<ValueType>& source, scalar t, scalar dt) = 0;
 
         virtual void
-        implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt) = 0;
+        implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt) = 0;
 
-        virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const = 0;
+        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -140,7 +151,7 @@ private:
         /* returns the name of the operator */
         std::string getName() const override { return concreteOp_.getName(); }
 
-        virtual void explicitOperation(Field<scalar>& source, scalar t, scalar dt) override
+        virtual void explicitOperation(Field<ValueType>& source, scalar t, scalar dt) override
         {
             if constexpr (HasTemporalExplicitOperator<ConcreteTemporalOperatorType>)
             {
@@ -149,7 +160,7 @@ private:
         }
 
         virtual void
-        implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt) override
+        implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt) override
         {
             if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
             {
@@ -157,7 +168,7 @@ private:
             }
         }
 
-        virtual la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override
+        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
         {
             // if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
             // {
@@ -167,14 +178,12 @@ private:
             // only need to avoid compiler warning about missing return statement
             // this code path should never be reached as we call implicitOperation on an explicit
             // operator
-            NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
+            NeoFOAM::Field<ValueType> values(exec(), 1, 0.0);
             NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
             NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
-            NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-                values, colIdx, rowPtrs
-            );
+            NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-            NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 1, 0.0);
+            NeoFOAM::Field<ValueType> rhs(exec(), 1, 0.0);
             return la::LinearSystem<scalar, localIdx>(csrMatrix, rhs, "custom");
         }
 
@@ -206,26 +215,46 @@ private:
 };
 
 
-TemporalOperator operator*(scalar scalarCoeff, TemporalOperator rhs);
-
-TemporalOperator operator*(const Field<scalar>& coeffField, TemporalOperator rhs);
-
-TemporalOperator operator*(const Coeff& coeff, TemporalOperator rhs);
-
-template<typename CoeffFunction>
-    requires std::invocable<CoeffFunction&, size_t>
-TemporalOperator operator*([[maybe_unused]] CoeffFunction coeffFunc, const TemporalOperator& lhs)
+template<typename ValueType>
+TemporalOperator<ValueType> operator*(scalar scalarCoeff, TemporalOperator<ValueType> rhs)
 {
-    // TODO implement
-    NF_ERROR_EXIT("Not implemented");
-    TemporalOperator result = lhs;
-    // if (!result.getCoefficient().useSpan)
-    // {
-    //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
-    // }
-    // map(result.exec(), result.getCoefficient().values, scaleFunc);
+    TemporalOperator<ValueType> result = rhs;
+    result.getCoefficient() *= scalarCoeff;
     return result;
 }
+
+template<typename ValueType>
+TemporalOperator<ValueType>
+operator*(const Field<scalar>& coeffField, TemporalOperator<ValueType> rhs)
+{
+    TemporalOperator<ValueType> result = rhs;
+    result.getCoefficient() *= Coeff(coeffField);
+    return result;
+}
+
+template<typename ValueType>
+TemporalOperator<ValueType> operator*(const Coeff& coeff, TemporalOperator<ValueType> rhs)
+{
+    TemporalOperator<ValueType> result = rhs;
+    result.getCoefficient() *= coeff;
+    return result;
+}
+
+// template<typename CoeffFunction>
+//     requires std::invocable<CoeffFunction&, size_t>
+// TemporalOperator<ValueType> operator*([[maybe_unused]] CoeffFunction coeffFunc, const
+// TemporalOperator<ValueType>& lhs)
+// {
+//     // TODO implement
+//     NF_ERROR_EXIT("Not implemented");
+//     TemporalOperator result = lhs;
+//     // if (!result.getCoefficient().useSpan)
+//     // {
+//     //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
+//     // }
+//     // map(result.exec(), result.getCoefficient().values, scaleFunc);
+//     return result;
+// }
 
 
 } // namespace NeoFOAM::dsl
