@@ -14,7 +14,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-class GaussGreenLaplacian : public LaplacianOperatorFactory::Register<GaussGreenLaplacian>
+class GaussGreenLaplacian : public LaplacianOperatorFactory<scalar>::Register<GaussGreenLaplacian>
 {
 public:
 

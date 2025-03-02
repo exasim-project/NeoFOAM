@@ -40,7 +40,7 @@ SpatialOperator<scalar>
 laplacian(fvcc::SurfaceField<NeoFOAM::scalar>& gamma, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
     return SpatialOperator<scalar>(
-        fvcc::LaplacianOperator(dsl::Operator::Type::Implicit, gamma, phi)
+        fvcc::LaplacianOperator<scalar>(dsl::Operator::Type::Implicit, gamma, phi)
     );
 }
 

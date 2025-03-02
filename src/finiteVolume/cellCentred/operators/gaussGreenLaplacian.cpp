@@ -220,7 +220,7 @@ void GaussGreenLaplacian::laplacian(
 };
 
 
-std::unique_ptr<LaplacianOperatorFactory> GaussGreenLaplacian::clone() const
+std::unique_ptr<LaplacianOperatorFactory<scalar>> GaussGreenLaplacian::clone() const
 {
     return std::make_unique<GaussGreenLaplacian>(*this);
 }
