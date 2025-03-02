@@ -8,7 +8,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-// instiate the template class
+// instantiate the template class
 template class GaussGreenLaplacian<scalar>;
 // template class GaussGreenLaplacian<Vector>;
 
