@@ -53,7 +53,7 @@ NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
 
 template<typename FieldType>
 NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int>
-ginkgoMatrix(Expression& exp, FieldType& solution)
+ginkgoMatrix(Expression<typename FieldType::ElementType>& exp, FieldType& solution)
 {
     using ValueType = typename FieldType::ElementType;
     auto vol = solution.mesh().cellVolumes().span();
@@ -104,7 +104,7 @@ ginkgoMatrix(Expression& exp, FieldType& solution)
  */
 template<typename FieldType>
 void solve(
-    Expression& exp,
+    Expression<typename FieldType::ElementType>& exp,
     FieldType& solution,
     scalar t,
     scalar dt,

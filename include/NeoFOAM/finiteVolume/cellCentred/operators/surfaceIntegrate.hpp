@@ -84,6 +84,8 @@ class SurfaceIntegrate
 
 public:
 
+    using FieldValueType = ValueType;
+
     SurfaceIntegrate(const SurfaceField<ValueType>& flux)
         : flux_(flux), type_(dsl::Operator::Type::Explicit), coeffs_(1.0) {};
 

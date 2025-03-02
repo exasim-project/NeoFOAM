@@ -20,6 +20,8 @@ class DdtOperator : public dsl::OperatorMixin<VolumeField<scalar>>
 
 public:
 
+    using FieldValueType = scalar;
+
     DdtOperator(dsl::Operator::Type termType, VolumeField<scalar>& field)
         : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), dsl::Coeff(1.0), field, termType),
           sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {

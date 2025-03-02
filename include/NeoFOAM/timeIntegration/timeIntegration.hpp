@@ -25,7 +25,8 @@ class TimeIntegratorBase :
 
 public:
 
-    using Expression = NeoFOAM::dsl::Expression;
+    using ValueType = typename SolutionType::FieldValueType;
+    using Expression = NeoFOAM::dsl::Expression<ValueType>;
 
     static std::string name() { return "timeIntegrationFactory"; }
 
@@ -60,7 +61,9 @@ class TimeIntegration
 
 public:
 
-    using Expression = NeoFOAM::dsl::Expression;
+
+    using ValueType = typename SolutionFieldType::FieldValueType;
+    using Expression = NeoFOAM::dsl::Expression<ValueType>;
 
     TimeIntegration(const TimeIntegration& timeIntegrator)
         : timeIntegratorStrategy_(timeIntegrator.timeIntegratorStrategy_->clone()) {};
