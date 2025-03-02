@@ -275,13 +275,13 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>            <span class="comment">// only need to avoid compiler warning about missing return statement</span></div>
 <div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>            <span class="comment">// this code path should never be reached as we call implicitOperation on an explicit</span></div>
 <div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>            <span class="comment">// operator</span></div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;ValueType&gt;</a> values(exec(), 1, 0.0);</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;ValueType&gt;</a> values(exec(), 1, <a class="code hl_variable" href="structNeoFOAM_1_1zero.html#ab532eab58457debecbe4122355bb71bd">zero&lt;ValueType&gt;::value</a>);</div>
 <div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;NeoFOAM::localIdx&gt;</a> colIdx(exec(), 1, 0);</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;NeoFOAM::localIdx&gt;</a> rowPtrs(exec(), 2, 0);</div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>            <a class="code hl_class" href="classNeoFOAM_1_1la_1_1CSRMatrix.html">NeoFOAM::la::CSRMatrix&lt;ValueType, NeoFOAM::localIdx&gt;</a> csrMatrix(values, colIdx, rowPtrs);</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;ValueType&gt;</a> rhs(exec(), 1, 0.0);</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>            <span class="keywordflow">return</span> <a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">la::LinearSystem&lt;scalar, localIdx&gt;</a>(csrMatrix, rhs, <span class="stringliteral">&quot;custom&quot;</span>);</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;ValueType&gt;</a> rhs(exec(), 1, <a class="code hl_variable" href="structNeoFOAM_1_1zero.html#ab532eab58457debecbe4122355bb71bd">zero&lt;ValueType&gt;::value</a>);</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>            <span class="keywordflow">return</span> <a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">la::LinearSystem&lt;ValueType, localIdx&gt;</a>(csrMatrix, rhs, <span class="stringliteral">&quot;custom&quot;</span>);</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>        }</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>        <span class="comment">/* @brief Given an input this function reads required coeffs */</span></div>
@@ -396,6 +396,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="anamespaceNeoFOAM_html_aaa4d35d275559f501cb6a1eec717c905"><div class="ttname"><a href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">NeoFOAM::Executor</a></div><div class="ttdeci">std::variant&lt; SerialExecutor, CPUExecutor, GPUExecutor &gt; Executor</div><div class="ttdef"><b>Definition</b> <a href="executor_8hpp_source.html#l00016">executor.hpp:16</a></div></div>
 <div class="ttc" id="aoperator_8hpp_html"><div class="ttname"><a href="operator_8hpp.html">operator.hpp</a></div></div>
 <div class="ttc" id="ascalar_8hpp_html"><div class="ttname"><a href="scalar_8hpp.html">scalar.hpp</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1zero_html_ab532eab58457debecbe4122355bb71bd"><div class="ttname"><a href="structNeoFOAM_1_1zero.html#ab532eab58457debecbe4122355bb71bd">NeoFOAM::zero::value</a></div><div class="ttdeci">static const T value</div><div class="ttdef"><b>Definition</b> <a href="traits_8hpp_source.html#l00018">traits.hpp:18</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
