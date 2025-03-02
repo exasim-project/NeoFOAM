@@ -15,7 +15,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 void computeLaplacian(
-    const FaceNormalGradient& faceNormalGradient,
+    const FaceNormalGradient<scalar>& faceNormalGradient,
     const SurfaceField<scalar>& gamma,
     VolumeField<scalar>& phi,
     Field<scalar>& lapPhi,
@@ -256,7 +256,7 @@ public:
 private:
 
     SurfaceInterpolation surfaceInterpolation_;
-    FaceNormalGradient faceNormalGradient_;
+    FaceNormalGradient<scalar> faceNormalGradient_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 

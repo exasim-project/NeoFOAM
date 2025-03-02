@@ -18,7 +18,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-class Uncorrected : public FaceNormalGradientFactory::Register<Uncorrected>
+class Uncorrected : public FaceNormalGradientFactory<scalar>::Register<Uncorrected>
 {
 
 public:

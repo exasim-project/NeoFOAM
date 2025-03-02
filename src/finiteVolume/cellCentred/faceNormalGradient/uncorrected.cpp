@@ -54,11 +54,11 @@ void computeFaceNormalGrad(
 Uncorrected::Uncorrected(
     const Executor& exec, const UnstructuredMesh& mesh, [[maybe_unused]] Input input
 )
-    : FaceNormalGradientFactory::Register<Uncorrected>(exec, mesh),
+    : FaceNormalGradientFactory<scalar>::Register<Uncorrected>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
 Uncorrected::Uncorrected(const Executor& exec, const UnstructuredMesh& mesh)
-    : FaceNormalGradientFactory::Register<Uncorrected>(exec, mesh),
+    : FaceNormalGradientFactory<scalar>::Register<Uncorrected>(exec, mesh),
       geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
 void Uncorrected::faceNormalGrad(
@@ -74,7 +74,7 @@ const SurfaceField<scalar>& Uncorrected::deltaCoeffs() const
 }
 
 
-std::unique_ptr<FaceNormalGradientFactory> Uncorrected::clone() const
+std::unique_ptr<FaceNormalGradientFactory<scalar>> Uncorrected::clone() const
 {
     return std::make_unique<Uncorrected>(*this);
 }

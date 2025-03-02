@@ -46,13 +46,13 @@ TEST_CASE("uncorrected")
     SECTION("Construct from Token" + execName)
     {
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("uncorrected")});
-        fvcc::FaceNormalGradient uncorrected(exec, mesh, input);
+        fvcc::FaceNormalGradient<NeoFOAM::scalar> uncorrected(exec, mesh, input);
     }
 
     SECTION("faceNormalGrad" + execName)
     {
         NeoFOAM::Input input = NeoFOAM::TokenList({std::string("uncorrected")});
-        fvcc::FaceNormalGradient uncorrected(exec, mesh, input);
+        fvcc::FaceNormalGradient<NeoFOAM::scalar> uncorrected(exec, mesh, input);
         uncorrected.faceNormalGrad(phi, phif);
 
         auto phifHost = phif.internalField().copyToHost();
