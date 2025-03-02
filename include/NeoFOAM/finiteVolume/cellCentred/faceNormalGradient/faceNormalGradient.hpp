@@ -101,8 +101,8 @@ public:
     SurfaceField<ValueType> faceNormalGrad(const VolumeField<ValueType>& volField) const
     {
         std::string nameInterpolated = "interpolated_" + volField.name;
-        SurfaceField<scalar> surfaceField(
-            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        SurfaceField<ValueType> surfaceField(
+            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh_)
         );
         faceNormalGrad(volField, surfaceField);
         return surfaceField;

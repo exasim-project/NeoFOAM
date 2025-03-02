@@ -17,11 +17,11 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
+template<typename ValueType>
 void computeFaceNormalGrad(
-    const VolumeField<scalar>& volField,
+    const VolumeField<ValueType>& volField,
     const std::shared_ptr<GeometryScheme> geometryScheme,
-    SurfaceField<scalar>& surfaceField
+    SurfaceField<ValueType>& surfaceField
 )
 {
     const UnstructuredMesh& mesh = surfaceField.mesh();
@@ -82,7 +82,7 @@ public:
     static std::string schema() { return "none"; }
 
     virtual void faceNormalGrad(
-        const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField
+        const VolumeField<ValueType>& volField, SurfaceField<ValueType>& surfaceField
     ) const override
     {
         computeFaceNormalGrad(volField, geometryScheme_, surfaceField);
