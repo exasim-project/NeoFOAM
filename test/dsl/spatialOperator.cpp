@@ -2,11 +2,16 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
+
+#include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include "common.hpp"
+
 
 namespace dsl = NeoFOAM::dsl;
 
-TEST_CASE("SpatialOperator")
+
+TEMPLATE_TEST_CASE("SpatialOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -20,12 +25,12 @@ TEST_CASE("SpatialOperator")
 
     SECTION("SpatialOperator creation on " + execName)
     {
-        Field fA(exec, 1, 2.0);
-        BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy(vf);
+        std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
+        auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
+        dsl::SpatialOperator<TestType> b = Dummy<TestType>(vf);
 
         REQUIRE(b.getName() == "Dummy");
         REQUIRE(b.getType() == Operator::Type::Explicit);
@@ -33,47 +38,48 @@ TEST_CASE("SpatialOperator")
 
     SECTION("Supports Coefficients Explicit " + execName)
     {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
 
-        Field fA(exec, 1, 2.0);
-        Field fB(exec, 1, 2.0);
-        BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
-        auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 2.0);
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
 
-        dsl::SpatialOperator c = 2.0 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
-        dsl::SpatialOperator d = fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
-        dsl::SpatialOperator e = Coeff(-3, fB) * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
+        dsl::SpatialOperator c = 2.0 * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf));
+        dsl::SpatialOperator d = scaleField * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf));
+        dsl::SpatialOperator e =
+            Coeff(-3, scaleField) * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();
         [[maybe_unused]] auto coeffE = e.getCoefficient();
 
-        Field source(exec, 1, 2.0);
+        NeoFOAM::Field<TestType> source(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
         c.explicitOperation(source);
 
         // 2 += 2 * 2
         auto hostSourceC = source.copyToHost();
-        REQUIRE(hostSourceC.span()[0] == 6.0);
+        REQUIRE(hostSourceC.span()[0] == 6.0 * NeoFOAM::one<TestType>::value);
 
         // 6 += 2 * 2
         d.explicitOperation(source);
         auto hostSourceD = source.copyToHost();
-        REQUIRE(hostSourceD.span()[0] == 10.0);
+        REQUIRE(hostSourceD.span()[0] == 10.0 * NeoFOAM::one<TestType>::value);
 
         // 10 += - 6 * 2
         e.explicitOperation(source);
         auto hostSourceE = source.copyToHost();
-        REQUIRE(hostSourceE.span()[0] == -2.0);
+        REQUIRE(hostSourceE.span()[0] == -2.0 * NeoFOAM::one<TestType>::value);
     }
 
     SECTION("Implicit Operations " + execName)
     {
-        Field fA(exec, 1, 2.0);
-        BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-        auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy(vf, Operator::Type::Implicit);
+        std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
+        auto vf = fvcc::VolumeField(exec, "vf", mesh, fA, bf, bcs);
+        dsl::SpatialOperator<TestType> b = Dummy<TestType>(vf, Operator::Type::Implicit);
 
         REQUIRE(b.getName() == "Dummy");
         REQUIRE(b.getType() == Operator::Type::Implicit);
@@ -86,20 +92,21 @@ TEST_CASE("SpatialOperator")
 
     SECTION("Supports Coefficients Implicit " + execName)
     {
-        std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
+        std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
 
-        Field fA(exec, 1, 2.0);
-        Field fB(exec, 1, 2.0);
-        BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
-        auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 2.0);
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        auto vf = fvcc::VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
         dsl::SpatialOperator c =
-            2 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
+            2 * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf, Operator::Type::Implicit));
         dsl::SpatialOperator d =
-            fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
+            scaleField
+            * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf, Operator::Type::Implicit));
         dsl::SpatialOperator e =
-            Coeff(-3, fB)
-            * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
+            Coeff(-3, scaleField)
+            * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf, Operator::Type::Implicit));
 
         [[maybe_unused]] auto coeffC = c.getCoefficient();
         [[maybe_unused]] auto coeffD = d.getCoefficient();
@@ -111,26 +118,26 @@ TEST_CASE("SpatialOperator")
 
         // c = 2 * 2
         auto hostRhsC = ls.rhs().copyToHost();
-        REQUIRE(hostRhsC.span()[0] == 4.0);
+        REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>::value);
         auto hostLsC = ls.copyToHost();
-        REQUIRE(hostLsC.matrix().values()[0] == 4.0);
+        REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>::value);
 
 
         // d= 2 * 2
         ls = d.createEmptyLinearSystem();
         d.implicitOperation(ls);
         auto hostRhsD = ls.rhs().copyToHost();
-        REQUIRE(hostRhsD.span()[0] == 4.0);
+        REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>::value);
         auto hostLsD = ls.copyToHost();
-        REQUIRE(hostLsD.matrix().values()[0] == 4.0);
+        REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>::value);
 
 
         // e = - -3 * 2 * 2 = -12
         ls = e.createEmptyLinearSystem();
         e.implicitOperation(ls);
         auto hostRhsE = ls.rhs().copyToHost();
-        REQUIRE(hostRhsE.span()[0] == -12.0);
+        REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>::value);
         auto hostLsE = ls.copyToHost();
-        REQUIRE(hostLsE.matrix().values()[0] == -12.0);
+        REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>::value);
     }
 }

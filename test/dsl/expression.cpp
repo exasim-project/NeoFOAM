@@ -30,12 +30,12 @@ TEST_CASE("Expression")
     SECTION("Create equation and perform explicitOperation on " + execName)
     {
         // TODO conversion from Dummy to SpatialOperator is not automatic
-        dsl::SpatialOperator<NeoFOAM::scalar> a = Dummy(vf);
-        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy(vf);
+        dsl::SpatialOperator<NeoFOAM::scalar> a = Dummy<NeoFOAM::scalar>(vf);
+        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy<NeoFOAM::scalar>(vf);
 
         auto eqnA = a + b;
-        auto eqnB = fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf))
-                  + 2 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf));
+        auto eqnB = fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy<NeoFOAM::scalar>(vf))
+                  + 2 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy<NeoFOAM::scalar>(vf));
         auto eqnC = Expression(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);
@@ -56,12 +56,20 @@ TEST_CASE("Expression")
     SECTION("Create equation and perform implicitOperation on " + execName)
     {
         // TODO conversion from Dummy to SpatialOperator is not automatic
-        dsl::SpatialOperator<NeoFOAM::scalar> a = Dummy(vf, Operator::Type::Implicit);
-        dsl::SpatialOperator<NeoFOAM::scalar> b = Dummy(vf, Operator::Type::Implicit);
+        dsl::SpatialOperator<NeoFOAM::scalar> a =
+            Dummy<NeoFOAM::scalar>(vf, Operator::Type::Implicit);
+        dsl::SpatialOperator<NeoFOAM::scalar> b =
+            Dummy<NeoFOAM::scalar>(vf, Operator::Type::Implicit);
 
         auto eqnA = a + b;
-        auto eqnB = fB * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit))
-                  + 2 * dsl::SpatialOperator<NeoFOAM::scalar>(Dummy(vf, Operator::Type::Implicit));
+        auto eqnB = fB
+                      * dsl::SpatialOperator<NeoFOAM::scalar>(
+                          Dummy<NeoFOAM::scalar>(vf, Operator::Type::Implicit)
+                      )
+                  + 2
+                        * dsl::SpatialOperator<NeoFOAM::scalar>(
+                            Dummy<NeoFOAM::scalar>(vf, Operator::Type::Implicit)
+                        );
         auto eqnC = Expression(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);
