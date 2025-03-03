@@ -39,6 +39,7 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenLaplacian.cpp"
+          "finiteVolume/cellCentred/operators/sourceTerm.cpp"
           "finiteVolume/cellCentred/operators/sparsityPattern.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"

@@ -3,3 +3,4 @@
 
 neofoam_unit_test(laplacianOperator)
 neofoam_unit_test(gaussGreenDiv)
+neofoam_unit_test(sourceTerm)
