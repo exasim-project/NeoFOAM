@@ -130,7 +130,7 @@ public:
             NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
         }
         const auto operatorScaling = this->getCoefficient();
-        NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), 0.0);
+        NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>::value);
         laplacianOperatorStrategy_->laplacian(tmpsource, gamma_, this->field_, operatorScaling);
         source += tmpsource;
     }

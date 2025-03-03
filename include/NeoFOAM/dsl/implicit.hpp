@@ -36,11 +36,12 @@ div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::sc
     return SpatialOperator<scalar>(fvcc::DivOperator(dsl::Operator::Type::Implicit, faceFlux, phi));
 }
 
-SpatialOperator<scalar>
-laplacian(fvcc::SurfaceField<NeoFOAM::scalar>& gamma, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+template<typename ValueType>
+SpatialOperator<ValueType>
+laplacian(fvcc::SurfaceField<NeoFOAM::scalar>& gamma, fvcc::VolumeField<ValueType>& phi)
 {
-    return SpatialOperator<scalar>(
-        fvcc::LaplacianOperator<scalar>(dsl::Operator::Type::Implicit, gamma, phi)
+    return SpatialOperator<ValueType>(
+        fvcc::LaplacianOperator<ValueType>(dsl::Operator::Type::Implicit, gamma, phi)
     );
 }
 

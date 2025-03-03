@@ -14,18 +14,19 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+template<typename ValueType>
 void computeLaplacian(
-    const FaceNormalGradient<scalar>& faceNormalGradient,
+    const FaceNormalGradient<ValueType>& faceNormalGradient,
     const SurfaceField<scalar>& gamma,
-    VolumeField<scalar>& phi,
-    Field<scalar>& lapPhi,
+    VolumeField<ValueType>& phi,
+    Field<ValueType>& lapPhi,
     const dsl::Coeff operatorScaling
 )
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
 
-    SurfaceField<scalar> faceNormalGrad = faceNormalGradient.faceNormalGrad(phi);
+    SurfaceField<ValueType> faceNormalGrad = faceNormalGradient.faceNormalGrad(phi);
 
     const auto [owner, neighbour, surfFaceCells] =
         spans(mesh.faceOwner(), mesh.faceNeighbour(), mesh.boundaryMesh().faceCells());
@@ -48,7 +49,7 @@ void computeLaplacian(
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            scalar flux = faceArea[i] * fnGrad[i];
+            ValueType flux = faceArea[i] * fnGrad[i];
             result[static_cast<size_t>(owner[i])] += flux;
             result[static_cast<size_t>(neighbour[i])] -= flux;
         }
@@ -56,7 +57,7 @@ void computeLaplacian(
         for (size_t i = nInternalFaces; i < fnGrad.size(); i++)
         {
             auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-            scalar valueOwn = faceArea[i] * fnGrad[i];
+            ValueType valueOwn = faceArea[i] * fnGrad[i];
             result[own] += valueOwn;
         }
 
@@ -71,7 +72,7 @@ void computeLaplacian(
             exec,
             {0, nInternalFaces},
             KOKKOS_LAMBDA(const size_t i) {
-                scalar flux = faceArea[i] * fnGrad[i];
+                ValueType flux = faceArea[i] * fnGrad[i];
                 Kokkos::atomic_add(&result[static_cast<size_t>(owner[i])], flux);
                 Kokkos::atomic_sub(&result[static_cast<size_t>(neighbour[i])], flux);
             }
@@ -82,7 +83,7 @@ void computeLaplacian(
             {nInternalFaces, fnGrad.size()},
             KOKKOS_LAMBDA(const size_t i) {
                 auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-                scalar valueOwn = faceArea[i] * fnGrad[i];
+                ValueType valueOwn = faceArea[i] * fnGrad[i];
                 Kokkos::atomic_add(&result[own], valueOwn);
             }
         );
@@ -142,7 +143,9 @@ public:
         const dsl::Coeff operatorScaling
     ) override
     {
-        computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi.internalField(), operatorScaling);
+        computeLaplacian<ValueType>(
+            faceNormalGradient_, gamma, phi, lapPhi.internalField(), operatorScaling
+        );
     };
 
     virtual void laplacian(
@@ -152,7 +155,7 @@ public:
         const dsl::Coeff operatorScaling
     ) override
     {
-        computeLaplacian(faceNormalGradient_, gamma, phi, lapPhi, operatorScaling);
+        computeLaplacian<ValueType>(faceNormalGradient_, gamma, phi, lapPhi, operatorScaling);
     };
 
     virtual void laplacian(
@@ -206,14 +209,18 @@ public:
                 std::size_t rowOwnStart = rowPtrs[own];
 
                 // scalar valueNei = (1 - weight) * flux;
-                values[rowNeiStart + neiOffs[facei]] += flux;
-                Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux);
+                values[rowNeiStart + neiOffs[facei]] += flux * one<ValueType>::value;
+                Kokkos::atomic_sub(
+                    &values[rowOwnStart + diagOffs[own]], flux * one<ValueType>::value
+                );
 
                 // upper triangular part
 
                 // add owner contribution lower
-                values[rowOwnStart + ownOffs[facei]] += flux;
-                Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], flux);
+                values[rowOwnStart + ownOffs[facei]] += flux * one<ValueType>::value;
+                Kokkos::atomic_sub(
+                    &values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>::value
+                );
             }
         );
 
@@ -228,10 +235,11 @@ public:
                 std::size_t rowOwnStart = rowPtrs[own];
 
                 values[rowOwnStart + diagOffs[own]] -=
-                    flux * valueFraction[bcfacei] * deltaCoeffs[facei];
-                rhs[own] -= flux
-                          * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]
-                             + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei]);
+                    flux * valueFraction[bcfacei] * deltaCoeffs[facei] * one<ValueType>::value;
+                rhs[own] -=
+                    (flux
+                     * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]
+                        + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei]));
             }
         );
 
@@ -256,7 +264,7 @@ public:
 private:
 
     SurfaceInterpolation surfaceInterpolation_;
-    FaceNormalGradient<scalar> faceNormalGradient_;
+    FaceNormalGradient<ValueType> faceNormalGradient_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
