@@ -64,7 +64,6 @@ scalar computeCoNum(
     }
     else
     {
-	// TODO:  Unit testing...
         parallelFor(
             exec,
             {0, nInternalFaces},
@@ -99,8 +98,6 @@ scalar computeCoNum(
             maxReducer
         );
 
-	// TODO: Is calculation of the mean really necessary?
-	//       It is only printed and maybe needed for the user.
         scalar totalPhi = 0.0;
 	Kokkos::Sum<NeoFOAM::scalar> sumPhi(totalPhi);
         parallelReduce(
@@ -122,7 +119,6 @@ scalar computeCoNum(
         maxCoNum  = maxReducer.reference() * 0.5 * dt;
         meanCoNum = 0.5 * (sumPhi.reference() / sumVol.reference()) * dt;
     }
-
     std::cout << "Courant Number mean: " << meanCoNum << " max: " << maxCoNum  << std::endl;
 
     return maxCoNum;

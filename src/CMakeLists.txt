@@ -37,7 +37,7 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
-          "setup.cpp"
+	  "finiteVolume/cellCentred/auxiliary/coNum.cpp"
           "timeIntegration/timeIntegration.cpp"
           "timeIntegration/rungeKutta.cpp")
 
