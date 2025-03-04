@@ -37,8 +37,8 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
-    fill(phi.internalField(), 10 * one<TestType>::value);
-    fill(phi.boundaryField().value(), zero<TestType>::value);
+    fill(phi.internalField(), 10 * one<TestType>());
+    fill(phi.boundaryField().value(), zero<TestType>());
     phi.correctBoundaryConditions();
 
 
@@ -46,12 +46,12 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
     {
         fvcc::SourceTerm<TestType> sTerm(Operator::Type::Explicit, coeff, phi);
 
-        auto source = Field<TestType>(exec, phi.size(), zero<TestType>::value);
+        auto source = Field<TestType>(exec, phi.size(), zero<TestType>());
         sTerm.explicitOperation(source);
 
         // cell has one cell
         auto hostSource = source.copyToHost();
-        REQUIRE(mag(hostSource[0] - 20 * one<TestType>::value) == Catch::Approx(0.0).margin(1e-8));
+        REQUIRE(mag(hostSource[0] - 20 * one<TestType>()) == Catch::Approx(0.0).margin(1e-8));
     }
 
     SECTION("implicit SourceTerm" + execName)
@@ -63,7 +63,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
         auto vol = mesh.cellVolumes().copyToHost();
         // results = coeff*vol
         REQUIRE(
-            mag(lsHost.matrix().values()[0] - 2.0 * vol[0] * one<TestType>::value)
+            mag(lsHost.matrix().values()[0] - 2.0 * vol[0] * one<TestType>())
             == Catch::Approx(0.0).margin(1e-8)
         );
     }

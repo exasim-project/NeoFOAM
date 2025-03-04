@@ -38,7 +38,7 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     {
         Dictionary dict;
         dict.insert("type", std::string("fixedValue"));
-        dict.insert("fixedValue", one<TestType>::value);
+        dict.insert("fixedValue", one<TestType>());
         sbcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
         vbcs.push_back(fvcc::VolumeBoundary<TestType>(mesh, dict, patchi));
     }
@@ -46,7 +46,7 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto in = VolumeField<TestType>(exec, "in", mesh, vbcs);
     auto out = SurfaceField<TestType>(exec, "out", mesh, sbcs);
 
-    fill(in.internalField(), one<TestType>::value);
+    fill(in.internalField(), one<TestType>());
     in.correctBoundaryConditions();
 
     linear.interpolate(in, out);
@@ -57,12 +57,12 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto nBoundary = mesh.nBoundaryFaces();
     for (int i = 0; i < nInternal; i++)
     {
-        REQUIRE(outHost[i] == one<TestType>::value);
+        REQUIRE(outHost[i] == one<TestType>());
     }
 
     for (int i = nInternal; i < nInternal + nBoundary; i++)
     {
-        REQUIRE(outHost[i] == one<TestType>::value);
+        REQUIRE(outHost[i] == one<TestType>());
     }
 }
 }

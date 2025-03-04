@@ -47,7 +47,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             mesh,
             NeoFOAM::Dictionary(
                 {{"type", std::string("fixedValue")},
-                 {"fixedValue", NeoFOAM::scalar(0.5) * one<TestType>::value}}
+                 {"fixedValue", NeoFOAM::scalar(0.5) * one<TestType>()}}
             ),
             0
         ));
@@ -55,7 +55,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             mesh,
             NeoFOAM::Dictionary(
                 {{"type", std::string("fixedValue")},
-                 {"fixedValue", NeoFOAM::scalar(10.5) * one<TestType>::value}}
+                 {"fixedValue", NeoFOAM::scalar(10.5) * one<TestType>()}}
             ),
             1
         ));
@@ -63,7 +63,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
         fvcc::VolumeField<TestType> phi(exec, "phi", mesh, bcs);
         NeoFOAM::parallelFor(
             phi.internalField(),
-            KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1) * one<TestType>::value; }
+            KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1) * one<TestType>(); }
         );
         phi.correctBoundaryConditions();
 
@@ -85,7 +85,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             fvcc::LaplacianOperator<TestType> lapOp(
                 dsl::Operator::Type::Explicit, gamma, phi, input
             );
-            Field<TestType> source(exec, nCells, zero<TestType>::value);
+            Field<TestType> source(exec, nCells, zero<TestType>());
             lapOp.explicitOperation(source);
             auto sourceHost = source.copyToHost();
             auto sSource = sourceHost.span();

@@ -35,16 +35,16 @@ TEMPLATE_TEST_CASE("uncorrected", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<TestType>>(mesh);
 
     fvcc::SurfaceField<TestType> phif(exec, "phif", mesh, surfaceBCs);
-    fill(phif.internalField(), zero<TestType>::value);
+    fill(phif.internalField(), zero<TestType>());
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "phi", mesh, volumeBCs);
     NeoFOAM::parallelFor(
         phi.internalField(),
-        KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1) * one<TestType>::value; }
+        KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1) * one<TestType>(); }
     );
     phi.boundaryField().value() =
-        NeoFOAM::Field<TestType>(exec, {0.5 * one<TestType>::value, 10.5 * one<TestType>::value});
+        NeoFOAM::Field<TestType>(exec, {0.5 * one<TestType>(), 10.5 * one<TestType>()});
 
     SECTION("Construct from Token" + execName)
     {
@@ -64,19 +64,17 @@ TEMPLATE_TEST_CASE("uncorrected", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         {
             // correct value is 10.0
             REQUIRE(
-                NeoFOAM::mag(sPhif[i] - 10.0 * one<TestType>::value)
-                == Catch::Approx(0.0).margin(1e-8)
+                NeoFOAM::mag(sPhif[i] - 10.0 * one<TestType>()) == Catch::Approx(0.0).margin(1e-8)
             );
         }
         // left boundary is  -10.0
         REQUIRE(
-            NeoFOAM::mag(sPhif[nCells - 1] + 10.0 * one<TestType>::value)
+            NeoFOAM::mag(sPhif[nCells - 1] + 10.0 * one<TestType>())
             == Catch::Approx(0.0).margin(1e-8)
         );
         // right boundary is 10.0
         REQUIRE(
-            NeoFOAM::mag(sPhif[nCells] - 10.0 * one<TestType>::value)
-            == Catch::Approx(0.0).margin(1e-8)
+            NeoFOAM::mag(sPhif[nCells] - 10.0 * one<TestType>()) == Catch::Approx(0.0).margin(1e-8)
         );
     }
 }

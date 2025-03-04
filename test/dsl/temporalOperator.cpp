@@ -24,7 +24,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
     SECTION("Operator creation on " + execName)
     {
-        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
         std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
@@ -41,7 +41,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         NeoFOAM::scalar t = 0.0;
         NeoFOAM::scalar dt = 0.1;
 
-        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 2.0);
         NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
@@ -57,27 +57,27 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         [[maybe_unused]] auto coeffD = d.getCoefficient();
         [[maybe_unused]] auto coeffE = e.getCoefficient();
 
-        NeoFOAM::Field<TestType> source(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<TestType> source(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         c.explicitOperation(source, t, dt);
 
         // 2 += 2 * 2
         auto hostSourceC = source.copyToHost();
-        REQUIRE(hostSourceC.span()[0] == 6.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostSourceC.span()[0] == 6.0 * NeoFOAM::one<TestType>());
 
         // 6 += 2 * 2
         d.explicitOperation(source, t, dt);
         auto hostSourceD = source.copyToHost();
-        REQUIRE(hostSourceD.span()[0] == 10.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostSourceD.span()[0] == 10.0 * NeoFOAM::one<TestType>());
 
         // 10 += - 6 * 2
         e.explicitOperation(source, t, dt);
         auto hostSourceE = source.copyToHost();
-        REQUIRE(hostSourceE.span()[0] == -2.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostSourceE.span()[0] == -2.0 * NeoFOAM::one<TestType>());
     }
 
     SECTION("Implicit Operations " + execName)
     {
-        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
         std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
@@ -99,7 +99,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         NeoFOAM::scalar t = 0.0;
         NeoFOAM::scalar dt = 0.1;
 
-        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>::value);
+        NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 2.0);
         NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
         auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
@@ -120,26 +120,26 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         // c = 2 * 2
         auto hostRhsC = ls.rhs().copyToHost();
-        REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
         auto hostLsC = ls.copyToHost();
-        REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // d= 2 * 2
         ls = d.createEmptyLinearSystem();
         d.implicitOperation(ls, t, dt);
         auto hostRhsD = ls.rhs().copyToHost();
-        REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
         auto hostLsD = ls.copyToHost();
-        REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // e = - -3 * 2 * 2 = -12
         ls = e.createEmptyLinearSystem();
         e.implicitOperation(ls, t, dt);
         auto hostRhsE = ls.rhs().copyToHost();
-        REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
         auto hostLsE = ls.copyToHost();
-        REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>::value);
+        REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>());
     }
 }

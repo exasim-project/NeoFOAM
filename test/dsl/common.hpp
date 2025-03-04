@@ -78,12 +78,12 @@ public:
 
     la::LinearSystem<ValueType, NeoFOAM::localIdx> createEmptyLinearSystem() const
     {
-        NeoFOAM::Field<ValueType> values(this->exec(), 1, NeoFOAM::zero<ValueType>::value);
+        NeoFOAM::Field<ValueType> values(this->exec(), 1, NeoFOAM::zero<ValueType>());
         NeoFOAM::Field<NeoFOAM::localIdx> colIdx(this->exec(), 1, 0.0);
         NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(this->exec(), {0, 1});
         NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>::value);
+        NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>());
         NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(
             csrMatrix, rhs, "diagonal"
         );
@@ -153,12 +153,12 @@ public:
 
     la::LinearSystem<ValueType, NeoFOAM::localIdx> createEmptyLinearSystem() const
     {
-        NeoFOAM::Field<ValueType> values(this->exec(), 1, NeoFOAM::zero<ValueType>::value);
+        NeoFOAM::Field<ValueType> values(this->exec(), 1, NeoFOAM::zero<ValueType>());
         NeoFOAM::Field<NeoFOAM::localIdx> colIdx(this->exec(), 1, 0.0);
         NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(this->exec(), {0, 1});
         NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>::value);
+        NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>());
         NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(
             csrMatrix, rhs, "diagonal"
         );

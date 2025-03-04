@@ -37,7 +37,7 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     {
         Dictionary dict;
         dict.insert("type", std::string("fixedValue"));
-        dict.insert("fixedValue", one<TestType>::value);
+        dict.insert("fixedValue", one<TestType>());
         bcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
     }
 
@@ -45,8 +45,8 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto flux = SurfaceField<scalar>(exec, "flux", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, bcs);
 
-    fill(flux.internalField(), one<scalar>::value);
-    fill(in.internalField(), one<TestType>::value);
+    fill(flux.internalField(), one<scalar>());
+    fill(in.internalField(), one<TestType>());
 
     upwind.interpolate(flux, in, out);
     out.correctBoundaryConditions();
@@ -56,12 +56,12 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto nBoundary = mesh.nBoundaryFaces();
     for (int i = 0; i < nInternal; i++)
     {
-        REQUIRE(outHost[i] == one<TestType>::value);
+        REQUIRE(outHost[i] == one<TestType>());
     }
 
     for (int i = nInternal; i < nInternal + nBoundary; i++)
     {
-        REQUIRE(outHost[i] == one<TestType>::value);
+        REQUIRE(outHost[i] == one<TestType>());
     }
 }
 
