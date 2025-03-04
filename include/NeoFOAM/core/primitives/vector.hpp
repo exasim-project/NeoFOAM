@@ -156,29 +156,16 @@ scalar mag(const Vector& vec) { return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + 
 std::ostream& operator<<(std::ostream& out, const Vector& vec);
 
 
-// traits for vector
-// template<>
-// struct one<Vector>
-// {
-//     KOKKOS_INLINE_FUNCTION
-//     static constexpr const Vector value = Vector(1.0, 1.0, 1.0);
-// };
 template<>
-inline Vector one<Vector>(){
+inline Vector one<Vector>()
+{
     return Vector(1.0, 1.0, 1.0);
 }
 
 template<>
-inline Vector zero<Vector>(){
-    return Vector(1.0, 1.0, 1.0);
+inline Vector zero<Vector>()
+{
+    return Vector(0.0, 0.0, 0.0);
 }
-
-
-// template<>
-// struct zero<Vector>
-// {
-//     KOKKOS_INLINE_FUNCTION
-//     static constexpr const Vector value = Vector(0.0, 0.0, 0.0);
-// };
 
 } // namespace NeoFOAM
