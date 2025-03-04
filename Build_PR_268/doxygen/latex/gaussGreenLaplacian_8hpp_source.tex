@@ -214,64 +214,60 @@
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00210}00210\ }
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ scalar\ valueNei\ =\ (1\ -\/\ weight)\ *\ flux;}}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[rowNeiStart\ +\ neiOffs[facei]]\ +=\ flux\ *\ one<ValueType>();}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_sub(}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&values[rowOwnStart\ +\ diagOffs[own]],\ flux\ *\ one<ValueType>()}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_sub(\&values[rowOwnStart\ +\ diagOffs[own]],\ flux\ *\ one<ValueType>());}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00214}00214\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ upper\ triangular\ part}}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00216}00216\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ upper\ triangular\ part}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00218}00218\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ owner\ contribution\ lower}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[rowOwnStart\ +\ ownOffs[facei]]\ +=\ flux\ *\ one<ValueType>();}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_sub(}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&values[rowNeiStart\ +\ diagOffs[nei]],\ flux\ *\ one<ValueType>()}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00225}00225\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00226}00226\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \ \ \ \ exec,}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \ \ \ \ \{nInternalFaces,\ sGamma.size()\},}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ facei)\ \{}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ bcfacei\ =\ facei\ -\/\ nInternalFaces;}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}\ flux\ =\ sGamma[facei]\ *\ magFaceArea[facei];}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00233}00233\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ own\ =\ \textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(surfFaceCells[bcfacei]);}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ rowOwnStart\ =\ rowPtrs[own];}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00236}00236\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[rowOwnStart\ +\ diagOffs[own]]\ -\/=}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ flux\ *\ valueFraction[bcfacei]\ *\ deltaCoeffs[facei]\ *\ one<ValueType>();}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rhs[own]\ -\/=}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (flux}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ (valueFraction[bcfacei]\ *\ deltaCoeffs[facei]\ *\ refValue[bcfacei]}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ (1.0\ -\/\ valueFraction[bcfacei])\ *\ refGradient[bcfacei]));}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00244}00244\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00245}00245\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \ \ \ \ exec,}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \ \ \ \ \{0,\ rhs.size()\},}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ celli)\ \{}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rhs[celli]\ *=\ operatorScaling[celli];}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ rowPtrs[celli];\ i\ <\ rowPtrs[celli\ +\ 1];\ i++)}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00253}00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[i]\ *=\ operatorScaling[celli];}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00254}00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00257}00257\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00258}00258\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00259}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenLaplacian_a5d82e5c0d19719331487773e61ba3e76}{00259}}\ \ \ \ \ std::unique\_ptr<LaplacianOperatorFactory<ValueType>>\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenLaplacian_a5d82e5c0d19719331487773e61ba3e76}{clone}}()\textcolor{keyword}{\ const\ override}}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00260}00260\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<GaussGreenLaplacian<ValueType>>(*this);}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00262}00262\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00263}00263\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00264}00264\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00265}00265\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00266}00266\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolation}{SurfaceInterpolation}}\ surfaceInterpolation\_;}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00267}00267\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient<ValueType>}}\ faceNormalGradient\_;}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00268}00268\ \ \ \ \ \textcolor{keyword}{const}\ std::shared\_ptr<SparsityPattern>\ sparsityPattern\_;}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00269}00269\ \};}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00270}00270\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00271}00271\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ owner\ contribution\ lower}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[rowOwnStart\ +\ ownOffs[facei]]\ +=\ flux\ *\ one<ValueType>();}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_sub(\&values[rowNeiStart\ +\ diagOffs[nei]],\ flux\ *\ one<ValueType>());}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00221}00221\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ exec,}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ \ \ \{nInternalFaces,\ sGamma.size()\},}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ facei)\ \{}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ bcfacei\ =\ facei\ -\/\ nInternalFaces;}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}\ flux\ =\ sGamma[facei]\ *\ magFaceArea[facei];}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00229}00229\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ own\ =\ \textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(surfFaceCells[bcfacei]);}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ rowOwnStart\ =\ rowPtrs[own];}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00232}00232\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[rowOwnStart\ +\ diagOffs[own]]\ -\/=}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ flux\ *\ valueFraction[bcfacei]\ *\ deltaCoeffs[facei]\ *\ one<ValueType>();}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rhs[own]\ -\/=}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (flux}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ (valueFraction[bcfacei]\ *\ deltaCoeffs[facei]\ *\ refValue[bcfacei]}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ (1.0\ -\/\ valueFraction[bcfacei])\ *\ refGradient[bcfacei]));}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00240}00240\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00241}00241\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ exec,}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ \{0,\ rhs.size()\},}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ celli)\ \{}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ rhs[celli]\ *=\ operatorScaling[celli];}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ rowPtrs[celli];\ i\ <\ rowPtrs[celli\ +\ 1];\ i++)}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[i]\ *=\ operatorScaling[celli];}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00253}00253\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00254}00254\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00255}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenLaplacian_a5d82e5c0d19719331487773e61ba3e76}{00255}}\ \ \ \ \ std::unique\_ptr<LaplacianOperatorFactory<ValueType>>\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenLaplacian_a5d82e5c0d19719331487773e61ba3e76}{clone}}()\textcolor{keyword}{\ const\ override}}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00256}00256\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<GaussGreenLaplacian<ValueType>>(*this);}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00258}00258\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00260}00260\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00261}00261\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00262}00262\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolation}{SurfaceInterpolation<scalar>}}\ surfaceInterpolation\_;}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00263}00263\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradient}{FaceNormalGradient<ValueType>}}\ faceNormalGradient\_;}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00264}00264\ \ \ \ \ \textcolor{keyword}{const}\ std::shared\_ptr<SparsityPattern>\ sparsityPattern\_;}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00265}00265\ \};}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00266}00266\ }
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00267}00267\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
