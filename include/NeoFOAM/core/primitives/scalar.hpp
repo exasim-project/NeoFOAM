@@ -21,13 +21,13 @@ scalar mag(const scalar& s) { return std::abs(s); }
 
 // traits for vector
 template<>
-scalar one<scalar>()
+inline scalar one<scalar>()
 {
     return 1.0;
 };
 
 template<>
-scalar zero<scalar>()
+inline scalar zero<scalar>()
 {
     return 0.0;
 };

@@ -164,12 +164,12 @@ std::ostream& operator<<(std::ostream& out, const Vector& vec);
 //     static constexpr const Vector value = Vector(1.0, 1.0, 1.0);
 // };
 template<>
-Vector one<Vector>(){
+inline Vector one<Vector>(){
     return Vector(1.0, 1.0, 1.0);
 }
 
 template<>
-Vector zero<Vector>(){
+inline Vector zero<Vector>(){
     return Vector(1.0, 1.0, 1.0);
 }
 

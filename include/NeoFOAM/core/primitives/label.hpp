@@ -22,13 +22,13 @@ using mpi_label_t = int;
 
 // traits for vector
 template<>
-localIdx one<localIdx>()
+inline localIdx one<localIdx>()
 {
     return 1;
 };
 
 template<>
-localIdx zero<localIdx>()
+inline localIdx zero<localIdx>()
 {
     return 0;
 };
