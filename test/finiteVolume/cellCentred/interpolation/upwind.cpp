@@ -31,7 +31,7 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = create1DUniformMesh(exec, 10);
     Input input = TokenList({std::string("upwind")});
-    auto upwind = SurfaceInterpolation(exec, mesh, input);
+    auto upwind = SurfaceInterpolation<TestType>(exec, mesh, input);
     std::vector<fvcc::SurfaceBoundary<TestType>> bcs {};
     for (auto patchi : I<size_t> {0, 1})
     {

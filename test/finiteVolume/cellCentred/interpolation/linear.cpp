@@ -31,7 +31,7 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = create1DUniformMesh(exec, 10);
     Input input = TokenList({std::string("linear")});
-    auto linear = SurfaceInterpolation(exec, mesh, input);
+    auto linear = SurfaceInterpolation<TestType>(exec, mesh, input);
     std::vector<fvcc::VolumeBoundary<TestType>> vbcs {};
     std::vector<fvcc::SurfaceBoundary<TestType>> sbcs {};
     for (auto patchi : I<size_t> {0, 1})

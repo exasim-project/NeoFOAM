@@ -72,7 +72,7 @@ public:
 
 private:
 
-    SurfaceInterpolation surfaceInterpolation_;
+    SurfaceInterpolation<scalar> surfaceInterpolation_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 

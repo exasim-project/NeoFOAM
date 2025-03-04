@@ -210,17 +210,13 @@ public:
 
                 // scalar valueNei = (1 - weight) * flux;
                 values[rowNeiStart + neiOffs[facei]] += flux * one<ValueType>();
-                Kokkos::atomic_sub(
-                    &values[rowOwnStart + diagOffs[own]], flux * one<ValueType>()
-                );
+                Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux * one<ValueType>());
 
                 // upper triangular part
 
                 // add owner contribution lower
                 values[rowOwnStart + ownOffs[facei]] += flux * one<ValueType>();
-                Kokkos::atomic_sub(
-                    &values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>()
-                );
+                Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>());
             }
         );
 
@@ -263,7 +259,7 @@ public:
 
 private:
 
-    SurfaceInterpolation surfaceInterpolation_;
+    SurfaceInterpolation<scalar> surfaceInterpolation_;
     FaceNormalGradient<ValueType> faceNormalGradient_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
