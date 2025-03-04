@@ -8,6 +8,7 @@
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -89,6 +90,10 @@ public:
     SurfaceIntegrate(const SurfaceField<ValueType>& flux)
         : flux_(flux), type_(dsl::Operator::Type::Explicit), coeffs_(1.0) {};
 
+    SurfaceIntegrate(const SurfaceIntegrate& surfaceIntegrate)
+        : flux_(surfaceIntegrate.flux_), type_(surfaceIntegrate.type_),
+          coeffs_(surfaceIntegrate.coeffs_) {};
+
 
     void build(const Input& input)
     {
@@ -97,7 +102,7 @@ public:
 
     void explicitOperation(Field<ValueType>& source)
     {
-        NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
+        NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>::value);
         const auto operatorScaling = this->getCoefficient();
 
         const UnstructuredMesh& mesh = flux_.mesh();
@@ -110,7 +115,7 @@ public:
             mesh.faceNeighbour().span(),
             mesh.faceOwner().span(),
             mesh.boundaryMesh().faceCells().span(),
-            flux_.internalField().span(),
+            this->flux_.internalField().span(),
             mesh.cellVolumes().span(),
             tmpsource.span(),
             operatorScaling
