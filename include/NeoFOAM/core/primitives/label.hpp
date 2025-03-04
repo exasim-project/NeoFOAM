@@ -22,16 +22,15 @@ using mpi_label_t = int;
 
 // traits for vector
 template<>
-struct one<localIdx>
+localIdx one<localIdx>()
 {
-    static const inline localIdx value = 1;
+    return 1;
 };
 
-
 template<>
-struct zero<localIdx>
+localIdx zero<localIdx>()
 {
-    static const inline localIdx value = 0;
+    return 0;
 };
 
 }

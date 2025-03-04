@@ -102,7 +102,7 @@ public:
 
     void explicitOperation(Field<ValueType>& source)
     {
-        NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>::value);
+        NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>());
         const auto operatorScaling = this->getCoefficient();
 
         const UnstructuredMesh& mesh = flux_.mesh();

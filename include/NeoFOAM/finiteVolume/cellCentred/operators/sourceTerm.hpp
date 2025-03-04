@@ -53,7 +53,7 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
 
-        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>::value);
+        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
         Field<localIdx> mColIdxs(
             ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
         );
@@ -62,7 +62,7 @@ public:
         );
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>::value);
+        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
 
         return {matrix, rhs, ls.sparsityPattern()};
     }
@@ -82,7 +82,7 @@ public:
             KOKKOS_LAMBDA(const size_t celli) {
                 std::size_t idx = rowPtrs[celli] + diagOffs[celli];
                 values[idx] +=
-                    operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>::value;
+                    operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
             }
         );
     }

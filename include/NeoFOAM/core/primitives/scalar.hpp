@@ -21,16 +21,15 @@ scalar mag(const scalar& s) { return std::abs(s); }
 
 // traits for vector
 template<>
-struct one<scalar>
+scalar one<scalar>()
 {
-    static const inline scalar value = 1.0;
+    return 1.0;
 };
 
-
 template<>
-struct zero<scalar>
+scalar zero<scalar>()
 {
-    static const inline scalar value = 0.0;
+    return 0.0;
 };
 
 } // namespace NeoFOAM

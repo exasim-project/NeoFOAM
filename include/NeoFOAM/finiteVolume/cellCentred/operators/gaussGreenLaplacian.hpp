@@ -122,7 +122,7 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
 
-        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>::value);
+        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
         Field<localIdx> mColIdxs(
             ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
         );
@@ -131,7 +131,7 @@ public:
         );
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>::value);
+        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
 
         return {matrix, rhs, ls.sparsityPattern()};
     };
@@ -209,17 +209,17 @@ public:
                 std::size_t rowOwnStart = rowPtrs[own];
 
                 // scalar valueNei = (1 - weight) * flux;
-                values[rowNeiStart + neiOffs[facei]] += flux * one<ValueType>::value;
+                values[rowNeiStart + neiOffs[facei]] += flux * one<ValueType>();
                 Kokkos::atomic_sub(
-                    &values[rowOwnStart + diagOffs[own]], flux * one<ValueType>::value
+                    &values[rowOwnStart + diagOffs[own]], flux * one<ValueType>()
                 );
 
                 // upper triangular part
 
                 // add owner contribution lower
-                values[rowOwnStart + ownOffs[facei]] += flux * one<ValueType>::value;
+                values[rowOwnStart + ownOffs[facei]] += flux * one<ValueType>();
                 Kokkos::atomic_sub(
-                    &values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>::value
+                    &values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>()
                 );
             }
         );
@@ -235,7 +235,7 @@ public:
                 std::size_t rowOwnStart = rowPtrs[own];
 
                 values[rowOwnStart + diagOffs[own]] -=
-                    flux * valueFraction[bcfacei] * deltaCoeffs[facei] * one<ValueType>::value;
+                    flux * valueFraction[bcfacei] * deltaCoeffs[facei] * one<ValueType>();
                 rhs[own] -=
                     (flux
                      * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]

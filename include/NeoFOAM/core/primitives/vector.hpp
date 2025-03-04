@@ -157,17 +157,28 @@ std::ostream& operator<<(std::ostream& out, const Vector& vec);
 
 
 // traits for vector
+// template<>
+// struct one<Vector>
+// {
+//     KOKKOS_INLINE_FUNCTION
+//     static constexpr const Vector value = Vector(1.0, 1.0, 1.0);
+// };
 template<>
-struct one<Vector>
-{
-    static const inline Vector value = {1.0, 1.0, 1.0};
-};
+Vector one<Vector>(){
+    return Vector(1.0, 1.0, 1.0);
+}
+
+template<>
+Vector zero<Vector>(){
+    return Vector(1.0, 1.0, 1.0);
+}
 
 
-template<>
-struct zero<Vector>
-{
-    static const inline Vector value = {0.0, 0.0, 0.0};
-};
+// template<>
+// struct zero<Vector>
+// {
+//     KOKKOS_INLINE_FUNCTION
+//     static constexpr const Vector value = Vector(0.0, 0.0, 0.0);
+// };
 
 } // namespace NeoFOAM
