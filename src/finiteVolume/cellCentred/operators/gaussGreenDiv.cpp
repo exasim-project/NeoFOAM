@@ -93,7 +93,7 @@ template<typename ValueType>
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<ValueType>& phi,
-    const SurfaceInterpolation& surfInterp,
+    const SurfaceInterpolation<scalar>& surfInterp,
     Field<ValueType>& divPhi,
     const dsl::Coeff operatorScaling
 )
@@ -248,11 +248,10 @@ void GaussGreenDiv::div(
     const SurfaceField<scalar>& faceFlux,
     VolumeField<Vector>& phi,
     const dsl::Coeff operatorScaling
-)
-{
-    computeDiv<Vector>(
-        faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
-    );
+) {
+    // computeDiv<Vector>(
+    //     faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
+    // );
 };
 
 void GaussGreenDiv::div(
@@ -260,9 +259,8 @@ void GaussGreenDiv::div(
     const SurfaceField<scalar>& faceFlux,
     VolumeField<Vector>& phi,
     const dsl::Coeff operatorScaling
-)
-{
-    computeDiv<Vector>(faceFlux, phi, surfaceInterpolation_, divPhi, operatorScaling);
+) {
+    // computeDiv<Vector>(faceFlux, phi, surfaceInterpolation_, divPhi, operatorScaling);
 };
 
 VolumeField<Vector> GaussGreenDiv::div(
@@ -273,9 +271,9 @@ VolumeField<Vector> GaussGreenDiv::div(
     VolumeField<Vector> divPhi(
         exec_, name, mesh_, createCalculatedBCs<VolumeBoundary<Vector>>(mesh_)
     );
-    computeDiv<Vector>(
-        faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
-    );
+    // computeDiv<Vector>(
+    //     faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
+    // );
     return divPhi;
 };
 

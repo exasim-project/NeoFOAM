@@ -103,6 +103,8 @@ class DivOperator : public dsl::OperatorMixin<VolumeField<ValueType>>
 
 public:
 
+    using FieldValueType = ValueType;
+
     // copy constructor
     DivOperator(const DivOperator& divOp)
         : dsl::OperatorMixin<VolumeField<ValueType>>(
