@@ -8,6 +8,8 @@
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/core/database/oldTimeCollection.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -48,7 +50,20 @@ public:
 
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
-        return sparsityPattern_->linearSystem();
+        la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
+
+        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
+        Field<localIdx> mColIdxs(
+            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
+        );
+        Field<localIdx> mRowPtrs(
+            ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
+        );
+
+        la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
+        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
+
+        return {matrix, rhs, ls.sparsityPattern()};
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
