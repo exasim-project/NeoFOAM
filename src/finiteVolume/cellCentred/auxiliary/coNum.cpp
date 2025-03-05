@@ -3,6 +3,7 @@
 
 #include <limits>
 
+#include "NeoFOAM/core/info.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/auxiliary/coNum.hpp"
 
@@ -35,14 +36,14 @@ scalar computeCoNum(
     {
         for (size_t i = 0; i < nInternalFaces; i++)
         {
-            scalar flux = sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
+            const scalar flux = sqrt(surfFaceFlux[i] * surfFaceFlux[i]);
             volPhi[static_cast<size_t>(surfOwner[i])] += flux;
             volPhi[static_cast<size_t>(surfNeighbour[i])] += flux;
         }
 
         for (size_t i = nInternalFaces; i < faceFlux.size(); i++)
         {
-            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
+            const auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             scalar flux = surfFaceFlux[i] * surfFaceFlux[i];
             volPhi[own] += flux;
         }
@@ -53,7 +54,7 @@ scalar computeCoNum(
         scalar totalVol = 0.0;
         for (size_t i = 0; i < mesh.nCells(); i++)
 	{
-            double val = volPhi[i] / surfV[i];
+            const scalar val = volPhi[i] / surfV[i];
             if( val > maxCoNum ) maxCoNum = val;
             totalPhi += volPhi[i];
             totalVol += surfV[i];
@@ -103,7 +104,7 @@ scalar computeCoNum(
         parallelReduce(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli, double& lsum) { lsum += volPhi[celli]; },
+            KOKKOS_LAMBDA(const size_t celli, scalar& lsum) { lsum += volPhi[celli]; },
             sumPhi
         );
 
@@ -112,14 +113,14 @@ scalar computeCoNum(
         parallelReduce(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli, double& lsum) { lsum += surfV[celli]; },
+            KOKKOS_LAMBDA(const size_t celli, scalar& lsum) { lsum += surfV[celli]; },
             sumVol
         );
 
         maxCoNum  = maxReducer.reference() * 0.5 * dt;
         meanCoNum = 0.5 * (sumPhi.reference() / sumVol.reference()) * dt;
     }
-    std::cout << "Courant Number mean: " << meanCoNum << " max: " << maxCoNum  << std::endl;
+    NF_INFO("Courant Number mean: "+std::to_string(meanCoNum)+" max: "+std::to_string(maxCoNum));
 
     return maxCoNum;
 }
