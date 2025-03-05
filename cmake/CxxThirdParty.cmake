@@ -109,28 +109,22 @@ cpmaddpackage(
   SYSTEM)
 
 if(${NEOFOAM_WITH_GINKGO})
-  set(GINKGO_BUILD_TESTS
-      OFF
-      CACHE INTERNAL "")
-  set(GINKGO_BUILD_BENCHMARKS
-      OFF
-      CACHE INTERNAL "")
-  set(GINKGO_BUILD_EXAMPLES
-      OFF
-      CACHE INTERNAL "")
-  set(GINKGO_BUILD_MPI
-      OFF
-      CACHE INTERNAL "")
-  set(GINKGO_ENABLE_HALF
-      OFF
-      CACHE INTERNAL "")
   cpmaddpackage(
     NAME
     Ginkgo
+    VERSION
+    1.9.0
     GITHUB_REPOSITORY
     ginkgo-project/ginkgo
     GIT_TAG
     develop
+    OPTIONS
+    "GINKGO_BUILD_TESTS OFF"
+    "GINKGO_BUILD_BENCHMARKS OFF"
+    "GINKGO_BUILD_EXAMPLES OFF"
+    "GINKGO_BUILD_MPI ${NEOFOAM_ENABLE_MPI}"
+    "GINKGO_BUILD_CUDA ${Kokkos_ENABLE_CUDA}"
+    "GINKGO_BUILD_HIP ${Kokkos_ENABLE_HIP}"
     SYSTEM)
 endif()
 
