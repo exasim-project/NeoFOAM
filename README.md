@@ -55,7 +55,7 @@ Additionally, we provide several Cmake presets to set commmonly required flags i
 
 ### Executing Tests
 
-We provide a set of unit tests which can be execute via ctest or
+We provide a set of unit tests which can be executed via ctest or
 
     cmake --build . --target test
 
@@ -64,7 +64,7 @@ We provide a set of unit tests which can be execute via ctest or
 
 Currently, NeoFOAM is not a standalone CFD Framework.
 It is designed to be used within OpenFOAM.
-Examples how to integrate NeoFOAM into OpenFOAM and howto write applications is demonstrated in the [FoamAdapter](https://github.com/exasim-project/FoamAdapter) repository.
+Examples how to integrate NeoFOAM into OpenFOAM and how to write applications is demonstrated in the [FoamAdapter](https://github.com/exasim-project/FoamAdapter) repository.
 
 ## Documentation
 
