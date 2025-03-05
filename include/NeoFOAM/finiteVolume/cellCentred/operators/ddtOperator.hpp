@@ -23,7 +23,9 @@ public:
     using FieldValueType = ValueType;
 
     DdtOperator(dsl::Operator::Type termType, VolumeField<ValueType>& field)
-        : dsl::OperatorMixin<VolumeField<ValueType>>(field.exec(), dsl::Coeff(1.0), field, termType),
+        : dsl::OperatorMixin<VolumeField<ValueType>>(
+            field.exec(), dsl::Coeff(1.0), field, termType
+        ),
           sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {
 
           };
@@ -65,7 +67,7 @@ public:
             {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
                 std::size_t idx = rowPtrs[celli] + diagOffs[celli];
-                values[idx] += operatorScaling[celli] * rDeltat * vol[celli];
+                values[idx] += operatorScaling[celli] * rDeltat * vol[celli] * one<ValueType>();
                 rhs[celli] += operatorScaling[celli] * rDeltat * oldField[celli] * vol[celli];
             }
         );
