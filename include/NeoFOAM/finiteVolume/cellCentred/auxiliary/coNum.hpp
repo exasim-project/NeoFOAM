@@ -11,14 +11,15 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-//namespace fvcc = finiteVolume::cellCentred;
-
+/* @brief Calculates courant number from the face fluxes.
+ * @param faceFlux Scalar surface field with the flux values of all faces.
+ * @param dt Size of the time step.
+ * @return Maximum courant number.
+ */
 NeoFOAM::scalar computeCoNum(const SurfaceField<NeoFOAM::scalar>& faceFlux, const scalar dt);
 
 } // namespace NeoFOAM
