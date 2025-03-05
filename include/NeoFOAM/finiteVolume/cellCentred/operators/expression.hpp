@@ -16,6 +16,24 @@ namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
+// TODO extend sparsity pattern to return the correct type
+template<typename ValueType, typename IndexType = localIdx>
+la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
+{
+
+    Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
+    Field<localIdx> mColIdxs(
+        ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
+    );
+    Field<localIdx> mRowPtrs(
+        ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
+    );
+
+    la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
+    Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
+
+    return {matrix, rhs, ls.sparsityPattern()};
+}
 
 template<typename ValueType, typename IndexType = localIdx>
 class Expression
@@ -29,7 +47,7 @@ public:
         [[maybe_unused]] const Dictionary& fvSolution
     )
         : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
-          ls_(SparsityPattern::readOrCreate(psi.mesh())->linearSystem()),
+          ls_(convert<ValueType>(SparsityPattern::readOrCreate(psi.mesh())->linearSystem())),
           sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh()))
     {
         expr_.build(fvSchemes_);
