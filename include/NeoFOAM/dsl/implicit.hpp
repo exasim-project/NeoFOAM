@@ -19,21 +19,26 @@ namespace NeoFOAM::dsl::imp
 {
 
 
-TemporalOperator<scalar> ddt(fvcc::VolumeField<NeoFOAM::scalar>& phi)
+template<typename ValueType>
+TemporalOperator<ValueType> ddt(fvcc::VolumeField<ValueType>& phi)
 {
     return fvcc::DdtOperator(dsl::Operator::Type::Implicit, phi);
 }
 
-SpatialOperator<scalar>
-Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+template<typename ValueType>
+SpatialOperator<ValueType>
+Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<ValueType>& phi)
 {
-    return SpatialOperator<scalar>(fvcc::SourceTerm(dsl::Operator::Type::Implicit, coeff, phi));
+    return SpatialOperator<ValueType>(fvcc::SourceTerm(dsl::Operator::Type::Implicit, coeff, phi));
 }
 
-SpatialOperator<scalar>
-div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+template<typename ValueType>
+SpatialOperator<ValueType>
+div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<ValueType>& phi)
 {
-    return SpatialOperator<scalar>(fvcc::DivOperator(dsl::Operator::Type::Implicit, faceFlux, phi));
+    return SpatialOperator<ValueType>(
+        fvcc::DivOperator(dsl::Operator::Type::Implicit, faceFlux, phi)
+    );
 }
 
 template<typename ValueType>
