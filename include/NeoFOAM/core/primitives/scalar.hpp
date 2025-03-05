@@ -21,13 +21,15 @@ scalar mag(const scalar& s) { return std::abs(s); }
 
 // traits for vector
 template<>
-inline scalar one<scalar>()
+KOKKOS_INLINE_FUNCTION
+scalar one<scalar>()
 {
     return 1.0;
 };
 
 template<>
-inline scalar zero<scalar>()
+KOKKOS_INLINE_FUNCTION
+scalar zero<scalar>()
 {
     return 0.0;
 };

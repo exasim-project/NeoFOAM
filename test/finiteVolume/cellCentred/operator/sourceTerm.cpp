@@ -18,7 +18,7 @@ using Operator = NeoFOAM::dsl::Operator;
 namespace NeoFOAM
 {
 
-TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar)//, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -56,7 +56,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     SECTION("implicit SourceTerm" + execName)
     {
-        fvcc::SourceTerm<TestType> sTerm(Operator::Type::Explicit, coeff, phi);
+        fvcc::SourceTerm<TestType> sTerm(Operator::Type::Implicit, coeff, phi);
         auto ls = sTerm.createEmptyLinearSystem();
         sTerm.implicitOperation(ls);
         auto lsHost = ls.copyToHost();

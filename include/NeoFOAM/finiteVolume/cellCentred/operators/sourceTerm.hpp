@@ -75,7 +75,8 @@ public:
             spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
         const auto rowPtrs = ls.matrix().rowPtrs();
         const auto colIdxs = ls.matrix().colIdxs();
-        std::span<ValueType> values = ls.matrix().values();
+        auto values = ls.matrix().values();
+
         NeoFOAM::parallelFor(
             ls.exec(),
             {0, coeff.size()},
