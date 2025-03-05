@@ -57,7 +57,7 @@ public:
         auto ginkgoLs = NeoFOAM::dsl::ginkgoMatrix(ls, solutionField);
 
 
-        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
+        NeoFOAM::la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ginkgoLs, solutionField.internalField());
 
         // check if executor is GPU

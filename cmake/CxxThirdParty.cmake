@@ -113,7 +113,7 @@ if(${NEOFOAM_WITH_GINKGO})
     NAME
     Ginkgo
     VERSION
-    1.9.0
+    1.10.0
     GITHUB_REPOSITORY
     ginkgo-project/ginkgo
     GIT_TAG
