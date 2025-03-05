@@ -8,6 +8,6 @@ var searchData=
   ['apply_5',['apply',['../classNeoFOAM_1_1Field.html#ab3d5f8f8a4a7b07d5873f767978c0be7',1,'NeoFOAM::Field']]],
   ['arglist_6',['arglist',['../classNeoFOAM_1_1ArgList.html#a5ac95e8275474875c7821d54a4ed9ae9',1,'NeoFOAM::ArgList::ArgList()'],['../classNeoFOAM_1_1ArgList.html',1,'NeoFOAM::ArgList']]],
   ['as_7',['as',['../classNeoFOAM_1_1Collection.html#afef89c18c5d4463abc965c760e1f76fd',1,'NeoFOAM::Collection::as()'],['../classNeoFOAM_1_1Collection.html#a7efdebe920e9a33496859c8a5d9d61ba',1,'NeoFOAM::Collection::as() const']]],
-  ['assemble_8',['assemble',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#af5b9eaffd50d7e77d83653217ad2ac32',1,'NeoFOAM::finiteVolume::cellCentred::Expression']]],
+  ['assemble_8',['assemble',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#a3a9f9ca27271e675b7bb5b3f5c9e7a40',1,'NeoFOAM::finiteVolume::cellCentred::Expression::assemble(scalar t, scalar dt)'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#af5b9eaffd50d7e77d83653217ad2ac32',1,'NeoFOAM::finiteVolume::cellCentred::Expression::assemble()']]],
   ['at_9',['at',['../classNeoFOAM_1_1Database.html#a20a51e4e56e910e31e66d9f295a6e85d',1,'NeoFOAM::Database::at(const std::string &amp;name)'],['../classNeoFOAM_1_1Database.html#acf911a66346ee914dc3c6d769fe34e84',1,'NeoFOAM::Database::at(const std::string &amp;name) const'],['../classNeoFOAM_1_1Database.html#a1148215752af31e211712cddf3b7aa35',1,'NeoFOAM::Database::at(const std::string &amp;name)']]]
 ];
