@@ -28,42 +28,23 @@ public:
         : dsl::OperatorMixin<VolumeField<ValueType>>(
             field.exec(), dsl::Coeff(1.0), field, termType
         ),
-          sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {
-
-          };
+          sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
 
     void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
     {
-        const scalar rDeltat = 1 / dt;
+        const scalar dtInver = 1.0 / dt;
         const auto vol = this->getField().mesh().cellVolumes().span();
         auto operatorScaling = this->getCoefficient();
         auto [sourceSpan, field, oldField] =
             spans(source, this->field_.internalField(), oldTime(this->field_).internalField());
+        
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
             KOKKOS_LAMBDA(const size_t celli) {
-                sourceSpan[celli] += rDeltat * (field[celli] - oldField[celli]) * vol[celli];
+                sourceSpan[celli] += dtInver * (field[celli] - oldField[celli]) * vol[celli];
             }
         );
-    }
-
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-
-        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
-        Field<localIdx> mColIdxs(
-            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
-        );
-        Field<localIdx> mRowPtrs(
-            ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
-        );
-
-        la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
-
-        return {matrix, rhs, ls.sparsityPattern()};
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
@@ -89,6 +70,25 @@ public:
             }
         );
     }
+
+    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
+    {
+        la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
+
+        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
+        Field<localIdx> mColIdxs(
+            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
+        );
+        Field<localIdx> mRowPtrs(
+            ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
+        );
+
+        la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
+        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
+
+        return {matrix, rhs, ls.sparsityPattern()};
+    }
+
 
 
     void build(const Input& input)
