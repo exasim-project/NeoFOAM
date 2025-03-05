@@ -61,7 +61,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         sTerm.implicitOperation(ls);
         auto lsHost = ls.copyToHost();
         auto vol = mesh.cellVolumes().copyToHost();
-        // results = coeff*vol
+        
         REQUIRE(
             mag(lsHost.matrix().values()[0] - 2.0 * vol[0] * one<TestType>())
             == Catch::Approx(0.0).margin(1e-8)
