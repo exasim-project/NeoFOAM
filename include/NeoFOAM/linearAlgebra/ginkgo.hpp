@@ -17,6 +17,8 @@
 namespace NeoFOAM::la::ginkgo
 {
 
+gko::config::pnode parse(const Dictionary& dict);
+
 template<typename ValueType>
 class GkoSolverBase
 {
