@@ -28,13 +28,13 @@ public:
 
           };
 
-    void explicitOperation(Field<ValueType>& source, ValueType t, ValueType dt)
+    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
     {
         const scalar rDeltat = 1 / dt;
-        const auto vol = getField().mesh().cellVolumes().span();
-        auto operatorScaling = getCoefficient();
+        const auto vol = this->getField().mesh().cellVolumes().span();
+        auto operatorScaling = this->getCoefficient();
         auto [sourceSpan, field, oldField] =
-            spans(source, field_.internalField(), oldTime(field_).internalField());
+            spans(source, this->field_.internalField(), oldTime(this->field_).internalField());
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
@@ -49,13 +49,13 @@ public:
         return sparsityPattern_->linearSystem();
     }
 
-    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, ValueType t, ValueType dt)
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
     {
-        const ValueType rDeltat = 1 / dt;
-        const auto vol = getField().mesh().cellVolumes().span();
-        const auto operatorScaling = getCoefficient();
+        const scalar rDeltat = 1 / dt;
+        const auto vol = this->getField().mesh().cellVolumes().span();
+        const auto operatorScaling = this->getCoefficient();
         const auto [diagOffs, oldField] =
-            spans(sparsityPattern_->diagOffset(), oldTime(field_).internalField());
+            spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());
         const auto rowPtrs = ls.matrix().rowPtrs();
         const auto colIdxs = ls.matrix().colIdxs();
         std::span<ValueType> values = ls.matrix().values();
@@ -81,6 +81,7 @@ public:
 
 private:
 
+    // const VolumeField<ValueType> coefficients_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
