@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['gaussgreendiv_0',['gaussgreendiv',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenDiv.html',1,'NeoFOAM::finiteVolume::cellCentred::GaussGreenDiv'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenDiv.html#a39bcedf16619c1eacc116e4bb873e10c',1,'NeoFOAM::finiteVolume::cellCentred::GaussGreenDiv::GaussGreenDiv()']]],
+  ['gaussgreendiv_0',['gaussgreendiv',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenDiv.html',1,'NeoFOAM::finiteVolume::cellCentred::GaussGreenDiv&lt; ValueType &gt;'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenDiv.html#aa46e9261fa65b9fd1fc76ded1192b24f',1,'NeoFOAM::finiteVolume::cellCentred::GaussGreenDiv::GaussGreenDiv()']]],
   ['gaussgreendiv_2ehpp_1',['gaussGreenDiv.hpp',['../gaussGreenDiv_8hpp.html',1,'']]],
   ['gaussgreengrad_2',['gaussgreengrad',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenGrad.html',1,'NeoFOAM::finiteVolume::cellCentred::GaussGreenGrad'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenGrad.html#aee5e1fad6caad92f4c4fe9d19d237738',1,'NeoFOAM::finiteVolume::cellCentred::GaussGreenGrad::GaussGreenGrad()']]],
   ['gaussgreengrad_2ehpp_3',['gaussGreenGrad.hpp',['../gaussGreenGrad_8hpp.html',1,'']]],
