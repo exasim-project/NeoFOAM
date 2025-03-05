@@ -42,9 +42,7 @@ struct CreateField
             bcs.push_back(fvcc::VolumeBoundary<ValueType>(mesh, dict, patchi));
         }
         NeoFOAM::Field<ValueType> internalField(mesh.exec(), mesh.nCells(), 1.0);
-        fvcc::VolumeField<ValueType> vf(
-            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
-        );
+        fvcc::VolumeField<ValueType> vf(mesh.exec(), name, mesh, internalField, bcs, db, "", "");
 
         return NeoFOAM::Document(
             {{"name", vf.name},
@@ -60,10 +58,9 @@ struct CreateField
 
 TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Vector)
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {})//,
-        //NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        //NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+                                      NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+                                      NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
 
@@ -79,41 +76,53 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
     coeff.correctBoundaryConditions();
 
     fvcc::FieldCollection& fieldCollection =
-            fvcc::FieldCollection::instance(db, "testFieldCollection");
+        fvcc::FieldCollection::instance(db, "testFieldCollection");
 
-    fvcc::VolumeField<TestType>& phi =
-    fieldCollection.registerField<fvcc::VolumeField<TestType>>(
+    fvcc::VolumeField<TestType>& phi = fieldCollection.registerField<fvcc::VolumeField<TestType>>(
         CreateField<TestType> {.name = "phi", .mesh = mesh, .timeIndex = 1}
     );
     fill(phi.internalField(), 10 * one<TestType>());
     fill(phi.boundaryField().value(), zero<TestType>());
-    fill(oldTime(phi).internalField(), zero<TestType>());
+    fill(oldTime(phi).internalField(), -1.0 * one<TestType>());
     phi.correctBoundaryConditions();
 
     SECTION("explicit DdtOperator " + execName)
     {
         fvcc::DdtOperator<TestType> ddtTerm(Operator::Type::Explicit, phi);
         auto source = Field<TestType>(exec, phi.size(), zero<TestType>());
-        ddtTerm.explicitOperation(source, 1.0, 1.0);
+        ddtTerm.explicitOperation(source, 1.0, 0.5);
 
         // cell has one cell
+        const auto vol = mesh.cellVolumes().copyToHost();
         auto hostSource = source.copyToHost();
-        REQUIRE(mag(hostSource[0] - 10 * one<TestType>()) == Catch::Approx(0.0).margin(1e-8));
+        auto values = hostSource.span();
+        for(auto ii = 0; ii < values.size(); ++ii)
+        {
+            REQUIRE(values[ii] == Catch::Approx((22.0)*vol[0]).margin(1e-8)); // => (phi^{n + 1} - phi^{n})/dt*V => (10 -- 1)/.5*V = 22V
+        }
     }
 
-    // SECTION("implicit DdtOperator " + execName)
-    // {
-    //     fvcc::SourceTerm<TestType> sTerm(Operator::Type::Explicit, coeff, phi);
-    //     auto ls = sTerm.createEmptyLinearSystem();
-    //     sTerm.implicitOperation(ls);
-    //     auto lsHost = ls.copyToHost();
-    //     auto vol = mesh.cellVolumes().copyToHost();
-    //     // results = coeff*vol
-    //     REQUIRE(
-    //         mag(lsHost.matrix().values()[0] - 2.0 * vol[0] * one<TestType>())
-    //         == Catch::Approx(0.0).margin(1e-8)
-    //     );
-    // }
+    SECTION("implicit DdtOperator " + execName)
+    {
+        fvcc::DdtOperator<TestType> ddtTerm(Operator::Type::Implicit, phi);
+        auto ls = ddtTerm.createEmptyLinearSystem();
+        ddtTerm.implicitOperation(ls, 1.0, 0.5);
+
+        auto lsHost = ls.copyToHost();
+        const auto vol = mesh.cellVolumes().copyToHost();
+        const auto matrixValues = lsHost.matrix().values();
+        const auto rhs = lsHost.rhs().span();
+
+        for(auto ii = 0; ii < matrixValues.size(); ++ii)
+        {
+            REQUIRE(matrixValues[ii] == Catch::Approx(2.0*vol[0]).margin(1e-8)); // => 1/dt*V => 1/.5*V = 2V
+            REQUIRE(rhs[ii] == Catch::Approx(-2.0*vol[0]).margin(1e-8)); // => phi^{n}/dt*V => -1/.5*V = -2V
+        // REQUIRE(
+        //     mag(rhs + 1.0 * vol[0] * one<TestType>()) == Catch::Approx(0.0).margin(1e-8)
+        // ); // => 
+        }
+
+    }
 }
 
 }
