@@ -18,7 +18,7 @@ using Operator = NeoFOAM::dsl::Operator;
 namespace NeoFOAM
 {
 
-TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar)//, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
