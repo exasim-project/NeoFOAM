@@ -41,10 +41,24 @@ public:
     {}
 
     /**
-     * @brief Copy constructor.
-     * @param other The Collection instance to copy from.
+     * @brief A Collection is not copyable, only moveable.
      */
-    Collection(const Collection& other);
+    Collection(const Collection& other) = delete;
+
+    /**
+     * @brief A Collection is not copyable, only moveable.
+     */
+    Collection& operator=(const Collection& other) = delete;
+
+    /**
+     * @brief A Collection is moveable, but not copyable
+     */
+    Collection(Collection&& other) = default;
+
+    /**
+     * @brief A Collection is moveable, but not copyable
+     */
+    Collection& operator=(Collection&& other) = default;
 
     /**
      * @brief Retrieves a document by its ID.
@@ -157,7 +171,6 @@ private:
         virtual std::string name() const = 0;
         virtual Database& db() = 0;
         virtual const Database& db() const = 0;
-        virtual std::unique_ptr<CollectionConcept> clone() const = 0;
     };
 
     template<typename CollectionType>
@@ -185,11 +198,6 @@ private:
 
         const Database& db() const override { return collection_.db(); }
 
-        std::unique_ptr<CollectionConcept> clone() const override
-        {
-            return std::make_unique<CollectionModel>(*this);
-        }
-
         CollectionType collection_;
     };
 
@@ -215,6 +223,26 @@ public:
      * @param name The name of the collection.
      */
     CollectionMixin(NeoFOAM::Database& db, std::string name) : docs_(), db_(db), name_(name) {}
+
+    /**
+     * @biref A CollectionMixin is not copyable, only moveable.
+     */
+    CollectionMixin(const CollectionMixin&) = delete;
+
+    /**
+     * @biref A CollectionMixin is not copyable, only moveable.
+     */
+    CollectionMixin& operator=(const CollectionMixin&) = delete;
+
+    /**
+     * @biref A CollectionMixin is moveable, but not copyable.
+     */
+    CollectionMixin(CollectionMixin&&) = default;
+
+    /**
+     * @biref A CollectionMixin is not move-assign-able.
+     */
+    CollectionMixin& operator=(CollectionMixin&&) = delete;
 
     /**
      * @brief Retrieves a document by its ID.
