@@ -28,6 +28,7 @@ target_sources(
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
+          "linearAlgebra/ginkgo.cpp"
           "linearAlgebra/utilities.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"

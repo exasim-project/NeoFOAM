@@ -12,12 +12,14 @@
 #if NF_WITH_GINKGO
 
 template<typename ExecSpace>
-bool isNotKokkosThreads(ExecSpace ex)
+bool isNotKokkosThreads([[maybe_unused]] ExecSpace ex)
 {
+#ifdef KOKKOS_ENABLE_THREADS
     if constexpr (std::is_same_v<ExecSpace, Kokkos::Threads>)
     {
         return false;
     }
+#endif
     return true;
 }
 
@@ -56,12 +58,14 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs, "custom");
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
-        NeoFOAM::Dictionary solverDict;
-        solverDict.insert("maxIters", 100);
-        solverDict.insert("relTol", float(1e-7));
+        NeoFOAM::Dictionary solverDict {
+            {{"type", "solver::Cg"},
+             {"criteria",
+              NeoFOAM::Dictionary {{{"iteration", 100}, {"relative_residual_norm", 1e-7}}}}}
+        };
 
         // Create solver
-        auto solver = NeoFOAM::la::ginkgo::CG<NeoFOAM::scalar>(exec, solverDict);
+        auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, solverDict);
 
         // Solve system
         solver.solve(linearSystem, x);
