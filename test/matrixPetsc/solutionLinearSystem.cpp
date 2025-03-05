@@ -41,6 +41,9 @@ TEST_CASE("solution linear system")
         NeoFOAM::Field<NeoFOAM::scalar> values(
             exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
         );
+        NeoFOAM::Field<NeoFOAM::scalar> rhs(
+            exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}
+        );
         PetscInt colIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         PetscInt rowIdx[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         PetscScalar v[10];
@@ -65,7 +68,7 @@ TEST_CASE("solution linear system")
         }
         VecDuplicate(b, &x);
         VecSetPreallocationCOO(b, size, rowIdx);
-        VecSetValuesCOO(b, values.data(), ADD_VALUES);
+        VecSetValuesCOO(b, rhs.data(), ADD_VALUES);
 
         MatSetPreallocationCOO(A, size, colIdx, rowIdx);
         MatSetValuesCOO(A, values.data(), ADD_VALUES);

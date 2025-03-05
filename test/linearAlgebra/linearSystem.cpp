@@ -54,14 +54,27 @@ TEST_CASE("LinearSystem")
             values, colIdx, rowPtrs
         );
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 0.0);
+        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, {1.0, 2.0, 3.0});
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
             csrMatrix, rhs, "custom"
         );
 
         auto hostMatrix = linearSystem.matrix().copyToHost();
+        auto hostrhs = linearSystem.rhs().copyToHost();
 
         REQUIRE(hostMatrix.values()[0] == 1.0);
+        REQUIRE(hostMatrix.values()[1] == 2.0);
+        REQUIRE(hostMatrix.values()[2] == 3.0);
+        REQUIRE(hostMatrix.values()[3] == 4.0);
+        REQUIRE(hostMatrix.values()[4] == 5.0);
+        REQUIRE(hostMatrix.values()[5] == 6.0);
+        REQUIRE(hostMatrix.values()[6] == 7.0);
+        REQUIRE(hostMatrix.values()[7] == 8.0);
+        REQUIRE(hostMatrix.values()[8] == 9.0);
+
+        REQUIRE(hostrhs.data()[0] == 1.0);
+        REQUIRE(hostrhs.data()[1] == 2.0);
+        REQUIRE(hostrhs.data()[2] == 3.0);
     }
 
 

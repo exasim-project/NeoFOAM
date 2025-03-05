@@ -43,6 +43,7 @@ public:
     }
 
     [[nodiscard]] Field<IndexType> colIdxsToHost() const { return colIdxs_.copyToHost(); }
+    [[nodiscard]] Field<IndexType> rowPtrToHost() const { return rowPtrs_.copyToHost(); }
 
     [[nodiscard]] std::span<ValueType> values() { return values_.span(); }
     [[nodiscard]] std::span<IndexType> colIdxs() { return colIdxs_.span(); }

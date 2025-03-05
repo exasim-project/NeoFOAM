@@ -95,13 +95,15 @@ TEST_CASE("MatrixAssembly - Petsc")
     {
 
         std::cout << execName << "\n";
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+        NeoFOAM::Field<NeoFOAM::scalar> values(
+            exec, {10.0, 4.0, 7.0, 2.0, 10.0, 8.0, 3.0, 6.0, 10.0}
+        );
         // TODO work on support for unsingned types
         NeoFOAM::Field<int> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
         NeoFOAM::Field<int> rowPtrs(exec, {0, 3, 6, 9});
         NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, int> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 2.0);
+        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, {1.0, 2.0, 3.0});
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs, "custom");
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
