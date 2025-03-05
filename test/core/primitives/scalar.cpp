@@ -13,22 +13,22 @@ TEST_CASE("Primitives")
 {
     SECTION("Scalar", "[Traits]")
     {
-        auto one = NeoFOAM::one<NeoFOAM::scalar>::value;
+        auto one = NeoFOAM::one<NeoFOAM::scalar>();
 
         REQUIRE(one == 1.0);
 
-        auto zero = NeoFOAM::zero<NeoFOAM::scalar>::value;
+        auto zero = NeoFOAM::zero<NeoFOAM::scalar>();
 
         REQUIRE(zero == 0.0);
     }
 
     SECTION("LocalIdx", "[Traits]")
     {
-        auto one = NeoFOAM::one<NeoFOAM::localIdx>::value;
+        auto one = NeoFOAM::one<NeoFOAM::localIdx>();
 
         REQUIRE(one == 1);
 
-        auto zero = NeoFOAM::zero<NeoFOAM::localIdx>::value;
+        auto zero = NeoFOAM::zero<NeoFOAM::localIdx>();
 
         REQUIRE(zero == 0);
     }

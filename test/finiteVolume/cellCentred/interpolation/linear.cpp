@@ -31,14 +31,14 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = create1DUniformMesh(exec, 10);
     Input input = TokenList({std::string("linear")});
-    auto linear = SurfaceInterpolation(exec, mesh, input);
+    auto linear = SurfaceInterpolation<TestType>(exec, mesh, input);
     std::vector<fvcc::VolumeBoundary<TestType>> vbcs {};
     std::vector<fvcc::SurfaceBoundary<TestType>> sbcs {};
     for (auto patchi : I<size_t> {0, 1})
     {
         Dictionary dict;
         dict.insert("type", std::string("fixedValue"));
-        dict.insert("fixedValue", one<TestType>::value);
+        dict.insert("fixedValue", one<TestType>());
         sbcs.push_back(fvcc::SurfaceBoundary<TestType>(mesh, dict, patchi));
         vbcs.push_back(fvcc::VolumeBoundary<TestType>(mesh, dict, patchi));
     }
@@ -46,7 +46,7 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto in = VolumeField<TestType>(exec, "in", mesh, vbcs);
     auto out = SurfaceField<TestType>(exec, "out", mesh, sbcs);
 
-    fill(in.internalField(), one<TestType>::value);
+    fill(in.internalField(), one<TestType>());
     in.correctBoundaryConditions();
 
     linear.interpolate(in, out);
@@ -57,12 +57,12 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto nBoundary = mesh.nBoundaryFaces();
     for (int i = 0; i < nInternal; i++)
     {
-        REQUIRE(outHost[i] == one<TestType>::value);
+        REQUIRE(outHost[i] == one<TestType>());
     }
 
     for (int i = nInternal; i < nInternal + nBoundary; i++)
     {
-        REQUIRE(outHost[i] == one<TestType>::value);
+        REQUIRE(outHost[i] == one<TestType>());
     }
 }
 }
