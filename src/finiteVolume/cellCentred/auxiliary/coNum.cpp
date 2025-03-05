@@ -16,14 +16,16 @@ scalar computeCoNum(const SurfaceField<scalar>& faceFlux, const scalar dt)
     const auto exec = faceFlux.exec();
     VolumeField<scalar> phi(exec, "phi", mesh, createCalculatedBCs<VolumeBoundary<scalar>>(mesh));
     fill(phi.internalField(), 0.0);
-    const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
 
-    const auto volPhi = phi.internalField().span();
-    const auto surfOwner = mesh.faceOwner().span();
-    const auto surfNeighbour = mesh.faceNeighbour().span();
-    const auto surfFaceFlux = faceFlux.internalField().span();
+    const auto [surfFaceCells, volPhi, surfOwner, surfNeighbour, surfFaceFlux, surfV] = spans(
+        mesh.boundaryMesh().faceCells(),
+        phi.internalField(),
+        mesh.faceOwner(),
+        mesh.faceNeighbour(),
+        faceFlux.internalField(),
+        mesh.cellVolumes()
+    );
     size_t nInternalFaces = mesh.nInternalFaces();
-    const auto surfV = mesh.cellVolumes().span();
 
     scalar maxCoNum = std::numeric_limits<scalar>::lowest();
     scalar meanCoNum = 0.0;
