@@ -17,3 +17,5 @@
 
 #include "cellCentred/interpolation/linear.hpp"
 #include "cellCentred/interpolation/upwind.hpp"
+
+#include "cellCentred/auxiliary/coNum.hpp"
