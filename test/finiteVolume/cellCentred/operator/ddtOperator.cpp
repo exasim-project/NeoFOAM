@@ -58,9 +58,9 @@ struct CreateField
 
 TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Vector)
 {
-    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}) //,
-                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+                                      NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+                                      NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
 
