@@ -18,7 +18,7 @@ using Operator = NeoFOAM::dsl::Operator;
 namespace NeoFOAM
 {
 
-TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -30,7 +30,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
     auto mesh = createSingleCellMesh(exec);
 
     auto coeffBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<scalar>>(mesh);
-    fvcc::VolumeField<TestType> coeff(exec, "coeff", mesh, coeffBCs);
+    fvcc::VolumeField<scalar> coeff(exec, "coeff", mesh, coeffBCs);
     fill(coeff.internalField(), 2.0);
     fill(coeff.boundaryField().value(), 0.0);
     coeff.correctBoundaryConditions();
