@@ -4,7 +4,7 @@
 #include <limits>
 
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/setup.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/auxiliary/coNum.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
