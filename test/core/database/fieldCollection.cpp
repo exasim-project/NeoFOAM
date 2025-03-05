@@ -145,7 +145,7 @@ TEST_CASE("FieldCollection")
 
     SECTION("add FieldDocument to FieldCollection" + execName)
     {
-        fvcc::FieldCollection fieldCollection =
+        fvcc::FieldCollection& fieldCollection =
             fvcc::FieldCollection::instance(db, "testFieldCollection");
         REQUIRE(db.size() == 1);
 
