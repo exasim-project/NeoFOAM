@@ -42,11 +42,9 @@ TEST_CASE("Courant Number")
         fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, "sf", mesh, bcs);
         NeoFOAM::fill(sf.internalField(), 1.0);
 
-	// use arbitrary time step size of 0.01
-	const NeoFOAM::scalar coNum = fvcc::computeCoNum(sf, 0.01);
-	std::cout << "coNum " << coNum << std::endl;
+        // use arbitrary time step size of 0.01
+        const NeoFOAM::scalar coNum = fvcc::computeCoNum(sf, 0.01);
 
         REQUIRE(coNum == 0.04);
-
     }
 }

@@ -10,16 +10,11 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-scalar computeCoNum(
-    const SurfaceField<scalar>& faceFlux,
-    const scalar dt
-)
+scalar computeCoNum(const SurfaceField<scalar>& faceFlux, const scalar dt)
 {
     const UnstructuredMesh& mesh = faceFlux.mesh();
     const auto exec = faceFlux.exec();
-    VolumeField<scalar> phi(
-        exec, "phi", mesh, createCalculatedBCs<VolumeBoundary<scalar>>(mesh)
-    );
+    VolumeField<scalar> phi(exec, "phi", mesh, createCalculatedBCs<VolumeBoundary<scalar>>(mesh));
     fill(phi.internalField(), 0.0);
     const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
 
@@ -48,17 +43,17 @@ scalar computeCoNum(
             volPhi[own] += flux;
         }
 
-	phi.correctBoundaryConditions();
+        phi.correctBoundaryConditions();
 
         scalar totalPhi = 0.0;
         scalar totalVol = 0.0;
         for (size_t i = 0; i < mesh.nCells(); i++)
-	{
+        {
             const scalar val = volPhi[i] / surfV[i];
-            if( val > maxCoNum ) maxCoNum = val;
+            if (val > maxCoNum) maxCoNum = val;
             totalPhi += volPhi[i];
             totalVol += surfV[i];
-	}
+        }
 
         maxCoNum *= 0.5 * dt;
         meanCoNum = 0.5 * (totalPhi / totalVol) * dt;
@@ -85,22 +80,22 @@ scalar computeCoNum(
             }
         );
 
-	phi.correctBoundaryConditions();
+        phi.correctBoundaryConditions();
 
-	scalar maxValue;
-	Kokkos::Max<NeoFOAM::scalar> maxReducer(maxValue);
+        scalar maxValue;
+        Kokkos::Max<NeoFOAM::scalar> maxReducer(maxValue);
         parallelReduce(
             exec,
             {0, mesh.nCells()},
             KOKKOS_LAMBDA(const size_t celli, NeoFOAM::scalar& lmax) {
-	        NeoFOAM::scalar val = (volPhi[celli] / surfV[celli]);
-                if( val > lmax ) lmax = val;
+                NeoFOAM::scalar val = (volPhi[celli] / surfV[celli]);
+                if (val > lmax) lmax = val;
             },
             maxReducer
         );
 
         scalar totalPhi = 0.0;
-	Kokkos::Sum<NeoFOAM::scalar> sumPhi(totalPhi);
+        Kokkos::Sum<NeoFOAM::scalar> sumPhi(totalPhi);
         parallelReduce(
             exec,
             {0, mesh.nCells()},
@@ -109,7 +104,7 @@ scalar computeCoNum(
         );
 
         scalar totalVol = 0.0;
-	Kokkos::Sum<NeoFOAM::scalar> sumVol(totalVol);
+        Kokkos::Sum<NeoFOAM::scalar> sumVol(totalVol);
         parallelReduce(
             exec,
             {0, mesh.nCells()},
@@ -117,10 +112,12 @@ scalar computeCoNum(
             sumVol
         );
 
-        maxCoNum  = maxReducer.reference() * 0.5 * dt;
+        maxCoNum = maxReducer.reference() * 0.5 * dt;
         meanCoNum = 0.5 * (sumPhi.reference() / sumVol.reference()) * dt;
     }
-    NF_INFO("Courant Number mean: "+std::to_string(meanCoNum)+" max: "+std::to_string(maxCoNum));
+    NF_INFO(
+        "Courant Number mean: " + std::to_string(meanCoNum) + " max: " + std::to_string(maxCoNum)
+    );
 
     return maxCoNum;
 }
