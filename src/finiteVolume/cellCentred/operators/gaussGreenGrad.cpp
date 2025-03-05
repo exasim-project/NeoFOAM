@@ -104,4 +104,13 @@ void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& g
     computeGrad(phi, surfaceInterpolation_, gradPhi);
 };
 
+VolumeField<Vector> GaussGreenGrad::grad(const VolumeField<scalar>& phi)
+{
+    auto gradBCs = createCalculatedBCs<VolumeBoundary<Vector>>(phi.mesh());
+    VolumeField<Vector> gradPhi = VolumeField<Vector>(phi.exec(), "gradPhi", phi.mesh(), gradBCs);
+    fill(gradPhi.internalField(), zero<Vector>());
+    computeGrad(phi, surfaceInterpolation_, gradPhi);
+    return gradPhi;
+}
+
 } // namespace NeoFOAM
