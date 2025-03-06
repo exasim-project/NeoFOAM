@@ -67,7 +67,6 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     NeoFOAM::Database db;
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = createSingleCellMesh(exec);
-    auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
 
     fvcc::FieldCollection& fieldCollection =
         fvcc::FieldCollection::instance(db, "testFieldCollection");

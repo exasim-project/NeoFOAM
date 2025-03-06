@@ -51,7 +51,10 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 
         // cell has one cell
         auto hostSource = source.copyToHost();
-        REQUIRE(mag(hostSource[0] - 20 * one<TestType>()) == Catch::Approx(0.0).margin(1e-8));
+        for(auto ii = 0; ii < hostSource.size(); ++ii)
+        {
+            REQUIRE(hostSource[ii] - 20 * one<TestType>() == TestType(0.0));
+        }
     }
 
     SECTION("implicit SourceTerm" + execName)
@@ -61,11 +64,12 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
         sTerm.implicitOperation(ls);
         auto lsHost = ls.copyToHost();
         auto vol = mesh.cellVolumes().copyToHost();
+        const auto& values = lsHost.matrix().values();
         
-        REQUIRE(
-            mag(lsHost.matrix().values()[0] - 2.0 * vol[0] * one<TestType>())
-            == Catch::Approx(0.0).margin(1e-8)
-        );
+        for(auto ii = 0; ii < values.size(); ++ii)
+        {
+            REQUIRE(values[ii] - 2 * vol[0] * one<TestType>() == TestType(0.0));
+        }
     }
 }
 
