@@ -21,7 +21,7 @@ if(NOT ${Kokkos_FOUND})
   # See https://github.com/kokkos/kokkos/issues/549 for the discussion
   if(NOT DEFINED Kokkos_ENABLE_ATOMICS_BYPASS)
     set(Kokkos_ENABLE_ATOMICS_BYPASS
-        OFF
+        ON
         CACHE INTERNAL "")
   endif()
 
