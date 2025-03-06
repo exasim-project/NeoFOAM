@@ -21,9 +21,9 @@ template<typename ValueType, typename IndexType = localIdx>
 la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
 {
 
-    Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
+    Field<ValueType> values(ls.matrix().exec(), ls.matrix().nNonZeros(), zero<ValueType>());
     Field<localIdx> mColIdxs(
-        ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
+        ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nNonZeros()
     );
     Field<localIdx> mRowPtrs(
         ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()

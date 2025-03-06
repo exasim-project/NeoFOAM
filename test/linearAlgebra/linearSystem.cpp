@@ -36,9 +36,7 @@ TEST_CASE("LinearSystem")
         );
 
         REQUIRE(linearSystem.matrix().values().size() == 9);
-        REQUIRE(linearSystem.matrix().nValues() == 9);
-        REQUIRE(linearSystem.matrix().colIdxs().size() == 9);
-        REQUIRE(linearSystem.matrix().nColIdxs() == 9);
+        REQUIRE(linearSystem.matrix().nNonZeros() == 9);
         REQUIRE(linearSystem.matrix().rowPtrs().size() == 4);
         REQUIRE(linearSystem.matrix().nRows() == 3);
 

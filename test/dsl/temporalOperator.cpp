@@ -88,8 +88,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         REQUIRE(b.getType() == Operator::Type::Implicit);
 
         auto ls = b.createEmptyLinearSystem();
-        REQUIRE(ls.matrix().nValues() == 1);
-        REQUIRE(ls.matrix().nColIdxs() == 1);
+        REQUIRE(ls.matrix().nNonZeros() == 1);
         REQUIRE(ls.matrix().nRows() == 1);
     }
 

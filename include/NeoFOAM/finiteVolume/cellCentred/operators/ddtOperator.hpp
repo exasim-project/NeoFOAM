@@ -37,7 +37,7 @@ public:
         auto operatorScaling = this->getCoefficient();
         auto [sourceSpan, field, oldField] =
             spans(source, this->field_.internalField(), oldTime(this->field_).internalField());
-        
+
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
@@ -64,7 +64,7 @@ public:
             {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
                 std::size_t idx = rowPtrs[celli] + diagOffs[celli];
-                const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver; 
+                const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver;
                 values[idx] += commonCoef * one<ValueType>();
                 rhs[celli] += commonCoef * oldField[celli];
             }
@@ -75,9 +75,9 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
 
-        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
+        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nNonZeros(), zero<ValueType>());
         Field<localIdx> mColIdxs(
-            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
+            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nNonZeros()
         );
         Field<localIdx> mRowPtrs(
             ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
@@ -88,7 +88,6 @@ public:
 
         return {matrix, rhs, ls.sparsityPattern()};
     }
-
 
 
     void build(const Input& input)
