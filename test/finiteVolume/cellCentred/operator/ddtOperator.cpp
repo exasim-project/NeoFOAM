@@ -38,7 +38,7 @@ struct CreateField
         {
             NeoFOAM::Dictionary dict;
             dict.insert("type", std::string("fixedValue"));
-            dict.insert("fixedValue", 2.0);
+            dict.insert("fixedValue", ValueType(2.0));
             bcs.push_back(fvcc::VolumeBoundary<ValueType>(mesh, dict, patchi));
         }
         NeoFOAM::Field<ValueType> internalField(mesh.exec(), mesh.nCells(), ValueType(1.0));
@@ -55,10 +55,10 @@ struct CreateField
     }
 };
 
-
 TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
-    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
                                       NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
                                       NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
@@ -109,11 +109,8 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         for(auto ii = 0; ii < matrixValues.size(); ++ii)
         {
-            REQUIRE(matrixValues[ii] == 2.0*vol[0]); // => 1/dt*V => 1/.5*V = 2V
-            REQUIRE(rhs[ii] == -2.0*vol[0]); // => phi^{n}/dt*V => -1/.5*V = -2V
-        // REQUIRE(
-        //     mag(rhs + 1.0 * vol[0] * one<TestType>()) == Catch::Approx(0.0).margin(1e-8)
-        // ); // => 
+            REQUIRE(matrixValues[ii] == 2.0*vol[0]*one<TestType>()); // => 1/dt*V => 1/.5*V = 2V
+            REQUIRE(rhs[ii] == -2.0*vol[0]*one<TestType>()); // => phi^{n}/dt*V => -1/.5*V = -2V
         }
 
     }
