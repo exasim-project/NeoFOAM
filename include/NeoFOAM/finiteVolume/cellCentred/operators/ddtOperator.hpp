@@ -54,18 +54,14 @@ public:
         const auto operatorScaling = this->getCoefficient();
         const auto [diagOffs, oldField] =
             spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());
-        const auto rowPtrs = ls.matrix().rowPtrs();
-        const auto colIdxs = ls.matrix().colIdxs();
-        auto values = ls.matrix().values();
-        auto [rows, cols, values] = ls.matrix().span();
-
+        auto [values, cols, rows] = ls.matrix().span().span();
         auto rhs = ls.rhs().span();
 
         NeoFOAM::parallelFor(
             ls.exec(),
             {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
-                std::size_t idx = rowPtrs[celli] + diagOffs[celli];
+                std::size_t idx = rows[celli] + diagOffs[celli];
                 const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver;
                 values[idx] += commonCoef * one<ValueType>();
                 rhs[celli] += commonCoef * oldField[celli];

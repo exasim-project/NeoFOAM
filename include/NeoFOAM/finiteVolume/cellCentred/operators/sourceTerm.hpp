@@ -52,17 +52,15 @@ public:
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
+        auto [A, b, sp] = ls.view();
+        const auto& exec = A.exec();
 
-        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nNonZeros(), zero<ValueType>());
-        Field<localIdx> mColIdxs(
-            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nNonZeros()
-        );
-        Field<localIdx> mRowPtrs(
-            ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
-        );
+        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
+        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
+        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-        Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
+        Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
 
         return {matrix, rhs, ls.sparsityPattern()};
     }
@@ -73,15 +71,13 @@ public:
         const auto vol = coefficients_.mesh().cellVolumes().span();
         const auto [diagOffs, coeff] =
             spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
-        const auto rowPtrs = ls.matrix().rowPtrs();
-        const auto colIdxs = ls.matrix().colIdxs();
-        auto values = ls.matrix().values();
+        auto [values, cols, rows] = ls.matrix().span().span();
 
         NeoFOAM::parallelFor(
             ls.exec(),
             {0, coeff.size()},
             KOKKOS_LAMBDA(const size_t celli) {
-                std::size_t idx = rowPtrs[celli] + diagOffs[celli];
+                std::size_t idx = rows[celli] + diagOffs[celli];
                 values[idx] +=
                     operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
             }
