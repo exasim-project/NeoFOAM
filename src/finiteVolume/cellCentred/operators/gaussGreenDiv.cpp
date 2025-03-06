@@ -50,7 +50,8 @@ void computeDiv(
             surfDivPhi[own] += valueOwn;
         }
 
-        for (size_t celli = 0; celli < mesh.nCells(); celli++)
+        size_t ncells = mesh.nCells();
+        for (size_t celli = 0; celli < ncells; celli++)
         {
             surfDivPhi[celli] *= 1 / surfV[celli];
         }
@@ -64,7 +65,8 @@ void computeDiv(
                 scalar flux = surfFaceFlux[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
                 Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-            }
+            },
+            "sumFluxesInternal"
         );
 
         parallelFor(
@@ -74,13 +76,15 @@ void computeDiv(
                 auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                 scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
                 Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
-            }
+            },
+            "sumFluxesBoundary"
         );
 
         parallelFor(
             exec,
             {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) { surfDivPhi[celli] *= 1 / surfV[celli]; }
+            KOKKOS_LAMBDA(const size_t celli) { surfDivPhi[celli] *= 1 / surfV[celli]; },
+            "normalizeFluxes"
         );
     }
 }
