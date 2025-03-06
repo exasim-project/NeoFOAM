@@ -33,7 +33,7 @@ gko::config::pnode NeoFOAM::la::ginkgo::parse(const Dictionary& dict)
         {
             return node;
         }
-        if (auto node = parseAny((unsigned int) {}))
+        if (auto node = parseAny(static_cast<unsigned int>(0)))
         {
             return node;
         }
