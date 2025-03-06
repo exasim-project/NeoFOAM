@@ -50,6 +50,38 @@ cpmaddpackage(
   https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
 
+if(${NEOFOAM_WITH_ADIOS2})
+
+  set(ADIOS2_OPTIONS
+      "BUILD_TYPE Release")
+
+  if(WIN32)
+    list(APPEND ADIOS2_OPTIONS "BUILD_STATIC_LIBS ON")
+    list(APPEND ADIOS2_OPTIONS "BUILD_SHARED_LIBS OFF")
+  else()
+    list(APPEND ADIOS2_OPTIONS "BUILD_STATIC_LIBS OFF")
+    list(APPEND ADIOS2_OPTIONS "BUILD_SHARED_LIBS ON")
+  endif()
+
+  if(Kokkos_ENABLE_CUDA)
+    set(ADIOS2_CUDA_OPTIONS "ENABLE_CUDA ON" "ADIOS2_BUILD_KOKKOS ON")
+  else()
+    set(ADIOS2_CUDA_OPTIONS "ENABLE_CUDA OFF" "ADIOS2_BUILD_KOKKOS ON")
+  endif()
+
+  cpmaddpackage(
+    NAME
+    adios2
+    GITHUB_REPOSITORY
+    ornladios/ADIOS2
+    VERSION
+    2.10.2
+    OPTIONS
+    ${ADIOS2_OPTIONS}
+    ${ADIOS2_CUDA_OPTIONS}
+    SYSTEM)
+endif()
+
 if(${NEOFOAM_WITH_SUNDIALS})
 
   set(SUNDIALS_OPTIONS
