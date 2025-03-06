@@ -19,8 +19,8 @@ if(NOT ${Kokkos_FOUND})
   include(cmake/AutoEnableDevice.cmake)
 
   # See https://github.com/kokkos/kokkos/issues/549 for the discussion
-  if(NOT DEFINED KOKKOS_ENABLE_SERIAL_ATOMICS)
-    set(KOKKOS_ENABLE_SERIAL_ATOMICS
+  if(NOT DEFINED Kokkos_ENABLE_ATOMICS_BYPASS)
+    set(Kokkos_ENABLE_ATOMICS_BYPASS
         OFF
         CACHE INTERNAL "")
   endif()
