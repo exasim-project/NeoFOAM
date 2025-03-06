@@ -53,9 +53,9 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
 
-        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nValues(), zero<ValueType>());
+        Field<ValueType> values(ls.matrix().exec(), ls.matrix().nNonZeros(), zero<ValueType>());
         Field<localIdx> mColIdxs(
-            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nColIdxs()
+            ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nNonZeros()
         );
         Field<localIdx> mRowPtrs(
             ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
