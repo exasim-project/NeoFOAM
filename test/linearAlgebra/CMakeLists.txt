@@ -3,3 +3,4 @@
 
 neofoam_unit_test(CSRMatrix)
 neofoam_unit_test(linearSystem)
+neofoam_unit_test(linearAlgebra)

@@ -8,6 +8,7 @@
 #include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
@@ -24,22 +25,55 @@ public:
 
     GaussGreenDiv(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs);
 
-    void
-    div(VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    ) override;
+    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const override;
 
-    void
-    div(Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
-    ) override;
 
-    VolumeField<scalar>
-    div(const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi) override;
+    virtual void
+    div(VolumeField<scalar>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
+
+    virtual void
+    div(la::LinearSystem<scalar, localIdx>& ls,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
+
+    virtual void
+    div(Field<scalar>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
+
+    virtual VolumeField<scalar>
+    div(const SurfaceField<scalar>& faceFlux,
+        VolumeField<scalar>& phi,
+        const dsl::Coeff operatorScaling) override;
+
+    virtual void
+    div(VolumeField<Vector>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) override;
+
+    virtual void
+    div(Field<Vector>& divPhi,
+        const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) override;
+
+    virtual VolumeField<Vector>
+    div(const SurfaceField<scalar>& faceFlux,
+        VolumeField<Vector>& phi,
+        const dsl::Coeff operatorScaling) override;
 
     std::unique_ptr<DivOperatorFactory> clone() const override;
 
 private:
 
     SurfaceInterpolation surfaceInterpolation_;
+    const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
 } // namespace NeoFOAM

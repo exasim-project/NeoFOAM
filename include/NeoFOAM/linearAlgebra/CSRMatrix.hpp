@@ -109,6 +109,8 @@ public:
         NF_ASSERT(values.exec() == rowPtrs.exec(), "Executors are not the same");
     };
 
+    CSRMatrix(const Executor exec) : values_(exec, 0), colIdxs_(exec, 0), rowPtrs_(exec, 0) {}
+
     /**
      * @brief Default destructor.
      */

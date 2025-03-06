@@ -26,10 +26,16 @@ void setGradientValue(
 )
 {
     const auto iField = domainField.internalField().span();
-    auto refGradient = domainField.boundaryField().refGrad().span();
-    auto value = domainField.boundaryField().value().span();
-    auto faceCells = mesh.boundaryMesh().faceCells(static_cast<localIdx>(patchID));
-    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs(static_cast<localIdx>(patchID));
+
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        domainField.boundaryField().refGrad(),
+        domainField.boundaryField().value(),
+        domainField.boundaryField().valueFraction(),
+        domainField.boundaryField().refValue()
+    );
+
+    auto faceCells = mesh.boundaryMesh().faceCells();
+    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs();
 
     NeoFOAM::parallelFor(
         domainField.exec(),
@@ -39,6 +45,8 @@ void setGradientValue(
             // operator / is not defined for all ValueTypes
             value[i] =
                 iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
+            valueFraction[i] = 0.0;      // only used refGrad
+            refValue[i] = fixedGradient; // not used
         }
     );
 }

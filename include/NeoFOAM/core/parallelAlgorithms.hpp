@@ -124,7 +124,7 @@ void parallelReduce(
     const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, T& value
 )
 {
-    return std::visit([&](const auto& e) { return parallelReduce(e, range, kernel, value); }, exec);
+    std::visit([&](const auto& e) { parallelReduce(e, range, kernel, value); }, exec);
 }
 
 
@@ -159,9 +159,7 @@ void parallelReduce(
 template<typename ValueType, typename Kernel, typename T>
 void parallelReduce(Field<ValueType>& field, Kernel kernel, T& value)
 {
-    return std::visit(
-        [&](const auto& e) { return parallelReduce(e, field, kernel, value); }, field.exec()
-    );
+    std::visit([&](const auto& e) { parallelReduce(e, field, kernel, value); }, field.exec());
 }
 
 template<typename Executor, typename Kernel>
@@ -203,9 +201,7 @@ void parallelScan(
     ReturnType& returnValue
 )
 {
-    return std::visit(
-        [&](const auto& e) { return parallelScan(e, range, kernel, returnValue); }, exec
-    );
+    std::visit([&](const auto& e) { parallelScan(e, range, kernel, returnValue); }, exec);
 }
 
 
