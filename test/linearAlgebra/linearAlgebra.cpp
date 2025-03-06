@@ -4,6 +4,8 @@
 #include "catch2/catch_session.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "catch2/generators/catch_generators_all.hpp"
+#include <catch2/catch_approx.hpp>
+
 
 #define KOKKOS_ENABLE_SERIAL
 
@@ -67,6 +69,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         solver.solve(linearSystem, x);
 
         auto hostX = x.copyToHost();
+
         for (size_t i = 0; i < x.size(); ++i)
         {
             CHECK(hostX[i] != 0.0);
@@ -116,6 +119,12 @@ TEST_CASE("MatrixAssembly - Petsc")
 
         // Solve system
         solver.solve(linearSystem, x);
+
+        auto hostX = x.copyToHost();
+
+        REQUIRE(hostX[0] == Catch::Approx(3. / 205.).margin(1e-6));
+        REQUIRE(hostX[1] == Catch::Approx(8. / 205.).margin(1e-6));
+        REQUIRE(hostX[2] == Catch::Approx(53. / 205.).margin(1e-6));
     }
 }
 
