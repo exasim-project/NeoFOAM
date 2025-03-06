@@ -56,57 +56,53 @@
 \DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00052}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_ac2f601a3116d16c628c9356e1b373e30}{00052}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_ac2f601a3116d16c628c9356e1b373e30}{createEmptyLinearSystem}}()\textcolor{keyword}{\ const}}
 \DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00053}00053\ \textcolor{keyword}{\ \ \ \ }\{}
 \DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<scalar,\ localIdx>}}\ ls(sparsityPattern\_-\/>linearSystem());}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00055}00055\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ values(ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().exec(),\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().nNonZeros(),\ zero<ValueType>());}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mColIdxs(}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \ \ \ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().exec(),\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().colIdxs().data(),\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().nNonZeros()}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mRowPtrs(}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().exec(),\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().rowPtrs().data(),\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().rowPtrs().size()}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00063}00063\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrix}{la::CSRMatrix<ValueType,\ localIdx>}}\ matrix(values,\ mColIdxs,\ mRowPtrs);}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ rhs(ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().exec(),\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a4311d9a7dd8854afc26aa0e645c11193}{rhs}}().size(),\ zero<ValueType>());}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00066}00066\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{matrix,\ rhs,\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a815f095f6d110ff110844bc096f321e8}{sparsityPattern}}()\};}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00068}00068\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00069}00069\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00070}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a2f1d13ad6964e7c10a4701c2748966fc}{00070}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a2f1d13ad6964e7c10a4701c2748966fc}{implicitOperation}}(\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\&\ ls)}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00071}00071\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ vol\ =\ coefficients\_.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a18570fe2823eff871124806028b8fe33}{mesh}}().\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh_a2a4425ce53efde0d22d7b389d00d3e50}{cellVolumes}}().\mbox{\hyperlink{classNeoFOAM_1_1Field_a9ff92b9ff779eaae2e8bb6e9c38df479}{span}}();}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ [diagOffs,\ coeff]\ =}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{spans}}(sparsityPattern\_-\/>diagOffset(),\ coefficients\_.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a59f7de118d3b27ec7e23474f0395ea4e}{internalField}}());}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ rowPtrs\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().rowPtrs();}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ colIdxs\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().colIdxs();}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ values\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().values();}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00079}00079\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{NeoFOAM::parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a0b824eab2111c3db70123e51df96be3e}{exec}}(),}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \{0,\ coeff.size()\},}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ celli)\ \{}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ idx\ =\ rowPtrs[celli]\ +\ diagOffs[celli];}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[idx]\ +=}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ operatorScaling[celli]\ *\ coeff[celli]\ *\ vol[celli]\ *\ one<ValueType>();}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00089}00089\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00090}00090\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00091}00091\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00092}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_ade000c0742beae1e5ca02e8d308104a6}{00092}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_ade000c0742beae1e5ca02e8d308104a6}{build}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ input)}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00093}00093\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ do\ nothing}}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00095}00095\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [A,\ b,\ sp]\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a23eff5d049b804f25c2d9e9e2ea56040}{view}}();}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}\ =\ A.exec();}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ values(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}},\ A.nNonZeros(),\ zero<ValueType>());}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mColIdxs(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}},\ A.colIdxs().data(),\ A.nNonZeros());}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mRowPtrs(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}},\ A.rowPtrs().data(),\ A.rowPtrs().size());}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrix}{la::CSRMatrix<ValueType,\ localIdx>}}\ matrix(values,\ mColIdxs,\ mRowPtrs);}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ rhs(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}},\ b.size(),\ zero<ValueType>());}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{matrix,\ rhs,\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a815f095f6d110ff110844bc096f321e8}{sparsityPattern}}()\};}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00066}00066\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00068}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a2f1d13ad6964e7c10a4701c2748966fc}{00068}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a2f1d13ad6964e7c10a4701c2748966fc}{implicitOperation}}(\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\&\ ls)}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00069}00069\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ vol\ =\ coefficients\_.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a18570fe2823eff871124806028b8fe33}{mesh}}().\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh_a2a4425ce53efde0d22d7b389d00d3e50}{cellVolumes}}().\mbox{\hyperlink{classNeoFOAM_1_1Field_a9ff92b9ff779eaae2e8bb6e9c38df479}{span}}();}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ [diagOffs,\ coeff]\ =}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{spans}}(sparsityPattern\_-\/>diagOffset(),\ coefficients\_.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a59f7de118d3b27ec7e23474f0395ea4e}{internalField}}());}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [values,\ cols,\ rows]\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().span().span();}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a79afdaeec93fc7fcd0d3ff1951cf45be}{NeoFOAM::parallelFor}}(}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a0b824eab2111c3db70123e51df96be3e}{exec}}(),}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \{0,\ coeff.size()\},}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ celli)\ \{}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::size\_t\ idx\ =\ rows[celli]\ +\ diagOffs[celli];}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ values[idx]\ +=}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ operatorScaling[celli]\ *\ coeff[celli]\ *\ vol[celli]\ *\ one<ValueType>();}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00085}00085\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00086}00086\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00087}00087\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00088}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_ade000c0742beae1e5ca02e8d308104a6}{00088}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_ade000c0742beae1e5ca02e8d308104a6}{build}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ input)}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00089}00089\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ do\ nothing}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00091}00091\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00093}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a8b69fbefc472e9286e8956bdfdac505a}{00093}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a8b69fbefc472e9286e8956bdfdac505a}{getName}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}DivOperator"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00095}00095\ \textcolor{keyword}{private}:}
 \DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00096}00096\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00097}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a8b69fbefc472e9286e8956bdfdac505a}{00097}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SourceTerm_a8b69fbefc472e9286e8956bdfdac505a}{getName}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}DivOperator"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00098}00098\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00099}00099\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00097}00097\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ coefficients\_;}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00098}00098\ \ \ \ \ \textcolor{keyword}{const}\ std::shared\_ptr<SparsityPattern>\ sparsityPattern\_;}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00099}00099\ \};}
 \DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00100}00100\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00101}00101\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ coefficients\_;}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00102}00102\ \ \ \ \ \textcolor{keyword}{const}\ std::shared\_ptr<SparsityPattern>\ sparsityPattern\_;}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00103}00103\ \};}
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00104}00104\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00105}00105\ }
-\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00106}00106\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{sourceTerm_8hpp_source_l00102}00102\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
