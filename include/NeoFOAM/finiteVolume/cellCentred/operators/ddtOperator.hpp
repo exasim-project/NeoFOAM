@@ -57,6 +57,8 @@ public:
         const auto rowPtrs = ls.matrix().rowPtrs();
         const auto colIdxs = ls.matrix().colIdxs();
         auto values = ls.matrix().values();
+        auto [rows, cols, values] = ls.matrix().span();
+
         auto rhs = ls.rhs().span();
 
         NeoFOAM::parallelFor(
