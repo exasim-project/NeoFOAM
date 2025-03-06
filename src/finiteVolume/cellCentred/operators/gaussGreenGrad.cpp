@@ -31,16 +31,13 @@ void computeGrad(
 
     const auto surfV = mesh.cellVolumes().span();
 
-    ThreadSafeAdd add {exec};
-    ThreadSafeSub sub {exec};
-
     parallelFor(
         exec,
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t i) {
             Vector flux = sSf[i] * surfPhif[i];
-            add(surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
-            sub(surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
+            Kokkos::atomic_add(&surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
+            Kokkos::atomic_sub(&surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
         }
     );
 
@@ -50,7 +47,7 @@ void computeGrad(
         KOKKOS_LAMBDA(const size_t i) {
             size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             Vector valueOwn = sSf[i] * surfPhif[i];
-            add(surfGradPhi[own], valueOwn);
+            Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
         }
     );
 
