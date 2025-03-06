@@ -25,7 +25,10 @@ concept parallelForKernel = requires(Kernel t, size_t i) {
 
 template<typename Executor, parallelForKernel Kernel>
 void parallelFor(
-    [[maybe_unused]] const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, std::string name = "parallelFor"
+    [[maybe_unused]] const Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    std::string name = "parallelFor"
 )
 {
     auto [start, end] = range;
@@ -49,7 +52,12 @@ void parallelFor(
 
 
 template<parallelForKernel Kernel>
-void parallelFor(const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel, std::string name = "parallelFor")
+void parallelFor(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    std::string name = "parallelFor"
+)
 {
     std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
 }
@@ -63,12 +71,17 @@ concept parallelForFieldKernel = requires(Kernel t, ValueType val, size_t i) {
 };
 
 template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
-void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel, std::string name = "parallelFor")
+void parallelFor(
+    [[maybe_unused]] const Executor& exec,
+    Field<ValueType>& field,
+    Kernel kernel,
+    std::string name = "parallelFor"
+)
 {
     auto span = field.span();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-	size_t fieldSize = field.size();
+        size_t fieldSize = field.size();
         for (size_t i = 0; i < fieldSize; i++)
         {
             span[i] = kernel(i);
@@ -136,7 +149,7 @@ void parallelReduce(
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-	size_t fieldSize = field.size();
+        size_t fieldSize = field.size();
         for (size_t i = 0; i < fieldSize; i++)
         {
             if constexpr (Kokkos::is_reducer<T>::value)
