@@ -25,11 +25,11 @@ createGkoMtx(std::shared_ptr<const gko::Executor> exec, LinearSystem<ValueType, 
     auto& mtx = sys.matrix();
     size_t nrows = sys.rhs().size();
 
-    auto valuesView = gko::array<scalar>::view(exec, mtx.values().size(), mtx.values().data());
-    auto colIdxView = gko::array<int>::view(exec, mtx.colIdxs().size(), mtx.colIdxs().data());
-    auto rowPtrView = gko::array<int>::view(exec, mtx.rowPtrs().size(), mtx.rowPtrs().data());
+    auto valuesView = gko::array<ValueType>::view(exec, mtx.values().size(), mtx.values().data());
+    auto colIdxView = gko::array<IndexType>::view(exec, mtx.colIdxs().size(), mtx.colIdxs().data());
+    auto rowPtrView = gko::array<IndexType>::view(exec, mtx.rowPtrs().size(), mtx.rowPtrs().data());
 
-    return gko::share(gko::matrix::Csr<scalar, int>::create(
+    return gko::share(gko::matrix::Csr<ValueType, IndexType>::create(
         exec, gko::dim<2> {nrows, nrows}, valuesView, colIdxView, rowPtrView
     ));
 }
@@ -39,7 +39,7 @@ std::shared_ptr<gko::matrix::Dense<ValueType>>
 createGkoDense(std::shared_ptr<const gko::Executor> exec, ValueType* ptr, size_t size)
 {
     return gko::share(gko::matrix::Dense<ValueType>::create(
-        exec, gko::dim<2> {size, 1}, gko::array<scalar>::view(exec, size, ptr), 1
+        exec, gko::dim<2> {size, 1}, gko::array<ValueType>::view(exec, size, ptr), 1
     ));
 }
 }
