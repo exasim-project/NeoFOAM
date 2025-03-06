@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 set(NEOFOAM_KOKKOS_CHECKOUT_VERSION
-    "4.3.00"
+    "4.4.01"
     CACHE STRING "Use specific version of Kokkos")
 mark_as_advanced(NEOFOAM_KOKKOS_CHECKOUT_VERSION)
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
