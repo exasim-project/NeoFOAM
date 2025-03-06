@@ -18,13 +18,6 @@ if(NOT ${Kokkos_FOUND})
   include(FetchContent)
   include(cmake/AutoEnableDevice.cmake)
 
-  # See https://github.com/kokkos/kokkos/issues/549 for the discussion
-  if(NOT DEFINED Kokkos_ENABLE_ATOMICS_BYPASS)
-    set(Kokkos_ENABLE_ATOMICS_BYPASS
-        ON
-        CACHE INTERNAL "")
-  endif()
-
   FetchContent_Declare(
     Kokkos
     SYSTEM QUITE
