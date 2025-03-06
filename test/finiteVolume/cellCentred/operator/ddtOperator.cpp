@@ -41,7 +41,7 @@ struct CreateField
             dict.insert("fixedValue", 2.0);
             bcs.push_back(fvcc::VolumeBoundary<ValueType>(mesh, dict, patchi));
         }
-        NeoFOAM::Field<ValueType> internalField(mesh.exec(), mesh.nCells(), 1.0);
+        NeoFOAM::Field<ValueType> internalField(mesh.exec(), mesh.nCells(), ValueType(1.0));
         fvcc::VolumeField<ValueType> vf(mesh.exec(), name, mesh, internalField, bcs, db, "", "");
 
         return NeoFOAM::Document(
@@ -56,7 +56,7 @@ struct CreateField
 };
 
 
-TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
                                       NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
@@ -68,12 +68,6 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = createSingleCellMesh(exec);
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
-
-    auto coeffBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<scalar>>(mesh);
-    fvcc::VolumeField<TestType> coeff(exec, "coeff", mesh, coeffBCs);
-    fill(coeff.internalField(), 2.0);
-    fill(coeff.boundaryField().value(), 0.0);
-    coeff.correctBoundaryConditions();
 
     fvcc::FieldCollection& fieldCollection =
         fvcc::FieldCollection::instance(db, "testFieldCollection");
@@ -98,7 +92,7 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
         auto values = hostSource.span();
         for(auto ii = 0; ii < values.size(); ++ii)
         {
-            REQUIRE(values[ii] == Catch::Approx((22.0)*vol[0]).margin(1e-8)); // => (phi^{n + 1} - phi^{n})/dt*V => (10 -- 1)/.5*V = 22V
+            REQUIRE(values[ii] == vol[0]*TestType(22.0)); // => (phi^{n + 1} - phi^{n})/dt*V => (10 -- 1)/.5*V = 22V
         }
     }
 
@@ -115,8 +109,8 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar) //, NeoFOAM::Ve
 
         for(auto ii = 0; ii < matrixValues.size(); ++ii)
         {
-            REQUIRE(matrixValues[ii] == Catch::Approx(2.0*vol[0]).margin(1e-8)); // => 1/dt*V => 1/.5*V = 2V
-            REQUIRE(rhs[ii] == Catch::Approx(-2.0*vol[0]).margin(1e-8)); // => phi^{n}/dt*V => -1/.5*V = -2V
+            REQUIRE(matrixValues[ii] == 2.0*vol[0]); // => 1/dt*V => 1/.5*V = 2V
+            REQUIRE(rhs[ii] == -2.0*vol[0]); // => phi^{n}/dt*V => -1/.5*V = -2V
         // REQUIRE(
         //     mag(rhs + 1.0 * vol[0] * one<TestType>()) == Catch::Approx(0.0).margin(1e-8)
         // ); // => 
