@@ -39,6 +39,14 @@ public:
         cmpts_[2] = z;
     }
 
+    KOKKOS_INLINE_FUNCTION
+    explicit Vector(const scalar constValue)
+    {
+        cmpts_[0] = constValue;
+        cmpts_[1] = constValue;
+        cmpts_[2] = constValue;
+    }
+
     /**
      * @brief Returns pointer to the data of the vector
      *
