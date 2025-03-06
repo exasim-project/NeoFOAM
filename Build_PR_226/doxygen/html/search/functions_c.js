@@ -4,15 +4,14 @@ var searchData=
   ['nboundaries_1',['nboundaries',['../classNeoFOAM_1_1BoundaryFields.html#af3b8fedc3928ea76539b2f99d88c5b7c',1,'NeoFOAM::BoundaryFields::nBoundaries()'],['../classNeoFOAM_1_1UnstructuredMesh.html#ab8828546da19374ac9a6258670bc1ab9',1,'NeoFOAM::UnstructuredMesh::nBoundaries() const']]],
   ['nboundaryfaces_2',['nboundaryfaces',['../classNeoFOAM_1_1UnstructuredMesh.html#aac201cf14602f2afb6d9f84399a36524',1,'NeoFOAM::UnstructuredMesh::nBoundaryFaces()'],['../classNeoFOAM_1_1BoundaryFields.html#a7848931349cc5183e78c42f103389aca',1,'NeoFOAM::BoundaryFields::nBoundaryFaces()']]],
   ['ncells_3',['nCells',['../classNeoFOAM_1_1UnstructuredMesh.html#aadbdc8a2b4a0bffc6c691d599628b51f',1,'NeoFOAM::UnstructuredMesh']]],
-  ['ncolidxs_4',['nColIdxs',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a5835ab499b1be527af82028ad21bf53c',1,'NeoFOAM::la::CSRMatrix']]],
-  ['neofoamexception_5',['NeoFOAMException',['../classNeoFOAM_1_1NeoFOAMException.html#a97203629bd4f1e83a2ea1010094c026a',1,'NeoFOAM::NeoFOAMException']]],
-  ['nexttime_6',['nexttime',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a55aeb5eade825f623de34e315142b6b3',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime()'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a910f62e37796ecfdec46f53a0d878372',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime() const']]],
-  ['nf_7',['nf',['../classNeoFOAM_1_1BoundaryMesh.html#a86dedb4feac055813cfd387a5b75b613',1,'NeoFOAM::BoundaryMesh::nf() const'],['../classNeoFOAM_1_1BoundaryMesh.html#a4ad6bdf73ab49d32a95c05107308723d',1,'NeoFOAM::BoundaryMesh::nf(const localIdx i) const']]],
-  ['nfaces_8',['nFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#aad44a2f84a27c149a501f28db69616f5',1,'NeoFOAM::UnstructuredMesh']]],
-  ['ninternalfaces_9',['nInternalFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779',1,'NeoFOAM::UnstructuredMesh']]],
+  ['neofoamexception_4',['NeoFOAMException',['../classNeoFOAM_1_1NeoFOAMException.html#a97203629bd4f1e83a2ea1010094c026a',1,'NeoFOAM::NeoFOAMException']]],
+  ['nexttime_5',['nexttime',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a55aeb5eade825f623de34e315142b6b3',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime()'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a910f62e37796ecfdec46f53a0d878372',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime() const']]],
+  ['nf_6',['nf',['../classNeoFOAM_1_1BoundaryMesh.html#a86dedb4feac055813cfd387a5b75b613',1,'NeoFOAM::BoundaryMesh::nf() const'],['../classNeoFOAM_1_1BoundaryMesh.html#a4ad6bdf73ab49d32a95c05107308723d',1,'NeoFOAM::BoundaryMesh::nf(const localIdx i) const']]],
+  ['nfaces_7',['nFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#aad44a2f84a27c149a501f28db69616f5',1,'NeoFOAM::UnstructuredMesh']]],
+  ['ninternalfaces_8',['nInternalFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779',1,'NeoFOAM::UnstructuredMesh']]],
+  ['nnonzeros_9',['nNonZeros',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a9f82c546edff365981c20296d61ed1de',1,'NeoFOAM::la::CSRMatrix']]],
   ['nonorthcorrectionvectors_10',['nonOrthCorrectionVectors',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a76bd11324d2b3b772149d65011e4dd82',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
   ['nonorthdeltacoeffs_11',['nonOrthDeltaCoeffs',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a52315a12de47a9b7e6ac95c751c24c37',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
   ['nrows_12',['nRows',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#adc4ebdbad277c6e638683ab978526042',1,'NeoFOAM::la::CSRMatrix']]],
-  ['numsegments_13',['numSegments',['../classNeoFOAM_1_1SegmentedField.html#ad41c05f17db58a093e6c3c838428cb0c',1,'NeoFOAM::SegmentedField']]],
-  ['nvalues_14',['nValues',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a060c3aa86e0ca27da55f55bf93fb2c0f',1,'NeoFOAM::la::CSRMatrix']]]
+  ['numsegments_13',['numSegments',['../classNeoFOAM_1_1SegmentedField.html#ad41c05f17db58a093e6c3c838428cb0c',1,'NeoFOAM::SegmentedField']]]
 ];

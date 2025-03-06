@@ -8,5 +8,6 @@ var searchData=
   ['geometricfieldmixin_3c_20scalar_20_3e_5',['GeometricFieldMixin&lt; scalar &gt;',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
   ['geometryscheme_6',['GeometryScheme',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
   ['geometryschemefactory_7',['GeometrySchemeFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometrySchemeFactory.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
-  ['gpuexecutor_8',['GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html',1,'NeoFOAM']]]
+  ['ginkgomatrixassembly_8',['GinkgoMatrixAssembly',['../structNeoFOAM_1_1GinkgoMatrixAssembly.html',1,'NeoFOAM']]],
+  ['gpuexecutor_9',['GPUExecutor',['../classNeoFOAM_1_1GPUExecutor.html',1,'NeoFOAM']]]
 ];

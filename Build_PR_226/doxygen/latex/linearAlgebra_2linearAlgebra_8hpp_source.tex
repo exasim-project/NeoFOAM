@@ -1,0 +1,148 @@
+\doxysection{linear\+Algebra.\+hpp}
+\hypertarget{linearAlgebra_2linearAlgebra_8hpp_source}{}\label{linearAlgebra_2linearAlgebra_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/linearAlgebra.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/linearAlgebra.hpp}}
+\mbox{\hyperlink{linearAlgebra_2linearAlgebra_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ MIT}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2024\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <ginkgo/ginkgo.hpp>}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <ginkgo/extensions/kokkos.hpp>}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{field_8hpp}{NeoFOAM/fields/field.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00011}00011\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00012}00012\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00013}00013\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00014}00014\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00015}00015\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00016}\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry}{00016}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry}{MatrixEntry}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00017}00017\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00018}\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a54b2aebe373f0ae199c61dce332b5a54}{00018}}\ \ \ \ \ IndexType\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a54b2aebe373f0ae199c61dce332b5a54}{row}};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00019}\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a7b4b47f2dee26ab9a6ab67a87ab15cc7}{00019}}\ \ \ \ \ IndexType\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a7b4b47f2dee26ab9a6ab67a87ab15cc7}{col}};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00020}\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a1e9f11cfb1b5566207637e73f07e6c3c}{00020}}\ \ \ \ \ ValueType\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a1e9f11cfb1b5566207637e73f07e6c3c}{value}};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00021}00021\ \};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00022}00022\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00023}\mbox{\hyperlink{namespaceNeoFOAM_a9378f3e2c155e4e9b5ec1adc850fed7c}{00023}}\ std::shared\_ptr<gko::Executor>\ \mbox{\hyperlink{namespaceNeoFOAM_a9378f3e2c155e4e9b5ec1adc850fed7c}{getGkoExecutor}}(\mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ exec)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00024}00024\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00025}00025\ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit(}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00026}00026\ \ \ \ \ \ \ \ \ [](\textcolor{keyword}{auto}\ concreteExec)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00027}00027\ \ \ \ \ \ \ \ \ \{\ \textcolor{keywordflow}{return}\ gko::ext::kokkos::create\_executor(concreteExec.underlyingExec());\ \},}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00028}00028\ \ \ \ \ \ \ \ \ exec}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00029}00029\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00030}00030\ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00031}00031\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00032}00032\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00033}00033\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00034}\mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface}{00034}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface}{MatrixAssemblyInterface}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00035}00035\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00036}\mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface_a77c40112d631fc0ef012d7acb0295ca2}{00036}}\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface_a77c40112d631fc0ef012d7acb0295ca2}{MatrixAssemblyInterface}}(\mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ exec,\ \textcolor{keywordtype}{size\_t}\ numRows,\ \textcolor{keywordtype}{size\_t}\ numCols,\ \textcolor{keywordtype}{size\_t}\ nnzEstimation);}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00037}00037\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00038}\mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface_acb36e4bbf045acbab5ad18752ec5662d}{00038}}\ \ \ \ \ KOKKOS\_FUNCTION\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface_acb36e4bbf045acbab5ad18752ec5662d}{insert}}(\textcolor{keywordtype}{size\_t}\ nnzId,\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry}{MatrixEntry<ValueType,\ IndexType>}}\ entry)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00039}00039\ \};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00041}00041\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00042}\mbox{\hyperlink{structNeoFOAM_1_1MatrixInterface}{00042}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structNeoFOAM_1_1MatrixInterface}{MatrixInterface}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00043}00043\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00044}\mbox{\hyperlink{structNeoFOAM_1_1MatrixInterface_a0e19f0fb6dbb9fd094835889fd159c33}{00044}}\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1MatrixInterface_a0e19f0fb6dbb9fd094835889fd159c33}{MatrixInterface}}(\mbox{\hyperlink{structNeoFOAM_1_1MatrixAssemblyInterface}{MatrixAssemblyInterface<ValueType,\ IndexType>}}\&\&);}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00045}00045\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00046}\mbox{\hyperlink{structNeoFOAM_1_1MatrixInterface_a343c6b6e3a89bbf9273e692b171b204b}{00046}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixInterface_a343c6b6e3a89bbf9273e692b171b204b}{apply}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&);}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00047}00047\ \};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00050}00050\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00051}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly}{00051}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly}{GinkgoMatrixAssembly}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00052}00052\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00053}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_abdb9616911eab199b3d7cfeaf5e3f020}{00053}}\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_abdb9616911eab199b3d7cfeaf5e3f020}{GinkgoMatrixAssembly}}(\mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a53d02fdfcefa191de8a1b277cc2833b3}{exec}},\ \textcolor{keywordtype}{size\_t}\ numRows,\ \textcolor{keywordtype}{size\_t}\ numCols,\ \textcolor{keywordtype}{size\_t}\ nnzEstimation)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ :\ data(\mbox{\hyperlink{namespaceNeoFOAM_a9378f3e2c155e4e9b5ec1adc850fed7c}{getGkoExecutor}}(\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a53d02fdfcefa191de8a1b277cc2833b3}{exec}}),\ gko::dim<2>(numRows,\ numCols),\ nnzEstimation)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00055}00055\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ size\ =\ data.get\_size();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ arrays\ =\ data.empty\_out();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ arrays.row\_idxs.fill(0);}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ arrays.col\_idxs.fill(0);}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ arrays.values.fill(0);}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ data\ =\ gko::device\_matrix\_data<ValueType,\ IndexType>(}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ data.get\_executor(),}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ size,}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ std::move(arrays.row\_idxs),}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ std::move(arrays.col\_idxs),}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ std::move(arrays.values)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ rowIdxs\ =\ data.get\_row\_idxs();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ colIdxs\ =\ data.get\_col\_idxs();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ values\ =\ data.get\_values();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00071}00071\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00073}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a9d2e302385c75305d21aab538c4f5872}{00073}}\ \ \ \ \ KOKKOS\_FUNCTION\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a9d2e302385c75305d21aab538c4f5872}{insert}}(\textcolor{keywordtype}{size\_t}\ nnzId,\ \mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry}{MatrixEntry<ValueType,\ IndexType>}}\ entry)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00074}00074\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ rowIdxs[nnzId]\ =\ entry.\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a54b2aebe373f0ae199c61dce332b5a54}{row}};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ colIdxs[nnzId]\ =\ entry.\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a7b4b47f2dee26ab9a6ab67a87ab15cc7}{col}};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ values[nnzId]\ =\ entry.\mbox{\hyperlink{structNeoFOAM_1_1MatrixEntry_a1e9f11cfb1b5566207637e73f07e6c3c}{value}};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00078}00078\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00079}00079\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00080}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a53d02fdfcefa191de8a1b277cc2833b3}{00080}}\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a53d02fdfcefa191de8a1b277cc2833b3}{exec}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ exec\_;\ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00082}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a61b09caebb38a9b38d1f961b5f79d663}{00082}}\ \ \ \ \ \textcolor{keyword}{auto}\&\&\ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_a61b09caebb38a9b38d1f961b5f79d663}{getUnderlyingData}}()\ \&\&\ \{\ \textcolor{keywordflow}{return}\ std::move(data);\ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00083}00083\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00084}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_af33dc8182acd528fdf7e99937efc5452}{00084}}\ \ \ \ \ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_af33dc8182acd528fdf7e99937efc5452}{getUnderlyingData}}()\ \&\ \{\ \textcolor{keywordflow}{return}\ data;\ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00086}\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_afd3fc3571115b0502a8477a1217779bb}{00086}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly_afd3fc3571115b0502a8477a1217779bb}{finalize}}()}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00087}00087\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ data.sort\_row\_major();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ data.sum\_duplicates();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00090}00090\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00092}00092\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00094}00094\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ exec\_;}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00095}00095\ \ \ \ \ gko::device\_matrix\_data<ValueType,\ label>\ data;}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00097}00097\ \ \ \ \ IndexType*\ rowIdxs;}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00098}00098\ \ \ \ \ IndexType*\ colIdxs;}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00099}00099\ \ \ \ \ ValueType*\ values;}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00100}00100\ \};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00102}00102\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00103}00103\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00104}\mbox{\hyperlink{classNeoFOAM_1_1Matrix}{00104}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1Matrix}{Matrix}}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00105}00105\ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00106}00106\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00108}\mbox{\hyperlink{classNeoFOAM_1_1Matrix_ad375372ce11e8e4fc539630ebf6628d2}{00108}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Matrix_ad375372ce11e8e4fc539630ebf6628d2}{Matrix}}()\ :\ mtx(gko::matrix::Coo<ValueType,\ int>::create())\ \{\}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00109}\mbox{\hyperlink{classNeoFOAM_1_1Matrix_a3eb34416aee887f82d288a888c742ed8}{00109}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Matrix_a3eb34416aee887f82d288a888c742ed8}{Matrix}}(\mbox{\hyperlink{structNeoFOAM_1_1GinkgoMatrixAssembly}{GinkgoMatrixAssembly<ValueType,\ int>}}\&\&\ matrixAssembly)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ :\ mtx(gko::matrix::Coo<ValueType,\ int>::create(\mbox{\hyperlink{namespaceNeoFOAM_a9378f3e2c155e4e9b5ec1adc850fed7c}{getGkoExecutor}}(matrixAssembly.exec())))}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00111}00111\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ matrixAssembly.finalize();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ gkoData\ =\ std::move(matrixAssembly).getUnderlyingData();}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00114}00114\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ mtx-\/>read(std::move(gkoData));}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00116}00116\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00117}00117\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00118}\mbox{\hyperlink{classNeoFOAM_1_1Matrix_afe3f5661cdcc5458913263b390914cb4}{00118}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1Matrix_afe3f5661cdcc5458913263b390914cb4}{apply}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ in,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ out)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00119}00119\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ wrapField\ =\ [](\textcolor{keyword}{auto}\&\ field)}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ data\ =\ \textcolor{keyword}{const\_cast<}ValueType*\textcolor{keyword}{>}(field.data());}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ gkoExec\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a9378f3e2c155e4e9b5ec1adc850fed7c}{getGkoExecutor}}(field.exec());}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ gko::matrix::Dense<ValueType>::create(}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gkoExec,}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gko::dim<2>(field.size(),\ 1),}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ gko::make\_array\_view(gkoExec,\ field.size(),\ data),}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ mtx-\/>apply(wrapField(in),\ wrapField(out));}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00132}00132\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00133}00133\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00134}\mbox{\hyperlink{classNeoFOAM_1_1Matrix_af211f49638b9fb16f8446129795f051e}{00134}}\ \ \ \ \ \textcolor{keyword}{auto}*\ \mbox{\hyperlink{classNeoFOAM_1_1Matrix_af211f49638b9fb16f8446129795f051e}{getUnderlyingData}}()\ \{\ \textcolor{keywordflow}{return}\ mtx.get();\ \}}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00135}00135\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00136}00136\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00137}00137\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00138}00138\ \ \ \ \ std::shared\_ptr<gko::matrix::Coo<ValueType,\ label>>\ mtx;}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00139}00139\ \};}
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00140}00140\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00141}00141\ }
+\DoxyCodeLine{\Hypertarget{linearAlgebra_2linearAlgebra_8hpp_source_l00142}00142\ \}}
+
+\end{DoxyCode}

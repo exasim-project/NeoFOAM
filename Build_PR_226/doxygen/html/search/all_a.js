@@ -6,7 +6,7 @@ var searchData=
   ['level_3',['level',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a2b4fa47dd2a61e0b63760e1f67fa5dc4',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::level()'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a1d55897a75bc4a8ad2893ded50880d4f',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::level() const']]],
   ['linear_4',['linear',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Linear.html',1,'NeoFOAM::finiteVolume::cellCentred::Linear'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Linear.html#af534d6b3f1567cee8faf492a7fe1a16e',1,'NeoFOAM::finiteVolume::cellCentred::Linear::Linear(const Executor &amp;exec, const UnstructuredMesh &amp;mesh, Input input)'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Linear.html#a7b24cdc3bd137f5529d24ce35a974a32',1,'NeoFOAM::finiteVolume::cellCentred::Linear::Linear(const Executor &amp;exec, const UnstructuredMesh &amp;mesh)']]],
   ['linear_2ehpp_5',['linear.hpp',['../linear_8hpp.html',1,'']]],
-  ['linearalgebra_2ehpp_6',['linearAlgebra.hpp',['../linearAlgebra_8hpp.html',1,'']]],
+  ['linearalgebra_2ehpp_6',['linearalgebra.hpp',['../linearAlgebra_8hpp.html',1,'(Global Namespace)'],['../linearAlgebra_2linearAlgebra_8hpp.html',1,'(Global Namespace)']]],
   ['linearsystem_7',['linearsystem',['../classNeoFOAM_1_1la_1_1LinearSystem.html',1,'NeoFOAM::la::LinearSystem&lt; ValueType, IndexType &gt;'],['../classNeoFOAM_1_1la_1_1LinearSystem.html#aff2416fb13e1ba4c91bd8c9bb777b6b5',1,'NeoFOAM::la::LinearSystem::LinearSystem()']]],
   ['linearsystem_2ehpp_8',['linearSystem.hpp',['../linearSystem_8hpp.html',1,'']]],
   ['localidx_9',['localIdx',['../namespaceNeoFOAM.html#a95525d89d661b88aaa4548bdf2766842',1,'NeoFOAM']]],
