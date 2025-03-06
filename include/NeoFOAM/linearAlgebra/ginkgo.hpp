@@ -31,7 +31,12 @@ public:
 
     Solver(Executor exec, Dictionary solverConfig)
         : gkoExec_(getGkoExecutor(exec)), config_(parse(solverConfig)),
-          factory_(gko::config::parse(config_, gko::config::registry()).on(gkoExec_))
+          factory_(
+              gko::config::parse(
+                  config_, gko::config::registry(), gko::config::make_type_descriptor<ValueType>()
+              )
+                  .on(gkoExec_)
+          )
     {}
 
     void solve(LinearSystem<ValueType, int>& sys, Field<ValueType>& x)
