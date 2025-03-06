@@ -21,15 +21,15 @@ bool operator==(const gko::config::pnode& a, const gko::config::pnode& b)
 
     if (a.get_tag() == tag_t::array)
     {
-        const auto& a_arr = a.get_array();
-        const auto& b_arr = b.get_array();
-        if (a_arr.size() != b_arr.size())
+        const auto& aArr = a.get_array();
+        const auto& bArr = b.get_array();
+        if (aArr.size() != bArr.size())
         {
             return false;
         }
-        for (std::size_t i = 0; i < a_arr.size(); ++i)
+        for (std::size_t i = 0; i < aArr.size(); ++i)
         {
-            if (!(a_arr[i] == b_arr[i]))
+            if (!(aArr[i] == bArr[i]))
             {
                 return false;
             }
@@ -45,19 +45,19 @@ bool operator==(const gko::config::pnode& a, const gko::config::pnode& b)
     }
     if (a.get_tag() == tag_t::map)
     {
-        const auto& a_map = a.get_map();
-        const auto& b_map = b.get_map();
-        if (a_map.size() != b_map.size())
+        const auto& aMap = a.get_map();
+        const auto& bMap = b.get_map();
+        if (aMap.size() != bMap.size())
         {
             return false;
         }
-        for (const auto& [key, value] : a_map)
+        for (const auto& [key, value] : aMap)
         {
-            if (!b_map.contains(key))
+            if (!bMap.contains(key))
             {
                 return false;
             }
-            if (!(b_map.at(key) == value))
+            if (!(bMap.at(key) == value))
             {
                 return false;
             }
@@ -91,6 +91,15 @@ private:
 TEST_CASE("Dictionary Parsing - Ginkgo")
 {
     SECTION("String")
+    {
+        NeoFOAM::Dictionary dict {{{"key", std::string("value")}}};
+
+        auto node = NeoFOAM::la::ginkgo::parse(dict);
+
+        gko::config::pnode expected({{"key", gko::config::pnode {"value"}}});
+        CHECK_THAT(node, EqualsPnodeMatcher(expected));
+    }
+    SECTION("Const Char *")
     {
         NeoFOAM::Dictionary dict {{{"key", "value"}}};
 
@@ -137,6 +146,12 @@ TEST_CASE("Dictionary Parsing - Ginkgo")
             {{"key", gko::config::pnode({{"key", gko::config::pnode {"value"}}})}}
         );
         CHECK_THAT(node, EqualsPnodeMatcher(expected));
+    }
+    SECTION("Throws")
+    {
+        NeoFOAM::Dictionary dict({{"key", std::pair<int*, std::vector<double>> {}}});
+
+        REQUIRE_THROWS_AS(NeoFOAM::la::ginkgo::parse(dict), NeoFOAM::NeoFOAMException);
     }
 }
 

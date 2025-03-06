@@ -23,10 +23,6 @@ template<typename ValueType>
 class Solver
 {
 
-    std::shared_ptr<const gko::Executor> gkoExec_;
-    gko::config::pnode config_;
-    std::shared_ptr<const gko::LinOpFactory> factory_;
-
 public:
 
     Solver(Executor exec, Dictionary solverConfig)
@@ -49,6 +45,12 @@ public:
         auto gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);
         solver->apply(rhs, gkoX);
     }
+
+private:
+
+    std::shared_ptr<const gko::Executor> gkoExec_;
+    gko::config::pnode config_;
+    std::shared_ptr<const gko::LinOpFactory> factory_;
 };
 
 
