@@ -26,9 +26,13 @@ class Dummy : public OperatorMixin
 
 public:
 
-    Dummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
+    Dummy(VolumeField& field)
+        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
+    {}
 
-    Dummy(VolumeField& field, Operator::Type type) : OperatorMixin(field.exec(), field, type) {}
+    Dummy(VolumeField& field, Operator::Type type)
+        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, type)
+    {}
 
     void explicitOperation(Field& source)
     {
@@ -90,11 +94,12 @@ class TemporalDummy : public OperatorMixin
 
 public:
 
-    TemporalDummy(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit)
+    TemporalDummy(VolumeField& field)
+        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
     {}
 
     TemporalDummy(VolumeField& field, Operator::Type type)
-        : OperatorMixin(field.exec(), field, type)
+        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, type)
     {}
 
     void explicitOperation(Field& source, NeoFOAM::scalar t, NeoFOAM::scalar dt)

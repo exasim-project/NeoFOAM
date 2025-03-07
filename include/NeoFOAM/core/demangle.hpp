@@ -9,6 +9,7 @@
 #include <string>
 #include <any>
 #include <iostream>
+#include <format>
 
 namespace NeoFOAM
 {
@@ -18,10 +19,16 @@ std::string demangle(const char* mangledName);
 template<typename T, typename Container, typename Key>
 void logBadAnyCast(const std::bad_any_cast& e, const Key& key, const Container& data)
 {
-    std::cerr << "Caught a bad_any_cast exception: \n"
-              << "key requested: " << key << "requested type " << demangle(typeid(T).name()) << "\n"
-              << "actual type " << demangle(data.at(key).type().name()) << "\n"
-              << e.what() << std::endl;
+    std::cerr << std::format(
+        "Caught a bad_any_cast exception:\n",
+        "key: {}\n",
+        "requested type: {}\n",
+        "actual type: {}\n",
+        key,
+        demangle(typeid(T).name()),
+        demangle(data.at(key).type().name())
+    ) << e.what()
+              << std::endl;
 }
 
 }

@@ -9,7 +9,6 @@
 #include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/setReferenceValue.hpp"
 
 
 #include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
@@ -85,6 +84,13 @@ public:
                 fieldSpan[celli] = values[rowPtrs[celli] + diagOffsetCelli];
             }
         );
+    }
+
+    Field<ValueType> diag()
+    {
+        Field<ValueType> diagonal(exec(), sparsityPattern_->diagOffset().size(), 0.0);
+        diag(diagonal);
+        return diagonal;
     }
 
     void assemble()
@@ -169,8 +175,65 @@ public:
 
     void setReference(const IndexType refCell, ValueType refValue)
     {
-        SetReferenceValue<ValueType> setReferenceValue(getField(), refValue, refCell);
-        expr_.addOperator(setReferenceValue);
+        // TODO currently assumes that matrix is already assembled
+        const auto diagOffset = sparsityPattern_->diagOffset().span();
+        const auto rowPtrs = ls_.matrix().rowPtrs();
+        auto rhs = ls_.rhs().span();
+        auto values = ls_.matrix().values();
+        NeoFOAM::parallelFor(
+            ls_.exec(),
+            {refCell, refCell + 1},
+            KOKKOS_LAMBDA(const std::size_t refCelli) {
+                auto diagIdx = rowPtrs[refCelli] + diagOffset[refCelli];
+                auto diagValue = values[diagIdx];
+                rhs[refCelli] += diagValue * refValue;
+                values[diagIdx] += diagValue;
+            }
+        );
+    }
+
+    Field<ValueType> flux() const
+    {
+        const UnstructuredMesh& mesh = psi_.mesh();
+        const std::size_t nInternalFaces = mesh.nInternalFaces();
+        const auto exec = psi_.exec();
+        const auto [owner, neighbour, surfFaceCells, ownOffs, neiOffs, internalPsi] = spans(
+            mesh.faceOwner(),
+            mesh.faceNeighbour(),
+            mesh.boundaryMesh().faceCells(),
+            sparsityPattern_->ownerOffset(),
+            sparsityPattern_->neighbourOffset(),
+            psi_.internalField()
+        );
+
+        const auto rowPtrs = ls_.matrix().rowPtrs();
+        const auto colIdxs = ls_.matrix().colIdxs();
+        auto values = ls_.matrix().values();
+        auto rhs = ls_.rhs().span();
+
+
+        Field<ValueType> result(exec, neighbour.size(), 0.0);
+
+        auto resultSpan = result.span();
+
+        parallelFor(
+            exec,
+            {0, nInternalFaces},
+            KOKKOS_LAMBDA(const size_t facei) {
+                std::size_t own = static_cast<std::size_t>(owner[facei]);
+                std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
+
+                std::size_t rowNeiStart = rowPtrs[nei];
+                std::size_t rowOwnStart = rowPtrs[own];
+
+                auto Upper = values[rowNeiStart + neiOffs[facei]];
+                auto Lower = values[rowOwnStart + ownOffs[facei]];
+                Kokkos::atomic_add(
+                    &resultSpan[facei], Upper * internalPsi[nei] - Lower * internalPsi[own]
+                );
+            }
+        );
+        return result;
     }
 
 private:
