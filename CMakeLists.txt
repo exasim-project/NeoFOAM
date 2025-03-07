@@ -36,6 +36,7 @@ option(NEOFOAM_DEVEL_TOOLS "Add development tools to the build system" OFF)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_BUILD_DOC "Build documentation" OFF)
+option(NEOFOAM_WITH_ADIOS2 "Build NeoFOAM with ADIOS2 support" OFF)
 option(NEOFOAM_WITH_SUNDIALS "Build NeoFOAM with Sundials support [currently required]" ON)
 
 option(NEOFOAM_ENABLE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
