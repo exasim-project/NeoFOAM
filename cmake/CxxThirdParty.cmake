@@ -53,7 +53,16 @@ cpmaddpackage(
 if(${NEOFOAM_WITH_ADIOS2})
 
   set(ADIOS2_OPTIONS
-      "BUILD_TYPE Release")
+      "BUILD_TYPE Release"
+      "ADIOS2_USE_Kokkos ON"
+      "CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/cmake_packages/Kokkos"
+      "ADIOS2_USE_Fortran OFF"
+      "ADIOS2_USE_Python OFF"
+      "ADIOS2_USE_MHS OFF"
+      "ADIOS2_USE_SST OFF"
+      "ADIOS2_BUILD_EXAMPLES OFF"
+      "BUILD_TESTING OFF"
+      "ADIOS2_USE_Profiling OFF")
 
   if(WIN32)
     list(APPEND ADIOS2_OPTIONS "BUILD_STATIC_LIBS ON")
@@ -61,12 +70,6 @@ if(${NEOFOAM_WITH_ADIOS2})
   else()
     list(APPEND ADIOS2_OPTIONS "BUILD_STATIC_LIBS OFF")
     list(APPEND ADIOS2_OPTIONS "BUILD_SHARED_LIBS ON")
-  endif()
-
-  if(Kokkos_ENABLE_CUDA)
-    set(ADIOS2_CUDA_OPTIONS "ENABLE_CUDA ON" "ADIOS2_BUILD_KOKKOS ON")
-  else()
-    set(ADIOS2_CUDA_OPTIONS "ENABLE_CUDA OFF" "ADIOS2_BUILD_KOKKOS ON")
   endif()
 
   cpmaddpackage(
