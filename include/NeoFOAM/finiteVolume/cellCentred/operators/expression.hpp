@@ -6,6 +6,7 @@
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/setReferenceValue.hpp"
@@ -142,10 +143,10 @@ public:
             auto convertedLS = convertLinearSystem(ls_);
             solver.solve(convertedLS, psi_.internalField());
 #elif NF_WITH_PETSC
-// placeholder for petsc solver --> include runtime selection in future
-// should look like this
-//   NeoFOAM::la::petscSolver<ValueType> solver(solution.exec(), fvSolution);
-//        solver.solve(ls, solution.internalField());
+            // placeholder for petsc solver --> include runtime selection in future
+            // should look like this
+            NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(psi_.exec(), fvSolution_);
+            solver.solve(ls_, psi_.internalField());
 #endif
         }
     }

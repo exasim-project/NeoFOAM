@@ -12,6 +12,8 @@
 
 #if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#elif NF_WITH_PETSC
+#include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #endif
 
 namespace NeoFOAM::timeIntegration
@@ -60,10 +62,12 @@ public:
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ginkgoLs, solutionField.internalField());
 #elif NF_WITH_PETSC
-// placeholder for petsc solver --> include runtime selection in future
-// should look like this
-//   NeoFOAM::la::petscSolver<ValueType> solver(solution.exec(), fvSolution);
-//        solver.solve(ls, solution.internalField());
+        // placeholder for petsc solver --> include runtime selection in future
+        // should look like this
+        NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(
+            solutionField.exec(), this->solutionDict_
+        );
+        solver.solve(ginkgoLs, solutionField.internalField());
 #endif
 
         // check if executor is GPU

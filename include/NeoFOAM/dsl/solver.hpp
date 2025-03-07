@@ -16,6 +16,8 @@
 
 #if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#elif NF_WITH_PETSC
+#include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #endif
 
 
@@ -136,10 +138,10 @@ void solve(
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
 #elif NF_WITH_PETSC
-// placeholder for petsc solver --> include runtime selection in future
-// should look like this
-//   NeoFOAM::la::petscSolver<ValueType> solver(solution.exec(), fvSolution);
-//        solver.solve(ls, solution.internalField());
+        // placeholder for petsc solver --> include runtime selection in future
+        // should look like this
+        NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(solution.exec(), fvSolution);
+        solver.solve(ls, solution.internalField());
 #endif
     }
 }
