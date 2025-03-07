@@ -26,9 +26,12 @@ jobs:
       fail-fast: false
       matrix:
         instance:
-          - TYPE: g4ad.xlarge
+          - TYPE: p3.2xlarge
             AMI: ami-0f8c4824f9f2e449e
             index: 0
+          #- TYPE: g4ad.xlarge AMD GPU V520 currently not supported by cmake
+          #  AMI: ami-0f8c4824f9f2e449e
+          #  index: 0
           - TYPE: g4dn.xlarge
             AMI: ami-06615d18bfde0a1e7
             index: 1
@@ -152,7 +155,7 @@ jobs:
         run: |
           . /root/spack/share/spack/setup-env.sh
           spack load cmake@3.30.5
-          spack load hip
+          #spack load hip
           #spack load kokkos@4.3.00
           module load clang/17
           cmake --version
