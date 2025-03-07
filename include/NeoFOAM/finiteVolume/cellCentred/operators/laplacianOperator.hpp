@@ -125,10 +125,7 @@ public:
 
     void explicitOperation(Field<ValueType>& source)
     {
-        if (laplacianOperatorStrategy_ == nullptr)
-        {
-            NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
-        }
+        NF_ASSERT(laplacianOperatorStrategy_, "LaplacianOperatorStrategy not initialized");
         const auto operatorScaling = this->getCoefficient();
         NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>());
         laplacianOperatorStrategy_->laplacian(tmpsource, gamma_, this->field_, operatorScaling);
@@ -137,19 +134,13 @@ public:
 
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
-        if (laplacianOperatorStrategy_ == nullptr)
-        {
-            NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
-        }
+        NF_ASSERT(laplacianOperatorStrategy_, "LaplacianOperatorStrategy not initialized");
         return laplacianOperatorStrategy_->createEmptyLinearSystem();
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {
-        if (laplacianOperatorStrategy_ == nullptr)
-        {
-            NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
-        }
+        NF_ASSERT(laplacianOperatorStrategy_, "LaplacianOperatorStrategy not initialized");
         const auto operatorScaling = this->getCoefficient();
         laplacianOperatorStrategy_->laplacian(ls, gamma_, this->field_, operatorScaling);
     }

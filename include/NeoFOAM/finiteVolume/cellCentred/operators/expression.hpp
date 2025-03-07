@@ -20,18 +20,15 @@ namespace NeoFOAM::finiteVolume::cellCentred
 template<typename ValueType, typename IndexType = localIdx>
 la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
 {
+    auto [A, b, sp] = ls.view();
+    const auto& exec = A.exec();
 
-    Field<ValueType> values(ls.matrix().exec(), ls.matrix().nNonZeros(), zero<ValueType>());
-    Field<localIdx> mColIdxs(
-        ls.matrix().exec(), ls.matrix().colIdxs().data(), ls.matrix().nNonZeros()
-    );
-    Field<localIdx> mRowPtrs(
-        ls.matrix().exec(), ls.matrix().rowPtrs().data(), ls.matrix().rowPtrs().size()
-    );
+    Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
+    Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
+    Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
 
     la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-    Field<ValueType> rhs(ls.matrix().exec(), ls.rhs().size(), zero<ValueType>());
-
+    Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
     return {matrix, rhs, ls.sparsityPattern()};
 }
 
@@ -194,13 +191,11 @@ public:
             psi_.internalField()
         );
 
-        const auto rowPtrs = ls_.matrix().rowPtrs();
-        const auto colIdxs = ls_.matrix().colIdxs();
-        auto values = ls_.matrix().values();
         auto rhs = ls_.rhs().span();
-
+        auto [values, colIdxs, rowPtrs] = ls_.view();
 
         Field<ValueType> result(exec, neighbour.size(), 0.0);
+
 
         auto resultSpan = result.span();
 
@@ -249,10 +244,7 @@ operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType
 
     auto [result, b, x] =
         spans(resultField.internalField(), ls.linearSystem().rhs(), psi.internalField());
-
-    const std::span<const ValueType> values = ls.linearSystem().matrix().values();
-    const std::span<const IndexType> colIdxs = ls.linearSystem().matrix().colIdxs();
-    const std::span<const IndexType> rowPtrs = ls.linearSystem().matrix().rowPtrs();
+    const auto [values, colIdxs, rowPtrs] = ls.linearSystem().view();
 
     NeoFOAM::parallelFor(
         resultField.exec(),

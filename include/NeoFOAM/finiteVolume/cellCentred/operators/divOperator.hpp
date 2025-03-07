@@ -130,10 +130,7 @@ public:
 
     void explicitOperation(Field<scalar>& source)
     {
-        if (divOperatorStrategy_ == nullptr)
-        {
-            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
-        }
+        NF_ASSERT(divOperatorStrategy_, "DivOperatorStrategy not initialized");
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
         const auto operatorScaling = this->getCoefficient();
         divOperatorStrategy_->div(tmpsource, faceFlux_, this->getField(), operatorScaling);
@@ -148,19 +145,13 @@ public:
 
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
-        if (divOperatorStrategy_ == nullptr)
-        {
-            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
-        }
+        NF_ASSERT(divOperatorStrategy_, "DivOperatorStrategy not initialized");
         return divOperatorStrategy_->createEmptyLinearSystem();
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {
-        if (divOperatorStrategy_ == nullptr)
-        {
-            NF_ERROR_EXIT("DivOperatorStrategy not initialized");
-        }
+        NF_ASSERT(divOperatorStrategy_, "DivOperatorStrategy not initialized");
         const auto operatorScaling = this->getCoefficient();
         divOperatorStrategy_->div(ls, faceFlux_, this->getField(), operatorScaling);
     }
