@@ -55,7 +55,7 @@ if(${NEOFOAM_WITH_ADIOS2})
   set(ADIOS2_OPTIONS
       "BUILD_TYPE Release"
       "ADIOS2_USE_Kokkos ON"
-      "CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/cmake_packages/Kokkos"
+      "Kokkos_DIR ${Kokkos_BINARY_DIR}"
       "ADIOS2_USE_Fortran OFF"
       "ADIOS2_USE_Python OFF"
       "ADIOS2_USE_MHS OFF"
