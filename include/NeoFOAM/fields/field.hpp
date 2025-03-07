@@ -50,6 +50,8 @@ class Field
 
 public:
 
+    using FieldValueType = ValueType;
+
     /**
      * @brief Create an uninitialized Field with a given size on an executor
      * @param exec  Executor associated to the field
@@ -99,7 +101,7 @@ public:
     {
         void* ptr = nullptr;
         std::visit(
-            [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); }, exec_
+            [&ptr, size](const auto& execu) { ptr = execu.alloc(size * sizeof(ValueType)); }, exec_
         );
         data_ = static_cast<ValueType*>(ptr);
         NeoFOAM::fill(*this, value);

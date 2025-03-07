@@ -2,12 +2,16 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
+
+#include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include "common.hpp"
-#include "NeoFOAM/NeoFOAM.hpp"
 
-using Expression = NeoFOAM::dsl::Expression;
+namespace dsl = NeoFOAM::dsl;
 
-TEST_CASE("Expression")
+
+// TEST_CASE("Expression")
+TEMPLATE_TEST_CASE("Expression", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
@@ -19,22 +23,24 @@ TEST_CASE("Expression")
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
 
     const size_t size {1};
-    Field fA(exec, size, 2.0);
-    BoundaryFields bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+    NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
 
-    std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs {};
-    auto vf = VolumeField(exec, "vf", mesh, fA, bf, bcs);
-    auto fB = Field(exec, 1, 4.0);
+    std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
+    NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
+    NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 4.0);
+    auto vf = fvcc::VolumeField(exec, "vf", mesh, fA, bf, bcs);
 
 
     SECTION("Create equation and perform explicitOperation on " + execName)
     {
-        auto a = Dummy(vf);
-        auto b = Dummy(vf);
+        // TODO conversion from Dummy to SpatialOperator is not automatic
+        dsl::SpatialOperator<TestType> a = Dummy<TestType>(vf);
+        dsl::SpatialOperator<TestType> b = Dummy<TestType>(vf);
 
         auto eqnA = a + b;
-        auto eqnB = fB * Dummy(vf) + 2 * Dummy(vf);
-        auto eqnC = Expression(2 * a - b);
+        auto eqnB = scaleField * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf))
+                  + 2 * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf));
+        auto eqnC = dsl::Expression<TestType>(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);
         auto eqnF = (2 * a - b) - (2 * a - b);
@@ -43,23 +49,32 @@ TEST_CASE("Expression")
         REQUIRE(eqnB.size() == 2);
         REQUIRE(eqnC.size() == 2);
 
-        REQUIRE(getField(eqnA.explicitOperation(size)) == 4);
-        REQUIRE(getField(eqnB.explicitOperation(size)) == 12);
-        REQUIRE(getField(eqnC.explicitOperation(size)) == 2);
-        REQUIRE(getField(eqnD.explicitOperation(size)) == 6);
-        REQUIRE(getField(eqnE.explicitOperation(size)) == 4);
-        REQUIRE(getField(eqnF.explicitOperation(size)) == 0);
+        // 2 + 2 = 4
+        REQUIRE(getField(eqnA.explicitOperation(size)) == 4 * NeoFOAM::one<TestType>());
+        // 4*2 + 2*2 = 12
+        REQUIRE(getField(eqnB.explicitOperation(size)) == 12 * NeoFOAM::one<TestType>());
+        // 2*2 - 2 = 2
+        REQUIRE(getField(eqnC.explicitOperation(size)) == 2 * NeoFOAM::one<TestType>());
+        // 3*(2*2 - 2) = 6
+        REQUIRE(getField(eqnD.explicitOperation(size)) == 6 * NeoFOAM::one<TestType>());
+        // 2*2 - 2 + 2*2 - 2 = 4
+        REQUIRE(getField(eqnE.explicitOperation(size)) == 4 * NeoFOAM::one<TestType>());
+        // 2*2 - 2 - 2*2 + 2 = 0
+        REQUIRE(getField(eqnF.explicitOperation(size)) == 0 * NeoFOAM::one<TestType>());
     }
 
     SECTION("Create equation and perform implicitOperation on " + execName)
     {
-        auto a = Dummy(vf, Operator::Type::Implicit);
-        auto b = Dummy(vf, Operator::Type::Implicit);
+        // TODO conversion from Dummy to SpatialOperator is not automatic
+        dsl::SpatialOperator<TestType> a = Dummy<TestType>(vf, Operator::Type::Implicit);
+        dsl::SpatialOperator<TestType> b = Dummy<TestType>(vf, Operator::Type::Implicit);
 
         auto eqnA = a + b;
         auto eqnB =
-            fB * Dummy(vf, Operator::Type::Implicit) + 2 * Dummy(vf, Operator::Type::Implicit);
-        auto eqnC = Expression(2 * a - b);
+            scaleField
+                * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf, Operator::Type::Implicit))
+            + 2 * dsl::SpatialOperator<TestType>(Dummy<TestType>(vf, Operator::Type::Implicit));
+        auto eqnC = dsl::Expression<TestType>(2 * a - b);
         auto eqnD = 3 * (2 * a - b);
         auto eqnE = (2 * a - b) + (2 * a - b);
         auto eqnF = (2 * a - b) - (2 * a - b);
@@ -68,22 +83,28 @@ TEST_CASE("Expression")
         REQUIRE(eqnB.size() == 2);
         REQUIRE(eqnC.size() == 2);
 
-        REQUIRE(getDiag(eqnA.implicitOperation()) == 4);
-        REQUIRE(getRhs(eqnA.implicitOperation()) == 4);
+        // 2 + 2 = 4
+        REQUIRE(getDiag(eqnA.implicitOperation()) == 4 * NeoFOAM::one<TestType>());
+        REQUIRE(getRhs(eqnA.implicitOperation()) == 4 * NeoFOAM::one<TestType>());
 
-        REQUIRE(getDiag(eqnB.implicitOperation()) == 12);
-        REQUIRE(getRhs(eqnB.implicitOperation()) == 12);
+        // 4*2 + 2*2 = 12
+        REQUIRE(getDiag(eqnB.implicitOperation()) == 12 * NeoFOAM::one<TestType>());
+        REQUIRE(getRhs(eqnB.implicitOperation()) == 12 * NeoFOAM::one<TestType>());
 
-        REQUIRE(getDiag(eqnC.implicitOperation()) == 2);
-        REQUIRE(getRhs(eqnC.implicitOperation()) == 2);
+        // 2*2 - 2 = 2
+        REQUIRE(getDiag(eqnC.implicitOperation()) == 2 * NeoFOAM::one<TestType>());
+        REQUIRE(getRhs(eqnC.implicitOperation()) == 2 * NeoFOAM::one<TestType>());
 
-        REQUIRE(getDiag(eqnD.implicitOperation()) == 6);
-        REQUIRE(getRhs(eqnD.implicitOperation()) == 6);
+        // 3*(2*2 - 2) = 6
+        REQUIRE(getDiag(eqnD.implicitOperation()) == 6 * NeoFOAM::one<TestType>());
+        REQUIRE(getRhs(eqnD.implicitOperation()) == 6 * NeoFOAM::one<TestType>());
 
-        REQUIRE(getDiag(eqnE.implicitOperation()) == 4);
-        REQUIRE(getRhs(eqnE.implicitOperation()) == 4);
+        // 2*2 - 2 + 2*2 - 2 = 4
+        REQUIRE(getDiag(eqnE.implicitOperation()) == 4 * NeoFOAM::one<TestType>());
+        REQUIRE(getRhs(eqnE.implicitOperation()) == 4 * NeoFOAM::one<TestType>());
 
-        REQUIRE(getDiag(eqnF.implicitOperation()) == 0);
-        REQUIRE(getRhs(eqnF.implicitOperation()) == 0);
+        // 2*2 - 2 - 2*2 + 2 = 0
+        REQUIRE(getDiag(eqnF.implicitOperation()) == 0 * NeoFOAM::one<TestType>());
+        REQUIRE(getRhs(eqnF.implicitOperation()) == 0 * NeoFOAM::one<TestType>());
     }
 }

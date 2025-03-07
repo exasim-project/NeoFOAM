@@ -21,24 +21,32 @@ using BoundaryFields = NeoFOAM::BoundaryFields<NeoFOAM::scalar>;
 
 /* A dummy implementation of a SpatialOperator
  * following the SpatialOperator interface */
-class Dummy : public OperatorMixin
+
+template<typename ValueType>
+class Dummy : public NeoFOAM::dsl::OperatorMixin<fvcc::VolumeField<ValueType>>
 {
 
 public:
 
-    Dummy(VolumeField& field)
-        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
+    using FieldValueType = ValueType;
+
+    Dummy(fvcc::VolumeField<ValueType>& field)
+        : NeoFOAM::dsl::OperatorMixin<fvcc::VolumeField<ValueType>>(
+            field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit
+        )
     {}
 
-    Dummy(VolumeField& field, Operator::Type type)
-        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, type)
+    Dummy(fvcc::VolumeField<ValueType>& field, Operator::Type type)
+        : NeoFOAM::dsl::OperatorMixin<fvcc::VolumeField<ValueType>>(
+            field.exec(), dsl::Coeff(1.0), field, type
+        )
     {}
 
-    void explicitOperation(Field& source)
+    void explicitOperation(NeoFOAM::Field<ValueType>& source)
     {
         auto sourceSpan = source.span();
-        auto fieldSpan = field_.internalField().span();
-        auto coeff = getCoefficient();
+        auto fieldSpan = this->field_.internalField().span();
+        auto coeff = this->getCoefficient();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
@@ -46,39 +54,37 @@ public:
         );
     }
 
-    void implicitOperation(la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& ls)
+    void implicitOperation(la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
     {
         auto values = ls.matrix().values();
         auto rhs = ls.rhs().span();
-        auto fieldSpan = field_.internalField().span();
-        auto coeff = getCoefficient();
+        auto fieldSpan = this->field_.internalField().span();
+        auto coeff = this->getCoefficient();
 
         // update diag
         NeoFOAM::parallelFor(
-            exec(),
+            this->exec(),
             {0, values.size()},
             KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldSpan[i]; }
         );
 
         // update rhs
         NeoFOAM::parallelFor(
-            exec(),
+            this->exec(),
             ls.rhs().range(),
             KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldSpan[i]; }
         );
     }
 
-    la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> createEmptyLinearSystem() const
+    la::LinearSystem<ValueType, NeoFOAM::localIdx> createEmptyLinearSystem() const
     {
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
-        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0.0);
-        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), {0, 1});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-            values, colIdx, rowPtrs
-        );
+        NeoFOAM::Field<ValueType> values(this->exec(), 1, NeoFOAM::zero<ValueType>());
+        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(this->exec(), 1, 0.0);
+        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(this->exec(), {0, 1});
+        NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 1, 0.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
+        NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>());
+        NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(
             csrMatrix, rhs, "diagonal"
         );
         return linearSystem;
@@ -89,24 +95,31 @@ public:
 
 /* A dummy implementation of a SpatialOperator
  * following the SpatialOperator interface */
-class TemporalDummy : public OperatorMixin
+template<typename ValueType>
+class TemporalDummy : public NeoFOAM::dsl::OperatorMixin<fvcc::VolumeField<ValueType>>
 {
 
 public:
 
-    TemporalDummy(VolumeField& field)
-        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
+    using FieldValueType = ValueType;
+
+    TemporalDummy(fvcc::VolumeField<ValueType>& field)
+        : NeoFOAM::dsl::OperatorMixin<fvcc::VolumeField<ValueType>>(
+            field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit
+        )
     {}
 
-    TemporalDummy(VolumeField& field, Operator::Type type)
-        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, type)
+    TemporalDummy(fvcc::VolumeField<ValueType>& field, Operator::Type type)
+        : NeoFOAM::dsl::OperatorMixin<fvcc::VolumeField<ValueType>>(
+            field.exec(), dsl::Coeff(1.0), field, type
+        )
     {}
 
-    void explicitOperation(Field& source, NeoFOAM::scalar t, NeoFOAM::scalar dt)
+    void explicitOperation(NeoFOAM::Field<ValueType>& source, NeoFOAM::scalar t, NeoFOAM::scalar dt)
     {
         auto sourceSpan = source.span();
-        auto fieldSpan = field_.internalField().span();
-        auto coeff = getCoefficient();
+        auto fieldSpan = this->field_.internalField().span();
+        auto coeff = this->getCoefficient();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
@@ -115,42 +128,38 @@ public:
     }
 
     void implicitOperation(
-        la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& ls,
-        NeoFOAM::scalar t,
-        NeoFOAM::scalar dt
+        la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls, NeoFOAM::scalar t, NeoFOAM::scalar dt
     )
     {
         auto values = ls.matrix().values();
         auto rhs = ls.rhs().span();
-        auto fieldSpan = field_.internalField().span();
-        auto coeff = getCoefficient();
+        auto fieldSpan = this->field_.internalField().span();
+        auto coeff = this->getCoefficient();
 
         // update diag
         NeoFOAM::parallelFor(
-            exec(),
+            this->exec(),
             {0, values.size()},
             KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldSpan[i]; }
         );
 
         // update rhs
         NeoFOAM::parallelFor(
-            exec(),
+            this->exec(),
             ls.rhs().range(),
             KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldSpan[i]; }
         );
     }
 
-    la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> createEmptyLinearSystem() const
+    la::LinearSystem<ValueType, NeoFOAM::localIdx> createEmptyLinearSystem() const
     {
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec(), 1, 0.0);
-        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0.0);
-        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), {0, 1});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-            values, colIdx, rowPtrs
-        );
+        NeoFOAM::Field<ValueType> values(this->exec(), 1, NeoFOAM::zero<ValueType>());
+        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(this->exec(), 1, 0.0);
+        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(this->exec(), {0, 1});
+        NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec(), 1, 0.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
+        NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>());
+        NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(
             csrMatrix, rhs, "diagonal"
         );
         return linearSystem;
@@ -159,20 +168,22 @@ public:
     std::string getName() const { return "TemporalDummy"; }
 };
 
-NeoFOAM::scalar getField(const NeoFOAM::Field<NeoFOAM::scalar>& source)
+template<typename ValueType>
+ValueType getField(const NeoFOAM::Field<ValueType>& source)
 {
     auto sourceField = source.copyToHost();
     return sourceField.span()[0];
 }
 
-
-NeoFOAM::scalar getDiag(const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls)
+template<typename ValueType>
+ValueType getDiag(const la::LinearSystem<ValueType, NeoFOAM::localIdx> ls)
 {
     auto hostLs = ls.copyToHost();
     return hostLs.matrix().values()[0];
 }
 
-NeoFOAM::scalar getRhs(const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls)
+template<typename ValueType>
+ValueType getRhs(const la::LinearSystem<ValueType, NeoFOAM::localIdx> ls)
 {
     auto hostLs = ls.copyToHost();
     return hostLs.rhs().span()[0];

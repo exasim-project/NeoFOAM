@@ -19,7 +19,7 @@ class ForwardEuler :
 
 public:
 
-    using Expression = NeoFOAM::dsl::Expression;
+    using ValueType = typename SolutionFieldType::FieldValueType;
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<ForwardEuler<SolutionFieldType>>;
 
@@ -34,7 +34,10 @@ public:
     static std::string schema() { return "none"; }
 
     void solve(
-        Expression& eqn, SolutionFieldType& solutionField, [[maybe_unused]] scalar t, scalar dt
+        dsl::Expression<ValueType>& eqn,
+        SolutionFieldType& solutionField,
+        [[maybe_unused]] scalar t,
+        scalar dt
     ) override
     {
         auto source = eqn.explicitOperation(solutionField.size());

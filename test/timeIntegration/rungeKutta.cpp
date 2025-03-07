@@ -17,8 +17,8 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
-using SpatialOperator = NeoFOAM::dsl::SpatialOperator;
-using TemporalOperator = NeoFOAM::dsl::TemporalOperator;
+using SpatialOperator = NeoFOAM::dsl::SpatialOperator<NeoFOAM::scalar>;
+using TemporalOperator = NeoFOAM::dsl::TemporalOperator<NeoFOAM::scalar>;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
 using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
@@ -32,6 +32,8 @@ class YSquared : public OperatorMixin
 {
 
 public:
+
+    using FieldValueType = NeoFOAM::scalar;
 
     YSquared(VolumeField& field)
         : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)

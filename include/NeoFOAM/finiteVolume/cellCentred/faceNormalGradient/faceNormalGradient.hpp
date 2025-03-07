@@ -18,9 +18,10 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+template<typename ValueType>
 class FaceNormalGradientFactory :
     public NeoFOAM::RuntimeSelectionFactory<
-        FaceNormalGradientFactory,
+        FaceNormalGradientFactory<ValueType>,
         Parameters<const Executor&, const UnstructuredMesh&, const Input&>>
 {
 
@@ -35,8 +36,8 @@ public:
                 ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("faceNormalGradient")
                 : std::get<NeoFOAM::TokenList>(inputs).next<std::string>();
 
-        keyExistsOrError(key);
-        return table().at(key)(exec, uMesh, inputs);
+        FaceNormalGradientFactory<ValueType>::keyExistsOrError(key);
+        return FaceNormalGradientFactory<ValueType>::table().at(key)(exec, uMesh, inputs);
     }
 
     static std::string name() { return "FaceNormalGradientFactory"; }
@@ -47,13 +48,13 @@ public:
     virtual ~FaceNormalGradientFactory() {} // Virtual destructor
 
     virtual void faceNormalGrad(
-        const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField
+        const VolumeField<ValueType>& volField, SurfaceField<ValueType>& surfaceField
     ) const = 0;
 
     virtual const SurfaceField<scalar>& deltaCoeffs() const = 0;
 
     // Pure virtual function for cloning
-    virtual std::unique_ptr<FaceNormalGradientFactory> clone() const = 0;
+    virtual std::unique_ptr<FaceNormalGradientFactory<ValueType>> clone() const = 0;
 
 protected:
 
@@ -61,6 +62,7 @@ protected:
     const UnstructuredMesh& mesh_;
 };
 
+template<typename ValueType>
 class FaceNormalGradient
 {
 
@@ -77,17 +79,18 @@ public:
     FaceNormalGradient(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::unique_ptr<FaceNormalGradientFactory> interpolationKernel
+        std::unique_ptr<FaceNormalGradientFactory<ValueType>> faceNormalGradient
     )
-        : exec_(exec), mesh_(mesh), faceNormalGradKernel_(std::move(interpolationKernel)) {};
+        : exec_(exec), mesh_(mesh), faceNormalGradKernel_(std::move(faceNormalGradient)) {};
 
     FaceNormalGradient(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
         : exec_(exec), mesh_(mesh),
-          faceNormalGradKernel_(FaceNormalGradientFactory::create(exec, mesh, input)) {};
+          faceNormalGradKernel_(FaceNormalGradientFactory<ValueType>::create(exec, mesh, input)) {};
 
 
-    void
-    faceNormalGrad(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField) const
+    void faceNormalGrad(
+        const VolumeField<ValueType>& volField, SurfaceField<ValueType>& surfaceField
+    ) const
     {
         faceNormalGradKernel_->faceNormalGrad(volField, surfaceField);
     }
@@ -95,11 +98,11 @@ public:
     const SurfaceField<scalar>& deltaCoeffs() const { return faceNormalGradKernel_->deltaCoeffs(); }
 
 
-    SurfaceField<scalar> faceNormalGrad(const VolumeField<scalar>& volField) const
+    SurfaceField<ValueType> faceNormalGrad(const VolumeField<ValueType>& volField) const
     {
         std::string nameInterpolated = "interpolated_" + volField.name;
-        SurfaceField<scalar> surfaceField(
-            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        SurfaceField<ValueType> surfaceField(
+            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh_)
         );
         faceNormalGrad(volField, surfaceField);
         return surfaceField;
@@ -109,7 +112,7 @@ private:
 
     const Executor exec_;
     const UnstructuredMesh& mesh_;
-    std::unique_ptr<FaceNormalGradientFactory> faceNormalGradKernel_;
+    std::unique_ptr<FaceNormalGradientFactory<ValueType>> faceNormalGradKernel_;
 };
 
 

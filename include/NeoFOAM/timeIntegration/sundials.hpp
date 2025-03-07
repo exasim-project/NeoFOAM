@@ -191,7 +191,9 @@ template<typename SolutionFieldType>
 int explicitRKSolve([[maybe_unused]] sunrealtype t, N_Vector y, N_Vector ydot, void* userData)
 {
     // Pointer wrangling
-    NeoFOAM::dsl::Expression* pdeExpre = reinterpret_cast<NeoFOAM::dsl::Expression*>(userData);
+    using ValueType = typename SolutionFieldType::FieldValueType;
+    NeoFOAM::dsl::Expression<ValueType>* pdeExpre =
+        reinterpret_cast<NeoFOAM::dsl::Expression<ValueType>*>(userData);
     sunrealtype* yDotArray = N_VGetArrayPointer(ydot);
     sunrealtype* yArray = N_VGetArrayPointer(y);
 
