@@ -7,6 +7,7 @@ env:
   OMPI_MCA_rmaps_base_oversubscribe: true
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   DEBUG: ${{ github.event.inputs.debug }}
+  RUN_IDENTIFIER: ${{ github.event.number || format('manual-{0}', github.run_number) }}
 on:
   pull_request:
     types: [opened, synchronize]
@@ -197,11 +198,11 @@ jobs:
           cmake --build --preset profiling
           module load gnu/11
           ctest --preset profiling
-          mkdir -p ${{github.event.number}}/main
+          mkdir -p ${{ env.RUN_IDENTIFIER }}/main
           cd build/profiling/bin/benchmarks
           python3 ../../../../scripts/catch2json.py
           cd ../../../..
-          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/
+          cp build/profiling/bin/benchmarks/*.json ${{ env.RUN_IDENTIFIER }}/
           lscpu > ${{github.event.number}}/lscpu.log
           rm -rf build
           git fetch origin
@@ -216,17 +217,17 @@ jobs:
           cd build/profiling/bin/benchmarks
           python3 ../../../../scripts/catch2json.py
           cd ../../../..
-          cp build/profiling/bin/benchmarks/*.json ${{github.event.number}}/main/
+          cp build/profiling/bin/benchmarks/*.json ${{ env.RUN_IDENTIFIER }}/main/
 
       - name: Push Benchmark Data
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: ${{github.event.number}}
+          source-directory: ${{ env.RUN_IDENTIFIER }}
           destination-github-username: 'exasim-project'
           destination-repository-name: 'NeoFOAM-BenchmarkData'
-          target-directory: ${{github.event.number}}/${{matrix.instance.ec2-type}}
+          target-directory: ${{ env.RUN_IDENTIFIER }}/${{matrix.instance.ec2-type}}
           user-email: github-actions@github.com
           target-branch: main
   stop-runner:
