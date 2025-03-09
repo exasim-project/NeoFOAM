@@ -2,12 +2,7 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 #pragma once
 
-#include <unordered_map>
-#include <any>
-#include <string>
-#include <vector>
-
-#include "NeoFOAM/core/demangle.hpp"
+#include <span>
 
 namespace NeoFOAM
 {
@@ -24,7 +19,7 @@ public:
 #ifdef DEBUG
         if (index >= this->size())
         {
-            Kokkos::abort("Index out of range in DebugSpan.\n");
+            Kokkos::abort("Index out of range in Span.\n");
         }
 #endif
         return std::span<T>::operator[](index);
