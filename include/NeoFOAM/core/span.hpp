@@ -7,22 +7,35 @@
 namespace NeoFOAM
 {
 
-template<typename T>
-class Span : public std::span<T>
+template<typename ValueType>
+class Span : public std::span<ValueType>
 {
 public:
 
-    using std::span<T>::span; // Inherit constructors from std::span
+    bool abort = true;
 
-    constexpr T& operator[](std::size_t index) const
+    using std::span<ValueType>::span; // Inherit constructors from std::span
+
+    Span(std::span<ValueType> in) : Span(in.begin(), in.end()) {}
+
+    constexpr ValueType& operator[](std::size_t index) const
     {
-#ifdef DEBUG
+#ifdef NF_DEBUG
         if (index >= this->size())
         {
-            Kokkos::abort("Index out of range in Span.\n");
+            std::string msg;
+            msg += "Index is out of range. Index: " + std::to_string(index);
+            if (abort)
+            {
+                Kokkos::abort(msg.c_str());
+            }
+            else
+            {
+                throw std::invalid_argument(msg);
+            }
         }
 #endif
-        return std::span<T>::operator[](index);
+        return std::span<ValueType>::operator[](index);
     }
 };
 

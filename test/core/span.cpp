@@ -21,5 +21,30 @@ TEST_CASE("parallelFor")
     NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
     NeoFOAM::fill(fieldA, 2.0);
 
-    SECTION("parallelFor_") {}
+    auto fieldAStdSpan = fieldA.span();
+    auto fieldANDSpan = NeoFOAM::Span(fieldAStdSpan);
+
+    SECTION("can access elements")
+    {
+        REQUIRE(fieldANDSpan[0] == 2.0);
+        REQUIRE(fieldANDSpan[1] == 2.0);
+        REQUIRE(fieldANDSpan[2] == 2.0);
+        REQUIRE(fieldANDSpan[3] == 2.0);
+        REQUIRE(fieldANDSpan[4] == 2.0);
+    }
+
+    fieldANDSpan.abort = false;
+    SECTION("detects out of range") { CHECK_THROWS(fieldANDSpan[5]); }
+
+    SECTION("can be used in parallel for")
+    {
+        NeoFOAM::parallelFor(
+            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] += 2.0; }
+        );
+        REQUIRE(fieldANDSpan[0] == 4.0);
+        REQUIRE(fieldANDSpan[1] == 4.0);
+        REQUIRE(fieldANDSpan[2] == 4.0);
+        REQUIRE(fieldANDSpan[3] == 4.0);
+        REQUIRE(fieldANDSpan[4] == 4.0);
+    }
 };
