@@ -11,26 +11,39 @@
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00007}00007\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00008}00008\ \{}
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00009}00009\ }
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00010}00010\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00011}\mbox{\hyperlink{classNeoFOAM_1_1Span}{00011}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1Span}{Span}}\ :\ \textcolor{keyword}{public}\ std::span<T>}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00010}00010\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00011}\mbox{\hyperlink{classNeoFOAM_1_1Span}{00011}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1Span}{Span}}\ :\ \textcolor{keyword}{public}\ std::span<ValueType>}
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00012}00012\ \{}
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00013}00013\ \textcolor{keyword}{public}:}
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00014}00014\ }
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00015}00015\ \ \ \ \ \textcolor{keyword}{using\ }std::span<T>::span;\ \textcolor{comment}{//\ Inherit\ constructors\ from\ std::span}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00015}\mbox{\hyperlink{classNeoFOAM_1_1Span_aa53dc6ab2a0bcca243f6e7618f0a79f8}{00015}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1Span_aa53dc6ab2a0bcca243f6e7618f0a79f8}{abort}}\ =\ \textcolor{keyword}{true};}
 \DoxyCodeLine{\Hypertarget{span_8hpp_source_l00016}00016\ }
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00017}\mbox{\hyperlink{classNeoFOAM_1_1Span_a0533769dc619a3aba278d840514e2fea}{00017}}\ \ \ \ \ \textcolor{keyword}{constexpr}\ T\&\ \mbox{\hyperlink{classNeoFOAM_1_1Span_a0533769dc619a3aba278d840514e2fea}{operator[]}}(std::size\_t\ index)\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00018}00018\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00019}00019\ \textcolor{preprocessor}{\#ifdef\ DEBUG}}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00020}00020\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ >=\ this-\/>size())}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00021}00021\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00022}00022\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::abort(\textcolor{stringliteral}{"{}Index\ out\ of\ range\ in\ Span.\(\backslash\)n"{}});}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00023}00023\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00024}00024\ \textcolor{preprocessor}{\#endif}}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00025}00025\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::span<T>::operator[](index);}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00026}00026\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00027}00027\ \};}
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00028}00028\ }
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00029}00029\ }
-\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00030}00030\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00017}00017\ \ \ \ \ \textcolor{keyword}{using\ }std::span<ValueType>::span;\ \textcolor{comment}{//\ Inherit\ constructors\ from\ std::span}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00019}\mbox{\hyperlink{classNeoFOAM_1_1Span_a0113aec16d47ffc67ac88ea3717febb7}{00019}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Span_a0113aec16d47ffc67ac88ea3717febb7}{Span}}(std::span<ValueType>\ in)\ :\ \mbox{\hyperlink{classNeoFOAM_1_1Span}{Span}}(in.begin(),\ in.end())\ \{\}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00020}00020\ }
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00021}\mbox{\hyperlink{classNeoFOAM_1_1Span_a9cdf5e2e89261dab1c11899c9ac910de}{00021}}\ \ \ \ \ \textcolor{keyword}{constexpr}\ ValueType\&\ \mbox{\hyperlink{classNeoFOAM_1_1Span_a9cdf5e2e89261dab1c11899c9ac910de}{operator[]}}(std::size\_t\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00022}00022\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00023}00023\ \textcolor{preprocessor}{\#ifdef\ NF\_DEBUG}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00024}00024\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (index\ >=\ this-\/>size())}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00025}00025\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00026}00026\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ msg;}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00027}00027\ \ \ \ \ \ \ \ \ \ \ \ \ msg\ +=\ \textcolor{stringliteral}{"{}Index\ is\ out\ of\ range.\ Index:\ "{}}\ +\ std::to\_string(index);}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00028}00028\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classNeoFOAM_1_1Span_aa53dc6ab2a0bcca243f6e7618f0a79f8}{abort}})}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00029}00029\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00030}00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::abort(msg.c\_str());}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00031}00031\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00032}00032\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::invalid\_argument(msg);}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00037}00037\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::span<ValueType>::operator[](index);}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00039}00039\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00040}00040\ \};}
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{span_8hpp_source_l00043}00043\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
