@@ -33,8 +33,10 @@ TEST_CASE("parallelFor")
         REQUIRE(fieldANDSpan[4] == 2.0);
     }
 
+#ifdef NF_DEBUG
     fieldANDSpan.abort = false;
     SECTION("detects out of range") { CHECK_THROWS(fieldANDSpan[5]); }
+#endif
 
     SECTION("can be used in parallel for")
     {
