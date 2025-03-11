@@ -30,14 +30,15 @@ TEST_CASE("parallelFor")
     auto fieldANDSpan = NeoFOAM::Span(fieldAStdSpan);
 
     NeoFOAM::parallelFor(
-        exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] *= 2.0; }
+        exec, {0, 4}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] *= 2.0; }
     );
 
-#ifdef NF_DEBUGC
-    CHECK_THROWS(NeoFOAM::parallelFor(
-                     exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] *= 2.0; }
-    ););
-#endif
+    // NOTE: this does not work since throwing from a device function is not supported
+    // #ifdef NF_DEBUGC
+    //     CHECK_THROWS(NeoFOAM::parallelFor(
+    //                      exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] *= 2.0; }
+    //     ););
+    // #endif
 
     auto fieldAHost = fieldA.copyToHost();
     auto fieldANDSpanHost = NeoFOAM::Span(fieldAHost.span());
