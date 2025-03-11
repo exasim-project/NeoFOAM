@@ -12,6 +12,31 @@ namespace NeoFOAM::la
 {
 
 /**
+ * @struct LinearSystemView
+ * @brief
+ *
+ * @tparam ValueType
+ * @tparam IndexType
+ */
+template<typename ValueType, typename IndexType>
+struct LinearSystemView
+{
+    LinearSystemView() = default;
+    ~LinearSystemView() = default;
+
+    LinearSystemView(
+        CSRMatrixSpan<ValueType, IndexType> inA,
+        std::span<ValueType> inB,
+        std::string_view inSparsityPattern
+    )
+        : A(inA), b(inB), sparsityPattern(inSparsityPattern) {};
+
+    CSRMatrixSpan<ValueType, IndexType> A;
+    std::span<ValueType> b;
+    std::string_view sparsityPattern;
+};
+
+/**
  * @class LinearSystem
  * @brief A class representing a linear system of equations.
  *
@@ -42,6 +67,7 @@ public:
 
     ~LinearSystem() = default;
 
+
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
     [[nodiscard]] Field<ValueType>& rhs() { return rhs_; }
 
@@ -53,6 +79,13 @@ public:
     [[nodiscard]] LinearSystem copyToHost() const
     {
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost(), sparsityPattern_);
+    }
+
+    [[nodiscard]] constexpr LinearSystemView<ValueType, IndexType> view()
+    {
+        return LinearSystemView<ValueType, IndexType>(
+            matrix_.span(), rhs_.span(), sparsityPattern_
+        );
     }
 
     const Executor& exec() const { return matrix_.exec(); }

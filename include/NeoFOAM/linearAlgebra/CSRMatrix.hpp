@@ -28,11 +28,11 @@ public:
      * @param rowPtrs Span of the starting index in values/colIdxs for each row.
      */
     CSRMatrixSpan(
-        const std::span<ValueType>& values,
-        const std::span<IndexType>& colIdxs,
-        const std::span<IndexType>& rowPtrs
+        const std::span<ValueType>& value,
+        const std::span<IndexType>& columnIndex,
+        const std::span<IndexType>& rowOffset
     )
-        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs) {};
+        : value(value), columnIndex(columnIndex), rowOffset(rowOffset) {};
 
     /**
      * @brief Default destructor.
@@ -48,18 +48,18 @@ public:
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType i, const IndexType j) const
     {
-        const IndexType rowSize = rowPtrs_[i + 1] - rowPtrs_[i];
+        const IndexType rowSize = rowOffset[i + 1] - rowOffset[i];
         for (std::remove_const_t<IndexType> ic = 0; ic < rowSize; ++ic)
         {
-            const IndexType localCol = rowPtrs_[i] + ic;
-            if (colIdxs_[localCol] == j)
+            const IndexType localCol = rowOffset[i] + ic;
+            if (columnIndex[localCol] == j)
             {
-                return values_[localCol];
+                return value[localCol];
             }
-            if (colIdxs_[localCol] > j) break;
+            if (columnIndex[localCol] > j) break;
         }
         Kokkos::abort("Memory not allocated for CSR matrix component.");
-        return values_[values_.size()]; // compiler warning suppression.
+        return value[value.size()]; // compiler warning suppression.
     }
 
     /**
@@ -68,7 +68,7 @@ public:
      * @return Reference to the matrix element if it exists.
      */
     KOKKOS_INLINE_FUNCTION
-    ValueType& entry(const IndexType offset) const { return values_[offset]; }
+    ValueType& entry(const IndexType offset) const { return value[offset]; }
 
     /**
      * @brief Returns a structured binding of all containers.
@@ -76,14 +76,12 @@ public:
      */
     std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>> span()
     {
-        return {values_, colIdxs_, rowPtrs_};
+        return {value, columnIndex, rowOffset};
     }
 
-private:
-
-    std::span<ValueType> values_;  //!< Span to the values of the CSR matrix.
-    std::span<IndexType> colIdxs_; //!< Span to the column indices of the CSR matrix.
-    std::span<IndexType> rowPtrs_; //!< Span to the row offsets for the CSR matrix.
+    std::span<ValueType> value;       //!< Span to the values of the CSR matrix.
+    std::span<IndexType> columnIndex; //!< Span to the column indices of the CSR matrix.
+    std::span<IndexType> rowOffset;   //!< Span to the row offsets for the CSR matrix.
 };
 
 template<typename ValueType, typename IndexType>
