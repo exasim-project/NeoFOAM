@@ -36,7 +36,8 @@ public:
 #ifdef NF_DEBUG
         if (index >= this->size())
         {
-            std::string msg("Index is out of range. Index: " + std::to_string(index));
+            std::string msg;
+            msg += "Index is out of range. Index: " + std::to_string(index);
             if (abort)
             {
                 Kokkos::abort(msg.c_str());
