@@ -84,7 +84,7 @@ public:
     [[nodiscard]] constexpr LinearSystemView<ValueType, IndexType> view()
     {
         return LinearSystemView<ValueType, IndexType>(
-            matrix_.span(), rhs_.span(), sparsityPattern_
+            matrix_.view(), rhs_.span(), sparsityPattern_
         );
     }
 
