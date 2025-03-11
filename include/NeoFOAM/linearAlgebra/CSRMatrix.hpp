@@ -11,33 +11,33 @@ namespace NeoFOAM::la
 {
 
 /**
- * @class CSRMatrixSpan
+ * @class CSRMatrixView
  * @brief A helper class to allow easy read/write on all executors.
  * @tparam ValueType The type of the underlying CSR matrix elements.
  * @tparam IndexType The type of the indexes.
  */
 template<typename ValueType, typename IndexType>
-class CSRMatrixSpan
+class CSRMatrixView
 {
 public:
 
     /**
-     * @brief Constructor for CSRMatrixSpan.
+     * @brief Constructor for CSRMatrixView.
      * @param values Span of the non-zero values of the matrix.
      * @param colIdxs Span of the column indices for each non-zero value.
      * @param rowPtrs Span of the starting index in values/colIdxs for each row.
      */
-    CSRMatrixSpan(
-        const std::span<ValueType>& value,
-        const std::span<IndexType>& columnIndex,
-        const std::span<IndexType>& rowOffset
+    CSRMatrixView(
+        const std::span<ValueType>& inValue,
+        const std::span<IndexType>& inColumnIndex,
+        const std::span<IndexType>& inRwOffset
     )
-        : value(value), columnIndex(columnIndex), rowOffset(rowOffset) {};
+        : value(inValue), columnIndex(inColumnIndex), rowOffset(inRwOffset) {};
 
     /**
      * @brief Default destructor.
      */
-    ~CSRMatrixSpan() = default;
+    ~CSRMatrixView() = default;
 
     /**
      * @brief Retrieve a reference to the matrix element at position (i,j).
@@ -69,15 +69,6 @@ public:
      */
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType offset) const { return value[offset]; }
-
-    /**
-     * @brief Returns a structured binding of all containers.
-     * @return std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>>
-     */
-    std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>> span()
-    {
-        return {value, columnIndex, rowOffset};
-    }
 
     std::span<ValueType> value;       //!< Span to the values of the CSR matrix.
     std::span<IndexType> columnIndex; //!< Span to the column indices of the CSR matrix.
@@ -195,21 +186,21 @@ public:
     }
 
     /**
-     * @brief Get a span representation of the matrix.
-     * @return CSRMatrixSpan for easy access to matrix elements.
+     * @brief Get a view representation of the matrix's data.
+     * @return CSRMatrixView for easy access to matrix elements.
      */
-    [[nodiscard]] CSRMatrixSpan<ValueType, IndexType> span()
+    [[nodiscard]] CSRMatrixView<ValueType, IndexType> view()
     {
-        return CSRMatrixSpan(values_.span(), colIdxs_.span(), rowPtrs_.span());
+        return CSRMatrixView(values_.span(), colIdxs_.span(), rowPtrs_.span());
     }
 
     /**
-     * @brief Get a const span representation of the matrix.
-     * @return Const CSRMatrixSpan for read-only access to matrix elements.
+     * @brief Get a const view representation of the matrix's data.
+     * @return Const CSRMatrixView for read-only access to matrix elements.
      */
-    [[nodiscard]] const CSRMatrixSpan<const ValueType, const IndexType> span() const
+    [[nodiscard]] const CSRMatrixView<const ValueType, const IndexType> view() const
     {
-        return CSRMatrixSpan(values_.span(), colIdxs_.span(), rowPtrs_.span());
+        return CSRMatrixView(values_.span(), colIdxs_.span(), rowPtrs_.span());
     }
 
 private:

@@ -53,15 +53,15 @@ TEST_CASE("CSRMatrix")
         // Sparse
         NeoFOAM::Field<NeoFOAM::scalar> checkSparse(exec, 4);
         auto checkSparseSpan = checkSparse.span();
-        auto csrSparseSpan = sparseMatrixConst.span();
+        auto csrSparseView = sparseMatrixConst.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                checkSparseSpan[0] = csrSparseSpan.entry(0, 0);
-                checkSparseSpan[1] = csrSparseSpan.entry(1, 1);
-                checkSparseSpan[2] = csrSparseSpan.entry(1, 2);
-                checkSparseSpan[3] = csrSparseSpan.entry(2, 1);
+                checkSparseSpan[0] = csrSparseView.entry(0, 0);
+                checkSparseSpan[1] = csrSparseView.entry(1, 1);
+                checkSparseSpan[2] = csrSparseView.entry(1, 2);
+                checkSparseSpan[3] = csrSparseView.entry(2, 1);
             }
         );
 
@@ -74,20 +74,20 @@ TEST_CASE("CSRMatrix")
         // Dense
         NeoFOAM::Field<NeoFOAM::scalar> checkDense(exec, 9);
         auto checkDenseSpan = checkDense.span();
-        auto csrDenseSpan = denseMatrixConst.span();
+        auto csrDenseView = denseMatrixConst.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                checkDenseSpan[0] = csrDenseSpan.entry(0, 0);
-                checkDenseSpan[1] = csrDenseSpan.entry(0, 1);
-                checkDenseSpan[2] = csrDenseSpan.entry(0, 2);
-                checkDenseSpan[3] = csrDenseSpan.entry(1, 0);
-                checkDenseSpan[4] = csrDenseSpan.entry(1, 1);
-                checkDenseSpan[5] = csrDenseSpan.entry(1, 2);
-                checkDenseSpan[6] = csrDenseSpan.entry(2, 0);
-                checkDenseSpan[7] = csrDenseSpan.entry(2, 1);
-                checkDenseSpan[8] = csrDenseSpan.entry(2, 2);
+                checkDenseSpan[0] = csrDenseView.entry(0, 0);
+                checkDenseSpan[1] = csrDenseView.entry(0, 1);
+                checkDenseSpan[2] = csrDenseView.entry(0, 2);
+                checkDenseSpan[3] = csrDenseView.entry(1, 0);
+                checkDenseSpan[4] = csrDenseView.entry(1, 1);
+                checkDenseSpan[5] = csrDenseView.entry(1, 2);
+                checkDenseSpan[6] = csrDenseView.entry(2, 0);
+                checkDenseSpan[7] = csrDenseView.entry(2, 1);
+                checkDenseSpan[8] = csrDenseView.entry(2, 2);
             }
         );
         checkHost = checkDense.copyToHost();
@@ -105,15 +105,15 @@ TEST_CASE("CSRMatrix")
     SECTION("Update existing entry on " + execName)
     {
         // Sparse
-        auto csrSparseSpan = sparseMatrix.span();
+        auto csrSparseView = sparseMatrix.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrSparseSpan.entry(0, 0) = -1.0;
-                csrSparseSpan.entry(1, 1) = -5.0;
-                csrSparseSpan.entry(1, 2) = -6.0;
-                csrSparseSpan.entry(2, 1) = -8.0;
+                csrSparseView.entry(0, 0) = -1.0;
+                csrSparseView.entry(1, 1) = -5.0;
+                csrSparseView.entry(1, 2) = -6.0;
+                csrSparseView.entry(2, 1) = -8.0;
             }
         );
 
@@ -125,20 +125,20 @@ TEST_CASE("CSRMatrix")
         REQUIRE(checkHost[3] == -8.0);
 
         // Dense
-        auto csrDenseSpan = denseMatrix.span();
+        auto csrDenseView = denseMatrix.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrDenseSpan.entry(0, 0) = -1.0;
-                csrDenseSpan.entry(0, 1) = -2.0;
-                csrDenseSpan.entry(0, 2) = -3.0;
-                csrDenseSpan.entry(1, 0) = -4.0;
-                csrDenseSpan.entry(1, 1) = -5.0;
-                csrDenseSpan.entry(1, 2) = -6.0;
-                csrDenseSpan.entry(2, 0) = -7.0;
-                csrDenseSpan.entry(2, 1) = -8.0;
-                csrDenseSpan.entry(2, 2) = -9.0;
+                csrDenseView.entry(0, 0) = -1.0;
+                csrDenseView.entry(0, 1) = -2.0;
+                csrDenseView.entry(0, 2) = -3.0;
+                csrDenseView.entry(1, 0) = -4.0;
+                csrDenseView.entry(1, 1) = -5.0;
+                csrDenseView.entry(1, 2) = -6.0;
+                csrDenseView.entry(2, 0) = -7.0;
+                csrDenseView.entry(2, 1) = -8.0;
+                csrDenseView.entry(2, 2) = -9.0;
             }
         );
 
@@ -160,15 +160,15 @@ TEST_CASE("CSRMatrix")
         // Sparse
         NeoFOAM::Field<NeoFOAM::scalar> checkSparse(exec, 4);
         auto checkSparseSpan = checkSparse.span();
-        auto csrSparseSpan = sparseMatrixConst.span();
+        auto csrSparseView = sparseMatrixConst.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                checkSparseSpan[0] = csrSparseSpan.entry(0);
-                checkSparseSpan[1] = csrSparseSpan.entry(1);
-                checkSparseSpan[2] = csrSparseSpan.entry(2);
-                checkSparseSpan[3] = csrSparseSpan.entry(3);
+                checkSparseSpan[0] = csrSparseView.entry(0);
+                checkSparseSpan[1] = csrSparseView.entry(1);
+                checkSparseSpan[2] = csrSparseView.entry(2);
+                checkSparseSpan[3] = csrSparseView.entry(3);
             }
         );
         auto checkHost = checkSparse.copyToHost();
@@ -180,20 +180,20 @@ TEST_CASE("CSRMatrix")
         // Dense
         NeoFOAM::Field<NeoFOAM::scalar> checkDense(exec, 9);
         auto checkDenseSpan = checkDense.span();
-        auto csrDenseSpan = denseMatrixConst.span();
+        auto csrDenseView = denseMatrixConst.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                checkDenseSpan[0] = csrDenseSpan.entry(0);
-                checkDenseSpan[1] = csrDenseSpan.entry(1);
-                checkDenseSpan[2] = csrDenseSpan.entry(2);
-                checkDenseSpan[3] = csrDenseSpan.entry(3);
-                checkDenseSpan[4] = csrDenseSpan.entry(4);
-                checkDenseSpan[5] = csrDenseSpan.entry(5);
-                checkDenseSpan[6] = csrDenseSpan.entry(6);
-                checkDenseSpan[7] = csrDenseSpan.entry(7);
-                checkDenseSpan[8] = csrDenseSpan.entry(8);
+                checkDenseSpan[0] = csrDenseView.entry(0);
+                checkDenseSpan[1] = csrDenseView.entry(1);
+                checkDenseSpan[2] = csrDenseView.entry(2);
+                checkDenseSpan[3] = csrDenseView.entry(3);
+                checkDenseSpan[4] = csrDenseView.entry(4);
+                checkDenseSpan[5] = csrDenseView.entry(5);
+                checkDenseSpan[6] = csrDenseView.entry(6);
+                checkDenseSpan[7] = csrDenseView.entry(7);
+                checkDenseSpan[8] = csrDenseView.entry(8);
             }
         );
         checkHost = checkDense.copyToHost();
@@ -211,15 +211,15 @@ TEST_CASE("CSRMatrix")
     SECTION("Update existing directValue on " + execName)
     {
         // Sparse
-        auto csrSparseSpan = sparseMatrix.span();
+        auto csrSparseView = sparseMatrix.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrSparseSpan.entry(0) = -1.0;
-                csrSparseSpan.entry(1) = -5.0;
-                csrSparseSpan.entry(2) = -6.0;
-                csrSparseSpan.entry(3) = -8.0;
+                csrSparseView.entry(0) = -1.0;
+                csrSparseView.entry(1) = -5.0;
+                csrSparseView.entry(2) = -6.0;
+                csrSparseView.entry(3) = -8.0;
             }
         );
 
@@ -232,20 +232,20 @@ TEST_CASE("CSRMatrix")
         REQUIRE(checkHost[3] == -8.0);
 
         // Dense
-        auto csrDenseSpan = denseMatrix.span();
+        auto csrDenseView = denseMatrix.view();
         parallelFor(
             exec,
             {0, 1},
             KOKKOS_LAMBDA(const size_t) {
-                csrDenseSpan.entry(0) = -1.0;
-                csrDenseSpan.entry(1) = -2.0;
-                csrDenseSpan.entry(2) = -3.0;
-                csrDenseSpan.entry(3) = -4.0;
-                csrDenseSpan.entry(4) = -5.0;
-                csrDenseSpan.entry(5) = -6.0;
-                csrDenseSpan.entry(6) = -7.0;
-                csrDenseSpan.entry(7) = -8.0;
-                csrDenseSpan.entry(8) = -9.0;
+                csrDenseView.entry(0) = -1.0;
+                csrDenseView.entry(1) = -2.0;
+                csrDenseView.entry(2) = -3.0;
+                csrDenseView.entry(3) = -4.0;
+                csrDenseView.entry(4) = -5.0;
+                csrDenseView.entry(5) = -6.0;
+                csrDenseView.entry(6) = -7.0;
+                csrDenseView.entry(7) = -8.0;
+                csrDenseView.entry(8) = -9.0;
             }
         );
 
@@ -265,14 +265,16 @@ TEST_CASE("CSRMatrix")
     SECTION("Span " + execName)
     {
         auto hostMatrix = sparseMatrix.copyToHost();
-        auto [value, column, row] = hostMatrix.span().span();
+        auto value = hostMatrix.view().value;
+        auto column = hostMatrix.view().columnIndex;
+        auto row = hostMatrix.view().rowOffset;
         auto hostvaluesSparse = valuesSparse.copyToHost();
         auto hostcolIdxSparse = colIdxSparse.copyToHost();
         auto hostrowPtrsSparse = rowPtrsSparse.copyToHost();
 
-        REQUIRE(hostvaluesSparse.span().size() == value.size());
-        REQUIRE(hostcolIdxSparse.span().size() == column.size());
-        REQUIRE(hostrowPtrsSparse.span().size() == row.size());
+        REQUIRE(hostvaluesSparse.size() == value.size());
+        REQUIRE(hostcolIdxSparse.size() == column.size());
+        REQUIRE(hostrowPtrsSparse.size() == row.size());
 
         for (size_t i = 0; i < value.size(); ++i)
         {

@@ -25,13 +25,13 @@ struct LinearSystemView
     ~LinearSystemView() = default;
 
     LinearSystemView(
-        CSRMatrixSpan<ValueType, IndexType> inA,
+        CSRMatrixView<ValueType, IndexType> inA,
         std::span<ValueType> inB,
         std::string_view inSparsityPattern
     )
         : A(inA), b(inB), sparsityPattern(inSparsityPattern) {};
 
-    CSRMatrixSpan<ValueType, IndexType> A;
+    CSRMatrixView<ValueType, IndexType> A;
     std::span<ValueType> b;
     std::string_view sparsityPattern;
 };
