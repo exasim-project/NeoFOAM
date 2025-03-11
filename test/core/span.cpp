@@ -15,38 +15,45 @@
 
 TEST_CASE("parallelFor")
 {
-    NeoFOAM::Executor exec = NeoFOAM::SerialExecutor {};
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
     NeoFOAM::fill(fieldA, 2.0);
 
+
     auto fieldAStdSpan = fieldA.span();
     auto fieldANDSpan = NeoFOAM::Span(fieldAStdSpan);
 
-    SECTION("can access elements")
-    {
-        REQUIRE(fieldANDSpan[0] == 2.0);
-        REQUIRE(fieldANDSpan[1] == 2.0);
-        REQUIRE(fieldANDSpan[2] == 2.0);
-        REQUIRE(fieldANDSpan[3] == 2.0);
-        REQUIRE(fieldANDSpan[4] == 2.0);
-    }
+    NeoFOAM::parallelFor(
+        exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] *= 2.0; }
+    );
 
-#ifdef NF_DEBUG
-    fieldANDSpan.abort = false;
-    SECTION("detects out of range") { CHECK_THROWS(fieldANDSpan[5]); }
+#ifdef NF_DEBUGC
+    CHECK_THROWS(NeoFOAM::parallelFor(
+                     exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] *= 2.0; }
+    ););
 #endif
 
-    SECTION("can be used in parallel for")
+    auto fieldAHost = fieldA.copyToHost();
+    auto fieldANDSpanHost = NeoFOAM::Span(fieldAHost.span());
+
+    // to some checking if everything is correct
+#ifdef NF_DEBUG
+    fieldANDSpanHost.abort = false;
+    SECTION("detects out of range") { CHECK_THROWS(fieldANDSpanHost[5]); }
+#endif
+
+    SECTION("can access elements")
     {
-        NeoFOAM::parallelFor(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldANDSpan[i] += 2.0; }
-        );
-        REQUIRE(fieldANDSpan[0] == 4.0);
-        REQUIRE(fieldANDSpan[1] == 4.0);
-        REQUIRE(fieldANDSpan[2] == 4.0);
-        REQUIRE(fieldANDSpan[3] == 4.0);
-        REQUIRE(fieldANDSpan[4] == 4.0);
+        REQUIRE(fieldANDSpanHost[0] == 4.0);
+        REQUIRE(fieldANDSpanHost[1] == 4.0);
+        REQUIRE(fieldANDSpanHost[2] == 4.0);
+        REQUIRE(fieldANDSpanHost[3] == 4.0);
+        REQUIRE(fieldANDSpanHost[4] == 4.0);
     }
 };
