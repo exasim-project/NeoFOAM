@@ -78,16 +78,18 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="temporalOperator_8hpp_source.html">temporalOperator.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="operator_8hpp_source.html">operator.hpp</a>&gt;</code></p>
 <h2 class="groupheader">Concept definition</h2>
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator.html">NeoFOAM::dsl::HasTemporalOperator</a> =  <a class="code hl_concept" href="conceptNeoFOAM_1_1dsl_1_1HasTemporalExplicitOperator.html">HasTemporalExplicitOperator&lt;T&gt;</a> || <a class="code hl_concept" href="conceptNeoFOAM_1_1dsl_1_1HasTemporalImplicitOperator.html">HasTemporalImplicitOperator&lt;T&gt;</a></div>
-<div class="ttc" id="aconceptNeoFOAM_1_1dsl_1_1HasTemporalExplicitOperator_html"><div class="ttname"><a href="conceptNeoFOAM_1_1dsl_1_1HasTemporalExplicitOperator.html">NeoFOAM::dsl::HasTemporalExplicitOperator</a></div><div class="ttdef"><b>Definition</b> <a href="temporalOperator_8hpp_source.html#l00022">temporalOperator.hpp:22</a></div></div>
-<div class="ttc" id="aconceptNeoFOAM_1_1dsl_1_1HasTemporalImplicitOperator_html"><div class="ttname"><a href="conceptNeoFOAM_1_1dsl_1_1HasTemporalImplicitOperator.html">NeoFOAM::dsl::HasTemporalImplicitOperator</a></div><div class="ttdef"><b>Definition</b> <a href="temporalOperator_8hpp_source.html#l00033">temporalOperator.hpp:33</a></div></div>
-<div class="ttc" id="aconceptNeoFOAM_1_1dsl_1_1HasTemporalOperator_html"><div class="ttname"><a href="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator.html">NeoFOAM::dsl::HasTemporalOperator</a></div><div class="ttdef"><b>Definition</b> <a href="temporalOperator_8hpp_source.html#l00044">temporalOperator.hpp:44</a></div></div>
+<div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator.html">NeoFOAM::dsl::HasTemporalOperator</a> =  <span class="keyword">requires</span>(T t) {</div>
+<div class="line">    {</div>
+<div class="line">        t.temporalOperation(std::declval&lt;Field&lt;scalar&gt;&amp;&gt;(), std::declval&lt;scalar&gt;())</div>
+<div class="line">    } -&gt; std::same_as&lt;void&gt;; </div>
+<div class="line">}</div>
+<div class="ttc" id="aconceptNeoFOAM_1_1dsl_1_1HasTemporalOperator_html"><div class="ttname"><a href="conceptNeoFOAM_1_1dsl_1_1HasTemporalOperator.html">NeoFOAM::dsl::HasTemporalOperator</a></div><div class="ttdef"><b>Definition</b> <a href="operator_8hpp_source.html#l00017">operator.hpp:17</a></div></div>
 </div><!-- fragment --><a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="temporalOperator_8hpp_source.html#l00044">44</a> of file <a class="el" href="temporalOperator_8hpp_source.html">temporalOperator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="operator_8hpp_source.html#l00017">17</a> of file <a class="el" href="operator_8hpp_source.html">operator.hpp</a>.</p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
