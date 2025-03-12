@@ -30,7 +30,6 @@ public:
     /* a member to store the first out of range data access. This assumes a span has
      * at least a size of 1. A value of zero signals success. This is required we cannot
      * throw from a device function.
-     *
      */
     mutable size_t failureIndex = 0;
 

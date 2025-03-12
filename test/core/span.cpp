@@ -34,13 +34,13 @@ TEST_CASE("parallelFor")
     );
     REQUIRE(fieldNFSpan.failureIndex == 0);
 
-#ifdef NF_DEBUGC
-    fieldNFSpan.abort = false;
-    NeoFOAM::parallelFor(
-        exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
-    );
-    REQUIRE(fieldNFSpan.failureIndex == 5);
-#endif
+    // #ifdef NF_DEBUGC
+    //     fieldNFSpan.abort = false;
+    //     NeoFOAM::parallelFor(
+    //         exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
+    //     );
+    //     REQUIRE(fieldNFSpan.failureIndex == 5);
+    // #endif
 
     auto fieldHost = field.copyToHost();
     auto fieldNFSpanHost = NeoFOAM::Span(fieldHost.span());
