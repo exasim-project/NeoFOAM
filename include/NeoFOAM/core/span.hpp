@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 #pragma once
 
+#include <limits>
+
 #include <span>
 
 namespace NeoFOAM
@@ -25,6 +27,13 @@ public:
      */
     bool abort = true;
 
+    /* a member to store the first out of range data access. This assumes a span has
+     * at least a size of 1. A value of zero signals success. This is required we cannot
+     * throw from a device function.
+     *
+     */
+    mutable size_t failureIndex = 0;
+
     using std::span<ValueType>::span; // Inherit constructors from std::span
 
     /* Constructor from existing std::span
@@ -46,7 +55,12 @@ public:
             else
             {
                 // NOTE: throwing from a device function does not work
-                throw std::invalid_argument("Index is out of range");
+                // throw std::invalid_argument("Index is out of range");
+                if (failureIndex == 0)
+                {
+                    failureIndex = index;
+                }
+                return std::span<ValueType>::operator[](index);
             }
         }
 #endif
