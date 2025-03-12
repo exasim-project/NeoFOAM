@@ -45,7 +45,6 @@ TEST_CASE("parallelFor")
     auto fieldHost = field.copyToHost();
     auto fieldNFSpanHost = NeoFOAM::Span(fieldHost.span());
 
-    // to some checking if everything is correct
 #ifdef NF_DEBUG
     fieldNFSpanHost.abort = false;
     SECTION("detects out of range")
@@ -55,6 +54,7 @@ TEST_CASE("parallelFor")
     }
 #endif
 
+    // some checking if everything is correct
     SECTION("can access elements")
     {
         REQUIRE(fieldNFSpanHost[0] == 4.0);

@@ -23,7 +23,7 @@ class Span : public std::span<ValueType>
 public:
 
     /* A flag to control whether the program should terminate on invalid memory access or throw.
-     * Kokkos prefers to terminate, but for testing purpose throwing is preferred
+     * Kokkos prefers to terminate, but for testing purpose the failureIndex is preferred
      */
     bool abort = true;
 
