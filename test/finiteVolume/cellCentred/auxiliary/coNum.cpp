@@ -31,7 +31,7 @@ TEST_CASE("Courant Number")
     {
         NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, 4);
         std::vector<fvcc::SurfaceBoundary<NeoFOAM::scalar>> bcs {};
-        for (auto patchi : I<NeoFOAM::size_t> {0, 1, 2, 3})
+        for (auto patchi : I<NeoFOAM::size_t> {0, 1})
         {
             NeoFOAM::Dictionary dict;
             dict.insert("type", std::string("fixedValue"));
@@ -41,6 +41,7 @@ TEST_CASE("Courant Number")
 
         fvcc::SurfaceField<NeoFOAM::scalar> sf(exec, "sf", mesh, bcs);
         NeoFOAM::fill(sf.internalField(), 1.0);
+        sf.correctBoundaryConditions();
 
         // use arbitrary time step size of 0.01
         const NeoFOAM::scalar coNum = fvcc::computeCoNum(sf, 0.01);
