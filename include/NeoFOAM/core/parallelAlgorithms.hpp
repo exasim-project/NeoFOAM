@@ -24,7 +24,10 @@ concept parallelForKernel = requires(Kernel t, size_t i) {
 
 template<typename Executor, parallelForKernel Kernel>
 void parallelFor(
-    [[maybe_unused]] const Executor& exec, std::pair<size_t, size_t> range, Kernel kernel
+    [[maybe_unused]] const Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    std::string name = "parallelFor"
 )
 {
     auto [start, end] = range;
@@ -39,7 +42,7 @@ void parallelFor(
     {
         using runOn = typename Executor::exec;
         Kokkos::parallel_for(
-            "parallelFor",
+            name,
             Kokkos::RangePolicy<runOn>(start, end),
             KOKKOS_LAMBDA(const size_t i) { kernel(i); }
         );
@@ -48,9 +51,14 @@ void parallelFor(
 
 
 template<parallelForKernel Kernel>
-void parallelFor(const NeoFOAM::Executor& exec, std::pair<size_t, size_t> range, Kernel kernel)
+void parallelFor(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    std::string name = "parallelFor"
+)
 {
-    std::visit([&](const auto& e) { parallelFor(e, range, kernel); }, exec);
+    std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
 }
 
 // Concept to check if a callable is compatible with ValueType(const size_t)
@@ -62,12 +70,18 @@ concept parallelForFieldKernel = requires(Kernel t, ValueType val, size_t i) {
 };
 
 template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
-void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel)
+void parallelFor(
+    [[maybe_unused]] const Executor& exec,
+    Field<ValueType>& field,
+    Kernel kernel,
+    std::string name = "parallelFor"
+)
 {
     auto span = field.span();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-        for (size_t i = 0; i < field.size(); i++)
+        size_t fieldSize = field.size();
+        for (size_t i = 0; i < fieldSize; i++)
         {
             span[i] = kernel(i);
         }
@@ -76,7 +90,7 @@ void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field,
     {
         using runOn = typename Executor::exec;
         Kokkos::parallel_for(
-            "parallelFor",
+            name,
             Kokkos::RangePolicy<runOn>(0, field.size()),
             KOKKOS_LAMBDA(const size_t i) { span[i] = kernel(i); }
         );
@@ -84,9 +98,9 @@ void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field,
 }
 
 template<typename ValueType, parallelForFieldKernel<ValueType> Kernel>
-void parallelFor(Field<ValueType>& field, Kernel kernel)
+void parallelFor(Field<ValueType>& field, Kernel kernel, std::string name = "parallelFor")
 {
-    std::visit([&](const auto& e) { parallelFor(e, field, kernel); }, field.exec());
+    std::visit([&](const auto& e) { parallelFor(e, field, kernel, name); }, field.exec());
 }
 
 template<typename Executor, typename Kernel, typename T>
@@ -134,7 +148,8 @@ void parallelReduce(
 {
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
-        for (size_t i = 0; i < field.size(); i++)
+        size_t fieldSize = field.size();
+        for (size_t i = 0; i < fieldSize; i++)
         {
             if constexpr (Kokkos::is_reducer<T>::value)
             {

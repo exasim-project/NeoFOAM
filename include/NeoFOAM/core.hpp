@@ -9,6 +9,7 @@
 #include "core/parallelAlgorithms.hpp"
 #include "core/runtimeSelectionFactory.hpp"
 #include "core/time.hpp"
+#include "core/span.hpp"
 #include "core/tokenList.hpp"
 #include "core/primitives/label.hpp"
 #include "core/primitives/scalar.hpp"
