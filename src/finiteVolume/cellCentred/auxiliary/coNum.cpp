@@ -51,7 +51,7 @@ scalar computeCoNum(const SurfaceField<scalar>& faceFlux, const scalar dt)
 
     phi.correctBoundaryConditions();
 
-    scalar maxValue;
+    scalar maxValue {0.0};
     Kokkos::Max<NeoFOAM::scalar> maxReducer(maxValue);
     parallelReduce(
         exec,
