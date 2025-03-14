@@ -10,7 +10,6 @@
 namespace NeoFOAM
 {
 
-
 template<typename ValueType>
 class Field;
 
