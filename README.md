@@ -4,6 +4,7 @@
 **[Documentation](https://exasim-project.com/NeoFOAM/latest)** |
 **[Roadmap](https://github.com/orgs/exasim-project/projects/1/views/8)** |
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14608521.svg)](https://doi.org/10.5281/zenodo.14608521)
 [![c++ standard](https://img.shields.io/badge/c%2B%2B-20-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization) [![Gitter](https://img.shields.io/badge/Gitter-8A2BE2)](https://matrix.to/#/#NeoFOAM:gitter.im)
 [![doxygen](https://img.shields.io/badge/Doxygen-8A2BE2)](https://exasim-project.com/NeoFOAM/latest/doxygen/html/index.html)
 
@@ -54,7 +55,7 @@ Additionally, we provide several Cmake presets to set commmonly required flags i
 
 ### Executing Tests
 
-We provide a set of unit tests which can be execute via ctest or
+We provide a set of unit tests which can be executed via ctest or
 
     cmake --build . --target test
 
@@ -63,7 +64,7 @@ We provide a set of unit tests which can be execute via ctest or
 
 Currently, NeoFOAM is not a standalone CFD Framework.
 It is designed to be used within OpenFOAM.
-Examples how to integrate NeoFOAM into OpenFOAM and howto write applications is demonstrated in the [FoamAdapter](https://github.com/exasim-project/FoamAdapter) repository.
+Examples how to integrate NeoFOAM into OpenFOAM and how to write applications is demonstrated in the [FoamAdapter](https://github.com/exasim-project/FoamAdapter) repository.
 
 ## Documentation
 

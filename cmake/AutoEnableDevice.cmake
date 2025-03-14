@@ -65,3 +65,9 @@ if(NOT DEFINED Kokkos_ENABLE_HIP)
 else()
   message(STATUS "Skip HIP detection Kokkos_ENABLE_HIP=${Kokkos_ENABLE_HIP}")
 endif()
+
+if(NOT DEFINED Kokkos_ENABLE_SERIAL)
+  set(Kokkos_ENABLE_SERIAL
+      ON
+      CACHE INTERNAL "")
+endif()

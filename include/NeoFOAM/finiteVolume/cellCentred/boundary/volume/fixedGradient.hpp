@@ -39,7 +39,8 @@ void setGradientValue(
             // operator / is not defined for all ValueTypes
             value[i] =
                 iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
-        }
+        },
+        "setGradientValue"
     );
 }
 }
