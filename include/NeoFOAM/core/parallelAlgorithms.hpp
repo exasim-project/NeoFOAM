@@ -13,35 +13,6 @@ namespace NeoFOAM
 template<typename ValueType>
 class Field;
 
-
-template<typename Executor, typename Kernel>
-void parallelFor2([[maybe_unused]] const Executor& exec, Kernel kernel)
-{
-    auto [start, end] = kernel.range;
-    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
-    {
-        for (size_t i = start; i < end; i++)
-        {
-            kernel.call(i);
-        }
-    }
-    else
-    {
-        using runOn = typename Executor::exec;
-        Kokkos::parallel_for(
-            kernel.name,
-            Kokkos::RangePolicy<runOn>(start, end),
-            KOKKOS_LAMBDA(const size_t i) { kernel.call(i); }
-        );
-    }
-}
-
-template<typename Kernel>
-void parallelFor(Kernel kernel)
-{
-    std::visit([&](const auto& e) { parallelFor2(e, kernel); }, kernel.exec);
-}
-
 // Concept to check if a callable is compatible with void(const size_t)
 template<typename Kernel>
 concept parallelForKernel = requires(Kernel t, size_t i) {
@@ -88,6 +59,22 @@ void parallelFor(
 {
     std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
 }
+
+template<typename FactoryFunc>
+void parallelFor(const NeoFOAM::Executor& exec, FactoryFunc factoryFunc)
+{
+    std::visit(
+        [&](const auto& e)
+        {
+            auto kernel = factoryFunc(e);
+            auto range = kernel.range;
+            auto name = kernel.name;
+            parallelFor(e, range, kernel, name);
+        },
+        exec
+    );
+}
+
 
 // Concept to check if a callable is compatible with ValueType(const size_t)
 template<typename Kernel, typename ValueType>
