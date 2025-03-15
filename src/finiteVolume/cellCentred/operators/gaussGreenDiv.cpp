@@ -7,17 +7,20 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-struct SumInternalFluxes
+struct SumInternalFluxesKernel
 {
-
+    const NeoFOAM::Executor& exec;
+    const std::pair<size_t, size_t> range;
     const std::span<const scalar> surfFaceFlux;
     const std::span<const scalar> surfPhif;
-    std::span<scalar> surfDivPhi;
+    mutable std::span<scalar> surfDivPhi;
     const std::span<const int> surfOwner;
     const std::span<const int> surfNeighbour;
+    const std::string name;
+
 
     KOKKOS_INLINE_FUNCTION
-    void call1(const size_t i)
+    void call1(const size_t i) const
     {
         scalar flux = surfFaceFlux[i] * surfPhif[i];
         Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
@@ -25,7 +28,7 @@ struct SumInternalFluxes
     }
 
     KOKKOS_INLINE_FUNCTION
-    void call2(const size_t i)
+    void call2(const size_t i) const
     {
         scalar flux = surfFaceFlux[i] * surfPhif[i];
         surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
@@ -55,10 +58,17 @@ void computeDiv(
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
 
-    auto sumInternalFluxes =
-        SumInternalFluxes(surfFaceFlux, surfPhif, surfDivPhi, surfOwner, surfNeighbour);
+    parallelFor(SumInternalFluxesKernel {
+        exec,
+        {0, nInternalFaces},
+        surfFaceFlux,
+        surfPhif,
+        surfDivPhi,
+        surfOwner,
+        surfNeighbour,
+        "sumFluxesInternal"
+    });
 
-    parallelFor2(exec, {0, nInternalFaces}, sumInternalFluxes, "sumFluxesInternal");
 
     parallelFor(
         exec,

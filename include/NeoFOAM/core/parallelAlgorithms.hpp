@@ -14,23 +14,10 @@ template<typename ValueType>
 class Field;
 
 
-// Concept to check if a callable is compatible with void(const size_t)
-template<typename Kernel>
-concept parallelForKernel = requires(Kernel t, size_t i) {
-    {
-        t(i)
-    } -> std::same_as<void>;
-};
-
-template<typename Executor, parallelForKernel Kernel>
-void parallelFor2(
-    [[maybe_unused]] const Executor& exec,
-    std::pair<size_t, size_t> range,
-    Kernel kernel,
-    std::string name = "parallelFor"
-)
+template<typename Executor, typename Kernel>
+void parallelFor2([[maybe_unused]] const Executor& exec, Kernel kernel)
 {
-    auto [start, end] = range;
+    auto [start, end] = kernel.range;
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
         for (size_t i = start; i < end; i++)
@@ -42,7 +29,7 @@ void parallelFor2(
     {
         using runOn = typename Executor::exec;
         Kokkos::parallel_for(
-            name,
+            kernel.name,
             Kokkos::RangePolicy<runOn>(start, end),
             KOKKOS_LAMBDA(const size_t i) { kernel.call2(i); }
         );
@@ -50,15 +37,18 @@ void parallelFor2(
 }
 
 template<typename Kernel>
-void parallelFor2(
-    const NeoFOAM::Executor& exec,
-    std::pair<size_t, size_t> range,
-    Kernel kernel,
-    std::string name = "parallelFor"
-)
+void parallelFor(Kernel kernel)
 {
-    std::visit([&](const auto& e) { parallelFor2(e, range, kernel, name); }, exec);
+    std::visit([&](const auto& e) { parallelFor2(e, kernel); }, kernel.exec);
 }
+
+// Concept to check if a callable is compatible with void(const size_t)
+template<typename Kernel>
+concept parallelForKernel = requires(Kernel t, size_t i) {
+    {
+        t(i)
+    } -> std::same_as<void>;
+};
 
 template<typename Executor, parallelForKernel Kernel>
 void parallelFor(
