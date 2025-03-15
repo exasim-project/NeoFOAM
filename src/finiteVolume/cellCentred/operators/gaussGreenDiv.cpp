@@ -7,9 +7,10 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+template<typename ExecutorType>
 struct SumInternalFluxesKernel
 {
-    const NeoFOAM::Executor& exec;
+    const ExecutorType& exec;
     const std::pair<size_t, size_t> range;
     const std::span<const scalar> surfFaceFlux;
     const std::span<const scalar> surfPhif;
@@ -18,23 +19,23 @@ struct SumInternalFluxesKernel
     const std::span<const int> surfNeighbour;
     const std::string name;
 
-
     KOKKOS_INLINE_FUNCTION
-    void call1(const size_t i) const
+    void call(const size_t i) const
     {
         scalar flux = surfFaceFlux[i] * surfPhif[i];
         Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
         Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
     }
-
-    KOKKOS_INLINE_FUNCTION
-    void call2(const size_t i) const
-    {
-        scalar flux = surfFaceFlux[i] * surfPhif[i];
-        surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
-        surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
-    }
 };
+
+template<>
+KOKKOS_INLINE_FUNCTION void SumInternalFluxesKernel<SerialExecutor>::call(const size_t i) const
+{
+    scalar flux = surfFaceFlux[i] * surfPhif[i];
+    surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
+    surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
+}
+
 
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
@@ -58,16 +59,26 @@ void computeDiv(
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
 
-    parallelFor(SumInternalFluxesKernel {
-        exec,
-        {0, nInternalFaces},
-        surfFaceFlux,
-        surfPhif,
-        surfDivPhi,
-        surfOwner,
-        surfNeighbour,
-        "sumFluxesInternal"
-    });
+
+    std::visit(
+        [&](const auto& e)
+        {
+            parallelFor2(
+                e,
+                SumInternalFluxesKernel {
+                    e,
+                    {0, nInternalFaces},
+                    surfFaceFlux,
+                    surfPhif,
+                    surfDivPhi,
+                    surfOwner,
+                    surfNeighbour,
+                    "sumFluxesInternal"
+                }
+            );
+        },
+        exec
+    );
 
 
     parallelFor(

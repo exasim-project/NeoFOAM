@@ -22,7 +22,7 @@ void parallelFor2([[maybe_unused]] const Executor& exec, Kernel kernel)
     {
         for (size_t i = start; i < end; i++)
         {
-            kernel.call1(i);
+            kernel.call(i);
         }
     }
     else
@@ -31,7 +31,7 @@ void parallelFor2([[maybe_unused]] const Executor& exec, Kernel kernel)
         Kokkos::parallel_for(
             kernel.name,
             Kokkos::RangePolicy<runOn>(start, end),
-            KOKKOS_LAMBDA(const size_t i) { kernel.call2(i); }
+            KOKKOS_LAMBDA(const size_t i) { kernel.call(i); }
         );
     }
 }
