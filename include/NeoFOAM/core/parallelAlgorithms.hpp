@@ -23,6 +23,44 @@ concept parallelForKernel = requires(Kernel t, size_t i) {
 };
 
 template<typename Executor, parallelForKernel Kernel>
+void parallelFor2(
+    [[maybe_unused]] const Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    std::string name = "parallelFor"
+)
+{
+    auto [start, end] = range;
+    if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
+    {
+        for (size_t i = start; i < end; i++)
+        {
+            kernel.call1(i);
+        }
+    }
+    else
+    {
+        using runOn = typename Executor::exec;
+        Kokkos::parallel_for(
+            name,
+            Kokkos::RangePolicy<runOn>(start, end),
+            KOKKOS_LAMBDA(const size_t i) { kernel.call2(i); }
+        );
+    }
+}
+
+template<typename Kernel>
+void parallelFor2(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> range,
+    Kernel kernel,
+    std::string name = "parallelFor"
+)
+{
+    std::visit([&](const auto& e) { parallelFor2(e, range, kernel, name); }, exec);
+}
+
+template<typename Executor, parallelForKernel Kernel>
 void parallelFor(
     [[maybe_unused]] const Executor& exec,
     std::pair<size_t, size_t> range,
