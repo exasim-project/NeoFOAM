@@ -125,12 +125,12 @@
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00121}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenLaplacian_a1a25919948a36b75c86aba8110f3423a}{00121}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GaussGreenLaplacian_a1a25919948a36b75c86aba8110f3423a}{createEmptyLinearSystem}}()\textcolor{keyword}{\ const\ override}}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00122}00122\ \textcolor{keyword}{\ \ \ \ }\{}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<scalar,\ localIdx>}}\ ls(sparsityPattern\_-\/>linearSystem());}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [A,\ b,\ sp]\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a23eff5d049b804f25c2d9e9e2ea56040}{view}}();}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ exec\ =\ A.exec();}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ [A,\ b,\ sp]\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_aab9b2d003be0b8e9e749c68c33e424c9}{view}}();}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ exec\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_a0b824eab2111c3db70123e51df96be3e}{exec}}();}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00126}00126\ }
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ values(exec,\ A.nNonZeros(),\ zero<ValueType>());}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mColIdxs(exec,\ A.colIdxs().data(),\ A.nNonZeros());}
-\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mRowPtrs(exec,\ A.rowPtrs().data(),\ A.rowPtrs().size());}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ values(exec,\ A.value.size(),\ zero<ValueType>());}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mColIdxs(exec,\ A.columnIndex.data(),\ A.columnIndex.size());}
+\DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<localIdx>}}\ mRowPtrs(exec,\ A.rowOffset.data(),\ A.rowOffset.size());}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00130}00130\ }
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrix}{la::CSRMatrix<ValueType,\ localIdx>}}\ matrix(values,\ mColIdxs,\ mRowPtrs);}
 \DoxyCodeLine{\Hypertarget{gaussGreenLaplacian_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\ rhs(exec,\ b.size(),\ zero<ValueType>());}
