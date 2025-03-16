@@ -167,7 +167,6 @@ public:
         return {matrix, rhs, ls.sparsityPattern()};
     };
 
-
     virtual void
     div(VolumeField<ValueType>& divPhi,
         const SurfaceField<scalar>& faceFlux,
