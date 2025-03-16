@@ -7,7 +7,7 @@
 #include <functional>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 
 namespace NeoFOAM::timeIntegration
@@ -84,4 +84,4 @@ private:
 };
 
 
-} // namespace NeoFOAM::dsl
+} // namespace NeoFOAM::timeIntegration

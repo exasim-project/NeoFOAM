@@ -145,7 +145,6 @@ public:
             NF_ERROR_EXIT("LaplacianOperatorStrategy not initialized");
         }
         const auto operatorScaling = getCoefficient();
-        std::cout << "implicitOperation operatorScaling[0] = " << operatorScaling[0] << std::endl;
         laplacianOperatorStrategy_->laplacian(ls, gamma_, field_, operatorScaling);
     }
 

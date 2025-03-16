@@ -69,7 +69,6 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         auto outHost = result.copyToHost();
         for (int i = 0; i < result.size(); i++)
         {
-            std::cout << "outHost[" << i << "]" << outHost[i] << "\n";
             REQUIRE(outHost[i] == zero<TestType>::value);
         }
     }
