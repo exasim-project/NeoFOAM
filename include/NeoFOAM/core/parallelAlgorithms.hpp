@@ -13,6 +13,52 @@ namespace NeoFOAM
 template<typename ValueType>
 class Field;
 
+/* @brief Functor to compute addition in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
+template<typename ExecutorType>
+struct AtomicAdd
+{
+    const ExecutorType exec;
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
+    {
+        Kokkos::atomic_add(&a, b);
+    }
+};
+
+template<>
+template<typename OpA, typename OpB>
+KOKKOS_INLINE_FUNCTION void AtomicAdd<SerialExecutor>::operator()(OpA& a, const OpB& b) const
+{
+    a += b;
+}
+
+
+/* @brief Functor to compute subtraction in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
+template<typename ExecutorType>
+struct AtomicSub
+{
+    const ExecutorType exec;
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
+    {
+        Kokkos::atomic_add(&a, b);
+    }
+};
+
+template<>
+template<typename OpA, typename OpB>
+KOKKOS_INLINE_FUNCTION void AtomicSub<SerialExecutor>::operator()(OpA& a, const OpB& b) const
+{
+    a += b;
+}
+
+
 // Concept to check if a callable is compatible with void(const size_t)
 template<typename Kernel>
 concept parallelForKernel = requires(Kernel t, size_t i) {
@@ -20,6 +66,7 @@ concept parallelForKernel = requires(Kernel t, size_t i) {
         t(i)
     } -> std::same_as<void>;
 };
+
 
 template<typename Executor, parallelForKernel Kernel>
 void parallelFor(
@@ -48,6 +95,39 @@ void parallelFor(
     }
 }
 
+// template<parallelForKernel Kernel>
+// void parallelFor(
+//     const NeoFOAM::Executor& exec,
+//     std::vector<std::tuple<
+//     std::pair<size_t, size_t>,
+//     Kernel,
+//     std::string>> ranges
+// )
+// {
+//     for (auto [range, kernel, name]: ranges ) {
+//         std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
+//     }
+// }
+
+template<parallelForKernel KernelInternal, parallelForKernel KernelBoundary>
+void parallelFor(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> rangeInternal,
+    KernelInternal kernelInternal,
+    std::pair<size_t, size_t> rangeBoundary,
+    KernelBoundary kernelBoundary,
+    std::string name
+)
+{
+    std::visit(
+        [&](const auto& e) { parallelFor(e, rangeInternal, kernelInternal, name + "Internal"); },
+        exec
+    );
+    std::visit(
+        [&](const auto& e) { parallelFor(e, rangeBoundary, kernelBoundary, name + "Boundary"); },
+        exec
+    );
+}
 
 template<parallelForKernel Kernel>
 void parallelFor(
@@ -58,21 +138,6 @@ void parallelFor(
 )
 {
     std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
-}
-
-template<typename FactoryFunc>
-void parallelFor(const NeoFOAM::Executor& exec, FactoryFunc factoryFunc)
-{
-    std::visit(
-        [&](const auto& e)
-        {
-            auto kernel = factoryFunc(e);
-            auto range = kernel.range;
-            auto name = kernel.name;
-            parallelFor(e, range, kernel, name);
-        },
-        exec
-    );
 }
 
 
