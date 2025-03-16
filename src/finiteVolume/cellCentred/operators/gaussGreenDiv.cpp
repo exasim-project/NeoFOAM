@@ -13,6 +13,7 @@ struct SurfaceFluxView
     const std::span<const scalar> phif;
     const std::span<const int> owner;
     const std::span<const int> neigh;
+    const std::span<const int> cells;
 };
 
 void computeDiv(
@@ -25,7 +26,6 @@ void computeDiv(
 {
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
-    const auto surfFaceCells = mesh.boundaryMesh().faceCells().span();
     surfInterp.interpolate(faceFlux, phi, phif);
 
     auto surfDivPhi = divPhi.span();
@@ -34,11 +34,11 @@ void computeDiv(
         faceFlux.internalField().span(),
         phif.internalField().span(),
         mesh.faceOwner().span(),
-        mesh.faceNeighbour().span()
+        mesh.faceNeighbour().span(),
+        mesh.boundaryMesh().faceCells().span()
     };
 
     size_t nInternalFaces = mesh.nInternalFaces();
-    const auto surfV = mesh.cellVolumes().span();
 
     std::visit(
         [&](const auto& e)
@@ -55,7 +55,7 @@ void computeDiv(
                 },
                 {nInternalFaces, phif.size()},
                 KOKKOS_LAMBDA(const size_t i) {
-                    auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
+                    auto own = static_cast<size_t>(surfView.cells[i - nInternalFaces]);
                     scalar valueOwn = surfView.flux[i] * surfView.phif[i];
                     add(surfDivPhi[own], valueOwn);
                 },
@@ -64,6 +64,8 @@ void computeDiv(
         },
         exec
     );
+
+    const auto surfV = mesh.cellVolumes().span();
 
     parallelFor(
         exec,
