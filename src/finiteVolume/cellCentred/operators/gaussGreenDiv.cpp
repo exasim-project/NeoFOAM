@@ -7,37 +7,13 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-template<typename ExecutorType>
-struct SumInternalFluxesKernel
+struct SurfaceFluxView
 {
-    const ExecutorType& exec;
-    const std::pair<size_t, size_t> range;
-    const std::span<const scalar> surfFaceFlux;
-    const std::span<const scalar> surfPhif;
-    mutable std::span<scalar> surfDivPhi;
-    const std::span<const int> surfOwner;
-    const std::span<const int> surfNeighbour;
-    const std::string name;
-
-    KOKKOS_INLINE_FUNCTION
-    void operator()(const size_t i) const
-    {
-        scalar flux = surfFaceFlux[i] * surfPhif[i];
-        Kokkos::atomic_add(&surfDivPhi[static_cast<size_t>(surfOwner[i])], flux);
-        Kokkos::atomic_sub(&surfDivPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-    }
+    const std::span<const scalar> flux;
+    const std::span<const scalar> phif;
+    const std::span<const int> owner;
+    const std::span<const int> neigh;
 };
-
-/* specialisation for serial executor without atomics */
-template<>
-KOKKOS_INLINE_FUNCTION void SumInternalFluxesKernel<SerialExecutor>::operator()(const size_t i
-) const
-{
-    scalar flux = surfFaceFlux[i] * surfPhif[i];
-    surfDivPhi[static_cast<size_t>(surfOwner[i])] += flux;
-    surfDivPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
-}
-
 
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
@@ -54,39 +30,39 @@ void computeDiv(
 
     auto surfDivPhi = divPhi.span();
 
-    const auto surfPhif = phif.internalField().span();
-    const auto surfOwner = mesh.faceOwner().span();
-    const auto surfNeighbour = mesh.faceNeighbour().span();
-    const auto surfFaceFlux = faceFlux.internalField().span();
+    const SurfaceFluxView surfView {
+        faceFlux.internalField().span(),
+        phif.internalField().span(),
+        mesh.faceOwner().span(),
+        mesh.faceNeighbour().span()
+    };
+
     size_t nInternalFaces = mesh.nInternalFaces();
     const auto surfV = mesh.cellVolumes().span();
 
-    parallelFor(
-        exec,
-        [&]<typename ExecutorType>(ExecutorType exec)
+    std::visit(
+        [&](const auto& e)
         {
-            return SumInternalFluxesKernel(
-                exec,
+            AtomicAdd add {e};
+            AtomicSub sub {e};
+            parallelFor(
+                e,
                 {0, nInternalFaces},
-                surfFaceFlux,
-                surfPhif,
-                surfDivPhi,
-                surfOwner,
-                surfNeighbour,
-                "sumFluxesInternal"
+                KOKKOS_LAMBDA(const size_t i) {
+                    scalar flux = surfView.flux[i] * surfView.phif[i];
+                    add(surfDivPhi[static_cast<size_t>(surfView.owner[i])], flux);
+                    sub(surfDivPhi[static_cast<size_t>(surfView.neigh[i])], flux);
+                },
+                {nInternalFaces, phif.size()},
+                KOKKOS_LAMBDA(const size_t i) {
+                    auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
+                    scalar valueOwn = surfView.flux[i] * surfView.phif[i];
+                    add(surfDivPhi[own], valueOwn);
+                },
+                "sumFluxes"
             );
-        }
-    );
-
-    parallelFor(
-        exec,
-        {nInternalFaces, surfPhif.size()},
-        KOKKOS_LAMBDA(const size_t i) {
-            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-            scalar valueOwn = surfFaceFlux[i] * surfPhif[i];
-            Kokkos::atomic_add(&surfDivPhi[own], valueOwn);
         },
-        "sumFluxesBoundary"
+        exec
     );
 
     parallelFor(
@@ -104,7 +80,6 @@ void computeDiv(
     Field<scalar>& divPhi
 )
 {
-    NF_PING();
     const UnstructuredMesh& mesh = phi.mesh();
     const auto exec = phi.exec();
     SurfaceField<scalar> phif(
@@ -123,7 +98,6 @@ void computeDiv(
     VolumeField<scalar>& divPhi
 )
 {
-    NF_PING();
     Field<scalar>& divPhiField = divPhi.internalField();
     computeDiv(faceFlux, phi, surfInterp, divPhiField);
 }
@@ -138,7 +112,6 @@ void GaussGreenDiv::div(
     VolumeField<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
-    NF_PING();
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
 
@@ -146,7 +119,6 @@ void GaussGreenDiv::div(
     Field<scalar>& divPhi, const SurfaceField<scalar>& faceFlux, VolumeField<scalar>& phi
 )
 {
-    NF_PING();
     computeDiv(faceFlux, phi, surfaceInterpolation_, divPhi);
 };
 
