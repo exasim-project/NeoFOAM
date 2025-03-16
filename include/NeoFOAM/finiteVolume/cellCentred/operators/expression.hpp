@@ -20,7 +20,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
 template<typename ValueType, typename IndexType = localIdx>
 la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
 {
-    auto [A, b, sp] = ls.view();
+    const auto A = ls.matrix();
+    const auto b = ls.rhs();
+    const auto& sp = ls.sparsityPattern();
     const auto& exec = A.exec();
 
     Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
@@ -192,7 +194,10 @@ public:
         );
 
         auto rhs = ls_.rhs().span();
-        auto [values, colIdxs, rowPtrs] = ls_.view();
+
+        const auto values = ls_.matrix().values();
+        const auto colIdxs = ls_.matrix().colIdxs();
+        const auto rowPtrs = ls_.matrix().rowPtrs();
 
         Field<ValueType> result(exec, neighbour.size(), 0.0);
 

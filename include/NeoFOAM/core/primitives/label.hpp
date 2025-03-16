@@ -22,13 +22,13 @@ using mpi_label_t = int;
 
 // traits for vector
 template<>
-inline localIdx one<localIdx>()
+KOKKOS_INLINE_FUNCTION localIdx one<localIdx>()
 {
     return 1;
 };
 
 template<>
-inline localIdx zero<localIdx>()
+KOKKOS_INLINE_FUNCTION localIdx zero<localIdx>()
 {
     return 0;
 };

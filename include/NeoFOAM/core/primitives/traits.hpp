@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #pragma once
+
+#include <Kokkos_Core.hpp> // IWYU pragma: keep
 
 namespace NeoFOAM
 {
 
 template<typename T>
-T one()
+KOKKOS_INLINE_FUNCTION T one()
 {
     const T value;
     return value;
 };
 
 template<typename T>
-T zero()
+KOKKOS_INLINE_FUNCTION T zero()
 {
     const T value;
     return value;
