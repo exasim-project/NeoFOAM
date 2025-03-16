@@ -95,20 +95,6 @@ void parallelFor(
     }
 }
 
-// template<parallelForKernel Kernel>
-// void parallelFor(
-//     const NeoFOAM::Executor& exec,
-//     std::vector<std::tuple<
-//     std::pair<size_t, size_t>,
-//     Kernel,
-//     std::string>> ranges
-// )
-// {
-//     for (auto [range, kernel, name]: ranges ) {
-//         std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
-//     }
-// }
-
 template<parallelForKernel KernelInternal, parallelForKernel KernelBoundary>
 void parallelFor(
     const NeoFOAM::Executor& exec,

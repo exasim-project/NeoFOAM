@@ -85,7 +85,7 @@ void computeDiv(
                     add(surfDivPhi[static_cast<size_t>(surfView.owner[i])], flux);
                     sub(surfDivPhi[static_cast<size_t>(surfView.neigh[i])], flux);
                 },
-                {0, nInternalFaces},
+                {nInternalFaces, phif.size()},
                 KOKKOS_LAMBDA(const size_t i) {
                     auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
                     scalar valueOwn = surfView.flux[i] * surfView.phif[i];
