@@ -15,37 +15,6 @@ struct SurfaceFluxView
     const std::span<const int> neigh;
 };
 
-
-template<typename ExecutorType>
-struct SumInternalFluxesKernel
-{
-    const ExecutorType& exec;
-    const std::pair<size_t, size_t> range;
-    const SurfaceFluxView surf;
-    const std::string name;
-
-    mutable std::span<scalar> res; //!< span for result
-
-    KOKKOS_INLINE_FUNCTION
-    void operator()(const size_t i) const
-    {
-        scalar flux = surf.flux[i] * surf.phif[i];
-        Kokkos::atomic_add(&res[static_cast<size_t>(surf.owner[i])], flux);
-        Kokkos::atomic_sub(&res[static_cast<size_t>(surf.neigh[i])], flux);
-    }
-};
-
-/* specialisation for serial executor without atomics */
-template<>
-KOKKOS_INLINE_FUNCTION void SumInternalFluxesKernel<SerialExecutor>::operator()(const size_t i
-) const
-{
-    scalar flux = surf.flux[i] * surf.phif[i];
-    res[static_cast<size_t>(surf.owner[i])] += flux;
-    res[static_cast<size_t>(surf.neigh[i])] -= flux;
-}
-
-
 void computeDiv(
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<scalar>& phi,
@@ -60,7 +29,6 @@ void computeDiv(
     surfInterp.interpolate(faceFlux, phi, phif);
 
     auto surfDivPhi = divPhi.span();
-
 
     const SurfaceFluxView surfView {
         faceFlux.internalField().span(),
