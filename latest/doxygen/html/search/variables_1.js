@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['base_0',['Base',['../classNeoFOAM_1_1RuntimeSelectionFactory_3_01Base_00_01Parameters_3_01Args_8_8_8_01_4_01_4.html#a14385b85ff354c53958b8c18d09dd257',1,'NeoFOAM::RuntimeSelectionFactory&lt; Base, Parameters&lt; Args... &gt; &gt;']]]
+  ['coeffs_5f_0',['coeffs_',['../classNeoFOAM_1_1dsl_1_1OperatorMixin.html#a2dd8768f6c39dfa1635192aa98c4766d',1,'NeoFOAM::dsl::OperatorMixin']]],
+  ['control_5fdict_5fname_1',['CONTROL_DICT_NAME',['../classNeoFOAM_1_1Time.html#a993a30f96f2f961ce76bc92a922396a3',1,'NeoFOAM::Time']]]
 ];
