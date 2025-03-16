@@ -53,7 +53,7 @@ TEST_CASE("CSRMatrix")
         // Sparse
         NeoFOAM::Field<NeoFOAM::scalar> checkSparse(exec, 4);
         auto checkSparseSpan = checkSparse.span();
-        auto csrSparseView = sparseMatrixConst.view();
+        auto csrView = sparseMatrixConst.view();
         parallelFor(
             exec,
             {0, 1},
@@ -74,7 +74,7 @@ TEST_CASE("CSRMatrix")
         // Dense
         NeoFOAM::Field<NeoFOAM::scalar> checkDense(exec, 9);
         auto checkDenseSpan = checkDense.span();
-        auto csrDenseView = denseMatrixConst.view();
+        auto denseView = denseMatrixConst.view();
         parallelFor(
             exec,
             {0, 1},
