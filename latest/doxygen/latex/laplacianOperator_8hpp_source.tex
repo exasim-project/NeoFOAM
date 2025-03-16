@@ -22,180 +22,179 @@
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00018}00018\ \textcolor{comment}{/*\ @class\ Factory\ class\ to\ create\ divergence\ operators\ by\ a\ given\ name\ using}}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00019}00019\ \textcolor{comment}{\ *\ using\ NeoFOAMs\ runTimeFactory\ mechanism}}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00020}00020\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00021}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{00021}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory}}\ :}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00022}00022\ \ \ \ \ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory}{RuntimeSelectionFactory}}<}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00023}00023\ \ \ \ \ \ \ \ \ LaplacianOperatorFactory,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00024}00024\ \ \ \ \ \ \ \ \ Parameters<const\ Executor\&,\ const\ UnstructuredMesh\&,\ const\ Input\&>>}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00025}00025\ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00026}00026\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00027}00027\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00028}00028\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{keyword}{static}\ std::unique\_ptr<LaplacianOperatorFactory>}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00030}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aceaf6e1bff3d576763186b2c2d1dd776}{00030}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aceaf6e1bff3d576763186b2c2d1dd776}{create}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ uMesh,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ inputs)}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00031}00031\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00032}00032\ \ \ \ \ \ \ \ \ std::string\ key\ =\ (std::holds\_alternative<Dictionary>(inputs))}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ std::get<Dictionary>(inputs).get<std::string>(\textcolor{stringliteral}{"{}LaplacianOperator"{}})}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::get<TokenList>(inputs).next<std::string>();}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ keyExistsOrError(key);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ table().at(key)(exec,\ uMesh,\ inputs);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00037}00037\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00038}00038\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00039}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a43c1cc30df460e31c96e0bba6b5fa218}{00039}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a43c1cc30df460e31c96e0bba6b5fa218}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LaplacianOperatorFactory"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00040}00040\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00041}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a4e68329978fc0b023fd6cb8512dc7869}{00041}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a4e68329978fc0b023fd6cb8512dc7869}{LaplacianOperatorFactory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh)}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_ac90c9f17d681fe450610fe1dc1af8e51}{exec\_}}(exec),\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aefd46249a5d8849bc851508f0b9326f3}{mesh\_}}(mesh)\ \{\};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00043}00043\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00044}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a23c999badcc1b5772a0adf26092df986}{00044}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a23c999badcc1b5772a0adf26092df986}{\string~LaplacianOperatorFactory}}()\ \{\}\ \textcolor{comment}{//\ Virtual\ destructor}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00045}00045\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00046}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a1f15f08f167e7bca95286e0a010ef7f0}{00046}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<scalar,\ localIdx>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a1f15f08f167e7bca95286e0a010ef7f0}{createEmptyLinearSystem}}()\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00047}00047\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00048}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a225b78d8e4365c451a0ce891bcb9df95}{00048}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a225b78d8e4365c451a0ce891bcb9df95}{laplacian}}(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ lapPhi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ phi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Coeff}{dsl::Coeff}}\ operatorScaling}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00053}00053\ \ \ \ \ )\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00054}00054\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00055}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a5f9fbb3577f01efb00125bcd99f2023f}{00055}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a5f9fbb3577f01efb00125bcd99f2023f}{laplacian}}(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<scalar>}}\&\ lapPhi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ phi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Coeff}{dsl::Coeff}}\ operatorScaling}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00060}00060\ \ \ \ \ )\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00061}00061\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00062}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a6a9940da089a8d4c54854b62420d033b}{00062}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a6a9940da089a8d4c54854b62420d033b}{laplacian}}(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<scalar,\ localIdx>}}\&\ ls,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ phi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Coeff}{dsl::Coeff}}\ operatorScaling}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00067}00067\ \ \ \ \ )\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00068}00068\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00069}00069\ \ \ \ \ \textcolor{comment}{//\ Pure\ virtual\ function\ for\ cloning}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00070}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a4a6450732288078ef592cdf19aca3e7f}{00070}}\ \ \ \ \ \textcolor{keyword}{virtual}\ std::unique\_ptr<LaplacianOperatorFactory>\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a4a6450732288078ef592cdf19aca3e7f}{clone}}()\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00071}00071\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00072}00072\ \textcolor{keyword}{protected}:}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00074}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_ac90c9f17d681fe450610fe1dc1af8e51}{00074}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_ac90c9f17d681fe450610fe1dc1af8e51}{exec\_}};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00075}00075\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00076}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aefd46249a5d8849bc851508f0b9326f3}{00076}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aefd46249a5d8849bc851508f0b9326f3}{mesh\_}};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00077}00077\ \};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00078}00078\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00079}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator}{00079}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator}{LaplacianOperator}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin}{dsl::OperatorMixin}}<VolumeField<scalar>>}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00080}00080\ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00081}00081\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00082}00082\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00021}00021\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00022}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{00022}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory}}\ :}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00023}00023\ \ \ \ \ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1RuntimeSelectionFactory}{RuntimeSelectionFactory}}<}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00024}00024\ \ \ \ \ \ \ \ \ LaplacianOperatorFactory<ValueType>,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00025}00025\ \ \ \ \ \ \ \ \ Parameters<const\ Executor\&,\ const\ UnstructuredMesh\&,\ const\ Input\&>>}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00026}00026\ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00027}00027\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00028}00028\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00029}00029\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{static}\ std::unique\_ptr<LaplacianOperatorFactory<ValueType>>}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00031}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aec501e644aab8a48e9ede536ec9d50bc}{00031}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aec501e644aab8a48e9ede536ec9d50bc}{create}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ uMesh,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ inputs)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00032}00032\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ std::string\ key\ =\ (std::holds\_alternative<Dictionary>(inputs))}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ std::get<Dictionary>(inputs).get<std::string>(\textcolor{stringliteral}{"{}LaplacianOperator"{}})}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::get<TokenList>(inputs).next<std::string>();}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory<ValueType>::keyExistsOrError}}(key);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory<ValueType>::table}}().at(key)(exec,\ uMesh,\ inputs);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00038}00038\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00039}00039\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00040}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a99fa5c3c6dc555368c942e45d64f2634}{00040}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a99fa5c3c6dc555368c942e45d64f2634}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LaplacianOperatorFactory"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00041}00041\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00042}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3331c7c60b1914bb8960440e4a6664c8}{00042}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3331c7c60b1914bb8960440e4a6664c8}{LaplacianOperatorFactory}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3edc6bb5e62d514d468683af4387ba07}{exec\_}}(exec),\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_abe64e9e2031a0aed22a211817a4635ae}{mesh\_}}(mesh)\ \{\};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00045}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a950ea3f41b71b52bfff1bd45bbc2c3a7}{00045}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a950ea3f41b71b52bfff1bd45bbc2c3a7}{\string~LaplacianOperatorFactory}}()\ \{\}\ \textcolor{comment}{//\ Virtual\ destructor}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00046}00046\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00047}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3ddc4608c0462a8190532bc2bc23046e}{00047}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3ddc4608c0462a8190532bc2bc23046e}{createEmptyLinearSystem}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00049}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a99cede1e13a3f029cc2d581bdaba57e7}{00049}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a99cede1e13a3f029cc2d581bdaba57e7}{laplacian}}(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ lapPhi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ phi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Coeff}{dsl::Coeff}}\ operatorScaling}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00054}00054\ \ \ \ \ )\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00056}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_adcf21af4dd791f5acf9c8d91544413d9}{00056}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_adcf21af4dd791f5acf9c8d91544413d9}{laplacian}}(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ lapPhi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ phi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Coeff}{dsl::Coeff}}\ operatorScaling}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00061}00061\ \ \ \ \ )\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00063}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a1ffe28a789c9688a14ab8383d38d4685}{00063}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a1ffe28a789c9688a14ab8383d38d4685}{laplacian}}(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\&\ ls,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ phi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Coeff}{dsl::Coeff}}\ operatorScaling}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00068}00068\ \ \ \ \ )\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00069}00069\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00070}00070\ \ \ \ \ \textcolor{comment}{//\ Pure\ virtual\ function\ for\ cloning}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00071}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a53a01b06f209fa6cd5957b7b49cf1187}{00071}}\ \ \ \ \ \textcolor{keyword}{virtual}\ std::unique\_ptr<LaplacianOperatorFactory<ValueType>>\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a53a01b06f209fa6cd5957b7b49cf1187}{clone}}()\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00073}00073\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00075}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3edc6bb5e62d514d468683af4387ba07}{00075}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_a3edc6bb5e62d514d468683af4387ba07}{exec\_}};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00077}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_abe64e9e2031a0aed22a211817a4635ae}{00077}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_abe64e9e2031a0aed22a211817a4635ae}{mesh\_}};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00078}00078\ \};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00079}00079\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00080}00080\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00081}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator}{00081}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator}{LaplacianOperator}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin}{dsl::OperatorMixin}}<VolumeField<ValueType>>}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00082}00082\ \{}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00083}00083\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00084}00084\ \ \ \ \ \textcolor{comment}{//\ copy\ constructor}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00085}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_ae1ae63b6cbe45a48cd71150e8dc278b5}{00085}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_ae1ae63b6cbe45a48cd71150e8dc278b5}{LaplacianOperator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator}{LaplacianOperator}}\&\ lapOp)}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<\mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}>>(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_aa48aaec131693a80ab1d0734b3087e03}{exec\_}},\ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a2dd8768f6c39dfa1635192aa98c4766d}{coeffs\_}},\ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}},\ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_aa918b10c6096444b127434656070e6fa}{type\_}}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ ),}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ gamma\_(lapOp.gamma\_),}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lapOp.laplacianOperatorStrategy\_\ ?\ lapOp.laplacianOperatorStrategy\_-\/>clone()\ :\ nullptr}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ )\ \{\};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00093}00093\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00094}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a368b094cfb31a9a596f67616a70d153e}{00094}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a368b094cfb31a9a596f67616a70d153e}{LaplacianOperator}}(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Operator_a0744dad1cdfa671a15278a71f3557f18}{dsl::Operator::Type}}\ termType,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ phi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\ input}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00099}00099\ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00100}00100\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<\mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}>>(phi.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::Coeff(1.0),\ phi,\ termType),}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \ \ gamma\_(gamma),}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory}}::create(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_aa48aaec131693a80ab1d0734b3087e03}{exec\_}},\ phi.mesh(),\ input))\ \{\};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00103}00103\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00104}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a708fa38d0161934a447bc129bed84505}{00104}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a708fa38d0161934a447bc129bed84505}{LaplacianOperator}}(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Operator_a0744dad1cdfa671a15278a71f3557f18}{dsl::Operator::Type}}\ termType,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ phi,}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ std::unique\_ptr<LaplacianOperatorFactory>\ laplacianOperatorStrategy}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00109}00109\ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<\mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}>>(phi.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::Coeff(1.0),\ phi,\ termType),}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ gamma\_(gamma),\ laplacianOperatorStrategy\_(std::move(laplacianOperatorStrategy))\ \{\};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00112}00112\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00113}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_aaa6f6c8544ab358c9818200817e3bc66}{00113}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_aaa6f6c8544ab358c9818200817e3bc66}{LaplacianOperator}}(}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Operator_a0744dad1cdfa671a15278a71f3557f18}{dsl::Operator::Type}}\ termType,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ phi}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00084}00084\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00086}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_aa963136b6a6b7f129a593fc5a1d27a1a}{00086}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_aa963136b6a6b7f129a593fc5a1d27a1a}{FieldValueType}}\ =\ ValueType;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00087}00087\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00088}00088\ \ \ \ \ \textcolor{comment}{//\ copy\ constructor}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00089}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a7b74e2a7162a906c7ebf349eaae166e2}{00089}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a7b74e2a7162a906c7ebf349eaae166e2}{LaplacianOperator}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator}{LaplacianOperator}}\&\ lapOp)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<ValueType>>(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_aa48aaec131693a80ab1d0734b3087e03}{exec\_}},\ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a2dd8768f6c39dfa1635192aa98c4766d}{coeffs\_}},\ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}},\ lapOp.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_aa918b10c6096444b127434656070e6fa}{type\_}}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ ),}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \ \ gamma\_(lapOp.gamma\_),}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lapOp.laplacianOperatorStrategy\_\ ?\ lapOp.laplacianOperatorStrategy\_-\/>clone()\ :\ nullptr}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ )\ \{\};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00097}00097\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00098}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a569246c0b78952a9da7aa6df8711c2c5}{00098}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a569246c0b78952a9da7aa6df8711c2c5}{LaplacianOperator}}(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Operator_a0744dad1cdfa671a15278a71f3557f18}{dsl::Operator::Type}}\ termType,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ phi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\ input}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00103}00103\ \ \ \ \ )}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00104}00104\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<ValueType>>(phi.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::Coeff(1.0),\ phi,\ termType),}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \ \ gamma\_(gamma),}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory}}<ValueType>::create(this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_aa48aaec131693a80ab1d0734b3087e03}{exec\_}},\ phi.mesh(),\ input)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \ \ )\ \{\};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00109}00109\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00110}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a42c356caed4d0054013016275c0619cc}{00110}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a42c356caed4d0054013016275c0619cc}{LaplacianOperator}}(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Operator_a0744dad1cdfa671a15278a71f3557f18}{dsl::Operator::Type}}\ termType,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ phi,}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ std::unique\_ptr<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory}{LaplacianOperatorFactory<ValueType>}}>\ laplacianOperatorStrategy}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00115}00115\ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<\mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}}>>(phi.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::Coeff(1.0),\ phi,\ termType),}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ gamma\_(gamma),\ laplacianOperatorStrategy\_(nullptr)\ \{\};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<ValueType>>(phi.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::Coeff(1.0),\ phi,\ termType),}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ gamma\_(gamma),\ laplacianOperatorStrategy\_(std::move(laplacianOperatorStrategy))\ \{\};}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00118}00118\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00119}00119\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00120}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a3e21f9c9d746779fe5c7b309062e8cf0}{00120}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a3e21f9c9d746779fe5c7b309062e8cf0}{explicitOperation}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<scalar>}}\&\ source)}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00121}00121\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (laplacianOperatorStrategy\_\ ==\ \textcolor{keyword}{nullptr})}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}LaplacianOperatorStrategy\ not\ initialized"{}});}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<NeoFOAM::scalar>}}\ tmpsource(source.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ source.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}(),\ 0.0);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(tmpsource,\ gamma\_,\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}},\ operatorScaling);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ source\ +=\ tmpsource;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00130}00130\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00131}00131\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00132}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_ae897caa336edb6209a619d59a308aefe}{00132}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<scalar,\ localIdx>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_ae897caa336edb6209a619d59a308aefe}{createEmptyLinearSystem}}()\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00133}00133\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (laplacianOperatorStrategy\_\ ==\ \textcolor{keyword}{nullptr})}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}LaplacianOperatorStrategy\ not\ initialized"{}});}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00119}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a7531f5c36619094552c971ed93486467}{00119}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a7531f5c36619094552c971ed93486467}{LaplacianOperator}}(}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Operator_a0744dad1cdfa671a15278a71f3557f18}{dsl::Operator::Type}}\ termType,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<scalar>}}\&\ gamma,\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<ValueType>}}\&\ phi}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00121}00121\ \ \ \ \ )}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00122}00122\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3447c3e855282b4c53f897cceca593f3}{OperatorMixin}}<\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField}}<ValueType>>(phi.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl}{dsl}}::Coeff(1.0),\ phi,\ termType),}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ gamma\_(gamma),\ laplacianOperatorStrategy\_(nullptr)\ \{\};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00125}00125\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00126}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a8ce745e046eb5743d81af81eeb0c416c}{00126}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a8ce745e046eb5743d81af81eeb0c416c}{explicitOperation}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ source)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00127}00127\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecc669a189db22f652ffb9788f01a99b}{NF\_ASSERT}}(laplacianOperatorStrategy\_,\ \textcolor{stringliteral}{"{}LaplacianOperatorStrategy\ not\ initialized"{}});}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{NeoFOAM::Field<ValueType>}}\ tmpsource(source.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ source.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}(),\ zero<ValueType>());}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(tmpsource,\ gamma\_,\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}},\ operatorScaling);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ source\ +=\ tmpsource;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00133}00133\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00134}00134\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00135}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a8166d47724fd556456685efe3a7ef10f}{00135}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a8166d47724fd556456685efe3a7ef10f}{createEmptyLinearSystem}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00136}00136\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecc669a189db22f652ffb9788f01a99b}{NF\_ASSERT}}(laplacianOperatorStrategy\_,\ \textcolor{stringliteral}{"{}LaplacianOperatorStrategy\ not\ initialized"{}});}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ laplacianOperatorStrategy\_-\/>createEmptyLinearSystem();}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00139}00139\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00140}00140\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00141}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a689a39fa7b58fa3a152b3b68d5f4992f}{00141}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a689a39fa7b58fa3a152b3b68d5f4992f}{implicitOperation}}(\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<scalar,\ localIdx>}}\&\ ls)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00141}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_abf85a6aa8d4a67bdd8c1c107cf663dc2}{00141}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_abf85a6aa8d4a67bdd8c1c107cf663dc2}{implicitOperation}}(\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ localIdx>}}\&\ ls)}
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00142}00142\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (laplacianOperatorStrategy\_\ ==\ \textcolor{keyword}{nullptr})}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}LaplacianOperatorStrategy\ not\ initialized"{}});}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00147}00147\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00148}00148\ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(ls,\ gamma\_,\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}},\ operatorScaling);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00149}00149\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00150}00150\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00151}00151\ \ \ \ \ \textcolor{comment}{//\ void\ laplacian(Field<scalar>\&\ lapPhi)}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00152}00152\ \ \ \ \ \textcolor{comment}{//\ \{}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00153}00153\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(lapPhi,\ gamma\_,\ getField());}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00154}00154\ \ \ \ \ \textcolor{comment}{//\ \}}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00155}00155\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00156}00156\ \ \ \ \ \textcolor{comment}{//\ void\ laplacian(la::LinearSystem<scalar,\ localIdx>\&\ ls)}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00157}00157\ \ \ \ \ \textcolor{comment}{//\ \{}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00158}00158\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(ls,\ gamma\_,\ getField());}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00159}00159\ \ \ \ \ \textcolor{comment}{//\ \};}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00160}00160\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00161}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_acf5745b16eacfd8f99178c972c8c7ae2}{00161}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_acf5745b16eacfd8f99178c972c8c7ae2}{laplacian}}(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ lapPhi)}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00162}00162\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00164}00164\ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(lapPhi,\ gamma\_,\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a7f82fb37c8d1411ec810813526f1c00c}{getField}}(),\ operatorScaling);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00165}00165\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00166}00166\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00167}00167\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00168}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a63c9b5c43d53a4e87d030452e782b5c1}{00168}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a63c9b5c43d53a4e87d030452e782b5c1}{build}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ input)}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00169}00169\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh\ =\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}}.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a18570fe2823eff871124806028b8fe33}{mesh}}();}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::Dictionary>(input))}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dict\ =\ std::get<NeoFOAM::Dictionary>(input);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ schemeName\ =\ \textcolor{stringliteral}{"{}laplacian("{}}\ +\ gamma\_.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a34822743f4c8549b6573fc3abae17b76}{name}}\ +\ \textcolor{stringliteral}{"{},"{}}\ +\ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}}.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a34822743f4c8549b6573fc3abae17b76}{name}}\ +\ \textcolor{stringliteral}{"{})"{}};}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tokens\ =\ dict.subDict(\textcolor{stringliteral}{"{}laplacianSchemes"{}}).get<\mbox{\hyperlink{classNeoFOAM_1_1TokenList}{NeoFOAM::TokenList}}>(schemeName);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aceaf6e1bff3d576763186b2c2d1dd776}{LaplacianOperatorFactory::create}}(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ mesh,\ tokens);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tokens\ =\ std::get<NeoFOAM::TokenList>(input);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_\ =\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aceaf6e1bff3d576763186b2c2d1dd776}{LaplacianOperatorFactory::create}}(\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ mesh,\ tokens);}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00183}00183\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00184}00184\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00185}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a5e9a2dc3ef5e3a1a12bd0a4d3782cccc}{00185}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a5e9a2dc3ef5e3a1a12bd0a4d3782cccc}{getName}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LaplacianOperator"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00186}00186\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00187}00187\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00188}00188\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00189}00189\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<NeoFOAM::scalar>}}\&\ gamma\_;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00190}00190\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00191}00191\ \ \ \ \ std::unique\_ptr<LaplacianOperatorFactory>\ laplacianOperatorStrategy\_;}
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00192}00192\ \};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{error_8hpp_aecc669a189db22f652ffb9788f01a99b}{NF\_ASSERT}}(laplacianOperatorStrategy\_,\ \textcolor{stringliteral}{"{}LaplacianOperatorStrategy\ not\ initialized"{}});}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(ls,\ gamma\_,\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}},\ operatorScaling);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00146}00146\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00147}00147\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00148}00148\ \ \ \ \ \textcolor{comment}{//\ void\ laplacian(Field<scalar>\&\ lapPhi)}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00149}00149\ \ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00150}00150\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(lapPhi,\ gamma\_,\ getField());}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00151}00151\ \ \ \ \ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00152}00152\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00153}00153\ \ \ \ \ \textcolor{comment}{//\ void\ laplacian(la::LinearSystem<scalar,\ localIdx>\&\ ls)}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00154}00154\ \ \ \ \ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00155}00155\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(ls,\ gamma\_,\ getField());}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00156}00156\ \ \ \ \ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00157}00157\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00158}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_aeb6b5cd9a87487f4493573c35810903b}{00158}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_aeb6b5cd9a87487f4493573c35810903b}{laplacian}}(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeField}{VolumeField<scalar>}}\&\ lapPhi)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00159}00159\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ operatorScaling\ =\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a31dbc05a5d74ed9bfcc4b3e40a47afce}{getCoefficient}}();}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00161}00161\ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_-\/>laplacian(lapPhi,\ gamma\_,\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a7f82fb37c8d1411ec810813526f1c00c}{getField}}(),\ operatorScaling);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00162}00162\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00163}00163\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00164}00164\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00165}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_ad820488bb9bb2af9e2301551e9624f47}{00165}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_ad820488bb9bb2af9e2301551e9624f47}{build}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_a161184af07a233e2513b53451edc6b39}{Input}}\&\ input)}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00166}00166\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh\ =\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}}.mesh();}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::Dictionary>(input))}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ dict\ =\ std::get<NeoFOAM::Dictionary>(input);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ schemeName\ =\ \textcolor{stringliteral}{"{}laplacian("{}}\ +\ gamma\_.\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometricFieldMixin_a34822743f4c8549b6573fc3abae17b76}{name}}\ +\ \textcolor{stringliteral}{"{},"{}}\ +\ this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_afba09e632b0039558263d1d10ebbf5f1}{field\_}}.name\ +\ \textcolor{stringliteral}{"{})"{}};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tokens\ =\ dict.subDict(\textcolor{stringliteral}{"{}laplacianSchemes"{}}).get<\mbox{\hyperlink{classNeoFOAM_1_1TokenList}{NeoFOAM::TokenList}}>(schemeName);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_\ =}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aec501e644aab8a48e9ede536ec9d50bc}{LaplacianOperatorFactory<ValueType>::create}}(this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ mesh,\ tokens);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tokens\ =\ std::get<NeoFOAM::TokenList>(input);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \ \ \ \ laplacianOperatorStrategy\_\ =}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperatorFactory_aec501e644aab8a48e9ede536ec9d50bc}{LaplacianOperatorFactory<ValueType>::create}}(this-\/>\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1OperatorMixin_a3a51d62b4f7f225ba8366198731a2159}{exec}}(),\ mesh,\ tokens);}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00182}00182\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00183}00183\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00184}\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a3428c7750e7991ecccf5e1c8a73ad590}{00184}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1LaplacianOperator_a3428c7750e7991ecccf5e1c8a73ad590}{getName}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LaplacianOperator"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00185}00185\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00186}00186\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00187}00187\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00188}00188\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceField}{SurfaceField<NeoFOAM::scalar>}}\&\ gamma\_;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00189}00189\ }
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00190}00190\ \ \ \ \ std::unique\_ptr<LaplacianOperatorFactory<ValueType>>\ laplacianOperatorStrategy\_;}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00191}00191\ \};}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00192}00192\ }
 \DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00193}00193\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00194}00194\ }
-\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00195}00195\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{laplacianOperator_8hpp_source_l00194}00194\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
