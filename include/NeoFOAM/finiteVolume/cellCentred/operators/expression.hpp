@@ -152,7 +152,8 @@ public:
             // placeholder for petsc solver --> include runtime selection in future
             // should look like this
             NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(psi_.exec(), fvSolution_);
-            solver.solve(ls_, psi_.internalField());
+            auto convertedLS = convertLinearSystem(ls_);
+            solver.solve(convertedLS, psi_.internalField());
 #endif
         }
     }
