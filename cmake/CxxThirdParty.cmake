@@ -28,6 +28,7 @@ if(${NEOFOAM_WITH_PETSC})
   pkg_search_module(PETSc REQUIRED IMPORTED_TARGET PETSc)
   set(Kokkos_ROOT ${PETSc_PREFIX})
   set(CMAKE_CUDA_STANDARD 17)
+  include(cmake/AutoEnableDevice.cmake)
 endif()
 
 set(Kokkos_ROOT_DIR ${PETSc_PREFIX})
