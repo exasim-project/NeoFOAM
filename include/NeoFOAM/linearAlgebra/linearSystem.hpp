@@ -13,10 +13,10 @@ namespace NeoFOAM::la
 
 /**
  * @struct LinearSystemView
- * @brief
+ * @brief A view linear into a linear system's data.
  *
- * @tparam ValueType
- * @tparam IndexType
+ * @tparam ValueType The value type of the linear system.
+ * @tparam IndexType The index type of the linear system.
  */
 template<typename ValueType, typename IndexType>
 struct LinearSystemView

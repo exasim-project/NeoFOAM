@@ -13,6 +13,7 @@ namespace NeoFOAM::la
 /**
  * @class CSRMatrixView
  * @brief A view class to allow easy read/write on all executors.
+ *
  * @tparam ValueType The value type of the non-zero entries.
  * @tparam IndexType The index type of the rows and columns.
  */
