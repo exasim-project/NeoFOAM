@@ -7,7 +7,7 @@
 #include <functional>
 
 #include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 
 namespace NeoFOAM::timeIntegration
@@ -25,7 +25,8 @@ class TimeIntegratorBase :
 
 public:
 
-    using Expression = NeoFOAM::dsl::Expression;
+    using ValueType = typename SolutionType::FieldValueType;
+    using Expression = NeoFOAM::dsl::Expression<ValueType>;
 
     static std::string name() { return "timeIntegrationFactory"; }
 
@@ -60,7 +61,9 @@ class TimeIntegration
 
 public:
 
-    using Expression = NeoFOAM::dsl::Expression;
+
+    using ValueType = typename SolutionFieldType::FieldValueType;
+    using Expression = NeoFOAM::dsl::Expression<ValueType>;
 
     TimeIntegration(const TimeIntegration& timeIntegrator)
         : timeIntegratorStrategy_(timeIntegrator.timeIntegratorStrategy_->clone()) {};
@@ -84,4 +87,4 @@ private:
 };
 
 
-} // namespace NeoFOAM::dsl
+} // namespace NeoFOAM::timeIntegration

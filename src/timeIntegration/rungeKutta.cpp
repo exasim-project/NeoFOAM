@@ -10,8 +10,9 @@ template<typename SolutionFieldType>
 RungeKutta<SolutionFieldType>::RungeKutta(const RungeKutta<SolutionFieldType>& other)
     : Base(other), solution_(other.solution_), initialConditions_(other.initialConditions_),
       pdeExpr_(
-          other.pdeExpr_ ? std::make_unique<NeoFOAM::dsl::Expression>(other.pdeExpr_->exec())
-                         : nullptr
+          other.pdeExpr_
+              ? std::make_unique<NeoFOAM::dsl::Expression<ValueType>>(other.pdeExpr_->exec())
+              : nullptr
       )
 {
     sunrealtype timeCurrent;
@@ -29,7 +30,7 @@ RungeKutta<SolutionFieldType>::RungeKutta(RungeKutta<SolutionFieldType>&& other)
 
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::solve(
-    Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt
+    dsl::Expression<ValueType>& exp, SolutionFieldType& solutionField, scalar t, const scalar dt
 )
 {
     // Setup sundials if required, load the current solution for temporal integration
@@ -61,7 +62,9 @@ std::unique_ptr<TimeIntegratorBase<SolutionFieldType>> RungeKutta<SolutionFieldT
 
 template<typename SolutionFieldType>
 void RungeKutta<SolutionFieldType>::initSUNERKSolver(
-    Expression& exp, SolutionFieldType& field, const scalar t
+    dsl::Expression<typename SolutionFieldType::FieldValueType>& exp,
+    SolutionFieldType& field,
+    const scalar t
 )
 {
     initExpression(exp);
@@ -72,9 +75,9 @@ void RungeKutta<SolutionFieldType>::initSUNERKSolver(
 }
 
 template<typename SolutionFieldType>
-void RungeKutta<SolutionFieldType>::initExpression(const Expression& exp)
+void RungeKutta<SolutionFieldType>::initExpression(const dsl::Expression<ValueType>& exp)
 {
-    pdeExpr_ = std::make_unique<Expression>(exp);
+    pdeExpr_ = std::make_unique<dsl::Expression<ValueType>>(exp);
 }
 
 // NOTE: This function triggers an error with the leak checkers/asan

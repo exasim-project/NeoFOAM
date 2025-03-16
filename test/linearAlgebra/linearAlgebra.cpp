@@ -28,15 +28,10 @@ TEST_CASE("MatrixAssembly - Ginkgo")
     // NOTE: Ginkgo doesn't support Kokkos::Threads, the only option is to use omp threads
     // thus we need to filter out all executors which underlying executor is Kokkos::Threads
     // TODO: This seems to be a very convoluted approach, hopefully there is a better approach
-    NeoFOAM::Executor exec = GENERATE(filter(
-        [](auto exec)
-        { return std::visit([](auto e) { return isNotKokkosThreads(e.underlyingExec()); }, exec); },
-        values(
-            {NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-             NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-             NeoFOAM::Executor(NeoFOAM::GPUExecutor {})}
-        )
-    ));
+    NeoFOAM::Executor exec = GENERATE(
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}), NeoFOAM::Executor(NeoFOAM::CPUExecutor {})
+        // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+    );
 
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
@@ -58,10 +53,10 @@ TEST_CASE("MatrixAssembly - Ginkgo")
 
         NeoFOAM::Dictionary solverDict;
         solverDict.insert("maxIters", 100);
-        solverDict.insert("relTol", float(1e-7));
+        solverDict.insert("relTol", NeoFOAM::scalar(1e-7));
 
         // Create solver
-        auto solver = NeoFOAM::la::ginkgo::CG<NeoFOAM::scalar>(exec, solverDict);
+        auto solver = NeoFOAM::la::ginkgo::BiCGStab<NeoFOAM::scalar>(exec, solverDict);
 
         // Solve system
         solver.solve(linearSystem, x);

@@ -1,5 +1,7 @@
 # Version 0.2.0 (unreleased)
 ## Features
+- templated Expression and Operator on ValueType [#268](https://github.com/exasim-project/NeoFOAM/pull/268)
+- ability to solve poisson equation similar required in the PISO algorithm [#267](https://github.com/exasim-project/NeoFOAM/pull/267)
 - implicit BCs and Laplacian operator [#262](https://github.com/exasim-project/NeoFOAM/pull/262)
 - add basic vectorField implementation  [#260](https://github.com/exasim-project/NeoFOAM/pull/260)
 - add temporal operators inside expressions and the ability to solve linear system [#259 ](https://github.com/exasim-project/NeoFOAM/pull/259)

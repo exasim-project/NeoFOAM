@@ -28,7 +28,7 @@ TEST_CASE("SurfaceInterpolation")
     {
         auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input = NeoFOAM::TokenList({interpolation});
-        fvcc::SurfaceInterpolation surfInterpolation(exec, mesh, input);
+        fvcc::SurfaceInterpolation<NeoFOAM::scalar> surfInterpolation(exec, mesh, input);
     }
 
     SECTION("Construct from Dictionary" + execName)
@@ -36,6 +36,6 @@ TEST_CASE("SurfaceInterpolation")
         auto mesh = NeoFOAM::createSingleCellMesh(exec);
         NeoFOAM::Input input =
             NeoFOAM::Dictionary({{std::string("surfaceInterpolation"), interpolation}});
-        fvcc::SurfaceInterpolation surfInterpolation(exec, mesh, input);
+        fvcc::SurfaceInterpolation<NeoFOAM::scalar> surfInterpolation(exec, mesh, input);
     }
 }

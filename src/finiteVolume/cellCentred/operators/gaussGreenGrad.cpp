@@ -15,7 +15,9 @@ namespace NeoFOAM::finiteVolume::cellCentred
 ** @param[in,out] out - Field to hold the result
 */
 void computeGrad(
-    const VolumeField<scalar>& in, const SurfaceInterpolation& surfInterp, VolumeField<Vector>& out
+    const VolumeField<scalar>& in,
+    const SurfaceInterpolation<scalar>& surfInterp,
+    VolumeField<Vector>& out
 )
 {
     const UnstructuredMesh& mesh = out.mesh();
@@ -92,13 +94,23 @@ void computeGrad(
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
-    : mesh_(mesh),
-      surfaceInterpolation_(exec, mesh, std::make_unique<Linear>(exec, mesh, Dictionary())) {};
+    : mesh_(mesh), surfaceInterpolation_(
+                       exec, mesh, std::make_unique<Linear<scalar>>(exec, mesh, Dictionary())
+                   ) {};
 
 
 void GaussGreenGrad::grad(const VolumeField<scalar>& phi, VolumeField<Vector>& gradPhi)
 {
     computeGrad(phi, surfaceInterpolation_, gradPhi);
 };
+
+VolumeField<Vector> GaussGreenGrad::grad(const VolumeField<scalar>& phi)
+{
+    auto gradBCs = createCalculatedBCs<VolumeBoundary<Vector>>(phi.mesh());
+    VolumeField<Vector> gradPhi = VolumeField<Vector>(phi.exec(), "gradPhi", phi.mesh(), gradBCs);
+    fill(gradPhi.internalField(), zero<Vector>());
+    computeGrad(phi, surfaceInterpolation_, gradPhi);
+    return gradPhi;
+}
 
 } // namespace NeoFOAM

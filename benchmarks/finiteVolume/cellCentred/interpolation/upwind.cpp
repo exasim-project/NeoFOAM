@@ -31,7 +31,7 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     UnstructuredMesh mesh = create1DUniformMesh(exec, size);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<TestType>>(mesh);
     Input input = TokenList({std::string("upwind")});
-    auto upwind = SurfaceInterpolation(exec, mesh, input);
+    auto upwind = SurfaceInterpolation<TestType>(exec, mesh, input);
 
     auto in = VolumeField<TestType>(exec, "in", mesh, {});
     auto flux = SurfaceField<scalar>(exec, "flux", mesh, {});
