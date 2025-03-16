@@ -15,12 +15,16 @@ class Field;
 
 /* @brief Functor to compute addition in a thread safe way
 **
-** see gaussGreenGrad.cpp for an usage example
+** @note see gaussGreenGrad.cpp for an usage example
 */
 template<typename ExecutorType>
 struct AtomicAdd
 {
-    const ExecutorType exec;
+    const ExecutorType exec_;
+
+    AtomicAdd(ExecutorType exec) : exec_(exec) {}
+
+
     template<typename OpA, typename OpB>
     KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
     {
@@ -28,6 +32,10 @@ struct AtomicAdd
     }
 };
 
+/* @brief non-blocking specialization for SerialExecutor
+**
+** @note see gaussGreenGrad.cpp for an usage example
+*/
 template<>
 template<typename OpA, typename OpB>
 KOKKOS_INLINE_FUNCTION void AtomicAdd<SerialExecutor>::operator()(OpA& a, const OpB& b) const
@@ -43,7 +51,10 @@ KOKKOS_INLINE_FUNCTION void AtomicAdd<SerialExecutor>::operator()(OpA& a, const 
 template<typename ExecutorType>
 struct AtomicSub
 {
-    const ExecutorType exec;
+    const ExecutorType exec_;
+
+    AtomicSub(ExecutorType exec) : exec_(exec) {}
+
     template<typename OpA, typename OpB>
     KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
     {
@@ -51,6 +62,10 @@ struct AtomicSub
     }
 };
 
+/* @brief non-blocking specialization for SerialExecutor
+**
+** @note see gaussGreenGrad.cpp for an usage example
+*/
 template<>
 template<typename OpA, typename OpB>
 KOKKOS_INLINE_FUNCTION void AtomicSub<SerialExecutor>::operator()(OpA& a, const OpB& b) const
@@ -95,6 +110,10 @@ void parallelFor(
     }
 }
 
+/* @brief parallelFor which takes to separate kernels, one for the internal domain and one for
+ *boundaries
+ **
+ */
 template<parallelForKernel KernelInternal, parallelForKernel KernelBoundary>
 void parallelFor(
     const NeoFOAM::Executor& exec,
