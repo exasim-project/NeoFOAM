@@ -8,65 +8,81 @@
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/core/database/oldTimeCollection.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 
-// template<typename ValueType>
-class DdtOperator : public dsl::OperatorMixin<VolumeField<scalar>>
+template<typename ValueType>
+class DdtOperator : public dsl::OperatorMixin<VolumeField<ValueType>>
 {
 
 public:
 
-    DdtOperator(dsl::Operator::Type termType, VolumeField<scalar>& field)
-        : dsl::OperatorMixin<VolumeField<scalar>>(field.exec(), dsl::Coeff(1.0), field, termType),
-          sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {
+    using FieldValueType = ValueType;
 
-          };
+    DdtOperator(dsl::Operator::Type termType, VolumeField<ValueType>& field)
+        : dsl::OperatorMixin<VolumeField<ValueType>>(
+            field.exec(), dsl::Coeff(1.0), field, termType
+        ),
+          sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
 
-    void explicitOperation(Field<scalar>& source, scalar t, scalar dt)
+    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
     {
-        const scalar rDeltat = 1 / dt;
-        const auto vol = getField().mesh().cellVolumes().span();
-        auto operatorScaling = getCoefficient();
+        const scalar dtInver = 1.0 / dt;
+        const auto vol = this->getField().mesh().cellVolumes().span();
+        auto operatorScaling = this->getCoefficient();
         auto [sourceSpan, field, oldField] =
-            spans(source, field_.internalField(), oldTime(field_).internalField());
+            spans(source, this->field_.internalField(), oldTime(this->field_).internalField());
+
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
             KOKKOS_LAMBDA(const size_t celli) {
-                sourceSpan[celli] += rDeltat * (field[celli] - oldField[celli]) * vol[celli];
+                sourceSpan[celli] += dtInver * (field[celli] - oldField[celli]) * vol[celli];
             }
         );
     }
 
-    la::LinearSystem<scalar, localIdx> createEmptyLinearSystem() const
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
     {
-        return sparsityPattern_->linearSystem();
-    }
-
-    void implicitOperation(la::LinearSystem<scalar, localIdx>& ls, scalar t, scalar dt)
-    {
-        const scalar rDeltat = 1 / dt;
-        const auto vol = getField().mesh().cellVolumes().span();
-        const auto operatorScaling = getCoefficient();
+        const scalar dtInver = 1.0 / dt;
+        const auto vol = this->getField().mesh().cellVolumes().span();
+        const auto operatorScaling = this->getCoefficient();
         const auto [diagOffs, oldField] =
-            spans(sparsityPattern_->diagOffset(), oldTime(field_).internalField());
-        const auto rowPtrs = ls.matrix().rowPtrs();
-        const auto colIdxs = ls.matrix().colIdxs();
-        std::span<scalar> values = ls.matrix().values();
-        std::span<scalar> rhs = ls.rhs().span();
+            spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());
+        auto [values, cols, rows] = ls.matrix().span().span();
+        auto rhs = ls.rhs().span();
+
         NeoFOAM::parallelFor(
             ls.exec(),
             {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
-                std::size_t idx = rowPtrs[celli] + diagOffs[celli];
-                values[idx] += operatorScaling[celli] * rDeltat * vol[celli];
-                rhs[celli] += operatorScaling[celli] * rDeltat * oldField[celli] * vol[celli];
+                std::size_t idx = rows[celli] + diagOffs[celli];
+                const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver;
+                values[idx] += commonCoef * one<ValueType>();
+                rhs[celli] += commonCoef * oldField[celli];
             }
         );
+    }
+
+    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
+    {
+        la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
+        auto [A, b, sp] = ls.view();
+        const auto& exec = A.exec();
+
+        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
+        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
+        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+
+        la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
+        Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
+
+        return {matrix, rhs, ls.sparsityPattern()};
     }
 
 
@@ -79,6 +95,7 @@ public:
 
 private:
 
+    // const VolumeField<ValueType> coefficients_;
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 

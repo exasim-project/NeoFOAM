@@ -7,15 +7,17 @@ namespace NeoFOAM
 {
 
 template<typename T>
-struct one
+T one()
 {
-    static const T value;
+    const T value;
+    return value;
 };
 
 template<typename T>
-struct zero
+T zero()
 {
-    static const T value;
+    const T value;
+    return value;
 };
 
 }

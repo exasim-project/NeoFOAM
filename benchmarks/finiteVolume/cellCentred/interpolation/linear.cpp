@@ -30,7 +30,7 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     UnstructuredMesh mesh = create1DUniformMesh(exec, size);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<TestType>>(mesh);
     Input input = TokenList({std::string("linear")});
-    auto linear = SurfaceInterpolation(exec, mesh, input);
+    auto linear = SurfaceInterpolation<TestType>(exec, mesh, input);
 
     auto in = VolumeField<TestType>(exec, "in", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, surfaceBCs);

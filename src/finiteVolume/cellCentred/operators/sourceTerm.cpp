@@ -3,13 +3,13 @@
 
 
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenLaplacian.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 // instantiate the template class
-template class GaussGreenLaplacian<scalar>;
-template class GaussGreenLaplacian<Vector>;
+template class SourceTerm<scalar>;
+template class SourceTerm<Vector>;
 
 };

@@ -16,6 +16,21 @@ namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
+// TODO extend sparsity pattern to return the correct type
+template<typename ValueType, typename IndexType = localIdx>
+la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
+{
+    auto [A, b, sp] = ls.view();
+    const auto& exec = A.exec();
+
+    Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
+    Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
+    Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+
+    la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
+    Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
+    return {matrix, rhs, ls.sparsityPattern()};
+}
 
 template<typename ValueType, typename IndexType = localIdx>
 class Expression
@@ -23,13 +38,13 @@ class Expression
 public:
 
     Expression(
-        dsl::Expression expr,
+        dsl::Expression<ValueType> expr,
         VolumeField<ValueType>& psi,
         [[maybe_unused]] const Dictionary& fvSchemes,
         [[maybe_unused]] const Dictionary& fvSolution
     )
         : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
-          ls_(SparsityPattern::readOrCreate(psi.mesh())->linearSystem()),
+          ls_(convert<ValueType>(SparsityPattern::readOrCreate(psi.mesh())->linearSystem())),
           sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh()))
     {
         expr_.build(fvSchemes_);
@@ -37,7 +52,7 @@ public:
     };
 
     Expression(const Expression& ls)
-        : psi_(ls.psi_), expr_(ls.expr_), fvSchemes_(ls.fvSchemes), fvSolution_(ls.fvSolution),
+        : psi_(ls.psi_), expr_(ls.expr_), fvSchemes_(ls.fvSchemes_), fvSolution_(ls.fvSolution_),
           ls_(ls.ls_), sparsityPattern_(ls.sparsityPattern_) {};
 
     ~Expression() = default;
@@ -52,9 +67,9 @@ public:
         return *sparsityPattern_;
     }
 
-    VolumeField<ValueType>& getField() { return psi_; }
+    VolumeField<ValueType>& getField() { return this->psi_; }
 
-    const VolumeField<ValueType>&& getField() const { return psi_; }
+    const VolumeField<ValueType>& getField() const { return this->psi_; }
 
     [[nodiscard]] const la::LinearSystem<ValueType, IndexType>& linearSystem() const { return ls_; }
     [[nodiscard]] const SparsityPattern& sparsityPattern() const
@@ -68,28 +83,22 @@ public:
 
     const Executor& exec() const { return ls_.exec(); }
 
-    void diag(Field<ValueType>& field)
+    void assemble(scalar t, scalar dt)
     {
-        NF_ASSERT_EQUAL(field.size(), sparsityPattern_->diagOffset().size());
-        const auto diagOffset = sparsityPattern_->diagOffset().span();
-        const auto rowPtrs = ls_.matrix().rowPtrs();
-        std::span<ValueType> fieldSpan = field.span();
-        std::span<ValueType> values = ls_.matrix().values();
+        auto vol = psi_.mesh().cellVolumes().span();
+        auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
+        expr_.explicitOperation(expSource, t, dt);
+        auto expSourceSpan = expSource.span();
+
+        ls_ = expr_.implicitOperation();
+        expr_.implicitOperation(ls_, t, dt);
+        auto rhs = ls_.rhs().span();
+        // we subtract the explicit source term from the rhs
         NeoFOAM::parallelFor(
             exec(),
-            {0, diagOffset.size()},
-            KOKKOS_LAMBDA(const std::size_t celli) {
-                auto diagOffsetCelli = diagOffset[celli];
-                fieldSpan[celli] = values[rowPtrs[celli] + diagOffsetCelli];
-            }
+            {0, rhs.size()},
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSourceSpan[i] * vol[i]; }
         );
-    }
-
-    Field<ValueType> diag()
-    {
-        Field<ValueType> diagonal(exec(), sparsityPattern_->diagOffset().size(), 0.0);
-        diag(diagonal);
-        return diagonal;
     }
 
     void assemble()
@@ -149,22 +158,6 @@ public:
         }
     }
 
-    Field<IndexType> diagIndex()
-    {
-        Field<IndexType> diagIndex(exec(), sparsityPattern_->diagOffset().size());
-        const auto diagOffset = sparsityPattern_->diagOffset().span();
-        auto diagIndexSpan = diagIndex.span();
-        const auto rowPtrs = ls_.matrix().rowPtrs();
-        NeoFOAM::parallelFor(
-            exec(),
-            {0, diagIndex.size()},
-            KOKKOS_LAMBDA(const std::size_t celli) {
-                diagIndexSpan[celli] = rowPtrs[celli] + diagOffset[celli];
-            }
-        );
-        return diagIndex;
-    }
-
     void setReference(const IndexType refCell, ValueType refValue)
     {
         // TODO currently assumes that matrix is already assembled
@@ -198,13 +191,11 @@ public:
             psi_.internalField()
         );
 
-        const auto rowPtrs = ls_.matrix().rowPtrs();
-        const auto colIdxs = ls_.matrix().colIdxs();
-        auto values = ls_.matrix().values();
         auto rhs = ls_.rhs().span();
-
+        auto [values, colIdxs, rowPtrs] = ls_.view();
 
         Field<ValueType> result(exec, neighbour.size(), 0.0);
+
 
         auto resultSpan = result.span();
 
@@ -231,7 +222,7 @@ public:
 private:
 
     VolumeField<ValueType>& psi_;
-    dsl::Expression expr_;
+    dsl::Expression<ValueType> expr_;
     const Dictionary& fvSchemes_;
     const Dictionary& fvSolution_;
     la::LinearSystem<ValueType, IndexType> ls_;
@@ -253,10 +244,7 @@ operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType
 
     auto [result, b, x] =
         spans(resultField.internalField(), ls.linearSystem().rhs(), psi.internalField());
-
-    const std::span<const ValueType> values = ls.linearSystem().matrix().values();
-    const std::span<const IndexType> colIdxs = ls.linearSystem().matrix().colIdxs();
-    const std::span<const IndexType> rowPtrs = ls.linearSystem().matrix().rowPtrs();
+    const auto [values, colIdxs, rowPtrs] = ls.linearSystem().view();
 
     NeoFOAM::parallelFor(
         resultField.exec(),

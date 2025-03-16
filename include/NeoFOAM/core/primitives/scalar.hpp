@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <Kokkos_Core.hpp> // IWYU pragma: keep
 #include "NeoFOAM/core/primitives/traits.hpp"
 
 // TODO this needs to be implemented in the corresponding cmake file
@@ -15,18 +16,22 @@ typedef float scalar;
 
 constexpr scalar ROOTVSMALL = 1e-18;
 
+KOKKOS_INLINE_FUNCTION
+scalar mag(const scalar& s) { return std::abs(s); }
+
 // traits for vector
 template<>
-struct one<scalar>
+KOKKOS_INLINE_FUNCTION
+scalar one<scalar>()
 {
-    static const inline scalar value = 1.0;
+    return 1.0;
 };
 
-
 template<>
-struct zero<scalar>
+KOKKOS_INLINE_FUNCTION
+scalar zero<scalar>()
 {
-    static const inline scalar value = 0.0;
+    return 0.0;
 };
 
 } // namespace NeoFOAM

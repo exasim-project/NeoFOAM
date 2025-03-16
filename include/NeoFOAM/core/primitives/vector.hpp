@@ -39,6 +39,14 @@ public:
         cmpts_[2] = z;
     }
 
+    KOKKOS_INLINE_FUNCTION
+    explicit Vector(const scalar constValue)
+    {
+        cmpts_[0] = constValue;
+        cmpts_[1] = constValue;
+        cmpts_[2] = constValue;
+    }
+
     /**
      * @brief Returns pointer to the data of the vector
      *
@@ -156,18 +164,18 @@ scalar mag(const Vector& vec) { return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + 
 std::ostream& operator<<(std::ostream& out, const Vector& vec);
 
 
-// traits for vector
 template<>
-struct one<Vector>
+KOKKOS_INLINE_FUNCTION
+Vector one<Vector>()
 {
-    static const inline Vector value = {1.0, 1.0, 1.0};
-};
-
+    return Vector(1.0, 1.0, 1.0);
+}
 
 template<>
-struct zero<Vector>
+KOKKOS_INLINE_FUNCTION
+Vector zero<Vector>()
 {
-    static const inline Vector value = {0.0, 0.0, 0.0};
-};
+    return Vector(0.0, 0.0, 0.0);
+}
 
 } // namespace NeoFOAM

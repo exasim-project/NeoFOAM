@@ -43,12 +43,12 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     auto volumeBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<TestType>>(mesh);
     fvcc::VolumeField<TestType> phi(exec, "sf", mesh, volumeBCs);
-    fill(phi.internalField(), one<TestType>::value);
-    fill(phi.boundaryField().value(), one<TestType>::value);
+    fill(phi.internalField(), one<TestType>());
+    fill(phi.boundaryField().value(), one<TestType>());
     phi.correctBoundaryConditions();
 
     auto result = Field<TestType>(exec, phi.size());
-    fill(result, zero<TestType>::value);
+    fill(result, zero<TestType>());
 
     SECTION("Construct from Token" + execName)
     {
@@ -69,7 +69,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         auto outHost = result.copyToHost();
         for (int i = 0; i < result.size(); i++)
         {
-            REQUIRE(outHost[i] == zero<TestType>::value);
+            REQUIRE(outHost[i] == zero<TestType>());
         }
     }
 }
