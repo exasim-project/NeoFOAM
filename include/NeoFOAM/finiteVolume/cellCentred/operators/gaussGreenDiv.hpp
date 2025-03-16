@@ -155,11 +155,11 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
         auto [A, b, sp] = ls.view();
-        const auto& exec = A.exec();
+        const auto& exec = ls.exec();
 
-        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+        Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+        Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+        Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
@@ -196,9 +196,7 @@ public:
             sparsityPattern_->ownerOffset(),
             sparsityPattern_->neighbourOffset()
         );
-        const auto [values, colIdxs, rowPtrs] = ls.matrix().span().span();
-        auto rhs = ls.rhs().span();
-
+        auto [A, b, sp] = ls.view();
 
         parallelFor(
             exec,
@@ -212,31 +210,31 @@ public:
                 std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
 
                 // add neighbour contribution upper
-                std::size_t rowNeiStart = rowPtrs[nei];
-                std::size_t rowOwnStart = rowPtrs[own];
+                std::size_t rowNeiStart = A.rowOffset[nei];
+                std::size_t rowOwnStart = A.rowOffset[own];
 
                 value = -weight * flux * one<ValueType>();
                 // scalar valueNei = (1 - weight) * flux;
-                values[rowNeiStart + neiOffs[facei]] += value;
-                Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], value);
+                A.value[rowNeiStart + neiOffs[facei]] += value;
+                Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value);
 
                 // upper triangular part
 
                 // add owner contribution lower
                 value = flux * (1 - weight) * one<ValueType>();
-                values[rowOwnStart + ownOffs[facei]] += value;
-                Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], value);
+                A.value[rowOwnStart + ownOffs[facei]] += value;
+                Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value);
             }
         );
 
         parallelFor(
             exec,
-            {0, rhs.size()},
+            {0, b.size()},
             KOKKOS_LAMBDA(const size_t celli) {
-                rhs[celli] *= operatorScaling[celli];
-                for (size_t i = rowPtrs[celli]; i < rowPtrs[celli + 1]; i++)
+                b[celli] *= operatorScaling[celli];
+                for (size_t i = A.rowOffset[celli]; i < A.rowOffset[celli + 1]; i++)
                 {
-                    values[i] *= operatorScaling[celli];
+                    A.value[i] *= operatorScaling[celli];
                 }
             }
         );

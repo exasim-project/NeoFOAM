@@ -67,11 +67,6 @@ public:
 
     ~LinearSystem() = default;
 
-    [[nodiscard]] LinearSystemView<ValueType, IndexType> view()
-    {
-        return {.A = matrix_, .b = rhs_, .sparcityPattern = sparsityPattern_};
-    }
-
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
     [[nodiscard]] Field<ValueType>& rhs() { return rhs_; }
 

@@ -54,17 +54,16 @@ public:
         const auto operatorScaling = this->getCoefficient();
         const auto [diagOffs, oldField] =
             spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());
-        auto [values, cols, rows] = ls.matrix().span().span();
-        auto rhs = ls.rhs().span();
+        auto [A, b, sp] = ls.view();
 
         NeoFOAM::parallelFor(
             ls.exec(),
             {0, oldField.size()},
             KOKKOS_LAMBDA(const size_t celli) {
-                std::size_t idx = rows[celli] + diagOffs[celli];
+                std::size_t idx = A.rowOffset[celli] + diagOffs[celli];
                 const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver;
-                values[idx] += commonCoef * one<ValueType>();
-                rhs[celli] += commonCoef * oldField[celli];
+                A.value[idx] += commonCoef * one<ValueType>();
+                b[celli] += commonCoef * oldField[celli];
             }
         );
     }
@@ -73,18 +72,17 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
         auto [A, b, sp] = ls.view();
-        const auto& exec = A.exec();
+        const auto& exec = ls.exec();
 
-        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+        Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+        Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+        Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
 
         return {matrix, rhs, ls.sparsityPattern()};
     }
-
 
     void build(const Input& input)
     {

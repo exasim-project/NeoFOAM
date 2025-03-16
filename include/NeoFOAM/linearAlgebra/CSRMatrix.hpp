@@ -124,8 +124,8 @@ public:
      */
     [[nodiscard]] IndexType nRows() const
     {
-        return static_cast<IndexType>(rowPtrs_.size())
-             - static_cast<IndexType>(static_cast<bool>(rowPtrs_.size()));
+        return static_cast<IndexType>(rowOffset_.size())
+             - static_cast<IndexType>(static_cast<bool>(rowOffset_.size()));
     }
 
     /**

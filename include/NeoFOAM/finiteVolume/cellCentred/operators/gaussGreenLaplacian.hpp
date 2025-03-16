@@ -122,11 +122,11 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
         auto [A, b, sp] = ls.view();
-        const auto& exec = A.exec();
+        const auto& exec = ls.exec();
 
-        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+        Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+        Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+        Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());

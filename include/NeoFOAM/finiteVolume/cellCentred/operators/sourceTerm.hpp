@@ -53,11 +53,11 @@ public:
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
         auto [A, b, sp] = ls.view();
-        const auto& exec = A.exec();
+        const auto& exec = ls.exec();
 
-        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+        Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+        Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+        Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
@@ -71,14 +71,14 @@ public:
         const auto vol = coefficients_.mesh().cellVolumes().span();
         const auto [diagOffs, coeff] =
             spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
-        auto [values, cols, rows] = ls.matrix().span().span();
+        auto [A, b, sp] = ls.view();
 
         NeoFOAM::parallelFor(
             ls.exec(),
             {0, coeff.size()},
             KOKKOS_LAMBDA(const size_t celli) {
-                std::size_t idx = rows[celli] + diagOffs[celli];
-                values[idx] +=
+                std::size_t idx = A.rowOffset[celli] + diagOffs[celli];
+                A.value[idx] +=
                     operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
             }
         );
