@@ -16,7 +16,7 @@ class ExecutorGenerator final : public Catch::Generators::IGenerator<NeoFOAM::Ex
 {
 public:
 
-    int i = 1;
+    int i = 0;
     std::vector<NeoFOAM::Executor> execs {};
     NeoFOAM::Executor current_exec = NeoFOAM::SerialExecutor {};
 
