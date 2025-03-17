@@ -1,14 +1,18 @@
 # Version 0.2.0 (unreleased)
 ## Features
-- templated Expression and Operator on ValueType [#268](https://github.com/exasim-project/NeoFOAM/pull/268)
-- ability to solve poisson equation similar required in the PISO algorithm [#267](https://github.com/exasim-project/NeoFOAM/pull/267)
-- implicit BCs and Laplacian operator [#262](https://github.com/exasim-project/NeoFOAM/pull/262)
-- add basic vectorField implementation  [#260](https://github.com/exasim-project/NeoFOAM/pull/260)
-- add temporal operators inside expressions and the ability to solve linear system [#259 ](https://github.com/exasim-project/NeoFOAM/pull/259)
-- Add basic Ginkgo solver interface [#250](https://github.com/exasim-project/NeoFOAM/pull/250)
-- support for implicit operators in the DSL [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
-- add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
+### Implicit Capabilities
+- Implicit BCs and Laplacian operator [#262](https://github.com/exasim-project/NeoFOAM/pull/262)
+- Support for implicit operators in the DSL [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
+### Linear Algebra Capabilities
 - Adds a minimal implementation linear algebra functionality [#219](https://github.com/exasim-project/NeoFOAM/pull/219)
+- Add basic Ginkgo solver interface [#250](https://github.com/exasim-project/NeoFOAM/pull/250)
+### Misc
+- Templated Expression and Operator on ValueType [#268](https://github.com/exasim-project/NeoFOAM/pull/268)
+- Ability to solve poisson equation similar required in the PISO algorithm [#267](https://github.com/exasim-project/NeoFOAM/pull/267)
+- Add basic vectorField implementation  [#260](https://github.com/exasim-project/NeoFOAM/pull/260)
+- Add temporal operators inside expressions and the ability to solve linear system [#259 ](https://github.com/exasim-project/NeoFOAM/pull/259)
+- Add segmentedField to represent vector of vectors [#202](https://github.com/exasim-project/NeoFOAM/pull/202)
+- Add courant number calculation based on parallelFor [#224](https://github.com/exasim-project/NeoFOAM/pull/224)
 ## Fixes
 # Version 0.1.0
 - improve build with MSVC and Clang on Windows [#163](https://github.com/exasim-project/NeoFOAM/pull/163)
