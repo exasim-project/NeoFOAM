@@ -9,17 +9,10 @@ namespace NeoFOAM
 {
 
 template<typename T>
-KOKKOS_INLINE_FUNCTION T one()
-{
-    const T value;
-    return value;
-};
+KOKKOS_INLINE_FUNCTION T one();
 
 template<typename T>
-KOKKOS_INLINE_FUNCTION T zero()
-{
-    const T value;
-    return value;
-};
+KOKKOS_INLINE_FUNCTION T zero();
+
 
 }
