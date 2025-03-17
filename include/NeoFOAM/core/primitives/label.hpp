@@ -20,7 +20,7 @@ using globalIdx = uint64_t;
 using size_t = std::size_t;
 using mpi_label_t = int;
 
-// traits for vector
+// traits for label
 template<>
 KOKKOS_INLINE_FUNCTION localIdx one<localIdx>()
 {
