@@ -27,12 +27,14 @@ TEST_CASE("MatrixAssembly - Ginkgo")
 {
 
 
+    // FIXME: fix this new generate
     // NOTE: Ginkgo doesn't support Kokkos::Threads, the only option is to use omp threads
     // thus we need to filter out all executors which underlying executor is Kokkos::Threads
     // TODO: This seems to be a very convoluted approach, hopefully there is a better approach
     NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}), NeoFOAM::Executor(NeoFOAM::CPUExecutor {})
-        // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}) // ,
+                                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {})
+                                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
 
