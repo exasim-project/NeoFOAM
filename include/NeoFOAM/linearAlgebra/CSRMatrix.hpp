@@ -126,7 +126,11 @@ public:
      * @brief Get the number of rows in the matrix.
      * @return Number of rows.
      */
-    [[nodiscard]] IndexType nRows() const { return static_cast<IndexType>(rowPtrs_.size()) - 1; }
+    [[nodiscard]] IndexType nRows() const
+    {
+        return static_cast<IndexType>(rowPtrs_.size())
+             - static_cast<IndexType>(static_cast<bool>(rowPtrs_.size()));
+    }
 
     /**
      * @brief Get the number of non-zero values in the matrix.

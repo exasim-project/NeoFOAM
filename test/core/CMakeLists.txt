@@ -13,6 +13,7 @@ neofoam_unit_test(tokenList)
 neofoam_unit_test(input)
 neofoam_unit_test(executor)
 neofoam_unit_test(parallelAlgorithms)
+neofoam_unit_test(span)
 
 add_executable(runTimeSelectionFactory "runTimeSelectionFactory.cpp")
 target_link_libraries(runTimeSelectionFactory PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace

@@ -17,15 +17,65 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-
-class Linear : public SurfaceInterpolationFactory::Register<Linear>
+/* @brief computional kernel to perform a linear interpolation
+** from a source volumeField to a surface field. It performs an interpolation
+** of the form
+**
+** d_f = w_f * s_O + ( 1 - w_f ) * s_N
+**
+**@param src the input field
+**@param weights weights for the interpolation
+**@param dst the target field
+*/
+template<typename ValueType>
+void computeLinearInterpolation(
+    const VolumeField<ValueType>& src,
+    const SurfaceField<scalar>& weights,
+    SurfaceField<ValueType>& dst
+)
 {
+    const auto exec = dst.exec();
+    auto dstS = dst.internalField().span();
+    const auto [srcS, weightS, ownerS, neighS, boundS] = spans(
+        src.internalField(),
+        weights.internalField(),
+        dst.mesh().faceOwner(),
+        dst.mesh().faceNeighbour(),
+        src.boundaryField().value()
+    );
+    size_t nInternalFaces = dst.mesh().nInternalFaces();
+
+    NeoFOAM::parallelFor(
+        exec,
+        {0, dstS.size()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            if (facei < nInternalFaces)
+            {
+                size_t own = static_cast<size_t>(ownerS[facei]);
+                size_t nei = static_cast<size_t>(neighS[facei]);
+                dstS[facei] = weightS[facei] * srcS[own] + (1 - weightS[facei]) * srcS[nei];
+            }
+            else
+            {
+                dstS[facei] = weightS[facei] * boundS[facei - nInternalFaces];
+            }
+        }
+    );
+}
+
+template<typename ValueType>
+class Linear : public SurfaceInterpolationFactory<ValueType>::template Register<Linear<ValueType>>
+{
+    using Base = SurfaceInterpolationFactory<ValueType>::template Register<Linear<ValueType>>;
 
 public:
 
-    Linear(const Executor& exec, const UnstructuredMesh& mesh, Input input);
+    Linear(const Executor& exec, const UnstructuredMesh& mesh, [[maybe_unused]] Input input)
+        : Base(exec, mesh), geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
-    Linear(const Executor& exec, const UnstructuredMesh& mesh);
+    Linear(const Executor& exec, const UnstructuredMesh& mesh)
+        : Base(exec, mesh), geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
+
 
     static std::string name() { return "linear"; }
 
@@ -33,20 +83,25 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void interpolate(const VolumeField<scalar>& src, SurfaceField<scalar>& dst) const override;
-
-    void interpolate(const VolumeField<Vector>& src, SurfaceField<Vector>& dst) const override;
-
-    void interpolate(
-        const SurfaceField<scalar>& flux, const VolumeField<scalar>& src, SurfaceField<scalar>& dst
-    ) const override;
+    void interpolate(const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst) const override
+    {
+        computeLinearInterpolation(src, geometryScheme_->weights(), dst);
+    }
 
     void interpolate(
-        const SurfaceField<scalar>& flux, const VolumeField<Vector>& src, SurfaceField<Vector>& dst
-    ) const override;
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<ValueType>& dst
+    ) const override
+    {
+        interpolate(src, dst);
+    }
 
 
-    std::unique_ptr<SurfaceInterpolationFactory> clone() const override;
+    std::unique_ptr<SurfaceInterpolationFactory<ValueType>> clone() const override
+    {
+        return std::make_unique<Linear>(*this);
+    }
 
 private:
 

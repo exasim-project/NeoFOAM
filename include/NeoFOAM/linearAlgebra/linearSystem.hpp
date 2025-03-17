@@ -11,6 +11,14 @@
 namespace NeoFOAM::la
 {
 
+template<typename ValueType, typename IndexType>
+struct LinearSystemView
+{
+    CSRMatrix<ValueType, IndexType>& A;
+    Field<ValueType>& b;
+    std::string& sparcityPattern;
+};
+
 /**
  * @class LinearSystem
  * @brief A class representing a linear system of equations.
@@ -41,6 +49,11 @@ public:
     LinearSystem(const Executor exec) : matrix_(exec), rhs_(exec, 0), sparsityPattern_() {}
 
     ~LinearSystem() = default;
+
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view()
+    {
+        return {.A = matrix_, .b = rhs_, .sparcityPattern = sparsityPattern_};
+    }
 
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
     [[nodiscard]] Field<ValueType>& rhs() { return rhs_; }
@@ -92,5 +105,36 @@ Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& 
 
     return resultField;
 };
+
+
+template<typename ValueType, typename SourceIndexType, typename DestIndexType = int>
+LinearSystem<ValueType, DestIndexType>
+convertLinearSystem(const LinearSystem<ValueType, SourceIndexType>& ls)
+{
+
+    Field<ValueType> convertedValues(
+        ls.exec(), ls.matrix().values().data(), ls.matrix().values().size()
+    );
+    Field<DestIndexType> convertedColIdxs(ls.exec(), ls.matrix().colIdxs().size());
+    auto mColIdxsSpan = ls.matrix().colIdxs();
+    NeoFOAM::parallelFor(
+        convertedColIdxs, KOKKOS_LAMBDA(const size_t i) { return DestIndexType(mColIdxsSpan[i]); }
+    );
+
+    Field<DestIndexType> convertedRowPtrs(ls.exec(), ls.matrix().rowPtrs().size());
+
+    auto mRowPtrsSpan = ls.matrix().rowPtrs();
+    NeoFOAM::parallelFor(
+        convertedRowPtrs, KOKKOS_LAMBDA(const size_t i) { return DestIndexType(mRowPtrsSpan[i]); }
+    );
+
+    Field<ValueType> convertedRhs(ls.exec(), ls.rhs().data(), ls.rhs().size());
+
+    la::CSRMatrix<ValueType, DestIndexType> matrix(
+        convertedValues, convertedColIdxs, convertedRowPtrs
+    );
+
+    return {matrix, convertedRhs, ls.sparsityPattern()};
+}
 
 } // namespace NeoFOAM::la

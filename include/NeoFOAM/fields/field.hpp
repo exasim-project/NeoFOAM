@@ -50,6 +50,8 @@ class Field
 
 public:
 
+    using FieldValueType = ValueType;
+
     /**
      * @brief Create an uninitialized Field with a given size on an executor
      * @param exec  Executor associated to the field
