@@ -139,7 +139,6 @@ public:
     void solve(scalar t, scalar dt)
     {
         // dsl::solve(expr_, psi_, t, dt, fvSchemes_, fvSolution_);
-        // FIXME:
         if (expr_.temporalOperators().size() == 0 && expr_.spatialOperators().size() == 0)
         {
             NF_ERROR_EXIT("No temporal or implicit terms to solve.");

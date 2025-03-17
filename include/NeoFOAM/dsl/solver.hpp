@@ -112,7 +112,7 @@ void solve(
     [[maybe_unused]] const Dictionary& fvSolution
 )
 {
-    // FIXME:
+    // TODO:
     if (exp.temporalOperators().size() == 0 && exp.spatialOperators().size() == 0)
     {
         NF_ERROR_EXIT("No temporal or implicit terms to solve.");
