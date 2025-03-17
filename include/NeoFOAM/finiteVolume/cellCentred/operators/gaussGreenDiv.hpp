@@ -215,29 +215,24 @@ public:
                 std::size_t rowNeiStart = rowPtrs[nei];
                 std::size_t rowOwnStart = rowPtrs[own];
 
+                scalar operatorScalingNei = operatorScaling[nei];
+                scalar operatorScalingOwn = operatorScaling[own];
+
                 value = -weight * flux * one<ValueType>();
                 // scalar valueNei = (1 - weight) * flux;
-                values[rowNeiStart + neiOffs[facei]] += value;
-                Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], value);
+                values[rowNeiStart + neiOffs[facei]] += value * operatorScalingNei;
+                Kokkos::atomic_sub(
+                    &values[rowOwnStart + diagOffs[own]], value * operatorScalingOwn
+                );
 
                 // upper triangular part
 
                 // add owner contribution lower
                 value = flux * (1 - weight) * one<ValueType>();
-                values[rowOwnStart + ownOffs[facei]] += value;
-                Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], value);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {0, rhs.size()},
-            KOKKOS_LAMBDA(const size_t celli) {
-                rhs[celli] *= operatorScaling[celli];
-                for (size_t i = rowPtrs[celli]; i < rowPtrs[celli + 1]; i++)
-                {
-                    values[i] *= operatorScaling[celli];
-                }
+                values[rowOwnStart + ownOffs[facei]] += value * operatorScalingOwn;
+                Kokkos::atomic_sub(
+                    &values[rowNeiStart + diagOffs[nei]], value * operatorScalingNei
+                );
             }
         );
     };
