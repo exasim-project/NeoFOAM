@@ -38,7 +38,6 @@ target_sources(
           "finiteVolume/cellCentred/boundary/boundary.cpp"
           "finiteVolume/cellCentred/operators/ddtOperator.cpp"
           # "finiteVolume/cellCentred/operators/expression.cpp"
-          "finiteVolume/cellCentred/pressureVelocityCoupling/pressureVelocityCoupling.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenLaplacian.cpp"

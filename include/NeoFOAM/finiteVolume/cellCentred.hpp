@@ -17,8 +17,6 @@
 #include "cellCentred/operators/gaussGreenDiv.hpp"
 #include "cellCentred/operators/gaussGreenGrad.hpp"
 
-#include "cellCentred/pressureVelocityCoupling/pressureVelocityCoupling.hpp"
-
 #include "cellCentred/operators/ddtOperator.hpp"
 
 #include "cellCentred/operators/sourceTerm.hpp"
