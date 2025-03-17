@@ -30,7 +30,11 @@ public:
         NF_ERROR_EXIT("Not implemented");
     }
 
-    void implicitOperation( [[maybe_unused]] la::LinearSystem<scalar, localIdx>& ls,[[maybe_unused]] scalar t, [[maybe_unused]] scalar dt)
+    void implicitOperation(
+        [[maybe_unused]] la::LinearSystem<scalar, localIdx>& ls,
+        [[maybe_unused]] scalar t,
+        [[maybe_unused]] scalar dt
+    )
     {
         NF_ERROR_EXIT("Not implemented");
     }

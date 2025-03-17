@@ -59,8 +59,8 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 {
     NeoFOAM::Executor exec = GENERATE(
         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-                                      NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-                                      NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
 
@@ -89,9 +89,11 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         const auto vol = mesh.cellVolumes().copyToHost();
         auto hostSource = source.copyToHost();
         auto values = hostSource.span();
-        for(auto ii = 0; ii < values.size(); ++ii)
+        for (auto ii = 0; ii < values.size(); ++ii)
         {
-            REQUIRE(values[ii] == vol[0]*TestType(22.0)); // => (phi^{n + 1} - phi^{n})/dt*V => (10 -- 1)/.5*V = 22V
+            REQUIRE(
+                values[ii] == vol[0] * TestType(22.0)
+            ); // => (phi^{n + 1} - phi^{n})/dt*V => (10 -- 1)/.5*V = 22V
         }
     }
 
@@ -106,12 +108,11 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         const auto matrixValues = lsHost.matrix().values();
         const auto rhs = lsHost.rhs().span();
 
-        for(auto ii = 0; ii < matrixValues.size(); ++ii)
+        for (auto ii = 0; ii < matrixValues.size(); ++ii)
         {
-            REQUIRE(matrixValues[ii] == 2.0*vol[0]*one<TestType>()); // => 1/dt*V => 1/.5*V = 2V
-            REQUIRE(rhs[ii] == -2.0*vol[0]*one<TestType>()); // => phi^{n}/dt*V => -1/.5*V = -2V
+            REQUIRE(matrixValues[ii] == 2.0 * vol[0] * one<TestType>()); // => 1/dt*V => 1/.5*V = 2V
+            REQUIRE(rhs[ii] == -2.0 * vol[0] * one<TestType>()); // => phi^{n}/dt*V => -1/.5*V = -2V
         }
-
     }
 }
 

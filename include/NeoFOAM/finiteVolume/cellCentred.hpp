@@ -30,3 +30,4 @@
 #include "cellCentred/interpolation/upwind.hpp"
 
 #include "cellCentred/faceNormalGradient/uncorrected.hpp"
+#include "cellCentred/auxiliary/coNum.hpp"

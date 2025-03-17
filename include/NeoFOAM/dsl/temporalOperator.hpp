@@ -44,7 +44,7 @@ template<typename T>
 concept HasTemporalOperator = HasTemporalExplicitOperator<T> || HasTemporalImplicitOperator<T>;
 
 /* @class TemporalOperator
- * @brief A class to represent an TemporalOperator in NeoFOAMs dsl
+ * @brief A class to represent a TemporalOperator in NeoFOAMs DSL
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw
@@ -240,21 +240,6 @@ TemporalOperator<ValueType> operator*(const Coeff& coeff, TemporalOperator<Value
     return result;
 }
 
-// template<typename CoeffFunction>
-//     requires std::invocable<CoeffFunction&, size_t>
-// TemporalOperator<ValueType> operator*([[maybe_unused]] CoeffFunction coeffFunc, const
-// TemporalOperator<ValueType>& lhs)
-// {
-//     // TODO implement
-//     NF_ERROR_EXIT("Not implemented");
-//     TemporalOperator result = lhs;
-//     // if (!result.getCoefficient().useSpan)
-//     // {
-//     //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
-//     // }
-//     // map(result.exec(), result.getCoefficient().values, scaleFunc);
-//     return result;
-// }
 
 
 } // namespace NeoFOAM::dsl

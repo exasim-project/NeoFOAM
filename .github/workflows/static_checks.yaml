@@ -43,7 +43,9 @@ jobs:
           -DCMAKE_CXX_COMPILER=clang++-16 \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-          -DNEOFOAM_ENABLE_IWYU=ON
+          -DNEOFOAM_ENABLE_IWYU=ON \
+          -DGINKGO_BUILD_OMP=OFF \
+          -DGINKGO_BUILD_MPI=OFF
         cmake --build --preset develop
     - uses: actions/upload-artifact@v4
       with:

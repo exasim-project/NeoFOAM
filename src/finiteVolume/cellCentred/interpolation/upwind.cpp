@@ -12,4 +12,5 @@ namespace NeoFOAM::finiteVolume::cellCentred
 template class Upwind<scalar>;
 template class Upwind<Vector>;
 
+
 } // namespace NeoFOAM

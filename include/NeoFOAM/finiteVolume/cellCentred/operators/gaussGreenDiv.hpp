@@ -73,7 +73,8 @@ void computeDiv(
                 ValueType flux = faceFlux[i] * phiF[i];
                 Kokkos::atomic_add(&res[static_cast<size_t>(owner[i])], flux);
                 Kokkos::atomic_sub(&res[static_cast<size_t>(neighbour[i])], flux);
-            }
+            },
+            "sumFluxesInternal"
         );
 
         parallelFor(
@@ -83,13 +84,15 @@ void computeDiv(
                 auto own = static_cast<size_t>(faceCells[i - nInternalFaces]);
                 ValueType valueOwn = faceFlux[i] * phiF[i];
                 Kokkos::atomic_add(&res[own], valueOwn);
-            }
+            },
+            "sumFluxesInternal"
         );
 
         parallelFor(
             exec,
             {0, nCells},
-            KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / V[celli]; }
+            KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / V[celli]; },
+            "normalizeFluxes"
         );
     }
 }

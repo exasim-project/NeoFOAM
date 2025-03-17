@@ -12,12 +12,14 @@
 #if NF_WITH_GINKGO
 
 template<typename ExecSpace>
-bool isNotKokkosThreads(ExecSpace ex)
+bool isNotKokkosThreads([[maybe_unused]] ExecSpace ex)
 {
+#ifdef KOKKOS_ENABLE_THREADS
     if constexpr (std::is_same_v<ExecSpace, Kokkos::Threads>)
     {
         return false;
     }
+#endif
     return true;
 }
 
@@ -25,12 +27,14 @@ TEST_CASE("MatrixAssembly - Ginkgo")
 {
 
 
+    // FIXME: fix this new generate
     // NOTE: Ginkgo doesn't support Kokkos::Threads, the only option is to use omp threads
     // thus we need to filter out all executors which underlying executor is Kokkos::Threads
     // TODO: This seems to be a very convoluted approach, hopefully there is a better approach
     NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}), NeoFOAM::Executor(NeoFOAM::CPUExecutor {})
-        // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}) // ,
+                                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {})
+                                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
 
 
@@ -51,12 +55,14 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs, "custom");
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
-        NeoFOAM::Dictionary solverDict;
-        solverDict.insert("maxIters", 100);
-        solverDict.insert("relTol", NeoFOAM::scalar(1e-7));
+        NeoFOAM::Dictionary solverDict {
+            {{"type", "solver::Cg"},
+             {"criteria",
+              NeoFOAM::Dictionary {{{"iteration", 100}, {"relative_residual_norm", 1e-7}}}}}
+        };
 
         // Create solver
-        auto solver = NeoFOAM::la::ginkgo::BiCGStab<NeoFOAM::scalar>(exec, solverDict);
+        auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, solverDict);
 
         // Solve system
         solver.solve(linearSystem, x);

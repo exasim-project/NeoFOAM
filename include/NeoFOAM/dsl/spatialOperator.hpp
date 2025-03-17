@@ -36,7 +36,7 @@ concept HasImplicitOperator = requires(T t) {
 template<typename T>
 concept IsSpatialOperator = HasExplicitOperator<T> || HasImplicitOperator<T>;
 
-/* @class Operator
+/* @class SpatialOperator
  * @brief A class to represent an operator in NeoFOAMs dsl
  *
  * The design here is based on the type erasure design pattern

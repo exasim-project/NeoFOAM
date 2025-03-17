@@ -47,7 +47,8 @@ void setGradientValue(
                 iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
             valueFraction[i] = 0.0;      // only used refGrad
             refValue[i] = fixedGradient; // not used
-        }
+        },
+        "setGradientValue"
     );
 }
 }

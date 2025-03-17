@@ -68,7 +68,8 @@ void computeUpwindInterpolation(
             {
                 dstS[facei] = weightS[facei] * boundS[facei - nInternalFaces];
             }
-        }
+        },
+        "computeUpwindInterpolation"
     );
 }
 
