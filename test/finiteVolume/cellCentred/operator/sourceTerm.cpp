@@ -51,7 +51,7 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 
         // cell has one cell
         auto hostSource = source.copyToHost();
-        for(auto ii = 0; ii < hostSource.size(); ++ii)
+        for (auto ii = 0; ii < hostSource.size(); ++ii)
         {
             REQUIRE(hostSource[ii] - 20 * one<TestType>() == TestType(0.0));
         }
@@ -65,8 +65,8 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
         auto lsHost = ls.copyToHost();
         auto vol = mesh.cellVolumes().copyToHost();
         const auto& values = lsHost.matrix().values();
-        
-        for(auto ii = 0; ii < values.size(); ++ii)
+
+        for (auto ii = 0; ii < values.size(); ++ii)
         {
             REQUIRE(values[ii] - 2 * vol[0] * one<TestType>() == TestType(0.0));
         }

@@ -132,8 +132,7 @@ void solve(
         using ValueType = typename FieldType::ElementType;
         auto ls = ginkgoMatrix(exp, solution);
 
-
-        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solution.exec(), fvSolution);
+        NeoFOAM::la::ginkgo::Solver<ValueType> solver(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
     }
 }
