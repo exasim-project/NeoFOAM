@@ -171,6 +171,8 @@
       <node id="9">
         <label>NeoFOAM/core/primitives/traits.hpp</label>
         <link refid="traits_8hpp"/>
+        <childnode refid="8" relation="include">
+        </childnode>
       </node>
       <node id="30">
         <label>NeoFOAM/core/primitives/vector.hpp</label>
@@ -593,7 +595,7 @@
         </childnode>
         <childnode refid="4" relation="include">
         </childnode>
-        <childnode refid="8" relation="include">
+        <childnode refid="9" relation="include">
         </childnode>
       </node>
       <node id="5">
@@ -603,22 +605,30 @@
         </childnode>
         <childnode refid="6" relation="include">
         </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/auxiliary/coNum.hpp</label>
+        <link refid="coNum_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
       </node>
       <node id="4">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/expression.hpp</label>
         <link refid="finiteVolume_2cellCentred_2operators_2expression_8hpp"/>
         <childnode refid="5" relation="include">
         </childnode>
-        <childnode refid="7" relation="include">
+        <childnode refid="8" relation="include">
         </childnode>
       </node>
-      <node id="7">
+      <node id="8">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/pressureVelocityCoupling/pressureVelocityCoupling.hpp</label>
         <link refid="pressureVelocityCoupling_8hpp"/>
         <childnode refid="5" relation="include">
         </childnode>
       </node>
-      <node id="8">
+      <node id="9">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/backwardEuler.hpp</label>
         <link refid="backwardEuler_8hpp"/>
       </node>
@@ -667,13 +677,13 @@
 <codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;int&gt;</ref><sp/>mColIdxs(solution.exec(),<sp/>ls.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1abcd18e32cbc6b2acc80bb31209d912bf" kindref="member">matrix</ref>().colIdxs().size());</highlight></codeline>
 <codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>mColIdxsSpan<sp/>=<sp/>ls.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1abcd18e32cbc6b2acc80bb31209d912bf" kindref="member">matrix</ref>().colIdxs();</highlight></codeline>
-<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a79afdaeec93fc7fcd0d3ff1951cf45be" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
 <codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mColIdxs,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>int(mColIdxsSpan[i]);<sp/>}</highlight></codeline>
 <codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="41"><highlight class="normal"></highlight></codeline>
 <codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;int&gt;</ref><sp/>mRowPtrs(solution.exec(),<sp/>ls.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1abcd18e32cbc6b2acc80bb31209d912bf" kindref="member">matrix</ref>().rowPtrs().size());</highlight></codeline>
 <codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>mRowPtrsSpan<sp/>=<sp/>ls.<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1abcd18e32cbc6b2acc80bb31209d912bf" kindref="member">matrix</ref>().rowPtrs();</highlight></codeline>
-<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a79afdaeec93fc7fcd0d3ff1951cf45be" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
 <codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mRowPtrs,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>int(mRowPtrsSpan[i]);<sp/>}</highlight></codeline>
 <codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="47"><highlight class="normal"></highlight></codeline>
@@ -696,7 +706,7 @@
 <codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref><sp/>rhs(solution.exec(),<sp/>ls.rhs().data(),<sp/>ls.rhs().size());</highlight></codeline>
 <codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>rhsSpan<sp/>=<sp/>rhs.<ref refid="classNeoFOAM_1_1Field_1a9ff92b9ff779eaae2e8bb6e9c38df479" kindref="member">span</ref>();</highlight></codeline>
 <codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>we<sp/>subtract<sp/>the<sp/>explicit<sp/>source<sp/>term<sp/>from<sp/>the<sp/>rhs</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a79afdaeec93fc7fcd0d3ff1951cf45be" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
 <codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>solution.exec(),</highlight></codeline>
 <codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>rhs.size()},</highlight></codeline>
 <codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/>rhsSpan[i]<sp/>-=<sp/>expSourceSpan[i]<sp/>*<sp/>vol[i];<sp/>}</highlight></codeline>
@@ -707,13 +717,13 @@
 <codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;int&gt;</ref><sp/>mColIdxs(solution.exec(),<sp/>ls.matrix().colIdxs().size());</highlight></codeline>
 <codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>mColIdxsSpan<sp/>=<sp/>ls.matrix().colIdxs();</highlight></codeline>
-<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a79afdaeec93fc7fcd0d3ff1951cf45be" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
 <codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mColIdxs,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>int(mColIdxsSpan[i]);<sp/>}</highlight></codeline>
 <codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="81"><highlight class="normal"></highlight></codeline>
 <codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;int&gt;</ref><sp/>mRowPtrs(solution.exec(),<sp/>ls.matrix().rowPtrs().size());</highlight></codeline>
 <codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>mRowPtrsSpan<sp/>=<sp/>ls.matrix().rowPtrs();</highlight></codeline>
-<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a79afdaeec93fc7fcd0d3ff1951cf45be" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
 <codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mRowPtrs,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>int(mRowPtrsSpan[i]);<sp/>}</highlight></codeline>
 <codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="87"><highlight class="normal"></highlight></codeline>
@@ -764,13 +774,12 @@
 <codeline lineno="132"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">ValueType<sp/>=<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>FieldType::ElementType;</highlight></codeline>
 <codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>ls<sp/>=<sp/><ref refid="namespaceNeoFOAM_1_1dsl_1abc1652f03f3277b3a110d54a2d18a602" kindref="member">ginkgoMatrix</ref>(exp,<sp/>solution);</highlight></codeline>
 <codeline lineno="134"><highlight class="normal"></highlight></codeline>
-<codeline lineno="135"><highlight class="normal"></highlight></codeline>
-<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoFOAM::la::ginkgo::BiCGStab&lt;ValueType&gt;<sp/>solver(solution.exec(),<sp/>fvSolution);</highlight></codeline>
-<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>solver.solve(ls,<sp/>solution.internalField());</highlight></codeline>
-<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="139"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="140"><highlight class="normal"></highlight></codeline>
-<codeline lineno="141"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM::dsl</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoFOAM::la::ginkgo::Solver&lt;ValueType&gt;<sp/>solver(solution.exec(),<sp/>fvSolution);</highlight></codeline>
+<codeline lineno="136"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>solver.solve(ls,<sp/>solution.internalField());</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="138"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="139"><highlight class="normal"></highlight></codeline>
+<codeline lineno="140"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM::dsl</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/solver.hpp"/>
   </compounddef>
