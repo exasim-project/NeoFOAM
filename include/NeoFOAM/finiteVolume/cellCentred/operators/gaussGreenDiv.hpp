@@ -112,10 +112,8 @@ void computeDiv(
     SurfaceField<ValueType> phif(
         exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh)
     );
-    // fill(phif.internalField(), NeoFOAM::zero<ValueType>::value);
     surfInterp.interpolate(faceFlux, phi, phif);
 
-    // FIXME: currently we just copy the boundary values over
     phif.boundaryField().value() = phi.boundaryField().value();
 
     size_t nInternalFaces = mesh.nInternalFaces();
@@ -221,7 +219,6 @@ public:
                 Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value);
 
                 // upper triangular part
-
                 // add owner contribution lower
                 value = flux * (1 - weight) * one<ValueType>();
                 A.value[rowOwnStart + ownOffs[facei]] += value;
