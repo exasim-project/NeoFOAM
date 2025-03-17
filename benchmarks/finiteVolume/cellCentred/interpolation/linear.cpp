@@ -16,7 +16,7 @@ using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
 namespace NeoFOAM
 {
 
-TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("linear", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
 
@@ -35,7 +35,7 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto in = VolumeField<TestType>(exec, "in", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, surfaceBCs);
 
-    fill(in.internalField(), one<TestType>::value);
+    fill(in.internalField(), one<TestType>());
 
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)
