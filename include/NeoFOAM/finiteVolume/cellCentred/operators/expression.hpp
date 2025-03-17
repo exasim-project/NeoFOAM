@@ -64,7 +64,7 @@ public:
     {
         if (!sparsityPattern_)
         {
-            NF_THROW("fvcc:LinearSystem:sparsityPattern: sparsityPattern is null");
+            NF_THROW(std::string("fvcc:LinearSystem:sparsityPattern: sparsityPattern is null"));
         }
         return *sparsityPattern_;
     }
