@@ -12,5 +12,5 @@ var searchData=
   ['csrmatrix_9',['CSRMatrix',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
   ['csrmatrix_3c_20neofoam_3a_3ascalar_2c_20neofoam_3a_3alocalidx_20_3e_10',['CSRMatrix&lt; NeoFOAM::scalar, NeoFOAM::localIdx &gt;',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
   ['csrmatrix_3c_20valuetype_2c_20localidx_20_3e_11',['CSRMatrix&lt; ValueType, localIdx &gt;',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
-  ['csrmatrixview_12',['CSRMatrixView',['../classNeoFOAM_1_1la_1_1CSRMatrixView.html',1,'NeoFOAM::la']]]
+  ['csrmatrixview_12',['CSRMatrixView',['../structNeoFOAM_1_1la_1_1CSRMatrixView.html',1,'NeoFOAM::la']]]
 ];

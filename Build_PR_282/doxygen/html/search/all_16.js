@@ -3,7 +3,7 @@ var searchData=
   ['_7eboundarypatchmixin_0',['~BoundaryPatchMixin',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1BoundaryPatchMixin.html#a923cf29ee11bb548424f6a8106e8ab4e',1,'NeoFOAM::finiteVolume::cellCentred::BoundaryPatchMixin']]],
   ['_7ecpuexecutor_1',['~CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html#a96176dcaa399677d193aa5c7219624a9',1,'NeoFOAM::CPUExecutor']]],
   ['_7ecsrmatrix_2',['~CSRMatrix',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a9bd72d19a65381bcb0b610ef65230ede',1,'NeoFOAM::la::CSRMatrix']]],
-  ['_7ecsrmatrixview_3',['~CSRMatrixView',['../classNeoFOAM_1_1la_1_1CSRMatrixView.html#ab2cc39d5115b6e397233f488b5d1766d',1,'NeoFOAM::la::CSRMatrixView']]],
+  ['_7ecsrmatrixview_3',['~CSRMatrixView',['../structNeoFOAM_1_1la_1_1CSRMatrixView.html#ab2cc39d5115b6e397233f488b5d1766d',1,'NeoFOAM::la::CSRMatrixView']]],
   ['_7edivoperatorfactory_4',['~DivOperatorFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1DivOperatorFactory.html#a6abad3d16ea7716164f49d7e3225c069',1,'NeoFOAM::finiteVolume::cellCentred::DivOperatorFactory']]],
   ['_7eexpression_5',['~Expression',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#a38390506625d51ef3688dd6e39f792e4',1,'NeoFOAM::finiteVolume::cellCentred::Expression']]],
   ['_7efacenormalgradientfactory_6',['~FaceNormalGradientFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1FaceNormalGradientFactory.html#a5f8e971286c37ab5e5398b6e59bbb4d4',1,'NeoFOAM::finiteVolume::cellCentred::FaceNormalGradientFactory']]],
