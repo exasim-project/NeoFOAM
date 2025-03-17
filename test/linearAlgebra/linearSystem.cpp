@@ -53,51 +53,57 @@ TEST_CASE("LinearSystem")
             values, colIdx, rowPtrs
         );
         NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, {10.0, 20.0, 30.0});
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
-            csrMatrix, rhs, "custom"
-        );
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls(csrMatrix, rhs, "custom");
 
-        auto lsView = linearSystem.view();
+        auto lsView = ls.view();
+        auto hostLS = ls.copyToHost();
+        auto hostLSView = hostLS.view();
+
 
         // some simple sanity checks
-        REQUIRE(lsView.A.value.size() == 9);
-        REQUIRE(lsView.A.columnIndex.size() == 9);
-        REQUIRE(lsView.A.rowOffset.size() == 4);
-        REQUIRE(lsView.b.size() == 3);
-        REQUIRE(lsView.sparsityPattern == "custom");
+        REQUIRE(hostLSView.A.value.size() == 9);
+        REQUIRE(hostLSView.A.columnIndex.size() == 9);
+        REQUIRE(hostLSView.A.rowOffset.size() == 4);
+        REQUIRE(hostLSView.b.size() == 3);
+        REQUIRE(hostLSView.sparsityPattern == "custom");
 
         // check system values
-        for (size_t i = 0; i < lsView.A.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
         {
-            REQUIRE(lsView.A.value[i] == static_cast<NeoFOAM::scalar>(i + 1));
-            REQUIRE(lsView.A.columnIndex[i] == i % 3);
+            REQUIRE(hostLSView.A.value[i] == static_cast<NeoFOAM::scalar>(i + 1));
+            REQUIRE(hostLSView.A.columnIndex[i] == i % 3);
         }
-        for (size_t i = 0; i < lsView.A.rowOffset.size(); ++i)
+        for (size_t i = 0; i < hostLSView.A.rowOffset.size(); ++i)
         {
-            REQUIRE(lsView.A.rowOffset[i] == static_cast<NeoFOAM::localIdx>(i * 3));
+            REQUIRE(hostLSView.A.rowOffset[i] == static_cast<NeoFOAM::localIdx>(i * 3));
         }
-        for (size_t i = 0; i < lsView.b.size(); ++i)
+        for (size_t i = 0; i < hostLSView.b.size(); ++i)
         {
-            REQUIRE(lsView.b[i] == static_cast<NeoFOAM::scalar>((i + 1) * 10));
+            REQUIRE(hostLSView.b[i] == static_cast<NeoFOAM::scalar>((i + 1) * 10));
         }
 
         // Modify values.
-        for (size_t i = 0; i < lsView.A.value.size(); ++i)
-        {
-            lsView.A.value[i] = -lsView.A.value[i];
-            lsView.b[i] = -lsView.b[i];
-        }
+        parallelFor(
+            exec,
+            {0, lsView.A.value.size()},
+            KOKKOS_LAMBDA(const size_t i) {
+                lsView.A.value[i] = -lsView.A.value[i];
+                lsView.b[i] = -lsView.b[i];
+            }
+        );
 
         // Check modification.
-        for (size_t i = 0; i < linearSystem.matrix().values().size(); ++i)
+        hostLS = ls.copyToHost();
+        hostLSView = hostLS.view();
+        for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
         {
-            REQUIRE(linearSystem.matrix().values()[i] == -static_cast<NeoFOAM::scalar>(i + 1));
+            REQUIRE(hostLSView.A.value[i] == -static_cast<NeoFOAM::scalar>(i + 1));
         }
-        for (size_t i = 0; i < linearSystem.rhs().size(); ++i)
+        for (size_t i = 0; i < hostLSView.b.size(); ++i)
         {
-            REQUIRE(linearSystem.rhs()[i] == -static_cast<NeoFOAM::scalar>((i + 1) * 10));
+            REQUIRE(hostLSView.b[i] == -static_cast<NeoFOAM::scalar>((i + 1) * 10));
         }
-        REQUIRE(linearSystem.sparsityPattern() == "custom");
+        REQUIRE(hostLSView.sparsityPattern == "custom");
     }
 
 

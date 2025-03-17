@@ -265,9 +265,7 @@ TEST_CASE("CSRMatrix")
     SECTION("Span " + execName)
     {
         auto hostMatrix = sparseMatrix.copyToHost();
-        auto value = hostMatrix.view().value;
-        auto column = hostMatrix.view().columnIndex;
-        auto row = hostMatrix.view().rowOffset;
+        auto [value, column, row] = hostMatrix.view();
         auto hostvaluesSparse = valuesSparse.copyToHost();
         auto hostcolIdxSparse = colIdxSparse.copyToHost();
         auto hostrowPtrsSparse = rowPtrsSparse.copyToHost();
