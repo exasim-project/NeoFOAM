@@ -5,8 +5,6 @@ add_library(NeoFOAM ${NeoFOAM_LIB_TYPE})
 
 include(GNUInstallDirs)
 
-target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
-
 if(NEOFOAM_ENABLE_CUDA)
   set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
 endif()
