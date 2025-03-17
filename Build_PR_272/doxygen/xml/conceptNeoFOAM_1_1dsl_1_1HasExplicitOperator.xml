@@ -10,8 +10,9 @@
     </templateparamlist>
     <initializer>template&lt;typename T&gt;
 concept <ref refid="conceptNeoFOAM_1_1dsl_1_1HasExplicitOperator" kindref="compound">NeoFOAM::dsl::HasExplicitOperator</ref> =  requires(T t) {
+    
     {
-        t.explicitOperation(std::declval&lt;Field&lt;scalar&gt;&amp;&gt;())
+        t.explicitOperation(std::declval&lt;Field&lt;typename T::FieldValueType&gt;&amp;&gt;())
     } -&gt; std::same_as&lt;void&gt;; 
 }    </initializer>
     <briefdescription>
