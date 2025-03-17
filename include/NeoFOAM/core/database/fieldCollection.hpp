@@ -8,6 +8,7 @@
 
 #include "NeoFOAM/core/demangle.hpp"
 #include "NeoFOAM/core/error.hpp"
+#include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/core/database/database.hpp"
 #include "NeoFOAM/core/database/collection.hpp"
 #include "NeoFOAM/core/database/document.hpp"
@@ -354,15 +355,12 @@ public:
 
     FieldDocument operator()(Database& db)
     {
+        DomainField<typename FieldType::FieldValueType> domainField(
+            field.mesh().exec(), field.internalField(), field.boundaryField()
+        );
+
         FieldType vf(
-            field.exec(),
-            name,
-            field.mesh(),
-            field.internalField(),
-            field.boundaryConditions(),
-            db,
-            "",
-            ""
+            field.exec(), name, field.mesh(), domainField, field.boundaryConditions(), db, "", ""
         );
 
         if (field.registered())

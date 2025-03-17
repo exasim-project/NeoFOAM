@@ -119,20 +119,14 @@ public:
         const Executor& exec,
         std::string fieldName,
         const UnstructuredMesh& mesh,
-        const Field<ValueType>& internalField,
+        const DomainField<ValueType>& domainField,
         const std::vector<VolumeBoundary<ValueType>>& boundaryConditions,
         Database& db,
         std::string dbKey,
         std::string collectionName
     )
-        : GeometricFieldMixin<ValueType>(
-            exec,
-            fieldName,
-            mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
-        ),
-          key(dbKey), fieldCollectionName(collectionName), boundaryConditions_(boundaryConditions),
-          db_(&db)
+        : GeometricFieldMixin<ValueType>(exec, fieldName, mesh, domainField), key(dbKey),
+          fieldCollectionName(collectionName), boundaryConditions_(boundaryConditions), db_(&db)
     {}
 
     VolumeField(const VolumeField& other)
