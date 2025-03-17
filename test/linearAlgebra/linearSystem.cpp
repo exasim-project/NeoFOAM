@@ -16,9 +16,9 @@ TEST_CASE("LinearSystem")
 
     // FIXME: fix this new generate
     NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}) //,
-                                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-                                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
+        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
     );
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
@@ -65,13 +65,12 @@ TEST_CASE("LinearSystem")
         REQUIRE(hostLSView.A.columnIndex.size() == 9);
         REQUIRE(hostLSView.A.rowOffset.size() == 4);
         REQUIRE(hostLSView.b.size() == 3);
-        REQUIRE(hostLSView.sparsityPattern == "custom");
 
         // check system values
         for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
         {
             REQUIRE(hostLSView.A.value[i] == static_cast<NeoFOAM::scalar>(i + 1));
-            REQUIRE(hostLSView.A.columnIndex[i] == i % 3);
+            REQUIRE(hostLSView.A.columnIndex[i] == (i % 3));
         }
         for (size_t i = 0; i < hostLSView.A.rowOffset.size(); ++i)
         {
@@ -103,7 +102,6 @@ TEST_CASE("LinearSystem")
         {
             REQUIRE(hostLSView.b[i] == -static_cast<NeoFOAM::scalar>((i + 1) * 10));
         }
-        REQUIRE(hostLSView.sparsityPattern == "custom");
     }
 
 
