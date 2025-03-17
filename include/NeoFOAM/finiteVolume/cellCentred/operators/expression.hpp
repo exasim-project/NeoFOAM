@@ -154,7 +154,10 @@ public:
         }
         else
         {
-            NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(psi_.exec(), fvSolution_);
+            // TODO: currently only we just pass the fvSolution dict to satisfy the compiler
+            // however, this should be the correct solver dict
+            auto exec = psi_.exec();
+            auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
             auto convertedLS = convertLinearSystem(ls_);
             solver.solve(convertedLS, psi_.internalField());
         }
