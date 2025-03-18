@@ -117,7 +117,7 @@ if(${NEOFOAM_WITH_GINKGO})
     GITHUB_REPOSITORY
     ginkgo-project/ginkgo
     GIT_TAG
-    develop
+    kokkos-threads
     OPTIONS
     "GINKGO_BUILD_TESTS OFF"
     "GINKGO_BUILD_BENCHMARKS OFF"
