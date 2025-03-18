@@ -31,9 +31,8 @@ function(neofoam_unit_test TEST)
     ${neofoam_COMMAND} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options Kokkos::kokkos
                                NeoFOAM cpptrace::cpptrace)
 
-  if(NEOFOAM_WITH_SUNDIALS)
-    target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
-  endif()
+  # if(NEOFOAM_WITH_SUNDIALS) target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
+  # endif()
   if(WIN32)
     set_target_properties(
       ${neofoam_COMMAND}
