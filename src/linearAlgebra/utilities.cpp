@@ -22,12 +22,25 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
             {
                 return gko::OmpExecutor::create();
             }
-            // else if constexpr (std::is_same_v<ExecType, GPUExecutor>)
-            // {
-            //     return gko::CudaExecutor::create(
-            //         Kokkos::device_id(), gko::ReferenceExecutor::create(),
-            //         std::make_shared<gko::CudaAllocator>(), ex.cuda_stream());
-            // }
+            else if constexpr (std::is_same_v<ExecType, GPUExecutor>)
+            {
+#if defined(KOKKOS_ENABLE_CUDA)
+                return gko::CudaExecutor::create(
+                    Kokkos::device_id(),
+                    gko::ReferenceExecutor::create(),
+                    std::make_shared<gko::CudaAllocator>(),
+                    ex.cuda_stream()
+                );
+#elif defined(KOKKOS_ENABLE_HIP)
+                return gko::HipExecutor::create(
+                    Kokkos::device_id(),
+                    gko::ReferenceExecutor::create(),
+                    std::make_shared<gko::HipAllocator>(),
+                    ex.hip_stream()
+                );
+#endif
+                throw std::runtime_error("No valid GPU executor mapping available");
+            }
             else
             {
                 throw std::runtime_error("Unsupported executor type");

@@ -112,8 +112,11 @@ void computeDiv(
     SurfaceField<ValueType> phif(
         exec, "phif", mesh, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh)
     );
+    // TODO: remove or implement
+    // fill(phif.internalField(), NeoFOAM::zero<ValueType>::value);
     surfInterp.interpolate(faceFlux, phi, phif);
 
+    // TODO: currently we just copy the boundary values over
     phif.boundaryField().value() = phi.boundaryField().value();
 
     size_t nInternalFaces = mesh.nInternalFaces();

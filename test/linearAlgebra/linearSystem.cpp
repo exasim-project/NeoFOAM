@@ -8,18 +8,15 @@
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
+#include "executorGenerator.hpp"
 
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 TEST_CASE("LinearSystem")
 {
 
-    // FIXME: fix this new generate
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
+    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
+
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     SECTION("construct " + execName)
@@ -85,18 +82,14 @@ TEST_CASE("LinearSystem")
         parallelFor(
             exec,
             {0, lsView.A.value.size()},
-            KOKKOS_LAMBDA(const size_t i) {
-                lsView.A.value[i] = -lsView.A.value[i];
-            }
+            KOKKOS_LAMBDA(const size_t i) { lsView.A.value[i] = -lsView.A.value[i]; }
         );
-        
-         // Modify values.
+
+        // Modify values.
         parallelFor(
             exec,
             {0, lsView.b.size()},
-            KOKKOS_LAMBDA(const size_t i) {
-                lsView.b[i] = -lsView.b[i];
-            }
+            KOKKOS_LAMBDA(const size_t i) { lsView.b[i] = -lsView.b[i]; }
         );
 
         // Check modification.

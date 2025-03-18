@@ -34,6 +34,12 @@ function(neofoam_unit_test TEST)
   if(NEOFOAM_WITH_SUNDIALS)
     target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
   endif()
+
+  target_include_directories(${neofoam_COMMAND} PRIVATE "${CMAKE_SOURCE_DIR}/test/catch2")
+
+  if(NEOFOAM_WITH_SUNDIALS)
+    target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
+  endif()
   if(WIN32)
     set_target_properties(
       ${neofoam_COMMAND}

@@ -4,8 +4,7 @@
 #include "catch2/catch_session.hpp"
 #include "catch2/catch_test_macros.hpp"
 #include "catch2/generators/catch_generators_all.hpp"
-
-#define KOKKOS_ENABLE_SERIAL
+#include "executorGenerator.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -25,18 +24,7 @@ bool isNotKokkosThreads([[maybe_unused]] ExecSpace ex)
 
 TEST_CASE("MatrixAssembly - Ginkgo")
 {
-
-
-    // FIXME: fix this new generate
-    // NOTE: Ginkgo doesn't support Kokkos::Threads, the only option is to use omp threads
-    // thus we need to filter out all executors which underlying executor is Kokkos::Threads
-    // TODO: This seems to be a very convoluted approach, hopefully there is a better approach
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}) // ,
-                                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {})
-                                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
+    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
