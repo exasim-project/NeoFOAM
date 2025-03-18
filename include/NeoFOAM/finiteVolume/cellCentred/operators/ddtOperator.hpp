@@ -54,7 +54,7 @@ public:
         const auto operatorScaling = this->getCoefficient();
         const auto [diagOffs, oldField] =
             spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());
-        auto [A, b, sp] = ls.view();
+        auto [A, b] = ls.view();
 
         NeoFOAM::parallelFor(
             ls.exec(),
@@ -71,7 +71,7 @@ public:
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-        auto [A, b, sp] = ls.view();
+        auto [A, b] = ls.view();
         const auto& exec = ls.exec();
 
         Field<ValueType> values(exec, A.value.size(), zero<ValueType>());

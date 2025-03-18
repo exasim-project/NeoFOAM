@@ -25,15 +25,14 @@ struct LinearSystemView
     ~LinearSystemView() = default;
 
     LinearSystemView(
-        CSRMatrixView<ValueType, IndexType> inA,
-        std::span<ValueType> inB,
-        std::string_view inSparsityPattern
+        CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB
+        //, std::string_view inSparsityPattern
     )
-        : A(inA), b(inB), sparsityPattern(inSparsityPattern) {};
+        : A(inA), b(inB) {}; //, sparsityPattern(inSparsityPattern) {};
 
     CSRMatrixView<ValueType, IndexType> A;
     std::span<ValueType> b;
-    std::string_view sparsityPattern;
+    // std::string_view sparsityPattern;
 };
 
 /**
@@ -80,10 +79,21 @@ public:
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost(), sparsityPattern_);
     }
 
-    [[nodiscard]] constexpr LinearSystemView<ValueType, IndexType> view()
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view() && = delete;
+
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view() const&& = delete;
+
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view() &
     {
         return LinearSystemView<ValueType, IndexType>(
-            matrix_.view(), rhs_.span(), sparsityPattern_
+            matrix_.view(), rhs_.span() //, sparsityPattern_
+        );
+    }
+
+    [[nodiscard]] LinearSystemView<const ValueType, const IndexType> view() const&
+    {
+        return LinearSystemView<ValueType, IndexType>(
+            matrix_.view(), rhs_.span() //, sparsityPattern_
         );
     }
 

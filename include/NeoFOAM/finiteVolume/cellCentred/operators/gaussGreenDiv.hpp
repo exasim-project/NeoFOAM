@@ -155,7 +155,7 @@ public:
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-        auto [A, b, sp] = ls.view();
+        auto [A, b] = ls.view();
         const auto& exec = ls.exec();
 
         Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
@@ -196,7 +196,7 @@ public:
             sparsityPattern_->ownerOffset(),
             sparsityPattern_->neighbourOffset()
         );
-        auto [A, b, sp] = ls.view();
+        auto [A, b] = ls.view();
 
         parallelFor(
             exec,

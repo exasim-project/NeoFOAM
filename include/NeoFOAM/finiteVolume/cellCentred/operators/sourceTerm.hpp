@@ -52,7 +52,7 @@ public:
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-        auto [A, b, sp] = ls.view();
+        auto [A, b] = ls.view();
         const auto& exec = ls.exec();
 
         Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
@@ -71,7 +71,7 @@ public:
         const auto vol = coefficients_.mesh().cellVolumes().span();
         const auto [diagOffs, coeff] =
             spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
-        auto [A, b, sp] = ls.view();
+        auto [A, b] = ls.view();
 
         NeoFOAM::parallelFor(
             ls.exec(),
