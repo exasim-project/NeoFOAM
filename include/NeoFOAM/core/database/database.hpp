@@ -24,7 +24,7 @@ public:
      * @param col The collection to be inserted into the database.
      * @return Collection& A reference to the inserted collection.
      */
-    Collection& insert(const std::string& key, const Collection& col);
+    Collection& insert(const std::string& key, Collection&& col);
 
     /**
      * @brief Checks if the database contains an collection with the specified name.
