@@ -241,5 +241,4 @@ TemporalOperator<ValueType> operator*(const Coeff& coeff, TemporalOperator<Value
 }
 
 
-
 } // namespace NeoFOAM::dsl
