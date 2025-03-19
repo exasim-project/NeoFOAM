@@ -18,12 +18,15 @@ jobs:
         wget https://apt.llvm.org/llvm-snapshot.gpg.key
         sudo apt-key add llvm-snapshot.gpg.key
 
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
     - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install \
            ninja-build \
-           python3.10 \
            iwyu \
            clang-18 \
            libomp-18-dev \
