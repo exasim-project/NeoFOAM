@@ -14,9 +14,13 @@ jobs:
 
     - name: Add clang repo
       run: |
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main'
+        sudo add-apt-repository 'deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main'
         wget https://apt.llvm.org/llvm-snapshot.gpg.key
         sudo apt-key add llvm-snapshot.gpg.key
+
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
 
     - name: Install dependencies
       run: |
@@ -24,8 +28,8 @@ jobs:
         sudo apt install \
            ninja-build \
            iwyu \
-           clang-16 \
-           libomp-16-dev \
+           clang-18 \
+           libomp-18-dev \
            libopenmpi-dev \
            openmpi-bin
 
@@ -38,9 +42,11 @@ jobs:
 
     - name: Create Compilation Database
       run: |
+        CC=clang \
+        CXX=clang++ \
         cmake --preset develop \
           -DNEOFOAM_DEVEL_TOOLS=OFF \
-          -DCMAKE_CXX_COMPILER=clang++-16 \
+          -DCMAKE_CXX_COMPILER=clang++-18 \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
           -DNEOFOAM_ENABLE_IWYU=ON \
@@ -61,7 +67,7 @@ jobs:
 
     - name: Add clang repo
       run: |
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main'
+        sudo add-apt-repository 'deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main'
         wget https://apt.llvm.org/llvm-snapshot.gpg.key
         sudo apt-key add llvm-snapshot.gpg.key
 
@@ -69,8 +75,8 @@ jobs:
       run: |
         sudo apt update
         sudo apt install \
-           clang-tidy-16 \
-           libomp-16-dev \
+           clang-tidy-18 \
+           libomp-18-dev \
            libopenmpi-dev \
            openmpi-bin
 
@@ -90,7 +96,7 @@ jobs:
           | sed 's/^"\(.*\)"$/\1/' \
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
-        clang-tidy-16 --fix --extra-arg=-w -p build/develop $(cat files)
+        clang-tidy-18 --fix --extra-arg=-w -p build/develop $(cat files)
 
     - name: Check for fixes
       run: |
