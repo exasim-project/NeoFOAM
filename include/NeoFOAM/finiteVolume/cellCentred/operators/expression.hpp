@@ -20,14 +20,12 @@ namespace NeoFOAM::finiteVolume::cellCentred
 template<typename ValueType, typename IndexType = localIdx>
 la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
 {
-    const auto A = ls.matrix();
-    const auto b = ls.rhs();
-    const auto& sp = ls.sparsityPattern();
+    const auto [A, b] = ls.view();
     const auto& exec = A.exec();
 
-    Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-    Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-    Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
+    Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+    Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+    Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
     la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
     Field<ValueType> rhs(exec, b.size(), zero<ValueType>());

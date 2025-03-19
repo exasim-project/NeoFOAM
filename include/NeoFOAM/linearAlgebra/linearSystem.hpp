@@ -11,12 +11,28 @@
 namespace NeoFOAM::la
 {
 
+/**
+ * @struct LinearSystemView
+ * @brief A view linear into a linear system's data.
+ *
+ * @tparam ValueType The value type of the linear system.
+ * @tparam IndexType The index type of the linear system.
+ */
 template<typename ValueType, typename IndexType>
 struct LinearSystemView
 {
-    CSRMatrix<ValueType, IndexType>& A;
-    Field<ValueType>& b;
-    std::string& sparcityPattern;
+    LinearSystemView() = default;
+    ~LinearSystemView() = default;
+
+    LinearSystemView(
+        CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB
+        //, std::string_view inSparsityPattern
+    )
+        : A(inA), b(inB) {}; //, sparsityPattern(inSparsityPattern) {};
+
+    CSRMatrixView<ValueType, IndexType> A;
+    std::span<ValueType> b;
+    // std::string_view sparsityPattern;
 };
 
 /**
@@ -50,11 +66,6 @@ public:
 
     ~LinearSystem() = default;
 
-    [[nodiscard]] LinearSystemView<ValueType, IndexType> view()
-    {
-        return {.A = matrix_, .b = rhs_, .sparcityPattern = sparsityPattern_};
-    }
-
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
     [[nodiscard]] Field<ValueType>& rhs() { return rhs_; }
 
@@ -66,6 +77,24 @@ public:
     [[nodiscard]] LinearSystem copyToHost() const
     {
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost(), sparsityPattern_);
+    }
+
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view() && = delete;
+
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view() const&& = delete;
+
+    [[nodiscard]] LinearSystemView<ValueType, IndexType> view() &
+    {
+        return LinearSystemView<ValueType, IndexType>(
+            matrix_.view(), rhs_.span() //, sparsityPattern_
+        );
+    }
+
+    [[nodiscard]] LinearSystemView<const ValueType, const IndexType> view() const&
+    {
+        return LinearSystemView<ValueType, IndexType>(
+            matrix_.view(), rhs_.span() //, sparsityPattern_
+        );
     }
 
     const Executor& exec() const { return matrix_.exec(); }

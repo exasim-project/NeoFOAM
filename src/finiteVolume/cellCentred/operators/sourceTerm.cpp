@@ -7,9 +7,7 @@
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-
 // instantiate the template class
 template class SourceTerm<scalar>;
 template class SourceTerm<Vector>;
-
 };
