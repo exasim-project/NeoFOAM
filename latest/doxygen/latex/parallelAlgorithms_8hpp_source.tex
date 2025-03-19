@@ -142,7 +142,7 @@
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00138}00138\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{NeoFOAM::Executor}}\&\ exec,\ std::pair<size\_t,\ size\_t>\ range,\ Kernel\ kernel,\ T\&\ value}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00139}00139\ )}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00140}00140\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00141}00141\ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9}{parallelReduce}}(e,\ range,\ kernel,\ value);\ \},\ exec);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00141}00141\ \ \ \ \ std::visit([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \mbox{\hyperlink{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9}{parallelReduce}}(e,\ range,\ kernel,\ value);\ \},\ exec);}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00142}00142\ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00143}00143\ }
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00144}00144\ }
@@ -178,56 +178,52 @@
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00174}00174\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ Kernel,\ \textcolor{keyword}{typename}\ T>}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00175}\mbox{\hyperlink{namespaceNeoFOAM_ae3937be91de80536a70f2e020edbdab7}{00175}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9}{parallelReduce}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ field,\ Kernel\ kernel,\ T\&\ value)}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00176}00176\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00177}00177\ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit(}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00178}00178\ \ \ \ \ \ \ \ \ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9}{parallelReduce}}(e,\ field,\ kernel,\ value);\ \},\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}()}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00179}00179\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00180}00180\ \}}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00181}00181\ }
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00182}00182\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Executor,\ \textcolor{keyword}{typename}\ Kernel>}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00183}\mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{00183}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00184}00184\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ std::pair<size\_t,\ size\_t>\ range,\ Kernel\ kernel}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00185}00185\ )}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00186}00186\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00187}00187\ \ \ \ \ \textcolor{keyword}{auto}\ [start,\ end]\ =\ range;}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00188}00188\ \ \ \ \ \textcolor{keyword}{using\ }runOn\ =\ \textcolor{keyword}{typename}\ Executor::exec;}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00189}00189\ \ \ \ \ Kokkos::parallel\_scan(\textcolor{stringliteral}{"{}parallelScan"{}},\ Kokkos::RangePolicy<runOn>(start,\ end),\ kernel);}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00190}00190\ \}}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00191}00191\ }
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00192}00192\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Kernel>}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00193}\mbox{\hyperlink{namespaceNeoFOAM_a5b8d6853fc05246a8ed89db7d88badee}{00193}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{NeoFOAM::Executor}}\&\ exec,\ std::pair<size\_t,\ size\_t>\ range,\ Kernel\ kernel)}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00194}00194\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00195}00195\ \ \ \ \ std::visit([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(e,\ range,\ kernel);\ \},\ exec);}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00196}00196\ \}}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00197}00197\ }
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00198}00198\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Executor,\ \textcolor{keyword}{typename}\ Kernel,\ \textcolor{keyword}{typename}\ ReturnType>}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00199}\mbox{\hyperlink{namespaceNeoFOAM_afbfeb99db57b54fe06c59babef5e118c}{00199}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00200}00200\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00201}00201\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range,}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00202}00202\ \ \ \ \ Kernel\ kernel,}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00203}00203\ \ \ \ \ ReturnType\&\ returnValue}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00204}00204\ )}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00205}00205\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00206}00206\ \ \ \ \ \textcolor{keyword}{auto}\ [start,\ end]\ =\ range;}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00207}00207\ \ \ \ \ \textcolor{keyword}{using\ }runOn\ =\ \textcolor{keyword}{typename}\ Executor::exec;}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00208}00208\ \ \ \ \ Kokkos::parallel\_scan(}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}parallelScan"{}},\ Kokkos::RangePolicy<runOn>(start,\ end),\ kernel,\ returnValue}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00210}00210\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00211}00211\ \}}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00212}00212\ }
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00213}00213\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Kernel,\ \textcolor{keyword}{typename}\ ReturnType>}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00214}\mbox{\hyperlink{namespaceNeoFOAM_a1fbe805af7f4710f16ec7fbf18b87741}{00214}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00215}00215\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{NeoFOAM::Executor}}\&\ exec,}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00216}00216\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range,}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00217}00217\ \ \ \ \ Kernel\ kernel,}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00218}00218\ \ \ \ \ ReturnType\&\ returnValue}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00219}00219\ )}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00220}00220\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00221}00221\ \ \ \ \ \textcolor{keywordflow}{return}\ std::visit(}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00222}00222\ \ \ \ \ \ \ \ \ [\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(e,\ range,\ kernel,\ returnValue);\ \},\ exec}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00223}00223\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00224}00224\ \}}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00225}00225\ }
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00226}00226\ }
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00227}00227\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00177}00177\ \ \ \ \ std::visit([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \mbox{\hyperlink{namespaceNeoFOAM_a64951263f8419915d4717c4bc76005b9}{parallelReduce}}(e,\ field,\ kernel,\ value);\ \},\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}());}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00178}00178\ \}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00179}00179\ }
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00180}00180\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Executor,\ \textcolor{keyword}{typename}\ Kernel>}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00181}\mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{00181}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00182}00182\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,\ std::pair<size\_t,\ size\_t>\ range,\ Kernel\ kernel}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00183}00183\ )}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00184}00184\ \{}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00185}00185\ \ \ \ \ \textcolor{keyword}{auto}\ [start,\ end]\ =\ range;}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00186}00186\ \ \ \ \ \textcolor{keyword}{using\ }runOn\ =\ \textcolor{keyword}{typename}\ Executor::exec;}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00187}00187\ \ \ \ \ Kokkos::parallel\_scan(\textcolor{stringliteral}{"{}parallelScan"{}},\ Kokkos::RangePolicy<runOn>(start,\ end),\ kernel);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00188}00188\ \}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00189}00189\ }
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00190}00190\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Kernel>}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00191}\mbox{\hyperlink{namespaceNeoFOAM_a5b8d6853fc05246a8ed89db7d88badee}{00191}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{NeoFOAM::Executor}}\&\ exec,\ std::pair<size\_t,\ size\_t>\ range,\ Kernel\ kernel)}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00192}00192\ \{}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00193}00193\ \ \ \ \ std::visit([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(e,\ range,\ kernel);\ \},\ exec);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00194}00194\ \}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00195}00195\ }
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00196}00196\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Executor,\ \textcolor{keyword}{typename}\ Kernel,\ \textcolor{keyword}{typename}\ ReturnType>}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00197}\mbox{\hyperlink{namespaceNeoFOAM_afbfeb99db57b54fe06c59babef5e118c}{00197}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00198}00198\ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{Executor}}\&\ exec,}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00199}00199\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range,}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00200}00200\ \ \ \ \ Kernel\ kernel,}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00201}00201\ \ \ \ \ ReturnType\&\ returnValue}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00202}00202\ )}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00203}00203\ \{}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00204}00204\ \ \ \ \ \textcolor{keyword}{auto}\ [start,\ end]\ =\ range;}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00205}00205\ \ \ \ \ \textcolor{keyword}{using\ }runOn\ =\ \textcolor{keyword}{typename}\ Executor::exec;}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00206}00206\ \ \ \ \ Kokkos::parallel\_scan(}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}parallelScan"{}},\ Kokkos::RangePolicy<runOn>(start,\ end),\ kernel,\ returnValue}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00208}00208\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00209}00209\ \}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00210}00210\ }
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00211}00211\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Kernel,\ \textcolor{keyword}{typename}\ ReturnType>}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00212}\mbox{\hyperlink{namespaceNeoFOAM_a1fbe805af7f4710f16ec7fbf18b87741}{00212}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00213}00213\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_aaa4d35d275559f501cb6a1eec717c905}{NeoFOAM::Executor}}\&\ exec,}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00214}00214\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range,}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00215}00215\ \ \ \ \ Kernel\ kernel,}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00216}00216\ \ \ \ \ ReturnType\&\ returnValue}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00217}00217\ )}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00218}00218\ \{}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00219}00219\ \ \ \ \ std::visit([\&](\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ e)\ \{\ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{parallelScan}}(e,\ range,\ kernel,\ returnValue);\ \},\ exec);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00220}00220\ \}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00221}00221\ }
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00223}00223\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}

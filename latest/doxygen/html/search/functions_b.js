@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['mag_0',['mag',['../namespaceNeoFOAM.html#a30753699ca02c237b4081286380cabd6',1,'NeoFOAM']]],
+  ['mag_0',['mag',['../namespaceNeoFOAM.html#abb63e8a2f557cc72e042ff949ea576da',1,'NeoFOAM::mag(const scalar &amp;s)'],['../namespaceNeoFOAM.html#a30753699ca02c237b4081286380cabd6',1,'NeoFOAM::mag(const Vector &amp;vec)']]],
   ['magfaceareas_1',['magFaceAreas',['../classNeoFOAM_1_1UnstructuredMesh.html#a75051ce1557fff2fcb282f25b90cf816',1,'NeoFOAM::UnstructuredMesh']]],
   ['magsf_2',['magsf',['../classNeoFOAM_1_1BoundaryMesh.html#a440a8c36013674d9873371d13543aa05',1,'NeoFOAM::BoundaryMesh::magSf() const'],['../classNeoFOAM_1_1BoundaryMesh.html#a3ee8d38788a65bc335e566f182e60600',1,'NeoFOAM::BoundaryMesh::magSf(const localIdx i) const']]],
   ['map_3',['map',['../namespaceNeoFOAM.html#a58f995a6ce3861bf1eb92ca1e6a36739',1,'NeoFOAM']]],
