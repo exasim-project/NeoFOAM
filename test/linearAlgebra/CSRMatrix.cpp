@@ -10,17 +10,14 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "executorGenerator.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 
 TEST_CASE("CSRMatrix")
 {
 
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
+    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
     // sparse matrix
