@@ -14,7 +14,7 @@ jobs:
 
     - name: Add clang repo
       run: |
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main'
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main'
         wget https://apt.llvm.org/llvm-snapshot.gpg.key
         sudo apt-key add llvm-snapshot.gpg.key
 
@@ -24,8 +24,8 @@ jobs:
         sudo apt install \
            ninja-build \
            iwyu \
-           clang-17 \
-           libomp-17-dev \
+           clang-18 \
+           libomp-18-dev \
            libopenmpi-dev \
            openmpi-bin
 
@@ -40,7 +40,7 @@ jobs:
       run: |
         cmake --preset develop \
           -DNEOFOAM_DEVEL_TOOLS=OFF \
-          -DCMAKE_CXX_COMPILER=clang++-17 \
+          -DCMAKE_CXX_COMPILER=clang++-18 \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
           -DNEOFOAM_ENABLE_IWYU=ON \
@@ -61,7 +61,7 @@ jobs:
 
     - name: Add clang repo
       run: |
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main'
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main'
         wget https://apt.llvm.org/llvm-snapshot.gpg.key
         sudo apt-key add llvm-snapshot.gpg.key
 
@@ -69,8 +69,8 @@ jobs:
       run: |
         sudo apt update
         sudo apt install \
-           clang-tidy-17 \
-           libomp-17-dev \
+           clang-tidy-18 \
+           libomp-18-dev \
            libopenmpi-dev \
            openmpi-bin
 
@@ -90,7 +90,7 @@ jobs:
           | sed 's/^"\(.*\)"$/\1/' \
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
-        clang-tidy-17 --fix --extra-arg=-w -p build/develop $(cat files)
+        clang-tidy-18 --fix --extra-arg=-w -p build/develop $(cat files)
 
     - name: Check for fixes
       run: |
