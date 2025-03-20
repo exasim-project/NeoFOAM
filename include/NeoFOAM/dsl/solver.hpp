@@ -22,9 +22,10 @@
 namespace NeoFOAM::dsl
 {
 
+// FIXME is that needed?
 template<typename FieldType>
-NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
-    NeoFOAM::la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution
+la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
+    la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution
 )
 {
     using ValueType = typename FieldType::ElementType;
@@ -35,25 +36,28 @@ NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
     );
     Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
     auto mColIdxsSpan = ls.matrix().colIdxs();
-    NeoFOAM::parallelFor(
+    parallelFor(
         mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); }
     );
 
     Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
     auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    NeoFOAM::parallelFor(
+    parallelFor(
         mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); }
     );
 
     la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
 
-    NeoFOAM::la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
+    la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
     return convertedLs;
 }
 
+
+/* @brief given an expression and a solution field this function creates a linear system
+ */
 template<typename FieldType>
-NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int>
-ginkgoMatrix(Expression<typename FieldType::ElementType>& exp, FieldType& solution)
+la::LinearSystem<typename FieldType::ElementType, int>
+convertToLinearSystem(Expression<typename FieldType::ElementType>& exp, FieldType& solution)
 {
     using ValueType = typename FieldType::ElementType;
     auto vol = solution.mesh().cellVolumes().span();
@@ -64,7 +68,7 @@ ginkgoMatrix(Expression<typename FieldType::ElementType>& exp, FieldType& soluti
     Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
     auto rhsSpan = rhs.span();
     // we subtract the explicit source term from the rhs
-    NeoFOAM::parallelFor(
+    parallelFor(
         solution.exec(),
         {0, rhs.size()},
         KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] -= expSourceSpan[i] * vol[i]; }
@@ -75,13 +79,13 @@ ginkgoMatrix(Expression<typename FieldType::ElementType>& exp, FieldType& soluti
     );
     Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
     auto mColIdxsSpan = ls.matrix().colIdxs();
-    NeoFOAM::parallelFor(
+    parallelFor(
         mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); }
     );
 
     Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
     auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    NeoFOAM::parallelFor(
+    parallelFor(
         mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); }
     );
 
@@ -130,11 +134,11 @@ void solve(
     {
         // solve sparse matrix system
         using ValueType = typename FieldType::ElementType;
-        auto ls = ginkgoMatrix(exp, solution);
+        auto ls = convertToLinearSystem(exp, solution);
 
-        NeoFOAM::la::ginkgo::Solver<ValueType> solver(solution.exec(), fvSolution);
+        la::ginkgo::Solver<ValueType> solver(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
     }
 }
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl

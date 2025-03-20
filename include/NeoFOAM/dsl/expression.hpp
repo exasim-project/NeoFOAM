@@ -13,7 +13,7 @@
 #include "NeoFOAM/dsl/temporalOperator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-namespace la = NeoFOAM::la;
+namespace la = la;
 
 namespace NeoFOAM::dsl
 {
@@ -31,7 +31,7 @@ public:
           spatialOperators_(exp.spatialOperators_)
     {}
 
-    void build(const NeoFOAM::Dictionary& input)
+    void build(const Dictionary& input)
     {
         for (auto& op : temporalOperators_)
         {
@@ -237,4 +237,4 @@ operator-(leftOperator lhs, rightOperator rhs)
 // }
 
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl

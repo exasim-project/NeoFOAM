@@ -171,12 +171,12 @@ private:
             // only need to avoid compiler warning about missing return statement
             // this code path should never be reached as we call implicitOperation on an explicit
             // operator
-            NeoFOAM::Field<ValueType> values(exec(), 1, zero<ValueType>());
-            Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
-            NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
-            NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
+            Field<ValueType> values(exec(), 1, zero<ValueType>());
+            Field<localIdx> colIdx(exec(), 1, 0);
+            Field<localIdx> rowPtrs(exec(), 2, 0);
+            la::CSRMatrix<ValueType, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-            NeoFOAM::Field<ValueType> rhs(exec(), 1, zero<ValueType>());
+            Field<ValueType> rhs(exec(), 1, zero<ValueType>());
             return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs, "custom");
         }
 
@@ -248,4 +248,4 @@ SpatialOperator<ValueType> operator*(const Coeff& coeff, SpatialOperator<ValueTy
 //     return result;
 // }
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl
