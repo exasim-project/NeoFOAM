@@ -86,8 +86,9 @@ template<typename SKVectorType, typename ValueType>
 void fieldToSunNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
+    auto fieldSpan = field.span();
     NeoFOAM::parallelFor(
-        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { view(i) = field[i]; }
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { view(i) = fieldSpan[i]; }
     );
 };
 
