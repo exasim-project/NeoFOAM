@@ -96,7 +96,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;<a class="code" href="coeff_8hpp.html">NeoFOAM/dsl/coeff.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;<a class="code" href="operator_8hpp.html">NeoFOAM/dsl/operator.hpp</a>&quot;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM_1_1la.html">la</a> = <a class="code hl_namespace" href="namespaceNeoFOAM_1_1la.html">NeoFOAM::la</a>;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">namespace </span>la = <a class="code hl_namespace" href="namespaceNeoFOAM_1_1la.html">NeoFOAM::la</a>;</div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM_1_1dsl.html">NeoFOAM::dsl</a></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
@@ -120,7 +120,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="conceptNeoFOAM_1_1dsl_1_1HasTemporalImplicitOperator.html">   33</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptNeoFOAM_1_1dsl_1_1HasTemporalImplicitOperator.html">HasTemporalImplicitOperator</a> = <span class="keyword">requires</span>(T t) {</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    {</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        t.implicitOperation(</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>            std::declval&lt;<a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">la::LinearSystem&lt;typename T::FieldValueType, localIdx&gt;</a>&amp;&gt;(),</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>            std::declval&lt;la::LinearSystem&lt;typename T::FieldValueType, localIdx&gt;&amp;&gt;(),</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>            std::declval&lt;NeoFOAM::scalar&gt;(),</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>            std::declval&lt;NeoFOAM::scalar&gt;()</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        )</div>
@@ -257,7 +257,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        }</div>
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span> </div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        <span class="keyword">virtual</span> <span class="keywordtype">void</span></div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        implicitOperation(<a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">la::LinearSystem&lt;ValueType, localIdx&gt;</a>&amp; ls, <a class="code hl_typedef" href="namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b">scalar</a> t, <a class="code hl_typedef" href="namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b">scalar</a> dt)<span class="keyword"> override</span></div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        implicitOperation(la::LinearSystem&lt;ValueType, localIdx&gt;&amp; ls, <a class="code hl_typedef" href="namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b">scalar</a> t, <a class="code hl_typedef" href="namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b">scalar</a> dt)<span class="keyword"> override</span></div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span><span class="keyword">        </span>{</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>            <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (HasTemporalImplicitOperator&lt;ConcreteTemporalOperatorType&gt;)</div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>            {</div>
@@ -265,7 +265,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            }</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        }</div>
 <div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="keyword">virtual</span> <a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">la::LinearSystem&lt;ValueType, localIdx&gt;</a> createEmptyLinearSystem()<span class="keyword"> const override</span></div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="keyword">virtual</span> la::LinearSystem&lt;ValueType, localIdx&gt; createEmptyLinearSystem()<span class="keyword"> const override</span></div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span><span class="keyword">        </span>{</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>            <span class="comment">// if constexpr (HasTemporalImplicitOperator&lt;ConcreteTemporalOperatorType&gt;)</span></div>
 <div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>            <span class="comment">// {</span></div>
@@ -281,7 +281,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>            <a class="code hl_class" href="classNeoFOAM_1_1la_1_1CSRMatrix.html">NeoFOAM::la::CSRMatrix&lt;ValueType, NeoFOAM::localIdx&gt;</a> csrMatrix(values, colIdx, rowPtrs);</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span> </div>
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>            <a class="code hl_class" href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt;ValueType&gt;</a> rhs(exec(), 1, zero&lt;ValueType&gt;());</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>            <span class="keywordflow">return</span> <a class="code hl_class" href="classNeoFOAM_1_1la_1_1LinearSystem.html">la::LinearSystem&lt;ValueType, localIdx&gt;</a>(csrMatrix, rhs, <span class="stringliteral">&quot;custom&quot;</span>);</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>            <span class="keywordflow">return</span> la::LinearSystem&lt;ValueType, localIdx&gt;(csrMatrix, rhs, <span class="stringliteral">&quot;custom&quot;</span>);</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>        }</div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span> </div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>        <span class="comment">/* @brief Given an input this function reads required coeffs */</span></div>
