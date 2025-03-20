@@ -35,7 +35,7 @@ jobs:
           #  index: 0
           - TYPE: g4dn.xlarge
             AMI: ami-053248e1ad04b8278
-            index: 1
+            index: 0
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -100,16 +100,16 @@ jobs:
         with:
           name: labels_0
           path: downloaded_data
-      - name: Download Artifact 2
-        uses: actions/download-artifact@v4
-        with:
-          name: labels_1
-          path: downloaded_data
+      #- name: Download Artifact 2
+      #  uses: actions/download-artifact@v4
+      #  with:
+      #    name: labels_1
+      #    path: downloaded_data
       - name: Loop Through Matrix Indices and Download Artifacts
         id: aggregate
         run: |
           INSTANCES=()
-          for index in {0..1}; do  # Adjust max index if needed
+          for index in {0..0}; do  # Adjust max index if needed
             # Read values from downloaded files
             LABEL=$(cat downloaded_data/label_${index}.txt)
             EC2_ID=$(cat downloaded_data/ec2-instance-id_${index}.txt)
