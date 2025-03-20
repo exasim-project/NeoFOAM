@@ -52,6 +52,8 @@ cpmaddpackage(
 
 if(${NEOFOAM_WITH_ADIOS2})
 
+  set(ADIOS2_KOKKOS_PATCH git apply ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/adios2_kokkos.patch)
+
   set(ADIOS2_OPTIONS
       "BUILD_TYPE Release"
       "ADIOS2_USE_Kokkos ON"
@@ -77,6 +79,8 @@ if(${NEOFOAM_WITH_ADIOS2})
     adios2
     GITHUB_REPOSITORY
     ornladios/ADIOS2
+    PATCH_COMMAND
+    ${ADIOS2_KOKKOS_PATCH}
     VERSION
     2.10.2
     OPTIONS
