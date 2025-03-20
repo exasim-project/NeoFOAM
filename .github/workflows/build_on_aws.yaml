@@ -69,9 +69,9 @@ jobs:
           pre-runner-script: |
                  #!/bin/bash
                  . /root/spack/share/spack/setup-env.sh
-                 sudo rm /usr/local/cuda
-                 sudo rm /usr/local/cuda-12.1
-                 sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
+                 #sudo rm /usr/local/cuda
+                 #sudo rm /usr/local/cuda-12.1
+                 #sudo ln -s /usr/local/cuda-12.2 /usr/local/cuda
       - name: Store Runner Label
         run: |
           echo "${{ steps.start-ec2-runner.outputs.label }}" > label_${{ matrix.instance.index }}.txt
@@ -152,7 +152,7 @@ jobs:
           path: build
           key: aws_PR_${{ github.event.pull_request.number }}_${{matrix.preset}}_${{matrix.instance.ec2-type}}
       - name: Build NeoFOAM
-        shell: bash {0}
+        shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
           spack load cmake@3.30.5
@@ -185,7 +185,7 @@ jobs:
         instance: ${{ fromJson(needs.aggregate-labels.outputs.matrix) }}
     steps:
       - name: Build NeoFOAM
-        shell: bash {0}
+        shell: bash -i {0}
         run: |
           . /root/spack/share/spack/setup-env.sh
           module load clang/17
