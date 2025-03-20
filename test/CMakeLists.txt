@@ -5,6 +5,8 @@ list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 # has to be first since it adds the main target
 add_subdirectory(catch2)
+set(TEST_CATCH2_DIR ${CMAKE_CURRENT_LIST_DIR}/catch2)
+message("TEST_CATCH2_DIR ${TEST_CATCH2_DIR}")
 
 # include "NeoFOAM/core/parallelAlgorithms.hpp" This function creates unit tests. It provides the
 # following keywords:
@@ -35,7 +37,7 @@ function(neofoam_unit_test TEST)
     target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
   endif()
 
-  target_include_directories(${neofoam_COMMAND} PRIVATE "${CMAKE_SOURCE_DIR}/test/catch2")
+  target_include_directories(${neofoam_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
 
   if(NEOFOAM_WITH_SUNDIALS)
     target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
