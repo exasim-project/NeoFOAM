@@ -24,9 +24,8 @@ namespace NeoFOAM::dsl
 
 // FIXME is that needed?
 template<typename FieldType>
-la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
-    la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution
-)
+la::LinearSystem<typename FieldType::ElementType, int>
+ginkgoMatrix(la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution)
 {
     using ValueType = typename FieldType::ElementType;
     Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
