@@ -208,9 +208,9 @@ private:
  * @class CollectionMixin
  * @brief A mixin class for collection of documents in a database to simplify the implementation of
  * common operations.
- * @tparam DocumentType The type of documents stored in the collection.
+ * @tparam CollectionType The collection type specialised for handling specific document types.
  */
-template<typename DocumentType>
+template<typename CollectionType>
 class CollectionMixin
 {
 
@@ -312,7 +312,7 @@ public:
      *
      * @return std::string The type name of the documents.
      */
-    std::string type() const { return DocumentType::typeName(); }
+    std::string type() const { return CollectionType::typeName(); }
 
     /**
      * @brief Gets the sorted keys of the documents in the collection.
@@ -332,9 +332,10 @@ public:
 
 protected:
 
-    std::unordered_map<std::string, DocumentType> docs_; ///< The map of document IDs to documents.
-    NeoFOAM::Database& db_;                              ///< The reference to the database.
-    std::string name_;                                   ///< The name of the collection.
+    std::unordered_map<std::string, CollectionType>
+        docs_;              ///< The map of document IDs to documents.
+    NeoFOAM::Database& db_; ///< The reference to the database.
+    std::string name_;      ///< The name of the collection.
 };
 
 } // namespace NeoFOAM

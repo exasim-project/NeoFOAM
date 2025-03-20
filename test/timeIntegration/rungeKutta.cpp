@@ -12,7 +12,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
