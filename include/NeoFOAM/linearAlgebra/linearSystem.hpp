@@ -92,7 +92,7 @@ public:
 
     [[nodiscard]] LinearSystemView<const ValueType, const IndexType> view() const&
     {
-        return LinearSystemView<ValueType, IndexType>(
+        return LinearSystemView<const ValueType, const IndexType>(
             matrix_.view(), rhs_.span() //, sparsityPattern_
         );
     }
