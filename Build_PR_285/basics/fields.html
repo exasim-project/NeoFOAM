@@ -305,8 +305,22 @@
 <section id="the-field-valuetype-class">
 <h2>The Field&lt;ValueType&gt; class<a class="headerlink" href="#the-field-valuetype-class" title="Link to this heading">¶</a></h2>
 <p>The Field class is the basic container class and is the central elements for implementing a platform portable CFD framework.
-Fields should allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.</p>
-<p>In the following, some implementation details of the field operations are detailed using the additions operator as an example.
+One of the key differences between accessing the elements of a Field and a typically <code class="docutils literal notranslate"><span class="pre">std</span></code> sequential data containers is the lack of a subscript, or direct element access, operators.
+This is due to preventing accidental access to device memory from the host.
+The correct procedure to access a Field elements is indirectly through a <code class="docutils literal notranslate"><span class="pre">span</span></code>, see below</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// Host Fields</span>
+<span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">hostField</span><span class="p">(</span><span class="n">Executor</span><span class="o">::</span><span class="n">CPUExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">size_</span><span class="p">);</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">hostFieldSpan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hostField</span><span class="p">.</span><span class="n">span</span><span class="p">();</span>
+<span class="n">hostFieldSpan</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="c1">// assuming size_ &gt; 2.</span>
+
+<span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">deviceField</span><span class="p">(</span><span class="n">Executor</span><span class="o">::</span><span class="n">GPUExecutor</span><span class="p">,</span><span class="w"> </span><span class="n">size_</span><span class="p">);</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">deviceFieldOnHost</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">deviceField</span><span class="p">.</span><span class="n">copyToHost</span><span class="p">();</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">deviceFieldOnHostSpan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">deviceFieldOnHost</span><span class="p">.</span><span class="n">span</span><span class="p">();</span>
+<span class="n">deviceFieldOnHostSpan</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="c1">// assuming size_ &gt; 2.</span>
+</pre></div>
+</div>
+<p>Fields allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
+In the following, some implementation details of the field operations are detailed using the additions operator as an example.
 The block of code below shows an example implementation of the addition operator.</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="n">nodiscard</span><span class="p">]]</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="k">operator</span><span class="o">+</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Field</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">rhs</span><span class="p">)</span>
 <span class="p">{</span>
