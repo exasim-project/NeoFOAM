@@ -49,6 +49,7 @@ function(neofoam_unit_test TEST)
                  LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
                  ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
   else()
+    # cmake-lint: disable=C0307
     set_target_properties(${neofoam_COMMAND} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                                         ${neofoam_WORKING_DIRECTORY})
   endif()
