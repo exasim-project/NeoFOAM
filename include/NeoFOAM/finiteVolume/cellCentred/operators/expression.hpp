@@ -21,6 +21,7 @@ template<typename ValueType, typename IndexType = localIdx>
 la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
 {
     const auto [A, b] = ls.view();
+    // FIXME: A doeset have .exec();
     const auto& exec = A.exec();
 
     Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
