@@ -123,7 +123,7 @@ public:
           gamma_(gamma), laplacianOperatorStrategy_(nullptr) {};
 
 
-    void explicitOperation(Field<ValueType>& source)
+    void explicitOperation(Field<ValueType>& source) const
     {
         NF_ASSERT(laplacianOperatorStrategy_, "LaplacianOperatorStrategy not initialized");
         const auto operatorScaling = this->getCoefficient();

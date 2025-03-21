@@ -44,14 +44,14 @@ public:
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<ValueType> explicitOperation(size_t nCells)
+    Field<ValueType> explicitOperation(size_t nCells) const
     {
         Field<ValueType> source(exec_, nCells, zero<ValueType>());
         return explicitOperation(source);
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<ValueType> explicitOperation(Field<ValueType>& source)
+    Field<ValueType> explicitOperation(Field<ValueType>& source) const
     {
         for (auto& op : spatialOperators_)
         {
@@ -63,7 +63,7 @@ public:
         return source;
     }
 
-    Field<ValueType> explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
+    Field<ValueType> explicitOperation(Field<ValueType>& source, scalar t, scalar dt) const
     {
         for (auto& op : temporalOperators_)
         {
@@ -75,9 +75,12 @@ public:
         return source;
     }
 
+    // FIXME rename to asembleMatrixCoefficients ?
     /* @brief perform all implicit operation and accumulate the result */
     la::LinearSystem<ValueType, localIdx> implicitOperation()
     {
+	    // TODO: use an explicit constructor here
+	    // ie auto ls = LinearSystem(exec());
         auto ls = spatialOperators_[0].createEmptyLinearSystem();
         for (auto& op : spatialOperators_)
         {

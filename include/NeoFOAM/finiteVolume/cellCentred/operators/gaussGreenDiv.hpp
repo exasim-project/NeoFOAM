@@ -174,8 +174,8 @@ public:
     virtual void
     div(VolumeField<ValueType>& divPhi,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) override
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const  override
     {
         computeDiv<ValueType>(
             faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling
@@ -185,8 +185,8 @@ public:
     virtual void
     div(la::LinearSystem<ValueType, localIdx>& ls,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) override
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const override
     {
         const UnstructuredMesh& mesh = phi.mesh();
         const std::size_t nInternalFaces = mesh.nInternalFaces();
@@ -245,16 +245,16 @@ public:
     virtual void
     div(Field<ValueType>& divPhi,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) override
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const override
     {
         computeDiv<ValueType>(faceFlux, phi, surfaceInterpolation_, divPhi, operatorScaling);
     };
 
     virtual VolumeField<ValueType>
     div(const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) override
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const override
     {
         std::string name = "div(" + faceFlux.name + "," + phi.name + ")";
         VolumeField<ValueType> divPhi(

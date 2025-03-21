@@ -69,7 +69,7 @@ public:
         return *this;
     }
 
-    void explicitOperation(Field<ValueType>& source) { model_->explicitOperation(source); }
+    void explicitOperation(Field<ValueType>& source) const { model_->explicitOperation(source); }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {

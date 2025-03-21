@@ -100,7 +100,7 @@ public:
         // do nothing
     }
 
-    void explicitOperation(Field<ValueType>& source)
+    void explicitOperation(Field<ValueType>& source) const
     {
         NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>());
         const auto operatorScaling = this->getCoefficient();

@@ -30,7 +30,7 @@ public:
         ),
           sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
 
-    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
+    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt) const
     {
         const scalar dtInver = 1.0 / dt;
         const auto vol = this->getField().mesh().cellVolumes().span();

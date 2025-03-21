@@ -34,7 +34,7 @@ public:
           coefficients_(coefficients),
           sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
 
-    void explicitOperation(Field<ValueType>& source)
+    void explicitOperation(Field<ValueType>& source) const
     {
         auto operatorScaling = this->getCoefficient();
         const auto vol = coefficients_.mesh().cellVolumes().span();

@@ -70,7 +70,7 @@ public:
 
     TemporalOperator(TemporalOperator&& eqnOperator) : model_ {std::move(eqnOperator.model_)} {}
 
-    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
+    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt) const
     {
         model_->explicitOperation(source, t, dt);
     }
