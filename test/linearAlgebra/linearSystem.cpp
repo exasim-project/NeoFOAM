@@ -12,6 +12,13 @@
 
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
+using NeoFOAM::scalar;
+using NeoFOAM::localIdx;
+using NeoFOAM::Field;
+using NeoFOAM::la::LinearSystem;
+using NeoFOAM::la::CSRMatrix;
+using NeoFOAM::la::SpMV;
+
 TEST_CASE("LinearSystem")
 {
 
@@ -21,17 +28,13 @@ TEST_CASE("LinearSystem")
 
     SECTION("construct " + execName)
     {
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-            values, colIdx, rowPtrs
-        );
+        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
+        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
+        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 0.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
-            csrMatrix, rhs, "custom"
-        );
+        Field<scalar> rhs(exec, 3, 0.0);
+        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs, "custom");
 
         REQUIRE(linearSystem.matrix().values().size() == 9);
         REQUIRE(linearSystem.matrix().colIdxs().size() == 9);
@@ -43,19 +46,16 @@ TEST_CASE("LinearSystem")
 
     SECTION("view read/write " + execName)
     {
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-            values, colIdx, rowPtrs
-        );
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, {10.0, 20.0, 30.0});
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls(csrMatrix, rhs, "custom");
+        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
+        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
+        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
+        Field<scalar> rhs(exec, {10.0, 20.0, 30.0});
+        LinearSystem<scalar, localIdx> ls(csrMatrix, rhs, "custom");
 
         auto lsView = ls.view();
         auto hostLS = ls.copyToHost();
         auto hostLSView = hostLS.view();
-
 
         // some simple sanity checks
         REQUIRE(hostLSView.A.value.size() == 9);
@@ -66,16 +66,16 @@ TEST_CASE("LinearSystem")
         // check system values
         for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
         {
-            REQUIRE(hostLSView.A.value[i] == static_cast<NeoFOAM::scalar>(i + 1));
+            REQUIRE(hostLSView.A.value[i] == static_cast<scalar>(i + 1));
             REQUIRE(hostLSView.A.columnIndex[i] == (i % 3));
         }
         for (size_t i = 0; i < hostLSView.A.rowOffset.size(); ++i)
         {
-            REQUIRE(hostLSView.A.rowOffset[i] == static_cast<NeoFOAM::localIdx>(i * 3));
+            REQUIRE(hostLSView.A.rowOffset[i] == static_cast<localIdx>(i * 3));
         }
         for (size_t i = 0; i < hostLSView.b.size(); ++i)
         {
-            REQUIRE(hostLSView.b[i] == static_cast<NeoFOAM::scalar>((i + 1) * 10));
+            REQUIRE(hostLSView.b[i] == static_cast<scalar>((i + 1) * 10));
         }
 
         // Modify values.
@@ -97,44 +97,37 @@ TEST_CASE("LinearSystem")
         hostLSView = hostLS.view();
         for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
         {
-            REQUIRE(hostLSView.A.value[i] == -static_cast<NeoFOAM::scalar>(i + 1));
+            REQUIRE(hostLSView.A.value[i] == -static_cast<scalar>(i + 1));
         }
         for (size_t i = 0; i < hostLSView.b.size(); ++i)
         {
-            REQUIRE(hostLSView.b[i] == -static_cast<NeoFOAM::scalar>((i + 1) * 10));
+            REQUIRE(hostLSView.b[i] == -static_cast<scalar>((i + 1) * 10));
         }
     }
 
 
     SECTION("SpmV" + execName)
     {
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
-            values, colIdx, rowPtrs
-        );
+        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
+        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
+        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 0.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
-            csrMatrix, rhs, "testing"
-        );
-        NeoFOAM::Field<NeoFOAM::scalar> x(exec, {1.0, 2.0, 3.0});
+        Field<scalar> rhs(exec, 3, 0.0);
+        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs, "testing");
+        Field<scalar> x(exec, {1.0, 2.0, 3.0});
 
-        NeoFOAM::Field<NeoFOAM::scalar> y = NeoFOAM::la::SpMV(linearSystem, x);
+        Field<scalar> y = SpMV(linearSystem, x);
         auto yHost = y.copyToHost();
 
         REQUIRE(yHost[0] == 1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0);
         REQUIRE(yHost[1] == 4.0 * 1.0 + 5.0 * 2.0 + 6.0 * 3.0);
         REQUIRE(yHost[2] == 7.0 * 1.0 + 8.0 * 2.0 + 9.0 * 3.0);
 
-
         // test with non-zero rhs
-        NeoFOAM::Field<NeoFOAM::scalar> rhs2(exec, {1.0, 2.0, 3.0});
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem2(
-            csrMatrix, rhs2, "testing"
-        );
-        y = NeoFOAM::la::SpMV(linearSystem2, x);
+        Field<scalar> rhs2(exec, {1.0, 2.0, 3.0});
+        LinearSystem<scalar, localIdx> linearSystem2(csrMatrix, rhs2, "testing");
+        y = SpMV(linearSystem2, x);
         yHost = y.copyToHost();
 
         REQUIRE(yHost[0] == 14.0 - 1.0);
