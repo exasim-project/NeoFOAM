@@ -55,7 +55,7 @@ if(${NEOFOAM_WITH_ADIOS2})
   set(ADIOS2_KOKKOS_PATCH git apply ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/adios2_kokkos.patch)
 
   set(ADIOS2_OPTIONS
-      "BUILD_TYPE Release"
+      "BUILD_TYPE ${CMAKE_BUILD_TYPE}"
       "ADIOS2_USE_Kokkos ON"
       "Kokkos_DIR ${Kokkos_BINARY_DIR}"
       "ADIOS2_USE_Fortran OFF"
