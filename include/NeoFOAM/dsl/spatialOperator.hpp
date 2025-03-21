@@ -177,7 +177,7 @@ private:
             la::CSRMatrix<ValueType, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
             Field<ValueType> rhs(exec(), 1, zero<ValueType>());
-            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs, "custom");
+            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs);
         }
 
         /* @brief Given an input this function reads required coeffs */

@@ -181,7 +181,7 @@ private:
             NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
             NeoFOAM::Field<ValueType> rhs(exec(), 1, zero<ValueType>());
-            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs, "custom");
+            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs);
         }
 
         /* @brief Given an input this function reads required coeffs */

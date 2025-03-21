@@ -84,9 +84,7 @@ public:
         NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
         NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>());
-        NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(
-            csrMatrix, rhs, "diagonal"
-        );
+        NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
         return linearSystem;
     }
 
@@ -159,9 +157,7 @@ public:
         NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
 
         NeoFOAM::Field<ValueType> rhs(this->exec(), 1, NeoFOAM::zero<ValueType>());
-        NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(
-            csrMatrix, rhs, "diagonal"
-        );
+        NeoFOAM::la::LinearSystem<ValueType, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
         return linearSystem;
     }
 

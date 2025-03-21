@@ -34,7 +34,7 @@ TEST_CASE("LinearSystem")
         CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
         Field<scalar> rhs(exec, 3, 0.0);
-        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs, "custom");
+        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
 
         REQUIRE(linearSystem.matrix().values().size() == 9);
         REQUIRE(linearSystem.matrix().colIdxs().size() == 9);
@@ -51,7 +51,7 @@ TEST_CASE("LinearSystem")
         Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
         CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
         Field<scalar> rhs(exec, {10.0, 20.0, 30.0});
-        LinearSystem<scalar, localIdx> ls(csrMatrix, rhs, "custom");
+        LinearSystem<scalar, localIdx> ls(csrMatrix, rhs);
 
         auto lsView = ls.view();
         auto hostLS = ls.copyToHost();
@@ -114,7 +114,7 @@ TEST_CASE("LinearSystem")
         CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
         Field<scalar> rhs(exec, 3, 0.0);
-        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs, "testing");
+        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
         Field<scalar> x(exec, {1.0, 2.0, 3.0});
 
         Field<scalar> y = SpMV(linearSystem, x);
@@ -126,7 +126,7 @@ TEST_CASE("LinearSystem")
 
         // test with non-zero rhs
         Field<scalar> rhs2(exec, {1.0, 2.0, 3.0});
-        LinearSystem<scalar, localIdx> linearSystem2(csrMatrix, rhs2, "testing");
+        LinearSystem<scalar, localIdx> linearSystem2(csrMatrix, rhs2);
         y = SpMV(linearSystem2, x);
         yHost = y.copyToHost();
 

@@ -49,6 +49,7 @@ public:
         );
     }
 
+    // FIXME: remove?
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
@@ -62,7 +63,7 @@ public:
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
 
-        return {matrix, rhs, ls.sparsityPattern()};
+        return {matrix, rhs};
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)

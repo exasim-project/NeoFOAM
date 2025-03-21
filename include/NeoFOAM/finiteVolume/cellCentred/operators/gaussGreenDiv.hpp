@@ -155,6 +155,7 @@ public:
         : Base(exec, mesh), surfaceInterpolation_(exec, mesh, inputs),
           sparsityPattern_(SparsityPattern::readOrCreate(mesh)) {};
 
+    // FIXME: remove?
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
     {
         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
@@ -168,7 +169,7 @@ public:
         la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
 
-        return {matrix, rhs, ls.sparsityPattern()};
+        return {matrix, rhs};
     };
 
     virtual void
