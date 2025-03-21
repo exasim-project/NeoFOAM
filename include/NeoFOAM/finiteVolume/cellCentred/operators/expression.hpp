@@ -155,8 +155,7 @@ public:
             // however, this should be the correct solver dict
             auto exec = psi_.exec();
             auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
-            auto convertedLS = convertLinearSystem(ls_);
-            solver.solve(convertedLS, psi_.internalField());
+            solver.solve(ls_, psi_.internalField());
         }
     }
 

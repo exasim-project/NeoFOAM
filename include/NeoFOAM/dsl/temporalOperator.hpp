@@ -12,11 +12,8 @@
 #include "NeoFOAM/dsl/coeff.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
 
-namespace la = NeoFOAM::la;
-
 namespace NeoFOAM::dsl
 {
-
 
 template<typename T>
 concept HasTemporalExplicitOperator = requires(T t) {

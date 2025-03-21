@@ -47,8 +47,7 @@ public:
     ) override
     {
         auto source = eqn.explicitOperation(solutionField.size());
-        SolutionFieldType& oldSolutionField =
-            NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
+        SolutionFieldType& oldSolutionField = finiteVolume::cellCentred::oldTime(solutionField);
 
         // solutionField.internalField() = oldSolutionField.internalField() - source * dt;
         // solutionField.correctBoundaryConditions();
@@ -57,11 +56,10 @@ public:
         auto ls = eqn.implicitOperation();
         auto values = ls.matrix().values();
         eqn.implicitOperation(ls, t, dt);
-        auto ginkgoLs = NeoFOAM::dsl::ginkgoMatrix(ls, solutionField);
+	// FIXME if we dont convert is there anything needed to do on the rhs 
 
-
-        NeoFOAM::la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
-        solver.solve(ginkgoLs, solutionField.internalField());
+        la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
+        solver.solve(ls, solutionField.internalField());
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))

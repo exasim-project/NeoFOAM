@@ -26,13 +26,11 @@ struct LinearSystemView
 
     LinearSystemView(
         CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB
-        //, std::string_view inSparsityPattern
     )
-        : A(inA), b(inB) {}; //, sparsityPattern(inSparsityPattern) {};
+        : A(inA), b(inB) {};
 
     CSRMatrixView<ValueType, IndexType> A;
     std::span<ValueType> b;
-    // std::string_view sparsityPattern;
 };
 
 /**
@@ -117,7 +115,7 @@ Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& 
     std::span<IndexType> colIdxs = ls.matrix().colIdxs();
     std::span<IndexType> rowPtrs = ls.matrix().rowPtrs();
 
-    NeoFOAM::parallelFor(
+    parallelFor(
         ls.exec(),
         {0, ls.matrix().nRows()},
         KOKKOS_LAMBDA(const std::size_t rowi) {
@@ -136,34 +134,57 @@ Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& 
 };
 
 
-template<typename ValueType, typename SourceIndexType, typename DestIndexType = int>
-LinearSystem<ValueType, DestIndexType>
-convertLinearSystem(const LinearSystem<ValueType, SourceIndexType>& ls)
+template<typename ValueTypeIn, typename IndexTypeIn, typename ValueTypeOut, typename IndexTypeOut>
+LinearSystem<ValueTypeOut, IndexTypeOut>
+convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
 {
-
-    Field<ValueType> convertedValues(
-        ls.exec(), ls.matrix().values().data(), ls.matrix().values().size()
-    );
-    Field<DestIndexType> convertedColIdxs(ls.exec(), ls.matrix().colIdxs().size());
-    auto mColIdxsSpan = ls.matrix().colIdxs();
-    NeoFOAM::parallelFor(
-        convertedColIdxs, KOKKOS_LAMBDA(const size_t i) { return DestIndexType(mColIdxsSpan[i]); }
-    );
-
-    Field<DestIndexType> convertedRowPtrs(ls.exec(), ls.matrix().rowPtrs().size());
-
-    auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    NeoFOAM::parallelFor(
-        convertedRowPtrs, KOKKOS_LAMBDA(const size_t i) { return DestIndexType(mRowPtrsSpan[i]); }
-    );
-
-    Field<ValueType> convertedRhs(ls.exec(), ls.rhs().data(), ls.rhs().size());
-
-    la::CSRMatrix<ValueType, DestIndexType> matrix(
-        convertedValues, convertedColIdxs, convertedRowPtrs
-    );
-
-    return {matrix, convertedRhs, ls.sparsityPattern()};
+    auto exec = ls.exec();
+    Field<ValueTypeOut> convertedRhs(exec, ls.rhs().data(), ls.rhs().size());
+    return {convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut> (exec, ls.view.A), convertedRhs, ls.sparsityPattern()};
 }
+
+
+
+/* @brief given an expression and a solution field this function creates a linear system
+ */
+/*template<typename FieldType>*/
+/*LinearSystem<typename FieldType::ElementType, int>*/
+/*convertToLinearSystem(*/
+/*		Expression<typename FieldType::ElementType>& exp,*/
+/*		FieldType& solution)*/
+/*{*/
+/*    using ValueType = typename FieldType::ElementType;*/
+/**/
+/*    auto expTmp = exp.explicitOperation(solution.mesh().nCells());*/
+/*    Field<ValueType> rhsOut(solution.exec(), ls.rhs().data(), ls.rhs().size());*/
+/**/
+/*    auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, rhsOut);*/
+/**/
+/*    // subtract the explicit source term from the rhs*/
+/*    parallelFor(*/
+/*        solution.exec(),*/
+/*        {0, rhs.size()},*/
+/*        KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }*/
+/*    );*/
+/**/
+/*    return {convert<ValueType,localIdx,ValueType,int>(solution.exec(), ls.view().A), rhsOut, ls.sparsityPattern()};*/
+/*}*/
+
+// FIXME consolidate with linearSystem convert
+// FIXME is that needed? this seems to just make sure that row and col are in ints
+/*template<typename FieldType>*/
+/*LinearSystem<typename FieldType::ElementType, int>*/
+/*ginkgoMatrix(LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution)*/
+/*{*/
+/*    using ValueType = typename FieldType::ElementType;*/
+/*    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());*/
+/**/
+/*    LinearSystem<ValueType, int> convertedLs(convert<ValueType,localIdx,ValueType,int>(*/
+/*			    solution.exec(),*/
+/*			    ls.view().A*/
+/*			    ), rhs, ls.sparsityPattern());*/
+/*    return convertedLs;*/
+/*}*/
+
 
 } // namespace NeoFOAM::la

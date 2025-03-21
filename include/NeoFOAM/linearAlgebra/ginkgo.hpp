@@ -35,7 +35,7 @@ public:
           )
     {}
 
-    void solve(LinearSystem<ValueType, int>& sys, Field<ValueType>& x)
+    void solve(LinearSystem<ValueType, localIdx>& sys, Field<ValueType>& x)
     {
         size_t nrows = sys.rhs().size();
 

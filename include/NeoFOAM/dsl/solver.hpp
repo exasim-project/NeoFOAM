@@ -11,80 +11,18 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
 #if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #endif
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 
 namespace NeoFOAM::dsl
 {
-
-// FIXME is that needed? this seems to just make sure that row and col are in ints
-template<typename FieldType>
-la::LinearSystem<typename FieldType::ElementType, int>
-ginkgoMatrix(la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution)
-{
-    using ValueType = typename FieldType::ElementType;
-    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
-
-    Field<ValueType> mValues(
-        solution.exec(), ls.matrix().values().data(), ls.matrix().values().size()
-    );
-    Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
-    auto mColIdxsSpan = ls.matrix().colIdxs();
-    parallelFor(mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); });
-
-    Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
-    auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    parallelFor(mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); });
-
-    la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
-
-    la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
-    return convertedLs;
-}
-
-
-/* @brief given an expression and a solution field this function creates a linear system
- */
-template<typename FieldType>
-la::LinearSystem<typename FieldType::ElementType, int>
-convertToLinearSystem(Expression<typename FieldType::ElementType>& exp, FieldType& solution)
-{
-    using ValueType = typename FieldType::ElementType;
-
-    auto ls = exp.implicitOperation();
-    auto expTmp = exp.explicitOperation(solution.mesh().nCells());
-    Field<ValueType> rhsOut(solution.exec(), ls.rhs().data(), ls.rhs().size());
-
-    auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, rhsOut);
-
-    // subtract the explicit source term from the rhs
-    parallelFor(
-        solution.exec(),
-        {0, rhs.size()},
-        KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
-    );
-
-    Field<ValueType> mValues(
-        solution.exec(), ls.matrix().values().data(), ls.matrix().values().size()
-    );
-
-    Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
-    auto mColIdxsSpan = ls.matrix().colIdxs();
-    parallelFor(mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); });
-
-    Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
-    auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    parallelFor(mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); });
-
-    la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
-
-    return {matrix, rhsOut, ls.sparsityPattern()};
-}
 
 /* @brief solve an expression
  *
@@ -123,10 +61,21 @@ void solve(
     {
         // solve sparse matrix system
         using ValueType = typename FieldType::ElementType;
-        auto ls = convertToLinearSystem(exp, solution);
+	
+	auto lsTmp = exp.implicitOperation();
+	auto expTmp = exp.explicitOperation(solution.mesh().nCells());
 
-        la::ginkgo::Solver<ValueType> solver(solution.exec(), fvSolution);
-        solver.solve(ls, solution.internalField());
+        auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, lsTmp.rhs());
+
+    // subtract the explicit source term from the rhs
+    parallelFor(
+	solution.exec(),
+	{0, rhs.size()},
+	KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
+    );
+
+        auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
+        solver.solve(lsTmp, solution.internalField());
     }
 }
 

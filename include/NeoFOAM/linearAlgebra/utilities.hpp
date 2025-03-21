@@ -33,13 +33,13 @@ createGkoArray(std::shared_ptr<const gko::Executor> exec, std::span<const T> val
 }
 
 template<typename ValueType, typename IndexType>
-std::shared_ptr<gko::matrix::Csr<ValueType, IndexType>>
+std::shared_ptr<gko::matrix::Csr<ValueType, int>>
 createGkoMtx(std::shared_ptr<const gko::Executor> exec, LinearSystem<ValueType, IndexType>& sys)
 {
-    auto& mtx = sys.matrix();
     size_t nrows = sys.rhs().size();
+    auto mtx = convert<ValueType, IndexType, ValueType, int>(sys.exec(), sys.view().A);
 
-    return gko::share(gko::matrix::Csr<ValueType, IndexType>::create(
+    return gko::share(gko::matrix::Csr<ValueType, int>::create(
         exec,
         gko::dim<2> {nrows, nrows},
         createGkoArray(exec, mtx.values()),
