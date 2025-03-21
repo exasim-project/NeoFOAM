@@ -75,12 +75,12 @@ public:
         return source;
     }
 
-    // FIXME rename to asembleMatrixCoefficients ?
+    // FIXME rename to assembleMatrixCoefficients ?
     /* @brief perform all implicit operation and accumulate the result */
     la::LinearSystem<ValueType, localIdx> implicitOperation()
     {
-	    // TODO: use an explicit constructor here
-	    // ie auto ls = LinearSystem(exec());
+        // TODO: use an explicit constructor here
+        // ie auto ls = LinearSystem(exec());
         auto ls = spatialOperators_[0].createEmptyLinearSystem();
         for (auto& op : spatialOperators_)
         {

@@ -56,7 +56,7 @@ public:
         auto ls = eqn.implicitOperation();
         auto values = ls.matrix().values();
         eqn.implicitOperation(ls, t, dt);
-	// FIXME if we dont convert is there anything needed to do on the rhs 
+        // FIXME if we dont convert is there anything needed to do on the rhs
 
         la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ls, solutionField.internalField());

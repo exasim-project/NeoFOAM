@@ -24,9 +24,7 @@ struct LinearSystemView
     LinearSystemView() = default;
     ~LinearSystemView() = default;
 
-    LinearSystemView(
-        CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB
-    )
+    LinearSystemView(CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB)
         : A(inA), b(inB) {};
 
     CSRMatrixView<ValueType, IndexType> A;
@@ -140,9 +138,12 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
 {
     auto exec = ls.exec();
     Field<ValueTypeOut> convertedRhs(exec, ls.rhs().data(), ls.rhs().size());
-    return {convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut> (exec, ls.view.A), convertedRhs, ls.sparsityPattern()};
+    return {
+        convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut>(exec, ls.view.A),
+        convertedRhs,
+        ls.sparsityPattern()
+    };
 }
-
 
 
 /* @brief given an expression and a solution field this function creates a linear system
@@ -167,7 +168,8 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
 /*        KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }*/
 /*    );*/
 /**/
-/*    return {convert<ValueType,localIdx,ValueType,int>(solution.exec(), ls.view().A), rhsOut, ls.sparsityPattern()};*/
+/*    return {convert<ValueType,localIdx,ValueType,int>(solution.exec(), ls.view().A), rhsOut,
+ * ls.sparsityPattern()};*/
 /*}*/
 
 // FIXME consolidate with linearSystem convert

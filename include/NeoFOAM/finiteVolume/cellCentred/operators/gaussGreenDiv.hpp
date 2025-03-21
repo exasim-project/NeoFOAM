@@ -175,7 +175,7 @@ public:
     div(VolumeField<ValueType>& divPhi,
         const SurfaceField<scalar>& faceFlux,
         const VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) const  override
+        const dsl::Coeff operatorScaling) const override
     {
         computeDiv<ValueType>(
             faceFlux, phi, surfaceInterpolation_, divPhi.internalField(), operatorScaling

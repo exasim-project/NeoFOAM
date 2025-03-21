@@ -225,20 +225,21 @@ private:
  */
 template<typename ValueTypeIn, typename IndexTypeIn, typename ValueTypeOut, typename IndexTypeOut>
 la::CSRMatrix<ValueTypeOut, IndexTypeOut>
-convert(
-    const Executor exec,
-    const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> in
-)
+convert(const Executor exec, const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> in)
 {
     Field<IndexTypeOut> colIdxsTmp(exec, in.columnIndex.size());
     Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffset.size());
-    Field<ValueTypeOut> valuesTmp(
-        exec, in.value.data(), in.value.size()
-    );
+    Field<ValueTypeOut> valuesTmp(exec, in.value.data(), in.value.size());
 
-    parallelFor(colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.columnIndex[i]); });
-    parallelFor(rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffset[i]); });
-    parallelFor(valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.value[i]); });
+    parallelFor(
+        colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.columnIndex[i]); }
+    );
+    parallelFor(
+        rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffset[i]); }
+    );
+    parallelFor(
+        valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.value[i]); }
+    );
 
     return la::CSRMatrix<ValueTypeOut, IndexTypeOut> {valuesTmp, colIdxsTmp, rowPtrsTmp};
 }

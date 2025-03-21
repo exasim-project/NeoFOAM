@@ -61,18 +61,18 @@ void solve(
     {
         // solve sparse matrix system
         using ValueType = typename FieldType::ElementType;
-	
-	auto lsTmp = exp.implicitOperation();
-	auto expTmp = exp.explicitOperation(solution.mesh().nCells());
+
+        auto lsTmp = exp.implicitOperation();
+        auto expTmp = exp.explicitOperation(solution.mesh().nCells());
 
         auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, lsTmp.rhs());
 
-    // subtract the explicit source term from the rhs
-    parallelFor(
-	solution.exec(),
-	{0, rhs.size()},
-	KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
-    );
+        // subtract the explicit source term from the rhs
+        parallelFor(
+            solution.exec(),
+            {0, rhs.size()},
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
+        );
 
         auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
         solver.solve(lsTmp, solution.internalField());

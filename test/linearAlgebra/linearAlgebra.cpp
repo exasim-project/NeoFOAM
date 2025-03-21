@@ -37,10 +37,14 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         // TODO work on support for unsingned types
         NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
         NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
+        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
+            values, colIdx, rowPtrs
+        );
 
         NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 2.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs, "custom");
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(
+            csrMatrix, rhs, "custom"
+        );
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
         NeoFOAM::Dictionary solverDict {
