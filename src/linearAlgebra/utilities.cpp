@@ -4,6 +4,8 @@
 #include "NeoFOAM/linearAlgebra/utilities.hpp"
 
 
+#if NF_WITH_GINKGO
+
 namespace NeoFOAM::la
 {
 
@@ -17,3 +19,5 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
 }
 
 }
+
+#endif
