@@ -125,7 +125,9 @@ private:
  * @param message The error message to be included in the exception.
  */
 #define NF_THROW(message)                                                                          \
-    throw NeoFOAM::NeoFOAMException((std::stringstream() << NF_ERROR_MESSAGE(message)).str())
+    throw NeoFOAM::NeoFOAMException(                                                               \
+        (std::stringstream() << NF_ERROR_MESSAGE(std::string(message))).str()                      \
+    )
 
 /**
  * @def NF_ASSERT

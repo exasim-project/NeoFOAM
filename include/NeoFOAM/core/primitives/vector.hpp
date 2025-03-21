@@ -7,6 +7,8 @@
 
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/core/primitives/traits.hpp"
+
 
 namespace NeoFOAM
 {
@@ -35,6 +37,14 @@ public:
         cmpts_[0] = x;
         cmpts_[1] = y;
         cmpts_[2] = z;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    explicit Vector(const scalar constValue)
+    {
+        cmpts_[0] = constValue;
+        cmpts_[1] = constValue;
+        cmpts_[2] = constValue;
     }
 
     /**
@@ -143,14 +153,27 @@ Vector operator*(const scalar& sclr, Vector rhs)
 }
 
 KOKKOS_INLINE_FUNCTION
-Vector operator&(const Vector& lhs, Vector rhs)
+scalar operator&(const Vector& lhs, Vector rhs)
 {
-    return Vector(rhs[0] * lhs[0], rhs[1] * lhs[1], rhs[2] * lhs[2]);
+    return lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2];
 }
 
 KOKKOS_INLINE_FUNCTION
 scalar mag(const Vector& vec) { return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]); }
 
 std::ostream& operator<<(std::ostream& out, const Vector& vec);
+
+
+template<>
+KOKKOS_INLINE_FUNCTION Vector one<Vector>()
+{
+    return Vector(1.0, 1.0, 1.0);
+}
+
+template<>
+KOKKOS_INLINE_FUNCTION Vector zero<Vector>()
+{
+    return Vector(0.0, 0.0, 0.0);
+}
 
 } // namespace NeoFOAM

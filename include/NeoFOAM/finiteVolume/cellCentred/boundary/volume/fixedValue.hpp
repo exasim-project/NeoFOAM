@@ -22,8 +22,12 @@ void setFixedValue(
     DomainField<ValueType>& domainField, std::pair<size_t, size_t> range, ValueType fixedValue
 )
 {
-    auto refValue = domainField.boundaryField().refValue().span();
-    auto value = domainField.boundaryField().value().span();
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        domainField.boundaryField().refGrad(),
+        domainField.boundaryField().value(),
+        domainField.boundaryField().valueFraction(),
+        domainField.boundaryField().refValue()
+    );
 
     NeoFOAM::parallelFor(
         domainField.exec(),
@@ -31,6 +35,8 @@ void setFixedValue(
         KOKKOS_LAMBDA(const size_t i) {
             refValue[i] = fixedValue;
             value[i] = fixedValue;
+            valueFraction[i] = 1.0;      // only used refValue
+            refGradient[i] = fixedValue; // not used
         }
     );
 }
