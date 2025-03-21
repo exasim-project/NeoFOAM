@@ -45,9 +45,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
         Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
         Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        CSRMatrix<scalar, localIdx> csrMatrix(
-            values, colIdx, rowPtrs
-        );
+        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
         Field<scalar> rhs(exec, 3, 2.0);
         LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
@@ -55,8 +53,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
 
         Dictionary solverDict {
             {{"type", "solver::Cg"},
-             {"criteria",
-              Dictionary {{{"iteration", 20}, {"relative_residual_norm", 1e-7}}}}}
+             {"criteria", Dictionary {{{"iteration", 20}, {"relative_residual_norm", 1e-7}}}}}
         };
 
         // Create solver
