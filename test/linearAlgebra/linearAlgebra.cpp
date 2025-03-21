@@ -22,9 +22,18 @@ bool isNotKokkosThreads([[maybe_unused]] ExecSpace ex)
     return true;
 }
 
+using NeoFOAM::Executor;
+using NeoFOAM::Dictionary;
+using NeoFOAM::scalar;
+using NeoFOAM::localIdx;
+using NeoFOAM::Field;
+using NeoFOAM::la::LinearSystem;
+using NeoFOAM::la::CSRMatrix;
+using NeoFOAM::la::ginkgo::Solver;
+
 TEST_CASE("MatrixAssembly - Ginkgo")
 {
-    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
+    Executor exec = GENERATE(allAvailableExecutor());
 
     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
@@ -33,25 +42,25 @@ TEST_CASE("MatrixAssembly - Ginkgo")
     SECTION("Solve linear system " + execName)
     {
 
-        NeoFOAM::Field<NeoFOAM::scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(
+        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
+        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
+        CSRMatrix<scalar, localIdx> csrMatrix(
             values, colIdx, rowPtrs
         );
 
-        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, 3, 2.0);
-        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> linearSystem(csrMatrix, rhs);
-        NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
+        Field<scalar> rhs(exec, 3, 2.0);
+        LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
+        Field<scalar> x(exec, {0.0, 0.0, 0.0});
 
-        NeoFOAM::Dictionary solverDict {
+        Dictionary solverDict {
             {{"type", "solver::Cg"},
              {"criteria",
-              NeoFOAM::Dictionary {{{"iteration", 100}, {"relative_residual_norm", 1e-7}}}}}
+              Dictionary {{{"iteration", 20}, {"relative_residual_norm", 1e-7}}}}}
         };
 
         // Create solver
-        auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, solverDict);
+        auto solver = Solver<scalar>(exec, solverDict);
 
         // Solve system
         solver.solve(linearSystem, x);
