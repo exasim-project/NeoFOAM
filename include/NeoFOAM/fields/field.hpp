@@ -199,38 +199,6 @@ public:
     }
 
     /**
-     * @brief Subscript operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    ValueType& operator[](const size_t i) { return data_[i]; }
-
-    /**
-     * @brief Subscript operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& operator[](const size_t i) const { return data_[i]; }
-
-    /**
-     * @brief Function call operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    ValueType& operator()(const size_t i) { return data_[i]; }
-
-    /**
-     * @brief Function call operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& operator()(const size_t i) const { return data_[i]; }
-
-    /**
      * @brief Assignment operator, Sets the field values to that of the passed value.
      * @param rhs The value to set the field to.
      */
