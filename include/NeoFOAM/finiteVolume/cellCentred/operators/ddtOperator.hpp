@@ -34,7 +34,6 @@ public:
     {
         const scalar dtInver = 1.0 / dt;
         const auto vol = this->getField().mesh().cellVolumes().span();
-        auto operatorScaling = this->getCoefficient();
         auto [sourceSpan, field, oldField] =
             spans(source, this->field_.internalField(), oldTime(this->field_).internalField());
 
@@ -84,7 +83,7 @@ public:
         return {matrix, rhs};
     }
 
-    void build(const Input& input)
+    void build([[maybe_unused]] const Input& input)
     {
         // do nothing
     }

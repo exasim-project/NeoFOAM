@@ -29,18 +29,16 @@ const std::shared_ptr<SparsityPattern> SparsityPattern::readOrCreate(const Unstr
 void SparsityPattern::update()
 {
     const auto exec = mesh_.exec();
-    const localIdx nCells = mesh_.nCells();
+    const auto nCells = mesh_.nCells();
     const auto faceOwner = mesh_.faceOwner().span();
     const auto faceNeighbour = mesh_.faceNeighbour().span();
     const auto faceFaceCells = mesh_.boundaryMesh().faceCells().span();
-    const size_t nInternalFaces = mesh_.nInternalFaces();
+    const auto nInternalFaces = mesh_.nInternalFaces();
 
     // start with one to include the diagonal
     Field<localIdx> nFacesPerCell(exec, nCells, 1);
-    std::span<localIdx> nFacesPerCellSpan = nFacesPerCell.span();
-    std::span<uint8_t> neighbourOffsetSpan = neighbourOffset_.span();
-    std::span<uint8_t> ownerOffsetSpan = ownerOffset_.span();
-    std::span<uint8_t> diagOffsetSpan = diagOffset_.span();
+    auto [nFacesPerCellSpan, neighbourOffsetSpan, ownerOffsetSpan, diagOffsetSpan] =
+        spans(nFacesPerCell, neighbourOffset_, ownerOffset_, diagOffset_);
 
     // only the internalfaces define the sparsity pattern
     // get the number of faces per cell to allocate the correct size

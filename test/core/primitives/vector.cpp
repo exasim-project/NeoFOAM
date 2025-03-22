@@ -53,17 +53,16 @@ TEST_CASE("Primitives")
     SECTION("Vector", "[Traits]")
     {
 
-        auto one1 = NeoFOAM::one<NeoFOAM::scalar>();
-        // auto one = one<scalar>();
+        auto one = NeoFOAM::one<NeoFOAM::Vector>();
 
-        // REQUIRE(one(0) == 1.0);
-        // REQUIRE(one(1) == 1.0);
-        // REQUIRE(one(2) == 1.0);
+        REQUIRE(one(0) == 1.0);
+        REQUIRE(one(1) == 1.0);
+        REQUIRE(one(2) == 1.0);
 
-        // auto zero = NeoFOAM::zero<NeoFOAM::Vector>::value;
+        auto zero = NeoFOAM::zero<NeoFOAM::Vector>();
 
-        // REQUIRE(zero(0) == 0.0);
-        // REQUIRE(zero(1) == 0.0);
-        // REQUIRE(zero(2) == 0.0);
+        REQUIRE(zero(0) == 0.0);
+        REQUIRE(zero(1) == 0.0);
+        REQUIRE(zero(2) == 0.0);
     }
 }

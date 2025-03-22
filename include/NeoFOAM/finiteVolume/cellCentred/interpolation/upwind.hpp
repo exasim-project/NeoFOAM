@@ -82,7 +82,7 @@ class Upwind : public SurfaceInterpolationFactory<ValueType>::template Register<
 
 public:
 
-    Upwind(const Executor& exec, const UnstructuredMesh& mesh, Input input)
+    Upwind(const Executor& exec, const UnstructuredMesh& mesh, [[maybe_unused]] Input input)
         : Base(exec, mesh), geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
     static std::string name() { return "upwind"; }
@@ -91,7 +91,10 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void interpolate(const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst) const override
+    void interpolate(
+        [[maybe_unused]] const VolumeField<ValueType>& src,
+        [[maybe_unused]] SurfaceField<ValueType>& dst
+    ) const override
     {
         NF_ERROR_EXIT("limited scheme require a faceFlux");
     }

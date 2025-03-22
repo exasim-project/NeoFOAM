@@ -16,12 +16,13 @@ namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from a __device__ function is not allowed
+// NOTE: patchID was removed since it was unused
+// I guess it was replaced by range
 template<typename ValueType>
 void setGradientValue(
     DomainField<ValueType>& domainField,
     const UnstructuredMesh& mesh,
     std::pair<size_t, size_t> range,
-    size_t patchID,
     ValueType fixedGradient
 )
 {
@@ -70,9 +71,7 @@ public:
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final
     {
-        detail::setGradientValue(
-            domainField, mesh_, this->range(), this->patchID(), fixedGradient_
-        );
+        detail::setGradientValue(domainField, mesh_, this->range(), fixedGradient_);
     }
 
     static std::string name() { return "fixedGradient"; }

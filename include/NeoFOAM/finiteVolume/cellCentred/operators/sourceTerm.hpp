@@ -86,7 +86,7 @@ public:
     }
 
 
-    void build(const Input& input)
+    void build([[maybe_unused]] const Input& input)
     {
         // do nothing
     }

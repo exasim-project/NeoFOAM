@@ -89,9 +89,7 @@ public:
     }
 
     void interpolate(
-        const SurfaceField<scalar>& flux,
-        const VolumeField<ValueType>& src,
-        SurfaceField<ValueType>& dst
+        const SurfaceField<scalar>&, const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst
     ) const override
     {
         interpolate(src, dst);

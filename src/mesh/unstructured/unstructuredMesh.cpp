@@ -153,8 +153,8 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
     labelField faceOwnerHost(hostExec, nCells + 1);
     labelField faceNeighbor(exec, nCells - 1);
-    faceOwnerHost[nCells - 1] = 0;      // left boundary face
-    faceOwnerHost[nCells] = nCells - 1; // right boundary face
+    faceOwnerHost[nCells - 1] = 0;                          // left boundary face
+    faceOwnerHost[nCells] = static_cast<label>(nCells) - 1; // right boundary face
     auto faceOwner = faceOwnerHost.copyToExecutor(exec);
 
     // loop over internal faces
