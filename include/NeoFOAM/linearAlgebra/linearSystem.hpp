@@ -133,48 +133,26 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
     };
 }
 
+// FIXME: implement this
+/* @brief creates a zero initialised linear system based on given sparsity pattern */
+//     template<typename ValueType, typename IndexType>
+//     LinearSystem<ValueType, IndexType> createEmptyLinearSystem(
+//                                         const UnstructuredMesh& mesh
+// ) const
+//     {
+//         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
+//         auto [A, b] = ls.view();
+//         const auto& exec = ls.exec();
 
-/* @brief given an expression and a solution field this function creates a linear system
- */
-/*template<typename FieldType>*/
-/*LinearSystem<typename FieldType::ElementType, int>*/
-/*convertToLinearSystem(*/
-/*		Expression<typename FieldType::ElementType>& exp,*/
-/*		FieldType& solution)*/
-/*{*/
-/*    using ValueType = typename FieldType::ElementType;*/
-/**/
-/*    auto expTmp = exp.explicitOperation(solution.mesh().nCells());*/
-/*    Field<ValueType> rhsOut(solution.exec(), ls.rhs().data(), ls.rhs().size());*/
-/**/
-/*    auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, rhsOut);*/
-/**/
-/*    // subtract the explicit source term from the rhs*/
-/*    parallelFor(*/
-/*        solution.exec(),*/
-/*        {0, rhs.size()},*/
-/*        KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }*/
-/*    );*/
-/**/
-/*    return {convert<ValueType,localIdx,ValueType,int>(solution.exec(), ls.view().A), rhsOut,
- * ls.sparsityPattern()};*/
-/*}*/
+//         Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+//         Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+//         Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
-// FIXME consolidate with linearSystem convert
-// FIXME is that needed? this seems to just make sure that row and col are in ints
-/*template<typename FieldType>*/
-/*LinearSystem<typename FieldType::ElementType, int>*/
-/*ginkgoMatrix(LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution)*/
-/*{*/
-/*    using ValueType = typename FieldType::ElementType;*/
-/*    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());*/
-/**/
-/*    LinearSystem<ValueType, int> convertedLs(convert<ValueType,localIdx,ValueType,int>(*/
-/*			    solution.exec(),*/
-/*			    ls.view().A*/
-/*			    ), rhs, ls.sparsityPattern());*/
-/*    return convertedLs;*/
-/*}*/
+//         la::CSRMatrix<ValueType, IndexType> matrix(values, mColIdxs, mRowPtrs);
+//         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
+
+//         return {matrix, rhs};
+//     }
 
 
 } // namespace NeoFOAM::la
