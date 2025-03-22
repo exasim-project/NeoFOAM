@@ -69,7 +69,7 @@ class Uncorrected :
 
 public:
 
-    Uncorrected(const Executor& exec, const UnstructuredMesh& mesh, Input input)
+    Uncorrected(const Executor& exec, const UnstructuredMesh& mesh, Input)
         : Base(exec, mesh), geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
     Uncorrected(const Executor& exec, const UnstructuredMesh& mesh)

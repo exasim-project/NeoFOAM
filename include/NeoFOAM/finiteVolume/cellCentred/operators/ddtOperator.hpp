@@ -30,7 +30,7 @@ public:
         ),
           sparsityPattern_(SparsityPattern::readOrCreate(field.mesh())) {};
 
-    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt) const
+    void explicitOperation(Field<ValueType>& source, scalar, scalar dt) const
     {
         const scalar dtInver = 1.0 / dt;
         const auto vol = this->getField().mesh().cellVolumes().span();
@@ -46,7 +46,7 @@ public:
         );
     }
 
-    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar, scalar dt)
     {
         const scalar dtInver = 1.0 / dt;
         const auto vol = this->getField().mesh().cellVolumes().span();
