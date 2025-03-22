@@ -22,11 +22,10 @@ Besides these container like field classes several finite volume specific field 
 
 The Field<ValueType> class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-The Field class is the basic container class and is the central elements for implementing a platform portable CFD framework.
-One of the key differences between accessing the elements of a Field and a typically ``std`` sequential data containers is the lack of a subscript, or direct element access, operators.
-This is due to preventing accidental access to device memory from the host.
-The correct procedure to access a Field elements is indirectly through a ``span``, see below
-
+The Field class is the basic container class and is the central component for implementing a platform portable CFD framework.
+One of the key differences between accessing the elements of a ``Field`` and typical ``std`` sequential data containers is the lack of subscript or direct element access operators.
+This is to prevent accidental access to device memory from the host.
+The correct procedure to access ``Field`` elements is indirectly through a ``span``, as shown below:
 .. code-block:: cpp
 
     // Host Fields
@@ -34,12 +33,13 @@ The correct procedure to access a Field elements is indirectly through a ``span`
     auto hostFieldSpan = hostField.span();
     hostFieldSpan[1] = 1; // assuming size_ > 2.
 
+    // Device Fields
     Field<T> deviceField(Executor::GPUExecutor, size_);
     auto deviceFieldOnHost = deviceField.copyToHost();
     auto deviceFieldOnHostSpan = deviceFieldOnHost.span();
     deviceFieldOnHostSpan[1] = 1; // assuming size_ > 2.
 
-Fields allow to perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
+Fields perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
 In the following, some implementation details of the field operations are detailed using the additions operator as an example.
 The block of code below shows an example implementation of the addition operator.
 
