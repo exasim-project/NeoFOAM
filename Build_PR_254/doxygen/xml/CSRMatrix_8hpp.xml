@@ -402,6 +402,8 @@
         <link refid="linearSystem_8hpp"/>
         <childnode refid="11" relation="include">
         </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
         <childnode refid="18" relation="include">
         </childnode>
         <childnode refid="28" relation="include">
@@ -595,7 +597,33 @@
 <codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexType&gt;</ref><sp/>rowOffset_;<sp/><sp/><sp/></highlight></codeline>
 <codeline lineno="220"><highlight class="normal">};</highlight></codeline>
 <codeline lineno="221"><highlight class="normal"></highlight></codeline>
-<codeline lineno="222"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="222"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>given<sp/>a<sp/>csr<sp/>matrix<sp/>this<sp/>function<sp/>copies<sp/>the<sp/>matrix<sp/>and<sp/>converts<sp/>to<sp/>requested<sp/>target<sp/>types</highlight></codeline>
+<codeline lineno="223"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="224"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="225"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueTypeIn,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexTypeIn,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueTypeOut,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexTypeOut&gt;</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><ref refid="classNeoFOAM_1_1la_1_1CSRMatrix" kindref="compound">la::CSRMatrix&lt;ValueTypeOut, IndexTypeOut&gt;</ref></highlight></codeline>
+<codeline lineno="228" refid="namespaceNeoFOAM_1_1la_1ad2b56043f07e635e944df6d43a1f4701" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1_1la_1ad2b56043f07e635e944df6d43a1f4701" kindref="member">convert</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aaa4d35d275559f501cb6a1eec717c905" kindref="member">Executor</ref><sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView" kindref="compound">la::CSRMatrixView&lt;ValueTypeIn, IndexTypeIn&gt;</ref><sp/>in)</highlight></codeline>
+<codeline lineno="229"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexTypeOut&gt;</ref><sp/>colIdxsTmp(exec,<sp/>in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a05c3335faba6da1cc8a35bdf21dac238" kindref="member">columnIndex</ref>.size());</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;IndexTypeOut&gt;</ref><sp/>rowPtrsTmp(exec,<sp/>in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a25681ea942414fee98d49760e6def949" kindref="member">rowOffset</ref>.size());</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueTypeOut&gt;</ref><sp/>valuesTmp(exec,<sp/>in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a73ef5870dc767c9d992057363abf861f" kindref="member">value</ref>.data(),<sp/>in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a73ef5870dc767c9d992057363abf861f" kindref="member">value</ref>.size());</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"></highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">parallelFor</ref>(</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>colIdxsTmp,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>IndexTypeOut(in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a05c3335faba6da1cc8a35bdf21dac238" kindref="member">columnIndex</ref>[i]);<sp/>}</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">parallelFor</ref>(</highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rowPtrsTmp,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>IndexTypeOut(in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a25681ea942414fee98d49760e6def949" kindref="member">rowOffset</ref>[i]);<sp/>}</highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">parallelFor</ref>(</highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>valuesTmp,<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>ValueTypeOut(in.<ref refid="structNeoFOAM_1_1la_1_1CSRMatrixView_1a73ef5870dc767c9d992057363abf861f" kindref="member">value</ref>[i]);<sp/>}</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"></highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1la_1_1CSRMatrix" kindref="compound">la::CSRMatrix&lt;ValueTypeOut, IndexTypeOut&gt;</ref><sp/>{valuesTmp,<sp/>colIdxsTmp,<sp/>rowPtrsTmp};</highlight></codeline>
+<codeline lineno="245"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"></highlight></codeline>
+<codeline lineno="247"><highlight class="normal"></highlight></codeline>
+<codeline lineno="248"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/CSRMatrix.hpp"/>
   </compounddef>

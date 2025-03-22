@@ -51,37 +51,35 @@
 \DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00047}00047\ \ \ \ \ )\textcolor{keyword}{\ override}}
 \DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00048}00048\ \textcolor{keyword}{\ \ \ \ }\{}
 \DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ source\ =\ eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_aaafab32b855fada13b28497d08359428}{explicitOperation}}(solutionField.size());}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ SolutionFieldType\&\ oldSolutionField\ =}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_a4400b455f0b411d00432715774a8381c}{NeoFOAM::finiteVolume::cellCentred::oldTime}}(solutionField);}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00052}00052\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solutionField.internalField()\ =\ oldSolutionField.internalField()\ -\/\ source\ *\ dt;}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solutionField.correctBoundaryConditions();}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solve\ sparse\ matrix\ system}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1BackwardEuler_aeadcca2903670efd6dfa84387fea9e13}{ValueType}}\ =\ \textcolor{keyword}{typename}\ SolutionFieldType::ElementType;}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ls\ =\ eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a5d88a8cdfe2435b316c0f1c790736c2a}{implicitOperation}}();}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ values\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().\mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrix_ae19e42f39730deb0ef5540ec71e2fca3}{values}}();}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a5d88a8cdfe2435b316c0f1c790736c2a}{implicitOperation}}(ls,\ t,\ dt);}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ginkgoLs\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1dsl_a0bd1fd64c38801b7749ec0460348ae6d}{NeoFOAM::dsl::ginkgoMatrix}}(ls,\ solutionField);}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00061}00061\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00062}00062\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ NeoFOAM::la::ginkgo::Solver<ValueType>\ solver(solutionField.exec(),\ this-\/>solutionDict\_);}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ solver.solve(ginkgoLs,\ solutionField.internalField());}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00065}00065\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ executor\ is\ GPU}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a5d340fdd02be696d5a773e7b96c8902d}{exec}}()))}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::fence();}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ oldSolutionField.internalField()\ =\ solutionField.internalField();}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00072}00072\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00074}\mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1BackwardEuler_a4bca6e04f303dc5925eaad20ba1d5ded}{00074}}\ \ \ \ \ std::unique\_ptr<TimeIntegratorBase<SolutionFieldType>>\ \mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1BackwardEuler_a4bca6e04f303dc5925eaad20ba1d5ded}{clone}}()\textcolor{keyword}{\ const\ override}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00075}00075\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<BackwardEuler>(*\textcolor{keyword}{this});}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00077}00077\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00078}00078\ \};}
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00079}00079\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00080}00080\ }
-\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00081}00081\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ SolutionFieldType\&\ oldSolutionField\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_a4400b455f0b411d00432715774a8381c}{finiteVolume::cellCentred::oldTime}}(solutionField);}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solutionField.internalField()\ =\ oldSolutionField.internalField()\ -\/\ source\ *\ dt;}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solutionField.correctBoundaryConditions();}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ solve\ sparse\ matrix\ system}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1BackwardEuler_aeadcca2903670efd6dfa84387fea9e13}{ValueType}}\ =\ \textcolor{keyword}{typename}\ SolutionFieldType::ElementType;}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ls\ =\ eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a5d88a8cdfe2435b316c0f1c790736c2a}{implicitOperation}}();}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ values\ =\ ls.\mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem_abcd18e32cbc6b2acc80bb31209d912bf}{matrix}}().\mbox{\hyperlink{classNeoFOAM_1_1la_1_1CSRMatrix_ae19e42f39730deb0ef5540ec71e2fca3}{values}}();}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a5d88a8cdfe2435b316c0f1c790736c2a}{implicitOperation}}(ls,\ t,\ dt);}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ if\ we\ dont\ convert\ is\ there\ anything\ needed\ to\ do\ on\ the\ rhs}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ la::ginkgo::Solver<ValueType>\ solver(solutionField.exec(),\ this-\/>solutionDict\_);}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ solver.solve(ls,\ solutionField.internalField());}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ executor\ is\ GPU}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (std::holds\_alternative<NeoFOAM::GPUExecutor>(eqn.\mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression_a5d340fdd02be696d5a773e7b96c8902d}{exec}}()))}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::fence();}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ oldSolutionField.internalField()\ =\ solutionField.internalField();}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00070}00070\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00072}\mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1BackwardEuler_a4bca6e04f303dc5925eaad20ba1d5ded}{00072}}\ \ \ \ \ std::unique\_ptr<TimeIntegratorBase<SolutionFieldType>>\ \mbox{\hyperlink{classNeoFOAM_1_1timeIntegration_1_1BackwardEuler_a4bca6e04f303dc5925eaad20ba1d5ded}{clone}}()\textcolor{keyword}{\ const\ override}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00073}00073\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<BackwardEuler>(*\textcolor{keyword}{this});}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00075}00075\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00076}00076\ \};}
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00077}00077\ }
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{backwardEuler_8hpp_source_l00079}00079\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
