@@ -7,7 +7,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-namespace dsl = NeoFOAM::dsl;
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 namespace NeoFOAM
