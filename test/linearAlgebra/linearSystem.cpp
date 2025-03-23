@@ -21,10 +21,7 @@ using NeoFOAM::la::SpMV;
 
 TEST_CASE("LinearSystem")
 {
-
-    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("construct " + execName)
     {

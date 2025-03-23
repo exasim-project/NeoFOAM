@@ -16,9 +16,7 @@
 
 TEST_CASE("CSRMatrix")
 {
-
-    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     // sparse matrix
     NeoFOAM::Field<NeoFOAM::scalar> valuesSparse(exec, {1.0, 5.0, 6.0, 8.0});

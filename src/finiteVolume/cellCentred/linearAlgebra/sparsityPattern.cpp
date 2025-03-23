@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 #include "NeoFOAM/fields/segmentedField.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -40,6 +40,7 @@ void SparsityPattern::update()
     auto [nFacesPerCellSpan, neighbourOffsetSpan, ownerOffsetSpan, diagOffsetSpan] =
         spans(nFacesPerCell, neighbourOffset_, ownerOffset_, diagOffset_);
 
+    // accumulate number non-zeros per row
     // only the internalfaces define the sparsity pattern
     // get the number of faces per cell to allocate the correct size
     parallelFor(
@@ -56,6 +57,7 @@ void SparsityPattern::update()
     );
 
 
+    // get number of total non-zeros
     Field<localIdx> rowPtrs(exec, nCells + 1, 0);
     auto nEntries = NeoFOAM::segmentsFromIntervals(nFacesPerCell, rowPtrs);
     NeoFOAM::Field<NeoFOAM::scalar> values(exec, nEntries, 0.0);

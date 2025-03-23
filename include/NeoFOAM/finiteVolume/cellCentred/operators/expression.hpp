@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
+// TODO: move to cellCenred dsl?
 
 #pragma once
 
@@ -8,15 +9,14 @@
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
-
-
-#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 // TODO extend sparsity pattern to return the correct type
+// FIXME not needed because conversion happens just before passing to gko
 template<typename ValueType, typename IndexType = localIdx>
 la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
 {
@@ -32,6 +32,12 @@ la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, In
     return {matrix, rhs, ls.sparsityPattern()};
 }
 
+/*@brief extends expression by giving access to assembled matrix
+ * @note used in neoIcoFOAM directly instead of dsl::expression
+ * TODO: implement flag if matrix is assembled or not -> if not assembled call assemble
+ * for dependent operations like discrete momentum fields
+ * needs storage for assembled matrix? and whether update is needed like for rAU and HbyA
+ */
 template<typename ValueType, typename IndexType = localIdx>
 class Expression
 {
@@ -83,6 +89,7 @@ public:
 
     const Executor& exec() const { return ls_.exec(); }
 
+
     void assemble(scalar t, scalar dt)
     {
         auto vol = psi_.mesh().cellVolumes().span();
@@ -91,6 +98,7 @@ public:
         auto expSourceSpan = expSource.span();
 
         ls_ = expr_.implicitOperation();
+        // TODO rename implicitOperation -> assembleLinearSystem
         expr_.implicitOperation(ls_, t, dt);
         auto rhs = ls_.rhs().span();
         // we subtract the explicit source term from the rhs

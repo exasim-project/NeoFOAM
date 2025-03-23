@@ -11,8 +11,7 @@
 TEST_CASE("Field<scalar>::addition", "[bench]")
 {
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
-    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     DYNAMIC_SECTION("" << size)
     {
@@ -31,8 +30,7 @@ TEST_CASE("Field<scalar>::multiplication", "[bench]")
 {
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
 
-    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     DYNAMIC_SECTION("" << size)
     {

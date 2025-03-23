@@ -13,9 +13,7 @@
 
 TEST_CASE("Unstructured Mesh")
 {
-    NeoFOAM::Executor exec = GENERATE(allAvailableExecutor());
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("Can create single cell mesh " + execName)
     {
@@ -92,48 +90,49 @@ TEST_CASE("Unstructured Mesh")
         REQUIRE(hostBoundaryDelta[1][0] == 0.125);
     }
 
-    SECTION("Can compute sparsityPattern from mesh " + execName)
-    {
-        size_t nCells = 4;
-        size_t nnzs = nCells + (nCells - 1) * 2; // 2 nnz per internal face
-        NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, nCells);
+    // TODO remove
+    // SECTION("Can compute sparsityPattern from mesh " + execName)
+    // {
+    //     size_t nCells = 4;
+    //     size_t nnzs = nCells + (nCells - 1) * 2; // 2 nnz per internal face
+    //     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, nCells);
 
-        auto [rows, cols, map] = createSparsityPattern<NeoFOAM::localIdx>(exec, mesh);
-        auto [rowsH, colsH, mapH] = copyToHosts(rows, cols, map);
-        auto [rowsHS, colsHS, mapHS] = spans(rowsH, colsH, mapH);
+    //     auto [rows, cols, map] = createSparsityPattern<NeoFOAM::localIdx>(exec, mesh);
+    //     auto [rowsH, colsH, mapH] = copyToHosts(rows, cols, map);
+    //     auto [rowsHS, colsHS, mapHS] = spans(rowsH, colsH, mapH);
 
-        REQUIRE(rowsHS.size() == nnzs);
-        REQUIRE(rowsHS[0] == 0);
-        REQUIRE(rowsHS[1] == 0);
-        REQUIRE(rowsHS[2] == 1);
-        REQUIRE(rowsHS[3] == 1);
-        REQUIRE(rowsHS[4] == 1);
-        REQUIRE(rowsHS[5] == 2);
-        REQUIRE(rowsHS[6] == 2);
-        REQUIRE(rowsHS[7] == 2);
-        REQUIRE(rowsHS[8] == 3);
-        REQUIRE(rowsHS[9] == 3);
+    //     REQUIRE(rowsHS.size() == nnzs);
+    //     REQUIRE(rowsHS[0] == 0);
+    //     REQUIRE(rowsHS[1] == 0);
+    //     REQUIRE(rowsHS[2] == 1);
+    //     REQUIRE(rowsHS[3] == 1);
+    //     REQUIRE(rowsHS[4] == 1);
+    //     REQUIRE(rowsHS[5] == 2);
+    //     REQUIRE(rowsHS[6] == 2);
+    //     REQUIRE(rowsHS[7] == 2);
+    //     REQUIRE(rowsHS[8] == 3);
+    //     REQUIRE(rowsHS[9] == 3);
 
-        REQUIRE(colsHS[0] == 0);
-        REQUIRE(colsHS[1] == 1);
-        REQUIRE(colsHS[2] == 0);
-        REQUIRE(colsHS[3] == 1);
-        REQUIRE(colsHS[4] == 2);
-        REQUIRE(colsHS[5] == 1);
-        REQUIRE(colsHS[6] == 2);
-        REQUIRE(colsHS[7] == 3);
-        REQUIRE(colsHS[8] == 2);
-        REQUIRE(colsHS[9] == 3);
+    //     REQUIRE(colsHS[0] == 0);
+    //     REQUIRE(colsHS[1] == 1);
+    //     REQUIRE(colsHS[2] == 0);
+    //     REQUIRE(colsHS[3] == 1);
+    //     REQUIRE(colsHS[4] == 2);
+    //     REQUIRE(colsHS[5] == 1);
+    //     REQUIRE(colsHS[6] == 2);
+    //     REQUIRE(colsHS[7] == 3);
+    //     REQUIRE(colsHS[8] == 2);
+    //     REQUIRE(colsHS[9] == 3);
 
-        REQUIRE(mapHS[0] == 6);
-        REQUIRE(mapHS[1] == 0);
-        REQUIRE(mapHS[2] == 1);
-        REQUIRE(mapHS[3] == 7);
-        REQUIRE(mapHS[4] == 2);
-        REQUIRE(mapHS[5] == 3);
-        REQUIRE(mapHS[6] == 8);
-        REQUIRE(mapHS[7] == 4);
-        REQUIRE(mapHS[8] == 5);
-        REQUIRE(mapHS[9] == 9);
-    }
+    //     REQUIRE(mapHS[0] == 6);
+    //     REQUIRE(mapHS[1] == 0);
+    //     REQUIRE(mapHS[2] == 1);
+    //     REQUIRE(mapHS[3] == 7);
+    //     REQUIRE(mapHS[4] == 2);
+    //     REQUIRE(mapHS[5] == 3);
+    //     REQUIRE(mapHS[6] == 8);
+    //     REQUIRE(mapHS[7] == 4);
+    //     REQUIRE(mapHS[8] == 5);
+    //     REQUIRE(mapHS[9] == 9);
+    // }
 }

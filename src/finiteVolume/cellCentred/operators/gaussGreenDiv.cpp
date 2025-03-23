@@ -7,6 +7,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+// FIXME move implementation here again
 template class GaussGreenDiv<scalar>;
 template class GaussGreenDiv<Vector>;
 
