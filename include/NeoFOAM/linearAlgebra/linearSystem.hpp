@@ -48,7 +48,7 @@ public:
         : matrix_(matrix), rhs_(rhs)
     {
         NF_ASSERT(matrix.exec() == rhs.exec(), "Executors are not the same");
-        NF_ASSERT(matrix.nRows() == rhs.size(), "Matrix and RHS size mismatch");
+        NF_ASSERT(matrix.nRows() == rhs.ssize(), "Matrix and RHS size mismatch");
     };
 
     LinearSystem(const LinearSystem& ls) : matrix_(ls.matrix_), rhs_(ls.rhs_) {};

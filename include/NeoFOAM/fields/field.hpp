@@ -357,6 +357,12 @@ public:
     [[nodiscard]] size_t size() const { return size_; }
 
     /**
+     * @brief Gets the size of the field.
+     * @return The size of the field.
+     */
+    [[nodiscard]] label ssize() const { return static_cast<label>(size_); }
+
+    /**
      * @brief Checks if the field is empty.
      * @return True if the field is empty, false otherwise.
      */
