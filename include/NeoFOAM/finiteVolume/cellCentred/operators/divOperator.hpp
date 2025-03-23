@@ -8,7 +8,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred

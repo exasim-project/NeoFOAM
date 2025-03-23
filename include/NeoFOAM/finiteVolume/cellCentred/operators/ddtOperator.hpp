@@ -7,7 +7,6 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/core/database/oldTimeCollection.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"

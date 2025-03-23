@@ -9,7 +9,6 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred

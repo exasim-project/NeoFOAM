@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/fields/segmentedField.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred

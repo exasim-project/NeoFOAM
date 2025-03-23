@@ -6,7 +6,7 @@
 #include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/surfaceBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::surfaceBoundary
 {

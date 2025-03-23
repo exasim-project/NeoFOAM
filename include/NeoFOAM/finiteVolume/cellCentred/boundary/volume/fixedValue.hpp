@@ -7,7 +7,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
