@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "catch2/catch_session.hpp"
-#include "catch2/catch_test_macros.hpp"
-#include "catch2/generators/catch_generators_all.hpp"
-#include "executorGenerator.hpp"
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 

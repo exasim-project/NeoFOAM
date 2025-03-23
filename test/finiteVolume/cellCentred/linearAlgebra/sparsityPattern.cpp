@@ -3,15 +3,14 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/catch_template_test_macros.hpp>
+
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+
+// FIXME make sure that this is in NeoFOAM/NeoFOAM.hpp
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
-#include "executorGenerator.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 

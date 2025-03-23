@@ -3,11 +3,10 @@
 
 // #include <source_location>
 
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+
 
 using namespace NeoFOAM;
 

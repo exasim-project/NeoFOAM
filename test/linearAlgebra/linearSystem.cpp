@@ -5,12 +5,9 @@
                             // a custom main
 #include <string>
 
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include "executorGenerator.hpp"
+#include "catch2_common.hpp"
 
-#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 using NeoFOAM::scalar;
 using NeoFOAM::localIdx;
