@@ -3,7 +3,11 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include "catch2_common.hpp"
+#include <catch2/catch_session.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators_all.hpp>
+#include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 
