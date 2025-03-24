@@ -34,7 +34,7 @@ SpatialOperator<scalar> div(const fvcc::SurfaceField<NeoFOAM::scalar>& flux)
 }
 
 SpatialOperator<scalar>
-Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
+source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<NeoFOAM::scalar>& phi)
 {
     return SpatialOperator<scalar>(fvcc::SourceTerm(dsl::Operator::Type::Explicit, coeff, phi));
 }

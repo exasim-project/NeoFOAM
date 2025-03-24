@@ -55,7 +55,9 @@ public:
 
     using FieldValueType = ValueType;
 
-    template<IsSpatialOperator T>
+    // FIXME add again
+    // template<IsSpatialOperator T>
+    template<typename T>
     SpatialOperator(T cls) : model_(std::make_unique<OperatorModel<T>>(std::move(cls)))
     {}
 

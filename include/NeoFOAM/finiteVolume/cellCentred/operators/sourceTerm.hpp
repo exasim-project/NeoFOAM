@@ -6,6 +6,8 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/dsl/operator.hpp"
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
