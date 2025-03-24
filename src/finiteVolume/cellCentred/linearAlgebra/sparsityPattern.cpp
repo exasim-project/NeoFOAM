@@ -8,7 +8,7 @@ namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 SparsityPattern::SparsityPattern(const UnstructuredMesh& mesh)
-    : mesh_(mesh), ls_(mesh_.exec()), ownerOffset_(mesh_.exec(), mesh_.nInternalFaces(), 0),
+    : mesh_(mesh), ownerOffset_(mesh_.exec(), mesh_.nInternalFaces(), 0),
       neighbourOffset_(mesh_.exec(), mesh_.nInternalFaces(), 0),
       diagOffset_(mesh_.exec(), mesh_.nCells(), 0)
 {
@@ -25,6 +25,16 @@ const std::shared_ptr<SparsityPattern> SparsityPattern::readOrCreate(const Unstr
     return stencilDb.get<std::shared_ptr<SparsityPattern>>("SparsityPattern");
 }
 
+Field<localIdx> SparsityPattern::columnIndex() const
+{
+    auto nFaces = ownerOffset_.size();
+    auto nnz = diagOffset_.size() + 2 * ownerOffset_.size();
+    auto exec = mesh_.exec();
+
+    auto ret = Field<localIdx>(exec, nnz, 0);
+
+    return ret;
+}
 
 void SparsityPattern::update()
 {
@@ -59,9 +69,8 @@ void SparsityPattern::update()
 
     // get number of total non-zeros
     Field<localIdx> rowPtrs(exec, nCells + 1, 0);
-    auto nEntries = NeoFOAM::segmentsFromIntervals(nFacesPerCell, rowPtrs);
-    NeoFOAM::Field<NeoFOAM::scalar> values(exec, nEntries, 0.0);
-    NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec, nEntries, 0);
+    auto nEntries = segmentsFromIntervals(nFacesPerCell, rowPtrs);
+    Field<localIdx> colIdx(exec, nEntries, 0);
     std::span<localIdx> sColIdx = colIdx.span();
     fill(nFacesPerCell, 0); // reset nFacesPerCell
 
@@ -115,17 +124,22 @@ void SparsityPattern::update()
         }
     );
 
-    NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
+    // colIdx_ = colIdx;
+    // rowPtr_ = rowPtrs;
 
-    NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, nCells, 0.0);
-    ls_ = NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>(csrMatrix, rhs);
+    // NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, NeoFOAM::localIdx> csrMatrix(values, colIdx,
+    // rowPtrs);
+
+    // NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, nCells, 0.0);
+    // ls_ = NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>(csrMatrix, rhs);
 }
 
-const NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>&
-SparsityPattern::linearSystem() const
-{
-    return ls_;
-}
+// FIXME remove
+// const NeoFOAM::la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>&
+// SparsityPattern::linearSystem() const
+// {
+//     return ls_;
+// }
 
 const NeoFOAM::Field<uint8_t>& SparsityPattern::ownerOffset() const { return ownerOffset_; }
 

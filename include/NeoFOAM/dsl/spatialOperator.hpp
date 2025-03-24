@@ -76,11 +76,6 @@ public:
         model_->implicitOperation(ls);
     }
 
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        return model_->createEmptyLinearSystem();
-    }
-
     /* returns the fundamental type of an operator, ie explicit, implicit */
     Operator::Type getType() const { return model_->getType(); }
 
@@ -110,8 +105,6 @@ private:
         virtual void explicitOperation(Field<ValueType>& source) = 0;
 
         virtual void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls) = 0;
-
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -159,25 +152,6 @@ private:
             {
                 concreteOp_.implicitOperation(ls);
             }
-        }
-
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
-        {
-            if constexpr (HasImplicitOperator<ConcreteOperatorType>)
-            {
-                return concreteOp_.createEmptyLinearSystem();
-            }
-            throw std::runtime_error("Implicit operation not implemented");
-            // only need to avoid compiler warning about missing return statement
-            // this code path should never be reached as we call implicitOperation on an explicit
-            // operator
-            Field<ValueType> values(exec(), 1, zero<ValueType>());
-            Field<localIdx> colIdx(exec(), 1, 0);
-            Field<localIdx> rowPtrs(exec(), 2, 0);
-            la::CSRMatrix<ValueType, localIdx> csrMatrix(values, colIdx, rowPtrs);
-
-            Field<ValueType> rhs(exec(), 1, zero<ValueType>());
-            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs);
         }
 
         /* @brief Given an input this function reads required coeffs */

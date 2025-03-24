@@ -14,6 +14,11 @@
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #endif
 
+// FIXME
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
+
+
 namespace NeoFOAM::timeIntegration
 {
 
@@ -53,7 +58,16 @@ public:
         // solutionField.correctBoundaryConditions();
         // solve sparse matrix system
         using ValueType = typename SolutionFieldType::ElementType;
-        auto ls = eqn.implicitOperation();
+
+        // FIXME
+        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solutionField.mesh());
+        auto ls = la::createEmptyLinearSystem<
+            ValueType,
+            localIdx,
+            finiteVolume::cellCentred::SparsityPattern>(sparsity);
+
+        eqn.implicitOperation(ls);
+
         auto values = ls.matrix().values();
         eqn.implicitOperation(ls, t, dt);
         // FIXME if we dont convert is there anything needed to do on the rhs

@@ -77,11 +77,8 @@ public:
 
     // FIXME rename to assembleMatrixCoefficients ?
     /* @brief perform all implicit operation and accumulate the result */
-    la::LinearSystem<ValueType, localIdx> implicitOperation()
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {
-        // TODO: use an explicit constructor here
-        // ie auto ls = LinearSystem(exec());
-        auto ls = spatialOperators_[0].createEmptyLinearSystem();
         for (auto& op : spatialOperators_)
         {
             if (op.getType() == Operator::Type::Implicit)
@@ -89,7 +86,6 @@ public:
                 op.implicitOperation(ls);
             }
         }
-        return ls;
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)

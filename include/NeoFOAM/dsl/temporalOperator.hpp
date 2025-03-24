@@ -77,10 +77,11 @@ public:
         model_->implicitOperation(ls, t, dt);
     }
 
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        return model_->createEmptyLinearSystem();
-    }
+    // FIXME remove
+    // la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
+    // {
+    //     return model_->createEmptyLinearSystem();
+    // }
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
     Operator::Type getType() const { return model_->getType(); }
@@ -112,7 +113,8 @@ private:
         virtual void
         implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt) = 0;
 
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
+        // FIXME remove
+        // virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -165,24 +167,26 @@ private:
             }
         }
 
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
-        {
-            // if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
-            // {
-            return concreteOp_.createEmptyLinearSystem();
-            // }
-            throw std::runtime_error("Implicit operation not implemented");
-            // only need to avoid compiler warning about missing return statement
-            // this code path should never be reached as we call implicitOperation on an explicit
-            // operator
-            NeoFOAM::Field<ValueType> values(exec(), 1, zero<ValueType>());
-            NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
-            NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
-            NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
+        // FIXME remove
+        // virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
+        // {
+        //     // if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
+        //     // {
+        //     return concreteOp_.createEmptyLinearSystem();
+        //     // }
+        //     throw std::runtime_error("Implicit operation not implemented");
+        //     // only need to avoid compiler warning about missing return statement
+        //     // this code path should never be reached as we call implicitOperation on an explicit
+        //     // operator
+        //     NeoFOAM::Field<ValueType> values(exec(), 1, zero<ValueType>());
+        //     NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
+        //     NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
+        //     NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx,
+        //     rowPtrs);
 
-            NeoFOAM::Field<ValueType> rhs(exec(), 1, zero<ValueType>());
-            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs);
-        }
+        //     NeoFOAM::Field<ValueType> rhs(exec(), 1, zero<ValueType>());
+        //     return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs);
+        // }
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) override { concreteOp_.build(input); }

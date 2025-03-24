@@ -43,8 +43,6 @@ public:
 
     virtual ~DivOperatorFactory() {} // Virtual destructor
 
-    virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
-
     // NOTE currently simple overloading is used here, because templating the virtual function
     // does not work and we cant template the entire class because the static create function
     // cannot access keyExistsOrError and table anymore.

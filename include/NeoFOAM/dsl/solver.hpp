@@ -20,6 +20,9 @@
 #endif
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
+// FIXME
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
+
 
 namespace NeoFOAM::dsl
 {
@@ -62,10 +65,16 @@ void solve(
         // solve sparse matrix system
         using ValueType = typename FieldType::ElementType;
 
-        auto lsTmp = exp.implicitOperation();
+        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solution.mesh());
+        auto ls = la::createEmptyLinearSystem<
+            ValueType,
+            localIdx,
+            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sparsity);
+
+        exp.implicitOperation(ls);
         auto expTmp = exp.explicitOperation(solution.mesh().nCells());
 
-        auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, lsTmp.rhs());
+        auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, ls.rhs());
 
         // subtract the explicit source term from the rhs
         parallelFor(
@@ -75,7 +84,7 @@ void solve(
         );
 
         auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
-        solver.solve(lsTmp, solution.internalField());
+        solver.solve(ls, solution.internalField());
     }
 }
 

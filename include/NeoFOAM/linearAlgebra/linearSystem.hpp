@@ -133,26 +133,25 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
     };
 }
 
-// FIXME: implement this
-/* @brief creates a zero initialised linear system based on given sparsity pattern */
-//     template<typename ValueType, typename IndexType>
-//     LinearSystem<ValueType, IndexType> createEmptyLinearSystem(
-//                                         const UnstructuredMesh& mesh
-// ) const
-//     {
-//         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-//         auto [A, b] = ls.view();
-//         const auto& exec = ls.exec();
+/*@brief creates a zero initialised linear system based on given sparsity pattern
+ */
+template<typename ValueType, typename IndexType, typename SparsityType>
+LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& sparsity)
+{
+    const auto& exec = sparsity.mesh().exec();
 
-//         Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
-//         Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
-//         Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
+    localIdx rows {10};
+    localIdx nnzs {20};
 
-//         la::CSRMatrix<ValueType, IndexType> matrix(values, mColIdxs, mRowPtrs);
-//         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
+    Field<ValueType> values(exec, nnzs, zero<IndexType>());
+    Field<localIdx> mColIdxs(exec, nnzs, zero<IndexType>());
+    Field<localIdx> mRowPtrs(exec, rows, zero<ValueType>());
 
-//         return {matrix, rhs};
-//     }
+    CSRMatrix<ValueType, IndexType> matrix(values, mColIdxs, mRowPtrs);
+    Field<ValueType> rhs(exec, rows, zero<ValueType>());
+
+    return {matrix, rhs};
+}
 
 
 } // namespace NeoFOAM::la

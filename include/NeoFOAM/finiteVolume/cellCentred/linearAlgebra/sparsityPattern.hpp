@@ -4,13 +4,10 @@
 #pragma once
 
 #include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
-
-namespace la = NeoFOAM::la;
+// #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-
 
 /* @class SparsityPattern
  * @brief row and column index representation of a mesh
@@ -27,7 +24,7 @@ public:
 
     void update();
 
-    const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& linearSystem() const;
+    // const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& linearSystem() const;
 
     // FIXME rename upperOffset
     const Field<uint8_t>& ownerOffset() const;
@@ -37,15 +34,22 @@ public:
 
     const Field<uint8_t>& diagOffset() const;
 
+    const UnstructuredMesh& mesh() const { return mesh_; };
+    /* @brief given faceIdxs t
+     *
+     */
+    [[nodiscard]] Field<localIdx> columnIndex() const;
+
     // add selection mechanism via dictionary later
     static const std::shared_ptr<SparsityPattern> readOrCreate(const UnstructuredMesh& mesh);
 
 private:
 
     const UnstructuredMesh& mesh_;
+
     // TODO: currently sparsity pattern owns a linear system
     // this should be changed and sparsityPattern should only compute row and column idxs
-    la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls_;
+    // la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls_;
 
     Field<uint8_t> ownerOffset_; //! mapping from faceId to lower index in a row
 

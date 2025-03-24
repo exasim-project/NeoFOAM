@@ -50,21 +50,21 @@ public:
     }
 
     // FIXME: remove?
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-        auto [A, b] = ls.view();
-        const auto& exec = ls.exec();
+    // la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
+    // {
+    //     la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
+    //     auto [A, b] = ls.view();
+    //     const auto& exec = ls.exec();
 
-        Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
-        Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
-        Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
+    //     Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
+    //     Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
+    //     Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
 
-        la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-        Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
+    //     la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
+    //     Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
 
-        return {matrix, rhs};
-    }
+    //     return {matrix, rhs};
+    // }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {
