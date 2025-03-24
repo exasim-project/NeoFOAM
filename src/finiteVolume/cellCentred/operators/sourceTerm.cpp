@@ -18,7 +18,6 @@ template<typename ValueType>
 void SourceTerm<ValueType>::explicitOperation(Field<ValueType>& source) const
 {
     auto operatorScaling = this->getCoefficient();
-    // const auto vol = coefficients_.mesh().cellVolumes().span();
     auto [sourceSpan, fieldSpan, coeff] =
         spans(source, this->field_.internalField(), coefficients_.internalField());
     NeoFOAM::parallelFor(
