@@ -8,10 +8,6 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-// FIXME make sure that this is in NeoFOAM/NeoFOAM.hpp
-#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
-
-
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using SparsityPattern = fvcc::SparsityPattern;
