@@ -53,7 +53,7 @@ public:
 
     void implicitOperation(la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
     {
-        auto values = ls.matrix().values();
+        auto values = ls.matrix().values().span();
         auto rhs = ls.rhs().span();
         auto fieldSpan = this->field_.internalField().span();
         auto coeff = this->getCoefficient();
@@ -126,7 +126,7 @@ public:
         la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls, NeoFOAM::scalar t, NeoFOAM::scalar dt
     )
     {
-        auto values = ls.matrix().values();
+        auto values = ls.matrix().values().span();
         auto rhs = ls.rhs().span();
         auto fieldSpan = this->field_.internalField().span();
         auto coeff = this->getCoefficient();

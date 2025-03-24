@@ -42,7 +42,7 @@ createGkoMtx(std::shared_ptr<const gko::Executor> exec, LinearSystem<ValueType, 
     return gko::share(gko::matrix::Csr<ValueType, int>::create(
         exec,
         gko::dim<2> {nrows, nrows},
-        createGkoArray(exec, mtx.values()),
+        createGkoArray(exec, mtx.values().span()),
         createGkoArray(exec, mtx.colIdxs()),
         createGkoArray(exec, mtx.rowPtrs())
     ));

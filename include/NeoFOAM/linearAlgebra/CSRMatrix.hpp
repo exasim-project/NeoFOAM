@@ -136,7 +136,7 @@ public:
      * @brief Get a span to the values array.
      * @return Span containing the matrix values.
      */
-    [[nodiscard]] std::span<ValueType> values() { return value_.span(); }
+    [[nodiscard]] Field<ValueType>& values() { return value_; }
 
     /**
      * @brief Get a span to the column indices array.
@@ -154,7 +154,7 @@ public:
      * @brief Get a const span to the values array.
      * @return Const span containing the matrix values.
      */
-    [[nodiscard]] const std::span<const ValueType> values() const { return value_.span(); }
+    [[nodiscard]] const Field<ValueType>& values() const { return value_; }
 
     /**
      * @brief Get a const span to the column indices array.

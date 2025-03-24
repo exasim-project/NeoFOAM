@@ -112,9 +112,12 @@ void computeLaplacianImpl(
         phi.boundaryField().refValue()
     );
 
-    const auto rowPtrs = ls.matrix().rowPtrs();
-    const auto colIdxs = ls.matrix().colIdxs();
-    auto values = ls.matrix().values();
+    // FIXME: what if order changes
+    auto [values, colIdxs, rowPtrs] = ls.matrix().view();
+
+    // const auto rowPtrs = ls.matrix().rowPtrs();
+    // const auto colIdxs = ls.matrix().colIdxs();
+    // auto values = ls.matrix().values().span();
     auto rhs = ls.rhs().span();
 
     parallelFor(

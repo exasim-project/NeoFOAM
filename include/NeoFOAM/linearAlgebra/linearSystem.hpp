@@ -68,6 +68,16 @@ public:
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost());
     }
 
+
+    /* @brief resets the linear system by setting the matrix values and the rhs to zero
+     *
+     */
+    void reset()
+    {
+        fill(matrix_.values(), zero<ValueType>());
+        fill(rhs_, zero<ValueType>());
+    }
+
     [[nodiscard]] LinearSystemView<ValueType, IndexType> view() && = delete;
 
     [[nodiscard]] LinearSystemView<ValueType, IndexType> view() const&& = delete;
@@ -97,7 +107,7 @@ Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& 
     Field<ValueType> resultField(ls.exec(), ls.rhs().size(), 0.0);
     auto [result, b, x] = spans(resultField, ls.rhs(), xfield);
 
-    std::span<ValueType> values = ls.matrix().values();
+    std::span<ValueType> values = ls.matrix().values().span();
     std::span<IndexType> colIdxs = ls.matrix().colIdxs();
     std::span<IndexType> rowPtrs = ls.matrix().rowPtrs();
 
@@ -146,7 +156,7 @@ LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& s
 
     return {
         CSRMatrix<ValueType, IndexType> {
-            Field<ValueType>(exec, nnzs, zero<IndexType>()),
+            Field<ValueType>(exec, nnzs, zero<ValueType>()),
             sparsity.columnIndex(),
             sparsity.rowPtrs()
         },
