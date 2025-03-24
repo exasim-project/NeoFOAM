@@ -39,9 +39,9 @@ public:
 
     [[nodiscard]] const Field<localIdx>& rowPtrs() const { return rowPtrs_; };
 
-    [[nodiscard]] const localIdx rows() const { return static_cast<localIdx>(diagOffset_.size()); };
+    [[nodiscard]] localIdx rows() const { return static_cast<localIdx>(diagOffset_.size()); };
 
-    [[nodiscard]] const localIdx nnz() const { return static_cast<localIdx>(colIdxs_.size()); };
+    [[nodiscard]] localIdx nnz() const { return static_cast<localIdx>(colIdxs_.size()); };
 
     // add selection mechanism via dictionary later
     static const std::shared_ptr<SparsityPattern> readOrCreate(const UnstructuredMesh& mesh);
