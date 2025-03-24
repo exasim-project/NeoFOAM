@@ -20,12 +20,13 @@ TEST_CASE("LinearSystem")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
+    Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
+    Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
+    Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
+    CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
+
     SECTION("construct " + execName)
     {
-        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
 
         Field<scalar> rhs(exec, 3, 0.0);
         LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
@@ -37,13 +38,29 @@ TEST_CASE("LinearSystem")
         REQUIRE(linearSystem.rhs().size() == 3);
     }
 
+    SECTION("construct zero initialized from sparsity " + execName)
+    {
+        auto nCells = 10;
+        auto nFaces = 9;
+        auto nnz = nCells + 2 * nFaces;
+        auto mesh = create1DUniformMesh(exec, nCells);
+
+        // TODO improve structure here
+        auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
+        auto linearSystem = NeoFOAM::la::createEmptyLinearSystem<
+            scalar,
+            localIdx,
+            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
+
+        REQUIRE(linearSystem.matrix().values().size() == nnz);
+        REQUIRE(linearSystem.matrix().colIdxs().size() == nnz);
+        REQUIRE(linearSystem.matrix().rowPtrs().size() == nCells + 1);
+        REQUIRE(linearSystem.matrix().nRows() == nCells);
+        REQUIRE(linearSystem.rhs().size() == nCells);
+    }
 
     SECTION("view read/write " + execName)
     {
-        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
         Field<scalar> rhs(exec, {10.0, 20.0, 30.0});
         LinearSystem<scalar, localIdx> ls(csrMatrix, rhs);
 
@@ -102,11 +119,6 @@ TEST_CASE("LinearSystem")
 
     SECTION("SpmV" + execName)
     {
-        Field<scalar> values(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
-        Field<localIdx> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
-        Field<localIdx> rowPtrs(exec, {0, 3, 6, 9});
-        CSRMatrix<scalar, localIdx> csrMatrix(values, colIdx, rowPtrs);
-
         Field<scalar> rhs(exec, 3, 0.0);
         LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
         Field<scalar> x(exec, {1.0, 2.0, 3.0});
