@@ -41,7 +41,6 @@ void computeGrad(
 
     size_t nInternalFaces = mesh.nInternalFaces();
 
-
     // TODO use NeoFOAM::atomic_
     parallelFor(
         exec,

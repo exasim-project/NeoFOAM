@@ -32,36 +32,7 @@ void computeLinearInterpolation(
     const VolumeField<ValueType>& src,
     const SurfaceField<scalar>& weights,
     SurfaceField<ValueType>& dst
-)
-{
-    const auto exec = dst.exec();
-    auto dstS = dst.internalField().span();
-    const auto [srcS, weightS, ownerS, neighS, boundS] = spans(
-        src.internalField(),
-        weights.internalField(),
-        dst.mesh().faceOwner(),
-        dst.mesh().faceNeighbour(),
-        src.boundaryField().value()
-    );
-    size_t nInternalFaces = dst.mesh().nInternalFaces();
-
-    NeoFOAM::parallelFor(
-        exec,
-        {0, dstS.size()},
-        KOKKOS_LAMBDA(const size_t facei) {
-            if (facei < nInternalFaces)
-            {
-                size_t own = static_cast<size_t>(ownerS[facei]);
-                size_t nei = static_cast<size_t>(neighS[facei]);
-                dstS[facei] = weightS[facei] * srcS[own] + (1 - weightS[facei]) * srcS[nei];
-            }
-            else
-            {
-                dstS[facei] = weightS[facei] * boundS[facei - nInternalFaces];
-            }
-        }
-    );
-}
+);
 
 template<typename ValueType>
 class Linear : public SurfaceInterpolationFactory<ValueType>::template Register<Linear<ValueType>>
