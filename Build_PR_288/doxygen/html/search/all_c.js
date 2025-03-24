@@ -35,7 +35,7 @@ var searchData=
   ['neofoam_5fassert_5fequal_5flength_32',['NeoFOAM_ASSERT_EQUAL_LENGTH',['../exceptions_8hpp.html#a466d6d559414b6d1198021e94e31545e',1,'exceptions.hpp']]],
   ['neofoamexception_33',['neofoamexception',['../classNeoFOAM_1_1NeoFOAMException.html#a97203629bd4f1e83a2ea1010094c026a',1,'NeoFOAM::NeoFOAMException::NeoFOAMException()'],['../classNeoFOAM_1_1NeoFOAMException.html',1,'NeoFOAM::NeoFOAMException']]],
   ['next_34',['next',['../classNeoFOAM_1_1TokenList.html#a5021e4a82af2514956223cf9ed15afbf',1,'NeoFOAM::TokenList::next()'],['../classNeoFOAM_1_1TokenList.html#a3ae147f11457cc2ff46db2fc666982c1',1,'NeoFOAM::TokenList::next() const']]],
-  ['nexttime_35',['nexttime',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a55aeb5eade825f623de34e315142b6b3',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime()'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a910f62e37796ecfdec46f53a0d878372',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime() const']]],
+  ['nexttime_35',['nexttime',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a910f62e37796ecfdec46f53a0d878372',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime() const'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a55aeb5eade825f623de34e315142b6b3',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime()']]],
   ['nf_36',['nf',['../classNeoFOAM_1_1BoundaryMesh.html#a4ad6bdf73ab49d32a95c05107308723d',1,'NeoFOAM::BoundaryMesh::nf(const localIdx i) const'],['../classNeoFOAM_1_1BoundaryMesh.html#a86dedb4feac055813cfd387a5b75b613',1,'NeoFOAM::BoundaryMesh::nf() const']]],
   ['nf_5fassert_37',['NF_ASSERT',['../error_8hpp.html#aecc669a189db22f652ffb9788f01a99b',1,'error.hpp']]],
   ['nf_5fassert_5fequal_38',['NF_ASSERT_EQUAL',['../error_8hpp.html#a40409dec4da3178309a1b0f662496159',1,'error.hpp']]],
@@ -54,8 +54,9 @@ var searchData=
   ['ninternalfaces_51',['nInternalFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779',1,'NeoFOAM::UnstructuredMesh']]],
   ['nl_52',['NL',['../time_8hpp.html#a6c2bdfd6f25ccadb92fcff4173b7fec2',1,'time.hpp']]],
   ['nnonzeros_53',['nNonZeros',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a9f82c546edff365981c20296d61ed1de',1,'NeoFOAM::la::CSRMatrix']]],
-  ['nonorthcorrectionvectors_54',['nonOrthCorrectionVectors',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a76bd11324d2b3b772149d65011e4dd82',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
-  ['nonorthdeltacoeffs_55',['nonOrthDeltaCoeffs',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a52315a12de47a9b7e6ac95c751c24c37',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
-  ['nrows_56',['nRows',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#adc4ebdbad277c6e638683ab978526042',1,'NeoFOAM::la::CSRMatrix']]],
-  ['numsegments_57',['numSegments',['../classNeoFOAM_1_1SegmentedField.html#ad41c05f17db58a093e6c3c838428cb0c',1,'NeoFOAM::SegmentedField']]]
+  ['nnz_54',['nnz',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern.html#abbb89c3eaa23e3cdbba346b06f53e821',1,'NeoFOAM::finiteVolume::cellCentred::SparsityPattern']]],
+  ['nonorthcorrectionvectors_55',['nonOrthCorrectionVectors',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a76bd11324d2b3b772149d65011e4dd82',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
+  ['nonorthdeltacoeffs_56',['nonOrthDeltaCoeffs',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a52315a12de47a9b7e6ac95c751c24c37',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
+  ['nrows_57',['nRows',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#adc4ebdbad277c6e638683ab978526042',1,'NeoFOAM::la::CSRMatrix']]],
+  ['numsegments_58',['numSegments',['../classNeoFOAM_1_1SegmentedField.html#ad41c05f17db58a093e6c3c838428cb0c',1,'NeoFOAM::SegmentedField']]]
 ];
