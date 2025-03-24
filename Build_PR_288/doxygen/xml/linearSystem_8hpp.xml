@@ -9,11 +9,11 @@
     <includedby refid="solver_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/solver.hpp</includedby>
     <includedby refid="spatialOperator_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/spatialOperator.hpp</includedby>
     <includedby refid="temporalOperator_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/dsl/temporalOperator.hpp</includedby>
-    <includedby refid="sparsityPattern_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp</includedby>
     <includedby refid="divOperator_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp</includedby>
     <includedby refid="finiteVolume_2cellCentred_2operators_2expression_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/expression.hpp</includedby>
     <includedby refid="laplacianOperator_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/laplacianOperator.hpp</includedby>
     <includedby refid="utilities_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/utilities.hpp</includedby>
+    <includedby refid="backwardEuler_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/timeIntegration/backwardEuler.hpp</includedby>
     <incdepgraph>
       <node id="7">
         <label>NeoFOAM/core/error.hpp</label>
@@ -292,22 +292,6 @@
         <childnode refid="5" relation="include">
         </childnode>
       </node>
-      <node id="24">
-        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp</label>
-        <link refid="sparsityPattern_8hpp"/>
-        <childnode refid="16" relation="include">
-        </childnode>
-        <childnode refid="4" relation="include">
-        </childnode>
-        <childnode refid="18" relation="include">
-        </childnode>
-        <childnode refid="20" relation="include">
-        </childnode>
-        <childnode refid="21" relation="include">
-        </childnode>
-        <childnode refid="22" relation="include">
-        </childnode>
-      </node>
       <node id="16">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/finiteVolume/cellCentred/operators/ddtOperator.hpp</label>
         <link refid="ddtOperator_8hpp"/>
@@ -383,18 +367,18 @@
         </childnode>
         <childnode refid="23" relation="include">
         </childnode>
-        <childnode refid="24" relation="include">
-        </childnode>
         <childnode refid="17" relation="include">
         </childnode>
         <childnode refid="4" relation="include">
         </childnode>
         <childnode refid="19" relation="include">
         </childnode>
-        <childnode refid="25" relation="include">
+        <childnode refid="24" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
         </childnode>
       </node>
-      <node id="25">
+      <node id="24">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/utilities.hpp</label>
         <link refid="utilities_8hpp"/>
       </node>
@@ -552,29 +536,28 @@
 <codeline lineno="133"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
 <codeline lineno="134"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="135"><highlight class="normal"></highlight></codeline>
-<codeline lineno="136"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIXME:<sp/>implement<sp/>this</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="137"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>creates<sp/>a<sp/>zero<sp/>initialised<sp/>linear<sp/>system<sp/>based<sp/>on<sp/>given<sp/>sparsity<sp/>pattern<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="138"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>template&lt;typename<sp/>ValueType,<sp/>typename<sp/>IndexType&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="139"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>LinearSystem&lt;ValueType,<sp/>IndexType&gt;<sp/>createEmptyLinearSystem(</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="140"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>const<sp/>UnstructuredMesh&amp;<sp/>mesh</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="141"><highlight class="normal"></highlight><highlight class="comment">//<sp/>)<sp/>const</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="142"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>{</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="143"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>la::LinearSystem&lt;scalar,<sp/>localIdx&gt;<sp/>ls(sparsityPattern_-&gt;linearSystem());</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="144"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>auto<sp/>[A,<sp/>b]<sp/>=<sp/>ls.view();</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="145"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>const<sp/>auto&amp;<sp/>exec<sp/>=<sp/>ls.exec();</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="146"><highlight class="normal"></highlight></codeline>
-<codeline lineno="147"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Field&lt;ValueType&gt;<sp/>values(exec,<sp/>A.value.size(),<sp/>zero&lt;ValueType&gt;());</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="148"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Field&lt;localIdx&gt;<sp/>mColIdxs(exec,<sp/>A.columnIndex.data(),<sp/>A.columnIndex.size());</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="149"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Field&lt;localIdx&gt;<sp/>mRowPtrs(exec,<sp/>A.rowOffset.data(),<sp/>A.rowOffset.size());</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="150"><highlight class="normal"></highlight></codeline>
-<codeline lineno="151"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>la::CSRMatrix&lt;ValueType,<sp/>IndexType&gt;<sp/>matrix(values,<sp/>mColIdxs,<sp/>mRowPtrs);</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="152"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Field&lt;ValueType&gt;<sp/>rhs(exec,<sp/>b.size(),<sp/>zero&lt;ValueType&gt;());</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="153"><highlight class="normal"></highlight></codeline>
-<codeline lineno="154"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>return<sp/>{matrix,<sp/>rhs};</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="155"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>}</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="136"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>creates<sp/>a<sp/>zero<sp/>initialised<sp/>linear<sp/>system<sp/>based<sp/>on<sp/>given<sp/>sparsity<sp/>pattern</highlight></codeline>
+<codeline lineno="137"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>SparsityType&gt;</highlight></codeline>
+<codeline lineno="139" refid="namespaceNeoFOAM_1_1la_1a6aad8cc3be3c00507a018149a38cd17b" refkind="member"><highlight class="normal"><ref refid="classNeoFOAM_1_1la_1_1LinearSystem" kindref="compound">LinearSystem&lt;ValueType, IndexType&gt;</ref><sp/><ref refid="namespaceNeoFOAM_1_1la_1a6aad8cc3be3c00507a018149a38cd17b" kindref="member">createEmptyLinearSystem</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SparsityType&amp;<sp/>sparsity)</highlight></codeline>
+<codeline lineno="140"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>exec<sp/>=<sp/>sparsity.mesh().<ref refid="classNeoFOAM_1_1la_1_1LinearSystem_1a0b824eab2111c3db70123e51df96be3e" kindref="member">exec</ref>();</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"></highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a95525d89d661b88aaa4548bdf2766842" kindref="member">localIdx</ref><sp/>rows<sp/>{10};</highlight></codeline>
+<codeline lineno="144"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a95525d89d661b88aaa4548bdf2766842" kindref="member">localIdx</ref><sp/>nnzs<sp/>{20};</highlight></codeline>
+<codeline lineno="145"><highlight class="normal"></highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref><sp/>values(exec,<sp/>nnzs,<sp/>zero&lt;IndexType&gt;());</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;localIdx&gt;</ref><sp/>mColIdxs(exec,<sp/>nnzs,<sp/>zero&lt;IndexType&gt;());</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;localIdx&gt;</ref><sp/>mRowPtrs(exec,<sp/>rows,<sp/>zero&lt;ValueType&gt;());</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"></highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1la_1_1CSRMatrix" kindref="compound">CSRMatrix&lt;ValueType, IndexType&gt;</ref><sp/>matrix(values,<sp/>mColIdxs,<sp/>mRowPtrs);</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">Field&lt;ValueType&gt;</ref><sp/>rhs(exec,<sp/>rows,<sp/>zero&lt;ValueType&gt;());</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>{matrix,<sp/>rhs};</highlight></codeline>
+<codeline lineno="154"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"></highlight></codeline>
 <codeline lineno="156"><highlight class="normal"></highlight></codeline>
-<codeline lineno="157"><highlight class="normal"></highlight></codeline>
-<codeline lineno="158"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM::la</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="157"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM::la</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/linearAlgebra/linearSystem.hpp"/>
   </compounddef>
