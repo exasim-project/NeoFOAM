@@ -133,23 +133,25 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
     };
 }
 
-/*@brief creates a zero initialised linear system based on given sparsity pattern
+/*@brief helper function that creates a zero initialised linear system based on given sparsity
+ * pattern
  */
 template<typename ValueType, typename IndexType, typename SparsityType>
 LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& sparsity)
 {
     const auto& exec = sparsity.mesh().exec();
 
-    localIdx rows {10};
-    localIdx nnzs {20};
+    localIdx rows {sparsity.rows()};
+    localIdx nnzs {sparsity.nnz()};
 
-    auto matrix = CSRMatrix<ValueType, IndexType> {
-        Field<ValueType>(exec, nnzs, zero<IndexType>()), sparsity.columnIndex(), sparsity.rowPtrs()
+    return {
+        CSRMatrix<ValueType, IndexType> {
+            Field<ValueType>(exec, nnzs, zero<IndexType>()),
+            sparsity.columnIndex(),
+            sparsity.rowPtrs()
+        },
+        Field<ValueType> {exec, rows, zero<ValueType>()}
     };
-
-    Field<ValueType> rhs(exec, rows, zero<ValueType>());
-
-    return {matrix, rhs};
 }
 
 
