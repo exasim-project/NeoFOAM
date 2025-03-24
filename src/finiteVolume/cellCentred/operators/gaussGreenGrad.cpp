@@ -42,55 +42,32 @@ void computeGrad(
     size_t nInternalFaces = mesh.nInternalFaces();
 
 
-    if (std::holds_alternative<SerialExecutor>(exec))
-    {
-        for (size_t i = 0; i < nInternalFaces; i++)
-        {
+    // TODO use NeoFOAM::atomic_
+    parallelFor(
+        exec,
+        {0, nInternalFaces},
+        KOKKOS_LAMBDA(const size_t i) {
             Vector flux = faceAreaS[i] * surfPhif[i];
-            surfGradPhi[static_cast<size_t>(surfOwner[i])] += flux;
-            surfGradPhi[static_cast<size_t>(surfNeighbour[i])] -= flux;
+            Kokkos::atomic_add(&surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
+            Kokkos::atomic_sub(&surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
         }
+    );
 
-        for (size_t i = nInternalFaces; i < surfPhif.size(); i++)
-        {
+    parallelFor(
+        exec,
+        {nInternalFaces, surfPhif.size()},
+        KOKKOS_LAMBDA(const size_t i) {
             size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-            Vector valueOwn = sBSf[i - nInternalFaces] * surfPhif[i];
-            surfGradPhi[own] += valueOwn;
+            Vector valueOwn = faceAreaS[i] * surfPhif[i];
+            Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
         }
+    );
 
-        for (size_t celli = 0; celli < mesh.nCells(); celli++)
-        {
-            surfGradPhi[celli] *= 1 / surfV[celli];
-        }
-    }
-    else
-    {
-        parallelFor(
-            exec,
-            {0, nInternalFaces},
-            KOKKOS_LAMBDA(const size_t i) {
-                Vector flux = faceAreaS[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfGradPhi[static_cast<size_t>(surfOwner[i])], flux);
-                Kokkos::atomic_sub(&surfGradPhi[static_cast<size_t>(surfNeighbour[i])], flux);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {nInternalFaces, surfPhif.size()},
-            KOKKOS_LAMBDA(const size_t i) {
-                size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-                Vector valueOwn = faceAreaS[i] * surfPhif[i];
-                Kokkos::atomic_add(&surfGradPhi[own], valueOwn);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) { surfGradPhi[celli] *= 1 / surfV[celli]; }
-        );
-    }
+    parallelFor(
+        exec,
+        {0, mesh.nCells()},
+        KOKKOS_LAMBDA(const size_t celli) { surfGradPhi[celli] *= 1 / surfV[celli]; }
+    );
 }
 
 GaussGreenGrad::GaussGreenGrad(const Executor& exec, const UnstructuredMesh& mesh)
