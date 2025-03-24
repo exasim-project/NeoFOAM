@@ -54,7 +54,7 @@ var searchData=
   ['ninternalfaces_51',['nInternalFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779',1,'NeoFOAM::UnstructuredMesh']]],
   ['nl_52',['NL',['../time_8hpp.html#a6c2bdfd6f25ccadb92fcff4173b7fec2',1,'time.hpp']]],
   ['nnonzeros_53',['nNonZeros',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a9f82c546edff365981c20296d61ed1de',1,'NeoFOAM::la::CSRMatrix']]],
-  ['nnz_54',['nnz',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern.html#abbb89c3eaa23e3cdbba346b06f53e821',1,'NeoFOAM::finiteVolume::cellCentred::SparsityPattern']]],
+  ['nnz_54',['nnz',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern.html#a577ae3b523a38ecbeed6ef28a7f1eb2c',1,'NeoFOAM::finiteVolume::cellCentred::SparsityPattern']]],
   ['nonorthcorrectionvectors_55',['nonOrthCorrectionVectors',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a76bd11324d2b3b772149d65011e4dd82',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
   ['nonorthdeltacoeffs_56',['nonOrthDeltaCoeffs',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1GeometryScheme.html#a52315a12de47a9b7e6ac95c751c24c37',1,'NeoFOAM::finiteVolume::cellCentred::GeometryScheme']]],
   ['nrows_57',['nRows',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#adc4ebdbad277c6e638683ab978526042',1,'NeoFOAM::la::CSRMatrix']]],
