@@ -6,8 +6,6 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/dsl/spatialOperator.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
@@ -31,10 +29,7 @@ public:
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls) const;
 
-    void build(const Input&)
-    {
-        // do nothing
-    }
+    void build(const Input&) {}
 
     std::string getName() const { return "sourceTerm"; }
 
