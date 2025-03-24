@@ -143,11 +143,10 @@ LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& s
     localIdx rows {10};
     localIdx nnzs {20};
 
-    Field<ValueType> values(exec, nnzs, zero<IndexType>());
-    Field<localIdx> mColIdxs(exec, nnzs, zero<IndexType>());
-    Field<localIdx> mRowPtrs(exec, rows, zero<ValueType>());
+    auto matrix = CSRMatrix<ValueType, IndexType> {
+        Field<ValueType>(exec, nnzs, zero<IndexType>()), sparsity.columnIndex(), sparsity.rowPtrs()
+    };
 
-    CSRMatrix<ValueType, IndexType> matrix(values, mColIdxs, mRowPtrs);
     Field<ValueType> rhs(exec, rows, zero<ValueType>());
 
     return {matrix, rhs};

@@ -20,11 +20,10 @@ class SparsityPattern
 {
 public:
 
+    // TODO implement ctor copying all members
     SparsityPattern(const UnstructuredMesh& mesh);
 
     void update();
-
-    // const la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx>& linearSystem() const;
 
     // FIXME rename upperOffset
     const Field<uint8_t>& ownerOffset() const;
@@ -35,10 +34,10 @@ public:
     const Field<uint8_t>& diagOffset() const;
 
     const UnstructuredMesh& mesh() const { return mesh_; };
-    /* @brief given faceIdxs t
-     *
-     */
-    [[nodiscard]] Field<localIdx> columnIndex() const;
+
+    [[nodiscard]] const Field<localIdx>& columnIndex() const { return colIdxs_; };
+
+    [[nodiscard]] const Field<localIdx>& rowPtrs() const { return rowPtrs_; };
 
     // add selection mechanism via dictionary later
     static const std::shared_ptr<SparsityPattern> readOrCreate(const UnstructuredMesh& mesh);
@@ -47,9 +46,9 @@ private:
 
     const UnstructuredMesh& mesh_;
 
-    // TODO: currently sparsity pattern owns a linear system
-    // this should be changed and sparsityPattern should only compute row and column idxs
-    // la::LinearSystem<NeoFOAM::scalar, NeoFOAM::localIdx> ls_;
+    Field<localIdx> rowPtrs_; //! rowPtrs map from row to start index in values
+
+    Field<localIdx> colIdxs_; //!
 
     Field<uint8_t> ownerOffset_; //! mapping from faceId to lower index in a row
 
