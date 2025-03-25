@@ -72,8 +72,12 @@ public:
         eqn.implicitOperation(ls, t, dt);
         // FIXME if we dont convert is there anything needed to do on the rhs
 
+#if NF_WITH_GINKGO
         la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ls, solutionField.internalField());
+#else
+    NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))

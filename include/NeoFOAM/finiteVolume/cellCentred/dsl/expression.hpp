@@ -126,6 +126,7 @@ public:
         }
     }
 
+    // TODO unify with dsl/solver.hpp
     void solve(scalar t, scalar dt)
     {
         // dsl::solve(expr_, psi_, t, dt, fvSchemes_, fvSolution_);
@@ -135,6 +136,7 @@ public:
         }
         if (expr_.temporalOperators().size() > 0)
         {
+            NF_ERROR_EXIT("Not implemented");
             //     // integrate equations in time
             //     NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
             //         fvSchemes_.subDict("ddtSchemes"), fvSolution_
@@ -143,11 +145,15 @@ public:
         }
         else
         {
+#if NF_WITH_GINKGO
             // TODO: currently only we just pass the fvSolution dict to satisfy the compiler
             // however, this should be the correct solver dict
             auto exec = psi_.exec();
             auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
             solver.solve(ls_, psi_.internalField());
+#else
+    NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
         }
     }
 
