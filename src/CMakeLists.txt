@@ -26,7 +26,6 @@ target_sources(
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
-          "linearAlgebra/ginkgo.cpp"
           "linearAlgebra/utilities.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
@@ -54,6 +53,10 @@ target_sources(
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
                                  "mesh/unstructured/communicator.cpp")
+endif()
+
+if(NEOFOAM_WITH_GINKGO)
+  target_sources(NeoFOAM PRIVATE "linearAlgebra/ginkgo.cpp")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
