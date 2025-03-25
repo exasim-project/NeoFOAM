@@ -42,7 +42,7 @@ class GaussGreenLaplacian :
 
 public:
 
-    static std::string name() { return "Gauss-Green Laplacian"; }
+    static std::string name() { return "Gauss"; }
 
     static std::string doc() { return "Gauss-Green Laplacian"; }
 
@@ -94,7 +94,7 @@ public:
 
 private:
 
-    SurfaceInterpolation<scalar> surfaceInterpolation_;
+    SurfaceInterpolation<ValueType> surfaceInterpolation_;
 
     FaceNormalGradient<ValueType> faceNormalGradient_;
 

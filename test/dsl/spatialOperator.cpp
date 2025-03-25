@@ -69,10 +69,6 @@ TEMPLATE_TEST_CASE("SpatialOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Ve
 
         REQUIRE(b.getName() == "Dummy");
         REQUIRE(b.getType() == Operator::Type::Implicit);
-
-        // auto ls = b.createEmptyLinearSystem();
-        // REQUIRE(ls.matrix().nNonZeros() == 1);
-        // REQUIRE(ls.matrix().nRows() == 1);
     }
 
     SECTION("Supports Coefficients Implicit " + execName)
@@ -100,24 +96,21 @@ TEMPLATE_TEST_CASE("SpatialOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Ve
         c.implicitOperation(ls);
 
         // c = 2 * 2
-        auto hostRhsC = ls.rhs().copyToHost();
-        auto hostLsC = ls.copyToHost();
+        auto [hostRhsC, hostLsC] = copyToHosts(ls.rhs(), ls);
         REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
         REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
         // d= 2 * 2
         ls.reset();
         d.implicitOperation(ls);
-        auto hostRhsD = ls.rhs().copyToHost();
-        auto hostLsD = ls.copyToHost();
+        auto [hostRhsD, hostLsD] = copyToHosts(ls.rhs(), ls);
         REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
         REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
         // e = - -3 * 2 * 2 = -12
         ls.reset();
         e.implicitOperation(ls);
-        auto hostRhsE = ls.rhs().copyToHost();
-        auto hostLsE = ls.copyToHost();
+        auto [hostRhsE, hostLsE] = copyToHosts(ls.rhs(), ls);
         REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
         REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>());
     }
