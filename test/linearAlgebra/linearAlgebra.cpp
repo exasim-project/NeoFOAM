@@ -46,9 +46,10 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         solver.solve(linearSystem, x);
 
         auto hostX = x.copyToHost();
+        auto hostXS = hostX.span();
         for (size_t i = 0; i < x.size(); ++i)
         {
-            CHECK(hostX[i] != 0.0);
+            CHECK(hostXS[i] != 0.0);
         }
     }
 }
