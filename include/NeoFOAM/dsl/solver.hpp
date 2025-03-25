@@ -83,8 +83,13 @@ void solve(
             KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
         );
 
+#if NF_WITH_GINKGO
         auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
+#else
+    NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
+
     }
 }
 

@@ -8,6 +8,7 @@ namespace NeoFOAM::la
 {
 
 
+#if NF_WITH_GINKGO
 std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
 {
     return std::visit(
@@ -50,4 +51,5 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
     );
 }
 
+#endif
 }
