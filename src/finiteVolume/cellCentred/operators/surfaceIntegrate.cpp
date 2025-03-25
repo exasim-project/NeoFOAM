@@ -16,12 +16,12 @@ void surfaceIntegrate(
     std::span<const int> owner,
     std::span<const int> faceCells,
     std::span<const ValueType> flux,
-    std::span<const scalar> V,
+    std::span<const scalar> v,
     std::span<ValueType> res,
     const dsl::Coeff operatorScaling
 )
 {
-    size_t nCells {V.size()};
+    size_t nCells {v.size()};
     const size_t nBoundaryFaces = faceCells.size();
     parallelFor(
         exec,
@@ -44,7 +44,7 @@ void surfaceIntegrate(
     parallelFor(
         exec,
         {0, nCells},
-        KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / V[celli]; }
+        KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / v[celli]; }
     );
 }
 

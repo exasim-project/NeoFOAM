@@ -211,10 +211,10 @@ public:
                 std::size_t rowNeiStart = rowPtrs[nei];
                 std::size_t rowOwnStart = rowPtrs[own];
 
-                auto Upper = values[rowNeiStart + neiOffs[facei]];
-                auto Lower = values[rowOwnStart + ownOffs[facei]];
+                auto upper = values[rowNeiStart + neiOffs[facei]];
+                auto lower = values[rowOwnStart + ownOffs[facei]];
                 Kokkos::atomic_add(
-                    &resultSpan[facei], Upper * internalPsi[nei] - Lower * internalPsi[own]
+                    &resultSpan[facei], upper * internalPsi[nei] - lower * internalPsi[own]
                 );
             }
         );

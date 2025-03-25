@@ -22,7 +22,7 @@ void surfaceIntegrate(
     std::span<const int> owner,
     std::span<const int> faceCells,
     std::span<const ValueType> flux,
-    std::span<const scalar> V,
+    std::span<const scalar> v,
     std::span<ValueType> res,
     const dsl::Coeff operatorScaling
 );

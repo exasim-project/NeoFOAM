@@ -75,7 +75,7 @@ public:
         return source;
     }
 
-    // FIXME rename to assembleMatrixCoefficients ?
+    // TODO: rename to assembleMatrixCoefficients ?
     /* @brief perform all implicit operation and accumulate the result */
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {

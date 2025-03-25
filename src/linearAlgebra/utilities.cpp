@@ -8,6 +8,7 @@ namespace NeoFOAM::la
 {
 
 
+// TODO: check if this can be replaced by Ginkgos executor mapping
 #if NF_WITH_GINKGO
 std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
 {

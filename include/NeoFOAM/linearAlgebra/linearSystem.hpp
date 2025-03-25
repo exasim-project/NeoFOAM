@@ -102,7 +102,7 @@ private:
 
 
 template<typename ValueType, typename IndexType>
-Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& xfield)
+Field<ValueType> spmv(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& xfield)
 {
     Field<ValueType> resultField(ls.exec(), ls.rhs().size(), 0.0);
     auto [result, b, x] = spans(resultField, ls.rhs(), xfield);

@@ -291,21 +291,4 @@ UnstructuredMesh createSingleCellMesh(const Executor exec);
 UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells);
 
 
-namespace detail
-{
-
-/* @brief applies permutation vector s = v[p[i]]
- *                 e.g. s[0] = v[p[0] -> 4 ]
- */
-template<typename T, typename IndexType>
-std::vector<T> apply_permutation(const std::span<T> vec, const std::vector<IndexType>& p)
-{
-    std::vector<T> sorted_vec(vec.size());
-    std::transform(p.begin(), p.end(), sorted_vec.begin(), [&](label i) { return vec[i]; });
-    return sorted_vec;
-}
-
-
-}
-
 } // namespace NeoFOAM

@@ -14,7 +14,7 @@ using NeoFOAM::localIdx;
 using NeoFOAM::Field;
 using NeoFOAM::la::LinearSystem;
 using NeoFOAM::la::CSRMatrix;
-using NeoFOAM::la::SpMV;
+using NeoFOAM::la::spmv;
 
 TEST_CASE("LinearSystem")
 {
@@ -123,7 +123,7 @@ TEST_CASE("LinearSystem")
         LinearSystem<scalar, localIdx> linearSystem(csrMatrix, rhs);
         Field<scalar> x(exec, {1.0, 2.0, 3.0});
 
-        Field<scalar> y = SpMV(linearSystem, x);
+        Field<scalar> y = spmv(linearSystem, x);
         auto yHost = y.copyToHost();
 
         REQUIRE(yHost[0] == 1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0);
@@ -133,7 +133,7 @@ TEST_CASE("LinearSystem")
         // test with non-zero rhs
         Field<scalar> rhs2(exec, {1.0, 2.0, 3.0});
         LinearSystem<scalar, localIdx> linearSystem2(csrMatrix, rhs2);
-        y = SpMV(linearSystem2, x);
+        y = spmv(linearSystem2, x);
         yHost = y.copyToHost();
 
         REQUIRE(yHost[0] == 14.0 - 1.0);

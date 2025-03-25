@@ -22,8 +22,8 @@ void updateFaceVelocity(
 );
 
 void updateVelocity(
-    VolumeField<Vector>& U,
-    const VolumeField<Vector>& HbyA,
+    VolumeField<Vector>& u,
+    const VolumeField<Vector>& hbyA,
     VolumeField<scalar>& rAU,
     VolumeField<scalar>& p
 );

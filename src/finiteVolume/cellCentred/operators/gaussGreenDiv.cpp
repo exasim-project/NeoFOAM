@@ -28,12 +28,12 @@ void computeDiv(
     std::span<const int> faceCells,
     std::span<const scalar> faceFlux,
     std::span<const ValueType> phiF,
-    std::span<const scalar> V,
+    std::span<const scalar> v,
     std::span<ValueType> res,
     const dsl::Coeff operatorScaling
 )
 {
-    size_t nCells {V.size()};
+    size_t nCells {v.size()};
     // check if the executor is GPU
     if (std::holds_alternative<SerialExecutor>(exec))
     {
@@ -54,7 +54,7 @@ void computeDiv(
         // TODO does it make sense to store invVol and multiply?
         for (size_t celli = 0; celli < nCells; celli++)
         {
-            res[celli] *= operatorScaling[celli] / V[celli];
+            res[celli] *= operatorScaling[celli] / v[celli];
         }
     }
     else
@@ -84,7 +84,7 @@ void computeDiv(
         parallelFor(
             exec,
             {0, nCells},
-            KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / V[celli]; },
+            KOKKOS_LAMBDA(const size_t celli) { res[celli] *= operatorScaling[celli] / v[celli]; },
             "normalizeFluxes"
         );
     }
