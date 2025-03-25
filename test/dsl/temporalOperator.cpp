@@ -15,6 +15,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
+    auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     SECTION("Operator creation on " + execName)
     {
@@ -80,12 +81,12 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         REQUIRE(b.getName() == "TemporalDummy");
         REQUIRE(b.getType() == Operator::Type::Implicit);
-
-        // FIXME
-        // auto ls = b.createEmptyLinearSystem();
-        // REQUIRE(ls.matrix().nNonZeros() == 1);
-        // REQUIRE(ls.matrix().nRows() == 1);
     }
+
+    auto ls = NeoFOAM::la::createEmptyLinearSystem<
+        TestType,
+        NeoFOAM::localIdx,
+        NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
 
     SECTION("Supports Coefficients Implicit " + execName)
     {
@@ -108,33 +109,31 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         [[maybe_unused]] auto coeffD = d.getCoefficient();
         [[maybe_unused]] auto coeffE = e.getCoefficient();
 
-        // FIXME reimplement
-        // Field source(exec, 1, 2.0);
-        // auto ls = c.createEmptyLinearSystem();
-        // c.implicitOperation(ls, t, dt);
+        Field source(exec, 1, 2.0);
+        c.implicitOperation(ls, t, dt);
 
-        // // c = 2 * 2
-        // auto hostRhsC = ls.rhs().copyToHost();
-        // REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
-        // auto hostLsC = ls.copyToHost();
-        // REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
+        // c = 2 * 2
+        auto hostRhsC = ls.rhs().copyToHost();
+        REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
+        auto hostLsC = ls.copyToHost();
+        REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // // d= 2 * 2
-        // ls = d.createEmptyLinearSystem();
-        // d.implicitOperation(ls, t, dt);
-        // auto hostRhsD = ls.rhs().copyToHost();
-        // REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
-        // auto hostLsD = ls.copyToHost();
-        // REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
+        ls.reset();
+        d.implicitOperation(ls, t, dt);
+        auto hostRhsD = ls.rhs().copyToHost();
+        REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
+        auto hostLsD = ls.copyToHost();
+        REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
-        // // e = - -3 * 2 * 2 = -12
-        // ls = e.createEmptyLinearSystem();
-        // e.implicitOperation(ls, t, dt);
-        // auto hostRhsE = ls.rhs().copyToHost();
-        // REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
-        // auto hostLsE = ls.copyToHost();
-        // REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>());
+        // e = - -3 * 2 * 2 = -12
+        ls.reset();
+        e.implicitOperation(ls, t, dt);
+        auto hostRhsE = ls.rhs().copyToHost();
+        REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
+        auto hostLsE = ls.copyToHost();
+        REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>());
     }
 }
