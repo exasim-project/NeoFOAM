@@ -54,6 +54,7 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     NeoFOAM::Database db;
     auto mesh = createSingleCellMesh(exec);
+    auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     fvcc::FieldCollection& fieldCollection =
         fvcc::FieldCollection::instance(db, "testFieldCollection");
@@ -86,22 +87,23 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
     SECTION("implicit DdtOperator " + execName)
     {
+        auto ls = NeoFOAM::la::createEmptyLinearSystem<
+            TestType,
+            NeoFOAM::localIdx,
+            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
         fvcc::DdtOperator<TestType> ddtTerm(Operator::Type::Implicit, phi);
-        // FIXME
-        // auto ls = createEmptyLinearSystem(mesh);
-        // ddtTerm.implicitOperation(ls, 1.0, 0.5);
+        ddtTerm.implicitOperation(ls, 1.0, 0.5);
 
-        // auto lsHost = ls.copyToHost();
-        // const auto vol = mesh.cellVolumes().copyToHost();
-        // const auto matrixValues = lsHost.matrix().values();
-        // const auto rhs = lsHost.rhs().span();
+        auto lsHost = ls.copyToHost();
+        const auto vol = mesh.cellVolumes().copyToHost();
+        const auto matrixValues = lsHost.matrix().values();
+        const auto rhs = lsHost.rhs().span();
 
-        // for (auto ii = 0; ii < matrixValues.size(); ++ii)
-        // {
-        //     REQUIRE(matrixValues[ii] == 2.0 * vol[0] * one<TestType>()); // => 1/dt*V => 1/.5*V =
-        //     2V REQUIRE(rhs[ii] == -2.0 * vol[0] * one<TestType>()); // => phi^{n}/dt*V => -1/.5*V
-        //     = -2V
-        // }
+        for (auto ii = 0; ii < matrixValues.size(); ++ii)
+        {
+            REQUIRE(matrixValues[ii] == 2.0 * vol[0] * one<TestType>()); // => 1/dt*V => 1/.5*V = 2V
+            REQUIRE(rhs[ii] == -2.0 * vol[0] * one<TestType>()); // => phi^{n}/dt*V => -1/.5*V = -2V
+        }
     }
 }
 
