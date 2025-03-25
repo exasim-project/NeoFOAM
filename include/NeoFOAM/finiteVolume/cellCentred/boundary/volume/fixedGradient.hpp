@@ -28,15 +28,14 @@ void setGradientValue(
 {
     const auto iField = domainField.internalField().span();
 
-    auto [refGradient, value, valueFraction, refValue] = spans(
+    auto [refGradient, value, valueFraction, refValue, faceCells, deltaCoeffs] = spans(
         domainField.boundaryField().refGrad(),
         domainField.boundaryField().value(),
         domainField.boundaryField().valueFraction(),
-        domainField.boundaryField().refValue()
+        domainField.boundaryField().refValue(),
+        mesh.boundaryMesh().faceCells(),
+        mesh.boundaryMesh().deltaCoeffs()
     );
-
-    auto faceCells = mesh.boundaryMesh().faceCells();
-    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs();
 
     NeoFOAM::parallelFor(
         domainField.exec(),
