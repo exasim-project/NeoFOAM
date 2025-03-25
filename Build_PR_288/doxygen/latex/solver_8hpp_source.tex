@@ -87,11 +87,16 @@
 \DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ rhs[i]\ -\/=\ expSource[i]\ *\ vol[i];\ \}}
 \DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00085}00085\ }
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ la::ginkgo::Solver<ValueType>(solution.exec(),\ fvSolution);}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ solver.solve(ls,\ solution.internalField());}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00088}00088\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00089}00089\ \}}
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00090}00090\ }
-\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00091}00091\ \}\ \textcolor{comment}{//\ namespace\ dsl}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00086}00086\ \textcolor{preprocessor}{\#if\ NF\_WITH\_GINKGO}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ la::ginkgo::Solver<ValueType>(solution.exec(),\ fvSolution);}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ solver.solve(ls,\ solution.internalField());}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00089}00089\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00090}00090\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a8b8fc4329e5e6dfc3731ca28605a8a49}{NF\_ERROR\_EXIT}}(\textcolor{stringliteral}{"{}No\ linear\ solver\ is\ available,\ build\ with\ -\/DNEOFOAM\_WITH\_GINKGO=ON"{}})}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00091}00091\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00093}00093\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00094}00094\ \}}
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{solver_8hpp_source_l00096}00096\ \}\ \textcolor{comment}{//\ namespace\ dsl}}
 
 \end{DoxyCode}
