@@ -44,10 +44,10 @@ public:
     //- Destructor
     virtual ~petscSolver()
     {
-        MatDestroy(&Amat_);
+        // MatDestroy(&Amat_);
         KSPDestroy(&ksp_);
-        VecDestroy(&sol_);
-        VecDestroy(&rhs_);
+        // VecDestroy(&sol_);
+        // VecDestroy(&rhs_);
     }
 
     void solve(LinearSystem<ValueType, int>& sys, Field<ValueType>& x)
@@ -130,6 +130,12 @@ public:
         rhs_ = petsctx.rhs();
         sol_ = petsctx.sol();
 
+        VecSetValuesCOO(rhs_, sys.rhs().data(), ADD_VALUES);
+        MatSetValuesCOO(Amat_, sys.matrix().values().data(), ADD_VALUES);
+
+        // MatView(Amat_, PETSC_VIEWER_STDOUT_WORLD);
+        // VecView(rhs_, PETSC_VIEWER_STDOUT_WORLD);
+
 
         KSPCreate(PETSC_COMM_WORLD, &ksp_);
         KSPSetOperators(ksp_, Amat_, Amat_);
@@ -137,16 +143,18 @@ public:
         KSPSetFromOptions(ksp_);
         // KSPSetUp(ksp);
 
+
         PetscCallVoid(KSPSolve(ksp_, rhs_, sol_));
 
-        // VecView(sol_,  PETSC_VIEWER_STDOUT_WORLD);
 
         PetscScalar* x_help = static_cast<PetscScalar*>(x.data());
         VecGetArray(sol_, &x_help);
+
         NeoFOAM::Field<NeoFOAM::scalar> x2(
             x.exec(), static_cast<ValueType*>(x_help), nrows, x.exec()
         );
         x = x2;
+
 
         // PetscCall(ierr);
     }

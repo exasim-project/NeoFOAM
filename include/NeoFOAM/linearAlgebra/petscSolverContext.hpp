@@ -30,7 +30,7 @@ class petscSolverContext
     bool init_, updated_;
     Executor exec_;
     Mat Amat_;
-    KSP ksp_;
+    // KSP ksp_;
 
     Vec sol_, rhs_;
 
@@ -41,8 +41,8 @@ public:
 
     //- Default construct
     petscSolverContext(Executor exec)
-        : init_(false), updated_(false), exec_(exec), Amat_(nullptr), ksp_(nullptr), sol_(nullptr),
-          rhs_(nullptr)
+        : init_(false), updated_(false), exec_(exec), Amat_(nullptr), sol_(nullptr),
+          rhs_(nullptr) //, ksp_(nullptr)
     {}
 
 
@@ -50,7 +50,7 @@ public:
     virtual ~petscSolverContext()
     {
         MatDestroy(&Amat_);
-        KSPDestroy(&ksp_);
+        // KSPDestroy(&ksp_);
         VecDestroy(&sol_);
         VecDestroy(&rhs_);
     }

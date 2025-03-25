@@ -122,6 +122,7 @@ TEST_CASE("MatrixAssembly - Petsc")
 
         auto hostX = x.copyToHost();
 
+
         REQUIRE(hostX[0] == Catch::Approx(3. / 205.).margin(1e-6));
         REQUIRE(hostX[1] == Catch::Approx(8. / 205.).margin(1e-6));
         REQUIRE(hostX[2] == Catch::Approx(53. / 205.).margin(1e-6));
