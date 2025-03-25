@@ -21,7 +21,11 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
             }
             else if constexpr (std::is_same_v<ExecType, CPUExecutor>)
             {
+#if defined(KOKKOS_ENABLE_OMP)
                 return gko::OmpExecutor::create();
+#elif defined(KOKKOS_ENABLE_THREADS)
+                return gko::ReferenceExecutor::create();
+#endif
             }
             else if constexpr (std::is_same_v<ExecType, GPUExecutor>)
             {
