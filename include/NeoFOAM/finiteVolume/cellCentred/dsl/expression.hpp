@@ -152,7 +152,7 @@ public:
             auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
             solver.solve(ls_, psi_.internalField());
 #else
-    NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+            NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
 #endif
         }
     }

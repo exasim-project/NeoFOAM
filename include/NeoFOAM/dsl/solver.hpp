@@ -87,9 +87,8 @@ void solve(
         auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
 #else
-    NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
 #endif
-
     }
 }
 

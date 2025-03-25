@@ -12,6 +12,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
+// TODO move to source file
 namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function

@@ -14,8 +14,9 @@
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #endif
 
-// FIXME
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+
+// TODO decouple from fvcc
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 
@@ -59,7 +60,7 @@ public:
         // solve sparse matrix system
         using ValueType = typename SolutionFieldType::ElementType;
 
-        // FIXME
+        // TODO decouple from fvcc specific implementation
         auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solutionField.mesh());
         auto ls = la::createEmptyLinearSystem<
             ValueType,
@@ -70,13 +71,13 @@ public:
 
         auto values = ls.matrix().values();
         eqn.implicitOperation(ls, t, dt);
-        // FIXME if we dont convert is there anything needed to do on the rhs
 
+        // TODO make it independent of ginkgo
 #if NF_WITH_GINKGO
         la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ls, solutionField.internalField());
 #else
-    NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
 #endif
 
         // check if executor is GPU
