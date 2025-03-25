@@ -15,22 +15,6 @@ namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-// TODO extend sparsity pattern to return the correct type
-// FIXME not needed because conversion happens just before passing to gko
-template<typename ValueType, typename IndexType = localIdx>
-la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
-{
-    const auto& exec = ls.exec();
-    const auto [A, b] = ls.view();
-
-    Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
-    Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
-    Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
-
-    la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-    Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
-    return {matrix, rhs, ls.sparsityPattern()};
-}
 
 /*@brief extends expression by giving access to assembled matrix
  * @note used in neoIcoFOAM directly instead of dsl::expression
@@ -243,7 +227,7 @@ private:
 
 template<typename ValueType, typename IndexType = localIdx>
 VolumeField<ValueType>
-operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType>& psi)
+operator&(const Expression<ValueType, IndexType> expr, const VolumeField<ValueType>& psi)
 {
     VolumeField<ValueType> resultField(
         psi.exec(),
@@ -255,8 +239,8 @@ operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType
     );
 
     auto [result, b, x] =
-        spans(resultField.internalField(), ls.linearSystem().rhs(), psi.internalField());
-    const auto [values, colIdxs, rowPtrs] = ls.linearSystem().view();
+        spans(resultField.internalField(), expr.linearSystem().rhs(), psi.internalField());
+    const auto [values, colIdxs, rowPtrs] = expr.linearSystem().view();
 
     NeoFOAM::parallelFor(
         resultField.exec(),
