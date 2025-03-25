@@ -7,18 +7,6 @@
 
 #if NF_WITH_GINKGO
 
-template<typename ExecSpace>
-bool isNotKokkosThreads([[maybe_unused]] ExecSpace ex)
-{
-#ifdef KOKKOS_ENABLE_THREADS
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::Threads>)
-    {
-        return false;
-    }
-#endif
-    return true;
-}
-
 using NeoFOAM::Executor;
 using NeoFOAM::Dictionary;
 using NeoFOAM::scalar;
