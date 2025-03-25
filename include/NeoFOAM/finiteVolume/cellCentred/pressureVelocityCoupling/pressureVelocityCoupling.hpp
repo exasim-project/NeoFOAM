@@ -6,7 +6,7 @@
 
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/expression.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/dsl/expression.hpp"
 
 
 namespace NeoFOAM::finiteVolume::cellCentred
