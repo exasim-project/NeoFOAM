@@ -128,8 +128,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="comment">// deallocated before solving</span></div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keyword">auto</span> mtx = convert&lt;ValueType, IndexType, ValueType, int&gt;(sys.exec(), sys.view().A);</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keyword">auto</span> vals = createGkoArray(exec, mtx.values().span());</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keyword">auto</span> col = createGkoArray(exec, mtx.colIdxs());</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keyword">auto</span> row = createGkoArray(exec, mtx.rowPtrs());</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keyword">auto</span> col = createGkoArray(exec, mtx.colIdxs().span());</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keyword">auto</span> row = createGkoArray(exec, mtx.rowPtrs().span());</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordflow">return</span> gko::share(</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        gko::matrix::Csr&lt;ValueType, int&gt;::create(exec, gko::dim&lt;2&gt; {nrows, nrows}, vals, col, row)</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    );</div>
