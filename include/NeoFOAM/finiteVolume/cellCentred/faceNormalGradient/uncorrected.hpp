@@ -67,4 +67,8 @@ private:
     const std::shared_ptr<GeometryScheme> geometryScheme_;
 };
 
+// instantiate the template class
+template class Uncorrected<scalar>;
+template class Uncorrected<Vector>;
+
 } // namespace NeoFOAM

@@ -58,8 +58,4 @@ void computeFaceNormalGrad(
 NF_DECLARE_COMPUTE_IMP_FNG(scalar);
 NF_DECLARE_COMPUTE_IMP_FNG(Vector);
 
-// instantiate the template class
-template class Uncorrected<scalar>;
-template class Uncorrected<Vector>;
-
 } // namespace NeoFOAM

@@ -27,7 +27,8 @@ void computeDivImp(
     la::LinearSystem<ValueType, localIdx>& ls,
     const SurfaceField<scalar>& faceFlux,
     const VolumeField<ValueType>& phi,
-    const dsl::Coeff operatorScaling
+    const dsl::Coeff operatorScaling,
+    const SparsityPattern& sparsityPattern
 );
 
 template<typename ValueType>
@@ -107,5 +108,8 @@ private:
     // TODO why store as shared_ptr
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
+
+template class GaussGreenDiv<scalar>;
+template class GaussGreenDiv<Vector>;
 
 } // namespace NeoFOAM

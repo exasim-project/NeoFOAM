@@ -184,9 +184,4 @@ void computeLaplacianImpl(
 NF_DECLARE_COMPUTE_IMP_LAP(scalar);
 NF_DECLARE_COMPUTE_IMP_LAP(Vector);
 
-
-// instantiate the template class
-template class GaussGreenLaplacian<scalar>;
-template class GaussGreenLaplacian<Vector>;
-
 };

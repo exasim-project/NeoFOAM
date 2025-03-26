@@ -212,8 +212,4 @@ void computeDivImp(
 NF_DECLARE_COMPUTE_IMP_DIV(scalar);
 NF_DECLARE_COMPUTE_IMP_DIV(Vector);
 
-
-template class GaussGreenDiv<scalar>;
-template class GaussGreenDiv<Vector>;
-
 };

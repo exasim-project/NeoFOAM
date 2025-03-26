@@ -101,4 +101,8 @@ private:
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
 
+// instantiate the template class
+template class GaussGreenLaplacian<scalar>;
+template class GaussGreenLaplacian<Vector>;
+
 } // namespace NeoFOAM
