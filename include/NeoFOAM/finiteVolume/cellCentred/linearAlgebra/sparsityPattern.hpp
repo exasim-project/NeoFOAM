@@ -25,10 +25,10 @@ public:
 
     void update();
 
-    // FIXME rename upperOffset
+    // TODO: rename upperOffset
     const Field<uint8_t>& ownerOffset() const;
 
-    // FIXME rename lowerOffset
+    // TODO: rename lowerOffset
     const Field<uint8_t>& neighbourOffset() const;
 
     const Field<uint8_t>& diagOffset() const;

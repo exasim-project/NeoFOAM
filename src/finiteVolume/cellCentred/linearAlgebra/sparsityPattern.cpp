@@ -33,7 +33,7 @@ void SparsityPattern::update()
     const auto nCells = mesh_.nCells();
     const auto faceOwner = mesh_.faceOwner().span();
     const auto faceNeighbour = mesh_.faceNeighbour().span();
-    const auto faceFaceCells = mesh_.boundaryMesh().faceCells().span();
+    // const auto faceFaceCells = mesh_.boundaryMesh().faceCells().span();
     const auto nInternalFaces = mesh_.nInternalFaces();
 
     // start with one to include the diagonal
@@ -58,7 +58,7 @@ void SparsityPattern::update()
     );
 
     // get number of total non-zeros
-    auto nEntries = segmentsFromIntervals(nFacesPerCell, rowPtrs_);
+    // auto nEntries = segmentsFromIntervals(nFacesPerCell, rowPtrs_);
     auto rowPtrs = rowPtrs_.span();
     std::span<localIdx> sColIdx = colIdxs_.span();
     fill(nFacesPerCell, 0); // reset nFacesPerCell
@@ -69,12 +69,12 @@ void SparsityPattern::update()
         {0, nInternalFaces},
         KOKKOS_LAMBDA(const size_t facei) {
             size_t neighbour = static_cast<size_t>(faceNeighbour[facei]);
-            size_t owner = static_cast<size_t>(faceOwner[facei]);
+            localIdx owner = static_cast<localIdx>(faceOwner[facei]);
 
             // return the oldValues
             // hit on performance on serial
             size_t segIdxNei = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[neighbour], 1);
-            neighbourOffsetSpan[facei] = segIdxNei;
+            neighbourOffsetSpan[facei] = static_cast<uint8_t>(segIdxNei);
 
             size_t startSegNei = rowPtrs[neighbour];
             // neighbour --> current cell
@@ -87,7 +87,7 @@ void SparsityPattern::update()
         nFacesPerCell,
         KOKKOS_LAMBDA(const size_t celli) {
             size_t nFaces = nFacesPerCellSpan[static_cast<size_t>(celli)];
-            diagOffsetSpan[celli] = nFaces;
+            diagOffsetSpan[celli] = static_cast<uint8_t>(nFaces);
             sColIdx[rowPtrs[celli] + nFaces] = celli;
             return nFaces + 1;
         }
@@ -104,7 +104,7 @@ void SparsityPattern::update()
             // return the oldValues
             // hit on performance on serial
             size_t segIdxOwn = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[owner], 1);
-            ownerOffsetSpan[facei] = segIdxOwn;
+            ownerOffsetSpan[facei] = static_cast<uint8_t>(segIdxOwn);
 
             size_t startSegOwn = rowPtrs[owner];
             // owner --> current cell

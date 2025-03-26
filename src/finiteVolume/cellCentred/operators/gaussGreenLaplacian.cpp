@@ -53,7 +53,7 @@ void computeLaplacianExp(
         exec,
         {nInternalFaces, fnGrad.size()},
         KOKKOS_LAMBDA(const size_t i) {
-            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
+            size_t own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
             ValueType valueOwn = faceArea[i] * fnGrad[i];
             Kokkos::atomic_add(&result[own], valueOwn);
         }

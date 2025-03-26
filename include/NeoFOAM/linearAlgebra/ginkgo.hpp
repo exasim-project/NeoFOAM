@@ -39,10 +39,12 @@ public:
     {
         size_t nrows = sys.rhs().size();
 
-        auto solver = factory_->generate(detail::createGkoMtx(gkoExec_, sys));
+        auto gkoMtx = detail::createGkoMtx(gkoExec_, sys);
+        auto solver = factory_->generate(gkoMtx);
 
         auto rhs = detail::createGkoDense(gkoExec_, sys.rhs().data(), nrows);
         auto gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);
+
         solver->apply(rhs, gkoX);
     }
 
