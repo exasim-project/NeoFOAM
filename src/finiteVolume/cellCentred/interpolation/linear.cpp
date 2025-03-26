@@ -52,7 +52,7 @@ void computeLinearInterpolation(
 NF_DECLARE_COMPUTE_IMP_LIN_INT(scalar);
 NF_DECLARE_COMPUTE_IMP_LIN_INT(Vector);
 
-template class Linear<scalar>;
-template class Linear<Vector>;
+// template class Linear<scalar>;
+// template class Linear<Vector>;
 
 } // namespace NeoFOAM

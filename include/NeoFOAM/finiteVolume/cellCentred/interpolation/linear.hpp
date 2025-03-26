@@ -78,3 +78,15 @@ private:
 };
 
 } // namespace NeoFOAM
+
+namespace NeoFOAM {
+
+namespace fvcc = finiteVolume::cellCentred;
+
+template class fvcc::SurfaceInterpolationFactory<scalar>;
+template class fvcc::SurfaceInterpolationFactory<Vector>;
+
+template class fvcc::Linear<scalar>;
+template class fvcc::Linear<Vector>;
+
+}

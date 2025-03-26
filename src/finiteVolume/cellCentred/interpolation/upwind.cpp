@@ -62,8 +62,4 @@ void computeUpwindInterpolation(
 NF_DECLARE_COMPUTE_IMP_UPW_INT(scalar);
 NF_DECLARE_COMPUTE_IMP_UPW_INT(Vector);
 
-template class Upwind<scalar>;
-template class Upwind<Vector>;
-
-
 } // namespace NeoFOAM

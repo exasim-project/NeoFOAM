@@ -80,3 +80,14 @@ private:
 };
 
 } // namespace NeoFOAM
+
+
+namespace NeoFOAM
+{
+
+namespace fvcc = finiteVolume::cellCentred;
+
+template class fvcc::Upwind<scalar>;
+template class fvcc::Upwind<Vector>;
+
+}
