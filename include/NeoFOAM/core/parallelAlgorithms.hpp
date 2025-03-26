@@ -10,9 +10,68 @@
 namespace NeoFOAM
 {
 
-
 template<typename ValueType>
 class Field;
+
+/* @brief Functor to compute addition in a thread safe way
+**
+** @note see gaussGreenGrad.cpp for an usage example
+*/
+template<typename ExecutorType>
+struct AtomicAdd
+{
+    const ExecutorType exec_;
+
+    AtomicAdd(ExecutorType exec) : exec_(exec) {}
+
+
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
+    {
+        Kokkos::atomic_add(&a, b);
+    }
+};
+
+/* @brief non-blocking specialization for SerialExecutor
+**
+** @note see gaussGreenGrad.cpp for an usage example
+*/
+template<>
+template<typename OpA, typename OpB>
+KOKKOS_INLINE_FUNCTION void AtomicAdd<SerialExecutor>::operator()(OpA& a, const OpB& b) const
+{
+    a += b;
+}
+
+
+/* @brief Functor to compute subtraction in a thread safe way
+**
+** see gaussGreenGrad.cpp for an usage example
+*/
+template<typename ExecutorType>
+struct AtomicSub
+{
+    const ExecutorType exec_;
+
+    AtomicSub(ExecutorType exec) : exec_(exec) {}
+
+    template<typename OpA, typename OpB>
+    KOKKOS_INLINE_FUNCTION void operator()(OpA& a, const OpB& b) const
+    {
+        Kokkos::atomic_add(&a, b);
+    }
+};
+
+/* @brief non-blocking specialization for SerialExecutor
+**
+** @note see gaussGreenGrad.cpp for an usage example
+*/
+template<>
+template<typename OpA, typename OpB>
+KOKKOS_INLINE_FUNCTION void AtomicSub<SerialExecutor>::operator()(OpA& a, const OpB& b) const
+{
+    a += b;
+}
 
 
 // Concept to check if a callable is compatible with void(const size_t)
@@ -22,6 +81,7 @@ concept parallelForKernel = requires(Kernel t, size_t i) {
         t(i)
     } -> std::same_as<void>;
 };
+
 
 template<typename Executor, parallelForKernel Kernel>
 void parallelFor(
@@ -50,6 +110,29 @@ void parallelFor(
     }
 }
 
+/* @brief parallelFor which takes to separate kernels, one for the internal domain and one for
+ *boundaries
+ **
+ */
+template<parallelForKernel KernelInternal, parallelForKernel KernelBoundary>
+void parallelFor(
+    const NeoFOAM::Executor& exec,
+    std::pair<size_t, size_t> rangeInternal,
+    KernelInternal kernelInternal,
+    std::pair<size_t, size_t> rangeBoundary,
+    KernelBoundary kernelBoundary,
+    std::string name
+)
+{
+    std::visit(
+        [&](const auto& e) { parallelFor(e, rangeInternal, kernelInternal, name + "Internal"); },
+        exec
+    );
+    std::visit(
+        [&](const auto& e) { parallelFor(e, rangeBoundary, kernelBoundary, name + "Boundary"); },
+        exec
+    );
+}
 
 template<parallelForKernel Kernel>
 void parallelFor(
@@ -61,6 +144,7 @@ void parallelFor(
 {
     std::visit([&](const auto& e) { parallelFor(e, range, kernel, name); }, exec);
 }
+
 
 // Concept to check if a callable is compatible with ValueType(const size_t)
 template<typename Kernel, typename ValueType>
