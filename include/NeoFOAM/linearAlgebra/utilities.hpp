@@ -44,8 +44,8 @@ createGkoMtx(std::shared_ptr<const gko::Executor> exec, LinearSystem<ValueType, 
     // deallocated before solving
     auto mtx = convert<ValueType, IndexType, ValueType, int>(sys.exec(), sys.view().A);
     auto vals = createGkoArray(exec, mtx.values().span());
-    auto col = createGkoArray(exec, mtx.colIdxs());
-    auto row = createGkoArray(exec, mtx.rowPtrs());
+    auto col = createGkoArray(exec, mtx.colIdxs().span());
+    auto row = createGkoArray(exec, mtx.rowPtrs().span());
     return gko::share(
         gko::matrix::Csr<ValueType, int>::create(exec, gko::dim<2> {nrows, nrows}, vals, col, row)
     );

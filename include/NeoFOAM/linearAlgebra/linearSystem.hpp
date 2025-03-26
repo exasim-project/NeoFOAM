@@ -107,9 +107,9 @@ Field<ValueType> spmv(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& 
     Field<ValueType> resultField(ls.exec(), ls.rhs().size(), 0.0);
     auto [result, b, x] = spans(resultField, ls.rhs(), xfield);
 
-    std::span<ValueType> values = ls.matrix().values().span();
-    std::span<IndexType> colIdxs = ls.matrix().colIdxs();
-    std::span<IndexType> rowPtrs = ls.matrix().rowPtrs();
+    auto values = ls.matrix().values().span();
+    auto colIdxs = ls.matrix().colIdxs().span();
+    auto rowPtrs = ls.matrix().rowPtrs().span();
 
     parallelFor(
         ls.exec(),
