@@ -58,7 +58,7 @@ void SparsityPattern::update()
     );
 
     // get number of total non-zeros
-    // auto nEntries = segmentsFromIntervals(nFacesPerCell, rowPtrs_);
+    segmentsFromIntervals(nFacesPerCell, rowPtrs_);
     auto rowPtrs = rowPtrs_.span();
     std::span<localIdx> sColIdx = colIdxs_.span();
     fill(nFacesPerCell, 0); // reset nFacesPerCell
@@ -104,7 +104,7 @@ void SparsityPattern::update()
             // return the oldValues
             // hit on performance on serial
             size_t segIdxOwn = Kokkos::atomic_fetch_add(&nFacesPerCellSpan[owner], 1);
-            ownerOffsetSpan[facei] = static_cast<uint8_t>(segIdxOwn);
+            ownerOffsetSpan[facei] = uint8_t(segIdxOwn);
 
             size_t startSegOwn = rowPtrs[owner];
             // owner --> current cell
