@@ -79,7 +79,8 @@ private:
 
 } // namespace NeoFOAM
 
-namespace NeoFOAM {
+namespace NeoFOAM
+{
 
 namespace fvcc = finiteVolume::cellCentred;
 
