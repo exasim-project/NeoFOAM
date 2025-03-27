@@ -11,6 +11,8 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
+namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
+
 #if NF_WITH_GINKGO
 
 template<typename ExecSpace>
@@ -97,6 +99,8 @@ TEST_CASE("MatrixAssembly - Petsc")
     SECTION("Solve linear system " + execName)
     {
 
+        NeoFOAM::Database db;
+
         std::cout << execName << "\n";
         NeoFOAM::Field<NeoFOAM::scalar> values(
             exec, {10.0, 4.0, 7.0, 2.0, 10.0, 8.0, 3.0, 6.0, 10.0}
@@ -111,21 +115,53 @@ TEST_CASE("MatrixAssembly - Petsc")
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
         NeoFOAM::Dictionary solverDict;
-        // solverDict.insert("maxIters", 100);
-        // solverDict.insert("relTol", float(1e-7));
 
         // Create solver
-        auto solver = NeoFOAM::la::petscSolver::petscSolver<NeoFOAM::scalar>(exec, solverDict);
+        auto solver = NeoFOAM::la::petscSolver::petscSolver<NeoFOAM::scalar>(exec, solverDict, db);
 
         // Solve system
         solver.solve(linearSystem, x);
 
         auto hostX = x.copyToHost();
 
-
         REQUIRE(hostX[0] == Catch::Approx(3. / 205.).margin(1e-6));
         REQUIRE(hostX[1] == Catch::Approx(8. / 205.).margin(1e-6));
         REQUIRE(hostX[2] == Catch::Approx(53. / 205.).margin(1e-6));
+    }
+
+    SECTION("Linear solver context " + execName)
+    {
+
+        NeoFOAM::Database db;
+        fvcc::FieldCollection fieldCollection =
+            fvcc::FieldCollection::instance(db, "testpetscContext");
+
+        Mat Amat_;
+        Vec sol_, rhs_;
+
+        std::cout << execName << "\n";
+        NeoFOAM::Field<NeoFOAM::scalar> values(
+            exec, {10.0, 4.0, 7.0, 2.0, 10.0, 8.0, 3.0, 6.0, 10.0}
+        );
+        // TODO work on support for unsingned types
+        NeoFOAM::Field<int> colIdx(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
+        NeoFOAM::Field<int> rowPtrs(exec, {0, 3, 6, 9});
+        NeoFOAM::la::CSRMatrix<NeoFOAM::scalar, int> csrMatrix(values, colIdx, rowPtrs);
+
+        NeoFOAM::Field<NeoFOAM::scalar> rhs(exec, {1.0, 2.0, 3.0});
+        NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs, "custom");
+        NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
+
+        std::size_t nrows = linearSystem.rhs().size();
+        NeoFOAM::la::petscSolverContext::petscSolverContext<NeoFOAM::scalar> petsctx(exec);
+        petsctx.initialize(linearSystem);
+
+        Amat_ = petsctx.AMat();
+        rhs_ = petsctx.rhs();
+        sol_ = petsctx.sol();
+
+        VecSetValuesCOO(rhs_, linearSystem.rhs().data(), ADD_VALUES);
+        MatSetValuesCOO(Amat_, linearSystem.matrix().values().data(), ADD_VALUES);
     }
 }
 

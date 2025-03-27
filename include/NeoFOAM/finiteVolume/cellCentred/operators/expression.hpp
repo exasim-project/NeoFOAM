@@ -149,9 +149,9 @@ public:
             auto convertedLS = convertLinearSystem(ls_);
             solver.solve(convertedLS, psi_.internalField());
 #elif NF_WITH_PETSC
-            // placeholder for petsc solver --> include runtime selection in future
-            // should look like this
-            NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(psi_.exec(), fvSolution_);
+            NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(
+                psi_.exec(), fvSolution_, psi_.db()
+            );
             auto convertedLS = convertLinearSystem(ls_);
             solver.solve(convertedLS, psi_.internalField());
 #endif

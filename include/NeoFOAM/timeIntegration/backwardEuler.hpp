@@ -62,10 +62,8 @@ public:
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ginkgoLs, solutionField.internalField());
 #elif NF_WITH_PETSC
-        // placeholder for petsc solver --> include runtime selection in future
-        // should look like this
         NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(
-            solutionField.exec(), this->solutionDict_
+            solutionField.exec(), this->solutionDict_, solutionField.db()
         );
         solver.solve(ginkgoLs, solutionField.internalField());
 #endif
