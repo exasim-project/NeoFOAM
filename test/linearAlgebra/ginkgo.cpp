@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
+#include "catch2_common.hpp"
 
-#include <NeoFOAM/linearAlgebra/ginkgo.hpp>
+#include "NeoFOAM/NeoFOAM.hpp"
 
-#include "catch2/catch_session.hpp"
-#include "catch2/catch_test_macros.hpp"
-#include "catch2/generators/catch_generators_all.hpp"
-#include <catch2/matchers/catch_matchers_templated.hpp>
 
 #if NF_WITH_GINKGO
 

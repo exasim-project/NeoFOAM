@@ -3,6 +3,8 @@
 
 #pragma once
 
+#if NF_WITH_GINKGO
+
 #include <ginkgo/ginkgo.hpp>
 #include <ginkgo/extensions/kokkos.hpp>
 
@@ -27,7 +29,7 @@ gko::array<T> createGkoArray(std::shared_ptr<const gko::Executor> exec, std::spa
 
 template<typename T>
 gko::detail::const_array_view<T>
-createGkoArray(std::shared_ptr<const gko::Executor> exec, std::span<const T> values)
+createConstGkoArray(std::shared_ptr<const gko::Executor> exec, std::span<const T> values)
 {
     return gko::make_const_array_view(exec, values.size(), values.data());
 }
@@ -37,15 +39,16 @@ std::shared_ptr<gko::matrix::Csr<ValueType, int>>
 createGkoMtx(std::shared_ptr<const gko::Executor> exec, LinearSystem<ValueType, IndexType>& sys)
 {
     size_t nrows = sys.rhs().size();
+    // TODO: avoid copying
+    // NOTE: since mtx is a converted copy we need to make sure that mtx data is not
+    // deallocated before solving
     auto mtx = convert<ValueType, IndexType, ValueType, int>(sys.exec(), sys.view().A);
-
-    return gko::share(gko::matrix::Csr<ValueType, int>::create(
-        exec,
-        gko::dim<2> {nrows, nrows},
-        createGkoArray(exec, mtx.values()),
-        createGkoArray(exec, mtx.colIdxs()),
-        createGkoArray(exec, mtx.rowPtrs())
-    ));
+    auto vals = createGkoArray(exec, mtx.values().span());
+    auto col = createGkoArray(exec, mtx.colIdxs().span());
+    auto row = createGkoArray(exec, mtx.rowPtrs().span());
+    return gko::share(
+        gko::matrix::Csr<ValueType, int>::create(exec, gko::dim<2> {nrows, nrows}, vals, col, row)
+    );
 }
 
 template<typename ValueType>
@@ -59,3 +62,5 @@ createGkoDense(std::shared_ptr<const gko::Executor> exec, ValueType* ptr, size_t
 }
 
 }
+
+#endif

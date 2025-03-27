@@ -136,37 +136,37 @@ public:
      * @brief Get a span to the values array.
      * @return Span containing the matrix values.
      */
-    [[nodiscard]] std::span<ValueType> values() { return value_.span(); }
+    [[nodiscard]] Field<ValueType>& values() { return value_; }
 
     /**
      * @brief Get a span to the column indices array.
      * @return Span containing the column indices.
      */
-    [[nodiscard]] std::span<IndexType> colIdxs() { return columnIndex_.span(); }
+    [[nodiscard]] Field<IndexType>& colIdxs() { return columnIndex_; }
 
     /**
      * @brief Get a span to the row pointers array.
      * @return Span containing the row pointers.
      */
-    [[nodiscard]] std::span<IndexType> rowPtrs() { return rowOffset_.span(); }
+    [[nodiscard]] Field<IndexType>& rowPtrs() { return rowOffset_; }
 
     /**
      * @brief Get a const span to the values array.
      * @return Const span containing the matrix values.
      */
-    [[nodiscard]] const std::span<const ValueType> values() const { return value_.span(); }
+    [[nodiscard]] const Field<ValueType>& values() const { return value_; }
 
     /**
      * @brief Get a const span to the column indices array.
      * @return Const span containing the column indices.
      */
-    [[nodiscard]] const std::span<const IndexType> colIdxs() const { return columnIndex_.span(); }
+    [[nodiscard]] const Field<IndexType> colIdxs() const { return columnIndex_; }
 
     /**
      * @brief Get a const span to the row pointers array.
      * @return Const span containing the row pointers.
      */
-    [[nodiscard]] const std::span<const IndexType> rowPtrs() const { return rowOffset_.span(); }
+    [[nodiscard]] const Field<IndexType>& rowPtrs() const { return rowOffset_; }
 
     /**
      * @brief Copy the matrix to another executor.

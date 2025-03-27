@@ -9,8 +9,12 @@
 #include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/dsl/temporalOperator.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+
+// TODO: decouple from fvcc
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/ddtOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/laplacianOperator.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
@@ -26,7 +30,7 @@ TemporalOperator<ValueType> ddt(fvcc::VolumeField<ValueType>& phi)
 
 template<typename ValueType>
 SpatialOperator<ValueType>
-Source(fvcc::VolumeField<scalar>& coeff, fvcc::VolumeField<ValueType>& phi)
+source(fvcc::VolumeField<scalar>& coeff, fvcc::VolumeField<ValueType>& phi)
 {
     return SpatialOperator<ValueType>(fvcc::SourceTerm(dsl::Operator::Type::Implicit, coeff, phi));
 }

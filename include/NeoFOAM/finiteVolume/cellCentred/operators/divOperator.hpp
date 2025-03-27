@@ -8,7 +8,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -42,8 +42,6 @@ public:
         : exec_(exec), mesh_(mesh) {};
 
     virtual ~DivOperatorFactory() {} // Virtual destructor
-
-    virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
     // NOTE currently simple overloading is used here, because templating the virtual function
     // does not work and we cant template the entire class because the static create function

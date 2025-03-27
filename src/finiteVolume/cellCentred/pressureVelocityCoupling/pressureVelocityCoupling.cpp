@@ -13,8 +13,8 @@ namespace NeoFOAM::finiteVolume::cellCentred
 std::tuple<VolumeField<scalar>, VolumeField<Vector>>
 discreteMomentumFields(const Expression<Vector>& expr)
 {
-    const VolumeField<Vector>& U = expr.getField();
-    const UnstructuredMesh& mesh = U.mesh();
+    const VolumeField<Vector>& u = expr.getField();
+    const UnstructuredMesh& mesh = u.mesh();
     const SparsityPattern& sparsityPattern = expr.sparsityPattern();
     const auto& ls = expr.linearSystem();
     const auto vol = mesh.cellVolumes().span();
@@ -32,23 +32,24 @@ discreteMomentumFields(const Expression<Vector>& expr)
         return vol[celli] / (values[rowPtrs[celli] + diagOffsetCelli][0]);
     });
 
-    auto OffDiagonalSourceBCs = createCalculatedBCs<VolumeBoundary<Vector>>(mesh);
-    VolumeField<Vector> HbyA = VolumeField<Vector>(expr.exec(), "HbyA", mesh, OffDiagonalSourceBCs);
-    fill(HbyA.internalField(), zero<Vector>());
+    auto offDiagonalSourceBCs = createCalculatedBCs<VolumeBoundary<Vector>>(mesh);
+    VolumeField<Vector> hByA = VolumeField<Vector>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
+    fill(hByA.internalField(), zero<Vector>());
+
     const std::size_t nInternalFaces = mesh.nInternalFaces();
 
-    const auto exec = U.exec();
+    const auto exec = u.exec();
     const auto [owner, neighbour, surfFaceCells, ownOffs, neiOffs, internalU, internalRAU] = spans(
         mesh.faceOwner(),
         mesh.faceNeighbour(),
         mesh.boundaryMesh().faceCells(),
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset(),
-        U.internalField(),
+        u.internalField(),
         rAU.internalField()
     );
 
-    auto internalHbyA = HbyA.internalField().span();
+    auto internalHbyA = hByA.internalField().span();
 
     parallelFor(
         exec,
@@ -60,10 +61,10 @@ discreteMomentumFields(const Expression<Vector>& expr)
             std::size_t rowNeiStart = rowPtrs[nei];
             std::size_t rowOwnStart = rowPtrs[own];
 
-            auto Upper = values[rowNeiStart + neiOffs[facei]];
-            auto Lower = values[rowOwnStart + ownOffs[facei]];
-            Kokkos::atomic_add(&internalHbyA[nei], Lower[0] * internalU[own]);
-            Kokkos::atomic_add(&internalHbyA[own], Upper[0] * internalU[nei]);
+            auto upper = values[rowNeiStart + neiOffs[facei]];
+            auto lower = values[rowOwnStart + ownOffs[facei]];
+            Kokkos::atomic_add(&internalHbyA[nei], lower[0] * internalU[own]);
+            Kokkos::atomic_add(&internalHbyA[own], upper[0] * internalU[nei]);
         }
     );
 
@@ -76,7 +77,7 @@ discreteMomentumFields(const Expression<Vector>& expr)
         }
     );
 
-    return {rAU, HbyA};
+    return {rAU, hByA};
 }
 
 
@@ -119,26 +120,26 @@ void updateFaceVelocity(
             std::size_t rowNeiStart = rowPtrs[nei];
             std::size_t rowOwnStart = rowPtrs[own];
 
-            auto Upper = values[rowNeiStart + neiOffs[facei]];
-            auto Lower = values[rowOwnStart + ownOffs[facei]];
+            auto upper = values[rowNeiStart + neiOffs[facei]];
+            auto lower = values[rowOwnStart + ownOffs[facei]];
             iPhi[facei] = iPredPhi[facei];
-            Kokkos::atomic_add(&iPhi[facei], Upper * internalPsi[nei] - Lower * internalPsi[own]);
+            Kokkos::atomic_add(&iPhi[facei], upper * internalPsi[nei] - lower * internalPsi[own]);
         }
     );
 }
 
 void updateVelocity(
-    VolumeField<Vector>& U,
-    const VolumeField<Vector>& HbyA,
+    VolumeField<Vector>& u,
+    const VolumeField<Vector>& hByA,
     VolumeField<scalar>& rAU,
     VolumeField<scalar>& p
 )
 {
     VolumeField<Vector> gradP = GaussGreenGrad(p.exec(), p.mesh()).grad(p);
     auto [iHbyA, iRAU, iGradP] =
-        spans(HbyA.internalField(), rAU.internalField(), gradP.internalField());
+        spans(hByA.internalField(), rAU.internalField(), gradP.internalField());
 
-    U.internalField().apply(KOKKOS_LAMBDA(const std::size_t celli) {
+    u.internalField().apply(KOKKOS_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - iRAU[celli] * iGradP[celli];
     });
 }

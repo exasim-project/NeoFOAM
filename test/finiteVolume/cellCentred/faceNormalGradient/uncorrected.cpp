@@ -3,16 +3,10 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/catch_approx.hpp>
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
-
-namespace dsl = NeoFOAM::dsl;
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 namespace NeoFOAM
@@ -23,14 +17,9 @@ using I = std::initializer_list<T>;
 
 TEMPLATE_TEST_CASE("uncorrected", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
     const size_t nCells = 10;
-    NeoFOAM::Executor exec = GENERATE(NeoFOAM::Executor(NeoFOAM::SerialExecutor {})
-                                      // NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-                                      // NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
-
     auto mesh = create1DUniformMesh(exec, nCells);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<TestType>>(mesh);
 

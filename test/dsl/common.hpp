@@ -2,10 +2,7 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/benchmark/catch_benchmark.hpp>
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -56,7 +53,7 @@ public:
 
     void implicitOperation(la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
     {
-        auto values = ls.matrix().values();
+        auto values = ls.matrix().values().span();
         auto rhs = ls.rhs().span();
         auto fieldSpan = this->field_.internalField().span();
         auto coeff = this->getCoefficient();
@@ -113,7 +110,7 @@ public:
         )
     {}
 
-    void explicitOperation(NeoFOAM::Field<ValueType>& source, NeoFOAM::scalar t, NeoFOAM::scalar dt)
+    void explicitOperation(NeoFOAM::Field<ValueType>& source, NeoFOAM::scalar, NeoFOAM::scalar)
     {
         auto sourceSpan = source.span();
         auto fieldSpan = this->field_.internalField().span();
@@ -126,10 +123,10 @@ public:
     }
 
     void implicitOperation(
-        la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls, NeoFOAM::scalar t, NeoFOAM::scalar dt
+        la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls, NeoFOAM::scalar, NeoFOAM::scalar
     )
     {
-        auto values = ls.matrix().values();
+        auto values = ls.matrix().values().span();
         auto rhs = ls.rhs().span();
         auto fieldSpan = this->field_.internalField().span();
         auto coeff = this->getCoefficient();
@@ -172,14 +169,14 @@ ValueType getField(const NeoFOAM::Field<ValueType>& source)
 }
 
 template<typename ValueType>
-ValueType getDiag(const la::LinearSystem<ValueType, NeoFOAM::localIdx> ls)
+ValueType getDiag(const la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
 {
     auto hostLs = ls.copyToHost();
     return hostLs.matrix().values()[0];
 }
 
 template<typename ValueType>
-ValueType getRhs(const la::LinearSystem<ValueType, NeoFOAM::localIdx> ls)
+ValueType getRhs(const la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
 {
     auto hostLs = ls.copyToHost();
     return hostLs.rhs().span()[0];

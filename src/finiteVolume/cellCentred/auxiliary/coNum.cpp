@@ -6,6 +6,10 @@
 #include "NeoFOAM/core/info.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/auxiliary/coNum.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

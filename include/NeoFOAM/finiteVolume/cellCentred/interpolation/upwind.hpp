@@ -6,7 +6,7 @@
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -33,46 +33,7 @@ void computeUpwindInterpolation(
     const SurfaceField<scalar>& flux,
     const SurfaceField<scalar>& weights,
     SurfaceField<ValueType>& dst
-)
-{
-    const auto exec = dst.exec();
-    auto dstS = dst.internalField().span();
-    const auto [srcS, weightS, ownerS, neighS, boundS, fluxS] = spans(
-        src.internalField(),
-        weights.internalField(),
-        dst.mesh().faceOwner(),
-        dst.mesh().faceNeighbour(),
-        src.boundaryField().value(),
-        flux.internalField()
-    );
-    size_t nInternalFaces = dst.mesh().nInternalFaces();
-
-    NeoFOAM::parallelFor(
-        exec,
-        {0, dstS.size()},
-        KOKKOS_LAMBDA(const size_t facei) {
-            if (facei < nInternalFaces)
-            {
-                if (fluxS[facei] >= 0)
-                {
-                    size_t own = static_cast<size_t>(ownerS[facei]);
-                    dstS[facei] = srcS[own];
-                }
-                else
-                {
-                    size_t nei = static_cast<size_t>(neighS[facei]);
-                    dstS[facei] = srcS[nei];
-                }
-            }
-            else
-            {
-                dstS[facei] = weightS[facei] * boundS[facei - nInternalFaces];
-            }
-        },
-        "computeUpwindInterpolation"
-    );
-}
-
+);
 
 template<typename ValueType>
 class Upwind : public SurfaceInterpolationFactory<ValueType>::template Register<Upwind<ValueType>>
@@ -119,3 +80,14 @@ private:
 };
 
 } // namespace NeoFOAM
+
+
+namespace NeoFOAM
+{
+
+namespace fvcc = finiteVolume::cellCentred;
+
+template class fvcc::Upwind<scalar>;
+template class fvcc::Upwind<Vector>;
+
+}

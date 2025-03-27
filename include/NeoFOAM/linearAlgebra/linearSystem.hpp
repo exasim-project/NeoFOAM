@@ -48,7 +48,7 @@ public:
         : matrix_(matrix), rhs_(rhs)
     {
         NF_ASSERT(matrix.exec() == rhs.exec(), "Executors are not the same");
-        NF_ASSERT(matrix.nRows() == rhs.ssize(), "Matrix and RHS size mismatch");
+        NF_ASSERT(matrix.nRows() == rhs.size(), "Matrix and RHS size mismatch");
     };
 
     LinearSystem(const LinearSystem& ls) : matrix_(ls.matrix_), rhs_(ls.rhs_) {};
@@ -66,6 +66,16 @@ public:
     [[nodiscard]] LinearSystem copyToHost() const
     {
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost());
+    }
+
+
+    /* @brief resets the linear system by setting the matrix values and the rhs to zero
+     *
+     */
+    void reset()
+    {
+        fill(matrix_.values(), zero<ValueType>());
+        fill(rhs_, zero<ValueType>());
     }
 
     [[nodiscard]] LinearSystemView<ValueType, IndexType> view() && = delete;
@@ -92,14 +102,14 @@ private:
 
 
 template<typename ValueType, typename IndexType>
-Field<ValueType> SpMV(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& xfield)
+Field<ValueType> spmv(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& xfield)
 {
     Field<ValueType> resultField(ls.exec(), ls.rhs().size(), 0.0);
     auto [result, b, x] = spans(resultField, ls.rhs(), xfield);
 
-    std::span<ValueType> values = ls.matrix().values();
-    std::span<IndexType> colIdxs = ls.matrix().colIdxs();
-    std::span<IndexType> rowPtrs = ls.matrix().rowPtrs();
+    auto values = ls.matrix().values().span();
+    auto colIdxs = ls.matrix().colIdxs().span();
+    auto rowPtrs = ls.matrix().rowPtrs().span();
 
     parallelFor(
         ls.exec(),
@@ -133,26 +143,26 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
     };
 }
 
-// FIXME: implement this
-/* @brief creates a zero initialised linear system based on given sparsity pattern */
-//     template<typename ValueType, typename IndexType>
-//     LinearSystem<ValueType, IndexType> createEmptyLinearSystem(
-//                                         const UnstructuredMesh& mesh
-// ) const
-//     {
-//         la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-//         auto [A, b] = ls.view();
-//         const auto& exec = ls.exec();
+/*@brief helper function that creates a zero initialised linear system based on given sparsity
+ * pattern
+ */
+template<typename ValueType, typename IndexType, typename SparsityType>
+LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& sparsity)
+{
+    const auto& exec = sparsity.mesh().exec();
 
-//         Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
-//         Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
-//         Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
+    localIdx rows {sparsity.rows()};
+    localIdx nnzs {sparsity.nnz()};
 
-//         la::CSRMatrix<ValueType, IndexType> matrix(values, mColIdxs, mRowPtrs);
-//         Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
-
-//         return {matrix, rhs};
-//     }
+    return {
+        CSRMatrix<ValueType, IndexType> {
+            Field<ValueType>(exec, nnzs, zero<ValueType>()),
+            sparsity.columnIndex(),
+            sparsity.rowPtrs()
+        },
+        Field<ValueType> {exec, rows, zero<ValueType>()}
+    };
+}
 
 
 } // namespace NeoFOAM::la

@@ -6,12 +6,13 @@
 #include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
+// TODO move to source file
 namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
@@ -28,15 +29,14 @@ void setGradientValue(
 {
     const auto iField = domainField.internalField().span();
 
-    auto [refGradient, value, valueFraction, refValue] = spans(
+    auto [refGradient, value, valueFraction, refValue, faceCells, deltaCoeffs] = spans(
         domainField.boundaryField().refGrad(),
         domainField.boundaryField().value(),
         domainField.boundaryField().valueFraction(),
-        domainField.boundaryField().refValue()
+        domainField.boundaryField().refValue(),
+        mesh.boundaryMesh().faceCells(),
+        mesh.boundaryMesh().deltaCoeffs()
     );
-
-    auto faceCells = mesh.boundaryMesh().faceCells();
-    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs();
 
     NeoFOAM::parallelFor(
         domainField.exec(),

@@ -404,7 +404,6 @@ private:
 };
 
 // Initialize the static variable and register the class
-// FIXME ::template Register triggers a compiler warning
 template<class Base, class... Args>
 template<class derivedClass>
 bool RuntimeSelectionFactory<Base, Parameters<Args...>>::Register<derivedClass>::REGISTERED =

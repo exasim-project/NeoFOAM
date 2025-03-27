@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
+// TODO: move to cellCenred dsl?
 
 #pragma once
 
@@ -8,30 +9,19 @@
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
-
-
-#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-// TODO extend sparsity pattern to return the correct type
-template<typename ValueType, typename IndexType = localIdx>
-la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
-{
-    const auto& exec = ls.exec();
-    const auto [A, b] = ls.view();
 
-    Field<ValueType> values(exec, A.value.size(), zero<ValueType>());
-    Field<localIdx> mColIdxs(exec, A.columnIndex.data(), A.columnIndex.size());
-    Field<localIdx> mRowPtrs(exec, A.rowOffset.data(), A.rowOffset.size());
-
-    la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-    Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
-    return {matrix, rhs, ls.sparsityPattern()};
-}
-
+/*@brief extends expression by giving access to assembled matrix
+ * @note used in neoIcoFOAM directly instead of dsl::expression
+ * TODO: implement flag if matrix is assembled or not -> if not assembled call assemble
+ * for dependent operations like discrete momentum fields
+ * needs storage for assembled matrix? and whether update is needed like for rAU and HbyA
+ */
 template<typename ValueType, typename IndexType = localIdx>
 class Expression
 {
@@ -83,6 +73,7 @@ public:
 
     const Executor& exec() const { return ls_.exec(); }
 
+
     void assemble(scalar t, scalar dt)
     {
         auto vol = psi_.mesh().cellVolumes().span();
@@ -91,6 +82,7 @@ public:
         auto expSourceSpan = expSource.span();
 
         ls_ = expr_.implicitOperation();
+        // TODO rename implicitOperation -> assembleLinearSystem
         expr_.implicitOperation(ls_, t, dt);
         auto rhs = ls_.rhs().span();
         // we subtract the explicit source term from the rhs
@@ -134,6 +126,7 @@ public:
         }
     }
 
+    // TODO unify with dsl/solver.hpp
     void solve(scalar t, scalar dt)
     {
         // dsl::solve(expr_, psi_, t, dt, fvSchemes_, fvSolution_);
@@ -143,6 +136,7 @@ public:
         }
         if (expr_.temporalOperators().size() > 0)
         {
+            NF_ERROR_EXIT("Not implemented");
             //     // integrate equations in time
             //     NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
             //         fvSchemes_.subDict("ddtSchemes"), fvSolution_
@@ -151,11 +145,15 @@ public:
         }
         else
         {
+#if NF_WITH_GINKGO
             // TODO: currently only we just pass the fvSolution dict to satisfy the compiler
             // however, this should be the correct solver dict
             auto exec = psi_.exec();
             auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
             solver.solve(ls_, psi_.internalField());
+#else
+            NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
         }
     }
 
@@ -213,10 +211,10 @@ public:
                 std::size_t rowNeiStart = rowPtrs[nei];
                 std::size_t rowOwnStart = rowPtrs[own];
 
-                auto Upper = values[rowNeiStart + neiOffs[facei]];
-                auto Lower = values[rowOwnStart + ownOffs[facei]];
+                auto upper = values[rowNeiStart + neiOffs[facei]];
+                auto lower = values[rowOwnStart + ownOffs[facei]];
                 Kokkos::atomic_add(
-                    &resultSpan[facei], Upper * internalPsi[nei] - Lower * internalPsi[own]
+                    &resultSpan[facei], upper * internalPsi[nei] - lower * internalPsi[own]
                 );
             }
         );
@@ -235,7 +233,7 @@ private:
 
 template<typename ValueType, typename IndexType = localIdx>
 VolumeField<ValueType>
-operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType>& psi)
+operator&(const Expression<ValueType, IndexType> expr, const VolumeField<ValueType>& psi)
 {
     VolumeField<ValueType> resultField(
         psi.exec(),
@@ -247,8 +245,8 @@ operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType
     );
 
     auto [result, b, x] =
-        spans(resultField.internalField(), ls.linearSystem().rhs(), psi.internalField());
-    const auto [values, colIdxs, rowPtrs] = ls.linearSystem().view();
+        spans(resultField.internalField(), expr.linearSystem().rhs(), psi.internalField());
+    const auto [values, colIdxs, rowPtrs] = expr.linearSystem().view();
 
     NeoFOAM::parallelFor(
         resultField.exec(),
