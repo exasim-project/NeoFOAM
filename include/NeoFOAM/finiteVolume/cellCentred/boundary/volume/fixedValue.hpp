@@ -7,7 +7,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
@@ -15,6 +15,7 @@ namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 
 namespace detail
 {
+// TODO move to source
 // Without this function the compiler warns that calling a __host__ function
 // from a __device__ function is not allowed
 template<typename ValueType>

@@ -6,6 +6,7 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "../../../catch_main.hpp"
+#include "test/catch2/executorGenerator.hpp"
 
 using Operator = NeoFOAM::dsl::Operator;
 
@@ -13,13 +14,8 @@ TEST_CASE("DivOperator::div", "[bench]")
 {
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
 
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     NeoFOAM::UnstructuredMesh mesh = NeoFOAM::create1DUniformMesh(exec, size);
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
     fvcc::SurfaceField<NeoFOAM::scalar> faceFlux(exec, "sf", mesh, surfaceBCs);

@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/dsl/coeff.hpp"
+
 namespace NeoFOAM::dsl
 {
 

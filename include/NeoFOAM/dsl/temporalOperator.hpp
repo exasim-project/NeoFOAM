@@ -12,11 +12,8 @@
 #include "NeoFOAM/dsl/coeff.hpp"
 #include "NeoFOAM/dsl/operator.hpp"
 
-namespace la = NeoFOAM::la;
-
 namespace NeoFOAM::dsl
 {
-
 
 template<typename T>
 concept HasTemporalExplicitOperator = requires(T t) {
@@ -44,7 +41,7 @@ template<typename T>
 concept HasTemporalOperator = HasTemporalExplicitOperator<T> || HasTemporalImplicitOperator<T>;
 
 /* @class TemporalOperator
- * @brief A class to represent an TemporalOperator in NeoFOAMs dsl
+ * @brief A class to represent a TemporalOperator in NeoFOAMs DSL
  *
  * The design here is based on the type erasure design pattern
  * see https://www.youtube.com/watch?v=4eeESJQk-mw
@@ -70,7 +67,7 @@ public:
 
     TemporalOperator(TemporalOperator&& eqnOperator) : model_ {std::move(eqnOperator.model_)} {}
 
-    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
+    void explicitOperation(Field<ValueType>& source, scalar t, scalar dt) const
     {
         model_->explicitOperation(source, t, dt);
     }
@@ -78,11 +75,6 @@ public:
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
     {
         model_->implicitOperation(ls, t, dt);
-    }
-
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        return model_->createEmptyLinearSystem();
     }
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
@@ -114,8 +106,6 @@ private:
 
         virtual void
         implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt) = 0;
-
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -166,25 +156,6 @@ private:
             {
                 concreteOp_.implicitOperation(ls, t, dt);
             }
-        }
-
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
-        {
-            // if constexpr (HasTemporalImplicitOperator<ConcreteTemporalOperatorType>)
-            // {
-            return concreteOp_.createEmptyLinearSystem();
-            // }
-            throw std::runtime_error("Implicit operation not implemented");
-            // only need to avoid compiler warning about missing return statement
-            // this code path should never be reached as we call implicitOperation on an explicit
-            // operator
-            NeoFOAM::Field<ValueType> values(exec(), 1, zero<ValueType>());
-            NeoFOAM::Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
-            NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
-            NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
-
-            NeoFOAM::Field<ValueType> rhs(exec(), 1, zero<ValueType>());
-            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs, "custom");
         }
 
         /* @brief Given an input this function reads required coeffs */
@@ -239,22 +210,6 @@ TemporalOperator<ValueType> operator*(const Coeff& coeff, TemporalOperator<Value
     result.getCoefficient() *= coeff;
     return result;
 }
-
-// template<typename CoeffFunction>
-//     requires std::invocable<CoeffFunction&, size_t>
-// TemporalOperator<ValueType> operator*([[maybe_unused]] CoeffFunction coeffFunc, const
-// TemporalOperator<ValueType>& lhs)
-// {
-//     // TODO implement
-//     NF_ERROR_EXIT("Not implemented");
-//     TemporalOperator result = lhs;
-//     // if (!result.getCoefficient().useSpan)
-//     // {
-//     //     result.setField(std::make_shared<Field<scalar>>(result.exec(), result.nCells(), 1.0));
-//     // }
-//     // map(result.exec(), result.getCoefficient().values, scaleFunc);
-//     return result;
-// }
 
 
 } // namespace NeoFOAM::dsl

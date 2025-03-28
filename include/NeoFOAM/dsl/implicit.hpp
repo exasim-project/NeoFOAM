@@ -9,11 +9,15 @@
 #include "NeoFOAM/dsl/spatialOperator.hpp"
 #include "NeoFOAM/dsl/temporalOperator.hpp"
 #include "NeoFOAM/dsl/ddt.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred.hpp"
+
+// TODO: decouple from fvcc
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/ddtOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/laplacianOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
-namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::dsl::imp
 {
@@ -27,14 +31,14 @@ TemporalOperator<ValueType> ddt(fvcc::VolumeField<ValueType>& phi)
 
 template<typename ValueType>
 SpatialOperator<ValueType>
-Source(fvcc::VolumeField<NeoFOAM::scalar>& coeff, fvcc::VolumeField<ValueType>& phi)
+source(fvcc::VolumeField<scalar>& coeff, fvcc::VolumeField<ValueType>& phi)
 {
     return SpatialOperator<ValueType>(fvcc::SourceTerm(dsl::Operator::Type::Implicit, coeff, phi));
 }
 
 template<typename ValueType>
 SpatialOperator<ValueType>
-div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<ValueType>& phi)
+div(fvcc::SurfaceField<scalar>& faceFlux, fvcc::VolumeField<ValueType>& phi)
 {
     return SpatialOperator<ValueType>(
         fvcc::DivOperator(dsl::Operator::Type::Implicit, faceFlux, phi)
@@ -43,7 +47,7 @@ div(fvcc::SurfaceField<NeoFOAM::scalar>& faceFlux, fvcc::VolumeField<ValueType>&
 
 template<typename ValueType>
 SpatialOperator<ValueType>
-laplacian(fvcc::SurfaceField<NeoFOAM::scalar>& gamma, fvcc::VolumeField<ValueType>& phi)
+laplacian(fvcc::SurfaceField<scalar>& gamma, fvcc::VolumeField<ValueType>& phi)
 {
     return SpatialOperator<ValueType>(
         fvcc::LaplacianOperator<ValueType>(dsl::Operator::Type::Implicit, gamma, phi)

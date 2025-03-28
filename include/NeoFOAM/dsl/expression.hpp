@@ -13,7 +13,7 @@
 #include "NeoFOAM/dsl/temporalOperator.hpp"
 #include "NeoFOAM/core/error.hpp"
 
-namespace la = NeoFOAM::la;
+namespace la = la;
 
 namespace NeoFOAM::dsl
 {
@@ -31,7 +31,7 @@ public:
           spatialOperators_(exp.spatialOperators_)
     {}
 
-    void build(const NeoFOAM::Dictionary& input)
+    void build(const Dictionary& input)
     {
         for (auto& op : temporalOperators_)
         {
@@ -44,14 +44,14 @@ public:
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<ValueType> explicitOperation(size_t nCells)
+    Field<ValueType> explicitOperation(size_t nCells) const
     {
         Field<ValueType> source(exec_, nCells, zero<ValueType>());
         return explicitOperation(source);
     }
 
     /* @brief perform all explicit operation and accumulate the result */
-    Field<ValueType> explicitOperation(Field<ValueType>& source)
+    Field<ValueType> explicitOperation(Field<ValueType>& source) const
     {
         for (auto& op : spatialOperators_)
         {
@@ -63,7 +63,7 @@ public:
         return source;
     }
 
-    Field<ValueType> explicitOperation(Field<ValueType>& source, scalar t, scalar dt)
+    Field<ValueType> explicitOperation(Field<ValueType>& source, scalar t, scalar dt) const
     {
         for (auto& op : temporalOperators_)
         {
@@ -75,10 +75,10 @@ public:
         return source;
     }
 
+    // TODO: rename to assembleMatrixCoefficients ?
     /* @brief perform all implicit operation and accumulate the result */
-    la::LinearSystem<ValueType, localIdx> implicitOperation()
+    void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {
-        auto ls = spatialOperators_[0].createEmptyLinearSystem();
         for (auto& op : spatialOperators_)
         {
             if (op.getType() == Operator::Type::Implicit)
@@ -86,7 +86,6 @@ public:
                 op.implicitOperation(ls);
             }
         }
-        return ls;
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls, scalar t, scalar dt)
@@ -237,4 +236,4 @@ operator-(leftOperator lhs, rightOperator rhs)
 // }
 
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl

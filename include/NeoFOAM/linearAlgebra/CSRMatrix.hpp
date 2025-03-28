@@ -11,33 +11,32 @@ namespace NeoFOAM::la
 {
 
 /**
- * @class CSRMatrixSpan
- * @brief A helper class to allow easy read/write on all executors.
- * @tparam ValueType The type of the underlying CSR matrix elements.
- * @tparam IndexType The type of the indexes.
+ * @struct CSRMatrixView
+ * @brief A view struct to allow easy read/write on all executors.
+ *
+ * @tparam ValueType The value type of the non-zero entries.
+ * @tparam IndexType The index type of the rows and columns.
  */
 template<typename ValueType, typename IndexType>
-class CSRMatrixSpan
+struct CSRMatrixView
 {
-public:
-
     /**
-     * @brief Constructor for CSRMatrixSpan.
-     * @param values Span of the non-zero values of the matrix.
-     * @param colIdxs Span of the column indices for each non-zero value.
-     * @param rowPtrs Span of the starting index in values/colIdxs for each row.
+     * @brief Constructor for CSRMatrixView.
+     * @param inValue Span of the non-zero values of the matrix.
+     * @param inColumnIndex Span of the column indices for each non-zero value.
+     * @param inRwOffset Span of the starting index in values/colIdxs for each row.
      */
-    CSRMatrixSpan(
-        const std::span<ValueType>& values,
-        const std::span<IndexType>& colIdxs,
-        const std::span<IndexType>& rowPtrs
+    CSRMatrixView(
+        const std::span<ValueType>& inValue,
+        const std::span<IndexType>& inColumnIndex,
+        const std::span<IndexType>& inRwOffset
     )
-        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs) {};
+        : value(inValue), columnIndex(inColumnIndex), rowOffset(inRwOffset) {};
 
     /**
      * @brief Default destructor.
      */
-    ~CSRMatrixSpan() = default;
+    ~CSRMatrixView() = default;
 
     /**
      * @brief Retrieve a reference to the matrix element at position (i,j).
@@ -48,18 +47,18 @@ public:
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType i, const IndexType j) const
     {
-        const IndexType rowSize = rowPtrs_[i + 1] - rowPtrs_[i];
+        const IndexType rowSize = rowOffset[i + 1] - rowOffset[i];
         for (std::remove_const_t<IndexType> ic = 0; ic < rowSize; ++ic)
         {
-            const IndexType localCol = rowPtrs_[i] + ic;
-            if (colIdxs_[localCol] == j)
+            const IndexType localCol = rowOffset[i] + ic;
+            if (columnIndex[localCol] == j)
             {
-                return values_[localCol];
+                return value[localCol];
             }
-            if (colIdxs_[localCol] > j) break;
+            if (columnIndex[localCol] > j) break;
         }
         Kokkos::abort("Memory not allocated for CSR matrix component.");
-        return values_[values_.size()]; // compiler warning suppression.
+        return value[value.size()]; // compiler warning suppression.
     }
 
     /**
@@ -68,24 +67,19 @@ public:
      * @return Reference to the matrix element if it exists.
      */
     KOKKOS_INLINE_FUNCTION
-    ValueType& entry(const IndexType offset) const { return values_[offset]; }
+    ValueType& entry(const IndexType offset) const { return value[offset]; }
 
-    /**
-     * @brief Returns a structured binding of all containers.
-     * @return std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>>
-     */
-    std::tuple<std::span<ValueType>, std::span<IndexType>, std::span<IndexType>> span()
-    {
-        return {values_, colIdxs_, rowPtrs_};
-    }
-
-private:
-
-    std::span<ValueType> values_;  //!< Span to the values of the CSR matrix.
-    std::span<IndexType> colIdxs_; //!< Span to the column indices of the CSR matrix.
-    std::span<IndexType> rowPtrs_; //!< Span to the row offsets for the CSR matrix.
+    std::span<ValueType> value;       //!< Span to the values of the CSR matrix.
+    std::span<IndexType> columnIndex; //!< Span to the column indices of the CSR matrix.
+    std::span<IndexType> rowOffset;   //!< Span to the row offsets for the CSR matrix.
 };
 
+/**
+ * @class CSRMatrix
+ * @brief Sparse matrix class with compact storage by row (CSR) format.
+ * @tparam ValueType The value type of the non-zero entries.
+ * @tparam IndexType The index type of the rows and columns.
+ */
 template<typename ValueType, typename IndexType>
 class CSRMatrix
 {
@@ -94,22 +88,22 @@ public:
 
     /**
      * @brief Constructor for CSRMatrix.
-     * @param values The non-zero values of the matrix.
-     * @param colIdxs The column indices for each non-zero value.
-     * @param rowPtrs The starting index in values/colIdxs for each row.
+     * @param value The non-zero values of the matrix.
+     * @param columnIndex The column indices for each non-zero value.
+     * @param rowOffset The starting index in values/colIdxs for each row.
      */
     CSRMatrix(
-        const Field<ValueType>& values,
-        const Field<IndexType>& colIdxs,
-        const Field<IndexType>& rowPtrs
+        const Field<ValueType>& value,
+        const Field<IndexType>& columnIndex,
+        const Field<IndexType>& rowOffset
     )
-        : values_(values), colIdxs_(colIdxs), rowPtrs_(rowPtrs)
+        : value_(value), columnIndex_(columnIndex), rowOffset_(rowOffset)
     {
-        NF_ASSERT(values.exec() == colIdxs.exec(), "Executors are not the same");
-        NF_ASSERT(values.exec() == rowPtrs.exec(), "Executors are not the same");
-    };
+        NF_ASSERT(value.exec() == columnIndex_.exec(), "Executors are not the same");
+        NF_ASSERT(value.exec() == rowOffset_.exec(), "Executors are not the same");
+    }
 
-    CSRMatrix(const Executor exec) : values_(exec, 0), colIdxs_(exec, 0), rowPtrs_(exec, 0) {}
+    CSRMatrix(const Executor exec) : value_(exec, 0), columnIndex_(exec, 0), rowOffset_(exec, 0) {}
 
     /**
      * @brief Default destructor.
@@ -120,7 +114,7 @@ public:
      * @brief Get the executor associated with this matrix.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const Executor& exec() const { return values_.exec(); }
+    [[nodiscard]] const Executor& exec() const { return value_.exec(); }
 
     /**
      * @brief Get the number of rows in the matrix.
@@ -128,51 +122,51 @@ public:
      */
     [[nodiscard]] IndexType nRows() const
     {
-        return static_cast<IndexType>(rowPtrs_.size())
-             - static_cast<IndexType>(static_cast<bool>(rowPtrs_.size()));
+        return static_cast<IndexType>(rowOffset_.size())
+             - static_cast<IndexType>(static_cast<bool>(rowOffset_.size()));
     }
 
     /**
      * @brief Get the number of non-zero values in the matrix.
      * @return Number of non-zero values.
      */
-    [[nodiscard]] IndexType nNonZeros() const { return static_cast<IndexType>(values_.size()); }
+    [[nodiscard]] IndexType nNonZeros() const { return static_cast<IndexType>(value_.size()); }
 
     /**
      * @brief Get a span to the values array.
      * @return Span containing the matrix values.
      */
-    [[nodiscard]] std::span<ValueType> values() { return values_.span(); }
+    [[nodiscard]] Field<ValueType>& values() { return value_; }
 
     /**
      * @brief Get a span to the column indices array.
      * @return Span containing the column indices.
      */
-    [[nodiscard]] std::span<IndexType> colIdxs() { return colIdxs_.span(); }
+    [[nodiscard]] Field<IndexType>& colIdxs() { return columnIndex_; }
 
     /**
      * @brief Get a span to the row pointers array.
      * @return Span containing the row pointers.
      */
-    [[nodiscard]] std::span<IndexType> rowPtrs() { return rowPtrs_.span(); }
+    [[nodiscard]] Field<IndexType>& rowPtrs() { return rowOffset_; }
 
     /**
      * @brief Get a const span to the values array.
      * @return Const span containing the matrix values.
      */
-    [[nodiscard]] const std::span<const ValueType> values() const { return values_.span(); }
+    [[nodiscard]] const Field<ValueType>& values() const { return value_; }
 
     /**
      * @brief Get a const span to the column indices array.
      * @return Const span containing the column indices.
      */
-    [[nodiscard]] const std::span<const IndexType> colIdxs() const { return colIdxs_.span(); }
+    [[nodiscard]] const Field<IndexType>& colIdxs() const { return columnIndex_; }
 
     /**
      * @brief Get a const span to the row pointers array.
      * @return Const span containing the row pointers.
      */
-    [[nodiscard]] const std::span<const IndexType> rowPtrs() const { return rowPtrs_.span(); }
+    [[nodiscard]] const Field<IndexType>& rowPtrs() const { return rowOffset_; }
 
     /**
      * @brief Copy the matrix to another executor.
@@ -181,12 +175,12 @@ public:
      */
     [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == values_.exec())
+        if (dstExec == value_.exec())
         {
             return *this;
         }
         CSRMatrix<ValueType, IndexType> other(
-            values_.copyToHost(), colIdxs_.copyToHost(), rowPtrs_.copyToHost()
+            value_.copyToHost(), columnIndex_.copyToHost(), rowOffset_.copyToHost()
         );
         return other;
     }
@@ -201,28 +195,54 @@ public:
     }
 
     /**
-     * @brief Get a span representation of the matrix.
-     * @return CSRMatrixSpan for easy access to matrix elements.
+     * @brief Get a view representation of the matrix's data.
+     * @return CSRMatrixView for easy access to matrix elements.
      */
-    [[nodiscard]] CSRMatrixSpan<ValueType, IndexType> span()
+    [[nodiscard]] CSRMatrixView<ValueType, IndexType> view()
     {
-        return CSRMatrixSpan(values_.span(), colIdxs_.span(), rowPtrs_.span());
+        return CSRMatrixView(value_.span(), columnIndex_.span(), rowOffset_.span());
     }
 
     /**
-     * @brief Get a const span representation of the matrix.
-     * @return Const CSRMatrixSpan for read-only access to matrix elements.
+     * @brief Get a const view representation of the matrix's data.
+     * @return Const CSRMatrixView for read-only access to matrix elements.
      */
-    [[nodiscard]] const CSRMatrixSpan<const ValueType, const IndexType> span() const
+    [[nodiscard]] const CSRMatrixView<const ValueType, const IndexType> view() const
     {
-        return CSRMatrixSpan(values_.span(), colIdxs_.span(), rowPtrs_.span());
+        return CSRMatrixView(value_.span(), columnIndex_.span(), rowOffset_.span());
     }
 
 private:
 
-    Field<ValueType> values_;  //!< The (non-zero) values of the CSR matrix.
-    Field<IndexType> colIdxs_; //!< The column indices of the CSR matrix.
-    Field<IndexType> rowPtrs_; //!< The row offsets for the CSR matrix.
+    Field<ValueType> value_;       //!< The (non-zero) values of the CSR matrix.
+    Field<IndexType> columnIndex_; //!< The column indices of the CSR matrix.
+    Field<IndexType> rowOffset_;   //!< The row offsets for the CSR matrix.
 };
+
+/* @brief given a csr matrix this function copies the matrix and converts to requested target types
+ *
+ *
+ */
+template<typename ValueTypeIn, typename IndexTypeIn, typename ValueTypeOut, typename IndexTypeOut>
+la::CSRMatrix<ValueTypeOut, IndexTypeOut>
+convert(const Executor exec, const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> in)
+{
+    Field<IndexTypeOut> colIdxsTmp(exec, in.columnIndex.size());
+    Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffset.size());
+    Field<ValueTypeOut> valuesTmp(exec, in.value.data(), in.value.size());
+
+    parallelFor(
+        colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.columnIndex[i]); }
+    );
+    parallelFor(
+        rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffset[i]); }
+    );
+    parallelFor(
+        valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.value[i]); }
+    );
+
+    return la::CSRMatrix<ValueTypeOut, IndexTypeOut> {valuesTmp, colIdxsTmp, rowPtrsTmp};
+}
+
 
 } // namespace NeoFOAM

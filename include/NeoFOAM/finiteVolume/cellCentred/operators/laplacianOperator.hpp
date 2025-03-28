@@ -9,7 +9,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -43,8 +43,6 @@ public:
         : exec_(exec), mesh_(mesh) {};
 
     virtual ~LaplacianOperatorFactory() {} // Virtual destructor
-
-    virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
     virtual void laplacian(
         VolumeField<ValueType>& lapPhi,
@@ -123,19 +121,13 @@ public:
           gamma_(gamma), laplacianOperatorStrategy_(nullptr) {};
 
 
-    void explicitOperation(Field<ValueType>& source)
+    void explicitOperation(Field<ValueType>& source) const
     {
         NF_ASSERT(laplacianOperatorStrategy_, "LaplacianOperatorStrategy not initialized");
         const auto operatorScaling = this->getCoefficient();
         NeoFOAM::Field<ValueType> tmpsource(source.exec(), source.size(), zero<ValueType>());
         laplacianOperatorStrategy_->laplacian(tmpsource, gamma_, this->field_, operatorScaling);
         source += tmpsource;
-    }
-
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        NF_ASSERT(laplacianOperatorStrategy_, "LaplacianOperatorStrategy not initialized");
-        return laplacianOperatorStrategy_->createEmptyLinearSystem();
     }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)

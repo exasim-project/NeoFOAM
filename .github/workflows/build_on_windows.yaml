@@ -6,7 +6,9 @@ on:
       - dev
       - main
   pull_request:
-    types: synchronize
+    types:
+      - synchronize
+      - opened
   schedule:
     - cron: "* 0 * * 0"
 
@@ -30,7 +32,7 @@ jobs:
     - uses: seanmiddleditch/gha-setup-ninja@master
     - name: configure
       run: |
-        cmake --preset develop -DKokkos_DIR="D:/dev/Kokkos/lib/cmake/Kokkos" -DNEOFOAM_DEVEL_TOOLS=OFF -DNEOFOAM_ENABLE_MPI_SUPPORT=OFF
+        cmake --preset develop  -DKokkos_DIR="D:/dev/Kokkos/lib/cmake/Kokkos" -DNEOFOAM_DEVEL_TOOLS=OFF -DNEOFOAM_WITH_GINKGO=OFF -DNEOFOAM_ENABLE_MPI_SUPPORT=OFF
       shell: cmd
 
     - name: build

@@ -36,7 +36,7 @@ concept HasImplicitOperator = requires(T t) {
 template<typename T>
 concept IsSpatialOperator = HasExplicitOperator<T> || HasImplicitOperator<T>;
 
-/* @class Operator
+/* @class SpatialOperator
  * @brief A class to represent an operator in NeoFOAMs dsl
  *
  * The design here is based on the type erasure design pattern
@@ -55,7 +55,9 @@ public:
 
     using FieldValueType = ValueType;
 
-    template<IsSpatialOperator T>
+    // FIXME add again
+    // template<IsSpatialOperator T>
+    template<typename T>
     SpatialOperator(T cls) : model_(std::make_unique<OperatorModel<T>>(std::move(cls)))
     {}
 
@@ -69,16 +71,11 @@ public:
         return *this;
     }
 
-    void explicitOperation(Field<ValueType>& source) { model_->explicitOperation(source); }
+    void explicitOperation(Field<ValueType>& source) const { model_->explicitOperation(source); }
 
     void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls)
     {
         model_->implicitOperation(ls);
-    }
-
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
-    {
-        return model_->createEmptyLinearSystem();
     }
 
     /* returns the fundamental type of an operator, ie explicit, implicit */
@@ -110,8 +107,6 @@ private:
         virtual void explicitOperation(Field<ValueType>& source) = 0;
 
         virtual void implicitOperation(la::LinearSystem<ValueType, localIdx>& ls) = 0;
-
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
 
         /* @brief Given an input this function reads required coeffs */
         virtual void build(const Input& input) = 0;
@@ -159,25 +154,6 @@ private:
             {
                 concreteOp_.implicitOperation(ls);
             }
-        }
-
-        virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
-        {
-            if constexpr (HasImplicitOperator<ConcreteOperatorType>)
-            {
-                return concreteOp_.createEmptyLinearSystem();
-            }
-            throw std::runtime_error("Implicit operation not implemented");
-            // only need to avoid compiler warning about missing return statement
-            // this code path should never be reached as we call implicitOperation on an explicit
-            // operator
-            NeoFOAM::Field<ValueType> values(exec(), 1, zero<ValueType>());
-            Field<NeoFOAM::localIdx> colIdx(exec(), 1, 0);
-            NeoFOAM::Field<NeoFOAM::localIdx> rowPtrs(exec(), 2, 0);
-            NeoFOAM::la::CSRMatrix<ValueType, NeoFOAM::localIdx> csrMatrix(values, colIdx, rowPtrs);
-
-            NeoFOAM::Field<ValueType> rhs(exec(), 1, zero<ValueType>());
-            return la::LinearSystem<ValueType, localIdx>(csrMatrix, rhs, "custom");
         }
 
         /* @brief Given an input this function reads required coeffs */
@@ -248,4 +224,4 @@ SpatialOperator<ValueType> operator*(const Coeff& coeff, SpatialOperator<ValueTy
 //     return result;
 // }
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl

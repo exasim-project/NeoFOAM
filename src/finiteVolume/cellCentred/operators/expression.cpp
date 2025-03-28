@@ -3,7 +3,7 @@
 
 
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/expression.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/expression.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

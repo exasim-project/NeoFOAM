@@ -5,98 +5,33 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/laplacianOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/faceNormalGradient/faceNormalGradient.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
 template<typename ValueType>
-void computeLaplacian(
-    const FaceNormalGradient<ValueType>& faceNormalGradient,
+void computeLaplacianExp(
+    const FaceNormalGradient<ValueType>&,
+    const SurfaceField<scalar>&,
+    VolumeField<ValueType>&,
+    Field<ValueType>&,
+    const dsl::Coeff
+);
+
+template<typename ValueType>
+void computeLaplacianImpl(
+    la::LinearSystem<ValueType, localIdx>& ls,
     const SurfaceField<scalar>& gamma,
     VolumeField<ValueType>& phi,
-    Field<ValueType>& lapPhi,
-    const dsl::Coeff operatorScaling
-)
-{
-    const UnstructuredMesh& mesh = phi.mesh();
-    const auto exec = phi.exec();
-
-    SurfaceField<ValueType> faceNormalGrad = faceNormalGradient.faceNormalGrad(phi);
-
-    const auto [owner, neighbour, surfFaceCells] =
-        spans(mesh.faceOwner(), mesh.faceNeighbour(), mesh.boundaryMesh().faceCells());
-
-    auto [refGradient, value, valueFraction, refValue] = spans(
-        phi.boundaryField().refGrad(),
-        phi.boundaryField().value(),
-        phi.boundaryField().valueFraction(),
-        phi.boundaryField().refValue()
-    );
-
-    const auto [result, faceArea, fnGrad, vol] =
-        spans(lapPhi, mesh.magFaceAreas(), faceNormalGrad.internalField(), mesh.cellVolumes());
-
-
-    size_t nInternalFaces = mesh.nInternalFaces();
-
-    // check if the executor is GPU
-    if (std::holds_alternative<SerialExecutor>(exec))
-    {
-        for (size_t i = 0; i < nInternalFaces; i++)
-        {
-            ValueType flux = faceArea[i] * fnGrad[i];
-            result[static_cast<size_t>(owner[i])] += flux;
-            result[static_cast<size_t>(neighbour[i])] -= flux;
-        }
-
-        for (size_t i = nInternalFaces; i < fnGrad.size(); i++)
-        {
-            auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-            ValueType valueOwn = faceArea[i] * fnGrad[i];
-            result[own] += valueOwn;
-        }
-
-        for (size_t celli = 0; celli < mesh.nCells(); celli++)
-        {
-            result[celli] *= operatorScaling[celli] / vol[celli];
-        }
-    }
-    else
-    {
-        parallelFor(
-            exec,
-            {0, nInternalFaces},
-            KOKKOS_LAMBDA(const size_t i) {
-                ValueType flux = faceArea[i] * fnGrad[i];
-                Kokkos::atomic_add(&result[static_cast<size_t>(owner[i])], flux);
-                Kokkos::atomic_sub(&result[static_cast<size_t>(neighbour[i])], flux);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {nInternalFaces, fnGrad.size()},
-            KOKKOS_LAMBDA(const size_t i) {
-                auto own = static_cast<size_t>(surfFaceCells[i - nInternalFaces]);
-                ValueType valueOwn = faceArea[i] * fnGrad[i];
-                Kokkos::atomic_add(&result[own], valueOwn);
-            }
-        );
-
-        parallelFor(
-            exec,
-            {0, mesh.nCells()},
-            KOKKOS_LAMBDA(const size_t celli) {
-                result[celli] *= operatorScaling[celli] / vol[celli];
-            }
-        );
-    }
-}
+    const dsl::Coeff operatorScaling,
+    const SparsityPattern& sparsityPattern,
+    const FaceNormalGradient<ValueType>& faceNormalGradient
+);
 
 template<typename ValueType>
 class GaussGreenLaplacian :
@@ -109,7 +44,7 @@ public:
 
     static std::string name() { return "Gauss"; }
 
-    static std::string doc() { return "Gauss-Green Divergence"; }
+    static std::string doc() { return "Gauss-Green Laplacian"; }
 
     static std::string schema() { return "none"; }
 
@@ -118,22 +53,6 @@ public:
           faceNormalGradient_(exec, mesh, inputs),
           sparsityPattern_(SparsityPattern::readOrCreate(mesh)) {};
 
-    la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const override
-    {
-        la::LinearSystem<scalar, localIdx> ls(sparsityPattern_->linearSystem());
-        auto [A, b, sp] = ls.view();
-        const auto& exec = A.exec();
-
-        Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-        Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-        Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
-
-        la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-        Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
-
-        return {matrix, rhs, ls.sparsityPattern()};
-    };
-
     virtual void laplacian(
         VolumeField<ValueType>& lapPhi,
         const SurfaceField<scalar>& gamma,
@@ -141,7 +60,7 @@ public:
         const dsl::Coeff operatorScaling
     ) override
     {
-        computeLaplacian<ValueType>(
+        computeLaplacianExp<ValueType>(
             faceNormalGradient_, gamma, phi, lapPhi.internalField(), operatorScaling
         );
     };
@@ -153,7 +72,7 @@ public:
         const dsl::Coeff operatorScaling
     ) override
     {
-        computeLaplacian<ValueType>(faceNormalGradient_, gamma, phi, lapPhi, operatorScaling);
+        computeLaplacianExp<ValueType>(faceNormalGradient_, gamma, phi, lapPhi, operatorScaling);
     };
 
     virtual void laplacian(
@@ -163,91 +82,8 @@ public:
         const dsl::Coeff operatorScaling
     ) override
     {
-        const UnstructuredMesh& mesh = phi.mesh();
-        const std::size_t nInternalFaces = mesh.nInternalFaces();
-        const auto exec = phi.exec();
-        const auto [owner, neighbour, surfFaceCells, diagOffs, ownOffs, neiOffs] = spans(
-            mesh.faceOwner(),
-            mesh.faceNeighbour(),
-            mesh.boundaryMesh().faceCells(),
-            sparsityPattern_->diagOffset(),
-            sparsityPattern_->ownerOffset(),
-            sparsityPattern_->neighbourOffset()
-        );
-
-        const auto [sGamma, deltaCoeffs, magFaceArea] = spans(
-            gamma.internalField(),
-            faceNormalGradient_.deltaCoeffs().internalField(),
-            mesh.magFaceAreas()
-        );
-
-        auto [refGradient, value, valueFraction, refValue] = spans(
-            phi.boundaryField().refGrad(),
-            phi.boundaryField().value(),
-            phi.boundaryField().valueFraction(),
-            phi.boundaryField().refValue()
-        );
-
-        const auto rowPtrs = ls.matrix().rowPtrs();
-        const auto colIdxs = ls.matrix().colIdxs();
-        auto values = ls.matrix().values();
-        auto rhs = ls.rhs().span();
-
-        parallelFor(
-            exec,
-            {0, nInternalFaces},
-            KOKKOS_LAMBDA(const size_t facei) {
-                scalar flux = deltaCoeffs[facei] * sGamma[facei] * magFaceArea[facei];
-
-                std::size_t own = static_cast<std::size_t>(owner[facei]);
-                std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
-
-                // add neighbour contribution upper
-                std::size_t rowNeiStart = rowPtrs[nei];
-                std::size_t rowOwnStart = rowPtrs[own];
-
-                scalar operatorScalingNei = operatorScaling[nei];
-                scalar operatorScalingOwn = operatorScaling[own];
-
-                // scalar valueNei = (1 - weight) * flux;
-                values[rowNeiStart + neiOffs[facei]] +=
-                    flux * one<ValueType>() * operatorScalingNei;
-                Kokkos::atomic_sub(
-                    &values[rowOwnStart + diagOffs[own]],
-                    flux * one<ValueType>() * operatorScalingOwn
-                );
-
-                // upper triangular part
-
-                // add owner contribution lower
-                values[rowOwnStart + ownOffs[facei]] +=
-                    flux * one<ValueType>() * operatorScalingOwn;
-                Kokkos::atomic_sub(
-                    &values[rowNeiStart + diagOffs[nei]],
-                    flux * one<ValueType>() * operatorScalingNei
-                );
-            }
-        );
-
-        parallelFor(
-            exec,
-            {nInternalFaces, sGamma.size()},
-            KOKKOS_LAMBDA(const size_t facei) {
-                std::size_t bcfacei = facei - nInternalFaces;
-                scalar flux = sGamma[facei] * magFaceArea[facei];
-
-                std::size_t own = static_cast<std::size_t>(surfFaceCells[bcfacei]);
-                std::size_t rowOwnStart = rowPtrs[own];
-                scalar operatorScalingOwn = operatorScaling[own];
-
-                values[rowOwnStart + diagOffs[own]] -= flux * operatorScalingOwn
-                                                     * valueFraction[bcfacei] * deltaCoeffs[facei]
-                                                     * one<ValueType>();
-                rhs[own] -=
-                    (flux * operatorScalingOwn
-                     * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]
-                        + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei]));
-            }
+        computeLaplacianImpl(
+            ls, gamma, phi, operatorScaling, *sparsityPattern_.get(), faceNormalGradient_
         );
     };
 
@@ -258,9 +94,15 @@ public:
 
 private:
 
-    SurfaceInterpolation<scalar> surfaceInterpolation_;
+    SurfaceInterpolation<ValueType> surfaceInterpolation_;
+
     FaceNormalGradient<ValueType> faceNormalGradient_;
+
     const std::shared_ptr<SparsityPattern> sparsityPattern_;
 };
+
+// instantiate the template class
+template class GaussGreenLaplacian<scalar>;
+template class GaussGreenLaplacian<Vector>;
 
 } // namespace NeoFOAM

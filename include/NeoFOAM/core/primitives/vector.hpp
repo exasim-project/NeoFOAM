@@ -165,15 +165,13 @@ std::ostream& operator<<(std::ostream& out, const Vector& vec);
 
 
 template<>
-KOKKOS_INLINE_FUNCTION
-Vector one<Vector>()
+KOKKOS_INLINE_FUNCTION Vector one<Vector>()
 {
     return Vector(1.0, 1.0, 1.0);
 }
 
 template<>
-KOKKOS_INLINE_FUNCTION
-Vector zero<Vector>()
+KOKKOS_INLINE_FUNCTION Vector zero<Vector>()
 {
     return Vector(0.0, 0.0, 0.0);
 }

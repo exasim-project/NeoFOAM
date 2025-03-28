@@ -14,6 +14,12 @@
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #endif
 
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+
+// TODO decouple from fvcc
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
+
+
 namespace NeoFOAM::timeIntegration
 {
 
@@ -47,21 +53,32 @@ public:
     ) override
     {
         auto source = eqn.explicitOperation(solutionField.size());
-        SolutionFieldType& oldSolutionField =
-            NeoFOAM::finiteVolume::cellCentred::oldTime(solutionField);
+        SolutionFieldType& oldSolutionField = finiteVolume::cellCentred::oldTime(solutionField);
 
         // solutionField.internalField() = oldSolutionField.internalField() - source * dt;
         // solutionField.correctBoundaryConditions();
         // solve sparse matrix system
         using ValueType = typename SolutionFieldType::ElementType;
-        auto ls = eqn.implicitOperation();
+
+        // TODO decouple from fvcc specific implementation
+        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solutionField.mesh());
+        auto ls = la::createEmptyLinearSystem<
+            ValueType,
+            localIdx,
+            finiteVolume::cellCentred::SparsityPattern>(sparsity);
+
+        eqn.implicitOperation(ls);
+
         auto values = ls.matrix().values();
         eqn.implicitOperation(ls, t, dt);
-        auto ginkgoLs = NeoFOAM::dsl::ginkgoMatrix(ls, solutionField);
 
-
-        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
-        solver.solve(ginkgoLs, solutionField.internalField());
+        // TODO make it independent of ginkgo
+#if NF_WITH_GINKGO
+        la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
+        solver.solve(ls, solutionField.internalField());
+#else
+        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))

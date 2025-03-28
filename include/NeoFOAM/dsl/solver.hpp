@@ -11,87 +11,21 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
 #if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #endif
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+
+// FIXME
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 
 namespace NeoFOAM::dsl
 {
-
-template<typename FieldType>
-NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int> ginkgoMatrix(
-    NeoFOAM::la::LinearSystem<typename FieldType::ElementType, localIdx>& ls, FieldType& solution
-)
-{
-    using ValueType = typename FieldType::ElementType;
-    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
-
-    Field<ValueType> mValues(
-        solution.exec(), ls.matrix().values().data(), ls.matrix().values().size()
-    );
-    Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
-    auto mColIdxsSpan = ls.matrix().colIdxs();
-    NeoFOAM::parallelFor(
-        mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); }
-    );
-
-    Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
-    auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    NeoFOAM::parallelFor(
-        mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); }
-    );
-
-    la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
-
-    NeoFOAM::la::LinearSystem<ValueType, int> convertedLs(matrix, rhs, ls.sparsityPattern());
-    return convertedLs;
-}
-
-template<typename FieldType>
-NeoFOAM::la::LinearSystem<typename FieldType::ElementType, int>
-ginkgoMatrix(Expression<typename FieldType::ElementType>& exp, FieldType& solution)
-{
-    using ValueType = typename FieldType::ElementType;
-    auto vol = solution.mesh().cellVolumes().span();
-    auto expSource = exp.explicitOperation(solution.mesh().nCells());
-    auto expSourceSpan = expSource.span();
-
-    auto ls = exp.implicitOperation();
-    Field<ValueType> rhs(solution.exec(), ls.rhs().data(), ls.rhs().size());
-    auto rhsSpan = rhs.span();
-    // we subtract the explicit source term from the rhs
-    NeoFOAM::parallelFor(
-        solution.exec(),
-        {0, rhs.size()},
-        KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] -= expSourceSpan[i] * vol[i]; }
-    );
-
-    Field<ValueType> mValues(
-        solution.exec(), ls.matrix().values().data(), ls.matrix().values().size()
-    );
-    Field<int> mColIdxs(solution.exec(), ls.matrix().colIdxs().size());
-    auto mColIdxsSpan = ls.matrix().colIdxs();
-    NeoFOAM::parallelFor(
-        mColIdxs, KOKKOS_LAMBDA(const size_t i) { return int(mColIdxsSpan[i]); }
-    );
-
-    Field<int> mRowPtrs(solution.exec(), ls.matrix().rowPtrs().size());
-    auto mRowPtrsSpan = ls.matrix().rowPtrs();
-    NeoFOAM::parallelFor(
-        mRowPtrs, KOKKOS_LAMBDA(const size_t i) { return int(mRowPtrsSpan[i]); }
-    );
-
-    auto values = ls.matrix().values();
-
-
-    la::CSRMatrix<ValueType, int> matrix(mValues, mColIdxs, mRowPtrs);
-
-    return {matrix, rhs, ls.sparsityPattern()};
-}
 
 /* @brief solve an expression
  *
@@ -112,7 +46,7 @@ void solve(
     [[maybe_unused]] const Dictionary& fvSolution
 )
 {
-    // FIXME:
+    // TODO:
     if (exp.temporalOperators().size() == 0 && exp.spatialOperators().size() == 0)
     {
         NF_ERROR_EXIT("No temporal or implicit terms to solve.");
@@ -130,12 +64,32 @@ void solve(
     {
         // solve sparse matrix system
         using ValueType = typename FieldType::ElementType;
-        auto ls = ginkgoMatrix(exp, solution);
 
+        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solution.mesh());
+        auto ls = la::createEmptyLinearSystem<
+            ValueType,
+            localIdx,
+            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sparsity);
 
-        NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solution.exec(), fvSolution);
+        exp.implicitOperation(ls);
+        auto expTmp = exp.explicitOperation(solution.mesh().nCells());
+
+        auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, ls.rhs());
+
+        // subtract the explicit source term from the rhs
+        parallelFor(
+            solution.exec(),
+            {0, rhs.size()},
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
+        );
+
+#if NF_WITH_GINKGO
+        auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
+#else
+        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
     }
 }
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl

@@ -3,8 +3,8 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include "catch2_common.hpp"
+
 #include "common.hpp"
 
 namespace dsl = NeoFOAM::dsl;
@@ -12,15 +12,10 @@ namespace dsl = NeoFOAM::dsl;
 // TEST_CASE("TemporalOperator")
 TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
+    auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     SECTION("Operator creation on " + execName)
     {
@@ -86,11 +81,12 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         REQUIRE(b.getName() == "TemporalDummy");
         REQUIRE(b.getType() == Operator::Type::Implicit);
-
-        auto ls = b.createEmptyLinearSystem();
-        REQUIRE(ls.matrix().nNonZeros() == 1);
-        REQUIRE(ls.matrix().nRows() == 1);
     }
+
+    auto ls = NeoFOAM::la::createEmptyLinearSystem<
+        TestType,
+        NeoFOAM::localIdx,
+        NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
 
     SECTION("Supports Coefficients Implicit " + execName)
     {
@@ -113,8 +109,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         [[maybe_unused]] auto coeffD = d.getCoefficient();
         [[maybe_unused]] auto coeffE = e.getCoefficient();
 
-        // Field source(exec, 1, 2.0);
-        auto ls = c.createEmptyLinearSystem();
+        Field source(exec, 1, 2.0);
         c.implicitOperation(ls, t, dt);
 
         // c = 2 * 2
@@ -124,8 +119,8 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
-        // d= 2 * 2
-        ls = d.createEmptyLinearSystem();
+        // // d= 2 * 2
+        ls.reset();
         d.implicitOperation(ls, t, dt);
         auto hostRhsD = ls.rhs().copyToHost();
         REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
@@ -134,7 +129,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
 
         // e = - -3 * 2 * 2 = -12
-        ls = e.createEmptyLinearSystem();
+        ls.reset();
         e.implicitOperation(ls, t, dt);
         auto hostRhsE = ls.rhs().copyToHost();
         REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());

@@ -26,7 +26,7 @@ namespace NeoFOAM::sundials
  * @param ctx Pointer to the SUNContext to be freed, can be nullptr.
  * @details Safely frees the context if it's the last reference.
  */
-auto SUN_CONTEXT_DELETER = [](SUNContext* ctx)
+inline auto SUN_CONTEXT_DELETER = [](SUNContext* ctx)
 {
     if (ctx != nullptr)
     {
@@ -39,7 +39,7 @@ auto SUN_CONTEXT_DELETER = [](SUNContext* ctx)
  * @param ark Pointer to the ark memory to be freed, can be nullptr.
  * @details Safely frees the ark memory.
  */
-auto SUN_ARK_DELETER = [](char* ark)
+inline auto SUN_ARK_DELETER = [](char* ark)
 {
     if (ark != nullptr)
     {
@@ -54,7 +54,7 @@ auto SUN_ARK_DELETER = [](char* ark)
  * @return ARKODE_ERKTableID for the corresponding Butcher tableau.
  * @throws Runtime error for unsupported methods.
  */
-ARKODE_ERKTableID stringToERKTable(const std::string& key)
+inline ARKODE_ERKTableID stringToERKTable(const std::string& key)
 {
     if (key == "Forward-Euler") return ARKODE_FORWARD_EULER_1_1;
     if (key == "Heun")
@@ -86,8 +86,9 @@ template<typename SKVectorType, typename ValueType>
 void fieldToSunNVectorImpl(const NeoFOAM::Field<ValueType>& field, N_Vector& vector)
 {
     auto view = ::sundials::kokkos::GetVec<SKVectorType>(vector)->View();
+    auto fieldS = field.span();
     NeoFOAM::parallelFor(
-        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { view(i) = field[i]; }
+        field.exec(), field.range(), KOKKOS_LAMBDA(const size_t i) { view(i) = fieldS[i]; }
     );
 };
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
+// TODO: move to cellCenred dsl?
 
 #pragma once
 
@@ -8,32 +9,19 @@
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
-
-
-#include "NeoFOAM/finiteVolume/cellCentred/operators/sparsityPattern.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 namespace dsl = NeoFOAM::dsl;
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {
-// TODO extend sparsity pattern to return the correct type
-template<typename ValueType, typename IndexType = localIdx>
-la::LinearSystem<ValueType, IndexType> convert(const la::LinearSystem<scalar, IndexType>& ls)
-{
-    const auto A = ls.matrix();
-    const auto b = ls.rhs();
-    const auto& sp = ls.sparsityPattern();
-    const auto& exec = A.exec();
 
-    Field<ValueType> values(exec, A.nNonZeros(), zero<ValueType>());
-    Field<localIdx> mColIdxs(exec, A.colIdxs().data(), A.nNonZeros());
-    Field<localIdx> mRowPtrs(exec, A.rowPtrs().data(), A.rowPtrs().size());
-
-    la::CSRMatrix<ValueType, localIdx> matrix(values, mColIdxs, mRowPtrs);
-    Field<ValueType> rhs(exec, b.size(), zero<ValueType>());
-    return {matrix, rhs, ls.sparsityPattern()};
-}
-
+/*@brief extends expression by giving access to assembled matrix
+ * @note used in neoIcoFOAM directly instead of dsl::expression
+ * TODO: implement flag if matrix is assembled or not -> if not assembled call assemble
+ * for dependent operations like discrete momentum fields
+ * needs storage for assembled matrix? and whether update is needed like for rAU and HbyA
+ */
 template<typename ValueType, typename IndexType = localIdx>
 class Expression
 {
@@ -46,11 +34,13 @@ public:
         [[maybe_unused]] const Dictionary& fvSolution
     )
         : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
-          ls_(convert<ValueType>(SparsityPattern::readOrCreate(psi.mesh())->linearSystem())),
-          sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh()))
+          sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh())),
+          ls_(la::createEmptyLinearSystem<ValueType, localIdx, SparsityPattern>(
+              *sparsityPattern_.get()
+          ))
     {
         expr_.build(fvSchemes_);
-        assemble();
+        // assemble();
     };
 
     Expression(const Expression& ls)
@@ -64,7 +54,7 @@ public:
     {
         if (!sparsityPattern_)
         {
-            NF_THROW("fvcc:LinearSystem:sparsityPattern: sparsityPattern is null");
+            NF_THROW(std::string("fvcc:LinearSystem:sparsityPattern: sparsityPattern is null"));
         }
         return *sparsityPattern_;
     }
@@ -85,14 +75,17 @@ public:
 
     const Executor& exec() const { return ls_.exec(); }
 
+
     void assemble(scalar t, scalar dt)
     {
         auto vol = psi_.mesh().cellVolumes().span();
         auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
         expr_.explicitOperation(expSource, t, dt);
         auto expSourceSpan = expSource.span();
-
-        ls_ = expr_.implicitOperation();
+        fill(ls_.rhs(), zero<ValueType>());
+        fill(ls_.matrix().values(), zero<ValueType>());
+        expr_.implicitOperation(ls_);
+        // TODO rename implicitOperation -> assembleLinearSystem
         expr_.implicitOperation(ls_, t, dt);
         auto rhs = ls_.rhs().span();
         // we subtract the explicit source term from the rhs
@@ -136,16 +129,17 @@ public:
         }
     }
 
+    // TODO unify with dsl/solver.hpp
     void solve(scalar t, scalar dt)
     {
         // dsl::solve(expr_, psi_, t, dt, fvSchemes_, fvSolution_);
-        // FIXME:
         if (expr_.temporalOperators().size() == 0 && expr_.spatialOperators().size() == 0)
         {
             NF_ERROR_EXIT("No temporal or implicit terms to solve.");
         }
         if (expr_.temporalOperators().size() > 0)
         {
+            NF_ERROR_EXIT("Not implemented");
             //     // integrate equations in time
             //     NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
             //         fvSchemes_.subDict("ddtSchemes"), fvSolution_
@@ -154,9 +148,15 @@ public:
         }
         else
         {
-            NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(psi_.exec(), fvSolution_);
-            auto convertedLS = convertLinearSystem(ls_);
-            solver.solve(convertedLS, psi_.internalField());
+#if NF_WITH_GINKGO
+            // TODO: currently only we just pass the fvSolution dict to satisfy the compiler
+            // however, this should be the correct solver dict
+            auto exec = psi_.exec();
+            auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
+            solver.solve(ls_, psi_.internalField());
+#else
+            NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
         }
     }
 
@@ -166,7 +166,7 @@ public:
         const auto diagOffset = sparsityPattern_->diagOffset().span();
         const auto rowPtrs = ls_.matrix().rowPtrs();
         auto rhs = ls_.rhs().span();
-        auto values = ls_.matrix().values();
+        auto values = ls_.matrix().values().span();
         NeoFOAM::parallelFor(
             ls_.exec(),
             {refCell, refCell + 1},
@@ -195,9 +195,9 @@ public:
 
         auto rhs = ls_.rhs().span();
 
-        const auto values = ls_.matrix().values();
-        const auto colIdxs = ls_.matrix().colIdxs();
-        const auto rowPtrs = ls_.matrix().rowPtrs();
+        const auto values = ls_.matrix().values().span();
+        const auto colIdxs = ls_.matrix().colIdxs().span();
+        const auto rowPtrs = ls_.matrix().rowPtrs().span();
 
         Field<ValueType> result(exec, neighbour.size(), 0.0);
 
@@ -214,10 +214,10 @@ public:
                 std::size_t rowNeiStart = rowPtrs[nei];
                 std::size_t rowOwnStart = rowPtrs[own];
 
-                auto Upper = values[rowNeiStart + neiOffs[facei]];
-                auto Lower = values[rowOwnStart + ownOffs[facei]];
+                auto upper = values[rowNeiStart + neiOffs[facei]];
+                auto lower = values[rowOwnStart + ownOffs[facei]];
                 Kokkos::atomic_add(
-                    &resultSpan[facei], Upper * internalPsi[nei] - Lower * internalPsi[own]
+                    &resultSpan[facei], upper * internalPsi[nei] - lower * internalPsi[own]
                 );
             }
         );
@@ -230,13 +230,13 @@ private:
     dsl::Expression<ValueType> expr_;
     const Dictionary& fvSchemes_;
     const Dictionary& fvSolution_;
-    la::LinearSystem<ValueType, IndexType> ls_;
     std::shared_ptr<SparsityPattern> sparsityPattern_;
+    la::LinearSystem<ValueType, IndexType> ls_;
 };
 
 template<typename ValueType, typename IndexType = localIdx>
 VolumeField<ValueType>
-operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType>& psi)
+operator&(const Expression<ValueType, IndexType> expr, const VolumeField<ValueType>& psi)
 {
     VolumeField<ValueType> resultField(
         psi.exec(),
@@ -248,8 +248,8 @@ operator&(const Expression<ValueType, IndexType> ls, const VolumeField<ValueType
     );
 
     auto [result, b, x] =
-        spans(resultField.internalField(), ls.linearSystem().rhs(), psi.internalField());
-    const auto [values, colIdxs, rowPtrs] = ls.linearSystem().view();
+        spans(resultField.internalField(), expr.linearSystem().rhs(), psi.internalField());
+    const auto [values, colIdxs, rowPtrs] = expr.linearSystem().view();
 
     NeoFOAM::parallelFor(
         resultField.exec(),

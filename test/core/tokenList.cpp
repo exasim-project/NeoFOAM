@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <catch2/catch_test_macros.hpp>
-#include "NeoFOAM/core/tokenList.hpp"
-#include "NeoFOAM/core/primitives/label.hpp"
-#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "catch2_common.hpp"
+
+#include "NeoFOAM/NeoFOAM.hpp"
 
 TEST_CASE("tokenList")
 {

@@ -13,6 +13,7 @@ neofoam_unit_test(tokenList)
 neofoam_unit_test(input)
 neofoam_unit_test(executor)
 neofoam_unit_test(parallelAlgorithms)
+neofoam_unit_test(span)
 
 add_executable(runTimeSelectionFactory "runTimeSelectionFactory.cpp")
 target_link_libraries(runTimeSelectionFactory PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace
@@ -27,6 +28,7 @@ if(WIN32)
 else()
   set_property(TARGET runTimeSelectionFactory PROPERTY RUNTIME_OUTPUT_DIRECTORY
                                                        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
+  target_include_directories(runTimeSelectionFactory PRIVATE "${CMAKE_CURRENT_LIST_DIR}/../catch2")
 endif()
 
 add_test(

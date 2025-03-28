@@ -17,98 +17,44 @@
 namespace NeoFOAM::la::ginkgo
 {
 
+gko::config::pnode parse(const Dictionary& dict);
+
 template<typename ValueType>
-class GkoSolverBase
+class Solver
 {
+
+public:
+
+    Solver(Executor exec, Dictionary solverConfig)
+        : gkoExec_(getGkoExecutor(exec)), config_(parse(solverConfig)),
+          factory_(
+              gko::config::parse(
+                  config_, gko::config::registry(), gko::config::make_type_descriptor<ValueType>()
+              )
+                  .on(gkoExec_)
+          )
+    {}
+
+    void solve(LinearSystem<ValueType, localIdx>& sys, Field<ValueType>& x)
+    {
+        size_t nrows = sys.rhs().size();
+
+        auto gkoMtx = detail::createGkoMtx(gkoExec_, sys);
+        auto solver = factory_->generate(gkoMtx);
+
+        auto rhs = detail::createGkoDense(gkoExec_, sys.rhs().data(), nrows);
+        auto gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);
+
+        solver->apply(rhs, gkoX);
+    }
 
 private:
 
     std::shared_ptr<const gko::Executor> gkoExec_;
-    Dictionary solverDict_;
-
-    virtual std::shared_ptr<gko::LinOp> solverGen(
-        std::shared_ptr<const gko::Executor> exec,
-        std::shared_ptr<const gko::LinOp> mtx,
-        size_t maxIter,
-        float relTol
-    ) = 0;
-
-protected:
-
-    GkoSolverBase(Executor exec, Dictionary solverDict)
-        : gkoExec_(getGkoExecutor(exec)), solverDict_(solverDict)
-    {}
-
-public:
-
-    virtual void solve(LinearSystem<ValueType, int>& sys, Field<ValueType>& x)
-    {
-        size_t nrows = sys.rhs().size();
-
-        auto solver = solverGen(
-            gkoExec_,
-            detail::createGkoMtx(gkoExec_, sys),
-            size_t(solverDict_.get<int>("maxIters")),
-            float(solverDict_.get<double>("relTol"))
-        );
-
-        auto rhs = detail::createGkoDense(gkoExec_, sys.rhs().data(), nrows);
-        auto gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);
-        solver->apply(rhs, gkoX);
-    }
+    gko::config::pnode config_;
+    std::shared_ptr<const gko::LinOpFactory> factory_;
 };
 
-
-template<typename ValueType>
-class CG : public GkoSolverBase<ValueType>
-{
-
-    virtual std::shared_ptr<gko::LinOp> solverGen(
-        std::shared_ptr<const gko::Executor> exec,
-        std::shared_ptr<const gko::LinOp> mtx,
-        size_t maxIter,
-        float relTol
-    ) override
-    {
-        auto fact =
-            gko::solver::Bicgstab<ValueType>::build()
-                .with_criteria(
-                    gko::stop::Iteration::build().with_max_iters(maxIter),
-                    gko::stop::ResidualNorm<ValueType>::build().with_reduction_factor(relTol)
-                )
-                .on(exec);
-        return fact->generate(mtx);
-    }
-
-public:
-
-    CG(Executor exec, Dictionary solverDict) : GkoSolverBase<ValueType>(exec, solverDict) {}
-};
-
-template<typename ValueType>
-class BiCGStab : public GkoSolverBase<ValueType>
-{
-    virtual std::shared_ptr<gko::LinOp> solverGen(
-        std::shared_ptr<const gko::Executor> exec,
-        std::shared_ptr<const gko::LinOp> mtx,
-        size_t maxIter,
-        float relTol
-    )
-    {
-        auto fact =
-            gko::solver::Bicgstab<ValueType>::build()
-                .with_criteria(
-                    gko::stop::Iteration::build().with_max_iters(maxIter),
-                    gko::stop::ResidualNorm<ValueType>::build().with_reduction_factor(relTol)
-                )
-                .on(exec);
-        return fact->generate(mtx);
-    }
-
-public:
-
-    BiCGStab(Executor exec, Dictionary solverDict) : GkoSolverBase<ValueType>(exec, solverDict) {}
-};
 
 }
 

@@ -17,7 +17,7 @@ using NeoFOAM::Input;
 namespace NeoFOAM
 {
 
-TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("upwind", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
     auto size = GENERATE(1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20);
 
@@ -37,8 +37,8 @@ TEMPLATE_TEST_CASE("upwind", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto flux = SurfaceField<scalar>(exec, "flux", mesh, {});
     auto out = SurfaceField<TestType>(exec, "out", mesh, surfaceBCs);
 
-    fill(flux.internalField(), one<scalar>::value);
-    fill(in.internalField(), one<TestType>::value);
+    fill(flux.internalField(), one<scalar>());
+    fill(in.internalField(), one<TestType>());
 
     // capture the value of size as section name
     DYNAMIC_SECTION("" << size)

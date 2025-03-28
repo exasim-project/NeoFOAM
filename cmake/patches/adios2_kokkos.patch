@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Unlicense
+# SPDX-FileCopyrightText: 2025 NeoFOAM authors
+diff --git a/cmake/DetectOptions.cmake b/cmake/DetectOptions.cmake
+index d1348ecdd..421194274 100644
+--- a/cmake/DetectOptions.cmake
++++ b/cmake/DetectOptions.cmake
+@@ -209,9 +209,19 @@ endif()
+ # Kokkos
+ if(ADIOS2_USE_Kokkos)
+   if(ADIOS2_USE_Kokkos STREQUAL AUTO)
+-    find_package(Kokkos 3.7 QUIET)
++    if(TARGET Kokkos::kokkos)
++      set(Kokkos_FOUND True)
++      set(Kokkos_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
++    else()
++      find_package(Kokkos 3.7 QUIET)
++    endif()
+   else()
+-    find_package(Kokkos 3.7 REQUIRED)
++    if(TARGET Kokkos::kokkos)
++      set(Kokkos_FOUND True)
++      set(Kokkos_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
++    else()
++      find_package(Kokkos 3.7 REQUIRED)
++    endif()
+   endif()
+   if(Kokkos_FOUND)
+     set(ADIOS2_HAVE_Kokkos TRUE)

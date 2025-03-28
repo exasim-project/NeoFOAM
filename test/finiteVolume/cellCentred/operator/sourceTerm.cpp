@@ -3,11 +3,7 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -20,14 +16,10 @@ namespace NeoFOAM
 
 TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
     auto mesh = createSingleCellMesh(exec);
+    auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     auto coeffBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<scalar>>(mesh);
     fvcc::VolumeField<scalar> coeff(exec, "coeff", mesh, coeffBCs);
@@ -49,9 +41,9 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
         auto source = Field<TestType>(exec, phi.size(), zero<TestType>());
         sTerm.explicitOperation(source);
 
-        // cell has one cell
+        // mesh has one cell
         auto hostSource = source.copyToHost();
-        for(auto ii = 0; ii < hostSource.size(); ++ii)
+        for (auto ii = 0; ii < hostSource.size(); ++ii)
         {
             REQUIRE(hostSource[ii] - 20 * one<TestType>() == TestType(0.0));
         }
@@ -60,13 +52,15 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
     SECTION("implicit SourceTerm" + execName)
     {
         fvcc::SourceTerm<TestType> sTerm(Operator::Type::Implicit, coeff, phi);
-        auto ls = sTerm.createEmptyLinearSystem();
+        auto ls = NeoFOAM::la::createEmptyLinearSystem<
+            TestType,
+            NeoFOAM::localIdx,
+            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
         sTerm.implicitOperation(ls);
-        auto lsHost = ls.copyToHost();
-        auto vol = mesh.cellVolumes().copyToHost();
+        auto [lsHost, vol] = copyToHosts(ls, mesh.cellVolumes());
         const auto& values = lsHost.matrix().values();
-        
-        for(auto ii = 0; ii < values.size(); ++ii)
+
+        for (auto ii = 0; ii < values.size(); ++ii)
         {
             REQUIRE(values[ii] - 2 * vol[0] * one<TestType>() == TestType(0.0));
         }

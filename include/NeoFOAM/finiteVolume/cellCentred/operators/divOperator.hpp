@@ -8,7 +8,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/dsl/spatialOperator.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
@@ -43,33 +43,31 @@ public:
 
     virtual ~DivOperatorFactory() {} // Virtual destructor
 
-    virtual la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const = 0;
-
     // NOTE currently simple overloading is used here, because templating the virtual function
     // does not work and we cant template the entire class because the static create function
     // cannot access keyExistsOrError and table anymore.
     virtual void
     div(VolumeField<ValueType>& divPhi,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) = 0;
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const = 0;
 
     virtual void
     div(la::LinearSystem<ValueType, localIdx>& ls,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) = 0;
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const = 0;
 
     virtual void
     div(Field<ValueType>& divPhi,
         const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) = 0;
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const = 0;
 
     virtual VolumeField<ValueType>
     div(const SurfaceField<scalar>& faceFlux,
-        VolumeField<ValueType>& phi,
-        const dsl::Coeff operatorScaling) = 0;
+        const VolumeField<ValueType>& phi,
+        const dsl::Coeff operatorScaling) const = 0;
 
     // Pure virtual function for cloning
     virtual std::unique_ptr<DivOperatorFactory<ValueType>> clone() const = 0;
@@ -128,19 +126,13 @@ public:
           faceFlux_(faceFlux), divOperatorStrategy_(nullptr) {};
 
 
-    void explicitOperation(Field<scalar>& source)
+    void explicitOperation(Field<scalar>& source) const
     {
         NF_ASSERT(divOperatorStrategy_, "DivOperatorStrategy not initialized");
         NeoFOAM::Field<NeoFOAM::scalar> tmpsource(source.exec(), source.size(), 0.0);
         const auto operatorScaling = this->getCoefficient();
         divOperatorStrategy_->div(tmpsource, faceFlux_, this->getField(), operatorScaling);
         source += tmpsource;
-    }
-
-    void div(Field<ValueType>& divPhi)
-    {
-        const auto operatorScaling = this->getCoefficient();
-        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField(), operatorScaling);
     }
 
     la::LinearSystem<ValueType, localIdx> createEmptyLinearSystem() const
@@ -156,19 +148,23 @@ public:
         divOperatorStrategy_->div(ls, faceFlux_, this->getField(), operatorScaling);
     }
 
-
-    void div(la::LinearSystem<ValueType, localIdx>& ls)
-    {
-        const auto operatorScaling = this->getCoefficient();
-        divOperatorStrategy_->div(ls, faceFlux_, this->getField(), operatorScaling);
-    };
-
-    void div(VolumeField<ValueType>& divPhi)
+    void div(Field<ValueType>& divPhi) const
     {
         const auto operatorScaling = this->getCoefficient();
         divOperatorStrategy_->div(divPhi, faceFlux_, this->getField(), operatorScaling);
     }
 
+    void div(la::LinearSystem<ValueType, localIdx>& ls) const
+    {
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(ls, faceFlux_, this->getField(), operatorScaling);
+    };
+
+    void div(VolumeField<ValueType>& divPhi) const
+    {
+        const auto operatorScaling = this->getCoefficient();
+        divOperatorStrategy_->div(divPhi, faceFlux_, this->getField(), operatorScaling);
+    }
 
     void build(const Input& input)
     {

@@ -6,36 +6,38 @@
 #include <Kokkos_Core.hpp>
 
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {
 
+// TODO move to source file
 namespace detail
 {
 // Without this function the compiler warns that calling a __host__ function
 // from a __device__ function is not allowed
+// NOTE: patchID was removed since it was unused
+// I guess it was replaced by range
 template<typename ValueType>
 void setGradientValue(
     DomainField<ValueType>& domainField,
     const UnstructuredMesh& mesh,
     std::pair<size_t, size_t> range,
-    size_t patchID,
     ValueType fixedGradient
 )
 {
     const auto iField = domainField.internalField().span();
 
-    auto [refGradient, value, valueFraction, refValue] = spans(
+    auto [refGradient, value, valueFraction, refValue, faceCells, deltaCoeffs] = spans(
         domainField.boundaryField().refGrad(),
         domainField.boundaryField().value(),
         domainField.boundaryField().valueFraction(),
-        domainField.boundaryField().refValue()
+        domainField.boundaryField().refValue(),
+        mesh.boundaryMesh().faceCells(),
+        mesh.boundaryMesh().deltaCoeffs()
     );
 
-    auto faceCells = mesh.boundaryMesh().faceCells().span();
-    auto deltaCoeffs = mesh.boundaryMesh().deltaCoeffs().span();
 
     NeoFOAM::parallelFor(
         domainField.exec(),
@@ -47,7 +49,8 @@ void setGradientValue(
                 iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
             valueFraction[i] = 0.0;          // only use refGrad
             refValue[i] = zero<ValueType>(); // not used
-        }
+        },
+        "setGradientValue"
     );
 }
 }
@@ -69,9 +72,7 @@ public:
 
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) final
     {
-        detail::setGradientValue(
-            domainField, mesh_, this->range(), this->patchID(), fixedGradient_
-        );
+        detail::setGradientValue(domainField, mesh_, this->range(), fixedGradient_);
     }
 
     static std::string name() { return "fixedGradient"; }

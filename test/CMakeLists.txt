@@ -5,6 +5,8 @@ list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 # has to be first since it adds the main target
 add_subdirectory(catch2)
+set(TEST_CATCH2_DIR ${CMAKE_CURRENT_LIST_DIR}/catch2)
+message("TEST_CATCH2_DIR ${TEST_CATCH2_DIR}")
 
 # include "NeoFOAM/core/parallelAlgorithms.hpp" This function creates unit tests. It provides the
 # following keywords:
@@ -22,30 +24,39 @@ function(neofoam_unit_test TEST)
     set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
   endif()
   if(NOT DEFINED "neofoam_COMMAND")
-    set(neofoam_COMMAND ${TEST})
+    set(neofoam_COMMAND nf_${TEST})
   endif()
 
-  add_executable(${TEST} "${TEST}.cpp")
-  target_link_libraries(${TEST} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options
-                                        Kokkos::kokkos NeoFOAM cpptrace::cpptrace)
+  add_executable(${neofoam_COMMAND} "${TEST}.cpp")
+  set_target_properties(${neofoam_COMMAND} PROPERTIES OUTPUT_NAME ${TEST})
+  target_link_libraries(
+    ${neofoam_COMMAND} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options Kokkos::kokkos
+                               NeoFOAM cpptrace::cpptrace)
 
   if(NEOFOAM_WITH_SUNDIALS)
-    target_link_libraries(${TEST} PRIVATE SUNDIALS::arkode)
+    target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
+  endif()
+
+  target_include_directories(${neofoam_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
+
+  if(NEOFOAM_WITH_SUNDIALS)
+    target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
   endif()
   if(WIN32)
     set_target_properties(
-      ${TEST}
+      ${neofoam_COMMAND}
       PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
                  LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
                  ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
   else()
-    set_target_properties(${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY})
+    # cmake-lint: disable=C0307
+    set_target_properties(${neofoam_COMMAND} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                                        ${neofoam_WORKING_DIRECTORY})
   endif()
   add_test(
     NAME ${TEST}
     COMMAND ${neofoam_COMMAND}
     WORKING_DIRECTORY ${neofoam_WORKING_DIRECTORY})
-
 endfunction()
 
 function(neofoam_unit_test_mpi TEST)

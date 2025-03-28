@@ -5,8 +5,6 @@ add_library(NeoFOAM ${NeoFOAM_LIB_TYPE})
 
 include(GNUInstallDirs)
 
-target_sources(NeoFOAM PRIVATE ${NeoFOAM_SRCS})
-
 if(NEOFOAM_ENABLE_CUDA)
   set_source_files_properties(${NeoFOAM_SRCS} PROPERTIES LANGUAGE CUDA)
 endif()
@@ -23,6 +21,7 @@ target_sources(
           "core/demangle.cpp"
           "core/tokenList.cpp"
           "dsl/coeff.cpp"
+          "dsl/explicit.cpp"
           "dsl/spatialOperator.cpp"
           "dsl/temporalOperator.cpp"
           "executor/CPUExecutor.cpp"
@@ -31,6 +30,7 @@ target_sources(
           "linearAlgebra/utilities.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
+          "finiteVolume/cellCentred/linearAlgebra/sparsityPattern.cpp"
           "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
           "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
           "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
@@ -42,17 +42,21 @@ target_sources(
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenLaplacian.cpp"
           "finiteVolume/cellCentred/operators/sourceTerm.cpp"
-          "finiteVolume/cellCentred/operators/sparsityPattern.cpp"
           "finiteVolume/cellCentred/operators/surfaceIntegrate.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
           "finiteVolume/cellCentred/faceNormalGradient/uncorrected.cpp"
+          "finiteVolume/cellCentred/auxiliary/coNum.cpp"
           "timeIntegration/timeIntegration.cpp"
           "timeIntegration/rungeKutta.cpp")
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
                                  "mesh/unstructured/communicator.cpp")
+endif()
+
+if(NEOFOAM_WITH_GINKGO)
+  target_sources(NeoFOAM PRIVATE "linearAlgebra/ginkgo.cpp")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
