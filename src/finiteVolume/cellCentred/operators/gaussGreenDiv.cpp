@@ -179,28 +179,19 @@ void computeDivImp(
             std::size_t rowNeiStart = A.rowOffset[nei];
             std::size_t rowOwnStart = A.rowOffset[own];
 
+            scalar operatorScalingNei = operatorScaling[nei];
+            scalar operatorScalingOwn = operatorScaling[own];
+
             value = -weight * flux * one<ValueType>();
             // scalar valueNei = (1 - weight) * flux;
-            A.value[rowNeiStart + neiOffs[facei]] += value;
-            Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value);
+            A.value[rowNeiStart + neiOffs[facei]] += value * operatorScalingNei;
+            Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value * operatorScalingOwn);
 
             // upper triangular part
             // add owner contribution lower
             value = flux * (1 - weight) * one<ValueType>();
-            A.value[rowOwnStart + ownOffs[facei]] += value;
-            Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value);
-        }
-    );
-
-    parallelFor(
-        exec,
-        {0, b.size()},
-        KOKKOS_LAMBDA(const size_t celli) {
-            b[celli] *= operatorScaling[celli];
-            for (size_t i = A.rowOffset[celli]; i < A.rowOffset[celli + 1]; i++)
-            {
-                A.value[i] *= operatorScaling[celli];
-            }
+            A.value[rowOwnStart + ownOffs[facei]] += value * operatorScalingOwn;
+            Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value * operatorScalingNei);
         }
     );
 };

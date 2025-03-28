@@ -133,15 +133,22 @@ void computeLaplacianImpl(
             std::size_t rowNeiStart = rowPtrs[nei];
             std::size_t rowOwnStart = rowPtrs[own];
 
+            scalar operatorScalingNei = operatorScaling[nei];
+            scalar operatorScalingOwn = operatorScaling[own];
+
             // scalar valueNei = (1 - weight) * flux;
-            values[rowNeiStart + neiOffs[facei]] += flux * one<ValueType>();
-            Kokkos::atomic_sub(&values[rowOwnStart + diagOffs[own]], flux * one<ValueType>());
+            values[rowNeiStart + neiOffs[facei]] += flux * one<ValueType>() * operatorScalingNei;
+            Kokkos::atomic_sub(
+                &values[rowOwnStart + diagOffs[own]], flux * one<ValueType>() * operatorScalingOwn
+            );
 
             // upper triangular part
 
             // add owner contribution lower
-            values[rowOwnStart + ownOffs[facei]] += flux * one<ValueType>();
-            Kokkos::atomic_sub(&values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>());
+            values[rowOwnStart + ownOffs[facei]] += flux * one<ValueType>() * operatorScalingOwn;
+            Kokkos::atomic_sub(
+                &values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>() * operatorScalingNei
+            );
         }
     );
 
@@ -154,25 +161,15 @@ void computeLaplacianImpl(
 
             std::size_t own = static_cast<std::size_t>(surfFaceCells[bcfacei]);
             std::size_t rowOwnStart = rowPtrs[own];
+            scalar operatorScalingOwn = operatorScaling[own];
 
-            values[rowOwnStart + diagOffs[own]] -=
-                flux * valueFraction[bcfacei] * deltaCoeffs[facei] * one<ValueType>();
+            values[rowOwnStart + diagOffs[own]] -= flux * operatorScalingOwn
+                                                 * valueFraction[bcfacei] * deltaCoeffs[facei]
+                                                 * one<ValueType>();
             rhs[own] -=
-                (flux
+                (flux * operatorScalingOwn
                  * (valueFraction[bcfacei] * deltaCoeffs[facei] * refValue[bcfacei]
                     + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei]));
-        }
-    );
-
-    parallelFor(
-        exec,
-        {0, rhs.size()},
-        KOKKOS_LAMBDA(const size_t celli) {
-            rhs[celli] *= operatorScaling[celli];
-            for (size_t i = rowPtrs[celli]; i < rowPtrs[celli + 1]; i++)
-            {
-                values[i] *= operatorScaling[celli];
-            }
         }
     );
 }
