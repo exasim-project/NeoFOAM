@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoFOAM/dsl/explicit.hpp"
 

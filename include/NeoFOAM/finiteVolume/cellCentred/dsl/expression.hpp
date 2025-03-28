@@ -35,7 +35,8 @@ public:
     )
         : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
           sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh())),
-          ls_(la::createEmptyLinearSystem<scalar, localIdx, SparsityPattern>(*sparsityPattern_.get()))
+          ls_(la::createEmptyLinearSystem<scalar, localIdx, SparsityPattern>(*sparsityPattern_.get()
+          ))
     {
         expr_.build(fvSchemes_);
         assemble();
