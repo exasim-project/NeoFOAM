@@ -34,8 +34,8 @@ public:
         [[maybe_unused]] const Dictionary& fvSolution
     )
         : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
-          ls_(convert<ValueType>(SparsityPattern::readOrCreate(psi.mesh())->linearSystem())),
-          sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh()))
+          sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh())),
+          ls_(la::createEmptyLinearSystem<scalar, localIdx, SparsityPattern>(*sparsityPattern_.get()))
     {
         expr_.build(fvSchemes_);
         assemble();
@@ -227,8 +227,8 @@ private:
     dsl::Expression<ValueType> expr_;
     const Dictionary& fvSchemes_;
     const Dictionary& fvSolution_;
-    la::LinearSystem<ValueType, IndexType> ls_;
     std::shared_ptr<SparsityPattern> sparsityPattern_;
+    la::LinearSystem<ValueType, IndexType> ls_;
 };
 
 template<typename ValueType, typename IndexType = localIdx>
