@@ -38,8 +38,8 @@
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ [[maybe\_unused]]\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSolution}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00035}00035\ \ \ \ \ )}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ :\ psi\_(psi),\ expr\_(expr),\ fvSchemes\_(fvSchemes),\ fvSolution\_(fvSolution),}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ ls\_(convert<ValueType>(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern}{SparsityPattern}}::readOrCreate(psi.mesh())-\/>\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression_a7fd7beb2753b40cf07b0d125fd88fbe1}{linearSystem}}())),}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ sparsityPattern\_(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern}{SparsityPattern}}::readOrCreate(psi.mesh()))}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ sparsityPattern\_(\mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern}{SparsityPattern}}::readOrCreate(psi.mesh())),}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ ls\_(la::createEmptyLinearSystem<\mbox{\hyperlink{namespaceNeoFOAM_a03eba15c79160376393af407daa0fd7b}{scalar}},\ \mbox{\hyperlink{namespaceNeoFOAM_a95525d89d661b88aaa4548bdf2766842}{localIdx}},\ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SparsityPattern}{SparsityPattern}}>(*sparsityPattern\_.get()))}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00039}00039\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ expr\_.build(fvSchemes\_);}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression_af5b9eaffd50d7e77d83653217ad2ac32}{assemble}}();}
@@ -231,8 +231,8 @@
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00227}00227\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1dsl_1_1Expression}{dsl::Expression<ValueType>}}\ expr\_;}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00228}00228\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSchemes\_;}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00229}00229\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Dictionary}{Dictionary}}\&\ fvSolution\_;}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00230}00230\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ IndexType>}}\ ls\_;}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00231}00231\ \ \ \ \ std::shared\_ptr<SparsityPattern>\ sparsityPattern\_;}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00230}00230\ \ \ \ \ std::shared\_ptr<SparsityPattern>\ sparsityPattern\_;}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00231}00231\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1la_1_1LinearSystem}{la::LinearSystem<ValueType,\ IndexType>}}\ ls\_;}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00232}00232\ \};}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00233}00233\ }
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00234}00234\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType\ =\ localIdx>}
@@ -258,12 +258,12 @@
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00254}00254\ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ std::size\_t\ rowi)\ \{}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \ \ \ \ IndexType\ rowStart\ =\ rowPtrs[rowi];}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ \ \ \ \ IndexType\ rowEnd\ =\ rowPtrs[rowi\ +\ 1];}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \ \ \ \ ValueType\ \mbox{\hyperlink{namespaceNeoFOAM_a4dcbfd98270c4706062b4786eedbfdf2}{sum}}\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \ \ \ \ ValueType\ sum\ =\ 0.0;}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00258}00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (IndexType\ coli\ =\ rowStart;\ coli\ <\ rowEnd;\ coli++)}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00259}00259\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00260}00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a4dcbfd98270c4706062b4786eedbfdf2}{sum}}\ +=\ values[coli]\ *\ x[colIdxs[coli]];}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00260}00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sum\ +=\ values[coli]\ *\ x[colIdxs[coli]];}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00262}00262\ \ \ \ \ \ \ \ \ \ \ \ \ result[rowi]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a4dcbfd98270c4706062b4786eedbfdf2}{sum}}\ -\/\ b[rowi];}
+\DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00262}00262\ \ \ \ \ \ \ \ \ \ \ \ \ result[rowi]\ =\ sum\ -\/\ b[rowi];}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00263}00263\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00264}00264\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{finiteVolume_2cellCentred_2dsl_2expression_8hpp_source_l00265}00265\ }
