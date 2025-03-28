@@ -7,6 +7,5 @@ var searchData=
   ['dictionary_2ehpp_4',['dictionary.hpp',['../dictionary_8hpp.html',1,'']]],
   ['divoperator_2ehpp_5',['divOperator.hpp',['../divOperator_8hpp.html',1,'']]],
   ['document_2ehpp_6',['document.hpp',['../document_8hpp.html',1,'']]],
-  ['domainfield_2ehpp_7',['domainField.hpp',['../domainField_8hpp.html',1,'']]],
-  ['dsl_2ehpp_8',['dsl.hpp',['../dsl_8hpp.html',1,'']]]
+  ['domainfield_2ehpp_7',['domainField.hpp',['../domainField_8hpp.html',1,'']]]
 ];

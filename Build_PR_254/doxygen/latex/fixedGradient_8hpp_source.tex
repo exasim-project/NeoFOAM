@@ -10,37 +10,37 @@
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <Kokkos\_Core.hpp>}}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00007}00007\ }
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{volumeBoundaryFactory_8hpp}{NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp}}"{}}}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{unstructured_8hpp}{NeoFOAM/mesh/unstructured.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{unstructuredMesh_8hpp}{NeoFOAM/mesh/unstructured/unstructuredMesh.hpp}}"{}}}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{parallelAlgorithms_8hpp}{NeoFOAM/core/parallelAlgorithms.hpp}}"{}}}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00011}00011\ }
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00012}00012\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary}{NeoFOAM::finiteVolume::cellCentred::volumeBoundary}}}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00013}00013\ \{}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00014}00014\ }
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00015}\mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail}{00015}}\ \textcolor{keyword}{namespace\ }detail}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00016}00016\ \{}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00017}00017\ \textcolor{comment}{//\ Without\ this\ function\ the\ compiler\ warns\ that\ calling\ a\ \_\_host\_\_\ function}}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00018}00018\ \textcolor{comment}{//\ from\ a\ \_\_device\_\_\ function\ is\ not\ allowed}}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00019}00019\ \textcolor{comment}{//\ NOTE:\ patchID\ was\ removed\ since\ it\ was\ unused}}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00020}00020\ \textcolor{comment}{//\ I\ guess\ it\ was\ replaced\ by\ range}}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00021}00021\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00022}\mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a6ff237ce63dc443580ccc03c7644e63a}{00022}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a6ff237ce63dc443580ccc03c7644e63a}{setGradientValue}}(}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00023}00023\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1DomainField}{DomainField<ValueType>}}\&\ domainField,}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00024}00024\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh,}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00025}00025\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range,}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00026}00026\ \ \ \ \ ValueType\ fixedGradient}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00027}00027\ )}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00028}00028\ \{}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ iField\ =\ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_af05959974fceab7c39565f3a3314be9f}{internalField}}().span();}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00030}00030\ }
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00031}00031\ \ \ \ \ \textcolor{keyword}{auto}\ [refGradient,\ value,\ valueFraction,\ refValue]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{spans}}(}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00032}00032\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_a476f9a5e97b451bbeebb99e049ca9d4b}{refGrad}}(),}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_a6d685a47e4be1adbc89b84f261c9d786}{value}}(),}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_ae212c4300459da0d612c2340744b5e38}{valueFraction}}(),}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_a8c3799df523d2f18598a0090d25600c8}{refValue}}()}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00036}00036\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00037}00037\ }
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keyword}{auto}\ faceCells\ =\ mesh.\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh_a0d183643d0aa687b3daca9eee9a7fc3b}{boundaryMesh}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryMesh_ae988fda8cddb5ad7ea5c430627cb0554}{faceCells}}();}
-\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00039}00039\ \ \ \ \ \textcolor{keyword}{auto}\ deltaCoeffs\ =\ mesh.\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh_a0d183643d0aa687b3daca9eee9a7fc3b}{boundaryMesh}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryMesh_a92936bbec13bcb77ef7e7b1404f1a659}{deltaCoeffs}}();}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00015}00015\ \textcolor{comment}{//\ TODO\ move\ to\ source\ file}}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00016}\mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail}{00016}}\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00017}00017\ \{}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00018}00018\ \textcolor{comment}{//\ Without\ this\ function\ the\ compiler\ warns\ that\ calling\ a\ \_\_host\_\_\ function}}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00019}00019\ \textcolor{comment}{//\ from\ a\ \_\_device\_\_\ function\ is\ not\ allowed}}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00020}00020\ \textcolor{comment}{//\ NOTE:\ patchID\ was\ removed\ since\ it\ was\ unused}}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00021}00021\ \textcolor{comment}{//\ I\ guess\ it\ was\ replaced\ by\ range}}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00022}00022\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00023}\mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a6ff237ce63dc443580ccc03c7644e63a}{00023}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a6ff237ce63dc443580ccc03c7644e63a}{setGradientValue}}(}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00024}00024\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1DomainField}{DomainField<ValueType>}}\&\ domainField,}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00025}00025\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh}{UnstructuredMesh}}\&\ mesh,}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00026}00026\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range,}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00027}00027\ \ \ \ \ ValueType\ fixedGradient}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00028}00028\ )}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00029}00029\ \{}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ iField\ =\ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_af05959974fceab7c39565f3a3314be9f}{internalField}}().span();}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00031}00031\ }
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00032}00032\ \ \ \ \ \textcolor{keyword}{auto}\ [refGradient,\ value,\ valueFraction,\ refValue,\ faceCells,\ deltaCoeffs]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{spans}}(}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_a476f9a5e97b451bbeebb99e049ca9d4b}{refGrad}}(),}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_a6d685a47e4be1adbc89b84f261c9d786}{value}}(),}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_ae212c4300459da0d612c2340744b5e38}{valueFraction}}(),}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_aac8ed3340a7bb5fa7e1572bdbf8d463d}{boundaryField}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryFields_a8c3799df523d2f18598a0090d25600c8}{refValue}}(),}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ mesh.\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh_a0d183643d0aa687b3daca9eee9a7fc3b}{boundaryMesh}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryMesh_ae988fda8cddb5ad7ea5c430627cb0554}{faceCells}}(),}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ mesh.\mbox{\hyperlink{classNeoFOAM_1_1UnstructuredMesh_a0d183643d0aa687b3daca9eee9a7fc3b}{boundaryMesh}}().\mbox{\hyperlink{classNeoFOAM_1_1BoundaryMesh_a92936bbec13bcb77ef7e7b1404f1a659}{deltaCoeffs}}()}
+\DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00039}00039\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00040}00040\ }
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00041}00041\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae2c722dbedf8901153be15abfe9c1926}{NeoFOAM::parallelFor}}(}
 \DoxyCodeLine{\Hypertarget{fixedGradient_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ domainField.\mbox{\hyperlink{classNeoFOAM_1_1DomainField_a155439d3bfa1906bfa64e5e1852cecf0}{exec}}(),}

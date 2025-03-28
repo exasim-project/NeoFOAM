@@ -195,100 +195,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00291" name="l00291"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#afdb9b151e2c17ce2b8065fe66989ce3e">  291</a></span><a class="code hl_class" href="classNeoFOAM_1_1UnstructuredMesh.html">UnstructuredMesh</a> <a class="code hl_function" href="namespaceNeoFOAM.html#afdb9b151e2c17ce2b8065fe66989ce3e">create1DUniformMesh</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">Executor</a> exec, <span class="keyword">const</span> <span class="keywordtype">size_t</span> nCells);</div>
 <div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span> </div>
 <div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span> </div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span><span class="keyword">namespace </span>detail</div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>{</div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span> </div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span><span class="comment">/* @brief applies permutation vector s = v[p[i]]</span></div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span><span class="comment"> *                 e.g. s[0] = v[p[0] -&gt; 4 ]</span></div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> IndexType&gt;</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>std::vector&lt;T&gt; apply_permutation(<span class="keyword">const</span> std::span&lt;T&gt; vec, <span class="keyword">const</span> std::vector&lt;IndexType&gt;&amp; p)</div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>{</div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>    std::vector&lt;T&gt; sorted_vec(vec.size());</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    std::transform(p.begin(), p.end(), sorted_vec.begin(), [&amp;](<a class="code hl_typedef" href="namespaceNeoFOAM.html#a7c2c6a7a7bda94e9fb289fd81b96f745">label</a> i) { return vec[i]; });</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>    <span class="keywordflow">return</span> sorted_vec;</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>}</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span> </div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span> </div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>}</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span> </div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span><span class="comment">/* @brief given an unstructured mesh this function computes row and column indices in CSR format</span></div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span><span class="comment"> * @return a tuple containing rowPtrs, colIdxs, and a faceOrderMap</span></div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span><span class="comment"> * the faceOrderMap is a Field of length = 2*internalFaces</span></div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span><span class="comment"> * where faceOrderMap[2*faceI]     = globalIdx of owner</span></div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span><span class="comment"> * and   faceOrderMap[2*faceI + 1] = globalIdx of neighbour</span></div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span><span class="comment"> * with  globalIdx being the consecutive index in the resulting CSR/COO matrix</span></div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> IndexType&gt;</div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>std::tuple&lt;Field&lt;IndexType&gt;, Field&lt;IndexType&gt;, Field&lt;IndexType&gt;&gt;</div>
-<div class="foldopen" id="foldopen00321" data-start="{" data-end="}">
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a9a16674e2d8742acb129f49dd0256b1c">  321</a></span><a class="code hl_function" href="namespaceNeoFOAM.html#a9a16674e2d8742acb129f49dd0256b1c">createSparsityPattern</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">Executor</a>&amp; exec, <span class="keyword">const</span> <a class="code hl_class" href="classNeoFOAM_1_1UnstructuredMesh.html">UnstructuredMesh</a>&amp; in)</div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>{</div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>    <span class="keyword">const</span> <span class="keyword">auto</span> nInternalFaces = in.<a class="code hl_function" href="classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779">nInternalFaces</a>();</div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span>    <span class="keyword">const</span> <span class="keyword">auto</span> nCells = in.<a class="code hl_function" href="classNeoFOAM_1_1UnstructuredMesh.html#aadbdc8a2b4a0bffc6c691d599628b51f">nCells</a>();</div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>    <span class="keyword">const</span> <span class="keyword">auto</span> nnzs = 2 * nInternalFaces + nCells;</div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno">  326</span>    <span class="keyword">const</span> <span class="keyword">auto</span> [faceOwner, faceNeighbour] = <a class="code hl_function" href="namespaceNeoFOAM.html#ae31c35461ab0f69ee4c8309b18cd1143">spans</a>(in.<a class="code hl_function" href="classNeoFOAM_1_1UnstructuredMesh.html#ab4574a9ddb1ab79f819076a9137d7783">faceOwner</a>(), in.<a class="code hl_function" href="classNeoFOAM_1_1UnstructuredMesh.html#ac5b626578f53d43f10f18353bbcb127a">faceNeighbour</a>());</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>    <a class="code hl_class" href="classNeoFOAM_1_1Field.html">Field&lt;IndexType&gt;</a> rows(exec, nnzs, 0);</div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>    <a class="code hl_class" href="classNeoFOAM_1_1Field.html">Field&lt;IndexType&gt;</a> cols(exec, nnzs, 0);</div>
-<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>    <span class="keyword">auto</span> [rowss, colss] = <a class="code hl_function" href="namespaceNeoFOAM.html#ae31c35461ab0f69ee4c8309b18cd1143">spans</a>(rows, cols);</div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span> </div>
-<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span>    <a class="code hl_function" href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">parallelFor</a>(</div>
-<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>        exec,</div>
-<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>        {0, nInternalFaces},</div>
-<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>        KOKKOS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> facei) {</div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>            IndexType owner = <span class="keyword">static_cast&lt;</span>IndexType<span class="keyword">&gt;</span>(faceOwner[facei]);</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>            IndexType neigh = <span class="keyword">static_cast&lt;</span>IndexType<span class="keyword">&gt;</span>(faceNeighbour[facei]);</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>            rowss[2 * facei] = owner;</div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>            rowss[2 * facei + 1] = neigh;</div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>            colss[2 * facei] = neigh;</div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>            colss[2 * facei + 1] = owner;</div>
-<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>        }</div>
-<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>    );</div>
-<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span> </div>
-<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>    <a class="code hl_function" href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">parallelFor</a>(</div>
-<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span>        exec,</div>
-<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>        {0, nCells},</div>
-<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>        KOKKOS_LAMBDA(<span class="keyword">const</span> <span class="keywordtype">size_t</span> cellI) {</div>
-<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span>            rowss[2 * nInternalFaces + cellI] = cellI;</div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno">  351</span>            colss[2 * nInternalFaces + cellI] = cellI;</div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>        }</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>    );</div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span> </div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span> </div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <span class="comment">// TODO: NOTE: As a proof of concept things are sorted on the CPU for now</span></div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    <span class="comment">// until a GPU sorting is implemented</span></div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span> </div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    <span class="keyword">auto</span> [rowsH, colsH] = <a class="code hl_function" href="namespaceNeoFOAM.html#a374c57db6afb96ab76b48e6868082c81">copyToHosts</a>(rows, cols);</div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>    <span class="keyword">auto</span> [rowsHS, colsHS] = <a class="code hl_function" href="namespaceNeoFOAM.html#ae31c35461ab0f69ee4c8309b18cd1143">spans</a>(rowsH, colsH);</div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span> </div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>    std::vector&lt;IndexType&gt; permutation(rowsH.size());</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>    std::iota(permutation.begin(), permutation.end(), 0);</div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    std::stable_sort(</div>
-<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        permutation.begin(),</div>
-<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>        permutation.end(),</div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span>        [&amp;](std::size_t i, std::size_t j)</div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span>        { return std::tie(rowsHS[i], colsHS[i]) &lt; std::tie(rowsHS[j], colsHS[j]); }</div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span>    );</div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span> </div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span>    <span class="keyword">auto</span> sortedRows = detail::apply_permutation(rowsHS, permutation);</div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span>    <span class="keyword">auto</span> sortedCols = detail::apply_permutation(colsHS, permutation);</div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span> </div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span>    <span class="keywordflow">return</span> {</div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span>        <a class="code hl_class" href="classNeoFOAM_1_1Field.html">Field&lt;IndexType&gt;</a> {exec, sortedRows.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a756b2b776a6c4cc7ffe091e42e505efa">data</a>(), sortedRows.size()},</div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span>        <a class="code hl_class" href="classNeoFOAM_1_1Field.html">Field&lt;IndexType&gt;</a> {exec, sortedCols.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a756b2b776a6c4cc7ffe091e42e505efa">data</a>(), sortedCols.size()},</div>
-<div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span>        <a class="code hl_class" href="classNeoFOAM_1_1Field.html">Field&lt;IndexType&gt;</a> {exec, permutation.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a756b2b776a6c4cc7ffe091e42e505efa">data</a>(), permutation.size()}</div>
-<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>    };</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>}</div>
-</div>
-<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span> </div>
-<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aboundaryMesh_8hpp_html"><div class="ttname"><a href="boundaryMesh_8hpp.html">boundaryMesh.hpp</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1BoundaryMesh_html"><div class="ttname"><a href="classNeoFOAM_1_1BoundaryMesh.html">NeoFOAM::BoundaryMesh</a></div><div class="ttdoc">Represents boundaries of an unstructured mesh.</div><div class="ttdef"><b>Definition</b> <a href="boundaryMesh_8hpp_source.html#l00027">boundaryMesh.hpp:28</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Field_html"><div class="ttname"><a href="classNeoFOAM_1_1Field.html">NeoFOAM::Field&lt; Vector &gt;</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a756b2b776a6c4cc7ffe091e42e505efa"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a756b2b776a6c4cc7ffe091e42e505efa">NeoFOAM::Field::data</a></div><div class="ttdeci">ValueType * data()</div><div class="ttdoc">Direct access to the underlying field data.</div><div class="ttdef"><b>Definition</b> <a href="field_8hpp_source.html#l00339">field.hpp:339</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1StencilDataBase_html"><div class="ttname"><a href="classNeoFOAM_1_1StencilDataBase.html">NeoFOAM::StencilDataBase</a></div><div class="ttdoc">A class that represents a stencil database.</div><div class="ttdef"><b>Definition</b> <a href="stencilDataBase_8hpp_source.html#l00019">stencilDataBase.hpp:20</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1UnstructuredMesh_html"><div class="ttname"><a href="classNeoFOAM_1_1UnstructuredMesh.html">NeoFOAM::UnstructuredMesh</a></div><div class="ttdoc">Represents an unstructured mesh in NeoFOAM.</div><div class="ttdef"><b>Definition</b> <a href="unstructuredMesh_8hpp_source.html#l00032">unstructuredMesh.hpp:33</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1UnstructuredMesh_html_a0d183643d0aa687b3daca9eee9a7fc3b"><div class="ttname"><a href="classNeoFOAM_1_1UnstructuredMesh.html#a0d183643d0aa687b3daca9eee9a7fc3b">NeoFOAM::UnstructuredMesh::boundaryMesh</a></div><div class="ttdeci">const BoundaryMesh &amp; boundaryMesh() const</div><div class="ttdoc">Get the boundary mesh.</div></div>
@@ -310,13 +220,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aclassNeoFOAM_1_1UnstructuredMesh_html_aedf7e0975133f758f4f8c0a53fea273d"><div class="ttname"><a href="classNeoFOAM_1_1UnstructuredMesh.html#aedf7e0975133f758f4f8c0a53fea273d">NeoFOAM::UnstructuredMesh::faceCentres</a></div><div class="ttdeci">const vectorField &amp; faceCentres() const</div><div class="ttdoc">Get the field of face centres.</div></div>
 <div class="ttc" id="afieldTypeDefs_8hpp_html"><div class="ttname"><a href="fieldTypeDefs_8hpp.html">fieldTypeDefs.hpp</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="collection_8hpp_source.html#l00013">collection.hpp:14</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a374c57db6afb96ab76b48e6868082c81"><div class="ttname"><a href="namespaceNeoFOAM.html#a374c57db6afb96ab76b48e6868082c81">NeoFOAM::copyToHosts</a></div><div class="ttdeci">auto copyToHosts(Args &amp;... fields)</div><div class="ttdef"><b>Definition</b> <a href="fieldFreeFunctions_8hpp_source.html#l00150">fieldFreeFunctions.hpp:150</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a7c2c6a7a7bda94e9fb289fd81b96f745"><div class="ttname"><a href="namespaceNeoFOAM.html#a7c2c6a7a7bda94e9fb289fd81b96f745">NeoFOAM::label</a></div><div class="ttdeci">int32_t label</div><div class="ttdef"><b>Definition</b> <a href="label_8hpp_source.html#l00016">label.hpp:16</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a99bff8ff2aa41c8015bdb6c509ee5567"><div class="ttname"><a href="namespaceNeoFOAM.html#a99bff8ff2aa41c8015bdb6c509ee5567">NeoFOAM::createSingleCellMesh</a></div><div class="ttdeci">UnstructuredMesh createSingleCellMesh(const Executor exec)</div><div class="ttdoc">creates a mesh containing only a single cell @warn currently this is only a 2D mesh</div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a9a16674e2d8742acb129f49dd0256b1c"><div class="ttname"><a href="namespaceNeoFOAM.html#a9a16674e2d8742acb129f49dd0256b1c">NeoFOAM::createSparsityPattern</a></div><div class="ttdeci">std::tuple&lt; Field&lt; IndexType &gt;, Field&lt; IndexType &gt;, Field&lt; IndexType &gt; &gt; createSparsityPattern(const Executor &amp;exec, const UnstructuredMesh &amp;in)</div><div class="ttdef"><b>Definition</b> <a href="unstructuredMesh_8hpp_source.html#l00321">unstructuredMesh.hpp:321</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_aaa4d35d275559f501cb6a1eec717c905"><div class="ttname"><a href="namespaceNeoFOAM.html#aaa4d35d275559f501cb6a1eec717c905">NeoFOAM::Executor</a></div><div class="ttdeci">std::variant&lt; SerialExecutor, CPUExecutor, GPUExecutor &gt; Executor</div><div class="ttdef"><b>Definition</b> <a href="executor_8hpp_source.html#l00016">executor.hpp:16</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_ae2c722dbedf8901153be15abfe9c1926"><div class="ttname"><a href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">NeoFOAM::parallelFor</a></div><div class="ttdeci">void parallelFor(const Executor &amp;exec, std::pair&lt; size_t, size_t &gt; range, Kernel kernel, std::string name=&quot;parallelFor&quot;)</div><div class="ttdef"><b>Definition</b> <a href="parallelAlgorithms_8hpp_source.html#l00027">parallelAlgorithms.hpp:27</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_ae31c35461ab0f69ee4c8309b18cd1143"><div class="ttname"><a href="namespaceNeoFOAM.html#ae31c35461ab0f69ee4c8309b18cd1143">NeoFOAM::spans</a></div><div class="ttdeci">auto spans(Args &amp;... fields)</div><div class="ttdef"><b>Definition</b> <a href="fieldFreeFunctions_8hpp_source.html#l00144">fieldFreeFunctions.hpp:144</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_afdb9b151e2c17ce2b8065fe66989ce3e"><div class="ttname"><a href="namespaceNeoFOAM.html#afdb9b151e2c17ce2b8065fe66989ce3e">NeoFOAM::create1DUniformMesh</a></div><div class="ttdeci">UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)</div><div class="ttdoc">A factory function for a 1D mesh.</div></div>
 <div class="ttc" id="astencilDataBase_8hpp_html"><div class="ttname"><a href="stencilDataBase_8hpp.html">stencilDataBase.hpp</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
