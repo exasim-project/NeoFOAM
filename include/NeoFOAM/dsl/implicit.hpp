@@ -15,6 +15,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred/operators/ddtOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/divOperator.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/operators/laplacianOperator.hpp"
+#include "NeoFOAM/finiteVolume/cellCentred/operators/sourceTerm.hpp"
 
 namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
