@@ -26,7 +26,7 @@ namespace NeoFOAM::sundials
  * @param ctx Pointer to the SUNContext to be freed, can be nullptr.
  * @details Safely frees the context if it's the last reference.
  */
-auto SUN_CONTEXT_DELETER = [](SUNContext* ctx)
+inline auto SUN_CONTEXT_DELETER = [](SUNContext* ctx)
 {
     if (ctx != nullptr)
     {
