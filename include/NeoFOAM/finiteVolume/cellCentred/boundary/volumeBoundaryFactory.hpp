@@ -7,7 +7,7 @@
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 #include "NeoFOAM/fields/domainField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/boundaryPatchMixin.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred
 {

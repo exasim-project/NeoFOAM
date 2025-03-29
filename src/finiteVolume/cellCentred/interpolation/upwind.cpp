@@ -9,77 +9,57 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+template<typename ValueType>
 void computeUpwindInterpolation(
-    const SurfaceField<scalar>& faceFlux,
-    const VolumeField<scalar>& volField,
-    const std::shared_ptr<GeometryScheme> geometryScheme,
-    SurfaceField<scalar>& surfaceField
+    const VolumeField<ValueType>& src,
+    const SurfaceField<scalar>& flux,
+    const SurfaceField<scalar>& weights,
+    SurfaceField<ValueType>& dst
 )
 {
-    const UnstructuredMesh& mesh = surfaceField.mesh();
-    const auto& exec = surfaceField.exec();
-
-    auto sfield = surfaceField.internalField().span();
-    const NeoFOAM::labelField& owner = mesh.faceOwner();
-    const NeoFOAM::labelField& neighbour = mesh.faceNeighbour();
-    const auto sWeight = geometryScheme->weights().internalField().span();
-    const auto sFaceFlux = faceFlux.internalField().span();
-    const auto sVolField = volField.internalField().span();
-    const auto sBField = volField.boundaryField().value().span();
-    const auto sOwner = owner.span();
-    const auto sNeighbour = neighbour.span();
-    size_t nInternalFaces = mesh.nInternalFaces();
+    const auto exec = dst.exec();
+    auto dstS = dst.internalField().span();
+    const auto [srcS, weightS, ownerS, neighS, boundS, fluxS] = spans(
+        src.internalField(),
+        weights.internalField(),
+        dst.mesh().faceOwner(),
+        dst.mesh().faceNeighbour(),
+        src.boundaryField().value(),
+        flux.internalField()
+    );
+    size_t nInternalFaces = dst.mesh().nInternalFaces();
 
     NeoFOAM::parallelFor(
         exec,
-        {0, sfield.size()},
+        {0, dstS.size()},
         KOKKOS_LAMBDA(const size_t facei) {
             if (facei < nInternalFaces)
             {
-                if (sFaceFlux[facei] >= 0)
+                if (fluxS[facei] >= 0)
                 {
-                    size_t own = static_cast<size_t>(sOwner[facei]);
-                    sfield[facei] = sVolField[own];
+                    size_t own = static_cast<size_t>(ownerS[facei]);
+                    dstS[facei] = srcS[own];
                 }
                 else
                 {
-                    size_t nei = static_cast<size_t>(sNeighbour[facei]);
-                    sfield[facei] = sVolField[nei];
+                    size_t nei = static_cast<size_t>(neighS[facei]);
+                    dstS[facei] = srcS[nei];
                 }
             }
             else
             {
-                sfield[facei] = sWeight[facei] * sBField[facei - nInternalFaces];
+                dstS[facei] = weightS[facei] * boundS[facei - nInternalFaces];
             }
         },
         "computeUpwindInterpolation"
     );
 }
 
-Upwind::Upwind(const Executor& exec, const UnstructuredMesh& mesh, [[maybe_unused]] Input input)
-    : SurfaceInterpolationFactory::Register<Upwind>(exec, mesh),
-      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
+#define NF_DECLARE_COMPUTE_IMP_UPW_INT(TYPENAME)                                                   \
+    template void computeUpwindInterpolation<                                                      \
+        TYPENAME>(const VolumeField<TYPENAME>&, const SurfaceField<scalar>&, const SurfaceField<scalar>&, SurfaceField<TYPENAME>&)
 
-void Upwind::interpolate(
-    [[maybe_unused]] const VolumeField<scalar>& volField,
-    [[maybe_unused]] SurfaceField<scalar>& surfaceField
-) const
-{
-    NF_ERROR_EXIT("limited scheme require a faceFlux");
-}
-
-void Upwind::interpolate(
-    const SurfaceField<scalar>& faceFlux,
-    const VolumeField<scalar>& volField,
-    SurfaceField<scalar>& surfaceField
-) const
-{
-    computeUpwindInterpolation(faceFlux, volField, geometryScheme_, surfaceField);
-}
-
-std::unique_ptr<SurfaceInterpolationFactory> Upwind::clone() const
-{
-    return std::make_unique<Upwind>(*this);
-}
+NF_DECLARE_COMPUTE_IMP_UPW_INT(scalar);
+NF_DECLARE_COMPUTE_IMP_UPW_INT(Vector);
 
 } // namespace NeoFOAM

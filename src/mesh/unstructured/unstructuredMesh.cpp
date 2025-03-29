@@ -93,7 +93,7 @@ UnstructuredMesh createSingleCellMesh(const Executor exec)
     );
     return UnstructuredMesh(
         {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
-        {exec, 1},                                            // cellVolumes
+        {exec, 1, 1.0},                                       // cellVolumes
         {exec, {{0.5, 0.5, 0.0}}},                            // cellCentres
         faceAreasVectors,
         faceCentresVectors,
@@ -153,8 +153,8 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
     labelField faceOwnerHost(hostExec, nCells + 1);
     labelField faceNeighbor(exec, nCells - 1);
-    faceOwnerHost[nCells - 1] = 0;      // left boundary face
-    faceOwnerHost[nCells] = nCells - 1; // right boundary face
+    faceOwnerHost[nCells - 1] = 0;                          // left boundary face
+    faceOwnerHost[nCells] = static_cast<label>(nCells) - 1; // right boundary face
     auto faceOwner = faceOwnerHost.copyToExecutor(exec);
 
     // loop over internal faces

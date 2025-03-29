@@ -11,8 +11,17 @@
 #include "NeoFOAM/core/primitives/scalar.hpp"
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
+
+#if NF_WITH_GINKGO
+#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#endif
+#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+
+// FIXME
+#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 
 namespace NeoFOAM::dsl
@@ -29,7 +38,7 @@ namespace NeoFOAM::dsl
  */
 template<typename FieldType>
 void solve(
-    Expression& exp,
+    Expression<typename FieldType::ElementType>& exp,
     FieldType& solution,
     scalar t,
     scalar dt,
@@ -37,7 +46,8 @@ void solve(
     [[maybe_unused]] const Dictionary& fvSolution
 )
 {
-    if (exp.temporalOperators().size() == 0 && exp.implicitOperators().size() == 0)
+    // TODO:
+    if (exp.temporalOperators().size() == 0 && exp.spatialOperators().size() == 0)
     {
         NF_ERROR_EXIT("No temporal or implicit terms to solve.");
     }
@@ -45,14 +55,41 @@ void solve(
     if (exp.temporalOperators().size() > 0)
     {
         // integrate equations in time
-        timeIntegration::TimeIntegration<FieldType> timeIntegrator(fvSchemes.subDict("ddtSchemes"));
+        timeIntegration::TimeIntegration<FieldType> timeIntegrator(
+            fvSchemes.subDict("ddtSchemes"), fvSolution
+        );
         timeIntegrator.solve(exp, solution, t, dt);
     }
     else
     {
-        NF_ERROR_EXIT("Not implemented.");
         // solve sparse matrix system
+        using ValueType = typename FieldType::ElementType;
+
+        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solution.mesh());
+        auto ls = la::createEmptyLinearSystem<
+            ValueType,
+            localIdx,
+            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sparsity);
+
+        exp.implicitOperation(ls);
+        auto expTmp = exp.explicitOperation(solution.mesh().nCells());
+
+        auto [vol, expSource, rhs] = spans(solution.mesh().cellVolumes(), expTmp, ls.rhs());
+
+        // subtract the explicit source term from the rhs
+        parallelFor(
+            solution.exec(),
+            {0, rhs.size()},
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
+        );
+
+#if NF_WITH_GINKGO
+        auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
+        solver.solve(ls, solution.internalField());
+#else
+        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+#endif
     }
 }
 
-} // namespace NeoFOAM::dsl
+} // namespace dsl

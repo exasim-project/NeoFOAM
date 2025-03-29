@@ -7,7 +7,7 @@
 #include "NeoFOAM/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/stencil/geometryScheme.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -17,15 +17,36 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+/* @brief computional kernel to perform a linear interpolation
+** from a source volumeField to a surface field. It performs an interpolation
+** of the form
+**
+** d_f = w_f * s_O + ( 1 - w_f ) * s_N
+**
+**@param src the input field
+**@param weights weights for the interpolation
+**@param dst the target field
+*/
+template<typename ValueType>
+void computeLinearInterpolation(
+    const VolumeField<ValueType>& src,
+    const SurfaceField<scalar>& weights,
+    SurfaceField<ValueType>& dst
+);
 
-class Linear : public SurfaceInterpolationFactory::Register<Linear>
+template<typename ValueType>
+class Linear : public SurfaceInterpolationFactory<ValueType>::template Register<Linear<ValueType>>
 {
+    using Base = SurfaceInterpolationFactory<ValueType>::template Register<Linear<ValueType>>;
 
 public:
 
-    Linear(const Executor& exec, const UnstructuredMesh& mesh, Input input);
+    Linear(const Executor& exec, const UnstructuredMesh& mesh, [[maybe_unused]] Input input)
+        : Base(exec, mesh), geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
 
-    Linear(const Executor& exec, const UnstructuredMesh& mesh);
+    Linear(const Executor& exec, const UnstructuredMesh& mesh)
+        : Base(exec, mesh), geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
+
 
     static std::string name() { return "linear"; }
 
@@ -33,16 +54,23 @@ public:
 
     static std::string schema() { return "none"; }
 
-    void interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
-        const override;
+    void interpolate(const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst) const override
+    {
+        computeLinearInterpolation(src, geometryScheme_->weights(), dst);
+    }
 
     void interpolate(
-        const SurfaceField<scalar>& faceFlux,
-        const VolumeField<scalar>& volField,
-        SurfaceField<scalar>& surfaceField
-    ) const override;
+        const SurfaceField<scalar>&, const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst
+    ) const override
+    {
+        interpolate(src, dst);
+    }
 
-    std::unique_ptr<SurfaceInterpolationFactory> clone() const override;
+
+    std::unique_ptr<SurfaceInterpolationFactory<ValueType>> clone() const override
+    {
+        return std::make_unique<Linear>(*this);
+    }
 
 private:
 
@@ -50,3 +78,16 @@ private:
 };
 
 } // namespace NeoFOAM
+
+namespace NeoFOAM
+{
+
+namespace fvcc = finiteVolume::cellCentred;
+
+template class fvcc::SurfaceInterpolationFactory<scalar>;
+template class fvcc::SurfaceInterpolationFactory<Vector>;
+
+template class fvcc::Linear<scalar>;
+template class fvcc::Linear<Vector>;
+
+}

@@ -54,11 +54,9 @@ class RungeKutta :
 {
 public:
 
-    using ValueType = SolutionFieldType::FieldValueType;
-    using Expression = NeoFOAM::dsl::Expression;
+    using ValueType = typename SolutionFieldType::FieldValueType;
     using Base =
         TimeIntegratorBase<SolutionFieldType>::template Register<RungeKutta<SolutionFieldType>>;
-    using Base::dict_;
 
     /**
      * @brief Default constructor.
@@ -74,7 +72,9 @@ public:
      * @brief Constructor that initializes the RungeKutta solver with a dictionary configuration.
      * @param dict The dictionary containing configuration parameters.
      */
-    RungeKutta(const Dictionary& dict) : Base(dict) {}
+    RungeKutta(const Dictionary& schemeDict, const Dictionary& solutionDict)
+        : Base(schemeDict, solutionDict)
+    {}
 
     /**
      * @brief Copy constructor.
@@ -121,8 +121,9 @@ public:
      * @param t The current time
      * @param dt The time step size
      */
-    void
-    solve(Expression& exp, SolutionFieldType& solutionField, scalar t, const scalar dt) override;
+    void solve(
+        dsl::Expression<ValueType>& exp, SolutionFieldType& solutionField, scalar t, const scalar dt
+    ) override;
 
     /**
      * @brief Return a copy of this instantiated class.
@@ -143,7 +144,7 @@ private:
     std::unique_ptr<char, decltype(sundials::SUN_ARK_DELETER)> ODEMemory_ {
         nullptr, sundials::SUN_ARK_DELETER
     }; /**< The 'memory' sundails for the RK solver. (note void* is not stl compliant). */
-    std::unique_ptr<NeoFOAM::dsl::Expression> pdeExpr_ {nullptr
+    std::unique_ptr<NeoFOAM::dsl::Expression<ValueType>> pdeExpr_ {nullptr
     }; /**< Pointer to the pde system we are integrating in time. */
 
     /**
@@ -153,13 +154,14 @@ private:
      * @param t The current time
      * @param dt The time step size
      */
-    void initSUNERKSolver(Expression& exp, SolutionFieldType& field, const scalar t);
+    void
+    initSUNERKSolver(dsl::Expression<ValueType>& exp, SolutionFieldType& field, const scalar t);
 
     /**
      * @brief Initializes the PDE expression to be solved.
      * @param exp The expression to be initialized
      */
-    void initExpression(const Expression& exp);
+    void initExpression(const dsl::Expression<ValueType>& exp);
 
     /**
      * @brief Initializes the Sundials context for the solver.

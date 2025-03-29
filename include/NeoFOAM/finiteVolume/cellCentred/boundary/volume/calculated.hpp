@@ -5,9 +5,8 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "NeoFOAM/core.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {

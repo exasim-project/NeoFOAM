@@ -9,70 +9,50 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+template<typename ValueType>
 void computeLinearInterpolation(
-    const VolumeField<scalar>& volField,
-    const std::shared_ptr<GeometryScheme> geometryScheme,
-    SurfaceField<scalar>& surfaceField
+    const VolumeField<ValueType>& src,
+    const SurfaceField<scalar>& weights,
+    SurfaceField<ValueType>& dst
 )
 {
-    const UnstructuredMesh& mesh = surfaceField.mesh();
-    const auto& exec = surfaceField.exec();
-    auto sfield = surfaceField.internalField().span();
-    const NeoFOAM::labelField& owner = mesh.faceOwner();
-    const NeoFOAM::labelField& neighbour = mesh.faceNeighbour();
-
-    const auto sWeight = geometryScheme->weights().internalField().span();
-    const auto sVolField = volField.internalField().span();
-    const auto sBField = volField.boundaryField().value().span();
-    const auto sOwner = owner.span();
-    const auto sNeighbour = neighbour.span();
-    size_t nInternalFaces = mesh.nInternalFaces();
+    const auto exec = dst.exec();
+    auto dstS = dst.internalField().span();
+    const auto [srcS, weightS, ownerS, neighS, boundS] = spans(
+        src.internalField(),
+        weights.internalField(),
+        dst.mesh().faceOwner(),
+        dst.mesh().faceNeighbour(),
+        src.boundaryField().value()
+    );
+    size_t nInternalFaces = dst.mesh().nInternalFaces();
 
     NeoFOAM::parallelFor(
         exec,
-        {0, sfield.size()},
+        {0, dstS.size()},
         KOKKOS_LAMBDA(const size_t facei) {
-            size_t own = static_cast<size_t>(sOwner[facei]);
-            size_t nei = static_cast<size_t>(sNeighbour[facei]);
             if (facei < nInternalFaces)
             {
-                sfield[facei] =
-                    sWeight[facei] * sVolField[own] + (1 - sWeight[facei]) * sVolField[nei];
+                size_t own = static_cast<size_t>(ownerS[facei]);
+                size_t nei = static_cast<size_t>(neighS[facei]);
+                dstS[facei] = weightS[facei] * srcS[own] + (1 - weightS[facei]) * srcS[nei];
             }
             else
             {
-                sfield[facei] = sWeight[facei] * sBField[facei - nInternalFaces];
+                dstS[facei] = weightS[facei] * boundS[facei - nInternalFaces];
             }
         }
     );
 }
 
-Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh, [[maybe_unused]] Input input)
-    : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
-      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
+#define NF_DECLARE_COMPUTE_IMP_LIN_INT(TYPENAME)                                                   \
+    template void computeLinearInterpolation<                                                      \
+        TYPENAME>(const VolumeField<TYPENAME>&, const SurfaceField<scalar>&, SurfaceField<TYPENAME>&)
 
-Linear::Linear(const Executor& exec, const UnstructuredMesh& mesh)
-    : SurfaceInterpolationFactory::Register<Linear>(exec, mesh),
-      geometryScheme_(GeometryScheme::readOrCreate(mesh)) {};
+NF_DECLARE_COMPUTE_IMP_LIN_INT(scalar);
+NF_DECLARE_COMPUTE_IMP_LIN_INT(Vector);
 
-void Linear::interpolate(const VolumeField<scalar>& volField, SurfaceField<scalar>& surfaceField)
-    const
-{
-    computeLinearInterpolation(volField, geometryScheme_, surfaceField);
-}
-
-void Linear::interpolate(
-    [[maybe_unused]] const SurfaceField<scalar>& faceFlux,
-    const VolumeField<scalar>& volField,
-    SurfaceField<scalar>& surfaceField
-) const
-{
-    interpolate(volField, surfaceField);
-}
-
-std::unique_ptr<SurfaceInterpolationFactory> Linear::clone() const
-{
-    return std::make_unique<Linear>(*this);
-}
+// template class Linear<scalar>;
+// template class Linear<Vector>;
 
 } // namespace NeoFOAM

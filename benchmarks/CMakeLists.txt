@@ -29,3 +29,4 @@ endfunction()
 
 add_subdirectory(fields)
 add_subdirectory(finiteVolume/cellCentred/operator)
+add_subdirectory(finiteVolume/cellCentred/interpolation)
