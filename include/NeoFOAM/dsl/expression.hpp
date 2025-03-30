@@ -176,14 +176,6 @@ operator+(leftOperator lhs, rightOperator rhs)
     return expr;
 }
 
-// [[nodiscard]] inline Expression operator+(const SpatialOperator& lhs, const SpatialOperator& rhs)
-// {
-//     Expression expr(lhs.exec());
-//     expr.addOperator(lhs);
-//     expr.addOperator(rhs);
-//     return expr;
-// }
-
 template<typename ValueType>
 [[nodiscard]] inline Expression<ValueType> operator*(scalar scale, const Expression<ValueType>& es)
 {
@@ -226,14 +218,6 @@ operator-(leftOperator lhs, rightOperator rhs)
     expr.addOperator(Coeff(-1) * rhs);
     return expr;
 }
-
-// [[nodiscard]] inline Expression operator-(const SpatialOperator& lhs, const SpatialOperator& rhs)
-// {
-//     Expression expr(lhs.exec());
-//     expr.addOperator(lhs);
-//     expr.addOperator(Coeff(-1) * rhs);
-//     return expr;
-// }
 
 
 } // namespace dsl
