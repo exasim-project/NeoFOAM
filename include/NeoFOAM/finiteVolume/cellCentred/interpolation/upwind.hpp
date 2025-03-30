@@ -69,6 +69,20 @@ public:
         computeUpwindInterpolation(src, flux, geometryScheme_->weights(), dst);
     }
 
+    void weight(const VolumeField<ValueType>& src, SurfaceField<scalar>& weight) const override
+    {
+        NF_ERROR_EXIT("limited scheme require a faceFlux");
+    }
+
+    void weight(
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<scalar>& weight
+    ) const override
+    {
+        // geometryScheme_->weights(flux, src, weight);
+    }
+
     std::unique_ptr<SurfaceInterpolationFactory<ValueType>> clone() const override
     {
         return std::make_unique<Upwind>(*this);

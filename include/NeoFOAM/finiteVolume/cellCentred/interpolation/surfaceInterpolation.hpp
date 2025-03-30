@@ -60,6 +60,14 @@ public:
         SurfaceField<ValueType>& dst
     ) const = 0;
 
+    virtual void weight(const VolumeField<ValueType>& src, SurfaceField<scalar>& weight) const = 0;
+
+    virtual void weight(
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<scalar>& weight
+    ) const = 0;
+
     // Pure virtual function for cloning
     virtual std::unique_ptr<SurfaceInterpolationFactory<ValueType>> clone() const = 0;
 
@@ -112,13 +120,28 @@ public:
         interpolationKernel_->interpolate(flux, src, dst);
     }
 
+    void weight(const VolumeField<ValueType>& src, SurfaceField<scalar>& weight) const
+    {
+        interpolationKernel_->weight(src, weight);
+    }
+
+    void weight(
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<scalar>& weight
+    ) const
+    {
+        interpolationKernel_->weight(flux, src, weight);
+    }
+
+
     SurfaceField<ValueType> interpolate(const VolumeField<ValueType>& src) const
     {
         std::string nameInterpolated = "interpolated_" + src.name;
         SurfaceField<ValueType> dst(
             exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh_)
         );
-        interpolate(dst, src);
+        interpolate(src, dst);
         return dst;
     }
 
@@ -131,6 +154,27 @@ public:
         );
         interpolate(flux, src, dst);
         return dst;
+    }
+
+    SurfaceField<scalar> weight(const VolumeField<ValueType>& src) const
+    {
+        std::string name = "weight_" + src.name;
+        SurfaceField<scalar> weightField(
+            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        );
+        weight(src, weightField);
+        return weightField;
+    }
+
+    SurfaceField<scalar>
+    weight(const SurfaceField<scalar>& flux, const VolumeField<ValueType>& src) const
+    {
+        std::string name = "weight_" + src.name;
+        SurfaceField<scalar> weightField(
+            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        );
+        weight(flux, src, weightField);
+        return weightField;
     }
 
 private:
