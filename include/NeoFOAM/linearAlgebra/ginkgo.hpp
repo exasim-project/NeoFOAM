@@ -41,11 +41,22 @@ public:
 
         auto gkoMtx = detail::createGkoMtx(gkoExec_, sys);
         auto solver = factory_->generate(gkoMtx);
+        std::shared_ptr<const gko::log::Convergence<ValueType>> logger =
+            gko::log::Convergence<ValueType>::create();
+        solver->add_logger(logger);
 
         auto rhs = detail::createGkoDense(gkoExec_, sys.rhs().data(), nrows);
         auto gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);
 
         solver->apply(rhs, gkoX);
+        std::cout << "solver took nIterations: " << logger->get_num_iterations() << std::endl;
+        auto res_norm = gko::as<gko::matrix::Dense<ValueType>>(logger->get_residual_norm());
+        auto res_norm_host = gko::matrix::Dense<ValueType>::create(
+            res_norm->get_executor()->get_master(), gko::dim<2> {1}
+        );
+        res_norm_host->copy_from(res_norm);
+        // return res_norm_host->at(0);
+        std::cout << "residual: " << res_norm_host->at(0) << std::endl;
     }
 
 private:
