@@ -95,7 +95,7 @@ public:
         catch (const std::bad_any_cast& e)
         {
             logBadAnyCast<T>(e, key, data_);
-            throw e;
+            throw;
         }
     }
 
@@ -117,7 +117,7 @@ public:
         catch (const std::bad_any_cast& e)
         {
             logBadAnyCast<T>(e, key, data_);
-            throw e;
+            throw;
         }
     }
 

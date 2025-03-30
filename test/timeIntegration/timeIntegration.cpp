@@ -3,8 +3,7 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
 #include "../dsl/common.hpp"
 
@@ -42,13 +41,7 @@ struct CreateField
 
 TEST_CASE("TimeIntegration")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     NeoFOAM::Database db;
     auto mesh = NeoFOAM::createSingleCellMesh(exec);
@@ -68,10 +61,10 @@ TEST_CASE("TimeIntegration")
     SECTION("Create expression and perform explicitOperation on " + execName)
     {
         auto dummy = Dummy(vf);
-        Operator ddtOperator = NeoFOAM::dsl::temporal::ddt(vf);
+        NeoFOAM::dsl::TemporalOperator<NeoFOAM::scalar> ddtOperator = NeoFOAM::dsl::imp::ddt(vf);
 
         // ddt(U) = f
-        auto eqn = ddtOperator + dummy;
+        NeoFOAM::dsl::Expression<NeoFOAM::scalar> eqn = ddtOperator + dummy;
         double dt {2.0};
         double time {1.0};
 

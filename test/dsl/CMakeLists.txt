@@ -3,4 +3,5 @@
 
 neofoam_unit_test(coeff)
 neofoam_unit_test(expression)
-neofoam_unit_test(operator)
+neofoam_unit_test(spatialOperator)
+neofoam_unit_test(temporalOperator)

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <catch2/catch_test_macros.hpp>
-#include "NeoFOAM/core/tokenList.hpp"
-#include "NeoFOAM/core/primitives/label.hpp"
-#include "NeoFOAM/core/primitives/scalar.hpp"
+#include "catch2_common.hpp"
+
+#include "NeoFOAM/NeoFOAM.hpp"
 
 TEST_CASE("tokenList")
 {
@@ -48,6 +47,17 @@ TEST_CASE("tokenList")
         REQUIRE(secondToken == 2.0);
         REQUIRE(thirdToken == "string");
         REQUIRE(tokenList.size() == 0);
+    }
+
+    SECTION("Next Token")
+    {
+        tokenList =
+            NeoFOAM::TokenList({NeoFOAM::label(1), NeoFOAM::scalar(2.0), std::string("string")});
+        REQUIRE(tokenList.size() == 3);
+        REQUIRE(tokenList.next<NeoFOAM::label>() == 1);
+        REQUIRE(tokenList.next<NeoFOAM::scalar>() == 2.0);
+        REQUIRE(tokenList.next<std::string>() == "string");
+        REQUIRE_THROWS_AS(tokenList.next<NeoFOAM::label>(), std::out_of_range);
     }
 
     SECTION("Access out of bound index")

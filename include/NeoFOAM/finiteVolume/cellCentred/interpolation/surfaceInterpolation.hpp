@@ -10,7 +10,7 @@
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/input.hpp"
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/surfaceField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/fields/volumeField.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
@@ -18,26 +18,30 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
+/* @class SurfaceInterpolationFactor
+**
+*/
+template<typename ValueType>
 class SurfaceInterpolationFactory :
-    public NeoFOAM::RuntimeSelectionFactory<
-        SurfaceInterpolationFactory,
-        Parameters<const Executor&, const UnstructuredMesh&, Input>>
+    public RuntimeSelectionFactory<
+        SurfaceInterpolationFactory<ValueType>,
+        Parameters<const Executor&, const UnstructuredMesh&, const Input&>>
 {
     using ScalarSurfaceField = SurfaceField<scalar>;
 
 public:
 
-    static std::unique_ptr<SurfaceInterpolationFactory>
-    create(const Executor& exec, const UnstructuredMesh& uMesh, Input inputs)
+    static std::unique_ptr<SurfaceInterpolationFactory<ValueType>>
+    create(const Executor& exec, const UnstructuredMesh& uMesh, const Input& inputs)
     {
         // input is dictionary the key is "interpolation"
         std::string key =
             (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
                 ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("surfaceInterpolation")
-                : std::get<NeoFOAM::TokenList>(inputs).get<std::string>(0);
+                : std::get<NeoFOAM::TokenList>(inputs).next<std::string>();
 
-        keyExistsOrError(key);
-        return table().at(key)(exec, uMesh, inputs);
+        SurfaceInterpolationFactory<ValueType>::keyExistsOrError(key);
+        return SurfaceInterpolationFactory<ValueType>::table().at(key)(exec, uMesh, inputs);
     }
 
     static std::string name() { return "SurfaceInterpolationFactory"; }
@@ -48,16 +52,16 @@ public:
     virtual ~SurfaceInterpolationFactory() {} // Virtual destructor
 
     virtual void
-    interpolate(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const = 0;
+    interpolate(const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst) const = 0;
 
     virtual void interpolate(
-        const ScalarSurfaceField& faceFlux,
-        const VolumeField<scalar>& volField,
-        ScalarSurfaceField& surfaceField
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<ValueType>& dst
     ) const = 0;
 
     // Pure virtual function for cloning
-    virtual std::unique_ptr<SurfaceInterpolationFactory> clone() const = 0;
+    virtual std::unique_ptr<SurfaceInterpolationFactory<ValueType>> clone() const = 0;
 
 protected:
 
@@ -65,9 +69,11 @@ protected:
     const UnstructuredMesh& mesh_;
 };
 
+template<typename ValueType>
 class SurfaceInterpolation
 {
-    using ScalarSurfaceField = SurfaceField<scalar>;
+
+    using FieldValueType = ValueType;
 
 public:
 
@@ -82,55 +88,56 @@ public:
     SurfaceInterpolation(
         const Executor& exec,
         const UnstructuredMesh& mesh,
-        std::unique_ptr<SurfaceInterpolationFactory> interpolationKernel
+        std::unique_ptr<SurfaceInterpolationFactory<ValueType>> interpolationKernel
     )
         : exec_(exec), mesh_(mesh), interpolationKernel_(std::move(interpolationKernel)) {};
 
-    SurfaceInterpolation(const Executor& exec, const UnstructuredMesh& mesh, Input input)
+    SurfaceInterpolation(const Executor& exec, const UnstructuredMesh& mesh, const Input& input)
         : exec_(exec), mesh_(mesh),
-          interpolationKernel_(SurfaceInterpolationFactory::create(exec, mesh, input)) {};
+          interpolationKernel_(SurfaceInterpolationFactory<ValueType>::create(exec, mesh, input)) {
+          };
 
 
-    void interpolate(const VolumeField<scalar>& volField, ScalarSurfaceField& surfaceField) const
+    void interpolate(const VolumeField<ValueType>& src, SurfaceField<ValueType>& dst) const
     {
-        interpolationKernel_->interpolate(volField, surfaceField);
-    }
-
-    ScalarSurfaceField interpolate(const VolumeField<scalar>& volField) const
-    {
-        std::string nameInterpolated = "interpolated_" + volField.name;
-        ScalarSurfaceField surfaceField(
-            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
-        );
-        interpolate(surfaceField, volField);
-        return surfaceField;
+        interpolationKernel_->interpolate(src, dst);
     }
 
     void interpolate(
-        const ScalarSurfaceField& faceFlux,
-        const VolumeField<scalar>& volField,
-        ScalarSurfaceField& surfaceField
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<ValueType>& dst
     ) const
     {
-        interpolationKernel_->interpolate(faceFlux, volField, surfaceField);
+        interpolationKernel_->interpolate(flux, src, dst);
     }
 
-    ScalarSurfaceField
-    interpolate(const ScalarSurfaceField& faceFlux, const VolumeField<scalar>& volField) const
+    SurfaceField<ValueType> interpolate(const VolumeField<ValueType>& src) const
     {
-        std::string name = "interpolated_" + volField.name;
-        ScalarSurfaceField surfaceField(
-            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<scalar>>(mesh_)
+        std::string nameInterpolated = "interpolated_" + src.name;
+        SurfaceField<ValueType> dst(
+            exec_, nameInterpolated, mesh_, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh_)
         );
-        interpolate(faceFlux, volField, surfaceField);
-        return surfaceField;
+        interpolate(dst, src);
+        return dst;
+    }
+
+    SurfaceField<ValueType>
+    interpolate(const SurfaceField<ValueType>& flux, const VolumeField<ValueType>& src) const
+    {
+        std::string name = "interpolated_" + src.name;
+        SurfaceField<ValueType> dst(
+            exec_, name, mesh_, createCalculatedBCs<SurfaceBoundary<ValueType>>(mesh_)
+        );
+        interpolate(flux, src, dst);
+        return dst;
     }
 
 private:
 
     const Executor exec_;
     const UnstructuredMesh& mesh_;
-    std::unique_ptr<SurfaceInterpolationFactory> interpolationKernel_;
+    std::unique_ptr<SurfaceInterpolationFactory<ValueType>> interpolationKernel_;
 };
 
 

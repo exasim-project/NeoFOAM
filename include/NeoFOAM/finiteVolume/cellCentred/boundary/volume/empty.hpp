@@ -8,7 +8,7 @@
 #include "NeoFOAM/core/runtimeSelectionFactory.hpp"                            // Register
 #include "NeoFOAM/core/dictionary.hpp"                                         // Dictionary
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp" // VolumeBoundaryFactory
-#include "NeoFOAM/mesh/unstructured.hpp"                                       // UnstructuredMesh
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"                      // UnstructuredMesh
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 {

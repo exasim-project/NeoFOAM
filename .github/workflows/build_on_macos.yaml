@@ -29,8 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
-          - CC: clang
-            CXX: clang++
+          - CC: gcc
+            CXX: g++
         preset: ["develop" ]
     runs-on: macos-latest
     steps:
@@ -47,7 +47,7 @@ jobs:
      - name: Install dependencies
        run: |
          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-         brew install ninja cmake
+         brew install ninja cmake libomp
 
      - name: Get versions
        run: |
@@ -62,6 +62,7 @@ jobs:
          cmake --preset ${{matrix.preset}} \
            -DNEOFOAM_BUILD_TESTS=ON \
            -DNEOFOAM_DEVEL_TOOLS=OFF \
+           -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/libomp/ \
            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
          cmake --build  --preset ${{matrix.preset}}
 

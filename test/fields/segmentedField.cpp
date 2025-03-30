@@ -3,23 +3,15 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
-#include "NeoFOAM/fields/segmentedField.hpp"
-#include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
+
 #include <Kokkos_Core.hpp>
 
 TEST_CASE("segmentedField")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("Constructor from sizes " + execName)
     {

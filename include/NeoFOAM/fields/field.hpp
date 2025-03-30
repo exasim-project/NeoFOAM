@@ -50,6 +50,8 @@ class Field
 
 public:
 
+    using FieldValueType = ValueType;
+
     /**
      * @brief Create an uninitialized Field with a given size on an executor
      * @param exec  Executor associated to the field
@@ -321,6 +323,12 @@ public:
      * @return The size of the field.
      */
     [[nodiscard]] size_t size() const { return size_; }
+
+    /**
+     * @brief Gets the size of the field.
+     * @return The size of the field.
+     */
+    [[nodiscard]] label ssize() const { return static_cast<label>(size_); }
 
     /**
      * @brief Checks if the field is empty.

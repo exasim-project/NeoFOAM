@@ -50,6 +50,45 @@ cpmaddpackage(
   https://github.com/nlohmann/json/releases/download/v3.11.3/include.zip
   SYSTEM)
 
+if(${NEOFOAM_WITH_ADIOS2})
+
+  set(ADIOS2_KOKKOS_PATCH git apply ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/adios2_kokkos.patch)
+
+  set(ADIOS2_OPTIONS
+      "BUILD_TYPE ${CMAKE_BUILD_TYPE}"
+      "ADIOS2_USE_Kokkos ON"
+      "Kokkos_DIR ${Kokkos_BINARY_DIR}"
+      "ADIOS2_USE_Fortran OFF"
+      "ADIOS2_USE_Python OFF"
+      "ADIOS2_USE_MHS OFF"
+      "ADIOS2_USE_SST OFF"
+      "ADIOS2_BUILD_EXAMPLES OFF"
+      "BUILD_TESTING OFF"
+      "ADIOS2_USE_Profiling OFF")
+
+  if(WIN32)
+    list(APPEND ADIOS2_OPTIONS "BUILD_STATIC_LIBS ON")
+    list(APPEND ADIOS2_OPTIONS "BUILD_SHARED_LIBS OFF")
+  else()
+    list(APPEND ADIOS2_OPTIONS "BUILD_STATIC_LIBS OFF")
+    list(APPEND ADIOS2_OPTIONS "BUILD_SHARED_LIBS ON")
+  endif()
+
+  cpmaddpackage(
+    NAME
+    adios2
+    GITHUB_REPOSITORY
+    ornladios/ADIOS2
+    PATCH_COMMAND
+    ${ADIOS2_KOKKOS_PATCH}
+    VERSION
+    2.10.2
+    OPTIONS
+    ${ADIOS2_OPTIONS}
+    ${ADIOS2_CUDA_OPTIONS}
+    SYSTEM)
+endif()
+
 if(${NEOFOAM_WITH_SUNDIALS})
 
   set(SUNDIALS_OPTIONS
@@ -72,6 +111,7 @@ if(${NEOFOAM_WITH_SUNDIALS})
   endif()
 
   if(Kokkos_ENABLE_CUDA)
+    set(CMAKE_CUDA_STANDARD 20)
     set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA ON" "SUNDIALS_BUILD_KOKKOS ON")
   else()
     set(SUNDIALS_CUDA_OPTIONS "ENABLE_CUDA OFF" "SUNDIALS_BUILD_KOKKOS ON")
@@ -107,6 +147,27 @@ cpmaddpackage(
   VERSION
   3.2.0
   SYSTEM)
+
+if(${NEOFOAM_WITH_GINKGO})
+  cpmaddpackage(
+    NAME
+    Ginkgo
+    VERSION
+    1.10.0
+    GITHUB_REPOSITORY
+    ginkgo-project/ginkgo
+    GIT_TAG
+    kokkos-threads
+    OPTIONS
+    "GINKGO_BUILD_TESTS OFF"
+    "GINKGO_BUILD_BENCHMARKS OFF"
+    "GINKGO_BUILD_EXAMPLES OFF"
+    "GINKGO_ENABLE_HALF OFF"
+    "GINKGO_BUILD_MPI ${NEOFOAM_ENABLE_MPI_SUPPORT}"
+    "GINKGO_BUILD_CUDA ${Kokkos_ENABLE_CUDA}"
+    "GINKGO_BUILD_HIP ${Kokkos_ENABLE_HIP}"
+    SYSTEM)
+endif()
 
 if(NEOFOAM_BUILD_TESTS OR NEOFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(
