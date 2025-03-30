@@ -36,7 +36,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
 
         Dictionary solverDict {
             {{"type", "solver::Cg"},
-             {"criteria", Dictionary {{{"iteration", 3}, {"relative_residual_norm", 1e-7}}}}}
+             {"criteria", Dictionary {{{"iteration", 100}, {"relative_residual_norm", 1e-7}}}}}
         };
 
         // Create solver
