@@ -16,12 +16,11 @@ discreteMomentumFields(const Expression<Vector>& expr)
     const VolumeField<Vector>& u = expr.getField();
     const UnstructuredMesh& mesh = u.mesh();
     const SparsityPattern& sparsityPattern = expr.sparsityPattern();
-    const auto& ls = expr.linearSystem();
     const auto vol = mesh.cellVolumes().span();
-    const auto values = ls.matrix().values();
-    const auto rhs = ls.rhs().span();
     const auto diagOffset = sparsityPattern.diagOffset().span();
-    const auto rowPtrs = ls.matrix().rowPtrs();
+    auto ls = expr.linearSystem().view();
+    const auto rhs = ls.b;
+    auto [values, col, rowPtrs] = ls.A;
 
     auto rABCs = createCalculatedBCs<VolumeBoundary<scalar>>(mesh);
     VolumeField<scalar> rAU = VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
@@ -101,13 +100,8 @@ void updateFaceVelocity(
         phi.internalField()
     );
 
-    const auto ls = expr.linearSystem();
-
-    const auto rowPtrs = ls.matrix().rowPtrs();
-    const auto colIdxs = ls.matrix().colIdxs();
-    auto values = ls.matrix().values();
-    auto rhs = ls.rhs().span();
-
+    const auto ls = expr.linearSystem().view();
+    auto [values, colIdxs, rowPtrs] = ls.A;
     auto [iPhi, iPredPhi] = spans(phi.internalField(), predictedPhi.internalField());
 
     parallelFor(
