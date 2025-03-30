@@ -154,10 +154,12 @@ void computeDivImp(
     const UnstructuredMesh& mesh = phi.mesh();
     const std::size_t nInternalFaces = mesh.nInternalFaces();
     const auto exec = phi.exec();
-    const auto [sFaceFlux, owner, neighbour, diagOffs, ownOffs, neiOffs] = spans(
+
+    const auto [sFaceFlux, owner, neighbour, surfFaceCells, diagOffs, ownOffs, neiOffs] = spans(
         faceFlux.internalField(),
         mesh.faceOwner(),
         mesh.faceNeighbour(),
+        mesh.boundaryMesh().faceCells(),
         sparsityPattern.diagOffset(),
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset()
@@ -192,6 +194,32 @@ void computeDivImp(
             value = flux * (1 - weight) * one<ValueType>();
             A.value[rowOwnStart + ownOffs[facei]] += value * operatorScalingOwn;
             Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value * operatorScalingNei);
+        }
+    );
+
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        phi.boundaryField().refGrad(),
+        phi.boundaryField().value(),
+        phi.boundaryField().valueFraction(),
+        phi.boundaryField().refValue()
+    );
+
+    parallelFor(
+        exec,
+        {nInternalFaces, sFaceFlux.size()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            std::size_t bcfacei = facei - nInternalFaces;
+            scalar flux = sFaceFlux[facei];
+
+            std::size_t own = static_cast<std::size_t>(surfFaceCells[bcfacei]);
+            std::size_t rowOwnStart = A.rowOffset[own];
+            scalar operatorScalingOwn = operatorScaling[own];
+
+            A.value[rowOwnStart + diagOffs[own]] +=
+                flux * operatorScalingOwn * (1.0 - valueFraction[bcfacei]) * one<ValueType>();
+            // TODO fix bc values
+            b[own] -= (flux * operatorScalingOwn * (valueFraction[bcfacei] * refValue[bcfacei]));
+            // + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei] / deltaCoeffs[facei]));
         }
     );
 };

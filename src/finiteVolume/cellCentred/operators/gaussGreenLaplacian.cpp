@@ -105,13 +105,6 @@ void computeLaplacianImpl(
         gamma.internalField(), faceNormalGradient.deltaCoeffs().internalField(), mesh.magFaceAreas()
     );
 
-    auto [refGradient, value, valueFraction, refValue] = spans(
-        phi.boundaryField().refGrad(),
-        phi.boundaryField().value(),
-        phi.boundaryField().valueFraction(),
-        phi.boundaryField().refValue()
-    );
-
     // FIXME: what if order changes
     auto [values, colIdxs, rowPtrs] = ls.matrix().view();
 
@@ -150,6 +143,13 @@ void computeLaplacianImpl(
                 &values[rowNeiStart + diagOffs[nei]], flux * one<ValueType>() * operatorScalingNei
             );
         }
+    );
+
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        phi.boundaryField().refGrad(),
+        phi.boundaryField().value(),
+        phi.boundaryField().valueFraction(),
+        phi.boundaryField().refValue()
     );
 
     parallelFor(
