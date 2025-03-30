@@ -307,6 +307,31 @@ public:
     }
 
     /**
+     * @brief Arithmetic multiply operator, multiplies this field by another field element-wise.
+     * @param rhs The field to multiply with this field.
+     * @returns The result of the element-wise multiplication.
+     */
+    Field<ValueType>& operator*=(const Field<scalar>& rhs)
+    {
+        validateOtherField(rhs);
+        Field<ValueType>& result = *this;
+        mul(result, rhs);
+        return result;
+    }
+
+    /**
+     * @brief Arithmetic multiply-assignment operator, multiplies every cell in the field
+     * by a scalar and updates the field in place.
+     * @param rhs The scalar to multiply with the field.
+     */
+    Field<ValueType>& operator*=(const scalar rhs)
+    {
+        Field<ValueType>& result = *this;
+        scalarMul(result, rhs);
+        return result;
+    }
+
+    /**
      * @brief Resizes the field to a new size.
      * @param size The new size to set the field to.
      */

@@ -91,7 +91,7 @@ void setField(
 }
 
 template<typename ValueType>
-void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+void scalarMul(Field<ValueType>& a, const scalar value)
 {
     auto spanA = a.span();
     parallelFor(
