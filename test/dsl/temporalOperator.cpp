@@ -20,7 +20,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
     SECTION("Operator creation on " + execName)
     {
         NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
-        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.boundaryMesh().offset());
 
         std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
         auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
@@ -38,7 +38,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 2.0);
-        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.boundaryMesh().offset());
         auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
 
         dsl::TemporalOperator<TestType> c =
@@ -73,7 +73,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
     SECTION("Implicit Operations " + execName)
     {
         NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
-        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.boundaryMesh().offset());
 
         std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
         auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
@@ -96,7 +96,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());
         NeoFOAM::Field<NeoFOAM::scalar> scaleField(exec, 1, 2.0);
-        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+        NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.boundaryMesh().offset());
         auto vf = fvcc::VolumeField<TestType>(exec, "vf", mesh, fA, bf, bcs);
 
         auto c = 2 * dsl::TemporalOperator<TestType>(TemporalDummy(vf, Operator::Type::Implicit));

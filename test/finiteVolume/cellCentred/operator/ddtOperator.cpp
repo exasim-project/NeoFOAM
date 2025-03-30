@@ -37,8 +37,7 @@ struct CreateField
         NeoFOAM::DomainField<ValueType> domainField(
             mesh.exec(),
             NeoFOAM::Field<ValueType>(mesh.exec(), mesh.nCells(), one<ValueType>()),
-            mesh.nBoundaryFaces(),
-            mesh.nBoundaries()
+            mesh.boundaryMesh().offset()
         );
         fvcc::VolumeField<ValueType> vf(mesh.exec(), name, mesh, domainField, bcs, db, "", "");
 

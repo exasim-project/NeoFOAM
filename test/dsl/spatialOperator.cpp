@@ -18,7 +18,7 @@ TEMPLATE_TEST_CASE("SpatialOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Ve
     auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     auto fA = NeoFOAM::Field<TestType>(exec, 1, 2.0 * NeoFOAM::one<TestType>());
-    auto bf = NeoFOAM::BoundaryFields<TestType>(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+    auto bf = NeoFOAM::BoundaryFields<TestType>(exec, mesh.boundaryMesh().offset());
     auto bcs = std::vector<fvcc::VolumeBoundary<TestType>> {};
     auto scaleField = NeoFOAM::Field<NeoFOAM::scalar>(exec, 1, 2.0);
 

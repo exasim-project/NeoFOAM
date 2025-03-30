@@ -56,11 +56,11 @@ public:
     {}
 
 
-    BoundaryFields(const Executor& exec, size_t nBoundaryFaces, size_t nBoundaries)
-        : exec_(exec), value_(exec, nBoundaryFaces), refValue_(exec, nBoundaryFaces),
-          valueFraction_(exec, nBoundaryFaces), refGrad_(exec, nBoundaryFaces),
-          boundaryTypes_(exec, nBoundaries), offset_(exec, nBoundaries + 1),
-          nBoundaries_(nBoundaries), nBoundaryFaces_(nBoundaryFaces)
+    BoundaryFields(const Executor& exec, const std::vector<localIdx>& offsets)
+        : exec_(exec), value_(exec, offsets.back()), refValue_(exec, offsets.back()),
+          valueFraction_(exec, offsets.back()), refGrad_(exec, offsets.back()),
+          boundaryTypes_(exec, offsets.size() - 1), offset_(exec, offsets),
+          nBoundaries_(offsets.size() - 1), nBoundaryFaces_(offsets.back())
     {}
 
 

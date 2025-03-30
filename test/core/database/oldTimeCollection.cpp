@@ -48,8 +48,7 @@ struct CreateField
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(
             mesh.exec(),
             NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0),
-            mesh.nBoundaryFaces(),
-            mesh.nBoundaries()
+            {0, 10, 20, 30}
         );
         fvcc::VolumeField<NeoFOAM::scalar> vf(
             mesh.exec(), name, mesh, domainField, bcs, db, "", ""

@@ -36,9 +36,8 @@ public:
         : exec_(exec), internalField_(exec, 0), boundaryFields_(exec, 0, 0)
     {}
 
-    DomainField(const Executor& exec, size_t nCells, size_t nBoundaryFaces, size_t nBoundaries)
-        : exec_(exec), internalField_(exec, nCells),
-          boundaryFields_(exec, nBoundaryFaces, nBoundaries)
+    DomainField(const Executor& exec, size_t nCells, std::vector<localIdx> offsets)
+        : exec_(exec), internalField_(exec, nCells), boundaryFields_(exec, offsets)
     {}
 
     DomainField(
@@ -50,18 +49,14 @@ public:
     {}
 
     DomainField(
-        const Executor& exec,
-        const Field<ValueType>& internalField,
-        size_t nBoundaryFaces,
-        size_t nBoundaries
+        const Executor& exec, const Field<ValueType>& internalField, std::vector<localIdx> offsets
     )
-        : exec_(exec), internalField_(exec, internalField),
-          boundaryFields_(exec, nBoundaryFaces, nBoundaries)
+        : exec_(exec), internalField_(exec, internalField), boundaryFields_(exec, offsets)
     {}
 
     DomainField(const Executor& exec, const UnstructuredMesh& mesh)
         : exec_(exec), internalField_(exec, mesh.nCells()),
-          boundaryFields_(exec, mesh.nBoundaryFaces(), mesh.nBoundaries())
+          boundaryFields_(exec, mesh.boundaryMesh().offset())
     {}
 
 

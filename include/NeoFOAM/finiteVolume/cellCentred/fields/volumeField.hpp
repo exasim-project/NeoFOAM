@@ -49,7 +49,7 @@ public:
             exec,
             name,
             mesh,
-            DomainField<ValueType>(exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
+            DomainField<ValueType>(exec, mesh.nCells(), mesh.boundaryMesh().offset())
         ),
           key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
           db_(std::nullopt)
@@ -76,7 +76,7 @@ public:
             exec,
             name,
             mesh,
-            DomainField<ValueType>(exec, internalField, mesh.nBoundaryFaces(), mesh.nBoundaries())
+            DomainField<ValueType>(exec, internalField, mesh.boundaryMesh().offset())
         ),
           key(""), fieldCollectionName(""), boundaryConditions_(boundaryConditions),
           db_(std::nullopt)
