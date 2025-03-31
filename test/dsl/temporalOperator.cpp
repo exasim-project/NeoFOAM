@@ -116,7 +116,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         auto hostRhsC = ls.rhs().copyToHost();
         REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
         auto hostLsC = ls.copyToHost();
-        REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsC.matrix().values().span()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // // d= 2 * 2
@@ -125,7 +125,7 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         auto hostRhsD = ls.rhs().copyToHost();
         REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
         auto hostLsD = ls.copyToHost();
-        REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsD.matrix().values().span()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // e = - -3 * 2 * 2 = -12
@@ -134,6 +134,6 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
         auto hostRhsE = ls.rhs().copyToHost();
         REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
         auto hostLsE = ls.copyToHost();
-        REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsE.matrix().values().span()[0] == -12.0 * NeoFOAM::one<TestType>());
     }
 }
