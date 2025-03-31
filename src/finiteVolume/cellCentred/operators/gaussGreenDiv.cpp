@@ -181,14 +181,14 @@ void computeDivImp(
 
             value = -weight * flux * one<ValueType>();
             // scalar valueNei = (1 - weight) * flux;
-            A.value[rowNeiStart + neiOffs[facei]] += value;
-            Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value);
+            A.values[rowNeiStart + neiOffs[facei]] += value;
+            Kokkos::atomic_sub(&A.values[rowOwnStart + diagOffs[own]], value);
 
             // upper triangular part
             // add owner contribution lower
             value = flux * (1 - weight) * one<ValueType>();
-            A.value[rowOwnStart + ownOffs[facei]] += value;
-            Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value);
+            A.values[rowOwnStart + ownOffs[facei]] += value;
+            Kokkos::atomic_sub(&A.values[rowNeiStart + diagOffs[nei]], value);
         }
     );
 
@@ -199,7 +199,7 @@ void computeDivImp(
             b[celli] *= operatorScaling[celli];
             for (size_t i = A.rowOffset[celli]; i < A.rowOffset[celli + 1]; i++)
             {
-                A.value[i] *= operatorScaling[celli];
+                A.values[i] *= operatorScaling[celli];
             }
         }
     );

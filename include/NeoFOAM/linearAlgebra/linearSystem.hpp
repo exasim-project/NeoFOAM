@@ -58,9 +58,11 @@ public:
     ~LinearSystem() = default;
 
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
+
     [[nodiscard]] Field<ValueType>& rhs() { return rhs_; }
 
     [[nodiscard]] const CSRMatrix<ValueType, IndexType>& matrix() const { return matrix_; }
+
     [[nodiscard]] const Field<ValueType>& rhs() const { return rhs_; }
 
     [[nodiscard]] LinearSystem copyToHost() const
@@ -68,10 +70,6 @@ public:
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost());
     }
 
-
-    /* @brief resets the linear system by setting the matrix values and the rhs to zero
-     *
-     */
     void reset()
     {
         fill(matrix_.values(), zero<ValueType>());

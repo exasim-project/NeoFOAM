@@ -48,7 +48,7 @@ void DdtOperator<ValueType>::implicitOperation(
         KOKKOS_LAMBDA(const size_t celli) {
             std::size_t idx = A.rowOffset[celli] + diagOffs[celli];
             const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver;
-            A.value[idx] += commonCoef * one<ValueType>();
+            A.values[idx] += commonCoef * one<ValueType>();
             b[celli] += commonCoef * oldField[celli];
         }
     );
