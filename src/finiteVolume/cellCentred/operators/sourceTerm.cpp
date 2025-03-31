@@ -44,7 +44,7 @@ void SourceTerm<ValueType>::implicitOperation(la::LinearSystem<ValueType, localI
         {0, coeff.size()},
         KOKKOS_LAMBDA(const size_t celli) {
             std::size_t idx = A.rowOffset[celli] + diagOffs[celli];
-            A.value[idx] += operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
+            A.values[idx] += operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
         }
     );
 }

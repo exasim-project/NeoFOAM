@@ -22,16 +22,16 @@ struct CSRMatrixView
 {
     /**
      * @brief Constructor for CSRMatrixView.
-     * @param inValue Span of the non-zero values of the matrix.
+     * @param valueView Span of the non-zero values of the matrix.
      * @param inColumnIndex Span of the column indices for each non-zero value.
      * @param inRwOffset Span of the starting index in values/colIdxs for each row.
      */
     CSRMatrixView(
-        const std::span<ValueType>& inValue,
+        const std::span<ValueType>& valueView,
         const std::span<IndexType>& inColumnIndex,
         const std::span<IndexType>& inRwOffset
     )
-        : value(inValue), columnIndex(inColumnIndex), rowOffset(inRwOffset) {};
+        : values(valueView), columnIndex(inColumnIndex), rowOffset(inRwOffset) {};
 
     /**
      * @brief Default destructor.
@@ -53,12 +53,12 @@ struct CSRMatrixView
             const IndexType localCol = rowOffset[i] + ic;
             if (columnIndex[localCol] == j)
             {
-                return value[localCol];
+                return values[localCol];
             }
             if (columnIndex[localCol] > j) break;
         }
         Kokkos::abort("Memory not allocated for CSR matrix component.");
-        return value[value.size()]; // compiler warning suppression.
+        return values[values.size()]; // compiler warning suppression.
     }
 
     /**
@@ -67,9 +67,9 @@ struct CSRMatrixView
      * @return Reference to the matrix element if it exists.
      */
     KOKKOS_INLINE_FUNCTION
-    ValueType& entry(const IndexType offset) const { return value[offset]; }
+    ValueType& entry(const IndexType offset) const { return values[offset]; }
 
-    std::span<ValueType> value;       //!< Span to the values of the CSR matrix.
+    std::span<ValueType> values;      //!< Span to the values of the CSR matrix.
     std::span<IndexType> columnIndex; //!< Span to the column indices of the CSR matrix.
     std::span<IndexType> rowOffset;   //!< Span to the row offsets for the CSR matrix.
 };
@@ -229,7 +229,7 @@ convert(const Executor exec, const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> i
 {
     Field<IndexTypeOut> colIdxsTmp(exec, in.columnIndex.size());
     Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffset.size());
-    Field<ValueTypeOut> valuesTmp(exec, in.value.data(), in.value.size());
+    Field<ValueTypeOut> valuesTmp(exec, in.values.data(), in.values.size());
 
     parallelFor(
         colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.columnIndex[i]); }
@@ -238,7 +238,7 @@ convert(const Executor exec, const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> i
         rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffset[i]); }
     );
     parallelFor(
-        valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.value[i]); }
+        valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.values[i]); }
     );
 
     return la::CSRMatrix<ValueTypeOut, IndexTypeOut> {valuesTmp, colIdxsTmp, rowPtrsTmp};

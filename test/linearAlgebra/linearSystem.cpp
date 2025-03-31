@@ -69,15 +69,15 @@ TEST_CASE("LinearSystem")
         auto hostLSView = hostLS.view();
 
         // some simple sanity checks
-        REQUIRE(hostLSView.matrix.value.size() == 9);
+        REQUIRE(hostLSView.matrix.values.size() == 9);
         REQUIRE(hostLSView.matrix.columnIndex.size() == 9);
         REQUIRE(hostLSView.matrix.rowOffset.size() == 4);
         REQUIRE(hostLSView.rhs.size() == 3);
 
         // check system values
-        for (size_t i = 0; i < hostLSView.matrix.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.values.size(); ++i)
         {
-            REQUIRE(hostLSView.matrix.value[i] == static_cast<scalar>(i + 1));
+            REQUIRE(hostLSView.matrix.values[i] == static_cast<scalar>(i + 1));
             REQUIRE(hostLSView.matrix.columnIndex[i] == (i % 3));
         }
         for (size_t i = 0; i < hostLSView.matrix.rowOffset.size(); ++i)
@@ -92,8 +92,8 @@ TEST_CASE("LinearSystem")
         // Modify values.
         parallelFor(
             exec,
-            {0, lsView.matrix.value.size()},
-            KOKKOS_LAMBDA(const size_t i) { lsView.matrix.value[i] = -lsView.matrix.value[i]; }
+            {0, lsView.matrix.values.size()},
+            KOKKOS_LAMBDA(const size_t i) { lsView.matrix.values[i] = -lsView.matrix.values[i]; }
         );
 
         // Modify values.
@@ -106,9 +106,9 @@ TEST_CASE("LinearSystem")
         // Check modification.
         hostLS = ls.copyToHost();
         hostLSView = hostLS.view();
-        for (size_t i = 0; i < hostLSView.matrix.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.values.size(); ++i)
         {
-            REQUIRE(hostLSView.matrix.value[i] == -static_cast<scalar>(i + 1));
+            REQUIRE(hostLSView.matrix.values[i] == -static_cast<scalar>(i + 1));
         }
         for (size_t i = 0; i < hostLSView.rhs.size(); ++i)
         {
