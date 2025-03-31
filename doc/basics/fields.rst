@@ -39,7 +39,7 @@ The correct procedure to access ``Field`` elements is indirectly through a ``spa
     auto deviceFieldOnHostSpan = deviceFieldOnHost.span();
     deviceFieldOnHostSpan[1] = 1; // assuming size_ > 2.
 
-Fields perform basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
+Fields support basic algebraic operations such as binary operations like the addition or subtraction of two fields, or scalar operations like the multiplication of a field with a scalar.
 In the following, some implementation details of the field operations are detailed using the additions operator as an example.
 The block of code below shows an example implementation of the addition operator.
 
