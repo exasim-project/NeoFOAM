@@ -109,7 +109,7 @@ TEST_CASE("CSRMatrix")
         );
 
         auto hostMatrix = sparseMatrix.copyToHost();
-        auto checkHost = hostMatrix.values();
+        auto checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -5.0);
         REQUIRE(checkHost[2] == -6.0);
@@ -134,7 +134,7 @@ TEST_CASE("CSRMatrix")
         );
 
         hostMatrix = denseMatrix.copyToHost();
-        checkHost = hostMatrix.values();
+        checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -2.0);
         REQUIRE(checkHost[2] == -3.0);
@@ -216,7 +216,7 @@ TEST_CASE("CSRMatrix")
 
 
         auto hostMatrix = sparseMatrix.copyToHost();
-        auto checkHost = hostMatrix.values();
+        auto checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -5.0);
         REQUIRE(checkHost[2] == -6.0);
@@ -241,7 +241,7 @@ TEST_CASE("CSRMatrix")
         );
 
         hostMatrix = denseMatrix.copyToHost();
-        checkHost = hostMatrix.values();
+        checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -2.0);
         REQUIRE(checkHost[2] == -3.0);

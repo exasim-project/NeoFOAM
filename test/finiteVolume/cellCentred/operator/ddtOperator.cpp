@@ -75,12 +75,13 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         // cell has one cell
         const auto vol = mesh.cellVolumes().copyToHost();
+        const auto volView = vol.span();
         auto hostSource = source.copyToHost();
         auto values = hostSource.span();
         for (auto ii = 0; ii < values.size(); ++ii)
         {
             REQUIRE(
-                values[ii] == vol[0] * TestType(22.0)
+                values[ii] == volView[0] * TestType(22.0)
             ); // => (phi^{n + 1} - phi^{n})/dt*V => (10 -- 1)/.5*V = 22V
         }
     }
@@ -96,13 +97,19 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         auto lsHost = ls.copyToHost();
         const auto vol = mesh.cellVolumes().copyToHost();
+        const auto volView = vol.span();
         const auto matrixValues = lsHost.matrix().values();
+        const auto matrixValuesView = matrixValues.span();
         const auto rhs = lsHost.rhs().span();
 
         for (auto ii = 0; ii < matrixValues.size(); ++ii)
         {
-            REQUIRE(matrixValues[ii] == 2.0 * vol[0] * one<TestType>()); // => 1/dt*V => 1/.5*V = 2V
-            REQUIRE(rhs[ii] == -2.0 * vol[0] * one<TestType>()); // => phi^{n}/dt*V => -1/.5*V = -2V
+            REQUIRE(
+                matrixValuesView[ii] == 2.0 * volView[0] * one<TestType>()
+            ); // => 1/dt*V => 1/.5*V = 2V
+            REQUIRE(
+                rhs[ii] == -2.0 * volView[0] * one<TestType>()
+            ); // => phi^{n}/dt*V => -1/.5*V = -2V
         }
     }
 }

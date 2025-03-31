@@ -104,7 +104,8 @@ TEST_CASE("Field Document")
             auto& volField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
 
             REQUIRE(volField.name == "T");
-            REQUIRE(volField.internalField().copyToHost()[0] == 1.0);
+            auto volFieldHost = volField.internalField().copyToHost();
+            REQUIRE(volFieldHost.span()[0] == 1.0);
             REQUIRE(&volField == &constVolField);
         }
 
@@ -116,7 +117,8 @@ TEST_CASE("Field Document")
             auto& volField = fieldDoc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
             NeoFOAM::fill(volField.internalField(), 2.0);
 
-            REQUIRE(volField.internalField().copyToHost()[0] == 2.0);
+            auto volFieldHost = volField.internalField().copyToHost();
+            REQUIRE(volFieldHost.span()[0] == 2.0);
             REQUIRE(fieldDoc.timeIndex() == 4);
             REQUIRE(fieldDoc.iterationIndex() == 5);
             REQUIRE(fieldDoc.subCycleIndex() == 6);
@@ -178,7 +180,8 @@ TEST_CASE("FieldCollection")
             auto& volField = doc.field<fvcc::VolumeField<NeoFOAM::scalar>>();
 
             REQUIRE(volField.name == "T1");
-            REQUIRE(volField.internalField().copyToHost()[0] == 1.0);
+            auto volFieldHost = volField.internalField().copyToHost();
+            REQUIRE(volFieldHost.span()[0] == 1.0);
             REQUIRE(&volField == &constVolField);
         }
 
@@ -220,7 +223,8 @@ TEST_CASE("FieldCollection")
 
         REQUIRE(t.name == "T");
         REQUIRE(t.hasDatabase());
-        REQUIRE(t.internalField().copyToHost()[0] == 1.0);
+        auto tHost = t.internalField().copyToHost();
+        REQUIRE(tHost.span()[0] == 1.0);
         REQUIRE(t.registered());
 
         SECTION("Construct from Field")

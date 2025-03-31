@@ -43,9 +43,10 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 
         // mesh has one cell
         auto hostSource = source.copyToHost();
+        auto hostSourceView = hostSource.span();
         for (auto ii = 0; ii < hostSource.size(); ++ii)
         {
-            REQUIRE(hostSource[ii] - 20 * one<TestType>() == TestType(0.0));
+            REQUIRE(hostSourceView[ii] - 20 * one<TestType>() == TestType(0.0));
         }
     }
 
@@ -58,11 +59,12 @@ TEMPLATE_TEST_CASE("SourceTerm", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
             NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
         sTerm.implicitOperation(ls);
         auto [lsHost, vol] = copyToHosts(ls, mesh.cellVolumes());
-        const auto& values = lsHost.matrix().values();
+        const auto& volView = vol.span();
+        const auto& values = lsHost.matrix().values().span();
 
         for (auto ii = 0; ii < values.size(); ++ii)
         {
-            REQUIRE(values[ii] - 2 * vol[0] * one<TestType>() == TestType(0.0));
+            REQUIRE(values[ii] - 2 * volView[0] * one<TestType>() == TestType(0.0));
         }
     }
 }

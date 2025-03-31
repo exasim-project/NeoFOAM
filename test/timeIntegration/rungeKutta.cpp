@@ -131,7 +131,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
 
             // check error.
             NeoFOAM::scalar analytical = 1.0 / (initialValue - maxTime);
-            error[iTest] = std::abs(vf.internalField().copyToHost()[0] - analytical);
+            auto vfHost = vf.internalField().copyToHost();
+            error[iTest] = std::abs(vfHost.span()[0] - analytical);
             iTest++;
         }
 
