@@ -132,9 +132,6 @@ TEST_CASE("MatrixAssembly - Petsc")
     SECTION("Linear solver context " + execName)
     {
 
-        NeoFOAM::Database db;
-        fvcc::FieldCollection fieldCollection =
-            fvcc::FieldCollection::instance(db, "testpetscContext");
 
         Mat Amat_;
         Vec sol_, rhs_;
@@ -152,8 +149,20 @@ TEST_CASE("MatrixAssembly - Petsc")
         NeoFOAM::la::LinearSystem<NeoFOAM::scalar, int> linearSystem(csrMatrix, rhs, "custom");
         NeoFOAM::Field<NeoFOAM::scalar> x(exec, {0.0, 0.0, 0.0});
 
-        std::size_t nrows = linearSystem.rhs().size();
         NeoFOAM::la::petscSolverContext::petscSolverContext<NeoFOAM::scalar> petsctx(exec);
+        NeoFOAM::Database db;
+        // NeoFOAM::Document doc({ {"petsctx", petsctx } });
+
+        // NeoFOAM::CollectionMixin<NeoFOAM::Document>  petscSolverCollection(db,
+        // "testpetscContext");
+
+        // db.insert("testpetscContext", petscSolverCollection);
+
+        // auto& testpetscContext =
+        // db.at<NeoFOAM::CollectionMixin<NeoFOAM::Document>>("testpetscContext");
+
+
+        std::size_t nrows = linearSystem.rhs().size();
         petsctx.initialize(linearSystem);
 
         Amat_ = petsctx.AMat();

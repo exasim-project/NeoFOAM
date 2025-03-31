@@ -22,6 +22,7 @@
 #include "core/database/document.hpp"
 #include "core/database/fieldCollection.hpp"
 #include "core/database/oldTimeCollection.hpp"
+#include "core/database/petscSolverContextCollection.hpp"
 
 #include "core/mpi/environment.hpp"
 #include "core/mpi/fullDuplexCommBuffer.hpp"
