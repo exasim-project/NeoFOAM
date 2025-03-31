@@ -200,6 +200,12 @@ public:
         result = copyToExecutor(SerialExecutor());
     }
 
+    // ensures no return of device address on host --> invalid memory access
+    ValueType& operator[](const size_t i) = delete;
+
+    // ensures no return of device address on host --> invalid memory access
+    const ValueType& operator[](const size_t i) const = delete;
+
     /**
      * @brief Assignment operator, Sets the field values to that of the passed value.
      * @param rhs The value to set the field to.
