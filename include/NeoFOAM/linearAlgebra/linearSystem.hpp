@@ -24,10 +24,10 @@ struct LinearSystemView
     LinearSystemView() = default;
     ~LinearSystemView() = default;
 
-    LinearSystemView(CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB)
-        : A(inA), b(inB) {};
+    LinearSystemView(CSRMatrixView<ValueType, IndexType> matrixView, std::span<ValueType> inB)
+        : matrix(matrixView), b(inB) {};
 
-    CSRMatrixView<ValueType, IndexType> A;
+    CSRMatrixView<ValueType, IndexType> matrix;
     std::span<ValueType> b;
 };
 
@@ -137,7 +137,7 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
     auto exec = ls.exec();
     Field<ValueTypeOut> convertedRhs(exec, ls.rhs().data(), ls.rhs().size());
     return {
-        convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut>(exec, ls.view.A),
+        convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut>(exec, ls.view.matrix),
         convertedRhs,
         ls.sparsityPattern()
     };

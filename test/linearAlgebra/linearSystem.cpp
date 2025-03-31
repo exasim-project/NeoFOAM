@@ -69,20 +69,20 @@ TEST_CASE("LinearSystem")
         auto hostLSView = hostLS.view();
 
         // some simple sanity checks
-        REQUIRE(hostLSView.A.value.size() == 9);
-        REQUIRE(hostLSView.A.columnIndex.size() == 9);
-        REQUIRE(hostLSView.A.rowOffset.size() == 4);
+        REQUIRE(hostLSView.matrix.value.size() == 9);
+        REQUIRE(hostLSView.matrix.columnIndex.size() == 9);
+        REQUIRE(hostLSView.matrix.rowOffset.size() == 4);
         REQUIRE(hostLSView.b.size() == 3);
 
         // check system values
-        for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.value.size(); ++i)
         {
-            REQUIRE(hostLSView.A.value[i] == static_cast<scalar>(i + 1));
-            REQUIRE(hostLSView.A.columnIndex[i] == (i % 3));
+            REQUIRE(hostLSView.matrix.value[i] == static_cast<scalar>(i + 1));
+            REQUIRE(hostLSView.matrix.columnIndex[i] == (i % 3));
         }
-        for (size_t i = 0; i < hostLSView.A.rowOffset.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.rowOffset.size(); ++i)
         {
-            REQUIRE(hostLSView.A.rowOffset[i] == static_cast<localIdx>(i * 3));
+            REQUIRE(hostLSView.matrix.rowOffset[i] == static_cast<localIdx>(i * 3));
         }
         for (size_t i = 0; i < hostLSView.b.size(); ++i)
         {
@@ -92,8 +92,8 @@ TEST_CASE("LinearSystem")
         // Modify values.
         parallelFor(
             exec,
-            {0, lsView.A.value.size()},
-            KOKKOS_LAMBDA(const size_t i) { lsView.A.value[i] = -lsView.A.value[i]; }
+            {0, lsView.matrix.value.size()},
+            KOKKOS_LAMBDA(const size_t i) { lsView.matrix.value[i] = -lsView.matrix.value[i]; }
         );
 
         // Modify values.
@@ -106,9 +106,9 @@ TEST_CASE("LinearSystem")
         // Check modification.
         hostLS = ls.copyToHost();
         hostLSView = hostLS.view();
-        for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.value.size(); ++i)
         {
-            REQUIRE(hostLSView.A.value[i] == -static_cast<scalar>(i + 1));
+            REQUIRE(hostLSView.matrix.value[i] == -static_cast<scalar>(i + 1));
         }
         for (size_t i = 0; i < hostLSView.b.size(); ++i)
         {

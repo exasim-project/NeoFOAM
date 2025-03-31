@@ -43,7 +43,7 @@ std::shared_ptr<gko::matrix::Csr<ValueType, int>> createGkoMtx(
     // TODO: avoid copying
     // NOTE: since mtx is a converted copy we need to make sure that mtx data is not
     // deallocated before solving
-    auto mtx = convert<ValueType, IndexType, ValueType, int>(sys.exec(), sys.view().A);
+    auto mtx = convert<ValueType, IndexType, ValueType, int>(sys.exec(), sys.view().matrix);
     auto vals = createGkoArray(exec, mtx.values().span());
     auto col = createGkoArray(exec, mtx.colIdxs().span());
     auto row = createGkoArray(exec, mtx.rowPtrs().span());
