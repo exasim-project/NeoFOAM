@@ -24,11 +24,11 @@ struct LinearSystemView
     LinearSystemView() = default;
     ~LinearSystemView() = default;
 
-    LinearSystemView(CSRMatrixView<ValueType, IndexType> matrixView, std::span<ValueType> inB)
-        : matrix(matrixView), b(inB) {};
+    LinearSystemView(CSRMatrixView<ValueType, IndexType> matrixView, std::span<ValueType> rhsView)
+        : matrix(matrixView), rhs(rhsView) {};
 
     CSRMatrixView<ValueType, IndexType> matrix;
-    std::span<ValueType> b;
+    std::span<ValueType> rhs;
 };
 
 /**
