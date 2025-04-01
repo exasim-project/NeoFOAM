@@ -88,22 +88,22 @@ public:
 
     /**
      * @brief Constructor for CSRMatrix.
-     * @param value The non-zero values of the matrix.
+     * @param values The non-zero values of the matrix.
      * @param colIdxs The column indices for each non-zero value.
      * @param rowOffs The starting index in values/colIdxs for each row.
      */
     CSRMatrix(
-        const Field<ValueType>& value,
+        const Field<ValueType>& values,
         const Field<IndexType>& colIdxs,
         const Field<IndexType>& rowOffs
     )
-        : value_(value), colIdxs_(colIdxs), rowOffs_(rowOffs)
+        : values_(values), colIdxs_(colIdxs), rowOffs_(rowOffs)
     {
         NF_ASSERT(value.exec() == colIdxs_.exec(), "Executors are not the same");
         NF_ASSERT(value.exec() == rowOffs_.exec(), "Executors are not the same");
     }
 
-    CSRMatrix(const Executor exec) : value_(exec, 0), colIdxs_(exec, 0), rowOffs_(exec, 0) {}
+    CSRMatrix(const Executor exec) : values_(exec, 0), colIdxs_(exec, 0), rowOffs_(exec, 0) {}
 
     /**
      * @brief Default destructor.
@@ -114,7 +114,7 @@ public:
      * @brief Get the executor associated with this matrix.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const Executor& exec() const { return value_.exec(); }
+    [[nodiscard]] const Executor& exec() const { return values_.exec(); }
 
     /**
      * @brief Get the number of rows in the matrix.
@@ -130,13 +130,13 @@ public:
      * @brief Get the number of non-zero values in the matrix.
      * @return Number of non-zero values.
      */
-    [[nodiscard]] IndexType nNonZeros() const { return static_cast<IndexType>(value_.size()); }
+    [[nodiscard]] IndexType nNonZeros() const { return static_cast<IndexType>(values_.size()); }
 
     /**
      * @brief Get a span to the values array.
      * @return Span containing the matrix values.
      */
-    [[nodiscard]] Field<ValueType>& values() { return value_; }
+    [[nodiscard]] Field<ValueType>& values() { return values_; }
 
     /**
      * @brief Get a span to the column indices array.
@@ -154,7 +154,7 @@ public:
      * @brief Get a const span to the values array.
      * @return Const span containing the matrix values.
      */
-    [[nodiscard]] const Field<ValueType>& values() const { return value_; }
+    [[nodiscard]] const Field<ValueType>& values() const { return values_; }
 
     /**
      * @brief Get a const span to the column indices array.
@@ -175,12 +175,12 @@ public:
      */
     [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == value_.exec())
+        if (dstExec == values_.exec())
         {
             return *this;
         }
         CSRMatrix<ValueType, IndexType> other(
-            value_.copyToHost(), colIdxs_.copyToHost(), rowOffs_.copyToHost()
+            values_.copyToHost(), colIdxs_.copyToHost(), rowOffs_.copyToHost()
         );
         return other;
     }
@@ -200,7 +200,7 @@ public:
      */
     [[nodiscard]] CSRMatrixView<ValueType, IndexType> view()
     {
-        return CSRMatrixView(value_.span(), colIdxs_.span(), rowOffs_.span());
+        return CSRMatrixView(values_.span(), colIdxs_.span(), rowOffs_.span());
     }
 
     /**
@@ -209,12 +209,12 @@ public:
      */
     [[nodiscard]] const CSRMatrixView<const ValueType, const IndexType> view() const
     {
-        return CSRMatrixView(value_.span(), colIdxs_.span(), rowOffs_.span());
+        return CSRMatrixView(values_.span(), colIdxs_.span(), rowOffs_.span());
     }
 
 private:
 
-    Field<ValueType> value_;   //!< The (non-zero) values of the CSR matrix.
+    Field<ValueType> values_;  //!< The (non-zero) values of the CSR matrix.
     Field<IndexType> colIdxs_; //!< The column indices of the CSR matrix.
     Field<IndexType> rowOffs_; //!< The row offsets for the CSR matrix.
 };
