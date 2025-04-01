@@ -71,7 +71,7 @@ TEST_CASE("LinearSystem")
         // some simple sanity checks
         REQUIRE(hostLSView.matrix.values.size() == 9);
         REQUIRE(hostLSView.matrix.colIdxs.size() == 9);
-        REQUIRE(hostLSView.matrix.rowOffset.size() == 4);
+        REQUIRE(hostLSView.matrix.rowOffs.size() == 4);
         REQUIRE(hostLSView.rhs.size() == 3);
 
         // check system values
@@ -80,9 +80,9 @@ TEST_CASE("LinearSystem")
             REQUIRE(hostLSView.matrix.values[i] == static_cast<scalar>(i + 1));
             REQUIRE(hostLSView.matrix.colIdxs[i] == (i % 3));
         }
-        for (size_t i = 0; i < hostLSView.matrix.rowOffset.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.rowOffs.size(); ++i)
         {
-            REQUIRE(hostLSView.matrix.rowOffset[i] == static_cast<localIdx>(i * 3));
+            REQUIRE(hostLSView.matrix.rowOffs[i] == static_cast<localIdx>(i * 3));
         }
         for (size_t i = 0; i < hostLSView.rhs.size(); ++i)
         {

@@ -176,8 +176,8 @@ void computeDivImp(
             std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
 
             // add neighbour contribution upper
-            std::size_t rowNeiStart = A.rowOffset[nei];
-            std::size_t rowOwnStart = A.rowOffset[own];
+            std::size_t rowNeiStart = A.rowOffs[nei];
+            std::size_t rowOwnStart = A.rowOffs[own];
 
             value = -weight * flux * one<ValueType>();
             // scalar valueNei = (1 - weight) * flux;
@@ -197,7 +197,7 @@ void computeDivImp(
         {0, b.size()},
         KOKKOS_LAMBDA(const size_t celli) {
             b[celli] *= operatorScaling[celli];
-            for (size_t i = A.rowOffset[celli]; i < A.rowOffset[celli + 1]; i++)
+            for (size_t i = A.rowOffs[celli]; i < A.rowOffs[celli + 1]; i++)
             {
                 A.values[i] *= operatorScaling[celli];
             }
