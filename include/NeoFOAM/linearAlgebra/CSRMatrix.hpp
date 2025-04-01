@@ -23,15 +23,15 @@ struct CSRMatrixView
     /**
      * @brief Constructor for CSRMatrixView.
      * @param valueView Span of the non-zero values of the matrix.
-     * @param inColumnIndex Span of the column indices for each non-zero value.
+     * @param colIdxsView Span of the column indices for each non-zero value.
      * @param inRwOffset Span of the starting index in values/colIdxs for each row.
      */
     CSRMatrixView(
         const std::span<ValueType>& valueView,
-        const std::span<IndexType>& inColumnIndex,
+        const std::span<IndexType>& colIdxsView,
         const std::span<IndexType>& inRwOffset
     )
-        : values(valueView), columnIndex(inColumnIndex), rowOffset(inRwOffset) {};
+        : values(valueView), colIdxs(colIdxsView), rowOffset(inRwOffset) {};
 
     /**
      * @brief Default destructor.
@@ -51,11 +51,11 @@ struct CSRMatrixView
         for (std::remove_const_t<IndexType> ic = 0; ic < rowSize; ++ic)
         {
             const IndexType localCol = rowOffset[i] + ic;
-            if (columnIndex[localCol] == j)
+            if (colIdxs[localCol] == j)
             {
                 return values[localCol];
             }
-            if (columnIndex[localCol] > j) break;
+            if (colIdxs[localCol] > j) break;
         }
         Kokkos::abort("Memory not allocated for CSR matrix component.");
         return values[values.size()]; // compiler warning suppression.
@@ -69,9 +69,9 @@ struct CSRMatrixView
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType offset) const { return values[offset]; }
 
-    std::span<ValueType> values;      //!< Span to the values of the CSR matrix.
-    std::span<IndexType> columnIndex; //!< Span to the column indices of the CSR matrix.
-    std::span<IndexType> rowOffset;   //!< Span to the row offsets for the CSR matrix.
+    std::span<ValueType> values;    //!< Span to the values of the CSR matrix.
+    std::span<IndexType> colIdxs;   //!< Span to the column indices of the CSR matrix.
+    std::span<IndexType> rowOffset; //!< Span to the row offsets for the CSR matrix.
 };
 
 /**
@@ -89,21 +89,21 @@ public:
     /**
      * @brief Constructor for CSRMatrix.
      * @param value The non-zero values of the matrix.
-     * @param columnIndex The column indices for each non-zero value.
+     * @param colIdxs The column indices for each non-zero value.
      * @param rowOffset The starting index in values/colIdxs for each row.
      */
     CSRMatrix(
         const Field<ValueType>& value,
-        const Field<IndexType>& columnIndex,
+        const Field<IndexType>& colIdxs,
         const Field<IndexType>& rowOffset
     )
-        : value_(value), columnIndex_(columnIndex), rowOffset_(rowOffset)
+        : value_(value), colIdxs_(colIdxs), rowOffset_(rowOffset)
     {
-        NF_ASSERT(value.exec() == columnIndex_.exec(), "Executors are not the same");
+        NF_ASSERT(value.exec() == colIdxs_.exec(), "Executors are not the same");
         NF_ASSERT(value.exec() == rowOffset_.exec(), "Executors are not the same");
     }
 
-    CSRMatrix(const Executor exec) : value_(exec, 0), columnIndex_(exec, 0), rowOffset_(exec, 0) {}
+    CSRMatrix(const Executor exec) : value_(exec, 0), colIdxs_(exec, 0), rowOffset_(exec, 0) {}
 
     /**
      * @brief Default destructor.
@@ -142,7 +142,7 @@ public:
      * @brief Get a span to the column indices array.
      * @return Span containing the column indices.
      */
-    [[nodiscard]] Field<IndexType>& colIdxs() { return columnIndex_; }
+    [[nodiscard]] Field<IndexType>& colIdxs() { return colIdxs_; }
 
     /**
      * @brief Get a span to the row pointers array.
@@ -160,7 +160,7 @@ public:
      * @brief Get a const span to the column indices array.
      * @return Const span containing the column indices.
      */
-    [[nodiscard]] const Field<IndexType> colIdxs() const { return columnIndex_; }
+    [[nodiscard]] const Field<IndexType> colIdxs() const { return colIdxs_; }
 
     /**
      * @brief Get a const span to the row pointers array.
@@ -180,7 +180,7 @@ public:
             return *this;
         }
         CSRMatrix<ValueType, IndexType> other(
-            value_.copyToHost(), columnIndex_.copyToHost(), rowOffset_.copyToHost()
+            value_.copyToHost(), colIdxs_.copyToHost(), rowOffset_.copyToHost()
         );
         return other;
     }
@@ -200,7 +200,7 @@ public:
      */
     [[nodiscard]] CSRMatrixView<ValueType, IndexType> view()
     {
-        return CSRMatrixView(value_.span(), columnIndex_.span(), rowOffset_.span());
+        return CSRMatrixView(value_.span(), colIdxs_.span(), rowOffset_.span());
     }
 
     /**
@@ -209,14 +209,14 @@ public:
      */
     [[nodiscard]] const CSRMatrixView<const ValueType, const IndexType> view() const
     {
-        return CSRMatrixView(value_.span(), columnIndex_.span(), rowOffset_.span());
+        return CSRMatrixView(value_.span(), colIdxs_.span(), rowOffset_.span());
     }
 
 private:
 
-    Field<ValueType> value_;       //!< The (non-zero) values of the CSR matrix.
-    Field<IndexType> columnIndex_; //!< The column indices of the CSR matrix.
-    Field<IndexType> rowOffset_;   //!< The row offsets for the CSR matrix.
+    Field<ValueType> value_;     //!< The (non-zero) values of the CSR matrix.
+    Field<IndexType> colIdxs_;   //!< The column indices of the CSR matrix.
+    Field<IndexType> rowOffset_; //!< The row offsets for the CSR matrix.
 };
 
 /* @brief given a csr matrix this function copies the matrix and converts to requested target types
@@ -227,12 +227,12 @@ template<typename ValueTypeIn, typename IndexTypeIn, typename ValueTypeOut, type
 la::CSRMatrix<ValueTypeOut, IndexTypeOut>
 convert(const Executor exec, const la::CSRMatrixView<const ValueTypeIn, const IndexTypeIn> in)
 {
-    Field<IndexTypeOut> colIdxsTmp(exec, in.columnIndex.size());
+    Field<IndexTypeOut> colIdxsTmp(exec, in.colIdxs.size());
     Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffset.size());
     Field<ValueTypeOut> valuesTmp(exec, in.values.data(), in.values.size());
 
     parallelFor(
-        colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.columnIndex[i]); }
+        colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.colIdxs[i]); }
     );
     parallelFor(
         rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffset[i]); }
