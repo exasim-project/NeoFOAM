@@ -200,37 +200,11 @@ public:
         result = copyToExecutor(SerialExecutor());
     }
 
-    /**
-     * @brief Subscript operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    ValueType& operator[](const size_t i) { return data_[i]; }
+    // ensures no return of device address on host --> invalid memory access
+    ValueType& operator[](const size_t i) = delete;
 
-    /**
-     * @brief Subscript operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& operator[](const size_t i) const { return data_[i]; }
-
-    /**
-     * @brief Function call operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    ValueType& operator()(const size_t i) { return data_[i]; }
-
-    /**
-     * @brief Function call operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& operator()(const size_t i) const { return data_[i]; }
+    // ensures no return of device address on host --> invalid memory access
+    const ValueType& operator[](const size_t i) const = delete;
 
     /**
      * @brief Assignment operator, Sets the field values to that of the passed value.

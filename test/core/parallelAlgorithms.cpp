@@ -182,19 +182,19 @@ TEST_CASE("parallelScan")
         );
 
         auto hostSegments = segments.copyToHost();
-        REQUIRE(hostSegments[0] == 0);
-        REQUIRE(hostSegments[1] == 1);
-        REQUIRE(hostSegments[2] == 3);
-        REQUIRE(hostSegments[3] == 6);
-        REQUIRE(hostSegments[4] == 10);
-        REQUIRE(hostSegments[5] == 15);
+        REQUIRE(hostSegments.span()[0] == 0);
+        REQUIRE(hostSegments.span()[1] == 1);
+        REQUIRE(hostSegments.span()[2] == 3);
+        REQUIRE(hostSegments.span()[3] == 6);
+        REQUIRE(hostSegments.span()[4] == 10);
+        REQUIRE(hostSegments.span()[5] == 15);
 
         auto hostIntervals = intervals.copyToHost();
-        REQUIRE(hostIntervals[0] == 1);
-        REQUIRE(hostIntervals[1] == 2);
-        REQUIRE(hostIntervals[2] == 3);
-        REQUIRE(hostIntervals[3] == 4);
-        REQUIRE(hostIntervals[4] == 5);
+        REQUIRE(hostIntervals.span()[0] == 1);
+        REQUIRE(hostIntervals.span()[1] == 2);
+        REQUIRE(hostIntervals.span()[2] == 3);
+        REQUIRE(hostIntervals.span()[3] == 4);
+        REQUIRE(hostIntervals.span()[4] == 5);
     }
 
     SECTION("parallelScan_withReturn" + execName)
@@ -221,18 +221,18 @@ TEST_CASE("parallelScan")
         REQUIRE(finalValue == 15);
 
         auto hostSegments = segments.copyToHost();
-        REQUIRE(hostSegments[0] == 0);
-        REQUIRE(hostSegments[1] == 1);
-        REQUIRE(hostSegments[2] == 3);
-        REQUIRE(hostSegments[3] == 6);
-        REQUIRE(hostSegments[4] == 10);
-        REQUIRE(hostSegments[5] == 15);
+        REQUIRE(hostSegments.span()[0] == 0);
+        REQUIRE(hostSegments.span()[1] == 1);
+        REQUIRE(hostSegments.span()[2] == 3);
+        REQUIRE(hostSegments.span()[3] == 6);
+        REQUIRE(hostSegments.span()[4] == 10);
+        REQUIRE(hostSegments.span()[5] == 15);
 
         auto hostIntervals = intervals.copyToHost();
-        REQUIRE(hostIntervals[0] == 1);
-        REQUIRE(hostIntervals[1] == 2);
-        REQUIRE(hostIntervals[2] == 3);
-        REQUIRE(hostIntervals[3] == 4);
-        REQUIRE(hostIntervals[4] == 5);
+        REQUIRE(hostIntervals.span()[0] == 1);
+        REQUIRE(hostIntervals.span()[1] == 2);
+        REQUIRE(hostIntervals.span()[2] == 3);
+        REQUIRE(hostIntervals.span()[3] == 4);
+        REQUIRE(hostIntervals.span()[4] == 5);
     }
 };

@@ -79,7 +79,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             for (size_t i = 0; i < nCells; i++)
             {
                 // the laplacian of a linear function is 0
-                REQUIRE(mag(sourceHost[i]) == Catch::Approx(0.0).margin(1e-8));
+                REQUIRE(mag(sSource[i]) == Catch::Approx(0.0).margin(1e-8));
             }
         }
 

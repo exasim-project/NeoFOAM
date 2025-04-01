@@ -64,9 +64,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == true);
-            REQUIRE(hostFieldA[0] == 3.0);
-            REQUIRE(hostFieldA[1] == 3.0);
-            REQUIRE(hostFieldA[2] == 3.0);
+            REQUIRE(hostFieldA.span()[0] == 3.0);
+            REQUIRE(hostFieldA.span()[1] == 3.0);
+            REQUIRE(hostFieldA.span()[2] == 3.0);
         }
 
         SECTION("scalar")
@@ -79,9 +79,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == false);
-            REQUIRE(hostFieldA[0] == 4.0);
-            REQUIRE(hostFieldA[1] == 4.0);
-            REQUIRE(hostFieldA[2] == 4.0);
+            REQUIRE(hostFieldA.span()[0] == 4.0);
+            REQUIRE(hostFieldA.span()[1] == 4.0);
+            REQUIRE(hostFieldA.span()[2] == 4.0);
         }
 
         SECTION("span and scalar")
@@ -94,9 +94,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == true);
-            REQUIRE(hostFieldA[0] == -3.0);
-            REQUIRE(hostFieldA[1] == -3.0);
-            REQUIRE(hostFieldA[2] == -3.0);
+            REQUIRE(hostFieldA.span()[0] == -3.0);
+            REQUIRE(hostFieldA.span()[1] == -3.0);
+            REQUIRE(hostFieldA.span()[2] == -3.0);
         }
     }
 }
