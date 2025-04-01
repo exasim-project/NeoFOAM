@@ -170,9 +170,6 @@ TEST_CASE("FieldCollection")
 
         NeoFOAM::la::petscSolverContext::petscSolverContext<NeoFOAM::scalar> petsctx3(exec);
         fvcc::petscSolverContextDocument petscSolverContextDoc3(petsctx3, "testEqn3");
-        std::cout << petscSolverContextDoc1.id() << "\n";
-        std::cout << petscSolverContextDoc2.id() << "\n";
-        std::cout << petscSolverContextDoc3.id() << "\n";
 
         REQUIRE(petscSolverContextCollection.insert(petscSolverContextDoc1) != std::string(""));
         REQUIRE(petscSolverContextCollection.insert(petscSolverContextDoc2) != std::string(""));
@@ -203,77 +200,20 @@ TEST_CASE("FieldCollection")
             REQUIRE(context.initialized() == false);
             REQUIRE(&constContext == &context);
         }
-        /*
-                SECTION("query")
-                {
-                    auto resTimeIndex =
-                        fieldCollection.find([](const NeoFOAM::Document& doc)
-                                             { return doc.get<std::int64_t>("timeIndex") == 1; });
 
-                    REQUIRE(resTimeIndex.size() == 3);
-
-                    auto resSubCycleIndex =
-                        fieldCollection.find([](const NeoFOAM::Document& doc)
-                                             { return doc.get<std::int64_t>("subCycleIndex") == 5;
-           });
-
-                    REQUIRE(resSubCycleIndex.size() == 0);
-
-                    auto resName = fieldCollection.find([](const NeoFOAM::Document& doc)
-                                                        { return doc.get<std::string>("name") ==
-           "T3"; });
-
-                    REQUIRE(resName.size() == 1);
-
-                    const auto& fieldDoc2 = fieldCollection.fieldDoc(resName[0]);
-                    REQUIRE(fieldDoc2.timeIndex() == 1);
-                }
-        */
-    }
-
-    SECTION("register " + execName)
-    {
-
-        fvcc::FieldCollection& fieldCollection1 =
-            fvcc::FieldCollection::instance(db, "newTestFieldCollection");
-        REQUIRE(db.size() == 1);
-
-        fvcc::VolumeField<NeoFOAM::scalar>& t =
-            fieldCollection1.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(CreateField {
-                .name = "T", .mesh = mesh, .timeIndex = 1, .iterationIndex = 1, .subCycleIndex = 1
-            });
-
-        REQUIRE(t.name == "T");
-        REQUIRE(t.hasDatabase());
-        REQUIRE(t.internalField().copyToHost()[0] == 1.0);
-        REQUIRE(t.registered());
-
-        SECTION("Construct from Field")
+        SECTION("query")
         {
-            fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(t);
-            REQUIRE(fieldCollection2.size() == 1);
-            const fvcc::VolumeField<NeoFOAM::scalar>& constT = t;
-            const fvcc::FieldCollection& fieldCollection3 = fvcc::FieldCollection::instance(constT);
-            REQUIRE(fieldCollection3.size() == 1);
-        }
 
+            auto resName = petscSolverContextCollection.find(
+                [](const NeoFOAM::Document& doc)
+                { return doc.get<std::string>("eqnName") == "testEqn3"; }
+            );
 
-        SECTION("register from existing field")
-        {
-            fvcc::FieldCollection& fieldCollection2 = fvcc::FieldCollection::instance(t);
-            fvcc::VolumeField<NeoFOAM::scalar>& t3 =
-                fieldCollection2.registerField<fvcc::VolumeField<NeoFOAM::scalar>>(
-                    fvcc::CreateFromExistingField<fvcc::VolumeField<NeoFOAM::scalar>> {
-                        .name = "T3", .field = t
-                    }
-                );
+            REQUIRE(resName.size() == 1);
 
-            const fvcc::FieldDocument& docT = fieldCollection2.fieldDoc(t3.key);
-            const fvcc::FieldDocument& docT3 = fieldCollection2.fieldDoc(t.key);
-
-            REQUIRE(docT.timeIndex() == docT3.timeIndex());
-            REQUIRE(docT.iterationIndex() == docT3.iterationIndex());
-            REQUIRE(docT.subCycleIndex() == docT3.subCycleIndex());
+            const auto& petscSolverContextDocument3 =
+                petscSolverContextCollection.petscSolverContextDoc(resName[0]);
+            REQUIRE(petscSolverContextDocument3.eqnName() == "testEqn3");
         }
     }
 }
