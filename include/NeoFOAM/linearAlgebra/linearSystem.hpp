@@ -154,9 +154,7 @@ LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& s
 
     return {
         CSRMatrix<ValueType, IndexType> {
-            Field<ValueType>(exec, nnzs, zero<ValueType>()),
-            sparsity.columnIndex(),
-            sparsity.rowPtrs()
+            Field<ValueType>(exec, nnzs, zero<ValueType>()), sparsity.colIdxs(), sparsity.rowPtrs()
         },
         Field<ValueType> {exec, rows, zero<ValueType>()}
     };
