@@ -99,8 +99,8 @@ public:
     )
         : values_(values), colIdxs_(colIdxs), rowOffs_(rowOffs)
     {
-        NF_ASSERT(value.exec() == colIdxs_.exec(), "Executors are not the same");
-        NF_ASSERT(value.exec() == rowOffs_.exec(), "Executors are not the same");
+        NF_ASSERT(values.exec() == colIdxs_.exec(), "Executors are not the same");
+        NF_ASSERT(values.exec() == rowOffs_.exec(), "Executors are not the same");
     }
 
     CSRMatrix(const Executor exec) : values_(exec, 0), colIdxs_(exec, 0), rowOffs_(exec, 0) {}
