@@ -38,6 +38,27 @@ TEST_CASE("CSRMatrix")
         valuesDense, colIdxDense, rowPtrsDense
     );
 
+    SECTION("View Order " + execName)
+    {
+        auto denseMatrixHost = denseMatrix.copyToHost();
+        auto [values, colIdxs, rowOffs] = denseMatrixHost.view();
+        auto valuesDenseHost = valuesDense.copyToHost();
+        auto valuesDenseHostView = valuesDenseHost.span();
+        auto colIdxDenseHost = colIdxDense.copyToHost();
+        auto colIdxDenseHostView = colIdxDenseHost.span();
+        auto rowPtrsDenseHost = rowPtrsDense.copyToHost();
+        auto rowPtrsDenseHostView = rowPtrsDenseHost.span();
+
+        for (int i = 0; i < valuesDenseHostView.size(); ++i)
+        {
+            REQUIRE(valuesDenseHostView[i] == values[i]);
+            REQUIRE(colIdxDenseHostView[i] == colIdxs[i]);
+        }
+        for (int i = 0; i < rowPtrsDenseHostView.size(); ++i)
+        {
+            REQUIRE(rowPtrsDenseHostView[i] == rowOffs[i]);
+        }
+    }
 
     SECTION("Read entry on " + execName)
     {
