@@ -40,16 +40,16 @@ void DdtOperator<ValueType>::implicitOperation(
     const auto operatorScaling = this->getCoefficient();
     const auto [diagOffs, oldField] =
         spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());
-    auto [A, b] = ls.view();
+    auto [matrix, rhs] = ls.view();
 
     NeoFOAM::parallelFor(
         ls.exec(),
         {0, oldField.size()},
         KOKKOS_LAMBDA(const size_t celli) {
-            std::size_t idx = A.rowOffs[celli] + diagOffs[celli];
+            std::size_t idx = matrix.rowOffs[celli] + diagOffs[celli];
             const auto commonCoef = operatorScaling[celli] * vol[celli] * dtInver;
-            A.values[idx] += commonCoef * one<ValueType>();
-            b[celli] += commonCoef * oldField[celli];
+            matrix.values[idx] += commonCoef * one<ValueType>();
+            rhs[celli] += commonCoef * oldField[celli];
         }
     );
 }
