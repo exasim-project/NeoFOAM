@@ -10,3 +10,4 @@ Gregor Weiss <gregor.weiss@hlrs.de>, High-Performance Computing Center Stuttgart
 Henning Scheufler <henning.scheufler@web.de>\
 Marcel Koch <marcel.koch@kit.edu>, Karlsruhe Institute of Technology\
 Roman Mishchuk <roman.mishchuk@tum.de> Technical University of Munich\
+Michael Alletto <michael.alletto@gmx.de>\

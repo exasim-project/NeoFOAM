@@ -12,6 +12,8 @@
 
 #if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#elif NF_WITH_PETSC
+#include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #endif
 
 namespace NeoFOAM::timeIntegration
@@ -56,9 +58,15 @@ public:
         eqn.implicitOperation(ls, t, dt);
         auto ginkgoLs = NeoFOAM::dsl::ginkgoMatrix(ls, solutionField);
 
-
+#if NF_WITH_GINKGO
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ginkgoLs, solutionField.internalField());
+#elif NF_WITH_PETSC
+        NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(
+            solutionField.exec(), this->solutionDict_, solutionField.db()
+        );
+        solver.solve(ginkgoLs, solutionField.internalField());
+#endif
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))

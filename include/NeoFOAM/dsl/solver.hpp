@@ -16,6 +16,8 @@
 
 #if NF_WITH_GINKGO
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#elif NF_WITH_PETSC
+#include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #endif
 
 
@@ -132,9 +134,15 @@ void solve(
         using ValueType = typename FieldType::ElementType;
         auto ls = ginkgoMatrix(exp, solution);
 
-
+#if NF_WITH_GINKGO
         NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
+#elif NF_WITH_PETSC
+        NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(
+            solution.exec(), fvSolution, solution.db()
+        );
+        solver.solve(ls, solution.internalField());
+#endif
     }
 }
 

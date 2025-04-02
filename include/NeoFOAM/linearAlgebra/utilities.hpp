@@ -3,6 +3,8 @@
 
 #pragma once
 
+#if NF_WITH_GINKGO
+
 #include <ginkgo/ginkgo.hpp>
 #include <ginkgo/extensions/kokkos.hpp>
 
@@ -45,3 +47,5 @@ createGkoDense(std::shared_ptr<const gko::Executor> exec, ValueType* ptr, size_t
 }
 
 }
+
+#endif

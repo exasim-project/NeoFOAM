@@ -6,6 +6,7 @@
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#include "NeoFOAM/linearAlgebra/petscSolver.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 
@@ -143,9 +144,17 @@ public:
         }
         else
         {
+#if NF_WITH_GINKGO
             NeoFOAM::la::ginkgo::BiCGStab<ValueType> solver(psi_.exec(), fvSolution_);
             auto convertedLS = convertLinearSystem(ls_);
             solver.solve(convertedLS, psi_.internalField());
+#elif NF_WITH_PETSC
+            NeoFOAM::la::petscSolver::petscSolver<ValueType> solver(
+                psi_.exec(), fvSolution_, psi_.db()
+            );
+            auto convertedLS = convertLinearSystem(ls_);
+            solver.solve(convertedLS, psi_.internalField());
+#endif
         }
     }
 
