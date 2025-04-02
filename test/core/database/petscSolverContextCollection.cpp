@@ -136,7 +136,7 @@ TEST_CASE("Field Document")
     }
 }
 
-TEST_CASE("FieldCollection")
+TEST_CASE("petscSolverContextCollection")
 {
     NeoFOAM::Database db;
 
@@ -155,10 +155,11 @@ TEST_CASE("FieldCollection")
         REQUIRE(petscSolverContextCollection.size() == 0);
     }
 
-    SECTION("add FieldDocument to FieldCollection" + execName)
+    SECTION("add petscSolverContextDocument to petscSolverContextCollection" + execName)
     {
-        fvcc::petscSolverContextCollection petscSolverContextCollection =
-            fvcc::petscSolverContextCollection::instance(db, "testFieldCollection");
+        db.insert(
+            "testFieldCollection", fvcc::petscSolverContextCollection(db, "testFieldCollection")
+        );
         REQUIRE(db.size() == 1);
 
         NeoFOAM::la::petscSolverContext::petscSolverContext<NeoFOAM::scalar> petsctx1(exec);
@@ -171,11 +172,15 @@ TEST_CASE("FieldCollection")
         NeoFOAM::la::petscSolverContext::petscSolverContext<NeoFOAM::scalar> petsctx3(exec);
         fvcc::petscSolverContextDocument petscSolverContextDoc3(petsctx3, "testEqn3");
 
+        auto& petscSolverContextCollection =
+            db.at<fvcc::petscSolverContextCollection>("testFieldCollection");
+
         REQUIRE(petscSolverContextCollection.insert(petscSolverContextDoc1) != std::string(""));
         REQUIRE(petscSolverContextCollection.insert(petscSolverContextDoc2) != std::string(""));
         REQUIRE(petscSolverContextCollection.insert(petscSolverContextDoc3) != std::string(""));
 
         REQUIRE(petscSolverContextCollection.size() == 3);
+        REQUIRE(db.at<fvcc::petscSolverContextCollection>("testFieldCollection").size() == 3);
 
 
         SECTION("get petscSolverContextDoc from petscSolverContextCollection")
@@ -213,6 +218,21 @@ TEST_CASE("FieldCollection")
 
             const auto& petscSolverContextDocument3 =
                 petscSolverContextCollection.petscSolverContextDoc(resName[0]);
+            REQUIRE(petscSolverContextDocument3.eqnName() == "testEqn3");
+        }
+        SECTION("find petsc solver context collections")
+        {
+
+            fvcc::petscSolverContextCollection& petscSolverContextCollectionFound =
+                db.at<fvcc::petscSolverContextCollection>("testFieldCollection");
+            auto resName = petscSolverContextCollectionFound.find(
+                [](const NeoFOAM::Document& doc)
+                { return doc.get<std::string>("eqnName") == "testEqn3"; }
+            );
+
+            REQUIRE(resName.size() == 1);
+            const fvcc::petscSolverContextDocument& petscSolverContextDocument3 =
+                petscSolverContextCollectionFound.petscSolverContextDoc(resName[0]);
             REQUIRE(petscSolverContextDocument3.eqnName() == "testEqn3");
         }
     }

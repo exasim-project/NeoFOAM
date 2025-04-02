@@ -79,6 +79,9 @@ TEST_CASE("Database")
         REQUIRE(collection1.size() == 2);
         REQUIRE(collection2.size() == 1);
 
+        REQUIRE(db.at<CustomCollection>("collection1").size() == 2);
+        REQUIRE(db.at<CustomCollection>("collection2").size() == 1);
+
         REQUIRE(collection1.name() == "collection1");
         REQUIRE(collection2.name() == "collection2");
 
