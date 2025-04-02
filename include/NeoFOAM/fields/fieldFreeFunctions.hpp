@@ -91,12 +91,13 @@ void setField(
 }
 
 template<typename ValueType>
-void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
+void scalarMul(Field<ValueType>& a, const scalar value)
 {
-    auto spanA = a.span();
-    parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return spanA[i] * value; }
-    );
+    // FIXME implement
+    // auto spanA = a.span();
+    // parallelFor(
+    //     a, KOKKOS_LAMBDA(const size_t i) { return spanA[i] * value; }
+    // );
 }
 
 namespace detail
@@ -106,12 +107,13 @@ void fieldBinaryOp(
     Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b, BinaryOp op
 )
 {
-    NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);
-    auto spanA = a.span();
-    auto spanB = b.span();
-    parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return op(spanA[i], spanB[i]); }
-    );
+    // FIXME implement
+    // NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);
+    // auto spanA = a.span();
+    // auto spanB = b.span();
+    // parallelFor(
+    //     a, KOKKOS_LAMBDA(const size_t i) { return op(spanA[i], spanB[i]); }
+    // );
 }
 }
 
@@ -133,7 +135,7 @@ void sub(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
 }
 
 template<typename ValueType>
-void mul(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
+void mul(Field<ValueType>& a, const Field<scalar>& b)
 {
     detail::fieldBinaryOp(
         a, b, KOKKOS_LAMBDA(ValueType va, ValueType vb) { return va * vb; }

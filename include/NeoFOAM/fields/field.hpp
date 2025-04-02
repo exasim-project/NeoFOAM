@@ -2,9 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <Kokkos_Core.hpp>
-
-#include <iostream>
 #include <span>
 
 #include "NeoFOAM/core/error.hpp"
@@ -16,27 +13,6 @@
 namespace NeoFOAM
 {
 
-namespace detail
-{
-/**
- * @brief A helper function to simplify the common pattern of copying between and to executor.
- * @param size The number of elements to copy.
- * @param srcPtr Pointer to the original block of memory.
- * @param dstPtr Pointer to the target block of memory.
- * @tparam ValueType The type of the underlying elements.
- * @returns A function that takes a source and an destination executor
- */
-template<typename ValueType>
-auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
-{
-    return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
-    {
-        Kokkos::deep_copy(
-            dstExec.createKokkosView(dstPtr, size), srcExec.createKokkosView(srcPtr, size)
-        );
-    };
-}
-}
 
 /**
  * @class Field
@@ -57,16 +33,7 @@ public:
      * @param exec  Executor associated to the field
      * @param size  size of the field
      */
-    Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
-    {
-        void* ptr = nullptr;
-        std::visit(
-            [&ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
-            exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-    }
+    Field(const Executor& exec, size_t size);
 
     /**
      * @brief Create a Field with a given size from existing memory on an executor
@@ -77,18 +44,7 @@ public:
      */
     Field(
         const Executor& exec, const ValueType* in, size_t size, Executor hostExec = SerialExecutor()
-    )
-        : size_(size), data_(nullptr), exec_(exec)
-    {
-        void* ptr = nullptr;
-        std::visit(
-            [&ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
-            exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-        std::visit(detail::deepCopyVisitor<ValueType>(size_, in, data_), hostExec, exec_);
-    }
+    );
 
     /**
      * @brief Create a Field with a given size on an executor and uniform value
@@ -96,16 +52,7 @@ public:
      * @param size  size of the field
      * @param value  the  default value
      */
-    Field(const Executor& exec, size_t size, ValueType value)
-        : size_(size), data_(nullptr), exec_(exec)
-    {
-        void* ptr = nullptr;
-        std::visit(
-            [&ptr, size](const auto& execu) { ptr = execu.alloc(size * sizeof(ValueType)); }, exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-        NeoFOAM::fill(*this, value);
-    }
+    Field(const Executor& exec, size_t size, ValueType value);
 
     /**
      * @brief Create a Field from a given vector of values on an executor
@@ -168,21 +115,13 @@ public:
      * @param dstExec The executor on which the data should be copied.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
-    {
-        if (dstExec == exec_) return *this;
-
-        Field<ValueType> result(dstExec, size_);
-        std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
-
-        return result;
-    }
+    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const;
 
     /**
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(SerialExecutor()); }
+    [[nodiscard]] Field<ValueType> copyToHost() const;
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -192,13 +131,7 @@ public:
      * @warning exits if the size of the result field is not the same as the
      * source field.
      */
-    void copyToHost(Field<ValueType>& result)
-    {
-        NF_DEBUG_ASSERT(
-            result.size() == size_, "Parsed Field size not the same as current field size"
-        );
-        result = copyToExecutor(SerialExecutor());
-    }
+    void copyToHost(Field<ValueType>& result) const;
 
     // ensures no return of device address on host --> invalid memory access
     ValueType& operator[](const size_t i) = delete;
@@ -218,53 +151,28 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<ValueType>& rhs)
-    {
-        NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
-        if (this->size() != rhs.size())
-        {
-            this->resize(rhs.size());
-        }
-        setField(*this, rhs.span());
-    }
+    void operator=(const Field<ValueType>& rhs);
 
     /**
      * @brief Arithmetic add operator, addition of a second field.
      * @param rhs The field to add with this field.
      * @returns The result of the addition.
      */
-    Field<ValueType>& operator+=(const Field<ValueType>& rhs)
-    {
-        validateOtherField(rhs);
-        add(*this, rhs);
-        return *this;
-    }
+    Field<ValueType>& operator+=(const Field<ValueType>& rhs);
 
     /**
      * @brief Arithmetic subtraction operator, subtraction by a second field.
      * @param rhs The field to subtract from this field.
      * @returns The result of the subtraction.
      */
-    Field<ValueType>& operator-=(const Field<ValueType>& rhs)
-    {
-        validateOtherField(rhs);
-        sub(*this, rhs);
-        return *this;
-    }
+    Field<ValueType>& operator-=(const Field<ValueType>& rhs);
 
     /**
      * @brief Arithmetic multiply operator, multiply by a second field.
      * @param rhs The field to subtract from this field.
      * @returns The result of the multiply.
      */
-    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
-    {
-        validateOtherField(rhs);
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        mul(result, rhs);
-        return result;
-    }
+    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs);
 
     /**
      * @brief Arithmetic multiply operator, multiplies every cell in the field
@@ -272,39 +180,13 @@ public:
      * @param rhs The scalar to multiply with the field.
      * @returns The result of the multiplication.
      */
-    [[nodiscard]] Field<ValueType> operator*(const scalar rhs)
-    {
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        scalarMul(result, rhs);
-        return result;
-    }
+    [[nodiscard]] Field<ValueType> operator*(const scalar rhs);
 
     /**
      * @brief Resizes the field to a new size.
      * @param size The new size to set the field to.
      */
-    void resize(const size_t size)
-    {
-        void* ptr = nullptr;
-        if (!empty())
-        {
-            std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.realloc(this->data_, size * sizeof(ValueType)); },
-                exec_
-            );
-        }
-        else
-        {
-            std::visit(
-                [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
-                exec_
-            );
-        }
-        data_ = static_cast<ValueType*>(ptr);
-        size_ = size;
-    }
+    void resize(const size_t size);
 
     /**
      * @brief Direct access to the underlying field data
@@ -403,7 +285,8 @@ private:
      * @brief Checks if two fields are the same size and have the same executor.
      * @param rhs The field to compare with.
      */
-    void validateOtherField(const Field<ValueType>& rhs) const
+    template<typename OtherValueType>
+    void validateOtherField(const Field<OtherValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
         NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");
