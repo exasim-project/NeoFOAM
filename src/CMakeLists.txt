@@ -21,6 +21,7 @@ target_sources(
           "core/database/oldTimeCollection.cpp"
           "core/dictionary.cpp"
           "core/demangle.cpp"
+          "core/io/dataOutput.cpp"
           "core/tokenList.cpp"
           "dsl/coeff.cpp"
           "dsl/operator.cpp"
@@ -55,6 +56,9 @@ target_link_libraries(NeoFOAM PRIVATE neofoam_warnings neofoam_options)
 target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api Kokkos::kokkos sundials_core
                                      sundials_arkode sundials_nvecserial cpptrace::cpptrace)
 
+if(NEOFOAM_WITH_ADIOS2)
+  target_link_libraries(NeoFOAM PUBLIC adios2)
+endif()
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_link_libraries(NeoFOAM PUBLIC MPI::MPI_CXX)
 endif()

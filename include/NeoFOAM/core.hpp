@@ -24,6 +24,8 @@
 #include "core/database/fieldCollection.hpp"
 #include "core/database/oldTimeCollection.hpp"
 
+#include "core/io/dataOutput.hpp"
+
 #include "core/mpi/environment.hpp"
 #include "core/mpi/fullDuplexCommBuffer.hpp"
 #include "core/mpi/halfDuplexCommBuffer.hpp"
