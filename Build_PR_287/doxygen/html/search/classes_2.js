@@ -7,9 +7,10 @@ var searchData=
   ['collectionmixin_4',['CollectionMixin',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
   ['collectionmixin_3c_20fielddocument_20_3e_5',['CollectionMixin&lt; FieldDocument &gt;',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
   ['collectionmixin_3c_20oldtimedocument_20_3e_6',['CollectionMixin&lt; OldTimeDocument &gt;',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
-  ['cpuexecutor_7',['CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html',1,'NeoFOAM']]],
-  ['createfromexistingfield_8',['CreateFromExistingField',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1CreateFromExistingField.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
-  ['csrmatrix_9',['CSRMatrix',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
-  ['csrmatrix_3c_20neofoam_3a_3ascalar_2c_20neofoam_3a_3alocalidx_20_3e_10',['CSRMatrix&lt; NeoFOAM::scalar, NeoFOAM::localIdx &gt;',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
-  ['csrmatrix_3c_20valuetype_2c_20localidx_20_3e_11',['CSRMatrix&lt; ValueType, localIdx &gt;',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]]
+  ['collectionmixin_3c_20petscsolvercontextdocument_20_3e_7',['CollectionMixin&lt; petscSolverContextDocument &gt;',['../classNeoFOAM_1_1CollectionMixin.html',1,'NeoFOAM']]],
+  ['cpuexecutor_8',['CPUExecutor',['../classNeoFOAM_1_1CPUExecutor.html',1,'NeoFOAM']]],
+  ['createfromexistingfield_9',['CreateFromExistingField',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1CreateFromExistingField.html',1,'NeoFOAM::finiteVolume::cellCentred']]],
+  ['csrmatrix_10',['CSRMatrix',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
+  ['csrmatrix_3c_20neofoam_3a_3ascalar_2c_20neofoam_3a_3alocalidx_20_3e_11',['CSRMatrix&lt; NeoFOAM::scalar, NeoFOAM::localIdx &gt;',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]],
+  ['csrmatrix_3c_20valuetype_2c_20localidx_20_3e_12',['CSRMatrix&lt; ValueType, localIdx &gt;',['../classNeoFOAM_1_1la_1_1CSRMatrix.html',1,'NeoFOAM::la']]]
 ];
