@@ -22,16 +22,16 @@ struct CSRMatrixView
 {
     /**
      * @brief Constructor for CSRMatrixView.
-     * @param inValue Span of the non-zero values of the matrix.
-     * @param inColumnIndex Span of the column indices for each non-zero value.
-     * @param inRwOffset Span of the starting index in values/colIdxs for each row.
+     * @param valueView Span of the non-zero values of the matrix.
+     * @param colIdxsView Span of the column indices for each non-zero value.
+     * @param rowOffsView Span of the starting index in values/colIdxs for each row.
      */
     CSRMatrixView(
-        const std::span<ValueType>& inValue,
-        const std::span<IndexType>& inColumnIndex,
-        const std::span<IndexType>& inRwOffset
+        const std::span<ValueType>& valueView,
+        const std::span<IndexType>& colIdxsView,
+        const std::span<IndexType>& rowOffsView
     )
-        : value(inValue), columnIndex(inColumnIndex), rowOffset(inRwOffset) {};
+        : values(valueView), colIdxs(colIdxsView), rowOffs(rowOffsView) {};
 
     /**
      * @brief Default destructor.
@@ -47,18 +47,18 @@ struct CSRMatrixView
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType i, const IndexType j) const
     {
-        const IndexType rowSize = rowOffset[i + 1] - rowOffset[i];
+        const IndexType rowSize = rowOffs[i + 1] - rowOffs[i];
         for (std::remove_const_t<IndexType> ic = 0; ic < rowSize; ++ic)
         {
-            const IndexType localCol = rowOffset[i] + ic;
-            if (columnIndex[localCol] == j)
+            const IndexType localCol = rowOffs[i] + ic;
+            if (colIdxs[localCol] == j)
             {
-                return value[localCol];
+                return values[localCol];
             }
-            if (columnIndex[localCol] > j) break;
+            if (colIdxs[localCol] > j) break;
         }
         Kokkos::abort("Memory not allocated for CSR matrix component.");
-        return value[value.size()]; // compiler warning suppression.
+        return values[values.size()]; // compiler warning suppression.
     }
 
     /**
@@ -67,11 +67,11 @@ struct CSRMatrixView
      * @return Reference to the matrix element if it exists.
      */
     KOKKOS_INLINE_FUNCTION
-    ValueType& entry(const IndexType offset) const { return value[offset]; }
+    ValueType& entry(const IndexType offset) const { return values[offset]; }
 
-    std::span<ValueType> value;       //!< Span to the values of the CSR matrix.
-    std::span<IndexType> columnIndex; //!< Span to the column indices of the CSR matrix.
-    std::span<IndexType> rowOffset;   //!< Span to the row offsets for the CSR matrix.
+    std::span<ValueType> values;  //!< Span to the values of the CSR matrix.
+    std::span<IndexType> colIdxs; //!< Span to the column indices of the CSR matrix.
+    std::span<IndexType> rowOffs; //!< Span to the row offsets for the CSR matrix.
 };
 
 /**
@@ -88,22 +88,22 @@ public:
 
     /**
      * @brief Constructor for CSRMatrix.
-     * @param value The non-zero values of the matrix.
-     * @param columnIndex The column indices for each non-zero value.
-     * @param rowOffset The starting index in values/colIdxs for each row.
+     * @param values The non-zero values of the matrix.
+     * @param colIdxs The column indices for each non-zero value.
+     * @param rowOffs The starting index in values/colIdxs for each row.
      */
     CSRMatrix(
-        const Field<ValueType>& value,
-        const Field<IndexType>& columnIndex,
-        const Field<IndexType>& rowOffset
+        const Field<ValueType>& values,
+        const Field<IndexType>& colIdxs,
+        const Field<IndexType>& rowOffs
     )
-        : value_(value), columnIndex_(columnIndex), rowOffset_(rowOffset)
+        : values_(values), colIdxs_(colIdxs), rowOffs_(rowOffs)
     {
-        NF_ASSERT(value.exec() == columnIndex_.exec(), "Executors are not the same");
-        NF_ASSERT(value.exec() == rowOffset_.exec(), "Executors are not the same");
+        NF_ASSERT(values.exec() == colIdxs_.exec(), "Executors are not the same");
+        NF_ASSERT(values.exec() == rowOffs_.exec(), "Executors are not the same");
     }
 
-    CSRMatrix(const Executor exec) : value_(exec, 0), columnIndex_(exec, 0), rowOffset_(exec, 0) {}
+    CSRMatrix(const Executor exec) : values_(exec, 0), colIdxs_(exec, 0), rowOffs_(exec, 0) {}
 
     /**
      * @brief Default destructor.
@@ -114,7 +114,7 @@ public:
      * @brief Get the executor associated with this matrix.
      * @return Reference to the executor.
      */
-    [[nodiscard]] const Executor& exec() const { return value_.exec(); }
+    [[nodiscard]] const Executor& exec() const { return values_.exec(); }
 
     /**
      * @brief Get the number of rows in the matrix.
@@ -122,51 +122,51 @@ public:
      */
     [[nodiscard]] IndexType nRows() const
     {
-        return static_cast<IndexType>(rowOffset_.size())
-             - static_cast<IndexType>(static_cast<bool>(rowOffset_.size()));
+        return static_cast<IndexType>(rowOffs_.size())
+             - static_cast<IndexType>(static_cast<bool>(rowOffs_.size()));
     }
 
     /**
      * @brief Get the number of non-zero values in the matrix.
      * @return Number of non-zero values.
      */
-    [[nodiscard]] IndexType nNonZeros() const { return static_cast<IndexType>(value_.size()); }
+    [[nodiscard]] IndexType nNonZeros() const { return static_cast<IndexType>(values_.size()); }
 
     /**
      * @brief Get a span to the values array.
      * @return Span containing the matrix values.
      */
-    [[nodiscard]] Field<ValueType>& values() { return value_; }
+    [[nodiscard]] Field<ValueType>& values() { return values_; }
 
     /**
      * @brief Get a span to the column indices array.
      * @return Span containing the column indices.
      */
-    [[nodiscard]] Field<IndexType>& colIdxs() { return columnIndex_; }
+    [[nodiscard]] Field<IndexType>& colIdxs() { return colIdxs_; }
 
     /**
      * @brief Get a span to the row pointers array.
      * @return Span containing the row pointers.
      */
-    [[nodiscard]] Field<IndexType>& rowPtrs() { return rowOffset_; }
+    [[nodiscard]] Field<IndexType>& rowPtrs() { return rowOffs_; }
 
     /**
      * @brief Get a const span to the values array.
      * @return Const span containing the matrix values.
      */
-    [[nodiscard]] const Field<ValueType>& values() const { return value_; }
+    [[nodiscard]] const Field<ValueType>& values() const { return values_; }
 
     /**
      * @brief Get a const span to the column indices array.
      * @return Const span containing the column indices.
      */
-    [[nodiscard]] const Field<IndexType> colIdxs() const { return columnIndex_; }
+    [[nodiscard]] const Field<IndexType> colIdxs() const { return colIdxs_; }
 
     /**
      * @brief Get a const span to the row pointers array.
      * @return Const span containing the row pointers.
      */
-    [[nodiscard]] const Field<IndexType>& rowPtrs() const { return rowOffset_; }
+    [[nodiscard]] const Field<IndexType>& rowPtrs() const { return rowOffs_; }
 
     /**
      * @brief Copy the matrix to another executor.
@@ -175,12 +175,12 @@ public:
      */
     [[nodiscard]] CSRMatrix<ValueType, IndexType> copyToExecutor(Executor dstExec) const
     {
-        if (dstExec == value_.exec())
+        if (dstExec == values_.exec())
         {
             return *this;
         }
         CSRMatrix<ValueType, IndexType> other(
-            value_.copyToHost(), columnIndex_.copyToHost(), rowOffset_.copyToHost()
+            values_.copyToHost(), colIdxs_.copyToHost(), rowOffs_.copyToHost()
         );
         return other;
     }
@@ -200,7 +200,7 @@ public:
      */
     [[nodiscard]] CSRMatrixView<ValueType, IndexType> view()
     {
-        return CSRMatrixView(value_.span(), columnIndex_.span(), rowOffset_.span());
+        return CSRMatrixView(values_.span(), colIdxs_.span(), rowOffs_.span());
     }
 
     /**
@@ -209,14 +209,14 @@ public:
      */
     [[nodiscard]] const CSRMatrixView<const ValueType, const IndexType> view() const
     {
-        return CSRMatrixView(value_.span(), columnIndex_.span(), rowOffset_.span());
+        return CSRMatrixView(values_.span(), colIdxs_.span(), rowOffs_.span());
     }
 
 private:
 
-    Field<ValueType> value_;       //!< The (non-zero) values of the CSR matrix.
-    Field<IndexType> columnIndex_; //!< The column indices of the CSR matrix.
-    Field<IndexType> rowOffset_;   //!< The row offsets for the CSR matrix.
+    Field<ValueType> values_;  //!< The (non-zero) values of the CSR matrix.
+    Field<IndexType> colIdxs_; //!< The column indices of the CSR matrix.
+    Field<IndexType> rowOffs_; //!< The row offsets for the CSR matrix.
 };
 
 /* @brief given a csr matrix this function copies the matrix and converts to requested target types
@@ -227,18 +227,18 @@ template<typename ValueTypeIn, typename IndexTypeIn, typename ValueTypeOut, type
 la::CSRMatrix<ValueTypeOut, IndexTypeOut>
 convert(const Executor exec, const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> in)
 {
-    Field<IndexTypeOut> colIdxsTmp(exec, in.columnIndex.size());
-    Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffset.size());
-    Field<ValueTypeOut> valuesTmp(exec, in.value.data(), in.value.size());
+    Field<IndexTypeOut> colIdxsTmp(exec, in.colIdxs.size());
+    Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffs.size());
+    Field<ValueTypeOut> valuesTmp(exec, in.values.data(), in.values.size());
 
     parallelFor(
-        colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.columnIndex[i]); }
+        colIdxsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.colIdxs[i]); }
     );
     parallelFor(
-        rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffset[i]); }
+        rowPtrsTmp, KOKKOS_LAMBDA(const size_t i) { return IndexTypeOut(in.rowOffs[i]); }
     );
     parallelFor(
-        valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.value[i]); }
+        valuesTmp, KOKKOS_LAMBDA(const size_t i) { return ValueTypeOut(in.values[i]); }
     );
 
     return la::CSRMatrix<ValueTypeOut, IndexTypeOut> {valuesTmp, colIdxsTmp, rowPtrsTmp};
