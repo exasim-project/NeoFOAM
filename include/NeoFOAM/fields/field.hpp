@@ -16,27 +16,6 @@
 namespace NeoFOAM
 {
 
-namespace detail
-{
-/**
- * @brief A helper function to simplify the common pattern of copying between and to executor.
- * @param size The number of elements to copy.
- * @param srcPtr Pointer to the original block of memory.
- * @param dstPtr Pointer to the target block of memory.
- * @tparam ValueType The type of the underlying elements.
- * @returns A function that takes a source and an destination executor
- */
-template<typename ValueType>
-auto deepCopyVisitor(size_t size, const ValueType* srcPtr, ValueType* dstPtr)
-{
-    return [size, srcPtr, dstPtr](const auto& srcExec, const auto& dstExec)
-    {
-        Kokkos::deep_copy(
-            dstExec.createKokkosView(dstPtr, size), srcExec.createKokkosView(srcPtr, size)
-        );
-    };
-}
-}
 
 /**
  * @class Field
@@ -57,16 +36,7 @@ public:
      * @param exec  Executor associated to the field
      * @param size  size of the field
      */
-    Field(const Executor& exec, size_t size) : size_(size), data_(nullptr), exec_(exec)
-    {
-        void* ptr = nullptr;
-        std::visit(
-            [&ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
-            exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-    }
+    Field(const Executor& exec, size_t size);
 
     /**
      * @brief Create a Field with a given size from existing memory on an executor
@@ -77,18 +47,7 @@ public:
      */
     Field(
         const Executor& exec, const ValueType* in, size_t size, Executor hostExec = SerialExecutor()
-    )
-        : size_(size), data_(nullptr), exec_(exec)
-    {
-        void* ptr = nullptr;
-        std::visit(
-            [&ptr, size](const auto& concreteExec)
-            { ptr = concreteExec.alloc(size * sizeof(ValueType)); },
-            exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-        std::visit(detail::deepCopyVisitor<ValueType>(size_, in, data_), hostExec, exec_);
-    }
+    );
 
     /**
      * @brief Create a Field with a given size on an executor and uniform value
@@ -96,16 +55,7 @@ public:
      * @param size  size of the field
      * @param value  the  default value
      */
-    Field(const Executor& exec, size_t size, ValueType value)
-        : size_(size), data_(nullptr), exec_(exec)
-    {
-        void* ptr = nullptr;
-        std::visit(
-            [&ptr, size](const auto& execu) { ptr = execu.alloc(size * sizeof(ValueType)); }, exec_
-        );
-        data_ = static_cast<ValueType*>(ptr);
-        NeoFOAM::fill(*this, value);
-    }
+    Field(const Executor& exec, size_t size, ValueType value);
 
     /**
      * @brief Create a Field from a given vector of values on an executor
@@ -168,21 +118,13 @@ public:
      * @param dstExec The executor on which the data should be copied.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const
-    {
-        if (dstExec == exec_) return *this;
-
-        Field<ValueType> result(dstExec, size_);
-        std::visit(detail::deepCopyVisitor(size_, data_, result.data()), exec_, dstExec);
-
-        return result;
-    }
+    [[nodiscard]] Field<ValueType> copyToExecutor(Executor dstExec) const;
 
     /**
      * @brief Returns a copy of the field back to the host.
      * @returns A copy of the field on the host.
      */
-    [[nodiscard]] Field<ValueType> copyToHost() const { return copyToExecutor(SerialExecutor()); }
+    [[nodiscard]] Field<ValueType> copyToHost() const;
 
     /**
      * @brief Copies the data (from anywhere) to a parsed host field.
@@ -192,13 +134,7 @@ public:
      * @warning exits if the size of the result field is not the same as the
      * source field.
      */
-    void copyToHost(Field<ValueType>& result)
-    {
-        NF_DEBUG_ASSERT(
-            result.size() == size_, "Parsed Field size not the same as current field size"
-        );
-        result = copyToExecutor(SerialExecutor());
-    }
+    void copyToHost(Field<ValueType>& result) const;
 
     // ensures no return of device address on host --> invalid memory access
     ValueType& operator[](const size_t i) = delete;
@@ -259,11 +195,12 @@ public:
      */
     [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
     {
-        validateOtherField(rhs);
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        mul(result, rhs);
-        return result;
+        // FIXME
+        // validateOtherField(rhs);
+        // Field<ValueType> result(exec_, size_);
+        // result = *this;
+        // mul(result, rhs);
+        // return result;
     }
 
     /**
@@ -403,7 +340,8 @@ private:
      * @brief Checks if two fields are the same size and have the same executor.
      * @param rhs The field to compare with.
      */
-    void validateOtherField(const Field<ValueType>& rhs) const
+    template<typename OtherValueType>
+    void validateOtherField(const Field<OtherValueType>& rhs) const
     {
         NF_DEBUG_ASSERT(size() == rhs.size(), "Fields are not the same size.");
         NF_DEBUG_ASSERT(exec() == rhs.exec(), "Executors are not the same.");

@@ -20,6 +20,7 @@ target_sources(
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/tokenList.cpp"
+          "fields/field.cpp"
           "dsl/coeff.cpp"
           "dsl/spatialOperator.cpp"
           "dsl/temporalOperator.cpp"

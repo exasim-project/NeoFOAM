@@ -22,4 +22,15 @@ KOKKOS_INLINE_FUNCTION T zero()
     return value;
 };
 
+
+#define NF_FOR_ALL_INDEX_TYPES(FUNC)                                                               \
+    FUNC(unsigned char);                                                                           \
+    FUNC(label);                                                                                   \
+    FUNC(localIdx);                                                                                \
+    FUNC(globalIdx)
+
+#define NF_FOR_ALL_VALUE_TYPES(FUNC)                                                               \
+    FUNC(scalar);                                                                                  \
+    FUNC(Vector)
+
 }
