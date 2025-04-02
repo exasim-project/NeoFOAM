@@ -62,8 +62,57 @@ Field<ValueType>::Field(const Executor& exec, size_t size, ValueType value)
         [&ptr, size](const auto& execu) { ptr = execu.alloc(size * sizeof(ValueType)); }, exec_
     );
     data_ = static_cast<ValueType*>(ptr);
-    NeoFOAM::fill(*this, value);
+    fill(*this, value);
 }
+
+template<typename ValueType>
+void Field<ValueType>::operator=(const Field<ValueType>& rhs)
+{
+    NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
+    if (this->size() != rhs.size())
+    {
+        this->resize(rhs.size());
+    }
+    setField(*this, rhs.span());
+}
+
+template<typename ValueType>
+Field<ValueType>& Field<ValueType>::operator+=(const Field<ValueType>& rhs)
+{
+    validateOtherField(rhs);
+    add(*this, rhs);
+    return *this;
+}
+
+template<typename ValueType>
+Field<ValueType>& Field<ValueType>::operator-=(const Field<ValueType>& rhs)
+{
+    validateOtherField(rhs);
+    sub(*this, rhs);
+    return *this;
+}
+
+template<typename ValueType>
+Field<ValueType> Field<ValueType>::operator*(const Field<scalar>& rhs)
+{
+    // FIXME
+    // validateOtherField(rhs);
+    // Field<ValueType> result(exec_, size_);
+    // result = *this;
+    // mul(result, rhs);
+    // return result;
+}
+
+
+template<typename ValueType>
+Field<ValueType> Field<ValueType>::operator*(const scalar rhs)
+{
+    Field<ValueType> result(exec_, size_);
+    result = *this;
+    scalarMul(result, rhs);
+    return result;
+}
+
 
 template<typename ValueType>
 Field<ValueType> Field<ValueType>::copyToExecutor(Executor dstExec) const
@@ -89,9 +138,30 @@ void Field<ValueType>::copyToHost(Field<ValueType>& result) const
     result = copyToExecutor(SerialExecutor());
 }
 
+template<typename ValueType>
+void Field<ValueType>::resize(const size_t size)
+{
+    void* ptr = nullptr;
+    if (!empty())
+    {
+        std::visit(
+            [this, &ptr, size](const auto& exec)
+            { ptr = exec.realloc(this->data_, size * sizeof(ValueType)); },
+            exec_
+        );
+    }
+    else
+    {
+        std::visit(
+            [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); }, exec_
+        );
+    }
+    data_ = static_cast<ValueType*>(ptr);
+    size_ = size;
+}
+
 
 #define NF_DECLARE_FIELD(TYPENAME) template class Field<TYPENAME>
-
 
 NF_FOR_ALL_INDEX_TYPES(NF_DECLARE_FIELD);
 NF_FOR_ALL_VALUE_TYPES(NF_DECLARE_FIELD);

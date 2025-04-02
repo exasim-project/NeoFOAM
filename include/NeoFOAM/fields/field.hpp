@@ -2,9 +2,6 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
-#include <Kokkos_Core.hpp>
-
-#include <iostream>
 #include <span>
 
 #include "NeoFOAM/core/error.hpp"
@@ -154,54 +151,28 @@ public:
      *
      * @warning This field will be sized to the size of the parsed field.
      */
-    void operator=(const Field<ValueType>& rhs)
-    {
-        NF_ASSERT(exec_ == rhs.exec_, "Executors are not the same");
-        if (this->size() != rhs.size())
-        {
-            this->resize(rhs.size());
-        }
-        setField(*this, rhs.span());
-    }
+    void operator=(const Field<ValueType>& rhs);
 
     /**
      * @brief Arithmetic add operator, addition of a second field.
      * @param rhs The field to add with this field.
      * @returns The result of the addition.
      */
-    Field<ValueType>& operator+=(const Field<ValueType>& rhs)
-    {
-        validateOtherField(rhs);
-        add(*this, rhs);
-        return *this;
-    }
+    Field<ValueType>& operator+=(const Field<ValueType>& rhs);
 
     /**
      * @brief Arithmetic subtraction operator, subtraction by a second field.
      * @param rhs The field to subtract from this field.
      * @returns The result of the subtraction.
      */
-    Field<ValueType>& operator-=(const Field<ValueType>& rhs)
-    {
-        validateOtherField(rhs);
-        sub(*this, rhs);
-        return *this;
-    }
+    Field<ValueType>& operator-=(const Field<ValueType>& rhs);
 
     /**
      * @brief Arithmetic multiply operator, multiply by a second field.
      * @param rhs The field to subtract from this field.
      * @returns The result of the multiply.
      */
-    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs)
-    {
-        // FIXME
-        // validateOtherField(rhs);
-        // Field<ValueType> result(exec_, size_);
-        // result = *this;
-        // mul(result, rhs);
-        // return result;
-    }
+    [[nodiscard]] Field<ValueType> operator*(const Field<scalar>& rhs);
 
     /**
      * @brief Arithmetic multiply operator, multiplies every cell in the field
@@ -209,39 +180,13 @@ public:
      * @param rhs The scalar to multiply with the field.
      * @returns The result of the multiplication.
      */
-    [[nodiscard]] Field<ValueType> operator*(const scalar rhs)
-    {
-        Field<ValueType> result(exec_, size_);
-        result = *this;
-        scalarMul(result, rhs);
-        return result;
-    }
+    [[nodiscard]] Field<ValueType> operator*(const scalar rhs);
 
     /**
      * @brief Resizes the field to a new size.
      * @param size The new size to set the field to.
      */
-    void resize(const size_t size)
-    {
-        void* ptr = nullptr;
-        if (!empty())
-        {
-            std::visit(
-                [this, &ptr, size](const auto& exec)
-                { ptr = exec.realloc(this->data_, size * sizeof(ValueType)); },
-                exec_
-            );
-        }
-        else
-        {
-            std::visit(
-                [&ptr, size](const auto& exec) { ptr = exec.alloc(size * sizeof(ValueType)); },
-                exec_
-            );
-        }
-        data_ = static_cast<ValueType*>(ptr);
-        size_ = size;
-    }
+    void resize(const size_t size);
 
     /**
      * @brief Direct access to the underlying field data
