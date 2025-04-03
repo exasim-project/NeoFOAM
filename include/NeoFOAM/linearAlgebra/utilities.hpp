@@ -29,14 +29,15 @@ gko::array<T> createGkoArray(std::shared_ptr<const gko::Executor> exec, std::spa
 
 template<typename T>
 gko::detail::const_array_view<T>
-createConstGkoArray(std::shared_ptr<const gko::Executor> exec, std::span<const T> values)
+createConstGkoArray(std::shared_ptr<const gko::Executor> exec, const std::span<const T> values)
 {
     return gko::make_const_array_view(exec, values.size(), values.data());
 }
 
 template<typename ValueType, typename IndexType>
-std::shared_ptr<gko::matrix::Csr<ValueType, int>>
-createGkoMtx(std::shared_ptr<const gko::Executor> exec, LinearSystem<ValueType, IndexType>& sys)
+std::shared_ptr<gko::matrix::Csr<ValueType, int>> createGkoMtx(
+    std::shared_ptr<const gko::Executor> exec, const LinearSystem<ValueType, IndexType>& sys
+)
 {
     size_t nrows = sys.rhs().size();
     // TODO: avoid copying
@@ -59,6 +60,17 @@ createGkoDense(std::shared_ptr<const gko::Executor> exec, ValueType* ptr, size_t
         exec, gko::dim<2> {size, 1}, createGkoArray(exec, std::span {ptr, size}), 1
     ));
 }
+
+template<typename ValueType>
+std::shared_ptr<gko::matrix::Dense<ValueType>>
+createGkoDense(std::shared_ptr<const gko::Executor> exec, const ValueType* ptr, size_t size)
+{
+    auto const_array_view = gko::array<ValueType>::const_view(exec, size, ptr);
+    return gko::share(gko::matrix::Dense<ValueType>::create(
+        exec, gko::dim<2> {size, 1}, const_array_view.copy_to_array(), 1
+    ));
+}
+
 }
 
 }

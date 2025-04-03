@@ -18,7 +18,7 @@
 namespace NeoFOAM::finiteVolume::cellCentred
 {
 
-/* @class SurfaceInterpolationFactor
+/* @class SurfaceInterpolationFactory
 **
 */
 template<typename ValueType>

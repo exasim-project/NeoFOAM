@@ -15,10 +15,8 @@
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 
-#if NF_WITH_GINKGO
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
-#endif
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+#include "NeoFOAM/linearAlgebra/solver.hpp"
 
 // FIXME
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
@@ -43,7 +41,7 @@ void solve(
     scalar t,
     scalar dt,
     [[maybe_unused]] const Dictionary& fvSchemes,
-    [[maybe_unused]] const Dictionary& fvSolution
+    const Dictionary& fvSolution
 )
 {
     // TODO:
@@ -56,7 +54,7 @@ void solve(
     {
         // integrate equations in time
         timeIntegration::TimeIntegration<FieldType> timeIntegrator(
-            fvSchemes.subDict("ddtSchemes"), fvSolution
+            fvSchemes.subDict("ddtSchemes"), fvSchemes
         );
         timeIntegrator.solve(exp, solution, t, dt);
     }
@@ -83,12 +81,8 @@ void solve(
             KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSource[i] * vol[i]; }
         );
 
-#if NF_WITH_GINKGO
-        auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
+        auto solver = NeoFOAM::la::Solver(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
-#else
-        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
-#endif
     }
 }
 
