@@ -10,6 +10,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/core/dictionary.hpp"
+#include "NeoFOAM/linearAlgebra/solver.hpp"
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 #include "NeoFOAM/linearAlgebra/utilities.hpp"
 
@@ -19,23 +20,28 @@ namespace NeoFOAM::la::ginkgo
 
 gko::config::pnode parse(const Dictionary& dict);
 
-template<typename ValueType>
-class Solver
+class GinkgoSolver : public SolverFactory::template Register<GinkgoSolver>
 {
+
+    using Base = SolverFactory::template Register<GinkgoSolver>;
 
 public:
 
-    Solver(Executor exec, Dictionary solverConfig)
-        : gkoExec_(getGkoExecutor(exec)), config_(parse(solverConfig)),
-          factory_(
-              gko::config::parse(
-                  config_, gko::config::registry(), gko::config::make_type_descriptor<ValueType>()
-              )
-                  .on(gkoExec_)
+    GinkgoSolver(Executor exec, const Dictionary& solverConfig)
+        : Base(exec), gkoExec_(getGkoExecutor(exec)), config_(parse(solverConfig)),
+          factory_(gko::config::parse(
+                       config_, gko::config::registry(), gko::config::make_type_descriptor<scalar>()
           )
+                       .on(gkoExec_))
     {}
 
-    void solve(LinearSystem<ValueType, localIdx>& sys, Field<ValueType>& x)
+    static std::string name() { return "Ginkgo"; }
+
+    static std::string doc() { return "TBD"; }
+
+    static std::string schema() { return "none"; }
+
+    virtual void solve(const LinearSystem<scalar, localIdx>& sys, Field<scalar>& x) const final
     {
         size_t nrows = sys.rhs().size();
 
@@ -46,6 +52,12 @@ public:
         auto gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);
 
         solver->apply(rhs, gkoX);
+    }
+
+    virtual std::unique_ptr<SolverFactory> clone() const final
+    {
+        // FIXME
+        return {};
     }
 
 private:

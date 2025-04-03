@@ -14,7 +14,7 @@ using NeoFOAM::localIdx;
 using NeoFOAM::Field;
 using NeoFOAM::la::LinearSystem;
 using NeoFOAM::la::CSRMatrix;
-using NeoFOAM::la::ginkgo::Solver;
+using NeoFOAM::la::Solver;
 
 TEST_CASE("Dictionary Parsing - Ginkgo")
 {
@@ -102,14 +102,13 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         Field<scalar> x(exec, {0.0, 0.0, 0.0});
 
         Dictionary solverDict {
-            {{"type", "solver::Cg"},
+            {{"solver", "Ginkgo"},
+             {"type", "solver::Cg"},
              {"criteria", Dictionary {{{"iteration", 3}, {"relative_residual_norm", 1e-7}}}}}
         };
 
         // Create solver
-        NeoFOAM::Input input = NeoFOAM::TokenList({std::string("linear")});
-        auto solver = NeoFOAM::la::Solver(exec, input);
-        // auto solver = Solver<scalar>(exec, solverDict);
+        auto solver = NeoFOAM::la::Solver(exec, solverDict);
 
         // Solve system
         solver.solve(linearSystem, x);

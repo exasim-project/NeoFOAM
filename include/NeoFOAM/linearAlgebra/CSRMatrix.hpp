@@ -225,7 +225,7 @@ private:
  */
 template<typename ValueTypeIn, typename IndexTypeIn, typename ValueTypeOut, typename IndexTypeOut>
 la::CSRMatrix<ValueTypeOut, IndexTypeOut>
-convert(const Executor exec, const la::CSRMatrixView<ValueTypeIn, IndexTypeIn> in)
+convert(const Executor exec, const la::CSRMatrixView<const ValueTypeIn, const IndexTypeIn> in)
 {
     Field<IndexTypeOut> colIdxsTmp(exec, in.columnIndex.size());
     Field<IndexTypeOut> rowPtrsTmp(exec, in.rowOffset.size());

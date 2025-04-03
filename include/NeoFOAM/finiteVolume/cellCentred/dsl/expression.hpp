@@ -6,7 +6,7 @@
 
 #include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#include "NeoFOAM/linearAlgebra/solver.hpp"
 #include "NeoFOAM/dsl/expression.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
@@ -146,15 +146,9 @@ public:
         }
         else
         {
-#if NF_WITH_GINKGO
-            // TODO: currently only we just pass the fvSolution dict to satisfy the compiler
-            // however, this should be the correct solver dict
             auto exec = psi_.exec();
-            auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
+            auto solver = NeoFOAM::la::Solver(exec, fvSolution_);
             solver.solve(ls_, psi_.internalField());
-#else
-            NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
-#endif
         }
     }
 

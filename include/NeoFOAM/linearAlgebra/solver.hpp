@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 #pragma once
 
+#include "NeoFOAM/core/input.hpp"
+#include "NeoFOAM/core/runtimeSelectionFactory.hpp"
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 namespace NeoFOAM::la
@@ -10,26 +12,20 @@ namespace NeoFOAM::la
 **
 */
 class SolverFactory :
-    public RuntimeSelectionFactory<SolverFactory, Parameters<const Executor&, const Input&>>
+    public RuntimeSelectionFactory<SolverFactory, Parameters<const Executor&, const Dictionary&>>
 {
 public:
 
-    static std::unique_ptr<SolverFactory> create(const Executor& exec, const Input& inputs)
+    static std::unique_ptr<SolverFactory> create(const Executor& exec, const Dictionary& dict)
     {
-        // input is dictionary the key is "interpolation"
-        std::string key = (std::holds_alternative<NeoFOAM::Dictionary>(inputs))
-                            ? std::get<NeoFOAM::Dictionary>(inputs).get<std::string>("solver")
-                            : std::get<NeoFOAM::TokenList>(inputs).next<std::string>();
-
+        auto key = dict.get<std::string>("solver");
         SolverFactory::keyExistsOrError(key);
-        return SolverFactory::table().at(key)(exec, inputs);
+        return SolverFactory::table().at(key)(exec, dict);
     }
 
     static std::string name() { return "SolverFactory"; }
 
     SolverFactory(const Executor& exec) : exec_(exec) {};
-
-    virtual ~SolverFactory() {} // Virtual destructor
 
     virtual void solve(const LinearSystem<scalar, localIdx>&, Field<scalar>&) const = 0;
 
@@ -58,8 +54,8 @@ public:
     Solver(const Executor& exec, std::unique_ptr<SolverFactory> solverInstance)
         : exec_(exec), solverInstance_(std::move(solverInstance)) {};
 
-    Solver(const Executor& exec, const Input& input)
-        : exec_(exec), solverInstance_(SolverFactory::create(exec, input)) {};
+    Solver(const Executor& exec, const Dictionary& dict)
+        : exec_(exec), solverInstance_(SolverFactory::create(exec, dict)) {};
 
     void solve(const LinearSystem<scalar, localIdx>& ls, Field<scalar>& field) const
     {
