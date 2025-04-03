@@ -102,7 +102,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         Field<scalar> x(exec, {0.0, 0.0, 0.0});
 
         Dictionary solverDict {
-            {{"solver", "Ginkgo"},
+            {{"solver", std::string {"Ginkgo"}},
              {"type", "solver::Cg"},
              {"criteria", Dictionary {{{"iteration", 3}, {"relative_residual_norm", 1e-7}}}}}
         };
