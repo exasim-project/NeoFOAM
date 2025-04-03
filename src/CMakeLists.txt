@@ -22,6 +22,7 @@ target_sources(
           "core/dictionary.cpp"
           "core/demangle.cpp"
           "core/io/dataOutput.cpp"
+          "core/io/staticIOComponents.cpp"
           "core/tokenList.cpp"
           "dsl/coeff.cpp"
           "dsl/operator.cpp"
