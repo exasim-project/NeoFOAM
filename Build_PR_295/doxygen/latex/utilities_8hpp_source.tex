@@ -33,40 +33,52 @@
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00029}00029\ }
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00030}00030\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00031}00031\ gko::detail::const\_array\_view<T>}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00032}00032\ createConstGkoArray(std::shared\_ptr<const\ gko::Executor>\ exec,\ std::span<const\ T>\ values)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00032}00032\ createConstGkoArray(std::shared\_ptr<const\ gko::Executor>\ exec,\ \textcolor{keyword}{const}\ std::span<const\ T>\ values)}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00033}00033\ \{}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00034}00034\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::make\_const\_array\_view(exec,\ values.size(),\ values.data());}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00035}00035\ \}}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00036}00036\ }
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00037}00037\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType>}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00038}00038\ std::shared\_ptr<gko::matrix::Csr<ValueType,\ int>>}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00039}00039\ createGkoMtx(std::shared\_ptr<const\ gko::Executor>\ exec,\ LinearSystem<ValueType,\ IndexType>\&\ sys)}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00040}00040\ \{}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00041}00041\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ nrows\ =\ sys.rhs().size();}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00042}00042\ \ \ \ \ \textcolor{comment}{//\ TODO:\ avoid\ copying}}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00043}00043\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ since\ mtx\ is\ a\ converted\ copy\ we\ need\ to\ make\ sure\ that\ mtx\ data\ is\ not}}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00044}00044\ \ \ \ \ \textcolor{comment}{//\ deallocated\ before\ solving}}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00045}00045\ \ \ \ \ \textcolor{keyword}{auto}\ mtx\ =\ convert<ValueType,\ IndexType,\ ValueType,\ int>(sys.exec(),\ sys.view().matrix);}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00046}00046\ \ \ \ \ \textcolor{keyword}{auto}\ vals\ =\ createGkoArray(exec,\ mtx.values().span());}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00047}00047\ \ \ \ \ \textcolor{keyword}{auto}\ col\ =\ createGkoArray(exec,\ mtx.colIdxs().span());}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keyword}{auto}\ row\ =\ createGkoArray(exec,\ mtx.rowPtrs().span());}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00049}00049\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ gko::matrix::Csr<ValueType,\ int>::create(exec,\ gko::dim<2>\ \{nrows,\ nrows\},\ vals,\ col,\ row)}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00051}00051\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00052}00052\ \}}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00053}00053\ }
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00054}00054\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00055}00055\ std::shared\_ptr<gko::matrix::Dense<ValueType>>}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00056}00056\ createGkoDense(std::shared\_ptr<const\ gko::Executor>\ exec,\ ValueType*\ ptr,\ \textcolor{keywordtype}{size\_t}\ size)}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00057}00057\ \{}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(gko::matrix::Dense<ValueType>::create(}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ exec,\ gko::dim<2>\ \{size,\ 1\},\ createGkoArray(exec,\ std::span\ \{ptr,\ size\}),\ 1}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00060}00060\ \ \ \ \ ));}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00061}00061\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00038}00038\ std::shared\_ptr<gko::matrix::Csr<ValueType,\ int>>\ createGkoMtx(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00039}00039\ \ \ \ \ std::shared\_ptr<const\ gko::Executor>\ exec,\ \textcolor{keyword}{const}\ LinearSystem<ValueType,\ IndexType>\&\ sys}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00040}00040\ )}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00041}00041\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00042}00042\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ nrows\ =\ sys.rhs().size();}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00043}00043\ \ \ \ \ \textcolor{comment}{//\ TODO:\ avoid\ copying}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00044}00044\ \ \ \ \ \textcolor{comment}{//\ NOTE:\ since\ mtx\ is\ a\ converted\ copy\ we\ need\ to\ make\ sure\ that\ mtx\ data\ is\ not}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00045}00045\ \ \ \ \ \textcolor{comment}{//\ deallocated\ before\ solving}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00046}00046\ \ \ \ \ \textcolor{keyword}{auto}\ mtx\ =\ convert<ValueType,\ IndexType,\ ValueType,\ int>(sys.exec(),\ sys.view().matrix);}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00047}00047\ \ \ \ \ \textcolor{keyword}{auto}\ vals\ =\ createGkoArray(exec,\ mtx.values().span());}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keyword}{auto}\ col\ =\ createGkoArray(exec,\ mtx.colIdxs().span());}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00049}00049\ \ \ \ \ \textcolor{keyword}{auto}\ row\ =\ createGkoArray(exec,\ mtx.rowPtrs().span());}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00050}00050\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ gko::matrix::Csr<ValueType,\ int>::create(exec,\ gko::dim<2>\ \{nrows,\ nrows\},\ vals,\ col,\ row)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00052}00052\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00053}00053\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00055}00055\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00056}00056\ std::shared\_ptr<gko::matrix::Dense<ValueType>>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00057}00057\ createGkoDense(std::shared\_ptr<const\ gko::Executor>\ exec,\ ValueType*\ ptr,\ \textcolor{keywordtype}{size\_t}\ size)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00058}00058\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(gko::matrix::Dense<ValueType>::create(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ exec,\ gko::dim<2>\ \{size,\ 1\},\ createGkoArray(exec,\ std::span\ \{ptr,\ size\}),\ 1}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00061}00061\ \ \ \ \ ));}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00062}00062\ \}}
 \DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00063}00063\ }
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00064}00064\ \}}
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00065}00065\ }
-\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00066}00066\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00064}00064\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00065}00065\ std::shared\_ptr<gko::matrix::Dense<ValueType>>}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00066}00066\ createGkoDense(std::shared\_ptr<const\ gko::Executor>\ exec,\ \textcolor{keyword}{const}\ ValueType*\ ptr,\ \textcolor{keywordtype}{size\_t}\ size)}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00067}00067\ \{}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00068}00068\ \ \ \ \ \textcolor{keyword}{auto}\ const\_array\_view\ =\ gko::array<ValueType>::const\_view(exec,\ size,\ ptr);}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00069}00069\ \ \ \ \ \textcolor{keywordflow}{return}\ gko::share(gko::matrix::Dense<ValueType>::create(}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ exec,\ gko::dim<2>\ \{size,\ 1\},\ const\_array\_view.copy\_to\_array(),\ 1}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00071}00071\ \ \ \ \ ));}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00072}00072\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00074}00074\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00076}00076\ \}}
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00077}00077\ }
+\DoxyCodeLine{\Hypertarget{utilities_8hpp_source_l00078}00078\ \textcolor{preprocessor}{\#endif}}
 
 \end{DoxyCode}
