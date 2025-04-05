@@ -51,6 +51,7 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
             {
                 throw std::runtime_error("Unsupported executor type");
             }
+	    return gko::ReferenceExecutor::create();
         },
         exec
     );
