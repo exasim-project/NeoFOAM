@@ -19,7 +19,7 @@ TEST_CASE("parallelFor")
 
 
     auto fieldStdSpan = field.span();
-    auto fieldNFSpan = NeoFOAM::Span(fieldStdSpan);
+    auto fieldNFSpan = NeoFOAM::View(fieldStdSpan);
 
     NeoFOAM::parallelFor(
         exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
@@ -39,7 +39,7 @@ TEST_CASE("parallelFor")
 #endif
 
     auto fieldHost = field.copyToHost();
-    auto fieldNFSpanHost = NeoFOAM::Span(fieldHost.span());
+    auto fieldNFSpanHost = NeoFOAM::View(fieldHost.span());
 
 #ifdef NF_DEBUG
 // TODO: on MSCV this results in a non terminating loop

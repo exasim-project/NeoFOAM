@@ -18,7 +18,7 @@ namespace NeoFOAM
  *
  */
 template<typename ValueType>
-class Span : public std::span<ValueType>
+class View : public std::span<ValueType>
 {
 public:
 
@@ -37,7 +37,7 @@ public:
 
     /* Constructor from existing std::span
      */
-    Span(std::span<ValueType> in) : Span(in.begin(), in.end()) {}
+    View(std::span<ValueType> in) : View(in.begin(), in.end()) {}
 
     constexpr ValueType& operator[](std::size_t index) const
     {
