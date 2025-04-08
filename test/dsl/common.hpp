@@ -114,7 +114,7 @@ public:
     {
         auto sourceSpan = source.span();
         auto fieldSpan = this->field_.internalField().span();
-        auto coeff = this->getCoefficient();
+        auto coeff = this->getCoefficient().span();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
@@ -129,7 +129,7 @@ public:
         auto values = ls.matrix().values().span();
         auto rhs = ls.rhs().span();
         auto fieldSpan = this->field_.internalField().span();
-        auto coeff = this->getCoefficient();
+        auto coeff = this->getCoefficient().span();
 
         // update diag
         NeoFOAM::parallelFor(

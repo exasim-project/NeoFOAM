@@ -32,6 +32,7 @@ public:
         execs.push_back({"CPUExecutor", NeoFOAM::CPUExecutor {}});
 #endif
 
+        execs.push_back({"GPUExecutor", NeoFOAM::GPUExecutor {}});
 #if defined(KOKKOS_ENABLE_CUDA)
         execs.push_back({"GPUExecutor", NeoFOAM::GPUExecutor {}});
 #elif defined(KOKKOS_ENABLE_HIP)
