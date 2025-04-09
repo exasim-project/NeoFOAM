@@ -69,50 +69,50 @@ TEST_CASE("LinearSystem")
         auto hostLSView = hostLS.view();
 
         // some simple sanity checks
-        REQUIRE(hostLSView.A.value.size() == 9);
-        REQUIRE(hostLSView.A.columnIndex.size() == 9);
-        REQUIRE(hostLSView.A.rowOffset.size() == 4);
-        REQUIRE(hostLSView.b.size() == 3);
+        REQUIRE(hostLSView.matrix.values.size() == 9);
+        REQUIRE(hostLSView.matrix.colIdxs.size() == 9);
+        REQUIRE(hostLSView.matrix.rowOffs.size() == 4);
+        REQUIRE(hostLSView.rhs.size() == 3);
 
         // check system values
-        for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.values.size(); ++i)
         {
-            REQUIRE(hostLSView.A.value[i] == static_cast<scalar>(i + 1));
-            REQUIRE(hostLSView.A.columnIndex[i] == (i % 3));
+            REQUIRE(hostLSView.matrix.values[i] == static_cast<scalar>(i + 1));
+            REQUIRE(hostLSView.matrix.colIdxs[i] == (i % 3));
         }
-        for (size_t i = 0; i < hostLSView.A.rowOffset.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.rowOffs.size(); ++i)
         {
-            REQUIRE(hostLSView.A.rowOffset[i] == static_cast<localIdx>(i * 3));
+            REQUIRE(hostLSView.matrix.rowOffs[i] == static_cast<localIdx>(i * 3));
         }
-        for (size_t i = 0; i < hostLSView.b.size(); ++i)
+        for (size_t i = 0; i < hostLSView.rhs.size(); ++i)
         {
-            REQUIRE(hostLSView.b[i] == static_cast<scalar>((i + 1) * 10));
+            REQUIRE(hostLSView.rhs[i] == static_cast<scalar>((i + 1) * 10));
         }
 
         // Modify values.
         parallelFor(
             exec,
-            {0, lsView.A.value.size()},
-            KOKKOS_LAMBDA(const size_t i) { lsView.A.value[i] = -lsView.A.value[i]; }
+            {0, lsView.matrix.values.size()},
+            KOKKOS_LAMBDA(const size_t i) { lsView.matrix.values[i] = -lsView.matrix.values[i]; }
         );
 
         // Modify values.
         parallelFor(
             exec,
-            {0, lsView.b.size()},
-            KOKKOS_LAMBDA(const size_t i) { lsView.b[i] = -lsView.b[i]; }
+            {0, lsView.rhs.size()},
+            KOKKOS_LAMBDA(const size_t i) { lsView.rhs[i] = -lsView.rhs[i]; }
         );
 
         // Check modification.
         hostLS = ls.copyToHost();
         hostLSView = hostLS.view();
-        for (size_t i = 0; i < hostLSView.A.value.size(); ++i)
+        for (size_t i = 0; i < hostLSView.matrix.values.size(); ++i)
         {
-            REQUIRE(hostLSView.A.value[i] == -static_cast<scalar>(i + 1));
+            REQUIRE(hostLSView.matrix.values[i] == -static_cast<scalar>(i + 1));
         }
-        for (size_t i = 0; i < hostLSView.b.size(); ++i)
+        for (size_t i = 0; i < hostLSView.rhs.size(); ++i)
         {
-            REQUIRE(hostLSView.b[i] == -static_cast<scalar>((i + 1) * 10));
+            REQUIRE(hostLSView.rhs[i] == -static_cast<scalar>((i + 1) * 10));
         }
     }
 

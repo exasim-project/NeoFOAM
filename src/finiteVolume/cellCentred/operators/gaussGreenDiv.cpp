@@ -162,7 +162,7 @@ void computeDivImp(
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset()
     );
-    auto [A, b] = ls.view();
+    auto [matrix, rhs] = ls.view();
 
     parallelFor(
         exec,
@@ -176,30 +176,30 @@ void computeDivImp(
             std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
 
             // add neighbour contribution upper
-            std::size_t rowNeiStart = A.rowOffset[nei];
-            std::size_t rowOwnStart = A.rowOffset[own];
+            std::size_t rowNeiStart = matrix.rowOffs[nei];
+            std::size_t rowOwnStart = matrix.rowOffs[own];
 
             value = -weight * flux * one<ValueType>();
             // scalar valueNei = (1 - weight) * flux;
-            A.value[rowNeiStart + neiOffs[facei]] += value;
-            Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value);
+            matrix.values[rowNeiStart + neiOffs[facei]] += value;
+            Kokkos::atomic_sub(&matrix.values[rowOwnStart + diagOffs[own]], value);
 
             // upper triangular part
             // add owner contribution lower
             value = flux * (1 - weight) * one<ValueType>();
-            A.value[rowOwnStart + ownOffs[facei]] += value;
-            Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value);
+            matrix.values[rowOwnStart + ownOffs[facei]] += value;
+            Kokkos::atomic_sub(&matrix.values[rowNeiStart + diagOffs[nei]], value);
         }
     );
 
     parallelFor(
         exec,
-        {0, b.size()},
+        {0, rhs.size()},
         KOKKOS_LAMBDA(const size_t celli) {
-            b[celli] *= operatorScaling[celli];
-            for (size_t i = A.rowOffset[celli]; i < A.rowOffset[celli + 1]; i++)
+            rhs[celli] *= operatorScaling[celli];
+            for (size_t i = matrix.rowOffs[celli]; i < matrix.rowOffs[celli + 1]; i++)
             {
-                A.value[i] *= operatorScaling[celli];
+                matrix.values[i] *= operatorScaling[celli];
             }
         }
     );

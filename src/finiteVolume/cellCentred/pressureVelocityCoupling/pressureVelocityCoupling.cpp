@@ -19,8 +19,8 @@ discreteMomentumFields(const Expression<Vector>& expr)
     const auto vol = mesh.cellVolumes().span();
     const auto diagOffset = sparsityPattern.diagOffset().span();
     auto ls = expr.linearSystem().view();
-    const auto rhs = ls.b;
-    auto [values, col, rowPtrs] = ls.A;
+    const auto rhs = ls.rhs;
+    auto [values, col, rowPtrs] = ls.matrix;
 
     auto rABCs = createCalculatedBCs<VolumeBoundary<scalar>>(mesh);
     VolumeField<scalar> rAU = VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
@@ -101,7 +101,7 @@ void updateFaceVelocity(
     );
 
     const auto ls = expr.linearSystem().view();
-    auto [values, colIdxs, rowPtrs] = ls.A;
+    auto [values, colIdxs, rowPtrs] = ls.matrix;
     auto [iPhi, iPredPhi] = spans(phi.internalField(), predictedPhi.internalField());
 
     parallelFor(

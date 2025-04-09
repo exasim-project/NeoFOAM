@@ -37,14 +37,15 @@ void SourceTerm<ValueType>::implicitOperation(la::LinearSystem<ValueType, localI
     const auto vol = coefficients_.mesh().cellVolumes().span();
     const auto [diagOffs, coeff] =
         spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
-    auto [A, b] = ls.view();
+    auto [matrix, rhs] = ls.view();
 
     NeoFOAM::parallelFor(
         ls.exec(),
         {0, coeff.size()},
         KOKKOS_LAMBDA(const size_t celli) {
-            std::size_t idx = A.rowOffset[celli] + diagOffs[celli];
-            A.value[idx] += operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
+            std::size_t idx = matrix.rowOffs[celli] + diagOffs[celli];
+            matrix.values[idx] +=
+                operatorScaling[celli] * coeff[celli] * vol[celli] * one<ValueType>();
         }
     );
 }
