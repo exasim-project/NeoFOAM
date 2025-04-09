@@ -28,10 +28,31 @@ function(neofoam_unit_test TEST)
   endif()
 
   add_executable(${neofoam_COMMAND} "${TEST}.cpp")
+
+  if(NEOFOAM_WITH_PETSC)
+    message("${PETSc_LIBRARIES}")
+    target_link_libraries(${neofoam_COMMAND} PRIVATE ${PETSc_LIBRARIES})
+  endif()
+
   set_target_properties(${neofoam_COMMAND} PROPERTIES OUTPUT_NAME ${TEST})
   target_link_libraries(
-    ${neofoam_COMMAND} PRIVATE neofoam_catch_main neofoam_warnings neofoam_options Kokkos::kokkos
-                               NeoFOAM cpptrace::cpptrace)
+    ${neofoam_COMMAND}
+    PRIVATE neofoam_catch_main
+            neofoam_warnings
+            neofoam_options
+            Kokkos::kokkos
+            NeoFOAM
+            cpptrace::cpptrace
+            mpi)
+  if(NEOFOAM_WITH_PETSC)
+    message("Hallo")
+    message("${PETSc_LIBRARIES}")
+    target_link_libraries(${neofoam_COMMAND} PRIVATE ${PETSc_LIBRARIES}
+                                                     ${PETSc_LIBRARY_DIRS}/libkokkoscore.so mpi)
+    target_include_directories(${neofoam_COMMAND} PRIVATE ${PETSc_INCLUDE_DIRS})
+    target_link_directories(${neofoam_COMMAND} PRIVATE ${PETSc_LIBRARY_DIRS})
+    link_directories(${PETSc_LIBRARY_DIRS})
+  endif()
 
   if(NEOFOAM_WITH_SUNDIALS)
     target_link_libraries(${neofoam_COMMAND} PRIVATE SUNDIALS::arkode)
