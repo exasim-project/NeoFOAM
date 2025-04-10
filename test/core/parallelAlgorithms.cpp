@@ -155,7 +155,7 @@ TEST_CASE("parallelReduce")
 
 TEST_CASE("parallelScan")
 {
-    NeoN::Executor exec = GENERATE(NeoN::Executor(NeoFOAM::SerialExecutor {})
+    NeoN::Executor exec = GENERATE(NeoN::Executor(NeoN::SerialExecutor {})
                                    // NeoN::Executor(NeoN::CPUExecutor {}),
                                    // NeoN::Executor(NeoN::GPUExecutor {})
     );

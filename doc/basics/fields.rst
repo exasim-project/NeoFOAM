@@ -115,6 +115,6 @@ Functionally, the ``VolumeField`` and the ``SurfaceField`` classes are comparabl
 A difference in the SurfaceField implementation is that the ``internalField`` also contains the boundary values, so no branches (if) are required when iterating over all cell faces.
 Thus the size of the ``internalField`` in NeoN differs from that of OpenFOAM.
 
-Further details `VolumeField  <https://exasim-project.com/NeoN/latest/doxygen/html/classNeoN_1_1finiteVolume_1_1cellCentred_1_1VolumeField.html>`_ and `ScalarField  <https://exasim-project.com/NeoFOAM/latest/doxygen/html/classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1ScalarField.html>`_.
+Further details `VolumeField  <https://exasim-project.com/NeoN/latest/doxygen/html/classNeoN_1_1finiteVolume_1_1cellCentred_1_1VolumeField.html>`_ and `ScalarField  <https://exasim-project.com/NeoN/latest/doxygen/html/classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1ScalarField.html>`_.
 
 .. _api_fields:

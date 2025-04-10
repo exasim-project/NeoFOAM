@@ -51,7 +51,7 @@ TEST_CASE("tokenList")
 
     SECTION("Next Token")
     {
-        tokenList = NeoN::TokenList({NeoN::label(1), NeoFOAM::scalar(2.0), std::string("string")});
+        tokenList = NeoN::TokenList({NeoN::label(1), NeoN::scalar(2.0), std::string("string")});
         REQUIRE(tokenList.size() == 3);
         REQUIRE(tokenList.next<NeoN::label>() == 1);
         REQUIRE(tokenList.next<NeoN::scalar>() == 2.0);

@@ -59,7 +59,7 @@ TEST_CASE("TimeIntegration")
     SECTION("Create expression and perform explicitOperation on " + execName)
     {
         auto dummy = Dummy(vf);
-        NeoN::dsl::TemporalOperator<NeoN::scalar> ddtOperator = NeoFOAM::dsl::imp::ddt(vf);
+        NeoN::dsl::TemporalOperator<NeoN::scalar> ddtOperator = NeoN::dsl::imp::ddt(vf);
 
         // ddt(U) = f
         NeoN::dsl::Expression<NeoN::scalar> eqn = ddtOperator + dummy;

@@ -110,7 +110,7 @@ public:
         )
     {}
 
-    void explicitOperation(NeoN::Field<ValueType>& source, NeoN::scalar, NeoFOAM::scalar)
+    void explicitOperation(NeoN::Field<ValueType>& source, NeoN::scalar, NeoN::scalar)
     {
         auto sourceSpan = source.span();
         auto fieldSpan = this->field_.internalField().span();
@@ -122,9 +122,8 @@ public:
         );
     }
 
-    void implicitOperation(
-        la::LinearSystem<ValueType, NeoN::localIdx>& ls, NeoN::scalar, NeoFOAM::scalar
-    )
+    void
+    implicitOperation(la::LinearSystem<ValueType, NeoN::localIdx>& ls, NeoN::scalar, NeoN::scalar)
     {
         auto values = ls.matrix().values().span();
         auto rhs = ls.rhs().span();

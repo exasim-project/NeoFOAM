@@ -74,7 +74,7 @@ A full list of the labels can be found `here <https://github.com/exasim-project/
 Building the Documentation
 """"""""""""""""""""""""""
 
-NeoN's documentation can be found `main <https://exasim-project.com/NeoN/latest/index.html>`_  and `doxygen <https://exasim-project.com/NeoFOAM/latest/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally, you can do so by executing the following steps.
+NeoN's documentation can be found `main <https://exasim-project.com/NeoN/latest/index.html>`_  and `doxygen <https://exasim-project.com/NeoN/latest/doxygen/html/>`_ documentation can be found online. However, if you want to build the documentation locally, you can do so by executing the following steps.
 First, make sure that Sphinx and Doxygen are installed on your system. Second, execute the following commands:
 
    .. code-block:: bash

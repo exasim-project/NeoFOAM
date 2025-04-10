@@ -71,7 +71,7 @@ TEST_CASE("Dictionary Parsing - Ginkgo")
     {
         NeoN::Dictionary dict({{"key", std::pair<int*, std::vector<double>> {}}});
 
-        REQUIRE_THROWS_AS(NeoN::la::ginkgo::parse(dict), NeoN::NeoFOAMException);
+        REQUIRE_THROWS_AS(NeoN::la::ginkgo::parse(dict), NeoN::NeoNException);
     }
 }
 

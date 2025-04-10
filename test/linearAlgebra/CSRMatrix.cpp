@@ -18,10 +18,10 @@ TEST_CASE("CSRMatrix")
     NeoN::Field<NeoN::scalar> valuesSparse(exec, {1.0, 5.0, 6.0, 8.0});
     NeoN::Field<NeoN::localIdx> colIdxSparse(exec, {0, 1, 2, 1});
     NeoN::Field<NeoN::localIdx> rowPtrsSparse(exec, {0, 1, 3, 4});
-    NeoN::la::CSRMatrix<NeoN::scalar, NeoFOAM::localIdx> sparseMatrix(
+    NeoN::la::CSRMatrix<NeoN::scalar, NeoN::localIdx> sparseMatrix(
         valuesSparse, colIdxSparse, rowPtrsSparse
     );
-    const NeoN::la::CSRMatrix<NeoN::scalar, NeoFOAM::localIdx> sparseMatrixConst(
+    const NeoN::la::CSRMatrix<NeoN::scalar, NeoN::localIdx> sparseMatrixConst(
         valuesSparse, colIdxSparse, rowPtrsSparse
     );
 
@@ -29,10 +29,10 @@ TEST_CASE("CSRMatrix")
     NeoN::Field<NeoN::scalar> valuesDense(exec, {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0});
     NeoN::Field<NeoN::localIdx> colIdxDense(exec, {0, 1, 2, 0, 1, 2, 0, 1, 2});
     NeoN::Field<NeoN::localIdx> rowPtrsDense(exec, {0, 3, 6, 9});
-    NeoN::la::CSRMatrix<NeoN::scalar, NeoFOAM::localIdx> denseMatrix(
+    NeoN::la::CSRMatrix<NeoN::scalar, NeoN::localIdx> denseMatrix(
         valuesDense, colIdxDense, rowPtrsDense
     );
-    const NeoN::la::CSRMatrix<NeoN::scalar, NeoFOAM::localIdx> denseMatrixConst(
+    const NeoN::la::CSRMatrix<NeoN::scalar, NeoN::localIdx> denseMatrixConst(
         valuesDense, colIdxDense, rowPtrsDense
     );
 
