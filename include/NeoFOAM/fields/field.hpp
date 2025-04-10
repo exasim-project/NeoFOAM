@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoN authors
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -7,13 +7,13 @@
 #include <iostream>
 #include <span>
 
-#include "NeoFOAM/core/error.hpp"
-#include "NeoFOAM/core/executor/executor.hpp"
-#include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/fieldFreeFunctions.hpp"
-#include "NeoFOAM/fields/fieldTypeDefs.hpp"
+#include "NeoN/core/error.hpp"
+#include "NeoN/core/executor/executor.hpp"
+#include "NeoN/core/primitives/scalar.hpp"
+#include "NeoN/fields/fieldFreeFunctions.hpp"
+#include "NeoN/fields/fieldTypeDefs.hpp"
 
-namespace NeoFOAM
+namespace NeoN
 {
 
 namespace detail
@@ -104,7 +104,7 @@ public:
             [&ptr, size](const auto& execu) { ptr = execu.alloc(size * sizeof(ValueType)); }, exec_
         );
         data_ = static_cast<ValueType*>(ptr);
-        NeoFOAM::fill(*this, value);
+        NeoN::fill(*this, value);
     }
 
     /**
@@ -436,4 +436,4 @@ template<typename T>
     return lhs;
 }
 
-} // namespace NeoFOAM
+} // namespace NeoN

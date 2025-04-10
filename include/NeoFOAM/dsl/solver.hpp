@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023-2024 NeoN authors
 #pragma once
 
 #include <iostream>
@@ -8,23 +8,23 @@
 #include <utility>
 #include <concepts>
 
-#include "NeoFOAM/core/primitives/scalar.hpp"
-#include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/core/input.hpp"
-#include "NeoFOAM/core/primitives/label.hpp"
-#include "NeoFOAM/dsl/expression.hpp"
-#include "NeoFOAM/timeIntegration/timeIntegration.hpp"
+#include "NeoN/core/primitives/scalar.hpp"
+#include "NeoN/fields/field.hpp"
+#include "NeoN/core/input.hpp"
+#include "NeoN/core/primitives/label.hpp"
+#include "NeoN/dsl/expression.hpp"
+#include "NeoN/timeIntegration/timeIntegration.hpp"
 
 #if NF_WITH_GINKGO
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#include "NeoN/linearAlgebra/ginkgo.hpp"
 #endif
-#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
 
 // FIXME
-#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
+#include "NeoN/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 
-namespace NeoFOAM::dsl
+namespace NeoN::dsl
 {
 
 /* @brief solve an expression
@@ -65,11 +65,11 @@ void solve(
         // solve sparse matrix system
         using ValueType = typename FieldType::ElementType;
 
-        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solution.mesh());
+        auto sparsity = NeoN::finiteVolume::cellCentred::SparsityPattern(solution.mesh());
         auto ls = la::createEmptyLinearSystem<
             ValueType,
             localIdx,
-            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sparsity);
+            NeoN::finiteVolume::cellCentred::SparsityPattern>(sparsity);
 
         exp.implicitOperation(ls);
         auto expTmp = exp.explicitOperation(solution.mesh().nCells());
@@ -87,7 +87,7 @@ void solve(
         auto solver = la::ginkgo::Solver<ValueType>(solution.exec(), fvSolution);
         solver.solve(ls, solution.internalField());
 #else
-        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+        NF_ERROR_EXIT("No linear solver is available, build with -DNeoN_WITH_GINKGO=ON");
 #endif
     }
 }

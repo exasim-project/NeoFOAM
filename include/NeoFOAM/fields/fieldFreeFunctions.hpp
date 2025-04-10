@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoN authors
 #pragma once
 
 #include <tuple>
 #include <span>
 
 #include <Kokkos_Core.hpp>
-#include "NeoFOAM/core/primitives/label.hpp"
-#include "NeoFOAM/helpers/exceptions.hpp"
-#include "NeoFOAM/core/parallelAlgorithms.hpp"
+#include "NeoN/core/primitives/label.hpp"
+#include "NeoN/helpers/exceptions.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
 
-namespace NeoFOAM
+namespace NeoN
 {
 
 // Forward declaration
@@ -106,7 +106,7 @@ void fieldBinaryOp(
     Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b, BinaryOp op
 )
 {
-    NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);
+    NeoN_ASSERT_EQUAL_LENGTH(a, b);
     auto spanA = a.span();
     auto spanB = b.span();
     parallelFor(
@@ -210,4 +210,4 @@ bool equal(const Field<T>& field, std::span<T> span2)
     return true;
 }
 
-} // namespace NeoFOAM
+} // namespace NeoN

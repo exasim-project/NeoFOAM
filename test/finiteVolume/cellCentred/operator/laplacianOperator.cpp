@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2024 NeoN authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 #include "catch2_common.hpp"
 
-#include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoN/NeoN.hpp"
 
 
-using NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolation;
-using NeoFOAM::finiteVolume::cellCentred::VolumeField;
-using NeoFOAM::finiteVolume::cellCentred::SurfaceField;
+using NeoN::finiteVolume::cellCentred::SurfaceInterpolation;
+using NeoN::finiteVolume::cellCentred::VolumeField;
+using NeoN::finiteVolume::cellCentred::SurfaceField;
 
-namespace NeoFOAM
+namespace NeoN
 {
 
 template<typename T>
 using I = std::initializer_list<T>;
 
 // TEST_CASE("laplacianOperator fixedValue")
-TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
+TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoN::scalar, NeoN::Vector)
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     const size_t nCells = 10;
     auto mesh = create1DUniformMesh(exec, nCells);
-    auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
+    auto sp = NeoN::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<scalar>>(mesh);
     fvcc::SurfaceField<scalar> gamma(exec, "gamma", mesh, surfaceBCs);
@@ -36,29 +36,29 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
         std::vector<fvcc::VolumeBoundary<TestType>> bcs;
         bcs.push_back(fvcc::VolumeBoundary<TestType>(
             mesh,
-            NeoFOAM::Dictionary(
+            NeoN::Dictionary(
                 {{"type", std::string("fixedValue")},
-                 {"fixedValue", NeoFOAM::scalar(0.5) * one<TestType>()}}
+                 {"fixedValue", NeoN::scalar(0.5) * one<TestType>()}}
             ),
             0
         ));
         bcs.push_back(fvcc::VolumeBoundary<TestType>(
             mesh,
-            NeoFOAM::Dictionary(
+            NeoN::Dictionary(
                 {{"type", std::string("fixedValue")},
-                 {"fixedValue", NeoFOAM::scalar(10.5) * one<TestType>()}}
+                 {"fixedValue", NeoN::scalar(10.5) * one<TestType>()}}
             ),
             1
         ));
 
         fvcc::VolumeField<TestType> phi(exec, "phi", mesh, bcs);
-        NeoFOAM::parallelFor(
+        NeoN::parallelFor(
             phi.internalField(),
             KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1) * one<TestType>(); }
         );
         phi.correctBoundaryConditions();
 
-        NeoFOAM::Input input = NeoFOAM::TokenList(
+        NeoN::Input input = NeoN::TokenList(
             {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
         );
         SECTION("Construct from Token" + execName)
@@ -83,16 +83,16 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             }
         }
 
-        auto ls = NeoFOAM::la::createEmptyLinearSystem<
+        auto ls = NeoN::la::createEmptyLinearSystem<
             TestType,
-            NeoFOAM::localIdx,
-            NeoFOAM::finiteVolume::cellCentred::SparsityPattern>(sp);
+            NeoN::localIdx,
+            NeoN::finiteVolume::cellCentred::SparsityPattern>(sp);
 
         SECTION("implicit laplacian operator" + execName)
         {
             lapOp.implicitOperation(ls);
             // TODO change to use the new fvcc::expression class
-            // fvcc::Expression<NeoFOAM::scalar> ls2(
+            // fvcc::Expression<NeoN::scalar> ls2(
             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
             // );
 
@@ -116,7 +116,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             // FIXME
             lapOp.implicitOperation(ls);
             // TODO change to use the new fvcc::expression class
-            // fvcc::Expression<NeoFOAM::scalar> ls2(
+            // fvcc::Expression<NeoN::scalar> ls2(
             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
             // );
 
@@ -136,49 +136,49 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 // TEST_CASE("laplacianOperator fixedGradient")
 // {
 //     const size_t nCells = 10;
-//     NeoFOAM::Executor exec = GENERATE(
-//         NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-//         NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-//         NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
+//     NeoN::Executor exec = GENERATE(
+//         NeoN::Executor(NeoN::SerialExecutor {}),
+//         NeoN::Executor(NeoN::CPUExecutor {}),
+//         NeoN::Executor(NeoN::GPUExecutor {})
 //     );
 
 //     std::string execName = std::visit([](auto e) { return e.name(); }, exec);
 
 //     auto mesh = create1DUniformMesh(exec, nCells);
-//     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoFOAM::scalar>>(mesh);
+//     auto surfaceBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(mesh);
 
-//     fvcc::SurfaceField<NeoFOAM::scalar> gamma(exec, "gamma", mesh, surfaceBCs);
+//     fvcc::SurfaceField<NeoN::scalar> gamma(exec, "gamma", mesh, surfaceBCs);
 //     fill(gamma.internalField(), 2.0);
 
 //     SECTION("fixedGradient")
 //     {
-//         std::vector<fvcc::VolumeBoundary<NeoFOAM::scalar>> bcs;
-//         bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(
+//         std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
+//         bcs.push_back(fvcc::VolumeBoundary<NeoN::scalar>(
 //             mesh,
-//             NeoFOAM::Dictionary(
+//             NeoN::Dictionary(
 //                 {{"type", std::string("fixedGradient")}, {"fixedGradient",
-//                 NeoFOAM::scalar(-10.0)}}
+//                 NeoN::scalar(-10.0)}}
 //             ),
 //             0
 //         ));
-//         bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(
+//         bcs.push_back(fvcc::VolumeBoundary<NeoN::scalar>(
 //             mesh,
-//             NeoFOAM::Dictionary(
+//             NeoN::Dictionary(
 //                 {{"type", std::string("fixedGradient")}, {"fixedGradient",
-//                 NeoFOAM::scalar(10.0)}}
+//                 NeoN::scalar(10.0)}}
 //             ),
 //             1
 //         ));
 
-//         fvcc::VolumeField<NeoFOAM::scalar> phi(exec, "phi", mesh, bcs);
-//         NeoFOAM::parallelFor(
+//         fvcc::VolumeField<NeoN::scalar> phi(exec, "phi", mesh, bcs);
+//         NeoN::parallelFor(
 //             phi.internalField(), KOKKOS_LAMBDA(const size_t i) { return scalar(i + 1); }
 //         );
 //         phi.correctBoundaryConditions();
 
 //         SECTION("Construct from Token" + execName)
 //         {
-//             NeoFOAM::Input input = NeoFOAM::TokenList(
+//             NeoN::Input input = NeoN::TokenList(
 //                 {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
 //             );
 //             fvcc::LaplacianOperator(dsl::Operator::Type::Implicit, gamma, phi, input);
@@ -186,11 +186,11 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
 //         SECTION("explicit laplacian operator" + execName)
 //         {
-//             NeoFOAM::Input input = NeoFOAM::TokenList(
+//             NeoN::Input input = NeoN::TokenList(
 //                 {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
 //             );
 //             fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Explicit, gamma, phi, input);
-//             Field<NeoFOAM::scalar> source(exec, nCells, 0.0);
+//             Field<NeoN::scalar> source(exec, nCells, 0.0);
 //             lapOp.explicitOperation(source);
 //             auto sourceHost = source.copyToHost();
 //             auto sSource = sourceHost.span();
@@ -203,7 +203,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
 //         SECTION("implicit laplacian operator" + execName)
 //         {
-//             NeoFOAM::Input input = NeoFOAM::TokenList(
+//             NeoN::Input input = NeoN::TokenList(
 //                 {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
 //             );
 //             fvcc::LaplacianOperator lapOp(dsl::Operator::Type::Explicit, gamma, phi, input);
@@ -211,7 +211,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 //             // auto ls = lapOp.createEmptyLinearSystem();
 //             // lapOp.implicitOperation(ls);
 //             // TODO change to use the new fvcc::expression class
-//             // fvcc::Expression<NeoFOAM::scalar> ls2(
+//             // fvcc::Expression<NeoN::scalar> ls2(
 //             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
 //             // );
 
@@ -229,4 +229,4 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 // }
 
 
-} // namespace NeoFOAM
+} // namespace NeoN

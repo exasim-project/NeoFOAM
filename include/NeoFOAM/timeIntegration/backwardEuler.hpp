@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: MIT
 //
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoN authors
 
 #pragma once
 
-#include "NeoFOAM/core/database/fieldCollection.hpp"
-#include "NeoFOAM/core/database/oldTimeCollection.hpp"
-#include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/timeIntegration/timeIntegration.hpp"
-#include "NeoFOAM/dsl/solver.hpp"
+#include "NeoN/core/database/fieldCollection.hpp"
+#include "NeoN/core/database/oldTimeCollection.hpp"
+#include "NeoN/fields/field.hpp"
+#include "NeoN/timeIntegration/timeIntegration.hpp"
+#include "NeoN/dsl/solver.hpp"
 
 #if NF_WITH_GINKGO
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
+#include "NeoN/linearAlgebra/ginkgo.hpp"
 #endif
 
-#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
 
 // TODO decouple from fvcc
-#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
+#include "NeoN/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
 
-namespace NeoFOAM::timeIntegration
+namespace NeoN::timeIntegration
 {
 
 template<typename SolutionFieldType>
@@ -61,7 +61,7 @@ public:
         using ValueType = typename SolutionFieldType::ElementType;
 
         // TODO decouple from fvcc specific implementation
-        auto sparsity = NeoFOAM::finiteVolume::cellCentred::SparsityPattern(solutionField.mesh());
+        auto sparsity = NeoN::finiteVolume::cellCentred::SparsityPattern(solutionField.mesh());
         auto ls = la::createEmptyLinearSystem<
             ValueType,
             localIdx,
@@ -77,11 +77,11 @@ public:
         la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ls, solutionField.internalField());
 #else
-        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+        NF_ERROR_EXIT("No linear solver is available, build with -DNeoN_WITH_GINKGO=ON");
 #endif
 
         // check if executor is GPU
-        if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))
+        if (std::holds_alternative<NeoN::GPUExecutor>(eqn.exec()))
         {
             Kokkos::fence();
         }
@@ -95,4 +95,4 @@ public:
 };
 
 
-} // namespace NeoFOAM
+} // namespace NeoN

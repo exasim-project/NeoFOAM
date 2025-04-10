@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoN authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -7,21 +7,21 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoN/NeoN.hpp"
 
 
 TEST_CASE("parallelFor")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    NeoFOAM::Field<NeoFOAM::scalar> field(exec, 5);
-    NeoFOAM::fill(field, 2.0);
+    NeoN::Field<NeoN::scalar> field(exec, 5);
+    NeoN::fill(field, 2.0);
 
 
     auto fieldStdSpan = field.span();
-    auto fieldNFSpan = NeoFOAM::Span(fieldStdSpan);
+    auto fieldNFSpan = NeoN::Span(fieldStdSpan);
 
-    NeoFOAM::parallelFor(
+    NeoN::parallelFor(
         exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
     );
     REQUIRE(fieldNFSpan.failureIndex == 0);
@@ -31,7 +31,7 @@ TEST_CASE("parallelFor")
 // so for now we deactivate it on MSVC since it a debugging helper
 #ifndef _MSC_VER
     fieldNFSpan.abort = false;
-    NeoFOAM::parallelFor(
+    NeoN::parallelFor(
         exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
     );
     REQUIRE(fieldNFSpan.failureIndex == 5);
@@ -39,7 +39,7 @@ TEST_CASE("parallelFor")
 #endif
 
     auto fieldHost = field.copyToHost();
-    auto fieldNFSpanHost = NeoFOAM::Span(fieldHost.span());
+    auto fieldNFSpanHost = NeoN::Span(fieldHost.span());
 
 #ifdef NF_DEBUG
 // TODO: on MSCV this results in a non terminating loop

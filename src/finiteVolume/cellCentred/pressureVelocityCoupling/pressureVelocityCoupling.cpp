@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoN authors
 
 
-#include "NeoFOAM/finiteVolume/cellCentred/pressureVelocityCoupling/pressureVelocityCoupling.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
+#include "NeoN/finiteVolume/cellCentred/pressureVelocityCoupling/pressureVelocityCoupling.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
 #include "Kokkos_Core.hpp"
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoN::finiteVolume::cellCentred
 {
 
 std::tuple<VolumeField<scalar>, VolumeField<Vector>>

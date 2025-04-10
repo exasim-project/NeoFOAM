@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2024 NeoFOAM authors
+# SPDX-FileCopyrightText: 2024 NeoN authors
 
-neofoam_unit_test(CSRMatrix)
-neofoam_unit_test(linearSystem)
+neon_unit_test(CSRMatrix)
+neon_unit_test(linearSystem)
 
 # the following tests currently require Ginkgo
-if(NEOFOAM_WITH_GINKGO)
-  neofoam_unit_test(ginkgo)
-  neofoam_unit_test(linearAlgebra)
+if(NeoN_WITH_GINKGO)
+  neon_unit_test(ginkgo)
+  neon_unit_test(linearAlgebra)
 endif()

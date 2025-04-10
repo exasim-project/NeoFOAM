@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2024 NeoFOAM authors
+// SPDX-FileCopyrightText: 2024 NeoN authors
 
 #include "catch2_common.hpp"
 
-#include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoN/NeoN.hpp"
 
 #if NF_WITH_GINKGO
 
-using NeoFOAM::Executor;
-using NeoFOAM::Dictionary;
-using NeoFOAM::scalar;
-using NeoFOAM::localIdx;
-using NeoFOAM::Field;
-using NeoFOAM::la::LinearSystem;
-using NeoFOAM::la::CSRMatrix;
-using NeoFOAM::la::ginkgo::Solver;
+using NeoN::Executor;
+using NeoN::Dictionary;
+using NeoN::scalar;
+using NeoN::localIdx;
+using NeoN::Field;
+using NeoN::la::LinearSystem;
+using NeoN::la::CSRMatrix;
+using NeoN::la::ginkgo::Solver;
 
 TEST_CASE("MatrixAssembly - Ginkgo")
 {
