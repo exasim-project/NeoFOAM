@@ -21,7 +21,7 @@ TEST_CASE("Field Constructors")
         REQUIRE(b.size() == size);
 
         auto hostB = b.copyToHost();
-        for (auto value : hostB.span())
+        for (auto value : hostB.view())
         {
             REQUIRE(value == 5.0);
         }
@@ -30,7 +30,7 @@ TEST_CASE("Field Constructors")
         REQUIRE(initWith5.size() == size);
 
         auto hostInitWith5 = initWith5.copyToHost();
-        for (auto value : hostInitWith5.span())
+        for (auto value : hostInitWith5.view())
         {
             REQUIRE(value == 5.0);
         }
@@ -81,8 +81,8 @@ TEST_CASE("Field Operator Overloads")
 
         a += b;
 
-        auto hostSpanA = a.copyToHost();
-        for (auto value : hostSpanA.span())
+        auto hostViewA = a.copyToHost();
+        for (auto value : hostViewA.view())
         {
             REQUIRE(value == 15.0);
         }
@@ -99,7 +99,7 @@ TEST_CASE("Field Operator Overloads")
         a -= b;
 
         auto hostA = a.copyToHost();
-        for (auto value : hostA.span())
+        for (auto value : hostA.view())
         {
             REQUIRE(value == -5.0);
         }
@@ -116,7 +116,7 @@ TEST_CASE("Field Operator Overloads")
 
         c = a + b;
         auto hostC = c.copyToHost();
-        for (auto value : hostC.span())
+        for (auto value : hostC.view())
         {
             REQUIRE(value == 15.0);
         }
@@ -134,7 +134,7 @@ TEST_CASE("Field Operator Overloads")
         c = a - b;
 
         auto hostC = c.copyToHost();
-        for (auto value : hostC.span())
+        for (auto value : hostC.view())
         {
             REQUIRE(value == -5.0);
         }
@@ -166,32 +166,32 @@ TEST_CASE("Field Container Operations")
         REQUIRE(b.range().second == size);
     };
 
-    SECTION("span" + execName)
+    SECTION("view" + execName)
     {
         NeoFOAM::Field<NeoFOAM::label> a(exec, {1, 2, 3});
         auto hostA = a.copyToHost();
 
-        auto view = hostA.span();
+        auto view = hostA.view();
         REQUIRE(view[0] == 1);
         REQUIRE(view[1] == 2);
         REQUIRE(view[2] == 3);
 
-        auto subView = hostA.span({1, 3});
+        auto subView = hostA.view({1, 3});
         REQUIRE(subView[0] == 2);
         REQUIRE(subView[1] == 3);
     }
 
-    SECTION("spanVector" + execName)
+    SECTION("viewVector" + execName)
     {
         NeoFOAM::Field<NeoFOAM::Vector> a(exec, {{1, 1, 1}, {2, 2, 2}, {3, 3, 3}});
         auto hostA = a.copyToHost();
 
-        auto view = hostA.span();
+        auto view = hostA.view();
         REQUIRE(view[0] == NeoFOAM::Vector(1, 1, 1));
         REQUIRE(view[1] == NeoFOAM::Vector(2, 2, 2));
         REQUIRE(view[2] == NeoFOAM::Vector(3, 3, 3));
 
-        auto subView = hostA.span({1, 3});
+        auto subView = hostA.view({1, 3});
         REQUIRE(subView[0] == NeoFOAM::Vector(2, 2, 2));
         REQUIRE(subView[1] == NeoFOAM::Vector(3, 3, 3));
     }
@@ -231,11 +231,11 @@ TEST_CASE("Field Operations")
         NeoFOAM::fill(b, 10.0);
 
         a = b;
-        REQUIRE(a.span().size() == size + 2);
+        REQUIRE(a.view().size() == size + 2);
         REQUIRE(equal(a, b));
 
         add(a, b);
-        REQUIRE(a.span().size() == size + 2);
+        REQUIRE(a.view().size() == size + 2);
         REQUIRE(equal(a, 20.0));
 
         a = a + b;
@@ -250,7 +250,7 @@ TEST_CASE("Field Operations")
         a = a * b;
         REQUIRE(equal(a, 20.0));
 
-        auto sB = b.span();
+        auto sB = b.view();
         a.apply(KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return 2 * sB[i]; });
         REQUIRE(equal(a, 20.0));
     }
@@ -269,19 +269,19 @@ TEST_CASE("getSpans")
     NeoFOAM::Field<NeoFOAM::scalar> c(exec, 3, 3.0);
 
     auto [hostA, hostB, hostC] = NeoFOAM::copyToHosts(a, b, c);
-    auto [spanB, spanC] = NeoFOAM::spans(b, c);
+    auto [viewB, viewC] = NeoFOAM::spans(b, c);
 
-    REQUIRE(hostA.span()[0] == 1.0);
-    REQUIRE(hostB.span()[0] == 2.0);
-    REQUIRE(hostC.span()[0] == 3.0);
+    REQUIRE(hostA.view()[0] == 1.0);
+    REQUIRE(hostB.view()[0] == 2.0);
+    REQUIRE(hostC.view()[0] == 3.0);
 
     NeoFOAM::parallelFor(
-        a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }
+        a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return viewB[i] + viewC[i]; }
     );
 
     auto hostD = a.copyToHost();
 
-    for (auto value : hostD.span())
+    for (auto value : hostD.view())
     {
         REQUIRE(value == 5.0);
     }

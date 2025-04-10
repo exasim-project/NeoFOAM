@@ -75,7 +75,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             Field<TestType> source(exec, nCells, zero<TestType>());
             lapOp.explicitOperation(source);
             auto sourceHost = source.copyToHost();
-            auto sSource = sourceHost.span();
+            auto sSource = sourceHost.view();
             for (size_t i = 0; i < nCells; i++)
             {
                 // the laplacian of a linear function is 0

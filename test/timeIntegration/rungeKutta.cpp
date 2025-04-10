@@ -39,12 +39,12 @@ public:
 
     void explicitOperation(Field& source) const
     {
-        auto sourceSpan = source.span();
+        auto sourceView = source.view();
         auto fieldData = field_.internalField().data();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
-            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] -= fieldData[i] * fieldData[i]; }
+            KOKKOS_LAMBDA(const size_t i) { sourceView[i] -= fieldData[i] * fieldData[i]; }
         );
     }
 
@@ -132,7 +132,7 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             // check error.
             NeoFOAM::scalar analytical = 1.0 / (initialValue - maxTime);
             auto vfHost = vf.internalField().copyToHost();
-            error[iTest] = std::abs(vfHost.span()[0] - analytical);
+            error[iTest] = std::abs(vfHost.view()[0] - analytical);
             iTest++;
         }
 

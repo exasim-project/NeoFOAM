@@ -18,38 +18,38 @@ TEST_CASE("parallelFor")
     NeoFOAM::fill(field, 2.0);
 
 
-    auto fieldStdSpan = field.span();
-    auto fieldNFSpan = NeoFOAM::View(fieldStdSpan);
+    auto fieldStdView = field.view();
+    auto fieldNFView = NeoFOAM::View(fieldStdView);
 
     NeoFOAM::parallelFor(
-        exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
+        exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { fieldNFView[i] *= 2.0; }
     );
-    REQUIRE(fieldNFSpan.failureIndex == 0);
+    REQUIRE(fieldNFView.failureIndex == 0);
 
 #ifdef NF_DEBUGC
 // TODO: on MSCV this results in a non terminating loop
 // so for now we deactivate it on MSVC since it a debugging helper
 #ifndef _MSC_VER
-    fieldNFSpan.abort = false;
+    fieldNFView.abort = false;
     NeoFOAM::parallelFor(
-        exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldNFSpan[i] *= 2.0; }
+        exec, {5, 6}, KOKKOS_LAMBDA(const size_t i) { fieldNFView[i] *= 2.0; }
     );
-    REQUIRE(fieldNFSpan.failureIndex == 5);
+    REQUIRE(fieldNFView.failureIndex == 5);
 #endif
 #endif
 
     auto fieldHost = field.copyToHost();
-    auto fieldNFSpanHost = NeoFOAM::View(fieldHost.span());
+    auto fieldNFViewHost = NeoFOAM::View(fieldHost.view());
 
 #ifdef NF_DEBUG
 // TODO: on MSCV this results in a non terminating loop
 // so for now we deactivate it on MSVC since it a debugging helper
 #ifndef _MSC_VER
-    fieldNFSpanHost.abort = false;
+    fieldNFViewHost.abort = false;
     SECTION("detects out of range")
     {
-        auto tmp = fieldNFSpanHost[5];
-        REQUIRE(fieldNFSpanHost.failureIndex == 5);
+        auto tmp = fieldNFViewHost[5];
+        REQUIRE(fieldNFViewHost.failureIndex == 5);
     }
 #endif
 #endif
@@ -57,10 +57,10 @@ TEST_CASE("parallelFor")
     // some checking if everything is correct
     SECTION("can access elements")
     {
-        REQUIRE(fieldNFSpanHost[0] == 4.0);
-        REQUIRE(fieldNFSpanHost[1] == 4.0);
-        REQUIRE(fieldNFSpanHost[2] == 4.0);
-        REQUIRE(fieldNFSpanHost[3] == 4.0);
-        REQUIRE(fieldNFSpanHost[4] == 4.0);
+        REQUIRE(fieldNFViewHost[0] == 4.0);
+        REQUIRE(fieldNFViewHost[1] == 4.0);
+        REQUIRE(fieldNFViewHost[2] == 4.0);
+        REQUIRE(fieldNFViewHost[3] == 4.0);
+        REQUIRE(fieldNFViewHost[4] == 4.0);
     }
 };

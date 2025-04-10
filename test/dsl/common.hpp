@@ -41,35 +41,35 @@ public:
 
     void explicitOperation(NeoFOAM::Field<ValueType>& source)
     {
-        auto sourceSpan = source.span();
-        auto fieldSpan = this->field_.internalField().span();
+        auto sourceView = source.view();
+        auto fieldView = this->field_.internalField().view();
         auto coeff = this->getCoefficient();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
-            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += coeff[i] * fieldSpan[i]; }
+            KOKKOS_LAMBDA(const size_t i) { sourceView[i] += coeff[i] * fieldView[i]; }
         );
     }
 
     void implicitOperation(la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
     {
-        auto values = ls.matrix().values().span();
-        auto rhs = ls.rhs().span();
-        auto fieldSpan = this->field_.internalField().span();
+        auto values = ls.matrix().values().view();
+        auto rhs = ls.rhs().view();
+        auto fieldView = this->field_.internalField().view();
         auto coeff = this->getCoefficient();
 
         // update diag
         NeoFOAM::parallelFor(
             this->exec(),
             {0, values.size()},
-            KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldSpan[i]; }
+            KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldView[i]; }
         );
 
         // update rhs
         NeoFOAM::parallelFor(
             this->exec(),
             ls.rhs().range(),
-            KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldSpan[i]; }
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldView[i]; }
         );
     }
 
@@ -112,13 +112,13 @@ public:
 
     void explicitOperation(NeoFOAM::Field<ValueType>& source, NeoFOAM::scalar, NeoFOAM::scalar)
     {
-        auto sourceSpan = source.span();
-        auto fieldSpan = this->field_.internalField().span();
+        auto sourceView = source.view();
+        auto fieldView = this->field_.internalField().view();
         auto coeff = this->getCoefficient();
         NeoFOAM::parallelFor(
             source.exec(),
             source.range(),
-            KOKKOS_LAMBDA(const size_t i) { sourceSpan[i] += coeff[i] * fieldSpan[i]; }
+            KOKKOS_LAMBDA(const size_t i) { sourceView[i] += coeff[i] * fieldView[i]; }
         );
     }
 
@@ -126,23 +126,23 @@ public:
         la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls, NeoFOAM::scalar, NeoFOAM::scalar
     )
     {
-        auto values = ls.matrix().values().span();
-        auto rhs = ls.rhs().span();
-        auto fieldSpan = this->field_.internalField().span();
+        auto values = ls.matrix().values().view();
+        auto rhs = ls.rhs().view();
+        auto fieldView = this->field_.internalField().view();
         auto coeff = this->getCoefficient();
 
         // update diag
         NeoFOAM::parallelFor(
             this->exec(),
             {0, values.size()},
-            KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldSpan[i]; }
+            KOKKOS_LAMBDA(const size_t i) { values[i] += coeff[i] * fieldView[i]; }
         );
 
         // update rhs
         NeoFOAM::parallelFor(
             this->exec(),
             ls.rhs().range(),
-            KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldSpan[i]; }
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] += coeff[i] * fieldView[i]; }
         );
     }
 
@@ -165,19 +165,19 @@ template<typename ValueType>
 ValueType getField(const NeoFOAM::Field<ValueType>& source)
 {
     auto sourceField = source.copyToHost();
-    return sourceField.span()[0];
+    return sourceField.view()[0];
 }
 
 template<typename ValueType>
 ValueType getDiag(const la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
 {
     auto hostLs = ls.copyToHost();
-    return hostLs.matrix().values().span()[0];
+    return hostLs.matrix().values().view()[0];
 }
 
 template<typename ValueType>
 ValueType getRhs(const la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
 {
     auto hostLs = ls.copyToHost();
-    return hostLs.rhs().span()[0];
+    return hostLs.rhs().view()[0];
 }

@@ -18,7 +18,7 @@ auto setup_operator_test(const UnstructuredMesh& mesh)
     // TODO this should be handled outside of the unit test
     auto faceFlux = fvcc::SurfaceField<scalar>(exec, "sf", mesh, surfaceBCs);
     fill(faceFlux.internalField(), 1.0);
-    auto boundFaceFlux = faceFlux.internalField().span();
+    auto boundFaceFlux = faceFlux.internalField().view();
     // face on the left side has different orientation
     parallelFor(
         exec,

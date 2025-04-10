@@ -35,7 +35,7 @@ TEST_CASE("surfaceField")
             auto internalValues = sf.internalField().copyToHost();
             for (size_t i = 0; i < internalValues.size(); ++i)
             {
-                REQUIRE(internalValues.span()[i] == 1.0);
+                REQUIRE(internalValues.view()[i] == 1.0);
             }
         }
 
@@ -48,19 +48,19 @@ TEST_CASE("surfaceField")
         auto internalValues = sf.internalField().copyToHost();
         for (size_t i = 0; i < internalValues.size(); ++i)
         {
-            REQUIRE(internalValues.span()[i] == 2.0);
+            REQUIRE(internalValues.view()[i] == 2.0);
         }
 
         auto values = sf.boundaryField().value().copyToHost();
         for (size_t i = 0; i < values.size(); ++i)
         {
-            REQUIRE(values.span()[i] == 2.0);
+            REQUIRE(values.view()[i] == 2.0);
         }
 
         auto refValue = sf.boundaryField().refValue().copyToHost();
         for (size_t i = 0; i < refValue.size(); ++i)
         {
-            REQUIRE(refValue.span()[i] == 2.0);
+            REQUIRE(refValue.view()[i] == 2.0);
         }
     }
 }

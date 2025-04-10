@@ -36,7 +36,7 @@ TEST_CASE("SparsityPattern")
     SECTION("has correct diagOffs" + execName)
     {
         auto diagOffs = sp.diagOffset().copyToHost();
-        auto diagOffsS = diagOffs.span();
+        auto diagOffsS = diagOffs.view();
 
         REQUIRE(diagOffsS[0] == 0);
         REQUIRE(diagOffsS[1] == 1);
@@ -53,7 +53,7 @@ TEST_CASE("SparsityPattern")
     SECTION("Can produce rowPtrs " + execName)
     {
         auto rowPtr = sp.rowPtrs().copyToHost();
-        auto rowPtrH = rowPtr.span();
+        auto rowPtrH = rowPtr.view();
 
         REQUIRE(rowPtrH[0] == 0);
         REQUIRE(rowPtrH[1] == 2);
@@ -72,7 +72,7 @@ TEST_CASE("SparsityPattern")
     {
         auto colIdx = sp.colIdxs();
         auto colIdxH = colIdx.copyToHost();
-        auto colIdxHS = colIdxH.span();
+        auto colIdxHS = colIdxH.view();
 
         REQUIRE(colIdx.size() == nCells + 2 * nFaces);
         REQUIRE(colIdxHS[0] == 0);

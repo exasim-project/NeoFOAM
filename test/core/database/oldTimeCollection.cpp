@@ -140,7 +140,7 @@ TEST_CASE("oldTimeCollection")
         REQUIRE(t.name == "T");
         REQUIRE(t.hasDatabase());
         auto tHost = t.internalField().copyToHost();
-        REQUIRE(tHost.span()[0] == 1.0);
+        REQUIRE(tHost.view()[0] == 1.0);
         REQUIRE(t.registered());
         fvcc::FieldDocument& docT = fieldCollection.fieldDoc(t.key);
         // without the timeIndex smaller than 2 the timeIndex overflows if we subtract 1
@@ -156,7 +156,7 @@ TEST_CASE("oldTimeCollection")
 
             REQUIRE(tOld.name == "T_0");
             auto tOldHost = tOld.internalField().copyToHost();
-            REQUIRE(tOldHost.span()[0] == 1.0);
+            REQUIRE(tOldHost.view()[0] == 1.0);
             fvcc::FieldDocument& doctOld = fieldCollection.fieldDoc(tOld.key);
             REQUIRE(doctOld.timeIndex() == 0);
             fvcc::OldTimeCollection& oldTimeCollection =
@@ -175,7 +175,7 @@ TEST_CASE("oldTimeCollection")
             auto& tOld2 = fvcc::oldTime(tOld);
             REQUIRE(tOld2.name == "T_0_0");
             auto tOld2Host = tOld2.internalField().copyToHost();
-            REQUIRE(tOld2Host.span()[0] == 1.0);
+            REQUIRE(tOld2Host.view()[0] == 1.0);
             fvcc::FieldDocument& doctOld2 = fieldCollection.fieldDoc(tOld2.key);
             REQUIRE(doctOld2.timeIndex() == -1);
             REQUIRE(oldTimeCollection.size() == 2);

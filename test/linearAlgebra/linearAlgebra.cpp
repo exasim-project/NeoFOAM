@@ -46,7 +46,7 @@ TEST_CASE("MatrixAssembly - Ginkgo")
         solver.solve(linearSystem, x);
 
         auto hostX = x.copyToHost();
-        auto hostXS = hostX.span();
+        auto hostXS = hostX.view();
         REQUIRE((hostXS[0]) == Catch::Approx(1.24489796).margin(1e-8));
         REQUIRE((hostXS[1]) == Catch::Approx(2.44897959).margin(1e-8));
         REQUIRE((hostXS[2]) == Catch::Approx(3.24489796).margin(1e-8));

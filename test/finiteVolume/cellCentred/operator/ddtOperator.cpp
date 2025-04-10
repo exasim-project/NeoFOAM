@@ -75,9 +75,9 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         // cell has one cell
         const auto vol = mesh.cellVolumes().copyToHost();
-        const auto volView = vol.span();
+        const auto volView = vol.view();
         auto hostSource = source.copyToHost();
-        auto values = hostSource.span();
+        auto values = hostSource.view();
         for (auto ii = 0; ii < values.size(); ++ii)
         {
             REQUIRE(
@@ -97,10 +97,10 @@ TEMPLATE_TEST_CASE("DdtOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         auto lsHost = ls.copyToHost();
         const auto vol = mesh.cellVolumes().copyToHost();
-        const auto volView = vol.span();
+        const auto volView = vol.view();
         const auto matrixValues = lsHost.matrix().values();
-        const auto matrixValuesView = matrixValues.span();
-        const auto rhs = lsHost.rhs().span();
+        const auto matrixValuesView = matrixValues.view();
+        const auto rhs = lsHost.rhs().view();
 
         for (auto ii = 0; ii < matrixValues.size(); ++ii)
         {
