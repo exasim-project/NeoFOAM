@@ -803,13 +803,13 @@
 <codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/><ref refid="namespaceNeoFOAM_1a4a11867ae32ece24e4477ed52aacbd3c" kindref="member">name</ref><sp/>=<sp/></highlight><highlight class="stringliteral">&quot;parallelFor&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="79"><highlight class="normal">)</highlight></codeline>
 <codeline lineno="80"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>span<sp/>=<sp/>field.<ref refid="classNeoFOAM_1_1Field_1a458dc28c61edeaa2f822d597f0771ec3" kindref="member">span</ref>();</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>view<sp/>=<sp/>field.<ref refid="classNeoFOAM_1_1Field_1aba166a5c31c2c70c01f05a01c18970d0" kindref="member">view</ref>();</highlight></codeline>
 <codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/>(std::is_same&lt;std::remove_reference_t&lt;Executor&gt;,<sp/><ref refid="classNeoFOAM_1_1SerialExecutor" kindref="compound">SerialExecutor</ref>&gt;::value)</highlight></codeline>
 <codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
 <codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>fieldSize<sp/>=<sp/>field.<ref refid="classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e" kindref="member">size</ref>();</highlight></codeline>
 <codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i<sp/>=<sp/>0;<sp/>i<sp/>&lt;<sp/>fieldSize;<sp/>i++)</highlight></codeline>
 <codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>span[i]<sp/>=<sp/>kernel(i);</highlight></codeline>
+<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>view[i]<sp/>=<sp/>kernel(i);</highlight></codeline>
 <codeline lineno="88"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"></highlight></codeline>
@@ -818,7 +818,7 @@
 <codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Kokkos::parallel_for(</highlight></codeline>
 <codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a4a11867ae32ece24e4477ed52aacbd3c" kindref="member">name</ref>,</highlight></codeline>
 <codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Kokkos::RangePolicy&lt;runOn&gt;(0,<sp/>field.<ref refid="classNeoFOAM_1_1Field_1a2915161f01fcce8b84e661a414bb9a2e" kindref="member">size</ref>()),</highlight></codeline>
-<codeline lineno="96"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/>span[i]<sp/>=<sp/>kernel(i);<sp/>}</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/>view[i]<sp/>=<sp/>kernel(i);<sp/>}</highlight></codeline>
 <codeline lineno="97"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="99"><highlight class="normal">}</highlight></codeline>

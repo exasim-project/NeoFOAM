@@ -16,10 +16,10 @@
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00024}\mbox{\hyperlink{namespaceNeoFOAM_a3c93e0b750c8dc9feb1621daf2da6915}{00024}}\ IndexType\ \mbox{\hyperlink{namespaceNeoFOAM_a3c93e0b750c8dc9feb1621daf2da6915}{segmentsFromIntervals}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<IndexType>}}\&\ intervals,\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<IndexType>}}\&\ offsets)}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00025}00025\ \{}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00026}00026\ \ \ \ \ IndexType\ finalValue\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00027}00027\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ inSpan\ =\ intervals.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
+\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00027}00027\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ inSpan\ =\ intervals.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00028}00028\ \ \ \ \ \textcolor{comment}{//\ skip\ the\ first\ element\ of\ the\ offsets}}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{comment}{//\ assumed\ to\ be\ zero}}
-\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{auto}\ offsSpan\ =\ offsets.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}().subspan(1);}
+\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{auto}\ offsSpan\ =\ offsets.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}().subspan(1);}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00031}00031\ \ \ \ \ \mbox{\hyperlink{error_8hpp_a40409dec4da3178309a1b0f662496159}{NF\_ASSERT\_EQUAL}}(inSpan.size(),\ offsSpan.size());}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00032}00032\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ac261f9695ee3ef30f1aba6e5c44e67bd}{NeoFOAM::parallelScan}}(}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ intervals.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),}
@@ -109,7 +109,7 @@
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00182}00182\ }
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00187}\mbox{\hyperlink{classNeoFOAM_1_1SegmentedField_a2c246e8fc0e72435ad4c1c7d7f78d0d6}{00187}}\ \ \ \ \ [[nodiscard]]\ \mbox{\hyperlink{classNeoFOAM_1_1SegmentedFieldView}{SegmentedFieldView<ValueType,\ IndexType>}}\ \mbox{\hyperlink{classNeoFOAM_1_1SegmentedField_a2c246e8fc0e72435ad4c1c7d7f78d0d6}{view}}()\ \&}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00188}00188\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoFOAM_1_1SegmentedFieldView}{SegmentedFieldView<ValueType,\ IndexType>}}\ \{values\_.span(),\ segments\_.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}()\};}
+\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoFOAM_1_1SegmentedFieldView}{SegmentedFieldView<ValueType,\ IndexType>}}\ \{values\_.view(),\ segments\_.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}()\};}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00190}00190\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00191}00191\ }
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00192}00192\ \ \ \ \ \textcolor{comment}{//\ ensures\ no\ return\ a\ span\ of\ a\ temporary\ object\ -\/-\/>\ invalid\ memory\ access}}
@@ -117,7 +117,7 @@
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00194}00194\ }
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00199}\mbox{\hyperlink{classNeoFOAM_1_1SegmentedField_a60757f414dc84e25eaa32936b03903eb}{00199}}\ \ \ \ \ [[nodiscard]]\ std::pair<std::span<ValueType>,\ std::span<IndexType>>\ \mbox{\hyperlink{classNeoFOAM_1_1SegmentedField_a60757f414dc84e25eaa32936b03903eb}{spans}}()\ \&}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00200}00200\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{values\_.span(),\ segments\_.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}()\};}
+\DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{values\_.view(),\ segments\_.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}()\};}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00202}00202\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00203}00203\ }
 \DoxyCodeLine{\Hypertarget{segmentedField_8hpp_source_l00204}00204\ \ \ \ \ \textcolor{comment}{//\ ensures\ not\ to\ return\ a\ span\ of\ a\ temporary\ object\ -\/-\/>\ invalid\ memory\ access}}

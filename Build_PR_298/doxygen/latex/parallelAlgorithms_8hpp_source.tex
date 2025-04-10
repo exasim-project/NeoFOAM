@@ -82,13 +82,13 @@
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00078}00078\ \ \ \ \ std::string\ \mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}}\ =\ \textcolor{stringliteral}{"{}parallelFor"{}}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00079}00079\ )}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00080}00080\ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00081}00081\ \ \ \ \ \textcolor{keyword}{auto}\ span\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00081}00081\ \ \ \ \ \textcolor{keyword}{auto}\ view\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00082}00082\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<std::remove\_reference\_t<Executor>,\ \mbox{\hyperlink{classNeoFOAM_1_1SerialExecutor}{SerialExecutor}}>::value)}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00083}00083\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ fieldSize\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}();}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ fieldSize;\ i++)}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ span[i]\ =\ kernel(i);}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ view[i]\ =\ kernel(i);}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00089}00089\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00090}00090\ \ \ \ \ \textcolor{keywordflow}{else}}
@@ -97,7 +97,7 @@
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ Kokkos::parallel\_for(}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a4a11867ae32ece24e4477ed52aacbd3c}{name}},}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::RangePolicy<runOn>(0,\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}()),}
-\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ span[i]\ =\ kernel(i);\ \}}
+\DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ view[i]\ =\ kernel(i);\ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00097}00097\ \ \ \ \ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00098}00098\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{parallelAlgorithms_8hpp_source_l00099}00099\ \}}

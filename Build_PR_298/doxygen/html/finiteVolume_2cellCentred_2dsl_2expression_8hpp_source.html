@@ -171,15 +171,15 @@ $(document).ready(function() { init_codefold(0); });
 <div class="foldopen" id="foldopen00078" data-start="{" data-end="}">
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#a3a9f9ca27271e675b7bb5b3f5c9e7a40">   78</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#a3a9f9ca27271e675b7bb5b3f5c9e7a40">assemble</a>(<a class="code hl_typedef" href="namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b">scalar</a> t, <a class="code hl_typedef" href="namespaceNeoFOAM.html#a03eba15c79160376393af407daa0fd7b">scalar</a> dt)</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    {</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        <span class="keyword">auto</span> vol = psi_.mesh().cellVolumes().span();</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>        <span class="keyword">auto</span> vol = psi_.mesh().cellVolumes().view();</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        <span class="keyword">auto</span> expSource = expr_.explicitOperation(psi_.mesh().nCells());</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        expr_.explicitOperation(expSource, t, dt);</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keyword">auto</span> expSourceSpan = expSource.span();</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>        <span class="keyword">auto</span> expSourceSpan = expSource.view();</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        ls_ = expr_.implicitOperation();</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="comment">// TODO rename implicitOperation -&gt; assembleLinearSystem</span></div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        expr_.implicitOperation(ls_, t, dt);</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keyword">auto</span> rhs = ls_.rhs().span();</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        <span class="keyword">auto</span> rhs = ls_.rhs().view();</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        <span class="comment">// we subtract the explicit source term from the rhs</span></div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        <a class="code hl_function" href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">NeoFOAM::parallelFor</a>(</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <a class="code hl_function" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#aaa7be6738aa5a147af004eed8febeb55">exec</a>(),</div>
@@ -208,12 +208,12 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        <span class="keywordflow">else</span></div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>        {</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            <span class="comment">// solve sparse matrix system</span></div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            <span class="keyword">auto</span> vol = psi_.mesh().cellVolumes().span();</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            <span class="keyword">auto</span> vol = psi_.mesh().cellVolumes().view();</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>            <span class="keyword">auto</span> expSource = expr_.explicitOperation(psi_.mesh().nCells());</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            <span class="keyword">auto</span> expSourceSpan = expSource.span();</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            <span class="keyword">auto</span> expSourceSpan = expSource.view();</div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>            ls_ = expr_.implicitOperation();</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            <span class="keyword">auto</span> rhs = ls_.rhs().span();</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>            <span class="keyword">auto</span> rhs = ls_.rhs().view();</div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>            <span class="comment">// we subtract the explicit source term from the rhs</span></div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>            <a class="code hl_function" href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">NeoFOAM::parallelFor</a>(</div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>                <a class="code hl_function" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#aaa7be6738aa5a147af004eed8febeb55">exec</a>(),</div>
@@ -261,9 +261,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00161" name="l00161"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#a6b0584bb3e75f1fd6bc189f93c3f6bf6">  161</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#a6b0584bb3e75f1fd6bc189f93c3f6bf6">setReference</a>(<span class="keyword">const</span> IndexType refCell, ValueType refValue)</div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>    {</div>
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        <span class="comment">// TODO currently assumes that matrix is already assembled</span></div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="keyword">const</span> <span class="keyword">auto</span> diagOffset = sparsityPattern_-&gt;diagOffset().span();</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        <span class="keyword">const</span> <span class="keyword">auto</span> diagOffset = sparsityPattern_-&gt;diagOffset().view();</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        <span class="keyword">const</span> <span class="keyword">auto</span> rowPtrs = ls_.matrix().rowPtrs();</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keyword">auto</span> rhs = ls_.rhs().span();</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keyword">auto</span> rhs = ls_.rhs().view();</div>
 <div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        <span class="keyword">auto</span> values = ls_.matrix().values();</div>
 <div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>        <a class="code hl_function" href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">NeoFOAM::parallelFor</a>(</div>
 <div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>            ls_.exec(),</div>
@@ -293,7 +293,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>            psi_.internalField()</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>        );</div>
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keyword">auto</span> rhs = ls_.rhs().span();</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keyword">auto</span> rhs = ls_.rhs().view();</div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span> </div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        <span class="keyword">const</span> <span class="keyword">auto</span> values = ls_.matrix().values();</div>
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        <span class="keyword">const</span> <span class="keyword">auto</span> colIdxs = ls_.matrix().colIdxs();</div>
@@ -302,7 +302,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <a class="code hl_class" href="classNeoFOAM_1_1Field.html">Field&lt;ValueType&gt;</a> result(<a class="code hl_function" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#aaa7be6738aa5a147af004eed8febeb55">exec</a>, neighbour.size(), 0.0);</div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        <span class="keyword">auto</span> resultSpan = result.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#a458dc28c61edeaa2f822d597f0771ec3">span</a>();</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        <span class="keyword">auto</span> resultSpan = result.<a class="code hl_function" href="classNeoFOAM_1_1Field.html#aba166a5c31c2c70c01f05a01c18970d0">view</a>();</div>
 <div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
 <div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>        <a class="code hl_function" href="namespaceNeoFOAM.html#ae2c722dbedf8901153be15abfe9c1926">parallelFor</a>(</div>
 <div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>            <a class="code hl_function" href="classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1Expression.html#aaa7be6738aa5a147af004eed8febeb55">exec</a>,</div>
@@ -377,8 +377,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aCSRMatrix_8hpp_html"><div class="ttname"><a href="CSRMatrix_8hpp.html">CSRMatrix.hpp</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1BoundaryMesh_html_ae988fda8cddb5ad7ea5c430627cb0554"><div class="ttname"><a href="classNeoFOAM_1_1BoundaryMesh.html#ae988fda8cddb5ad7ea5c430627cb0554">NeoFOAM::BoundaryMesh::faceCells</a></div><div class="ttdeci">const labelField &amp; faceCells() const</div><div class="ttdoc">Get the field of face cells.</div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Dictionary_html"><div class="ttname"><a href="classNeoFOAM_1_1Dictionary.html">NeoFOAM::Dictionary</a></div><div class="ttdoc">A class representing a dictionary that stores key-value pairs.</div><div class="ttdef"><b>Definition</b> <a href="dictionary_8hpp_source.html#l00032">dictionary.hpp:33</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html"><div class="ttname"><a href="classNeoFOAM_1_1Field.html">NeoFOAM::Field</a></div><div class="ttdoc">A class to contain the data and executors for a field and define some basic operations.</div><div class="ttdef"><b>Definition</b> <a href="field_8hpp_source.html#l00049">field.hpp:50</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1Field_html_a458dc28c61edeaa2f822d597f0771ec3"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#a458dc28c61edeaa2f822d597f0771ec3">NeoFOAM::Field::span</a></div><div class="ttdeci">View&lt; ValueType &gt; span() &amp;&amp;=delete</div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html"><div class="ttname"><a href="classNeoFOAM_1_1Field.html">NeoFOAM::Field</a></div><div class="ttdoc">A class to contain the data and executors for a field and define some basic operations.</div><div class="ttdef"><b>Definition</b> <a href="field_8hpp_source.html#l00048">field.hpp:49</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Field_html_aba166a5c31c2c70c01f05a01c18970d0"><div class="ttname"><a href="classNeoFOAM_1_1Field.html#aba166a5c31c2c70c01f05a01c18970d0">NeoFOAM::Field::view</a></div><div class="ttdeci">View&lt; ValueType &gt; view() &amp;&amp;=delete</div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1UnstructuredMesh_html"><div class="ttname"><a href="classNeoFOAM_1_1UnstructuredMesh.html">NeoFOAM::UnstructuredMesh</a></div><div class="ttdoc">Represents an unstructured mesh in NeoFOAM.</div><div class="ttdef"><b>Definition</b> <a href="unstructuredMesh_8hpp_source.html#l00032">unstructuredMesh.hpp:33</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1UnstructuredMesh_html_a0d183643d0aa687b3daca9eee9a7fc3b"><div class="ttname"><a href="classNeoFOAM_1_1UnstructuredMesh.html#a0d183643d0aa687b3daca9eee9a7fc3b">NeoFOAM::UnstructuredMesh::boundaryMesh</a></div><div class="ttdeci">const BoundaryMesh &amp; boundaryMesh() const</div><div class="ttdoc">Get the boundary mesh.</div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1UnstructuredMesh_html_a5028ef5a62edfe198288a9ed2d936779"><div class="ttname"><a href="classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779">NeoFOAM::UnstructuredMesh::nInternalFaces</a></div><div class="ttdeci">size_t nInternalFaces() const</div><div class="ttdoc">Get the number of internal faces in the mesh.</div></div>

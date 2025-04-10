@@ -201,8 +201,8 @@ void \mbox{\hyperlink{namespaceNeoFOAM_ae20bfb586b5469d94d83f3ca57310c29}{log\+O
 \begin{DoxyCompactList}\small\item\em Map a field using a specific executor. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_af46b35c634f08c04bccff09bd6a3af66}{fill}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ value, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range=\{0, 0\})
 \begin{DoxyCompactList}\small\item\em Fill the field with a scalar value using a specific executor. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45}{set\+Field}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const std\+::span$<$ const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ b, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range=\{0, 0\})
-\begin{DoxyCompactList}\small\item\em Set the field with a span of values using a specific executor. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a7021769b4076914223a9f32dd61033cf}{set\+Field}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const \mbox{\hyperlink{classNeoFOAM_1_1View}{View}}$<$ const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ b, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range=\{0, 0\})
+\begin{DoxyCompactList}\small\item\em Set the field with a view of values using a specific executor. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}{scalar\+Mul}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ value)
 \item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a44787ff1266d4f5ebd1660b821eee43e}{add}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ \&b)
@@ -219,7 +219,7 @@ void \mbox{\hyperlink{namespaceNeoFOAM_ae20bfb586b5469d94d83f3ca57310c29}{log\+O
 \item 
 {\footnotesize template$<$typename T $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_a80e6bdcbd3aa2c4474cb7d96cd96e35e}{equal}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field, const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field2)
 \item 
-{\footnotesize template$<$typename T $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_aa1215531419eead5c9138707a854d9c2}{equal}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field, std\+::span$<$ T $>$ span2)
+{\footnotesize template$<$typename T $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_a13428e067d6acc5adb7c2d4bb5d46882}{equal}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field, \mbox{\hyperlink{classNeoFOAM_1_1View}{View}}$<$ T $>$ span2)
 \item 
 {\footnotesize template$<$typename Index\+Type $>$ }\\Index\+Type \mbox{\hyperlink{namespaceNeoFOAM_a3c93e0b750c8dc9feb1621daf2da6915}{segments\+From\+Intervals}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Index\+Type $>$ \&intervals, \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Index\+Type $>$ \&offsets)
 \begin{DoxyCompactList}\small\item\em Compute segment offsets from an input field corresponding to lengths by computing a prefix sum. \end{DoxyCompactList}\item 
@@ -441,12 +441,12 @@ bool Neo\+FOAM\+::equal (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{c
 
 Definition at line \mbox{\hyperlink{fieldFreeFunctions_8hpp_source_l00171}{171}} of file \mbox{\hyperlink{fieldFreeFunctions_8hpp_source}{field\+Free\+Functions.\+hpp}}.
 
-\Hypertarget{namespaceNeoFOAM_aa1215531419eead5c9138707a854d9c2}\label{namespaceNeoFOAM_aa1215531419eead5c9138707a854d9c2} 
+\Hypertarget{namespaceNeoFOAM_a13428e067d6acc5adb7c2d4bb5d46882}\label{namespaceNeoFOAM_a13428e067d6acc5adb7c2d4bb5d46882} 
 \index{NeoFOAM@{NeoFOAM}!equal@{equal}}
 \index{equal@{equal}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{equal()}{equal()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
 {\footnotesize\ttfamily template$<$typename T $>$ \\
-bool Neo\+FOAM\+::equal (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&}]{field,  }\item[{std\+::span$<$ T $>$}]{span2 }\end{DoxyParamCaption})}
+bool Neo\+FOAM\+::equal (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&}]{field,  }\item[{\mbox{\hyperlink{classNeoFOAM_1_1View}{View}}$<$ T $>$}]{span2 }\end{DoxyParamCaption})}
 
 
 
@@ -736,7 +736,7 @@ The result of the addition.
 \end{DoxyReturn}
 
 
-Definition at line \mbox{\hyperlink{field_8hpp_source_l00421}{421}} of file \mbox{\hyperlink{field_8hpp_source}{field.\+hpp}}.
+Definition at line \mbox{\hyperlink{field_8hpp_source_l00420}{420}} of file \mbox{\hyperlink{field_8hpp_source}{field.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a7c9cbcc523297970cc4d1b13bde319d2}\label{namespaceNeoFOAM_a7c9cbcc523297970cc4d1b13bde319d2} 
 \index{NeoFOAM@{NeoFOAM}!operator-\/@{operator-\/}}
@@ -761,7 +761,7 @@ The result of the subtraction.
 \end{DoxyReturn}
 
 
-Definition at line \mbox{\hyperlink{field_8hpp_source_l00434}{434}} of file \mbox{\hyperlink{field_8hpp_source}{field.\+hpp}}.
+Definition at line \mbox{\hyperlink{field_8hpp_source_l00433}{433}} of file \mbox{\hyperlink{field_8hpp_source}{field.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a33d4783ebbf9904dce966898f9f0abb2}\label{namespaceNeoFOAM_a33d4783ebbf9904dce966898f9f0abb2} 
 \index{NeoFOAM@{NeoFOAM}!operator$<$$<$@{operator$<$$<$}}
@@ -971,22 +971,22 @@ The offsets are computed by a prefix sum of the input values. So, with given inp
 
 Definition at line \mbox{\hyperlink{segmentedField_8hpp_source_l00024}{24}} of file \mbox{\hyperlink{segmentedField_8hpp_source}{segmented\+Field.\+hpp}}.
 
-\Hypertarget{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45}\label{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45} 
+\Hypertarget{namespaceNeoFOAM_a7021769b4076914223a9f32dd61033cf}\label{namespaceNeoFOAM_a7021769b4076914223a9f32dd61033cf} 
 \index{NeoFOAM@{NeoFOAM}!setField@{setField}}
 \index{setField@{setField}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{setField()}{setField()}}
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
-void Neo\+FOAM\+::set\+Field (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{a,  }\item[{const std\+::span$<$ const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$}]{b,  }\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range = {\ttfamily \{0,~0\}} }\end{DoxyParamCaption})}
+void Neo\+FOAM\+::set\+Field (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&}]{a,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1View}{View}}$<$ const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$}]{b,  }\item[{std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$}]{range = {\ttfamily \{0,~0\}} }\end{DoxyParamCaption})}
 
 
 
-Set the field with a span of values using a specific executor. 
+Set the field with a view of values using a specific executor. 
 
 
 \begin{DoxyParams}{Parameters}
 {\em a} & The field to set. \\
 \hline
-{\em b} & The span of values to set the field with. \\
+{\em b} & The view of values to set the field with. \\
 \hline
 {\em range} & The range to set the field in. If not provided, the whole field is set. \\
 \hline

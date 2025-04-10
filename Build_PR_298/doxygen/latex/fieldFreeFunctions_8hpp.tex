@@ -1,11 +1,11 @@
 \doxysection{/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/fields/field\+Free\+Functions.hpp File Reference}
 \hypertarget{fieldFreeFunctions_8hpp}{}\label{fieldFreeFunctions_8hpp}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/fieldFreeFunctions.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fields/fieldFreeFunctions.hpp}}
 {\ttfamily \#include $<$tuple$>$}\newline
-{\ttfamily \#include $<$span$>$}\newline
 {\ttfamily \#include $<$Kokkos\+\_\+\+Core.\+hpp$>$}\newline
 {\ttfamily \#include "{}Neo\+FOAM/core/primitives/label.\+hpp"{}}\newline
 {\ttfamily \#include "{}Neo\+FOAM/helpers/exceptions.\+hpp"{}}\newline
 {\ttfamily \#include "{}Neo\+FOAM/core/parallel\+Algorithms.\+hpp"{}}\newline
+{\ttfamily \#include "{}Neo\+FOAM/core/view.\+hpp"{}}\newline
 \doxysubsubsection*{Namespaces}
 \begin{DoxyCompactItemize}
 \item 
@@ -20,8 +20,8 @@ namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1detail}{Neo\+FOAM\+::detail}}
 \begin{DoxyCompactList}\small\item\em Map a field using a specific executor. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_af46b35c634f08c04bccff09bd6a3af66}{Neo\+FOAM\+::fill}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ value, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range=\{0, 0\})
 \begin{DoxyCompactList}\small\item\em Fill the field with a scalar value using a specific executor. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45}{Neo\+FOAM\+::set\+Field}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const std\+::span$<$ const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ b, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range=\{0, 0\})
-\begin{DoxyCompactList}\small\item\em Set the field with a span of values using a specific executor. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a7021769b4076914223a9f32dd61033cf}{Neo\+FOAM\+::set\+Field}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const \mbox{\hyperlink{classNeoFOAM_1_1View}{View}}$<$ const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ b, std\+::pair$<$ \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}}, \mbox{\hyperlink{namespaceNeoFOAM_aa8ea339f1c9a4f2232da876ead30a82c}{size\+\_\+t}} $>$ range=\{0, 0\})
+\begin{DoxyCompactList}\small\item\em Set the field with a view of values using a specific executor. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}{Neo\+FOAM\+::scalar\+Mul}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ value)
 \item 
 {\footnotesize template$<$typename Value\+Type , typename Binary\+Op $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a56ee4648092e5f74747d3ae550b0857b}{Neo\+FOAM\+::detail\+::field\+Binary\+Op}} (\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ Value\+Type $>$ \&a, const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ std\+::type\+\_\+identity\+\_\+t$<$ Value\+Type $>$ $>$ \&b, Binary\+Op op)
@@ -40,5 +40,5 @@ namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1detail}{Neo\+FOAM\+::detail}}
 \item 
 {\footnotesize template$<$typename T $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_a80e6bdcbd3aa2c4474cb7d96cd96e35e}{Neo\+FOAM\+::equal}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field, const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field2)
 \item 
-{\footnotesize template$<$typename T $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_aa1215531419eead5c9138707a854d9c2}{Neo\+FOAM\+::equal}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field, std\+::span$<$ T $>$ span2)
+{\footnotesize template$<$typename T $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_a13428e067d6acc5adb7c2d4bb5d46882}{Neo\+FOAM\+::equal}} (const \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field}}$<$ T $>$ \&field, \mbox{\hyperlink{classNeoFOAM_1_1View}{View}}$<$ T $>$ span2)
 \end{DoxyCompactItemize}

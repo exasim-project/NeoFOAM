@@ -85,18 +85,18 @@
         <link refid="label_8hpp"/>
         <childnode refid="35" relation="include">
         </childnode>
-        <childnode refid="29" relation="include">
+        <childnode refid="28" relation="include">
         </childnode>
       </node>
-      <node id="28">
+      <node id="27">
         <label>NeoFOAM/core/primitives/scalar.hpp</label>
         <link refid="scalar_8hpp"/>
         <childnode refid="19" relation="include">
         </childnode>
-        <childnode refid="29" relation="include">
+        <childnode refid="28" relation="include">
         </childnode>
       </node>
-      <node id="29">
+      <node id="28">
         <label>NeoFOAM/core/primitives/traits.hpp</label>
         <link refid="traits_8hpp"/>
         <childnode refid="19" relation="include">
@@ -107,19 +107,19 @@
         <link refid="vector_8hpp"/>
         <childnode refid="19" relation="include">
         </childnode>
-        <childnode refid="28" relation="include">
+        <childnode refid="27" relation="include">
         </childnode>
         <childnode refid="34" relation="include">
         </childnode>
-        <childnode refid="29" relation="include">
+        <childnode refid="28" relation="include">
         </childnode>
       </node>
-      <node id="30">
+      <node id="29">
         <label>NeoFOAM/core/view.hpp</label>
         <link refid="view_8hpp"/>
-        <childnode refid="31" relation="include">
+        <childnode refid="30" relation="include">
         </childnode>
-        <childnode refid="27" relation="include">
+        <childnode refid="31" relation="include">
         </childnode>
       </node>
       <node id="26">
@@ -129,15 +129,13 @@
         </childnode>
         <childnode refid="14" relation="include">
         </childnode>
-        <childnode refid="27" relation="include">
-        </childnode>
         <childnode refid="11" relation="include">
         </childnode>
         <childnode refid="21" relation="include">
         </childnode>
-        <childnode refid="28" relation="include">
+        <childnode refid="27" relation="include">
         </childnode>
-        <childnode refid="30" relation="include">
+        <childnode refid="29" relation="include">
         </childnode>
         <childnode refid="32" relation="include">
         </childnode>
@@ -149,8 +147,6 @@
         <link refid="fieldFreeFunctions_8hpp"/>
         <childnode refid="33" relation="include">
         </childnode>
-        <childnode refid="27" relation="include">
-        </childnode>
         <childnode refid="19" relation="include">
         </childnode>
         <childnode refid="34" relation="include">
@@ -159,13 +155,15 @@
         </childnode>
         <childnode refid="18" relation="include">
         </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
       </node>
       <node id="37">
         <label>NeoFOAM/fields/fieldTypeDefs.hpp</label>
         <link refid="fieldTypeDefs_8hpp"/>
         <childnode refid="26" relation="include">
         </childnode>
-        <childnode refid="28" relation="include">
+        <childnode refid="27" relation="include">
         </childnode>
         <childnode refid="38" relation="include">
         </childnode>
@@ -229,7 +227,7 @@
       <node id="14">
         <label>iostream</label>
       </node>
-      <node id="31">
+      <node id="30">
         <label>limits</label>
       </node>
       <node id="4">
@@ -241,7 +239,7 @@
       <node id="7">
         <label>nvector/nvector_serial.h</label>
       </node>
-      <node id="27">
+      <node id="31">
         <label>span</label>
       </node>
       <node id="16">
@@ -354,9 +352,9 @@
 <codeline lineno="86" refid="namespaceNeoFOAM_1_1sundials_1ab47f1ccabb77326bedfdc3632a5e9990" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1sundials_1ab47f1ccabb77326bedfdc3632a5e9990" kindref="member">fieldToSunNVectorImpl</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Field" kindref="compound">NeoFOAM::Field&lt;ValueType&gt;</ref>&amp;<sp/>field,<sp/>N_Vector&amp;<sp/>vector)</highlight></codeline>
 <codeline lineno="87"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="88"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>view<sp/>=<sp/>::sundials::kokkos::GetVec&lt;SKVectorType&gt;(vector)-&gt;View();</highlight></codeline>
-<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>fieldSpan<sp/>=<sp/>field.<ref refid="classNeoFOAM_1_1Field_1a458dc28c61edeaa2f822d597f0771ec3" kindref="member">span</ref>();</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>fieldView<sp/>=<sp/>field.<ref refid="classNeoFOAM_1_1Field_1aba166a5c31c2c70c01f05a01c18970d0" kindref="member">view</ref>();</highlight></codeline>
 <codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ae2c722dbedf8901153be15abfe9c1926" kindref="member">NeoFOAM::parallelFor</ref>(</highlight></codeline>
-<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>field.<ref refid="classNeoFOAM_1_1Field_1a3669f86690a09efc721a5eb902f7aa28" kindref="member">exec</ref>(),<sp/>field.<ref refid="classNeoFOAM_1_1Field_1a1df824a46de3a2c0db14c4457ab8a34e" kindref="member">range</ref>(),<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/>view(i)<sp/>=<sp/>fieldSpan[i];<sp/>}</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>field.<ref refid="classNeoFOAM_1_1Field_1a3669f86690a09efc721a5eb902f7aa28" kindref="member">exec</ref>(),<sp/>field.<ref refid="classNeoFOAM_1_1Field_1a1df824a46de3a2c0db14c4457ab8a34e" kindref="member">range</ref>(),<sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i)<sp/>{<sp/>view(i)<sp/>=<sp/>fieldView[i];<sp/>}</highlight></codeline>
 <codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="93"><highlight class="normal">};</highlight></codeline>
 <codeline lineno="94"><highlight class="normal"></highlight></codeline>

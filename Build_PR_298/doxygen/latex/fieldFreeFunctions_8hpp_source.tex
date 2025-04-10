@@ -7,12 +7,12 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00003}00003\ \textcolor{preprocessor}{\#pragma\ once}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00004}00004\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ <tuple>}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <span>}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00007}00007\ }
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <Kokkos\_Core.hpp>}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{label_8hpp}{NeoFOAM/core/primitives/label.hpp}}"{}}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exceptions_8hpp}{NeoFOAM/helpers/exceptions.hpp}}"{}}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{parallelAlgorithms_8hpp}{NeoFOAM/core/parallelAlgorithms.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <Kokkos\_Core.hpp>}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{label_8hpp}{NeoFOAM/core/primitives/label.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{exceptions_8hpp}{NeoFOAM/helpers/exceptions.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{parallelAlgorithms_8hpp}{NeoFOAM/core/parallelAlgorithms.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{view_8hpp}{NeoFOAM/core/view.hpp}}"{}}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00012}00012\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00013}00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00014}00014\ \{}
@@ -30,9 +30,9 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00033}00033\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ end\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00035}00035\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00036}00036\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00036}00036\ \ \ \ \ \textcolor{keyword}{auto}\ viewA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00037}00037\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae2c722dbedf8901153be15abfe9c1926}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ \{start,\ end\},\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ spanA[i]\ =\ inner(i);\ \}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ \{start,\ end\},\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ viewA[i]\ =\ inner(i);\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00039}00039\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00040}00040\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00041}00041\ }
@@ -48,17 +48,17 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00058}00058\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ end\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00060}00060\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{auto}\ viewA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00062}00062\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae2c722dbedf8901153be15abfe9c1926}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ \{start,\ end\},\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ spanA[i]\ =\ value;\ \}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ \{start,\ end\},\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ viewA[i]\ =\ value;\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00064}00064\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00065}00065\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00066}00066\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00067}00067\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00075}00075\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00076}\mbox{\hyperlink{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45}{00076}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a3fe703c8f8b0434936a60f4df8722e45}{setField}}(}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00076}\mbox{\hyperlink{namespaceNeoFOAM_a7021769b4076914223a9f32dd61033cf}{00076}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a7021769b4076914223a9f32dd61033cf}{setField}}(}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00077}00077\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00078}00078\ \ \ \ \ \textcolor{keyword}{const}\ std::span<\textcolor{keyword}{const}\ std::type\_identity\_t<ValueType>>\ b,}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00078}00078\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1View}{View}}<\textcolor{keyword}{const}\ std::type\_identity\_t<ValueType>>\ b,}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00079}00079\ \ \ \ \ std::pair<size\_t,\ size\_t>\ range\ =\ \{0,\ 0\}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00080}00080\ )}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00081}00081\ \{}
@@ -67,18 +67,18 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00084}00084\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ end\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a2915161f01fcce8b84e661a414bb9a2e}{size}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00086}00086\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00087}00087\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00087}00087\ \ \ \ \ \textcolor{keyword}{auto}\ viewA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00088}00088\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae2c722dbedf8901153be15abfe9c1926}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ \{start,\ end\},\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ spanA[i]\ =\ b[i];\ \}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3669f86690a09efc721a5eb902f7aa28}{exec}}(),\ \{start,\ end\},\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ viewA[i]\ =\ b[i];\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00090}00090\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00091}00091\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00092}00092\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00093}00093\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00094}\mbox{\hyperlink{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}{00094}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_aee17902cea88cbe34c693d02eb681273}{scalarMul}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<ValueType>}}\&\ a,\ \textcolor{keyword}{const}\ std::type\_identity\_t<ValueType>\ value)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00095}00095\ \{}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00096}00096\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00096}00096\ \ \ \ \ \textcolor{keyword}{auto}\ viewA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00097}00097\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae2c722dbedf8901153be15abfe9c1926}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00098}00098\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ spanA[i]\ *\ value;\ \}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00098}00098\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ viewA[i]\ *\ value;\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00099}00099\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00100}00100\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00101}00101\ }
@@ -90,10 +90,10 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00107}00107\ )}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00108}00108\ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00109}00109\ \ \ \ \ \mbox{\hyperlink{exceptions_8hpp_a466d6d559414b6d1198021e94e31545e}{NeoFOAM\_ASSERT\_EQUAL\_LENGTH}}(a,\ b);}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00110}00110\ \ \ \ \ \textcolor{keyword}{auto}\ spanA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_a458dc28c61edeaa2f822d597f0771ec3}{span}}();}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00111}00111\ \ \ \ \ \textcolor{keyword}{auto}\ spanB\ =\ b.span();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00110}00110\ \ \ \ \ \textcolor{keyword}{auto}\ viewA\ =\ a.\mbox{\hyperlink{classNeoFOAM_1_1Field_aba166a5c31c2c70c01f05a01c18970d0}{view}}();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00111}00111\ \ \ \ \ \textcolor{keyword}{auto}\ viewB\ =\ b.view();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00112}00112\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_ae2c722dbedf8901153be15abfe9c1926}{parallelFor}}(}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ op(spanA[i],\ spanB[i]);\ \}}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ a,\ KOKKOS\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i)\ \{\ \textcolor{keywordflow}{return}\ op(viewA[i],\ viewB[i]);\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00114}00114\ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00115}00115\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00116}00116\ \}}
@@ -126,7 +126,7 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00143}00143\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Args>}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00144}\mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{00144}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceNeoFOAM_ae31c35461ab0f69ee4c8309b18cd1143}{spans}}(Args\&...\ fields)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00145}00145\ \{}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00146}00146\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_tuple(fields.span()...);}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00146}00146\ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_tuple(fields.view()...);}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00147}00147\ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00148}00148\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00149}00149\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Args>}
@@ -139,10 +139,10 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00156}\mbox{\hyperlink{namespaceNeoFOAM_a9cb7eae57c041b049ff2dcd222cc9573}{00156}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a9cb7eae57c041b049ff2dcd222cc9573}{equal}}(\mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<T>}}\&\ field,\ T\ value)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00157}00157\ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00158}00158\ \ \ \ \ \textcolor{keyword}{auto}\ hostField\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3c6cef7853ecc075f375c2ecbf2f9d86}{copyToHost}}();}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00159}00159\ \ \ \ \ \textcolor{keyword}{auto}\ hostSpan\ =\ hostField.span();}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00160}00160\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ hostSpan.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00159}00159\ \ \ \ \ \textcolor{keyword}{auto}\ hostView\ =\ hostField.view();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00160}00160\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ hostView.size();\ i++)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00161}00161\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hostSpan[i]\ !=\ value)}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00162}00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hostView[i]\ !=\ value)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00163}00163\ \ \ \ \ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \}}
@@ -173,18 +173,18 @@
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00190}00190\ \};}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00191}00191\ }
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00192}00192\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00193}\mbox{\hyperlink{namespaceNeoFOAM_aa1215531419eead5c9138707a854d9c2}{00193}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a9cb7eae57c041b049ff2dcd222cc9573}{equal}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<T>}}\&\ field,\ std::span<T>\ span2)}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00193}\mbox{\hyperlink{namespaceNeoFOAM_a13428e067d6acc5adb7c2d4bb5d46882}{00193}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a9cb7eae57c041b049ff2dcd222cc9573}{equal}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1Field}{Field<T>}}\&\ field,\ \mbox{\hyperlink{classNeoFOAM_1_1View}{View<T>}}\ span2)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00194}00194\ \{}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00195}00195\ \ \ \ \ \textcolor{keyword}{auto}\ hostSpan\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3c6cef7853ecc075f375c2ecbf2f9d86}{copyToHost}}().span();}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00195}00195\ \ \ \ \ \textcolor{keyword}{auto}\ hostView\ =\ field.\mbox{\hyperlink{classNeoFOAM_1_1Field_a3c6cef7853ecc075f375c2ecbf2f9d86}{copyToHost}}().view();}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00196}00196\ }
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00197}00197\ \ \ \ \ \textcolor{keywordflow}{if}\ (hostSpan.size()\ !=\ span2.size())}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00197}00197\ \ \ \ \ \textcolor{keywordflow}{if}\ (hostView.size()\ !=\ span2.size())}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00198}00198\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00200}00200\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00201}00201\ }
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00202}00202\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ hostSpan.size();\ i++)}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00202}00202\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ hostView.size();\ i++)}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00203}00203\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hostSpan[i]\ !=\ span2[i])}
+\DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (hostView[i]\ !=\ span2[i])}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
 \DoxyCodeLine{\Hypertarget{fieldFreeFunctions_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \}}
