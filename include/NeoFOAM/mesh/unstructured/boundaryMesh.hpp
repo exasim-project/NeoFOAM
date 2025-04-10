@@ -66,6 +66,8 @@ public:
      */
     const labelField& faceCells() const;
 
+    // TODO either dont mix return types, ie dont use span and Field
+    // for functions with same name
     /**
      * @brief Get a span of face cells for a specific boundary face.
      *

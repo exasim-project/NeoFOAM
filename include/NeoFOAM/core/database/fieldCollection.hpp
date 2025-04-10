@@ -215,6 +215,26 @@ public:
     FieldCollection(NeoFOAM::Database& db, std::string name);
 
     /**
+     * @brief A FieldCollection is not copyable, but moveable
+     */
+    FieldCollection(const FieldCollection&) = delete;
+
+    /**
+     * @brief A FieldCollection is not copyable, but moveable
+     */
+    FieldCollection& operator=(const FieldCollection&) = delete;
+
+    /**
+     * @brief A FieldCollection is move constructable, but not copyable
+     */
+    FieldCollection(FieldCollection&&) = default;
+
+    /**
+     * @brief A FieldCollection is not move-assign-able, but move-construct-able
+     */
+    FieldCollection& operator=(FieldCollection&&) = delete;
+
+    /**
      * @brief Checks if the collection contains a field with the given ID.
      *
      * @param id The ID of the field to check for.

@@ -86,14 +86,14 @@ UnstructuredMesh createSingleCellMesh(const Executor exec)
         faceAreasVectors,                                                               // sf,
         magFaceAreas,                                                                   // magSf,
         faceAreasVectors,                                                               // nf,
-        {exec, {{0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}, {-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}}}, // delta
+        {exec, {{-0.5, 0.0, 0.0}, {0.0, 0.5, 0.0}, {0.5, 0.0, 0.0}, {0.0, -0.5, 0.0}}}, // delta
         {exec, {1, 1, 1, 1}},                                                           // weights
         {exec, {2.0, 2.0, 2.0, 2.0}}, // deltaCoeffs --> mag(1 / delta)
         {0, 1, 2, 3, 4}               // offset
     );
     return UnstructuredMesh(
         {exec, {{0, 0, 0}, {0, 1, 0}, {1, 1, 0}, {1, 0, 0}}}, // points,
-        {exec, 1},                                            // cellVolumes
+        {exec, 1, 1.0},                                       // cellVolumes
         {exec, {{0.5, 0.5, 0.0}}},                            // cellCentres
         faceAreasVectors,
         faceCentresVectors,
@@ -116,8 +116,9 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / static_cast<scalar>(nCells);
     auto hostExec = SerialExecutor {};
     vectorField meshPointsHost(hostExec, nCells + 1, {0.0, 0.0, 0.0});
-    meshPointsHost[nCells - 1] = leftBoundary;
-    meshPointsHost[nCells] = rightBoundary;
+    auto meshPointsHostSpan = meshPointsHost.span();
+    meshPointsHostSpan[nCells - 1] = leftBoundary;
+    meshPointsHostSpan[nCells] = rightBoundary;
     auto meshPoints = meshPointsHost.copyToExecutor(exec);
 
     // loop over internal mesh points
@@ -145,7 +146,8 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
 
     vectorField faceAreasHost(hostExec, nCells + 1, {1.0, 0.0, 0.0});
-    faceAreasHost[nCells - 1] = {-1.0, 0.0, 0.0}; // left boundary face
+    auto faceAreasHostView = faceAreasHost.span();
+    faceAreasHostView[nCells - 1] = {-1.0, 0.0, 0.0}; // left boundary face
     auto faceAreas = faceAreasHost.copyToExecutor(exec);
 
     vectorField faceCenters(exec, meshPoints);
@@ -153,8 +155,9 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
     labelField faceOwnerHost(hostExec, nCells + 1);
     labelField faceNeighbor(exec, nCells - 1);
-    faceOwnerHost[nCells - 1] = 0;      // left boundary face
-    faceOwnerHost[nCells] = nCells - 1; // right boundary face
+    auto faceOwnerHostSpan = faceOwnerHost.span();
+    faceOwnerHostSpan[nCells - 1] = 0;                          // left boundary face
+    faceOwnerHostSpan[nCells] = static_cast<label>(nCells) - 1; // right boundary face
     auto faceOwner = faceOwnerHost.copyToExecutor(exec);
 
     // loop over internal faces
@@ -170,21 +173,24 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     );
 
     vectorField deltaHost(hostExec, 2);
+    auto deltaHostSpan = deltaHost.span();
     auto cellCentersHost = cellCenters.copyToHost();
-    deltaHost[0] = {leftBoundary[0] - cellCentersHost[0][0], 0.0, 0.0};
-    deltaHost[1] = {rightBoundary[0] - cellCentersHost[nCells - 1][0], 0.0, 0.0};
+    auto cellCentersHostSpan = cellCentersHost.span();
+    deltaHostSpan[0] = {leftBoundary[0] - cellCentersHostSpan[0][0], 0.0, 0.0};
+    deltaHostSpan[1] = {rightBoundary[0] - cellCentersHostSpan[nCells - 1][0], 0.0, 0.0};
     auto delta = deltaHost.copyToExecutor(exec);
 
     scalarField deltaCoeffsHost(hostExec, 2);
-    deltaCoeffsHost[0] = 1 / mag(deltaHost[0]);
-    deltaCoeffsHost[1] = 1 / mag(deltaHost[1]);
+    auto deltaCoeffsHostSpan = deltaCoeffsHost.span();
+    deltaCoeffsHostSpan[0] = 1 / mag(deltaHostSpan[0]);
+    deltaCoeffsHostSpan[1] = 1 / mag(deltaHostSpan[1]);
     auto deltaCoeffs = deltaCoeffsHost.copyToExecutor(exec);
 
     BoundaryMesh boundaryMesh(
         exec,
         {exec, {0, static_cast<int>(nCells) - 1}},
         {exec, {leftBoundary, rightBoundary}},
-        {exec, {cellCentersHost[0], cellCentersHost[nCells - 1]}},
+        {exec, {cellCentersHostSpan[0], cellCentersHostSpan[nCells - 1]}},
         {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
         {exec, {1.0, 1.0}},
         {exec, {{-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},

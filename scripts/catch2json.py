@@ -15,7 +15,12 @@ def parse_xml_dict(d):
         data = [data]
     records = []
     for cases in data:
-        test_case = cases["@name"]
+        test_case_raw_name = cases["@name"].split(" - ")
+        test_case = test_case_raw_name[0]
+        if len(test_case_raw_name) > 1:
+            test_type = test_case_raw_name[-1]
+        else:
+            test_type = ""
         for d in cases["Section"]:
             size = d["@name"]
             res = {}
@@ -33,6 +38,7 @@ def parse_xml_dict(d):
                     continue
             res["size"] = size
             res["test_case"] = test_case
+            res["test_type"] = test_type
             records.append(res)
     return records
 

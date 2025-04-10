@@ -3,22 +3,14 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/fields/domainField.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
+
 
 TEST_CASE("Unstructured Mesh")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("Can create single cell mesh " + execName)
     {
@@ -55,43 +47,43 @@ TEST_CASE("Unstructured Mesh")
         // bc  [   internal  ]  bc
         // 0.0 [ 0.25 | 0.50 ] 1.0
         auto hostPoints = mesh.points().copyToHost();
-        REQUIRE(hostPoints[0][0] == 0.25);
-        REQUIRE(hostPoints[1][0] == 0.5);
-        REQUIRE(hostPoints[3][0] == 0.0);
-        REQUIRE(hostPoints[nCells][0] == 1.0);
+        REQUIRE(hostPoints.span()[0][0] == 0.25);
+        REQUIRE(hostPoints.span()[1][0] == 0.5);
+        REQUIRE(hostPoints.span()[3][0] == 0.0);
+        REQUIRE(hostPoints.span()[nCells][0] == 1.0);
 
         // Verify cell centers
         auto hostCellCentres = mesh.cellCentres().copyToHost();
-        REQUIRE(hostCellCentres[0][0] == 0.125);
-        REQUIRE(hostCellCentres[1][0] == 0.375);
-        REQUIRE(hostCellCentres[2][0] == 0.625);
-        REQUIRE(hostCellCentres[3][0] == 0.875);
+        REQUIRE(hostCellCentres.span()[0][0] == 0.125);
+        REQUIRE(hostCellCentres.span()[1][0] == 0.375);
+        REQUIRE(hostCellCentres.span()[2][0] == 0.625);
+        REQUIRE(hostCellCentres.span()[3][0] == 0.875);
 
         // Verify face owners
         // |_3 0 |_0 1 |_1 2 |_2 3 |_4
         auto hostFaceOwner = mesh.faceOwner().copyToHost();
-        REQUIRE(hostFaceOwner[0] == 0);
-        REQUIRE(hostFaceOwner[1] == 1);
-        REQUIRE(hostFaceOwner[2] == 2);
-        REQUIRE(hostFaceOwner[3] == 0);
-        REQUIRE(hostFaceOwner[4] == 3);
+        REQUIRE(hostFaceOwner.span()[0] == 0);
+        REQUIRE(hostFaceOwner.span()[1] == 1);
+        REQUIRE(hostFaceOwner.span()[2] == 2);
+        REQUIRE(hostFaceOwner.span()[3] == 0);
+        REQUIRE(hostFaceOwner.span()[4] == 3);
 
         // Verify face neighbors
         // |_3 0 |_0 1 |_1 2 |_2 3 |_4
         auto hostFaceNeighbour = mesh.faceNeighbour().copyToHost();
-        REQUIRE(hostFaceNeighbour[0] == 1);
-        REQUIRE(hostFaceNeighbour[1] == 2);
-        REQUIRE(hostFaceNeighbour[2] == 3);
+        REQUIRE(hostFaceNeighbour.span()[0] == 1);
+        REQUIRE(hostFaceNeighbour.span()[1] == 2);
+        REQUIRE(hostFaceNeighbour.span()[2] == 3);
 
         // Verify boundary mesh
         auto hostBoundaryFaceCells = mesh.boundaryMesh().faceCells().copyToHost();
         auto hostBoundaryCn = mesh.boundaryMesh().cn().copyToHost();
         auto hostBoundaryDelta = mesh.boundaryMesh().delta().copyToHost();
-        REQUIRE(hostBoundaryFaceCells[0] == 0);
-        REQUIRE(hostBoundaryFaceCells[1] == 3);
-        REQUIRE(hostBoundaryCn[0][0] == 0.125);
-        REQUIRE(hostBoundaryCn[1][0] == 0.875);
-        REQUIRE(hostBoundaryDelta[0][0] == -0.125);
-        REQUIRE(hostBoundaryDelta[1][0] == 0.125);
+        REQUIRE(hostBoundaryFaceCells.span()[0] == 0);
+        REQUIRE(hostBoundaryFaceCells.span()[1] == 3);
+        REQUIRE(hostBoundaryCn.span()[0][0] == 0.125);
+        REQUIRE(hostBoundaryCn.span()[1][0] == 0.875);
+        REQUIRE(hostBoundaryDelta.span()[0][0] == -0.125);
+        REQUIRE(hostBoundaryDelta.span()[1][0] == 0.125);
     }
 }

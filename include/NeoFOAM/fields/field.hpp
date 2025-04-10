@@ -50,6 +50,8 @@ class Field
 
 public:
 
+    using FieldValueType = ValueType;
+
     /**
      * @brief Create an uninitialized Field with a given size on an executor
      * @param exec  Executor associated to the field
@@ -198,37 +200,11 @@ public:
         result = copyToExecutor(SerialExecutor());
     }
 
-    /**
-     * @brief Subscript operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    ValueType& operator[](const size_t i) { return data_[i]; }
+    // ensures no return of device address on host --> invalid memory access
+    ValueType& operator[](const size_t i) = delete;
 
-    /**
-     * @brief Subscript operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& operator[](const size_t i) const { return data_[i]; }
-
-    /**
-     * @brief Function call operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    ValueType& operator()(const size_t i) { return data_[i]; }
-
-    /**
-     * @brief Function call operator
-     * @param i The index of cell in the field
-     * @returns The value at the index i
-     */
-    KOKKOS_INLINE_FUNCTION
-    const ValueType& operator()(const size_t i) const { return data_[i]; }
+    // ensures no return of device address on host --> invalid memory access
+    const ValueType& operator[](const size_t i) const = delete;
 
     /**
      * @brief Assignment operator, Sets the field values to that of the passed value.
@@ -353,6 +329,12 @@ public:
      * @return The size of the field.
      */
     [[nodiscard]] size_t size() const { return size_; }
+
+    /**
+     * @brief Gets the size of the field.
+     * @return The size of the field.
+     */
+    [[nodiscard]] label ssize() const { return static_cast<label>(size_); }
 
     /**
      * @brief Checks if the field is empty.

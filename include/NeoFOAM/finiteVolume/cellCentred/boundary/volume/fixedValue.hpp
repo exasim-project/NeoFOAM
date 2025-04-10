@@ -7,7 +7,7 @@
 
 #include "NeoFOAM/fields/field.hpp"
 #include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured.hpp"
+#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
 
 namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
@@ -15,6 +15,7 @@ namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
 
 namespace detail
 {
+// TODO move to source
 // Without this function the compiler warns that calling a __host__ function
 // from a __device__ function is not allowed
 template<typename ValueType>
@@ -22,8 +23,12 @@ void setFixedValue(
     DomainField<ValueType>& domainField, std::pair<size_t, size_t> range, ValueType fixedValue
 )
 {
-    auto refValue = domainField.boundaryField().refValue().span();
-    auto value = domainField.boundaryField().value().span();
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        domainField.boundaryField().refGrad(),
+        domainField.boundaryField().value(),
+        domainField.boundaryField().valueFraction(),
+        domainField.boundaryField().refValue()
+    );
 
     NeoFOAM::parallelFor(
         domainField.exec(),
@@ -31,6 +36,8 @@ void setFixedValue(
         KOKKOS_LAMBDA(const size_t i) {
             refValue[i] = fixedValue;
             value[i] = fixedValue;
+            valueFraction[i] = 1.0;      // only used refValue
+            refGradient[i] = fixedValue; // not used
         }
     );
 }

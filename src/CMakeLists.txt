@@ -21,26 +21,42 @@ target_sources(
           "core/demangle.cpp"
           "core/tokenList.cpp"
           "dsl/coeff.cpp"
-          "dsl/operator.cpp"
+          "dsl/spatialOperator.cpp"
+          "dsl/temporalOperator.cpp"
           "executor/CPUExecutor.cpp"
           "executor/GPUExecutor.cpp"
           "executor/serialExecutor.cpp"
+          "linearAlgebra/utilities.cpp"
           "mesh/unstructured/boundaryMesh.cpp"
           "mesh/unstructured/unstructuredMesh.cpp"
+          "finiteVolume/cellCentred/linearAlgebra/sparsityPattern.cpp"
           "finiteVolume/cellCentred/stencil/stencilDataBase.cpp"
           "finiteVolume/cellCentred/stencil/geometryScheme.cpp"
           "finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp"
+          "finiteVolume/cellCentred/stencil/cellToFaceStencil.cpp"
           "finiteVolume/cellCentred/boundary/boundary.cpp"
+          "finiteVolume/cellCentred/operators/ddtOperator.cpp"
+          # "finiteVolume/cellCentred/operators/expression.cpp"
+          "finiteVolume/cellCentred/pressureVelocityCoupling/pressureVelocityCoupling.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenGrad.cpp"
           "finiteVolume/cellCentred/operators/gaussGreenDiv.cpp"
+          "finiteVolume/cellCentred/operators/gaussGreenLaplacian.cpp"
+          "finiteVolume/cellCentred/operators/sourceTerm.cpp"
+          "finiteVolume/cellCentred/operators/surfaceIntegrate.cpp"
           "finiteVolume/cellCentred/interpolation/linear.cpp"
           "finiteVolume/cellCentred/interpolation/upwind.cpp"
+          "finiteVolume/cellCentred/faceNormalGradient/uncorrected.cpp"
+          "finiteVolume/cellCentred/auxiliary/coNum.cpp"
           "timeIntegration/timeIntegration.cpp"
           "timeIntegration/rungeKutta.cpp")
 
 if(NEOFOAM_ENABLE_MPI_SUPPORT)
   target_sources(NeoFOAM PRIVATE "core/mpi/halfDuplexCommBuffer.cpp"
                                  "mesh/unstructured/communicator.cpp")
+endif()
+
+if(NEOFOAM_WITH_GINKGO)
+  target_sources(NeoFOAM PRIVATE "linearAlgebra/ginkgo.cpp")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)

@@ -2,13 +2,9 @@
 // SPDX-FileCopyrightText: 2023-2024 NeoFOAM authors
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/benchmark/catch_benchmark.hpp>
+#include "catch2_common.hpp"
 
-#include "NeoFOAM/fields/field.hpp"
-#include "NeoFOAM/dsl/coeff.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
@@ -17,13 +13,7 @@ using namespace NeoFOAM::dsl;
 
 TEST_CASE("Coeff")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("Coefficient evaluation on " + execName)
     {
@@ -74,9 +64,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == true);
-            REQUIRE(hostFieldA[0] == 3.0);
-            REQUIRE(hostFieldA[1] == 3.0);
-            REQUIRE(hostFieldA[2] == 3.0);
+            REQUIRE(hostFieldA.span()[0] == 3.0);
+            REQUIRE(hostFieldA.span()[1] == 3.0);
+            REQUIRE(hostFieldA.span()[2] == 3.0);
         }
 
         SECTION("scalar")
@@ -89,9 +79,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == false);
-            REQUIRE(hostFieldA[0] == 4.0);
-            REQUIRE(hostFieldA[1] == 4.0);
-            REQUIRE(hostFieldA[2] == 4.0);
+            REQUIRE(hostFieldA.span()[0] == 4.0);
+            REQUIRE(hostFieldA.span()[1] == 4.0);
+            REQUIRE(hostFieldA.span()[2] == 4.0);
         }
 
         SECTION("span and scalar")
@@ -104,9 +94,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == true);
-            REQUIRE(hostFieldA[0] == -3.0);
-            REQUIRE(hostFieldA[1] == -3.0);
-            REQUIRE(hostFieldA[2] == -3.0);
+            REQUIRE(hostFieldA.span()[0] == -3.0);
+            REQUIRE(hostFieldA.span()[1] == -3.0);
+            REQUIRE(hostFieldA.span()[2] == -3.0);
         }
     }
 }

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include <catch2/catch_test_macros.hpp>
+#include "catch2_common.hpp"
+
 #include "NeoFOAM/core/dictionary.hpp"
 
 TEST_CASE("Dictionary operations", "[dictionary]")

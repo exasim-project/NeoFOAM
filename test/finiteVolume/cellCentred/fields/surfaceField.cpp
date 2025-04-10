@@ -3,13 +3,9 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
-
-#include "NeoFOAM/finiteVolume/cellCentred/boundary.hpp"
 
 template<typename T>
 using I = std::initializer_list<T>;
@@ -17,14 +13,7 @@ using I = std::initializer_list<T>;
 TEST_CASE("surfaceField")
 {
     namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
-
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("can instantiate SurfaceField with fixedValues on: " + execName)
     {
@@ -46,7 +35,7 @@ TEST_CASE("surfaceField")
             auto internalValues = sf.internalField().copyToHost();
             for (size_t i = 0; i < internalValues.size(); ++i)
             {
-                REQUIRE(internalValues[i] == 1.0);
+                REQUIRE(internalValues.span()[i] == 1.0);
             }
         }
 
@@ -59,19 +48,19 @@ TEST_CASE("surfaceField")
         auto internalValues = sf.internalField().copyToHost();
         for (size_t i = 0; i < internalValues.size(); ++i)
         {
-            REQUIRE(internalValues[i] == 2.0);
+            REQUIRE(internalValues.span()[i] == 2.0);
         }
 
         auto values = sf.boundaryField().value().copyToHost();
         for (size_t i = 0; i < values.size(); ++i)
         {
-            REQUIRE(values[i] == 2.0);
+            REQUIRE(values.span()[i] == 2.0);
         }
 
         auto refValue = sf.boundaryField().refValue().copyToHost();
         for (size_t i = 0; i < refValue.size(); ++i)
         {
-            REQUIRE(refValue[i] == 2.0);
+            REQUIRE(refValue.span()[i] == 2.0);
         }
     }
 }

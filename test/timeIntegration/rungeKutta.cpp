@@ -3,9 +3,7 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 #include <string>
 
 #include "../dsl/common.hpp"
@@ -17,7 +15,8 @@ namespace fvcc = NeoFOAM::finiteVolume::cellCentred;
 
 using Field = NeoFOAM::Field<NeoFOAM::scalar>;
 using Coeff = NeoFOAM::dsl::Coeff;
-using Operator = NeoFOAM::dsl::Operator;
+using SpatialOperator = NeoFOAM::dsl::SpatialOperator<NeoFOAM::scalar>;
+using TemporalOperator = NeoFOAM::dsl::TemporalOperator<NeoFOAM::scalar>;
 using Executor = NeoFOAM::Executor;
 using VolumeField = fvcc::VolumeField<NeoFOAM::scalar>;
 using OperatorMixin = NeoFOAM::dsl::OperatorMixin<VolumeField>;
@@ -32,7 +31,11 @@ class YSquared : public OperatorMixin
 
 public:
 
-    YSquared(VolumeField& field) : OperatorMixin(field.exec(), field, Operator::Type::Explicit) {}
+    using FieldValueType = NeoFOAM::scalar;
+
+    YSquared(VolumeField& field)
+        : OperatorMixin(field.exec(), dsl::Coeff(1.0), field, Operator::Type::Explicit)
+    {}
 
     void explicitOperation(Field& source) const
     {
@@ -76,12 +79,7 @@ struct CreateField
 
 TEST_CASE("TimeIntegration - Runge Kutta")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     NeoFOAM::scalar convergenceTolerance = 1.0e-4; // how much lower we accept that expected order.
 
     // Set up dictionary.
@@ -119,7 +117,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
             vfOld.internalField() = initialValue;
 
             // Set expression
-            Operator ddtOp = Ddt(vfOld);
+            TemporalOperator ddtOp = NeoFOAM::dsl::imp::ddt(vfOld);
+
             auto divOp = YSquared(vfOld);
             auto eqn = ddtOp + divOp;
 
@@ -132,7 +131,8 @@ TEST_CASE("TimeIntegration - Runge Kutta")
 
             // check error.
             NeoFOAM::scalar analytical = 1.0 / (initialValue - maxTime);
-            error[iTest] = std::abs(vf.internalField().copyToHost()[0] - analytical);
+            auto vfHost = vf.internalField().copyToHost();
+            error[iTest] = std::abs(vfHost.span()[0] - analytical);
             iTest++;
         }
 

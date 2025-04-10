@@ -3,21 +3,13 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
 TEST_CASE("Field Constructors")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("Copy Constructor " + execName)
     {
@@ -279,9 +271,9 @@ TEST_CASE("getSpans")
     auto [hostA, hostB, hostC] = NeoFOAM::copyToHosts(a, b, c);
     auto [spanB, spanC] = NeoFOAM::spans(b, c);
 
-    REQUIRE(hostA[0] == 1.0);
-    REQUIRE(hostB[0] == 2.0);
-    REQUIRE(hostC[0] == 3.0);
+    REQUIRE(hostA.span()[0] == 1.0);
+    REQUIRE(hostB.span()[0] == 2.0);
+    REQUIRE(hostC.span()[0] == 3.0);
 
     NeoFOAM::parallelFor(
         a, KOKKOS_LAMBDA(const NeoFOAM::size_t i) { return spanB[i] + spanC[i]; }

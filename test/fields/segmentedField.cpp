@@ -3,23 +3,15 @@
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <catch2/catch_session.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
+#include "catch2_common.hpp"
 
-#include "NeoFOAM/fields/segmentedField.hpp"
-#include "NeoFOAM/core/primitives/label.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
+
 #include <Kokkos_Core.hpp>
 
 TEST_CASE("segmentedField")
 {
-    NeoFOAM::Executor exec = GENERATE(
-        NeoFOAM::Executor(NeoFOAM::SerialExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::CPUExecutor {}),
-        NeoFOAM::Executor(NeoFOAM::GPUExecutor {})
-    );
-
-    std::string execName = std::visit([](auto e) { return e.name(); }, exec);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     SECTION("Constructor from sizes " + execName)
     {
@@ -49,8 +41,8 @@ TEST_CASE("segmentedField")
         auto hostValues = segField.values().copyToHost();
         auto hostSegments = segField.segments().copyToHost();
 
-        REQUIRE(hostValues[5] == 5);
-        REQUIRE(hostSegments[2] == 4);
+        REQUIRE(hostValues.span()[5] == 5);
+        REQUIRE(hostSegments.span()[2] == 4);
 
         SECTION("loop over segments")
         {
@@ -91,11 +83,11 @@ TEST_CASE("segmentedField")
             );
 
             auto hostResult = result.copyToHost();
-            REQUIRE(hostResult[0] == 1 * 3);
-            REQUIRE(hostResult[1] == 5 * 3);
-            REQUIRE(hostResult[2] == 9 * 3);
-            REQUIRE(hostResult[3] == 13 * 3);
-            REQUIRE(hostResult[4] == 17 * 3);
+            REQUIRE(hostResult.span()[0] == 1 * 3);
+            REQUIRE(hostResult.span()[1] == 5 * 3);
+            REQUIRE(hostResult.span()[2] == 9 * 3);
+            REQUIRE(hostResult.span()[3] == 13 * 3);
+            REQUIRE(hostResult.span()[4] == 17 * 3);
         }
     }
 
@@ -105,19 +97,19 @@ TEST_CASE("segmentedField")
         NeoFOAM::SegmentedField<NeoFOAM::label, NeoFOAM::localIdx> segField(offsets);
 
         auto hostSegments = segField.segments().copyToHost();
-        REQUIRE(hostSegments[0] == 0);
-        REQUIRE(hostSegments[1] == 1);
-        REQUIRE(hostSegments[2] == 3);
-        REQUIRE(hostSegments[3] == 6);
-        REQUIRE(hostSegments[4] == 10);
-        REQUIRE(hostSegments[5] == 15);
+        REQUIRE(hostSegments.span()[0] == 0);
+        REQUIRE(hostSegments.span()[1] == 1);
+        REQUIRE(hostSegments.span()[2] == 3);
+        REQUIRE(hostSegments.span()[3] == 6);
+        REQUIRE(hostSegments.span()[4] == 10);
+        REQUIRE(hostSegments.span()[5] == 15);
 
         auto hostOffsets = offsets.copyToHost();
-        REQUIRE(hostOffsets[0] == 1);
-        REQUIRE(hostOffsets[1] == 2);
-        REQUIRE(hostOffsets[2] == 3);
-        REQUIRE(hostOffsets[3] == 4);
-        REQUIRE(hostOffsets[4] == 5);
+        REQUIRE(hostOffsets.span()[0] == 1);
+        REQUIRE(hostOffsets.span()[1] == 2);
+        REQUIRE(hostOffsets.span()[2] == 3);
+        REQUIRE(hostOffsets.span()[3] == 4);
+        REQUIRE(hostOffsets.span()[4] == 5);
 
         REQUIRE(segField.size() == 15);
 
@@ -150,11 +142,11 @@ TEST_CASE("segmentedField")
             );
 
             auto hostResult = result.copyToHost();
-            REQUIRE(hostResult[0] == 0 * 1);
-            REQUIRE(hostResult[1] == 1 * 2);
-            REQUIRE(hostResult[2] == 2 * 3);
-            REQUIRE(hostResult[3] == 3 * 4);
-            REQUIRE(hostResult[4] == 4 * 5);
+            REQUIRE(hostResult.span()[0] == 0 * 1);
+            REQUIRE(hostResult.span()[1] == 1 * 2);
+            REQUIRE(hostResult.span()[2] == 2 * 3);
+            REQUIRE(hostResult.span()[3] == 3 * 4);
+            REQUIRE(hostResult.span()[4] == 4 * 5);
         }
     }
 }
