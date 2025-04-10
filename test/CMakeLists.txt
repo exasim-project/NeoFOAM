@@ -28,6 +28,7 @@ function(neofoam_unit_test TEST)
   endif()
 
   add_executable(${neofoam_COMMAND} "${TEST}.cpp")
+  target_include_directories(${neofoam_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
   set_target_properties(${neofoam_COMMAND} PROPERTIES OUTPUT_NAME ${TEST})
   target_link_libraries(${neofoam_COMMAND} PRIVATE neofoam_warnings neofoam_options Kokkos::kokkos
                                                    NeoFOAM cpptrace::cpptrace)
@@ -49,6 +50,7 @@ function(neofoam_unit_test TEST)
                  LIBRARY_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>
                  ARCHIVE_OUTPUT_DIRECTORY ${neofoam_WORKING_DIRECTORY}/$<0:>)
   else()
+    # cmake-lint: disable=C0307
     set_target_properties(${neofoam_COMMAND} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                                         ${neofoam_WORKING_DIRECTORY})
   endif()
