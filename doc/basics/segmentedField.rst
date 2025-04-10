@@ -18,7 +18,7 @@ It can be used to represent cell to cell stencil.
     NeoFOAM::Field<NeoFOAM::label> result(exec, 5);
 
     NeoFOAM::fill(result, 0);
-    auto resultSpan = result.span();
+    auto resultSpan = result.view();
 
     parallelFor(
         exec,
