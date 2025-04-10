@@ -78,13 +78,13 @@ void parallelFor(
     std::string name = "parallelFor"
 )
 {
-    auto span = field.span();
+    auto view = field.view();
     if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
     {
         size_t fieldSize = field.size();
         for (size_t i = 0; i < fieldSize; i++)
         {
-            span[i] = kernel(i);
+            view[i] = kernel(i);
         }
     }
     else
@@ -93,7 +93,7 @@ void parallelFor(
         Kokkos::parallel_for(
             name,
             Kokkos::RangePolicy<runOn>(0, field.size()),
-            KOKKOS_LAMBDA(const size_t i) { span[i] = kernel(i); }
+            KOKKOS_LAMBDA(const size_t i) { view[i] = kernel(i); }
         );
     }
 }

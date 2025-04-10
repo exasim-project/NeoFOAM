@@ -77,15 +77,15 @@ public:
 
     void assemble(scalar t, scalar dt)
     {
-        auto vol = psi_.mesh().cellVolumes().span();
+        auto vol = psi_.mesh().cellVolumes().view();
         auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
         expr_.explicitOperation(expSource, t, dt);
-        auto expSourceSpan = expSource.span();
+        auto expSourceSpan = expSource.view();
 
         ls_ = expr_.implicitOperation();
         // TODO rename implicitOperation -> assembleLinearSystem
         expr_.implicitOperation(ls_, t, dt);
-        auto rhs = ls_.rhs().span();
+        auto rhs = ls_.rhs().view();
         // we subtract the explicit source term from the rhs
         NeoFOAM::parallelFor(
             exec(),
@@ -112,12 +112,12 @@ public:
         else
         {
             // solve sparse matrix system
-            auto vol = psi_.mesh().cellVolumes().span();
+            auto vol = psi_.mesh().cellVolumes().view();
             auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
-            auto expSourceSpan = expSource.span();
+            auto expSourceSpan = expSource.view();
 
             ls_ = expr_.implicitOperation();
-            auto rhs = ls_.rhs().span();
+            auto rhs = ls_.rhs().view();
             // we subtract the explicit source term from the rhs
             NeoFOAM::parallelFor(
                 exec(),
@@ -161,9 +161,9 @@ public:
     void setReference(const IndexType refCell, ValueType refValue)
     {
         // TODO currently assumes that matrix is already assembled
-        const auto diagOffset = sparsityPattern_->diagOffset().span();
+        const auto diagOffset = sparsityPattern_->diagOffset().view();
         const auto rowPtrs = ls_.matrix().rowPtrs();
-        auto rhs = ls_.rhs().span();
+        auto rhs = ls_.rhs().view();
         auto values = ls_.matrix().values();
         NeoFOAM::parallelFor(
             ls_.exec(),
@@ -191,7 +191,7 @@ public:
             psi_.internalField()
         );
 
-        auto rhs = ls_.rhs().span();
+        auto rhs = ls_.rhs().view();
 
         const auto values = ls_.matrix().values();
         const auto colIdxs = ls_.matrix().colIdxs();
@@ -200,7 +200,7 @@ public:
         Field<ValueType> result(exec, neighbour.size(), 0.0);
 
 
-        auto resultSpan = result.span();
+        auto resultSpan = result.view();
 
         parallelFor(
             exec,

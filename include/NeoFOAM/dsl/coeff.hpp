@@ -12,7 +12,7 @@ namespace NeoFOAM::dsl
  * @class Coeff
  * @brief A class that represents a coefficient for the NeoFOAM dsl.
  *
- * This class stores a single scalar coefficient and optionally span of values.
+ * This class stores a single scalar coefficient and optionally view of values.
  * It is used to delay the evaluation of a scalar multiplication with a field to
  * avoid the creation of a temporary field copy.
  * It provides an indexing operator `operator[]` that returns the evaluated value at the specified
@@ -32,11 +32,11 @@ public:
     Coeff(const Field<scalar>& field);
 
     KOKKOS_INLINE_FUNCTION
-    scalar operator[](const size_t i) const { return (hasSpan_) ? span_[i] * coeff_ : coeff_; }
+    scalar operator[](const size_t i) const { return (hasView_) ? view_[i] * coeff_ : coeff_; }
 
     bool hasSpan();
 
-    std::span<const scalar> span();
+    View<const scalar> span();
 
     Coeff& operator*=(scalar rhs);
 
@@ -48,9 +48,9 @@ private:
 
     scalar coeff_;
 
-    std::span<const scalar> span_;
+    View<const scalar> view_;
 
-    bool hasSpan_;
+    bool hasView_;
 };
 
 

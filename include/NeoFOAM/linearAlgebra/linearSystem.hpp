@@ -24,11 +24,11 @@ struct LinearSystemView
     LinearSystemView() = default;
     ~LinearSystemView() = default;
 
-    LinearSystemView(CSRMatrixView<ValueType, IndexType> matrixView, std::span<ValueType> rhsView)
+    LinearSystemView(CSRMatrixView<ValueType, IndexType> matrixView, View<ValueType> rhsView)
         : matrix(matrixView), rhs(rhsView) {};
 
     CSRMatrixView<ValueType, IndexType> matrix;
-    std::span<ValueType> rhs;
+    View<ValueType> rhs;
 };
 
 /**
@@ -82,12 +82,12 @@ public:
 
     [[nodiscard]] LinearSystemView<ValueType, IndexType> view() &
     {
-        return LinearSystemView<ValueType, IndexType>(matrix_.view(), rhs_.span());
+        return LinearSystemView<ValueType, IndexType>(matrix_.view(), rhs_.view());
     }
 
     [[nodiscard]] LinearSystemView<const ValueType, const IndexType> view() const&
     {
-        return LinearSystemView<const ValueType, const IndexType>(matrix_.view(), rhs_.span());
+        return LinearSystemView<const ValueType, const IndexType>(matrix_.view(), rhs_.view());
     }
 
     const Executor& exec() const { return matrix_.exec(); }
@@ -105,9 +105,9 @@ Field<ValueType> spmv(LinearSystem<ValueType, IndexType>& ls, Field<ValueType>& 
     Field<ValueType> resultField(ls.exec(), ls.rhs().size(), 0.0);
     auto [result, b, x] = spans(resultField, ls.rhs(), xfield);
 
-    auto values = ls.matrix().values().span();
-    auto colIdxs = ls.matrix().colIdxs().span();
-    auto rowPtrs = ls.matrix().rowPtrs().span();
+    auto values = ls.matrix().values().view();
+    auto colIdxs = ls.matrix().colIdxs().view();
+    auto rowPtrs = ls.matrix().rowPtrs().view();
 
     parallelFor(
         ls.exec(),

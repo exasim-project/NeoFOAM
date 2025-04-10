@@ -27,7 +27,7 @@ void setGradientValue(
     ValueType fixedGradient
 )
 {
-    const auto iField = domainField.internalField().span();
+    const auto iField = domainField.internalField().view();
 
     auto [refGradient, value, valueFraction, refValue, faceCells, deltaCoeffs] = spans(
         domainField.boundaryField().refGrad(),

@@ -6,19 +6,19 @@
 namespace NeoFOAM::dsl
 {
 
-Coeff::Coeff() : coeff_(1.0), span_(), hasSpan_(false) {}
+Coeff::Coeff() : coeff_(1.0), view_(), hasView_(false) {}
 
-Coeff::Coeff(scalar value) : coeff_(value), span_(), hasSpan_(false) {}
+Coeff::Coeff(scalar value) : coeff_(value), view_(), hasView_(false) {}
 
 Coeff::Coeff(scalar coeff, const Field<scalar>& field)
-    : coeff_(coeff), span_(field.span()), hasSpan_(true)
+    : coeff_(coeff), view_(field.view()), hasView_(true)
 {}
 
-Coeff::Coeff(const Field<scalar>& field) : coeff_(1.0), span_(field.span()), hasSpan_(true) {}
+Coeff::Coeff(const Field<scalar>& field) : coeff_(1.0), view_(field.view()), hasView_(true) {}
 
-bool Coeff::hasSpan() { return hasSpan_; }
+bool Coeff::hasSpan() { return hasView_; }
 
-std::span<const scalar> Coeff::span() { return span_; }
+View<const scalar> Coeff::span() { return view_; }
 
 Coeff& Coeff::operator*=(scalar rhs)
 {
@@ -28,16 +28,16 @@ Coeff& Coeff::operator*=(scalar rhs)
 
 Coeff& Coeff::operator*=(const Coeff& rhs)
 {
-    if (hasSpan_ && rhs.hasSpan_)
+    if (hasView_ && rhs.hasView_)
     {
         NF_ERROR_EXIT("Not implemented");
     }
 
-    if (!hasSpan_ && rhs.hasSpan_)
+    if (!hasView_ && rhs.hasView_)
     {
         // Take over the span
-        span_ = rhs.span_;
-        hasSpan_ = true;
+        view_ = rhs.view_;
+        hasView_ = true;
     }
 
     return this->operator*=(rhs.coeff_);
@@ -51,10 +51,10 @@ void toField(Coeff& coeff, Field<scalar>& rhs)
     {
         rhs.resize(coeff.span().size());
         fill(rhs, 1.0);
-        auto rhsSpan = rhs.span();
+        auto rhsView = rhs.view();
         // otherwise we are unable to capture values in the lambda
         parallelFor(
-            rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsSpan[i] *= coeff[i]; }
+            rhs.exec(), rhs.range(), KOKKOS_LAMBDA(const size_t i) { rhsView[i] *= coeff[i]; }
         );
     }
     else

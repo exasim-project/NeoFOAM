@@ -5,7 +5,6 @@
 #include <Kokkos_Core.hpp>
 
 #include <iostream>
-#include <span>
 
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
@@ -131,7 +130,7 @@ public:
     Field(const Field<ValueType>& rhs) : data_(nullptr), exec_(rhs.exec_)
     {
         resize(rhs.size_);
-        setField(*this, rhs.span());
+        setField(*this, rhs.view());
     }
 
     /**
@@ -226,7 +225,7 @@ public:
         {
             this->resize(rhs.size());
         }
-        setField(*this, rhs.span());
+        setField(*this, rhs.view());
     }
 
     /**
@@ -344,46 +343,46 @@ public:
     [[nodiscard]] bool empty() const { return size() == 0; }
 
     // return of a temporary --> invalid memory access
-    View<ValueType> span() && = delete;
+    View<ValueType> view() && = delete;
 
     // return of a temporary --> invalid memory access
-    View<const ValueType> span() const&& = delete;
+    View<const ValueType> view() const&& = delete;
 
     /**
-     * @brief Gets the field as a span.
-     * @return Span of the field.
+     * @brief Gets the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] View<ValueType> span() & { return View<ValueType>(data_, size_); }
+    [[nodiscard]] View<ValueType> view() & { return View<ValueType>(data_, size_); }
 
     /**
-     * @brief Gets the field as a span.
-     * @return Span of the field.
+     * @brief Gets the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] View<const ValueType> span() const&
+    [[nodiscard]] View<const ValueType> view() const&
     {
         return View<const ValueType>(data_, size_);
     }
 
     // return of a temporary --> invalid memory access
-    [[nodiscard]] View<ValueType> span(std::pair<size_t, size_t> range) && = delete;
+    [[nodiscard]] View<ValueType> view(std::pair<size_t, size_t> range) && = delete;
 
     // return of a temporary --> invalid memory access
-    [[nodiscard]] View<const ValueType> span(std::pair<size_t, size_t> range) const&& = delete;
+    [[nodiscard]] View<const ValueType> view(std::pair<size_t, size_t> range) const&& = delete;
 
     /**
-     * @brief Gets a sub view of the field as a span.
-     * @return Span of the field.
+     * @brief Gets a sub view of the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] View<ValueType> span(std::pair<size_t, size_t> range) &
+    [[nodiscard]] View<ValueType> view(std::pair<size_t, size_t> range) &
     {
         return View<ValueType>(data_ + range.first, range.second - range.first);
     }
 
     /**
-     * @brief Gets a sub view of the field as a span.
-     * @return Span of the field.
+     * @brief Gets a sub view of the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] View<const ValueType> span(std::pair<size_t, size_t> range) const&
+    [[nodiscard]] View<const ValueType> view(std::pair<size_t, size_t> range) const&
     {
         return View<const ValueType>(data_ + range.first, range.second - range.first);
     }

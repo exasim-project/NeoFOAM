@@ -22,14 +22,14 @@ struct CSRMatrixView
 {
     /**
      * @brief Constructor for CSRMatrixView.
-     * @param valueView Span of the non-zero values of the matrix.
-     * @param colIdxsView Span of the column indices for each non-zero value.
-     * @param rowOffsView Span of the starting index in values/colIdxs for each row.
+     * @param valueView View of the non-zero values of the matrix.
+     * @param colIdxsView View of the column indices for each non-zero value.
+     * @param rowOffsView View of the starting index in values/colIdxs for each row.
      */
     CSRMatrixView(
-        const std::span<ValueType>& valueView,
-        const std::span<IndexType>& colIdxsView,
-        const std::span<IndexType>& rowOffsView
+        const View<ValueType>& valueView,
+        const View<IndexType>& colIdxsView,
+        const View<IndexType>& rowOffsView
     )
         : values(valueView), colIdxs(colIdxsView), rowOffs(rowOffsView) {};
 
@@ -69,9 +69,9 @@ struct CSRMatrixView
     KOKKOS_INLINE_FUNCTION
     ValueType& entry(const IndexType offset) const { return values[offset]; }
 
-    std::span<ValueType> values;  //!< Span to the values of the CSR matrix.
-    std::span<IndexType> colIdxs; //!< Span to the column indices of the CSR matrix.
-    std::span<IndexType> rowOffs; //!< Span to the row offsets for the CSR matrix.
+    View<ValueType> values;  //!< View to the values of the CSR matrix.
+    View<IndexType> colIdxs; //!< View to the column indices of the CSR matrix.
+    View<IndexType> rowOffs; //!< View to the row offsets for the CSR matrix.
 };
 
 /**
@@ -200,7 +200,7 @@ public:
      */
     [[nodiscard]] CSRMatrixView<ValueType, IndexType> view()
     {
-        return CSRMatrixView(values_.span(), colIdxs_.span(), rowOffs_.span());
+        return CSRMatrixView(values_.view(), colIdxs_.view(), rowOffs_.view());
     }
 
     /**
@@ -209,7 +209,7 @@ public:
      */
     [[nodiscard]] const CSRMatrixView<const ValueType, const IndexType> view() const
     {
-        return CSRMatrixView(values_.span(), colIdxs_.span(), rowOffs_.span());
+        return CSRMatrixView(values_.view(), colIdxs_.view(), rowOffs_.view());
     }
 
 private:

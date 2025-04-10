@@ -18,12 +18,12 @@ template<typename ValueType>
 void surfaceIntegrate(
     const Executor& exec,
     size_t nInternalFaces,
-    std::span<const int> neighbour,
-    std::span<const int> owner,
-    std::span<const int> faceCells,
-    std::span<const ValueType> flux,
-    std::span<const scalar> v,
-    std::span<ValueType> res,
+    View<const int> neighbour,
+    View<const int> owner,
+    View<const int> faceCells,
+    View<const ValueType> flux,
+    View<const scalar> v,
+    View<ValueType> res,
     const dsl::Coeff operatorScaling
 );
 
@@ -57,12 +57,12 @@ public:
         surfaceIntegrate<ValueType>(
             exec,
             nInternalFaces,
-            mesh.faceNeighbour().span(),
-            mesh.faceOwner().span(),
-            mesh.boundaryMesh().faceCells().span(),
-            this->flux_.internalField().span(),
-            mesh.cellVolumes().span(),
-            tmpsource.span(),
+            mesh.faceNeighbour().view(),
+            mesh.faceOwner().view(),
+            mesh.boundaryMesh().faceCells().view(),
+            this->flux_.internalField().view(),
+            mesh.cellVolumes().view(),
+            tmpsource.view(),
             operatorScaling
         );
         source += tmpsource;

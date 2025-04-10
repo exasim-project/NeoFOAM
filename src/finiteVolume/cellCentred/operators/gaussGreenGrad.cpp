@@ -27,7 +27,7 @@ void computeGrad(
     );
     surfInterp.interpolate(in, phif);
 
-    auto surfGradPhi = out.internalField().span();
+    auto surfGradPhi = out.internalField().view();
 
     const auto [surfFaceCells, sBSf, surfPhif, surfOwner, surfNeighbour, faceAreaS, surfV] = spans(
         mesh.boundaryMesh().faceCells(),

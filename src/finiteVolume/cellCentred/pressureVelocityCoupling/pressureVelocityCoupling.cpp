@@ -16,8 +16,8 @@ discreteMomentumFields(const Expression<Vector>& expr)
     const VolumeField<Vector>& u = expr.getField();
     const UnstructuredMesh& mesh = u.mesh();
     const SparsityPattern& sparsityPattern = expr.sparsityPattern();
-    const auto vol = mesh.cellVolumes().span();
-    const auto diagOffset = sparsityPattern.diagOffset().span();
+    const auto vol = mesh.cellVolumes().view();
+    const auto diagOffset = sparsityPattern.diagOffset().view();
     auto ls = expr.linearSystem().view();
     const auto rhs = ls.rhs;
     auto [values, col, rowPtrs] = ls.matrix;
@@ -48,7 +48,7 @@ discreteMomentumFields(const Expression<Vector>& expr)
         rAU.internalField()
     );
 
-    auto internalHbyA = hByA.internalField().span();
+    auto internalHbyA = hByA.internalField().view();
 
     parallelFor(
         exec,

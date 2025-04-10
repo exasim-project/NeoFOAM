@@ -3,12 +3,12 @@
 #pragma once
 
 #include <tuple>
-#include <span>
 
 #include <Kokkos_Core.hpp>
 #include "NeoFOAM/core/primitives/label.hpp"
 #include "NeoFOAM/helpers/exceptions.hpp"
 #include "NeoFOAM/core/parallelAlgorithms.hpp"
+#include "NeoFOAM/core/view.hpp"
 
 namespace NeoFOAM
 {
@@ -33,9 +33,9 @@ void map(Field<T>& a, const Inner inner, std::pair<size_t, size_t> range = {0, 0
     {
         end = a.size();
     }
-    auto spanA = a.span();
+    auto viewA = a.view();
     parallelFor(
-        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = inner(i); }
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { viewA[i] = inner(i); }
     );
 }
 
@@ -58,24 +58,24 @@ void fill(
     {
         end = a.size();
     }
-    auto spanA = a.span();
+    auto viewA = a.view();
     parallelFor(
-        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = value; }
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { viewA[i] = value; }
     );
 }
 
 
 /**
- * @brief Set the field with a span of values using a specific executor.
+ * @brief Set the field with a view of values using a specific executor.
  *
  * @param a The field to set.
- * @param b The span of values to set the field with.
+ * @param b The view of values to set the field with.
  * @param range The range to set the field in. If not provided, the whole field is set.
  */
 template<typename ValueType>
 void setField(
     Field<ValueType>& a,
-    const std::span<const std::type_identity_t<ValueType>> b,
+    const View<const std::type_identity_t<ValueType>> b,
     std::pair<size_t, size_t> range = {0, 0}
 )
 {
@@ -84,18 +84,18 @@ void setField(
     {
         end = a.size();
     }
-    auto spanA = a.span();
+    auto viewA = a.view();
     parallelFor(
-        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = b[i]; }
+        a.exec(), {start, end}, KOKKOS_LAMBDA(const size_t i) { viewA[i] = b[i]; }
     );
 }
 
 template<typename ValueType>
 void scalarMul(Field<ValueType>& a, const std::type_identity_t<ValueType> value)
 {
-    auto spanA = a.span();
+    auto viewA = a.view();
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return spanA[i] * value; }
+        a, KOKKOS_LAMBDA(const size_t i) { return viewA[i] * value; }
     );
 }
 
@@ -107,10 +107,10 @@ void fieldBinaryOp(
 )
 {
     NeoFOAM_ASSERT_EQUAL_LENGTH(a, b);
-    auto spanA = a.span();
-    auto spanB = b.span();
+    auto viewA = a.view();
+    auto viewB = b.view();
     parallelFor(
-        a, KOKKOS_LAMBDA(const size_t i) { return op(spanA[i], spanB[i]); }
+        a, KOKKOS_LAMBDA(const size_t i) { return op(viewA[i], viewB[i]); }
     );
 }
 }
@@ -143,7 +143,7 @@ void mul(Field<ValueType>& a, const Field<std::type_identity_t<ValueType>>& b)
 template<typename... Args>
 auto spans(Args&... fields)
 {
-    return std::make_tuple(fields.span()...);
+    return std::make_tuple(fields.view()...);
 }
 
 template<typename... Args>
@@ -156,10 +156,10 @@ template<typename T>
 bool equal(Field<T>& field, T value)
 {
     auto hostField = field.copyToHost();
-    auto hostSpan = hostField.span();
-    for (size_t i = 0; i < hostSpan.size(); i++)
+    auto hostView = hostField.view();
+    for (size_t i = 0; i < hostView.size(); i++)
     {
-        if (hostSpan[i] != value)
+        if (hostView[i] != value)
         {
             return false;
         }
@@ -190,18 +190,18 @@ bool equal(const Field<T>& field, const Field<T>& field2)
 };
 
 template<typename T>
-bool equal(const Field<T>& field, std::span<T> span2)
+bool equal(const Field<T>& field, View<T> span2)
 {
-    auto hostSpan = field.copyToHost().span();
+    auto hostView = field.copyToHost().view();
 
-    if (hostSpan.size() != span2.size())
+    if (hostView.size() != span2.size())
     {
         return false;
     }
 
-    for (size_t i = 0; i < hostSpan.size(); i++)
+    for (size_t i = 0; i < hostView.size(); i++)
     {
-        if (hostSpan[i] != span2[i])
+        if (hostView[i] != span2[i])
         {
             return false;
         }

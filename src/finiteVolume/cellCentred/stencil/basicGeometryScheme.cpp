@@ -12,14 +12,14 @@ BasicGeometryScheme::BasicGeometryScheme(const UnstructuredMesh& mesh)
 
 void BasicGeometryScheme::updateWeights(const Executor& exec, SurfaceField<scalar>& weights)
 {
-    const auto owner = mesh_.faceOwner().span();
-    const auto neighbour = mesh_.faceNeighbour().span();
+    const auto owner = mesh_.faceOwner().view();
+    const auto neighbour = mesh_.faceNeighbour().view();
 
-    const auto cf = mesh_.faceCentres().span();
-    const auto c = mesh_.cellCentres().span();
-    const auto sf = mesh_.faceAreas().span();
+    const auto cf = mesh_.faceCentres().view();
+    const auto c = mesh_.cellCentres().view();
+    const auto sf = mesh_.faceAreas().view();
 
-    auto w = weights.internalField().span();
+    auto w = weights.internalField().view();
 
     parallelFor(
         exec,
@@ -58,7 +58,7 @@ void BasicGeometryScheme::updateDeltaCoeffs(
 
     const auto [cf, cellCentre] = spans(mesh_.faceCentres(), mesh_.cellCentres());
 
-    auto deltaCoeff = deltaCoeffs.internalField().span();
+    auto deltaCoeff = deltaCoeffs.internalField().view();
 
     parallelFor(
         exec,
@@ -95,7 +95,7 @@ void BasicGeometryScheme::updateNonOrthDeltaCoeffs(
     const auto [cf, cellCentre, faceAreaVector, faceArea] =
         spans(mesh_.faceCentres(), mesh_.cellCentres(), mesh_.faceAreas(), mesh_.magFaceAreas());
 
-    auto nonOrthDeltaCoeff = nonOrthDeltaCoeffs.internalField().span();
+    auto nonOrthDeltaCoeff = nonOrthDeltaCoeffs.internalField().view();
     fill(nonOrthDeltaCoeffs.internalField(), 0.0);
 
     const size_t nInternalFaces = mesh_.nInternalFaces();

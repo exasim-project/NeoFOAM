@@ -24,9 +24,9 @@ void setFixedValue(
     ValueType fixedValue
 )
 {
-    auto refValue = domainField.boundaryField().refValue().span();
-    auto value = domainField.boundaryField().value().span();
-    auto internalValues = domainField.internalField().span();
+    auto refValue = domainField.boundaryField().refValue().view();
+    auto value = domainField.boundaryField().value().view();
+    auto internalValues = domainField.internalField().view();
     auto nInternalFaces = mesh.nInternalFaces();
 
     NeoFOAM::parallelFor(

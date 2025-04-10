@@ -66,15 +66,15 @@ public:
      */
     const labelField& faceCells() const;
 
-    // TODO either dont mix return types, ie dont use span and Field
+    // TODO either dont mix return types, ie dont use view and Field
     // for functions with same name
     /**
-     * @brief Get a span of face cells for a specific boundary face.
+     * @brief Get a view of face cells for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of face cells for the specified boundary face.
+     * @return A view of face cells for the specified boundary face.
      */
-    std::span<const label> faceCells(const localIdx i) const;
+    View<const label> faceCells(const localIdx i) const;
 
     /**
      * @brief Get the field of face centres.
@@ -84,12 +84,12 @@ public:
     const vectorField& cf() const;
 
     /**
-     * @brief Get a span of face centres for a specific boundary face.
+     * @brief Get a view of face centres for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of face centres for the specified boundary face.
+     * @return A view of face centres for the specified boundary face.
      */
-    std::span<const Vector> cf(const localIdx i) const;
+    View<const Vector> cf(const localIdx i) const;
 
     /**
      * @brief Get the field of face normals.
@@ -99,12 +99,12 @@ public:
     const vectorField& cn() const;
 
     /**
-     * @brief Get a span of face normals for a specific boundary face.
+     * @brief Get a view of face normals for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of face normals for the specified boundary face.
+     * @return A view of face normals for the specified boundary face.
      */
-    std::span<const Vector> cn(const localIdx i) const;
+    View<const Vector> cn(const localIdx i) const;
 
     /**
      * @brief Get the field of face areas normals.
@@ -114,12 +114,12 @@ public:
     const vectorField& sf() const;
 
     /**
-     * @brief Get a span of face areas normals for a specific boundary face.
+     * @brief Get a view of face areas normals for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of face areas normals for the specified boundary face.
+     * @return A view of face areas normals for the specified boundary face.
      */
-    std::span<const Vector> sf(const localIdx i) const;
+    View<const Vector> sf(const localIdx i) const;
 
     /**
      * @brief Get the field of magnitudes of face areas normals.
@@ -130,14 +130,14 @@ public:
     const scalarField& magSf() const;
 
     /**
-     * @brief Get a span of magnitudes of face areas normals for a specific
+     * @brief Get a view of magnitudes of face areas normals for a specific
      * boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of magnitudes of face areas normals for the specified
+     * @return A view of magnitudes of face areas normals for the specified
      * boundary face.
      */
-    std::span<const scalar> magSf(const localIdx i) const;
+    View<const scalar> magSf(const localIdx i) const;
 
     /**
      * @brief Get the field of face unit normals.
@@ -147,12 +147,12 @@ public:
     const vectorField& nf() const;
 
     /**
-     * @brief Get a span of face unit normals for a specific boundary face.
+     * @brief Get a view of face unit normals for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of face unit normals for the specified boundary face.
+     * @return A view of face unit normals for the specified boundary face.
      */
-    std::span<const Vector> nf(const localIdx i) const;
+    View<const Vector> nf(const localIdx i) const;
 
     /**
      * @brief Get the field of delta vectors.
@@ -162,12 +162,12 @@ public:
     const vectorField& delta() const;
 
     /**
-     * @brief Get a span of delta vectors for a specific boundary face.
+     * @brief Get a view of delta vectors for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of delta vectors for the specified boundary face.
+     * @return A view of delta vectors for the specified boundary face.
      */
-    std::span<const Vector> delta(const localIdx i) const;
+    View<const Vector> delta(const localIdx i) const;
 
     /**
      * @brief Get the field of weights.
@@ -177,12 +177,12 @@ public:
     const scalarField& weights() const;
 
     /**
-     * @brief Get a span of weights for a specific boundary face.
+     * @brief Get a view of weights for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of weights for the specified boundary face.
+     * @return A view of weights for the specified boundary face.
      */
-    std::span<const scalar> weights(const localIdx i) const;
+    View<const scalar> weights(const localIdx i) const;
 
     /**
      * @brief Get the field of delta coefficients.
@@ -192,12 +192,12 @@ public:
     const scalarField& deltaCoeffs() const;
 
     /**
-     * @brief Get a span of delta coefficients for a specific boundary face.
+     * @brief Get a view of delta coefficients for a specific boundary face.
      *
      * @param i The index of the boundary face.
-     * @return A span of delta coefficients for the specified boundary face.
+     * @return A view of delta coefficients for the specified boundary face.
      */
-    std::span<const scalar> deltaCoeffs(const localIdx i) const;
+    View<const scalar> deltaCoeffs(const localIdx i) const;
 
     /**
      * @brief Get the offset of the boundary faces.
