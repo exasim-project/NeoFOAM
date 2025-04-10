@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2025 NeoFOAM authors
+// SPDX-FileCopyrightText: 2025 NeoN authors
 // TODO: move to cellCenred dsl?
 
 #pragma once
 
-#include "NeoFOAM/linearAlgebra/CSRMatrix.hpp"
-#include "NeoFOAM/linearAlgebra/linearSystem.hpp"
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
-#include "NeoFOAM/dsl/expression.hpp"
-#include "NeoFOAM/dsl/solver.hpp"
-#include "NeoFOAM/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
+#include "NeoN/linearAlgebra/CSRMatrix.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
+#include "NeoN/linearAlgebra/ginkgo.hpp"
+#include "NeoN/dsl/expression.hpp"
+#include "NeoN/dsl/solver.hpp"
+#include "NeoN/finiteVolume/cellCentred/linearAlgebra/sparsityPattern.hpp"
 
-namespace dsl = NeoFOAM::dsl;
+namespace dsl = NeoN::dsl;
 
-namespace NeoFOAM::finiteVolume::cellCentred
+namespace NeoN::finiteVolume::cellCentred
 {
 
 /*@brief extends expression by giving access to assembled matrix
@@ -87,7 +87,7 @@ public:
         expr_.implicitOperation(ls_, t, dt);
         auto rhs = ls_.rhs().span();
         // we subtract the explicit source term from the rhs
-        NeoFOAM::parallelFor(
+        NeoN::parallelFor(
             exec(),
             {0, rhs.size()},
             KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSourceSpan[i] * vol[i]; }
@@ -104,7 +104,7 @@ public:
         if (expr_.temporalOperators().size() > 0)
         {
             // integrate equations in time
-            // NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
+            // NeoN::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
             //     fvSchemes_.subDict("ddtSchemes"), fvSolution_
             // );
             // timeIntegrator.solve(expr_, psi_, t, dt);
@@ -119,7 +119,7 @@ public:
             ls_ = expr_.implicitOperation();
             auto rhs = ls_.rhs().span();
             // we subtract the explicit source term from the rhs
-            NeoFOAM::parallelFor(
+            NeoN::parallelFor(
                 exec(),
                 {0, rhs.size()},
                 KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSourceSpan[i] * vol[i]; }
@@ -139,7 +139,7 @@ public:
         {
             NF_ERROR_EXIT("Not implemented");
             //     // integrate equations in time
-            //     NeoFOAM::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
+            //     NeoN::timeIntegration::TimeIntegration<VolumeField<ValueType>> timeIntegrator(
             //         fvSchemes_.subDict("ddtSchemes"), fvSolution_
             //     );
             //     timeIntegrator.solve(expr_, psi_, t, dt);
@@ -150,10 +150,10 @@ public:
             // TODO: currently only we just pass the fvSolution dict to satisfy the compiler
             // however, this should be the correct solver dict
             auto exec = psi_.exec();
-            auto solver = NeoFOAM::la::ginkgo::Solver<NeoFOAM::scalar>(exec, fvSolution_);
+            auto solver = NeoN::la::ginkgo::Solver<NeoN::scalar>(exec, fvSolution_);
             solver.solve(ls_, psi_.internalField());
 #else
-            NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
+            NF_ERROR_EXIT("No linear solver is available, build with -DNeoN_WITH_GINKGO=ON");
 #endif
         }
     }
@@ -165,7 +165,7 @@ public:
         const auto rowPtrs = ls_.matrix().rowPtrs();
         auto rhs = ls_.rhs().span();
         auto values = ls_.matrix().values();
-        NeoFOAM::parallelFor(
+        NeoN::parallelFor(
             ls_.exec(),
             {refCell, refCell + 1},
             KOKKOS_LAMBDA(const std::size_t refCelli) {
@@ -249,7 +249,7 @@ operator&(const Expression<ValueType, IndexType> expr, const VolumeField<ValueTy
         spans(resultField.internalField(), expr.linearSystem().rhs(), psi.internalField());
     const auto [values, colIdxs, rowPtrs] = expr.linearSystem().view();
 
-    NeoFOAM::parallelFor(
+    NeoN::parallelFor(
         resultField.exec(),
         {0, result.size()},
         KOKKOS_LAMBDA(const std::size_t rowi) {

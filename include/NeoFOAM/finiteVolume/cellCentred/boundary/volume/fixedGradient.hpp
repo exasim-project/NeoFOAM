@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2023 NeoN authors
 
 #pragma once
 
 #include <Kokkos_Core.hpp>
 
-#include "NeoFOAM/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
-#include "NeoFOAM/mesh/unstructured/unstructuredMesh.hpp"
-#include "NeoFOAM/core/parallelAlgorithms.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
 
-namespace NeoFOAM::finiteVolume::cellCentred::volumeBoundary
+namespace NeoN::finiteVolume::cellCentred::volumeBoundary
 {
 
 // TODO move to source file
@@ -38,7 +38,7 @@ void setGradientValue(
         mesh.boundaryMesh().deltaCoeffs()
     );
 
-    NeoFOAM::parallelFor(
+    NeoN::parallelFor(
         domainField.exec(),
         range,
         KOKKOS_LAMBDA(const size_t i) {

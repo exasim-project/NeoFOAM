@@ -1,21 +1,21 @@
 Installation
 ============
 
-You can build NeoFOAM by following these steps:
+You can build NeoN by following these steps:
 
-Clone the NeoFOAM repository:
-
-   .. code-block:: bash
-
-      git clone https://github.com/exasim-project/NeoFOAM.git
-
-Navigate to the NeoFOAM directory:
+Clone the NeoN repository:
 
    .. code-block:: bash
 
-      cd NeoFOAM
+      git clone https://github.com/exasim-project/NeoN.git
 
-NeoFOAM uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below `below <Building with CMake Presets>`_. From a build directory, you can execute:
+Navigate to the NeoN directory:
+
+   .. code-block:: bash
+
+      cd NeoN
+
+NeoN uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below `below <Building with CMake Presets>`_. From a build directory, you can execute:
 
    .. code-block:: bash
 
@@ -32,30 +32,30 @@ The following can be chained with -D<DesiredBuildFlags>=<Value> to the CMake com
 +===========================+===================================+=========+
 | CMAKE_BUILD_TYPE          | Build in debug or release mode    | Debug   |
 +---------------------------+-----------------------------------+---------+
-| NEOFOAM_BUILD_DOC         | Build NeoFOAM with documentation  | ON      |
+| NeoN_BUILD_DOC         | Build NeoN with documentation  | ON      |
 +---------------------------+-----------------------------------+---------+
-| NEOFOAM_BUILD_TESTS       | Build NeoFOAM with tests          | OFF     |
+| NeoN_BUILD_TESTS       | Build NeoN with tests          | OFF     |
 +---------------------------+-----------------------------------+---------+
 
 To browse the full list of build options it is recommended to use a build tool like ``ccmake``.
 By opening the the project with cmake-gui you can easily set these flags and configure the build.
-NeoFOAM specific build flags are prefixed by ``NEOFOAM_``.
+NeoN specific build flags are prefixed by ``NeoN_``.
 
 .. note::
 
-   NeoFOAM will automatically enable ``Kokkos_ENABLE_CUDA`` or ``Kokkos_ENABLE_HIP`` if either of this is available on
+   NeoN will automatically enable ``Kokkos_ENABLE_CUDA`` or ``Kokkos_ENABLE_HIP`` if either of this is available on
    the system. This can be prevented by setting both options explicitly.
 
 Building with CMake Presets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Additionally, we provide several CMake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.
+Additionally, we provide several CMake presets to set commonly required flags if you compile NeoN in combination with Kokkos.
 
    .. code-block:: bash
 
     cmake --list-presets # To list existing presets
 
-To build NeoFOAM for production use, you can use the following commands:
+To build NeoN for production use, you can use the following commands:
 
    .. code-block:: bash
 
@@ -103,7 +103,7 @@ install the following extensions:
    ms-vscode.cmake-tools
 
 
-After installation, you can open the NeoFOAM directory with vscode and configure the build with cmake presets with the cmake extension as shown below:
+After installation, you can open the NeoN directory with vscode and configure the build with cmake presets with the cmake extension as shown below:
 
 .. figure:: _static/installation/cmakePresets.gif
    :alt: configure the build with cmake presets
