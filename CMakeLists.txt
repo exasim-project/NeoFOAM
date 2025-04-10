@@ -93,7 +93,7 @@ include(cmake/StaticAnalyzers.cmake)
 add_library(NeoN_options INTERFACE)
 add_library(NeoN_warnings INTERFACE)
 if(NeoN_ENABLE_WARNINGS)
-  neon_set_project_warnings(NeoN_warnings ${NEOFOAM_WARNINGS_AS_ERRORS} "" "" "")
+  neon_set_project_warnings(NeoN_warnings ${NeoN_WARNINGS_AS_ERRORS} "" "" "")
 endif()
 
 if(NeoN_BUILD_PCH)

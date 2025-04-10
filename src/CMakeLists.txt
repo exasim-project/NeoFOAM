@@ -60,9 +60,8 @@ if(NeoN_WITH_GINKGO)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/Sanitizer.cmake)
-enable_sanitizers(
-  NeoN NeoN_ENABLE_SANITIZE_ADDRESS NeoN_ENABLE_SANITIZE_LEAK NEOFOAM_ENABLE_SANITIZE_UB
-  NeoN_ENABLE_SANITIZE_THREAD NeoN_ENABLE_SANITIZE_MEMORY)
+enable_sanitizers(NeoN NeoN_ENABLE_SANITIZE_ADDRESS NeoN_ENABLE_SANITIZE_LEAK
+                  NeoN_ENABLE_SANITIZE_UB NeoN_ENABLE_SANITIZE_THREAD NeoN_ENABLE_SANITIZE_MEMORY)
 
 target_link_libraries(NeoN PRIVATE NeoN_warnings NeoN_options)
 target_link_libraries(NeoN PUBLIC NeoN_public_api Kokkos::kokkos sundials_core sundials_arkode

@@ -28,7 +28,7 @@ function(NeoN_unit_test TEST)
 
   add_executable(${NeoN_COMMAND} "${TEST}.cpp")
   set_target_properties(${NeoN_COMMAND} PROPERTIES OUTPUT_NAME ${TEST})
-  target_link_libraries(${NeoN_COMMAND} PRIVATE NeoN_catch_main NeoN_warnings neofoam_options
+  target_link_libraries(${NeoN_COMMAND} PRIVATE NeoN_catch_main NeoN_warnings NeoN_options
                                                 Kokkos::kokkos NeoN cpptrace::cpptrace)
 
   if(NeoN_WITH_SUNDIALS)
