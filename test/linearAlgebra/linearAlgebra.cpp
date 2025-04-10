@@ -4,4 +4,3 @@
 #include "catch2_common.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
-

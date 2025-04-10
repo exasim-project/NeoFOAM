@@ -38,8 +38,8 @@ TEST_CASE("CSRMatrix")
         valuesDense, colIdxDense, rowPtrsDense
     );
 
-     // NOTE: The purpose of this test is to detect changes in the order 
-     // of the structured bindings 
+    // NOTE: The purpose of this test is to detect changes in the order
+    // of the structured bindings
     SECTION("View Order " + execName)
     {
         auto denseMatrixHost = denseMatrix.copyToHost();
