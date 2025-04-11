@@ -28,13 +28,22 @@ function(neofoam_unit_test TEST)
   endif()
 
   add_executable(${neofoam_COMMAND} "${TEST}.cpp")
+
+  if(NEOFOAM_WITH_PETSC)
+    target_link_libraries(${neofoam_COMMAND} PRIVATE ${PETSc_LIBRARIES})
+    target_link_libraries(${neofoam_COMMAND} PRIVATE ${PETSc_LIBRARIES}
+                                                     ${PETSc_LIBRARY_DIRS}/libkokkoscore.so mpi)
+    target_include_directories(${neofoam_COMMAND} PRIVATE ${PETSc_INCLUDE_DIRS})
+    target_link_directories(${neofoam_COMMAND} PRIVATE ${PETSc_LIBRARY_DIRS})
+    link_directories(${PETSc_LIBRARY_DIRS})
+  endif()
   target_include_directories(${neofoam_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
   set_target_properties(${neofoam_COMMAND} PROPERTIES OUTPUT_NAME ${TEST})
+
   target_link_libraries(${neofoam_COMMAND} PRIVATE neofoam_warnings neofoam_options Kokkos::kokkos
                                                    NeoFOAM cpptrace::cpptrace)
   if(NOT neofoam_MPI_SIZE)
     target_link_libraries(${neofoam_COMMAND} PRIVATE neofoam_catch_main)
-
   else()
     target_link_libraries(${neofoam_COMMAND} PRIVATE neofoam_catch_main_mpi)
   endif()

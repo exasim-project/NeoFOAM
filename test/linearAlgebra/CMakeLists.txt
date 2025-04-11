@@ -8,3 +8,7 @@ neofoam_unit_test(linearSystem)
 if(NEOFOAM_WITH_GINKGO)
   neofoam_unit_test(ginkgo)
 endif()
+
+if(NEOFOAM_WITH_PETSC)
+  neofoam_unit_test(petsc)
+endif()
