@@ -66,6 +66,24 @@ public:
         interpolate(src, dst);
     }
 
+    void weight(const VolumeField<ValueType>& src, SurfaceField<scalar>& weight) const override
+    {
+        const SurfaceField<scalar>& linearWeight = geometryScheme_->weights();
+        weight.internalField() = linearWeight.internalField();
+        weight.boundaryField() = linearWeight.boundaryField();
+    }
+
+    void weight(
+        const SurfaceField<scalar>& flux,
+        const VolumeField<ValueType>& src,
+        SurfaceField<scalar>& weight
+    ) const override
+    {
+        const SurfaceField<scalar>& linearWeight = geometryScheme_->weights();
+        weight.internalField() = linearWeight.internalField();
+        weight.boundaryField() = linearWeight.boundaryField();
+    }
+
 
     std::unique_ptr<SurfaceInterpolationFactory<ValueType>> clone() const override
     {

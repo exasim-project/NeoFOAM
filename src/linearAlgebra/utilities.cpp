@@ -34,15 +34,17 @@ std::shared_ptr<gko::Executor> getGkoExecutor(Executor exec)
                 return gko::CudaExecutor::create(
                     Kokkos::device_id(),
                     gko::ReferenceExecutor::create(),
-                    std::make_shared<gko::CudaAllocator>(),
-                    ex.cuda_stream()
+                    std::make_shared<gko::CudaAllocator>()
+                    // TODO: check if this is correct
+                    // concreteExec.cuda_stream()
                 );
 #elif defined(KOKKOS_ENABLE_HIP)
                 return gko::HipExecutor::create(
                     Kokkos::device_id(),
                     gko::ReferenceExecutor::create(),
-                    std::make_shared<gko::HipAllocator>(),
-                    ex.hip_stream()
+                    std::make_shared<gko::HipAllocator>()
+                    // TODO: check if this is correct
+                    // concreteExec.hip_stream()
                 );
 #endif
                 throw std::runtime_error("No valid GPU executor mapping available");

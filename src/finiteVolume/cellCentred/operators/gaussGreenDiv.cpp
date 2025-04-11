@@ -154,10 +154,12 @@ void computeDivImp(
     const UnstructuredMesh& mesh = phi.mesh();
     const std::size_t nInternalFaces = mesh.nInternalFaces();
     const auto exec = phi.exec();
-    const auto [sFaceFlux, owner, neighbour, diagOffs, ownOffs, neiOffs] = spans(
+
+    const auto [sFaceFlux, owner, neighbour, surfFaceCells, diagOffs, ownOffs, neiOffs] = spans(
         faceFlux.internalField(),
         mesh.faceOwner(),
         mesh.faceNeighbour(),
+        mesh.boundaryMesh().faceCells(),
         sparsityPattern.diagOffset(),
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset()
@@ -179,28 +181,49 @@ void computeDivImp(
             std::size_t rowNeiStart = matrix.rowOffs[nei];
             std::size_t rowOwnStart = matrix.rowOffs[own];
 
+            scalar operatorScalingNei = operatorScaling[nei];
+            scalar operatorScalingOwn = operatorScaling[own];
+
             value = -weight * flux * one<ValueType>();
             // scalar valueNei = (1 - weight) * flux;
-            matrix.values[rowNeiStart + neiOffs[facei]] += value;
-            Kokkos::atomic_sub(&matrix.values[rowOwnStart + diagOffs[own]], value);
+            matrix.values[rowNeiStart + neiOffs[facei]] += value * operatorScalingNei;
+            Kokkos::atomic_sub(
+                &matrix.values[rowOwnStart + diagOffs[own]], value * operatorScalingOwn
+            );
 
             // upper triangular part
             // add owner contribution lower
             value = flux * (1 - weight) * one<ValueType>();
-            matrix.values[rowOwnStart + ownOffs[facei]] += value;
-            Kokkos::atomic_sub(&matrix.values[rowNeiStart + diagOffs[nei]], value);
+            matrix.values[rowOwnStart + ownOffs[facei]] += value * operatorScalingOwn;
+            Kokkos::atomic_sub(
+                &matrix.values[rowNeiStart + diagOffs[nei]], value * operatorScalingNei
+            );
         }
+    );
+
+    auto [refGradient, value, valueFraction, refValue] = spans(
+        phi.boundaryField().refGrad(),
+        phi.boundaryField().value(),
+        phi.boundaryField().valueFraction(),
+        phi.boundaryField().refValue()
     );
 
     parallelFor(
         exec,
-        {0, rhs.size()},
-        KOKKOS_LAMBDA(const size_t celli) {
-            rhs[celli] *= operatorScaling[celli];
-            for (size_t i = matrix.rowOffs[celli]; i < matrix.rowOffs[celli + 1]; i++)
-            {
-                matrix.values[i] *= operatorScaling[celli];
-            }
+        {nInternalFaces, sFaceFlux.size()},
+        KOKKOS_LAMBDA(const size_t facei) {
+            std::size_t bcfacei = facei - nInternalFaces;
+            scalar flux = sFaceFlux[facei];
+
+            std::size_t own = static_cast<std::size_t>(surfFaceCells[bcfacei]);
+            std::size_t rowOwnStart = matrix.rowOffs[own];
+            scalar operatorScalingOwn = operatorScaling[own];
+
+            matrix.values[rowOwnStart + diagOffs[own]] +=
+                flux * operatorScalingOwn * (1.0 - valueFraction[bcfacei]) * one<ValueType>();
+            // TODO fix bc values
+            rhs[own] -= (flux * operatorScalingOwn * (valueFraction[bcfacei] * refValue[bcfacei]));
+            // + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei] / deltaCoeffs[facei]));
         }
     );
 };

@@ -46,10 +46,7 @@ public:
             fieldName,
             mesh,
             DomainField<ValueType>(
-                exec,
-                mesh.nInternalFaces() + mesh.nBoundaryFaces(),
-                mesh.nBoundaryFaces(),
-                mesh.nBoundaries()
+                exec, mesh.nInternalFaces() + mesh.nBoundaryFaces(), mesh.boundaryMesh().offset()
             )
         ),
           boundaryConditions_(boundaryConditions)
