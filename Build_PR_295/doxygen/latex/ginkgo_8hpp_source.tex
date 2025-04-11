@@ -51,29 +51,40 @@
 \DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00047}00047\ }
 \DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ gkoMtx\ =\ detail::createGkoMtx(gkoExec\_,\ sys);}
 \DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ factory\_-\/>generate(gkoMtx);}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00050}00050\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rhs\ =\ detail::createGkoDense(gkoExec\_,\ sys.rhs().data(),\ nrows);}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ gkoX\ =\ detail::createGkoDense(gkoExec\_,\ x.data(),\ nrows);}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ std::shared\_ptr<const\ gko::log::Convergence<ValueType>>\ logger\ =}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ gko::log::Convergence<ValueType>::create();}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ solver-\/>add\_logger(logger);}
 \DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00053}00053\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ solver-\/>apply(rhs,\ gkoX);}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00055}00055\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rhs\ =\ detail::createGkoDense(gkoExec\_,\ sys.rhs().data(),\ nrows);}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ gkoX\ =\ detail::createGkoDense(gkoExec\_,\ x.data(),\ nrows);}
 \DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00056}00056\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00057}00057\ \ \ \ \ \textcolor{keyword}{virtual}\ std::unique\_ptr<SolverFactory>\ clone()\ const\ final}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00058}00058\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME}}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\};}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00061}00061\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00062}00062\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00063}00063\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00064}00064\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00065}00065\ \ \ \ \ std::shared\_ptr<const\ gko::Executor>\ gkoExec\_;}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00066}00066\ \ \ \ \ gko::config::pnode\ config\_;}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00067}00067\ \ \ \ \ std::shared\_ptr<const\ gko::LinOpFactory>\ factory\_;}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00068}00068\ \};}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00069}00069\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00070}00070\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00071}00071\ \}}
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00072}00072\ }
-\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00073}00073\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ solver-\/>apply(rhs,\ gkoX);}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}solver\ took\ nIterations:\ "{}}\ <<\ logger-\/>get\_num\_iterations()\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ res\_norm\ =\ gko::as<gko::matrix::Dense<ValueType>>(logger-\/>get\_residual\_norm());}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ res\_norm\_host\ =\ gko::matrix::Dense<ValueType>::create(}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ res\_norm-\/>get\_executor()-\/>get\_master(),\ gko::dim<2>\ \{1\}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ res\_norm\_host-\/>copy\_from(res\_norm);}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ return\ res\_norm\_host-\/>at(0);}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}residual:\ "{}}\ <<\ res\_norm\_host-\/>at(0)\ <<\ std::endl;}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00066}00066\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00068}00068\ \ \ \ \ \textcolor{keyword}{virtual}\ std::unique\_ptr<SolverFactory>\ clone()\ const\ final}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00069}00069\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \{\};}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00072}00072\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00074}00074\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00076}00076\ \ \ \ \ std::shared\_ptr<const\ gko::Executor>\ gkoExec\_;}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00077}00077\ \ \ \ \ gko::config::pnode\ config\_;}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00078}00078\ \ \ \ \ std::shared\_ptr<const\ gko::LinOpFactory>\ factory\_;}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00079}00079\ \};}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00082}00082\ \}}
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00083}00083\ }
+\DoxyCodeLine{\Hypertarget{ginkgo_8hpp_source_l00084}00084\ \textcolor{preprocessor}{\#endif}}
 
 \end{DoxyCode}
