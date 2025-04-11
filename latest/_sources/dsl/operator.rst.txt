@@ -21,7 +21,7 @@ To fit the specification of the Expression (storage in a vector), the Operator n
 .. code-block:: cpp
 
         NeoFOAM::Field<NeoFOAM::scalar> scalingField(exec, nCells, 2.0);
-        auto sF = scalingField.span();
+        auto sF = scalingField.view();
 
         dsl::Operator<NeoFOAM::scalar> customTerm =
             CustomTerm(dsl::Operator<NeoFOAM::scalar>::Type::Explicit, exec, nCells, 1.0);

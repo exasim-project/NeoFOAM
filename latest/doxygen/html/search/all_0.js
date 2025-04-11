@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['abort_0',['abort',['../classNeoFOAM_1_1Span.html#aa53dc6ab2a0bcca243f6e7618f0a79f8',1,'NeoFOAM::Span']]],
+  ['abort_0',['abort',['../classNeoFOAM_1_1View.html#a0f6d4fcc6e232f807a7dc56a86ff9587',1,'NeoFOAM::View']]],
   ['add_1',['add',['../namespaceNeoFOAM.html#a44787ff1266d4f5ebd1660b821eee43e',1,'NeoFOAM']]],
   ['addexpression_2',['addExpression',['../classNeoFOAM_1_1dsl_1_1Expression.html#a884e323093d23109354f8be8c41f31f5',1,'NeoFOAM::dsl::Expression']]],
   ['addoperator_3',['addoperator',['../classNeoFOAM_1_1dsl_1_1Expression.html#a1dfeb17008115ffea88f737431f49df7',1,'NeoFOAM::dsl::Expression::addOperator(const SpatialOperator&lt; ValueType &gt; &amp;oper)'],['../classNeoFOAM_1_1dsl_1_1Expression.html#a69125cc1d66addb6b8f57e5ac66d93ba',1,'NeoFOAM::dsl::Expression::addOperator(const TemporalOperator&lt; ValueType &gt; &amp;oper)']]],

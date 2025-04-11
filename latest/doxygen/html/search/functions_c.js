@@ -8,7 +8,7 @@ var searchData=
   ['neofoamexception_5',['NeoFOAMException',['../classNeoFOAM_1_1NeoFOAMException.html#a97203629bd4f1e83a2ea1010094c026a',1,'NeoFOAM::NeoFOAMException']]],
   ['next_6',['next',['../classNeoFOAM_1_1TokenList.html#a3ae147f11457cc2ff46db2fc666982c1',1,'NeoFOAM::TokenList::next() const'],['../classNeoFOAM_1_1TokenList.html#a5021e4a82af2514956223cf9ed15afbf',1,'NeoFOAM::TokenList::next()']]],
   ['nexttime_7',['nexttime',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a55aeb5eade825f623de34e315142b6b3',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime()'],['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1OldTimeDocument.html#a910f62e37796ecfdec46f53a0d878372',1,'NeoFOAM::finiteVolume::cellCentred::OldTimeDocument::nextTime() const']]],
-  ['nf_8',['nf',['../classNeoFOAM_1_1BoundaryMesh.html#a86dedb4feac055813cfd387a5b75b613',1,'NeoFOAM::BoundaryMesh::nf() const'],['../classNeoFOAM_1_1BoundaryMesh.html#a4ad6bdf73ab49d32a95c05107308723d',1,'NeoFOAM::BoundaryMesh::nf(const localIdx i) const']]],
+  ['nf_8',['nf',['../classNeoFOAM_1_1BoundaryMesh.html#a86dedb4feac055813cfd387a5b75b613',1,'NeoFOAM::BoundaryMesh::nf() const'],['../classNeoFOAM_1_1BoundaryMesh.html#a948f026b67dbe7cc7b4656a7c26e1834',1,'NeoFOAM::BoundaryMesh::nf(const localIdx i) const']]],
   ['nfaces_9',['nFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#aad44a2f84a27c149a501f28db69616f5',1,'NeoFOAM::UnstructuredMesh']]],
   ['ninternalfaces_10',['nInternalFaces',['../classNeoFOAM_1_1UnstructuredMesh.html#a5028ef5a62edfe198288a9ed2d936779',1,'NeoFOAM::UnstructuredMesh']]],
   ['nnonzeros_11',['nNonZeros',['../classNeoFOAM_1_1la_1_1CSRMatrix.html#a9f82c546edff365981c20296d61ed1de',1,'NeoFOAM::la::CSRMatrix']]],
