@@ -24,5 +24,6 @@ var searchData=
   ['_7eskvectorhostdefault_21',['~SKVectorHostDefault',['../classNeoFOAM_1_1sundials_1_1SKVectorHostDefault.html#aa5306b247b3b3c569f6c6fc79b1d1775',1,'NeoFOAM::sundials::SKVectorHostDefault']]],
   ['_7eskvectorserial_22',['~SKVectorSerial',['../classNeoFOAM_1_1sundials_1_1SKVectorSerial.html#acea0fcc25859c43f6ed7393da522d898',1,'NeoFOAM::sundials::SKVectorSerial']]],
   ['_7esurfaceinterpolationfactory_23',['~SurfaceInterpolationFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1SurfaceInterpolationFactory.html#a050680e7bad0bee519aed04bec730148',1,'NeoFOAM::finiteVolume::cellCentred::SurfaceInterpolationFactory']]],
-  ['_7etimeintegratorbase_24',['~TimeIntegratorBase',['../classNeoFOAM_1_1timeIntegration_1_1TimeIntegratorBase.html#a0abc317da6534e47e84716947822842b',1,'NeoFOAM::timeIntegration::TimeIntegratorBase']]]
+  ['_7etimeintegratorbase_24',['~TimeIntegratorBase',['../classNeoFOAM_1_1timeIntegration_1_1TimeIntegratorBase.html#a0abc317da6534e47e84716947822842b',1,'NeoFOAM::timeIntegration::TimeIntegratorBase']]],
+  ['_7evolumeboundaryfactory_25',['~VolumeBoundaryFactory',['../classNeoFOAM_1_1finiteVolume_1_1cellCentred_1_1VolumeBoundaryFactory.html#a775726016d7732305e1296a8ec52a1af',1,'NeoFOAM::finiteVolume::cellCentred::VolumeBoundaryFactory']]]
 ];
