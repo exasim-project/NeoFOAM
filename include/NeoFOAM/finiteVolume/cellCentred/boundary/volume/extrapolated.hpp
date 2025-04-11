@@ -25,7 +25,7 @@ void extrapolateValue(
     std::pair<size_t, size_t> range
 )
 {
-    const auto iField = domainField.internalField().span();
+    const auto iField = domainField.internalField().view();
 
     auto [refGradient, value, valueFraction, refValue, faceCells] = spans(
         domainField.boundaryField().refGrad(),
