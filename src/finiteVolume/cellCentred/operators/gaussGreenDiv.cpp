@@ -164,7 +164,7 @@ void computeDivImp(
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset()
     );
-    auto [A, b] = ls.view();
+    auto [matrix, rhs] = ls.view();
 
     parallelFor(
         exec,
@@ -178,22 +178,26 @@ void computeDivImp(
             std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
 
             // add neighbour contribution upper
-            std::size_t rowNeiStart = A.rowOffset[nei];
-            std::size_t rowOwnStart = A.rowOffset[own];
+            std::size_t rowNeiStart = matrix.rowOffs[nei];
+            std::size_t rowOwnStart = matrix.rowOffs[own];
 
             scalar operatorScalingNei = operatorScaling[nei];
             scalar operatorScalingOwn = operatorScaling[own];
 
             value = -weight * flux * one<ValueType>();
             // scalar valueNei = (1 - weight) * flux;
-            A.value[rowNeiStart + neiOffs[facei]] += value * operatorScalingNei;
-            Kokkos::atomic_sub(&A.value[rowOwnStart + diagOffs[own]], value * operatorScalingOwn);
+            matrix.values[rowNeiStart + neiOffs[facei]] += value * operatorScalingNei;
+            Kokkos::atomic_sub(
+                &matrix.values[rowOwnStart + diagOffs[own]], value * operatorScalingOwn
+            );
 
             // upper triangular part
             // add owner contribution lower
             value = flux * (1 - weight) * one<ValueType>();
-            A.value[rowOwnStart + ownOffs[facei]] += value * operatorScalingOwn;
-            Kokkos::atomic_sub(&A.value[rowNeiStart + diagOffs[nei]], value * operatorScalingNei);
+            matrix.values[rowOwnStart + ownOffs[facei]] += value * operatorScalingOwn;
+            Kokkos::atomic_sub(
+                &matrix.values[rowNeiStart + diagOffs[nei]], value * operatorScalingNei
+            );
         }
     );
 
@@ -212,13 +216,13 @@ void computeDivImp(
             scalar flux = sFaceFlux[facei];
 
             std::size_t own = static_cast<std::size_t>(surfFaceCells[bcfacei]);
-            std::size_t rowOwnStart = A.rowOffset[own];
+            std::size_t rowOwnStart = matrix.rowOffs[own];
             scalar operatorScalingOwn = operatorScaling[own];
 
-            A.value[rowOwnStart + diagOffs[own]] +=
+            matrix.values[rowOwnStart + diagOffs[own]] +=
                 flux * operatorScalingOwn * (1.0 - valueFraction[bcfacei]) * one<ValueType>();
             // TODO fix bc values
-            b[own] -= (flux * operatorScalingOwn * (valueFraction[bcfacei] * refValue[bcfacei]));
+            rhs[own] -= (flux * operatorScalingOwn * (valueFraction[bcfacei] * refValue[bcfacei]));
             // + (1.0 - valueFraction[bcfacei]) * refGradient[bcfacei] / deltaCoeffs[facei]));
         }
     );

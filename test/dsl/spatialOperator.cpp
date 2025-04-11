@@ -98,20 +98,20 @@ TEMPLATE_TEST_CASE("SpatialOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Ve
         // c = 2 * 2
         auto [hostRhsC, hostLsC] = copyToHosts(ls.rhs(), ls);
         REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
-        REQUIRE(hostLsC.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsC.matrix().values().span()[0] == 4.0 * NeoFOAM::one<TestType>());
 
         // d= 2 * 2
         ls.reset();
         d.implicitOperation(ls);
         auto [hostRhsD, hostLsD] = copyToHosts(ls.rhs(), ls);
         REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
-        REQUIRE(hostLsD.matrix().values()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsD.matrix().values().span()[0] == 4.0 * NeoFOAM::one<TestType>());
 
         // e = - -3 * 2 * 2 = -12
         ls.reset();
         e.implicitOperation(ls);
         auto [hostRhsE, hostLsE] = copyToHosts(ls.rhs(), ls);
         REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
-        REQUIRE(hostLsE.matrix().values()[0] == -12.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsE.matrix().values().span()[0] == -12.0 * NeoFOAM::one<TestType>());
     }
 }

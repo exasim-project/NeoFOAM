@@ -24,11 +24,11 @@ struct LinearSystemView
     LinearSystemView() = default;
     ~LinearSystemView() = default;
 
-    LinearSystemView(CSRMatrixView<ValueType, IndexType> inA, std::span<ValueType> inB)
-        : A(inA), b(inB) {};
+    LinearSystemView(CSRMatrixView<ValueType, IndexType> matrixView, std::span<ValueType> rhsView)
+        : matrix(matrixView), rhs(rhsView) {};
 
-    CSRMatrixView<ValueType, IndexType> A;
-    std::span<ValueType> b;
+    CSRMatrixView<ValueType, IndexType> matrix;
+    std::span<ValueType> rhs;
 };
 
 /**
@@ -58,9 +58,11 @@ public:
     ~LinearSystem() = default;
 
     [[nodiscard]] CSRMatrix<ValueType, IndexType>& matrix() { return matrix_; }
+
     [[nodiscard]] Field<ValueType>& rhs() { return rhs_; }
 
     [[nodiscard]] const CSRMatrix<ValueType, IndexType>& matrix() const { return matrix_; }
+
     [[nodiscard]] const Field<ValueType>& rhs() const { return rhs_; }
 
     [[nodiscard]] LinearSystem copyToHost() const
@@ -68,10 +70,6 @@ public:
         return LinearSystem(matrix_.copyToHost(), rhs_.copyToHost());
     }
 
-
-    /* @brief resets the linear system by setting the matrix values and the rhs to zero
-     *
-     */
     void reset()
     {
         fill(matrix_.values(), zero<ValueType>());
@@ -137,7 +135,7 @@ convertLinearSystem(const LinearSystem<ValueTypeIn, IndexTypeIn>& ls)
     auto exec = ls.exec();
     Field<ValueTypeOut> convertedRhs(exec, ls.rhs().data(), ls.rhs().size());
     return {
-        convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut>(exec, ls.view.A),
+        convert<ValueTypeIn, IndexTypeIn, ValueTypeOut, IndexTypeOut>(exec, ls.view.matrix),
         convertedRhs,
         ls.sparsityPattern()
     };
@@ -156,9 +154,7 @@ LinearSystem<ValueType, IndexType> createEmptyLinearSystem(const SparsityType& s
 
     return {
         CSRMatrix<ValueType, IndexType> {
-            Field<ValueType>(exec, nnzs, zero<ValueType>()),
-            sparsity.columnIndex(),
-            sparsity.rowPtrs()
+            Field<ValueType>(exec, nnzs, zero<ValueType>()), sparsity.colIdxs(), sparsity.rowPtrs()
         },
         Field<ValueType> {exec, rows, zero<ValueType>()}
     };

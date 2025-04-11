@@ -35,7 +35,7 @@ public:
 
     const UnstructuredMesh& mesh() const { return mesh_; };
 
-    [[nodiscard]] const Field<localIdx>& columnIndex() const { return colIdxs_; };
+    [[nodiscard]] const Field<localIdx>& colIdxs() const { return colIdxs_; };
 
     [[nodiscard]] const Field<localIdx>& rowPtrs() const { return rowPtrs_; };
 

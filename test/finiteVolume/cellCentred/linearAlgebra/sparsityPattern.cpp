@@ -70,7 +70,7 @@ TEST_CASE("SparsityPattern")
 
     SECTION("Can produce column indices " + execName)
     {
-        auto colIdx = sp.columnIndex();
+        auto colIdx = sp.colIdxs();
         auto colIdxH = colIdx.copyToHost();
         auto colIdxHS = colIdxH.span();
 

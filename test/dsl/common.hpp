@@ -172,7 +172,7 @@ template<typename ValueType>
 ValueType getDiag(const la::LinearSystem<ValueType, NeoFOAM::localIdx>& ls)
 {
     auto hostLs = ls.copyToHost();
-    return hostLs.matrix().values()[0];
+    return hostLs.matrix().values().span()[0];
 }
 
 template<typename ValueType>

@@ -60,9 +60,10 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         // divergence of a uniform field should be zero
         auto outHost = result.copyToHost();
+        auto outHostView = outHost.span();
         for (int i = 0; i < result.size(); i++)
         {
-            REQUIRE(outHost[i] == zero<TestType>());
+            REQUIRE(outHostView[i] == zero<TestType>());
         }
     }
 }

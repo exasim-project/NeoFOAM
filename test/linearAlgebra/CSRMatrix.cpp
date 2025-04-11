@@ -38,6 +38,29 @@ TEST_CASE("CSRMatrix")
         valuesDense, colIdxDense, rowPtrsDense
     );
 
+     // NOTE: The purpose of this test is to detect changes in the order 
+     // of the structured bindings 
+    SECTION("View Order " + execName)
+    {
+        auto denseMatrixHost = denseMatrix.copyToHost();
+        auto [values, colIdxs, rowOffs] = denseMatrixHost.view();
+        auto valuesDenseHost = valuesDense.copyToHost();
+        auto valuesDenseHostView = valuesDenseHost.span();
+        auto colIdxDenseHost = colIdxDense.copyToHost();
+        auto colIdxDenseHostView = colIdxDenseHost.span();
+        auto rowPtrsDenseHost = rowPtrsDense.copyToHost();
+        auto rowPtrsDenseHostView = rowPtrsDenseHost.span();
+
+        for (int i = 0; i < valuesDenseHostView.size(); ++i)
+        {
+            REQUIRE(valuesDenseHostView[i] == values[i]);
+            REQUIRE(colIdxDenseHostView[i] == colIdxs[i]);
+        }
+        for (int i = 0; i < rowPtrsDenseHostView.size(); ++i)
+        {
+            REQUIRE(rowPtrsDenseHostView[i] == rowOffs[i]);
+        }
+    }
 
     SECTION("Read entry on " + execName)
     {
@@ -109,7 +132,7 @@ TEST_CASE("CSRMatrix")
         );
 
         auto hostMatrix = sparseMatrix.copyToHost();
-        auto checkHost = hostMatrix.values();
+        auto checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -5.0);
         REQUIRE(checkHost[2] == -6.0);
@@ -134,7 +157,7 @@ TEST_CASE("CSRMatrix")
         );
 
         hostMatrix = denseMatrix.copyToHost();
-        checkHost = hostMatrix.values();
+        checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -2.0);
         REQUIRE(checkHost[2] == -3.0);
@@ -216,7 +239,7 @@ TEST_CASE("CSRMatrix")
 
 
         auto hostMatrix = sparseMatrix.copyToHost();
-        auto checkHost = hostMatrix.values();
+        auto checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -5.0);
         REQUIRE(checkHost[2] == -6.0);
@@ -241,7 +264,7 @@ TEST_CASE("CSRMatrix")
         );
 
         hostMatrix = denseMatrix.copyToHost();
-        checkHost = hostMatrix.values();
+        checkHost = hostMatrix.values().span();
         REQUIRE(checkHost[0] == -1.0);
         REQUIRE(checkHost[1] == -2.0);
         REQUIRE(checkHost[2] == -3.0);
