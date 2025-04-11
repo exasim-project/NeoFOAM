@@ -127,9 +127,7 @@ public:
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
      * @param rhs The field to copy from.
      */
-    Field(const Field<ValueType>& rhs) : 
-	    Field(rhs.exec(), rhs.data(), rhs.size(), rhs.exec())
-    {}
+    Field(const Field<ValueType>& rhs) : Field(rhs.exec(), rhs.data(), rhs.size(), rhs.exec()) {}
 
     /**
      * @brief Move constructor, moves the data from the parsed field to the new field.
