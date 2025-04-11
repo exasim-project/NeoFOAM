@@ -18,6 +18,7 @@ namespace NeoFOAM
 template<typename T>
 using I = std::initializer_list<T>;
 
+// FIXME: Not sure if this should still be a TEST_CASE
 // TEST_CASE("laplacianOperator fixedValue")
 TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
@@ -91,6 +92,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
         SECTION("implicit laplacian operator" + execName)
         {
             lapOp.implicitOperation(ls);
+            // FIXME:
             // TODO change to use the new fvcc::expression class
             // fvcc::Expression<NeoFOAM::scalar> ls2(
             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
@@ -113,8 +115,9 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             dsl::SpatialOperator lapOp = dsl::imp::laplacian(gamma, phi);
             lapOp.build(input);
             lapOp = dsl::Coeff(-0.5) * lapOp;
-            // FIXME
+
             lapOp.implicitOperation(ls);
+            // FIXME:
             // TODO change to use the new fvcc::expression class
             // fvcc::Expression<NeoFOAM::scalar> ls2(
             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
@@ -133,6 +136,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
     }
 }
 
+// FIXME:
 // TEST_CASE("laplacianOperator fixedGradient")
 // {
 //     const size_t nCells = 10;
