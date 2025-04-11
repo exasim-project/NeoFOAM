@@ -34,6 +34,7 @@ struct CreateField
         fvcc::VolumeField<NeoFOAM::scalar> vf(
             mesh.exec(), name, mesh, domainField, bcs, db, "", ""
         );
+        NeoFOAM::fill(vf.internalField(), value);
         return NeoFOAM::Document(
             {{"name", vf.name},
              {"timeIndex", timeIndex},
