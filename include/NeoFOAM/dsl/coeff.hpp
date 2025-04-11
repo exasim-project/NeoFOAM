@@ -36,7 +36,7 @@ public:
 
     bool hasSpan();
 
-    View<const scalar> span();
+    View<const scalar> view();
 
     Coeff& operator*=(scalar rhs);
 

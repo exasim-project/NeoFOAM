@@ -18,7 +18,7 @@ Coeff::Coeff(const Field<scalar>& field) : coeff_(1.0), view_(field.view()), has
 
 bool Coeff::hasSpan() { return hasView_; }
 
-View<const scalar> Coeff::span() { return view_; }
+View<const scalar> Coeff::view() { return view_; }
 
 Coeff& Coeff::operator*=(scalar rhs)
 {
@@ -49,7 +49,7 @@ void toField(Coeff& coeff, Field<scalar>& rhs)
 {
     if (coeff.hasSpan())
     {
-        rhs.resize(coeff.span().size());
+        rhs.resize(coeff.view().size());
         fill(rhs, 1.0);
         auto rhsView = rhs.view();
         // otherwise we are unable to capture values in the lambda

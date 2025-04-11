@@ -99,7 +99,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
             // auto result = ls2 & phi;
             // auto resultHost = result.internalField().copyToHost();
-            // auto sResult = resultHost.span();
+            // auto sResult = resultHost.view();
             // for (size_t celli = 0; celli < sResult.size(); celli++)
             // {
             //     // the laplacian of a linear function is 0
@@ -123,7 +123,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
             // auto result = ls2 & phi;
             // auto resultHost = result.internalField().copyToHost();
-            // auto sResult = resultHost.span();
+            // auto sResult = resultHost.view();
             // for (size_t celli = 0; celli < sResult.size(); celli++)
             // {
             //     // the laplacian of a linear function is 0
@@ -193,7 +193,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 //             Field<NeoFOAM::scalar> source(exec, nCells, 0.0);
 //             lapOp.explicitOperation(source);
 //             auto sourceHost = source.copyToHost();
-//             auto sSource = sourceHost.span();
+//             auto sSource = sourceHost.view();
 //             for (size_t i = 0; i < nCells; i++)
 //             {
 //                 // the laplacian of a linear function is 0
@@ -218,7 +218,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
 //             // auto result = ls2 & phi;
 //             // auto resultHost = result.internalField().copyToHost();
-//             // auto sResult = resultHost.span();
+//             // auto sResult = resultHost.view();
 //             // for (size_t celli = 0; celli < sResult.size(); celli++)
 //             // {
 //             //     // the laplacian of a linear function is 0

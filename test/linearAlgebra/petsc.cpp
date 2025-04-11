@@ -63,7 +63,7 @@ TEST_CASE("MatrixAssembly - Petsc")
         solver.solve(linearSystem, x);
 
         auto hostX = x.copyToHost();
-        auto hostXS = hostX.span();
+        auto hostXS = hostX.view();
         REQUIRE((hostXS[0]) == Catch::Approx(3. / 205.).margin(1e-8));
         REQUIRE((hostXS[1]) == Catch::Approx(8. / 205.).margin(1e-8));
         REQUIRE((hostXS[2]) == Catch::Approx(53. / 205.).margin(1e-8));
@@ -95,7 +95,7 @@ TEST_CASE("MatrixAssembly - Petsc")
             solver.solve(linearSystem, x);
 
             auto hostX = x.copyToHost();
-            auto hostXS = hostX.span();
+            auto hostXS = hostX.view();
             REQUIRE((hostXS[0]) == Catch::Approx(8. / 341.).margin(1e-8));
             REQUIRE((hostXS[1]) == Catch::Approx(27. / 341.).margin(1e-8));
             REQUIRE((hostXS[2]) == Catch::Approx(63. / 682.).margin(1e-8));
