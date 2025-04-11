@@ -54,9 +54,9 @@ TEST_CASE("Coeff")
         Field fieldA(exec, size, 0.0);
         Field fieldB(exec, size, 1.0);
 
-        SECTION("span")
+        SECTION("view")
         {
-            Coeff coeff = fieldB; // is a span with uniform value 1.0
+            Coeff coeff = fieldB; // is a view with uniform value 1.0
             {
                 NeoFOAM::parallelFor(
                     fieldA, KOKKOS_LAMBDA(const size_t i) { return coeff[i] + 2.0; }
@@ -64,9 +64,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == true);
-            REQUIRE(hostFieldA.span()[0] == 3.0);
-            REQUIRE(hostFieldA.span()[1] == 3.0);
-            REQUIRE(hostFieldA.span()[2] == 3.0);
+            REQUIRE(hostFieldA.view()[0] == 3.0);
+            REQUIRE(hostFieldA.view()[1] == 3.0);
+            REQUIRE(hostFieldA.view()[2] == 3.0);
         }
 
         SECTION("scalar")
@@ -79,12 +79,12 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == false);
-            REQUIRE(hostFieldA.span()[0] == 4.0);
-            REQUIRE(hostFieldA.span()[1] == 4.0);
-            REQUIRE(hostFieldA.span()[2] == 4.0);
+            REQUIRE(hostFieldA.view()[0] == 4.0);
+            REQUIRE(hostFieldA.view()[1] == 4.0);
+            REQUIRE(hostFieldA.view()[2] == 4.0);
         }
 
-        SECTION("span and scalar")
+        SECTION("view and scalar")
         {
             Coeff coeff {-5.0, fieldB};
             {
@@ -94,9 +94,9 @@ TEST_CASE("Coeff")
             };
             auto hostFieldA = fieldA.copyToHost();
             REQUIRE(coeff.hasSpan() == true);
-            REQUIRE(hostFieldA.span()[0] == -3.0);
-            REQUIRE(hostFieldA.span()[1] == -3.0);
-            REQUIRE(hostFieldA.span()[2] == -3.0);
+            REQUIRE(hostFieldA.view()[0] == -3.0);
+            REQUIRE(hostFieldA.view()[1] == -3.0);
+            REQUIRE(hostFieldA.view()[2] == -3.0);
         }
     }
 }

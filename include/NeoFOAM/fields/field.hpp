@@ -5,11 +5,11 @@
 #include <Kokkos_Core.hpp>
 
 #include <iostream>
-#include <span>
 
 #include "NeoFOAM/core/error.hpp"
 #include "NeoFOAM/core/executor/executor.hpp"
 #include "NeoFOAM/core/primitives/scalar.hpp"
+#include "NeoFOAM/core/view.hpp"
 #include "NeoFOAM/fields/fieldFreeFunctions.hpp"
 #include "NeoFOAM/fields/fieldTypeDefs.hpp"
 
@@ -221,7 +221,7 @@ public:
         {
             this->resize(rhs.size());
         }
-        setField(*this, rhs.span());
+        setField(*this, rhs.view());
     }
 
     /**
@@ -363,49 +363,49 @@ public:
      */
     [[nodiscard]] bool empty() const { return size() == 0; }
 
-    // ensures no return a span of a temporary object --> invalid memory access
-    std::span<ValueType> span() && = delete;
+    // return of a temporary --> invalid memory access
+    View<ValueType> view() && = delete;
 
-    // ensures no return a span of a temporary object --> invalid memory access
-    std::span<const ValueType> span() const&& = delete;
-
-    /**
-     * @brief Gets the field as a span.
-     * @return Span of the field.
-     */
-    [[nodiscard]] std::span<ValueType> span() & { return std::span<ValueType>(data_, size_); }
+    // return of a temporary --> invalid memory access
+    View<const ValueType> view() const&& = delete;
 
     /**
-     * @brief Gets the field as a span.
-     * @return Span of the field.
+     * @brief Gets the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span() const&
+    [[nodiscard]] View<ValueType> view() & { return View<ValueType>(data_, size_); }
+
+    /**
+     * @brief Gets the field as a view.
+     * @return View of the field.
+     */
+    [[nodiscard]] View<const ValueType> view() const&
     {
-        return std::span<const ValueType>(data_, size_);
+        return View<const ValueType>(data_, size_);
     }
 
-    // ensures no return a span of a temporary object --> invalid memory access
-    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range) && = delete;
+    // return of a temporary --> invalid memory access
+    [[nodiscard]] View<ValueType> view(std::pair<size_t, size_t> range) && = delete;
 
-    // ensures no return a span of a temporary object --> invalid memory access
-    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const&& = delete;
+    // return of a temporary --> invalid memory access
+    [[nodiscard]] View<const ValueType> view(std::pair<size_t, size_t> range) const&& = delete;
 
     /**
-     * @brief Gets a sub view of the field as a span.
-     * @return Span of the field.
+     * @brief Gets a sub view of the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] std::span<ValueType> span(std::pair<size_t, size_t> range) &
+    [[nodiscard]] View<ValueType> view(std::pair<size_t, size_t> range) &
     {
-        return std::span<ValueType>(data_ + range.first, range.second - range.first);
+        return View<ValueType>(data_ + range.first, range.second - range.first);
     }
 
     /**
-     * @brief Gets a sub view of the field as a span.
-     * @return Span of the field.
+     * @brief Gets a sub view of the field as a view.
+     * @return View of the field.
      */
-    [[nodiscard]] std::span<const ValueType> span(std::pair<size_t, size_t> range) const&
+    [[nodiscard]] View<const ValueType> view(std::pair<size_t, size_t> range) const&
     {
-        return std::span<const ValueType>(data_ + range.first, range.second - range.first);
+        return View<const ValueType>(data_ + range.first, range.second - range.first);
     }
 
     /**

@@ -24,10 +24,10 @@ template<typename IndexType>
 IndexType segmentsFromIntervals(const Field<IndexType>& intervals, Field<IndexType>& offsets)
 {
     IndexType finalValue = 0;
-    const auto inSpan = intervals.span();
+    const auto inSpan = intervals.view();
     // skip the first element of the offsets
     // assumed to be zero
-    auto offsSpan = offsets.span().subspan(1);
+    auto offsSpan = offsets.view().subspan(1);
     NF_ASSERT_EQUAL(inSpan.size(), offsSpan.size());
     NeoFOAM::parallelScan(
         intervals.exec(),
@@ -182,11 +182,11 @@ public:
 
     /**
      * @brief get a view of the segmented field
-     * @return Span of the fields
+     * @return View of the fields
      */
     [[nodiscard]] SegmentedFieldView<ValueType, IndexType> view() &
     {
-        return SegmentedFieldView<ValueType, IndexType> {values_.span(), segments_.span()};
+        return SegmentedFieldView<ValueType, IndexType> {values_.view(), segments_.view()};
     }
 
     // ensures no return a span of a temporary object --> invalid memory access
@@ -198,7 +198,7 @@ public:
      */
     [[nodiscard]] std::pair<std::span<ValueType>, std::span<IndexType>> spans() &
     {
-        return {values_.span(), segments_.span()};
+        return {values_.view(), segments_.view()};
     }
 
     // ensures not to return a span of a temporary object --> invalid memory access

@@ -34,7 +34,7 @@ template<typename ValueType>
 void SourceTerm<ValueType>::implicitOperation(la::LinearSystem<ValueType, localIdx>& ls) const
 {
     const auto operatorScaling = this->getCoefficient();
-    const auto vol = coefficients_.mesh().cellVolumes().span();
+    const auto vol = coefficients_.mesh().cellVolumes().view();
     const auto [diagOffs, coeff] =
         spans(sparsityPattern_->diagOffset(), coefficients_.internalField());
     auto [matrix, rhs] = ls.view();

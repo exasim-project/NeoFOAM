@@ -20,14 +20,14 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanA = fieldA.span();
-        auto spanB = fieldB.span();
+        auto viewA = fieldA.view();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + 2.0; }
+            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i) { viewA[i] = viewB[i] + 2.0; }
         );
         auto hostA = fieldA.copyToHost();
-        for (auto value : hostA.span())
+        for (auto value : hostA.view())
         {
             REQUIRE(value == 3.0);
         }
@@ -38,16 +38,16 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::Vector> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, NeoFOAM::Vector(0.0, 0.0, 0.0));
         NeoFOAM::Field<NeoFOAM::Vector> fieldB(exec, 5);
-        auto spanA = fieldA.span();
-        auto spanB = fieldB.span();
+        auto viewA = fieldA.view();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, NeoFOAM::Vector(1.0, 1.0, 1.0));
         NeoFOAM::parallelFor(
             exec,
             {0, 5},
-            KOKKOS_LAMBDA(const size_t i) { spanA[i] = spanB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
+            KOKKOS_LAMBDA(const size_t i) { viewA[i] = viewB[i] + NeoFOAM::Vector(2.0, 2.0, 2.0); }
         );
         auto hostA = fieldA.copyToHost();
-        for (auto value : hostA.span())
+        for (auto value : hostA.view())
         {
             REQUIRE(value == NeoFOAM::Vector(3.0, 3.0, 3.0));
         }
@@ -58,13 +58,13 @@ TEST_CASE("parallelFor")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanB = fieldB.span();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::parallelFor(
-            fieldA, KOKKOS_LAMBDA(const size_t i) { return spanB[i] + 2.0; }
+            fieldA, KOKKOS_LAMBDA(const size_t i) { return viewB[i] + 2.0; }
         );
         auto hostA = fieldA.copyToHost();
-        for (auto value : hostA.span())
+        for (auto value : hostA.view())
         {
             REQUIRE(value == 3.0);
         }
@@ -86,11 +86,11 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanB = fieldB.span();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
         NeoFOAM::parallelReduce(
-            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
+            exec, {0, 5}, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += viewB[i]; }, sum
         );
 
         REQUIRE(sum == 5.0);
@@ -101,7 +101,7 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanB = fieldB.span();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, 1.0);
         auto max = std::numeric_limits<NeoFOAM::scalar>::lowest();
         Kokkos::Max<NeoFOAM::scalar> reducer(max);
@@ -109,7 +109,7 @@ TEST_CASE("parallelReduce")
             exec,
             {0, 5},
             KOKKOS_LAMBDA(const size_t i, NeoFOAM::scalar& lmax) {
-                if (lmax < spanB[i]) lmax = spanB[i];
+                if (lmax < viewB[i]) lmax = viewB[i];
             },
             reducer
         );
@@ -122,11 +122,11 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanB = fieldB.span();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, 1.0);
         NeoFOAM::scalar sum = 0.0;
         NeoFOAM::parallelReduce(
-            fieldA, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += spanB[i]; }, sum
+            fieldA, KOKKOS_LAMBDA(const size_t i, double& lsum) { lsum += viewB[i]; }, sum
         );
 
         REQUIRE(sum == 5.0);
@@ -137,14 +137,14 @@ TEST_CASE("parallelReduce")
         NeoFOAM::Field<NeoFOAM::scalar> fieldA(exec, 5);
         NeoFOAM::fill(fieldA, 0.0);
         NeoFOAM::Field<NeoFOAM::scalar> fieldB(exec, 5);
-        auto spanB = fieldB.span();
+        auto viewB = fieldB.view();
         NeoFOAM::fill(fieldB, 1.0);
         auto max = std::numeric_limits<NeoFOAM::scalar>::lowest();
         Kokkos::Max<NeoFOAM::scalar> reducer(max);
         NeoFOAM::parallelReduce(
             fieldA,
             KOKKOS_LAMBDA(const size_t i, NeoFOAM::scalar& lmax) {
-                if (lmax < spanB[i]) lmax = spanB[i];
+                if (lmax < viewB[i]) lmax = viewB[i];
             },
             reducer
         );
@@ -166,53 +166,53 @@ TEST_CASE("parallelScan")
     {
         NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
         NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, intervals.size() + 1, 0);
-        auto segSpan = segments.span();
-        const auto intSpan = intervals.span();
+        auto segView = segments.view();
+        const auto intView = intervals.view();
 
         NeoFOAM::parallelScan(
             exec,
-            {1, segSpan.size()},
+            {1, segView.size()},
             KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
-                update += intSpan[i - 1];
+                update += intView[i - 1];
                 if (final)
                 {
-                    segSpan[i] = update;
+                    segView[i] = update;
                 }
             }
         );
 
         auto hostSegments = segments.copyToHost();
-        REQUIRE(hostSegments.span()[0] == 0);
-        REQUIRE(hostSegments.span()[1] == 1);
-        REQUIRE(hostSegments.span()[2] == 3);
-        REQUIRE(hostSegments.span()[3] == 6);
-        REQUIRE(hostSegments.span()[4] == 10);
-        REQUIRE(hostSegments.span()[5] == 15);
+        REQUIRE(hostSegments.view()[0] == 0);
+        REQUIRE(hostSegments.view()[1] == 1);
+        REQUIRE(hostSegments.view()[2] == 3);
+        REQUIRE(hostSegments.view()[3] == 6);
+        REQUIRE(hostSegments.view()[4] == 10);
+        REQUIRE(hostSegments.view()[5] == 15);
 
         auto hostIntervals = intervals.copyToHost();
-        REQUIRE(hostIntervals.span()[0] == 1);
-        REQUIRE(hostIntervals.span()[1] == 2);
-        REQUIRE(hostIntervals.span()[2] == 3);
-        REQUIRE(hostIntervals.span()[3] == 4);
-        REQUIRE(hostIntervals.span()[4] == 5);
+        REQUIRE(hostIntervals.view()[0] == 1);
+        REQUIRE(hostIntervals.view()[1] == 2);
+        REQUIRE(hostIntervals.view()[2] == 3);
+        REQUIRE(hostIntervals.view()[3] == 4);
+        REQUIRE(hostIntervals.view()[4] == 5);
     }
 
     SECTION("parallelScan_withReturn" + execName)
     {
         NeoFOAM::Field<NeoFOAM::localIdx> intervals(exec, {1, 2, 3, 4, 5});
         NeoFOAM::Field<NeoFOAM::localIdx> segments(exec, intervals.size() + 1, 0);
-        auto segSpan = segments.span();
-        const auto intSpan = intervals.span();
+        auto segView = segments.view();
+        const auto intView = intervals.view();
         NeoFOAM::localIdx finalValue = 0;
 
         NeoFOAM::parallelScan(
             exec,
-            {1, segSpan.size()},
+            {1, segView.size()},
             KOKKOS_LAMBDA(const std::size_t i, NeoFOAM::localIdx& update, const bool final) {
-                update += intSpan[i - 1];
+                update += intView[i - 1];
                 if (final)
                 {
-                    segSpan[i] = update;
+                    segView[i] = update;
                 }
             },
             finalValue
@@ -221,18 +221,18 @@ TEST_CASE("parallelScan")
         REQUIRE(finalValue == 15);
 
         auto hostSegments = segments.copyToHost();
-        REQUIRE(hostSegments.span()[0] == 0);
-        REQUIRE(hostSegments.span()[1] == 1);
-        REQUIRE(hostSegments.span()[2] == 3);
-        REQUIRE(hostSegments.span()[3] == 6);
-        REQUIRE(hostSegments.span()[4] == 10);
-        REQUIRE(hostSegments.span()[5] == 15);
+        REQUIRE(hostSegments.view()[0] == 0);
+        REQUIRE(hostSegments.view()[1] == 1);
+        REQUIRE(hostSegments.view()[2] == 3);
+        REQUIRE(hostSegments.view()[3] == 6);
+        REQUIRE(hostSegments.view()[4] == 10);
+        REQUIRE(hostSegments.view()[5] == 15);
 
         auto hostIntervals = intervals.copyToHost();
-        REQUIRE(hostIntervals.span()[0] == 1);
-        REQUIRE(hostIntervals.span()[1] == 2);
-        REQUIRE(hostIntervals.span()[2] == 3);
-        REQUIRE(hostIntervals.span()[3] == 4);
-        REQUIRE(hostIntervals.span()[4] == 5);
+        REQUIRE(hostIntervals.view()[0] == 1);
+        REQUIRE(hostIntervals.view()[1] == 2);
+        REQUIRE(hostIntervals.view()[2] == 3);
+        REQUIRE(hostIntervals.view()[3] == 4);
+        REQUIRE(hostIntervals.view()[4] == 5);
     }
 };

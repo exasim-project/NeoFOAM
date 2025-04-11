@@ -78,21 +78,21 @@ public:
 
     void assemble(scalar t, scalar dt)
     {
-        auto vol = psi_.mesh().cellVolumes().span();
+        auto vol = psi_.mesh().cellVolumes().view();
         auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
         expr_.explicitOperation(expSource, t, dt);
-        auto expSourceSpan = expSource.span();
+        auto expSourceView = expSource.view();
         fill(ls_.rhs(), zero<ValueType>());
         fill(ls_.matrix().values(), zero<ValueType>());
         expr_.implicitOperation(ls_);
         // TODO rename implicitOperation -> assembleLinearSystem
         expr_.implicitOperation(ls_, t, dt);
-        auto rhs = ls_.rhs().span();
+        auto rhs = ls_.rhs().view();
         // we subtract the explicit source term from the rhs
         NeoFOAM::parallelFor(
             exec(),
             {0, rhs.size()},
-            KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSourceSpan[i] * vol[i]; }
+            KOKKOS_LAMBDA(const size_t i) { rhs[i] -= expSourceView[i] * vol[i]; }
         );
     }
 
@@ -114,12 +114,12 @@ public:
         else
         {
             // solve sparse matrix system
-            auto vol = psi_.mesh().cellVolumes().span();
+            auto vol = psi_.mesh().cellVolumes().view();
             auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
-            auto expSourceSpan = expSource.span();
+            auto expSourceSpan = expSource.view();
 
             ls_ = expr_.implicitOperation();
-            auto rhs = ls_.rhs().span();
+            auto rhs = ls_.rhs().view();
             // we subtract the explicit source term from the rhs
             NeoFOAM::parallelFor(
                 exec(),
@@ -158,10 +158,10 @@ public:
     void setReference(const IndexType refCell, ValueType refValue)
     {
         // TODO currently assumes that matrix is already assembled
-        const auto diagOffset = sparsityPattern_->diagOffset().span();
+        const auto diagOffset = sparsityPattern_->diagOffset().view();
         const auto rowPtrs = ls_.matrix().rowPtrs();
-        auto rhs = ls_.rhs().span();
-        auto values = ls_.matrix().values().span();
+        auto rhs = ls_.rhs().view();
+        auto values = ls_.matrix().values().view();
         NeoFOAM::parallelFor(
             ls_.exec(),
             {refCell, refCell + 1},

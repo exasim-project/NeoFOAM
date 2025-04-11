@@ -12,12 +12,12 @@ template<typename ValueType>
 void surfaceIntegrate(
     const Executor& exec,
     size_t nInternalFaces,
-    std::span<const int> neighbour,
-    std::span<const int> owner,
-    std::span<const int> faceCells,
-    std::span<const ValueType> flux,
-    std::span<const scalar> v,
-    std::span<ValueType> res,
+    View<const int> neighbour,
+    View<const int> owner,
+    View<const int> faceCells,
+    View<const ValueType> flux,
+    View<const scalar> v,
+    View<ValueType> res,
     const dsl::Coeff operatorScaling
 )
 {
@@ -52,12 +52,12 @@ void surfaceIntegrate(
     template void surfaceIntegrate<TYPENAME>(                                                      \
         const Executor&,                                                                           \
         size_t,                                                                                    \
-        std::span<const int>,                                                                      \
-        std::span<const int>,                                                                      \
-        std::span<const int>,                                                                      \
-        std::span<const TYPENAME>,                                                                 \
-        std::span<const scalar>,                                                                   \
-        std::span<TYPENAME>,                                                                       \
+        View<const int>,                                                                           \
+        View<const int>,                                                                           \
+        View<const int>,                                                                           \
+        View<const TYPENAME>,                                                                      \
+        View<const scalar>,                                                                        \
+        View<TYPENAME>,                                                                            \
         const dsl::Coeff                                                                           \
     )
 

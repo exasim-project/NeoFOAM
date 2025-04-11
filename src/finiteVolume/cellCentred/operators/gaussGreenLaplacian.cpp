@@ -111,7 +111,7 @@ void computeLaplacianImpl(
     // const auto rowPtrs = ls.matrix().rowPtrs();
     // const auto colIdxs = ls.matrix().colIdxs();
     // auto values = ls.matrix().values().span();
-    auto rhs = ls.rhs().span();
+    auto rhs = ls.rhs().view();
 
     parallelFor(
         exec,

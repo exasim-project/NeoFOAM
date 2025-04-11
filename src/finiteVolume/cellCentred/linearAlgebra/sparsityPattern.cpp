@@ -31,9 +31,9 @@ void SparsityPattern::update()
 {
     const auto exec = mesh_.exec();
     const auto nCells = mesh_.nCells();
-    const auto faceOwner = mesh_.faceOwner().span();
-    const auto faceNeighbour = mesh_.faceNeighbour().span();
-    // const auto faceFaceCells = mesh_.boundaryMesh().faceCells().span();
+    const auto faceOwner = mesh_.faceOwner().view();
+    const auto faceNeighbour = mesh_.faceNeighbour().view();
+    // const auto faceFaceCells = mesh_.boundaryMesh().faceCells().view();
     const auto nInternalFaces = mesh_.nInternalFaces();
 
     // start with one to include the diagonal
@@ -59,8 +59,8 @@ void SparsityPattern::update()
 
     // get number of total non-zeros
     segmentsFromIntervals(nFacesPerCell, rowPtrs_);
-    auto rowPtrs = rowPtrs_.span();
-    std::span<localIdx> sColIdx = colIdxs_.span();
+    auto rowPtrs = rowPtrs_.view();
+    View<localIdx> sColIdx = colIdxs_.view();
     fill(nFacesPerCell, 0); // reset nFacesPerCell
 
     // compute the lower triangular part of the matrix

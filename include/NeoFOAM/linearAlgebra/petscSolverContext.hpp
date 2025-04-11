@@ -78,10 +78,10 @@ public:
 
         auto hostLS = sys.copyToHost();
 
-        // auto fieldS = field.span();
+        // auto fieldS = field.view();
 
-        auto rowPtrHost = hostLS.matrix().rowPtrs().span();
-        auto colIdxHost = hostLS.matrix().colIdxs().span();
+        auto rowPtrHost = hostLS.matrix().rowPtrs().view();
+        auto colIdxHost = hostLS.matrix().colIdxs().view();
         auto rhsHost = sys.rhs().copyToHost();
 
         for (size_t index = 0; index < nrows; ++index)

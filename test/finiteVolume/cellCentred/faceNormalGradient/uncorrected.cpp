@@ -48,7 +48,7 @@ TEMPLATE_TEST_CASE("uncorrected", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
         uncorrected.faceNormalGrad(phi, phif);
 
         auto phifHost = phif.internalField().copyToHost();
-        auto sPhif = phifHost.span();
+        auto sPhif = phifHost.view();
         for (size_t i = 0; i < nCells - 1; i++)
         {
             // correct value is 10.0

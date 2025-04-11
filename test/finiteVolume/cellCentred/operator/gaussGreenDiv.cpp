@@ -26,7 +26,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
     // TODO this should be handled outside of the unit test
     fvcc::SurfaceField<scalar> faceFlux(exec, "sf", mesh, surfaceBCs);
     fill(faceFlux.internalField(), 1.0);
-    auto boundFaceFlux = faceFlux.internalField().span();
+    auto boundFaceFlux = faceFlux.internalField().view();
     // face on the left side has different orientation
     parallelFor(
         exec,
@@ -60,7 +60,7 @@ TEMPLATE_TEST_CASE("DivOperator", "[template]", NeoFOAM::scalar, NeoFOAM::Vector
 
         // divergence of a uniform field should be zero
         auto outHost = result.copyToHost();
-        auto outHostView = outHost.span();
+        auto outHostView = outHost.view();
         for (int i = 0; i < result.size(); i++)
         {
             REQUIRE(outHostView[i] == zero<TestType>());

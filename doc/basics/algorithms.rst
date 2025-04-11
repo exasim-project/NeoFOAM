@@ -22,12 +22,12 @@ The following code block shows the implementation of a parallelFor for fields
     template<typename Executor, typename ValueType, parallelForFieldKernel<ValueType> Kernel>
     void parallelFor([[maybe_unused]] const Executor& exec, Field<ValueType>& field, Kernel kernel)
     {
-        auto span = field.span();
+        auto view = field.view();
         if constexpr (std::is_same<std::remove_reference_t<Executor>, SerialExecutor>::value)
         {
             for (size_t i = 0; i < field.size(); i++)
             {
-                span[i] = kernel(i);
+                view[i] = kernel(i);
             }
         }
         else
@@ -36,7 +36,7 @@ The following code block shows the implementation of a parallelFor for fields
             Kokkos::parallel_for(
                 "parallelFor",
                 Kokkos::RangePolicy<runOn>(0, field.size()),
-                KOKKOS_LAMBDA(const size_t i) { span[i] = kernel(i); }
+                KOKKOS_LAMBDA(const size_t i) { view[i] = kernel(i); }
             );
         }
     }
@@ -45,8 +45,8 @@ The following code block shows the implementation of a parallelFor for fields
 based on the Executor type a kernel function is either run directly within a for loop or dispatched to ``Kokkos::parallel_for`` for all non ``SerialExecutors``.
 The executor type determines the ``Kokkos::RangePolicy<runOn>`` and thus dispatches to GPUs if a ``GPUExecutor`` was used.
 Additionally, we name the kernel as ``"parallelFor"`` to improve visibility in profiling tools like nsys.
-Finally, a ``KOKKOS_LAMBDA`` is dispatched assigning the result of the given kernel function to the span of the field.
-Here the span holds data pointers to the device data and defines the begin and end pointer of the data.
+Finally, a ``KOKKOS_LAMBDA`` is dispatched assigning the result of the given kernel function to the view of the field.
+Here the view holds data pointers to the device data and defines the begin and end pointer of the data.
 Several overloads of the ``parallelFor`` functions exists to simplify running parallelFor on fields and spans with and without an explicitly defined data range.
 
 

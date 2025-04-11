@@ -49,12 +49,12 @@ TEMPLATE_TEST_CASE("linear", "", NeoFOAM::scalar, NeoFOAM::Vector)
     auto nBoundary = mesh.nBoundaryFaces();
     for (int i = 0; i < nInternal; i++)
     {
-        REQUIRE(outHost.span()[i] == one<TestType>());
+        REQUIRE(outHost.view()[i] == one<TestType>());
     }
 
     for (int i = nInternal; i < nInternal + nBoundary; i++)
     {
-        REQUIRE(outHost.span()[i] == one<TestType>());
+        REQUIRE(outHost.view()[i] == one<TestType>());
     }
 }
 }

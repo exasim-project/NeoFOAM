@@ -18,6 +18,7 @@ namespace NeoFOAM
 template<typename T>
 using I = std::initializer_list<T>;
 
+// FIXME: Not sure if this should still be a TEST_CASE
 // TEST_CASE("laplacianOperator fixedValue")
 TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
 {
@@ -75,7 +76,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             Field<TestType> source(exec, nCells, zero<TestType>());
             lapOp.explicitOperation(source);
             auto sourceHost = source.copyToHost();
-            auto sSource = sourceHost.span();
+            auto sSource = sourceHost.view();
             for (size_t i = 0; i < nCells; i++)
             {
                 // the laplacian of a linear function is 0
@@ -91,6 +92,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
         SECTION("implicit laplacian operator" + execName)
         {
             lapOp.implicitOperation(ls);
+            // FIXME:
             // TODO change to use the new fvcc::expression class
             // fvcc::Expression<NeoFOAM::scalar> ls2(
             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
@@ -99,7 +101,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
             // auto result = ls2 & phi;
             // auto resultHost = result.internalField().copyToHost();
-            // auto sResult = resultHost.span();
+            // auto sResult = resultHost.view();
             // for (size_t celli = 0; celli < sResult.size(); celli++)
             // {
             //     // the laplacian of a linear function is 0
@@ -113,8 +115,9 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
             dsl::SpatialOperator lapOp = dsl::imp::laplacian(gamma, phi);
             lapOp.build(input);
             lapOp = dsl::Coeff(-0.5) * lapOp;
-            // FIXME
+
             lapOp.implicitOperation(ls);
+            // FIXME:
             // TODO change to use the new fvcc::expression class
             // fvcc::Expression<NeoFOAM::scalar> ls2(
             //     phi, ls, fvcc::SparsityPattern::readOrCreate(mesh)
@@ -123,7 +126,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
             // auto result = ls2 & phi;
             // auto resultHost = result.internalField().copyToHost();
-            // auto sResult = resultHost.span();
+            // auto sResult = resultHost.view();
             // for (size_t celli = 0; celli < sResult.size(); celli++)
             // {
             //     // the laplacian of a linear function is 0
@@ -133,6 +136,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
     }
 }
 
+// FIXME:
 // TEST_CASE("laplacianOperator fixedGradient")
 // {
 //     const size_t nCells = 10;
@@ -193,7 +197,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 //             Field<NeoFOAM::scalar> source(exec, nCells, 0.0);
 //             lapOp.explicitOperation(source);
 //             auto sourceHost = source.copyToHost();
-//             auto sSource = sourceHost.span();
+//             auto sSource = sourceHost.view();
 //             for (size_t i = 0; i < nCells; i++)
 //             {
 //                 // the laplacian of a linear function is 0
@@ -218,7 +222,7 @@ TEMPLATE_TEST_CASE("laplacianOperator fixedValue", "[template]", NeoFOAM::scalar
 
 //             // auto result = ls2 & phi;
 //             // auto resultHost = result.internalField().copyToHost();
-//             // auto sResult = resultHost.span();
+//             // auto sResult = resultHost.view();
 //             // for (size_t celli = 0; celli < sResult.size(); celli++)
 //             // {
 //             //     // the laplacian of a linear function is 0

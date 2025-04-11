@@ -57,17 +57,17 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         // 2 += 2 * 2
         auto hostSourceC = source.copyToHost();
-        REQUIRE(hostSourceC.span()[0] == 6.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostSourceC.view()[0] == 6.0 * NeoFOAM::one<TestType>());
 
         // 6 += 2 * 2
         d.explicitOperation(source, t, dt);
         auto hostSourceD = source.copyToHost();
-        REQUIRE(hostSourceD.span()[0] == 10.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostSourceD.view()[0] == 10.0 * NeoFOAM::one<TestType>());
 
         // 10 += - 6 * 2
         e.explicitOperation(source, t, dt);
         auto hostSourceE = source.copyToHost();
-        REQUIRE(hostSourceE.span()[0] == -2.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostSourceE.view()[0] == -2.0 * NeoFOAM::one<TestType>());
     }
 
     SECTION("Implicit Operations " + execName)
@@ -114,26 +114,26 @@ TEMPLATE_TEST_CASE("TemporalOperator", "[template]", NeoFOAM::scalar, NeoFOAM::V
 
         // c = 2 * 2
         auto hostRhsC = ls.rhs().copyToHost();
-        REQUIRE(hostRhsC.span()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostRhsC.view()[0] == 4.0 * NeoFOAM::one<TestType>());
         auto hostLsC = ls.copyToHost();
-        REQUIRE(hostLsC.matrix().values().span()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsC.matrix().values().view()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // // d= 2 * 2
         ls.reset();
         d.implicitOperation(ls, t, dt);
         auto hostRhsD = ls.rhs().copyToHost();
-        REQUIRE(hostRhsD.span()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostRhsD.view()[0] == 4.0 * NeoFOAM::one<TestType>());
         auto hostLsD = ls.copyToHost();
-        REQUIRE(hostLsD.matrix().values().span()[0] == 4.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsD.matrix().values().view()[0] == 4.0 * NeoFOAM::one<TestType>());
 
 
         // e = - -3 * 2 * 2 = -12
         ls.reset();
         e.implicitOperation(ls, t, dt);
         auto hostRhsE = ls.rhs().copyToHost();
-        REQUIRE(hostRhsE.span()[0] == -12.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostRhsE.view()[0] == -12.0 * NeoFOAM::one<TestType>());
         auto hostLsE = ls.copyToHost();
-        REQUIRE(hostLsE.matrix().values().span()[0] == -12.0 * NeoFOAM::one<TestType>());
+        REQUIRE(hostLsE.matrix().values().view()[0] == -12.0 * NeoFOAM::one<TestType>());
     }
 }

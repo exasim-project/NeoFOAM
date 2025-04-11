@@ -23,13 +23,13 @@ void computeDiv(
     const Executor& exec,
     size_t nInternalFaces,
     size_t nBoundaryFaces,
-    std::span<const int> neighbour,
-    std::span<const int> owner,
-    std::span<const int> faceCells,
-    std::span<const scalar> faceFlux,
-    std::span<const ValueType> phiF,
-    std::span<const scalar> v,
-    std::span<ValueType> res,
+    View<const int> neighbour,
+    View<const int> owner,
+    View<const int> faceCells,
+    View<const scalar> faceFlux,
+    View<const ValueType> phiF,
+    View<const scalar> v,
+    View<ValueType> res,
     const dsl::Coeff operatorScaling
 )
 {
@@ -117,13 +117,13 @@ void computeDivExp(
         exec,
         nInternalFaces,
         nBoundaryFaces,
-        mesh.faceNeighbour().span(),
-        mesh.faceOwner().span(),
-        mesh.boundaryMesh().faceCells().span(),
-        faceFlux.internalField().span(),
-        phif.internalField().span(),
-        mesh.cellVolumes().span(),
-        divPhi.span(),
+        mesh.faceNeighbour().view(),
+        mesh.faceOwner().view(),
+        mesh.boundaryMesh().faceCells().view(),
+        faceFlux.internalField().view(),
+        phif.internalField().view(),
+        mesh.cellVolumes().view(),
+        divPhi.view(),
         operatorScaling
 
     );

@@ -17,7 +17,7 @@ template<typename ValueType>
 void DdtOperator<ValueType>::explicitOperation(Field<ValueType>& source, scalar, scalar dt) const
 {
     const scalar dtInver = 1.0 / dt;
-    const auto vol = this->getField().mesh().cellVolumes().span();
+    const auto vol = this->getField().mesh().cellVolumes().view();
     auto [sourceSpan, field, oldField] =
         spans(source, this->field_.internalField(), oldTime(this->field_).internalField());
 
@@ -36,7 +36,7 @@ void DdtOperator<ValueType>::implicitOperation(
 )
 {
     const scalar dtInver = 1.0 / dt;
-    const auto vol = this->getField().mesh().cellVolumes().span();
+    const auto vol = this->getField().mesh().cellVolumes().view();
     const auto operatorScaling = this->getCoefficient();
     const auto [diagOffs, oldField] =
         spans(sparsityPattern_->diagOffset(), oldTime(this->field_).internalField());

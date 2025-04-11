@@ -32,14 +32,14 @@ TEST_CASE("fixedValue")
 
         auto refValues = domainField.boundaryField().refValue().copyToHost();
 
-        for (auto& boundaryValue : refValues.span(boundary->range()))
+        for (auto& boundaryValue : refValues.view(boundary->range()))
         {
             REQUIRE(boundaryValue == setValue);
         }
 
         auto values = domainField.boundaryField().value().copyToHost();
 
-        for (auto& boundaryValue : values.span(boundary->range()))
+        for (auto& boundaryValue : values.view(boundary->range()))
         {
             REQUIRE(boundaryValue == setValue);
         }
@@ -49,13 +49,13 @@ TEST_CASE("fixedValue")
                 "fixedValue", mesh, dict, 1
             );
 
-        for (auto& boundaryValue : refValues.span(otherBoundary->range()))
+        for (auto& boundaryValue : refValues.view(otherBoundary->range()))
         {
             REQUIRE(boundaryValue != setValue);
         }
 
 
-        for (auto& boundaryValue : values.span(otherBoundary->range()))
+        for (auto& boundaryValue : values.view(otherBoundary->range()))
         {
             REQUIRE(boundaryValue != setValue);
         }

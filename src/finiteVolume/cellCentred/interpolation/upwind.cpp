@@ -18,7 +18,7 @@ void computeUpwindInterpolation(
 )
 {
     const auto exec = dst.exec();
-    auto dstS = dst.internalField().span();
+    auto dstS = dst.internalField().view();
     const auto [srcS, weightS, ownerS, neighS, boundS, fluxS] = spans(
         src.internalField(),
         weights.internalField(),

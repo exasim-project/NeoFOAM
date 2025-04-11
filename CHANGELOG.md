@@ -1,5 +1,7 @@
 # Version 0.2.0 (unreleased)
 ## Features
+### Refactoring
+- View replaces std::span and Field uses view() rather than span() and returns a view [#298](https://github.com/exasim-project/NeoFOAM/pull/298)
 ### Implicit Capabilities
 - Implicit BCs and Laplacian operator [#262](https://github.com/exasim-project/NeoFOAM/pull/262)
 - Support for implicit operators in the DSL [#246](https://github.com/exasim-project/NeoFOAM/pull/246)

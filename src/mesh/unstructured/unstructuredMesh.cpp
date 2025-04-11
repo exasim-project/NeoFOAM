@@ -116,13 +116,13 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     scalar meshSpacing = (rightBoundary[0] - leftBoundary[0]) / static_cast<scalar>(nCells);
     auto hostExec = SerialExecutor {};
     vectorField meshPointsHost(hostExec, nCells + 1, {0.0, 0.0, 0.0});
-    auto meshPointsHostSpan = meshPointsHost.span();
+    auto meshPointsHostSpan = meshPointsHost.view();
     meshPointsHostSpan[nCells - 1] = leftBoundary;
     meshPointsHostSpan[nCells] = rightBoundary;
     auto meshPoints = meshPointsHost.copyToExecutor(exec);
 
     // loop over internal mesh points
-    auto meshPointsSpan = meshPoints.span();
+    auto meshPointsSpan = meshPoints.view();
     auto leftBoundaryX = leftBoundary[0];
     parallelFor(
         exec,
@@ -135,7 +135,7 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     scalarField cellVolumes(exec, nCells, meshSpacing);
 
     vectorField cellCenters(exec, nCells, {0.0, 0.0, 0.0});
-    auto cellCentersSpan = cellCenters.span();
+    auto cellCentersSpan = cellCenters.view();
     parallelFor(
         exec,
         {0, nCells},
@@ -146,7 +146,7 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
 
     vectorField faceAreasHost(hostExec, nCells + 1, {1.0, 0.0, 0.0});
-    auto faceAreasHostView = faceAreasHost.span();
+    auto faceAreasHostView = faceAreasHost.view();
     faceAreasHostView[nCells - 1] = {-1.0, 0.0, 0.0}; // left boundary face
     auto faceAreas = faceAreasHost.copyToExecutor(exec);
 
@@ -155,14 +155,14 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
 
     labelField faceOwnerHost(hostExec, nCells + 1);
     labelField faceNeighbor(exec, nCells - 1);
-    auto faceOwnerHostSpan = faceOwnerHost.span();
+    auto faceOwnerHostSpan = faceOwnerHost.view();
     faceOwnerHostSpan[nCells - 1] = 0;                          // left boundary face
     faceOwnerHostSpan[nCells] = static_cast<label>(nCells) - 1; // right boundary face
     auto faceOwner = faceOwnerHost.copyToExecutor(exec);
 
     // loop over internal faces
-    auto faceOwnerSpan = faceOwner.span();
-    auto faceNeighborSpan = faceNeighbor.span();
+    auto faceOwnerSpan = faceOwner.view();
+    auto faceNeighborSpan = faceNeighbor.view();
     parallelFor(
         exec,
         {0, nCells - 1},
@@ -173,15 +173,15 @@ UnstructuredMesh create1DUniformMesh(const Executor exec, const size_t nCells)
     );
 
     vectorField deltaHost(hostExec, 2);
-    auto deltaHostSpan = deltaHost.span();
+    auto deltaHostSpan = deltaHost.view();
     auto cellCentersHost = cellCenters.copyToHost();
-    auto cellCentersHostSpan = cellCentersHost.span();
+    auto cellCentersHostSpan = cellCentersHost.view();
     deltaHostSpan[0] = {leftBoundary[0] - cellCentersHostSpan[0][0], 0.0, 0.0};
     deltaHostSpan[1] = {rightBoundary[0] - cellCentersHostSpan[nCells - 1][0], 0.0, 0.0};
     auto delta = deltaHost.copyToExecutor(exec);
 
     scalarField deltaCoeffsHost(hostExec, 2);
-    auto deltaCoeffsHostSpan = deltaCoeffsHost.span();
+    auto deltaCoeffsHostSpan = deltaCoeffsHost.view();
     deltaCoeffsHostSpan[0] = 1 / mag(deltaHostSpan[0]);
     deltaCoeffsHostSpan[1] = 1 / mag(deltaHostSpan[1]);
     auto deltaCoeffs = deltaCoeffsHost.copyToExecutor(exec);

@@ -125,7 +125,7 @@ TEST_CASE("LinearSystem")
 
         Field<scalar> y = spmv(linearSystem, x);
         auto yHost = y.copyToHost();
-        auto yHostView = yHost.span();
+        auto yHostView = yHost.view();
 
         REQUIRE(yHostView[0] == 1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0);
         REQUIRE(yHostView[1] == 4.0 * 1.0 + 5.0 * 2.0 + 6.0 * 3.0);
@@ -136,7 +136,7 @@ TEST_CASE("LinearSystem")
         LinearSystem<scalar, localIdx> linearSystem2(csrMatrix, rhs2);
         y = spmv(linearSystem2, x);
         yHost = y.copyToHost();
-        yHostView = yHost.span();
+        yHostView = yHost.view();
 
         REQUIRE(yHostView[0] == 14.0 - 1.0);
         REQUIRE(yHostView[1] == 32.0 - 2.0);

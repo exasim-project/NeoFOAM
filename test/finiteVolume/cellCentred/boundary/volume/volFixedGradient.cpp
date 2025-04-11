@@ -37,14 +37,14 @@ TEST_CASE("fixedGradient")
 
             auto refValues = domainField.boundaryField().refGrad().copyToHost();
 
-            for (auto boundaryValue : refValues.span(boundary->range()))
+            for (auto boundaryValue : refValues.view(boundary->range()))
             {
                 REQUIRE(boundaryValue == setValue);
             }
 
             auto values = domainField.boundaryField().value().copyToHost();
 
-            for (auto& boundaryValue : values.span(boundary->range()))
+            for (auto& boundaryValue : values.view(boundary->range()))
             {
                 REQUIRE(boundaryValue == 1.0);
             }
@@ -64,7 +64,7 @@ TEST_CASE("fixedGradient")
 
             auto refValues = domainField.boundaryField().refGrad().copyToHost();
 
-            for (auto boundaryValue : refValues.span(boundary->range()))
+            for (auto boundaryValue : refValues.view(boundary->range()))
             {
                 REQUIRE(boundaryValue == setValue);
             }
@@ -73,7 +73,7 @@ TEST_CASE("fixedGradient")
 
             // deltaCoeffs is the inverse distance and has a value of 2.0
             // so the value is 1.0 + 10 / 2.0 = 6.0
-            for (auto& boundaryValue : values.span(boundary->range()))
+            for (auto& boundaryValue : values.view(boundary->range()))
             {
                 REQUIRE(boundaryValue == 6.0);
             }

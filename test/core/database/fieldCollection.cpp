@@ -109,7 +109,7 @@ TEST_CASE("Field Document")
 
             REQUIRE(volField.name == "T");
             auto volFieldHost = volField.internalField().copyToHost();
-            REQUIRE(volFieldHost.span()[0] == 1.0);
+            REQUIRE(volFieldHost.view()[0] == 1.0);
             REQUIRE(&volField == &constVolField);
         }
 
@@ -122,7 +122,7 @@ TEST_CASE("Field Document")
             NeoFOAM::fill(volField.internalField(), 2.0);
 
             auto volFieldHost = volField.internalField().copyToHost();
-            REQUIRE(volFieldHost.span()[0] == 2.0);
+            REQUIRE(volFieldHost.view()[0] == 2.0);
             REQUIRE(fieldDoc.timeIndex() == 4);
             REQUIRE(fieldDoc.iterationIndex() == 5);
             REQUIRE(fieldDoc.subCycleIndex() == 6);
@@ -185,7 +185,7 @@ TEST_CASE("FieldCollection")
 
             REQUIRE(volField.name == "T1");
             auto volFieldHost = volField.internalField().copyToHost();
-            REQUIRE(volFieldHost.span()[0] == 1.0);
+            REQUIRE(volFieldHost.view()[0] == 1.0);
             REQUIRE(&volField == &constVolField);
         }
 
@@ -228,7 +228,7 @@ TEST_CASE("FieldCollection")
         REQUIRE(t.name == "T");
         REQUIRE(t.hasDatabase());
         auto tHost = t.internalField().copyToHost();
-        REQUIRE(tHost.span()[0] == 1.0);
+        REQUIRE(tHost.view()[0] == 1.0);
         REQUIRE(t.registered());
 
         SECTION("Construct from Field")
