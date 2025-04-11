@@ -131,41 +131,38 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        <span class="keyword">auto</span> gkoMtx = detail::createGkoMtx(gkoExec_, sys);</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keyword">auto</span> solver = factory_-&gt;generate(gkoMtx);</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        std::shared_ptr&lt;const gko::log::Convergence&lt;ValueType&gt;&gt; logger =</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>            gko::log::Convergence&lt;ValueType&gt;::create();</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        solver-&gt;add_logger(logger);</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="comment">// std::shared_ptr&lt;const gko::log::Convergence&lt;ValueType&gt;&gt; logger =</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="comment">//     gko::log::Convergence&lt;ValueType&gt;::create();</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="comment">// solver-&gt;add_logger(logger);</span></div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keyword">auto</span> rhs = detail::createGkoDense(gkoExec_, sys.rhs().data(), nrows);</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        <span class="keyword">auto</span> gkoX = detail::createGkoDense(gkoExec_, x.data(), nrows);</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        solver-&gt;apply(rhs, gkoX);</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;solver took nIterations: &quot;</span> &lt;&lt; logger-&gt;get_num_iterations() &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keyword">auto</span> res_norm = gko::as&lt;gko::matrix::Dense&lt;ValueType&gt;&gt;(logger-&gt;get_residual_norm());</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keyword">auto</span> res_norm_host = gko::matrix::Dense&lt;ValueType&gt;::create(</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>            res_norm-&gt;get_executor()-&gt;get_master(), gko::dim&lt;2&gt; {1}</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        );</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        res_norm_host-&gt;copy_from(res_norm);</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <span class="comment">// return res_norm_host-&gt;at(0);</span></div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        std::cout &lt;&lt; <span class="stringliteral">&quot;residual: &quot;</span> &lt;&lt; res_norm_host-&gt;at(0) &lt;&lt; std::endl;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    }</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keyword">virtual</span> std::unique_ptr&lt;SolverFactory&gt; clone() const final</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    {</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        <span class="comment">// FIXME</span></div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        <span class="keywordflow">return</span> {};</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    }</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    std::shared_ptr&lt;const gko::Executor&gt; gkoExec_;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    gko::config::pnode config_;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    std::shared_ptr&lt;const gko::LinOpFactory&gt; factory_;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>};</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="comment">// auto res_norm = gko::as&lt;gko::matrix::Dense&lt;ValueType&gt;&gt;(logger-&gt;get_residual_norm());</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="comment">// auto res_norm_host = gko::matrix::Dense&lt;ValueType&gt;::create(</span></div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="comment">//     res_norm-&gt;get_executor()-&gt;get_master(), gko::dim&lt;2&gt; {1}</span></div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <span class="comment">// );</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="comment">// res_norm_host-&gt;copy_from(res_norm);</span></div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    }</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keyword">virtual</span> std::unique_ptr&lt;SolverFactory&gt; clone() const final</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    {</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        <span class="comment">// FIXME</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        <span class="keywordflow">return</span> {};</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    }</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    std::shared_ptr&lt;const gko::Executor&gt; gkoExec_;</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    gko::config::pnode config_;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    std::shared_ptr&lt;const gko::LinOpFactory&gt; factory_;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>};</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>}</div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>}</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="aclassRuntimeSelectionFactory_1_1Register_html"><div class="ttname"><a href="classRuntimeSelectionFactory_1_1Register.html">Register</a></div><div class="ttdoc">A template class for registering derived classes with a base class.</div></div>
 <div class="ttc" id="adictionary_8hpp_html"><div class="ttname"><a href="dictionary_8hpp.html">dictionary.hpp</a></div></div>
 <div class="ttc" id="afield_8hpp_html"><div class="ttname"><a href="field_8hpp.html">field.hpp</a></div></div>
