@@ -10,10 +10,6 @@
 #include "NeoFOAM/timeIntegration/timeIntegration.hpp"
 #include "NeoFOAM/dsl/solver.hpp"
 
-#if NF_WITH_GINKGO
-#include "NeoFOAM/linearAlgebra/ginkgo.hpp"
-#endif
-
 #include "NeoFOAM/linearAlgebra/linearSystem.hpp"
 
 // TODO decouple from fvcc
@@ -72,13 +68,8 @@ public:
         auto values = ls.matrix().values();
         eqn.implicitOperation(ls, t, dt);
 
-        // TODO make it independent of ginkgo
-#if NF_WITH_GINKGO
-        la::ginkgo::Solver<ValueType> solver(solutionField.exec(), this->solutionDict_);
+        auto solver = NeoFOAM::la::Solver(solutionField.exec(), this->solutionDict_);
         solver.solve(ls, solutionField.internalField());
-#else
-        NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
-#endif
 
         // check if executor is GPU
         if (std::holds_alternative<NeoFOAM::GPUExecutor>(eqn.exec()))
