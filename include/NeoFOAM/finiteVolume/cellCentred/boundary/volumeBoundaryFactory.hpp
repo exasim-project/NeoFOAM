@@ -28,6 +28,8 @@ public:
     )
         : BoundaryPatchMixin(mesh, patchID) {};
 
+    virtual ~VolumeBoundaryFactory() = default;
+
     virtual void correctBoundaryCondition(DomainField<ValueType>& domainField) = 0;
 
     virtual std::unique_ptr<VolumeBoundaryFactory> clone() const = 0;

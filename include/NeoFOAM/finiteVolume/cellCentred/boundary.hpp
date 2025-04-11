@@ -8,6 +8,7 @@
 
 #include "boundary/volume/empty.hpp"
 #include "boundary/volume/calculated.hpp"
+#include "boundary/volume/extrapolated.hpp"
 #include "boundary/volume/fixedValue.hpp"
 #include "boundary/volume/fixedGradient.hpp"
 
@@ -34,6 +35,18 @@ std::vector<BoundaryType> createCalculatedBCs(const UnstructuredMesh& mesh)
     return bcs;
 };
 
+template<typename BoundaryType>
+std::vector<BoundaryType> createExtrapolatedBCs(const UnstructuredMesh& mesh)
+{
+    std::vector<BoundaryType> bcs;
+    for (size_t patchID = 0; patchID < mesh.nBoundaries(); patchID++)
+    {
+        Dictionary patchDict({{"type", std::string("extrapolated")}});
+        bcs.push_back(BoundaryType(mesh, patchDict, patchID));
+    }
+    return bcs;
+};
+
 }
 
 namespace NeoFOAM
@@ -52,6 +65,9 @@ template class fvcc::volumeBoundary::FixedGradient<Vector>;
 
 template class fvcc::volumeBoundary::Calculated<scalar>;
 template class fvcc::volumeBoundary::Calculated<Vector>;
+
+template class fvcc::volumeBoundary::Extrapolated<scalar>;
+template class fvcc::volumeBoundary::Extrapolated<Vector>;
 
 template class fvcc::volumeBoundary::Empty<scalar>;
 template class fvcc::volumeBoundary::Empty<Vector>;

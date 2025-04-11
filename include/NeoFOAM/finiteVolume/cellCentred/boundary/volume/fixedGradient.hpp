@@ -38,6 +38,7 @@ void setGradientValue(
         mesh.boundaryMesh().deltaCoeffs()
     );
 
+
     NeoFOAM::parallelFor(
         domainField.exec(),
         range,
@@ -46,8 +47,8 @@ void setGradientValue(
             // operator / is not defined for all ValueTypes
             value[i] =
                 iField[static_cast<size_t>(faceCells[i])] + fixedGradient * (1 / deltaCoeffs[i]);
-            valueFraction[i] = 0.0;      // only used refGrad
-            refValue[i] = fixedGradient; // not used
+            valueFraction[i] = 0.0;          // only use refGrad
+            refValue[i] = zero<ValueType>(); // not used
         },
         "setGradientValue"
     );

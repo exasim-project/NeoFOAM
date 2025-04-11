@@ -44,10 +44,14 @@ struct CreateField
             dict.insert("fixedValue", 2.0);
             bcs.push_back(fvcc::VolumeBoundary<NeoFOAM::scalar>(mesh, dict, patchi));
         }
-        NeoFOAM::Field internalField =
-            NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0);
+
+        NeoFOAM::DomainField<NeoFOAM::scalar> domainField(
+            mesh.exec(),
+            NeoFOAM::Field<NeoFOAM::scalar>(mesh.exec(), mesh.nCells(), 1.0),
+            {0, 10, 20, 30}
+        );
         fvcc::VolumeField<NeoFOAM::scalar> vf(
-            mesh.exec(), name, mesh, internalField, bcs, db, "", ""
+            mesh.exec(), name, mesh, domainField, bcs, db, "", ""
         );
         return NeoFOAM::Document(
             {{"name", vf.name},

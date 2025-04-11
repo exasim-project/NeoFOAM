@@ -127,11 +127,7 @@ public:
      * @brief Copy constructor, creates a new field with the same size and data as the parsed field.
      * @param rhs The field to copy from.
      */
-    Field(const Field<ValueType>& rhs) : data_(nullptr), exec_(rhs.exec_)
-    {
-        resize(rhs.size_);
-        setField(*this, rhs.view());
-    }
+    Field(const Field<ValueType>& rhs) : Field(rhs.exec(), rhs.data(), rhs.size(), rhs.exec()) {}
 
     /**
      * @brief Move constructor, moves the data from the parsed field to the new field.
@@ -276,6 +272,31 @@ public:
     {
         Field<ValueType> result(exec_, size_);
         result = *this;
+        scalarMul(result, rhs);
+        return result;
+    }
+
+    /**
+     * @brief Arithmetic multiply operator, multiplies this field by another field element-wise.
+     * @param rhs The field to multiply with this field.
+     * @returns The result of the element-wise multiplication.
+     */
+    Field<ValueType>& operator*=(const Field<scalar>& rhs)
+    {
+        validateOtherField(rhs);
+        Field<ValueType>& result = *this;
+        mul(result, rhs);
+        return result;
+    }
+
+    /**
+     * @brief Arithmetic multiply-assignment operator, multiplies every cell in the field
+     * by a scalar and updates the field in place.
+     * @param rhs The scalar to multiply with the field.
+     */
+    Field<ValueType>& operator*=(const scalar rhs)
+    {
+        Field<ValueType>& result = *this;
         scalarMul(result, rhs);
         return result;
     }
