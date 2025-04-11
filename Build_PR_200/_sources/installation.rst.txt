@@ -64,6 +64,79 @@ To build NeoFOAM for production use, you can use the following commands:
 
 It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.
 
+Building with Spack
+^^^^^^^^^^^^^^^^^^^
+
+A good way to simplify the process of building NeoFOAM is by using spack.
+Here is a short tutorial on how to build NeoFOAM with spack for development.
+First clone spack from  https://github.com/spack/spack.
+
+   .. code-block:: bash
+
+    git clone  https://github.com/spack/spack
+    source spack/share/spack/setup-env.sh
+
+Next we create a development environment for NeoFOAM and add NeoFOAM to it.
+
+   .. code-block:: bash
+
+    mkdir neofoam-env
+    spack env create  -d neofoam-env
+    spack env activate neofoam-env
+    cd neofoam-env
+    spack develop --path /home/greole/data/code/NeoFOAM neofoam
+
+Next we install clang 17 as a compiler into our environment
+
+   .. code-block:: bash
+
+    spack add llvm@17
+    spack compiler add "$(spack location -i llvm)"
+
+
+Here is the current package.py. Edit spack/var/spack/repos/builtin/packages/neofoam/package.py accordingly
+
+   .. code-block:: bash
+        class Neofoam(CMakePackage):
+            """NeoFOAM is a WIP prototype of a modern CFD core."""
+
+            homepage = "https://github.com/exasim-project/NeoFOAM"
+            git = "https://github.com/exasim-project/NeoFOAM.git"
+
+            maintainers("greole", "HenningScheufler")
+
+            license("MIT", checked_by="greole")
+            version("main", branch="main")
+
+            variant("cuda", default=False, description="Compile with CUDA support")
+            variant("hip", default=False, description="Compile with HIP support")
+            variant("ginkgo", default=True, description="Compile with Ginkgo")
+            variant("sundials", default=True, description="Compile with Sundials")
+            variant("test", default=False, description="Compile and install tutorial programs")
+
+            depends_on("c", type="build")
+            depends_on("cxx", type="build")
+            depends_on("cmake@3.26:", type="build")
+            depends_on("mpi@3")
+            depends_on("cuda@12.6", when="+cuda")
+            depends_on("kokkos@4.3.0")
+            depends_on("ginkgo", when="+ginkgo")
+
+            def cmake_args(self):
+                return [
+                    '-DNEOFOAM_BUILD_TESTS=%s' % ('+test' in self.spec),
+                    '-DKokkos_ENABLE_CUDA=%s' % ('+cuda' in self.spec),
+                ]
+
+
+Next, we add NeoFOAM with the required dependencies.
+
+   .. code-block:: bash
+
+     spack add neofoam+test++cuda ^kokkos cuda_arch=80 cxxstd=20  ^ginkgo cuda_arch=80   %llvm@17
+     spack install
+
+
 Prerequisites
 ^^^^^^^^^^^^^
 
