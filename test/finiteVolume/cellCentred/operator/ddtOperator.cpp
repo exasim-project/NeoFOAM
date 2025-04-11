@@ -34,8 +34,12 @@ struct CreateField
             dict.insert("fixedValue", ValueType(2.0));
             bcs.push_back(fvcc::VolumeBoundary<ValueType>(mesh, dict, patchi));
         }
-        NeoFOAM::Field<ValueType> internalField(mesh.exec(), mesh.nCells(), ValueType(1.0));
-        fvcc::VolumeField<ValueType> vf(mesh.exec(), name, mesh, internalField, bcs, db, "", "");
+        NeoFOAM::DomainField<ValueType> domainField(
+            mesh.exec(),
+            NeoFOAM::Field<ValueType>(mesh.exec(), mesh.nCells(), one<ValueType>()),
+            mesh.boundaryMesh().offset()
+        );
+        fvcc::VolumeField<ValueType> vf(mesh.exec(), name, mesh, domainField, bcs, db, "", "");
 
         return NeoFOAM::Document(
             {{"name", vf.name},

@@ -19,7 +19,7 @@ TEMPLATE_TEST_CASE("Expression", "[template]", NeoFOAM::scalar, NeoFOAM::Vector)
     auto sp = NeoFOAM::finiteVolume::cellCentred::SparsityPattern {mesh};
 
     const size_t size {1};
-    NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.nBoundaryFaces(), mesh.nBoundaries());
+    NeoFOAM::BoundaryFields<TestType> bf(exec, mesh.boundaryMesh().offset());
 
     std::vector<fvcc::VolumeBoundary<TestType>> bcs {};
     NeoFOAM::Field<TestType> fA(exec, 1, 2.0 * NeoFOAM::one<TestType>());

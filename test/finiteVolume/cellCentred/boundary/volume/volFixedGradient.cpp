@@ -15,7 +15,7 @@ TEST_CASE("fixedGradient")
     {
         // unit cube mesh
         auto mesh = NeoFOAM::createSingleCellMesh(exec);
-        // the same as (exec, mesh.nCells(), mesh.nBoundaryFaces(), mesh.nBoundaries())
+        // the same as (exec, mesh.nCells(), mesh.boundaryMesh().offset())
         NeoFOAM::DomainField<NeoFOAM::scalar> domainField(exec, mesh);
         NeoFOAM::fill(domainField.internalField(), 1.0);
         NeoFOAM::fill(domainField.boundaryField().refGrad(), -1.0);

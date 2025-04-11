@@ -35,11 +35,12 @@ public:
     )
         : psi_(psi), expr_(expr), fvSchemes_(fvSchemes), fvSolution_(fvSolution),
           sparsityPattern_(SparsityPattern::readOrCreate(psi.mesh())),
-          ls_(la::createEmptyLinearSystem<scalar, localIdx, SparsityPattern>(*sparsityPattern_.get()
+          ls_(la::createEmptyLinearSystem<ValueType, localIdx, SparsityPattern>(
+              *sparsityPattern_.get()
           ))
     {
         expr_.build(fvSchemes_);
-        assemble();
+        // assemble();
     };
 
     Expression(const Expression& ls)
@@ -81,8 +82,9 @@ public:
         auto expSource = expr_.explicitOperation(psi_.mesh().nCells());
         expr_.explicitOperation(expSource, t, dt);
         auto expSourceSpan = expSource.span();
-
-        ls_ = expr_.implicitOperation();
+        fill(ls_.rhs(), zero<ValueType>());
+        fill(ls_.matrix().values(), zero<ValueType>());
+        expr_.implicitOperation(ls_);
         // TODO rename implicitOperation -> assembleLinearSystem
         expr_.implicitOperation(ls_, t, dt);
         auto rhs = ls_.rhs().span();
@@ -149,6 +151,7 @@ public:
             auto exec = psi_.exec();
             auto solver = NeoFOAM::la::Solver(exec, fvSolution_);
             solver.solve(ls_, psi_.internalField());
+            NF_ERROR_EXIT("No linear solver is available, build with -DNEOFOAM_WITH_GINKGO=ON");
         }
     }
 
@@ -158,7 +161,7 @@ public:
         const auto diagOffset = sparsityPattern_->diagOffset().span();
         const auto rowPtrs = ls_.matrix().rowPtrs();
         auto rhs = ls_.rhs().span();
-        auto values = ls_.matrix().values();
+        auto values = ls_.matrix().values().span();
         NeoFOAM::parallelFor(
             ls_.exec(),
             {refCell, refCell + 1},
@@ -169,51 +172,6 @@ public:
                 values[diagIdx] += diagValue;
             }
         );
-    }
-
-    Field<ValueType> flux() const
-    {
-        const UnstructuredMesh& mesh = psi_.mesh();
-        const std::size_t nInternalFaces = mesh.nInternalFaces();
-        const auto exec = psi_.exec();
-        const auto [owner, neighbour, surfFaceCells, ownOffs, neiOffs, internalPsi] = spans(
-            mesh.faceOwner(),
-            mesh.faceNeighbour(),
-            mesh.boundaryMesh().faceCells(),
-            sparsityPattern_->ownerOffset(),
-            sparsityPattern_->neighbourOffset(),
-            psi_.internalField()
-        );
-
-        auto rhs = ls_.rhs().span();
-
-        const auto values = ls_.matrix().values();
-        const auto colIdxs = ls_.matrix().colIdxs();
-        const auto rowPtrs = ls_.matrix().rowPtrs();
-
-        Field<ValueType> result(exec, neighbour.size(), 0.0);
-
-
-        auto resultSpan = result.span();
-
-        parallelFor(
-            exec,
-            {0, nInternalFaces},
-            KOKKOS_LAMBDA(const size_t facei) {
-                std::size_t own = static_cast<std::size_t>(owner[facei]);
-                std::size_t nei = static_cast<std::size_t>(neighbour[facei]);
-
-                std::size_t rowNeiStart = rowPtrs[nei];
-                std::size_t rowOwnStart = rowPtrs[own];
-
-                auto upper = values[rowNeiStart + neiOffs[facei]];
-                auto lower = values[rowOwnStart + ownOffs[facei]];
-                Kokkos::atomic_add(
-                    &resultSpan[facei], upper * internalPsi[nei] - lower * internalPsi[own]
-                );
-            }
-        );
-        return result;
     }
 
 private:
