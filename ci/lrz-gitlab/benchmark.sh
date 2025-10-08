@@ -98,14 +98,14 @@ build_and_benchmark() {
     fi
 
     echo ">>> Building"
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
+    ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
 
     echo ">>> Running benchmarks..."
-    - ./benchmarks/benchmarkSuite/cleanAll.sh
-    - ./benchmarks/benchmarkSuite/runAll.sh
+    ./benchmarks/benchmarkSuite/cleanAll.sh
+    ./benchmarks/benchmarkSuite/runAll.sh
 
     # Check for produced results
-    - find benchmarks/benchmarkSuite/ -name '*csv'
+    find benchmarks/benchmarkSuite/ -name '*csv'
 
 }
 
