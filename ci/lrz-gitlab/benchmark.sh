@@ -58,7 +58,16 @@ collect_system_info() {
     } > "${RESULTS_DIR}/system-info.log"
 }
 
-# Build & benchmark given branch
+# -------------------------
+# Step 1: Prepare NeoN
+# -------------------------
+echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
+git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
+    https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
+
+# -------------------------
+# Step 2: Configure and build FoamAdapter for benchmarking
+# -------------------------
 build_and_benchmark() {
     local branch=$1
     local output_dir=$2
