@@ -85,7 +85,6 @@
       when: always
     - when: never
 
-
 # --- Build and test NeoFOAM with the main branch of NeoN ---
 build-and-test-triggered-from-FA-nvidia:
   extends:
@@ -103,7 +102,6 @@ build-and-test-triggered-from-FA-amd:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
 
-
 # --- Benchmark NeoFOAM with the main branch of NeoN ---
 benchmark-triggered-from-FA-nvidia:
   extends:
@@ -111,11 +109,8 @@ benchmark-triggered-from-FA-nvidia:
     - .openfoam-env-setup
     - .trigger-from-neofoam-for-benchmarking
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
-    - ./benchmarks/benchmarkSuite/cleanAll.sh
-    - ./benchmarks/benchmarkSuite/runAll.sh
-    # Check for produced results
-    - find benchmarks/benchmarkSuite/ -name '*csv'
+    - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
+    - ./ci/lrz-gitlab/benchmark.sh nvidia main profiling
 
 benchmark-triggered-from-FA-amd:
   extends:
@@ -124,12 +119,7 @@ benchmark-triggered-from-FA-amd:
     - .trigger-from-neofoam-for-benchmarking
   script:
     - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
-    - ./ci/lrz-gitlab/build-and-test.sh amd main profiling
-    - ./benchmarks/benchmarkSuite/cleanAll.sh
-    - ./benchmarks/benchmarkSuite/runAll.sh
-    # Check for produced results
-    - find benchmarks/benchmarkSuite/ -name '*csv'
-
+    - ./ci/lrz-gitlab/benchmark.sh amd main profiling
 
 # --- Build and test NeoFOAM with a feature branch of NeoN ---
 build-and-test-triggered-from-NeoN-nvidia:
