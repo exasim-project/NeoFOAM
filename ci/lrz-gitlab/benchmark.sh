@@ -98,7 +98,7 @@ build_and_benchmark() {
     fi
 
     echo ">>> Building"
-    ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
+    cmake --build --preset profiling
 
     echo ">>> Running benchmarks..."
     ./benchmarks/benchmarkSuite/cleanAll.sh
