@@ -18,13 +18,6 @@ TARGET_BRANCH=${TARGET_BRANCH:?Must set TARGET_BRANCH}
 RUN_IDENTIFIER=${RUN_IDENTIFIER:?Must set RUN_IDENTIFIER}
 API_TOKEN_GITHUB=${API_TOKEN_GITHUB:?Must set API_TOKEN_GITHUB}
 
-# # Check GPU type argument
-# if [ $# -lt 1 ]; then
-#     echo "Usage: $0 <gpu_type>"
-#     echo "  gpu_type: nvidia | amd | none"
-#     exit 1
-# fi
-
 GPU_VENDOR="$1"
 echo "Selected GPU vendor: ${GPU_VENDOR}"
 
@@ -103,8 +96,10 @@ build_and_benchmark() {
     echo ">>> Running benchmarks..."
     ./benchmarks/benchmarkSuite/cleanAll.sh
     ./benchmarks/benchmarkSuite/runAll.sh
+    echo ">>> Benchmarks completed"
 
     # Check for produced results
+    echo ">>> Benchmark results stored in..."
     find benchmarks/benchmarkSuite/ -name '*csv'
 
 }
@@ -118,8 +113,8 @@ push_results() {
     cd "${REPO_NAME}"
 
     git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
-    mkdir -p "${RUN_IDENTIFIER}/${CI_RUNNER_DESCRIPTION}"
-    cp -r ../${RESULTS_DIR}/* "${RUN_IDENTIFIER}/${CI_RUNNER_DESCRIPTION}"
+    mkdir -p "${RESULTS_DIR}"
+    cp -r ../${RESULTS_DIR}/* "${RESULTS_DIR}"
 
     git add .
     git commit -m "Benchmarks from GitLab pipeline ${RUN_IDENTIFIER}" || echo "No changes to commit"
