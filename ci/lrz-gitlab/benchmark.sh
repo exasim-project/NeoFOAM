@@ -12,6 +12,7 @@ GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
 NEON_BRANCH=${2:-main} # Default to 'main' if not provided
 
 RESULTS_DIR=${RESULTS_DIR:-results}
+TARGET_RESULTS_DIR=${TARGET_RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
 REPO_NAME=$(basename "$TARGET_REPO" .git)
 TARGET_BRANCH=${TARGET_BRANCH:?Must set TARGET_BRANCH}
@@ -99,9 +100,15 @@ build_and_benchmark() {
     echo ">>> Benchmarks completed"
 
     # Check for produced results
-    echo ">>> Benchmark results stored in..."
-    find benchmarks/benchmarkSuite/ -name '*csv'
-
+    files=$(find benchmarks/benchmarkSuite/ -name '*csv')
+    if [ -z "$files" ]; then
+        echo "No CSV files found!"
+        exit 1
+    else
+        echo ">>> List of files generated."
+        echo "$files"
+        echo "============================"
+    fi
 }
 
 # Push benchmark results to GitHub
@@ -114,7 +121,7 @@ push_results() {
 
     git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
     mkdir -p "${RESULTS_DIR}"
-    cp -r ../${RESULTS_DIR}/* "${RESULTS_DIR}"
+    cp -r ../${RESULTS_DIR}/* "${TARGET_RESULTS_DIR}"
 
     git add .
     git commit -m "Benchmarks from GitLab pipeline ${RUN_IDENTIFIER}" || echo "No changes to commit"
