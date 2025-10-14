@@ -12,7 +12,6 @@ GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
 NEON_BRANCH=${2:-main} # Default to 'main' if not provided
 
 RESULTS_DIR=${RESULTS_DIR:-results}
-TARGET_RESULTS_DIR=${TARGET_RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
 REPO_NAME=$(basename "$TARGET_REPO" .git)
 TARGET_BRANCH=${TARGET_BRANCH:?Must set TARGET_BRANCH}
@@ -121,7 +120,7 @@ push_results() {
 
     git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
     mkdir -p "${RESULTS_DIR}"
-    cp -r ../${RESULTS_DIR}/* "${TARGET_RESULTS_DIR}"
+    cp -r ../${RESULTS_DIR}/* "${RESULTS_DIR}"
 
     git add .
     git commit -m "Benchmarks from GitLab pipeline ${RUN_IDENTIFIER}" || echo "No changes to commit"
