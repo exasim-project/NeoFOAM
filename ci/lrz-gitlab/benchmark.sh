@@ -113,11 +113,11 @@ build_and_benchmark() {
 
 # Push benchmark results to GitHub
 push_results() {
-    git config --global user.email "gitlab-ci@users.noreply.github.com"
-    git config --global user.name "GitLab CI"
-
     git clone "https://oauth2:${API_TOKEN_GITHUB}@${TARGET_REPO}"
     cd "${REPO_NAME}"
+
+    git config user.email "gitlab-ci@users.noreply.github.com"
+    git config user.name "GitLab CI"
 
     git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
     mkdir -p "${RESULTS_DIR}"
@@ -133,10 +133,10 @@ push_results() {
 collect_system_info "${GPU_VENDOR}"
 
 # Current branch
-build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
+#build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
 
 # Main branch
-build_and_benchmark "main" "${RESULTS_DIR}/main"
+#build_and_benchmark "main" "${RESULTS_DIR}/main"
 
 # Push results
 push_results
