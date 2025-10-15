@@ -132,10 +132,14 @@ push_results() {
 collect_system_info "${GPU_VENDOR}"
 
 # Current branch
-#build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
+echo ">>> Benchmarking the current branch"
+build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
 
 # Main branch
-#build_and_benchmark "main" "${RESULTS_DIR}/main"
+echo ">>> Benchmarking the main branch"
+build_and_benchmark "main" "${RESULTS_DIR}/main"
 
 # Push results
+echo ">>> Copying results to NeoFOAM-BenchmarkData repository"
 push_results
+echo "Results copied successfully"
