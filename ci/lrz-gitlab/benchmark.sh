@@ -59,7 +59,7 @@ git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
     https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
 # Temporarly using NeoN from a previous state
 cd ../NeoN
-git checkout 26c1518c057c97014fab89bfbf6a707ba8b54d88
+git checkout 283163928b803fe8778dfb214fa41430ea9f3ba6
 cd ../FoamAdapter
 # ============================================
 
