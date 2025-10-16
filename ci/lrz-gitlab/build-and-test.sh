@@ -49,7 +49,7 @@ current_dir=$(pwd)
 cd ../NeoN
 git fetch --unshallow
 git checkout 283163928b803fe8778dfb214fa41430ea9f3ba6
-current_dir=$(pwd)
+cd $current_dir
 # ============================================
 
 # -------------------------
