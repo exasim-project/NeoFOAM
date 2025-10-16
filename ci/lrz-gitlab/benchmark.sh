@@ -114,7 +114,12 @@ build_and_benchmark() {
         echo ">>> List of files generated."
         echo "$files"
         echo "============================"
+
+        mkdir -p "${output_dir}"
+        cp $files "${output_dir}" \;
     fi
+    
+    rm -rf build
 }
 
 # Push benchmark results to GitHub
