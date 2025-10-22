@@ -101,23 +101,29 @@ build_and_benchmark() {
     cmake --build --preset profiling
 
     echo ">>> Running benchmarks..."
+    export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
     ./benchmarks/benchmarkSuite/cleanAll.sh
     ./benchmarks/benchmarkSuite/runAll.sh
     echo ">>> Benchmarks completed"
 
-    # Check for produced results
-    files=$(find benchmarks/benchmarkSuite/ -name '*csv')
-    if [ -z "$files" ]; then
-        echo "No CSV files found!"
-        exit 1
-    else
-        echo ">>> List of files generated."
-        echo "$files"
-        echo "============================"
+     # Check for produced results
+    mapfile -d '' csv_files < <(find benchmarks/benchmarkSuite/ -type f -name '*.csv' -print0)
 
-        mkdir -p "${output_dir}"
-        cp $files "${output_dir}" \;
+    if [ "${#csv_files[@]}" -eq 0 ]; then
+        echo "No CSV files found!" >&2
+        exit 1
     fi
+
+    echo ">>> List of files generated."
+    for f in "${csv_files[@]}"; do
+        echo "$f"
+    done
+    echo "============================"
+
+    mkdir -p -- "${output_dir}"
+    for f in "${csv_files[@]}"; do
+        cp -f -- "$f" "${output_dir}/"
+    done
     
     rm -rf build
 }
