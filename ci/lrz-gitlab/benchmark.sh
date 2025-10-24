@@ -57,13 +57,6 @@ collect_system_info() {
 echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
 git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
     https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
-# Temporarly using NeoN from a previous state
-current_dir=$(pwd)
-cd ../NeoN
-git fetch --unshallow
-git checkout 283163928b803fe8778dfb214fa41430ea9f3ba6
-cd $current_dir
-# ============================================
 
 # -------------------------
 # Step 2: Configure and build FoamAdapter for benchmarking
