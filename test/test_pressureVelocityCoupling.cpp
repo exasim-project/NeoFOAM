@@ -360,9 +360,10 @@ TEST_CASE("PressureVelocityCoupling")
 
             Foam::fvVectorMatrix ofUEqn(
                 Foam::fvm::ddt(ofU) + Foam::fvm::div(ofPhi, ofU) - Foam::fvm::laplacian(ofNu, ofU)
+                + Foam::fvc::grad(ofp)
             );
 
-            Foam::solve(ofUEqn == -Foam::fvc::grad(ofp));
+            Foam::solve(ofUEqn); // == -Foam::fvc::grad(ofp));
 
             nf::PDESolver<NeoN::Vec3> nfUEqn(
                 dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU)
@@ -374,12 +375,12 @@ TEST_CASE("PressureVelocityCoupling")
             nfUEqn.solve();
 
             auto hostnfU2 = nfU.internalVector().copyToHost();
-            // for (size_t celli = 0; celli < hostnfU.size(); celli++)
-            // {
-            //     REQUIRE(hostnfU2.view()[celli][0] == Catch::Approx(ofU[celli][0]).margin(1e-12));
-            //     REQUIRE(hostnfU2.view()[celli][1] == Catch::Approx(ofU[celli][1]).margin(1e-12));
-            //     REQUIRE(hostnfU2.view()[celli][2] == Catch::Approx(ofU[celli][2]).margin(1e-12));
-            // }
+            for (size_t celli = 0; celli < hostnfU.size(); celli++)
+            {
+                REQUIRE(hostnfU2.view()[celli][0] == Catch::Approx(ofU[celli][0]).margin(1e-12));
+                REQUIRE(hostnfU2.view()[celli][1] == Catch::Approx(ofU[celli][1]).margin(1e-12));
+                REQUIRE(hostnfU2.view()[celli][2] == Catch::Approx(ofU[celli][2]).margin(1e-12));
+            }
 
             SECTION("HbyA modified U")
             {
@@ -403,12 +404,18 @@ TEST_CASE("PressureVelocityCoupling")
                               << HbyA[celli][0] << "\n";
                     std::cout << " nf[1] " << hostnfHbyA.view()[celli][1] << " of[1] "
                               << HbyA[celli][1] << "\n";
-                    // REQUIRE(hostnfHbyA.view()[celli][0] ==
-                    // Catch::Approx(HbyA[celli][0]).margin(1e-8));
-                    // REQUIRE(hostnfHbyA.view()[celli][1] ==
-                    // Catch::Approx(HbyA[celli][1]).margin(1e-8));
-                    // REQUIRE(hostnfHbyA.view()[celli][2] ==
-                    // Catch::Approx(HbyA[celli][2]).margin(1e-8));
+                }
+                for (size_t celli = 0; celli < hostnfHbyA.size(); celli++)
+                {
+                    REQUIRE(
+                        hostnfHbyA.view()[celli][0] == Catch::Approx(HbyA[celli][0]).margin(1e-8)
+                    );
+                    REQUIRE(
+                        hostnfHbyA.view()[celli][1] == Catch::Approx(HbyA[celli][1]).margin(1e-8)
+                    );
+                    REQUIRE(
+                        hostnfHbyA.view()[celli][2] == Catch::Approx(HbyA[celli][2]).margin(1e-8)
+                    );
                 }
 
                 Foam::surfaceScalarField phiHbyA("phiHbyA", Foam::fvc::flux(HbyA));

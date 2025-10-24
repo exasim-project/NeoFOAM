@@ -12,14 +12,14 @@ namespace FoamAdapter
 {
 
 void constrainHbyA(
-    const nnfvcc::VolumeField<Vec3>& u,
+    const nnfvcc::VolumeField<Vec3>& U,
     const nnfvcc::VolumeField<scalar>& p,
     nnfvcc::VolumeField<Vec3>& hByA
 )
 {
     auto hByAin = hByA.internalVector().view();
-    auto [hByABcValue, uBcValue] = views(hByA.boundaryData().value(), u.boundaryData().value());
-    const auto& uBCs = u.boundaryConditions();
+    auto [hByABcValue, uBcValue] = views(hByA.boundaryData().value(), U.boundaryData().value());
+    const auto& uBCs = U.boundaryConditions();
 
     for (auto patchi = 0; patchi < uBCs.size(); ++patchi)
     {
@@ -65,8 +65,8 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
 computeRAUandHByA(const PDESolver<Vec3>& expr)
 {
-    const auto& u = expr.getField();
-    const auto& mesh = u.mesh();
+    const auto& U = expr.getField();
+    const auto& mesh = U.mesh();
     const auto& sparsityPattern = expr.sparsityPattern();
     const auto& ls = expr.linearSystem();
 
@@ -81,15 +81,16 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     auto offDiagonalSourceBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
     auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
     NeoN::fill(hByA.internalVector(), NeoN::zero<Vec3>());
+    hByA.correctBoundaryConditions();
     const auto nInternalFaces = mesh.nInternalFaces();
-    const auto exec = u.exec();
+    const auto exec = U.exec();
 
     const auto [owner, neighbour, ownOffs, neiOffs, internalU] = views(
         mesh.faceOwner(),
         mesh.faceNeighbour(),
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset(),
-        u.internalVector()
+        U.internalVector()
     );
 
     auto internalHbyA = hByA.internalVector().view();
@@ -106,8 +107,14 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
             auto lower = values[rowNeiStart + neiOffs[facei]];
             auto upper = values[rowOwnStart + ownOffs[facei]];
 
-            Kokkos::atomic_sub(&internalHbyA[nei], lower[0] * internalU[own]);
-            Kokkos::atomic_sub(&internalHbyA[own], upper[0] * internalU[nei]);
+            Kokkos::atomic_sub(&internalHbyA[nei][0], lower[0] * internalU[own][0]);
+            Kokkos::atomic_sub(&internalHbyA[own][0], upper[0] * internalU[nei][0]);
+
+            Kokkos::atomic_sub(&internalHbyA[nei][1], lower[1] * internalU[own][1]);
+            Kokkos::atomic_sub(&internalHbyA[own][1], upper[1] * internalU[nei][1]);
+
+            Kokkos::atomic_sub(&internalHbyA[nei][2], lower[2] * internalU[own][2]);
+            Kokkos::atomic_sub(&internalHbyA[own][2], upper[2] * internalU[nei][2]);
         }
     );
 
@@ -200,14 +207,18 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
-    nnfvcc::VolumeField<Vec3>& u
+    nnfvcc::VolumeField<Vec3>& U
 )
 {
     auto gradP = nnfvcc::GaussGreenGrad(p.exec(), p.mesh()).grad(p);
-    auto [iHbyA, iRAU, iGradP] =
-        views(hByA.internalVector(), rAU.internalVector(), gradP.internalVector());
+    auto [Uv, iHbyA, iRAU, iGradP] = views(
+        U.internalVector(),
+        hByA.internalVector(),
+        rAU.internalVector(),
+        gradP.internalVector()
+    );
 
-    u.internalVector().apply(KOKKOS_LAMBDA(const std::size_t celli) {
+    U.internalVector().apply(KOKKOS_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - iRAU[celli] * iGradP[celli];
     });
 }
