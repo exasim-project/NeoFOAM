@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
             if (piso.momentumPredictor())
             {
                 // NOTE solve on a temporary clone of UEqn
-                UEqn.solve(dsl::exp::grad(p));
+                UEqn.solve(-1.0 * dsl::exp::grad(p));
             }
             else
             {

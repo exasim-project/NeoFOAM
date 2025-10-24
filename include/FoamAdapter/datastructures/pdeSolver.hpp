@@ -123,19 +123,20 @@ public:
         return solveImpl(expr_, ls_);
     }
 
-    NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs) const
+    NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
         auto expr = dsl::Expression<ValueType>(expr_);
         auto ls = NeoN::la::LinearSystem<ValueType, IndexType>(ls_);
         expr.addOperator(-1.0 * rhs);
-        return solve(expr, ls);
+        assemble();
+        return solveImpl(expr, ls);
     }
 
 private:
 
     NeoN::la::SolverStats solveImpl(
-            const dsl::Expression<ValueType>& expr,
-            const NeoN::la::LinearSystem<ValueType, IndexType>& ls)
+             dsl::Expression<ValueType>& expr,
+             NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
@@ -151,14 +152,13 @@ private:
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
         }
 
-        // FIXME TODO this will create the sparsity pattern and potentially the ls
-        // again even if it has been created already
         auto solverDict = runTime_.fvSolutionDict.get<NeoN::Dictionary>("solvers");
         auto fieldSolverDict = solverDict.get<NeoN::Dictionary>(psi_.name);
-        auto stats = NeoN::dsl::detail::iterativeSolveImpl(
-            expr_,
+
+        auto stats = ::NeoN::dsl::detail::iterativeSolveImpl(
+            expr,
             sparsityPattern_,
-            ls_,
+            ls,
             psi_,
             runTime_.t,
             runTime_.dt,
