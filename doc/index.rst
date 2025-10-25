@@ -15,6 +15,7 @@ Table of Contents
    :maxdepth: 2
 
    self
+   installation
    gettingStarted
    testcases
    ci
