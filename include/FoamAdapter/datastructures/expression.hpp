@@ -120,7 +120,9 @@ public:
     }
 
     // TODO unify with dsl/solver.hpp
-    NeoN::la::SolverStats solve()
+    NeoN::la::SolverStats solve(
+            const dsl::Expression<ValueType>& expr,
+            const NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
@@ -159,10 +161,16 @@ public:
         return stats;
     }
 
+    NeoN::la::SolverStats solve() {
+        return solve(expr_, ls_);
+    }
+
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
-        expr_.addOperator(-1.0 * rhs);
-        return solve();
+        auto expr = dsl::Expression<ValueType>(expr_);
+        auto ls = NeoN::la::LinearSystem<ValueType, IndexType>(ls_);
+        expr.addOperator(-1.0 * rhs);
+        return solve(expr, ls);
     }
 
 private:
