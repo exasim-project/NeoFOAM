@@ -1,0 +1,61 @@
+name: Build FoamAdapter
+run-name: 'Build workflow'
+
+on:
+  push:
+    branches:
+      - update_neon
+  schedule:
+    - cron: '00 6 * * 0'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Update NeoN
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Update NeoN if necessary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          export REMOTE_SHA=$(git ls-remote --heads https://github.com/exasim-project/NeoN main | awk '{print $1}')
+          export NEON_SUBMODULE=src/NeoN
+          export CURRENT_SHA=$(git ls-tree HEAD ${NEON_SUBMODULE} | awk '{print $3}')
+          if [[ "${REMOTE_SHA}" != "${CURRENT_SHA}" ]]; then
+            echo "REMOTE_SHA ${REMOTE_SHA} is different than CURRENT_SHA ${CURRENT_SHA}"
+            export BRANCH_NAME=updatebot/neon_${REMOTE_SHA}
+            if git show-ref --verify --quiet "refs/heads/${BRANCH_NAME}"; then
+              echo "updatebot alreadys create that branch"
+            else
+              echo "Create a new branch ${BRANCH_NAME} and corresponding PR"
+              git checkout -b ${BRANCH_NAME}
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git -C ${NEON_SUBMODULE} fetch
+              git -C ${NEON_SUBMODULE} checkout ${REMOTE_SHA}
+              git add ${NEON_SUBMODULE}
+              git commit -m "Update submodule ${NEON_SUBMODULE} to NeoN@${REMOTE_SHA}"
+              export CMAKEFILE=cmake/CxxThirdParty.cmake
+              sed s/@NEON_TAG@/${REMOTE_SHA}/g ${CMAKEFILE}.in > ${CMAKEFILE}
+              git add ${CMAKEFILE}
+              git commit -m "Update NeoN Version in ${CMAKEFILE} to exasim-project/NeoN@${REMOTE_SHA}"
+              git push origin ${BRANCH_NAME}
+              gh pr create \
+                --title "Update NeoN version to NeoN@${REMOTE_SHA}" \
+                --body "Update the submodule and cmake version to exasim-project/NeoN@${REMOTE_SHA}" \
+                --head ${BRANCH_NAME} \
+                --base main
+            fi
+          else
+            echo "CURRENT_SHA is ${CURRENT_SHA}, which is the same as REMOTE_SHA."
+          fi
+
+
+
