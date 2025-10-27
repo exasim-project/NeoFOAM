@@ -18,6 +18,9 @@ namespace dsl = NeoN::dsl;
 #include "gaussConvectionScheme.H"
 #include "gaussLaplacianScheme.H"
 
+extern Foam::Time* timePtr;    // A single time object
+extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
+extern Foam::fvMesh* meshPtr;  // A single mesh object
 
 TEST_CASE("DivOperator")
 {
@@ -280,7 +283,7 @@ TEST_CASE("GradOperator")
             {
                 NeoN::fill(nfGradT.internalVector(), NeoN::Vec3(0, 0, 0));
                 NeoN::fill(nfGradT.boundaryData().value(), NeoN::Vec3(0, 0, 0));
-                fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, nfGradT);
+                fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, NeoN::dsl::Coeff(), nfGradT);
                 if (execName == "GPUExecutor")
                 {
                     Kokkos::fence();
