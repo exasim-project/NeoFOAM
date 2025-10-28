@@ -87,7 +87,7 @@
 
 
 # --- Build and test FoamAdapter with the main branch of NeoN ---
-build-and-test-with-neon-main-nvidia:
+build-and-test-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -95,7 +95,7 @@ build-and-test-with-neon-main-nvidia:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia
 
-build-and-test-with-neon-main-amd:
+build-and-test-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
@@ -105,7 +105,7 @@ build-and-test-with-neon-main-amd:
 
 
 # --- Benchmark FoamAdapter with the main branch of NeoN ---
-benchmark-with-neon-main-nvidia:
+benchmark-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -117,7 +117,7 @@ benchmark-with-neon-main-nvidia:
     # Check for produced results
     - find benchmarks/benchmarkSuite/ -name '*csv'
 
-benchmark-with-neon-main-amd:
+benchmark-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
@@ -132,7 +132,7 @@ benchmark-with-neon-main-amd:
 
 
 # --- Build and test FoamAdapter with a feature branch of NeoN ---
-build-and-test-with-neon-feature-nvidia:
+build-and-test-triggered-from-NeoN-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -140,7 +140,7 @@ build-and-test-with-neon-feature-nvidia:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
 
-build-and-test-with-neon-feature-amd:
+build-and-test-triggered-from-NeoN-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
