@@ -19,24 +19,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history needed for mirroring
+          fetch-depth: 0  # fetch full history
+
+      - name: Fetch main and develop branches
+        run: |
+          # Ensure the branches exist locally
+          git fetch origin main:main || echo "main branch not found in origin"
+          git fetch origin develop:develop || echo "develop branch not found in origin"
 
       - name: Mirror selected branches to LRZ GitLab
         run: |
           set -e
           echo "Configuring LRZ remote..."
-          # Construct the LRZ GitLab project path
           LRZ_PROJECT_PATH="${LRZ_GROUP}/${REPO_NAME}"
-
-          # Use project access token for authentication
           git remote add lrz https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_PROJECT_PATH}.git
 
           # Branches to mirror
           BRANCHES=("main" "develop")
 
           for branch in "${BRANCHES[@]}"; do
-            echo "Pushing branch '$branch' to LRZ GitLab..."
-            git push lrz $branch:$branch
+            if git show-ref --verify --quiet refs/heads/$branch; then
+              echo "Pushing branch '$branch' to LRZ GitLab..."
+              git push lrz $branch:$branch
+            else
+              echo "Branch '$branch' does not exist locally, skipping..."
+            fi
           done
 
           echo "Branch mirror completed successfully."
