@@ -10,7 +10,7 @@
 #   LRZ_GROUP, LRZ_HOST, REPO_NAME, LRZ_GITLAB_TRIGGER_TOKEN
 #
 # Usage:
-#   ./ci/github/scripts/trigger_pipeline.sh <branch>
+#   ./ci/github/trigger_pipeline.sh <branch>
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -28,10 +28,34 @@ HOST="${LRZ_HOST:?LRZ_HOST not set}"
 shift 1
 VARIABLES="$@"     # Optional extra variables in the form: "variables[KEY]=VALUE"
 
+# -----------------------------------------------------------------------------
+# Determine NeoN branch on LRZ GitLab
+# -----------------------------------------------------------------------------
+NEON_PROJECT="NeoN"
+
+echo "Checking if NeoN branch '${BRANCH}' exists on LRZ GitLab..."
+
+# Query the NeoN repo branch endpoint on LRZ GitLab
+status_code=$(curl -s -o /dev/null -w "%{http_code}" \
+  "https://${HOST}/api/v4/projects/${GROUP}%2F${NEON_PROJECT}/repository/branches/${BRANCH}")
+
+if [ "$status_code" -eq 200 ]; then
+  NEON_BRANCH="$BRANCH"
+  echo "NeoN branch '${BRANCH}' exists on LRZ GitLab."
+else
+  NEON_BRANCH="develop"
+  echo "NeoN branch '${BRANCH}' does not exist on LRZ GitLab. Using '${NEON_BRANCH}'."
+fi
+
+# -----------------------------------------------------------------------------
+# Trigger FoamAdapter pipeline
+# -----------------------------------------------------------------------------
 echo "Triggering new CI pipeline on branch $BRANCH in project: $GROUP/$PROJECT"
 
 # Prepare curl form data for variables
 FORM_DATA="--form ref=$BRANCH --form token=$TRIGGER_TOKEN"
+FORM_DATA="$FORM_DATA --form variables[NEON_BRANCH]=$NEON_BRANCH"
+
 for var in $VARIABLES; do
   FORM_DATA="$FORM_DATA --form $var"
 done
