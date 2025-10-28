@@ -35,9 +35,13 @@ NEON_PROJECT="NeoN"
 
 echo "Checking if NeoN branch '${BRANCH}' exists on LRZ GitLab..."
 
+# Encode branch name for safe URL use
+ENCODED_BRANCH=$(printf '%s' "$BRANCH" | jq -sRr @uri)
+
 # Query the NeoN repo branch endpoint on LRZ GitLab
 status_code=$(curl -s -o /dev/null -w "%{http_code}" \
-  "https://${HOST}/api/v4/projects/${GROUP}%2F${NEON_PROJECT}/repository/branches/${BRANCH}")
+  "https://${HOST}/api/v4/projects/${GROUP}%2F${NEON_PROJECT}/repository/branches/${ENCODED_BRANCH}")
+
 
 if [ "$status_code" -eq 200 ]; then
   NEON_BRANCH="$BRANCH"
