@@ -59,7 +59,6 @@ echo "Triggering new CI pipeline on branch $BRANCH in project: $GROUP/$PROJECT"
 # Prepare curl form data for variables
 FORM_DATA="--form ref=$BRANCH --form token=$TRIGGER_TOKEN"
 FORM_DATA="$FORM_DATA --form variables[NEON_BRANCH]=$NEON_BRANCH"
-FORM_DATA="$FORM_DATA --form variables[TRIGGER_SOURCE]=$PROJECT"
 
 for var in $VARIABLES; do
   FORM_DATA="$FORM_DATA --form $var"

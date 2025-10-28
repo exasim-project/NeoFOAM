@@ -66,8 +66,10 @@ jobs:
       - name: Trigger LRZ GitLab CI pipeline
         id: trigger
         run: |
-          ./ci/github/trigger_pipeline.sh ${{ steps.branch.outputs.branch }}
-
+          ./ci/github/trigger_pipeline.sh \
+            "${{ steps.branch.outputs.branch }}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
+            "variables[BENCHMARK]=false"
 
       - name: Wait for LRZ GitLab CI pipeline
         run: |
