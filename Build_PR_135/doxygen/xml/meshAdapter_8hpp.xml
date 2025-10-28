@@ -1,0 +1,216 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="meshAdapter_8hpp" kind="file" language="C++">
+    <compoundname>meshAdapter.hpp</compoundname>
+    <includes local="no">functional</includes>
+    <includes local="no">memory</includes>
+    <includes local="yes">NeoN/NeoN.hpp</includes>
+    <includes local="yes">fvMesh.H</includes>
+    <includes refid="readers_8hpp" local="yes">FoamAdapter/auxiliary/readers.hpp</includes>
+    <includedby refid="runTime_8hpp" local="yes">/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/datastructures/runTime.hpp</includedby>
+    <incdepgraph>
+      <node id="8">
+        <label>FoamAdapter/auxiliary/convert.hpp</label>
+        <link refid="convert_8hpp"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>FoamAdapter/auxiliary/readers.hpp</label>
+        <link refid="readers_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>FoamAdapter/auxiliary/type_conversion.hpp</label>
+        <link refid="type__conversion_8hpp"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/datastructures/meshAdapter.hpp</label>
+        <link refid="meshAdapter_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="2">
+        <label>functional</label>
+      </node>
+      <node id="5">
+        <label>fvMesh.H</label>
+      </node>
+      <node id="9">
+        <label>fvc.H</label>
+      </node>
+      <node id="3">
+        <label>memory</label>
+      </node>
+      <node id="12">
+        <label>surfaceFields.H</label>
+      </node>
+      <node id="7">
+        <label>type_traits</label>
+      </node>
+      <node id="11">
+        <label>volFields.H</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="5">
+        <label>/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/algorithms/pressureVelocityCoupling.hpp</label>
+        <link refid="pressureVelocityCoupling_8hpp"/>
+      </node>
+      <node id="3">
+        <label>/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/auxiliary/setup.hpp</label>
+        <link refid="setup_8hpp"/>
+      </node>
+      <node id="4">
+        <label>/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/datastructures/expression.hpp</label>
+        <link refid="expression_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/datastructures/meshAdapter.hpp</label>
+        <link refid="meshAdapter_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/datastructures/runTime.hpp</label>
+        <link refid="runTime_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classFoamAdapter_1_1MeshAdapter" prot="public">FoamAdapter::MeshAdapter</innerclass>
+    <innernamespace refid="namespaceFoamAdapter">FoamAdapter</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2023<sp/>FoamAdapter<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;functional&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;memory&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;fvMesh.H&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="readers_8hpp" kindref="compound">FoamAdapter/auxiliary/readers.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceFoamAdapter" kindref="compound">FoamAdapter</ref></highlight></codeline>
+<codeline lineno="17"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight></codeline>
+<codeline lineno="19" refid="namespaceFoamAdapter_1a756cc6e6886d3830b69f190c6144d45d" refkind="member"><highlight class="normal">std::vector&lt;NeoN::localIdx&gt;<sp/><ref refid="namespaceFoamAdapter_1a756cc6e6886d3830b69f190c6144d45d" kindref="member">computeOffset</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh);</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21" refid="namespaceFoamAdapter_1a350e30b195d83112881719b760db48af" refkind="member"><highlight class="normal">int32_t<sp/><ref refid="namespaceFoamAdapter_1a350e30b195d83112881719b760db48af" kindref="member">computeNBoundaryFaces</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh);</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>FieldT&gt;</highlight></codeline>
+<codeline lineno="24" refid="namespaceFoamAdapter_1ab204c114163c8f7c5363ea1ce677bc57" refkind="member"><highlight class="normal">FieldT<sp/><ref refid="namespaceFoamAdapter_1ab204c114163c8f7c5363ea1ce677bc57" kindref="member">flatBCField</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh,<sp/>std::function&lt;FieldT(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvPatch&amp;)&gt;<sp/>f);</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26" refid="namespaceFoamAdapter_1a3211f53f1673aa91a630ab089ceae7d2" refkind="member"><highlight class="normal">NeoN::UnstructuredMesh<sp/><ref refid="namespaceFoamAdapter_1a3211f53f1673aa91a630ab089ceae7d2" kindref="member">readOpenFOAMMesh</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor<sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh);</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight></codeline>
+<codeline lineno="30" refid="classFoamAdapter_1_1MeshAdapter" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classFoamAdapter_1_1MeshAdapter" kindref="compound">MeshAdapter</ref><sp/>:<sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal"><sp/>Foam::fvMesh</highlight></codeline>
+<codeline lineno="31"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">word<sp/>=<sp/>Foam::word;</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::UnstructuredMesh<sp/>nfMesh_;</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Private<sp/>Member<sp/>Functions</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>No<sp/>copy<sp/>construct</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classFoamAdapter_1_1MeshAdapter" kindref="compound">MeshAdapter</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classFoamAdapter_1_1MeshAdapter" kindref="compound">MeshAdapter</ref>&amp;)<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>No<sp/>copy<sp/>assignment</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>operator=(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classFoamAdapter_1_1MeshAdapter" kindref="compound">MeshAdapter</ref>&amp;)<sp/>=<sp/></highlight><highlight class="keyword">delete</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Runtime<sp/>type<sp/>information</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47" refid="classFoamAdapter_1_1MeshAdapter_1a546685a63fcd87c4b8c55ba53e2e30bb" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a546685a63fcd87c4b8c55ba53e2e30bb" kindref="member">TypeName</ref>(</highlight><highlight class="stringliteral">&quot;MeshAdapter&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Constructors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Construct<sp/>from<sp/>IOobject</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="52" refid="classFoamAdapter_1_1MeshAdapter_1a10b8a57d8f82a5a3d9d59766e0256c4e" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">explicit</highlight><highlight class="normal"><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a10b8a57d8f82a5a3d9d59766e0256c4e" kindref="member">MeshAdapter</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a4df45052e509fd4d52fc6120ae02c525" kindref="member">exec</ref>,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::IOobject&amp;<sp/>io,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>doInit<sp/>=<sp/></highlight><highlight class="keyword">true</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Construct<sp/>from<sp/>IOobject<sp/>or<sp/>as<sp/>zero-sized<sp/>mesh</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>Boundary<sp/>is<sp/>added<sp/>using<sp/>addFvPatches()<sp/>member<sp/>function</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56" refid="classFoamAdapter_1_1MeshAdapter_1a29f8fbec747649e3cb48b9d9b1d8de3b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a29f8fbec747649e3cb48b9d9b1d8de3b" kindref="member">MeshAdapter</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a4df45052e509fd4d52fc6120ae02c525" kindref="member">exec</ref>,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::IOobject&amp;<sp/>io,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::zero,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>syncPar<sp/>=<sp/></highlight><highlight class="keyword">true</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Construct<sp/>from<sp/>components<sp/>without<sp/>boundary.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>Boundary<sp/>is<sp/>added<sp/>using<sp/>addFvPatches()<sp/>member<sp/>function</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="60" refid="classFoamAdapter_1_1MeshAdapter_1aee3809a660b6cbba97e0edb3e9607698" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1aee3809a660b6cbba97e0edb3e9607698" kindref="member">MeshAdapter</ref>(</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a4df45052e509fd4d52fc6120ae02c525" kindref="member">exec</ref>,</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::IOobject&amp;<sp/>io,</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::pointField&amp;&amp;<sp/>points,</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::faceList&amp;&amp;<sp/>faces,</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::labelList&amp;&amp;<sp/>allOwner,</highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::labelList&amp;&amp;<sp/>allNeighbour,</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>syncPar<sp/>=<sp/></highlight><highlight class="keyword">true</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Construct<sp/>without<sp/>boundary<sp/>from<sp/>cells<sp/>rather<sp/>than<sp/>owner/neighbour.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>Boundary<sp/>is<sp/>added<sp/>using<sp/>addPatches()<sp/>member<sp/>function</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="72" refid="classFoamAdapter_1_1MeshAdapter_1a6894712164d8776b008720d3a7e5f72f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a6894712164d8776b008720d3a7e5f72f" kindref="member">MeshAdapter</ref>(</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a4df45052e509fd4d52fc6120ae02c525" kindref="member">exec</ref>,</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::IOobject&amp;<sp/>io,</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::pointField&amp;&amp;<sp/>points,</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::faceList&amp;&amp;<sp/>faces,</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::cellList&amp;&amp;<sp/>cells,</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>syncPar<sp/>=<sp/></highlight><highlight class="keyword">true</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Destructor</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="82" refid="classFoamAdapter_1_1MeshAdapter_1a6cc73499d214ab3d938ec79f3df69724" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">virtual</highlight><highlight class="normal"><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a6cc73499d214ab3d938ec79f3df69724" kindref="member">~MeshAdapter</ref>()<sp/>=<sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight></codeline>
+<codeline lineno="84" refid="classFoamAdapter_1_1MeshAdapter_1a05e872a8e76a491cf191887032c65ac2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::UnstructuredMesh&amp;<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a05e872a8e76a491cf191887032c65ac2" kindref="member">nfMesh</ref>()<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>nfMesh_;<sp/>}</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86" refid="classFoamAdapter_1_1MeshAdapter_1a4b9a8243377dd4ccdb55b52e21305d5a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::UnstructuredMesh&amp;<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a4b9a8243377dd4ccdb55b52e21305d5a" kindref="member">nfMesh</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>nfMesh_;<sp/>}</highlight></codeline>
+<codeline lineno="87"><highlight class="normal"></highlight></codeline>
+<codeline lineno="88" refid="classFoamAdapter_1_1MeshAdapter_1a4df45052e509fd4d52fc6120ae02c525" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor<sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a4df45052e509fd4d52fc6120ae02c525" kindref="member">exec</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classFoamAdapter_1_1MeshAdapter_1a05e872a8e76a491cf191887032c65ac2" kindref="member">nfMesh</ref>().exec();<sp/>}</highlight></codeline>
+<codeline lineno="89"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight></codeline>
+<codeline lineno="91" refid="namespaceFoamAdapter_1a51e665d621ee4cf402e9427637c25cea" refkind="member"><highlight class="normal">std::unique_ptr&lt;MeshAdapter&gt;<sp/><ref refid="namespaceFoamAdapter_1a51e665d621ee4cf402e9427637c25cea" kindref="member">createMesh</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor&amp;<sp/>exec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::Time&amp;<sp/>runTime);</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight></codeline>
+<codeline lineno="93" refid="namespaceFoamAdapter_1a3218439d4f85ce028cfd1575954d1109" refkind="member"><highlight class="normal">std::unique_ptr&lt;Foam::fvMesh&gt;<sp/><ref refid="namespaceFoamAdapter_1a51e665d621ee4cf402e9427637c25cea" kindref="member">createMesh</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::Time&amp;<sp/>runTime);</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>End<sp/>namespace<sp/>Foam</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/datastructures/meshAdapter.hpp"/>
+  </compounddef>
+</doxygen>
