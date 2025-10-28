@@ -105,6 +105,7 @@ jobs:
         run: |
           ./ci/github/trigger_pipeline.sh \
             "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=true"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
