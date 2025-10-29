@@ -54,8 +54,8 @@ fi
 # -----------------------------------------------------------------------------
 # Trigger FoamAdapter pipeline
 # -----------------------------------------------------------------------------
-echo "Triggering a new CI pipeline on branch $BRANCH in project: $GROUP/$PROJECT \
-with NeoN branch: $NEON_BRANCH"
+echo "Triggering a new CI pipeline on branch $BRANCH in project: $GROUP/$PROJECT"
+echo "Use NeoN branch: $NEON_BRANCH"
 
 # Prepare curl form data for variables
 FORM_DATA="--form ref=$BRANCH --form token=$TRIGGER_TOKEN"
