@@ -60,6 +60,7 @@ jobs:
           git push --force lrz HEAD:refs/heads/${{ steps.branch.outputs.branch }}
 
       - name: Cancel running/pending LRZ GitLab CI pipelines
+        if: ${{ github.event_name != 'push' }}
         run: |
           ./ci/github/cancel_triggered_pipelines.sh ${{ steps.branch.outputs.branch }}
 
