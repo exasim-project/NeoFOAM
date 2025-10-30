@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['meshadapter_0',['MeshAdapter',['../classFoamAdapter_1_1MeshAdapter.html',1,'FoamAdapter']]]
+  ['pdesolver_0',['PDESolver',['../classFoamAdapter_1_1PDESolver.html',1,'FoamAdapter']]]
 ];

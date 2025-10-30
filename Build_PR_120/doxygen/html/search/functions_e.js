@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['updatefacevelocity_0',['updateFaceVelocity',['../namespaceFoamAdapter.html#a678aeff6603442623c3cb8c784435ecb',1,'FoamAdapter']]],
-  ['updatepreconditioner_1',['updatePreconditioner',['../namespaceFoamAdapter.html#a387368bb2d20ed59a7547204e2f3aaa2',1,'FoamAdapter']]],
-  ['updatesolver_2',['updateSolver',['../namespaceFoamAdapter.html#a46e698646a94db94dd4f57ca77f699bd',1,'FoamAdapter']]],
-  ['updatevelocity_3',['updateVelocity',['../namespaceFoamAdapter.html#ab07cdffe2f504299318aad761dfd4b9b',1,'FoamAdapter']]]
+  ['typename_0',['TypeName',['../classFoamAdapter_1_1MeshAdapter.html#a546685a63fcd87c4b8c55ba53e2e30bb',1,'FoamAdapter::MeshAdapter']]]
 ];

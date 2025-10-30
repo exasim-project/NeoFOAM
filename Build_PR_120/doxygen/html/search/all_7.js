@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['linearsystem_0',['linearsystem',['../classFoamAdapter_1_1Expression.html#a16c7d18b9f295ae6ceb255def5c6d5fd',1,'FoamAdapter::Expression::linearSystem()'],['../classFoamAdapter_1_1Expression.html#a1531aefa9f947598726d237b7a810414',1,'FoamAdapter::Expression::linearSystem() const']]]
+  ['linearsystem_0',['linearsystem',['../classFoamAdapter_1_1PDESolver.html#ac35b64b2d576f9889564e4597be2906e',1,'FoamAdapter::PDESolver::linearSystem()'],['../classFoamAdapter_1_1PDESolver.html#a5952a2749774464c282bda15df63a3e7',1,'FoamAdapter::PDESolver::linearSystem() const']]]
 ];

@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['setdeltat_0',['setDeltaT',['../namespaceFoamAdapter.html#a52be9ed969f57da51a090c9df132990d',1,'FoamAdapter']]],
-  ['setreference_1',['setReference',['../classFoamAdapter_1_1Expression.html#a8ed934777e6059677c60d31b9c2f4c40',1,'FoamAdapter::Expression']]],
-  ['solve_2',['solve',['../classFoamAdapter_1_1Expression.html#a18ce364852da75332139d8053146df6a',1,'FoamAdapter::Expression']]],
-  ['sparsitypattern_3',['sparsityPattern',['../classFoamAdapter_1_1Expression.html#a855cf32c23315ea3cc202e7bb1cd89d5',1,'FoamAdapter::Expression']]]
+  ['readopenfoammesh_0',['readOpenFOAMMesh',['../namespaceFoamAdapter.html#a3211f53f1673aa91a630ab089ceae7d2',1,'FoamAdapter']]],
+  ['readsurfaceboundaryconditions_1',['readSurfaceBoundaryConditions',['../namespaceFoamAdapter.html#ad7849fbeb06f57b55857d3a36a5acd26',1,'FoamAdapter']]],
+  ['readvolboundaryconditions_2',['readVolBoundaryConditions',['../namespaceFoamAdapter.html#aede9b3b7c2b995b24825529cfe2c2386',1,'FoamAdapter']]]
 ];
