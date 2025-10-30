@@ -5,7 +5,7 @@
 # Available GPUs and corresponding Docker images
 .use-nvidia-gpu-and-image:
   tags: ["nvidia-h100-gpus"]
-  image: chihtaw/cuda-openfoam-ginkgo:arch_90-v2412
+  image: chihtaw/cuda-openfoam-ginkgo:12.8.1-v2412-arch_90
   variables:
     PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages
     FOAM_INST_DIR: /usr/local/app/openfoam
@@ -13,7 +13,7 @@
 
 .use-amd-gpu-and-image:
   tags: ["amd-gpus"]
-  image: chihtaw/rocm-openfoam-ginkgo:arch_gfx90a-6.4.1-v2412
+  image: chihtaw/rocm-openfoam-ginkgo:6.4.1-v2412-arch_gfx90a
   variables:
     PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages
     FOAM_INST_DIR: /workspace/openfoam
@@ -69,44 +69,43 @@
 # Job rules to determine if the pipeline was triggered from FoamAdapter or NeoN CI
 .trigger-from-foamadapter-for-testing:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $NEON_BRANCH == null && $BENCHMARK != "true"
-
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "FoamAdapter" && $BENCHMARK == "false"
       when: always
     - when: never
 
 .trigger-from-neon-for-testing:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $NEON_BRANCH != null && $BENCHMARK != "true"
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" && $BENCHMARK == "false"
       when: always
     - when: never
 
 .trigger-from-foamadapter-for-benchmarking:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $NEON_BRANCH == null && $BENCHMARK == "true"
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "FoamAdapter" && $BENCHMARK == "true"
       when: always
     - when: never
 
 
 # --- Build and test FoamAdapter with the main branch of NeoN ---
-build-and-test-with-neon-main-nvidia:
+build-and-test-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
     - .trigger-from-foamadapter-for-testing
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia
+    - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
 
-build-and-test-with-neon-main-amd:
+build-and-test-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
     - .trigger-from-foamadapter-for-testing
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh amd
+    - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
 
 
 # --- Benchmark FoamAdapter with the main branch of NeoN ---
-benchmark-with-neon-main-nvidia:
+benchmark-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -118,7 +117,7 @@ benchmark-with-neon-main-nvidia:
     # Check for produced results
     - find benchmarks/benchmarkSuite/ -name '*csv'
 
-benchmark-with-neon-main-amd:
+benchmark-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
@@ -133,7 +132,7 @@ benchmark-with-neon-main-amd:
 
 
 # --- Build and test FoamAdapter with a feature branch of NeoN ---
-build-and-test-with-neon-feature-nvidia:
+build-and-test-triggered-from-NeoN-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -141,7 +140,7 @@ build-and-test-with-neon-feature-nvidia:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
 
-build-and-test-with-neon-feature-amd:
+build-and-test-triggered-from-NeoN-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup

@@ -2,7 +2,7 @@ name: LRZ GitLab CI
 
 on:
   push:
-    branches: [dev, main]
+    branches: [develop, main]
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   schedule:
@@ -60,14 +60,17 @@ jobs:
           git push --force lrz HEAD:refs/heads/${{ steps.branch.outputs.branch }}
 
       - name: Cancel running/pending LRZ GitLab CI pipelines
+        if: ${{ github.event_name != 'push' }}
         run: |
           ./ci/github/cancel_triggered_pipelines.sh ${{ steps.branch.outputs.branch }}
 
       - name: Trigger LRZ GitLab CI pipeline
         id: trigger
         run: |
-          ./ci/github/trigger_pipeline.sh ${{ steps.branch.outputs.branch }}
-
+          ./ci/github/trigger_pipeline.sh \
+            "${{ steps.branch.outputs.branch }}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
+            "variables[BENCHMARK]=false"
 
       - name: Wait for LRZ GitLab CI pipeline
         run: |
@@ -103,6 +106,7 @@ jobs:
         run: |
           ./ci/github/trigger_pipeline.sh \
             "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=true"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
