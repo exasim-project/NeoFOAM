@@ -1,13 +1,13 @@
 import inspect
 import functools
 from pydantic import BaseModel
-from typing import ClassVar, Protocol, runtime_checkable
+from typing import ClassVar, Protocol, runtime_checkable, Callable
 from foamadapter.framework.dag import NodeData
 
 from typing import Annotated, get_origin, get_args,Protocol, Any
 
 from .context import Context, FieldUpdates
-from dataclasses import is_dataclass
+from dataclasses import is_dataclass, dataclass
 
 
 def _get_value(ctx: Context, name, annotation: any):
@@ -30,32 +30,25 @@ def _get_value(ctx: Context, name, annotation: any):
     
     return call_args
 
-class StepFn(Protocol):
-    _is_step: bool
-    _step_number: int
-    _depends_on: list[str]
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: 
-        ...
+@dataclass
+class Step:
+    """A concrete step class that wraps a function with metadata."""
+    func: Callable
+    step_number: int
+    step_name: str
+    depends_on: list[str] | None = None
     
-    @property
-    def is_step(self) -> bool:
-        return self._is_step
-
-    @property
-    def step_number(self) -> int:
-        return self._step_number
-
-    @property
-    def depends_on(self) -> list[str]:
-        return self._depends_on
+    def __call__(self, *args, **kwargs):
+        return self.func(self,*args, **kwargs)
     
-    @property
-    def step_name(self) -> str:
-        ...
+    def run(self, ctx: Context):
+        return self.func.run(ctx)
+    
 
 
-def _update_dependencies(steps: list[StepFn]) -> list[StepFn]:
+
+
+def _update_dependencies(steps: list[Step]) -> list[Step]:
     """
     For each step, if depends_on is None, set it to depend on the previous step (by order).
     """
@@ -128,7 +121,6 @@ def _step(*, step_number: int, depends_on=None):
         wrapped_func._is_step = True
         wrapped_func._step_number = step_number
         wrapped_func._depends_on = depends_on or []
-        wrapped_func.step_name = wrapped_func.__name__
 
         return wrapped_func
     
@@ -136,16 +128,22 @@ def _step(*, step_number: int, depends_on=None):
 
 
 def Solver(cls):
-    step_functions: list[StepFn] = []
+    step_functions: list[Step] = []
     
     # Collect all step functions
     for attr_name in dir(cls):
         attr = getattr(cls, attr_name)
         if getattr(attr, "_is_step", False):
-            step_functions.append(attr)
-    
+            step_functions.append(
+                Step(
+                    func=attr,
+                    step_number=attr._step_number,
+                    depends_on=attr._depends_on,
+                    step_name=attr.__name__,
+                )
+            )
     # Sort steps by step_number
-    step_functions = sorted(step_functions, key=lambda s: s._step_number)
+    step_functions = sorted(step_functions, key=lambda s: s.step_number)
     
     # Automatically set dependencies if not provided
     step_functions = _update_dependencies(step_functions)
@@ -160,7 +158,7 @@ Solver.step = staticmethod(_step)
 
 @runtime_checkable
 class SolverInterface(Protocol):
-    _steps: ClassVar[list[StepFn]]
+    _steps: ClassVar[list[Step]]
 
     @classmethod
     def number_steps(cls) -> int:

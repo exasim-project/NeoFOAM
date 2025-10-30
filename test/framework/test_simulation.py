@@ -28,7 +28,7 @@ class FirstSolver(BaseModel):
 
     def dependencies(self, domain_name: str) -> list[NodeData]:
         nodedata = []
-        for step in self._step_data:
+        for step in self._steps:
             depends_on = [f"{domain_name}.{dep}" for dep in step.depends_on]
             nodedata.append(NodeData(name=f"{domain_name}.{step.step_name}", depends_on=depends_on, shape="box"))
         return nodedata
@@ -58,7 +58,7 @@ class SecondSolver(BaseModel):
 
     def dependencies(self, domain_name: str) -> list[NodeData]:
         nodedata = []
-        for step in self._step_data:
+        for step in self._steps:
             depends_on = [f"{domain_name}.{dep}" for dep in step.depends_on]
             nodedata.append(NodeData(name=f"{domain_name}.{step.step_name}", depends_on=depends_on, shape="box"))
         return nodedata

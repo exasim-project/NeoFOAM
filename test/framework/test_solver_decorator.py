@@ -29,25 +29,30 @@ class MyCustomSolver(BaseModel):
 def test_solver_steps_registration():
 
     assert MyCustomSolver.number_steps() == 4
-    assert MyCustomSolver._step_data[0].step_name == "step_one"
-    assert MyCustomSolver._step_data[0].step_number == 1
-    assert MyCustomSolver._step_data[0].depends_on == []
-    assert MyCustomSolver._steps[0] == MyCustomSolver.step_one
+    
+    first_step = MyCustomSolver._steps[0]
+    assert first_step.step_name == "step_one"
+    assert first_step.step_number == 1
+    assert first_step.depends_on == []
+    assert first_step.func == MyCustomSolver.step_one
 
-    assert MyCustomSolver._step_data[1].step_name == "step_two"
-    assert MyCustomSolver._step_data[1].step_number == 2
-    assert MyCustomSolver._step_data[1].depends_on == ["step_one"]
-    assert MyCustomSolver._steps[1] == MyCustomSolver.step_two
+    second_step = MyCustomSolver._steps[1]
+    assert second_step.step_name == "step_two"
+    assert second_step.step_number == 2
+    assert second_step.depends_on == ["step_one"]
+    assert second_step.func == MyCustomSolver.step_two
 
-    assert MyCustomSolver._step_data[2].step_name == "step_three"
-    assert MyCustomSolver._step_data[2].step_number == 3
-    assert MyCustomSolver._step_data[2].depends_on == ["step_two"]
-    assert MyCustomSolver._steps[2] == MyCustomSolver.step_three
+    third_step = MyCustomSolver._steps[2]
+    assert third_step.step_name == "step_three"
+    assert third_step.step_number == 3
+    assert third_step.depends_on == ["step_two"]
+    assert third_step.func == MyCustomSolver.step_three
 
-    assert MyCustomSolver._step_data[3].step_name == "step_four"
-    assert MyCustomSolver._step_data[3].step_number == 4
-    assert MyCustomSolver._step_data[3].depends_on == ["step_three"]
-    assert MyCustomSolver._steps[3] == MyCustomSolver.step_four
+    fourth_step = MyCustomSolver._steps[3]
+    assert fourth_step.step_name == "step_four"
+    assert fourth_step.step_number == 4
+    assert fourth_step.depends_on == ["step_three"]
+    assert fourth_step.func == MyCustomSolver.step_four
 
     solver = MyCustomSolver()
     assert solver.name == "MyCustomSolver"
