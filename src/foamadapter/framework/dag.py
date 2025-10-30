@@ -1,17 +1,32 @@
-def build_global_dag(domains):
+from dataclasses import dataclass
+import networkx as nx
+
+@dataclass
+class NodeData:
+    name: str
+    depends_on: list[str]
+    shape: str
+
+    @property
+    def dependencies(self):
+        # Return the list of dependencies for this node
+        # check if depends_on has node names or NodeData objects
+        dependencies = self.depends_on
+        return dependencies
+
+def build_global_dag(domains: dict[str, list[NodeData]]) -> nx.DiGraph:
     """
     Build a global DAG from multiple domain models, supporting interdomain dependencies.
     Each node is named as 'domain.step'.
     """
     G = nx.DiGraph()
-    for domain_name, domain in domains.items():
-        for step in domain.__class__._steps:
-            node_name = f"{domain_name}.{step.name}"
-            G.add_node(node_name, meta=step)
-            for dep in step.depends_on:
-                G.add_edge(dep, node_name)
+    for domain_name, nodes in domains.items():
+        for node in nodes:
+            G.add_node(node.name, meta=node, shape=node.shape)
+            for dep in node.depends_on:
+                G.add_edge(dep, node.name)
     return G
-import networkx as nx
+
 
 def build_step_dag(model):
     steps = getattr(model.__class__, "_steps", [])

@@ -1,6 +1,6 @@
 import networkx as nx
-from framework.dag import build_step_dag, build_global_dag
-from framework import model, step
+from foamadapter.framework.dag import build_step_dag, build_global_dag
+from foamadapter.framework.decorators import model, step
 import networkx as nx
 import os
 import matplotlib.pyplot as plt
@@ -65,7 +65,7 @@ def test_global_dag_cross_domain():
         def heat_transfer(self, ctrl): pass
 
     # Build global DAG
-    from framework.dag import build_global_dag
+    from foamadapter.framework.dag import build_global_dag
 
     domains = {"fluid": Fluid(), "solid": Solid()}
     dag = build_global_dag(domains)

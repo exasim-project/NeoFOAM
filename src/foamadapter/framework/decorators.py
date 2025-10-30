@@ -1,6 +1,6 @@
 
 
-from .registry import register_model
+
 
 from dataclasses import dataclass, field
 
@@ -27,7 +27,7 @@ def step(order, repeat=None, depends_on=None):
 
 def model(name):
     def decorator(cls):
-        register_model(name, cls)
+        # register_model(name, cls)
         cls.__model_name__ = name
         # Collect step metadata
         steps = []
