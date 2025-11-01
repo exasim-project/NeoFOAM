@@ -7,7 +7,7 @@ def digraph_to_pyvis_html(G: nx.DiGraph, html_path: str = "dag.html"):
     net = Network(directed=True, notebook=False)
     for node, attrs in G.nodes(data=True):
         shape = attrs.get("shape", "ellipse")  # default if missing
-        net.add_node(node, label=str(node), shape=shape)
+        net.add_node(node, label=str(node), shape=shape, color=attrs.get("color", "lightblue"))
     for source, target in G.edges:
         net.add_edge(source, target)
 
