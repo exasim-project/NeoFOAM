@@ -1,6 +1,6 @@
 
 from foamadapter.framework.dag import NodeData
-from foamadapter.framework.solver import Step, _step, _update_dependencies
+from foamadapter.framework.solver import Step, step, update_dependencies
 from foamadapter.framework.context import Context
 from typing import Protocol, runtime_checkable, ClassVar
 
@@ -25,7 +25,7 @@ def Iteration(cls):
     step_functions = sorted(step_functions, key=lambda s: s.step_number)
     
     # Automatically set dependencies if not provided
-    step_functions = _update_dependencies(step_functions)
+    step_functions = update_dependencies(step_functions)
     
     # Store the step functions
     cls._steps = step_functions
@@ -33,7 +33,7 @@ def Iteration(cls):
     
     return cls
 
-Iteration.step = staticmethod(_step)
+Iteration.step = staticmethod(step)
 
 
 @runtime_checkable
