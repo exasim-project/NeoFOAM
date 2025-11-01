@@ -32,8 +32,16 @@ Table of Contents
    :caption: Development:
 
    development/architecture
+   development/framework
    development/contributing
    development/testing
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Testing & Examples:
+
+   testing
+   test_integration
 
 .. toctree::
    :maxdepth: 2

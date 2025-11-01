@@ -9,7 +9,11 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 from sphinx.builders.html import StandaloneHTMLBuilder
-import subprocess, os
+import subprocess, os, sys
+
+# Add source paths for imports
+sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../test'))
 
 # Doxygen
 subprocess.call('doxygen Doxyfile.in', shell=True)
@@ -22,19 +26,31 @@ author = 'FoamAdapter authors'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx_togglebutton",
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',      # For NumPy/Google style docstrings
+    'sphinx.ext.doctest',       # For running doctests in documentation
+    'sphinx.ext.viewcode',      # Links to source code
+    'sphinx.ext.coverage',      # Coverage reports
     'sphinxcontrib.mermaid',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
-    'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode',
     'sphinx_sitemap',
     'sphinx.ext.inheritance_diagram',
     'breathe'
 ]
+
+# Doctest configuration
+doctest_default_flags = 0  # Can add doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE
+doctest_global_setup = """
+import sys
+import os
+sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../test'))
+"""
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
