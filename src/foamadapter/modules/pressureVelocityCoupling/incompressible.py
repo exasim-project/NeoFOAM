@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Callable
+from typing import Any, Literal, Optional, Callable
 from dataclasses import dataclass
 import pybFoam
 from pybFoam import (
@@ -52,7 +52,7 @@ class PressureVelocityFields:
     p: volScalarField
     U: volVectorField
     phi: surfaceScalarField
-    turbulence: any  # Placeholder for turbulence model
+    turbulence: Any  # Placeholder for turbulence model
 
 
 @fields.Fields.deps("U")

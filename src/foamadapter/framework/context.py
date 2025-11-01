@@ -1,4 +1,4 @@
-from typing import Type, Annotated, TypeVar
+from typing import Type, Annotated, TypeVar, Any
 from pydantic import BaseModel
 import inspect
 
@@ -15,5 +15,5 @@ class FieldUpdates(dict):
 
 class Context(BaseModel):
     model_config = { "arbitrary_types_allowed": True }
-    fields: dict[str,any]
-    models: dict[str,any]
+    fields: dict[str, Any]
+    models: dict[str, Any]

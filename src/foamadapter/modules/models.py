@@ -21,7 +21,7 @@ class ModelsFactory(Protocol):
     def dependencies(self) -> list[str]:
         ...
 
-    def __call__(self, deps: dict[str, any]) -> any:
+    def __call__(self, deps: dict[str, Any]) -> Any:
         ...
 
 

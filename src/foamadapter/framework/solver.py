@@ -10,7 +10,7 @@ from .context import Context, FieldUpdates
 from dataclasses import is_dataclass, dataclass
 
 
-def _get_value(ctx: Context, name, annotation: any):
+def _get_value(ctx: Context, name, annotation: Any) -> dict[str, Any]:
     call_args = {}
     ctx_var = ctx.fields
 
@@ -34,15 +34,16 @@ def _get_value(ctx: Context, name, annotation: any):
 class Step:
     """A concrete step class that wraps a function with metadata."""
     func: Callable
+    cls: type
     step_number: int
     step_name: str
     depends_on: list[str] | None = None
     
     def __call__(self, *args, **kwargs):
-        return self.func(self,*args, **kwargs)
+        return self.func(self.cls,*args, **kwargs)
     
     def run(self, ctx: Context):
-        return self.func.run(ctx)
+        return self.func.run(self.cls,ctx)
     
 
 
@@ -77,12 +78,18 @@ def _step(*, step_number: int, depends_on=None):
         sig = inspect.signature(wrapped_func)
         param_names = sig.parameters
 
-        @functools.wraps(wrapped_func)
-        def context_wrapper(context: Context):
+        # @functools.wraps(wrapped_func)
+        def context_wrapper(self,context: Context):
             # Build the arguments for the function call
+            print(f"Calling {wrapped_func.__name__} with self={self}")
             call_args = {}
+            self2 = self
             
             for name in param_names:
+                if name == "self":
+                    call_args[name] = self
+                    continue
+
                 param = sig.parameters[name]
                 annotation = param.annotation
                 if is_dataclass(annotation):
@@ -95,6 +102,9 @@ def _step(*, step_number: int, depends_on=None):
                         dc_args.update(_get_value(context,dc_name,dc_annotation))
                         
                     call_args[name] = annotation(**dc_args)
+                elif annotation == Context:
+                    call_args[name] = context
+                    continue
                 else:
                     call_args.update(_get_value(context,name,annotation))
             
@@ -137,6 +147,7 @@ def Solver(cls):
             step_functions.append(
                 Step(
                     func=attr,
+                    cls=cls,
                     step_number=attr._step_number,
                     depends_on=attr._depends_on,
                     step_name=attr.__name__,
@@ -152,6 +163,7 @@ def Solver(cls):
     cls._steps = step_functions
     cls.number_steps = classmethod(lambda c: len(c._steps))
     
+    
     return cls
 
 Solver.step = staticmethod(_step)
@@ -161,7 +173,7 @@ class SolverInterface(Protocol):
     _steps: ClassVar[list[Step]]
 
     @classmethod
-    def number_steps(cls) -> int:
+    def steps(cls) -> int:
         ...
 
     def dependencies(self) -> list[NodeData]:

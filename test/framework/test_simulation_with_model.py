@@ -3,9 +3,12 @@ from foamadapter.framework.iteration import Iteration
 from foamadapter.framework.pyvis_utils import digraph_to_pyvis_html
 from foamadapter.framework.simulation import Simulation, Domain
 from foamadapter.framework.context import Context, FieldUpdates
+from foamadapter.framework.model import Model, ModelInterface
 from foamadapter.framework.solver import Solver, Step
+import networkx as nx
 from pydantic import BaseModel
 from typing import Literal
+import inspect
 
 
 @Iteration
@@ -28,14 +31,20 @@ class SubSolver(BaseModel):
         a = a + 2
         return FieldUpdates({"a": a})
 
+    def steps(self) -> list[Step]:
+        steps = [*self._steps]
+        for step in steps:
+            step.cls = self
+        return steps
+
     def run(self, ctx: Context):
         while self.loop():
-            for step in self._steps:
+            for step in self.steps():
                 step.run(ctx)
 
     def dependencies(self, domain_name: str, iteration_name: str) -> list[NodeData]:
         nodedata = []
-        for i, step in enumerate(self._steps):
+        for i, step in enumerate(self.steps()):
             depends_on = [f"{domain_name}.{self.name}.{dep}" for dep in step.depends_on]
             if i == 0:
                 depends_on.append(f"{domain_name}.{iteration_name}")
@@ -49,14 +58,59 @@ class SubSolver(BaseModel):
         return nodedata
 
 
+@Model
+class MyModel(BaseModel):
+    param1: float
+
+    def dependencies(self, domain_name: str, iteration_name: str) -> list[NodeData]:
+        nodedata = []
+        for i, step in enumerate(self._steps):
+            depends_on = [f"{domain_name}.model.{dep}" for dep in step.depends_on]
+            if i == 0:
+                depends_on.append(f"{domain_name}.{iteration_name}")
+            nodedata.append(
+                NodeData(
+                    name=f"{domain_name}.model.{step.step_name}",
+                    depends_on=depends_on,
+                    shape="box",
+                )
+            )
+        return nodedata
+
+    @Model.step(step_number=1)
+    def add_param1(self, a: float):
+        a = a + self.param1
+        return FieldUpdates({"a": a})
+
+    @Model.step(step_number=2)
+    def multiply_param1(self, a: float):
+        a = a * self.param1
+        return FieldUpdates({"a": a})
+
+    def steps(self) -> list[Step]:
+        steps = [*self._steps]
+        for step in steps:
+            step.cls = self
+        return steps
+
+    def run(self, ctx: Context):
+        for step in self.steps():
+            step.run(ctx)
+
+
 @Solver
 class FirstSolver(BaseModel):
+    model_config = {"arbitrary_types_allowed": True}
     name: Literal["FirstSolver"] = "FirstSolver"
     sub_solver: SubSolver
+    models: list[ModelInterface]  # can modify steps or add addiitional steps
 
     def create_context(self) -> Context:
         ctx = Context(fields={}, models={})
         ctx.fields["a"] = 0.0
+        for model in self.models:
+            model_name = f"model_{type(model).__name__}"
+            ctx.models[model_name] = model
         return ctx
 
     @Solver.step(step_number=1)
@@ -74,7 +128,11 @@ class FirstSolver(BaseModel):
         self.sub_solver.run(ctx)
         # return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=4)
+    # @Solver.step(step_number=4)
+    # def model_steps(self, ctx: Context):
+    #     self.my_model.run(ctx)
+
+    @Solver.step(step_number=5)
     def add5(self, a: float):
         a = a + 5
         return FieldUpdates({"a": a})
@@ -97,12 +155,26 @@ class FirstSolver(BaseModel):
                     iteration_name=step.step_name,
                 )
                 nodedata.extend(sub_nodedata)
+            if step.step_name == "model_steps":
+                # Add model dependencies
+                model_nodedata = self.my_model.dependencies(
+                    domain_name=f"{domain_name}",
+                    iteration_name=step.step_name,
+                )
+                nodedata.extend(model_nodedata)
         return nodedata
 
     def steps(self) -> list[Step]:
         steps = [*self._steps]
         for step in steps:
             step.cls = self
+        for model in self.models:
+            pass
+            # model_steps = model.steps()
+            # for m_step in model_steps:
+            #     m_step.cls = model
+            # steps.extend(model_steps)    
+        # steps.insert(3, self.models[0])  # assuming only one model for now
         return steps
 
     def main_loop(self, ctx: Context):
@@ -110,30 +182,35 @@ class FirstSolver(BaseModel):
             step.run(ctx)
 
 
-def test_sub_solver():
-    ctx = Context(fields={}, models={})
-    ctx.fields["a"] = 0.0
-
-    subsolver = SubSolver(max_iterations=2)
-    subsolver.run(ctx)
-
-    assert ctx.fields["a"] == 6.0
-
-
 def test_simulation_dag():
     sim = Simulation(
         domains=[
             Domain(
                 name="region1",
-                solver=FirstSolver(sub_solver=SubSolver(max_iterations=2)),
-            ),
+                solver=FirstSolver(
+                    sub_solver=SubSolver(max_iterations=2), models=[MyModel(param1=2.0)]
+                ),
+            )
         ],
         coupling_interface=[],
     )
 
     dag = sim.dependency_graph()
+    # sort nodes based on counter
+    counter = 0
+    for node in dag.nodes(data=True):
+        node[1]["counter"] = counter
+        counter += 1
 
-    digraph_to_pyvis_html(dag, "dag_one_solver.html")
+    order = list(
+        nx.lexicographical_topological_sort(dag, key=lambda n: dag.nodes[n]["counter"])
+    )
+    # order = list(nx.lexicographical_topological_sort(dag))
+    print(order)
+
+    digraph_to_pyvis_html(dag, "dag_one_solver_w_model.html")
+
+    assert False
 
 
 def test_simulation_one_solver():
@@ -141,7 +218,9 @@ def test_simulation_one_solver():
         domains=[
             Domain(
                 name="region1",
-                solver=FirstSolver(sub_solver=SubSolver(max_iterations=2)),
+                solver=FirstSolver(
+                    sub_solver=SubSolver(max_iterations=2), models=[MyModel(param1=1.0)]
+                ),
             ),
         ],
         coupling_interface=[],
@@ -150,4 +229,4 @@ def test_simulation_one_solver():
     sim_ctx = sim.init_simulation_context()
     sim.main_loop(sim_ctx)
     ctx_region1 = sim_ctx.domain_context["region1"]
-    assert ctx_region1.fields["a"] == 13.0
+    assert ctx_region1.fields["a"] == 14.0

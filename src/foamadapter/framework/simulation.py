@@ -16,6 +16,10 @@ class Domain(BaseModel):
     def dependencies(self) -> list[NodeData]:
         return self.solver.dependencies(self.name)
 
+
+def run_solver(step: SolverInterface, ctx: Context):
+    for step in step._steps:
+        step.run(ctx)
             
 
 class Simulation(BaseModel):
@@ -46,3 +50,4 @@ class Simulation(BaseModel):
         for domain in self.domains:
             ctx = sim_ctx.domain_context[domain.name]
             domain.solver.main_loop(ctx)
+            # run_solver(domain.solver, ctx)

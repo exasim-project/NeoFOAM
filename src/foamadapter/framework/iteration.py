@@ -5,7 +5,7 @@ from foamadapter.framework.context import Context
 from typing import Protocol, runtime_checkable, ClassVar
 
 
-def Model(cls):
+def Iteration(cls):
     step_functions: list[Step] = []
     
     # Collect all step functions
@@ -33,14 +33,18 @@ def Model(cls):
     
     return cls
 
-Model.step = staticmethod(_step)
+Iteration.step = staticmethod(_step)
 
 
 @runtime_checkable
-class ModelInterface(Protocol):
+class IterationInterface(Protocol):
     _steps: ClassVar[list[Step]]
 
-    def steps(self) -> list[Step]:
+    def loop(self) -> bool:
+        ...
+
+    @classmethod
+    def number_substeps(cls) -> int:
         ...
 
     def dependencies(self) -> list[NodeData]:
