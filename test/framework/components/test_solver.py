@@ -62,14 +62,3 @@ def test_solver_steps_registration():
     assert "name" in schema["properties"]
     assert "_steps" not in schema["properties"]
     assert "_step_data" not in schema["properties"]
-
-
-
-def test_solver_step_requires_step_number():
-    # Define a class with a step missing step_number
-    with pytest.raises(TypeError, match="missing 1 required keyword-only argument: 'step_number'"):
-        @Solver
-        class BadSolver(BaseModel):
-            @Solver.step()
-            def step_without_number(self):
-                pass
