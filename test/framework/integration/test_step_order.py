@@ -43,11 +43,10 @@ class MySolver(BaseModel):
     def dependencies(self, domain_name: str) -> list[NodeData]:
         nodedata = []
         for step in self.steps(domain_name=domain_name):
-            depends_on = [f"{domain_name}.{dep}" for dep in step.depends_on]
             nodedata.append(
                 NodeData(
-                    name=f"{domain_name}.{step.step_name}",
-                    depends_on=depends_on,
+                    name=step.name,
+                    depends_on=step.dependency_names,
                     shape="box",
                     step_number=StepNumber(f"{step.step_number}.0.0"),
                 )
@@ -59,7 +58,6 @@ class MySolver(BaseModel):
 @Model
 class MyModel(BaseModel):
     param: float
-    name: str
 
     @Model.step(step_number=1, depends_on=["step_one"])
     def initialize(self):
@@ -110,7 +108,7 @@ def test_run_steps():
 
 def test_step_order():
     solver1 = MySolver(param1=1.0)
-    model1 = MyModel(param=1.0, name="MyModel1")
+    model1 = MyModel(param=1.0)
 
     steps_solver1 = solver1.steps("domain1")
     steps_model1 = model1.steps("domain1")
@@ -120,20 +118,12 @@ def test_step_order():
     steps = steps_model1 + steps_solver1
     nodes = model1.dependencies("domain1") + solver1.dependencies("domain1")
 
-    
-    for so in steps:
-        so.step_name = f"domain1.{so.step_name}"
-
     nodes_ordered = compute_nodes_order(nodes)
-    for no in nodes_ordered:
-        print("Ordered node: ", no)
-
     steps_ordered = compute_steps_order(steps, nodes)
-    
-    # if True:
-    #     parent_dir = Path(__file__).parent
-    #     path = str(parent_dir / "test_step_order.html")
-    #     digraph_to_pyvis_html(dag, html_path=path)
 
-    assert False
+    assert nodes_ordered == [step.name for step in steps_ordered]
+    a = 0
+    for step in steps_ordered:
+        a += step()
+    assert a == 8.0 + 4.0
 

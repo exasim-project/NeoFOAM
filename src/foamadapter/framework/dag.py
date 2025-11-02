@@ -86,7 +86,9 @@ def compute_steps_order(steps: list[Step], nodes: list[NodeData]) -> list[Step]:
     """
     nodes_sorted = compute_nodes_order(nodes)
     step_name_to_index = {node: i for i, node in enumerate(nodes_sorted)}
-    steps_sorted = [steps[step_name_to_index[step.step_name]] for step in steps]
+    steps_sorted = [None] * len(steps)
+    for step in steps:
+        steps_sorted[step_name_to_index[step.name]] = step
     return steps_sorted
 
 
