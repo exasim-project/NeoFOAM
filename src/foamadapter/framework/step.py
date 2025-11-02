@@ -124,7 +124,7 @@ def step(*, step_number: int, depends_on=None):
                 context.fields.update(results)
             else:
                 print(
-                    f"--- Warning: Step '{wrapped_func.__name__}' returned an unprocessed object: {type(item)} ---"
+                    f"--- Warning: Step '{wrapped_func.__name__}' returned an unprocessed object: {type(results)} ---"
                 )
             return results
 

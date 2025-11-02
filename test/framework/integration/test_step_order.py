@@ -37,7 +37,7 @@ class MySolver(BaseModel):
         steps = [*self._steps]
         for step in steps:
             step.cls = self
-            step.domain = domain_name # horrible design
+            step.domain = domain_name
         return steps
 
     def dependencies(self, domain_name: str) -> list[NodeData]:
@@ -71,11 +71,10 @@ class MyModel(BaseModel):
         steps = [*self._steps]
         for step in steps:
             step.cls = self
-            step.domain = domain_name # horrible design
+            step.domain = domain_name
         return steps
     
     def dependencies(self, domain_name: str | None = None) -> list[NodeData]:
-        # horrible design
         nodedata = []
         for step in self.steps(domain_name=domain_name):
             nodedata.append(
