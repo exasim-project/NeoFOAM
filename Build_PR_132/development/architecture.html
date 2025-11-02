@@ -251,10 +251,12 @@
         <article role="main" id="furo-main-content">
           <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
-<p>This document describes the overall architecture of FoamAdapter, including both the C++ core and Python interface components.</p>
+<p>FoamAdapter is multilanguage repository as it contains both C++ and python code.
+This document describes the architecture of FoamAdapter, including the C++ core and Python interface components.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
 <p>FoamAdapter is designed as a multi-physics, python-based simulation framework.
+Additionally, a set of C++ based legacy solvers like neoIcoFoam simplify the transition from existing OpenFOAM solvers and workflows.
 It provides a flexible and modular architecture that allows users to easily extend and customize the simulation setup.</p>
 <p>The architecture provides following features to achieve the goals outlined in the <a class="reference internal" href="../goals_features.html"><span class="doc">goals and features</span></a> document:</p>
 <ul class="simple">
@@ -263,10 +265,10 @@ It provides a flexible and modular architecture that allows users to easily exte
 <li><p>Modular solver design that computes the data dependencies at runtime</p></li>
 <li><p>Plugin architecture for easy extension with new models and fields</p></li>
 </ul>
-<p>The main abstraction is that each domain has one physics module assigned to it that defines the governing equations and models for that domain.
+<p>In order to implement multi-physics capabilities multliple computational domains are supported.
+Each computational domain has one physics module assigned that defines the governing equations and physical models.
 Multiple domains can be defined with input files and the coupling between the domains is handled automatically based on the defined physics modules.</p>
-<p>The following sections describe the main feature and and implementation example to give a high level overview of the architecture.
-More details are described in the section for each feature.</p>
+<p>The following sections describe the main feature and implementation example to give a high level overview of the architecture.</p>
 </section>
 <section id="solver-execution-model">
 <h2>Solver Execution Model<a class="headerlink" href="#solver-execution-model" title="Link to this heading">¶</a></h2>
@@ -305,7 +307,6 @@ flowchart TB
     S2B --&gt; S1E
     </pre><p>The diagram shows two selected solvers: a non-thermal-fluid solver and a thermal-solid solver.
 Each solver has its own setup phase and computational steps, with interactions between the two solvers for energy exchange.</p>
-<p>The solution steps of each solver provide the dependencies and the runtime system constructs a DAG to determine the correct execution order based on these dependencies.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># &#39;model&#39; is a placeholder for the model dependency object required by each step.</span>
 <span class="n">model</span> <span class="o">=</span> <span class="o">...</span>  <span class="c1"># placeholder for model dependency</span>
 <span class="nd">@model</span><span class="p">(</span><span class="s2">&quot;fluidSolver&quot;</span><span class="p">)</span>
@@ -337,8 +338,8 @@ Additional models can be executed before and after each step to modify the behav
 </section>
 <section id="modular-solver-architecture">
 <h2>Modular Solver Architecture<a class="headerlink" href="#modular-solver-architecture" title="Link to this heading">¶</a></h2>
-<p>The modular solver architecture briefly touched on in the previous section is a key feature of FoamAdapter and allows for flexible composition of complex multi-physics simulations.
-An example of the modular solver architecture is illustrated in the following diagram:</p>
+<p>The modular solver architectures allows to extend individiual solver by adding addititional physics modules.
+This is illustrated in the following diagram, where the fluid solver is extended by three physics submodules.</p>
 <pre  class="mermaid">
         flowchart TD
 
@@ -432,7 +433,8 @@ This approach promotes maintainability, collaboration, and rapid prototyping of 
 The core idea is to allow new plugin types (e.g., models, fields, solvers) to be registered dynamically, either at runtime or via Python entry points (setuptools).
 Each plugin type (such as physics models or boundary conditions) is managed by a registry, which collects all available plugin classes and exposes a unified configuration model for input validation and schema generation.</p>
 <p><strong>Background: Pydantic Discriminated Unions</strong></p>
-<p>Pydantic supports discriminated unions for type-safe configuration, but the set of types in the union must be known at model definition time. For example:</p>
+<p>Pydantic supports discriminated unions for type-safe configuration, but the set of types in the union must be known at model definition time.
+The following example ensures that a pet is either Cat, Dog, or Lizard</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 

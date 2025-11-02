@@ -46,7 +46,7 @@ Setting Up Development Environment
 
 .. code-block:: bash
 
-    git checkout -b feature/your-feature-name
+    git checkout -b feat/your-feature-name
     # or
     git checkout -b fix/issue-description
 
