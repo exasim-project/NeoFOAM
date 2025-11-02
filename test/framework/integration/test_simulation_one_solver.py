@@ -77,7 +77,6 @@ class FirstSolver(BaseModel):
     @Solver.step(step_number=3, depends_on=["factor2"])
     def sub_iter(self, ctx: Context):
         self.sub_solver.run(ctx)
-        # return FieldUpdates({"a": a})
 
     @Solver.step(step_number=4, depends_on=["sub_iter"])
     def add5(self, a: float):
@@ -149,4 +148,4 @@ def test_simulation_one_solver():
     sim_ctx = sim.init_simulation_context()
     sim.main_loop(sim_ctx)
     ctx_region1 = sim_ctx.domain_context["region1"]
-    assert ctx_region1.fields["a"] == 13.0
+    assert ctx_region1.fields["a"] == 1.0 * 2.0 + 2 * (1.0 + 2.0) + 5.0  # init * factor2 + sub_iter + add5
