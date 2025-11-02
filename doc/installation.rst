@@ -235,7 +235,7 @@ If you encounter issues not covered here:
 
 1. **Check the GitHub Issues**: `FoamAdapter Issues <https://github.com/exasim-project/FoamAdapter/issues>`_
 2. **Review the documentation**: :doc:`../index`
-3. **Check OpenFOAM logs** for underlying solver issues
+3. **Check  logs** for underlying solver issues
 4. **Verify pybFoam installation** and compatibility
 
 Environment Variables
