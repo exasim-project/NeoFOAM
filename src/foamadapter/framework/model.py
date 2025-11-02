@@ -24,9 +24,6 @@ def Model(cls):
     # Sort steps by step_number
     step_functions = sorted(step_functions, key=lambda s: s.step_number)
     
-    # Automatically set dependencies if not provided
-    step_functions = update_dependencies(step_functions)
-    
     # Store the step functions
     cls._steps = step_functions
     cls.number_steps = classmethod(lambda c: len(c._steps))

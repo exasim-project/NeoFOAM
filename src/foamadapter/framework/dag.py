@@ -1,6 +1,8 @@
 from functools import total_ordering
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import networkx as nx
+
+from foamadapter.framework.step import Step
 
 
 @total_ordering
@@ -35,8 +37,9 @@ class StepNumber:
 class NodeData:
     name: str
     depends_on: list[str]
-    shape: str
     step_number: StepNumber
+    shape: str = "box"
+    used_by: list[str] = field(default_factory=list)
     color: str = None
 
     @property
@@ -69,9 +72,22 @@ def build_global_dag(domains: dict[str, list[NodeData]]) -> nx.DiGraph:
         G = nx.compose(G, sub_graph)
     return G
 
-def compute_steps_order(nodes: list[NodeData]) -> list[str]:
+def compute_nodes_order(nodes: list[NodeData]) -> list[str]:
+    """
+    Compute a valid topological order of nodes in the DAG.
+    """
+    dag = build_dag(nodes)
+    nodes_sorted = list(nx.lexicographical_topological_sort(dag, key=lambda n: dag.nodes[n]["step_number"]))
+    return nodes_sorted
+
+def compute_steps_order(steps: list[Step], nodes: list[NodeData]) -> list[Step]:
     """
     Compute a valid topological order of steps in the DAG.
     """
-    dag = build_dag(nodes)
-    return list(nx.lexicographical_topological_sort(dag, key=lambda n: dag.nodes[n]["step_number"]))
+    nodes_sorted = compute_nodes_order(nodes)
+    step_name_to_index = {node: i for i, node in enumerate(nodes_sorted)}
+    steps_sorted = [steps[step_name_to_index[step.step_name]] for step in steps]
+    return steps_sorted
+
+
+

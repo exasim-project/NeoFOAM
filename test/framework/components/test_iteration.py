@@ -9,7 +9,7 @@ class MyCustomIteration(BaseModel):
     name: Literal["MyCustomIteration"] = "MyCustomIteration"
 
 
-    @Iteration.step(step_number=2)
+    @Iteration.step(step_number=2, depends_on=["step_one"])
     def step_two(self):
         pass
 
@@ -17,11 +17,11 @@ class MyCustomIteration(BaseModel):
     def step_one(self):
         pass
 
-    @Iteration.step(step_number=3)
+    @Iteration.step(step_number=3, depends_on=["step_two"])
     def step_three(self):
         pass
 
-    @Iteration.step(step_number=4)
+    @Iteration.step(step_number=4, depends_on=["step_three"])
     def step_four(self):
         pass
 

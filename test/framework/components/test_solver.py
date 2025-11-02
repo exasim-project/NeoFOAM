@@ -9,7 +9,7 @@ class MyCustomSolver(BaseModel):
     name: Literal["MyCustomSolver"] = "MyCustomSolver"
 
 
-    @Solver.step(step_number=2)
+    @Solver.step(step_number=2, depends_on=["step_one"])
     def step_two(self):
         pass
 
@@ -17,11 +17,11 @@ class MyCustomSolver(BaseModel):
     def step_one(self):
         pass
 
-    @Solver.step(step_number=3)
+    @Solver.step(step_number=3, depends_on=["step_two"])
     def step_three(self):
         pass
 
-    @Solver.step(step_number=4)
+    @Solver.step(step_number=4, depends_on=["step_three"])
     def step_four(self):
         pass
 

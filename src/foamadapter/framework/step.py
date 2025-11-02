@@ -33,7 +33,20 @@ class Step:
     cls: type
     step_number: int
     step_name: str
+    domain: str | None = None
     depends_on: list[str] | None = None
+
+    @property
+    def name(self):
+        return f"{self.domain}.{self.step_name}" if self.domain else self.step_name
+    
+    @property
+    def dependency_names(self):
+        if self.depends_on is None:
+            return []
+        if self.domain:
+            return [f"{self.domain}.{dep}" for dep in self.depends_on]
+        return self.depends_on
 
     def __call__(self, *args, **kwargs):
         return self.func(self.cls, *args, **kwargs)

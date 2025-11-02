@@ -3,6 +3,7 @@ from foamadapter.framework.dag import (
     build_dag,
     NodeData,
     build_global_dag,
+    compute_nodes_order,
     compute_steps_order,
     StepNumber,
 )
@@ -157,7 +158,7 @@ def test_compute_steps_order():
     )
 
     nodes = [node1, node2, node3, node4, node5, node6, node7]
-    order = compute_steps_order(nodes)
+    order = compute_nodes_order(nodes)
     assert order == ["node1", "node2", "node4", "node3", "node5", "node6", "node7"]
 
     if PLOT_DAG:
