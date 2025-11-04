@@ -1,51 +1,61 @@
-name: Coordinated Merge for Existing PRs (NeoN + FoamAdapter)
+name: Coordinated Merge for FoamAdapter + NeoN
 
 on:
-  workflow_dispatch:
-    inputs:
-      neon_pr:
-        description: "NeoN PR number (e.g. 123)"
-        required: true
-      foam_pr:
-        description: "FoamAdapter PR number (e.g. 456)"
-        required: true
+  pull_request:
+    types: [labeled, unlabeled, synchronize, reopened, opened]
+    branches:
+      - develop
 
 jobs:
   coordinated-merge:
+    if: contains(github.event.pull_request.labels.*.name, 'coordinated-merge')
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
       NEON_REPO: exasim-project/NeoN
       FOAM_REPO: exasim-project/FoamAdapter
+      BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
-      - name: Checkout
+      - name: Checkout FoamAdapter repository
         uses: actions/checkout@v4
 
-      - name: Check NeoN PR approval
+      - name: Confirm triggering context
         run: |
-          echo "Checking approval for NeoN PR #${{ github.event.inputs.neon_pr }}..."
-          approved=$(gh pr view ${{ github.event.inputs.neon_pr }} --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
-          if [[ "$approved" != "APPROVED" ]]; then
-            echo "NeoN PR not yet approved."
-            exit 1
-          fi
-          echo "NeoN PR approved."
+          echo "Triggered from FoamAdapter PR: #${{ github.event.pull_request.number }}"
+          echo "Branch name: $BRANCH_NAME"
+          echo "Label: coordinated-merge detected"
 
       - name: Check FoamAdapter PR approval
         run: |
-          echo "Checking approval for FoamAdapter PR #${{ github.event.inputs.foam_pr }}..."
-          approved=$(gh pr view ${{ github.event.inputs.foam_pr }} --repo $FOAM_REPO --json reviewDecision -q '.reviewDecision')
+          echo "Checking approval for FoamAdapter PR..."
+          approved=$(gh pr view ${{ github.event.pull_request.number }} --repo $FOAM_REPO --json reviewDecision -q '.reviewDecision')
           if [[ "$approved" != "APPROVED" ]]; then
             echo "FoamAdapter PR not yet approved."
             exit 1
           fi
           echo "FoamAdapter PR approved."
 
+      - name: Check NeoN PR approval
+        run: |
+          echo "Checking approval for NeoN PR with branch '$BRANCH_NAME'..."
+          neon_pr=$(gh pr list --repo $NEON_REPO --head $BRANCH_NAME --json number -q '.[0].number')
+          if [[ -z "$neon_pr" ]]; then
+            echo "No matching NeoN PR found for branch '$BRANCH_NAME'."
+            exit 1
+          fi
+          echo "Found NeoN PR #$neon_pr"
+          approved=$(gh pr view $neon_pr --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
+          if [[ "$approved" != "APPROVED" ]]; then
+            echo "NeoN PR not yet approved."
+            exit 1
+          fi
+          echo "NeoN PR approved."
+
       - name: Merge NeoN PR
         run: |
           echo "Merging NeoN PR..."
-          gh pr merge ${{ github.event.inputs.neon_pr }} \
+          gh pr merge "$neon_pr" \
             --repo $NEON_REPO \
             --merge \
             --admin \
@@ -55,7 +65,7 @@ jobs:
       - name: Merge FoamAdapter PR
         run: |
           echo "Merging FoamAdapter PR..."
-          gh pr merge ${{ github.event.inputs.foam_pr }} \
+          gh pr merge ${{ github.event.pull_request.number }} \
             --repo $FOAM_REPO \
             --merge \
             --admin \
@@ -68,5 +78,5 @@ jobs:
       #     ./scripts/trigger-lrz-ci.sh NeoN develop
       #     ./scripts/trigger-lrz-ci.sh FoamAdapter develop
 
-      # - name: Done
-      #   run: echo "Both PRs merged and LRZ CI triggered successfully!"
+      - name: Done
+        run: echo "Both PRs merged successfully."
