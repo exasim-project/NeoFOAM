@@ -77,12 +77,17 @@ jobs:
           git clone https://github.com/$FOAM_REPO.git $TMP_DIR/foam
           git clone https://github.com/$NEON_REPO.git $TMP_DIR/neon
 
-          # Checkout base branches
+          # Configure git identity for merge commits
+          git config --global user.email "ci-bot@example.com"
+          git config --global user.name "CI Bot"
+
+          # Checkout base branches and dry-run merge FoamAdapter
           cd $TMP_DIR/foam
           git checkout ${{ github.event.pull_request.base.ref }}
           git fetch origin $BRANCH_NAME
           git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "FoamAdapter merge would fail"; exit 1; }
 
+          # Dry-run merge NeoN
           cd $TMP_DIR/neon
           git checkout ${{ steps.find-neon.outputs.neon_pr_base }}
           git fetch origin $BRANCH_NAME
