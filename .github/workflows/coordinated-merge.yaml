@@ -3,8 +3,6 @@ name: Coordinated Merge for FoamAdapter + NeoN
 on:
   pull_request:
     types: [labeled, unlabeled, synchronize, reopened, opened]
-    branches:
-      - develop
 
 jobs:
   coordinated-merge:
@@ -25,6 +23,7 @@ jobs:
           echo "Triggered from FoamAdapter PR: #${{ github.event.pull_request.number }}"
           echo "Branch name: $BRANCH_NAME"
           echo "Label: coordinated-merge detected"
+          echo "FoamAdapter PR base branch: ${{ github.event.pull_request.base.ref }}"
 
       - name: Check FoamAdapter PR approval
         run: |
@@ -36,16 +35,42 @@ jobs:
           fi
           echo "FoamAdapter PR approved."
 
-      - name: Check NeoN PR approval
+      - name: Find NeoN PR with same branch
+        id: find-neon
         run: |
-          echo "Checking approval for NeoN PR with branch '$BRANCH_NAME'..."
-          neon_pr=$(gh pr list --repo $NEON_REPO --head $BRANCH_NAME --json number -q '.[0].number')
+          echo "Looking for NeoN PR with branch '$BRANCH_NAME'..."
+          neon_pr=$(gh pr list --repo $NEON_REPO --head $BRANCH_NAME --json number,baseRefName -q '.[0]')
           if [[ -z "$neon_pr" ]]; then
             echo "No matching NeoN PR found for branch '$BRANCH_NAME'."
             exit 1
           fi
-          echo "Found NeoN PR #$neon_pr"
-          approved=$(gh pr view $neon_pr --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
+
+          neon_pr_number=$(echo $neon_pr | jq -r '.number')
+          neon_pr_base=$(echo $neon_pr | jq -r '.baseRefName')
+          echo "Found NeoN PR #$neon_pr_number targeting branch '$neon_pr_base'"
+
+          echo "neon_pr_number=$neon_pr_number" >> $GITHUB_OUTPUT
+          echo "neon_pr_base=$neon_pr_base" >> $GITHUB_OUTPUT
+
+      - name: Verify base branches match
+        run: |
+          foam_base="${{ github.event.pull_request.base.ref }}"
+          neon_base="${{ steps.find-neon.outputs.neon_pr_base }}"
+
+          echo "FoamAdapter PR base: $foam_base"
+          echo "NeoN PR base: $neon_base"
+
+          if [[ "$foam_base" != "$neon_base" ]]; then
+            echo "Base branches do not match. Cannot perform coordinated merge."
+            exit 1
+          fi
+          echo "Base branches match."
+
+      - name: Check NeoN PR approval
+        run: |
+          neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
+          echo "Checking approval for NeoN PR #$neon_pr_number..."
+          approved=$(gh pr view "$neon_pr_number" --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
           if [[ "$approved" != "APPROVED" ]]; then
             echo "NeoN PR not yet approved."
             exit 1
@@ -54,29 +79,32 @@ jobs:
 
       - name: Merge NeoN PR
         run: |
-          echo "Merging NeoN PR..."
-          gh pr merge "$neon_pr" \
+          neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
+          neon_base="${{ steps.find-neon.outputs.neon_pr_base }}"
+          echo "Merging NeoN PR #$neon_pr_number into $neon_base..."
+          gh pr merge "$neon_pr_number" \
             --repo $NEON_REPO \
             --merge \
             --admin \
             --delete-branch
-          echo "NeoN PR merged into develop."
+          echo "NeoN PR merged."
 
       - name: Merge FoamAdapter PR
         run: |
-          echo "Merging FoamAdapter PR..."
+          foam_base="${{ github.event.pull_request.base.ref }}"
+          echo "Merging FoamAdapter PR #${{ github.event.pull_request.number }} into $foam_base..."
           gh pr merge ${{ github.event.pull_request.number }} \
             --repo $FOAM_REPO \
             --merge \
             --admin \
             --delete-branch
-          echo "FoamAdapter PR merged into develop."
+          echo "FoamAdapter PR merged."
 
       # - name: Trigger LRZ GitLab CI
       #   run: |
       #     echo "Triggering LRZ GitLab CI pipelines for both repos..."
-      #     ./scripts/trigger-lrz-ci.sh NeoN develop
-      #     ./scripts/trigger-lrz-ci.sh FoamAdapter develop
+      #     ./scripts/trigger-lrz-ci.sh NeoN "$neon_base"
+      #     ./scripts/trigger-lrz-ci.sh FoamAdapter "$foam_base"
 
       - name: Done
-        run: echo "Both PRs merged successfully."
+        run: echo "Coordinated merge completed successfully."
