@@ -1,26 +1,20 @@
-name: LRZ GitLab CI
+name: Mirror to LRZ Gitlab
 
 on:
   push:
-    branches: [develop, main]
+    branches: [develop, main, clean_ci]
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-  schedule:
-    - cron: '00 8 * * 0'  # Runs at 10 AM CEST (08:00 UTC) every Sunday
-  workflow_dispatch:      # Optional: allows manual trigger
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: Trigger and run CI on GPU (${{ github.event.repository.name }})
+  mirror:
+    name: mirror to LRZ Gitlab
     runs-on: ubuntu-latest
     timeout-minutes: 1440 # 24 hours
-
-    outputs:
-      branch: ${{ steps.branch.outputs.branch }}
 
     # Only run if the 'Skip-build' label is not present on a PR
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
@@ -39,76 +33,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine branch
-        id: branch
-        run: |
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request"* ]]; then
-            BRANCH="$GITHUB_HEAD_REF"
-          else
-            BRANCH=${GITHUB_REF_NAME#refs/heads/}
-          fi
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-
       - name: Push commit to LRZ GitLab
         run: |
+          echo "branch ${{ github.ref_name }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add lrz https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_GROUP}/${REPO_NAME}.git
-          git fetch origin ${{ steps.branch.outputs.branch }}
-          git checkout -B ${{ steps.branch.outputs.branch }} origin/${{ steps.branch.outputs.branch }}
-          git reset --hard origin/${{ steps.branch.outputs.branch }}
-          git push --force lrz HEAD:refs/heads/${{ steps.branch.outputs.branch }}
-
-      - name: Cancel running/pending LRZ GitLab CI pipelines
-        if: ${{ github.event_name != 'push' }}
-        run: |
-          ./ci/github/cancel_triggered_pipelines.sh ${{ steps.branch.outputs.branch }}
-
-      - name: Trigger LRZ GitLab CI pipeline
-        id: trigger
-        run: |
-          ./ci/github/trigger_pipeline.sh \
-            "${{ steps.branch.outputs.branch }}" \
-            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
-            "variables[BENCHMARK]=false"
-
-      - name: Wait for LRZ GitLab CI pipeline
-        run: |
-          ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
-
-  benchmark:
-    name: Benchmark FoamAdapter on GPU
-    runs-on: ubuntu-latest
-    timeout-minutes: 1440 # 24 hours
-
-    needs: [build-and-test]
-    if: contains(toJson(github.event.pull_request.labels), 'benchmark')
-
-    env:
-      LRZ_GROUP: greole
-      LRZ_HOST: gitlab-ce.lrz.de
-      REPO_NAME: ${{ github.event.repository.name }}
-      BRANCH: ${{ needs.build-and-test.outputs.branch }}
-      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.GITLAB_PROJECT_TOKEN }}
-      LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
-      MAX_WAIT_MINUTES: 1440
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Cancel running/pending LRZ GitLab CI pipelines
-        run: |
-          ./ci/github/cancel_triggered_pipelines.sh "${BRANCH}"
-
-      - name: Trigger LRZ GitLab CI pipeline for benchmarking
-        id: trigger
-        run: |
-          ./ci/github/trigger_pipeline.sh \
-            "${BRANCH}" \
-            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
-            "variables[BENCHMARK]=true"
-
-      - name: Wait for LRZ GitLab CI pipeline for benchmarking
-        run: |
-          ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
+          git fetch origin ${{ github.ref_name }}
+          git checkout -B ${{ github.ref_name }} origin/${{ github.ref_name }}
+          git reset --hard origin/${{ github.ref_name }}
+          git push --force lrz HEAD:refs/heads/${{ github.ref_name }}

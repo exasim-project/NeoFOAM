@@ -2,6 +2,12 @@
 #
 # SPDX-License-Identifier: Unlicense
 
+stages:
+  - build-and-test
+  - trigger_benchmark
+  - benchmark
+
+
 # Available GPUs and corresponding Docker images
 .use-nvidia-gpu-and-image:
   tags: ["nvidia-h100-gpus"]
@@ -66,42 +72,47 @@
     - which simpleFoam || echo "simpleFoam not found!"
     - find $FOAM_LIBBIN -name "libPstream.so"
 
-# Job rules to determine if the pipeline was triggered from FoamAdapter or NeoN CI
-.trigger-from-foamadapter-for-testing:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "FoamAdapter" && $BENCHMARK == "false"
-      when: always
-    - when: never
-
-.trigger-from-neon-for-testing:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" && $BENCHMARK == "false"
-      when: always
-    - when: never
-
-.trigger-from-foamadapter-for-benchmarking:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "FoamAdapter" && $BENCHMARK == "true"
-      when: always
-    - when: never
-
 
 # --- Build and test FoamAdapter with the main branch of NeoN ---
 build-and-test-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-testing
+  stage: build-and-test
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
+    - ./ci/lrz-gitlab/build-and-test.sh nvidia
 
 build-and-test-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-testing
+  stage: build-and-test
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
+    - ./ci/lrz-gitlab/build-and-test.sh amd
+
+benchmark_piepline:
+  extends:
+    - .use-amd-gpu-and-image
+  stage: trigger_benchmark
+  script:
+    - PR_ID=$(curl -s "https://api.github.com/search/issues?q=sha:${CI_COMMIT_SHA}"
+      | jq '.items[0].number')
+    - |
+      if [[ "${PR_ID}" != "null" ]]; then
+        echo "Finding the corresponding Pull Request - ${PR_ID}"
+        echo "Checking whether the PR contains benchmark labels"
+        PR_CONTENT=$(curl -X GET -s -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/exasim-project/FoamAdapter/issues/${PR_ID}")
+        BENCHMARK=$(echo "${PR_CONTENT}" | jq -r 'any( [.labels | .[] | .name ] | .[] ; . == "benchmark")')
+        echo "BENCHMARK=${BENCHMARK}" > vars.env
+      else
+        echo "BENCHMARK=false" > vars.env
+      fi
+  artifacts:
+    reports:
+      dotenv: vars.env
+
+
 
 
 # --- Benchmark FoamAdapter with the main branch of NeoN ---
@@ -109,41 +120,30 @@ benchmark-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-benchmarking
+  stage: benchmark
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
+    - ./ci/lrz-gitlab/build-and-test.sh nvidia profiling
     - ./benchmarks/benchmarkSuite/cleanAll.sh
     - ./benchmarks/benchmarkSuite/runAll.sh
     # Check for produced results
     - find benchmarks/benchmarkSuite/ -name '*csv'
+  rules:
+    - if: $BENCHMARK != "true"
+      when: never
+
 
 benchmark-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-benchmarking
+  stage: benchmark
   script:
     - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
-    - ./ci/lrz-gitlab/build-and-test.sh amd main profiling
+    - ./ci/lrz-gitlab/build-and-test.sh amd profiling
     - ./benchmarks/benchmarkSuite/cleanAll.sh
     - ./benchmarks/benchmarkSuite/runAll.sh
     # Check for produced results
     - find benchmarks/benchmarkSuite/ -name '*csv'
-
-
-# --- Build and test FoamAdapter with a feature branch of NeoN ---
-build-and-test-triggered-from-NeoN-nvidia:
-  extends:
-    - .use-nvidia-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neon-for-testing
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
-
-build-and-test-triggered-from-NeoN-amd:
-  extends:
-    - .use-amd-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neon-for-testing
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
+  rules:
+    - if: $BENCHMARK != "true"
+      when: never
