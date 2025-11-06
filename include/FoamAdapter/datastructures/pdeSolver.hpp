@@ -155,7 +155,7 @@ private:
         auto solverDict = runTime_.fvSolutionDict.get<NeoN::Dictionary>("solvers");
         auto fieldSolverDict = solverDict.get<NeoN::Dictionary>(psi_.name);
 
-        auto stats = ::NeoN::dsl::detail::iterativeSolveImpl(
+        auto stats = NeoN::dsl::detail::iterativeSolveImpl(
             expr,
             sparsityPattern_,
             ls,
