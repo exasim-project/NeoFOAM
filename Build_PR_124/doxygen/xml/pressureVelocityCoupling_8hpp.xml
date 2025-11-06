@@ -45,12 +45,20 @@
         <childnode refid="11" relation="include">
         </childnode>
       </node>
+      <node id="16">
+        <label>FoamAdapter/compatibility/fvSolution.hpp</label>
+        <link refid="fvSolution_8hpp"/>
+        <childnode refid="17" relation="include">
+        </childnode>
+      </node>
       <node id="2">
         <label>FoamAdapter/datastructures/expression.hpp</label>
         <link refid="expression_8hpp"/>
         <childnode refid="3" relation="include">
         </childnode>
         <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="6">
@@ -81,6 +89,9 @@
       </node>
       <node id="3">
         <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="17">
+        <label>NeoN/core/dictionary.hpp</label>
       </node>
       <node id="7">
         <label>functional</label>
@@ -196,8 +207,8 @@
 <codeline lineno="56"><highlight class="normal">std::tuple&lt;nnfvcc::VolumeField&lt;scalar&gt;,<sp/>nnfvcc::VolumeField&lt;Vec3&gt;&gt;</highlight></codeline>
 <codeline lineno="57" refid="namespaceFoamAdapter_1a0e140a23f076eb4857de406948f7956a" refkind="member"><highlight class="normal"><ref refid="namespaceFoamAdapter_1a0e140a23f076eb4857de406948f7956a" kindref="member">computeRAUandHByA</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classFoamAdapter_1_1PDESolver" kindref="compound">PDESolver&lt;Vec3&gt;</ref>&amp;<sp/>expr);</highlight></codeline>
 <codeline lineno="58"><highlight class="normal"></highlight></codeline>
-<codeline lineno="59"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief</highlight></codeline>
-<codeline lineno="60"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>computes<sp/>phi<sp/>=<sp/>phiHbyA<sp/>-<sp/>pEqn.flux();</highlight></codeline>
+<codeline lineno="60"><highlight class="comment"><sp/>*<sp/>where<sp/>pEqn.flux</highlight></codeline>
 <codeline lineno="61"><highlight class="comment"><sp/>*<sp/>@note<sp/>assumes<sp/>an<sp/>assembled<sp/>system<sp/>matrix</highlight></codeline>
 <codeline lineno="62"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="63" refid="namespaceFoamAdapter_1a60e76ae54f8f88e43502447f9d5399de" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceFoamAdapter_1a60e76ae54f8f88e43502447f9d5399de" kindref="member">updateFaceVelocity</ref>(</highlight></codeline>
@@ -207,26 +218,27 @@
 <codeline lineno="67"><highlight class="normal">);</highlight></codeline>
 <codeline lineno="68"><highlight class="normal"></highlight></codeline>
 <codeline lineno="69"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>velocity<sp/>based<sp/>on<sp/>HbyA,<sp/>rAU<sp/>and<sp/>current<sp/>pressure<sp/>value</highlight></codeline>
-<codeline lineno="70"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="71"><highlight class="comment"><sp/>*<sp/>@details<sp/>once<sp/>Hby<sp/>rAU<sp/>and<sp/>a<sp/>current<sp/>pressure<sp/>value<sp/>is<sp/>available</highlight></codeline>
-<codeline lineno="72"><highlight class="comment"><sp/>*<sp/>an<sp/>updated<sp/>velocity<sp/>can<sp/>be<sp/>computed<sp/>according<sp/>to</highlight></codeline>
-<codeline lineno="73"><highlight class="comment"><sp/>*<sp/>\bold<sp/>{u_P}<sp/>=<sp/>\frac{\bold<sp/>{H[u^*]<sp/>}}{a_P^*<sp/>}<sp/>-<sp/>\frac{1}{a_P^*<sp/>}\nabla<sp/>p_P</highlight></codeline>
-<codeline lineno="74"><highlight class="comment"><sp/>*<sp/>See<sp/>https://openfoamwiki.net/index.php/SimpleFoam<sp/>for<sp/>details</highlight></codeline>
-<codeline lineno="75"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="76" refid="namespaceFoamAdapter_1a7661d98c4e3066c2b08e0b2959bca571" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceFoamAdapter_1a7661d98c4e3066c2b08e0b2959bca571" kindref="member">updateVelocity</ref>(</highlight></codeline>
-<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
-<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
-<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
-<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>u</highlight></codeline>
-<codeline lineno="81"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="82"><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="comment"><sp/>*<sp/>U<sp/>=<sp/>HbyA<sp/>-<sp/>rAU*fvc::grad(p);</highlight></codeline>
+<codeline lineno="71"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="72"><highlight class="comment"><sp/>*<sp/>@details<sp/>once<sp/>Hby<sp/>rAU<sp/>and<sp/>a<sp/>current<sp/>pressure<sp/>value<sp/>is<sp/>available</highlight></codeline>
+<codeline lineno="73"><highlight class="comment"><sp/>*<sp/>an<sp/>updated<sp/>velocity<sp/>can<sp/>be<sp/>computed<sp/>according<sp/>to</highlight></codeline>
+<codeline lineno="74"><highlight class="comment"><sp/>*<sp/>\bold<sp/>{u_P}<sp/>=<sp/>\frac{\bold<sp/>{H[u^*]<sp/>}}{a_P^*<sp/>}<sp/>-<sp/>\frac{1}{a_P^*<sp/>}\nabla<sp/>p_P</highlight></codeline>
+<codeline lineno="75"><highlight class="comment"><sp/>*<sp/>See<sp/>https://openfoamwiki.net/index.php/SimpleFoam<sp/>for<sp/>details</highlight></codeline>
+<codeline lineno="76"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="77" refid="namespaceFoamAdapter_1a936ef96c5965acc3e3067ac0f90397c4" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceFoamAdapter_1a936ef96c5965acc3e3067ac0f90397c4" kindref="member">updateVelocity</ref>(</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>U</highlight></codeline>
+<codeline lineno="82"><highlight class="normal">);</highlight></codeline>
 <codeline lineno="83"><highlight class="normal"></highlight></codeline>
-<codeline lineno="84"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Reimplementation<sp/>of<sp/>OpenFOAMs<sp/>fvMatrix.flux()</highlight></codeline>
-<codeline lineno="85"><highlight class="comment"><sp/>*<sp/>@return<sp/>flux<sp/>surface<sp/>field</highlight></codeline>
-<codeline lineno="86"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="87" refid="namespaceFoamAdapter_1aeb9d6048345debcb9e018bb2e75436b3" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;scalar&gt;<sp/><ref refid="namespaceFoamAdapter_1aeb9d6048345debcb9e018bb2e75436b3" kindref="member">flux</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>volField);</highlight></codeline>
-<codeline lineno="88"><highlight class="normal"></highlight></codeline>
-<codeline lineno="89"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Reimplementation<sp/>of<sp/>OpenFOAMs<sp/>fvMatrix.flux()</highlight></codeline>
+<codeline lineno="86"><highlight class="comment"><sp/>*<sp/>@return<sp/>flux<sp/>surface<sp/>field</highlight></codeline>
+<codeline lineno="87"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="88" refid="namespaceFoamAdapter_1aeb9d6048345debcb9e018bb2e75436b3" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;scalar&gt;<sp/><ref refid="namespaceFoamAdapter_1aeb9d6048345debcb9e018bb2e75436b3" kindref="member">flux</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>volField);</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/FoamAdapter/FoamAdapter/include/FoamAdapter/algorithms/pressureVelocityCoupling.hpp"/>
   </compounddef>
