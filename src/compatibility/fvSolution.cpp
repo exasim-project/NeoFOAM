@@ -8,7 +8,10 @@
 
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+
 #include <map>
+
+#include <NeoN/core/logging.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
@@ -31,8 +34,7 @@ void updateSolver(NeoN::Dictionary& solverDict)
     auto it = solverMap.find(solverName);
     if (it != solverMap.end())
     {
-        std::cout << __FILE__ << ":\n\treplacing solver " << solverName << " by "
-                  << it->second.second << "\n";
+        NeoN::Logging::warn("Replacing solver {} by {}", solverName, it->second.second);
         solverName = it->second.first;
         // if (solverName == "GAMG")
         // {
@@ -96,8 +98,11 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         auto it = preconditionerMap.find(preconditionerName);
         if (it != preconditionerMap.end())
         {
-            std::cout << __FILE__ << ":\n\treplacing preconditioner " << preconditionerName
-                      << " by " << it->second << "\n";
+            NeoN::Logging::warn(
+                "Replacing preconditioner {} by {}",
+                preconditionerName,
+                it->second.get<std::string>("type")
+            );
             solverDict.insert("preconditioner", it->second);
         }
     }
@@ -145,7 +150,6 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     }
 
     NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-    std::cout << __FILE__ << ":\n\tStopping criteria: " << criteriaDict << "\n";
 }
 
 
@@ -154,10 +158,9 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     NeoN::Dictionary modSolverDict = solverDict;
 
     if (solverDict.contains("configFile")) return solverDict;
-    std::cout << __FILE__ << ":\n\tMapping OpenFOAM solver settings to NeoN settings\n"
-              << "\tCurrently, it is advisable to specify configFile for fine grained Ginkgo "
-                 "solver support\n";
-
+    NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.");
+    NeoN::Logging::warn("Currently, it is advisable to specify a configFile");
+    NeoN::Logging::warn("for fine grained Ginkgo solver control");
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
     updateCriteria(modSolverDict);
