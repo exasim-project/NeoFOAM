@@ -330,6 +330,11 @@ TEST_CASE("PressureVelocityCoupling")
                 REQUIRE(hostnfU2.view()[celli][2] == Catch::Approx(ofU[celli][2]).margin(1e-06));
             }
 
+            // NOTE we here test that that rAU and HbyA are correct
+            // regardless how UEqn was formulated, with or without grad(p)
+            // A better way is to just test correctness of computeRAUandHbyA once
+            // and check whether solve(grad(p)) does not modify the original matrix
+            // in UEqn
             SECTION("HbyA modified U")
             {
                 ofU.correctBoundaryConditions();
