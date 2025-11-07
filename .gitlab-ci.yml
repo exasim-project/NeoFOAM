@@ -132,37 +132,35 @@
 
 
 # --- Benchmark FoamAdapter with the main branch of NeoN ---
-benchmark-triggered-from-FA-nvidia:
-  extends:
-    - .use-nvidia-gpu-and-image
-    - .openfoam-env-setup
-  stage: benchmark
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia profiling
-    - ./benchmarks/benchmarkSuite/cleanAll.sh
-    - ./benchmarks/benchmarkSuite/runAll.sh
-    # Check for produced results
-    - find benchmarks/benchmarkSuite/ -name '*csv'
-  rules:
-    - if: $BENCHMARK != "true"
-      when: never
+# benchmark-triggered-from-FA-nvidia:
+#   extends:
+#     - .use-nvidia-gpu-and-image
+#     - .openfoam-env-setup
+#   script:
+#     - ./ci/lrz-gitlab/build-and-test.sh nvidia profiling
+#     - ./benchmarks/benchmarkSuite/cleanAll.sh
+#     - ./benchmarks/benchmarkSuite/runAll.sh
+#     # Check for produced results
+#     - find benchmarks/benchmarkSuite/ -name '*csv'
+#   rules:
+#     - if: $BENCHMARK != "true"
+#       when: never
 
 
-benchmark-triggered-from-FA-amd:
-  extends:
-    - .use-amd-gpu-and-image
-    - .openfoam-env-setup
-  stage: benchmark
-  script:
-    - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
-    - ./ci/lrz-gitlab/build-and-test.sh amd profiling
-    - ./benchmarks/benchmarkSuite/cleanAll.sh
-    - ./benchmarks/benchmarkSuite/runAll.sh
-    # Check for produced results
-    - find benchmarks/benchmarkSuite/ -name '*csv'
-  rules:
-    - if: $BENCHMARK != "true"
-      when: never
+# benchmark-triggered-from-FA-amd:
+#   extends:
+#     - .use-amd-gpu-and-image
+#     - .openfoam-env-setup
+#   script:
+#     - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
+#     - ./ci/lrz-gitlab/build-and-test.sh amd profiling
+#     - ./benchmarks/benchmarkSuite/cleanAll.sh
+#     - ./benchmarks/benchmarkSuite/runAll.sh
+#     # Check for produced results
+#     - find benchmarks/benchmarkSuite/ -name '*csv'
+#   rules:
+#     - if: $BENCHMARK != "true"
+#       when: never
 
 benchmark-echo:
   extends:
