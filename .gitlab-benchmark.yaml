@@ -1,0 +1,9 @@
+benchmark-echo:
+  tags: ["amd-gpus"]
+  image: chihtaw/rocm-openfoam-ginkgo:6.4.1-v2412-arch_gfx90a
+  stage: benchmark
+  script:
+    - echo "${BENCHMARK}"
+  rules:
+    - if: $BENCHMARK != "true"
+      when: always
