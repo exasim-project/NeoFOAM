@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023-2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "fvCFD.H"
 
@@ -13,7 +13,7 @@ using Foam::nl;
 
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -31,20 +31,20 @@ int main(int argc, char* argv[])
 #include "createControl.H"
 #include "createFields.H"
 
-        Info << "creating FoamAdapter fields" << endl;
+        Info << "creating NeoFOAM fields" << endl;
         fvcc::VectorCollection& VectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         fvcc::VolumeField<NeoN::scalar>& nfT =
             VectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                FoamAdapter::CreateFromFoamField<Foam::volScalarField> {
+                NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
                     .exec = rt.exec,
                     .nfMesh = rt.nfMesh,
                     .foamField = T,
                     .name = "nfT"
                 }
             );
-        auto nfPhi0 = FoamAdapter::constructSurfaceField(rt.exec, rt.nfMesh, phi0);
-        auto nfPhi = FoamAdapter::constructSurfaceField(rt.exec, rt.nfMesh, phi);
+        auto nfPhi0 = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, phi0);
+        auto nfPhi = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, phi);
 
         Foam::scalar endTime = rt.controlDict.get<Foam::scalar>("endTime");
 
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
             Foam::Info << "max(U) : " << max(U).value() << Foam::endl;
             if (rt.adjustTimeStep)
             {
-                FoamAdapter::setDeltaT(runTime, rt, coNum);
+                NeoFOAM::setDeltaT(runTime, rt, coNum);
             }
             runTime++;
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
             if (runTime.outputTime())
             {
                 Foam::Info << "writing nfT field" << Foam::endl;
-                FoamAdapter::write(nfT.internalVector(), rt.mesh, "nfT");
+                NeoFOAM::write(nfT.internalVector(), rt.mesh, "nfT");
             }
 
             runTime.write();

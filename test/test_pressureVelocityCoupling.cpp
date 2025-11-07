@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -15,7 +15,7 @@ namespace fvm = Foam::fvm;
 
 namespace dsl = NeoN::dsl;
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 
 extern Foam::Time* timePtr; // A single time object
 
@@ -50,7 +50,7 @@ TEST_CASE("PressureVelocityCoupling")
     auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
     nnfvcc::VolumeField<NeoN::Vec3>& nfU =
         vectorCollection.registerVector<nnfvcc::VolumeField<NeoN::Vec3>>(
-            FoamAdapter::CreateFromFoamField<Foam::volVectorField> {
+            NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
                 .exec = rt.exec,
                 .nfMesh = rt.nfMesh,
                 .foamField = ofU,
@@ -58,7 +58,7 @@ TEST_CASE("PressureVelocityCoupling")
             }
         );
     auto nfP = vectorCollection.registerVector<nnfvcc::VolumeField<NeoN::scalar>>(
-        FoamAdapter::CreateFromFoamField<Foam::volScalarField> {
+        NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
             .exec = rt.exec,
             .nfMesh = rt.nfMesh,
             .foamField = ofp,
@@ -81,7 +81,7 @@ TEST_CASE("PressureVelocityCoupling")
         ),
         fvc::flux(ofU)
     );
-    auto nfPhi = FoamAdapter::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi);
+    auto nfPhi = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi);
     nfPhi.name = "nfPhi";
 
     Foam::surfaceScalarField ofNu(
@@ -96,7 +96,7 @@ TEST_CASE("PressureVelocityCoupling")
         Foam::dimensionedScalar("ofNu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
     );
 
-    auto nfNu = FoamAdapter::constructSurfaceField(rt.exec, rt.nfMesh, ofNu);
+    auto nfNu = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, ofNu);
     nfNu.name = "nfNu";
     NeoN::fill(nfNu.boundaryData().value(), 0.01);
 
@@ -118,7 +118,7 @@ TEST_CASE("PressureVelocityCoupling")
             nfUEqn.assemble();
             auto nfrAU = nf::computeRAU(nfUEqn);
 
-            FoamAdapter::compare(nfrAU, forAU, ApproxScalar(1e-15), false);
+            NeoFOAM::compare(nfrAU, forAU, ApproxScalar(1e-15), false);
         }
 
         SECTION("rAU modified U")
@@ -132,7 +132,7 @@ TEST_CASE("PressureVelocityCoupling")
             nfUEqn.assemble();
             auto nfrAU = nf::computeRAU(nfUEqn);
 
-            FoamAdapter::compare(nfrAU, forAU, ApproxScalar(1e-15), false);
+            NeoFOAM::compare(nfrAU, forAU, ApproxScalar(1e-15), false);
         }
 
         SECTION("HbyA")
@@ -396,11 +396,11 @@ TEST_CASE("PressureVelocityCoupling")
                 mesh,
                 Foam::dimensionedScalar("forAUf", Foam::dimensionSet(0, 0, 1, 0, 0), 0.1)
             );
-            auto nfrAUf = FoamAdapter::constructSurfaceField(rt.exec, rt.nfMesh, forAUf);
+            auto nfrAUf = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, forAUf);
             nfrAUf.name = "nfrAUf";
 
             Foam::surfaceScalarField ofPhi0("ofPhi0", ofPhi * 0.0);
-            auto nfPhi0 = FoamAdapter::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi0);
+            auto nfPhi0 = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi0);
             nfPhi0.name = "nfPhi0";
 
             nf::PDESolver<NeoN::scalar> pEqn(

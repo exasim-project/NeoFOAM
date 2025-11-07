@@ -3,7 +3,7 @@
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "fvCFD.H"
 #include "pisoControl.H"
@@ -15,7 +15,7 @@ using Foam::nl;
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

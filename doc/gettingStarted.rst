@@ -1,21 +1,21 @@
 Getting started
 ===============
 
-You can build FoamAdapter by following these steps:
+You can build NeoFOAM by following these steps:
 
-Clone the FoamAdapter repository including FoamAdapter integrated as a submodule:
-
-   .. code-block:: bash
-
-      git clone --recurse-submodules https://github.com/exasim-project/FoamAdapter.git
-
-Navigate to the FoamAdapter directory:
+Clone the NeoFOAM repository including NeoFOAM integrated as a submodule:
 
    .. code-block:: bash
 
-      cd FoamAdapter
+      git clone --recurse-submodules https://github.com/exasim-project/NeoFOAM.git
 
-FoamAdapter uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below `below <Building with CMake Presets>`_. From a build directory, you can execute:
+Navigate to the NeoFOAM directory:
+
+   .. code-block:: bash
+
+      cd NeoFOAM
+
+NeoFOAM uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below `below <Building with CMake Presets>`_. From a build directory, you can execute:
 
    .. code-block:: bash
 
@@ -34,7 +34,7 @@ Additionally, we provide several CMake presets to set commonly required flags.
 
     cmake --list-presets # To list existing presets
 
-To build FoamAdapter for production use, you can use the following commands:
+To build NeoFOAM for production use, you can use the following commands:
 
    .. code-block:: bash
 
@@ -73,7 +73,7 @@ The required tools for compilation (ubuntu latest 24.04):
 Run test case
 ^^^^^^^^^^^^^
 
-To build these test cases, the CMake preset `profiling` should be used during config and build step for FoamAdapter.
+To build these test cases, the CMake preset `profiling` should be used during config and build step for NeoFOAM.
 
 .. code-block:: bash
 

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 // TODO: move to cellCenred dsl?
 
 #pragma once
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/datastructures/runTime.hpp"
-#include "FoamAdapter/compatibility/fvSolution.hpp"
+#include "NeoFOAM/datastructures/runTime.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
 
 namespace dsl = NeoN::dsl;
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 /*@brief extends expression by giving access to assembled matrix
@@ -119,9 +119,7 @@ public:
         pRefValue_ = pRefValue;
     }
 
-    NeoN::la::SolverStats solve() {
-        return solveImpl(expr_, ls_);
-    }
+    NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
 
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
@@ -134,9 +132,8 @@ public:
 
 private:
 
-    NeoN::la::SolverStats solveImpl(
-             dsl::Expression<ValueType>& expr,
-             NeoN::la::LinearSystem<ValueType, IndexType>& ls)
+    NeoN::la::SolverStats
+    solveImpl(dsl::Expression<ValueType>& expr, NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
@@ -146,9 +143,9 @@ private:
             functs =
                 needReference_
                     ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {SetReference<ValueType>(
-                          pRefCell_,
-                          pRefValue_
-                      )}
+                        pRefCell_,
+                        pRefValue_
+                    )}
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
         }
 

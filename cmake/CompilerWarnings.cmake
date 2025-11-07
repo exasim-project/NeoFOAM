@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 Jason Turner
-# SPDX-FileCopyrightText: 2023 FoamAdapter authors
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 ##############################################################################
 # This function will prevent in-source builds                                #
 # from here                                                                  #

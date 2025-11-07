@@ -1,7 +1,7 @@
 Test cases
 ==========
 
-Currently the following test cases are provided within the FoamAdapter:
+Currently the following test cases are provided within the NeoFOAM:
 
 .. code-block:: bash
 
