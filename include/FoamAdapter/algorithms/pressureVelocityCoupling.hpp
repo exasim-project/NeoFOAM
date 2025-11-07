@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "FoamAdapter/datastructures/expression.hpp"
+#include "FoamAdapter/datastructures/pdeSolver.hpp"
 
 #include "NeoN/NeoN.hpp"
 
