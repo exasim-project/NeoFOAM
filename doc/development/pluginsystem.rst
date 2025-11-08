@@ -1,89 +1,211 @@
-
 Plugin System
 =============
-
-Motivation
-^^^^^^^^^^
 
 Modern scientific and engineering workflows require flexible simulation frameworks that can be easily extended and customized.
 FoamAdapter's plugin architecture is designed to enable users and developers to add new physics models, boundary conditions, and solver modules without modifying the core codebase.
 This approach promotes maintainability, collaboration, and rapid prototyping of new features.
 
+Overview
+--------
 
+The PluginSystem provides a runtime-extensible configuration system using Pydantic discriminated unions and a registry pattern.
+The system allows to register child classes on numerous base classes, each with its own registry.
 
-Concept
-^^^^^^^
-FoamAdapter implements a runtime-extensible plugin/config system using Pydantic discriminated unions and a registry pattern.
-The core idea is to allow new plugin types (e.g., models, fields, solvers) to be registered dynamically, either at runtime or via Python entry points (setuptools).
-Each plugin type (such as physics models or boundary conditions) is managed by a registry, which collects all available plugin classes and exposes a unified configuration model for input validation and schema generation.
+Core Components
+---------------
 
-**Background: Pydantic Discriminated Unions**
+PluginRegistry Dataclass
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pydantic supports discriminated unions for type-safe configuration, but the set of types in the union must be known at model definition time. For example:
+The ``PluginRegistry`` dataclass stores metadata for each plugin base type:
 
-.. code-block:: python
+* ``base_cls``: The plugin base class (Pydantic BaseModel)
+* ``discriminator_variable``: Field name holding the union (e.g., 'shape', 'plugin')
+* ``discriminator``: Discriminator field name in plugin configs (e.g., 'shape_type', 'plugin_type')
+* ``plugin_registry``: List of registered plugin configuration classes
+* ``plugin_model``: Dynamically generated extensible Pydantic model
 
-    from typing import Literal, Union
-    from pydantic import BaseModel, Field
+PluginSystem Class
+~~~~~~~~~~~~~~~~~~
 
-    class Cat(BaseModel):
-        pet_type: Literal['cat']
-        meows: int
+The central registry stores all plugin families within the class dictionary variable ``_registry`` .
+Each key represents a plugin family name mapping to its corresponding PluginRegistry instance.
 
-    class Dog(BaseModel):
-        pet_type: Literal['dog']
-        barks: float
+Implementation Details
+----------------------
 
-    class Lizard(BaseModel):
-        pet_type: Literal['reptile', 'lizard']
-        scales: bool
+Registration Process
+~~~~~~~~~~~~~~~~~~~~
 
-    class Model(BaseModel):
-        pet: Union[Cat, Dog, Lizard] = Field(discriminator='pet_type')
-        n: int
+The decorator-based registration follows a two-step process:
 
-This works well for static unions, but it is not possible to add new types to the union at runtime. This is a challenge for plugin systems, where extensibility is required.
+1. **Base Class Registration**: ``@PluginSystem.register()`` creates a registry entry and adds helper methods
+2. **Plugin Registration**: ``@BaseClass.register`` adds plugin classes to the registry and regenerates the union model
 
-**How FoamAdapter Solves This**
+Dynamic Model Generation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Plugins are registered using a decorator-based API, making it easy for users to define and integrate new modules.
-Whenever a new plugin is registered, the system automatically rebuilds the Pydantic model for the plugin type, updating the discriminated union to include all registered types.
-This means that the configuration model always reflects the current set of available plugins, and input validation is always up to date.
+The system uses ``pydantic.create_model()`` to dynamically generate extensible models.
+Each registration updates the discriminated union type and recreates the model.
+The discriminator field enables automatic deserialization based on the type identifier.
 
-For example, after registering a new shape plugin, you can immediately use the updated model for validation:
+Usage Examples
+--------------
 
-.. code-block:: python
+Basic Plugin Setup
+~~~~~~~~~~~~~~~~~~
 
-    ShapeBase.register(TriangleConfig)
-    shape = ShapeBase.plugin_model(shape={"shape_type": "triangle", "base": 3.0, "height": 4.0}, color="yellow")
-
-This dynamic rebuilding of the model enables true runtime extensibility and ensures that input validation and schema generation always match the available plugins.
-The `plugin_model` attribute needs to be called to obtain the up-to-date model for the plugin type.
-
-Usage
-^^^^^
-
-To add a new plugin, users simply define a new Python class for their model or field and register it with the appropriate base class:
+The following example demonstrates how to define a plugin base class and register multiple plugin configurations.
 
 .. code-block:: python
 
+    from pydantic import BaseModel
+    from typing import Literal
     from foamadapter.core.plugin_system import PluginSystem
 
-    @PluginSystem.register(discriminator_variable="model", discriminator="model_type")
-    class ModelBase(BaseModel):
+    @PluginSystem.register(discriminator_variable="shape", discriminator="shape_type")
+    class ShapeInterface(BaseModel):
+        color: str
+        name: str = "default"
+
+    @ShapeInterface.register
+    class CircleConfig(BaseModel):
+        shape_type: Literal["circle"]
+        radius: float
+
+    @ShapeInterface.register
+    class SquareConfig(BaseModel):
+        shape_type: Literal["square"]
+        side: float
+
+Creating and Using Configurations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A usage example creating and using plugin configurations is shown below.
+
+.. code-block:: python
+
+    # Direct instantiation using the plugin model
+    Shape = ShapeInterface.plugin_model
+    circle = Shape(
+        shape={"shape_type": "circle", "radius": 5.0},
+        color="red"
+    )
+
+    # Using the create class method
+    square = ShapeInterface.create(
+        shape={"shape_type": "square", "side": 3.0},
+        color="blue"
+    )
+
+    # Accessing plugin-specific fields
+    assert circle.shape.radius == 5.0
+    assert square.shape.side == 3.0
+
+Runtime Extension
+~~~~~~~~~~~~~~~~~
+
+The plugin system supports runtime registration of new plugin configurations.
+However, this requires rebuilding the Type union which is done by the create method.
+
+.. code-block:: python
+
+    # Define new plugin configurations
+    class TriangleConfig(BaseModel):
+        shape_type: Literal["triangle"]
+        base: float
+        height: float
+
+    class EllipseConfig(BaseModel):
+        shape_type: Literal["ellipse"]
+        major_axis: float
+        minor_axis: float
+
+    # Register at runtime
+    ShapeInterface.register(TriangleConfig)
+    ShapeInterface.register(EllipseConfig)
+
+    # Use new configurations immediately
+    triangle = ShapeInterface.create(
+        shape={"shape_type": "triangle", "base": 4.0, "height": 3.0},
+        color="green"
+    )
+
+Register multiple classes
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`AnimalInterface` will be stored in a central registry to show the availability of all registered plugins.
+
+.. code-block:: python
+
+    @PluginSystem.register(discriminator_variable="animal", discriminator="animal_type")
+    class AnimalInterface(BaseModel):
         name: str
+        age: int
 
-    @ModelBase.register
-    class MyCustomModel(BaseModel):
-        model_type: Literal["custom"]
-        parameter: float
+    @AnimalInterface.register
+    class DogConfig(BaseModel):
+        animal_type: Literal["dog"]
+        breed: str
+        is_trained: bool = False
 
-    # Instantiate a model config
-    config = ModelBase.create(model={"model_type": "custom", "parameter": 1.23}, name="example")
+    @AnimalInterface.register
+    class CatConfig(BaseModel):
+        animal_type: Literal["cat"]
+        indoor_only: bool = True
+        declawed: bool = False
 
-Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend FoamAdapter seamlessly.
-The unified configuration model and schema make it easy to build UIs, validate inputs, and document available plugins.
+    # Independent from ShapeInterface family
+    my_dog = AnimalInterface.create(
+        animal={"animal_type": "dog", "breed": "Golden Retriever", "is_trained": True},
+        name="Buddy",
+        age=3
+    )
 
 
+    
 
+JSON Schema Generation
+~~~~~~~~~~~~~~~~~~~~~~
+
+The dynamically generated plugin models support JSON schema generation for validation and documentation purposes. 
+Json schemas show all possible configuration of all the available plugins of each base class and therefore enable the creation of user interfaces or config file validators.
+
+.. code-block:: python
+
+    # Get JSON schema for validation and documentation
+    Shape = ShapeInterface.plugin_model
+    schema = Shape.model_json_schema()
+
+    # Schema includes discriminator mapping
+    discriminator = schema["properties"]["shape"]["discriminator"]
+    print(discriminator["propertyName"])  # "shape_type"
+    print(discriminator["mapping"])       # {"circle": "...", "square": "..."}
+
+Registry Management
+~~~~~~~~~~~~~~~~~~~
+
+The PluginSystem class provides utility methods to manage and inspect the plugin registries.
+The following example demonstrates how to list registered plugins, retrieve specific registries, and remove plugins.
+
+.. code-block:: python
+
+    # List all plugin families
+    all_plugins = PluginSystem.list_plugins()
+    print(all_plugins.keys())  # ["ShapeInterface", "DataProcessor"]
+
+    # Get specific registry
+    shape_registry = PluginSystem.get_registered("ShapeInterface")
+    plugin_classes = shape_registry.plugin_registry
+
+    # Remove plugins
+    success = PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig)
+
+Registeration via Entrypoint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+.. warning::
+
+    This feature is not yet implemented.
 
