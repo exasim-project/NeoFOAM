@@ -4,6 +4,13 @@ Architecture
 FoamAdapter is multilanguage repository as it contains both C++ and python code.
 This document describes the architecture of FoamAdapter, including the C++ core and Python interface components.
 
+.. note::
+   This section of the documentation should provide:
+     * a high-level overview of the *planned* architecture 
+     * guidance through the review process
+     * The example implementation only serves as proof of concept and are only should provide a impression of the *planned* architecture.
+     * The implementation of the detailed features will update the following sections and will further refine the architecture and change the code examples.
+
 Overview
 --------
 
@@ -18,17 +25,116 @@ The architecture provides following features to achieve the goals outlined in th
 - Modular solver design that computes the data dependencies at runtime
 - Plugin architecture for easy extension with new models and fields
 
-In order to implement multi-physics capabilities multliple computational domains are supported.  
-Each computational domain has one physics module assigned that defines the governing equations and physical models.
+In order to implement multi-physics capabilities multiple computational domains are supported.  
+Each computational domain has **one solver** assigned that defines the governing equations, operations and **optional additional physical models.**
 Multiple domains can be defined with input files and the coupling between the domains is handled automatically based on the defined physics modules.
 
 The following sections describe the main feature and implementation example to give a high level overview of the architecture.
 
-Solver Execution Model
-----------------------
+Extensible Solver Architecture
+------------------------------
 
-FoamAdapter defines solver behavior as a dependency-driven execution model.
-Each solver declares its required fields and models, and the runtime system constructs a directed acyclic graph (DAG) to determine the correct execution order.
+To foster code reuse and maintainability, the execution steps (operations) can be configured at runtime based on the selected physics models.
+This is illustrated in the following diagram, where the fluid solver is extended by three physics submodules.
+
+.. mermaid::
+
+   flowchart TD
+        
+        subgraph MAIN ["Main Solver Loop"]
+            STEP1["Solver </br> Momentum equation"]
+            STEP2["add by model </br> Temperature equation"]
+            STEP3["Solver </br> continuity equation"]
+            STEP4["Solver </br> update turbulence"]
+        end
+        
+        STEP1 --> STEP2
+        STEP2 --> STEP3
+        STEP3 --> STEP4
+        
+        %% Physics Extensions (simplified)
+        subgraph AddPhysics ["Additional Physics Modules"]
+            direction TB
+            POROSITY["Porosity"]
+            ROTATION["Rotating Reference Frame"]
+            BUOYANCY["Boussinesq Approximation"]
+        end
+        POROSITY -.-> STEP1
+        ROTATION -.-> STEP1
+        BUOYANCY -.-> STEP2
+        BUOYANCY -.-> STEP3
+
+        style MAIN fill:#E3F2FD
+        style AddPhysics fill:#E3F2FD
+        style STEP1 fill:#2196F3,color:#fff
+        style STEP2 fill:#FF9800,color:#fff
+        style STEP3 fill:#9C27B0,color:#fff
+        style STEP4 fill:#607D8B,color:#fff
+
+The solver defines the main operations to be executed: Momentum, continuity and the turbulence model update.
+Additional physics models such as porosity, rotation, buoyancy can modify/add the main operations.
+This relation is defined defined in the pseudocode below:
+
+.. code-block:: python
+    # Pseudocode illustrating the solver and model structure
+    @Solver
+    class IncompressibleFluidSolver:
+        models: list[IncompressibleFluidModel]  # List of additional physics models
+        @Solver.step(...)
+        def momentum(self, ...): pass
+        @Solver.step(...)
+        def continuity(self, ...): pass
+        @Solver.step(...)
+        def update_turbulence(self, ...): pass
+
+    @IncompressibleFluidModel.register
+    class BoussinesqModel:
+        @IncompressibleFluidModel.step(...)
+        def temperature_equation(self, ...): pass
+
+Each solver has a list of additional physics models that can add/modify the solver operations (see diagram above).
+Therefore, the solver can be easily extended with new physics models with little extra code.
+The user just needs to define a new physics model that adds the desired operations to the solver at runtime and without modifying the core solver implementation.
+The new models can be registered via the plugin architecture described later and selected via input files.
+
+Conceptual Implementation
+-------------------------
+
+After the solver and models are initialized, operations need to be identified, and sorted to determine the correct execution order of the solver and models.
+The correct execution order of the operations are stored in the **Operations** class roughly sketched below:
+
+.. code-block:: python
+    # Pseudocode how the operations are stored and executed
+    class Operations:
+        ops: list[Operation]  # All operations to be executed
+
+        def run(self,...): pass
+
+    class Operation:
+        func: callable
+        sub_operations: list[Operation]  # Operations added by models
+        metadata: Any  # Additional metadata to describe/sort the operation
+
+        def run(self,...): pass
+ 
+An operation represents a single computational step in the solver or model and can be seen as a function that performs a specific task.
+So, each solver or model can define multiple operations that are stored as Operation.
+This class is able to hold sub operations and metadata to help with the sorting the process of the operations.
+
+After the sorting process is completed (that will be described in detail in future documentation), the **Operations** class holds all the steps to sucessfully run the modified solver.
+
+This modular design enables users to easily add or remove physics effects without altering the fundamental solver structure, promoting code reuse and maintainability.
+
+
+.. note::
+
+    implementation is still work in progress
+
+Simulation with multiple Domains/Solvers
+----------------------------------------
+
+This concept can be easily extended to a multi-physics scenario with multiple computational domains and solvers.
+Each solver would define its own operations and the coupling between the solver can be automatically managed at runtime based on the defined physics models/settings.
 
 The following diagram illustrates the workflow for two common solver types for a conjugate heat transfer scenario:
 
@@ -65,139 +171,30 @@ The following diagram illustrates the workflow for two common solver types for a
         S2B --> S1E
 
 
-The diagram shows two selected solvers: a non-thermal-fluid solver and a thermal-solid solver.
-Each solver has its own setup phase and computational steps, with interactions between the two solvers for energy exchange.
+The diagram shows two selected solvers: a non-thermal-fluid solver and a thermal-solid solver that solve a conjugate heat transfer problem.
+Each solver has its own initialization phase after this the **Operations** of each solver are determined based on the selected physics models.
+One the coupling between the **Operations** is determined, the Operations of both solvers are modfied to include the data exchange between the two solvers.
 
-
-.. code-block:: python
-
-    # 'model' is a placeholder for the model dependency object required by each step.
-    model = ...  # placeholder for model dependency
-    @model("fluidSolver")
-    class DomainA:
-        @step(order=1, model)
-        def momentum(self, ctrl): pass
-        @step(order=2, model)
-        def solve_energy(self, ctrl): pass
-        @step(order=3, model)
-        def pressure_corrector(self, ctrl): pass
-        @step(order=4, model)
-        def update_turbulence(self, ctrl): pass
-
-    @model("solidSolver")
-    class DomainB:
-        @step(order=1, model)
-        def solve_energy(self, ctrl): pass
-        @step(order=2, model)
-        def update_solid_properties(self, ctrl): pass
-
-A solver is defined as a class with multiple steps, each step has to declare its dependencies.
-Additional models can be executed before and after each step to modify the behavior and add additional physics.
-
-This allows to easily extend existing solvers with new physics without modifying the core solver implementation and promotes code reuse.
 
 .. note::
 
-    The implementation is still work in progress but only details may change.
-
-Modular Solver Architecture
----------------------------
-
-The modular solver architectures allows to extend individiual solver by adding addititional physics modules.
-This is illustrated in the following diagram, where the fluid solver is extended by three physics submodules.
-
-.. mermaid::
-
-   flowchart TD
-        
-        subgraph MAIN ["Main Solver Loop"]
-            STEP1["Momentum Predictor<br/>Solve velocity equation"]
-            STEP2["Additional Physics Modules"]
-            STEP3["Pressure Corrector<br/>Ensure mass conservation"]
-            STEP4["Field Updates<br/>Correct U, φ, turbulence"]
-        end
-        
-        STEP1 --> STEP2
-        STEP2 --> STEP3
-        STEP3 --> STEP4
-        
-        %% Physics Extensions (simplified)
-        subgraph AddPhysics ["Additional Physics Modules"]
-            direction TB
-            POROSITY["Porosity"]
-            ROTATION["Rotating Reference Frame"]
-            BUOYANCY["Boussinesq Approximation"]
-        end
-        POROSITY -.-> STEP1
-        ROTATION -.-> STEP1
-        BUOYANCY -.-> STEP2
-        BUOYANCY -.-> STEP3
-
-        style MAIN fill:#E3F2FD
-        style AddPhysics fill:#E3F2FD
-        style STEP1 fill:#2196F3,color:#fff
-        style STEP2 fill:#FF9800,color:#fff
-        style STEP3 fill:#9C27B0,color:#fff
-        style STEP4 fill:#607D8B,color:#fff
+    The implementation is still work in progress.
 
 
-In this architecture, the main solver loop consists of core steps such as momentum prediction and pressure correction.
-Additional physics modules (e.g., porosity, rotation, buoyancy) can be plugged into the workflow to modify the behavior of these core steps.
-
-This modular design enables users to easily add or remove physics effects without altering the fundamental solver structure, promoting code reuse and maintainability.
-The additional physics modules need to define their dependencies and the runtime system ensures that they are executed at the correct point in the solver loop.
-
-.. note::
-
-    implementation is still work in progress
-
-Field and Model Initialization
-------------------------------
+Initialization Stage
+--------------------
 
 
-As the fields and solver needs to be initialized in the correct order before the solver run, FoamAdapter provides a structured initialization phase to ensure that the necessary fields and models are properly set up.
+The initialization stage is responsible for setting up the simulation environment, including reading input files, initializing fields, and preparing solvers and models.
 
-The fields and models are stored lazily at first with the dependencies and a DAG is solved to determine the correct initialization order.
+It is not fully designed yet but a stage initiliation is envisioned that performs the following tasks:
 
+1. Read input files and parse configuration settings.
+2. Initialize computational domains and meshes.
+3. Exchange dependencies between the different operations e.g. adding a Boussinesq Approximation requires to solve a different formaulation in the pressure equation.
+4. Define the operations for each solver based on the selected physics models.
+5. Sort the operations to determine the correct execution order.
 
-.. image:: pimpleDag.png
-   :alt: DAG of field and model dependencies for pimpleFoam
-   :align: center
-
-The following code snippet illustrates how a turbulence model and a derived field (face velocity) are defined with their dependencies:
-
-.. code-block:: python
-
-    class TurbulenceModel:
-    
-    
-        @property
-        def dependencies(self) -> list[str]:
-            return ["U", "phi", "singlePhaseTransportModel"]
-        
-        @property
-        def description(self) -> str:
-            return "Incompressible turbulence model"
-        
-        def __call__(self, deps: dict):
-            U = fields.get_field(deps, "U")
-            phi = fields.get_field(deps, "phi")
-            singlePhaseTransportModel = models.get_model(deps, "singlePhaseTransportModel")
-            turbulence = incompressibleTurbulenceModel.New(U, phi, singlePhaseTransportModel)
-            return turbulence
-
-
-    @fields.Fields.deps("U")
-    def create_face_velocity(deps: dict) -> surfaceScalarField:
-        U = fields.get_field(deps, "U")
-        phi_field = createPhi(U)
-        return surfaceScalarField(
-            value=phi_field,
-            dimensions=(0, 1, -1, 0, 0, 0, 0),
-            description="Face flux field",
-        )
-
-The same approach is used for all fields and models in FoamAdapter, ensuring a consistent and reliable initialization process.
 
 Plugin Architecture
 -------------------
