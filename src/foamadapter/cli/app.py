@@ -133,3 +133,75 @@ def pimplefoam(
 
     pimplefoam = PimpleFoam(argv)
     pimplefoam.run()
+
+
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
+def pimplefoam_solvermodel(
+    ctx: typer.Context,
+    check_inputs: bool = typer.Option(
+        False, "--check_inputs", help="Check inputs and mesh before running"
+    ),
+    case_dir: str = typer.Option(".", "--case", help="Case directory path"),
+):
+    """Run the pimpleFoam solver."""
+
+    from foamadapter.solver.pimpleFoam_SolverModel import PimpleFoamSolver, run_solver
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    
+    if check_inputs:
+        try:
+            # Get the registry from PimpleFoam
+            registry = PimpleFoamSolver(argv).inputs()
+            
+            # Validate the case using the registry
+            is_valid, errors = registry.validate_case(case_dir)
+            
+            if not is_valid:
+                typer.echo(
+                    typer.style(
+                        "Input validation failed:", fg=typer.colors.RED, bold=True
+                    )
+                )
+                for error in errors:
+                    typer.echo(f"error in {error.file_name}:")
+                    typer.echo(f"    error type     = {error.error_type}")
+                    typer.echo(f"    affected key   = {error.field}")
+                    typer.echo(f"    error message  = {error.message}")
+                    typer.echo(f"    provided value = {error.input_value}")
+
+                typer.echo(
+                    typer.style(
+                        "Fix the above errors before running the solver.",
+                        fg=typer.colors.YELLOW,
+                    )
+                )
+                raise typer.Exit(code=1)
+            
+            # Try to read all inputs using the registry
+            case_inputs = registry.read_case_inputs(case_dir, name="PimpleFoamInputs")
+            typer.echo(typer.style("All inputs are valid!", fg=typer.colors.GREEN))
+
+        except ValidationError as e:
+            typer.echo(
+                typer.style(
+                    "Input validation failed:", fg=typer.colors.RED, bold=True
+                )
+            )
+            typer.echo(format_pydantic_errors(e))
+            typer.echo(
+                typer.style(
+                    "Fix the above errors before running the solver.",
+                    fg=typer.colors.YELLOW,
+                )
+            )
+            raise typer.Exit(code=1)
+
+        return
+
+    run_solver(argv)
+
+
