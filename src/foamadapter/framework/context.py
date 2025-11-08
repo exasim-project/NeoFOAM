@@ -17,3 +17,5 @@ class Context(BaseModel):
     model_config = { "arbitrary_types_allowed": True }
     fields: dict[str, Any]
     models: dict[str, Any]
+    mesh: Any = None
+    runTime: Any = None

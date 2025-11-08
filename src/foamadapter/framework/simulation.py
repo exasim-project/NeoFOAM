@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from foamadapter.framework.operations import Operations
 from foamadapter.framework.step import Step
 from .solver import SolverInterface
 from .couplingInterface import CouplingInterface
@@ -18,8 +19,8 @@ class Domain(BaseModel):
     def dependencies(self) -> list[NodeData]:
         return self.solver.dependencies(self.name)
     
-    def steps(self) -> list[Step]:
-        return self.solver.steps(domain_name=self.name)
+    def operations(self) -> list[Step]:
+        return self.solver.operations(domain_name=self.name)
 
 
 # def run_solver(step: SolverInterface, ctx: Context):
@@ -49,14 +50,11 @@ class Simulation(BaseModel):
 
     def main_loop(self, sim_ctx: SimulationContext):
 
-
         if len(self.domains) != 1:
             raise NotImplementedError("Only single-domain simulations are supported currently.")
         
         for domain in self.domains:
-            steps = domain.steps()
+            ops_collection = domain.operations()
             ctx = sim_ctx.domain_context[domain.name]
-            for step in steps:
-                step.run(ctx)
-            # domain.solver.main_loop(ctx)
-            # run_solver(domain.solver, ctx)
+            ops = Operations(operations=ops_collection)
+            ops.run(ctx)

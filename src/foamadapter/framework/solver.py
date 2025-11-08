@@ -44,10 +44,8 @@ Solver.step = staticmethod(step)
 
 @runtime_checkable
 class SolverInterface(Protocol):
-    _steps: ClassVar[list[Step]]
 
-    @classmethod
-    def steps(cls) -> int:
+    def operations(self) -> int:
         ...
 
     def dependencies(self) -> list[NodeData]:
