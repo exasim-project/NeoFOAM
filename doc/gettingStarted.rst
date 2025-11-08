@@ -28,7 +28,7 @@ FoamAdapter uses CMake to build, thus the standard CMake procedure should work, 
 Building with CMake Presets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Additionally, we provide several CMake presets to set commonly required flags if you compile NeoFoam in combination with Kokkos.
+Additionally, we provide several CMake presets to set commonly required flags.
 
    .. code-block:: bash
 
@@ -48,7 +48,7 @@ Prerequisites
 
 The following tools are used in the development of this project:
 
-required tools for documentation:
+The required tools for documentation:
 
 .. code-block:: bash
 
@@ -56,7 +56,7 @@ required tools for documentation:
     pip install pre-commit sphinx furo breathe sphinx-sitemap
 
 
-required tools for compilation (ubuntu latest 24.04):
+The required tools for compilation (ubuntu latest 24.04):
 
 .. code-block:: bash
 
