@@ -22,7 +22,7 @@ solvers
         preconditioner  DIC;
         tolerance       1e-8;
         relTol          1e-5;
-        maxIter         500;
+        maxIter         1000;
     }
 
     pFinal
@@ -31,31 +31,12 @@ solvers
         relTol          0;
     }
 
-    nfP
-    {
-
-        solver          Ginkgo;
-        type            "solver::Cg";
-	// configFile      system/gko/config.mg.json;
-        preconditioner
-        {
-            type            "preconditioner::Jacobi"; // "preconditioner::Ic", "preconditioner::Ilu";
-            max_block_size  8;
-        }
-        criteria
-        {
-            iteration 500;
-            relative_residual_norm 1e-300;
-            absolute_residual_norm 1e-300;
-        }
-    }
-
     U
     {
         solver          smoothSolver;
         smoother        symGaussSeidel;
         tolerance       1e-05;
-        relTol          0;
+        relTol          0.0;
     }
 
     UFinal
@@ -75,7 +56,7 @@ solvers
 
 PISO
 {
-    momentumPredictor   no;
+    momentumPredictor   yes;
     nCorrectors     4;
     nNonOrthogonalCorrectors 0;
     pRefCell        0;

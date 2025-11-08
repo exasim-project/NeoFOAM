@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.get<NeoN::Dictionary>("solvers");
         solverDict.get<NeoN::Dictionary>("p") =
             nf::mapFvSolution(solverDict.get<NeoN::Dictionary>("p"));
+        solverDict.get<NeoN::Dictionary>("U") =
+            nf::mapFvSolution(solverDict.get<NeoN::Dictionary>("U"));
 
         Info << "creating nf pressure field" << endl;
         fvcc::VectorCollection& vectorCollection =
@@ -82,11 +84,7 @@ int main(int argc, char* argv[])
             auto& oldU = fvcc::oldTime(U);
             oldU.internalVector() = U.internalVector();
 
-            // FIXME TODO sync runTime
-            auto t = runTime.time().value();
-            auto dt = runTime.deltaT().value();
-
-            auto coNum = fvcc::computeCoNum(phi, dt);
+            auto coNum = fvcc::computeCoNum(phi, rt.dt);
             if (rt.adjustTimeStep)
             {
                 nf::setDeltaT(runTime, rt, coNum);
@@ -101,7 +99,7 @@ int main(int argc, char* argv[])
 
             if (piso.momentumPredictor())
             {
-                // UEqn.solve(dsl::exp::grad(p));
+                UEqn.solve();
             }
             else
             {
@@ -114,23 +112,28 @@ int main(int argc, char* argv[])
             while (piso.correct())
             {
                 Info << "PISO loop" << endl;
-                auto [rAU, hByA] = nf::computeRAUandHByA(UEqn);
+                auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
-                nnfvcc::SurfaceField<NeoN::scalar> nfrAUf =
+                nnfvcc::SurfaceField<NeoN::scalar> rAU =
                     fvcc::SurfaceInterpolation<NeoN::scalar>(
                         rt.exec,
                         rt.nfMesh,
                         NeoN::TokenList({std::string("linear")})
                     )
-                        .interpolate(rAU);
-                nfrAUf.name = "rAUf";
+                        .interpolate(crAU);
+                rAU.name = "rAUf";
 
-                // TODO: + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi)
                 auto phiHbyA = nf::flux(hByA);
+                // TODO: OpenFOAM typically also corrects phiHbyA with
+                // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
+                // for the first term we can use but fvc::ddtCorr is missing
+                // NeoN::Input input = NeoN::TokenList({"linear"});
+                // fvcc::SurfaceInterpolation<NeoN::scalar> surfInterpolation(rt.exec, rt.nfMesh,
+                // input); auto surfRAU = surfInterpolation.interpolate(rAU);
 
+                // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
-
                 // Update the pressure BCs to ensure flux consistency
                 // Foam::constrainPressure(p, U, phiHbyA, rAU);
 
@@ -139,7 +142,7 @@ int main(int argc, char* argv[])
                 {
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
-                        NeoN::dsl::imp::laplacian(nfrAUf, p) - NeoN::dsl::exp::div(phiHbyA),
+                        NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
                         rt
                     );
@@ -157,10 +160,10 @@ int main(int argc, char* argv[])
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
                 }
-                // TODO:
+                // TODO: missing
                 // #include "continuityErrs.H"
 
-                nf::updateVelocity(hByA, rAU, p, U);
+                nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
             }
 
@@ -169,6 +172,7 @@ int main(int argc, char* argv[])
             {
                 Info << "writing p field" << endl;
                 write(p.internalVector(), mesh, "p");
+                Info << "writing U field" << endl;
                 write(U.internalVector(), mesh, "U");
             }
 

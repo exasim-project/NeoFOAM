@@ -26,7 +26,9 @@ dev = [
     "flake8",
     "isort",
     "mypy",
-    "pandas>=2.0.0"
+    "pandas>=2.0.0",
+    "poethepoet>=0.37.0",
+    "ruff>=0.14.2",
 ]
 docs = [
     "sphinx>=4.0",
@@ -54,6 +56,21 @@ requires = ["uv_build>=0.8.6,<0.9.0"]
 build-backend = "uv_build"
 
 
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+extend-exclude = ["build/", "dist/"]
+
+[tool.ruff.lint]
+select = ["E","F","I"]  # enable isort (I) + basic lint
+
+# optional per-rule ignores
+ignore = []
+
+# isort options (import sorting)
+[tool.ruff.lint.isort]
+known-first-party = ["foamadapter"]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra --showlocals"
@@ -61,3 +78,10 @@ testpaths = [
     "test"
 ]
 
+
+[tool.poe.tasks]
+test = "pytest"
+lint = "ruff check src/ test/ --exclude src/NeoN"
+format = "ruff format src/ test/ --exclude src/NeoN"
+build_docs = "sphinx-build -b html doc doc/_build"
+view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }

@@ -56,8 +56,8 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr);
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
 computeRAUandHByA(const PDESolver<Vec3>& expr);
 
-/* @brief
- *
+/* @brief computes phi = phiHbyA - pEqn.flux();
+ * where pEqn.flux
  * @note assumes an assembled system matrix
  */
 void updateFaceVelocity(
@@ -67,6 +67,7 @@ void updateFaceVelocity(
 );
 
 /* @brief velocity based on HbyA, rAU and current pressure value
+ * U = HbyA - rAU*fvc::grad(p);
  *
  * @details once Hby rAU and a current pressure value is available
  * an updated velocity can be computed according to
@@ -77,7 +78,7 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
-    nnfvcc::VolumeField<Vec3>& u
+    nnfvcc::VolumeField<Vec3>& U
 );
 
 

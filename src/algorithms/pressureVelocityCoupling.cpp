@@ -19,7 +19,6 @@ void constrainHbyA(
 {
     auto hByAin = hByA.internalVector().view();
     auto [hByABcValue, uBcValue] = views(hByA.boundaryData().value(), u.boundaryData().value());
-
     const auto& uBCs = u.boundaryConditions();
 
     for (auto patchi = 0; patchi < uBCs.size(); ++patchi)

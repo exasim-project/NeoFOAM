@@ -3,6 +3,7 @@
 - python top level solver
 - CLI for tools and solvers
 - utilize openfoam python bindings
+- created python package with CLI
 
 # Version 0.2.0 (unreleased)
 - improve solver interface with neon [#114](https://github.com/exasim-project/FoamAdapter/pull/114)

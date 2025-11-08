@@ -31,12 +31,9 @@ TEST_CASE("fvSolution")
     auto meshPtr = FoamAdapter::createMesh(exec, runTime);
     FoamAdapter::MeshAdapter& mesh = *meshPtr;
 
-
     NeoN::Dictionary fvSolutionDict = FoamAdapter::convert(mesh.solutionDict());
     NeoN::Dictionary& solverDict = fvSolutionDict.subDict("solvers");
-
     NeoN::Dictionary& solver1 = solverDict.subDict("solver1");
-
 
     SECTION("updateSolver")
     {
@@ -61,9 +58,6 @@ TEST_CASE("fvSolution")
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Bicgstab");
         }
-        // FoamAdapter::updateSolver(solver1);
-        // REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
-        // REQUIRE(solver1.get<std::string>("type") == "solver::Cg");
     }
 
     SECTION("updatePreconditioner")
@@ -74,7 +68,7 @@ TEST_CASE("fvSolution")
             FoamAdapter::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Jacobi");
-            REQUIRE(preconditionerDict.get<int>("max_block_size") == 8);
+            REQUIRE(preconditionerDict.get<int>("max_block_size") == 1);
         }
         SECTION("DILU")
         {
@@ -89,9 +83,4 @@ TEST_CASE("fvSolution")
             );
         }
     }
-
-
-    // FoamAdapter::updateSolver(solver1);
-
-    // REQUIRE(solverDict.get<NeoN::Dictionary>("solver1").get<std::string>("solver") == "Ginkgo");
 }

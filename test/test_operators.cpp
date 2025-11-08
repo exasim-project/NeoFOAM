@@ -69,10 +69,19 @@ TEST_CASE("Interpolation")
         auto nfGradT = FoamAdapter::constructFrom(exec, nfMesh, ofGradT);
         zero(nfGradT, NeoN::Vec3(0.0, 0.0, 0.0));
 
-        fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, nfGradT);
+        fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, NeoN::dsl::Coeff(), nfGradT.internalVector());
         nfGradT.correctBoundaryConditions();
+        auto nfGradTHost = nfGradT.internalVector().copyToHost();
+        for (size_t celli = 0; celli < nfGradTHost.size(); celli++)
+        {
+            REQUIRE(nfGradTHost.view()[celli][0] == Catch::Approx(ofGradT[celli][0]).margin(1e-15));
+            REQUIRE(nfGradTHost.view()[celli][1] == Catch::Approx(ofGradT[celli][1]).margin(1e-15));
+            // NOTE: we relax test in z direction, OpenFOAM explicitly zeros out in 2D case
+            REQUIRE(nfGradTHost.view()[celli][2] == Catch::Approx(ofGradT[celli][2]).margin(1e-6));
+        }
 
-        FoamAdapter::compare(nfGradT, ofGradT, ApproxVector(1e-12), false);
+        // NOTE not using compare for now since it has same tolerance in all directions
+        // FoamAdapter::compare(nfGradT, ofGradT, ApproxVector(1e-15), false);
     }
 
     Foam::surfaceScalarField ofPhi(
@@ -103,6 +112,7 @@ TEST_CASE("Interpolation")
 
         FoamAdapter::compare(nfDivT, ofDivT, ApproxScalar(1e-15), false);
     }
+
 
     SECTION("linear GaussGreen from expression on " + execName)
     {
