@@ -13,7 +13,8 @@ dependencies = [
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
-    "matplotlib>=3.0.0"
+    "matplotlib>=3.0.0",
+    "pyvis>=0.3.2",
 ]
 
 [project.optional-dependencies]
@@ -32,11 +33,18 @@ docs = [
     "myst-parser",
     "sphinx-sitemap",
     "furo",
-    "sphinxcontrib-mermaid"
+    "sphinxcontrib-mermaid",
+    "sphinx-togglebutton>=0.3.2",
+    "breathe"
+]
+server = [
+    "fastapi>=0.121.0",
+    "uvicorn>=0.38.0",
 ]
 all = [
-    "foamadapter[dev,docs]",
+    "foamadapter[dev,docs,server]",
 ]
+
 
 [project.scripts]
 foamadapter = "foamadapter.cli.app:app"
