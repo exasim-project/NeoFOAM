@@ -1,6 +1,7 @@
 # Version 0.3.0 (planned)
 
 - created python package with CLI
+- added coverage, format, linting, type checking to CI
 
 # Version 0.2.0 (unreleased)
 - improve solver interface with neon [#114](https://github.com/exasim-project/FoamAdapter/pull/114)
