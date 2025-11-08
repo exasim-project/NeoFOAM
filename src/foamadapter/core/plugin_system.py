@@ -90,3 +90,11 @@ class PluginSystem:
             base_cls.create = classmethod(create)
             return base_cls
         return base_decorator
+    
+    @classmethod
+    def get_registered(cls, base_cls_name: str) -> PluginRegistry:
+        return cls._registry.get(base_cls_name, None)
+    
+    @classmethod
+    def list_plugins(cls):
+        return {name: reg.plugin_registry for name, reg in cls._registry.items()}
