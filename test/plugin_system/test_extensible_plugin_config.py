@@ -85,6 +85,9 @@ def test_extensibility_n_models():
     assert m5.shape.length == 2.0
     assert m5.shape.shape_type == "polygon"
 
+    assert PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig) is True
+    assert PluginSystem.remove_plugin_model("ShapeInterface", PolygonConfig) is True
+
 
 def test_json_schema():
     Shape = ShapeInterface.plugin_model
@@ -111,6 +114,9 @@ def test_json_schema():
     mapping = schema["properties"]["shape"]["discriminator"]["mapping"]
     assert "polygon" in mapping
 
+    assert PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig) is True
+    assert PluginSystem.remove_plugin_model("ShapeInterface", PolygonConfig) is True
+
 
 def test_plugin_registry():
     ShapeInterface.register(TriangleConfig)
@@ -123,6 +129,9 @@ def test_plugin_registry():
     assert "RectangleConfig" in plugin_names
     assert "TriangleConfig" in plugin_names
     assert "PolygonConfig" in plugin_names
+
+    assert PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig) is True
+    assert PluginSystem.remove_plugin_model("ShapeInterface", PolygonConfig) is True
 
 
 @PluginSystem.register(discriminator_variable="animal", discriminator="animal_type")
@@ -149,6 +158,9 @@ def test_list_plugins():
     assert "RectangleConfig" in shape_plugin_names
     assert "TriangleConfig" in shape_plugin_names
     assert "PolygonConfig" in shape_plugin_names
+
+    assert PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig) is True
+    assert PluginSystem.remove_plugin_model("ShapeInterface", PolygonConfig) is True
 
     animal_plugin_names = [cls.__name__ for cls in plugins["AnimalInterface"]]
     assert "Dog" in animal_plugin_names

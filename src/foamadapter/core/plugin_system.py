@@ -96,5 +96,24 @@ class PluginSystem:
         return cls._registry.get(base_cls_name, None)
     
     @classmethod
+    def remove_plugin_model(cls, base_cls_name: str, registered_class: Type[BaseModel]) -> bool:
+        registry = cls._registry.get(base_cls_name, None)
+        if registry is None:
+            return False
+        if registered_class in registry.plugin_registry:
+            registry.plugin_registry.remove(registered_class)
+            union = Annotated[Union[tuple(registry.plugin_registry)], Field(discriminator=registry.discriminator)]
+            model = create_model(
+                f"{base_cls_name}ExtensibleModel",
+                **{registry.discriminator_variable: (union, ...)},
+                __base__=registry.base_cls
+            )
+            registry.plugin_model = model
+            registry.base_cls.plugin_model = model
+            return True
+        return False
+        
+
+    @classmethod
     def list_plugins(cls):
         return {name: reg.plugin_registry for name, reg in cls._registry.items()}
