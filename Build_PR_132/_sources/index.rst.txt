@@ -32,7 +32,6 @@ Table of Contents
    :caption: Development:
 
    development/architecture
-   development/contributing
    development/testing
 
 .. toctree::

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Contributing Guide" href="contributing.html"><link rel="prev" title="Command Line Interface" href="../usage/cli.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="prev" title="Command Line Interface" href="../usage/cli.html">
         <link rel="canonical" href="https://exasim-project.com/FoamAdapter/development/architecture.html">
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2025.09.25 -->
@@ -195,7 +195,7 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to FoamAdapter!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html">Goals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html#features">Features</a></li>
@@ -209,8 +209,6 @@
 <p class="caption" role="heading"><span class="caption-text">Development:</span></p>
 <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing Documentation</a></li>
 </ul>
 
 </div>
@@ -251,103 +249,49 @@
         <article role="main" id="furo-main-content">
           <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
-<p>FoamAdapter is multilanguage repository as it contains both C++ and python code.
-This document describes the architecture of FoamAdapter, including the C++ core and Python interface components.</p>
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>FoamAdapter is designed as a multi-physics, python-based simulation framework.
-Additionally, a set of C++ based legacy solvers like neoIcoFoam simplify the transition from existing OpenFOAM solvers and workflows.
-It provides a flexible and modular architecture that allows users to easily extend and customize the simulation setup.</p>
-<p>The architecture provides following features to achieve the goals outlined in the <a class="reference internal" href="../goals_features.html"><span class="doc">goals and features</span></a> document:</p>
-<ul class="simple">
-<li><p>Easy coupling of multiple domains and physics</p></li>
-<li><p>Field and model initialization based on dependency graphs</p></li>
-<li><p>Modular solver design that computes the data dependencies at runtime</p></li>
-<li><p>Plugin architecture for easy extension with new models and fields</p></li>
-</ul>
-<p>In order to implement multi-physics capabilities multliple computational domains are supported.
-Each computational domain has one physics module assigned that defines the governing equations and physical models.
-Multiple domains can be defined with input files and the coupling between the domains is handled automatically based on the defined physics modules.</p>
-<p>The following sections describe the main feature and implementation example to give a high level overview of the architecture.</p>
-</section>
-<section id="solver-execution-model">
-<h2>Solver Execution Model<a class="headerlink" href="#solver-execution-model" title="Link to this heading">¶</a></h2>
-<p>FoamAdapter defines solver behavior as a dependency-driven execution model.
-Each solver declares its required fields and models, and the runtime system constructs a directed acyclic graph (DAG) to determine the correct execution order.</p>
-<p>The following diagram illustrates the workflow for two common solver types for a conjugate heat transfer scenario:</p>
-<pre  class="mermaid">
-        %%{init: {'flowchart': { 'htmlLabels': true, 'wrap': true }}}%%
-flowchart TB
-    subgraph setup1 [&quot;setup &quot;]
-        direction TB
-        S1A[&quot;Initialize Fields&quot;]
-    end
-
-    subgraph setup2 [&quot;setup&quot;]
-        direction TB
-        S2A[&quot;Initialize Temperature Field&quot;]
-    end
-
-    subgraph S1 [&quot;non-thermal-fluid solver&quot;]
-        direction TB
-        S1C[&quot;Momentum Predictor&quot;]
-        S1C --&gt; S1E[&quot;Solve Energy Equation&quot;]
-        S1E --&gt; S1F[&quot;Pressure Corrector&lt;br/&gt;PISO Loop&quot;]
-        S1F --&gt; S1J[&quot;Update turbulence Model&quot;]
-    end
-
-    subgraph S2 [&quot;thermal-solid solver&quot;]
-        direction TB
-        S2B[&quot;Solve Energy Equation&quot;] --&gt; S2D[&quot;Update Solid Properties&quot;]
-    end
-
-    setup1 --&gt; S1C
-    setup2 --&gt; S2B
-    S1E --&gt; S2B
-    S2B --&gt; S1E
-    </pre><p>The diagram shows two selected solvers: a non-thermal-fluid solver and a thermal-solid solver.
-Each solver has its own setup phase and computational steps, with interactions between the two solvers for energy exchange.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># &#39;model&#39; is a placeholder for the model dependency object required by each step.</span>
-<span class="n">model</span> <span class="o">=</span> <span class="o">...</span>  <span class="c1"># placeholder for model dependency</span>
-<span class="nd">@model</span><span class="p">(</span><span class="s2">&quot;fluidSolver&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">DomainA</span><span class="p">:</span>
-    <span class="nd">@step</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@step</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">solve_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@step</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">pressure_corrector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@step</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span> <span class="k">pass</span>
-
-<span class="nd">@model</span><span class="p">(</span><span class="s2">&quot;solidSolver&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">DomainB</span><span class="p">:</span>
-    <span class="nd">@step</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">solve_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@step</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">update_solid_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span> <span class="k">pass</span>
-</pre></div>
-</div>
-<p>A solver is defined as a class with multiple steps, each step has to declare its dependencies.
-Additional models can be executed before and after each step to modify the behavior and add additional physics.</p>
-<p>This allows to easily extend existing solvers with new physics without modifying the core solver implementation and promotes code reuse.</p>
+<p>FoamAdapter is a multi-language repository containing both C++ and Python code.
+This document describes the architecture of FoamAdapter, including its C++ core and Python interface components.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The implementation is still work in progress but only details may change.</p>
+<dl class="simple">
+<dt>This section of the documentation provides:</dt><dd><ul class="simple">
+<li><p>a high-level overview of the <em>planned</em> architecture</p></li>
+<li><p>guidance through the review process</p></li>
+<li><p>example implementations serving only as proof of concept to illustrate the <em>planned</em> architecture</p></li>
+<li><p>a note that detailed features will evolve and refine the architecture, updating examples as development progresses</p></li>
+</ul>
+</dd>
+</dl>
 </div>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>FoamAdapter is designed as a multi-physics, Python-based simulation framework.
+Additionally, it includes a set of C++-based legacy solvers, such as neoIcoFoam, to simplify the transition from existing OpenFOAM solvers and workflows.
+It provides a flexible and modular architecture that allows users to easily extend and customize their simulation setup.</p>
+<p>The architecture provides the following features to achieve the goals outlined in the <a class="reference internal" href="../goals_features.html"><span class="doc">goals and features</span></a> document:</p>
+<ul class="simple">
+<li><p>Easy coupling of multiple domains and physical models</p></li>
+<li><p>Field and model initialization based on dependency graphs</p></li>
+<li><p>Modular solver design that computes data dependencies at runtime</p></li>
+<li><p>Plugin architecture for extending models and fields</p></li>
+</ul>
+<p>To support multi-physics capabilities, multiple computational domains are implemented.
+Each domain has <strong>one solver</strong> assigned, which defines the governing equations, operations, and <strong>optional additional physical models.</strong>
+Multiple domains can be defined via input files, and coupling between domains is automatically handled based on the selected physics modules.</p>
+<p>The following sections describe the main architectural features and implementation examples, providing a high-level overview.</p>
 </section>
-<section id="modular-solver-architecture">
-<h2>Modular Solver Architecture<a class="headerlink" href="#modular-solver-architecture" title="Link to this heading">¶</a></h2>
-<p>The modular solver architectures allows to extend individiual solver by adding addititional physics modules.
-This is illustrated in the following diagram, where the fluid solver is extended by three physics submodules.</p>
+<section id="extensible-solver-architecture">
+<h2>Extensible Solver Architecture<a class="headerlink" href="#extensible-solver-architecture" title="Link to this heading">¶</a></h2>
+<p>To promote code reuse and maintainability, solver execution steps (operations) can be configured at runtime based on the selected physics models.
+This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.</p>
 <pre  class="mermaid">
         flowchart TD
 
      subgraph MAIN [&quot;Main Solver Loop&quot;]
-         STEP1[&quot;Momentum Predictor&lt;br/&gt;Solve velocity equation&quot;]
-         STEP2[&quot;Additional Physics Modules&quot;]
-         STEP3[&quot;Pressure Corrector&lt;br/&gt;Ensure mass conservation&quot;]
-         STEP4[&quot;Field Updates&lt;br/&gt;Correct U, φ, turbulence&quot;]
+         STEP1[&quot;Solver &lt;/br&gt; Momentum Equation&quot;]
+         STEP2[&quot;Added by Model &lt;/br&gt; Temperature Equation&quot;]
+         STEP3[&quot;Solver &lt;/br&gt; Continuity Equation&quot;]
+         STEP4[&quot;Solver &lt;/br&gt; Update Turbulence&quot;]
      end
 
      STEP1 --&gt; STEP2
@@ -372,69 +316,99 @@ This is illustrated in the following diagram, where the fluid solver is extended
      style STEP2 fill:#FF9800,color:#fff
      style STEP3 fill:#9C27B0,color:#fff
      style STEP4 fill:#607D8B,color:#fff
-    </pre><p>In this architecture, the main solver loop consists of core steps such as momentum prediction and pressure correction.
-Additional physics modules (e.g., porosity, rotation, buoyancy) can be plugged into the workflow to modify the behavior of these core steps.</p>
-<p>This modular design enables users to easily add or remove physics effects without altering the fundamental solver structure, promoting code reuse and maintainability.
-The additional physics modules need to define their dependencies and the runtime system ensures that they are executed at the correct point in the solver loop.</p>
+    </pre><p>The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
+Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
+This relationship is illustrated in the pseudocode below:</p>
+<p>Each solver maintains a list of additional physics models that can add or modify operations.
+As a result, the solver can be easily extended with new physics using minimal additional code.
+Users only need to define a new model that adds the desired operations to the solver at runtime, without modifying the core solver.
+New models can be registered via the plugin system and selected in input files.</p>
+</section>
+<section id="conceptual-implementation">
+<h2>Conceptual Implementation<a class="headerlink" href="#conceptual-implementation" title="Link to this heading">¶</a></h2>
+<p>After solvers and models are initialized, their operations must be identified and sorted to determine the correct execution order.
+This order is managed by the <strong>Operations</strong> class, shown conceptually below:</p>
+<p>An operation represents a single computational step in a solver or model, functioning as a callable task.
+Each solver or model can define multiple operations stored as <cite>Operation</cite> objects.
+These can hold sub-operations and metadata to assist in sorting and dependency management.</p>
+<p>After sorting (detailed in future documentation), the <cite>Operations</cite> class holds all steps required to run the modified solver successfully.</p>
+<p>This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>implementation is still work in progress</p>
+<p>Implementation is still a work in progress.</p>
 </div>
 </section>
-<section id="field-and-model-initialization">
-<h2>Field and Model Initialization<a class="headerlink" href="#field-and-model-initialization" title="Link to this heading">¶</a></h2>
-<p>As the fields and solver needs to be initialized in the correct order before the solver run, FoamAdapter provides a structured initialization phase to ensure that the necessary fields and models are properly set up.</p>
-<p>The fields and models are stored lazily at first with the dependencies and a DAG is solved to determine the correct initialization order.</p>
-<img alt="DAG of field and model dependencies for pimpleFoam" class="align-center" src="../_images/pimpleDag.png" />
-<p>The following code snippet illustrates how a turbulence model and a derived field (face velocity) are defined with their dependencies:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TurbulenceModel</span><span class="p">:</span>
+<section id="simulation-with-multiple-domains-solvers">
+<h2>Simulation with Multiple Domains/Solvers<a class="headerlink" href="#simulation-with-multiple-domains-solvers" title="Link to this heading">¶</a></h2>
+<p>The same concept can be extended to multi-physics scenarios with multiple domains and solvers.
+Each solver defines its own operations, while coupling between solvers is managed automatically at runtime based on defined physics models and settings.</p>
+<p>The diagram below illustrates this workflow for a conjugate heat transfer example:</p>
+<pre  class="mermaid">
+        %%{init: {'flowchart': { 'htmlLabels': true, 'wrap': true }}}%%
+flowchart TB
+    subgraph setup1 [&quot;Setup&quot;]
+        direction TB
+        S1A[&quot;Initialize Fields&quot;]
+    end
 
+    subgraph setup2 [&quot;Setup&quot;]
+        direction TB
+        S2A[&quot;Initialize Temperature Field&quot;]
+    end
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="s2">&quot;singlePhaseTransportModel&quot;</span><span class="p">]</span>
+    subgraph S1 [&quot;Non-Thermal Fluid Solver&quot;]
+        direction TB
+        S1C[&quot;Momentum Predictor&quot;]
+        S1C --&gt; S1E[&quot;Solve Energy Equation&quot;]
+        S1E --&gt; S1F[&quot;Pressure Corrector&lt;br/&gt;PISO Loop&quot;]
+        S1F --&gt; S1J[&quot;Update Turbulence Model&quot;]
+    end
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Incompressible turbulence model&quot;</span>
+    subgraph S2 [&quot;Thermal Solid Solver&quot;]
+        direction TB
+        S2B[&quot;Solve Energy Equation&quot;] --&gt; S2D[&quot;Update Solid Properties&quot;]
+    end
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">U</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">deps</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">deps</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">)</span>
-        <span class="n">singlePhaseTransportModel</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">deps</span><span class="p">,</span> <span class="s2">&quot;singlePhaseTransportModel&quot;</span><span class="p">)</span>
-        <span class="n">turbulence</span> <span class="o">=</span> <span class="n">incompressibleTurbulenceModel</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">singlePhaseTransportModel</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">turbulence</span>
-
-
-<span class="nd">@fields</span><span class="o">.</span><span class="n">Fields</span><span class="o">.</span><span class="n">deps</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">create_face_velocity</span><span class="p">(</span><span class="n">deps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-    <span class="n">U</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">deps</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
-    <span class="n">phi_field</span> <span class="o">=</span> <span class="n">createPhi</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span>
-        <span class="n">value</span><span class="o">=</span><span class="n">phi_field</span><span class="p">,</span>
-        <span class="n">dimensions</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Face flux field&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-</pre></div>
+    setup1 --&gt; S1C
+    setup2 --&gt; S2B
+    S1E --&gt; S2B
+    S2B --&gt; S1E
+    </pre><p>Here, a non-thermal fluid solver and a thermal solid solver solve a conjugate heat transfer problem.
+Each solver has its own initialization phase. Once the <strong>Operations</strong> are determined, coupling between them is established.
+The operation sequences of both solvers are then updated to include inter-solver data exchange.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Implementation is still a work in progress.</p>
 </div>
-<p>The same approach is used for all fields and models in FoamAdapter, ensuring a consistent and reliable initialization process.</p>
+</section>
+<section id="initialization-stage">
+<h2>Initialization Stage<a class="headerlink" href="#initialization-stage" title="Link to this heading">¶</a></h2>
+<p>The initialization stage sets up the simulation environment — reading input files, initializing fields, and preparing solvers and models.</p>
+<p>Although not yet finalized, the planned initialization stage will perform the following tasks:</p>
+<ol class="arabic simple">
+<li><p>Read and parse input files and configuration settings.</p></li>
+<li><p>Initialize computational domains and meshes.</p></li>
+<li><p>Exchange dependencies between operations (e.g., adding a Boussinesq approximation modifies the pressure equation formulation).</p></li>
+<li><p>Define solver operations based on selected physics models.</p></li>
+<li><p>Sort operations to determine correct execution order.</p></li>
+</ol>
 </section>
 <section id="plugin-architecture">
 <h2>Plugin Architecture<a class="headerlink" href="#plugin-architecture" title="Link to this heading">¶</a></h2>
 <section id="motivation">
 <h3>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h3>
-<p>Modern scientific and engineering workflows require flexible simulation frameworks that can be easily extended and customized.
-FoamAdapter’s plugin architecture is designed to enable users and developers to add new physics models, boundary conditions, and solver modules without modifying the core codebase.
-This approach promotes maintainability, collaboration, and rapid prototyping of new features.</p>
+<p>Modern scientific and engineering workflows require flexible, extensible frameworks.
+FoamAdapter’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
+This promotes maintainability, collaboration, and rapid prototyping.</p>
 </section>
 <section id="concept">
 <h3>Concept<a class="headerlink" href="#concept" title="Link to this heading">¶</a></h3>
-<p>FoamAdapter implements a runtime-extensible plugin/config system using Pydantic discriminated unions and a registry pattern.
-The core idea is to allow new plugin types (e.g., models, fields, solvers) to be registered dynamically, either at runtime or via Python entry points (setuptools).
-Each plugin type (such as physics models or boundary conditions) is managed by a registry, which collects all available plugin classes and exposes a unified configuration model for input validation and schema generation.</p>
+<p>FoamAdapter implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
+The core idea is to allow new plugin types (e.g., models, fields, solvers) to be dynamically registered at runtime or via Python entry points (setuptools).
+Each plugin type (such as a physics model or boundary condition) is managed by a registry, which collects available classes and exposes a unified configuration model for validation and schema generation.</p>
 <p><strong>Background: Pydantic Discriminated Unions</strong></p>
-<p>Pydantic supports discriminated unions for type-safe configuration, but the set of types in the union must be known at model definition time.
-The following example ensures that a pet is either Cat, Dog, or Lizard</p>
+<p>Pydantic supports discriminated unions for type-safe configuration, but union members must be defined at model creation time.
+For example, the following ensures a pet is either a Cat, Dog, or Lizard:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
@@ -447,7 +421,7 @@ The following example ensures that a pet is either Cat, Dog, or Lizard</p>
     <span class="n">barks</span><span class="p">:</span> <span class="nb">float</span>
 
 <span class="k">class</span> <span class="nc">Lizard</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;reptile&#39;</span><span class="p">,</span> <span class="s1">&#39;lizard&#39;</span><span class="p">]</span>
+    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;lizard&#39;</span><span class="p">]</span>
     <span class="n">scales</span><span class="p">:</span> <span class="nb">bool</span>
 
 <span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -455,22 +429,22 @@ The following example ensures that a pet is either Cat, Dog, or Lizard</p>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
 </pre></div>
 </div>
-<p>This works well for static unions, but it is not possible to add new types to the union at runtime. This is a challenge for plugin systems, where extensibility is required.</p>
+<p>This works for static unions but cannot be extended dynamically — a limitation for plugin systems.</p>
 <p><strong>How FoamAdapter Solves This</strong></p>
-<p>Plugins are registered using a decorator-based API, making it easy for users to define and integrate new modules.
-Whenever a new plugin is registered, the system automatically rebuilds the Pydantic model for the plugin type, updating the discriminated union to include all registered types.
-This means that the configuration model always reflects the current set of available plugins, and input validation is always up to date.</p>
-<p>For example, after registering a new shape plugin, you can immediately use the updated model for validation:</p>
+<p>Plugins are registered using a decorator-based API.
+Each registration automatically rebuilds the Pydantic model for that plugin type, updating the discriminated union to include new plugins.
+Thus, the configuration model always reflects available plugins and remains valid for schema generation and input validation.</p>
+<p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ShapeBase</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">TriangleConfig</span><span class="p">)</span>
 <span class="n">shape</span> <span class="o">=</span> <span class="n">ShapeBase</span><span class="o">.</span><span class="n">plugin_model</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape_type&quot;</span><span class="p">:</span> <span class="s2">&quot;triangle&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This dynamic rebuilding of the model enables true runtime extensibility and ensures that input validation and schema generation always match the available plugins.
-The <cite>plugin_model</cite> attribute needs to be called to obtain the up-to-date model for the plugin type.</p>
+<p>This approach enables <strong>true runtime extensibility</strong> while maintaining strong input validation.
+The updated model can always be retrieved via the <cite>plugin_model</cite> attribute.</p>
 </section>
 <section id="usage">
 <h3>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h3>
-<p>To add a new plugin, users simply define a new Python class for their model or field and register it with the appropriate base class:</p>
+<p>To add a new plugin, users define a Python class and register it with the corresponding base class:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">foamadapter.core.plugin_system</span> <span class="kn">import</span> <span class="n">PluginSystem</span>
 
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
@@ -487,22 +461,22 @@ The <cite>plugin_model</cite> attribute needs to be called to obtain the up-to-d
 </pre></div>
 </div>
 <p>Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend FoamAdapter seamlessly.
-The unified configuration model and schema make it easy to build UIs, validate inputs, and document available plugins.</p>
+The unified configuration and schema system simplifies UI generation, input validation, and documentation of available plugins.</p>
 </section>
 </section>
 <section id="model-introspection-and-schema-generation">
 <h2>Model Introspection and Schema Generation<a class="headerlink" href="#model-introspection-and-schema-generation" title="Link to this heading">¶</a></h2>
-<p>Model configuration and validation in FoamAdapter are implemented using Pydantic, which provides native support for input validation and automatic JSON Schema generation.
-This mechanism forms the basis for model discovery, UI integration, and automated documentation across the framework.</p>
-<p>Pydantic’s schema generation enables the following functionality:</p>
+<p>Model configuration and validation in FoamAdapter are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
+This mechanism enables model discovery, UI integration, and automatic documentation.</p>
+<p>Pydantic’s schema generation supports:</p>
 <ul class="simple">
-<li><p>Input validation: Ensures model configurations are consistent and type-safe.</p></li>
-<li><p>UI integration: Allows user interfaces to be generated dynamically from model definitions.</p></li>
-<li><p>Automatic documentation: Exposes field names, types, and constraints for all models.</p></li>
-<li><p>Metadata generation: Facilitates downstream tools to query and reason about model structures.</p></li>
-<li><p>AI-assisted workflows: Supports schema-driven interactions with generative AI systems.</p></li>
+<li><p>Input validation — ensures consistent and type-safe configurations</p></li>
+<li><p>UI generation — enables dynamic form or editor creation</p></li>
+<li><p>Automatic documentation — exposes all field names, types, and constraints</p></li>
+<li><p>Metadata discovery — supports downstream analysis and automation</p></li>
+<li><p>AI-assisted workflows — provides structured schemas for AI-based reasoning</p></li>
 </ul>
-<p>To obtain a model’s JSON Schema representation, use the model_json_schema() method provided by Pydantic:</p>
+<p>To retrieve a model’s JSON Schema, use:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For a registered plugin or configuration model</span>
 <span class="n">schema</span> <span class="o">=</span> <span class="n">ShapeBase</span><span class="o">.</span><span class="n">plugin_model</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
 
@@ -510,8 +484,8 @@ This mechanism forms the basis for model discovery, UI integration, and automate
 <span class="n">schema</span> <span class="o">=</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>This interface provides a uniform mechanism for introspection of all models in FoamAdapter, making it possible to programmatically discover available fields, their data types, validation rules, and default values.</p>
-<p>This requires that all plugin, solver, or model use Pydantic to configure the inputs.</p>
+<p>This unified mechanism allows programmatic discovery of fields, types, validation rules, and defaults.
+All solvers, models, and plugins must therefore use Pydantic for input configuration.</p>
 </section>
 </section>
 
@@ -520,15 +494,7 @@ This mechanism forms the basis for model discovery, UI integration, and automate
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="contributing.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">Contributing Guide</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
+          
           <a class="prev-page" href="../usage/cli.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
@@ -572,9 +538,10 @@ This mechanism forms the basis for model discovery, UI integration, and automate
             <ul>
 <li><a class="reference internal" href="#">Architecture</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
-<li><a class="reference internal" href="#solver-execution-model">Solver Execution Model</a></li>
-<li><a class="reference internal" href="#modular-solver-architecture">Modular Solver Architecture</a></li>
-<li><a class="reference internal" href="#field-and-model-initialization">Field and Model Initialization</a></li>
+<li><a class="reference internal" href="#extensible-solver-architecture">Extensible Solver Architecture</a></li>
+<li><a class="reference internal" href="#conceptual-implementation">Conceptual Implementation</a></li>
+<li><a class="reference internal" href="#simulation-with-multiple-domains-solvers">Simulation with Multiple Domains/Solvers</a></li>
+<li><a class="reference internal" href="#initialization-stage">Initialization Stage</a></li>
 <li><a class="reference internal" href="#plugin-architecture">Plugin Architecture</a><ul>
 <li><a class="reference internal" href="#motivation">Motivation</a></li>
 <li><a class="reference internal" href="#concept">Concept</a></li>

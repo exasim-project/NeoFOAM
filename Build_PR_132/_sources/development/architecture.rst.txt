@@ -1,120 +1,51 @@
 Architecture
 ============
 
-FoamAdapter is multilanguage repository as it contains both C++ and python code.
-This document describes the architecture of FoamAdapter, including the C++ core and Python interface components.
+FoamAdapter is a multi-language repository containing both C++ and Python code.
+This document describes the architecture of FoamAdapter, including its C++ core and Python interface components.
+
+.. note::
+   This section of the documentation provides:
+     * a high-level overview of the *planned* architecture 
+     * guidance through the review process
+     * example implementations serving only as proof of concept to illustrate the *planned* architecture
+     * a note that detailed features will evolve and refine the architecture, updating examples as development progresses
 
 Overview
 --------
 
-FoamAdapter is designed as a multi-physics, python-based simulation framework.
-Additionally, a set of C++ based legacy solvers like neoIcoFoam simplify the transition from existing OpenFOAM solvers and workflows.
-It provides a flexible and modular architecture that allows users to easily extend and customize the simulation setup.
+FoamAdapter is designed as a multi-physics, Python-based simulation framework.
+Additionally, it includes a set of C++-based legacy solvers, such as neoIcoFoam, to simplify the transition from existing OpenFOAM solvers and workflows.
+It provides a flexible and modular architecture that allows users to easily extend and customize their simulation setup.
 
-The architecture provides following features to achieve the goals outlined in the :doc:`goals and features <../goals_features>` document:
+The architecture provides the following features to achieve the goals outlined in the :doc:`goals and features <../goals_features>` document:
 
-- Easy coupling of multiple domains and physics
+- Easy coupling of multiple domains and physical models
 - Field and model initialization based on dependency graphs
-- Modular solver design that computes the data dependencies at runtime
-- Plugin architecture for easy extension with new models and fields
+- Modular solver design that computes data dependencies at runtime
+- Plugin architecture for extending models and fields
 
-In order to implement multi-physics capabilities multliple computational domains are supported.  
-Each computational domain has one physics module assigned that defines the governing equations and physical models.
-Multiple domains can be defined with input files and the coupling between the domains is handled automatically based on the defined physics modules.
+To support multi-physics capabilities, multiple computational domains are implemented.  
+Each domain has **one solver** assigned, which defines the governing equations, operations, and **optional additional physical models.**
+Multiple domains can be defined via input files, and coupling between domains is automatically handled based on the selected physics modules.
 
-The following sections describe the main feature and implementation example to give a high level overview of the architecture.
+The following sections describe the main architectural features and implementation examples, providing a high-level overview.
 
-Solver Execution Model
-----------------------
+Extensible Solver Architecture
+------------------------------
 
-FoamAdapter defines solver behavior as a dependency-driven execution model.
-Each solver declares its required fields and models, and the runtime system constructs a directed acyclic graph (DAG) to determine the correct execution order.
-
-The following diagram illustrates the workflow for two common solver types for a conjugate heat transfer scenario:
-
-.. mermaid::
-
-    %%{init: {'flowchart': { 'htmlLabels': true, 'wrap': true }}}%%
-    flowchart TB
-        subgraph setup1 ["setup "]
-            direction TB
-            S1A["Initialize Fields"]
-        end
-
-        subgraph setup2 ["setup"]
-            direction TB
-            S2A["Initialize Temperature Field"]
-        end
-
-        subgraph S1 ["non-thermal-fluid solver"]
-            direction TB
-            S1C["Momentum Predictor"]
-            S1C --> S1E["Solve Energy Equation"]
-            S1E --> S1F["Pressure Corrector<br/>PISO Loop"]
-            S1F --> S1J["Update turbulence Model"]
-        end
-
-        subgraph S2 ["thermal-solid solver"]
-            direction TB
-            S2B["Solve Energy Equation"] --> S2D["Update Solid Properties"]
-        end
-
-        setup1 --> S1C
-        setup2 --> S2B
-        S1E --> S2B
-        S2B --> S1E
-
-
-The diagram shows two selected solvers: a non-thermal-fluid solver and a thermal-solid solver.
-Each solver has its own setup phase and computational steps, with interactions between the two solvers for energy exchange.
-
-
-.. code-block:: python
-
-    # 'model' is a placeholder for the model dependency object required by each step.
-    model = ...  # placeholder for model dependency
-    @model("fluidSolver")
-    class DomainA:
-        @step(order=1, model)
-        def momentum(self, ctrl): pass
-        @step(order=2, model)
-        def solve_energy(self, ctrl): pass
-        @step(order=3, model)
-        def pressure_corrector(self, ctrl): pass
-        @step(order=4, model)
-        def update_turbulence(self, ctrl): pass
-
-    @model("solidSolver")
-    class DomainB:
-        @step(order=1, model)
-        def solve_energy(self, ctrl): pass
-        @step(order=2, model)
-        def update_solid_properties(self, ctrl): pass
-
-A solver is defined as a class with multiple steps, each step has to declare its dependencies.
-Additional models can be executed before and after each step to modify the behavior and add additional physics.
-
-This allows to easily extend existing solvers with new physics without modifying the core solver implementation and promotes code reuse.
-
-.. note::
-
-    The implementation is still work in progress but only details may change.
-
-Modular Solver Architecture
----------------------------
-
-The modular solver architectures allows to extend individiual solver by adding addititional physics modules.
-This is illustrated in the following diagram, where the fluid solver is extended by three physics submodules.
+To promote code reuse and maintainability, solver execution steps (operations) can be configured at runtime based on the selected physics models.
+This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.
 
 .. mermaid::
 
    flowchart TD
         
         subgraph MAIN ["Main Solver Loop"]
-            STEP1["Momentum Predictor<br/>Solve velocity equation"]
-            STEP2["Additional Physics Modules"]
-            STEP3["Pressure Corrector<br/>Ensure mass conservation"]
-            STEP4["Field Updates<br/>Correct U, φ, turbulence"]
+            STEP1["Solver </br> Momentum Equation"]
+            STEP2["Added by Model </br> Temperature Equation"]
+            STEP3["Solver </br> Continuity Equation"]
+            STEP4["Solver </br> Update Turbulence"]
         end
         
         STEP1 --> STEP2
@@ -140,64 +71,122 @@ This is illustrated in the following diagram, where the fluid solver is extended
         style STEP3 fill:#9C27B0,color:#fff
         style STEP4 fill:#607D8B,color:#fff
 
-
-In this architecture, the main solver loop consists of core steps such as momentum prediction and pressure correction.
-Additional physics modules (e.g., porosity, rotation, buoyancy) can be plugged into the workflow to modify the behavior of these core steps.
-
-This modular design enables users to easily add or remove physics effects without altering the fundamental solver structure, promoting code reuse and maintainability.
-The additional physics modules need to define their dependencies and the runtime system ensures that they are executed at the correct point in the solver loop.
-
-.. note::
-
-    implementation is still work in progress
-
-Field and Model Initialization
-------------------------------
-
-
-As the fields and solver needs to be initialized in the correct order before the solver run, FoamAdapter provides a structured initialization phase to ensure that the necessary fields and models are properly set up.
-
-The fields and models are stored lazily at first with the dependencies and a DAG is solved to determine the correct initialization order.
-
-
-.. image:: pimpleDag.png
-   :alt: DAG of field and model dependencies for pimpleFoam
-   :align: center
-
-The following code snippet illustrates how a turbulence model and a derived field (face velocity) are defined with their dependencies:
+The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
+Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
+This relationship is illustrated in the pseudocode below:
 
 .. code-block:: python
+    # Pseudocode illustrating solver and model structure
+    @Solver
+    class IncompressibleFluidSolver:
+        models: list[IncompressibleFluidModel]  # Additional physics models
+        @Solver.step(...)
+        def momentum(self, ...): pass
+        @Solver.step(...)
+        def continuity(self, ...): pass
+        @Solver.step(...)
+        def update_turbulence(self, ...): pass
 
-    class TurbulenceModel:
-    
-    
-        @property
-        def dependencies(self) -> list[str]:
-            return ["U", "phi", "singlePhaseTransportModel"]
-        
-        @property
-        def description(self) -> str:
-            return "Incompressible turbulence model"
-        
-        def __call__(self, deps: dict):
-            U = fields.get_field(deps, "U")
-            phi = fields.get_field(deps, "phi")
-            singlePhaseTransportModel = models.get_model(deps, "singlePhaseTransportModel")
-            turbulence = incompressibleTurbulenceModel.New(U, phi, singlePhaseTransportModel)
-            return turbulence
+    @IncompressibleFluidModel.register
+    class BoussinesqModel:
+        @IncompressibleFluidModel.step(...)
+        def temperature_equation(self, ...): pass
 
+Each solver maintains a list of additional physics models that can add or modify operations.
+As a result, the solver can be easily extended with new physics using minimal additional code.
+Users only need to define a new model that adds the desired operations to the solver at runtime, without modifying the core solver.
+New models can be registered via the plugin system and selected in input files.
 
-    @fields.Fields.deps("U")
-    def create_face_velocity(deps: dict) -> surfaceScalarField:
-        U = fields.get_field(deps, "U")
-        phi_field = createPhi(U)
-        return surfaceScalarField(
-            value=phi_field,
-            dimensions=(0, 1, -1, 0, 0, 0, 0),
-            description="Face flux field",
-        )
+Conceptual Implementation
+-------------------------
 
-The same approach is used for all fields and models in FoamAdapter, ensuring a consistent and reliable initialization process.
+After solvers and models are initialized, their operations must be identified and sorted to determine the correct execution order.
+This order is managed by the **Operations** class, shown conceptually below:
+
+.. code-block:: python
+    # Pseudocode showing how operations are stored and executed
+    class Operations:
+        ops: list[Operation]  # All operations to execute
+
+        def run(self, ...): pass
+
+    class Operation:
+        func: callable
+        sub_operations: list[Operation]  # Nested operations
+        metadata: Any  # Metadata for sorting or description
+
+        def run(self, ...): pass
+ 
+An operation represents a single computational step in a solver or model, functioning as a callable task.
+Each solver or model can define multiple operations stored as `Operation` objects.
+These can hold sub-operations and metadata to assist in sorting and dependency management.
+
+After sorting (detailed in future documentation), the `Operations` class holds all steps required to run the modified solver successfully.
+
+This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.
+
+.. note::
+    Implementation is still a work in progress.
+
+Simulation with Multiple Domains/Solvers
+----------------------------------------
+
+The same concept can be extended to multi-physics scenarios with multiple domains and solvers.
+Each solver defines its own operations, while coupling between solvers is managed automatically at runtime based on defined physics models and settings.
+
+The diagram below illustrates this workflow for a conjugate heat transfer example:
+
+.. mermaid::
+
+    %%{init: {'flowchart': { 'htmlLabels': true, 'wrap': true }}}%%
+    flowchart TB
+        subgraph setup1 ["Setup"]
+            direction TB
+            S1A["Initialize Fields"]
+        end
+
+        subgraph setup2 ["Setup"]
+            direction TB
+            S2A["Initialize Temperature Field"]
+        end
+
+        subgraph S1 ["Non-Thermal Fluid Solver"]
+            direction TB
+            S1C["Momentum Predictor"]
+            S1C --> S1E["Solve Energy Equation"]
+            S1E --> S1F["Pressure Corrector<br/>PISO Loop"]
+            S1F --> S1J["Update Turbulence Model"]
+        end
+
+        subgraph S2 ["Thermal Solid Solver"]
+            direction TB
+            S2B["Solve Energy Equation"] --> S2D["Update Solid Properties"]
+        end
+
+        setup1 --> S1C
+        setup2 --> S2B
+        S1E --> S2B
+        S2B --> S1E
+
+Here, a non-thermal fluid solver and a thermal solid solver solve a conjugate heat transfer problem.
+Each solver has its own initialization phase. Once the **Operations** are determined, coupling between them is established.
+The operation sequences of both solvers are then updated to include inter-solver data exchange.
+
+.. note::
+    Implementation is still a work in progress.
+
+Initialization Stage
+--------------------
+
+The initialization stage sets up the simulation environment — reading input files, initializing fields, and preparing solvers and models.
+
+Although not yet finalized, the planned initialization stage will perform the following tasks:
+
+1. Read and parse input files and configuration settings.
+2. Initialize computational domains and meshes.
+3. Exchange dependencies between operations (e.g., adding a Boussinesq approximation modifies the pressure equation formulation).
+4. Define solver operations based on selected physics models.
+5. Sort operations to determine correct execution order.
 
 Plugin Architecture
 -------------------
@@ -205,23 +194,21 @@ Plugin Architecture
 Motivation
 ^^^^^^^^^^
 
-Modern scientific and engineering workflows require flexible simulation frameworks that can be easily extended and customized.
-FoamAdapter's plugin architecture is designed to enable users and developers to add new physics models, boundary conditions, and solver modules without modifying the core codebase.
-This approach promotes maintainability, collaboration, and rapid prototyping of new features.
-
-
+Modern scientific and engineering workflows require flexible, extensible frameworks.
+FoamAdapter’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
+This promotes maintainability, collaboration, and rapid prototyping.
 
 Concept
 ^^^^^^^
 
-FoamAdapter implements a runtime-extensible plugin/config system using Pydantic discriminated unions and a registry pattern.
-The core idea is to allow new plugin types (e.g., models, fields, solvers) to be registered dynamically, either at runtime or via Python entry points (setuptools).
-Each plugin type (such as physics models or boundary conditions) is managed by a registry, which collects all available plugin classes and exposes a unified configuration model for input validation and schema generation.
+FoamAdapter implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
+The core idea is to allow new plugin types (e.g., models, fields, solvers) to be dynamically registered at runtime or via Python entry points (setuptools).
+Each plugin type (such as a physics model or boundary condition) is managed by a registry, which collects available classes and exposes a unified configuration model for validation and schema generation.
 
 **Background: Pydantic Discriminated Unions**
 
-Pydantic supports discriminated unions for type-safe configuration, but the set of types in the union must be known at model definition time. 
-The following example ensures that a pet is either Cat, Dog, or Lizard
+Pydantic supports discriminated unions for type-safe configuration, but union members must be defined at model creation time.
+For example, the following ensures a pet is either a Cat, Dog, or Lizard:
 
 .. code-block:: python
 
@@ -237,34 +224,35 @@ The following example ensures that a pet is either Cat, Dog, or Lizard
         barks: float
 
     class Lizard(BaseModel):
-        pet_type: Literal['reptile', 'lizard']
+        pet_type: Literal['lizard']
         scales: bool
 
     class Model(BaseModel):
         pet: Union[Cat, Dog, Lizard] = Field(discriminator='pet_type')
         n: int
 
-This works well for static unions, but it is not possible to add new types to the union at runtime. This is a challenge for plugin systems, where extensibility is required.
+This works for static unions but cannot be extended dynamically — a limitation for plugin systems.
 
 **How FoamAdapter Solves This**
 
-Plugins are registered using a decorator-based API, making it easy for users to define and integrate new modules.
-Whenever a new plugin is registered, the system automatically rebuilds the Pydantic model for the plugin type, updating the discriminated union to include all registered types.
-This means that the configuration model always reflects the current set of available plugins, and input validation is always up to date.
+Plugins are registered using a decorator-based API.
+Each registration automatically rebuilds the Pydantic model for that plugin type, updating the discriminated union to include new plugins.
+Thus, the configuration model always reflects available plugins and remains valid for schema generation and input validation.
 
-For example, after registering a new shape plugin, you can immediately use the updated model for validation:
+Example:
 
 .. code-block:: python
 
     ShapeBase.register(TriangleConfig)
     shape = ShapeBase.plugin_model(shape={"shape_type": "triangle", "base": 3.0, "height": 4.0}, color="yellow")
 
-This dynamic rebuilding of the model enables true runtime extensibility and ensures that input validation and schema generation always match the available plugins.
-The `plugin_model` attribute needs to be called to obtain the up-to-date model for the plugin type.
+This approach enables **true runtime extensibility** while maintaining strong input validation.
+The updated model can always be retrieved via the `plugin_model` attribute.
 
 Usage
 ^^^^^
-To add a new plugin, users simply define a new Python class for their model or field and register it with the appropriate base class:
+
+To add a new plugin, users define a Python class and register it with the corresponding base class:
 
 .. code-block:: python
 
@@ -283,24 +271,23 @@ To add a new plugin, users simply define a new Python class for their model or f
     config = ModelBase.create(model={"model_type": "custom", "parameter": 1.23}, name="example")
 
 Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend FoamAdapter seamlessly.
-The unified configuration model and schema make it easy to build UIs, validate inputs, and document available plugins.
-
+The unified configuration and schema system simplifies UI generation, input validation, and documentation of available plugins.
 
 Model Introspection and Schema Generation
-------------------------------------------
+-----------------------------------------
 
-Model configuration and validation in FoamAdapter are implemented using Pydantic, which provides native support for input validation and automatic JSON Schema generation.
-This mechanism forms the basis for model discovery, UI integration, and automated documentation across the framework.
+Model configuration and validation in FoamAdapter are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
+This mechanism enables model discovery, UI integration, and automatic documentation.
 
-Pydantic’s schema generation enables the following functionality:
+Pydantic’s schema generation supports:
 
-* Input validation: Ensures model configurations are consistent and type-safe.
-* UI integration: Allows user interfaces to be generated dynamically from model definitions.
-* Automatic documentation: Exposes field names, types, and constraints for all models.
-* Metadata generation: Facilitates downstream tools to query and reason about model structures.
-* AI-assisted workflows: Supports schema-driven interactions with generative AI systems.
+* Input validation — ensures consistent and type-safe configurations
+* UI generation — enables dynamic form or editor creation
+* Automatic documentation — exposes all field names, types, and constraints
+* Metadata discovery — supports downstream analysis and automation
+* AI-assisted workflows — provides structured schemas for AI-based reasoning
 
-To obtain a model’s JSON Schema representation, use the model_json_schema() method provided by Pydantic:
+To retrieve a model’s JSON Schema, use:
 
 .. code-block:: python
 
@@ -310,8 +297,6 @@ To obtain a model’s JSON Schema representation, use the model_json_schema() me
     # For any Pydantic model
     schema = MyModel.model_json_schema()
 
-This interface provides a uniform mechanism for introspection of all models in FoamAdapter, making it possible to programmatically discover available fields, their data types, validation rules, and default values.
-
-This requires that all plugin, solver, or model use Pydantic to configure the inputs.
-
+This unified mechanism allows programmatic discovery of fields, types, validation rules, and defaults.
+All solvers, models, and plugins must therefore use Pydantic for input configuration.
 
