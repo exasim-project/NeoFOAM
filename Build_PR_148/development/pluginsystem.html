@@ -243,72 +243,193 @@
         <article role="main" id="furo-main-content">
           <section id="plugin-system">
 <h1>Plugin System<a class="headerlink" href="#plugin-system" title="Link to this heading">¶</a></h1>
-<section id="motivation">
-<h2>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
 <p>Modern scientific and engineering workflows require flexible simulation frameworks that can be easily extended and customized.
 FoamAdapter’s plugin architecture is designed to enable users and developers to add new physics models, boundary conditions, and solver modules without modifying the core codebase.
 This approach promotes maintainability, collaboration, and rapid prototyping of new features.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The PluginSystem provides a runtime-extensible configuration system using Pydantic discriminated unions and a registry pattern.
+The system allows to register child classes on numerous base classes, each with its own registry.</p>
 </section>
-<section id="concept">
-<h2>Concept<a class="headerlink" href="#concept" title="Link to this heading">¶</a></h2>
-<p>FoamAdapter implements a runtime-extensible plugin/config system using Pydantic discriminated unions and a registry pattern.
-The core idea is to allow new plugin types (e.g., models, fields, solvers) to be registered dynamically, either at runtime or via Python entry points (setuptools).
-Each plugin type (such as physics models or boundary conditions) is managed by a registry, which collects all available plugin classes and exposes a unified configuration model for input validation and schema generation.</p>
-<p><strong>Background: Pydantic Discriminated Unions</strong></p>
-<p>Pydantic supports discriminated unions for type-safe configuration, but the set of types in the union must be known at model definition time. For example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<section id="core-components">
+<h2>Core Components<a class="headerlink" href="#core-components" title="Link to this heading">¶</a></h2>
+<section id="pluginregistry-dataclass">
+<h3>PluginRegistry Dataclass<a class="headerlink" href="#pluginregistry-dataclass" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">PluginRegistry</span></code> dataclass stores metadata for each plugin base type:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base_cls</span></code>: The plugin base class (Pydantic BaseModel)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discriminator_variable</span></code>: Field name holding the union (e.g., ‘shape’, ‘plugin’)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discriminator</span></code>: Discriminator field name in plugin configs (e.g., ‘shape_type’, ‘plugin_type’)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plugin_registry</span></code>: List of registered plugin configuration classes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plugin_model</span></code>: Dynamically generated extensible Pydantic model</p></li>
+</ul>
+</section>
+<section id="pluginsystem-class">
+<h3>PluginSystem Class<a class="headerlink" href="#pluginsystem-class" title="Link to this heading">¶</a></h3>
+<p>The central registry stores all plugin families within the class dictionary variable <code class="docutils literal notranslate"><span class="pre">_registry</span></code> .
+Each key represents a plugin family name mapping to its corresponding PluginRegistry instance.</p>
+</section>
+</section>
+<section id="implementation-details">
+<h2>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading">¶</a></h2>
+<section id="registration-process">
+<h3>Registration Process<a class="headerlink" href="#registration-process" title="Link to this heading">¶</a></h3>
+<p>The decorator-based registration follows a two-step process:</p>
+<ol class="arabic simple">
+<li><p><strong>Base Class Registration</strong>: <code class="docutils literal notranslate"><span class="pre">&#64;PluginSystem.register()</span></code> creates a registry entry and adds helper methods</p></li>
+<li><p><strong>Plugin Registration</strong>: <code class="docutils literal notranslate"><span class="pre">&#64;BaseClass.register</span></code> adds plugin classes to the registry and regenerates the union model</p></li>
+</ol>
+</section>
+<section id="dynamic-model-generation">
+<h3>Dynamic Model Generation<a class="headerlink" href="#dynamic-model-generation" title="Link to this heading">¶</a></h3>
+<p>The system uses <code class="docutils literal notranslate"><span class="pre">pydantic.create_model()</span></code> to dynamically generate extensible models.
+Each registration updates the discriminated union type and recreates the model.
+The discriminator field enables automatic deserialization based on the type identifier.</p>
+</section>
+</section>
+<section id="usage-examples">
+<h2>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h2>
+<section id="basic-plugin-setup">
+<h3>Basic Plugin Setup<a class="headerlink" href="#basic-plugin-setup" title="Link to this heading">¶</a></h3>
+<p>The following example demonstrates how to define a plugin base class and register multiple plugin configurations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span> <span class="nn">foamadapter.core.plugin_system</span> <span class="kn">import</span> <span class="n">PluginSystem</span>
 
-<span class="k">class</span> <span class="nc">Cat</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;cat&#39;</span><span class="p">]</span>
-    <span class="n">meows</span><span class="p">:</span> <span class="nb">int</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;shape_type&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">ShapeInterface</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span>
 
-<span class="k">class</span> <span class="nc">Dog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;dog&#39;</span><span class="p">]</span>
-    <span class="n">barks</span><span class="p">:</span> <span class="nb">float</span>
+<span class="nd">@ShapeInterface</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span> <span class="nc">CircleConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;circle&quot;</span><span class="p">]</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
 
-<span class="k">class</span> <span class="nc">Lizard</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;reptile&#39;</span><span class="p">,</span> <span class="s1">&#39;lizard&#39;</span><span class="p">]</span>
-    <span class="n">scales</span><span class="p">:</span> <span class="nb">bool</span>
-
-<span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Cat</span><span class="p">,</span> <span class="n">Dog</span><span class="p">,</span> <span class="n">Lizard</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s1">&#39;pet_type&#39;</span><span class="p">)</span>
-    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+<span class="nd">@ShapeInterface</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span> <span class="nc">SquareConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;square&quot;</span><span class="p">]</span>
+    <span class="n">side</span><span class="p">:</span> <span class="nb">float</span>
 </pre></div>
 </div>
-<p>This works well for static unions, but it is not possible to add new types to the union at runtime. This is a challenge for plugin systems, where extensibility is required.</p>
-<p><strong>How FoamAdapter Solves This</strong></p>
-<p>Plugins are registered using a decorator-based API, making it easy for users to define and integrate new modules.
-Whenever a new plugin is registered, the system automatically rebuilds the Pydantic model for the plugin type, updating the discriminated union to include all registered types.
-This means that the configuration model always reflects the current set of available plugins, and input validation is always up to date.</p>
-<p>For example, after registering a new shape plugin, you can immediately use the updated model for validation:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ShapeBase</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">TriangleConfig</span><span class="p">)</span>
-<span class="n">shape</span> <span class="o">=</span> <span class="n">ShapeBase</span><span class="o">.</span><span class="n">plugin_model</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape_type&quot;</span><span class="p">:</span> <span class="s2">&quot;triangle&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
+</section>
+<section id="creating-and-using-configurations">
+<h3>Creating and Using Configurations<a class="headerlink" href="#creating-and-using-configurations" title="Link to this heading">¶</a></h3>
+<p>A usage example creating and using plugin configurations is shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Direct instantiation using the plugin model</span>
+<span class="n">Shape</span> <span class="o">=</span> <span class="n">ShapeInterface</span><span class="o">.</span><span class="n">plugin_model</span>
+<span class="n">circle</span> <span class="o">=</span> <span class="n">Shape</span><span class="p">(</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape_type&quot;</span><span class="p">:</span> <span class="s2">&quot;circle&quot;</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">},</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Using the create class method</span>
+<span class="n">square</span> <span class="o">=</span> <span class="n">ShapeInterface</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape_type&quot;</span><span class="p">:</span> <span class="s2">&quot;square&quot;</span><span class="p">,</span> <span class="s2">&quot;side&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">},</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;blue&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Accessing plugin-specific fields</span>
+<span class="k">assert</span> <span class="n">circle</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">radius</span> <span class="o">==</span> <span class="mf">5.0</span>
+<span class="k">assert</span> <span class="n">square</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">side</span> <span class="o">==</span> <span class="mf">3.0</span>
 </pre></div>
 </div>
-<p>This dynamic rebuilding of the model enables true runtime extensibility and ensures that input validation and schema generation always match the available plugins.
-The <cite>plugin_model</cite> attribute needs to be called to obtain the up-to-date model for the plugin type.</p>
 </section>
-<section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
-<p>To add a new plugin, users simply define a new Python class for their model or field and register it with the appropriate base class:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">foamadapter.core.plugin_system</span> <span class="kn">import</span> <span class="n">PluginSystem</span>
+<section id="runtime-extension">
+<h3>Runtime Extension<a class="headerlink" href="#runtime-extension" title="Link to this heading">¶</a></h3>
+<p>The plugin system supports runtime registration of new plugin configurations.
+However, this requires rebuilding the Type union which is done by the create method.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define new plugin configurations</span>
+<span class="k">class</span> <span class="nc">TriangleConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;triangle&quot;</span><span class="p">]</span>
+    <span class="n">base</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">float</span>
 
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">ModelBase</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">EllipseConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ellipse&quot;</span><span class="p">]</span>
+    <span class="n">major_axis</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">minor_axis</span><span class="p">:</span> <span class="nb">float</span>
+
+<span class="c1"># Register at runtime</span>
+<span class="n">ShapeInterface</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">TriangleConfig</span><span class="p">)</span>
+<span class="n">ShapeInterface</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">EllipseConfig</span><span class="p">)</span>
+
+<span class="c1"># Use new configurations immediately</span>
+<span class="n">triangle</span> <span class="o">=</span> <span class="n">ShapeInterface</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape_type&quot;</span><span class="p">:</span> <span class="s2">&quot;triangle&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">},</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">&quot;green&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="register-multiple-classes">
+<h3>Register multiple classes<a class="headerlink" href="#register-multiple-classes" title="Link to this heading">¶</a></h3>
+<p><cite>AnimalInterface</cite> will be stored in a central registry to show the availability of all registered plugins.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;animal&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;animal_type&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">AnimalInterface</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">age</span><span class="p">:</span> <span class="nb">int</span>
 
-<span class="nd">@ModelBase</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span> <span class="nc">MyCustomModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;custom&quot;</span><span class="p">]</span>
-    <span class="n">parameter</span><span class="p">:</span> <span class="nb">float</span>
+<span class="nd">@AnimalInterface</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span> <span class="nc">DogConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">animal_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;dog&quot;</span><span class="p">]</span>
+    <span class="n">breed</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">is_trained</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-<span class="c1"># Instantiate a model config</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">ModelBase</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model_type&quot;</span><span class="p">:</span> <span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="s2">&quot;parameter&quot;</span><span class="p">:</span> <span class="mf">1.23</span><span class="p">},</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
+<span class="nd">@AnimalInterface</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span> <span class="nc">CatConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">animal_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cat&quot;</span><span class="p">]</span>
+    <span class="n">indoor_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">declawed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Independent from ShapeInterface family</span>
+<span class="n">my_dog</span> <span class="o">=</span> <span class="n">AnimalInterface</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">animal</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;animal_type&quot;</span><span class="p">:</span> <span class="s2">&quot;dog&quot;</span><span class="p">,</span> <span class="s2">&quot;breed&quot;</span><span class="p">:</span> <span class="s2">&quot;Golden Retriever&quot;</span><span class="p">,</span> <span class="s2">&quot;is_trained&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Buddy&quot;</span><span class="p">,</span>
+    <span class="n">age</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span>
 </pre></div>
 </div>
-<p>Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend FoamAdapter seamlessly.
-The unified configuration model and schema make it easy to build UIs, validate inputs, and document available plugins.</p>
+</section>
+<section id="json-schema-generation">
+<h3>JSON Schema Generation<a class="headerlink" href="#json-schema-generation" title="Link to this heading">¶</a></h3>
+<p>The dynamically generated plugin models support JSON schema generation for validation and documentation purposes.
+Json schemas show all possible configuration of all the available plugins of each base class and therefore enable the creation of user interfaces or config file validators.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get JSON schema for validation and documentation</span>
+<span class="n">Shape</span> <span class="o">=</span> <span class="n">ShapeInterface</span><span class="o">.</span><span class="n">plugin_model</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">Shape</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+
+<span class="c1"># Schema includes discriminator mapping</span>
+<span class="n">discriminator</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="s2">&quot;shape&quot;</span><span class="p">][</span><span class="s2">&quot;discriminator&quot;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">discriminator</span><span class="p">[</span><span class="s2">&quot;propertyName&quot;</span><span class="p">])</span>  <span class="c1"># &quot;shape_type&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">discriminator</span><span class="p">[</span><span class="s2">&quot;mapping&quot;</span><span class="p">])</span>       <span class="c1"># {&quot;circle&quot;: &quot;...&quot;, &quot;square&quot;: &quot;...&quot;}</span>
+</pre></div>
+</div>
+</section>
+<section id="registry-management">
+<h3>Registry Management<a class="headerlink" href="#registry-management" title="Link to this heading">¶</a></h3>
+<p>The PluginSystem class provides utility methods to manage and inspect the plugin registries.
+The following example demonstrates how to list registered plugins, retrieve specific registries, and remove plugins.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># List all plugin families</span>
+<span class="n">all_plugins</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">list_plugins</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">all_plugins</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>  <span class="c1"># [&quot;ShapeInterface&quot;, &quot;DataProcessor&quot;]</span>
+
+<span class="c1"># Get specific registry</span>
+<span class="n">shape_registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">&quot;ShapeInterface&quot;</span><span class="p">)</span>
+<span class="n">plugin_classes</span> <span class="o">=</span> <span class="n">shape_registry</span><span class="o">.</span><span class="n">plugin_registry</span>
+
+<span class="c1"># Remove plugins</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">remove_plugin_model</span><span class="p">(</span><span class="s2">&quot;ShapeInterface&quot;</span><span class="p">,</span> <span class="n">TriangleConfig</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="registeration-via-entrypoint">
+<h3>Registeration via Entrypoint<a class="headerlink" href="#registeration-via-entrypoint" title="Link to this heading">¶</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This feature is not yet implemented.</p>
+</div>
+</section>
 </section>
 </section>
 
@@ -360,9 +481,27 @@ The unified configuration model and schema make it easy to build UIs, validate i
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Plugin System</a><ul>
-<li><a class="reference internal" href="#motivation">Motivation</a></li>
-<li><a class="reference internal" href="#concept">Concept</a></li>
-<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#core-components">Core Components</a><ul>
+<li><a class="reference internal" href="#pluginregistry-dataclass">PluginRegistry Dataclass</a></li>
+<li><a class="reference internal" href="#pluginsystem-class">PluginSystem Class</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implementation-details">Implementation Details</a><ul>
+<li><a class="reference internal" href="#registration-process">Registration Process</a></li>
+<li><a class="reference internal" href="#dynamic-model-generation">Dynamic Model Generation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage-examples">Usage Examples</a><ul>
+<li><a class="reference internal" href="#basic-plugin-setup">Basic Plugin Setup</a></li>
+<li><a class="reference internal" href="#creating-and-using-configurations">Creating and Using Configurations</a></li>
+<li><a class="reference internal" href="#runtime-extension">Runtime Extension</a></li>
+<li><a class="reference internal" href="#register-multiple-classes">Register multiple classes</a></li>
+<li><a class="reference internal" href="#json-schema-generation">JSON Schema Generation</a></li>
+<li><a class="reference internal" href="#registry-management">Registry Management</a></li>
+<li><a class="reference internal" href="#registeration-via-entrypoint">Registeration via Entrypoint</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
