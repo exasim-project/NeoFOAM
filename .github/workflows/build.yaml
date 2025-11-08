@@ -1,4 +1,4 @@
-name: Build FoamAdapter
+name: Build NeoFOAM
 run-name: 'Build workflow'
 
 on:
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build FoamAdapter
+    name: Build NeoFOAM
     runs-on: ubuntu-latest
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
     strategy:
@@ -59,18 +59,18 @@ jobs:
          ninja --version
          cmake --version
 
-     - name: Build FoamAdapter
+     - name: Build NeoFOAM
        run: |
          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
          CC=${{matrix.compiler.CC}} \
          CXX=${{matrix.compiler.CXX}} \
          cmake --preset develop \
-           -DFOAMADAPTER_DEVEL_TOOLS=OFF \
-           -DFOAMADAPTER_BUILD_BENCHMARKS=OFF \
-           -DFOAMADAPTER_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+           -DNEOFOAM_DEVEL_TOOLS=OFF \
+           -DNEOFOAM_BUILD_BENCHMARKS=OFF \
+           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
          cmake --build  --preset develop
 
-     - name: Execute unit tests FoamAdapter
+     - name: Execute unit tests NeoFOAM
        run: |
          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
          ctest --preset develop

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023-2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
 #include <cstddef>
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
@@ -27,8 +27,8 @@ TEST_CASE("sparsityPattern")
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    auto meshPtr = FoamAdapter::createMesh(exec, runTime);
-    FoamAdapter::MeshAdapter& mesh = *meshPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     auto& nfMesh = mesh.nfMesh();
 
     SECTION("sparsityPattern_" + execName)

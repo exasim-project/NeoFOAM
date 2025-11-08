@@ -4,7 +4,7 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "NeoN/NeoN.hpp"
 #include "benchmarks/catch_main.hpp"
@@ -12,7 +12,7 @@
 #include "common.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 namespace dsl = NeoN::dsl;
 
 #include "fvc.H"
@@ -26,7 +26,7 @@ extern Foam::fvMesh* meshPtr;  // A single mesh object
 TEST_CASE("advection–diffusion-equation_scalar")
 {
     Foam::Time& runTime = *timePtr;
-    std::unique_ptr<Foam::fvMesh> meshPtr = FoamAdapter::createMesh(runTime);
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
 
     auto ofT = randomScalarField(runTime, mesh, "T");

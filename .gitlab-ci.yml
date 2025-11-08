@@ -66,10 +66,10 @@
     - which simpleFoam || echo "simpleFoam not found!"
     - find $FOAM_LIBBIN -name "libPstream.so"
 
-# Job rules to determine if the pipeline was triggered from FoamAdapter or NeoN CI
-.trigger-from-foamadapter-for-testing:
+# Job rules to determine if the pipeline was triggered from NeoFOAM or NeoN CI
+.trigger-from-neofoam-for-testing:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "FoamAdapter" && $BENCHMARK == "false"
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false"
       when: always
     - when: never
 
@@ -79,19 +79,19 @@
       when: always
     - when: never
 
-.trigger-from-foamadapter-for-benchmarking:
+.trigger-from-neofoam-for-benchmarking:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "FoamAdapter" && $BENCHMARK == "true"
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true"
       when: always
     - when: never
 
 
-# --- Build and test FoamAdapter with the main branch of NeoN ---
+# --- Build and test NeoFOAM with the main branch of NeoN ---
 build-and-test-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-testing
+    - .trigger-from-neofoam-for-testing
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
 
@@ -99,17 +99,17 @@ build-and-test-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-testing
+    - .trigger-from-neofoam-for-testing
   script:
     - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
 
 
-# --- Benchmark FoamAdapter with the main branch of NeoN ---
+# --- Benchmark NeoFOAM with the main branch of NeoN ---
 benchmark-triggered-from-FA-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-benchmarking
+    - .trigger-from-neofoam-for-benchmarking
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
     - ./benchmarks/benchmarkSuite/cleanAll.sh
@@ -121,7 +121,7 @@ benchmark-triggered-from-FA-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-foamadapter-for-benchmarking
+    - .trigger-from-neofoam-for-benchmarking
   script:
     - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
     - ./ci/lrz-gitlab/build-and-test.sh amd main profiling
@@ -131,7 +131,7 @@ benchmark-triggered-from-FA-amd:
     - find benchmarks/benchmarkSuite/ -name '*csv'
 
 
-# --- Build and test FoamAdapter with a feature branch of NeoN ---
+# --- Build and test NeoFOAM with a feature branch of NeoN ---
 build-and-test-triggered-from-NeoN-nvidia:
   extends:
     - .use-nvidia-gpu-and-image

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023-2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
 #include <cstddef>
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
@@ -27,8 +27,8 @@ TEST_CASE("matrix multiplication")
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    auto meshPtr = FoamAdapter::createMesh(exec, runTime);
-    FoamAdapter::MeshAdapter& mesh = *meshPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     auto nfMesh = mesh.nfMesh();
     const auto sparsityPattern = NeoN::la::createSparsity(nfMesh);
 
@@ -36,12 +36,12 @@ TEST_CASE("matrix multiplication")
 
     SECTION("ddt_" + execName)
     {
-        auto ofT = FoamAdapter::randomScalarField(runTime, mesh, "T");
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         ofT.correctBoundaryConditions();
 
         fvcc::VolumeField<NeoN::scalar>& nfT =
             fieldCol.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                FoamAdapter::CreateFromFoamField<Foam::volScalarField> {
+                NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
                     .exec = exec,
                     .nfMesh = nfMesh,
                     .foamField = ofT,
@@ -81,7 +81,7 @@ TEST_CASE("matrix multiplication")
         }
 
         // check diag
-        auto diag = FoamAdapter::diag(ls, sparsityPattern);
+        auto diag = NeoFOAM::diag(ls, sparsityPattern);
         auto diagHost = diag.copyToHost();
 
         for (size_t celli = 0; celli < diagHost.size(); celli++)
@@ -89,7 +89,7 @@ TEST_CASE("matrix multiplication")
             REQUIRE(diagHost.view()[celli] == Catch::Approx(matrix.diag()[celli]).margin(1e-16));
         }
 
-        auto result = FoamAdapter::applyOperator(ls, nfT);
+        auto result = NeoFOAM::applyOperator(ls, nfT);
         auto resultHost = result.internalVector().copyToHost();
         for (size_t celli = 0; celli < resultHost.size(); celli++)
         {
@@ -103,8 +103,8 @@ TEST_CASE("matrix multiplication")
     SECTION("sourceterm_" + execName)
     {
         NeoN::scalar coeff = 2.0;
-        auto ofT = FoamAdapter::randomScalarField(runTime, mesh, "T");
-        fvcc::VolumeField<NeoN::scalar> nfT = FoamAdapter::constructFrom(exec, nfMesh, ofT);
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
+        fvcc::VolumeField<NeoN::scalar> nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
 
         NeoN::map(
             nfT.internalVector(),
@@ -133,7 +133,7 @@ TEST_CASE("matrix multiplication")
         sourceTerm.implicitOperation(ls);
 
         // check diag
-        auto diag = FoamAdapter::diag(ls, sparsityPattern);
+        auto diag = NeoFOAM::diag(ls, sparsityPattern);
         auto diagHost = diag.copyToHost();
 
         for (size_t celli = 0; celli < diagHost.size(); celli++)
@@ -141,7 +141,7 @@ TEST_CASE("matrix multiplication")
             REQUIRE(diagHost.view()[celli] == coeff * cellVolumes.view()[celli]);
         }
 
-        auto result = FoamAdapter::applyOperator(ls, nfT);
+        auto result = NeoFOAM::applyOperator(ls, nfT);
         auto resultHost = result.internalVector().copyToHost();
         for (size_t celli = 0; celli < resultHost.size(); celli++)
         {
@@ -154,14 +154,14 @@ TEST_CASE("matrix multiplication")
 
     SECTION("div_" + execName)
     {
-        auto ofT = FoamAdapter::randomScalarField(runTime, mesh, "T");
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         forAll(ofT, celli)
         {
             ofT[celli] = celli;
         }
         ofT.correctBoundaryConditions();
 
-        auto nfT = FoamAdapter::constructFrom(exec, nfMesh, ofT);
+        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
         nfT.correctBoundaryConditions();
 
         Foam::surfaceScalarField ofPhi(
@@ -180,7 +180,7 @@ TEST_CASE("matrix multiplication")
             ofPhi[facei] = 1;
         }
 
-        auto nfPhi = FoamAdapter::constructSurfaceField(exec, nfMesh, ofPhi);
+        auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, ofPhi);
 
         Foam::fvScalarMatrix matrix(Foam::fvm::div(ofPhi, ofT));
         Foam::volScalarField divT("divT", matrix & ofT);
@@ -197,7 +197,7 @@ TEST_CASE("matrix multiplication")
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
 
-        auto result = FoamAdapter::applyOperator(ls, nfT);
+        auto result = NeoFOAM::applyOperator(ls, nfT);
         auto resultHost = result.internalVector().copyToHost();
         for (size_t celli = 0; celli < resultHost.size(); celli++)
         {
@@ -210,14 +210,14 @@ TEST_CASE("matrix multiplication")
 
     SECTION("laplacian_" + execName)
     {
-        auto ofT = FoamAdapter::randomScalarField(runTime, mesh, "T");
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         forAll(ofT, celli)
         {
             ofT[celli] = celli;
         }
         ofT.correctBoundaryConditions();
 
-        auto nfT = FoamAdapter::constructFrom(exec, nfMesh, ofT);
+        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
         nfT.correctBoundaryConditions();
 
         Foam::surfaceScalarField ofNuf(
@@ -232,7 +232,7 @@ TEST_CASE("matrix multiplication")
             Foam::dimensionedScalar("phi", Foam::dimless, 0.1)
         );
 
-        auto nfNuf = FoamAdapter::constructSurfaceField(exec, nfMesh, ofNuf);
+        auto nfNuf = NeoFOAM::constructSurfaceField(exec, nfMesh, ofNuf);
 
         Foam::fvScalarMatrix matrix(Foam::fvm::laplacian(ofNuf, ofT));
         Foam::volScalarField laplacian("laplacian", matrix & ofT);
@@ -251,7 +251,7 @@ TEST_CASE("matrix multiplication")
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
 
-        auto result = FoamAdapter::applyOperator(ls, nfT);
+        auto result = NeoFOAM::applyOperator(ls, nfT);
         auto resultHost = result.internalVector().copyToHost();
         for (size_t celli = 0; celli < resultHost.size(); celli++)
         {

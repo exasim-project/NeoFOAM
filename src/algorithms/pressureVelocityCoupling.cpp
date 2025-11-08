@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/algorithms/pressureVelocityCoupling.hpp"
+#include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
 #include "Kokkos_Core.hpp"
 
 namespace la = NeoN::la;
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 void constrainHbyA(

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #pragma once
 
@@ -11,9 +11,9 @@
 
 #include "fvMesh.H"
 
-#include "FoamAdapter/auxiliary/readers.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 std::vector<NeoN::localIdx> computeOffset(const Foam::fvMesh& mesh);
@@ -49,11 +49,20 @@ public:
     // Constructors
 
     //- Construct from IOobject
-    explicit MeshAdapter(const NeoN::Executor exec, const Foam::IOobject& io, const bool doInit = true);
+    explicit MeshAdapter(
+        const NeoN::Executor exec,
+        const Foam::IOobject& io,
+        const bool doInit = true
+    );
 
     //- Construct from IOobject or as zero-sized mesh
     //  Boundary is added using addFvPatches() member function
-    MeshAdapter(const NeoN::Executor exec, const Foam::IOobject& io, const Foam::zero, bool syncPar = true);
+    MeshAdapter(
+        const NeoN::Executor exec,
+        const Foam::IOobject& io,
+        const Foam::zero,
+        bool syncPar = true
+    );
 
     //- Construct from components without boundary.
     //  Boundary is added using addFvPatches() member function

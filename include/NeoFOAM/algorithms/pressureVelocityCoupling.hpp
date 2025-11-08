@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #pragma once
 
-#include "FoamAdapter/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pdeSolver.hpp"
 
 #include "NeoN/NeoN.hpp"
 
@@ -11,7 +11,7 @@ namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 using scalar = NeoN::scalar;
 using Vec3 = NeoN::Vec3;
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 /* @brief ensure that the HbyA does not violate boundary velocity constraint

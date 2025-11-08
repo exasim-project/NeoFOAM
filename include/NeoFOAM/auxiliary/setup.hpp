@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
 #include <tuple>
 
 #include "NeoN/NeoN.hpp"
-#include "FoamAdapter/datastructures/runTime.hpp"
+#include "NeoFOAM/datastructures/runTime.hpp"
 
 #include "fvc.H"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 /*@brief based on the Courant number this function synchronizes the deltaT value in both runtimes*/

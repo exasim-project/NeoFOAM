@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #pragma once
 
-#include "FoamAdapter/auxiliary/convert.hpp"
+#include "NeoFOAM/auxiliary/convert.hpp"
 
 #include "NeoN/NeoN.hpp"
 

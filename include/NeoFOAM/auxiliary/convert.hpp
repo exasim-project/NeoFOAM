@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
 #include "NeoN/NeoN.hpp"
 
 #include "fvc.H"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
-  // To NeoN
+// To NeoN
 NeoN::Vec3 convert(const Foam::vector& in);
 
 NeoN::scalar convert(const Foam::scalar& in);
@@ -64,4 +64,4 @@ NeoN::TokenList convert(const Foam::ITstream& stream);
 // To Foam
 Foam::vector convert(const NeoN::Vec3& in);
 
-}; // namespace FoamAdapter
+}; // namespace NeoFOAM

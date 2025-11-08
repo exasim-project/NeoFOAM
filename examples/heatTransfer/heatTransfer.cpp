@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 
 #include "fvCFD.H"
@@ -17,7 +17,7 @@ namespace fvm = Foam::fvm;
 
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
 #include "createFields.H"
 
-        Info << "creating FoamAdapter fields" << endl;
+        Info << "creating NeoFOAM fields" << endl;
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         fvcc::VolumeField<NeoN::scalar>& nfT =
