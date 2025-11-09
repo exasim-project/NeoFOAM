@@ -319,6 +319,23 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
     </pre><p>The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
 Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
 This relationship is illustrated in the pseudocode below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pseudocode illustrating solver and model structure</span>
+<span class="nd">@Solver</span>
+<span class="k">class</span> <span class="nc">IncompressibleFluidSolver</span><span class="p">:</span>
+    <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IncompressibleFluidModel</span><span class="p">]</span>  <span class="c1"># Additional physics models</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span> <span class="nc">BoussinesqModel</span><span class="p">:</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">temperature_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+</pre></div>
+</div>
 <p>Each solver maintains a list of additional physics models that can add or modify operations.
 As a result, the solver can be easily extended with new physics using minimal additional code.
 Users only need to define a new model that adds the desired operations to the solver at runtime, without modifying the core solver.
@@ -328,6 +345,20 @@ New models can be registered via the plugin system and selected in input files.<
 <h2>Conceptual Implementation<a class="headerlink" href="#conceptual-implementation" title="Link to this heading">¶</a></h2>
 <p>After solvers and models are initialized, their operations must be identified and sorted to determine the correct execution order.
 This order is managed by the <strong>Operations</strong> class, shown conceptually below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pseudocode showing how operations are stored and executed</span>
+<span class="k">class</span> <span class="nc">Operations</span><span class="p">:</span>
+    <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span>  <span class="c1"># All operations to execute</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">class</span> <span class="nc">Operation</span><span class="p">:</span>
+    <span class="n">func</span><span class="p">:</span> <span class="nb">callable</span>
+    <span class="n">sub_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span>  <span class="c1"># Nested operations</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span>  <span class="c1"># Metadata for sorting or description</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+</pre></div>
+</div>
 <p>An operation represents a single computational step in a solver or model, functioning as a callable task.
 Each solver or model can define multiple operations stored as <cite>Operation</cite> objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.</p>

@@ -76,6 +76,7 @@ Additional physics models, such as porosity, rotation, or buoyancy, can modify o
 This relationship is illustrated in the pseudocode below:
 
 .. code-block:: python
+
     # Pseudocode illustrating solver and model structure
     @Solver
     class IncompressibleFluidSolver:
@@ -104,6 +105,7 @@ After solvers and models are initialized, their operations must be identified an
 This order is managed by the **Operations** class, shown conceptually below:
 
 .. code-block:: python
+    
     # Pseudocode showing how operations are stored and executed
     class Operations:
         ops: list[Operation]  # All operations to execute
