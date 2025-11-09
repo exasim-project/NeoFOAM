@@ -1,0 +1,80 @@
+[project]
+name = "foamadapter"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Henning Scheufler", email = "henning.scheufler@web.de" }
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "pybFoam>=0.1.4",
+    "typer",
+    "pydantic>=2.0.0",
+    "networkx>=3.0",
+    "matplotlib>=3.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "pytest-xdist",
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "pandas>=2.0.0",
+    "poethepoet>=0.37.0",
+    "ruff>=0.14.2",
+]
+docs = [
+    "sphinx>=4.0",
+    "myst-parser",
+    "sphinx-sitemap",
+    "furo",
+    "sphinxcontrib-mermaid",
+    "breathe",
+]
+all = [
+    "foamadapter[dev,docs]",
+]
+
+[project.scripts]
+foamadapter = "foamadapter.cli.app:app"
+
+[build-system]
+requires = ["uv_build>=0.8.6,<0.9.0"]
+build-backend = "uv_build"
+
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+extend-exclude = ["build/", "dist/"]
+
+[tool.ruff.lint]
+select = ["E","F","I"]  # enable isort (I) + basic lint
+
+# optional per-rule ignores
+ignore = []
+
+# isort options (import sorting)
+[tool.ruff.lint.isort]
+known-first-party = ["foamadapter"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra --showlocals"
+testpaths = [
+    "test"
+]
+
+
+[tool.poe.tasks]
+test = "pytest"
+lint = "ruff check src/ test/ --exclude src/NeoN"
+format = "ruff format src/ test/ --exclude src/NeoN"
+build_docs = "sphinx-build -b html doc doc/_build"
+view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }
