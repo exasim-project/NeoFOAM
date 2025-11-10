@@ -1,0 +1,144 @@
+from foamadapter.framework.context import Context, FieldUpdates
+from foamadapter.framework.decorator import condition, step
+from foamadapter.framework.operations import (
+    IterativeOp,
+    Operation,
+    SequentialOp,
+    context_adapter,
+)
+
+
+class SomeClass:
+    @step
+    def member_function(self, a: int) -> FieldUpdates:
+        a += 1
+        return FieldUpdates({"a": a})
+
+    @step
+    def another_member_function(self, a: int, b: int) -> FieldUpdates:
+        b += 2
+        return FieldUpdates({"b": b})
+
+    @step
+    def another_member_function_kwargs(self, a: int, *, b: int, c: float) -> FieldUpdates:
+        b += 2
+        c += 3.0
+        return FieldUpdates({"b": b, "c": c})
+
+
+def test_context_adapter_step():
+    sc = SomeClass()
+
+    adapted_func = context_adapter(sc.member_function)
+
+    ctx = Context(fields={"a": 0}, models={})
+    adapted_func(ctx)
+
+    assert ctx.fields["a"] == 1
+
+    adapted_func = context_adapter(sc.another_member_function)
+
+    ctx = Context(fields={"a": 0, "b": 0}, models={})
+    adapted_func(ctx)
+
+    assert ctx.fields["b"] == 2
+
+    adapted_func = context_adapter(sc.another_member_function_kwargs)
+
+    ctx = Context(fields={"a": 0, "b": 0, "c": 0.0}, models={})
+    adapted_func(ctx)
+
+    assert ctx.fields["b"] == 2
+    assert ctx.fields["c"] == 3.0
+
+
+def test_context_adapter_condition():
+    class ConditionClass:
+        @condition
+        def my_condition(self, a: int) -> bool:
+            return a > 5
+
+    cc = ConditionClass()
+
+    adapted_func = context_adapter(cc.my_condition)
+
+    ctx = Context(fields={"a": 10}, models={})
+    condition_result = adapted_func(ctx)
+
+    assert isinstance(condition_result, bool)
+    assert condition_result
+
+    ctx = Context(fields={"a": 3}, models={})
+    condition_result = adapted_func(ctx)
+
+    assert isinstance(condition_result, bool)
+    assert not condition_result
+
+
+def test_sequential_op_free_function():
+    @step
+    def function1(a: int) -> int:
+        a += 1
+        return FieldUpdates({"a": a})
+
+    # init from components
+    seq_op = SequentialOp(func=context_adapter(function1))
+    op1 = Operation(func=seq_op, step_name="step1", step_number=1)
+
+    ctx = Context(fields={"a": 1}, models={})
+    op1.run(ctx)
+    assert ctx.fields["a"] == 2
+
+    op2 = Operation.create_SeqOp(function1)
+    ctx = Context(fields={"a": 1}, models={})
+    op2.run(ctx)
+    assert ctx.fields["a"] == 2
+
+
+def test_sequential_op_member_function():
+    class MyClass:
+        @step
+        def function1(self, a: int) -> FieldUpdates:
+            a += 1
+            return FieldUpdates({"a": a})
+
+    my_instance = MyClass()
+
+    seq_op = SequentialOp(func=context_adapter(my_instance.function1))
+    op1 = Operation(func=seq_op, step_name="step1", step_number=1)
+
+    ctx = Context(fields={"a": 1}, models={})
+    op1.run(ctx)
+    assert ctx.fields["a"] == 2
+
+    op2 = Operation.create_SeqOp(my_instance.function1)
+    assert op2.step_name == "function1"
+    assert op2.step_number is None
+
+    ctx = Context(fields={"a": 1}, models={})
+    op2.run(ctx)
+    assert ctx.fields["a"] == 2
+
+
+def test_iterative_op_member_function():
+    class MyClass:
+        @step
+        def function1(self, a: int) -> FieldUpdates:
+            a += 1
+            return FieldUpdates({"a": a})
+
+        @condition
+        def condition1(self, a: int) -> bool:
+            return a < 5
+
+    my_instance = MyClass()
+
+    iter_op = IterativeOp(func=context_adapter(my_instance.condition1))
+    increment_op = Operation.create_SeqOp(my_instance.function1)
+
+    op1 = Operation(func=iter_op, step_name="step1", step_number=1, sub_steps=[increment_op])
+    assert op1.step_name == "step1"
+
+    ctx = Context(fields={"a": 0}, models={})
+    op1.run(ctx)
+    assert ctx.fields["a"] == 5
