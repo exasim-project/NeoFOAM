@@ -99,4 +99,3 @@ class IcoFoam:
             runTime.printExecutionTime()
 
         Info("End")
-
