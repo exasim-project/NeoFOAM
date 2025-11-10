@@ -73,7 +73,12 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
 
 The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
 Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
-This relationship is illustrated in the pseudocode below:
+In this case, the porosity model and the Rotating Reference Frame add momentum source terms, while the Boussinesq model adds a temperature equation and modifies the continuity equation.
+
+Each solver maintains a list of additional physics models that can add or modify operations.
+These additional physics models are defined externally from the solver and only need to comply with the IncompressibleFluidModel interface, which can be defined separately by each solver.
+The execution order is determined at runtime based on the metadata specified in each model.
+
 
 .. code-block:: python
 
@@ -84,7 +89,8 @@ This relationship is illustrated in the pseudocode below:
         @Solver.step(...)
         def momentum(self, ...): pass
         @Solver.step(...)
-        def continuity(self, ...): pass
+        def continuity(self, ..
+        .): pass
         @Solver.step(...)
         def update_turbulence(self, ...): pass
 
@@ -93,7 +99,17 @@ This relationship is illustrated in the pseudocode below:
         @IncompressibleFluidModel.step(...)
         def temperature_equation(self, ...): pass
 
-Each solver maintains a list of additional physics models that can add or modify operations.
+    @IncompressibleFluidModel.register
+    class PorosityModel:
+        @IncompressibleFluidModel.step(...)
+        def add_momentum_source(self, ...): pass
+
+    @IncompressibleFluidModel.register
+    class RotatingReferenceFrame:
+        @IncompressibleFluidModel.step(...)
+        def add_momentum_source(self, ...): pass
+
+
 As a result, the solver can be easily extended with new physics using minimal additional code.
 Users only need to define a new model that adds the desired operations to the solver at runtime, without modifying the core solver.
 New models can be registered via the plugin system and selected in input files.
@@ -123,7 +139,7 @@ An operation represents a single computational step in a solver or model, functi
 Each solver or model can define multiple operations stored as `Operation` objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.
 
-After sorting (detailed in future documentation), the `Operations` class holds all steps required to run the modified solver successfully.
+After sorting (detailed in future documentation), the `Operations` class holds all steps required to run the newly-configured solver.
 
 This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.
 
@@ -136,7 +152,7 @@ Simulation with Multiple Domains/Solvers
 The same concept can be extended to multi-physics scenarios with multiple domains and solvers.
 Each solver defines its own operations, while coupling between solvers is managed automatically at runtime based on defined physics models and settings.
 
-The diagram below illustrates this workflow for a conjugate heat transfer example:
+The diagram below illustrates this for two domains in a conjugate heat transfer example:
 
 .. mermaid::
 
@@ -209,7 +225,7 @@ Each plugin type (such as a physics model or boundary condition) is managed by a
 
 **Background: Pydantic Discriminated Unions**
 
-Pydantic supports discriminated unions for type-safe configuration, but union members must be defined at model creation time.
+Pydantic supports discriminated unions f    or type-safe configuration, but union members must be defined at model creation time.
 For example, the following ensures a pet is either a Cat, Dog, or Lizard:
 
 .. code-block:: python
