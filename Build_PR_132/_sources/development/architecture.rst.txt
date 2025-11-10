@@ -14,7 +14,7 @@ This document describes the architecture of FoamAdapter, including its C++ core 
 Overview
 --------
 
-FoamAdapter is designed as a multi-physics, Python-based simulation framework.
+NeoFOAM is designed as a multi-physics, Python-based simulation framework.
 Additionally, it includes a set of C++-based legacy solvers, such as neoIcoFoam, to simplify the transition from existing OpenFOAM solvers and workflows.
 It provides a flexible and modular architecture that allows users to easily extend and customize their simulation setup.
 
@@ -25,9 +25,9 @@ The architecture provides the following features to achieve the goals outlined i
 - Modular solver design that computes data dependencies at runtime
 - Plugin architecture for extending models and fields
 
-To support multi-physics capabilities, multiple computational domains are implemented.  
+To support multi-physics capabilities, multiple computational domains are supported.  
 Each domain has **one solver** assigned, which defines the governing equations, operations, and **optional additional physical models.**
-Multiple domains can be defined via input files, and coupling between domains is automatically handled based on the selected physics modules.
+Coupling between domains is automatically handled based on the selected physics modules.
 
 The following sections describe the main architectural features and implementation examples, providing a high-level overview.
 
