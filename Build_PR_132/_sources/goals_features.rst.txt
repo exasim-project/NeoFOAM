@@ -1,7 +1,7 @@
 Goals
 =====
 
-The Goal of FoamAdapter is to offer a simple and intuitive to use multi-physics framework for developers and users.
+The Goal of NeoFOAM is to offer a simple and intuitive to use multi-physics framework for developers and users.
 This is achieved by providing a modern python interface while leveraging the heterogeneous architecture.
 
 This requires in our view an incremental rewrite of OpenFOAM solvers.
