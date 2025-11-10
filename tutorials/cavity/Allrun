@@ -6,8 +6,14 @@ touch cavity.foam
 restore0Dir
 
 runApplication blockMesh
+runApplication decomposePar
 
-runApplication ../../build/profiling/bin/icoNeoFoam
+# mpirun -np 4 foamadapter solver icofoam -parallel
+# runApplication foamadapter solver icofoam
+runParallel "foamadapter solver icofoam"
+
+
+#runApplication ../../build/profiling/bin/icoNeoFoam
 # runApplication icoFoam
 
 #------------------------------------------------------------------------------
