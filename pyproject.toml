@@ -28,7 +28,7 @@ dev = [
     "pandas>=2.0.0",
     "poethepoet>=0.37.0",
     "ruff>=0.14.2",
-    "ty"
+    "mypy"
 ]
 docs = [
     "sphinx>=4.0",
@@ -72,11 +72,27 @@ testpaths = [
     "test"
 ]
 
+[tool.mypy]
+files = ["src", "test"]          # your two roots
+mypy_path = ["src"]              # so imports from src resolve
+strict = true                    # optional but recommended
+
+# Exclude src/Neon and everything beneath it
+# (mypy applies this regex to the normalized file path)
+exclude = [
+  "src/NeoN",
+]
+
+# If other code imports src/Neon and you want mypy to never follow into it:
+[[tool.mypy.overrides]]
+module = ["Neon", "Neon.*"]
+ignore_errors = true
+
 
 [tool.poe.tasks]
 test = "pytest"
 lint = "ruff check"
 format = "ruff format"
-type_check = "ty check src/ test --exclude src/NeoN/"
+type_check = "mypy"
 build_docs = "sphinx-build -b html doc doc/_build"
 view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }
