@@ -20,6 +20,17 @@ Table of Contents
    goals_features
    ci
 
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development:
+
+   development/components
+   development/solver
+
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Usage:
