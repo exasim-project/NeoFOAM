@@ -10,7 +10,7 @@ class Condition:
     Unified condition class with logical operators.
 
     Usage:
-        c1 = Condition.max_iterations(100)
+        c1 = Condition( lambda: True, "AlwaysTrue")
         c2 = Condition(lambda: check_something(), "MyCheck")
         combined = (c1 & c2) | ~c1
     """

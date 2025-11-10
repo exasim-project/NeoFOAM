@@ -114,7 +114,8 @@ class Operation:
     step_name: str = None
     domain_name: str | None = None
     depends_on: list[str] | None = None
-    shape: str = "box"
+    # TODO move visualization metadata to a separate class
+    shape: str = "box" 
     color: str = "lightblue"
     level: int = 0
     sub_steps: list["Operation"] = field(default_factory=list)
