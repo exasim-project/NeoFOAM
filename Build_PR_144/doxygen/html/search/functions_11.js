@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['_7emeshadapter_0',['~MeshAdapter',['../classFoamAdapter_1_1MeshAdapter.html#a6cc73499d214ab3d938ec79f3df69724',1,'FoamAdapter::MeshAdapter']]],
-  ['_7epdesolver_1',['~PDESolver',['../classFoamAdapter_1_1PDESolver.html#ad1b1411b4c9dafa3af5db57b8a63d772',1,'FoamAdapter::PDESolver']]]
+  ['_7emeshadapter_0',['~MeshAdapter',['../classNeoFOAM_1_1MeshAdapter.html#aecf77843c02d153223582904d3b78670',1,'NeoFOAM::MeshAdapter']]],
+  ['_7epdesolver_1',['~PDESolver',['../classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538',1,'NeoFOAM::PDESolver']]]
 ];

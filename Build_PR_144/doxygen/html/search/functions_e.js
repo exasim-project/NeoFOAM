@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['typename_0',['TypeName',['../classFoamAdapter_1_1MeshAdapter.html#a546685a63fcd87c4b8c55ba53e2e30bb',1,'FoamAdapter::MeshAdapter']]]
+  ['typename_0',['TypeName',['../classNeoFOAM_1_1MeshAdapter.html#a691a24bcf22a1e249311741b6ec85ab2',1,'NeoFOAM::MeshAdapter']]]
 ];

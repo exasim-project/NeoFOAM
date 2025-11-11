@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['nfmesh_0',['nfmesh',['../classFoamAdapter_1_1MeshAdapter.html#a05e872a8e76a491cf191887032c65ac2',1,'FoamAdapter::MeshAdapter::nfMesh()'],['../classFoamAdapter_1_1MeshAdapter.html#a4b9a8243377dd4ccdb55b52e21305d5a',1,'FoamAdapter::MeshAdapter::nfMesh() const']]]
+  ['nfmesh_0',['nfmesh',['../classNeoFOAM_1_1MeshAdapter.html#aaf0eda0aca98dfa489c063fa878d9c09',1,'NeoFOAM::MeshAdapter::nfMesh()'],['../classNeoFOAM_1_1MeshAdapter.html#aa4f497b00faecd79140b4b9d32a29db8',1,'NeoFOAM::MeshAdapter::nfMesh() const']]]
 ];
