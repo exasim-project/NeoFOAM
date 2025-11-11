@@ -22,7 +22,7 @@ fi
 
 BRANCH=$1
 GROUP="${LRZ_GROUP:?LRZ_GROUP not set}"
-PROJECT=foamadapter # "${REPO_NAME:?REPO_NAME not set}" # TODO hardcoded for test
+PROJECT="${REPO_NAME:?REPO_NAME not set}"
 TRIGGER_TOKEN="${LRZ_GITLAB_TRIGGER_TOKEN:?LRZ_GITLAB_TRIGGER_TOKEN not set}"
 HOST="${LRZ_HOST:?LRZ_HOST not set}"
 shift 1
