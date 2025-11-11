@@ -8,6 +8,4 @@ function(foam_adapter_example NAME)
   install(TARGETS ${NAME})
 endfunction()
 
-add_subdirectory(scalarAdvection)
 add_subdirectory(neoIcoFoam)
-add_subdirectory(heatTransfer)
