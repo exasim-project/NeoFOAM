@@ -8,6 +8,7 @@
 
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/type_conversion.hpp"
+#include "NeoFOAM/auxiliary/field_traits.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
@@ -110,24 +111,6 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
 }
 
 template<typename FoamType>
-auto constructFrom(
-    const NeoN::Executor exec,
-    const NeoN::UnstructuredMesh& nfMesh,
-    const FoamType& in
-)
-{
-    using type_container_t = typename TypeMap<FoamType>::container_type;
-    using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
-
-    type_container_t out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
-
-    out.internalVector() = fromFoamField(exec, in.primitiveField());
-    out.correctBoundaryConditions();
-
-    return out;
-};
-
-template<typename FoamType>
 auto readSurfaceBoundaryConditions(
     const NeoN::UnstructuredMesh& uMesh,
     const FoamType& surfaceField
@@ -176,48 +159,65 @@ auto readSurfaceBoundaryConditions(
     return bcs;
 }
 
-template<typename FoamType>
-auto constructSurfaceField(
-    const NeoN::Executor exec,
-    const NeoN::UnstructuredMesh& nfMesh,
-    const FoamType& in
-)
+template <class FoamFieldType>
+auto constructFrom(const NeoN::Executor exec,
+                   const NeoN::UnstructuredMesh& nfMesh,
+                   const FoamFieldType& in)
 {
-    using type_container_t = typename TypeMap<FoamType>::container_type;
-    using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
-    using foam_primitive_t = typename FoamType::cmptType;
+    using ContainerType = typename TypeMap<FoamFieldType>::container_type;
+    using MappedType    = typename TypeMap<FoamFieldType>::mapped_type;
 
-    type_container_t
-        out(exec, in.name(), nfMesh, std::move(readSurfaceBoundaryConditions(nfMesh, in)));
+    if constexpr (NeoFOAM::detail::kIsVolumeFieldV<ContainerType>) {
+        ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
+        out.internalVector() = fromFoamField(exec, in.primitiveField());
+        out.correctBoundaryConditions();
+        return out;
+    } else if constexpr (NeoFOAM::detail::kIsSurfaceFieldV<ContainerType>) {
+        using FoamComponentType = typename FoamFieldType::cmptType;
 
-    Foam::Field<foam_primitive_t> flattenedField(out.internalVector().size());
-    size_t nInternal = nfMesh.nInternalFaces();
+        ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
 
-    forAll(in, facei)
-    {
-        flattenedField[facei] = convert(in[facei]);
-    }
+        const std::size_t nInt   = nfMesh.nInternalFaces();
+        const std::size_t nBnd   = nfMesh.boundaryMesh().offset().back();
+        const std::size_t nFaces = nInt+nBnd;
 
-    Foam::label idx = nInternal;
-    Foam::Field<foam_primitive_t> bvalue(out.internalVector().size());
-    forAll(in.boundaryField(), patchi)
-    {
-        const Foam::fvsPatchField<foam_primitive_t>& pin = in.boundaryField()[patchi];
+	NF_DINFO("Internal: "+std::to_string(nInt)+", Boundary: "+std::to_string(nBnd)+", nFaces: "+std::to_string(nFaces));
 
-        forAll(pin, facei)
-        {
-            flattenedField[idx] = pin[facei];
-            bvalue[idx - nInternal] = pin[facei];
-            idx++;
+        Foam::Field<FoamComponentType> flat(nFaces);
+        Foam::Field<FoamComponentType> bval(nBnd);
+
+        // Internal faces first: [0, nInt)
+        forAll(in, facei) {
+            if (static_cast<std::size_t>(facei) < nInt) {
+                flat[facei] = convert(in[facei]);
+            }
         }
+
+        // Boundary faces appended in patch order: [nInt, nFaces)
+        Foam::label idx = static_cast<Foam::label>(nInt);
+        Foam::label bi  = 0;
+        forAll(in.boundaryField(), patchi) {
+            const auto& pin = in.boundaryField()[patchi];
+            forAll(pin, facei) {
+                flat[idx] = convert(pin[facei]);
+                bval[bi]  = convert(pin[facei]);
+                ++idx; ++bi;
+            }
+        }
+
+        // (Optional) asserts in debug:
+        NF_ASSERT_EQUAL(static_cast<std::size_t>(idx), nFaces);
+        NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
+
+        out.internalVector()       = fromFoamField(exec, flat);
+        out.boundaryData().value() = fromFoamField(exec, bval);
+        out.correctBoundaryConditions();
+        return out;
+    } else {
+        NF_ASSERT((!std::is_same_v<ContainerType,ContainerType>),
+	    "TypeMap<FoamFieldType>::container_type must be VolumeField<ValueType> or SurfaceField<ValueType>."
+	);
     }
-    assert(idx == flattenedField.size());
-
-    out.internalVector() = fromFoamField(exec, flattenedField);
-    out.boundaryData().value() = fromFoamField(exec, bvalue);
-    out.correctBoundaryConditions();
-
-    return out;
 }
 
 /**

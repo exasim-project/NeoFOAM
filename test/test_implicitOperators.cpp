@@ -180,7 +180,7 @@ TEST_CASE("matrix multiplication")
             ofPhi[facei] = 1;
         }
 
-        auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, ofPhi);
+        auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
 
         Foam::fvScalarMatrix matrix(Foam::fvm::div(ofPhi, ofT));
         Foam::volScalarField divT("divT", matrix & ofT);
@@ -232,7 +232,7 @@ TEST_CASE("matrix multiplication")
             Foam::dimensionedScalar("phi", Foam::dimless, 0.1)
         );
 
-        auto nfNuf = NeoFOAM::constructSurfaceField(exec, nfMesh, ofNuf);
+        auto nfNuf = NeoFOAM::constructFrom(exec, nfMesh, ofNuf);
 
         Foam::fvScalarMatrix matrix(Foam::fvm::laplacian(ofNuf, ofT));
         Foam::volScalarField laplacian("laplacian", matrix & ofT);

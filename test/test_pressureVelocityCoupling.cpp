@@ -81,7 +81,7 @@ TEST_CASE("PressureVelocityCoupling")
         ),
         fvc::flux(ofU)
     );
-    auto nfPhi = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi);
+    auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
     nfPhi.name = "nfPhi";
 
     Foam::surfaceScalarField ofNu(
@@ -96,7 +96,7 @@ TEST_CASE("PressureVelocityCoupling")
         Foam::dimensionedScalar("ofNu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
     );
 
-    auto nfNu = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, ofNu);
+    auto nfNu = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
     nfNu.name = "nfNu";
     NeoN::fill(nfNu.boundaryData().value(), 0.01);
 
@@ -396,11 +396,11 @@ TEST_CASE("PressureVelocityCoupling")
                 mesh,
                 Foam::dimensionedScalar("forAUf", Foam::dimensionSet(0, 0, 1, 0, 0), 0.1)
             );
-            auto nfrAUf = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, forAUf);
+            auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
             nfrAUf.name = "nfrAUf";
 
             Foam::surfaceScalarField ofPhi0("ofPhi0", ofPhi * 0.0);
-            auto nfPhi0 = NeoFOAM::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi0);
+            auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
             nfPhi0.name = "nfPhi0";
 
             nf::PDESolver<NeoN::scalar> pEqn(

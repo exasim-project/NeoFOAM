@@ -25,6 +25,7 @@ function(foam_adapter_unit_test TEST SETUP_DIRECTORY)
   install(TARGETS adapter_${TEST})
 endfunction()
 
+foam_adapter_unit_test(ddtCorr setup_ddtCorr)
 foam_adapter_unit_test(geometricFields setup_operator)
 foam_adapter_unit_test(operators setup_operator)
 foam_adapter_unit_test(stencils setup_stencil3D)
