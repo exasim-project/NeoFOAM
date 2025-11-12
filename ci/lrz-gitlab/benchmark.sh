@@ -117,7 +117,7 @@ build_and_benchmark() {
     for f in "${csv_files[@]}"; do
         cp -f -- "$f" "${output_dir}/"
     done
-    
+
     rm -rf build
 }
 
