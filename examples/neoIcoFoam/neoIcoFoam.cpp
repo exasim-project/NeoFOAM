@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         NeoN::Logging::info("Creating phi");
-        auto phi = nf::constructSurfaceField(rt.exec, rt.nfMesh, ofphi);
+        auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
