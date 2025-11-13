@@ -1,4 +1,4 @@
-name: Coordinated Merge for FoamAdapter + NeoN
+name: Coordinated Merge for NeoFOAM + NeoN
 
 on:
   pull_request:
@@ -11,27 +11,27 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
       NEON_REPO: exasim-project/NeoN
-      FOAM_REPO: exasim-project/FoamAdapter
+      FOAM_REPO: exasim-project/NeoFOAM
       BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
-      - name: Checkout FoamAdapter repository
+      - name: Checkout NeoFOAM repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
 
       - name: Confirm triggering context
         run: |
-          echo "Triggered from FoamAdapter PR: #${{ github.event.pull_request.number }}"
+          echo "Triggered from NeoFOAM PR: #${{ github.event.pull_request.number }}"
           echo "Branch name: $BRANCH_NAME"
           echo "Label: coordinated-merge detected"
-          echo "FoamAdapter PR base branch: ${{ github.event.pull_request.base.ref }}"
+          echo "NeoFOAM PR base branch: ${{ github.event.pull_request.base.ref }}"
 
-      - name: Check FoamAdapter PR approval
+      - name: Check NeoFOAM PR approval
         run: |
           approved=$(gh pr view ${{ github.event.pull_request.number }} --repo $FOAM_REPO --json reviewDecision -q '.reviewDecision')
           if [[ "$approved" != "APPROVED" ]]; then
-            echo "FoamAdapter PR not yet approved."
+            echo "NeoFOAM PR not yet approved."
             exit 1
           fi
 
@@ -81,11 +81,11 @@ jobs:
           git config --global user.email "ci-bot@example.com"
           git config --global user.name "CI Bot"
 
-          # Checkout base branches and dry-run merge FoamAdapter
+          # Checkout base branches and dry-run merge NeoFOAM
           cd $TMP_DIR/foam
           git checkout ${{ github.event.pull_request.base.ref }}
           git fetch origin $BRANCH_NAME
-          git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "FoamAdapter merge would fail"; exit 1; }
+          git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "NeoFOAM merge would fail"; exit 1; }
 
           # Dry-run merge NeoN
           cd $TMP_DIR/neon
@@ -103,7 +103,7 @@ jobs:
             --merge \
             --admin
 
-      - name: Merge FoamAdapter PR
+      - name: Merge NeoFOAM PR
         run: |
           gh pr merge ${{ github.event.pull_request.number }} \
             --repo $FOAM_REPO \
