@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['adjusttimestep_0',['adjustTimeStep',['../structFoamAdapter_1_1RunTime.html#ac9a3f635b6f6104e474386c4761e7386',1,'FoamAdapter::RunTime']]]
+  ['adjusttimestep_0',['adjustTimeStep',['../structNeoFOAM_1_1RunTime.html#ace26fff0db0131deb4933452b23da4a3',1,'NeoFOAM::RunTime']]]
 ];

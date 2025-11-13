@@ -1,31 +1,31 @@
 Continuous Integration
 ======================
-The **FoamAdapter** project uses a two-level Continuous Integration (CI) system
+The **NeoFOAM** project uses a two-level Continuous Integration (CI) system
 to ensure correct builds, GPU compatibility, and automated benchmarking.
 
 The main repository is hosted on **GitHub**, and GPU-based workflows are delegated
 to **LRZ GitLab**, where jobs are executed on both **NVIDIA** and **AMD** GPUs.
-The CI architecture for FoamAdapter is illustrated below.
+The CI architecture for NeoFOAM is illustrated below.
 
 .. figure:: _static/ci/ci_overview.png
    :align: center
-   :alt: Overview of the CI architecture for FoamAdapter
+   :alt: Overview of the CI architecture for NeoFOAM
    :width: 90%
 
 --------------------------------
 Continuous Integration on GitHub
 --------------------------------
-GitHub CI is responsible for managing the overall FoamAdapter CI workflow.
+GitHub CI is responsible for managing the overall NeoFOAM CI workflow.
 
 **Responsibilities:**
 
-* Build and test FoamAdapter on **CPU** across different platforms (Linux, macOS, Windows).
+* Build and test NeoFOAM on **CPU** across different platforms (Linux, macOS, Windows).
 * Push the source code and commit metadata to **LRZ GitLab**.
 * Cancel outdated pipelines on LRZ GitLab for the same branch.
 * Trigger new LRZ GitLab pipelines for GPU builds and benchmarks.
 
 .. note::
-   The GitHub CI acts as the *control layer* for all FoamAdapter CI operations.
+   The GitHub CI acts as the *control layer* for all NeoFOAM CI operations.
    Developers interact only with GitHub — all LRZ GitLab pipelines are triggered automatically.
 
 ------------------------------------
@@ -35,32 +35,32 @@ The LRZ GitLab CI handles GPU-related operations.
 
 **Responsibilities:**
 
-* Build and test FoamAdapter on **NVIDIA** and **AMD** GPUs on Linux.
+* Build and test NeoFOAM on **NVIDIA** and **AMD** GPUs on Linux.
 * Run benchmark jobs after successful build and test stages.
 * Report the status and results back to GitHub for unified monitoring.
 
-.. _ci-foamadapter-workflow:
+.. _ci-neofoam-workflow:
 
 --------------------
 Development Workflow
 --------------------
-The development workflow for FoamAdapter proceeds as follows:
+The development workflow for NeoFOAM proceeds as follows:
 
 #. A developer opens a pull request (PR) or pushes a commit to an existing PR on GitHub.
-#. GitHub CI builds and tests FoamAdapter on CPUs.
+#. GitHub CI builds and tests NeoFOAM on CPUs.
 #. GitHub CI pushes the same branch to LRZ GitLab.
 #. GitHub CI cancels all pending or running LRZ GitLab pipelines for that branch.
 #. GitHub CI triggers a **new LRZ GitLab pipeline**.
-#. LRZ GitLab CI builds and tests FoamAdapter on GPUs.
+#. LRZ GitLab CI builds and tests NeoFOAM on GPUs.
 #. *(Optional)* Benchmark jobs are executed after successful testing.
 #. The developer monitors all results directly on GitHub.
 
-.. _ci-foamadapter-labels:
+.. _ci-neofoam-labels:
 
 -------------------
 Pull Request Labels
 -------------------
-FoamAdapter’s GitHub repository uses labels to control the CI behavior.
+NeoFOAM’s GitHub repository uses labels to control the CI behavior.
 
 **Relevant Labels:**
 
@@ -69,12 +69,12 @@ FoamAdapter’s GitHub repository uses labels to control the CI behavior.
 
 These labels allow developers to customize the CI process according to their needs.
 
-.. _ci-foamadapter-summary:
+.. _ci-neofoam-summary:
 
 -------
 Summary
 -------
-The FoamAdapter CI system provides:
+The NeoFOAM CI system provides:
 
 * Unified GitHub-driven CI management.
 * Transparent CPU and GPU build workflows.
@@ -84,5 +84,5 @@ The FoamAdapter CI system provides:
 
 .. seealso::
 
-   * :ref:`ci-foamadapter-workflow`
-   * :ref:`ci-foamadapter-labels`
+   * :ref:`ci-neofoam-workflow`
+   * :ref:`ci-neofoam-labels`
