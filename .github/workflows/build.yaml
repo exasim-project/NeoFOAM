@@ -135,4 +135,75 @@ jobs:
       - name: Test with pytest
         run: |
           uv run pytest
->>>>>>> 52ef7f54 (add python package minimal python package)
+
+  python-coverage:
+    runs-on: ubuntu-24.04 # may use an older version to test
+
+    name: Test coverage with OpenFOAM 2506 and Python 3.9
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2506
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: 3.9
+
+      - name: Install test dependencies
+        run: |
+          uv run pip install -v .[all]
+        
+      - name: Test with pytest
+        run: |
+            uv run pytest --cov=foamadapter --cov-report=xml --cov-report=term
+
+      # - name: Upload code coverage results to Codecov
+      #   uses: codecov/codecov-action@v5
+      #   with:
+      #     files: ./coverage.xml
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+    - name: Lint with Ruff
+      uses: astral-sh/ruff-action@v3
+      
+    - name: Format with Ruff
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: 'format --check'
+
+  typing:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: 3.9
+        
+    - name: Check types with ty
+      run: |
+        uv run pip install .[all]
+        poe type_check
+>>>>>>> 4cc1c14e (Python specific CI/CD setup (#147))
