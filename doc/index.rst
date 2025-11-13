@@ -17,8 +17,22 @@ Table of Contents
    self
    installation
    gettingStarted
-   testcases
+   goals_features
    ci
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Usage:
+   
+   usage/quickstart
+   usage/cli
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development:
+
+   development/architecture
+   development/testing
 
 .. toctree::
    :maxdepth: 2
