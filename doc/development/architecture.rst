@@ -89,8 +89,7 @@ The execution order is determined at runtime based on the metadata specified in 
         @Solver.step(...)
         def momentum(self, ...): pass
         @Solver.step(...)
-        def continuity(self, ..
-        .): pass
+        def continuity(self, ...): pass
         @Solver.step(...)
         def update_turbulence(self, ...): pass
 
