@@ -23,7 +23,7 @@ template class NeoN::timeIntegration::ForwardEuler<VolScalar>;
 
 extern Foam::Time* timePtr; // provided by the test harness
 
-TEST_CASE("ddtCorr: OpenFOAM vs NeoN (Forward Euler)")
+TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (Forward Euler)")
 {
     Foam::Time& runTime = *timePtr;
 
@@ -79,13 +79,11 @@ TEST_CASE("ddtCorr: OpenFOAM vs NeoN (Forward Euler)")
     );
 
     // === OpenFOAM: compute ddtPhiCorr(U, phi) for Euler ===
-    // OpenFOAM's fvc::ddtPhiCorr uses the scheme set in fvSchemes; for forward Euler
-    // its discrete form is equivalent to (phi0 - Sf·U0f)/dt under our controlled setup.
     Foam::surfaceScalarField foamCorr = fvc::ddtCorr(U, phi);
 
     // === NeoN: mirror the same state and compute forwardEuler::ddtPhiCorr ===
 
-    // Register U (VolVector) with oldTime support (timeIndex=1 enables oldTime in NeoN)
+    // Register U (VolVector) 
     auto& nfU = fieldCollection.registerVector<fvcc::VolumeField<Vec3>>(
         NeoFOAM::CreateFromFoamField<Foam::volVectorField>
         {
@@ -96,16 +94,13 @@ TEST_CASE("ddtCorr: OpenFOAM vs NeoN (Forward Euler)")
         }
     );
 
-    // Register phi (with oldTime support) 
+    // Register phi  
     auto& nfPhi = fieldCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
         NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField>{
             .exec = exec,
             .nfMesh = nfMesh,
             .foamField = phi,
             .name = "nfPhi"
-            //.iterationIndex = 0,
-            //.subCycleIndex = -1,
-            //.timeIndexOverride = 1   // <= ensures oldTime(nfPhi) is available right away
         }
     );
 
@@ -122,18 +117,7 @@ TEST_CASE("ddtCorr: OpenFOAM vs NeoN (Forward Euler)")
     SurfScalar nfCorr = fe.ddtPhiCorr(nfU, nfPhi, dt);
 
     // === Compare foamCorr vs nfCorr ===
-    // Bring both to host for a deterministic comparison.
     auto nfCorrHost   = nfCorr.internalVector().copyToHost();
-    auto nfPhi0Host   = nfPhi0.internalVector().copyToHost();
-    auto nfPhiHost   = nfPhi.internalVector().copyToHost();
-    auto nfU0Host   = nfU0.internalVector().copyToHost();
-
-    auto ofFaces = foamCorr.size();
-    forAll(foamCorr.boundaryField(), patchI)
-       ofFaces += phi.boundaryField()[patchI].size();
-
-    REQUIRE(ofFaces == nfCorrHost.size());
-    //REQUIRE(nfPhi0.internalVector().size() == phi.oldTime().size());
 
     NeoFOAM::compare(nfPhi, phi, ApproxScalar(1e-15));
     NeoFOAM::compare(nfPhi0, phi.oldTime(), ApproxScalar(1e-15));

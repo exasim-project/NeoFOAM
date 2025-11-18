@@ -73,7 +73,14 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         Info << "creating nf phi field" << endl;
-        auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
+	auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField>{
+                .exec = rt.exec,
+                .nfMesh = rt.nfMesh,
+                .foamField = ofphi,
+                .name = "phi"
+            }
+        );
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         Info << "\nStarting time loop\n" << endl;
@@ -83,6 +90,8 @@ int main(int argc, char* argv[])
 
             auto& oldU = fvcc::oldTime(U);
             oldU.internalVector() = U.internalVector();
+	    auto& oldPhi = fvcc::oldTime(phi);
+            oldPhi.internalVector() = phi.internalVector();
 
             auto coNum = fvcc::computeCoNum(phi, rt.dt);
             if (rt.adjustTimeStep)
@@ -126,13 +135,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA);
-                // TODO: OpenFOAM typically also corrects phiHbyA with
-                // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
-                // for the first term we can use but fvc::ddtCorr is missing
-                // NeoN::Input input = NeoN::TokenList({"linear"});
-                // fvcc::SurfaceInterpolation<NeoN::scalar> surfInterpolation(rt.exec, rt.nfMesh,
-                // input); auto surfRAU = surfInterpolation.interpolate(rAU);
+                auto phiHbyA = nf::flux(hByA) + rAU * NeoN::dsl::ddtPhiCorr(U, phi, rt.dt, rt.fvSchemesDict, rt.fvSolutionDict);
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
