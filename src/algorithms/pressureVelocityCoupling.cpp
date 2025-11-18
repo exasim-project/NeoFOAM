@@ -178,7 +178,7 @@ void updateFaceVelocity(
     );
 
     auto& bcCoeffs =
-        ls.auxiliaryCoefficients().get<la::BoundaryCoefficients<NeoN::scalar, NeoN::localIdx>>(
+        ls.auxiliaryCoefficients().getRef<la::BoundaryCoefficients<NeoN::scalar, NeoN::localIdx>>(
             "boundaryCoefficients"
         );
 

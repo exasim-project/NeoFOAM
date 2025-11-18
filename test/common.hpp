@@ -14,8 +14,8 @@
 #include "catch2/common.hpp"
 
 #include "NeoN/NeoN.hpp"
-#include "catch2/executorGenerator.hpp"
 #include "NeoFOAM/NeoFOAM.hpp"
+#include "catch2/executorGenerator.hpp"
 
 #include "fvm.H"
 #include "fvc.H"

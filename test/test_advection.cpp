@@ -49,6 +49,9 @@ void initFields(Foam::volScalarField& T, Foam::volVectorField& U, Foam::surfaceS
 TEST_CASE("Advection Equation")
 {
     Foam::Time& runTime = *timePtr;
+    Info << "Foo bbar bbaz\n";
+    // Info.level = 0;
+    // Info<< "Foo bbar bbaz 222 \n";
 
     NeoN::Database db;
     fvcc::VectorCollection& vectorCollection =

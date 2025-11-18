@@ -27,7 +27,7 @@ void updateSolver(NeoN::Dictionary& solverDict)
         {"GAMG", {"Ginkgo", "solver::Multigrid"}},
     };
 
-    std::string& solverName = solverDict.get<std::string>("solver");
+    std::string& solverName = solverDict.getRef<std::string>("solver");
     auto it = solverMap.find(solverName);
     if (it != solverMap.end())
     {
@@ -92,7 +92,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     else
     {
         // If no preconditioner is specified, we can insert a default one
-        std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
+        std::string& preconditionerName = solverDict.getRef<std::string>("preconditioner");
         auto it = preconditionerMap.find(preconditionerName);
         if (it != preconditionerMap.end())
         {
