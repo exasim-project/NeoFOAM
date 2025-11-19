@@ -177,7 +177,7 @@ void updateFaceVelocity(
         mesh.boundaryMesh().faceCells()
     );
 
-    auto& bcCoeffs =
+    const auto& bcCoeffs =
         ls.auxiliaryCoefficients().getRef<la::BoundaryCoefficients<NeoN::scalar, NeoN::localIdx>>(
             "boundaryCoefficients"
         );
