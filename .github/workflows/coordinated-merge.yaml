@@ -8,6 +8,7 @@ jobs:
   coordinated-merge:
     if: contains(github.event.pull_request.labels.*.name, 'coordinated-merge')
     runs-on: ubuntu-latest
+
     env:
       GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
       NEON_REPO: exasim-project/NeoN
@@ -15,6 +16,7 @@ jobs:
       BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
+
       - name: Checkout NeoFOAM repository
         uses: actions/checkout@v4
         with:
@@ -69,32 +71,60 @@ jobs:
             exit 1
           fi
 
+      # CHECK ALL WORKFLOWS PASS
+      - name: Wait for & verify NeoFOAM PR checks succeed
+        run: |
+          echo "Waiting for NeoFOAM CI checks to pass..."
+          gh pr checks ${{ github.event.pull_request.number }} --repo $FOAM_REPO --watch
+
+          result=$(gh pr checks ${{ github.event.pull_request.number }} --repo $FOAM_REPO --json status -q '.status')
+          if [[ "$result" != "SUCCESS" ]]; then
+            echo "NeoFOAM CI checks failing."
+            exit 1
+          fi
+
+      - name: Wait for & verify NeoN PR checks succeed
+        run: |
+          neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
+          echo "Waiting for NeoN CI checks to pass..."
+          gh pr checks "$neon_pr_number" --repo $NEON_REPO --watch
+
+          result=$(gh pr checks "$neon_pr_number" --repo $NEON_REPO --json status -q '.status')
+          if [[ "$result" != "SUCCESS" ]]; then
+            echo "NeoN CI checks failing."
+            exit 1
+          fi
+
+      - name: All CI checks passed
+        run: echo "All workflows passed for both PRs."
+
+      # DRY-RUN MERGE
       - name: Dry-run both merges locally
         run: |
           set -e
-          # Clone both repos into temp dirs
           TMP_DIR=$(mktemp -d)
+
           git clone https://github.com/$FOAM_REPO.git $TMP_DIR/foam
           git clone https://github.com/$NEON_REPO.git $TMP_DIR/neon
 
-          # Configure git identity for merge commits
           git config --global user.email "ci-bot@example.com"
           git config --global user.name "CI Bot"
 
-          # Checkout base branches and dry-run merge NeoFOAM
+          # NeoFOAM dry-run
           cd $TMP_DIR/foam
           git checkout ${{ github.event.pull_request.base.ref }}
           git fetch origin $BRANCH_NAME
           git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "NeoFOAM merge would fail"; exit 1; }
 
-          # Dry-run merge NeoN
+          # NeoN dry-run
           cd $TMP_DIR/neon
           git checkout ${{ steps.find-neon.outputs.neon_pr_base }}
           git fetch origin $BRANCH_NAME
           git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "NeoN merge would fail"; exit 1; }
 
-          echo "Dry-run merge succeeded for both PRs."
+          echo "Dry-run merge succeeded."
 
+      # MERGE
       - name: Merge NeoN PR
         run: |
           neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
