@@ -26,6 +26,8 @@ ddtSchemes
 gradSchemes
 {
     default         none;
+    grad(ofp)       $GRADSCHEME;
+    grad(nfP)       $GRADSCHEME;
     grad(T)         $GRADSCHEME;
     grad(U)         $GRADSCHEME;
     limited         cellLimited Gauss linear 1;
@@ -43,7 +45,7 @@ laplacianSchemes
     default         none;
     laplacian(ofNu,ofU) $LAPSCHEME;
     laplacian(nfNu,nfU) $LAPSCHEME;
-    laplacian(nfrAUf,nfp) $LAPSCHEME;
+    laplacian(nfrAUf,nfP) $LAPSCHEME;
     laplacian(forAUf,ofp) $LAPSCHEME;
 }
 
@@ -51,6 +53,7 @@ interpolationSchemes
 {
     default         none;
     flux(ofU)         linear;
+    flux(HbyA)         linear;
     // default         linear;
 }
 

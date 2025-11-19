@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-#include "FoamAdapter/auxiliary/comparison.hpp"
-#include "FoamAdapter/auxiliary/type_conversion.hpp"
-#include "FoamAdapter/auxiliary/convert.hpp"
+#include "NeoFOAM/auxiliary/comparison.hpp"
+#include "NeoFOAM/auxiliary/type_conversion.hpp"
+#include "NeoFOAM/auxiliary/convert.hpp"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 template<typename NT, typename OT>
@@ -44,7 +44,7 @@ bool operator==(
     }
 
     /* compare boundaryVector */
-    /* FoamAdapter boundaries are stored in contiguous memory
+    /* NeoFOAM boundaries are stored in contiguous memory
      * whereas OpenFOAM boundaries are
      * stored in a vector of patches */
     auto nfBoundaryHost = nf.boundaryData().value().copyToHost();

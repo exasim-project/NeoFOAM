@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -13,8 +13,8 @@ TEST_CASE("VolumeField")
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     Foam::Time& runTime = *timePtr;
-    auto meshPtr = FoamAdapter::createMesh(exec, runTime);
-    FoamAdapter::MeshAdapter& mesh = *meshPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     auto nfMesh = mesh.nfMesh();
 
     auto ofT = randomScalarField(runTime, mesh, "T");
@@ -22,13 +22,13 @@ TEST_CASE("VolumeField")
 
     SECTION("volumeScalarField " + execName)
     {
-        auto nfT = FoamAdapter::constructFrom(exec, nfMesh, ofT);
-        FoamAdapter::compare(nfT, ofT, ApproxScalar(1e-15));
+        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
+        NeoFOAM::compare(nfT, ofT, ApproxScalar(1e-15));
     }
 
     SECTION("volumeVectorField " + execName)
     {
-        auto nfU = FoamAdapter::constructFrom(exec, nfMesh, ofU);
-        FoamAdapter::compare(nfU, ofU, ApproxVector(1e-15));
+        auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
+        NeoFOAM::compare(nfU, ofU, ApproxVector(1e-15));
     }
 }

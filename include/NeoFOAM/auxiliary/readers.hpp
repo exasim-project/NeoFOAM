@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
 #include <type_traits>
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/auxiliary/convert.hpp"
-#include "FoamAdapter/auxiliary/type_conversion.hpp"
+#include "NeoFOAM/auxiliary/convert.hpp"
+#include "NeoFOAM/auxiliary/type_conversion.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 template<typename FoamType>
@@ -91,7 +91,9 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"extrapolatedCalculated",
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
-        {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }}
+        {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
+        {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
     };
 
     int patchi = 0;
@@ -158,7 +160,9 @@ auto readSurfaceBoundaryConditions(
              dict.insert("fixedValue", type_primitive_t {});
          }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
-        {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }}
+        {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
+        {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
     };
 
     for (const auto& bName : bDict.toc())

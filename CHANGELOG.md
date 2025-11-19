@@ -4,6 +4,8 @@
 - added coverage, format, linting, type checking to CI
 
 # Version 0.2.0 (unreleased)
-- improve solver interface with neon [#114](https://github.com/exasim-project/FoamAdapter/pull/114)
-- time integrator: integrates the newest dsl version 0.1 into FoamAdapter #41 [#14](https://github.com/exasim-project/FoamAdapter/pull/14)
-- convert foam dictionary to neofoam dictionary #13  [#13](https://github.com/exasim-project/FoamAdapter/pull/13)
+- Add support for PDEs on vector fields [#119](https://github.com/exasim-project/NeoFOAM/pull/119)[#134](https://github.com/exasim-project/NeoFOAM/pull/134)
+- Improve solver interface with neon [#114](https://github.com/exasim-project/NeoFOAM/pull/114)
+- Add basic runtime class [#113](https://github.com/exasim-project/NeoFOAM/pull/113)
+- Time integrator: integrates the newest dsl version 0.1 into NeoFOAM #41 [#14](https://github.com/exasim-project/NeoFOAM/pull/14)
+- Convert foam dictionary to neofoam dictionary #13  [#13](https://github.com/exasim-project/NeoFOAM/pull/13)

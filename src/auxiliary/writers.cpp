@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 //
-#include "FoamAdapter/auxiliary/writers.hpp"
+#include "NeoFOAM/auxiliary/writers.hpp"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 void write(const NeoN::scalarVector& sf, const Foam::fvMesh& mesh, const std::string fieldName)

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
 // TODO: move to cellCenred dsl?
 
 #pragma once
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/datastructures/runTime.hpp"
-#include "FoamAdapter/compatibility/fvSolution.hpp"
+#include "NeoFOAM/datastructures/runTime.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
 
 namespace dsl = NeoN::dsl;
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 /*@brief extends expression by giving access to assembled matrix
@@ -119,8 +119,21 @@ public:
         pRefValue_ = pRefValue;
     }
 
-    // TODO unify with dsl/solver.hpp
-    NeoN::la::SolverStats solve()
+    NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
+
+    NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
+    {
+        auto expr = dsl::Expression<ValueType>(expr_);
+        auto ls = NeoN::la::LinearSystem<ValueType, IndexType>(ls_);
+        expr.addOperator(-1.0 * rhs);
+        assemble();
+        return solveImpl(expr, ls);
+    }
+
+private:
+
+    NeoN::la::SolverStats
+    solveImpl(dsl::Expression<ValueType>& expr, NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
@@ -130,20 +143,19 @@ public:
             functs =
                 needReference_
                     ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {SetReference<ValueType>(
-                          pRefCell_,
-                          pRefValue_
-                      )}
+                        pRefCell_,
+                        pRefValue_
+                    )}
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
         }
 
-        // FIXME TODO this will create the sparsity pattern and potentially the ls
-        // again even if it has been created already
         auto solverDict = runTime_.fvSolutionDict.get<NeoN::Dictionary>("solvers");
         auto fieldSolverDict = solverDict.get<NeoN::Dictionary>(psi_.name);
+
         auto stats = NeoN::dsl::detail::iterativeSolveImpl(
-            expr_,
+            expr,
             sparsityPattern_,
-            ls_,
+            ls,
             psi_,
             runTime_.t,
             runTime_.dt,
@@ -159,13 +171,6 @@ public:
         return stats;
     }
 
-    NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
-    {
-        expr_.addOperator(-1.0 * rhs);
-        return solve();
-    }
-
-private:
 
     VolumeField& psi_;
     dsl::Expression<ValueType> expr_;

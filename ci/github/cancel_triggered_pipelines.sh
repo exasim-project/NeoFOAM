@@ -55,20 +55,24 @@ if [ -z "$pipeline_ids" ]; then
   echo "No running/pending CI pipelines to check"
 else
   for id in $pipeline_ids; do
-    echo "Checking pipeline $id for NEON_BRANCH variable"
+    echo "Checking pipeline $id for TRIGGER_SOURCE variable..."
     vars=$(curl -s \
       --header "PRIVATE-TOKEN: ${TOKEN}" \
       "https://${HOST}/api/v4/projects/${GROUP}%2F${PROJECT}/pipelines/$id/variables")
 
-    neon_branch=$(echo "$vars" | jq -r '.[] | select(.key=="NEON_BRANCH") | .value' || true)
+    trigger_source=$(echo "$vars" | jq -r '.[] | select(.key=="TRIGGER_SOURCE") | .value' || true)
 
-    if [ -z "$neon_branch" ]; then
-      echo "Canceling pipeline $id (NEON_BRANCH is null)"
+    if [ "$trigger_source" == "$PROJECT" ]; then
+      echo "Canceling pipeline $id (TRIGGER_SOURCE matches $PROJECT)"
       curl -s --request POST \
         --header "PRIVATE-TOKEN: ${TOKEN}" \
         "https://${HOST}/api/v4/projects/${GROUP}%2F${PROJECT}/pipelines/$id/cancel" >/dev/null
     else
-      echo "Keeping pipeline $id (NEON_BRANCH=$neon_branch)"
+      if [ -z "$trigger_source" ]; then
+        echo "Keeping pipeline $id (TRIGGER_SOURCE not set)"
+      else
+        echo "Keeping pipeline $id (TRIGGER_SOURCE=$trigger_source)"
+      fi
     fi
   done
 fi

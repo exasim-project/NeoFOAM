@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023-2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
-#include "FoamAdapter/auxiliary/setup.hpp"
-#include "FoamAdapter/datastructures/meshAdapter.hpp"
-#include "FoamAdapter/auxiliary/readers.hpp"
+#include "NeoFOAM/auxiliary/setup.hpp"
+#include "NeoFOAM/datastructures/meshAdapter.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
 
 #include "fvc.H"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 void setDeltaT(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum)
@@ -79,7 +79,7 @@ NeoN::Executor createExecutor(const Foam::dictionary& dict)
     return createExecutor(execName);
 }
 
-FoamAdapter::RunTime createAdapterRunTime(const Foam::Time& in)
+NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in)
 {
     auto exec = createExecutor(in.controlDict());
     return createAdapterRunTime(in, exec);
@@ -88,12 +88,12 @@ FoamAdapter::RunTime createAdapterRunTime(const Foam::Time& in)
 RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
 {
     std::cout << __FILE__ << ":"
-              << "Creating FoamAdapter runTime\n";
+              << "Creating NeoFOAM runTime\n";
     std::unique_ptr<MeshAdapter> meshPtr = createMesh(exec, in);
     MeshAdapter& mesh = *meshPtr;
 
     auto& nfMesh = mesh.nfMesh();
-    return FoamAdapter::RunTime {
+    return NeoFOAM::RunTime {
         .db = NeoN::Database(),
         .meshPtr = std::move(meshPtr),
         .mesh = mesh,

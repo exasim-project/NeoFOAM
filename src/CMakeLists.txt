@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Unlicense
 #
-# SPDX-FileCopyrightText: 2023 FoamAdapter authors
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-add_library(FoamAdapter SHARED)
+add_library(NeoFOAM SHARED)
 
-target_compile_definitions(FoamAdapter INTERFACE namespaceFoam=1)
-target_link_libraries(FoamAdapter PUBLIC FoamAdapter_public_api OpenFOAM)
+target_compile_definitions(NeoFOAM INTERFACE namespaceFoam=1)
+target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api OpenFOAM)
 
 target_sources(
-  FoamAdapter
+  NeoFOAM
   PRIVATE "algorithms/pressureVelocityCoupling.cpp"
           "auxiliary/convert.cpp"
           "auxiliary/foamDictionary.cpp"
@@ -19,4 +19,4 @@ target_sources(
           "datastructures/meshAdapter.cpp"
           "compatibility/fvSolution.cpp")
 
-install(TARGETS FoamAdapter)
+install(TARGETS NeoFOAM)
