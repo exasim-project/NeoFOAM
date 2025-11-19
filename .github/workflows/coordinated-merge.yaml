@@ -14,6 +14,7 @@ jobs:
       NEON_REPO: exasim-project/NeoN
       FOAM_REPO: exasim-project/NeoFOAM
       BRANCH_NAME: ${{ github.head_ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
 
@@ -24,121 +25,112 @@ jobs:
 
       - name: Confirm triggering context
         run: |
-          echo "Triggered from NeoFOAM PR: #${{ github.event.pull_request.number }}"
+          echo "Triggered from NeoFOAM PR: #$PR_NUMBER"
           echo "Branch name: $BRANCH_NAME"
-          echo "Label: coordinated-merge detected"
-          echo "NeoFOAM PR base branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Base branch: ${{ github.event.pull_request.base.ref }}"
 
       - name: Check NeoFOAM PR approval
         run: |
-          approved=$(gh pr view ${{ github.event.pull_request.number }} --repo $FOAM_REPO --json reviewDecision -q '.reviewDecision')
+          approved=$(gh pr view "$PR_NUMBER" --repo $FOAM_REPO --json reviewDecision -q '.reviewDecision')
           if [[ "$approved" != "APPROVED" ]]; then
-            echo "NeoFOAM PR not yet approved."
+            echo "NeoFOAM PR not approved."
             exit 1
           fi
 
+      # Find matching NeoN PR
       - name: Find NeoN PR with same branch
         id: find-neon
         run: |
-          neon_pr=$(gh pr list --repo $NEON_REPO --head $BRANCH_NAME --json number,baseRefName -q '.[0]')
-          if [[ -z "$neon_pr" ]]; then
-            echo "No matching NeoN PR found for branch '$BRANCH_NAME'."
+          neon=$(gh pr list --repo "$NEON_REPO" --head "$BRANCH_NAME" --json number,baseRefName -q '.[0]')
+          if [[ -z "$neon" ]]; then
+            echo "No matching NeoN PR found for branch $BRANCH_NAME"
             exit 1
           fi
 
-          neon_pr_number=$(echo $neon_pr | jq -r '.number')
-          neon_pr_base=$(echo $neon_pr | jq -r '.baseRefName')
+          echo "$neon" > neon.json
+          echo "NEON_PR_NUMBER=$(jq -r '.number' neon.json)" >> $GITHUB_ENV
+          echo "NEON_BASE_BRANCH=$(jq -r '.baseRefName' neon.json)" >> $GITHUB_ENV
 
-          echo "neon_pr_number=$neon_pr_number" >> $GITHUB_OUTPUT
-          echo "neon_pr_base=$neon_pr_base" >> $GITHUB_OUTPUT
+      - name: Print NeoN PR information
+        run: |
+          echo "NeoN PR number: $NEON_PR_NUMBER"
+          echo "NeoN base branch: $NEON_BASE_BRANCH"
 
       - name: Verify base branches match
         run: |
-          foam_base="${{ github.event.pull_request.base.ref }}"
-          neon_base="${{ steps.find-neon.outputs.neon_pr_base }}"
+          FOAM_BASE="${{ github.event.pull_request.base.ref }}"
 
-          if [[ "$foam_base" != "$neon_base" ]]; then
-            echo "Base branches do not match. Cannot perform coordinated merge."
+          if [[ "$FOAM_BASE" != "$NEON_BASE_BRANCH" ]]; then
+            echo "Base branches do not match."
+            echo "NeoFOAM base: $FOAM_BASE"
+            echo "NeoN base:    $NEON_BASE_BRANCH"
             exit 1
           fi
 
       - name: Check NeoN PR approval
         run: |
-          neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
-          approved=$(gh pr view "$neon_pr_number" --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
+          approved=$(gh pr view "$NEON_PR_NUMBER" --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
           if [[ "$approved" != "APPROVED" ]]; then
-            echo "NeoN PR not yet approved."
+            echo "NeoN PR not approved."
             exit 1
           fi
 
-      # CHECK ALL WORKFLOWS PASS
-      - name: Wait for & verify NeoFOAM PR checks succeed
+      # CI check validation for both PRs
+      - name: Wait for NeoFOAM CI to pass
         run: |
-          echo "Waiting for NeoFOAM CI checks to pass..."
-          gh pr checks ${{ github.event.pull_request.number }} --repo $FOAM_REPO --watch
+          gh pr checks "$PR_NUMBER" --repo $FOAM_REPO --watch
+          status=$(gh pr checks "$PR_NUMBER" --repo $FOAM_REPO --json status -q '.status')
+          [[ "$status" == "SUCCESS" ]] || { echo "NeoFOAM CI failed"; exit 1; }
 
-          result=$(gh pr checks ${{ github.event.pull_request.number }} --repo $FOAM_REPO --json status -q '.status')
-          if [[ "$result" != "SUCCESS" ]]; then
-            echo "NeoFOAM CI checks failing."
-            exit 1
-          fi
-
-      - name: Wait for & verify NeoN PR checks succeed
+      - name: Wait for NeoN CI to pass
         run: |
-          neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
-          echo "Waiting for NeoN CI checks to pass..."
-          gh pr checks "$neon_pr_number" --repo $NEON_REPO --watch
-
-          result=$(gh pr checks "$neon_pr_number" --repo $NEON_REPO --json status -q '.status')
-          if [[ "$result" != "SUCCESS" ]]; then
-            echo "NeoN CI checks failing."
-            exit 1
-          fi
+          gh pr checks "$NEON_PR_NUMBER" --repo $NEON_REPO --watch
+          status=$(gh pr checks "$NEON_PR_NUMBER" --repo $NEON_REPO --json status -q '.status')
+          [[ "$status" == "SUCCESS" ]] || { echo "NeoN CI failed"; exit 1; }
 
       - name: All CI checks passed
-        run: echo "All workflows passed for both PRs."
+        run: echo "All checks passed for both PRs."
 
-      # DRY-RUN MERGE
-      - name: Dry-run both merges locally
+      # Dry-run merges to ensure no conflicts
+      - name: Dry-run merges
         run: |
           set -e
-          TMP_DIR=$(mktemp -d)
+          TMP=$(mktemp -d)
 
-          git clone https://github.com/$FOAM_REPO.git $TMP_DIR/foam
-          git clone https://github.com/$NEON_REPO.git $TMP_DIR/neon
+          git clone https://github.com/$FOAM_REPO.git "$TMP/foam"
+          git clone https://github.com/$NEON_REPO.git "$TMP/neon"
 
-          git config --global user.email "ci-bot@example.com"
           git config --global user.name "CI Bot"
+          git config --global user.email "ci-bot@example.com"
 
-          # NeoFOAM dry-run
-          cd $TMP_DIR/foam
-          git checkout ${{ github.event.pull_request.base.ref }}
-          git fetch origin $BRANCH_NAME
-          git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "NeoFOAM merge would fail"; exit 1; }
+          # NeoFOAM merge simulation
+          cd "$TMP/foam"
+          git checkout "${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$BRANCH_NAME"
+          git merge --no-commit --no-ff origin/"$BRANCH_NAME"
 
-          # NeoN dry-run
-          cd $TMP_DIR/neon
-          git checkout ${{ steps.find-neon.outputs.neon_pr_base }}
-          git fetch origin $BRANCH_NAME
-          git merge --no-commit --no-ff origin/$BRANCH_NAME || { echo "NeoN merge would fail"; exit 1; }
+          # NeoN merge simulation
+          cd "$TMP/neon"
+          git checkout "$NEON_BASE_BRANCH"
+          git fetch origin "$BRANCH_NAME"
+          git merge --no-commit --no-ff origin/"$BRANCH_NAME"
 
-          echo "Dry-run merge succeeded."
+          echo "Dry-run succeeded."
 
-      # MERGE
+      # Merge both PRs
       - name: Merge NeoN PR
         run: |
-          neon_pr_number="${{ steps.find-neon.outputs.neon_pr_number }}"
-          gh pr merge "$neon_pr_number" \
+          gh pr merge "$NEON_PR_NUMBER" \
             --repo $NEON_REPO \
             --merge \
             --admin
 
       - name: Merge NeoFOAM PR
         run: |
-          gh pr merge ${{ github.event.pull_request.number }} \
+          gh pr merge "$PR_NUMBER" \
             --repo $FOAM_REPO \
             --merge \
             --admin
 
       - name: Done
-        run: echo "Coordinated merge completed successfully."
+        run: echo "Coordinated merge completed."
