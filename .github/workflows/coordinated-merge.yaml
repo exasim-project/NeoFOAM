@@ -76,20 +76,53 @@ jobs:
           fi
 
       # CI check validation for both PRs
-      - name: Wait for NeoFOAM CI to pass
+      - name: Validate NeoFOAM CI (fail fast)
         run: |
-          gh pr checks "$PR_NUMBER" --repo $FOAM_REPO --watch
-          status=$(gh pr checks "$PR_NUMBER" --repo $FOAM_REPO --json status -q '.status')
-          [[ "$status" == "SUCCESS" ]] || { echo "NeoFOAM CI failed"; exit 1; }
+          echo "Checking NeoFOAM CI checks for PR $PR_NUMBER in $FOAM_REPO..."
+          checks=$(gh pr checks "$PR_NUMBER" --repo "$FOAM_REPO" --json name,status,conclusion)
+          echo "$checks" | jq -r '.[] | "• \(.name): status=\(.status), conclusion=\(.conclusion)"'
 
-      - name: Wait for NeoN CI to pass
+          failing=$(echo "$checks" | jq -r '
+            .[]
+            | select(
+                .conclusion != null
+                and .conclusion != "success"
+                and .conclusion != "skipped"
+              )
+            | .name
+          ')
+
+          if [[ -n "$failing" ]]; then
+            echo "NeoFOAM CI has failing checks:"
+            echo "$failing"
+            exit 1
+          fi
+
+          echo "All NeoFOAM CI checks passed (ignoring skipped)."
+
+      - name: Validate NeoN CI (fail fast)
         run: |
-          gh pr checks "$NEON_PR_NUMBER" --repo $NEON_REPO --watch
-          status=$(gh pr checks "$NEON_PR_NUMBER" --repo $NEON_REPO --json status -q '.status')
-          [[ "$status" == "SUCCESS" ]] || { echo "NeoN CI failed"; exit 1; }
+          echo "Checking NeoN CI checks for PR $NEON_PR_NUMBER in $NEON_REPO..."
+          checks=$(gh pr checks "$NEON_PR_NUMBER" --repo "$NEON_REPO" --json name,status,conclusion)
+          echo "$checks" | jq -r '.[] | "• \(.name): status=\(.status), conclusion=\(.conclusion)"'
 
-      - name: All CI checks passed
-        run: echo "All checks passed for both PRs."
+          failing=$(echo "$checks" | jq -r '
+            .[]
+            | select(
+                .conclusion != null
+                and .conclusion != "success"
+                and .conclusion != "skipped"
+              )
+            | .name
+          ')
+
+          if [[ -n "$failing" ]]; then
+            echo "NeoN CI has failing checks:"
+            echo "$failing"
+            exit 1
+          fi
+
+          echo "All NeoN CI checks passed (ignoring skipped)."
 
       # Dry-run merges to ensure no conflicts
       - name: Dry-run merges
