@@ -60,8 +60,8 @@ TEST_CASE("read fvSchemes")
 
     NeoN::TokenList gradU = fvSchemesDict.subDict("gradSchemes").getVal<NeoN::TokenList>("grad(U)");
     REQUIRE(gradU.size() == 2);
-    REQUIRE(gradU.getVal<std::string>(0) == "Gauss");
-    REQUIRE(gradU.getVal<std::string>(1) == "linear");
+    REQUIRE(gradU.get<std::string>(0) == "Gauss");
+    REQUIRE(gradU.get<std::string>(1) == "linear");
 }
 
 TEST_CASE("read testDictionary from disk")
