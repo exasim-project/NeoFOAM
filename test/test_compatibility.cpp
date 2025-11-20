@@ -41,22 +41,22 @@ TEST_CASE("fvSolution")
         {
             solver1.insert("solver", std::string("PCG"));
             NeoFOAM::updateSolver(solver1);
-            REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
-            REQUIRE(solver1.get<std::string>("type") == "solver::Cg");
+            REQUIRE(solver1.getVal<std::string>("solver") == "Ginkgo");
+            REQUIRE(solver1.getVal<std::string>("type") == "solver::Cg");
         }
         SECTION("PBiCG")
         {
             solver1.insert("solver", std::string("PBiCG"));
             NeoFOAM::updateSolver(solver1);
-            REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
-            REQUIRE(solver1.get<std::string>("type") == "solver::Bicg");
+            REQUIRE(solver1.getVal<std::string>("solver") == "Ginkgo");
+            REQUIRE(solver1.getVal<std::string>("type") == "solver::Bicg");
         }
         SECTION("PBiCGStab")
         {
             solver1.insert("solver", std::string("PBiCGStab"));
             NeoFOAM::updateSolver(solver1);
-            REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
-            REQUIRE(solver1.get<std::string>("type") == "solver::Bicgstab");
+            REQUIRE(solver1.getVal<std::string>("solver") == "Ginkgo");
+            REQUIRE(solver1.getVal<std::string>("type") == "solver::Bicgstab");
         }
     }
 
@@ -67,18 +67,18 @@ TEST_CASE("fvSolution")
             solver1.insert("preconditioner", std::string("DIC"));
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
-            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Jacobi");
-            REQUIRE(preconditionerDict.get<int>("max_block_size") == 1);
+            REQUIRE(preconditionerDict.getVal<std::string>("type") == "preconditioner::Jacobi");
+            REQUIRE(preconditionerDict.getVal<int>("max_block_size") == 1);
         }
         SECTION("DILU")
         {
             solver1.insert("preconditioner", std::string("DILU"));
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
-            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
-            REQUIRE(preconditionerDict.get<bool>("reverse_apply") == false);
+            REQUIRE(preconditionerDict.getVal<std::string>("type") == "preconditioner::Ilu");
+            REQUIRE(preconditionerDict.getVal<bool>("reverse_apply") == false);
             REQUIRE(
-                preconditionerDict.subDict("factorization").get<std::string>("type")
+                preconditionerDict.subDict("factorization").getVal<std::string>("type")
                 == "factorization::ParIlu"
             );
         }

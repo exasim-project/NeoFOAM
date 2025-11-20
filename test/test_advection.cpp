@@ -109,7 +109,7 @@ TEST_CASE("Advection Equation")
 
     NeoN::Dictionary controlDict = NeoFOAM::convert(runTime.controlDict());
     NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());
-    Foam::scalar endTime = controlDict.get<Foam::scalar>("endTime");
+    Foam::scalar endTime = controlDict.getVal<Foam::scalar>("endTime");
 
     SECTION("Scalar advection with " + execName + " and " + "forwardEuler")
     {

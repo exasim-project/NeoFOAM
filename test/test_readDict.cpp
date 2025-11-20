@@ -25,15 +25,15 @@ TEST_CASE("Convert OpenFOAM::dictionary dict to NeoN::Dict")
 
     auto nfDict = NeoFOAM::convert(testDict);
 
-    REQUIRE(nfDict.get<NeoN::label>("label") == 1);
-    REQUIRE(nfDict.get<NeoN::scalar>("scalar") == 2.1);
-    REQUIRE(nfDict.get<NeoN::scalar>("scalar2") == 2.0);
-    REQUIRE(nfDict.get<NeoN::Vec3>("vector") == NeoN::Vec3(1.0, 2.0, 3.0));
-    REQUIRE(nfDict.get<std::string>("word") == "word");
+    REQUIRE(nfDict.getVal<NeoN::label>("label") == 1);
+    REQUIRE(nfDict.getVal<NeoN::scalar>("scalar") == 2.1);
+    REQUIRE(nfDict.getVal<NeoN::scalar>("scalar2") == 2.0);
+    REQUIRE(nfDict.getVal<NeoN::Vec3>("vector") == NeoN::Vec3(1.0, 2.0, 3.0));
+    REQUIRE(nfDict.getVal<std::string>("word") == "word");
 
     auto& nfSubDict = nfDict.subDict("subDict");
-    REQUIRE(nfSubDict.get<NeoN::scalar>("subScalar") == 4.1);
-    REQUIRE(nfSubDict.get<NeoN::Vec3>("subVector") == NeoN::Vec3(5.0, 6.0, 7.0));
+    REQUIRE(nfSubDict.getVal<NeoN::scalar>("subScalar") == 4.1);
+    REQUIRE(nfSubDict.getVal<NeoN::Vec3>("subVector") == NeoN::Vec3(5.0, 6.0, 7.0));
 }
 
 
@@ -48,20 +48,20 @@ TEST_CASE("read fvSchemes")
     NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());
     auto keys = fvSchemesDict.keys();
 
-    REQUIRE(fvSchemesDict.subDict("ddtSchemes").get<std::string>("ddt(T)") == "Euler");
+    REQUIRE(fvSchemesDict.subDict("ddtSchemes").getVal<std::string>("ddt(T)") == "Euler");
     auto gradSchemeKeys = fvSchemesDict.subDict("gradSchemes").keys();
     NeoN::TokenList limitedToken =
-        fvSchemesDict.subDict("gradSchemes").get<NeoN::TokenList>("limited");
+        fvSchemesDict.subDict("gradSchemes").getVal<NeoN::TokenList>("limited");
     REQUIRE(limitedToken.size() == 4);
     REQUIRE(limitedToken.get<std::string>(0) == "cellLimited");
     REQUIRE(limitedToken.get<std::string>(1) == "Gauss");
     REQUIRE(limitedToken.get<std::string>(2) == "linear");
     REQUIRE(limitedToken.get<NeoN::label>(3) == 1);
 
-    NeoN::TokenList gradU = fvSchemesDict.subDict("gradSchemes").get<NeoN::TokenList>("grad(U)");
+    NeoN::TokenList gradU = fvSchemesDict.subDict("gradSchemes").getVal<NeoN::TokenList>("grad(U)");
     REQUIRE(gradU.size() == 2);
-    REQUIRE(gradU.get<std::string>(0) == "Gauss");
-    REQUIRE(gradU.get<std::string>(1) == "linear");
+    REQUIRE(gradU.getVal<std::string>(0) == "Gauss");
+    REQUIRE(gradU.getVal<std::string>(1) == "linear");
 }
 
 TEST_CASE("read testDictionary from disk")
@@ -77,15 +77,15 @@ TEST_CASE("read testDictionary from disk")
 
     NeoN::Dictionary nfTestDict = NeoFOAM::convert(ofTestDict);
 
-    REQUIRE(nfTestDict.get<NeoN::label>("label") == 1);
-    REQUIRE(nfTestDict.get<NeoN::scalar>("scalar") == 2.1);
-    REQUIRE(nfTestDict.get<NeoN::scalar>("scalar2") == 2.0);
-    REQUIRE(nfTestDict.get<int>("scalarWriteAnsInt") == 2);
-    REQUIRE(nfTestDict.get<NeoN::Vec3>("vector") == NeoN::Vec3(1.0, 2.0, 3.0));
-    REQUIRE(nfTestDict.get<std::string>("word") == "word");
+    REQUIRE(nfTestDict.getVal<NeoN::label>("label") == 1);
+    REQUIRE(nfTestDict.getVal<NeoN::scalar>("scalar") == 2.1);
+    REQUIRE(nfTestDict.getVal<NeoN::scalar>("scalar2") == 2.0);
+    REQUIRE(nfTestDict.getVal<int>("scalarWriteAnsInt") == 2);
+    REQUIRE(nfTestDict.getVal<NeoN::Vec3>("vector") == NeoN::Vec3(1.0, 2.0, 3.0));
+    REQUIRE(nfTestDict.getVal<std::string>("word") == "word");
 
     NeoN::Dictionary& nfSubDict = nfTestDict.subDict("subDict");
-    REQUIRE(nfSubDict.get<NeoN::scalar>("subScalar") == 4.1);
-    REQUIRE(nfSubDict.get<NeoN::Vec3>("subVector") == NeoN::Vec3(5.0, 6.0, 7.0));
-    REQUIRE(nfSubDict.get<std::string>("subWord") == "subWord");
+    REQUIRE(nfSubDict.getVal<NeoN::scalar>("subScalar") == 4.1);
+    REQUIRE(nfSubDict.getVal<NeoN::Vec3>("subVector") == NeoN::Vec3(5.0, 6.0, 7.0));
+    REQUIRE(nfSubDict.getVal<std::string>("subWord") == "subWord");
 }

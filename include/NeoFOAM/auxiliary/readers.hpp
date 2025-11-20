@@ -45,7 +45,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [](auto& dict)
          {
              dict.insert("type", std::string("fixedGradient"));
-             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
+             NeoN::TokenList tokenList = dict.template getVal<NeoN::TokenList>("value");
              type_primitive_t fixedGradient = tokenList.get<type_primitive_t>(1);
              dict.insert("fixedGradient", fixedGradient);
          }},
@@ -59,7 +59,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [](auto& dict)
          {
              dict.insert("type", std::string("fixedValue"));
-             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
+             NeoN::TokenList tokenList = dict.template getVal<NeoN::TokenList>("value");
              type_primitive_t fixedValue {};
              if (std::is_same<type_primitive_t, NeoN::Vec3>::value)
              {

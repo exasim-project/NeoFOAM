@@ -121,19 +121,19 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     if (solverDict.contains("relTol"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("relative_residual_norm", solverDict.get<NeoN::scalar>("relTol"));
+        criteriaDict.insert("relative_residual_norm", solverDict.getVal<NeoN::scalar>("relTol"));
         solverDict.remove("relTol");
     }
     if (solverDict.contains("maxIter"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("iteration", solverDict.get<NeoN::label>("maxIter"));
+        criteriaDict.insert("iteration", solverDict.getVal<NeoN::label>("maxIter"));
         solverDict.remove("maxIter");
     }
     if (solverDict.contains("tolerance"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("absolute_residual_norm", solverDict.get<NeoN::scalar>("tolerance"));
+        criteriaDict.insert("absolute_residual_norm", solverDict.getVal<NeoN::scalar>("tolerance"));
         solverDict.remove("tolerance");
     }
 
