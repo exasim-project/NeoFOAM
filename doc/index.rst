@@ -20,17 +20,6 @@ Table of Contents
    goals_features
    ci
 
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development:
-
-   development/components
-   development/solver
-
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Usage:
@@ -43,7 +32,8 @@ Table of Contents
    :caption: Development:
 
    development/architecture
-   development/testing
+   development/components
+   development/solver
 
 .. toctree::
    :maxdepth: 2
