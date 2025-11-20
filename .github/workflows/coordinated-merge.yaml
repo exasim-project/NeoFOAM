@@ -79,15 +79,15 @@ jobs:
       - name: Validate NeoFOAM CI (fail fast)
         run: |
           echo "Checking NeoFOAM CI checks for PR $PR_NUMBER in $FOAM_REPO..."
-          checks=$(gh pr checks "$PR_NUMBER" --repo "$FOAM_REPO" --json name,status,conclusion)
-          echo "$checks" | jq -r '.[] | "• \(.name): status=\(.status), conclusion=\(.conclusion)"'
+          checks=$(gh pr checks "$PR_NUMBER" --repo "$FOAM_REPO" --json name,state)
+          echo "$checks" | jq -r '.[] | "• \(.name): state=\(.state)"'
 
           failing=$(echo "$checks" | jq -r '
             .[]
             | select(
-                .conclusion != null
-                and .conclusion != "success"
-                and .conclusion != "skipped"
+                (.name | test("coordinated-merge"; "i") | not)  # exclude coordinated-merge workflow
+                and .state != "SUCCESS"
+                and .state != "SKIPPED"
               )
             | .name
           ')
@@ -98,20 +98,19 @@ jobs:
             exit 1
           fi
 
-          echo "All NeoFOAM CI checks passed (ignoring skipped)."
+          echo "All NeoFOAM CI checks passed (ignoring skipped and excluding coordinated-merge)."
 
       - name: Validate NeoN CI (fail fast)
         run: |
           echo "Checking NeoN CI checks for PR $NEON_PR_NUMBER in $NEON_REPO..."
-          checks=$(gh pr checks "$NEON_PR_NUMBER" --repo "$NEON_REPO" --json name,status,conclusion)
-          echo "$checks" | jq -r '.[] | "• \(.name): status=\(.status), conclusion=\(.conclusion)"'
+          checks=$(gh pr checks "$NEON_PR_NUMBER" --repo "$NEON_REPO" --json name,state)
+          echo "$checks" | jq -r '.[] | "• \(.name): state=\(.state)"'
 
           failing=$(echo "$checks" | jq -r '
             .[]
             | select(
-                .conclusion != null
-                and .conclusion != "success"
-                and .conclusion != "skipped"
+                .state != "SUCCESS"
+                and .state != "SKIPPED"
               )
             | .name
           ')
