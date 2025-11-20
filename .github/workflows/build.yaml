@@ -36,19 +36,19 @@ jobs:
       - name: Checkout NeoFOAM repository
         uses: actions/checkout@v4
 
-      # Determine NeoN branch
+      # Determine NeoN branch (safe for slashes)
       - name: Determine NeoN branch
         id: neon_branch
         run: |
           TARGET_BRANCH="${{ github.ref_name }}"
           echo "Checking if NeoN branch '$TARGET_BRANCH' exists..."
 
-          if git ls-remote --heads https://github.com/exasim-project/NeoN "$TARGET_BRANCH" | grep "$TARGET_BRANCH" ; then
+          if git ls-remote --heads https://github.com/exasim-project/NeoN "$TARGET_BRANCH" | grep -q "^.*$TARGET_BRANCH$"; then
             echo "Branch exists. Using $TARGET_BRANCH"
-            echo "branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+            printf "branch=%s\n" "$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
           else
             echo "Branch does NOT exist. Falling back to develop"
-            echo "branch=develop" >> $GITHUB_OUTPUT
+            printf "branch=develop\n" >> "$GITHUB_OUTPUT"
 
       # Checkout NeoN
       - name: Checkout NeoN repository
@@ -105,10 +105,10 @@ jobs:
           CC=${{matrix.compiler.CC}} \
           CXX=${{matrix.compiler.CXX}} \
           cmake --preset develop \
-            -DNEOFOAM_NEON_DIR="${{ github.workspace }}/NeoN" \
             -DNEOFOAM_DEVEL_TOOLS=OFF \
             -DNEOFOAM_BUILD_BENCHMARKS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_DIR="${{ github.workspace }}/NeoN"
           cmake --build --preset develop
 
       # Execute unit tests
