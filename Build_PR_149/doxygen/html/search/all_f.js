@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['updatefacevelocity_0',['updateFaceVelocity',['../namespaceFoamAdapter.html#a60e76ae54f8f88e43502447f9d5399de',1,'FoamAdapter']]],
-  ['updatepreconditioner_1',['updatePreconditioner',['../namespaceFoamAdapter.html#a387368bb2d20ed59a7547204e2f3aaa2',1,'FoamAdapter']]],
-  ['updatesolver_2',['updateSolver',['../namespaceFoamAdapter.html#a46e698646a94db94dd4f57ca77f699bd',1,'FoamAdapter']]],
-  ['updatevelocity_3',['updateVelocity',['../namespaceFoamAdapter.html#a936ef96c5965acc3e3067ac0f90397c4',1,'FoamAdapter']]]
+  ['updatefacevelocity_0',['updateFaceVelocity',['../namespaceNeoFOAM.html#afc1d72b867bd234d1acdac0bf9f77bc5',1,'NeoFOAM']]],
+  ['updatepreconditioner_1',['updatePreconditioner',['../namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03',1,'NeoFOAM']]],
+  ['updatesolver_2',['updateSolver',['../namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256',1,'NeoFOAM']]],
+  ['updatevelocity_3',['updateVelocity',['../namespaceNeoFOAM.html#af74166d4a917f022e9371fa7a13cbc6a',1,'NeoFOAM']]]
 ];
