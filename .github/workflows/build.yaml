@@ -83,8 +83,8 @@ jobs:
         run: |
           bash -l -c "source /usr/lib/openfoam/openfoam2406/etc/bashrc \
                 && CC=${{ matrix.compiler.CC }} \
-                   CXX=${{ matrix.compiler.CXX }} \
-                   cmake --preset develop \
+                && CXX=${{ matrix.compiler.CXX }} \
+                && cmake --preset develop \
                    -DNeoN_DEVEL_TOOLS=OFF \
                    -DNeoN_BUILD_TESTS=OFF \
                    -DNEOFOAM_BUILD_BENCHMARKS=OFF \
