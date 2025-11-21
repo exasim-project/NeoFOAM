@@ -80,22 +80,17 @@ jobs:
           cmake --version
 
       - name: Build NeoFOAM
-        working-directory: ${{ github.workspace }}
         run: |
-          bash -l -c "source /usr/lib/openfoam/openfoam2406/etc/bashrc \
-                && CC=${{ matrix.compiler.CC }} \
-                && CXX=${{ matrix.compiler.CXX }} \
-                && cmake --preset develop \
-                   -DNeoN_DEVEL_TOOLS=OFF \
-                   -DNeoN_BUILD_TESTS=OFF \
-                   -DNEOFOAM_BUILD_BENCHMARKS=OFF \
-                   -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-                   -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
-                && cmake --build --preset develop"
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          CC=${{matrix.compiler.CC}} \
+          CXX=${{matrix.compiler.CXX}} \
+          cmake --preset develop \
+            -DNEOFOAM_DEVEL_TOOLS=OFF \
+            -DNEOFOAM_BUILD_BENCHMARKS=OFF \
+            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+          cmake --build  --preset develop
 
-
-      - name: Execute unit tests of NeoFOAM
-        working-directory: ${{ github.workspace }}
+      - name: Execute unit tests NeoFOAM
         run: |
-          bash -l -c "source /usr/lib/openfoam/openfoam2406/etc/bashrc \
-                && ctest --preset develop"
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          ctest --preset develop
