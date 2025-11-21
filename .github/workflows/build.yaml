@@ -81,18 +81,18 @@ jobs:
 
       - name: Build NeoFOAM
         run: |
-          source /usr/lib/openfoam/openfoam2406/etc/bashrc
-          CC=${{ matrix.compiler.CC }} \
-          CXX=${{ matrix.compiler.CXX }} \
-          cmake --preset develop \
-            -DNeoN_DEVEL_TOOLS=OFF \
-            -DNeoN_BUILD_TESTS=OFF \
-            -DNEOFOAM_BUILD_BENCHMARKS=OFF \
-            -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }}
-          cmake --build --preset develop
+          bash -l -c "source /usr/lib/openfoam/openfoam2406/etc/bashrc \
+                && CC=${{ matrix.compiler.CC }} \
+                   CXX=${{ matrix.compiler.CXX }} \
+                   cmake --preset develop \
+                   -DNeoN_DEVEL_TOOLS=OFF \
+                   -DNeoN_BUILD_TESTS=OFF \
+                   -DNEOFOAM_BUILD_BENCHMARKS=OFF \
+                   -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+                   -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
+                && cmake --build --preset develop"
 
       - name: Execute unit tests of NeoFOAM
         run: |
-          source /usr/lib/openfoam/openfoam2406/etc/bashrc
-          ctest --preset develop
+          bash -l -c "source /usr/lib/openfoam/openfoam2406/etc/bashrc \
+                && ctest --preset develop"
