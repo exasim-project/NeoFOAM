@@ -79,16 +79,8 @@ jobs:
           ninja --version
           cmake --version
 
-      # ensures OpenFOAM is available for all following steps
-      - name: Source OpenFOAM environment
-        id: openfoam
-        run: |
-          echo "Sourcing OpenFOAM..."
-          source /usr/lib/openfoam/openfoam2406/etc/bashrc
-          echo "OPENFOAM_READY=1" >> "$GITHUB_ENV"
-
       - name: Build NeoFOAM
-        if: env.OPENFOAM_READY == '1' 
+        if: env.OPENFOAM_READY == '1'
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc
           CC=${{ matrix.compiler.CC }} \
@@ -101,8 +93,8 @@ jobs:
             -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }}
           cmake --build --preset develop
 
-      - name: Execute unit tests NeoFOAM
-        if: env.OPENFOAM_READY == '1' 
+      - name: Execute unit tests of NeoFOAM
+        if: env.OPENFOAM_READY == '1'
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc
           ctest --preset develop
