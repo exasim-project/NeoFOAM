@@ -80,7 +80,6 @@ jobs:
           cmake --version
 
       - name: Build NeoFOAM
-        if: env.OPENFOAM_READY == '1'
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc
           CC=${{ matrix.compiler.CC }} \
@@ -94,7 +93,6 @@ jobs:
           cmake --build --preset develop
 
       - name: Execute unit tests of NeoFOAM
-        if: env.OPENFOAM_READY == '1'
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc
           ctest --preset develop
