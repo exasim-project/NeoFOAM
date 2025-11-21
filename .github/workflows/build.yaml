@@ -82,13 +82,15 @@ jobs:
       - name: Build NeoFOAM
         run: |
           cd $GITHUB_WORKSPACE
-          source /usr/lib/openfoam/openfoam2406/etc/bashrc
-          CC=${{matrix.compiler.CC}} \
-          CXX=${{matrix.compiler.CXX}} \
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          CC=${{matrix.compiler.CC}}
+          CXX=${{matrix.compiler.CXX}}
           cmake --preset develop \
-            -DNEOFOAM_DEVEL_TOOLS=OFF \
+            -DNeoN_DEVEL_TOOLS=OFF \
+            -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_BUILD_BENCHMARKS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+            -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }}
           cmake --build --preset develop
 
       - name: Execute unit tests NeoFOAM
