@@ -54,21 +54,6 @@ jobs:
             echo "NEON_BRANCH=develop" >> $GITHUB_ENV
           fi
 
-      - name: Checkout NeoN
-        uses: actions/checkout@v4
-        with:
-          repository: exasim-project/NeoN
-          ref: ${{ env.NEON_BRANCH }}
-          fetch-depth: 1
-
-      # Optional NeoN checkout if needed
-      # - name: Checkout NeoN submodule
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: exasim-project/NeoN
-      #     path: NeoN
-      #     ref: '${{ env.NEON_BRANCH }}'
-
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -94,9 +79,18 @@ jobs:
           ninja --version
           cmake --version
 
-      - name: Build NeoFOAM
+      # ensures OpenFOAM is available for all following steps
+      - name: Source OpenFOAM environment
+        id: openfoam
         run: |
-          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          echo "Sourcing OpenFOAM..."
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc
+          echo "OPENFOAM_READY=1" >> "$GITHUB_ENV"
+
+      - name: Build NeoFOAM
+        if: env.OPENFOAM_READY == '1' 
+        run: |
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc
           CC=${{ matrix.compiler.CC }} \
           CXX=${{ matrix.compiler.CXX }} \
           cmake --preset develop \
@@ -108,6 +102,7 @@ jobs:
           cmake --build --preset develop
 
       - name: Execute unit tests NeoFOAM
+        if: env.OPENFOAM_READY == '1' 
         run: |
-          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
+          source /usr/lib/openfoam/openfoam2406/etc/bashrc
           ctest --preset develop
