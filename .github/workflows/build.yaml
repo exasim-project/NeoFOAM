@@ -54,6 +54,13 @@ jobs:
             echo "NEON_BRANCH=develop" >> $GITHUB_ENV
           fi
 
+      - name: Checkout NeoFOAM
+        uses: actions/checkout@v4
+        with:
+          repository: exasim-project/NeoFOAM
+          ref: ${{ env.NEOFOAM_BRANCH }}
+          fetch-depth: 1
+
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -81,7 +88,6 @@ jobs:
 
       - name: Build NeoFOAM
         run: |
-          cd $GITHUB_WORKSPACE
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
           CC=${{matrix.compiler.CC}}
           CXX=${{matrix.compiler.CXX}}
