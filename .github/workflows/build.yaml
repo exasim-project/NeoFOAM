@@ -1,13 +1,14 @@
 name: Build NeoFOAM
-run-name: 'Build workflow'
+run-name: 'Build NeoFOAM
 
 on:
   push:
-    branches:
-      - develop
-      - main
+    branches: [develop, main]
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
+  schedule:
+    - cron: '00 8 * * 0'
+  workflow_dispatch:
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
@@ -19,9 +20,8 @@ concurrency:
 
 jobs:
   build-neofoam:
-    name: Build NeoFOAM
-    runs-on: ubuntu-latest
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+    name: Build NeoFOAM
     strategy:
       fail-fast: false
       matrix:
@@ -30,53 +30,50 @@ jobs:
             CXX: clang++
           - CC: gcc
             CXX: g++
-
+    runs-on: ubuntu-24.04
     steps:
-      # Checkout NeoFOAM
-      - name: Checkout NeoFOAM repository
-        uses: actions/checkout@v4
-
-      # Determine NeoN branch (safe for slashes)
-      - name: Determine NeoN branch
-        id: neon_branch
+      - name: Determine branch
         run: |
-          TARGET_BRANCH="${{ github.ref_name }}"
-          echo "Checking if NeoN branch '$TARGET_BRANCH' exists..."
 
-          if git ls-remote --heads https://github.com/exasim-project/NeoN "$TARGET_BRANCH" | grep -q "^.*$TARGET_BRANCH$"; then
-            echo "Branch exists. Using $TARGET_BRANCH"
-            printf "branch=%s\n" "$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
+          # Detect current branch of NeoFOAM
+          NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
+          echo "NEOFOAM_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+
+          # Define remote repo URL
+          REPO_URL="https://github.com/exasim-project/NeoN"
+
+          echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
+
+          # Query exact match: refs/heads/<branch>
+          if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+            echo "NeoN branch exists: $NEOFOAM_BRANCH"
+            echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
           else
-            echo "Branch does NOT exist. Falling back to develop"
-            printf "branch=develop\n" >> "$GITHUB_OUTPUT"
+            echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
+            echo "NEON_BRANCH=develop" >> $GITHUB_ENV
+          fi
 
-      # Checkout NeoN
-      - name: Checkout NeoN repository
+      - name: Checkout NeoN
         uses: actions/checkout@v4
         with:
           repository: exasim-project/NeoN
-          path: NeoN
-          ref: ${{ steps.neon_branch.outputs.branch }}
+          ref: ${{ env.NEON_BRANCH }}
+          fetch-depth: 1
 
-      # Log & validate NeoN directory
-      - name: Validate NeoN checkout
-        run: |
-          NEON_DIR="${{ github.workspace }}/NeoN"
-          echo "NeoN will be used from: $NEON_DIR"
-          echo "NeoN branch: ${{ steps.neon_branch.outputs.branch }}"
+      # Optional NeoN checkout if needed
+      # - name: Checkout NeoN submodule
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: exasim-project/NeoN
+      #     path: NeoN
+      #     ref: '${{ env.NEON_BRANCH }}'
 
-          if [ ! -d "$NEON_DIR" ]; then
-            echo "Error: NeoN directory '$NEON_DIR' does not exist!"
-            exit 1
-          fi
-
-      # Setup OpenFOAM
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
           openfoam-version: 2406
 
-      # Install dependencies
       - name: Install dependencies
         uses: gerlero/apt-install@v1
         with:
@@ -91,28 +88,26 @@ jobs:
             libopenmpi-dev
             openmpi-bin
 
-      # Get tool versions
       - name: Get versions
         run: |
           clang --version
           ninja --version
           cmake --version
 
-      # Build NeoFOAM
       - name: Build NeoFOAM
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          CC=${{matrix.compiler.CC}} \
-          CXX=${{matrix.compiler.CXX}} \
+          CC=${{ matrix.compiler.CC }} \
+          CXX=${{ matrix.compiler.CXX }} \
           cmake --preset develop \
-            -DNEOFOAM_DEVEL_TOOLS=OFF \
+            -DNeoN_DEVEL_TOOLS=OFF \
+            -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_BUILD_BENCHMARKS=OFF \
-            -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-            -DNEOFOAM_NEON_DIR="${{ github.workspace }}/NeoN"
+            -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }}
           cmake --build --preset develop
 
-      # Execute unit tests
-      - name: Execute unit tests NeoFOAM
+      - name: Execute unit tests NeoN
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
           ctest --preset develop
