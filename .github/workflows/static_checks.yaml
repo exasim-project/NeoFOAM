@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-compilation-db:
+    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
     name: Build with IWYU
     runs-on: ubuntu-24.04
     steps:
