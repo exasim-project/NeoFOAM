@@ -43,7 +43,7 @@ void write(
 
 /*@brief writes a NeoN field back to disk using OF field file format*/
 void write(
-    const fvcc::VolumeField<NeoN::scalar>& volField
+    const fvcc::VolumeField<NeoN::scalar>& volField,
     const Foam::fvMesh& mesh
 );
 
