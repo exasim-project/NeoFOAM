@@ -173,9 +173,9 @@ int main(int argc, char* argv[])
             if (runTime.outputTime())
             {
                 Info << "writing p field" << endl;
-                write(p.internalVector(), mesh, "p");
+                write(p, mesh);
                 Info << "writing U field" << endl;
-                write(U.internalVector(), mesh, "U");
+                write(U, mesh);
             }
 
             runTime.printExecutionTime(Info);
