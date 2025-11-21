@@ -35,11 +35,9 @@ int main(int argc, char* argv[])
 #include "createFields.H"
 
         // TODO have central place for the mapper
-        auto& solverDict = rt.fvSolutionDict.get<NeoN::Dictionary>("solvers");
-        solverDict.get<NeoN::Dictionary>("p") =
-            nf::mapFvSolution(solverDict.get<NeoN::Dictionary>("p"));
-        solverDict.get<NeoN::Dictionary>("U") =
-            nf::mapFvSolution(solverDict.get<NeoN::Dictionary>("U"));
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
         Info << "creating nf pressure field" << endl;
         fvcc::VectorCollection& vectorCollection =

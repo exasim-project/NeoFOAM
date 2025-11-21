@@ -149,8 +149,8 @@ private:
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
         }
 
-        auto solverDict = runTime_.fvSolutionDict.get<NeoN::Dictionary>("solvers");
-        auto fieldSolverDict = solverDict.get<NeoN::Dictionary>(psi_.name);
+        auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
+        auto fieldSolverDict = solverDict.subDict(psi_.name);
 
         auto stats = NeoN::dsl::detail::iterativeSolveImpl(
             expr,
