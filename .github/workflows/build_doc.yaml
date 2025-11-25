@@ -52,14 +52,14 @@ jobs:
         target-folder: ${{ github.ref_name }}
 
     # 3. DEPLOY FOR MAIN (stable)
-    - name: Deploy Latest (main)
+    - name: Deploy Main
       if: >
         github.event.pull_request.merged &&
         github.event.pull_request.base.ref == 'main'
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: docs_build
-        target-folder: latest
+        target-folder: main
 
     # 4. DEPLOY FOR DEVELOP (dev preview)
     - name: Deploy Develop
