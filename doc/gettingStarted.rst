@@ -3,11 +3,11 @@ Getting started
 
 You can build NeoFOAM by following these steps:
 
-Clone the NeoFOAM repository including NeoFOAM integrated as a submodule:
+Clone the NeoFOAM repository:
 
    .. code-block:: bash
 
-      git clone --recurse-submodules https://github.com/exasim-project/NeoFOAM.git
+      git clone https://github.com/exasim-project/NeoFOAM.git
 
 Navigate to the NeoFOAM directory:
 
@@ -24,6 +24,34 @@ NeoFOAM uses CMake to build, thus the standard CMake procedure should work, howe
         cmake <DesiredBuildFlags> ..
         cmake --build .
         cmake --install .
+
+Build NeoFOAM against NeoN
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are three ways to build NeoFOAM against NeoN:
+1. Using the NeoN repo directory:
+
+   We can specify the path to the NeoN repo directory during the CMake configuration step:
+   .. code-block:: bash
+
+      -DNEOFOAM_NEON_DIR=/path/to/NeoN/
+
+2. Using the NeoN submodule:
+   We can initialize and update the NeoN submodule in the NeoFOAM repo:
+   .. code-block:: bash
+
+      git submodule update --init --recursive
+
+   Then, during the CMake configuration step, CMake will automatically detect and use the NeoN submodule.
+
+3. Using automatically downloaded NeoN:
+   During the CMake configuration step, if neither of the above two options are provided, CMake will automatically download a pre-defined version of NeoN.
+   The pre-defined version is the main branch of NeoN by default, but it can be changed by specifying the desired version as follows:
+   .. code-block:: bash
+
+      -DNEOFOAM_NEON_VERSION=<desired_version>
+
+   The desired version can be a branch name, a tag name, or a commit hash.
 
 Building for GPUs
 ^^^^^^^^^^^^^^^^^^
