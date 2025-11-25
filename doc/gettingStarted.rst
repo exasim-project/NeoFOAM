@@ -25,6 +25,13 @@ NeoFOAM uses CMake to build, thus the standard CMake procedure should work, howe
         cmake --build .
         cmake --install .
 
+Building for GPUs
+^^^^^^^^^^^^^^^^^^
+
+NeoFOAM supports GPUs from different vendors through NeoN, which uses Kokkos as the backend for performance portability.
+Check the NeoN documentation for [instructions](https://exasim-project.com/NeoN/latest/installation.html#building-for-gpus)
+ on how to build for GPUs from different vendors.
+
 Building with CMake Presets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
