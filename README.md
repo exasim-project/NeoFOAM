@@ -1,6 +1,6 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
-**[Documentation](https://exasim-project.com/NeoFOAM/latest)** |
+**[Documentation](https://exasim-project.com/NeoFOAM/develop)** |
 # NeoFOAM
 
 NeoFOAM provides platform-portable implementations of common CFD algorithms and solvers using
