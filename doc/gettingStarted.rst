@@ -61,7 +61,7 @@ There are three ways to link NeoFOAM with NeoN:
 Building for GPUs
 -----------------
 
-NeoFOAM supports GPUs from multiple vendors via NeoN, which uses Kokkos for performance portability.  
+NeoFOAM supports GPUs from multiple vendors via NeoN, which uses Kokkos for performance portability.
 For detailed instructions, see the `Building NeoN for GPUs <https://exasim-project.com/NeoN/latest/installation.html#building-for-gpus>`_.
 
 Building with CMake Presets
