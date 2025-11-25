@@ -14,15 +14,17 @@ NeoFOAM has the following requirements
 *  _cmake 3.22+_
 *  _gcc >= 12_ or  _clang >= 18+_
 * OpenFOAM _2406_+
-* CUDA  _12.1_ (for GPU support)
+* NeoN (latest version)
 
 ## Compilation
 
 We provide several Cmake presets to set commmonly required flags for building NeoFOAM
 
-    cmake --list-presets # To list existing presets
-    cmake --preset production # Config for production
+    cmake --list-presets # List existing presets
+    cmake --preset production # Configure for production
     cmake --build --preset production # Build for production
+
+Check the documentation for [details](https://exasim-project.com/NeoFOAM/develop/gettingStarted.html#building-with-cmake-presets)
 
 ## Structure
 
