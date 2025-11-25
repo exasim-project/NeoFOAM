@@ -1,0 +1,22 @@
+name: update README documentation link after merge
+
+on:
+  pull_request:
+    types: closed
+
+jobs:
+  fix-readme:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rewrite develop link to main
+        run: |
+          sed -i 's|https://exasim-project.com/NeoFOAM/develop|https://exasim-project.com/NeoFOAM/main|g' README.md docs/**/*.md || true
+
+      - name: Commit and push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.MERGE_TOKEN }}
+          commit_message: "update documentation link for main"
