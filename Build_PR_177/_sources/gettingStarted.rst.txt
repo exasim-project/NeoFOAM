@@ -61,15 +61,15 @@ There are three ways to link NeoFOAM with NeoN:
 Building for GPUs
 -----------------
 
-NeoFOAM supports GPUs from multiple vendors via NeoN, which uses Kokkos for performance portability.
-For detailed instructions, see the `NeoN GPU installation guide <https://exasim-project.com/NeoN/latest/installation.html#building-for-gpus>`_.
+NeoFOAM supports GPUs from multiple vendors via NeoN, which uses Kokkos for performance portability.  
+For detailed instructions, see the `Building NeoN for GPUs <https://exasim-project.com/NeoN/latest/installation.html#building-for-gpus>`_.
 
 Building with CMake Presets
 ---------------------------
 
 .. _cmake-presets:
 
-Several CMake presets are provided to simplify building with common configurations:
+Three CMake presets are provided to simplify building with common configurations:
 
 .. code-block:: bash
 
@@ -110,16 +110,10 @@ The following tools are required:
        python3-dev \
        build-essential
 
-Running Test Cases
+Running Tutorials
 ------------------
 
-To build test cases, use the `profiling` CMake preset:
-
-.. code-block:: bash
-
-   cmake --preset profiling
-   cmake --build --preset profiling
-
+Use any of NeoFOAM's CMake presets to configure and build NeoFOAM.
 Then navigate to the `tutorials` directory and run the provided `Allrun` script in the directory of the chosen test case:
 
 .. code-block:: bash
