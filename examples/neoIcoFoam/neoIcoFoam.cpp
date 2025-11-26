@@ -48,13 +48,13 @@ int main(int argc, char* argv[])
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
         // create a new non-default logger with a given name, debug level and target
-        auto logger = std::make_shared<NeoN::Logging::Logger>(
-            "Debug Logger",             // name of the logger displayed in log
-            NeoN::Logging::Level::Info, // verbosity, Trace - most verbose
-            NeoN::Logging::Target::File // Console or File for JSON output
-        );
+        // auto logger = std::make_shared<NeoN::Logging::Logger>(
+        //     "Debug Logger",             // name of the logger displayed in log
+        //     NeoN::Logging::Level::Info, // verbosity, Trace - most verbose
+        //     NeoN::Logging::Target::File // Console or File for JSON output
+        // );
         // add a logger to specific class that supports logging
-        setLogger(vectorCollection, logger);
+        // setLogger(vectorCollection, logger);
         // to get a more detailed picture of what is happening
         // attach a logger to an executor
         // setLogger(rt.exec, logger);
