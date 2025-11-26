@@ -59,7 +59,7 @@ git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
     https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
 
 # -------------------------
-# Step 2: Configure and build FoamAdapter for benchmarking
+# Step 2: Configure and build NeoFOAM for benchmarking
 # -------------------------
 build_and_benchmark() {
     local branch=$1
@@ -72,7 +72,7 @@ build_and_benchmark() {
     echo ">>> Configuring build"
     if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         cmake --preset profiling \
-        -DFOAMADAPTER_NEON_DIR=../NeoN \
+        -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CUDA_ARCHITECTURES=90 \
         -DNeoN_WITH_THREADS=OFF
     elif [[ "$GPU_VENDOR" == "amd" ]]; then
@@ -81,13 +81,13 @@ build_and_benchmark() {
         export HIPCC_CXX=/usr/bin/g++
 
         cmake --preset profiling \
-        -DFOAMADAPTER_NEON_DIR=../NeoN \
+        -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CXX_COMPILER=hipcc \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF
     else
-        cmake --preset profiling -DFOAMADAPTER_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
+        cmake --preset profiling -DNEOFOAM_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
     fi
 
     echo ">>> Building"
