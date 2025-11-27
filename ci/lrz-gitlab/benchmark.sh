@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Argument parsing
 GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
-NEON_BRANCH=${2:-main} # Default to 'main' if not provided
+NEON_BRANCH=${2:-develop} # Default to 'develop' if not provided
 
 RESULTS_DIR=${RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
@@ -146,9 +146,9 @@ collect_system_info "${GPU_VENDOR}"
 echo ">>> Benchmarking the current branch"
 build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
 
-# Main branch
-echo ">>> Benchmarking the main branch"
-build_and_benchmark "main" "${RESULTS_DIR}/main"
+# Develop branch
+echo ">>> Benchmarking the develop branch"
+build_and_benchmark "develop" "${RESULTS_DIR}/develop"
 
 # Push results
 echo ">>> Copying results to NeoFOAM-BenchmarkData repository"
