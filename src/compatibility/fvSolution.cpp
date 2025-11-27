@@ -105,6 +105,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
 
 void updateCriteria(NeoN::Dictionary& solverDict)
 {
+    // parse given dictionary, get numeric value of key in a safe way
+    auto extractScalar = [](NeoN::Dictionary& d, std::string key)
+    {
+        NeoN::scalar ret =
+            (d.isType<int>(key)) ? NeoN::scalar(d.get<int>(key)) : d.get<NeoN::scalar>(key);
+        d.remove(key);
+        return ret;
+    };
+
     // Ensure the criteria dictionary exists
     if (!solverDict.contains("criteria"))
     {
@@ -121,8 +130,7 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     if (solverDict.contains("relTol"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("relative_residual_norm", solverDict.get<NeoN::scalar>("relTol"));
-        solverDict.remove("relTol");
+        criteriaDict.insert("relative_residual_norm", extractScalar(solverDict, "relTol"));
     }
     if (solverDict.contains("maxIter"))
     {
@@ -133,8 +141,7 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     if (solverDict.contains("tolerance"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("absolute_residual_norm", solverDict.get<NeoN::scalar>("tolerance"));
-        solverDict.remove("tolerance");
+        criteriaDict.insert("absolute_residual_norm", extractScalar(solverDict, "tolerance"));
     }
 
     NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");

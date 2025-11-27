@@ -212,9 +212,8 @@ TEST_CASE("PressureVelocityCoupling")
 
         SECTION("Solve transient momentum without grad(p)")
         {
-            auto& solverDict = rt.fvSolutionDict.get<NeoN::Dictionary>("solvers");
-            solverDict.get<NeoN::Dictionary>("nfU") =
-                nf::mapFvSolution(solverDict.get<NeoN::Dictionary>("nfU"));
+            auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+            solverDict.subDict("nfU") = nf::mapFvSolution(solverDict.subDict("nfU"));
 
             // require fields to be initially the same
             auto hostnfU = nfU.internalVector().copyToHost();
@@ -294,9 +293,8 @@ TEST_CASE("PressureVelocityCoupling")
 
         SECTION("Solve transient momentum with grad(p)")
         {
-            auto& solverDict = rt.fvSolutionDict.get<NeoN::Dictionary>("solvers");
-            solverDict.get<NeoN::Dictionary>("nfU") =
-                nf::mapFvSolution(solverDict.get<NeoN::Dictionary>("nfU"));
+            auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+            solverDict.subDict("nfU") = nf::mapFvSolution(solverDict.subDict("nfU"));
 
             // require fields to be initially the same
             auto hostnfU = nfU.internalVector().copyToHost();
