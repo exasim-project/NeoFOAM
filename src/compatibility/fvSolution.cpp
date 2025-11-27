@@ -129,8 +129,8 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     // Set default values for relative residual norm and iteration count
     if (solverDict.contains("relTol"))
     {
-        NeoN::Dictionary& d = solverDict.subDict("criteria");
-        criteriaDict.insert("relative_residual_norm", safeRetrieveScalarAndRemove(solverDict, "relTol"));
+        NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
+        criteriaDict.insert("relative_residual_norm", extractScalar(solverDict, "relTol"));
     }
     if (solverDict.contains("maxIter"))
     {
@@ -140,8 +140,8 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     }
     if (solverDict.contains("tolerance"))
     {
-        NeoN::Dictionary& d = solverDict.subDict("criteria");
-        criteriaDict.insert("absolute_residual_norm", safeRetrieveScalarAndRemove(solverDict, "tolerance"));
+        NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
+        criteriaDict.insert("absolute_residual_norm", extractScalar(solverDict, "tolerance"));
     }
 
     NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
