@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Argument parsing
 GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
-NEON_BRANCH=${2:-develop} # Default to 'develop' if not provided
+NEON_BRANCH=${2:?Error: NeoN branch must be specified}
 
 RESULTS_DIR=${RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
