@@ -111,7 +111,7 @@ benchmark-triggered-from-FA-nvidia:
     - .openfoam-env-setup
     - .trigger-from-neofoam-for-benchmarking
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia main profiling
+    - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH profiling
     - ./benchmarks/benchmarkSuite/cleanAll.sh
     - ./benchmarks/benchmarkSuite/runAll.sh
     # Check for produced results
@@ -124,7 +124,7 @@ benchmark-triggered-from-FA-amd:
     - .trigger-from-neofoam-for-benchmarking
   script:
     - export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
-    - ./ci/lrz-gitlab/build-and-test.sh amd main profiling
+    - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH profiling
     - ./benchmarks/benchmarkSuite/cleanAll.sh
     - ./benchmarks/benchmarkSuite/runAll.sh
     # Check for produced results

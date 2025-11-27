@@ -7,7 +7,7 @@ set -euo pipefail
 
 # Argument parsing
 GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
-NEON_BRANCH=${2:-main} # Default to 'main' if not provided
+NEON_BRANCH=${2:?Error: NeoN branch must be specified}
 PRESET=${3:-develop}   # Which CMakePreset to use, defaults to 'develop'
 
 echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
