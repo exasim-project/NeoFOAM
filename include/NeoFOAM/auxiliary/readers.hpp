@@ -32,6 +32,7 @@ auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
 template<typename FoamType>
 auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamType& ofVolField)
 {
+        std::cout << __FILE__ << __LINE__ << "readVolBoundaryConditions()\n";
     using type_container_t = typename TypeMap<FoamType>::container_type;
     using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
 
@@ -98,6 +99,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              dict.insert("fixedValue", type_primitive_t {});
          }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+        {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"extrapolatedCalculated",
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
@@ -111,12 +113,35 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict = convert(patchDict);
+        std::cout << __FILE__ << __LINE__ << "boundary " <<patchDict.get<Foam::word>("type") << " \n";
         patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
         bcs.emplace_back(nfMesh, neoPatchDict, patchi);
         patchi++;
     }
     return bcs;
 }
+
+template<typename FoamType>
+auto constructFrom(
+    const NeoN::Executor exec,
+    const NeoN::UnstructuredMesh& nfMesh,
+    const FoamType& in
+)
+{
+        std::cout << __FILE__ << __LINE__ << "constructFrom()\n";
+    using type_container_t = typename TypeMap<FoamType>::container_type;
+    using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
+
+    type_container_t out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
+
+        std::cout << __FILE__ << __LINE__ << "fromFoamField()\n";
+    out.internalVector() = fromFoamField(exec, in.primitiveField());
+        std::cout << __FILE__ << __LINE__ << "correctBoundary()\n";
+    out.correctBoundaryConditions();
+        std::cout << __FILE__ << __LINE__ << " done correctBoundary()\n";
+
+    return out;
+};
 
 template<typename FoamType>
 auto readSurfaceBoundaryConditions(
@@ -160,6 +185,7 @@ auto readSurfaceBoundaryConditions(
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict;
+        std::cout << "map patch type" << patchDict.get<Foam::word>("type") << "\n";
         patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
         bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
         patchi++;
@@ -265,6 +291,7 @@ public:
 
     fvcc::VectorDocument operator()(NeoN::Database& db)
     {
+        std::cout << __FILE__ << __LINE__ << "operator()\n";
         using type_container_t = typename TypeMap<FieldType>::container_type;
         type_container_t convertedField = constructFrom(exec, nfMesh, foamField);
         if (name != "")
@@ -275,12 +302,14 @@ public:
         const Foam::Time& runTime = mesh.time();
         std::int64_t timeIndex = runTime.timeIndex();
 
+        std::cout << __FILE__ << __LINE__ << "field()\n";
         NeoN::Field<typename type_container_t::VectorValueType> field(
             convertedField.exec(),
             convertedField.internalVector(),
             convertedField.boundaryData()
         );
 
+        std::cout << __FILE__ << __LINE__ << "registeredField()\n";
         type_container_t registeredField(
             convertedField.exec(),
             convertedField.name,
