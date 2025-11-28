@@ -55,9 +55,9 @@ std::unique_ptr<Foam::fvMesh> createMesh(const Foam::Time& runTime)
 /* @brief create a NeoN executor from a name
  * @return the Neon::Executor
  */
-NeoN::Executor createExecutor(const Foam::word& execName)
+NeoN::Executor createExecutor(const std::string execName)
 {
-    NeoN::Logging::info("Creating Executor"); //: {} ", execName);
+    NeoN::Logging::info("Creating Executor {}", execName);
     if (execName == "Serial")
     {
         return NeoN::SerialExecutor();
@@ -79,7 +79,7 @@ NeoN::Executor createExecutor(const Foam::word& execName)
 
 NeoN::Executor createExecutor(const Foam::dictionary& dict)
 {
-    auto execName = dict.get<Foam::word>("executor");
+    auto execName = std::string(dict.get<Foam::word>("executor"));
     return createExecutor(execName);
 }
 

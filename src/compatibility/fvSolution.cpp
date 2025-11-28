@@ -31,18 +31,18 @@ void updateSolver(NeoN::Dictionary& solverDict)
     };
 
     std::string& solverName = solverDict.get<std::string>("solver");
-    auto it = solverMap.find(solverName);
-    if (it != solverMap.end())
+    auto mapEntry = solverMap.find(solverName);
+    if (mapEntry != solverMap.end())
     {
-        NeoN::Logging::warn("Replacing solver {} by {}", solverName, it->second.second);
-        solverName = it->second.first;
+        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
+        solverName = mapEntry->second.first;
         // if (solverName == "GAMG")
         // {
         //     throw std::runtime_error(
         //         "GAMG is not supported in NeoFOAM, please use a different solver."
         //     );
         // }
-        solverDict.insert("type", it->second.second);
+        solverDict.insert("type", mapEntry->second.second);
     }
 }
 
@@ -95,15 +95,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     {
         // If no preconditioner is specified, we can insert a default one
         std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
-        auto it = preconditionerMap.find(preconditionerName);
-        if (it != preconditionerMap.end())
+        auto mapEntry = preconditionerMap.find(preconditionerName);
+        if (mapEntry != preconditionerMap.end())
         {
             NeoN::Logging::warn(
                 "Replacing preconditioner {} by {}",
                 preconditionerName,
-                it->second.get<std::string>("type")
+                mapEntry->second.get<std::string>("type")
             );
-            solverDict.insert("preconditioner", it->second);
+            solverDict.insert("preconditioner", mapEntry->second);
         }
     }
 }
@@ -158,9 +158,9 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     NeoN::Dictionary modSolverDict = solverDict;
 
     if (solverDict.contains("configFile")) return solverDict;
-    NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.");
-    NeoN::Logging::warn("Currently, it is advisable to specify a configFile");
-    NeoN::Logging::warn("for fine grained Ginkgo solver control");
+    NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"
+                        "Currently, it is advisable to specify a configFile\n"
+                        "for fine grained Ginkgo solver control\n");
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
     updateCriteria(modSolverDict);
