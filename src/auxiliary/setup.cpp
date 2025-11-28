@@ -41,8 +41,7 @@ std::unique_ptr<Foam::fvMesh> createMesh(const Foam::Time& runTime)
 {
     std::unique_ptr<Foam::fvMesh> meshPtr;
     Foam::word regionName(Foam::polyMesh::defaultRegion);
-    // NeoN::Logging::info("Create mesh for time = {}", runTime.timeName());
-    NeoN::Logging::info("Create mesh"); //, runTime.timeName());
+    NeoN::Logging::info("Create mesh for time = {}", runTime.timeOutputValue());
 
     meshPtr.reset(new Foam::fvMesh(
         Foam::IOobject(regionName, runTime.timeName(), runTime, Foam::IOobject::MUST_READ),
