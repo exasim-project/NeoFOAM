@@ -39,25 +39,12 @@ int main(int argc, char* argv[])
 
 #include "createFields.H"
 
-        // TODO have central place for the mapper
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-
-        // create a new non-default logger with a given name, debug level and target
-        // auto logger = std::make_shared<NeoN::Logging::Logger>(
-        //     "Debug Logger",             // name of the logger displayed in log
-        //     NeoN::Logging::Level::Info, // verbosity, Trace - most verbose
-        //     NeoN::Logging::Target::File // Console or File for JSON output
-        // );
-        // add a logger to specific class that supports logging
-        // setLogger(vectorCollection, logger);
-        // to get a more detailed picture of what is happening
-        // attach a logger to an executor
-        // setLogger(rt.exec, logger);
 
         fvcc::VolumeField<NeoN::scalar>& p =
             vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
@@ -84,7 +71,7 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.internalVector(), viscosity.value());
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
-        NeoN::Logging::info("creating nf phi field");
+        NeoN::Logging::info("Creating phi");
         auto phi = nf::constructSurfaceField(rt.exec, rt.nfMesh, ofphi);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -184,9 +171,9 @@ int main(int argc, char* argv[])
             runTime.write();
             if (runTime.outputTime())
             {
-                Info << "writing p field" << endl;
+                NeoN::Logging::info("Writing p");
                 write(p, mesh);
-                Info << "writing U field" << endl;
+                NeoN::Logging::info("Writing U");
                 write(U, mesh);
             }
 
