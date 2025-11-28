@@ -93,7 +93,7 @@
     TARGET_RESULTS_DIR: "NeoFOAM/${RUN_IDENTIFIER}/${CI_RUNNER_DESCRIPTION}"
 
 # --- Build and test NeoFOAM with the develop branch of NeoN ---
-build-and-test-triggered-from-FA-nvidia:
+build-and-test-triggered-from-NF-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -101,7 +101,7 @@ build-and-test-triggered-from-FA-nvidia:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
 
-build-and-test-triggered-from-FA-amd:
+build-and-test-triggered-from-NF-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
@@ -110,7 +110,7 @@ build-and-test-triggered-from-FA-amd:
     - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
 
 # --- Benchmark NeoFOAM with the develop branch of NeoN ---
-benchmark-triggered-from-FA-nvidia:
+benchmark-triggered-from-NF-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
@@ -118,7 +118,7 @@ benchmark-triggered-from-FA-nvidia:
   script:
     - ./ci/lrz-gitlab/benchmark.sh nvidia $NEON_BRANCH profiling
 
-benchmark-triggered-from-FA-amd:
+benchmark-triggered-from-NF-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup

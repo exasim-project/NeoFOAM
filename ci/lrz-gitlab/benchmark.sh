@@ -99,7 +99,7 @@ build_and_benchmark() {
     ./benchmarks/benchmarkSuite/runAll.sh
     echo ">>> Benchmarks completed"
 
-     # Check for produced results
+    # Check for produced results
     mapfile -d '' csv_files < <(find benchmarks/benchmarkSuite/ -type f -name '*.csv' -print0)
 
     if [ "${#csv_files[@]}" -eq 0 ]; then
@@ -107,12 +107,14 @@ build_and_benchmark() {
         exit 1
     fi
 
+    # Display the list of files generated
     echo ">>> List of files generated."
     for f in "${csv_files[@]}"; do
         echo "$f"
     done
     echo "============================"
 
+    # Copy the files to a common directory
     mkdir -p -- "${output_dir}"
     for f in "${csv_files[@]}"; do
         cp -f -- "$f" "${output_dir}/"
