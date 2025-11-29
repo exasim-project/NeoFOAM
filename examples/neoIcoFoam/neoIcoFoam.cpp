@@ -8,10 +8,15 @@
 #include "fvCFD.H"
 #include "pisoControl.H"
 
+#include <memory>
+
 using Foam::Info;
 using Foam::endl;
 using Foam::nl;
 
+// NOTE about namespace usage
+// here the namespaces are used deliberately verbose to
+// demonstrate where things are implemented
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -21,7 +26,7 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
-    Kokkos::initialize(argc, argv);
+    NeoN::initialize(argc, argv);
     {
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
@@ -34,12 +39,10 @@ int main(int argc, char* argv[])
 
 #include "createFields.H"
 
-        // TODO have central place for the mapper
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
-        Info << "creating nf pressure field" << endl;
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
@@ -53,7 +56,6 @@ int main(int argc, char* argv[])
                 }
             );
 
-        Info << "creating nf velocity field" << endl;
         fvcc::VolumeField<NeoN::Vec3>& U =
             vectorCollection.registerVector<fvcc::VolumeField<NeoN::Vec3>>(
                 nf::CreateFromFoamField<Foam::volVectorField> {
@@ -64,29 +66,28 @@ int main(int argc, char* argv[])
                 }
             );
 
-        Info << "creating nf nu field" << endl;
         auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         fvcc::SurfaceField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, nuBCs);
         NeoN::fill(nu.internalVector(), viscosity.value());
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
-        Info << "creating nf phi field" << endl;
+        NeoN::Logging::info("Creating phi");
         auto phi = nf::constructSurfaceField(rt.exec, rt.nfMesh, ofphi);
+
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-        Info << "\nStarting time loop\n" << endl;
+        NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            Info << "Time = " << runTime.timeName() << nl << endl;
+            // Logging supports string formatting
+            NeoN::Logging::info("Time = {}", rt.t);
 
             auto& oldU = fvcc::oldTime(U);
             oldU.internalVector() = U.internalVector();
 
-            auto coNum = fvcc::computeCoNum(phi, rt.dt);
-            if (rt.adjustTimeStep)
-            {
-                nf::setDeltaT(runTime, rt, coNum);
-            }
+            auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
+            NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
+            nf::syncRunTimes(runTime, rt, maxCoNum);
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
@@ -111,7 +112,7 @@ int main(int argc, char* argv[])
             // --- PISO loop
             while (piso.correct())
             {
-                Info << "PISO loop" << endl;
+                NeoN::Logging::info("PISO loop");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -170,18 +171,16 @@ int main(int argc, char* argv[])
             runTime.write();
             if (runTime.outputTime())
             {
-                Info << "writing p field" << endl;
+                NeoN::Logging::info("Writing p");
                 write(p, mesh);
-                Info << "writing U field" << endl;
+                NeoN::Logging::info("Writing U");
                 write(U, mesh);
             }
 
             runTime.printExecutionTime(Info);
         }
-
-        Info << "End\n" << endl;
     }
-    Kokkos::finalize();
+    NeoN::finalize();
 
     return 0;
 }

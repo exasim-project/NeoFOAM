@@ -164,10 +164,9 @@ private:
             functs
         );
 
-        std::cout << "[NeoN] Solving for " << psi_.name << ":"
-                  << " Initial residual: " << stats.initResNorm
-                  << " Final residual: " << stats.finalResNorm
-                  << " No Iterations: " << stats.numIter << std::endl;
+        NeoN::Logging::info(
+            "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
+                psi_.name, stats.initResNorm, stats.finalResNorm, stats.numIter);
         return stats;
     }
 

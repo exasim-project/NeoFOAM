@@ -8,7 +8,10 @@
 
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+
 #include <map>
+
+#include <NeoN/core/logging.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
@@ -28,19 +31,18 @@ void updateSolver(NeoN::Dictionary& solverDict)
     };
 
     std::string& solverName = solverDict.get<std::string>("solver");
-    auto it = solverMap.find(solverName);
-    if (it != solverMap.end())
+    auto mapEntry = solverMap.find(solverName);
+    if (mapEntry != solverMap.end())
     {
-        std::cout << __FILE__ << ":\n\treplacing solver " << solverName << " by "
-                  << it->second.second << "\n";
-        solverName = it->second.first;
+        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
+        solverName = mapEntry->second.first;
         // if (solverName == "GAMG")
         // {
         //     throw std::runtime_error(
         //         "GAMG is not supported in NeoFOAM, please use a different solver."
         //     );
         // }
-        solverDict.insert("type", it->second.second);
+        solverDict.insert("type", mapEntry->second.second);
     }
 }
 
@@ -93,12 +95,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     {
         // If no preconditioner is specified, we can insert a default one
         std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
-        auto it = preconditionerMap.find(preconditionerName);
-        if (it != preconditionerMap.end())
+        auto mapEntry = preconditionerMap.find(preconditionerName);
+        if (mapEntry != preconditionerMap.end())
         {
-            std::cout << __FILE__ << ":\n\treplacing preconditioner " << preconditionerName
-                      << " by " << it->second << "\n";
-            solverDict.insert("preconditioner", it->second);
+            NeoN::Logging::warn(
+                "Replacing preconditioner {} by {}",
+                preconditionerName,
+                mapEntry->second.get<std::string>("type")
+            );
+            solverDict.insert("preconditioner", mapEntry->second);
         }
     }
 }
@@ -145,7 +150,6 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     }
 
     NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-    std::cout << __FILE__ << ":\n\tStopping criteria: " << criteriaDict << "\n";
 }
 
 
@@ -154,10 +158,9 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     NeoN::Dictionary modSolverDict = solverDict;
 
     if (solverDict.contains("configFile")) return solverDict;
-    std::cout << __FILE__ << ":\n\tMapping OpenFOAM solver settings to NeoN settings\n"
-              << "\tCurrently, it is advisable to specify configFile for fine grained Ginkgo "
-                 "solver support\n";
-
+    NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"
+                        "Currently, it is advisable to specify a configFile\n"
+                        "for fine grained Ginkgo solver control\n");
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
     updateCriteria(modSolverDict);
