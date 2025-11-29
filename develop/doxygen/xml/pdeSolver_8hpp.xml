@@ -295,77 +295,76 @@
 <codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>functs</highlight></codeline>
 <codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="166"><highlight class="normal"></highlight></codeline>
-<codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;[NeoN]<sp/>Solving<sp/>for<sp/>&quot;</highlight><highlight class="normal"><sp/>&lt;&lt;<sp/>psi_.name<sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;:&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;<sp/>Initial<sp/>residual:<sp/>&quot;</highlight><highlight class="normal"><sp/>&lt;&lt;<sp/>stats.initResNorm</highlight></codeline>
-<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;<sp/>Final<sp/>residual:<sp/>&quot;</highlight><highlight class="normal"><sp/>&lt;&lt;<sp/>stats.finalResNorm</highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;<sp/>No<sp/>Iterations:<sp/>&quot;</highlight><highlight class="normal"><sp/>&lt;&lt;<sp/>stats.numIter<sp/>&lt;&lt;<sp/>std::endl;</highlight></codeline>
-<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>stats;</highlight></codeline>
-<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoN::Logging::info(</highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;Solving<sp/>for<sp/>{}<sp/>Initial<sp/>residual:<sp/>{}<sp/>Final<sp/>residual:<sp/>{}<sp/>No<sp/>Iterations:<sp/>{}&quot;</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi_.name,<sp/>stats.initResNorm,<sp/>stats.finalResNorm,<sp/>stats.numIter);</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>stats;</highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"></highlight></codeline>
 <codeline lineno="173"><highlight class="normal"></highlight></codeline>
-<codeline lineno="174"><highlight class="normal"></highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/>VolumeField&amp;<sp/>psi_;</highlight></codeline>
-<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/>dsl::Expression&lt;ValueType&gt;<sp/>expr_;</highlight></codeline>
-<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>RunTime&amp;<sp/>runTime_;</highlight></codeline>
-<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::la::SparsityPattern&amp;<sp/>sparsityPattern_;</highlight></codeline>
-<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::LinearSystem&lt;ValueType,<sp/>IndexType&gt;<sp/>ls_;</highlight></codeline>
-<codeline lineno="180"><highlight class="normal"></highlight></codeline>
-<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>needReference_;</highlight></codeline>
-<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::localIdx<sp/>pRefCell_;</highlight></codeline>
-<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>pRefValue_;</highlight></codeline>
-<codeline lineno="184"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="185"><highlight class="normal"></highlight></codeline>
-<codeline lineno="186"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
-<codeline lineno="187" refid="namespaceNeoFOAM_1aa275ecb871028c14e2d9dae4c78686e2" refkind="member"><highlight class="normal">NeoN::Vector&lt;ValueType&gt;<sp/><ref refid="namespaceNeoFOAM_1aa275ecb871028c14e2d9dae4c78686e2" kindref="member">diag</ref>(</highlight></codeline>
-<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>la::LinearSystem&lt;ValueType,<sp/>IndexType&gt;&amp;<sp/>ls,</highlight></codeline>
-<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::la::SparsityPattern&amp;<sp/>sparsityPattern</highlight></codeline>
-<codeline lineno="190"><highlight class="normal">)</highlight></codeline>
-<codeline lineno="191"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Vector&lt;ValueType&gt;<sp/>diagonal(ls.exec(),<sp/>sparsityPattern.diagOffset().size(),<sp/>0.0);</highlight></codeline>
-<codeline lineno="193"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>diagView<sp/>=<sp/>diagonal.view();</highlight></codeline>
-<codeline lineno="194"><highlight class="normal"></highlight></codeline>
-<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>diagOffset<sp/>=<sp/>sparsityPattern.diagOffset().view();</highlight></codeline>
-<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>[matrix,<sp/>b]<sp/>=<sp/>ls.view();</highlight></codeline>
-<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::parallelFor(</highlight></codeline>
-<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ls.exec(),</highlight></codeline>
-<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>diagOffset.size()},</highlight></codeline>
-<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::size_t<sp/>celli)<sp/>{</highlight></codeline>
-<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>diagOffsetCelli<sp/>=<sp/>diagOffset[celli];</highlight></codeline>
-<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>diagView[celli]<sp/>=<sp/>matrix.values[matrix.rowOffs[celli]<sp/>+<sp/>diagOffsetCelli];</highlight></codeline>
-<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>diagonal;</highlight></codeline>
-<codeline lineno="206"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/>VolumeField&amp;<sp/>psi_;</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/>dsl::Expression&lt;ValueType&gt;<sp/>expr_;</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>RunTime&amp;<sp/>runTime_;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::la::SparsityPattern&amp;<sp/>sparsityPattern_;</highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::LinearSystem&lt;ValueType,<sp/>IndexType&gt;<sp/>ls_;</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"></highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>needReference_;</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::localIdx<sp/>pRefCell_;</highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>pRefValue_;</highlight></codeline>
+<codeline lineno="183"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"></highlight></codeline>
+<codeline lineno="185"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
+<codeline lineno="186" refid="namespaceNeoFOAM_1aa275ecb871028c14e2d9dae4c78686e2" refkind="member"><highlight class="normal">NeoN::Vector&lt;ValueType&gt;<sp/><ref refid="namespaceNeoFOAM_1aa275ecb871028c14e2d9dae4c78686e2" kindref="member">diag</ref>(</highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>la::LinearSystem&lt;ValueType,<sp/>IndexType&gt;&amp;<sp/>ls,</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::la::SparsityPattern&amp;<sp/>sparsityPattern</highlight></codeline>
+<codeline lineno="189"><highlight class="normal">)</highlight></codeline>
+<codeline lineno="190"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Vector&lt;ValueType&gt;<sp/>diagonal(ls.exec(),<sp/>sparsityPattern.diagOffset().size(),<sp/>0.0);</highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>diagView<sp/>=<sp/>diagonal.view();</highlight></codeline>
+<codeline lineno="193"><highlight class="normal"></highlight></codeline>
+<codeline lineno="194"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>diagOffset<sp/>=<sp/>sparsityPattern.diagOffset().view();</highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>[matrix,<sp/>b]<sp/>=<sp/>ls.view();</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::parallelFor(</highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ls.exec(),</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>diagOffset.size()},</highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>KOKKOS_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::size_t<sp/>celli)<sp/>{</highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>diagOffsetCelli<sp/>=<sp/>diagOffset[celli];</highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>diagView[celli]<sp/>=<sp/>matrix.values[matrix.rowOffs[celli]<sp/>+<sp/>diagOffsetCelli];</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>diagonal;</highlight></codeline>
+<codeline lineno="205"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"></highlight></codeline>
 <codeline lineno="207"><highlight class="normal"></highlight></codeline>
-<codeline lineno="208"><highlight class="normal"></highlight></codeline>
-<codeline lineno="209"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
-<codeline lineno="210" refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" refkind="member"><highlight class="normal">NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;<sp/><ref refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" kindref="member">applyOperator</ref>(</highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>la::LinearSystem&lt;ValueType,<sp/>IndexType&gt;&amp;<sp/>ls,</highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;<sp/>psi</highlight></codeline>
-<codeline lineno="213"><highlight class="normal">)</highlight></codeline>
-<codeline lineno="214"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;<sp/>res(</highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.exec(),</highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;ls_&quot;</highlight><highlight class="normal"><sp/>+<sp/>psi.name,</highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.mesh(),</highlight></codeline>
-<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.internalVector(),</highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.boundaryData(),</highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.boundaryConditions()</highlight></codeline>
-<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::computeResidual(ls.matrix(),<sp/>ls.rhs(),<sp/>psi.internalVector(),<sp/>res.internalVector());</highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>res;</highlight></codeline>
-<codeline lineno="225"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
+<codeline lineno="209" refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" refkind="member"><highlight class="normal">NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;<sp/><ref refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" kindref="member">applyOperator</ref>(</highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>la::LinearSystem&lt;ValueType,<sp/>IndexType&gt;&amp;<sp/>ls,</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;<sp/>psi</highlight></codeline>
+<codeline lineno="212"><highlight class="normal">)</highlight></codeline>
+<codeline lineno="213"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;<sp/>res(</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.exec(),</highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;ls_&quot;</highlight><highlight class="normal"><sp/>+<sp/>psi.name,</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.mesh(),</highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.internalVector(),</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.boundaryData(),</highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>psi.boundaryConditions()</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::computeResidual(ls.matrix(),<sp/>ls.rhs(),<sp/>psi.internalVector(),<sp/>res.internalVector());</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>res;</highlight></codeline>
+<codeline lineno="224"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"></highlight></codeline>
 <codeline lineno="226"><highlight class="normal"></highlight></codeline>
-<codeline lineno="227"><highlight class="normal"></highlight></codeline>
-<codeline lineno="228"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
-<codeline lineno="229" refid="namespaceNeoFOAM_1a9de226ba9098594fc8b6b867a35adccc" refkind="member"><highlight class="normal">NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;<sp/><ref refid="namespaceNeoFOAM_1a9de226ba9098594fc8b6b867a35adccc" kindref="member">operator&amp;</ref>(</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PDESolver" kindref="compound">PDESolver&lt;ValueType, IndexType&gt;</ref><sp/>expr,</highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;<sp/>psi</highlight></codeline>
-<codeline lineno="232"><highlight class="normal">)</highlight></codeline>
-<codeline lineno="233"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" kindref="member">applyOperator</ref>(expr.<ref refid="classNeoFOAM_1_1PDESolver_1a0b3c75a1830571b477f95604a603b6a9" kindref="member">linearSystem</ref>(),<sp/>psi);</highlight></codeline>
-<codeline lineno="235"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="236"><highlight class="normal"></highlight></codeline>
-<codeline lineno="237"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>IndexType<sp/>=<sp/>NeoN::localIdx&gt;</highlight></codeline>
+<codeline lineno="228" refid="namespaceNeoFOAM_1a9de226ba9098594fc8b6b867a35adccc" refkind="member"><highlight class="normal">NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;<sp/><ref refid="namespaceNeoFOAM_1a9de226ba9098594fc8b6b867a35adccc" kindref="member">operator&amp;</ref>(</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PDESolver" kindref="compound">PDESolver&lt;ValueType, IndexType&gt;</ref><sp/>expr,</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;<sp/>psi</highlight></codeline>
+<codeline lineno="231"><highlight class="normal">)</highlight></codeline>
+<codeline lineno="232"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" kindref="member">applyOperator</ref>(expr.<ref refid="classNeoFOAM_1_1PDESolver_1a0b3c75a1830571b477f95604a603b6a9" kindref="member">linearSystem</ref>(),<sp/>psi);</highlight></codeline>
+<codeline lineno="234"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"></highlight></codeline>
+<codeline lineno="236"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp"/>
   </compounddef>
