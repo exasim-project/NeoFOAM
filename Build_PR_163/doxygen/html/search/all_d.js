@@ -6,5 +6,6 @@ var searchData=
   ['setup_2ehpp_3',['setup.hpp',['../setup_8hpp.html',1,'']]],
   ['solve_4',['solve',['../classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb',1,'NeoFOAM::PDESolver::solve()'],['../classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df',1,'NeoFOAM::PDESolver::solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)']]],
   ['sparsitypattern_5',['sparsityPattern',['../classNeoFOAM_1_1PDESolver.html#a8e5fb73b6f8356252df9d57badb62f66',1,'NeoFOAM::PDESolver']]],
-  ['subcycleindex_6',['subCycleIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7',1,'NeoFOAM::CreateFromFoamField']]]
+  ['subcycleindex_6',['subCycleIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7',1,'NeoFOAM::CreateFromFoamField']]],
+  ['syncruntimes_7',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
 ];
