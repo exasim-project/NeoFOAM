@@ -1,4 +1,4 @@
-# Version 0.2.0 (unreleased)
+# Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)
 - Add support for PDEs on vector fields [#119](https://github.com/exasim-project/NeoFOAM/pull/119)[#134](https://github.com/exasim-project/NeoFOAM/pull/134)
 - Improve solver interface with neon [#114](https://github.com/exasim-project/NeoFOAM/pull/114)
