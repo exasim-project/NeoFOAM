@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2024 FoamAdapter authors
+// SPDX-FileCopyrightText: 2024 NeoFOAM authors
 
-#include "FoamAdapter/auxiliary/convert.hpp"
+#include "NeoFOAM/auxiliary/convert.hpp"
 
 #include "vector.H"
 #include <functional>
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 static std::vector<std::function<bool(NeoN::Dictionary&, const Foam::entry&)>> mapEntries = {

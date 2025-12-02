@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2024 FoamAdapter authors
+# SPDX-FileCopyrightText: 2024 NeoFOAM authors
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -14,9 +14,9 @@ import subprocess, os
 # Doxygen
 subprocess.call('doxygen Doxyfile.in', shell=True)
 
-project = 'FoamAdapter'
-copyright = '2025, FoamAdapter authors'
-author = 'FoamAdapter authors'
+project = 'NeoFOAM'
+copyright = '2025, NeoFOAM authors'
+author = 'NeoFOAM authors'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -65,8 +65,8 @@ html_css_files = [
 ]
 
 breathe_projects = {
-    "FoamAdapter": "_build/xml/"
+    "NeoFOAM": "_build/xml/"
 }
-html_baseurl = "https://exasim-project.com/FoamAdapter/"
-breathe_default_project = "FoamAdapter"
+html_baseurl = "https://exasim-project.com/NeoFOAM/"
+breathe_default_project = "NeoFOAM"
 breathe_default_members = ('members', 'undoc-members')

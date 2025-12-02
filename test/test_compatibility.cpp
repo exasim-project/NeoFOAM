@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023-2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
 #include <cstddef>
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
@@ -28,10 +28,10 @@ TEST_CASE("fvSolution")
     std::string execName = "Serial";
     auto exec = NeoN::SerialExecutor {};
 
-    auto meshPtr = FoamAdapter::createMesh(exec, runTime);
-    FoamAdapter::MeshAdapter& mesh = *meshPtr;
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
 
-    NeoN::Dictionary fvSolutionDict = FoamAdapter::convert(mesh.solutionDict());
+    NeoN::Dictionary fvSolutionDict = NeoFOAM::convert(mesh.solutionDict());
     NeoN::Dictionary& solverDict = fvSolutionDict.subDict("solvers");
     NeoN::Dictionary& solver1 = solverDict.subDict("solver1");
 
@@ -40,21 +40,21 @@ TEST_CASE("fvSolution")
         SECTION("PCG")
         {
             solver1.insert("solver", std::string("PCG"));
-            FoamAdapter::updateSolver(solver1);
+            NeoFOAM::updateSolver(solver1);
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Cg");
         }
         SECTION("PBiCG")
         {
             solver1.insert("solver", std::string("PBiCG"));
-            FoamAdapter::updateSolver(solver1);
+            NeoFOAM::updateSolver(solver1);
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Bicg");
         }
         SECTION("PBiCGStab")
         {
             solver1.insert("solver", std::string("PBiCGStab"));
-            FoamAdapter::updateSolver(solver1);
+            NeoFOAM::updateSolver(solver1);
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Bicgstab");
         }
@@ -65,7 +65,7 @@ TEST_CASE("fvSolution")
         SECTION("DIC")
         {
             solver1.insert("preconditioner", std::string("DIC"));
-            FoamAdapter::updatePreconditioner(solver1);
+            NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Jacobi");
             REQUIRE(preconditionerDict.get<int>("max_block_size") == 1);
@@ -73,7 +73,7 @@ TEST_CASE("fvSolution")
         SECTION("DILU")
         {
             solver1.insert("preconditioner", std::string("DILU"));
-            FoamAdapter::updatePreconditioner(solver1);
+            NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
             REQUIRE(preconditionerDict.get<bool>("reverse_apply") == false);

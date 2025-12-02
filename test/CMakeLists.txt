@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2023 FoamAdapter authors
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 add_subdirectory(catch2)
 
@@ -12,7 +12,7 @@ function(foam_adapter_unit_test TEST SETUP_DIRECTORY)
 
   target_compile_definitions(adapter_${TEST} PUBLIC OMPI_SKIP_MPICXX)
 
-  target_link_libraries(adapter_${TEST} FoamAdapter_public_api foamadapter_catch_main OpenFOAM)
+  target_link_libraries(adapter_${TEST} NeoFOAM_public_api neofoam_catch_main OpenFOAM)
 
   set_target_properties(adapter_${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                                    ${adapter_WORKING_DIRECTORY})

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include "addToRunTimeSelectionTable.H"
 
-#include "FoamAdapter/fvcc/surfaceInterpolation/surfaceInterpolationFactory.hpp"
+#include "NeoFOAM/fvcc/surfaceInterpolation/surfaceInterpolationFactory.hpp"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
-/* This file implements comparison operator to compare OpenFOAM and corresponding FoamAdapter fields
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+/* This file implements comparison operator to compare OpenFOAM and corresponding NeoFOAM fields
  * TODO the comparison operator only make sense for testing purposes
  * so this should be part of the tests
  */
 
 
-#include "FoamAdapter/compatibility/fvSolution.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
+
 #include <map>
+
+#include <NeoN/core/logging.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 void updateSolver(NeoN::Dictionary& solverDict)
@@ -28,19 +31,18 @@ void updateSolver(NeoN::Dictionary& solverDict)
     };
 
     std::string& solverName = solverDict.get<std::string>("solver");
-    auto it = solverMap.find(solverName);
-    if (it != solverMap.end())
+    auto mapEntry = solverMap.find(solverName);
+    if (mapEntry != solverMap.end())
     {
-        std::cout << __FILE__ << ":\n\treplacing solver " << solverName << " by "
-                  << it->second.second << "\n";
-        solverName = it->second.first;
+        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
+        solverName = mapEntry->second.first;
         // if (solverName == "GAMG")
         // {
         //     throw std::runtime_error(
-        //         "GAMG is not supported in FoamAdapter, please use a different solver."
+        //         "GAMG is not supported in NeoFOAM, please use a different solver."
         //     );
         // }
-        solverDict.insert("type", it->second.second);
+        solverDict.insert("type", mapEntry->second.second);
     }
 }
 
@@ -78,7 +80,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         if (preconditionerDict.isDict("type"))
         {
             throw std::runtime_error(
-                "GAMG is not supported in FoamAdapter, please use a different preconditioner."
+                "GAMG is not supported in NeoFOAM, please use a different preconditioner."
             );
             // std::string& preconditionerType = preconditionerDict.get<std::string>("type");
             // auto it = preconditionerMap.find(preconditionerType);
@@ -93,18 +95,30 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     {
         // If no preconditioner is specified, we can insert a default one
         std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
-        auto it = preconditionerMap.find(preconditionerName);
-        if (it != preconditionerMap.end())
+        auto mapEntry = preconditionerMap.find(preconditionerName);
+        if (mapEntry != preconditionerMap.end())
         {
-            std::cout << __FILE__ << ":\n\treplacing preconditioner " << preconditionerName
-                      << " by " << it->second << "\n";
-            solverDict.insert("preconditioner", it->second);
+            NeoN::Logging::warn(
+                "Replacing preconditioner {} by {}",
+                preconditionerName,
+                mapEntry->second.get<std::string>("type")
+            );
+            solverDict.insert("preconditioner", mapEntry->second);
         }
     }
 }
 
 void updateCriteria(NeoN::Dictionary& solverDict)
 {
+    // parse given dictionary, get numeric value of key in a safe way
+    auto extractScalar = [](NeoN::Dictionary& d, std::string key)
+    {
+        NeoN::scalar ret =
+            (d.isType<int>(key)) ? NeoN::scalar(d.get<int>(key)) : d.get<NeoN::scalar>(key);
+        d.remove(key);
+        return ret;
+    };
+
     // Ensure the criteria dictionary exists
     if (!solverDict.contains("criteria"))
     {
@@ -121,8 +135,7 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     if (solverDict.contains("relTol"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("relative_residual_norm", solverDict.get<NeoN::scalar>("relTol"));
-        solverDict.remove("relTol");
+        criteriaDict.insert("relative_residual_norm", extractScalar(solverDict, "relTol"));
     }
     if (solverDict.contains("maxIter"))
     {
@@ -133,12 +146,10 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     if (solverDict.contains("tolerance"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("absolute_residual_norm", solverDict.get<NeoN::scalar>("tolerance"));
-        solverDict.remove("tolerance");
+        criteriaDict.insert("absolute_residual_norm", extractScalar(solverDict, "tolerance"));
     }
 
     NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-    std::cout << __FILE__ << ":\n\tStopping criteria: " << criteriaDict << "\n";
 }
 
 
@@ -147,10 +158,9 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     NeoN::Dictionary modSolverDict = solverDict;
 
     if (solverDict.contains("configFile")) return solverDict;
-    std::cout << __FILE__ << ":\n\tMapping OpenFOAM solver settings to NeoN settings\n"
-              << "\tCurrently, it is advisable to specify configFile for fine grained Ginkgo "
-                 "solver support\n";
-
+    NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"
+                        "Currently, it is advisable to specify a configFile\n"
+                        "for fine grained Ginkgo solver control\n");
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
     updateCriteria(modSolverDict);
@@ -158,4 +168,4 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     return modSolverDict;
 }
 
-} // namespace FoamAdapter
+} // namespace NeoFOAM

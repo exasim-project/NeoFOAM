@@ -2,7 +2,7 @@ name: LRZ GitLab CI
 
 on:
   push:
-    branches: [dev, main]
+    branches: [develop, main]
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   schedule:
@@ -30,7 +30,7 @@ jobs:
       LRZ_HOST: gitlab-ce.lrz.de
       REPO_NAME: ${{ github.event.repository.name }}
       MAX_WAIT_MINUTES: 1440
-      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.GITLAB_PROJECT_TOKEN }}
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
       LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
 
     steps:
@@ -60,21 +60,24 @@ jobs:
           git push --force lrz HEAD:refs/heads/${{ steps.branch.outputs.branch }}
 
       - name: Cancel running/pending LRZ GitLab CI pipelines
+        if: ${{ github.event_name != 'push' }}
         run: |
           ./ci/github/cancel_triggered_pipelines.sh ${{ steps.branch.outputs.branch }}
 
       - name: Trigger LRZ GitLab CI pipeline
         id: trigger
         run: |
-          ./ci/github/trigger_pipeline.sh ${{ steps.branch.outputs.branch }}
-
+          ./ci/github/trigger_pipeline.sh \
+            "${{ steps.branch.outputs.branch }}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
+            "variables[BENCHMARK]=false"
 
       - name: Wait for LRZ GitLab CI pipeline
         run: |
           ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
 
   benchmark:
-    name: Benchmark FoamAdapter on GPU
+    name: Benchmark NeoFOAM on GPU
     runs-on: ubuntu-latest
     timeout-minutes: 1440 # 24 hours
 
@@ -86,7 +89,7 @@ jobs:
       LRZ_HOST: gitlab-ce.lrz.de
       REPO_NAME: ${{ github.event.repository.name }}
       BRANCH: ${{ needs.build-and-test.outputs.branch }}
-      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.GITLAB_PROJECT_TOKEN }}
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
       LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
       MAX_WAIT_MINUTES: 1440
 
@@ -103,6 +106,7 @@ jobs:
         run: |
           ./ci/github/trigger_pipeline.sh \
             "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=true"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking

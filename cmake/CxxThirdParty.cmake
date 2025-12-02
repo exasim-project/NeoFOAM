@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2023 FoamAdapter authors
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 include(cmake/CPM.cmake)
 
-if(FoamAdapter_BUILD_TESTS OR FoamAdapter_BUILD_BENCHMARKS)
+if(NeoFOAM_BUILD_TESTS OR NeoFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(NAME Catch2 GITHUB_REPOSITORY catchorg/Catch2 VERSION 3.4.0)
 endif()
 
-if(FOAMADAPTER_NEON_VIA_CPM)
-  if(NOT DEFINED FOAMADAPTER_NEON_VERSION)
-    set(FOAMADAPTER_NEON_VERSION
+if(NEOFOAM_NEON_VIA_CPM)
+  if(NOT DEFINED NEOFOAM_NEON_VERSION)
+    set(NEOFOAM_NEON_VERSION
         "main"
         CACHE INTERNAL "")
   endif()
@@ -20,7 +20,7 @@ if(FOAMADAPTER_NEON_VIA_CPM)
     GITHUB_REPOSITORY
     exasim-project/NeoN
     GIT_TAG
-    ${FOAMADAPTER_NEON_VERSION}
+    ${NEOFOAM_NEON_VERSION}
     SYSTEM
     YES
     "Kokkos_ENABLE_CUDA ${Kokkos_ENABLE_CUDA}"

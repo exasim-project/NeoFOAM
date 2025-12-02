@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include <vector>
 
@@ -12,7 +12,7 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 extern Foam::Time* timePtr;   // A single time object
 extern Foam::fvMesh* meshPtr; // A single mesh object
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 template<typename OFMesh, typename NFMesh, typename Accessor>
@@ -165,8 +165,8 @@ TEST_CASE("fvccGeometryScheme")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    std::unique_ptr<FoamAdapter::MeshAdapter> meshPtr = FoamAdapter::createMesh(exec, *timePtr);
-    FoamAdapter::MeshAdapter& mesh = *meshPtr;
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, *timePtr);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
     const NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     SECTION("BasicFvccGeometryScheme" + execName)

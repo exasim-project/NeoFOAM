@@ -1,0 +1,169 @@
+name: Coordinated Merge for NeoFOAM + NeoN
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  coordinated-merge:
+    if: contains(github.event.pull_request.labels.*.name, 'coordinated-merge')
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.MERGE_TOKEN }}
+      NEON_REPO: exasim-project/NeoN
+      FOAM_REPO: exasim-project/NeoFOAM
+      BRANCH_NAME: ${{ github.head_ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+
+      - name: Checkout NeoFOAM repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Confirm triggering context
+        run: |
+          echo "Triggered from NeoFOAM PR: #$PR_NUMBER"
+          echo "Branch name: $BRANCH_NAME"
+          echo "Base branch: ${{ github.event.pull_request.base.ref }}"
+
+
+      # Find matching NeoN PR
+      - name: Find NeoN PR with same branch
+        id: find-neon
+        run: |
+          neon=$(gh pr list --repo "$NEON_REPO" --head "$BRANCH_NAME" --json number,baseRefName -q '.[0]')
+          if [[ -z "$neon" ]]; then
+            echo "No matching NeoN PR found for branch $BRANCH_NAME"
+            exit 1
+          fi
+
+          echo "$neon" > neon.json
+          echo "NEON_PR_NUMBER=$(jq -r '.number' neon.json)" >> $GITHUB_ENV
+          echo "NEON_BASE_BRANCH=$(jq -r '.baseRefName' neon.json)" >> $GITHUB_ENV
+
+      - name: Print NeoN PR information
+        run: |
+          echo "NeoN PR number: $NEON_PR_NUMBER"
+          echo "NeoN base branch: $NEON_BASE_BRANCH"
+
+      - name: Verify base branches match
+        run: |
+          FOAM_BASE="${{ github.event.pull_request.base.ref }}"
+
+          if [[ "$FOAM_BASE" != "$NEON_BASE_BRANCH" ]]; then
+            echo "Base branches do not match."
+            echo "NeoFOAM base: $FOAM_BASE"
+            echo "NeoN base:    $NEON_BASE_BRANCH"
+            exit 1
+          fi
+
+      - name: Check NeoN PR approval
+        run: |
+          approved=$(gh pr view "$NEON_PR_NUMBER" --repo $NEON_REPO --json reviewDecision -q '.reviewDecision')
+          if [[ "$approved" != "APPROVED" ]]; then
+            echo "NeoN PR not approved."
+            exit 1
+          fi
+
+      - name: Check NeoFOAM PR approval
+        run: |
+          approved=$(gh pr view "$PR_NUMBER" --repo $FOAM_REPO --json reviewDecision -q '.reviewDecision')
+          if [[ "$approved" != "APPROVED" ]]; then
+            echo "NeoFOAM PR not approved."
+            exit 1
+          fi
+
+      # CI check validation for both PRs
+      - name: Validate NeoN CI (fail fast)
+        run: |
+          echo "Checking NeoN CI checks for PR $NEON_PR_NUMBER in $NEON_REPO..."
+          checks=$(gh pr checks "$NEON_PR_NUMBER" --repo "$NEON_REPO" --json name,state)
+          echo "$checks" | jq -r '.[] | "• \(.name): state=\(.state)"'
+
+          failing=$(echo "$checks" | jq -r '
+            .[]
+            | select(
+                .state != "SUCCESS"
+                and .state != "SKIPPED"
+              )
+            | .name
+          ')
+
+          if [[ -n "$failing" ]]; then
+            echo "NeoN CI has the following failing checks:"
+            echo "$failing"
+            exit 1
+          fi
+
+          echo "All NeoN CI checks passed (ignoring skipped)."
+
+      - name: Validate NeoFOAM CI (fail fast)
+        run: |
+          echo "Checking NeoFOAM CI checks for PR $PR_NUMBER in $FOAM_REPO..."
+          checks=$(gh pr checks "$PR_NUMBER" --repo "$FOAM_REPO" --json name,state)
+          echo "$checks" | jq -r '.[] | "• \(.name): state=\(.state)"'
+
+          failing=$(echo "$checks" | jq -r '
+            .[]
+            | select(
+                (.name | test("coordinated-merge"; "i") | not)  # exclude coordinated-merge workflow
+                and .state != "SUCCESS"
+                and .state != "SKIPPED"
+              )
+            | .name
+          ')
+
+          if [[ -n "$failing" ]]; then
+            echo "NeoFOAM CI has the following failing checks:"
+            echo "$failing"
+            exit 1
+          fi
+
+          echo "All NeoFOAM CI checks passed (ignoring skipped and excluding coordinated-merge)."
+
+      # Dry-run merges to ensure no conflicts
+      - name: Dry-run merges
+        run: |
+          set -e
+          TMP=$(mktemp -d)
+
+          git clone https://github.com/$FOAM_REPO.git "$TMP/foam"
+          git clone https://github.com/$NEON_REPO.git "$TMP/neon"
+
+          git config --global user.name "CI Bot"
+          git config --global user.email "ci-bot@example.com"
+
+          # NeoN merge simulation
+          cd "$TMP/neon"
+          git checkout "$NEON_BASE_BRANCH"
+          git fetch origin "$BRANCH_NAME"
+          git merge --no-commit --no-ff origin/"$BRANCH_NAME"
+
+          # NeoFOAM merge simulation
+          cd "$TMP/foam"
+          git checkout "${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$BRANCH_NAME"
+          git merge --no-commit --no-ff origin/"$BRANCH_NAME"
+
+          echo "Dry-run succeeded."
+
+      # Merge both PRs
+      - name: Merge NeoN PR
+        run: |
+          gh pr merge "$NEON_PR_NUMBER" \
+            --repo $NEON_REPO \
+            --merge \
+            --admin
+
+      - name: Merge NeoFOAM PR
+        run: |
+          gh pr merge "$PR_NUMBER" \
+            --repo $FOAM_REPO \
+            --merge \
+            --admin
+
+      - name: Done
+        run: echo "Coordinated merge completed."

@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(Catch2)
 function(NeoN_benchmark BENCH)
 
   add_executable(bench_${BENCH} "bench_${BENCH}.cpp")
-  target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 OpenFOAM FoamAdapter)
+  target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 OpenFOAM NeoFOAM)
   target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
 
   if(WIN32)

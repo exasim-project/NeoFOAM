@@ -4,61 +4,81 @@ env:
   PR_NUMBER: ${{ github.event.number }}
 
 on:
- pull_request:
-    types: [closed, synchronize, opened]
- push:
+  pull_request:
+    types: [opened, synchronize, closed]
+
+  push:
     tags:
-       - v*
+      - v*
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
     - name: Requirements
-      run: sudo apt install doxygen python3-sphinx texlive-font-utils
-        && pip3 install furo
-        && pip3 install breathe
-        && pip3 install sphinx-sitemap
-        && pip3 install sphinxcontrib-mermaid
+      run: |
+        sudo apt install doxygen python3-sphinx texlive-font-utils
+        pip3 install furo breathe sphinx-sitemap sphinxcontrib-mermaid
+
     - name: Checkout repo
       uses: actions/checkout@v4
 
     - uses: actions/setup-python@v5
-      with:
-        cache: 'pip'
+      with: { cache: 'pip' }
+
     - run: pip install -r doc/requirements.txt
 
     - name: Build docs
       run: |
         sphinx-build -b html ./doc ./docs_build/
         cp -r doc/_build/ docs_build/doxygen
-        cd docs_build
-        ls doxygen
-        touch .nojekyll
+        touch ./docs_build/.nojekyll
+
+    # 1. PREVIEW BUILD (per PR)
     - name: Deploy PR Build
+      if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.merged }}
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: docs_build
         target-folder: Build_PR_${{ env.PR_NUMBER }}
+
+    # 2. VERSIONED BUILD (tags)
     - name: Deploy Versioned Build
-      if: ${{ github.ref_type == 'tag'}}
+      if: ${{ github.ref_type == 'tag' }}
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: docs_build
         target-folder: ${{ github.ref_name }}
-    - name: Deploy Latest Build
-      if: ${{ github.event.pull_request.merged && github.event.pull_request.base.ref == 'main' }}
+
+    # 3. DEPLOY FOR MAIN (stable)
+    - name: Deploy Main
+      if: >
+        github.event.pull_request.merged &&
+        github.event.pull_request.base.ref == 'main'
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: docs_build
-        target-folder: latest
+        target-folder: main
+
+    # 4. DEPLOY FOR DEVELOP (dev preview)
+    - name: Deploy Develop
+      if: >
+        github.event.pull_request.merged &&
+        github.event.pull_request.base.ref == 'develop'
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: docs_build
+        target-folder: develop
+
     - name: Comment PR
+      if: ${{ github.event_name == 'pull_request' }}
       uses: thollander/actions-comment-pull-request@v2
       with:
         message: |
-          Deployed test documentation to https://exasim-project.com/FoamAdapter/Build_PR_${{ env.PR_NUMBER }}
+          Deployed test documentation to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}
         comment_tag: build_url
 
     - name: Echo Build PR URL
-      run: |
-        echo "Deploy to: https://exasim-project.com/FoamAdapter/Build_PR_${{ env.PR_NUMBER }}"
+      if: ${{ github.event_name == 'pull_request' }}
+      run: echo "Deploy to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}"

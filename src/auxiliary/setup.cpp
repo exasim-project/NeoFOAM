@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023-2025 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023-2025 NeoFOAM authors
 
-#include "FoamAdapter/auxiliary/setup.hpp"
-#include "FoamAdapter/datastructures/meshAdapter.hpp"
-#include "FoamAdapter/auxiliary/readers.hpp"
+#include "NeoFOAM/auxiliary/setup.hpp"
+#include "NeoFOAM/datastructures/meshAdapter.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
 
 #include "fvc.H"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 void setDeltaT(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum)
@@ -16,9 +16,17 @@ void setDeltaT(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum)
     Foam::scalar deltaTFact = Foam::min(Foam::min(maxDeltaTFact, 1.0 + 0.1 * maxDeltaTFact), 1.2);
 
     ofRunTime.setDeltaT(Foam::min(deltaTFact * ofRunTime.deltaTValue(), nfRunTime.maxDeltaT));
-    Foam::Info << "deltaT = " << ofRunTime.deltaTValue() << Foam::endl;
+    NeoN::Logging::info("deltaT = {}", ofRunTime.deltaTValue());
+}
 
+void syncRunTimes(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum)
+{
+    if (nfRunTime.adjustTimeStep)
+    {
+        setDeltaT(ofRunTime, nfRunTime, coNum);
+    }
     nfRunTime.dt = ofRunTime.deltaTValue();
+    nfRunTime.t = ofRunTime.time().value();
 }
 
 
@@ -32,9 +40,8 @@ std::unique_ptr<MeshAdapter> createMesh(const NeoN::Executor& exec, const Foam::
 std::unique_ptr<Foam::fvMesh> createMesh(const Foam::Time& runTime)
 {
     std::unique_ptr<Foam::fvMesh> meshPtr;
-    Foam::Info << "Create mesh";
     Foam::word regionName(Foam::polyMesh::defaultRegion);
-    Foam::Info << " for time = " << runTime.timeName() << Foam::nl;
+    NeoN::Logging::info("Create mesh for time = {}", runTime.timeOutputValue());
 
     meshPtr.reset(new Foam::fvMesh(
         Foam::IOobject(regionName, runTime.timeName(), runTime, Foam::IOobject::MUST_READ),
@@ -48,22 +55,19 @@ std::unique_ptr<Foam::fvMesh> createMesh(const Foam::Time& runTime)
 /* @brief create a NeoN executor from a name
  * @return the Neon::Executor
  */
-NeoN::Executor createExecutor(const Foam::word& execName)
+NeoN::Executor createExecutor(const std::string execName)
 {
-    Foam::Info << "Creating Executor: " << execName << Foam::endl;
+    NeoN::Logging::info("Creating Executor {}", execName);
     if (execName == "Serial")
     {
-        Foam::Info << "Serial Executor" << Foam::endl;
         return NeoN::SerialExecutor();
     }
     if (execName == "CPU")
     {
-        Foam::Info << "CPU Executor" << Foam::endl;
         return NeoN::CPUExecutor();
     }
     if (execName == "GPU")
     {
-        Foam::Info << "GPU Executor" << Foam::endl;
         return NeoN::GPUExecutor();
     }
     Foam::FatalError << "unknown Executor: " << execName << Foam::nl
@@ -75,11 +79,11 @@ NeoN::Executor createExecutor(const Foam::word& execName)
 
 NeoN::Executor createExecutor(const Foam::dictionary& dict)
 {
-    auto execName = dict.get<Foam::word>("executor");
+    auto execName = std::string(dict.get<Foam::word>("executor"));
     return createExecutor(execName);
 }
 
-FoamAdapter::RunTime createAdapterRunTime(const Foam::Time& in)
+NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in)
 {
     auto exec = createExecutor(in.controlDict());
     return createAdapterRunTime(in, exec);
@@ -87,13 +91,12 @@ FoamAdapter::RunTime createAdapterRunTime(const Foam::Time& in)
 
 RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
 {
-    std::cout << __FILE__ << ":"
-              << "Creating FoamAdapter runTime\n";
+    NeoN::Logging::info("Creating NeoFOAM runTime");
     std::unique_ptr<MeshAdapter> meshPtr = createMesh(exec, in);
     MeshAdapter& mesh = *meshPtr;
 
     auto& nfMesh = mesh.nfMesh();
-    return FoamAdapter::RunTime {
+    return NeoFOAM::RunTime {
         .db = NeoN::Database(),
         .meshPtr = std::move(meshPtr),
         .mesh = mesh,

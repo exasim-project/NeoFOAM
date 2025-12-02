@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 // common test functions
 #pragma once
 
@@ -15,13 +15,13 @@
 
 #include "NeoN/NeoN.hpp"
 #include "catch2/executorGenerator.hpp"
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "fvm.H"
 #include "fvc.H"
 // #include "fvCFD.H"
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 template<typename FieldType, typename RandomFunc>
@@ -62,11 +62,7 @@ auto randomScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam
     return createRandomField<Foam::volScalarField>(runTime, mesh, name, [&]() { return dis(gen); });
 }
 
-auto randomVectorField(
-    const Foam::Time& runTime,
-    const FoamAdapter::MeshAdapter& mesh,
-    Foam::word name
-)
+auto randomVectorField(const Foam::Time& runTime, const NeoFOAM::MeshAdapter& mesh, Foam::word name)
 {
     std::random_device rd;  // Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
