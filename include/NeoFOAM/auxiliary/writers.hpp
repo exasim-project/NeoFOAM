@@ -31,6 +31,25 @@ void copyImpl(const SrcField& src, DestField& dest)
 }
 }
 
+template<class SrcField>
+void sync(const SrcField& src, Foam::volVectorField& dest)
+{
+    detail::copyImpl(src.internalVector(), dest.ref());
+
+    auto hostBCValue = src.boundaryData().value().copyToHost();
+
+    // forAll(dest.boundaryField(), patchi)
+    // {
+    //     auto& foamFieldPatch = dest().boundaryFieldRef()[patchi];
+    //     auto [start, end] = src.boundaryData().range(patchi);
+
+    //     forAll(foamFieldPatch, bfacei)
+    //     {
+    //         foamFieldPatch[bfacei] = hostBCValue.view()[start + bfacei];
+    //     }
+    // }
+}
+
 /*@brief writes a NeoN field back to disk using OF field file format*/
 void write(const NeoN::scalarVector& sf, const Foam::fvMesh& mesh, const std::string fieldName);
 

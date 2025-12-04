@@ -14,6 +14,8 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace NeoFOAM
 {
 
+/*@brief given an OpenFOAM field type this function generates a corresponding NeoN field
+*/
 template<typename FoamType>
 auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
 {

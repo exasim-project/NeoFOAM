@@ -4,8 +4,9 @@
 function(foam_adapter_example NAME)
   add_executable(${NAME} ${NAME}.cpp)
   target_compile_definitions(${NAME} INTERFACE namespaceFoam=1)
-  target_link_libraries(${NAME} NeoFOAM)
+  target_link_libraries(${NAME} NeoFOAM OpenFOAM)
   install(TARGETS ${NAME})
 endfunction()
 
 add_subdirectory(neoIcoFoam)
+add_subdirectory(neoPisoFoam)
