@@ -221,7 +221,7 @@ def extract_centreline(x: np.ndarray, y: np.ndarray, U_int: np.ndarray,
         return np.array(vals)[idx], np.array(comp)[idx]
 
 # =========================================================
-#  Plotting 
+#  Plotting
 # =========================================================
 def plot_u(y_cl: np.ndarray, u_cl: np.ndarray, GHIA_Y: np.ndarray, GHIA_U: np.ndarray,
            Re_rounded: int, endTime: float, case_path: Path) -> None:
