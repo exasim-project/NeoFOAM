@@ -1,5 +1,7 @@
+# SPDX-FileCopyrightText: 2023 - 2025 NeoN authors
+#
 # SPDX-License-Identifier: Unlicense
-# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
 # ----------------------------------
 # Options affecting listfile parsing
 # ----------------------------------
@@ -166,7 +168,7 @@ with section("markup"):
 with section("lint"):
 
   # a list of lint codes to disable
-  disabled_codes = ["C0103", "C0111", "W0105", "R0913", "R0912", "R0915", "C0307"]
+  disabled_codes = ["C0103", "C0111", "W0105", "R0913", "R0912", "R0915"]
 
   # regular expression pattern describing valid function names
   function_pattern = '[0-9a-z_]+'
