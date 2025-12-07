@@ -1,6 +1,14 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 import pytest
 
-from foamadapter.framework.decorator import OpType, condition, decorated_member_functions, step
+from foamadapter.framework.decorator import (
+    OpType,
+    condition,
+    decorated_member_functions,
+    step,
+)
 
 
 def test_decorator_free_function():
@@ -34,7 +42,9 @@ def test_decorator_free_function_type_error():
 
     assert msg in str(excinfo.value)
 
-    msg = "Function free_condition_function must have a return type annotation of 'bool'"
+    msg = (
+        "Function free_condition_function must have a return type annotation of 'bool'"
+    )
     with pytest.raises(TypeError) as excinfo:
 
         @condition

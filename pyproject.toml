@@ -76,14 +76,15 @@ testpaths = [
 ]
 
 [tool.mypy]
-files = ["src", "test"]          # your two roots
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
+files = ["src"]                  # Only check src, exclude test
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)
 exclude = [
   "src/NeoN",
+  "test/",
 ]
 
 # If other code imports src/Neon and you want mypy to never follow into it:

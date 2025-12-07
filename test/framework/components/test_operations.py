@@ -1,4 +1,12 @@
-from foamadapter.framework.operations import IterativeOp, Operation, SequentialOp, StepBuilder
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+from foamadapter.framework.operations import (
+    IterativeOp,
+    Operation,
+    SequentialOp,
+    StepBuilder,
+)
 
 
 def function1():
@@ -37,7 +45,9 @@ def test_builder_context():
 
     assert len(builder.operations) == 2
 
-    with builder.loop(Operation(func=function1, step_name="loop1", step_number=3)) as loop:
+    with builder.loop(
+        Operation(func=function1, step_name="loop1", step_number=3)
+    ) as loop:
         loop.step(Operation(func=function1, step_name="loop1_step1", step_number=4))
         loop.step(Operation(func=function1, step_name="loop1_step2", step_number=5))
 
@@ -54,7 +64,9 @@ def test_builder_nested_context():
 
         assert len(builder.operations) == 2
 
-        with builder.loop(Operation(func=function1, step_name="loop1", step_number=3)) as loop:
+        with builder.loop(
+            Operation(func=function1, step_name="loop1", step_number=3)
+        ) as loop:
             loop.step(Operation(func=function1, step_name="loop1_step1", step_number=4))
             loop.step(Operation(func=function1, step_name="loop1_step2", step_number=5))
 
@@ -92,8 +104,16 @@ def test_operation_run():
     opBuilder = StepBuilder()
 
     with opBuilder as op:
-        op.step(Operation(func=SequentialOp(increment), step_name="increment1", step_number=1))
-        op.step(Operation(func=SequentialOp(increment), step_name="increment2", step_number=2))
+        op.step(
+            Operation(
+                func=SequentialOp(increment), step_name="increment1", step_number=1
+            )
+        )
+        op.step(
+            Operation(
+                func=SequentialOp(increment), step_name="increment2", step_number=2
+            )
+        )
 
         with op.loop(
             Operation(
@@ -104,16 +124,22 @@ def test_operation_run():
         ) as loop:
             loop.step(
                 Operation(
-                    func=SequentialOp(increment), step_name="looped_increment_1", step_number=4
+                    func=SequentialOp(increment),
+                    step_name="looped_increment_1",
+                    step_number=4,
                 )
             )
             loop.step(
                 Operation(
-                    func=SequentialOp(increment), step_name="looped_increment_2", step_number=5
+                    func=SequentialOp(increment),
+                    step_name="looped_increment_2",
+                    step_number=5,
                 )
             )
 
     ops = opBuilder.operations
     ops.run(ran)
 
-    assert ran["count"] == 2 + 4 * 2  # 2 from sequential, 4 loops with 2 increments each
+    assert (
+        ran["count"] == 2 + 4 * 2
+    )  # 2 from sequential, 4 loops with 2 increments each

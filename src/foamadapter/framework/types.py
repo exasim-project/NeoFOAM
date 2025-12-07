@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import total_ordering
@@ -5,7 +10,7 @@ from functools import total_ordering
 
 @total_ordering
 class StepNumber:
-    def __init__(self, version):
+    def __init__(self, version: str | int | list[int] | tuple[int, ...]) -> None:
         if isinstance(version, str):
             self.parts = [int(p) for p in version.split(".")]
         elif isinstance(version, (list, tuple)):
@@ -17,7 +22,9 @@ class StepNumber:
                 "StepNumber must be initialized with a string, int, or list/tuple of integers"
             )
 
-    def _as_tuple(self, other):
+    def _as_tuple(
+        self, other: StepNumber | str | int | list[int] | tuple[int, ...]
+    ) -> tuple[tuple[int, ...], tuple[int, ...]]:
         if not isinstance(other, StepNumber):
             other = StepNumber(other)
         max_len = max(len(self.parts), len(other.parts))
@@ -25,11 +32,15 @@ class StepNumber:
         b = tuple(other.parts + [0] * (max_len - len(other.parts)))
         return a, b
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, (StepNumber, str, int, list, tuple)):
+            return NotImplemented
         a, b = self._as_tuple(other)
         return a == b
 
-    def __lt__(self, other):
+    def __lt__(
+        self, other: "StepNumber" | str | int | list[int] | tuple[int, ...]
+    ) -> bool:
         a, b = self._as_tuple(other)
         return a < b
 

@@ -128,6 +128,7 @@ def test_simulation_one_solver():
     )
 
     sim_ctx = sim.init_simulation_context()
+    sim_ctx.domain_context["region1"] = sim.domains[0].solver.create_context()
     sim.main_loop(sim_ctx)
     ctx_region1 = sim_ctx.domain_context["region1"]
     assert (
