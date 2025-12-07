@@ -2,14 +2,14 @@ Main Components
 ===============
 
 
-As introduced in the architecture overview, the FoamAdapter solver framework tries to make the solver more modular and easier to extend by breaking down the solver into smaller components.
+As introduced in the architecture overview, the NeoFOAM solver framework tries to make the solver more modular and easier to extend by breaking down the solver into smaller components.
 
 
 
 Main Concepts
 ^^^^^^^^^^^^^
 
-The main concept of the FoamAdapter solver framework is to represent a CFD solver a series of operations that update fields based on governing equations.
+The main concept of the NeoFOAM solver framework is to represent a CFD solver a series of operations that update fields based on governing equations.
 
 .. hint::
 
@@ -164,7 +164,7 @@ A common example for this would be a steady state solver that converged sucessfu
 StepBuilder
 ^^^^^^^^^^^^^
 
-It is possible to build required operations from just the operations defined in the solver and model classes with the availble metadata in the Operations.
+It is possible to build required operations from just the operations defined in the solver and model classes with the available metadata in the Operations.
 
 .. code-block:: python
 

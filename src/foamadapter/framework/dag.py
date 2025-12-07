@@ -62,4 +62,3 @@ def compute_steps_order(op_col: OperationCollection) -> Operations:
     for node_name in nodes_sorted:
         ops_sorted.add(name_to_op[node_name])
     return ops_sorted
-    # raise NotImplementedError("compute_steps_order is not yet implemented")
