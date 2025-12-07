@@ -1,13 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+from __future__ import annotations
+
 import inspect
 from dataclasses import dataclass, field, is_dataclass
-from typing import Annotated, Any, Callable, Union, get_args, get_origin
+from typing import Annotated, Any, Callable, Iterator, Union, get_args, get_origin
 
 from foamadapter.framework.context import Context, FieldUpdates
 
 from .types import OperationMetadata, OpType, StepNumber
 
 
-def _get_value(ctx: Context, name, annotation: Any) -> dict[str, Any]:
+def _get_value(ctx: Context, name: str, annotation: Any) -> dict[str, Any]:
     call_args = {}
     ctx_var = ctx.fields
 
@@ -27,7 +32,7 @@ def _get_value(ctx: Context, name, annotation: Any) -> dict[str, Any]:
     return call_args
 
 
-def get_function_parameters(func: Callable) -> dict[str, type]:
+def get_function_parameters(func: Callable[..., Any]) -> dict[str, type]:
     sig = inspect.signature(func)
     param_types = {}
     for name, param in sig.parameters.items():
@@ -52,18 +57,21 @@ def get_call_arguments(func_args: dict[str, type], context: Context) -> dict[str
     return call_args
 
 
-def _get_operation_type(func: Callable) -> OpType:
+def _get_operation_type(func: Callable[..., Any]) -> OpType:
     if hasattr(func, "_metadata"):
-        return func._metadata.op_type
+        op_type = func._metadata.op_type
+        if not isinstance(op_type, OpType):
+            raise ValueError("Function metadata does not have valid op_type")
+        return op_type
     raise ValueError("Function is not decorated with metadata")
 
 
-def context_adapter(func: Callable) -> Callable[[Context], None]:
+def context_adapter(func: Callable[..., Any]) -> Callable[[Context], Any]:
     func_paras = get_function_parameters(func)
     op_type = _get_operation_type(func)
     # TODO error handling if not FieldUpdates is returned
 
-    def wrapped_function(context: Context):
+    def wrapped_function(context: Context) -> Any:
         call_args = get_call_arguments(func_paras, context)
         results = func(**call_args)
 
@@ -94,11 +102,11 @@ class IterativeOp:
 
 class SequentialOp:
     @staticmethod
-    def from_method(method: Callable) -> "SequentialOp":
+    def from_method(method: Callable[..., Any]) -> SequentialOp:
         func = context_adapter(method)
         return SequentialOp(func=func)
 
-    def __init__(self, func: Callable[[Context], None]):
+    def __init__(self, func: Callable[[Context], Any]) -> None:
         self.func = func
 
     def __call__(self, ctx: Context) -> None:
@@ -110,35 +118,39 @@ class Operation:
     """A concrete step class that wraps a function with metadata."""
 
     func: Union[ConditionalOp, IterativeOp, SequentialOp]
-    step_number: StepNumber = None
-    step_name: str = None
+    step_number: StepNumber | None = None
+    step_name: str | None = None
     domain_name: str | None = None
     depends_on: list[str] | None = None
     # TODO move visualization metadata to a separate class
-    shape: str = "box" 
+    shape: str = "box"
     color: str = "lightblue"
     level: int = 0
     sub_steps: list["Operation"] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.depends_on is None:
             self.depends_on = []
 
     @staticmethod
-    def create_SeqOp(callable_method: Callable[[Context], None], **kwargs) -> "Operation":
-        if not hasattr(callable_method, "_metadata") or not callable_method._metadata.is_step:
+    def create_SeqOp(callable_method: Callable[..., Any], **kwargs: Any) -> Operation:
+        if (
+            not hasattr(callable_method, "_metadata")
+            or not callable_method._metadata.is_step
+        ):
             raise ValueError("callable_method cannot be None")
         seq_op = SequentialOp.from_method(callable_method)
-        if "step_name" not in kwargs and callable_method._metadata.name is not None:
-            kwargs["step_name"] = callable_method._metadata.name
-        if "step_number" not in kwargs and callable_method._metadata.step_number is not None:
-            kwargs["step_number"] = callable_method._metadata.step_number
-        if "depends_on" not in kwargs and callable_method._metadata.depends_on is not None:
-            kwargs["depends_on"] = callable_method._metadata.depends_on
+        metadata = callable_method._metadata
+        if "step_name" not in kwargs and metadata.name is not None:
+            kwargs["step_name"] = metadata.name
+        if "step_number" not in kwargs and metadata.step_number is not None:
+            kwargs["step_number"] = metadata.step_number
+        if "depends_on" not in kwargs and metadata.depends_on is not None:
+            kwargs["depends_on"] = metadata.depends_on
         return Operation(func=seq_op, **kwargs)
 
     @property
-    def operation_type(self):
+    def operation_type(self) -> str:
         if isinstance(self.func, ConditionalOp):
             return "conditional"
         elif isinstance(self.func, IterativeOp):
@@ -150,7 +162,7 @@ class Operation:
 
     def operation_metadata(self) -> OperationMetadata:
         return OperationMetadata(
-            op_name=self.step_name,
+            op_name=self.step_name or "unknown",
             depends_on=self.depends_on,
             shape=self.shape,
             step_number=self.step_number,
@@ -159,18 +171,22 @@ class Operation:
         )
 
     @property
-    def name(self):
-        return f"{self.domain_name}.{self.step_name}" if self.domain_name else self.step_name
+    def name(self) -> str | None:
+        return (
+            f"{self.domain_name}.{self.step_name}"
+            if self.domain_name
+            else self.step_name
+        )
 
     @property
-    def dependency_names(self):
+    def dependency_names(self) -> list[str]:
         if self.depends_on is None:
             return []
         if self.domain_name:
             return [f"{self.domain_name}.{dep}" for dep in self.depends_on]
         return self.depends_on
 
-    def run(self, ctx):
+    def run(self, ctx: Context) -> Any:
         op_type = self.operation_type
         if op_type == "conditional":
             return self.func(ctx)
@@ -185,13 +201,12 @@ class Operation:
 
 
 class OperationCollection:
-    def __init__(self, operations: list[Operation] = None):
-        if operations is not None:
-            self.ops = operations
-        else:
-            self.ops: list[Operation] = []
+    def __init__(self, operations: list[Operation] | None = None) -> None:
+        self.ops: list[Operation] = operations if operations is not None else []
 
-    def add(self, operation: Union[Operation, "OperationCollection"]) -> "OperationCollection":
+    def add(
+        self, operation: Union[Operation, OperationCollection]
+    ) -> OperationCollection:
         if isinstance(operation, OperationCollection):
             self.ops.extend(operation.ops)
         else:
@@ -199,12 +214,18 @@ class OperationCollection:
         return self
 
     def add_suboperation(
-        self, operation: Operation, index: Union[int, str] = -1
-    ) -> "OperationCollection":
+        self, operation: Operation, index: int | str = -1
+    ) -> OperationCollection:
+        if isinstance(index, str):
+            for i, op in enumerate(self.ops):
+                if op.step_name == index:
+                    self.ops[i].sub_steps.append(operation)
+                    return self
+            raise KeyError(f"Operation with step_name '{index}' not found.")
         self.ops[index].sub_steps.append(operation)
         return self
 
-    def __getitem__(self, index: Union[int, str]) -> Operation:
+    def __getitem__(self, index: int | str) -> Operation:
         if isinstance(index, str):
             for op in self.ops:
                 if op.step_name == index:
@@ -212,8 +233,11 @@ class OperationCollection:
             raise KeyError(f"Operation with step_name '{index}' not found.")
         return self.ops[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.ops)
+
+    def __iter__(self) -> Iterator[Operation]:
+        return iter(self.ops)
 
     def total_operations(self) -> int:
         def count_ops(ops: list[Operation]) -> int:
@@ -228,21 +252,23 @@ class OperationCollection:
 
 
 class Operations:
-    def __init__(self, operations: list[Operation] = None):
-        if operations is not None:
-            self.ops = operations
+    def __init__(
+        self, operations: list[Operation] | OperationCollection | None = None
+    ) -> None:
+        if isinstance(operations, OperationCollection):
+            self.ops = operations.ops
         else:
-            self.ops: list[Operation] = []
+            self.ops = operations if operations is not None else []
 
-    def add(self, operation: Operation) -> "Operations":
+    def add(self, operation: Operation) -> Operations:
         self.ops.append(operation)
         return self
 
-    def add_suboperation(self, operation: Operation) -> "Operations":
+    def add_suboperation(self, operation: Operation) -> Operations:
         self.ops[-1].sub_steps.append(operation)
         return self
 
-    def __getitem__(self, index: Union[int, str]) -> Operation:
+    def __getitem__(self, index: int | str) -> Operation:
         if isinstance(index, str):
             for op in self.ops:
                 if op.step_name == index:
@@ -250,31 +276,33 @@ class Operations:
             raise KeyError(f"Operation with step_name '{index}' not found.")
         return self.ops[index]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.ops)
 
-    def run(self, ctx):
+    def __iter__(self) -> Iterator[Operation]:
+        return iter(self.ops)
+
+    def run(self, ctx: Context) -> None:
         for operation in self.ops:
             operation.run(ctx)
 
 
 class StepBuilder:
-    def __init__(self, operations: list[Operation] = None):
-        if operations is not None:
-            self.operations: Operations = Operations(operations)
-        else:
-            self.operations: Operations = Operations()
+    def __init__(self, operations: list[Operation] | None = None) -> None:
+        self.operations = (
+            Operations(operations) if operations is not None else Operations()
+        )
 
-    def __enter__(self) -> "StepBuilder":
+    def __enter__(self) -> StepBuilder:
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> None:
         pass
 
-    def step(self, operation: Operation) -> "StepBuilder":
+    def step(self, operation: Operation) -> StepBuilder:
         self.operations.add(operation)
         return self
 
-    def loop(self, operation: Operation) -> "StepBuilder":
+    def loop(self, operation: Operation) -> StepBuilder:
         self.operations.add(operation)
         return StepBuilder(operations=self.operations[-1].sub_steps)

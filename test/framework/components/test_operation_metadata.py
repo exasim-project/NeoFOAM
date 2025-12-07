@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 from foamadapter.framework.types import OperationMetadata, StepNumber
 
 
@@ -16,7 +19,10 @@ def test_node_data():
     assert node.step_number == StepNumber("1.0.0")
 
     node_no_color = OperationMetadata(
-        op_name="test_node2", depends_on=[], shape="square", step_number=StepNumber("1.0.1")
+        op_name="test_node2",
+        depends_on=[],
+        shape="square",
+        step_number=StepNumber("1.0.1"),
     )
     assert node_no_color.op_name == "test_node2"
     assert node_no_color.depends_on == []

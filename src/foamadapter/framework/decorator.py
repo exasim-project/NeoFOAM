@@ -1,15 +1,23 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+from __future__ import annotations
+
 import functools
 import inspect
-from typing import Any
+from typing import Any, Callable, TypeVar
 
 from .types import OperationMetadata, OpType, StepNumber
 
 
-def _is_decorated_method(method: callable) -> bool:
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def _is_decorated_method(method: Callable[..., Any]) -> bool:
     return callable(method) and hasattr(method, "_metadata")
 
 
-def decorated_member_functions(instance: Any) -> list[callable]:
+def decorated_member_functions(instance: Any) -> list[Callable[..., Any]]:
     decorated_functions = []
     for name, method in vars(instance.__class__).items():
         if _is_decorated_method(method):
@@ -21,22 +29,27 @@ def decorated_member_functions(instance: Any) -> list[callable]:
 
 
 def step(
-    _func=None, step_number: StepNumber | int | None = None, depends_on: list[str] | None = None
-):
-    def _step_decorator(_func):
+    _func: F | None = None,
+    step_number: StepNumber | int | None = None,
+    depends_on: list[str] | None = None,
+) -> F | Callable[[F], F]:
+    def _step_decorator(_func: F) -> F:
         """Decorator to mark a function as a step in the workflow."""
 
         @functools.wraps(_func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: object, **kwargs: object) -> Any:
             return _func(*args, **kwargs)
 
-        wrapper._metadata = OperationMetadata(
+        step_num = (
+            StepNumber(step_number) if isinstance(step_number, int) else step_number
+        )
+        wrapper._metadata = OperationMetadata(  # type: ignore[attr-defined]
             op_type=OpType.STEP,
             op_name=_func.__name__,
-            step_number=step_number,
+            step_number=step_num,
             depends_on=depends_on,
         )
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     if _func is None:
         return _step_decorator
@@ -45,9 +58,11 @@ def step(
 
 
 def condition(
-    _func=None, step_number: StepNumber | int | None = None, depends_on: list[str] | None = None
-):
-    def _condition_decorator(_func):
+    _func: F | None = None,
+    step_number: StepNumber | int | None = None,
+    depends_on: list[str] | None = None,
+) -> F | Callable[[F], F]:
+    def _condition_decorator(_func: F) -> F:
         # check if return value is a Condition instance
         return_annotation = inspect.signature(_func).return_annotation
         # Require return annotation to be present and be Condition
@@ -62,16 +77,19 @@ def condition(
             )
 
         @functools.wraps(_func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: object, **kwargs: object) -> Any:
             return _func(*args, **kwargs)
 
-        wrapper._metadata = OperationMetadata(
+        step_num = (
+            StepNumber(step_number) if isinstance(step_number, int) else step_number
+        )
+        wrapper._metadata = OperationMetadata(  # type: ignore[attr-defined]
             op_type=OpType.CONDITION,
             op_name=_func.__name__,
-            step_number=step_number,
+            step_number=step_num,
             depends_on=depends_on,
         )
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     if _func is None:
         return _condition_decorator

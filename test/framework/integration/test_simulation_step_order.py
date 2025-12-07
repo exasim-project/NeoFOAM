@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 from pathlib import Path
 from typing import Literal
 
@@ -139,7 +142,9 @@ def test_simulation_step_order():
     if True:
         dag = sim.dependency_graph()
         parent_dir = Path(__file__).parent
-        digraph_to_pyvis_html(dag, html_path=str(parent_dir / "dag_sim_step_order.html"))
+        digraph_to_pyvis_html(
+            dag, html_path=str(parent_dir / "dag_sim_step_order.html")
+        )
 
 
 def test_simulation_run():
@@ -151,7 +156,8 @@ def test_simulation_run():
         coupling_interface=[],
     )
 
-    ctx = sim.init_simulation_context()
-    sim.main_loop(ctx)
-    fields = ctx.domain_context["region1"].fields
+    sim_ctx = sim.init_simulation_context()
+    sim_ctx.domain_context["region1"] = sim.domains[0].solver.create_context()
+    sim.main_loop(sim_ctx)
+    fields = sim_ctx.domain_context["region1"].fields
     assert fields["a"] == 8.0 + 6.0

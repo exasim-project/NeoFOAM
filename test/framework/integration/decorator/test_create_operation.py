@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 from foamadapter.framework.context import Context, FieldUpdates
 from foamadapter.framework.decorator import condition, step
 from foamadapter.framework.operations import (
@@ -20,7 +23,9 @@ class SomeClass:
         return FieldUpdates({"b": b})
 
     @step
-    def another_member_function_kwargs(self, a: int, *, b: int, c: float) -> FieldUpdates:
+    def another_member_function_kwargs(
+        self, a: int, *, b: int, c: float
+    ) -> FieldUpdates:
         b += 2
         c += 3.0
         return FieldUpdates({"b": b, "c": c})
@@ -136,7 +141,9 @@ def test_iterative_op_member_function():
     iter_op = IterativeOp(func=context_adapter(my_instance.condition1))
     increment_op = Operation.create_SeqOp(my_instance.function1)
 
-    op1 = Operation(func=iter_op, step_name="step1", step_number=1, sub_steps=[increment_op])
+    op1 = Operation(
+        func=iter_op, step_name="step1", step_number=1, sub_steps=[increment_op]
+    )
     assert op1.step_name == "step1"
 
     ctx = Context(fields={"a": 0}, models={})

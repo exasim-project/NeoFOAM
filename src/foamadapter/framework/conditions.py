@@ -1,6 +1,11 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
 """
 Unified Condition class with logical operators.
 """
+
+from __future__ import annotations
 
 from typing import Callable
 
@@ -19,23 +24,23 @@ class Condition:
         self._condition_func = condition_func
         self._name = name
 
-    def __call__(self, *args, **kwargs) -> bool:
+    def __call__(self, *args: object, **kwargs: object) -> bool:
         return self._condition_func(*args, **kwargs)
 
-    def __and__(self, other: "Condition") -> "Condition":
-        def combined_condition(*args, **kwargs):
+    def __and__(self, other: Condition) -> Condition:
+        def combined_condition(*args: object, **kwargs: object) -> bool:
             return self(*args, **kwargs) and other(*args, **kwargs)
 
         return Condition(combined_condition, f"({self._name} & {other._name})")
 
-    def __or__(self, other: "Condition") -> "Condition":
-        def combined_condition(*args, **kwargs):
+    def __or__(self, other: Condition) -> Condition:
+        def combined_condition(*args: object, **kwargs: object) -> bool:
             return self(*args, **kwargs) or other(*args, **kwargs)
 
         return Condition(combined_condition, f"({self._name} | {other._name})")
 
-    def __invert__(self) -> "Condition":
-        def inverted_condition(*args, **kwargs):
+    def __invert__(self) -> Condition:
+        def inverted_condition(*args: object, **kwargs: object) -> bool:
             return not self(*args, **kwargs)
 
         return Condition(inverted_condition, f"~{self._name}")
