@@ -12,7 +12,7 @@ repos:
     hooks:
       - id: clang-format
         types_or: [c++]
-        exclude: FoamAdapter
+        exclude: NeoFOAM
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
@@ -26,3 +26,28 @@ repos:
     rev: v1.23.1
     hooks:
       - id: typos
+
+  - repo: local
+    hooks:
+      # 1) Format Python with Ruff (runs only on changed Python files)
+      - id: format
+        name: Ruff Format
+        entry: poe format
+        language: system
+        types_or: [python]
+        pass_filenames: false  # important: rely on pyproject files/exclude
+
+      # 2) Lint Python with Ruff
+      - id: lint
+        name: Ruff Lint
+        entry: poe lint
+        language: system
+        types_or: [python]
+        pass_filenames: false  # important: rely on pyproject files/exclude
+
+      # 3) Type-check with mypy (let mypy read files/exclude from pyproject)
+      - id: type-check
+        name: Mypy Type Check
+        entry: poe type_check
+        language: system
+        pass_filenames: false  # important: rely on pyproject files/exclude

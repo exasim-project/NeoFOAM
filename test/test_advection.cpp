@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -61,9 +61,8 @@ TEST_CASE("Advection Equation")
     runTime.setTime(startTime, startTimeIndex);
 
     // create mesh
-    std::unique_ptr<FoamAdapter::MeshAdapter> meshAdapterPtr =
-        FoamAdapter::createMesh(exec, runTime);
-    FoamAdapter::MeshAdapter& mesh = *meshAdapterPtr;
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     Foam::volScalarField T(
@@ -98,18 +97,18 @@ TEST_CASE("Advection Equation")
 
     fvcc::VolumeField<NeoN::scalar>& nfT =
         vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-            FoamAdapter::CreateFromFoamField<Foam::volScalarField> {
+            NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
                 .exec = exec,
                 .nfMesh = nfMesh,
                 .foamField = T,
                 .name = "nfT"
             }
         );
-    auto nfPhi0 = FoamAdapter::constructSurfaceField(exec, nfMesh, phi0);
-    auto nfPhi = FoamAdapter::constructSurfaceField(exec, nfMesh, phi);
+    auto nfPhi0 = NeoFOAM::constructSurfaceField(exec, nfMesh, phi0);
+    auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, phi);
 
-    NeoN::Dictionary controlDict = FoamAdapter::convert(runTime.controlDict());
-    NeoN::Dictionary fvSchemesDict = FoamAdapter::convert(mesh.schemesDict());
+    NeoN::Dictionary controlDict = NeoFOAM::convert(runTime.controlDict());
+    NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());
     Foam::scalar endTime = controlDict.get<Foam::scalar>("endTime");
 
 
@@ -148,7 +147,7 @@ TEST_CASE("Advection Equation")
                 TEqn.solve();
             }
 
-            // advance FoamAdapter fields in time
+            // advance NeoFOAM fields in time
             {
                 NeoN::dsl::Expression eqnSys(
                     NeoN::dsl::imp::ddt(nfT) + NeoN::dsl::exp::div(nfPhi, nfT)
@@ -166,7 +165,7 @@ TEST_CASE("Advection Equation")
             // runTime.write();
             // runTime.printExecutionTime(Info);
         }
-        FoamAdapter::compare(nfT, T, ApproxScalar(1e-10), false);
+        NeoFOAM::compare(nfT, T, ApproxScalar(1e-10), false);
     }
 
     std::string timeIntegration = "backwardEuler";
@@ -198,7 +197,7 @@ TEST_CASE("Advection Equation")
             nfPhi.internalVector() =
                 nfPhi0.internalVector() * std::cos(pi * (t + 0.5 * dt) / endTime);
 
-            FoamAdapter::compare(nfT, T, ApproxScalar(1e-04), false);
+            NeoFOAM::compare(nfT, T, ApproxScalar(1e-04), false);
 
             // advance Foam fields in time
             {
@@ -206,7 +205,7 @@ TEST_CASE("Advection Equation")
                 TEqn.solve();
             }
 
-            // advance FoamAdapter fields in time
+            // advance NeoFOAM fields in time
             {
                 NeoN::dsl::Expression eqnSys(
                     NeoN::dsl::imp::ddt(nfT) + NeoN::dsl::imp::div(nfPhi, nfT)
@@ -225,6 +224,6 @@ TEST_CASE("Advection Equation")
             // runTime.printExecutionTime(Info);
         }
 
-        FoamAdapter::compare(nfT, T, ApproxScalar(1e-8), false);
+        NeoFOAM::compare(nfT, T, ApproxScalar(1e-8), false);
     }
 }

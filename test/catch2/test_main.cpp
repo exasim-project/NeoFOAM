@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 
 #include "Kokkos_Core.hpp"
@@ -10,7 +10,7 @@
 #include <catch2/matchers/catch_matchers_all.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "argList.H"
 #include "fvMesh.H"
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 #include "setRootCase.H"
 #include "createTime.H"
 
-    std::unique_ptr<Foam::fvMesh> meshPtr = FoamAdapter::createMesh(runTime);
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
     argsPtr = &args;
     timePtr = &runTime;

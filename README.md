@@ -1,15 +1,15 @@
 **[Requirements](#requirements)** |
 **[Compilation](#Compilation)** |
-**[Documentation](https://exasim-project.com/FoamAdapter/latest)** |
-# FoamAdapter
+**[Documentation](https://exasim-project.com/NeoFOAM/latest)** |
+# NeoFOAM
 
-FoamAdapter provides platform-portable implementations of common CFD algorithms and solvers using
+NeoFOAM provides platform-portable implementations of common CFD algorithms and solvers using
 [NeoN](https://github.com/exasim-project/NeoN) as a computational backend.
 Additionally, It implements converters between OpenFOAM and NeoN datastructures such that you can run examples, benchmarks and tests on accelerator devices.
 
 ## Requirements
 
-FoamAdapter has the following requirements
+NeoFOAM has the following requirements
 
 *  _cmake 3.22+_
 *  _gcc >= 12_ or  _clang >= 18+_
@@ -18,7 +18,7 @@ FoamAdapter has the following requirements
 
 ## Compilation
 
-We provide several Cmake presets to set commmonly required flags for building FoamAdapter
+We provide several Cmake presets to set commmonly required flags for building NeoFOAM
 
     cmake --list-presets # To list existing presets
     cmake --preset production # Config for production
@@ -28,6 +28,6 @@ We provide several Cmake presets to set commmonly required flags for building Fo
 
 The repository is structured in the following way:
 - *src* and *include* implement common functionality to copy data between OpenFOAM and NeoN
-- *tests* demonstrating that FoamAdapter and OpenFOAM deliver identical results are provided by this repository in the test folder.
-- *examples* provides examples of how FoamAdapter can be used for writing applications
+- *tests* demonstrating that NeoFOAM and OpenFOAM deliver identical results are provided by this repository in the test folder.
+- *examples* provides examples of how NeoFOAM can be used for writing applications
 - *tutorials* provides tutorial cases which can be run like typical OpenFOAM cases

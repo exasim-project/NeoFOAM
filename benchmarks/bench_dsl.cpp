@@ -4,7 +4,7 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "NeoN/NeoN.hpp"
 #include "benchmarks/catch_main.hpp"
@@ -12,16 +12,21 @@
 #include "common.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 namespace dsl = NeoN::dsl;
 
 #include "fvc.H"
 #include "fvm.H"
 #include "fvMatrices.H"
 
+extern Foam::Time* timePtr;    // A single time object
+extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
+extern Foam::fvMesh* meshPtr;  // A single mesh object
+
 TEST_CASE("advection–diffusion-equation_scalar")
 {
     Foam::Time& runTime = *timePtr;
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
 
     auto ofT = randomScalarField(runTime, mesh, "T");
@@ -43,8 +48,6 @@ TEST_CASE("advection–diffusion-equation_scalar")
 
     SECTION("OpenFOAM")
     {
-        auto [ofT, ofPhi, ofGamma] = constructOfFields(mesh);
-
         SECTION("explicit-time-integration")
         {
 
@@ -75,7 +78,6 @@ TEST_CASE("advection–diffusion-equation_scalar")
     SECTION("NeoN")
     {
         auto [execName, exec] = GENERATE(allAvailableExecutor());
-        auto [ofT, ofPhi, ofGamma] = constructOfFields(mesh);
 
         auto rt = nf::createAdapterRunTime(runTime);
 
@@ -84,7 +86,7 @@ TEST_CASE("advection–diffusion-equation_scalar")
             vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
                 nf::CreateFromFoamField<Foam::volScalarField> {
                     .exec = exec,
-                    .nfMesh = nfMesh,
+                    .nfMesh = rt.nfMesh,
                     .foamField = ofT,
                     .name = "nfT"
                 }
@@ -105,14 +107,14 @@ TEST_CASE("advection–diffusion-equation_scalar")
                     {{std::string("type"), NeoN::TokenList({std::string("forwardEuler")})}}
                 )
             );
-            rt.fvSchemesExpDict.insert(
+            rt.fvSchemesDict.insert(
                 std::string("divSchemes"),
                 NeoN::Dictionary(
                     {{std::string("div(phi,nfT)"),
                       NeoN::TokenList({std::string("Gauss"), std::string("upwind")})}}
                 )
             );
-            rt.fvSchemesExpDict.insert(
+            rt.fvSchemesDict.insert(
                 std::string("laplacianSchemes"),
                 NeoN::Dictionary(
                     {{std::string("laplacian(Gamma,nfT)"),
@@ -124,15 +126,13 @@ TEST_CASE("advection–diffusion-equation_scalar")
 
             BENCHMARK(std::string(execName))
             {
-                // Momentum predictor
-                nffvcc::Expression<NeoN::scalar> advectDiffEqn(
+                auto eqn = nf::PDESolver(
                     dsl::imp::ddt(nfT) + dsl::exp::div(nfPhi, nfT)
                         - dsl::exp::laplacian(nfGamma, nfT),
                     nfT,
                     rt
                 );
-                advectDiffEqn.assemble();
-                return;
+                return eqn.assemble();
             };
         }
 
@@ -163,15 +163,13 @@ TEST_CASE("advection–diffusion-equation_scalar")
 
             BENCHMARK(std::string(execName))
             {
-                // Momentum predictor
-                nf::Expression<NeoN::scalar> advectDiffEqn(
+                auto eqn = nf::PDESolver(
                     dsl::imp::ddt(nfT) + dsl::imp::div(nfPhi, nfT)
                         - dsl::imp::laplacian(nfGamma, nfT),
                     nfT,
                     rt
                 );
-                auto ls = advectDiffEqn.assemble();
-                return ls;
+                return eqn.assemble();
             };
         }
     }

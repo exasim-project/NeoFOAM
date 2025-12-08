@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
-/* This file implements comparison operator to compare OpenFOAM and corresponding FoamAdapter fields
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+/* This file implements comparison operator to compare OpenFOAM and corresponding NeoFOAM fields
  * TODO the comparison operator only make sense for testing purposes
  * so this should be part of the tests
  */
 
 
-#include "FoamAdapter/compatibility/fvSolution.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
 #include <map>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
 
-namespace FoamAdapter
+namespace NeoFOAM
 {
 
 void updateSolver(NeoN::Dictionary& solverDict)
@@ -37,7 +37,7 @@ void updateSolver(NeoN::Dictionary& solverDict)
         // if (solverName == "GAMG")
         // {
         //     throw std::runtime_error(
-        //         "GAMG is not supported in FoamAdapter, please use a different solver."
+        //         "GAMG is not supported in NeoFOAM, please use a different solver."
         //     );
         // }
         solverDict.insert("type", it->second.second);
@@ -78,7 +78,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         if (preconditionerDict.isDict("type"))
         {
             throw std::runtime_error(
-                "GAMG is not supported in FoamAdapter, please use a different preconditioner."
+                "GAMG is not supported in NeoFOAM, please use a different preconditioner."
             );
             // std::string& preconditionerType = preconditionerDict.get<std::string>("type");
             // auto it = preconditionerMap.find(preconditionerType);
@@ -158,4 +158,4 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     return modSolverDict;
 }
 
-} // namespace FoamAdapter
+} // namespace NeoFOAM

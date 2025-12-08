@@ -1,10 +1,10 @@
-name: Build FoamAdapter
+name: Build NeoFOAM
 run-name: 'Build workflow'
 
 on:
   push:
     branches:
-      - dev
+      - develop
       - main
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build FoamAdapter
+    name: Build NeoFOAM
     runs-on: ubuntu-latest
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
     strategy:
@@ -59,18 +59,18 @@ jobs:
          ninja --version
          cmake --version
 
-     - name: Build FoamAdapter
+     - name: Build NeoFOAM
        run: |
          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
          CC=${{matrix.compiler.CC}} \
          CXX=${{matrix.compiler.CXX}} \
          cmake --preset develop \
-           -DFOAMADAPTER_DEVEL_TOOLS=OFF \
-           -DFOAMADAPTER_BUILD_BENCHMARKS=OFF \
-           -DFOAMADAPTER_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
+           -DNEOFOAM_DEVEL_TOOLS=OFF \
+           -DNEOFOAM_BUILD_BENCHMARKS=OFF \
+           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF
          cmake --build  --preset develop
 
-     - name: Execute unit tests FoamAdapter
+     - name: Execute unit tests NeoFOAM
        run: |
          source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
          ctest --preset develop
@@ -86,7 +86,7 @@ jobs:
     name: FoamAdapter Python with OpenFOAM ${{ matrix.openfoam-version }}
     steps:
       - uses: actions/checkout@v5
-      
+
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -103,7 +103,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv run pip install -v .[all]
-        
+
       - name: Test with pytest
         run: |
           uv run pytest
@@ -114,7 +114,7 @@ jobs:
     name: Test coverage with OpenFOAM 2506 and Python 3.9
     steps:
       - uses: actions/checkout@v5
-      
+
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -128,7 +128,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv run pip install -v .[all]
-        
+
       - name: Test with pytest
         run: |
             uv run pytest --cov=foamadapter --cov-report=xml --cov-report=term
@@ -152,7 +152,7 @@ jobs:
 
     - name: Lint with Ruff
       uses: astral-sh/ruff-action@v3
-      
+
     - name: Format with Ruff
       uses: astral-sh/ruff-action@v3
       with:
@@ -173,7 +173,7 @@ jobs:
       uses: astral-sh/setup-uv@v7
       with:
         python-version: 3.9
-        
+
     - name: Check types with ty
       run: |
         uv run pip install .[all]

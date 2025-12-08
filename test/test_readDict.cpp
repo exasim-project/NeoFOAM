@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 FoamAdapter authors
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -23,7 +23,7 @@ TEST_CASE("Convert OpenFOAM::dictionary dict to NeoN::Dict")
     subDict.add("subWord", "subWord");
     testDict.add("subDict", subDict);
 
-    auto nfDict = FoamAdapter::convert(testDict);
+    auto nfDict = NeoFOAM::convert(testDict);
 
     REQUIRE(nfDict.get<NeoN::label>("label") == 1);
     REQUIRE(nfDict.get<NeoN::scalar>("scalar") == 2.1);
@@ -40,12 +40,12 @@ TEST_CASE("Convert OpenFOAM::dictionary dict to NeoN::Dict")
 TEST_CASE("read fvSchemes")
 {
     Foam::Time& runTime = *timePtr;
-    auto meshPtr = FoamAdapter::createMesh(NeoN::SerialExecutor {}, runTime);
-    FoamAdapter::MeshAdapter& mesh = *meshPtr;
+    auto meshPtr = NeoFOAM::createMesh(NeoN::SerialExecutor {}, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
 
     Foam::dictionary fvSchemes = mesh.schemesDict();
 
-    NeoN::Dictionary fvSchemesDict = FoamAdapter::convert(mesh.schemesDict());
+    NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());
     auto keys = fvSchemesDict.keys();
 
     REQUIRE(fvSchemesDict.subDict("ddtSchemes").get<std::string>("ddt(T)") == "Euler");
@@ -75,7 +75,7 @@ TEST_CASE("read testDictionary from disk")
         Foam::IOobject::NO_WRITE
     ));
 
-    NeoN::Dictionary nfTestDict = FoamAdapter::convert(ofTestDict);
+    NeoN::Dictionary nfTestDict = NeoFOAM::convert(ofTestDict);
 
     REQUIRE(nfTestDict.get<NeoN::label>("label") == 1);
     REQUIRE(nfTestDict.get<NeoN::scalar>("scalar") == 2.1);

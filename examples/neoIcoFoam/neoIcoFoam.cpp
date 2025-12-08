@@ -3,7 +3,7 @@
 
 #include "NeoN/NeoN.hpp"
 
-#include "FoamAdapter/FoamAdapter.hpp"
+#include "NeoFOAM/NeoFOAM.hpp"
 
 #include "fvCFD.H"
 #include "pisoControl.H"
@@ -15,7 +15,7 @@ using Foam::nl;
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nf = FoamAdapter;
+namespace nf = NeoFOAM;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -99,7 +99,9 @@ int main(int argc, char* argv[])
 
             if (piso.momentumPredictor())
             {
-                UEqn.solve();
+                // NOTE solve on a temporary clone of UEqn
+                // TODO use a free function here
+                UEqn.solve(-1.0 * dsl::exp::grad(p));
             }
             else
             {
