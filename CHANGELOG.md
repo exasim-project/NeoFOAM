@@ -2,6 +2,7 @@
 
 - created python package with CLI
 - added coverage, format, linting, type checking to CI
+- added python versions of pimpleFoam and icoFoam
 
 # Version 0.2.0 (unreleased)
 - Add support for PDEs on vector fields [#119](https://github.com/exasim-project/NeoFOAM/pull/119)[#134](https://github.com/exasim-project/NeoFOAM/pull/134)
