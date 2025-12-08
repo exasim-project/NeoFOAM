@@ -64,6 +64,22 @@
         "NEOFOAM_BUILD_EXAMPLES": "ON",
         "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer $env{CXXFLAGS}"
       }
+    },
+    {
+      "name": "scorep",
+      "inherits": ["production"],
+      "displayName": "Score-P Profiling",
+      "description": "Build with Score-P instrumentation",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer",
+        "ENABLE_PROFILING": "ON"
+      },
+      "environment": {
+        "SCOREP_WRAPPER_INSTRUMENTER_FLAGS": "--thread=pthread --mpp=none --kokkos --cuda",
+        "NVCC_WRAPPER_DEFAULT_COMPILER": "scorep-g++",
+	"CMAKE_CXX_COMPILER": "${sourceDir}/cmake/bin/neofoam-cxx-wrapper"
+      }
     }
   ],
   "buildPresets": [
@@ -87,6 +103,13 @@
       "description": "Build for profiling use",
       "configurePreset": "profiling",
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "scorep",
+      "displayName": "Score-P Profiling",
+      "description": "Build for profiling use",
+      "configurePreset": "scorep",
+      "configuration": "Release"
     }
   ],
   "testPresets": [

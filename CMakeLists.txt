@@ -19,6 +19,7 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(ENABLE_PROFILING "Build Score-P to enable profiling" OFF)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
@@ -48,11 +49,23 @@ endif()
 
 include(cmake/CxxThirdParty.cmake)
 
+if(ENABLE_PROFILING)
+    add_dependencies(NeoN scorep_build)
+endif()
+
 add_subdirectory(include)
 add_subdirectory(src)
 
+if(ENABLE_PROFILING)
+    add_dependencies(NeoFOAM scorep_build)
+endif()
+
 if(NEOFOAM_BUILD_EXAMPLES)
   add_subdirectory(examples)
+endif()
+
+if(ENABLE_PROFILING)
+    add_dependencies(neoIcoFoam scorep_build)
 endif()
 
 if(NEOFOAM_BUILD_TESTS)
