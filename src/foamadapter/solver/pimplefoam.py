@@ -31,25 +31,24 @@ class CFLNumber:
         self.criteria = []
         self.GREAT = 1e30
         self.SMALL = 1e-15
-        self.maxDeltaT = 1e-3  # Default maximum deltaT
+        self.maxDeltaT = maxDeltaT  # Default maximum deltaT
 
-    def setDelta(self, runTime, phi):
+    def setDelta(self, runTime, phi, maxRatio=1.2):
         deltaT = runTime.deltaTValue()
 
         if not self.criteria:
             return
 
-        max_cfl_number, mean_cfl_number = computeCFLNumber(phi)
+        maxCFLNumber, meanCFLNumber = computeCFLNumber(phi)
         Info(f"Courant Number mean: {mean_cfl_number}, max: {max_cfl_number}")
         ratios = [self.max_cfl_number / max_cfl_number]
 
         # limit to 1.2 to avoid too large time steps
-        ratios = [min(ratio, 1.2) for ratio in ratios if ratio > self.SMALL and ratio < self.GREAT]
+        ratios = [min(ratio, maxRatio) for ratio in ratios if ratio > self.SMALL and ratio < self.GREAT]
 
         # Set most restrictive time step
         finalDeltaT = min(min(deltaT * ratio for ratio in ratios), self.maxDeltaT)
         runTime.setDeltaT(finalDeltaT)
-        Info(f"deltaT = {runTime.deltaTValue()}")
         runTime.increment()
 
 
@@ -104,7 +103,7 @@ class PimpleFoam:
             if pimple.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
 
-        # Optionally include continuityErrs()
+        # TODO include continuityErrs()
         U.assign(HbyA - rAU * fvc.grad(p))
         U.correctBoundaryConditions()
 

@@ -44,7 +44,6 @@ class IcoFoam:
 
         p, U, phi, nu = create_fields(mesh)
 
-        # Optional: pressure reference
 
         fvSolution = dictionary.read("system/fvSolution")
 
@@ -88,7 +87,7 @@ class IcoFoam:
                     if piso.finalNonOrthogonalIter():
                         phi.assign(phiHbyA - pEqn.flux())
 
-                # Optionally include continuityErrs()
+                # TODO include continuityErrs()
 
                 U.assign(HbyA - rAU * fvc.grad(p))
 
