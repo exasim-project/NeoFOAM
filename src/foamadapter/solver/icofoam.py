@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2023 FoamAdapter authors
-
-import pybFoam as pyf
+import pybFoam as pyf  # type: ignore[import-not-found]
 from pybFoam import (
     Info,
     fvc,
@@ -14,7 +13,9 @@ from pybFoam import (
 )
 
 
-def create_fields(mesh):
+def create_fields(
+    mesh: pyf.fvMesh,
+) -> tuple[volScalarField, volVectorField, surfaceScalarField, volScalarField]:
     p = volScalarField.read_field(mesh, "p")
     U = volVectorField.read_field(mesh, "U")
     phi = pyf.createPhi(U)
@@ -24,10 +25,10 @@ def create_fields(mesh):
 
 
 class IcoFoam:
-    def __init__(self, argv):
+    def __init__(self, argv: list[str]) -> None:
         self._argv = argv
 
-    def run(self):
+    def run(self) -> None:
         argList = pyf.argList(self._argv)
 
         runTime = pyf.Time(argList)
@@ -35,7 +36,6 @@ class IcoFoam:
         mesh = pyf.fvMesh(runTime)
 
         p, U, phi, nu = create_fields(mesh)
-
 
         fvSolution = pyf.dictionary.read("system/fvSolution")
 
@@ -62,7 +62,8 @@ class IcoFoam:
                 HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
                 phiHbyA = surfaceScalarField(
-                    pyf.Word("phiHbyA"), fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi)
+                    pyf.Word("phiHbyA"),
+                    fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
                 )
 
                 pyf.adjustPhi(phiHbyA, U, p)

@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2023 FoamAdapter authors
 
-import pybFoam as pyf
+from typing import Any
+
+import pybFoam as pyf  # type: ignore[import-not-found]
 from pybFoam import (
     Info,
     fvc,
@@ -12,13 +14,12 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel
+from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
 
 
 class CFLNumber:
-
-    def __init__(self, maxDeltaT):
-        self.criteria = []
+    def __init__(self, maxDeltaT: float) -> None:
+        self.criteria: list[Any] = []
         self.GREAT = 1e30
         self.SMALL = 1e-15
         controlDict = pyf.dictionary.read("system/controlDict")
@@ -26,8 +27,9 @@ class CFLNumber:
         self.maxCFL = controlDict.get[float]("maxCo")
         self.maxDeltaT = maxDeltaT
 
-
-    def setDelta(self, runTime, phi, maxRatio=1.2):
+    def setDelta(
+        self, runTime: pyf.Time, phi: pyf.surfaceScalarField, maxRatio: float = 1.2
+    ) -> None:
         deltaT = runTime.deltaTValue()
 
         if not self.criteria:
@@ -38,7 +40,11 @@ class CFLNumber:
         ratios = [self.maxCFL / maxCFLNumber]
 
         # limit to 1.2 to avoid too large time steps
-        ratios = [min(ratio, maxRatio) for ratio in ratios if ratio > self.SMALL and ratio < self.GREAT]
+        ratios = [
+            min(ratio, maxRatio)
+            for ratio in ratios
+            if ratio > self.SMALL and ratio < self.GREAT
+        ]
 
         # Set most restrictive time step
         finalDeltaT = min(min(deltaT * ratio for ratio in ratios), self.maxDeltaT)
@@ -46,7 +52,15 @@ class CFLNumber:
         runTime.increment()
 
 
-def create_fields(mesh):
+def create_fields(
+    mesh: Any,
+) -> tuple[
+    volScalarField,
+    volVectorField,
+    surfaceScalarField,
+    singlePhaseTransportModel,
+    incompressibleTurbulenceModel,
+]:
     p = volScalarField.read_field(mesh, "p")
     U = volVectorField.read_field(mesh, "U")
     phi = pyf.createPhi(U)
@@ -58,12 +72,14 @@ def create_fields(mesh):
 
 
 class PimpleFoam:
-    def __init__(self, argv):
+    def __init__(self, argv: list[str]) -> None:
         self._argv = argv
         self.pRefCell = None
         self.pRefValue = None
 
-    def momentum_equation(self, pimple, U, p, phi, turbulence) -> fvVectorMatrix:
+    def momentum_equation(
+        self, pimple: Any, U: Any, p: Any, phi: Any, turbulence: Any
+    ) -> fvVectorMatrix:
         """
         Solve the momentum equations using the PIMPLE algorithm.
         """
@@ -76,7 +92,9 @@ class PimpleFoam:
 
         return UEqn
 
-    def pressure_correction(self, pimple, U, p, phi, UEqn) -> None:
+    def pressure_correction(
+        self, pimple: Any, U: Any, p: Any, phi: Any, UEqn: Any
+    ) -> None:
         """
         Correct the solution based on the PIMPLE algorithm.
         """
@@ -84,7 +102,8 @@ class PimpleFoam:
         HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
         phiHbyA = surfaceScalarField(
-            pyf.Word("phiHbyA"), fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi)
+            pyf.Word("phiHbyA"),
+            fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
         )
 
         pyf.adjustPhi(phiHbyA, U, p)
@@ -100,7 +119,7 @@ class PimpleFoam:
         U.assign(HbyA - rAU * fvc.grad(p))
         U.correctBoundaryConditions()
 
-    def run(self):
+    def run(self) -> None:
         argList = pyf.argList(self._argv)
         runTime = pyf.Time(argList)
         mesh = pyf.fvMesh(runTime)
