@@ -17,29 +17,32 @@ from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTranspo
 
 class CFLNumber:
 
-    def __init__(self):
+    def __init__(self, maxDeltaT):
         self.criteria = []
         self.GREAT = 1e30
         self.SMALL = 1e-15
-        self.maxDeltaT = 1e-3  # Default maximum deltaT
+        controlDict = pyf.dictionary.read("system/controlDict")
+        self.adjustable = controlDict.get[bool]("adjustTimeStep")
+        self.maxCFL = controlDict.get[float]("maxCo")
+        self.maxDeltaT = maxDeltaT
 
-    def setDelta(self, runTime, phi):
+
+    def setDelta(self, runTime, phi, maxRatio=1.2):
         deltaT = runTime.deltaTValue()
 
         if not self.criteria:
             return
 
-        max_cfl_number, mean_cfl_number = pyf.computeCFLNumber(phi)
-        Info(f"Courant Number mean: {mean_cfl_number}, max: {max_cfl_number}")
-        ratios = [self.max_cfl_number / max_cfl_number]
+        maxCFLNumber, meanCFLNumber = pyf.computeCFLNumber(phi)
+        Info(f"Courant Number mean: {meanCFLNumber}, max: {maxCFLNumber}")
+        ratios = [self.maxCFL / maxCFLNumber]
 
         # limit to 1.2 to avoid too large time steps
-        ratios = [min(ratio, 1.2) for ratio in ratios if ratio > self.SMALL and ratio < self.GREAT]
+        ratios = [min(ratio, maxRatio) for ratio in ratios if ratio > self.SMALL and ratio < self.GREAT]
 
         # Set most restrictive time step
         finalDeltaT = min(min(deltaT * ratio for ratio in ratios), self.maxDeltaT)
         runTime.setDeltaT(finalDeltaT)
-        Info(f"deltaT = {runTime.deltaTValue()}")
         runTime.increment()
 
 
@@ -48,8 +51,8 @@ def create_fields(mesh):
     U = volVectorField.read_field(mesh, "U")
     phi = pyf.createPhi(U)
 
-    laminarTransport = pyf.singlePhaseTransportModel(U, phi)
-    turbulence = pyf.incompressibleTurbulenceModel.New(U, phi, laminarTransport)
+    laminarTransport = singlePhaseTransportModel(U, phi)
+    turbulence = incompressibleTurbulenceModel.New(U, phi, laminarTransport)
 
     return p, U, phi, laminarTransport, turbulence
 
@@ -93,7 +96,7 @@ class PimpleFoam:
             if pimple.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
 
-        # Optionally include continuityErrs()
+        # TODO include continuityErrs()
         U.assign(HbyA - rAU * fvc.grad(p))
         U.correctBoundaryConditions()
 
@@ -107,7 +110,13 @@ class PimpleFoam:
         fvSolution = pyf.dictionary.read("system/fvSolution")
         self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
         mesh.setFluxRequired(pyf.Word("p"))
-        cfl_number = CFLNumber()
+        controlDict = pyf.dictionary.read("system/controlDict")
+        maxDeltaT = 1e5
+        try:
+            maxDeltaT = controlDict.get[float]("maxDeltaT")
+        except KeyError:
+            pass
+        cfl_number = CFLNumber(maxDeltaT)
 
         pimple = pyf.pimpleControl(mesh)
 
