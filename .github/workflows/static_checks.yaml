@@ -104,14 +104,15 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true # Recursively clone submodules
-    - name: Install dependencies
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: 3.12
+    - name: Install Python dependencies
       run: |
-        sudo apt update
-        sudo apt install \
-           pre-commit python3-identify
-        pre-commit install
+        uv sync --frozen --all-extras
     - name: Run pre-commit on all files
-      run: pre-commit run --all --color always --verbose
+      run: uv run pre-commit run --all --color always --verbose
     - name: check for todo fixme note
       run: |
         NTODOS="$(grep -r 'TODO DONT MERGE' --exclude-dir=.github | wc -l)"
