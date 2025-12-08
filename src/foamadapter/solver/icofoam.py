@@ -1,24 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2023 FoamAdapter authors
 
-import pybFoam
+import pybFoam as pyf
 from pybFoam import (
     Info,
-    Time,
-    Word,
-    adjustPhi,
-    constrainHbyA,
-    constrainPressure,
-    createPhi,
-    dictionary,
     fvc,
     fvm,
-    fvMesh,
     fvScalarMatrix,
     fvVectorMatrix,
-    pisoControl,
-    setRefCell,
-    solve,
     surfaceScalarField,
     volScalarField,
     volVectorField,
@@ -28,7 +17,7 @@ from pybFoam import (
 def create_fields(mesh):
     p = volScalarField.read_field(mesh, "p")
     U = volVectorField.read_field(mesh, "U")
-    phi = createPhi(U)
+    phi = pyf.createPhi(U)
     nu = volScalarField.read_field(mesh, "nu")  # Assumes viscosity is read like a field
 
     return p, U, phi, nu
@@ -39,22 +28,22 @@ class IcoFoam:
         self._argv = argv
 
     def run(self):
-        argList = pybFoam.argList(self._argv)
+        argList = pyf.argList(self._argv)
 
-        runTime = Time(argList)
+        runTime = pyf.Time(argList)
 
-        mesh = fvMesh(runTime)
+        mesh = pyf.fvMesh(runTime)
 
         p, U, phi, nu = create_fields(mesh)
 
 
-        fvSolution = dictionary.read("system/fvSolution")
+        fvSolution = pyf.dictionary.read("system/fvSolution")
 
-        pRefCell, pRefValue = setRefCell(p, fvSolution.subDict("PISO"))
+        pRefCell, pRefValue = pyf.setRefCell(p, fvSolution.subDict("PISO"))
 
-        mesh.setFluxRequired(Word("p"))
+        mesh.setFluxRequired(pyf.Word("p"))
 
-        piso = pisoControl(mesh)
+        piso = pyf.pisoControl(mesh)
 
         while runTime.loop():
             Info(f"Time = {runTime.timeName()}")
@@ -65,20 +54,20 @@ class IcoFoam:
             UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) - fvm.laplacian(nu, U))
 
             if piso.momentumPredictor():
-                solve(UEqn + fvc.grad(p))
+                pyf.solve(UEqn + fvc.grad(p))
 
             while piso.correct():
-                rAU = volScalarField(Word("rAU"), 1.0 / UEqn.A())
+                rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
 
-                HbyA = volVectorField(constrainHbyA(rAU * UEqn.H(), U, p))
+                HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
                 phiHbyA = surfaceScalarField(
-                    Word("phiHbyA"), fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi)
+                    pyf.Word("phiHbyA"), fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi)
                 )
 
-                adjustPhi(phiHbyA, U, p)
+                pyf.adjustPhi(phiHbyA, U, p)
 
-                constrainPressure(p, U, phiHbyA, rAU)
+                pyf.constrainPressure(p, U, phiHbyA, rAU)
 
                 while piso.correctNonOrthogonal():
                     pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
