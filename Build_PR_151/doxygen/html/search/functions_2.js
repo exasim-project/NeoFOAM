@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['diag_0',['diag',['../namespaceFoamAdapter.html#a13b42389ef03dfeb668a50344c66743c',1,'FoamAdapter']]]
+  ['diag_0',['diag',['../namespaceNeoFOAM.html#aa275ecb871028c14e2d9dae4c78686e2',1,'NeoFOAM']]]
 ];
