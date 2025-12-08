@@ -1,23 +1,13 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2023 FoamAdapter authors
 
-import pybFoam
+import pybFoam as pyf
 from pybFoam import (
     Info,
-    Time,
-    Word,
-    adjustPhi,
-    computeCFLNumber,
-    constrainHbyA,
-    constrainPressure,
-    createPhi,
-    dictionary,
     fvc,
     fvm,
-    fvMesh,
     fvScalarMatrix,
     fvVectorMatrix,
-    pimpleControl,
-    setRefCell,
-    solve,
     surfaceScalarField,
     volScalarField,
     volVectorField,
@@ -39,7 +29,7 @@ class CFLNumber:
         if not self.criteria:
             return
 
-        max_cfl_number, mean_cfl_number = computeCFLNumber(phi)
+        max_cfl_number, mean_cfl_number = pyf.computeCFLNumber(phi)
         Info(f"Courant Number mean: {mean_cfl_number}, max: {max_cfl_number}")
         ratios = [self.max_cfl_number / max_cfl_number]
 
@@ -56,11 +46,10 @@ class CFLNumber:
 def create_fields(mesh):
     p = volScalarField.read_field(mesh, "p")
     U = volVectorField.read_field(mesh, "U")
-    phi = createPhi(U)
+    phi = pyf.createPhi(U)
 
-    laminarTransport = singlePhaseTransportModel(U, phi)
-
-    turbulence = incompressibleTurbulenceModel.New(U, phi, laminarTransport)
+    laminarTransport = pyf.singlePhaseTransportModel(U, phi)
+    turbulence = pyf.incompressibleTurbulenceModel.New(U, phi, laminarTransport)
 
     return p, U, phi, laminarTransport, turbulence
 
@@ -80,7 +69,7 @@ class PimpleFoam:
         UEqn.relax()
 
         if pimple.momentumPredictor():
-            solve(UEqn + fvc.grad(p))
+            pyf.solve(UEqn + fvc.grad(p))
 
         return UEqn
 
@@ -88,15 +77,15 @@ class PimpleFoam:
         """
         Correct the solution based on the PIMPLE algorithm.
         """
-        rAU = volScalarField(Word("rAU"), 1.0 / UEqn.A())
-        HbyA = volVectorField(constrainHbyA(rAU * UEqn.H(), U, p))
+        rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
+        HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
         phiHbyA = surfaceScalarField(
-            Word("phiHbyA"), fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi)
+            pyf.Word("phiHbyA"), fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi)
         )
 
-        adjustPhi(phiHbyA, U, p)
-        constrainPressure(p, U, phiHbyA, rAU)
+        pyf.adjustPhi(phiHbyA, U, p)
+        pyf.constrainPressure(p, U, phiHbyA, rAU)
         while pimple.correctNonOrthogonal():
             pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
             pEqn.setReference(self.pRefCell, self.pRefValue, False)
@@ -109,18 +98,18 @@ class PimpleFoam:
         U.correctBoundaryConditions()
 
     def run(self):
-        argList = pybFoam.argList(self._argv)
-        runTime = Time(argList)
-        mesh = fvMesh(runTime)
+        argList = pyf.argList(self._argv)
+        runTime = pyf.Time(argList)
+        mesh = pyf.fvMesh(runTime)
 
         p, U, phi, laminarTransport, turbulence = create_fields(mesh)
 
-        fvSolution = dictionary.read("system/fvSolution")
-        self.pRefCell, self.pRefValue = setRefCell(p, fvSolution.subDict("PIMPLE"))
-        mesh.setFluxRequired(Word("p"))
+        fvSolution = pyf.dictionary.read("system/fvSolution")
+        self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
+        mesh.setFluxRequired(pyf.Word("p"))
         cfl_number = CFLNumber()
 
-        pimple = pimpleControl(mesh)
+        pimple = pyf.pimpleControl(mesh)
 
         while runTime.loop():
             Info(f"Time = {runTime.timeName()}")
