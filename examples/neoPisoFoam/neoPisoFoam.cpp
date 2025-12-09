@@ -97,11 +97,11 @@ int main(int argc, char* argv[])
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         // update function called async
-        auto updateFunction = [&turbulence, &ofU]()
+        auto updateFunction = [&turbulence]()
         {
             NeoN::Logging::info("Turbulence->correct");
             turbulence->correct();
-            return turbulence->nut();
+            return turbulence->nut()();
         };
 
         auto nutBuffer = turbulence->nut()();

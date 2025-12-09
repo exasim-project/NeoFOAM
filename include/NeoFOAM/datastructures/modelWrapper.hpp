@@ -4,12 +4,16 @@
 
 #pragma once
 
+#include <future>
+
 #include "NeoN/NeoN.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
 namespace NeoFOAM
 {
+
+    inline int func() {return 1;}
 
 template<
     typename ExecuteFunctionType,
@@ -24,7 +28,7 @@ private:
     std::vector<std::pair<fvcc::VolumeField<NeoN::Vec3>&, Foam::volVectorField&>> syncFields_;
     ExecuteFunctionType execute_;
     NNOutField& outField_;
-    Foam::volScalarField& tmpRet_;
+    std::future<Foam::volScalarField> tmpRet_;
 
 public:
 
@@ -37,8 +41,11 @@ public:
         : syncFields_(syncFields)
         , execute_(executeFunction)
         , outField_(outField),
-        tmpRet_(buffer)
-    {}
+        tmpRet_()
+    {
+        execute();
+    }
+
 
     void execute()
     {
@@ -46,12 +53,13 @@ public:
         {
             syncToFoam(src, dst);
         }
-        tmpRet_ = execute_();
+        tmpRet_ = std::async(std::launch::async, execute_);
     }
 
     NNOutField& getValue() {
-      syncFromFoam(tmpRet_(), outField_);
-      return outField_;
+        tmpRet_.wait();
+        syncFromFoam(tmpRet_.get(), outField_);
+        return outField_;
     };
 };
 
