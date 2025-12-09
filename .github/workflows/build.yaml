@@ -103,12 +103,6 @@ jobs:
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
           ctest --preset develop
-=======
-     - name: Execute unit tests FoamAdapter
-       run: |
-         source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-         ctest --preset develop
->>>>>>> origin/feat/python_cli
 
   build-python:
     runs-on: ubuntu-latest # may use an older version to test
@@ -121,11 +115,6 @@ jobs:
     name: FoamAdapter Python with OpenFOAM ${{ matrix.openfoam-version }}
     steps:
       - uses: actions/checkout@v5
-<<<<<<< HEAD
-
-=======
-
->>>>>>> origin/feat/python_cli
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -143,10 +132,14 @@ jobs:
         run: |
           uv run pip install -v .[all]
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 >>>>>>> origin/feat/python_cli
+=======
+
+>>>>>>> origin/feat/python_pre_commit
       - name: Test with pytest
         run: |
           uv run pytest
@@ -158,10 +151,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 >>>>>>> origin/feat/python_cli
+=======
+
+>>>>>>> origin/feat/python_pre_commit
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -176,10 +173,14 @@ jobs:
         run: |
           uv run pip install -v .[all]
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 
 >>>>>>> origin/feat/python_cli
+=======
+
+>>>>>>> origin/feat/python_pre_commit
       - name: Test with pytest
         run: |
             uv run pytest --cov=foamadapter --cov-report=xml --cov-report=term
@@ -203,11 +204,6 @@ jobs:
 
     - name: Lint with Ruff
       uses: astral-sh/ruff-action@v3
-<<<<<<< HEAD
-
-=======
-
->>>>>>> origin/feat/python_cli
     - name: Format with Ruff
       uses: astral-sh/ruff-action@v3
       with:
@@ -228,16 +224,11 @@ jobs:
       uses: astral-sh/setup-uv@v7
       with:
         python-version: 3.9
-<<<<<<< HEAD
-
     - name: Check types with ty
       run: |
         uv run pip install .[all]
         poe type_check
-=======
-
     - name: Check types with ty
       run: |
         uv run pip install .[all]
         poe type_check
->>>>>>> origin/feat/python_cli
