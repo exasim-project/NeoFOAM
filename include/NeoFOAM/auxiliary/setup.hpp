@@ -15,6 +15,9 @@ namespace NeoFOAM
 /*@brief based on the Courant number this function synchronizes the deltaT value in both runtimes*/
 void setDeltaT(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum);
 
+/*@brief syncroncize between OpenFOAM and NeoFOAM runtimes */
+void syncRunTimes(Foam::Time& ofRunTime, RunTime& nfRunTime, Foam::scalar coNum);
+
 /* @brief create a NeoN executor from a dictionary
  * @return the Neon::Executor
  */
@@ -33,4 +36,4 @@ RunTime createAdapterRunTime(const Foam::Time& runTime, const NeoN::Executor exe
  * @return the RunTime instance*/
 RunTime createAdapterRunTime(const Foam::Time& runTime);
 
-} // namespace Foam
+} // namespace NeoFoam

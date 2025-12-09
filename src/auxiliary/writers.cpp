@@ -64,15 +64,11 @@ void write(
     }
 }
 
-void write(
-    const fvcc::VolumeField<NeoN::scalar>& volField,
-    const Foam::fvMesh& mesh,
-    const std::string fieldName
-)
+void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& mesh)
 {
     Foam::volScalarField foamField(
         Foam::IOobject(
-            fieldName,
+            volField.name,
             mesh.time().timeName(),
             mesh,
             Foam::IOobject::NO_READ,
@@ -98,15 +94,11 @@ void write(
     foamField.write();
 }
 
-void write(
-    const fvcc::VolumeField<NeoN::Vec3>& volField,
-    const Foam::fvMesh& mesh,
-    const std::string fieldName
-)
+void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& mesh)
 {
     Foam::volVectorField foamField(
         Foam::IOobject(
-            fieldName,
+            volField.name,
             mesh.time().timeName(),
             mesh,
             Foam::IOobject::NO_READ,

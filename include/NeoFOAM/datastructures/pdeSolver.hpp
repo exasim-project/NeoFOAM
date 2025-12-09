@@ -149,8 +149,8 @@ private:
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
         }
 
-        auto solverDict = runTime_.fvSolutionDict.get<NeoN::Dictionary>("solvers");
-        auto fieldSolverDict = solverDict.get<NeoN::Dictionary>(psi_.name);
+        auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
+        auto fieldSolverDict = solverDict.subDict(psi_.name);
 
         auto stats = NeoN::dsl::detail::iterativeSolveImpl(
             expr,
@@ -164,10 +164,9 @@ private:
             functs
         );
 
-        std::cout << "[NeoN] Solving for " << psi_.name << ":"
-                  << " Initial residual: " << stats.initResNorm
-                  << " Final residual: " << stats.finalResNorm
-                  << " No Iterations: " << stats.numIter << std::endl;
+        NeoN::Logging::info(
+            "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
+                psi_.name, stats.initResNorm, stats.finalResNorm, stats.numIter);
         return stats;
     }
 

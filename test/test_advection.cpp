@@ -115,7 +115,7 @@ TEST_CASE("Advection Equation")
     SECTION("Scalar advection with " + execName + " and " + "forwardEuler")
     {
         std::string timeIntegration = "forwardEuler";
-        fvSchemesDict.get<NeoN::Dictionary>("ddtSchemes").insert("type", timeIntegration);
+        fvSchemesDict.subDict("ddtSchemes").insert("type", timeIntegration);
 
         while (runTime.run())
         {
@@ -179,7 +179,7 @@ TEST_CASE("Advection Equation")
 
     SECTION("Scalar advection with " + execName + " and " + timeIntegration)
     {
-        fvSchemesDict.get<NeoN::Dictionary>("ddtSchemes").insert("type", timeIntegration);
+        fvSchemesDict.subDict("ddtSchemes").insert("type", timeIntegration);
 
         while (runTime.run())
         {

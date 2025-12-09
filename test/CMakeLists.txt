@@ -14,8 +14,8 @@ function(foam_adapter_unit_test TEST SETUP_DIRECTORY)
 
   target_link_libraries(adapter_${TEST} NeoFOAM_public_api neofoam_catch_main OpenFOAM)
 
-  set_target_properties(adapter_${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                                                   ${adapter_WORKING_DIRECTORY})
+  set(NFT_PWD ${adapter_WORKING_DIRECTORY})
+  set_target_properties(adapter_${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NFT_PWD})
 
   add_test(
     NAME adapter_${TEST}

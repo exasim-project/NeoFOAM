@@ -3,13 +3,39 @@ run-name: Static checks
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-compilation-db:
+    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
     name: Build with IWYU
     runs-on: ubuntu-24.04
     steps:
+    - name: Determine branch
+      run: |
+
+          # Detect current branch of NeoFOAM
+          NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
+          echo "NEOFOAM_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+
+          # Define remote repo URL
+          REPO_URL="https://github.com/exasim-project/NeoN"
+
+          echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
+
+          # Query exact match: refs/heads/<branch>
+          if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+            echo "NeoN branch exists: $NEOFOAM_BRANCH"
+            echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+          else
+            echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
+            echo "NEON_BRANCH=develop" >> $GITHUB_ENV
+          fi
     - uses: actions/checkout@v4
 
     - name: Add repos
@@ -29,6 +55,7 @@ jobs:
            openmpi-bin \
            openfoam2406-dev
 
+
     - name: Create Compilation Database
       run: |
         source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
@@ -39,6 +66,7 @@ jobs:
           -DNEOFOAM_BUILD_BENCHMARKS=OFF \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           -DNEOFOAM_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+          -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
           -DNEOFOAM_ENABLE_IWYU=ON
         cmake --build --preset develop
     - uses: actions/upload-artifact@v4
