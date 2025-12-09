@@ -96,20 +96,14 @@ int main(int argc, char* argv[])
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-        // update function called async
-        auto updateFunction = [&turbulence]()
-        {
-            NeoN::Logging::info("Turbulence->correct");
-            turbulence->correct();
-            return turbulence->nut()();
-        };
-
-        auto nutBuffer = turbulence->nut()();
         auto bridgedTurbulence = NeoFOAM::ModelAdapter {
-            {{U, ofU}}, // sync before update
-            updateFunction,
-            nut, // reference to out field to synchronize
-            nutBuffer
+            std::make_tuple(std::ref(U), std::ref(ofU)), // sync before update
+            [&turbulence]
+            {
+                turbulence->correct();
+                return turbulence->nut()();
+            },
+            nut
         };
 
         NeoN::Input input = NeoN::TokenList({std::string("linear")});
