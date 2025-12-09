@@ -1,9 +1,3 @@
-
-Installation
-============
-
-This guide explains how to install the FoamAdapter Python package and set up the development environment using standard Python tools and Poe.
-
 Requirements
 ------------
 - Python 3.9 or newer
