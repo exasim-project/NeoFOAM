@@ -225,7 +225,6 @@ auto constructSurfaceField(
 /**
  * @brief Creates a VectorDocument from an existing Foam Field.
  *
-
  * @return The created VectorDocument.
  */
 template<typename FieldType>

@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 #include "setRootCase.H"
 #include "createTime.H"
 
+        NeoN::Logging::info("createAdapterRunTime");
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
@@ -42,12 +43,17 @@ int main(int argc, char* argv[])
 
 #include "createFields.H"
 
+        NeoN::Logging::info("fvSolution");
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        NeoN::Logging::info("mapP");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+        NeoN::Logging::info("mapU");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
+        NeoN::Logging::info("transportModel");
         Foam::singlePhaseTransportModel laminarTransport(ofU, ofphi);
 
+        NeoN::Logging::info("turbulenceModel");
         Foam::autoPtr<Foam::incompressible::turbulenceModel> turbulence(
             Foam::incompressible::turbulenceModel::New(ofU, ofphi, laminarTransport)
         );
@@ -55,6 +61,7 @@ int main(int argc, char* argv[])
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
+        NeoN::Logging::info("create p");
         fvcc::VolumeField<NeoN::scalar>& p =
             vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
                 nf::CreateFromFoamField<Foam::volScalarField> {
@@ -65,6 +72,7 @@ int main(int argc, char* argv[])
                 }
             );
 
+        NeoN::Logging::info("create U");
         fvcc::VolumeField<NeoN::Vec3>& U =
             vectorCollection.registerVector<fvcc::VolumeField<NeoN::Vec3>>(
                 nf::CreateFromFoamField<Foam::volVectorField> {
@@ -75,9 +83,11 @@ int main(int argc, char* argv[])
                 }
             );
 
+        NeoN::Logging::info("createCalculatedBCs");
         auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         fvcc::SurfaceField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, nuBCs);
-        fvcc::SurfaceField<NeoN::scalar> nut(rt.exec, "nut", rt.nfMesh, nuBCs);
+        auto nutBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
+        fvcc::VolumeField<NeoN::scalar> nut(rt.exec, "nut", rt.nfMesh, nutBCs);
         NeoN::fill(nu.internalVector(), viscosity.value());
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
@@ -87,18 +97,23 @@ int main(int argc, char* argv[])
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         // update function called async
-        auto updateFunction = [&turbulence]()
+        auto updateFunction = [&turbulence, &ofU]()
         {
+            NeoN::Logging::info("Turbulence->correct");
             turbulence->correct();
-            auto ofNut = turbulence->nut();
-            return ofNut;
+            return turbulence->nut();
         };
 
+        auto nutBuffer = turbulence->nut()();
         auto bridgedTurbulence = NeoFOAM::ModelAdapter {
             {{U, ofU}}, // sync before update
             updateFunction,
-            nut // reference to out field to synchronize
+            nut, // reference to out field to synchronize
+            nutBuffer
         };
+
+        NeoN::Input input = NeoN::TokenList({std::string("linear")});
+        auto linear = fvcc::SurfaceInterpolation<NeoN::scalar>(rt.exec, rt.nfMesh, input);
 
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
@@ -116,10 +131,11 @@ int main(int argc, char* argv[])
             // Momentum predictor
             auto& nut = bridgedTurbulence.getValue();
             // auto nuEff = nut + nu;
+            linear.interpolate(nut, nu);
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U)
                     - dsl::imp::laplacian(
-                        nut,
+                        nu,
                         U
                     ), // - dsl::exp::div(nuEff*dev2(T(dsl::exp::grad(U))))
                 U,
@@ -186,6 +202,7 @@ int main(int argc, char* argv[])
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();
 
+                    NeoN::Logging::info("updateFaceVelocity 1");
                     if (piso.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
@@ -194,8 +211,11 @@ int main(int argc, char* argv[])
                 // TODO: missing
                 // #include "continuityErrs.H"
 
+                NeoN::Logging::info("updateFaceVelocity 2");
                 nf::updateVelocity(hByA, crAU, p, U);
+                NeoN::Logging::info("correctBoundaryConditions");
                 U.correctBoundaryConditions();
+                NeoN::Logging::info("execute turbulence");
                 bridgedTurbulence.execute();
             }
 

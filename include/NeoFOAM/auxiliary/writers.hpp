@@ -17,9 +17,9 @@ namespace NeoFOAM
 namespace detail
 {
 
-/*@brief copy from neon src field on device to dest OF field*/
-template<class SrcField, class DestField>
-void copyImpl(const SrcField& src, DestField& dest)
+/*@brief copy from neon src vector on device to dest OF field*/
+template<class SrcValueType, class DestField>
+void copyImpl(const NeoN::Vector<SrcValueType>& src, DestField& dest)
 {
     NF_ASSERT_EQUAL(dest.size(), src.size());
     auto srcHost = src.copyToHost();
@@ -29,24 +29,58 @@ void copyImpl(const SrcField& src, DestField& dest)
         dest[i] = convert(srcView[i]);
     }
 }
+
+/*@brief copy from OF field to dest neon vector*/
+template<class SrcField, class DestValueType>
+void copyImplToNF(const SrcField& src, NeoN::Vector<DestValueType>& dest)
+{
+    NF_ASSERT_EQUAL(dest.size(), src.size());
+    auto exec = dest.exec();
+    auto tmpVec = NeoN::Vector<DestValueType>(
+        exec,
+        reinterpret_cast<const DestValueType*>(src.cdata()),
+        src.size()
+    );
+    dest=tmpVec;
+}
+
 }
 
 template<class SrcField>
-void sync(const SrcField& src, Foam::volVectorField& dest)
+void syncToFoam(const SrcField& src, Foam::volVectorField& dest)
 {
     detail::copyImpl(src.internalVector(), dest.ref());
 
     auto hostBCValue = src.boundaryData().value().copyToHost();
 
+    forAll(dest.boundaryField(), patchi)
+    {
+        auto& foamFieldPatch = dest.boundaryFieldRef()[patchi];
+        auto [start, end] = src.boundaryData().range(patchi);
+
+        // forAll(foamFieldPatch, bfacei)
+        // {
+        //     foamFieldPatch[bfacei] = hostBCValue.view()[start + bfacei];
+        // }
+    }
+}
+
+template<class SrcField, class DstField>
+void syncFromFoam(const SrcField& src, DstField& dest)
+{
+    detail::copyImplToNF(src, dest.internalVector());
+
+    // auto hostBCValue = src.boundaryData().value().copyToHost();
+
     // forAll(dest.boundaryField(), patchi)
     // {
-    //     auto& foamFieldPatch = dest().boundaryFieldRef()[patchi];
+    //     auto& foamFieldPatch = dest.boundaryFieldRef()[patchi];
     //     auto [start, end] = src.boundaryData().range(patchi);
 
-    //     forAll(foamFieldPatch, bfacei)
-    //     {
-    //         foamFieldPatch[bfacei] = hostBCValue.view()[start + bfacei];
-    //     }
+    //     // forAll(foamFieldPatch, bfacei)
+    //     // {
+    //     //     foamFieldPatch[bfacei] = hostBCValue.view()[start + bfacei];
+    //     // }
     // }
 }
 

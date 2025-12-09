@@ -42,10 +42,8 @@ find_package(MPI REQUIRED)
 
 add_library(OpenFOAM INTERFACE)
 
-target_include_directories(
-  OpenFOAM
-  PUBLIC
-  INTERFACE $ENV{FOAM_SRC}/OSspecific/POSIX/lnInclude $ENV{FOAM_SRC}/transportModels)
+target_include_directories(OpenFOAM INTERFACE $ENV{FOAM_SRC}/OSspecific/POSIX/lnInclude
+                                              $ENV{FOAM_SRC}/transportModels)
 target_compile_definitions(OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} NoRepository
                                               WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
 

@@ -20,8 +20,7 @@ Foam::volScalarField
             runTime.timeName(),
             mesh,
             Foam::IOobject::MUST_READ,
-            Foam::IOobject::NO_WRITE,
-            Foam::IOobject::NO_REGISTER
+            Foam::IOobject::NO_WRITE
         ),
         mesh);
 
@@ -33,8 +32,7 @@ Foam::volVectorField
             runTime.timeName(),
             mesh,
             Foam::IOobject::MUST_READ,
-            Foam::IOobject::NO_WRITE,
-            Foam::IOobject::NO_REGISTER
+            Foam::IOobject::NO_WRITE
         ),
         mesh);
 
@@ -47,8 +45,7 @@ Foam::surfaceScalarField ofphi(
         runTime.timeName(),
         mesh,
         Foam::IOobject::READ_IF_PRESENT,
-        Foam::IOobject::NO_WRITE,
-        Foam::IOobject::NO_REGISTER
+        Foam::IOobject::NO_WRITE
     ),
     fvc::flux(ofU)
 );
@@ -57,4 +54,4 @@ Foam::surfaceScalarField ofphi(
 Foam::label pRefCell = 0;
 Foam::scalar pRefValue = 0.0;
 setRefCell(ofp, mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
-// mesh.setFluxRequired(p.name());
+mesh.setFluxRequired(ofp.name());
