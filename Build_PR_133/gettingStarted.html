@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/gettingStarted.html">
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2025.09.25 -->
-        <title>Getting started - NeoFOAM documentation</title>
+        <title>Getting Started - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=acfd86a5" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -196,7 +196,7 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting started</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="goals_features.html">Goals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="goals_features.html#features">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ci.html">Continuous Integration</a></li>
@@ -248,76 +248,98 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="getting-started">
-<h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
-<p>You can build NeoFOAM by following these steps:</p>
-<p>Clone the NeoFOAM repository including NeoFOAM integrated as a submodule:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>https://github.com/exasim-project/NeoFOAM.git
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
+<p>Follow these steps to build NeoFOAM:</p>
+<p>Clone the NeoFOAM repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/exasim-project/NeoFOAM.git
 </pre></div>
 </div>
-</div></blockquote>
 <p>Navigate to the NeoFOAM directory:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>NeoFOAM
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>NeoFOAM
 </pre></div>
 </div>
-</div></blockquote>
-<p>NeoFOAM uses CMake to build, thus the standard CMake procedure should work, however, we recommend using one of the provided CMake presets detailed below <a class="reference external" href="BuildingwithCMakePresets">below</a>. From a build directory, you can execute:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>build
+<p>NeoFOAM uses CMake for building. The standard CMake procedure works, but we recommend using one of the provided CMake presets (see <span class="xref std std-ref">cmake-presets</span>). From a build directory, execute:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>build
 <span class="nb">cd</span><span class="w"> </span>build
 cmake<span class="w"> </span>&lt;DesiredBuildFlags&gt;<span class="w"> </span>..
 cmake<span class="w"> </span>--build<span class="w"> </span>.
 cmake<span class="w"> </span>--install<span class="w"> </span>.
 </pre></div>
 </div>
-</div></blockquote>
+<section id="build-neofoam-against-neon">
+<h2>Build NeoFOAM Against NeoN<a class="headerlink" href="#build-neofoam-against-neon" title="Link to this heading">¶</a></h2>
+<p>There are three ways to link NeoFOAM with NeoN:</p>
+<ol class="arabic">
+<li><p><strong>Using the NeoN repository directory</strong></p>
+<p>Specify the path to the NeoN repository during CMake configuration:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>-DNEOFOAM_NEON_DIR<span class="o">=</span>/path/to/NeoN/
+</pre></div>
+</div>
+</li>
+<li><p><strong>Using the NeoN submodule</strong></p>
+<p>Initialize and update the NeoN submodule in the NeoFOAM repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive
+</pre></div>
+</div>
+<p>During CMake configuration, the submodule will be automatically detected.</p>
+</li>
+<li><p><strong>Using automatically downloaded NeoN</strong></p>
+<p>If neither of the above options is provided, CMake will download a predefined version of NeoN. By default, this is the <cite>main</cite> branch. To specify a different version:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>-DNEOFOAM_NEON_VERSION<span class="o">=</span>&lt;desired_version&gt;
+</pre></div>
+</div>
+<p><cite>&lt;desired_version&gt;</cite> can be a branch name, tag, or commit hash.</p>
+</li>
+</ol>
+</section>
+<section id="building-for-gpus">
+<h2>Building for GPUs<a class="headerlink" href="#building-for-gpus" title="Link to this heading">¶</a></h2>
+<p>NeoFOAM supports GPUs from multiple vendors via NeoN, which uses Kokkos for performance portability.
+For detailed instructions, see the <a class="reference external" href="https://exasim-project.com/NeoN/latest/installation.html#building-for-gpus">Building NeoN for GPUs</a>.</p>
+</section>
 <section id="building-with-cmake-presets">
 <h2>Building with CMake Presets<a class="headerlink" href="#building-with-cmake-presets" title="Link to this heading">¶</a></h2>
-<p>Additionally, we provide several CMake presets to set commonly required flags.</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--list-presets<span class="w"> </span><span class="c1"># To list existing presets</span>
+<p id="cmake-presets">Three CMake presets are provided to simplify building with common configurations:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--list-presets<span class="w">  </span><span class="c1"># List all available presets</span>
 </pre></div>
 </div>
-</div></blockquote>
-<p>To build NeoFOAM for production use, you can use the following commands:</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>production<span class="w"> </span><span class="c1"># To configure with ninja and common kokkos flags</span>
-cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>production<span class="w"> </span><span class="c1"># To compile with ninja and common kokkos flags</span>
+<p>For production builds:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>production<span class="w">       </span><span class="c1"># Configure with Ninja and common Kokkos flags</span>
+cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>production<span class="w">  </span><span class="c1"># Compile with Ninja and common Kokkos flags</span>
 </pre></div>
 </div>
-</div></blockquote>
-<p>It should be noted that the build directory changes depending on the chosen preset. This way you can have different build directories for different presets and easily switch between them.</p>
+<p>Each preset uses its own build directory, allowing multiple configurations in parallel.</p>
 </section>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
-<p>The following tools are used in the development of this project:</p>
-<p>The required tools for documentation:</p>
+<p>The following tools are required:</p>
+<p><strong>Documentation tools:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>doxygen
 pip<span class="w"> </span>install<span class="w"> </span>pre-commit<span class="w"> </span>sphinx<span class="w"> </span>furo<span class="w"> </span>breathe<span class="w"> </span>sphinx-sitemap
 </pre></div>
 </div>
-<p>The required tools for compilation (ubuntu latest 24.04):</p>
+<p><strong>Compilation tools (Ubuntu 24.04):</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
 sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
-ninja-build<span class="w"> </span><span class="se">\</span>
-clang-16<span class="w"> </span><span class="se">\</span>
-gcc-10<span class="w"> </span><span class="se">\</span>
-libomp-16-dev<span class="w"> </span><span class="se">\</span>
-python3<span class="w"> </span><span class="se">\</span>
-python3-dev<span class="w"> </span><span class="se">\</span>
-build-essential
+<span class="w">    </span>ninja-build<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>clang-16<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>gcc-10<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>libomp-16-dev<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>python3<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>python3-dev<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>build-essential
 </pre></div>
 </div>
 </section>
-<section id="run-test-case">
-<h2>Run test case<a class="headerlink" href="#run-test-case" title="Link to this heading">¶</a></h2>
-<p>To build these test cases, the CMake preset <cite>profiling</cite> should be used during config and build step for NeoFOAM.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>profiling
-cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>profiling
+<section id="running-tutorials">
+<h2>Running Tutorials<a class="headerlink" href="#running-tutorials" title="Link to this heading">¶</a></h2>
+<p>Use any of NeoFOAM’s CMake presets to configure and build NeoFOAM.
+Then navigate to the <cite>tutorials</cite> directory and run the provided <cite>Allrun</cite> script in the directory of the chosen test case:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>tutorials/&lt;test_case&gt;
+chmod<span class="w"> </span>+x<span class="w"> </span>Allrun<span class="w">  </span><span class="c1"># Make sure it is executable</span>
+./Allrun
 </pre></div>
 </div>
-<p>Then go to the <cite>tutorials</cite> directory and use the predefined script <cite>Allrun</cite> in the directory of each test case to run the chosen test case.</p>
 </section>
 </section>
 
@@ -376,10 +398,12 @@ cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class=
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Getting started</a><ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#build-neofoam-against-neon">Build NeoFOAM Against NeoN</a></li>
+<li><a class="reference internal" href="#building-for-gpus">Building for GPUs</a></li>
 <li><a class="reference internal" href="#building-with-cmake-presets">Building with CMake Presets</a></li>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li><a class="reference internal" href="#run-test-case">Run test case</a></li>
+<li><a class="reference internal" href="#running-tutorials">Running Tutorials</a></li>
 </ul>
 </li>
 </ul>
