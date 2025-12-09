@@ -42,57 +42,55 @@
 <codeline lineno="13"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
 <codeline lineno="14"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="15"><highlight class="normal"></highlight></codeline>
-<codeline lineno="16" refid="namespaceNeoFOAM_1acf865e4430d3bbcf09e5123f74f7920f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1acf865e4430d3bbcf09e5123f74f7920f" kindref="member">func</ref>()<sp/>{</highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1;}</highlight></codeline>
-<codeline lineno="17"><highlight class="normal"></highlight></codeline>
-<codeline lineno="18"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight></codeline>
-<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ExecuteFunctionType,</highlight></codeline>
-<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>typename<sp/>NNInField,</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>typename<sp/>OFInField,</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>NNOutField&gt;</highlight></codeline>
-<codeline lineno="23" refid="classNeoFOAM_1_1ModelAdapter" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1ModelAdapter" kindref="compound">ModelAdapter</ref></highlight></codeline>
-<codeline lineno="24"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="25"><highlight class="normal"></highlight></codeline>
-<codeline lineno="26"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="27"><highlight class="normal"></highlight></codeline>
-<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;std::pair&lt;fvcc::VolumeField&lt;NeoN::Vec3&gt;&amp;,<sp/>Foam::volVectorField&amp;&gt;&gt;<sp/>syncFields_;</highlight></codeline>
-<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/>ExecuteFunctionType<sp/>execute_;</highlight></codeline>
-<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/>NNOutField&amp;<sp/>outField_;</highlight></codeline>
-<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/>std::future&lt;Foam::volScalarField&gt;<sp/>tmpRet_;</highlight></codeline>
-<codeline lineno="32"><highlight class="normal"></highlight></codeline>
-<codeline lineno="33"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="34"><highlight class="normal"></highlight></codeline>
-<codeline lineno="35" refid="classNeoFOAM_1_1ModelAdapter_1a43b168284de00b4cc1fcba1ce11e505c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1a43b168284de00b4cc1fcba1ce11e505c" kindref="member">ModelAdapter</ref>(</highlight></codeline>
-<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::vector&lt;std::pair&lt;fvcc::VolumeField&lt;NeoN::Vec3&gt;&amp;,<sp/>Foam::volVectorField&amp;&gt;&gt;<sp/>syncFields,</highlight></codeline>
-<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ExecuteFunctionType<sp/>executeFunction,</highlight></codeline>
-<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NNOutField&amp;<sp/>outField,</highlight></codeline>
-<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Foam::volScalarField&amp;<sp/>buffer</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="comment">/*@class<sp/>A<sp/>class<sp/>to<sp/>hold<sp/>an<sp/>OpenFOAM<sp/>Model<sp/>which<sp/>executes<sp/>on<sp/>CPU<sp/>and<sp/>needs<sp/>synchronization<sp/>before<sp/>execution</highlight></codeline>
+<codeline lineno="18"><highlight class="comment">*</highlight></codeline>
+<codeline lineno="19"><highlight class="comment">*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ExecuteFunctionType,</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>SyncTupleType,</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>NNOutField&gt;</highlight></codeline>
+<codeline lineno="24" refid="classNeoFOAM_1_1ModelAdapter" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1ModelAdapter" kindref="compound">ModelAdapter</ref></highlight></codeline>
+<codeline lineno="25"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/>SyncTupleType<sp/>syncFields_;</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/>ExecuteFunctionType<sp/>execute_;</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/>NNOutField&amp;<sp/>outField_;</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/>std::future&lt;Foam::volScalarField&gt;<sp/>tmpRet_;</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="36" refid="classNeoFOAM_1_1ModelAdapter_1a4d1b0d6402824a02dbfd79f29bbfdffc" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1a4d1b0d6402824a02dbfd79f29bbfdffc" kindref="member">ModelAdapter</ref>(</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>SyncTupleType<sp/>syncFields,</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ExecuteFunctionType<sp/>executeFunction,</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NNOutField&amp;<sp/>outField</highlight></codeline>
 <codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/>)</highlight></codeline>
 <codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>syncFields_(syncFields)</highlight></codeline>
 <codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>,<sp/>execute_(executeFunction)</highlight></codeline>
 <codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>,<sp/>outField_(outField),</highlight></codeline>
 <codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>tmpRet_()</highlight></codeline>
 <codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1aa68cfc008d829a2a5deadac3ebba9750" kindref="member">execute</ref>();</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1ae7f5915fc617c53419cc41042a4d4d28" kindref="member">execute</ref>();</highlight></codeline>
 <codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="48"><highlight class="normal"></highlight></codeline>
-<codeline lineno="49"><highlight class="normal"></highlight></codeline>
-<codeline lineno="50" refid="classNeoFOAM_1_1ModelAdapter_1aa68cfc008d829a2a5deadac3ebba9750" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1aa68cfc008d829a2a5deadac3ebba9750" kindref="member">execute</ref>()</highlight></codeline>
-<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="52"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>[src,<sp/>dst]<sp/>:<sp/>syncFields_)</highlight></codeline>
-<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a439dee2befb98c6e84bfafc023ceec7e" kindref="member">syncToFoam</ref>(src,<sp/>dst);</highlight></codeline>
-<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>tmpRet_<sp/>=<sp/>std::async(std::launch::async,<sp/>execute_);</highlight></codeline>
-<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="58"><highlight class="normal"></highlight></codeline>
-<codeline lineno="59" refid="classNeoFOAM_1_1ModelAdapter_1a4dd8c15f38d6ab9349b25167a94fb890" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NNOutField&amp;<sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1a4dd8c15f38d6ab9349b25167a94fb890" kindref="member">getValue</ref>()<sp/>{</highlight></codeline>
-<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>tmpRet_.wait();</highlight></codeline>
-<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ab8f2e0dffeab45f813b7494fcc81220c" kindref="member">syncFromFoam</ref>(tmpRet_.get(),<sp/>outField_);</highlight></codeline>
-<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>outField_;</highlight></codeline>
-<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
-<codeline lineno="64"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="65"><highlight class="normal"></highlight></codeline>
-<codeline lineno="66"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="49" refid="classNeoFOAM_1_1ModelAdapter_1ae7f5915fc617c53419cc41042a4d4d28" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1ae7f5915fc617c53419cc41042a4d4d28" kindref="member">execute</ref>()</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>NOTE<sp/>currently<sp/>hardcodes<sp/>just<sp/>two<sp/>fields,</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>needs<sp/>to<sp/>iterate<sp/>over<sp/>tuple<sp/>in<sp/>pairs</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1a439dee2befb98c6e84bfafc023ceec7e" kindref="member">syncToFoam</ref>(std::get&lt;0&gt;(syncFields_),<sp/>std::get&lt;1&gt;(syncFields_));</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>tmpRet_<sp/>=<sp/>std::async(std::launch::async,<sp/>execute_);</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57" refid="classNeoFOAM_1_1ModelAdapter_1ab95ac45232cd403b4986bfd32af04dfa" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NNOutField&amp;<sp/><ref refid="classNeoFOAM_1_1ModelAdapter_1ab95ac45232cd403b4986bfd32af04dfa" kindref="member">getValue</ref>()<sp/>{</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>tmpRet_.wait();</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1ab8f2e0dffeab45f813b7494fcc81220c" kindref="member">syncFromFoam</ref>(tmpRet_.get(),<sp/>outField_);</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>outField_;</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="62"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/modelWrapper.hpp"/>
   </compounddef>

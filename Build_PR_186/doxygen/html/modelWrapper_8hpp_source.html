@@ -97,73 +97,70 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>{</div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#acf865e4430d3bbcf09e5123f74f7920f">   16</a></span>    <span class="keyword">inline</span> <span class="keywordtype">int</span> <a class="code hl_function" href="namespaceNeoFOAM.html#acf865e4430d3bbcf09e5123f74f7920f">func</a>() {<span class="keywordflow">return</span> 1;}</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">template</span>&lt;</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="keyword">typename</span> ExecuteFunctionType,</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="comment">// typename NNInField,</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="comment">// typename OFInField,</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">typename</span> NNOutField&gt;</div>
-<div class="foldopen" id="foldopen00023" data-start="{" data-end="};">
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html">   23</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1ModelAdapter.html">ModelAdapter</a></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>{</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    std::vector&lt;std::pair&lt;fvcc::VolumeField&lt;NeoN::Vec3&gt;&amp;, Foam::volVectorField&amp;&gt;&gt; syncFields_;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    ExecuteFunctionType execute_;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    NNOutField&amp; outField_;</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    std::future&lt;Foam::volScalarField&gt; tmpRet_;</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
-<div class="foldopen" id="foldopen00035" data-start="{" data-end="}">
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html#a43b168284de00b4cc1fcba1ce11e505c">   35</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#a43b168284de00b4cc1fcba1ce11e505c">ModelAdapter</a>(</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        std::vector&lt;std::pair&lt;fvcc::VolumeField&lt;NeoN::Vec3&gt;&amp;, Foam::volVectorField&amp;&gt;&gt; syncFields,</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        ExecuteFunctionType executeFunction,</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        NNOutField&amp; outField,</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        Foam::volScalarField&amp; buffer</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">/*@class A class to hold an OpenFOAM Model which executes on CPU and needs synchronization before execution</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">*</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">*/</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">template</span>&lt;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keyword">typename</span> ExecuteFunctionType,</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="keyword">typename</span> SyncTupleType,</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    <span class="keyword">typename</span> NNOutField&gt;</div>
+<div class="foldopen" id="foldopen00024" data-start="{" data-end="};">
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html">   24</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1ModelAdapter.html">ModelAdapter</a></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>{</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    SyncTupleType syncFields_;</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    ExecuteFunctionType execute_;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    NNOutField&amp; outField_;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    std::future&lt;Foam::volScalarField&gt; tmpRet_;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="foldopen" id="foldopen00036" data-start="{" data-end="}">
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html#a4d1b0d6402824a02dbfd79f29bbfdffc">   36</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#a4d1b0d6402824a02dbfd79f29bbfdffc">ModelAdapter</a>(</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        SyncTupleType syncFields,</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        ExecuteFunctionType executeFunction,</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        NNOutField&amp; outField</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    )</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        : syncFields_(syncFields)</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        , execute_(executeFunction)</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        , outField_(outField),</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        tmpRet_()</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    {</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#aa68cfc008d829a2a5deadac3ebba9750">execute</a>();</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#ae7f5915fc617c53419cc41042a4d4d28">execute</a>();</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
 </div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="foldopen" id="foldopen00050" data-start="{" data-end="}">
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html#aa68cfc008d829a2a5deadac3ebba9750">   50</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#aa68cfc008d829a2a5deadac3ebba9750">execute</a>()</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    {</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; [src, dst] : syncFields_)</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        {</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>            <a class="code hl_function" href="namespaceNeoFOAM.html#a439dee2befb98c6e84bfafc023ceec7e">syncToFoam</a>(src, dst);</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        }</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>        tmpRet_ = std::async(std::launch::async, execute_);</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    }</div>
+<div class="foldopen" id="foldopen00049" data-start="{" data-end="}">
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html#ae7f5915fc617c53419cc41042a4d4d28">   49</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#ae7f5915fc617c53419cc41042a4d4d28">execute</a>()</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    {</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        <span class="comment">// NOTE currently hardcodes just two fields,</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        <span class="comment">// needs to iterate over tuple in pairs</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        <a class="code hl_function" href="namespaceNeoFOAM.html#a439dee2befb98c6e84bfafc023ceec7e">syncToFoam</a>(std::get&lt;0&gt;(syncFields_), std::get&lt;1&gt;(syncFields_));</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        tmpRet_ = std::async(std::launch::async, execute_);</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    }</div>
 </div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
-<div class="foldopen" id="foldopen00059" data-start="{" data-end="}">
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html#a4dd8c15f38d6ab9349b25167a94fb890">   59</a></span>    NNOutField&amp; <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#a4dd8c15f38d6ab9349b25167a94fb890">getValue</a>() {</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        tmpRet_.wait();</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <a class="code hl_function" href="namespaceNeoFOAM.html#ab8f2e0dffeab45f813b7494fcc81220c">syncFromFoam</a>(tmpRet_.get(), outField_);</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keywordflow">return</span> outField_;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    };</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="foldopen" id="foldopen00057" data-start="{" data-end="}">
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1ModelAdapter.html#ab95ac45232cd403b4986bfd32af04dfa">   57</a></span>    NNOutField&amp; <a class="code hl_function" href="classNeoFOAM_1_1ModelAdapter.html#ab95ac45232cd403b4986bfd32af04dfa">getValue</a>() {</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        tmpRet_.wait();</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <a class="code hl_function" href="namespaceNeoFOAM.html#ab8f2e0dffeab45f813b7494fcc81220c">syncFromFoam</a>(tmpRet_.get(), outField_);</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <span class="keywordflow">return</span> outField_;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    };</div>
 </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>};</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>};</div>
 </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>}</div>
-<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html">NeoFOAM::ModelAdapter</a></div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00023">modelWrapper.hpp:24</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html_a43b168284de00b4cc1fcba1ce11e505c"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html#a43b168284de00b4cc1fcba1ce11e505c">NeoFOAM::ModelAdapter::ModelAdapter</a></div><div class="ttdeci">ModelAdapter(std::vector&lt; std::pair&lt; fvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;, Foam::volVectorField &amp; &gt; &gt; syncFields, ExecuteFunctionType executeFunction, NNOutField &amp;outField, Foam::volScalarField &amp;buffer)</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00035">modelWrapper.hpp:35</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html_a4dd8c15f38d6ab9349b25167a94fb890"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html#a4dd8c15f38d6ab9349b25167a94fb890">NeoFOAM::ModelAdapter::getValue</a></div><div class="ttdeci">NNOutField &amp; getValue()</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00059">modelWrapper.hpp:59</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html_aa68cfc008d829a2a5deadac3ebba9750"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html#aa68cfc008d829a2a5deadac3ebba9750">NeoFOAM::ModelAdapter::execute</a></div><div class="ttdeci">void execute()</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00050">modelWrapper.hpp:50</a></div></div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>}</div>
+<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html">NeoFOAM::ModelAdapter</a></div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00024">modelWrapper.hpp:25</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html_a4d1b0d6402824a02dbfd79f29bbfdffc"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html#a4d1b0d6402824a02dbfd79f29bbfdffc">NeoFOAM::ModelAdapter::ModelAdapter</a></div><div class="ttdeci">ModelAdapter(SyncTupleType syncFields, ExecuteFunctionType executeFunction, NNOutField &amp;outField)</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00036">modelWrapper.hpp:36</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html_ab95ac45232cd403b4986bfd32af04dfa"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html#ab95ac45232cd403b4986bfd32af04dfa">NeoFOAM::ModelAdapter::getValue</a></div><div class="ttdeci">NNOutField &amp; getValue()</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00057">modelWrapper.hpp:57</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1ModelAdapter_html_ae7f5915fc617c53419cc41042a4d4d28"><div class="ttname"><a href="classNeoFOAM_1_1ModelAdapter.html#ae7f5915fc617c53419cc41042a4d4d28">NeoFOAM::ModelAdapter::execute</a></div><div class="ttdeci">void execute()</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00049">modelWrapper.hpp:49</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a439dee2befb98c6e84bfafc023ceec7e"><div class="ttname"><a href="namespaceNeoFOAM.html#a439dee2befb98c6e84bfafc023ceec7e">NeoFOAM::syncToFoam</a></div><div class="ttdeci">void syncToFoam(const SrcField &amp;src, Foam::volVectorField &amp;dest)</div><div class="ttdef"><b>Definition</b> <a href="writers_8hpp_source.html#l00050">writers.hpp:50</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_ab8f2e0dffeab45f813b7494fcc81220c"><div class="ttname"><a href="namespaceNeoFOAM.html#ab8f2e0dffeab45f813b7494fcc81220c">NeoFOAM::syncFromFoam</a></div><div class="ttdeci">void syncFromFoam(const SrcField &amp;src, DstField &amp;dest)</div><div class="ttdef"><b>Definition</b> <a href="writers_8hpp_source.html#l00069">writers.hpp:69</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_acf865e4430d3bbcf09e5123f74f7920f"><div class="ttname"><a href="namespaceNeoFOAM.html#acf865e4430d3bbcf09e5123f74f7920f">NeoFOAM::func</a></div><div class="ttdeci">int func()</div><div class="ttdef"><b>Definition</b> <a href="modelWrapper_8hpp_source.html#l00016">modelWrapper.hpp:16</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
