@@ -66,9 +66,9 @@
 <codeline lineno="17" refid="namespaceNeoFOAM_1_1detail" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal">detail</highlight></codeline>
 <codeline lineno="18"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="19"><highlight class="normal"></highlight></codeline>
-<codeline lineno="20"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>copy<sp/>from<sp/>neon<sp/>src<sp/>field<sp/>on<sp/>device<sp/>to<sp/>dest<sp/>OF<sp/>field*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>SrcField,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>DestField&gt;</highlight></codeline>
-<codeline lineno="22" refid="namespaceNeoFOAM_1_1detail_1aaf277cdfa64f90d5470e3b9d751249af" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1detail_1aaf277cdfa64f90d5470e3b9d751249af" kindref="member">copyImpl</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SrcField&amp;<sp/>src,<sp/>DestField&amp;<sp/>dest)</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>copy<sp/>from<sp/>neon<sp/>src<sp/>vector<sp/>on<sp/>device<sp/>to<sp/>dest<sp/>OF<sp/>field*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>SrcValueType,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>DestField&gt;</highlight></codeline>
+<codeline lineno="22" refid="namespaceNeoFOAM_1_1detail_1a5ed7a17524b670e6f595d8db1122742e" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1detail_1a5ed7a17524b670e6f595d8db1122742e" kindref="member">copyImpl</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Vector&lt;SrcValueType&gt;&amp;<sp/>src,<sp/>DestField&amp;<sp/>dest)</highlight></codeline>
 <codeline lineno="23"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/>NF_ASSERT_EQUAL(dest.size(),<sp/>src.size());</highlight></codeline>
 <codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>srcHost<sp/>=<sp/>src.copyToHost();</highlight></codeline>
@@ -78,50 +78,84 @@
 <codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>dest[i]<sp/>=<sp/><ref refid="namespaceNeoFOAM_1af69b228bd9e492814da093da0a51d1ac" kindref="member">convert</ref>(srcView[i]);</highlight></codeline>
 <codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
 <codeline lineno="31"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="32"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="33"><highlight class="normal"></highlight></codeline>
-<codeline lineno="34"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>SrcField&gt;</highlight></codeline>
-<codeline lineno="35" refid="namespaceNeoFOAM_1a94998f25dc15bb578a9049969fd654f5" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a94998f25dc15bb578a9049969fd654f5" kindref="member">sync</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SrcField&amp;<sp/>src,<sp/>Foam::volVectorField&amp;<sp/>dest)</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>copy<sp/>from<sp/>OF<sp/>field<sp/>to<sp/>dest<sp/>neon<sp/>vector*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>SrcField,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>DestValueType&gt;</highlight></codeline>
+<codeline lineno="35" refid="namespaceNeoFOAM_1_1detail_1a753984c4d55e0551de32db7e183f14c8" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1_1detail_1a753984c4d55e0551de32db7e183f14c8" kindref="member">copyImplToNF</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SrcField&amp;<sp/>src,<sp/>NeoN::Vector&lt;DestValueType&gt;&amp;<sp/>dest)</highlight></codeline>
 <codeline lineno="36"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1_1detail_1aaf277cdfa64f90d5470e3b9d751249af" kindref="member">detail::copyImpl</ref>(src.internalVector(),<sp/>dest.ref());</highlight></codeline>
-<codeline lineno="38"><highlight class="normal"></highlight></codeline>
-<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>hostBCValue<sp/>=<sp/>src.boundaryData().value().copyToHost();</highlight></codeline>
-<codeline lineno="40"><highlight class="normal"></highlight></codeline>
-<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>forAll(dest.boundaryField(),<sp/>patchi)</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>{</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>auto&amp;<sp/>foamFieldPatch<sp/>=<sp/>dest().boundaryFieldRef()[patchi];</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>auto<sp/>[start,<sp/>end]<sp/>=<sp/>src.boundaryData().range(patchi);</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="45"><highlight class="normal"></highlight></codeline>
-<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>forAll(foamFieldPatch,<sp/>bfacei)</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>{</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>foamFieldPatch[bfacei]<sp/>=<sp/>hostBCValue.view()[start<sp/>+<sp/>bfacei];</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>}</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>}</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="51"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="52"><highlight class="normal"></highlight></codeline>
-<codeline lineno="53"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="54" refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::scalarVector&amp;<sp/>sf,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string<sp/>fieldName);</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/>NF_ASSERT_EQUAL(dest.size(),<sp/>src.size());</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>exec<sp/>=<sp/>dest.exec();</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>tmpVec<sp/>=<sp/>NeoN::Vector&lt;DestValueType&gt;(</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exec,</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">reinterpret_cast&lt;</highlight><highlight class="keyword">const<sp/></highlight><highlight class="normal">DestValueType*</highlight><highlight class="keyword">&gt;</highlight><highlight class="normal">(src.cdata()),</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>src.size()</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/>dest=tmpVec;</highlight></codeline>
+<codeline lineno="45"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>SrcField&gt;</highlight></codeline>
+<codeline lineno="50" refid="namespaceNeoFOAM_1a439dee2befb98c6e84bfafc023ceec7e" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a439dee2befb98c6e84bfafc023ceec7e" kindref="member">syncToFoam</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SrcField&amp;<sp/>src,<sp/>Foam::volVectorField&amp;<sp/>dest)</highlight></codeline>
+<codeline lineno="51"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="52"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1_1detail_1a5ed7a17524b670e6f595d8db1122742e" kindref="member">detail::copyImpl</ref>(src.internalVector(),<sp/>dest.ref());</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>hostBCValue<sp/>=<sp/>src.boundaryData().value().copyToHost();</highlight></codeline>
 <codeline lineno="55"><highlight class="normal"></highlight></codeline>
-<codeline lineno="56"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="57" refid="namespaceNeoFOAM_1a74bbfc6d5d7a681b4737ae8b42916d5b" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight></codeline>
-<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Vector&lt;NeoN::Vec3&gt;&amp;<sp/>sf,</highlight></codeline>
-<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh,</highlight></codeline>
-<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string<sp/>fieldName</highlight></codeline>
-<codeline lineno="61"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="62"><highlight class="normal"></highlight></codeline>
-<codeline lineno="63"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="64" refid="namespaceNeoFOAM_1ab761525a35b5b6bb313c2c67c053211a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight></codeline>
-<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>fvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>volField,</highlight></codeline>
-<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh</highlight></codeline>
-<codeline lineno="67"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="68"><highlight class="normal"></highlight></codeline>
-<codeline lineno="69"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="70" refid="namespaceNeoFOAM_1ac90ca3a810facf8e02d279ef402ecc68" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight></codeline>
-<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>fvcc::VolumeField&lt;NeoN::Vec3&gt;&amp;<sp/>volField,</highlight></codeline>
-<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh</highlight></codeline>
-<codeline lineno="73"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/>forAll(dest.boundaryField(),<sp/>patchi)</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal">&amp;<sp/>foamFieldPatch<sp/>=<sp/>dest.boundaryFieldRef()[patchi];</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>[start,<sp/>end]<sp/>=<sp/>src.boundaryData().range(patchi);</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>forAll(foamFieldPatch,<sp/>bfacei)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>{</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>foamFieldPatch[bfacei]<sp/>=<sp/>hostBCValue.view()[start<sp/>+<sp/>bfacei];</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>}</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="66"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>SrcField,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>DstField&gt;</highlight></codeline>
+<codeline lineno="69" refid="namespaceNeoFOAM_1ab8f2e0dffeab45f813b7494fcc81220c" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ab8f2e0dffeab45f813b7494fcc81220c" kindref="member">syncFromFoam</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SrcField&amp;<sp/>src,<sp/>DstField&amp;<sp/>dest)</highlight></codeline>
+<codeline lineno="70"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="namespaceNeoFOAM_1_1detail_1a753984c4d55e0551de32db7e183f14c8" kindref="member">detail::copyImplToNF</ref>(src,<sp/>dest.internalVector());</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>auto<sp/>hostBCValue<sp/>=<sp/>src.boundaryData().value().copyToHost();</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="74"><highlight class="normal"></highlight></codeline>
-<codeline lineno="75"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>Foam</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>forAll(dest.boundaryField(),<sp/>patchi)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>{</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>auto&amp;<sp/>foamFieldPatch<sp/>=<sp/>dest.boundaryFieldRef()[patchi];</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>auto<sp/>[start,<sp/>end]<sp/>=<sp/>src.boundaryData().range(patchi);</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>//<sp/>forAll(foamFieldPatch,<sp/>bfacei)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>//<sp/>{</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>//<sp/><sp/><sp/><sp/><sp/>foamFieldPatch[bfacei]<sp/>=<sp/>hostBCValue.view()[start<sp/>+<sp/>bfacei];</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>//<sp/>}</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>}</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight></codeline>
+<codeline lineno="87"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="88" refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::scalarVector&amp;<sp/>sf,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string<sp/>fieldName);</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91" refid="namespaceNeoFOAM_1a74bbfc6d5d7a681b4737ae8b42916d5b" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Vector&lt;NeoN::Vec3&gt;&amp;<sp/>sf,</highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh,</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string<sp/>fieldName</highlight></codeline>
+<codeline lineno="95"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98" refid="namespaceNeoFOAM_1ab761525a35b5b6bb313c2c67c053211a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>fvcc::VolumeField&lt;NeoN::scalar&gt;&amp;<sp/>volField,</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh</highlight></codeline>
+<codeline lineno="101"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="comment">/*@brief<sp/>writes<sp/>a<sp/>NeoN<sp/>field<sp/>back<sp/>to<sp/>disk<sp/>using<sp/>OF<sp/>field<sp/>file<sp/>format*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104" refid="namespaceNeoFOAM_1ac90ca3a810facf8e02d279ef402ecc68" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a0fdc041fbcfcb89b3d2f87395606b3c7" kindref="member">write</ref>(</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>fvcc::VolumeField&lt;NeoN::Vec3&gt;&amp;<sp/>volField,</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::fvMesh&amp;<sp/>mesh</highlight></codeline>
+<codeline lineno="107"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>Foam</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/writers.hpp"/>
   </compounddef>

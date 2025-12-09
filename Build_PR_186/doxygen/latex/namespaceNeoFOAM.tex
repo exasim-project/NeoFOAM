@@ -97,7 +97,9 @@ Neo\+N\+::\+Executor \mbox{\hyperlink{namespaceNeoFOAM_ac77aa23b184bcb66d69edc48
 \item 
 \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \mbox{\hyperlink{namespaceNeoFOAM_a070bec2a3a31c4ed6c81b2babb1350a8}{create\+Adapter\+Run\+Time}} (const Foam\+::\+Time \&run\+Time)
 \item 
-{\footnotesize template$<$class Src\+Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a94998f25dc15bb578a9049969fd654f5}{sync}} (const Src\+Field \&src, Foam\+::vol\+Vector\+Field \&dest)
+{\footnotesize template$<$class Src\+Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a439dee2befb98c6e84bfafc023ceec7e}{sync\+To\+Foam}} (const Src\+Field \&src, Foam\+::vol\+Vector\+Field \&dest)
+\item 
+{\footnotesize template$<$class Src\+Field , class Dst\+Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ab8f2e0dffeab45f813b7494fcc81220c}{sync\+From\+Foam}} (const Src\+Field \&src, Dst\+Field \&dest)
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_a0fdc041fbcfcb89b3d2f87395606b3c7}{write}} (const Neo\+N\+::scalar\+Vector \&sf, const Foam\+::fv\+Mesh \&mesh, const std\+::string field\+Name)
 \item 
@@ -124,6 +126,8 @@ Neo\+N\+::\+Unstructured\+Mesh \mbox{\hyperlink{namespaceNeoFOAM_a7fa41e32ba62c4
 std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_ac60b005cd9f9140205f676b9953615e4}{create\+Mesh}} (const Neo\+N\+::\+Executor \&exec, const Foam\+::\+Time \&run\+Time)
 \item 
 std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8}{create\+Mesh}} (const Foam\+::\+Time \&run\+Time)
+\item 
+int \mbox{\hyperlink{namespaceNeoFOAM_acf865e4430d3bbcf09e5123f74f7920f}{func}} ()
 \item 
 {\footnotesize template$<$typename Value\+Type , typename Index\+Type  = Neo\+N\+::local\+Idx$>$ }\\Neo\+N\+::\+Vector$<$ Value\+Type $>$ \mbox{\hyperlink{namespaceNeoFOAM_aa275ecb871028c14e2d9dae4c78686e2}{diag}} (const la\+::\+Linear\+System$<$ Value\+Type, Index\+Type $>$ \&ls, const Neo\+N\+::la\+::\+Sparsity\+Pattern \&sparsity\+Pattern)
 \item 
@@ -321,6 +325,16 @@ auto Neo\+FOAM\+::from\+Foam\+Field (\begin{DoxyParamCaption}\item[{const Neo\+N
 
 Definition at line \mbox{\hyperlink{readers_8hpp_source_l00020}{20}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
+\Hypertarget{namespaceNeoFOAM_acf865e4430d3bbcf09e5123f74f7920f}\label{namespaceNeoFOAM_acf865e4430d3bbcf09e5123f74f7920f} 
+\index{NeoFOAM@{NeoFOAM}!func@{func}}
+\index{func@{func}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{func()}{func()}}
+{\footnotesize\ttfamily int Neo\+FOAM\+::func (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{modelWrapper_8hpp_source_l00016}{16}} of file \mbox{\hyperlink{modelWrapper_8hpp_source}{model\+Wrapper.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}\label{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9} 
 \index{NeoFOAM@{NeoFOAM}!insert@{insert}}
 \index{insert@{insert}!NeoFOAM@{NeoFOAM}}
@@ -404,22 +418,33 @@ Definition at line \mbox{\hyperlink{readers_8hpp_source_l00034}{34}} of file \mb
 \doxysubsubsection{\texorpdfstring{setDeltaT()}{setDeltaT()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::set\+DeltaT (\begin{DoxyParamCaption}\item[{Foam\+::\+Time \&}]{of\+Run\+Time,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{nf\+Run\+Time,  }\item[{Foam\+::scalar}]{co\+Num }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a94998f25dc15bb578a9049969fd654f5}\label{namespaceNeoFOAM_a94998f25dc15bb578a9049969fd654f5} 
-\index{NeoFOAM@{NeoFOAM}!sync@{sync}}
-\index{sync@{sync}!NeoFOAM@{NeoFOAM}}
-\doxysubsubsection{\texorpdfstring{sync()}{sync()}}
-{\footnotesize\ttfamily template$<$class Src\+Field $>$ \\
-void Neo\+FOAM\+::sync (\begin{DoxyParamCaption}\item[{const Src\+Field \&}]{src,  }\item[{Foam\+::vol\+Vector\+Field \&}]{dest }\end{DoxyParamCaption})}
+\Hypertarget{namespaceNeoFOAM_ab8f2e0dffeab45f813b7494fcc81220c}\label{namespaceNeoFOAM_ab8f2e0dffeab45f813b7494fcc81220c} 
+\index{NeoFOAM@{NeoFOAM}!syncFromFoam@{syncFromFoam}}
+\index{syncFromFoam@{syncFromFoam}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{syncFromFoam()}{syncFromFoam()}}
+{\footnotesize\ttfamily template$<$class Src\+Field , class Dst\+Field $>$ \\
+void Neo\+FOAM\+::sync\+From\+Foam (\begin{DoxyParamCaption}\item[{const Src\+Field \&}]{src,  }\item[{Dst\+Field \&}]{dest }\end{DoxyParamCaption})}
 
 
 
-Definition at line \mbox{\hyperlink{writers_8hpp_source_l00035}{35}} of file \mbox{\hyperlink{writers_8hpp_source}{writers.\+hpp}}.
+Definition at line \mbox{\hyperlink{writers_8hpp_source_l00069}{69}} of file \mbox{\hyperlink{writers_8hpp_source}{writers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156}\label{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156} 
 \index{NeoFOAM@{NeoFOAM}!syncRunTimes@{syncRunTimes}}
 \index{syncRunTimes@{syncRunTimes}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{syncRunTimes()}{syncRunTimes()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::sync\+Run\+Times (\begin{DoxyParamCaption}\item[{Foam\+::\+Time \&}]{of\+Run\+Time,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{nf\+Run\+Time,  }\item[{Foam\+::scalar}]{co\+Num }\end{DoxyParamCaption})}
+
+\Hypertarget{namespaceNeoFOAM_a439dee2befb98c6e84bfafc023ceec7e}\label{namespaceNeoFOAM_a439dee2befb98c6e84bfafc023ceec7e} 
+\index{NeoFOAM@{NeoFOAM}!syncToFoam@{syncToFoam}}
+\index{syncToFoam@{syncToFoam}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{syncToFoam()}{syncToFoam()}}
+{\footnotesize\ttfamily template$<$class Src\+Field $>$ \\
+void Neo\+FOAM\+::sync\+To\+Foam (\begin{DoxyParamCaption}\item[{const Src\+Field \&}]{src,  }\item[{Foam\+::vol\+Vector\+Field \&}]{dest }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{writers_8hpp_source_l00050}{50}} of file \mbox{\hyperlink{writers_8hpp_source}{writers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5}\label{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5} 
 \index{NeoFOAM@{NeoFOAM}!updateFaceVelocity@{updateFaceVelocity}}
