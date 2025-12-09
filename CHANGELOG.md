@@ -1,6 +1,5 @@
 # Version 0.3.0 (planned)
-- created python package with CLI
-- added coverage, format, linting, type checking to CI
+- Implement python framework [#133](https://github.com/exasim-project/NeoFOAM/pull/133)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)
