@@ -64,6 +64,22 @@
         "NEOFOAM_BUILD_EXAMPLES": "ON",
         "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer $env{CXXFLAGS}"
       }
+    },
+    {
+      "name": "scorep",
+      "inherits": ["production"],
+      "displayName": "Score-P Profiling",
+      "description": "Build with Score-P instrumentation",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_C_COMPILER": "/storage/home/ctwang/scorep/bin/scorep-gcc",
+        "CMAKE_CXX_COMPILER": "/storage/home/ctwang/scorep/bin/scorep-g++",
+        "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer"
+      },
+      "environment": {
+        "SCOREP_WRAPPER_INSTRUMENTER_FLAGS": "--thread=pthread --mpp=none --kokkos --cuda",
+        "NVCC_WRAPPER_DEFAULT_COMPILER": "/storage/home/ctwang/scorep/scorep/bin/scorep-g++"
+      }
     }
   ],
   "buildPresets": [
@@ -86,6 +102,13 @@
       "displayName": "Profiling",
       "description": "Build for profiling use",
       "configurePreset": "profiling",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "scorep",
+      "displayName": "Score-P",
+      "description": "Build NeoFOAM instrumented with Score-P",
+      "configurePreset": "scorep",
       "configuration": "RelWithDebInfo"
     }
   ],
