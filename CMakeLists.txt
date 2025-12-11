@@ -3,6 +3,45 @@
 
 cmake_minimum_required(VERSION 3.22.0)
 
+if(ENABLE_PROFILING)
+    project(Bootstrap)
+    # Always prepend (possible) Score-P bootstrap location
+    set(SCOREP_PREFIX "${CMAKE_BINARY_DIR}/scorep")
+    set(SCOREP_BIN    "${SCOREP_PREFIX}/bin")
+    set(ENV{PATH} "${SCOREP_BIN}:$ENV{PATH}")
+
+    # Try to locate Score-P
+    find_program(SCOREP_INFO scorep-info HINTS ${SCOREP_BIN})
+
+    if(NOT SCOREP_INFO)
+        message(STATUS "[Score-P] Not found. Bootstrapping…")
+
+        include(cmake/scorep.cmake)
+
+        message(STATUS "[Score-P] Now run:  cmake --build .   then rerun configuration with:  cmake ..")
+        return()  # stop configure 
+    else()
+        message(STATUS "[Score-P] Found: ${SCOREP_INFO}")
+    endif()
+
+    # Score-P exists → select wrappers according to compiler family
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(CMAKE_C_COMPILER   "${SCOREP_BIN}/scorep-gcc"  CACHE STRING "" FORCE)
+        set(CMAKE_CXX_COMPILER "${SCOREP_BIN}/scorep-g++"  CACHE STRING "" FORCE)
+	set(ENV{SCOREP_WRAPPER_INSTRUMENTER_FLAGS}
+            "--thread=pthread --mpp=none --kokkos --cuda"
+         )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(CMAKE_C_COMPILER   "${SCOREP_BIN}/scorep-clang"   CACHE STRING "" FORCE)
+        set(CMAKE_CXX_COMPILER "${SCOREP_BIN}/scorep-clang++" CACHE STRING "" FORCE)
+	set(ENV{SCOREP_WRAPPER_INSTRUMENTER_FLAGS}
+            "--thread=pthread --mpp=none --kokkos"
+        )
+    else()
+        message(FATAL_ERROR "Unsupported compiler family for Score-P")
+    endif()
+endif()
+
 project(
   NeoFOAM
   LANGUAGES C CXX
@@ -49,23 +88,11 @@ endif()
 
 include(cmake/CxxThirdParty.cmake)
 
-if(ENABLE_PROFILING)
-    add_dependencies(NeoN scorep_build)
-endif()
-
 add_subdirectory(include)
 add_subdirectory(src)
 
-if(ENABLE_PROFILING)
-    add_dependencies(NeoFOAM scorep_build)
-endif()
-
 if(NEOFOAM_BUILD_EXAMPLES)
   add_subdirectory(examples)
-endif()
-
-if(ENABLE_PROFILING)
-    add_dependencies(neoIcoFoam scorep_build)
 endif()
 
 if(NEOFOAM_BUILD_TESTS)
