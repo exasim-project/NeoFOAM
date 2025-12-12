@@ -3,43 +3,16 @@
 
 cmake_minimum_required(VERSION 3.22.0)
 
-if(ENABLE_PROFILING)
-    project(Bootstrap)
-    # Always prepend (possible) Score-P bootstrap location
-    set(SCOREP_PREFIX "${CMAKE_BINARY_DIR}/scorep")
-    set(SCOREP_BIN    "${SCOREP_PREFIX}/bin")
-    set(ENV{PATH} "${SCOREP_BIN}:$ENV{PATH}")
-
-    # Try to locate Score-P
-    find_program(SCOREP_INFO scorep-info HINTS ${SCOREP_BIN})
-
-    if(NOT SCOREP_INFO)
-        message(STATUS "[Score-P] Not found. Bootstrapping…")
-
-        include(cmake/scorep.cmake)
-
-        message(STATUS "[Score-P] Now run:  cmake --build .   then rerun configuration with:  cmake ..")
-        return()  # stop configure 
-    else()
-        message(STATUS "[Score-P] Found: ${SCOREP_INFO}")
+if(NEOFOAM_WITH_SCOREP)
+    include(cmake/scorep.cmake)
+    scorep_check(SCOREP_FOUND)
+    if(NOT SCOREP_FOUND)
+	include(cmake/CxxThirdParty.cmake)
+	project(bootstrap_scorep LANGUAGES NONE)
+        scorep_add_external_project()
+        return()   # required to stop the configure after scorep on first cmake call
     endif()
-
-    # Score-P exists → select wrappers according to compiler family
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set(CMAKE_C_COMPILER   "${SCOREP_BIN}/scorep-gcc"  CACHE STRING "" FORCE)
-        set(CMAKE_CXX_COMPILER "${SCOREP_BIN}/scorep-g++"  CACHE STRING "" FORCE)
-	set(ENV{SCOREP_WRAPPER_INSTRUMENTER_FLAGS}
-            "--thread=pthread --mpp=none --kokkos --cuda"
-         )
-    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(CMAKE_C_COMPILER   "${SCOREP_BIN}/scorep-clang"   CACHE STRING "" FORCE)
-        set(CMAKE_CXX_COMPILER "${SCOREP_BIN}/scorep-clang++" CACHE STRING "" FORCE)
-	set(ENV{SCOREP_WRAPPER_INSTRUMENTER_FLAGS}
-            "--thread=pthread --mpp=none --kokkos"
-        )
-    else()
-        message(FATAL_ERROR "Unsupported compiler family for Score-P")
-    endif()
+    scorep_setup_compilers()
 endif()
 
 project(
@@ -58,7 +31,7 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(ENABLE_PROFILING "Build Score-P to enable profiling" OFF)
+option(NEOFOAM_WITH_SCOREP "Build with Score-P support " OFF)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
