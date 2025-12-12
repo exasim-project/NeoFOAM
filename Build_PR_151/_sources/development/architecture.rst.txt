@@ -6,7 +6,7 @@ This document describes the architecture of FoamAdapter, including its C++ core 
 
 .. note::
    This section of the documentation provides:
-     * a high-level overview of the *planned* architecture 
+     * a high-level overview of the *planned* architecture
      * guidance through the review process
      * example implementations serving only as proof of concept to illustrate the *planned* architecture
      * a note that detailed features will evolve and refine the architecture, updating examples as development progresses
