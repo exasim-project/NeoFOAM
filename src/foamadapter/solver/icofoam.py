@@ -48,9 +48,6 @@ class IcoFoam:
         while runTime.loop():
             Info(f"Time = {runTime.timeName()}")
 
-            # Courant number computation assumed handled elsewhere
-            # (optionally bind and call selectCourantNo)
-
             UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) - fvm.laplacian(nu, U))
 
             if piso.momentumPredictor():
