@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2023 FoamAdapter authors
+# SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 from typing import Any
 
@@ -143,7 +143,7 @@ class PimpleFoam:
             Info(f"Time = {runTime.timeName()}")
 
             # Compute Courant number
-            cfl_number.setDelta(runTime, phi)
+            cfl_number.setDeltaT(runTime, phi)
 
             while pimple.loop():
                 UEqn = self.momentum_equation(pimple, U, p, phi, turbulence)
