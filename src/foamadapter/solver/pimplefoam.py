@@ -27,7 +27,7 @@ class CFLNumber:
         self.maxCFL = controlDict.get[float]("maxCo")
         self.maxDeltaT = maxDeltaT
 
-    def setDelta(
+    def setDeltaT(
         self, runTime: pyf.Time, phi: pyf.surfaceScalarField, maxRatio: float = 1.2
     ) -> None:
         deltaT = runTime.deltaTValue()
