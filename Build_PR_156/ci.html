@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Quick Start Guide" href="usage/quickstart.html"><link rel="prev" title="Goals" href="goals_features.html">
-        <link rel="canonical" href="https://exasim-project.com/FoamAdapter/ci.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/ci.html">
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2025.09.25 -->
-        <title>Continuous Integration - FoamAdapter documentation</title>
+        <title>Continuous Integration - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=acfd86a5" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=580074bf" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
@@ -164,7 +164,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">FoamAdapter  documentation</div></a>
+      <a href="index.html"><div class="brand">NeoFOAM  documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -185,7 +185,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">FoamAdapter  documentation</span>
+  <span class="sidebar-brand-text">NeoFOAM  documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -194,9 +194,9 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to FoamAdapter!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gettingStarted.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingStarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="goals_features.html">Goals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="goals_features.html#features">Features</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Continuous Integration</a></li>
@@ -249,27 +249,27 @@
         <article role="main" id="furo-main-content">
           <section id="continuous-integration">
 <h1>Continuous Integration<a class="headerlink" href="#continuous-integration" title="Link to this heading">¶</a></h1>
-<p>The <strong>FoamAdapter</strong> project uses a two-level Continuous Integration (CI) system
+<p>The <strong>NeoFOAM</strong> project uses a two-level Continuous Integration (CI) system
 to ensure correct builds, GPU compatibility, and automated benchmarking.</p>
 <p>The main repository is hosted on <strong>GitHub</strong>, and GPU-based workflows are delegated
 to <strong>LRZ GitLab</strong>, where jobs are executed on both <strong>NVIDIA</strong> and <strong>AMD</strong> GPUs.
-The CI architecture for FoamAdapter is illustrated below.</p>
+The CI architecture for NeoFOAM is illustrated below.</p>
 <figure class="align-center">
-<a class="reference internal image-reference" href="_images/ci_overview.png"><img alt="Overview of the CI architecture for FoamAdapter" src="_images/ci_overview.png" style="width: 90%;" /></a>
+<a class="reference internal image-reference" href="_images/ci_overview.png"><img alt="Overview of the CI architecture for NeoFOAM" src="_images/ci_overview.png" style="width: 90%;" /></a>
 </figure>
 <section id="continuous-integration-on-github">
 <h2>Continuous Integration on GitHub<a class="headerlink" href="#continuous-integration-on-github" title="Link to this heading">¶</a></h2>
-<p>GitHub CI is responsible for managing the overall FoamAdapter CI workflow.</p>
+<p>GitHub CI is responsible for managing the overall NeoFOAM CI workflow.</p>
 <p><strong>Responsibilities:</strong></p>
 <ul class="simple">
-<li><p>Build and test FoamAdapter on <strong>CPU</strong> across different platforms (Linux, macOS, Windows).</p></li>
+<li><p>Build and test NeoFOAM on <strong>CPU</strong> across different platforms (Linux, macOS, Windows).</p></li>
 <li><p>Push the source code and commit metadata to <strong>LRZ GitLab</strong>.</p></li>
 <li><p>Cancel outdated pipelines on LRZ GitLab for the same branch.</p></li>
 <li><p>Trigger new LRZ GitLab pipelines for GPU builds and benchmarks.</p></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The GitHub CI acts as the <em>control layer</em> for all FoamAdapter CI operations.
+<p>The GitHub CI acts as the <em>control layer</em> for all NeoFOAM CI operations.
 Developers interact only with GitHub — all LRZ GitLab pipelines are triggered automatically.</p>
 </div>
 </section>
@@ -278,28 +278,28 @@ Developers interact only with GitHub — all LRZ GitLab pipelines are triggered 
 <p>The LRZ GitLab CI handles GPU-related operations.</p>
 <p><strong>Responsibilities:</strong></p>
 <ul class="simple">
-<li><p>Build and test FoamAdapter on <strong>NVIDIA</strong> and <strong>AMD</strong> GPUs on Linux.</p></li>
+<li><p>Build and test NeoFOAM on <strong>NVIDIA</strong> and <strong>AMD</strong> GPUs on Linux.</p></li>
 <li><p>Run benchmark jobs after successful build and test stages.</p></li>
 <li><p>Report the status and results back to GitHub for unified monitoring.</p></li>
 </ul>
 </section>
 <section id="development-workflow">
-<span id="ci-foamadapter-workflow"></span><h2>Development Workflow<a class="headerlink" href="#development-workflow" title="Link to this heading">¶</a></h2>
-<p>The development workflow for FoamAdapter proceeds as follows:</p>
+<span id="ci-neofoam-workflow"></span><h2>Development Workflow<a class="headerlink" href="#development-workflow" title="Link to this heading">¶</a></h2>
+<p>The development workflow for NeoFOAM proceeds as follows:</p>
 <ol class="arabic simple">
 <li><p>A developer opens a pull request (PR) or pushes a commit to an existing PR on GitHub.</p></li>
-<li><p>GitHub CI builds and tests FoamAdapter on CPUs.</p></li>
+<li><p>GitHub CI builds and tests NeoFOAM on CPUs.</p></li>
 <li><p>GitHub CI pushes the same branch to LRZ GitLab.</p></li>
 <li><p>GitHub CI cancels all pending or running LRZ GitLab pipelines for that branch.</p></li>
 <li><p>GitHub CI triggers a <strong>new LRZ GitLab pipeline</strong>.</p></li>
-<li><p>LRZ GitLab CI builds and tests FoamAdapter on GPUs.</p></li>
+<li><p>LRZ GitLab CI builds and tests NeoFOAM on GPUs.</p></li>
 <li><p><em>(Optional)</em> Benchmark jobs are executed after successful testing.</p></li>
 <li><p>The developer monitors all results directly on GitHub.</p></li>
 </ol>
 </section>
 <section id="pull-request-labels">
-<span id="ci-foamadapter-labels"></span><h2>Pull Request Labels<a class="headerlink" href="#pull-request-labels" title="Link to this heading">¶</a></h2>
-<p>FoamAdapter’s GitHub repository uses labels to control the CI behavior.</p>
+<span id="ci-neofoam-labels"></span><h2>Pull Request Labels<a class="headerlink" href="#pull-request-labels" title="Link to this heading">¶</a></h2>
+<p>NeoFOAM’s GitHub repository uses labels to control the CI behavior.</p>
 <p><strong>Relevant Labels:</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">Skip-build</span></code> — Skip all build-and-test jobs on both GitHub and LRZ GitLab.</p></li>
@@ -308,8 +308,8 @@ Developers interact only with GitHub — all LRZ GitLab pipelines are triggered 
 <p>These labels allow developers to customize the CI process according to their needs.</p>
 </section>
 <section id="summary">
-<span id="ci-foamadapter-summary"></span><h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">¶</a></h2>
-<p>The FoamAdapter CI system provides:</p>
+<span id="ci-neofoam-summary"></span><h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">¶</a></h2>
+<p>The NeoFOAM CI system provides:</p>
 <ul class="simple">
 <li><p>Unified GitHub-driven CI management.</p></li>
 <li><p>Transparent CPU and GPU build workflows.</p></li>
@@ -320,8 +320,8 @@ Developers interact only with GitHub — all LRZ GitLab pipelines are triggered 
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#ci-foamadapter-workflow"><span class="std std-ref">Development Workflow</span></a></p></li>
-<li><p><a class="reference internal" href="#ci-foamadapter-labels"><span class="std std-ref">Pull Request Labels</span></a></p></li>
+<li><p><a class="reference internal" href="#ci-neofoam-workflow"><span class="std std-ref">Development Workflow</span></a></p></li>
+<li><p><a class="reference internal" href="#ci-neofoam-labels"><span class="std std-ref">Pull Request Labels</span></a></p></li>
 </ul>
 </div>
 </section>
@@ -356,7 +356,7 @@ Developers interact only with GitHub — all LRZ GitLab pipelines are triggered 
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, FoamAdapter authors
+                Copyright &#169; 2025, NeoFOAM authors
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             

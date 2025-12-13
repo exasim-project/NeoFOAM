@@ -6,7 +6,7 @@ This document describes the architecture of FoamAdapter, including its C++ core 
 
 .. note::
    This section of the documentation provides:
-     * a high-level overview of the *planned* architecture 
+     * a high-level overview of the *planned* architecture
      * guidance through the review process
      * example implementations serving only as proof of concept to illustrate the *planned* architecture
      * a note that detailed features will evolve and refine the architecture, updating examples as development progresses
@@ -25,7 +25,7 @@ The architecture provides the following features to achieve the goals outlined i
 - Modular solver design that computes data dependencies at runtime
 - Plugin architecture for extending models and fields
 
-To support multi-physics capabilities, multiple computational domains are supported.  
+To support multi-physics capabilities, multiple computational domains are supported.
 Each domain has **one solver** assigned, which defines the governing equations, operations, and **optional additional physical models.**
 Coupling between domains is automatically handled based on the selected physics modules.
 
@@ -40,18 +40,18 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
 .. mermaid::
 
    flowchart TD
-        
+
         subgraph MAIN ["Main Solver Loop"]
             STEP1["Solver </br> Momentum Equation"]
             STEP2["Added by Model </br> Temperature Equation"]
             STEP3["Solver </br> Continuity Equation"]
             STEP4["Solver </br> Update Turbulence"]
         end
-        
+
         STEP1 --> STEP2
         STEP2 --> STEP3
         STEP3 --> STEP4
-        
+
         %% Physics Extensions (simplified)
         subgraph AddPhysics ["Additional Physics Modules"]
             direction TB
@@ -120,7 +120,7 @@ After solvers and models are initialized, their operations must be identified an
 This order is managed by the **Operations** class, shown conceptually below:
 
 .. code-block:: python
-    
+
     # Pseudocode showing how operations are stored and executed
     class Operations:
         ops: list[Operation]  # All operations to execute
@@ -133,7 +133,7 @@ This order is managed by the **Operations** class, shown conceptually below:
         metadata: Any  # Metadata for sorting or description
 
         def run(self, ...): pass
- 
+
 An operation represents a single computational step in a solver or model, functioning as a callable task.
 Each solver or model can define multiple operations stored as `Operation` objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.
@@ -316,4 +316,3 @@ To retrieve a model’s JSON Schema, use:
 
 This unified mechanism allows programmatic discovery of fields, types, validation rules, and defaults.
 All solvers, models, and plugins must therefore use Pydantic for input configuration.
-

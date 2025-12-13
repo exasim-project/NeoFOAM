@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['insert_0',['insert',['../namespaceFoamAdapter.html#a001fc933f3c84a6aa35c1ca0791faf78',1,'FoamAdapter']]]
+  ['insert_0',['insert',['../namespaceNeoFOAM.html#af3b37c9dbbd37df8a0849a0f383f06d9',1,'NeoFOAM']]]
 ];
