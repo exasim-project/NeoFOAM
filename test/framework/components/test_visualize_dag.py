@@ -6,7 +6,7 @@ from foamadapter.framework.dag import (
     compute_nodes_order,
 )
 from foamadapter.framework.pyvis_utils import digraph_to_pyvis_html
-from foamadapter.framework.types import OperationMetadata, StepNumber
+from foamadapter.framework.types import OperationMetadata, OperationNumber
 
 PLOT_DAG = True
 
@@ -18,28 +18,28 @@ def test_build_dag():
         depends_on=[],
         shape="circle",
         color="red",
-        step_number=StepNumber("1.0.0"),
+        operation_number=OperationNumber("1.0.0"),
     )
     node2 = OperationMetadata(
         op_name="node2",
         depends_on=["node1"],
         shape="square",
         color="blue",
-        step_number=StepNumber("1.0.1"),
+        operation_number=OperationNumber("1.0.1"),
     )
     node3 = OperationMetadata(
         op_name="node3",
         depends_on=["node1", "node2"],
         shape="triangle",
         color="green",
-        step_number=StepNumber("1.1.0"),
+        operation_number=OperationNumber("1.1.0"),
     )
     node4 = OperationMetadata(
         op_name="node4",
         depends_on=["node2"],
         shape="triangle",
         color="green",
-        step_number=StepNumber("1.1.1"),
+        operation_number=OperationNumber("1.1.1"),
     )
 
     dag = build_dag([node1, node2, node3, node4])
@@ -63,14 +63,14 @@ def test_build_global_dag():
             depends_on=[],
             shape="circle",
             color="red",
-            step_number=StepNumber("1.0.0"),
+            operation_number=OperationNumber("1.0.0"),
         ),
         OperationMetadata(
             op_name="a2",
             depends_on=["a1"],
             shape="square",
             color="blue",
-            step_number=StepNumber("1.0.0"),
+            operation_number=OperationNumber("1.0.0"),
         ),
     ]
     domain_b_nodes = [
@@ -79,14 +79,14 @@ def test_build_global_dag():
             depends_on=[],
             shape="triangle",
             color="green",
-            step_number=StepNumber("1.0.0"),
+            operation_number=OperationNumber("1.0.0"),
         ),
         OperationMetadata(
             op_name="b2",
             depends_on=["b1", "a1"],
             shape="diamond",
             color="orange",
-            step_number=StepNumber("1.0.0"),
+            operation_number=OperationNumber("1.0.0"),
         ),
     ]
 
@@ -109,49 +109,49 @@ def test_compute_steps_order():
         depends_on=[],
         shape="circle",
         color="red",
-        step_number=StepNumber("1.0.0"),
+        operation_number=OperationNumber("1.0.0"),
     )
     node2 = OperationMetadata(
         op_name="node2",
         depends_on=["node1"],
         shape="square",
         color="blue",
-        step_number=StepNumber("2.0.0"),
+        operation_number=OperationNumber("2.0.0"),
     )
     node3 = OperationMetadata(
         op_name="node3",
         depends_on=["node1", "node2"],
         shape="triangle",
         color="green",
-        step_number=StepNumber("3.2.0"),
+        operation_number=OperationNumber("3.2.0"),
     )
     node4 = OperationMetadata(
         op_name="node4",
         depends_on=["node2"],
         shape="triangle",
         color="green",
-        step_number=StepNumber("3.1.0"),
+        operation_number=OperationNumber("3.1.0"),
     )
     node5 = OperationMetadata(
         op_name="node5",
         depends_on=["node3"],
         shape="circle",
         color="red",
-        step_number=StepNumber("3.2.0"),
+        operation_number=OperationNumber("3.2.0"),
     )
     node6 = OperationMetadata(
         op_name="node6",
         depends_on=["node3"],
         shape="circle",
         color="red",
-        step_number=StepNumber("3.2.0"),
+        operation_number=OperationNumber("3.2.0"),
     )
     node7 = OperationMetadata(
         op_name="node7",
         depends_on=["node3"],
         shape="circle",
         color="red",
-        step_number=StepNumber("3.2.1"),
+        operation_number=OperationNumber("3.2.1"),
     )
 
     nodes = [node1, node2, node3, node4, node5, node6, node7]

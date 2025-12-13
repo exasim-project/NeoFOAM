@@ -2,7 +2,7 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 from foamadapter.framework.context import Context, FieldUpdates
-from foamadapter.framework.decorator import condition, step
+from foamadapter.framework.decorator import condition, operation
 from foamadapter.framework.operations import (
     IterativeOp,
     Operation,
@@ -12,17 +12,17 @@ from foamadapter.framework.operations import (
 
 
 class SomeClass:
-    @step
+    @operation
     def member_function(self, a: int) -> FieldUpdates:
         a += 1
         return FieldUpdates({"a": a})
 
-    @step
+    @operation
     def another_member_function(self, a: int, b: int) -> FieldUpdates:
         b += 2
         return FieldUpdates({"b": b})
 
-    @step
+    @operation
     def another_member_function_kwargs(
         self, a: int, *, b: int, c: float
     ) -> FieldUpdates:
@@ -81,14 +81,14 @@ def test_context_adapter_condition():
 
 
 def test_sequential_op_free_function():
-    @step
+    @operation
     def function1(a: int) -> int:
         a += 1
         return FieldUpdates({"a": a})
 
     # init from components
     seq_op = SequentialOp(func=context_adapter(function1))
-    op1 = Operation(func=seq_op, step_name="step1", step_number=1)
+    op1 = Operation(func=seq_op, operation_name="step1", operation_number=1)
 
     ctx = Context(fields={"a": 1}, models={})
     op1.run(ctx)
@@ -102,7 +102,7 @@ def test_sequential_op_free_function():
 
 def test_sequential_op_member_function():
     class MyClass:
-        @step
+        @operation
         def function1(self, a: int) -> FieldUpdates:
             a += 1
             return FieldUpdates({"a": a})
@@ -110,15 +110,15 @@ def test_sequential_op_member_function():
     my_instance = MyClass()
 
     seq_op = SequentialOp(func=context_adapter(my_instance.function1))
-    op1 = Operation(func=seq_op, step_name="step1", step_number=1)
+    op1 = Operation(func=seq_op, operation_name="step1", operation_number=1)
 
     ctx = Context(fields={"a": 1}, models={})
     op1.run(ctx)
     assert ctx.fields["a"] == 2
 
     op2 = Operation.create_SeqOp(my_instance.function1)
-    assert op2.step_name == "function1"
-    assert op2.step_number is None
+    assert op2.operation_name == "function1"
+    assert op2.operation_number is None
 
     ctx = Context(fields={"a": 1}, models={})
     op2.run(ctx)
@@ -127,7 +127,7 @@ def test_sequential_op_member_function():
 
 def test_iterative_op_member_function():
     class MyClass:
-        @step
+        @operation
         def function1(self, a: int) -> FieldUpdates:
             a += 1
             return FieldUpdates({"a": a})
@@ -142,9 +142,12 @@ def test_iterative_op_member_function():
     increment_op = Operation.create_SeqOp(my_instance.function1)
 
     op1 = Operation(
-        func=iter_op, step_name="step1", step_number=1, sub_steps=[increment_op]
+        func=iter_op,
+        operation_name="step1",
+        operation_number=1,
+        sub_operations=[increment_op],
     )
-    assert op1.step_name == "step1"
+    assert op1.operation_name == "step1"
 
     ctx = Context(fields={"a": 0}, models={})
     op1.run(ctx)

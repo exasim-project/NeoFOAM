@@ -31,12 +31,12 @@ class MaxIterations:
 class MyModel1(BaseModel):
     param1: float
 
-    @Model.step(step_number=1, depends_on=["step1"])
+    @Model.operation(operation_number=1, depends_on=["step1"])
     def model1_step_one(self, a: float):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
 
-    @Model.step(step_number=2, depends_on=["step2"])
+    @Model.operation(operation_number=2, depends_on=["step2"])
     def model1_step_two(self, a: float):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
@@ -60,22 +60,22 @@ class FirstSolver(BaseModel):
         ctx.fields["a"] = 0.0
         return ctx
 
-    @Solver.step(step_number=1)
+    @Solver.operation(operation_number=1)
     def init(self, a: float):
         a = 1
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=2, depends_on=["init"])
+    @Solver.operation(operation_number=2, depends_on=["init"])
     def factor2(self, a: float):
         a = a * 2
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=3, depends_on=["factor2"])
+    @Solver.operation(operation_number=3, depends_on=["factor2"])
     def add2(self, a: float):
         a = a + 2
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=4, depends_on=["add2"])
+    @Solver.operation(operation_number=4, depends_on=["add2"])
     def add5(self, a: float):
         a = a + 5
         return FieldUpdates({"a": a})
@@ -98,8 +98,8 @@ class FirstSolver(BaseModel):
         with main_loop.loop(
             Operation(
                 func=IterativeOp(MaxIterations(max_iters=4)),
-                step_name="loop_increment",
-                step_number=1,
+                operation_name="loop_increment",
+                operation_number=1,
             )
         ) as loop:
             loop.step(ops["init"])
@@ -121,10 +121,10 @@ def test_operations_solver():
     for op in ops_col:
         op.run(ctx)
 
-    assert ops_col[0].step_name == "init"
-    assert ops_col[1].step_name == "factor2"
-    assert ops_col[2].step_name == "add2"
-    assert ops_col[3].step_name == "add5"
+    assert ops_col[0].operation_name == "init"
+    assert ops_col[1].operation_name == "factor2"
+    assert ops_col[2].operation_name == "add2"
+    assert ops_col[3].operation_name == "add5"
 
     assert ctx.fields["a"] == 1 * 2 + 2 + 5
 

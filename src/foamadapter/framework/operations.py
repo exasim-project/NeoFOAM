@@ -9,7 +9,7 @@ from typing import Annotated, Any, Callable, Iterator, Union, get_args, get_orig
 
 from foamadapter.framework.context import Context, FieldUpdates
 
-from .types import OperationMetadata, OpType, StepNumber
+from .types import OperationMetadata, OpType, OperationNumber
 
 
 def _get_value(ctx: Context, name: str, annotation: Any) -> dict[str, Any]:
@@ -75,7 +75,7 @@ def context_adapter(func: Callable[..., Any]) -> Callable[[Context], Any]:
         call_args = get_call_arguments(func_paras, context)
         results = func(**call_args)
 
-        if op_type == OpType.STEP and isinstance(results, FieldUpdates):
+        if op_type == OpType.OPERATION and isinstance(results, FieldUpdates):
             context.fields.update(results)
             return None
 
@@ -115,18 +115,18 @@ class SequentialOp:
 
 @dataclass
 class Operation:
-    """A concrete step class that wraps a function with metadata."""
+    """A concrete operation class that wraps a function with metadata."""
 
     func: Union[ConditionalOp, IterativeOp, SequentialOp]
-    step_number: StepNumber | None = None
-    step_name: str | None = None
+    operation_number: OperationNumber | None = None
+    operation_name: str | None = None
     domain_name: str | None = None
     depends_on: list[str] | None = None
     # TODO move visualization metadata to a separate class
     shape: str = "box"
     color: str = "lightblue"
     level: int = 0
-    sub_steps: list["Operation"] = field(default_factory=list)
+    sub_operations: list["Operation"] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.depends_on is None:
@@ -136,15 +136,15 @@ class Operation:
     def create_SeqOp(callable_method: Callable[..., Any], **kwargs: Any) -> Operation:
         if (
             not hasattr(callable_method, "_metadata")
-            or not callable_method._metadata.is_step
+            or not callable_method._metadata.is_operation
         ):
             raise ValueError("callable_method cannot be None")
         seq_op = SequentialOp.from_method(callable_method)
         metadata = callable_method._metadata
-        if "step_name" not in kwargs and metadata.name is not None:
-            kwargs["step_name"] = metadata.name
-        if "step_number" not in kwargs and metadata.step_number is not None:
-            kwargs["step_number"] = metadata.step_number
+        if "operation_name" not in kwargs and metadata.name is not None:
+            kwargs["operation_name"] = metadata.name
+        if "operation_number" not in kwargs and metadata.operation_number is not None:
+            kwargs["operation_number"] = metadata.operation_number
         if "depends_on" not in kwargs and metadata.depends_on is not None:
             kwargs["depends_on"] = metadata.depends_on
         return Operation(func=seq_op, **kwargs)
@@ -162,10 +162,10 @@ class Operation:
 
     def operation_metadata(self) -> OperationMetadata:
         return OperationMetadata(
-            op_name=self.step_name or "unknown",
+            op_name=self.operation_name or "unknown",
             depends_on=self.depends_on,
             shape=self.shape,
-            step_number=self.step_number,
+            operation_number=self.operation_number,
             color=self.color,
             domain_name=self.domain_name,
         )
@@ -173,9 +173,9 @@ class Operation:
     @property
     def name(self) -> str | None:
         return (
-            f"{self.domain_name}.{self.step_name}"
+            f"{self.domain_name}.{self.operation_name}"
             if self.domain_name
-            else self.step_name
+            else self.operation_name
         )
 
     @property
@@ -192,8 +192,8 @@ class Operation:
             return self.func(ctx)
         elif op_type == "iterative":
             while self.func(ctx):
-                for step in self.sub_steps:
-                    step.run(ctx)
+                for op in self.sub_operations:
+                    op.run(ctx)
         elif op_type == "sequential":
             self.func(ctx)
         else:
@@ -218,19 +218,19 @@ class OperationCollection:
     ) -> OperationCollection:
         if isinstance(index, str):
             for i, op in enumerate(self.ops):
-                if op.step_name == index:
-                    self.ops[i].sub_steps.append(operation)
+                if op.operation_name == index:
+                    self.ops[i].sub_operations.append(operation)
                     return self
-            raise KeyError(f"Operation with step_name '{index}' not found.")
-        self.ops[index].sub_steps.append(operation)
+            raise KeyError(f"Operation with operation_name '{index}' not found.")
+        self.ops[index].sub_operations.append(operation)
         return self
 
     def __getitem__(self, index: int | str) -> Operation:
         if isinstance(index, str):
             for op in self.ops:
-                if op.step_name == index:
+                if op.operation_name == index:
                     return op
-            raise KeyError(f"Operation with step_name '{index}' not found.")
+            raise KeyError(f"Operation with operation_name '{index}' not found.")
         return self.ops[index]
 
     def __len__(self) -> int:
@@ -244,8 +244,8 @@ class OperationCollection:
             total = 0
             for op in ops:
                 total += 1
-                if op.sub_steps:
-                    total += count_ops(op.sub_steps)
+                if op.sub_operations:
+                    total += count_ops(op.sub_operations)
             return total
 
         return count_ops(self.ops)
@@ -265,15 +265,15 @@ class Operations:
         return self
 
     def add_suboperation(self, operation: Operation) -> Operations:
-        self.ops[-1].sub_steps.append(operation)
+        self.ops[-1].sub_operations.append(operation)
         return self
 
     def __getitem__(self, index: int | str) -> Operation:
         if isinstance(index, str):
             for op in self.ops:
-                if op.step_name == index:
+                if op.operation_name == index:
                     return op
-            raise KeyError(f"Operation with step_name '{index}' not found.")
+            raise KeyError(f"Operation with operation_name '{index}' not found.")
         return self.ops[index]
 
     def __len__(self) -> int:
@@ -305,4 +305,4 @@ class StepBuilder:
 
     def loop(self, operation: Operation) -> StepBuilder:
         self.operations.add(operation)
-        return StepBuilder(operations=self.operations[-1].sub_steps)
+        return StepBuilder(operations=self.operations[-1].sub_operations)

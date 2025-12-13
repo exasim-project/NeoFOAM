@@ -7,12 +7,12 @@ from foamadapter.framework.decorator import (
     OpType,
     condition,
     decorated_member_functions,
-    step,
+    operation,
 )
 
 
 def test_decorator_free_function():
-    @step
+    @operation
     def free_step_function(a: float) -> float:
         a = a + 1.0
         return a
@@ -23,7 +23,7 @@ def test_decorator_free_function():
 
     assert free_step_function(1.0) == 2.0
 
-    free_step_function._metadata.op_type == OpType.STEP
+    free_step_function._metadata.op_type == OpType.OPERATION
     free_step_function._metadata.name == "free_step_function"
 
     assert free_condition_function()
@@ -56,7 +56,7 @@ def test_decorator_free_function_type_error():
 
 def test_decorator_member_function():
     class SomeClass:
-        @step
+        @operation
         def member_function(self):
             return True
 
@@ -71,7 +71,7 @@ def test_decorator_member_function():
     some_instance = SomeClass()
     assert some_instance.member_function()
 
-    some_instance.member_function._metadata.op_type == OpType.STEP
+    some_instance.member_function._metadata.op_type == OpType.OPERATION
     some_instance.member_function._metadata.name == "member_function"
 
     funcs = some_instance.list_functions()

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from foamadapter.framework.context import Context, FieldUpdates
-from foamadapter.framework.decorator import step
+from foamadapter.framework.decorator import operation
 from foamadapter.framework.operations import (
     context_adapter,
 )
@@ -14,7 +14,7 @@ class CombinedData:
 
 
 class SomeClass:
-    @step
+    @operation
     def member_function(self, a: int, combined: CombinedData) -> FieldUpdates:
         combined.b += 2
         combined.c += 3.0

@@ -12,19 +12,19 @@ from foamadapter.framework.solver import Solver, SolverInterface
 class MyCustomSolver(BaseModel):
     name: Literal["MyCustomSolver"] = "MyCustomSolver"
 
-    @Solver.step(step_number=1)
+    @Solver.operation(operation_number=1)
     def step_one(self):
         pass
 
-    @Solver.step(step_number=2, depends_on=["step_one"])
+    @Solver.operation(operation_number=2, depends_on=["step_one"])
     def step_two(self):
         pass
 
-    @Solver.step(step_number=3, depends_on=["step_two"])
+    @Solver.operation(operation_number=3, depends_on=["step_two"])
     def step_three(self):
         pass
 
-    @Solver.step(step_number=4, depends_on=["step_three"])
+    @Solver.operation(operation_number=4, depends_on=["step_three"])
     def step_four(self):
         pass
 
@@ -48,23 +48,23 @@ def test_solver_steps_registration():
     assert len(ops) == 4
 
     first_step = ops[0]
-    assert first_step.step_name == "step_one"
-    assert first_step.step_number == 1
+    assert first_step.operation_name == "step_one"
+    assert first_step.operation_number == 1
     assert first_step.depends_on == []
 
     second_step = ops[1]
-    assert second_step.step_name == "step_two"
-    assert second_step.step_number == 2
+    assert second_step.operation_name == "step_two"
+    assert second_step.operation_number == 2
     assert second_step.depends_on == ["step_one"]
 
     third_step = ops[2]
-    assert third_step.step_name == "step_three"
-    assert third_step.step_number == 3
+    assert third_step.operation_name == "step_three"
+    assert third_step.operation_number == 3
     assert third_step.depends_on == ["step_two"]
 
     fourth_step = ops[3]
-    assert fourth_step.step_name == "step_four"
-    assert fourth_step.step_number == 4
+    assert fourth_step.operation_name == "step_four"
+    assert fourth_step.operation_number == 4
     assert fourth_step.depends_on == ["step_three"]
 
     solver = MyCustomSolver()

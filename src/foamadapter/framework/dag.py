@@ -19,7 +19,7 @@ def build_dag(nodes: list[OperationMetadata]) -> nx.DiGraph:
             meta=node,
             shape=node.shape,
             color=node.color,
-            step_number=node.step_number,
+            operation_number=node.operation_number,
         )
         for dep in node.dependencies:
             G.add_edge(dep, node.name)
@@ -45,7 +45,7 @@ def compute_nodes_order(nodes: list[OperationMetadata]) -> list[str]:
     dag = build_dag(nodes)
     nodes_sorted = list(
         nx.lexicographical_topological_sort(
-            dag, key=lambda n: dag.nodes[n]["step_number"]
+            dag, key=lambda n: dag.nodes[n]["operation_number"]
         )
     )
     return nodes_sorted

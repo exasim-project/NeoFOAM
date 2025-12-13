@@ -9,7 +9,17 @@ from functools import total_ordering
 
 
 @total_ordering
-class StepNumber:
+class OperationNumber:
+    """
+    The operation number of a solver are typically fixed the operation number allows to easily
+    insert new operations between existing ones by incrementing the sub numbers.
+
+    Examples:
+        The solver defines the operations with numbers 1, 2, 3.
+        Now a new operation needs to be added between 1 and 2, so it is assigned the number 1.1.
+        Later another operation is added between 1 and 1.1, which is assigned the number 1.0.1.
+    """
+
     def __init__(self, version: str | int | list[int] | tuple[int, ...]) -> None:
         if isinstance(version, str):
             self.parts = [int(p) for p in version.split(".")]
@@ -19,27 +29,27 @@ class StepNumber:
             self.parts = [version]
         else:
             raise TypeError(
-                "StepNumber must be initialized with a string, int, or list/tuple of integers"
+                "OperationNumber must be initialized with a string, int, or list/tuple of integers"
             )
 
     def _as_tuple(
-        self, other: StepNumber | str | int | list[int] | tuple[int, ...]
+        self, other: OperationNumber | str | int | list[int] | tuple[int, ...]
     ) -> tuple[tuple[int, ...], tuple[int, ...]]:
-        if not isinstance(other, StepNumber):
-            other = StepNumber(other)
+        if not isinstance(other, OperationNumber):
+            other = OperationNumber(other)
         max_len = max(len(self.parts), len(other.parts))
         a = tuple(self.parts + [0] * (max_len - len(self.parts)))
         b = tuple(other.parts + [0] * (max_len - len(other.parts)))
         return a, b
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (StepNumber, str, int, list, tuple)):
+        if not isinstance(other, (OperationNumber, str, int, list, tuple)):
             return NotImplemented
         a, b = self._as_tuple(other)
         return a == b
 
     def __lt__(
-        self, other: "StepNumber" | str | int | list[int] | tuple[int, ...]
+        self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]
     ) -> bool:
         a, b = self._as_tuple(other)
         return a < b
@@ -47,12 +57,12 @@ class StepNumber:
 
 class OpType(Enum):
     CONDITION = "condition"
-    STEP = "step"
+    OPERATION = "operation"
 
 
 @dataclass
 class OperationMetadata:
-    """Metadata for operations - describes both decorated functions and DAG nodes."""
+    """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
 
     # Core identity
     op_name: str
@@ -60,7 +70,7 @@ class OperationMetadata:
     # Optional metadata
     op_type: OpType | None = None
     description: str = ""
-    step_number: StepNumber | None = None
+    operation_number: OperationNumber | None = None
     depends_on: list[str] | None = None
     domain_name: str | None = None
 
@@ -70,10 +80,10 @@ class OperationMetadata:
     used_by: list[str] = field(default_factory=list)
 
     @property
-    def is_step(self) -> bool:
+    def is_operation(self) -> bool:
         if self.op_type is None:
             return False
-        return self.op_type == OpType.STEP
+        return self.op_type == OpType.OPERATION
 
     @property
     def is_condition(self) -> bool:

@@ -22,12 +22,12 @@ class SubSolver(BaseModel):
         self.current_iteration += 1
         return self.current_iteration <= self.max_iterations
 
-    @Model.step(step_number=1)
+    @Model.operation(operation_number=1)
     def add1(self, a: float) -> FieldUpdates:
         a = a + 1
         return FieldUpdates({"a": a})
 
-    @Model.step(step_number=2, depends_on=["add1"])
+    @Model.operation(operation_number=2, depends_on=["add1"])
     def add2(self, a: float) -> FieldUpdates:
         a = a + 2
         return FieldUpdates({"a": a})
@@ -56,21 +56,21 @@ class FirstSolver(BaseModel):
         ctx.fields["a"] = 0.0
         return ctx
 
-    @Solver.step(step_number=1)
+    @Solver.operation(operation_number=1)
     def init(self, a: float):
         a = 1
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=2, depends_on=["init"])
+    @Solver.operation(operation_number=2, depends_on=["init"])
     def factor2(self, a: float):
         a = a * 2
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=3, depends_on=["factor2"])
+    @Solver.operation(operation_number=3, depends_on=["factor2"])
     def sub_iter(self, ctx: Context):
         self.sub_solver.run(ctx)
 
-    @Solver.step(step_number=4, depends_on=["sub_iter"])
+    @Solver.operation(operation_number=4, depends_on=["sub_iter"])
     def add5(self, a: float):
         a = a + 5
         return FieldUpdates({"a": a})

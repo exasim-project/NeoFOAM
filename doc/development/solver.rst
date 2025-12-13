@@ -11,11 +11,11 @@ Additionally, the solver also defines the models that can be used to extend the 
     @Solver
     class IncompressibleFluidSolver:
         models: list[IncompressibleFluidModel]  # Additional physics models
-        @Solver.step(...)
+        @Solver.operation(...)
         def momentum(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def continuity(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def update_turbulence(self, ...): pass
 
 
@@ -25,17 +25,17 @@ Additionally, the solver also defines the models that can be used to extend the 
 
     @IncompressibleFluidModel.register
     class BoussinesqModel:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def temperature_equation(self, ...): pass
 
     @IncompressibleFluidModel.register
     class PorosityModel:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def add_momentum_source(self, ...): pass
 
     @IncompressibleFluidModel.register
     class RotatingReferenceFrame:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def add_momentum_source(self, ...): pass
 
 
@@ -74,4 +74,3 @@ This is solved by a 3 stage initialization process of the solver and models:
 
         def define_operations(self, domain_name: str | None = None) -> Operations:
             # ... TBD
-

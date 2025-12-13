@@ -33,22 +33,24 @@ class MySolver(BaseModel):
         ctx.fields["a"] = 0.0
         return ctx
 
-    @Solver.step(step_number=1, depends_on=[])  # check if the steps are sorted
+    @Solver.operation(
+        operation_number=1, depends_on=[]
+    )  # check if the steps are sorted
     def step_one(self, a: float):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=2, depends_on=["step_one"])
+    @Solver.operation(operation_number=2, depends_on=["step_one"])
     def step_two(self, a: float):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=3, depends_on=["step_two"])
+    @Solver.operation(operation_number=3, depends_on=["step_two"])
     def step_three(self, a: float):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
 
-    @Solver.step(step_number=4, depends_on=["step_three"])
+    @Solver.operation(operation_number=4, depends_on=["step_three"])
     def step_four(self, a: float):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
@@ -85,12 +87,12 @@ class MyModel(BaseModel):
     param: float
     name: str
 
-    @Model.step(step_number=1, depends_on=["step_one"])
+    @Model.operation(operation_number=1, depends_on=["step_one"])
     def initialize(self, a: float):
         a += self.param + 1.0
         return FieldUpdates({"a": a})
 
-    @Model.step(step_number=2, depends_on=["step_three"])
+    @Model.operation(operation_number=2, depends_on=["step_three"])
     def process(self, a: float):
         a += self.param + 1.0
         return FieldUpdates({"a": a})

@@ -16,20 +16,20 @@ class MySolver(BaseModel):
     name: Literal["MySolver"] = "MySolver"
     param1: float
 
-    @Solver.step(step_number=1, depends_on=[])  # check if the steps are sorted
-    def step_one(self, a: float) -> FieldUpdates:
+    @Solver.operation(operation_number=1, depends_on=[])  # check if the ops are sorted
+    def op_one(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=self.param1 + 1.0)
 
-    @Solver.step(step_number=2, depends_on=["step_one"])
-    def step_two(self, a: float) -> FieldUpdates:
+    @Solver.operation(operation_number=2, depends_on=["op_one"])
+    def op_two(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param1 + 1.0)
 
-    @Solver.step(step_number=3, depends_on=["step_two"])
-    def step_three(self, a: float) -> FieldUpdates:
+    @Solver.operation(operation_number=3, depends_on=["op_two"])
+    def op_three(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param1 + 1.0)
 
-    @Solver.step(step_number=4, depends_on=["step_three"])
-    def step_four(self, a: float) -> FieldUpdates:
+    @Solver.operation(operation_number=4, depends_on=["op_three"])
+    def op_four(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param1 + 1.0)
 
     def operations(self, domain_name: str | None = None) -> OperationCollection:
@@ -47,11 +47,11 @@ class MySolver(BaseModel):
 class MyModel(BaseModel):
     param: float
 
-    @Model.step(step_number=1, depends_on=["step_one"])
+    @Model.operation(operation_number=1, depends_on=["op_one"])
     def initialize(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param + 1.0)
 
-    @Model.step(step_number=2, depends_on=["step_three"])
+    @Model.operation(operation_number=2, depends_on=["op_three"])
     def process(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param + 1.0)
 

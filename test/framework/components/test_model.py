@@ -11,20 +11,20 @@ from foamadapter.framework.operations import Operation, OperationCollection
 class MyCustomModel(BaseModel):
     name: Literal["MyCustomModel"] = "MyCustomModel"
 
-    @Model.step(step_number=1)  # check if the steps are sorted
-    def step_one(self):
+    @Model.operation(operation_number=1)  # check if the ops are sorted
+    def op_one(self):
         pass
 
-    @Model.step(step_number=2, depends_on=["step_one"])
-    def step_two(self):
+    @Model.operation(operation_number=2, depends_on=["op_one"])
+    def op_two(self):
         pass
 
-    @Model.step(step_number=3, depends_on=["step_two"])
-    def step_three(self):
+    @Model.operation(operation_number=3, depends_on=["op_two"])
+    def op_three(self):
         pass
 
-    @Model.step(step_number=4, depends_on=["step_three"])
-    def step_four(self):
+    @Model.operation(operation_number=4, depends_on=["op_three"])
+    def op_four(self):
         pass
 
     def operations(self, domain_name: str | None = None) -> OperationCollection:
@@ -39,7 +39,7 @@ class MyCustomModel(BaseModel):
         pass
 
 
-def test_model_steps_registration():
+def test_model_ops_registration():
     assert issubclass(MyCustomModel, ModelInterface)
     # assert MyCustomModel.number_steps() == 4
 
@@ -47,25 +47,25 @@ def test_model_steps_registration():
     ops = my_model.operations()
     assert len(ops) == 4
 
-    first_step = ops[0]
-    assert first_step.step_name == "step_one"
-    assert first_step.step_number == 1
-    assert first_step.depends_on == []
+    first_op = ops[0]
+    assert first_op.operation_name == "op_one"
+    assert first_op.operation_number == 1
+    assert first_op.depends_on == []
 
-    second_step = ops[1]
-    assert second_step.step_name == "step_two"
-    assert second_step.step_number == 2
-    assert second_step.depends_on == ["step_one"]
+    second_op = ops[1]
+    assert second_op.operation_name == "op_two"
+    assert second_op.operation_number == 2
+    assert second_op.depends_on == ["op_one"]
 
-    third_step = ops[2]
-    assert third_step.step_name == "step_three"
-    assert third_step.step_number == 3
-    assert third_step.depends_on == ["step_two"]
+    third_op = ops[2]
+    assert third_op.operation_name == "op_three"
+    assert third_op.operation_number == 3
+    assert third_op.depends_on == ["op_two"]
 
-    fourth_step = ops[3]
-    assert fourth_step.step_name == "step_four"
-    assert fourth_step.step_number == 4
-    assert fourth_step.depends_on == ["step_three"]
+    fourth_op = ops[3]
+    assert fourth_op.operation_name == "op_four"
+    assert fourth_op.operation_number == 4
+    assert fourth_op.depends_on == ["op_three"]
 
     solver = MyCustomModel()
     assert solver.name == "MyCustomModel"
@@ -73,5 +73,3 @@ def test_model_steps_registration():
     schema = MyCustomModel.model_json_schema()
     assert "properties" in schema
     assert "name" in schema["properties"]
-    assert "_steps" not in schema["properties"]
-    assert "_step_data" not in schema["properties"]

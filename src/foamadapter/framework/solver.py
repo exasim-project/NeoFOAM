@@ -7,14 +7,14 @@ from typing import Protocol, runtime_checkable
 from foamadapter.framework.operations import OperationCollection
 
 from .context import Context
-from .decorator import step
+from .decorator import operation
 
 
 def Solver(cls: type) -> type:
     return cls
 
 
-Solver.step = staticmethod(step)  # type: ignore[attr-defined]
+Solver.operation = staticmethod(operation)  # type: ignore[attr-defined]
 
 
 @runtime_checkable

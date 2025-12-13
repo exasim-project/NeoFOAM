@@ -7,7 +7,7 @@ import functools
 import inspect
 from typing import Any, Callable, TypeVar
 
-from .types import OperationMetadata, OpType, StepNumber
+from .types import OperationMetadata, OpType, OperationNumber
 
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -28,38 +28,40 @@ def decorated_member_functions(instance: Any) -> list[Callable[..., Any]]:
     return decorated_functions
 
 
-def step(
+def operation(
     _func: F | None = None,
-    step_number: StepNumber | int | None = None,
+    operation_number: OperationNumber | int | None = None,
     depends_on: list[str] | None = None,
 ) -> F | Callable[[F], F]:
-    def _step_decorator(_func: F) -> F:
-        """Decorator to mark a function as a step in the workflow."""
+    def _operation_decorator(_func: F) -> F:
+        """Decorator to mark a function as an operation in the workflow."""
 
         @functools.wraps(_func)
         def wrapper(*args: object, **kwargs: object) -> Any:
             return _func(*args, **kwargs)
 
-        step_num = (
-            StepNumber(step_number) if isinstance(step_number, int) else step_number
+        op_num = (
+            OperationNumber(operation_number)
+            if isinstance(operation_number, int)
+            else operation_number
         )
         wrapper._metadata = OperationMetadata(  # type: ignore[attr-defined]
-            op_type=OpType.STEP,
+            op_type=OpType.OPERATION,
             op_name=_func.__name__,
-            step_number=step_num,
+            operation_number=op_num,
             depends_on=depends_on,
         )
         return wrapper  # type: ignore[return-value]
 
     if _func is None:
-        return _step_decorator
+        return _operation_decorator
     else:
-        return _step_decorator(_func)
+        return _operation_decorator(_func)
 
 
 def condition(
     _func: F | None = None,
-    step_number: StepNumber | int | None = None,
+    operation_number: OperationNumber | int | None = None,
     depends_on: list[str] | None = None,
 ) -> F | Callable[[F], F]:
     def _condition_decorator(_func: F) -> F:
@@ -80,13 +82,15 @@ def condition(
         def wrapper(*args: object, **kwargs: object) -> Any:
             return _func(*args, **kwargs)
 
-        step_num = (
-            StepNumber(step_number) if isinstance(step_number, int) else step_number
+        op_num = (
+            OperationNumber(operation_number)
+            if isinstance(operation_number, int)
+            else operation_number
         )
         wrapper._metadata = OperationMetadata(  # type: ignore[attr-defined]
             op_type=OpType.CONDITION,
             op_name=_func.__name__,
-            step_number=step_num,
+            operation_number=op_num,
             depends_on=depends_on,
         )
         return wrapper  # type: ignore[return-value]

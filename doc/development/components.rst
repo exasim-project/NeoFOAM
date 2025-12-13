@@ -30,13 +30,13 @@ The context object is simply a simple data container that holds references to al
 
 
 Each operation is a class that implements a specific functionality, such as updating a field based on a governing equation or applying boundary conditions.
-It can be created by using the ``@Solver.step`` or ``@Model.step`` decorator.
-The decorator method flags the bounded method as a step and collects metadata such as step name, step number, and dependencies.
+It can be created by using the ``@Solver.operation`` or ``@Model.operation`` decorator.
+The decorator method flags the bounded method as an operation and collects metadata such as operation name, operation number, and dependencies.
 
 
 .. code-block:: python
 
-    @Solver.step
+    @Solver.operation
     def solve_momentum(self, U, p) -> FieldUpdates:
         # ... computation
         return FieldUpdates({"U": U_new})
@@ -54,9 +54,9 @@ Operations
 
 There are three main types of operations in the framework:
 
-* ``SequentialOp`` represents a regular step in the solver sequence and contains a single function to execute.
-* ``ConditionalOp`` represents a step that is executed only if a certain condition is met, and has multiple sub-operations.
-* ``IterativeOp`` represents a step that is executed repeatedly while a certain condition is met, and has multiple sub-operations.
+* ``SequentialOp`` represents a regular operation in the solver sequence and contains a single function to execute.
+* ``ConditionalOp`` represents an operation that is executed only if a certain condition is met, and has multiple sub-operations.
+* ``IterativeOp`` represents an operation that is executed repeatedly while a certain condition is met, and has multiple sub-operations.
 
 These operations types can be visualized as follows and are the building blocks of a solver workflow:
 
@@ -98,17 +98,17 @@ All operations stored as instances of the ``Operation`` class, which contains th
 
     @dataclass
     class Operation:
-        """A concrete step class that wraps a function with metadata."""
+        """A concrete operation class that wraps a function with metadata."""
 
         func: Union[ConditionalOp, IterativeOp, SequentialOp]
-        step_number: StepNumber = None
-        step_name: str = None
+        operation_number: OperationNumber = None
+        operation_name: str = None
         domain_name: str | None = None
         depends_on: list[str] | None = None
         shape: str = "box"
         color: str = "lightblue"
         level: int = 0
-        sub_steps: list["Operation"] = field(default_factory=list)
+        sub_operations: list["Operation"] = field(default_factory=list)
 
 The solver framework gathers all ``Operation`` instances defined in the solver and model classes and constructs a workflow that can be executed in sequence.
 The resulting workflow is represented by the ``Operations`` class that is a container for all operations in the solver:
@@ -158,7 +158,7 @@ This enables the creation of complex conditions by combining simpler ones.
 
 This also allows to modify the solver workflow and execution dynamically based on the current state of the context object.
 Models can define their own conditions that can be used to modify the ``ConditionalOp`` and ``IterativeOp``s defined in the solver.
-A common example for this would be a steady state solver that converged sucessfully and the residuals are below a certain threshold.
+A common example for this would be a steady state solver that converged successfully and the residuals are below a certain threshold.
 
 
 StepBuilder
@@ -171,19 +171,19 @@ It is possible to build required operations from just the operations defined in 
     @Solver
     class IncompressibleFluidSolver:
         models: list[IncompressibleFluidModel]  # Additional physics models
-        @Solver.step(...)
+        @Solver.operation(...)
         def momentum(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def continuity(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def update_turbulence(self, ...): pass
 
 
-However, this approach is difficult to comprehend and a the solver workflow is not easily readable, exspecially for complex solvers and nested operations.
+However, this approach is difficult to comprehend and a the solver workflow is not easily readable, especially for complex solvers and nested operations.
 The classical approach in contrast is a lot easier to read and understand as the solver workflow is defined in a single method.
 
 .. code-block:: python
-    
+
     # pseudo code for a classical PIMPLE solver loop
     while runTime.loop():
         Info(f"Time = {runTime.timeName()}")
@@ -233,4 +233,3 @@ It is used in the define_operations method of the solver class to build the solv
         op_build.update_operations(ops_col) # add or modify steps defined by the models of a solver
 
         return op_build.operations
-
