@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['kissurfacefieldv_0',['kIsSurfaceFieldV',['../namespaceNeoFOAM_1_1detail.html#ab37344dd011dcd16dfb787aa42818cab',1,'NeoFOAM::detail']]],
-  ['kisvolumefieldv_1',['kIsVolumeFieldV',['../namespaceNeoFOAM_1_1detail.html#aa7e67856d10070fa8eb28d5f17c718cf',1,'NeoFOAM::detail']]]
+  ['linearsystem_0',['linearsystem',['../classNeoFOAM_1_1PDESolver.html#a0b3c75a1830571b477f95604a603b6a9',1,'NeoFOAM::PDESolver::linearSystem()'],['../classNeoFOAM_1_1PDESolver.html#a2c0e3ff2aee001b75bd3dd060d8b14ab',1,'NeoFOAM::PDESolver::linearSystem() const']]]
 ];

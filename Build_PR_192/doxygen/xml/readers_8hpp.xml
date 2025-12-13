@@ -5,8 +5,8 @@
     <includes local="no">type_traits</includes>
     <includes local="yes">NeoN/NeoN.hpp</includes>
     <includes refid="convert_8hpp" local="yes">NeoFOAM/auxiliary/convert.hpp</includes>
-    <includes refid="type__conversion_8hpp" local="yes">NeoFOAM/auxiliary/type_conversion.hpp</includes>
-    <includes refid="field__traits_8hpp" local="yes">NeoFOAM/auxiliary/field_traits.hpp</includes>
+    <includes refid="typeConversion_8hpp" local="yes">NeoFOAM/auxiliary/typeConversion.hpp</includes>
+    <includes refid="fieldTraits_8hpp" local="yes">NeoFOAM/auxiliary/fieldTraits.hpp</includes>
     <includedby refid="meshAdapter_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp</includedby>
     <includedby refid="runTime_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/runTime.hpp</includedby>
     <incdepgraph>
@@ -19,8 +19,8 @@
         </childnode>
       </node>
       <node id="9">
-        <label>NeoFOAM/auxiliary/field_traits.hpp</label>
-        <link refid="field__traits_8hpp"/>
+        <label>NeoFOAM/auxiliary/fieldTraits.hpp</label>
+        <link refid="fieldTraits_8hpp"/>
         <childnode refid="3" relation="include">
         </childnode>
       </node>
@@ -39,8 +39,8 @@
         </childnode>
       </node>
       <node id="6">
-        <label>NeoFOAM/auxiliary/type_conversion.hpp</label>
-        <link refid="type__conversion_8hpp"/>
+        <label>NeoFOAM/auxiliary/typeConversion.hpp</label>
+        <link refid="typeConversion_8hpp"/>
         <childnode refid="7" relation="include">
         </childnode>
         <childnode refid="8" relation="include">
@@ -120,8 +120,8 @@
 <codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="8"><highlight class="normal"></highlight></codeline>
 <codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="convert_8hpp" kindref="compound">NeoFOAM/auxiliary/convert.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="type__conversion_8hpp" kindref="compound">NeoFOAM/auxiliary/type_conversion.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="field__traits_8hpp" kindref="compound">NeoFOAM/auxiliary/field_traits.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="typeConversion_8hpp" kindref="compound">NeoFOAM/auxiliary/typeConversion.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="fieldTraits_8hpp" kindref="compound">NeoFOAM/auxiliary/fieldTraits.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="12"><highlight class="normal"></highlight></codeline>
 <codeline lineno="13"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal">fvcc<sp/>=<sp/>NeoN::finiteVolume::cellCentred;</highlight></codeline>
 <codeline lineno="14"><highlight class="normal"></highlight></codeline>
@@ -280,12 +280,12 @@
 <codeline lineno="167"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">ContainerType<sp/>=<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/><ref refid="structNeoFOAM_1_1TypeMap" kindref="compound">TypeMap&lt;FoamFieldType&gt;::container_type</ref>;</highlight></codeline>
 <codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">MappedType<sp/><sp/><sp/><sp/>=<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/><ref refid="structNeoFOAM_1_1TypeMap" kindref="compound">TypeMap&lt;FoamFieldType&gt;::mapped_type</ref>;</highlight></codeline>
 <codeline lineno="169"><highlight class="normal"></highlight></codeline>
-<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/>(NeoFOAM::detail::kIsVolumeFieldV&lt;ContainerType&gt;)<sp/>{</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/>(NeoFOAM::detail::isVolumeField&lt;ContainerType&gt;)<sp/>{</highlight></codeline>
 <codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ContainerType<sp/>out(exec,<sp/>in.name(),<sp/>nfMesh,<sp/><ref refid="namespaceNeoFOAM_1a6cb4d89d1e44667e5a66f5119bad9206" kindref="member">readVolBoundaryConditions</ref>(nfMesh,<sp/>in));</highlight></codeline>
 <codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out.internalVector()<sp/>=<sp/><ref refid="namespaceNeoFOAM_1a1dfe753898e56c3e2e7b5c6f00bd2a4f" kindref="member">fromFoamField</ref>(exec,<sp/>in.primitiveField());</highlight></codeline>
 <codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out.correctBoundaryConditions();</highlight></codeline>
 <codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>out;</highlight></codeline>
-<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/>(NeoFOAM::detail::kIsSurfaceFieldV&lt;ContainerType&gt;)<sp/>{</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/>(NeoFOAM::detail::isSurfaceField&lt;ContainerType&gt;)<sp/>{</highlight></codeline>
 <codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal">FoamComponentType<sp/>=<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>FoamFieldType::cmptType;</highlight></codeline>
 <codeline lineno="177"><highlight class="normal"></highlight></codeline>
 <codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ContainerType<sp/>out(exec,<sp/>in.name(),<sp/>nfMesh,<sp/><ref refid="namespaceNeoFOAM_1adb365cf8e725db6dbfc0a758c392e2b1" kindref="member">readSurfaceBoundaryConditions</ref>(nfMesh,<sp/>in));</highlight></codeline>

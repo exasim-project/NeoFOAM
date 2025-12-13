@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['operator_26_0',['operator&amp;',['../namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc',1,'NeoFOAM']]],
-  ['operator_28_29_1',['operator()',['../classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f',1,'NeoFOAM::CreateFromFoamField::operator()()'],['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a47ab1991c1a3be26016c83df5c0d2283',1,'NeoFOAM::PDESolver::SetReference::operator()()']]],
-  ['operator_3d_3d_2',['operator==',['../namespaceNeoFOAM.html#adb3f301260a65dd30182893f75665a8a',1,'NeoFOAM::operator==(const NeoN::Vector&lt; NT &gt; &amp;nf, const Foam::Field&lt; OT &gt; &amp;of)'],['../namespaceNeoFOAM.html#ab57ab173a9df89dbffffcf9a42aa673d',1,'NeoFOAM::operator==(fvcc::VolumeField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvPatchField, Foam::volMesh &gt; &amp;of)'],['../namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805',1,'NeoFOAM::operator==(const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)']]]
+  ['pdesolver_0',['pdesolver',['../classNeoFOAM_1_1PDESolver.html',1,'NeoFOAM::PDESolver&lt; ValueType, IndexType &gt;'],['../classNeoFOAM_1_1PDESolver.html#afe835ed8d94d48b6cc9f115abafce6da',1,'NeoFOAM::PDESolver::PDESolver(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, const RunTime &amp;runTime)'],['../classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1',1,'NeoFOAM::PDESolver::PDESolver(const PDESolver &amp;expr)']]],
+  ['pdesolver_2ehpp_1',['pdeSolver.hpp',['../pdeSolver_8hpp.html',1,'']]],
+  ['prefcell_5f_2',['pRefCell_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4',1,'NeoFOAM::PDESolver::SetReference']]],
+  ['prefvalue_5f_3',['pRefValue_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b',1,'NeoFOAM::PDESolver::SetReference']]],
+  ['pressurevelocitycoupling_2ehpp_4',['pressureVelocityCoupling.hpp',['../pressureVelocityCoupling_8hpp.html',1,'']]]
 ];
