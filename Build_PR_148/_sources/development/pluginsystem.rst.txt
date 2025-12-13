@@ -163,12 +163,12 @@ Register multiple classes
     )
 
 
-    
+
 
 JSON Schema Generation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The dynamically generated plugin models support JSON schema generation for validation and documentation purposes. 
+The dynamically generated plugin models support JSON schema generation for validation and documentation purposes.
 Json schemas show all possible configuration of all the available plugins of each base class and therefore enable the creation of user interfaces or config file validators.
 
 .. code-block:: python
@@ -201,11 +201,10 @@ The following example demonstrates how to list registered plugins, retrieve spec
     # Remove plugins
     success = PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig)
 
-Registeration via Entrypoint
+Registration via Entrypoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 .. warning::
 
     This feature is not yet implemented.
-
