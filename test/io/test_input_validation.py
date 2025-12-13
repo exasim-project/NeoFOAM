@@ -1,4 +1,5 @@
 import os
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -8,8 +9,8 @@ from pydantic import BaseModel, Field
 from foamadapter.io.input_validation import ModelInputDefinition, ModelInputCollection
 
 
-@pytest.fixture
-def run_from_parent_directory():
+@pytest.fixture  # type: ignore[untyped-decorator]
+def run_from_parent_directory() -> Generator[None, None, None]:
     cwd = Path.cwd()
     parent_dir = Path(__file__).parent
     os.chdir(parent_dir)
@@ -17,16 +18,18 @@ def run_from_parent_directory():
     os.chdir(cwd)
 
 
-def test_validate_case(run_from_parent_directory):
+def test_validate_case(run_from_parent_directory: None) -> None:
     registry = ModelInputCollection()
 
     # Define a simple Pydantic model for testing
-    class CorrectModel(IOModelBase):
+    class CorrectModel(IOModelBase):  # type: ignore[misc]
         value: int
         too_high_value: int = Field(..., le=100)
 
     correct_model = ModelInputDefinition(
-        baseModel=CorrectModel, relative_path="input_files/simple_model.yaml", required=True
+        baseModel=CorrectModel,
+        relative_path="input_files/simple_model.yaml",
+        required=True,
     )
     assert Path(correct_model.relative_path).exists()
 
@@ -36,16 +39,18 @@ def test_validate_case(run_from_parent_directory):
     assert len(errors) == 0
 
 
-def test_validation_error(run_from_parent_directory):
+def test_validation_error(run_from_parent_directory: None) -> None:
     registry = ModelInputCollection()
 
     # Define a simple Pydantic model for testing
-    class IncorrectModel(IOModelBase):
+    class IncorrectModel(IOModelBase):  # type: ignore[misc]
         missing_value: int
         too_high_value: int = Field(..., le=10)
 
     incorrect_model = ModelInputDefinition(
-        baseModel=IncorrectModel, relative_path="input_files/simple_model.yaml", required=True
+        baseModel=IncorrectModel,
+        relative_path="input_files/simple_model.yaml",
+        required=True,
     )
     assert Path(incorrect_model.relative_path).exists()
 
@@ -71,13 +76,13 @@ def test_validation_error(run_from_parent_directory):
     assert second_error.message == "Input should be less than or equal to 10"
 
 
-def test_registry_find_remove():
+def test_registry_find_remove() -> None:
     registry = ModelInputCollection()
 
-    class DummyModelA(BaseModel):
+    class DummyModelA(BaseModel):  # type: ignore[misc]
         pass
 
-    class DummyModelB(BaseModel):
+    class DummyModelB(BaseModel):  # type: ignore[misc]
         pass
 
     input_def_a = ModelInputDefinition(

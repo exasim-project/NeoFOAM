@@ -1,7 +1,10 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2025 NeoFOAM authors
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Tuple, Type
+from typing import Any, Callable, Tuple, Type
 
 import tomllib
 import yaml
@@ -14,7 +17,9 @@ except ImportError:
     can_load_toml = False
 
 
-def default_validation_strategy(baseModel: Type[BaseModel], file_path: Path, encoding: str) -> None:
+def default_validation_strategy(
+    baseModel: Type[BaseModel], file_path: Path, encoding: str
+) -> None:
     """
     Default strategy to read and parse a file into a Pydantic model to validate it.
 
@@ -25,17 +30,19 @@ def default_validation_strategy(baseModel: Type[BaseModel], file_path: Path, enc
     """
     if not hasattr(baseModel, "from_file"):
         baseModel.from_file(file_path)
-    with open(file_path, "r", encoding=encoding) as f:
-        if file_path.suffix in [".yaml", ".yml"]:
-            data = yaml.safe_load(f)
-        elif file_path.suffix == ".json":
-            data = json.load(f)
-        elif file_path.suffix == ".toml":
-            if not can_load_toml:
-                raise ValueError("TOML support is not available")
+    if file_path.suffix == ".toml":
+        if not can_load_toml:
+            raise ValueError("TOML support is not available")
+        with open(file_path, "rb") as f:
             data = tomllib.load(f)
-        else:
-            raise ValueError(f"Unsupported file format: {file_path.suffix}")
+    else:
+        with open(file_path, "r", encoding=encoding) as f:
+            if file_path.suffix in [".yaml", ".yml"]:
+                data = yaml.safe_load(f)
+            elif file_path.suffix == ".json":
+                data = json.load(f)
+            else:
+                raise ValueError(f"Unsupported file format: {file_path.suffix}")
     baseModel.model_validate(data)
 
 
@@ -46,7 +53,9 @@ class ModelInputDefinition:
     encoding: str = "utf-8"
     required: bool = True
     description: str = ""
-    reading_strategy: callable = default_validation_strategy
+    reading_strategy: Callable[[Type[BaseModel], Path, str], None] = (
+        default_validation_strategy
+    )
 
     def validate(self, case_dir: str = ".") -> list[ValidationError]:
         """
@@ -104,10 +113,10 @@ class ValidationErrors:
 class ModelInputCollection:
     """ModelInputCollection that holds model classes and their file specifications."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._inputs: list[ModelInputDefinition] = []
 
-    def add(self, input_validation_data: ModelInputDefinition):
+    def add(self, input_validation_data: ModelInputDefinition) -> None:
         self._inputs.append(input_validation_data)
 
     def find(self, index: int | Path | str | Type[BaseModel]) -> ModelInputDefinition:
@@ -126,10 +135,12 @@ class ModelInputCollection:
         else:
             raise TypeError(f"Unsupported index type: {type(index)}")
 
-    def remove(self, index: int):
+    def remove(self, index: int) -> None:
         self._inputs.pop(index)
 
-    def validate_case(self, case_dir: str | Path = ".") -> Tuple[bool, list[ValidationErrors]]:
+    def validate_case(
+        self, case_dir: str | Path = "."
+    ) -> Tuple[bool, list[ValidationErrors]]:
         """
         Validate that all required files exist and are valid for the given case.
 
@@ -143,7 +154,7 @@ class ModelInputCollection:
         validation_errors: list[ValidationErrors] = []
 
         for input_validation_data in self._inputs:
-            errors = input_validation_data.validate(case_dir=case_path)
+            errors = input_validation_data.validate(case_dir=str(case_path))
             validation_errors.extend(errors)
 
         return len(validation_errors) == 0, validation_errors

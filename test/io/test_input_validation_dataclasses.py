@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from foamadapter.io.input_validation import ModelInputDefinition, ValidationErrors
 
 
-def test_file_spec_instance():
-    class DummyModel(BaseModel):
+def test_file_spec_instance() -> None:
+    class DummyModel(BaseModel):  # type: ignore[misc]
         value: int
 
     fs = ModelInputDefinition(
@@ -17,7 +17,7 @@ def test_file_spec_instance():
     assert fs.description == ""
 
 
-def test_validation_errors_instance():
+def test_validation_errors_instance() -> None:
     ve = ValidationErrors(
         field="velocity",
         error_type="TypeError",
