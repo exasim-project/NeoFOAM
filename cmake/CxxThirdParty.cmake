@@ -15,8 +15,6 @@ function(scorep_add_external_project)
                               Defaults to 'gcc', if this is not the intended 
 			      compiler set manually via SCOREP_COMPILER_SUITE")
 
-    set(SCOREP_PREFIX "${CMAKE_BINARY_DIR}/scorep")
-
     ExternalProject_Add(scorep_build
         SOURCE_DIR     ${CMAKE_BINARY_DIR}/_deps/scorep-src
         URL            https://zenodo.org/records/17297069/files/scorep-9.3.tar.gz

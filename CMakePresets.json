@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 5,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 22,
@@ -66,7 +66,7 @@
       }
     },
     {
-      "name": "scorep",
+      "name": "instrumented",
       "inherits": ["production"],
       "displayName": "Score-P Profiling",
       "description": "Build with Score-P instrumentation",
@@ -74,6 +74,11 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer",
         "NEOFOAM_WITH_SCOREP": "ON"
+      },
+      "environment": {
+	"PATH": "${sourceDir}/build/scorep/bin:$penv{PATH}",
+        "NVCC_WRAPPER_DEFAULT_COMPILER": "scorep-g++",
+	"SCOREP_WRAPPER_INSTRUMENTER_FLAGS": "--thread=pthread --mpp=none --kokkos"
       }
     }
   ],
@@ -100,10 +105,10 @@
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "scorep",
+      "name": "instrumented",
       "displayName": "Score-P Profiling",
       "description": "Build for profiling use",
-      "configurePreset": "scorep",
+      "configurePreset": "instrumented",
       "configuration": "Release"
     }
   ],

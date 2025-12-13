@@ -3,18 +3,6 @@
 
 cmake_minimum_required(VERSION 3.22.0)
 
-if(NEOFOAM_WITH_SCOREP)
-    include(cmake/scorep.cmake)
-    scorep_check(SCOREP_FOUND)
-    if(NOT SCOREP_FOUND)
-	include(cmake/CxxThirdParty.cmake)
-	project(bootstrap_scorep LANGUAGES NONE)
-        scorep_add_external_project()
-        return()   # required to stop the configure after scorep on first cmake call
-    endif()
-    scorep_setup_compilers()
-endif()
-
 project(
   NeoFOAM
   LANGUAGES C CXX
@@ -43,6 +31,16 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 # Set the output directories for all binaries and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+if(NEOFOAM_WITH_SCOREP)
+    include(cmake/scorep.cmake)
+    scorep_check(SCOREP_FOUND)
+    if(NOT SCOREP_FOUND)
+        include(cmake/CxxThirdParty.cmake)
+        scorep_add_external_project()
+        return()   # required to stop the configure after scorep on first cmake call
+    endif()
+endif()
 
 include(cmake/OpenFOAM.cmake)
 
