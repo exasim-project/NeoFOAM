@@ -3,10 +3,23 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from pybFoam.io.model_base import IOModelBase
 from pydantic import BaseModel, Field
 
 from foamadapter.io.input_validation import ModelInputDefinition, ModelInputCollection
+
+# Try to import pybFoam, skip tests if not available
+try:
+    from pybFoam.io.model_base import IOModelBase
+    PYBFOAM_AVAILABLE = True
+except (ImportError, OSError) as e:
+    PYBFOAM_AVAILABLE = False
+    # Create a dummy class for type checking
+    IOModelBase = BaseModel  # type: ignore[misc,assignment]
+
+requires_pybfoam = pytest.mark.skipif(
+    not PYBFOAM_AVAILABLE,
+    reason="pybFoam not available or OpenFOAM libraries not loaded"
+)
 
 
 @pytest.fixture  # type: ignore[untyped-decorator]
@@ -18,6 +31,7 @@ def run_from_parent_directory() -> Generator[None, None, None]:
     os.chdir(cwd)
 
 
+@requires_pybfoam
 def test_validate_case(run_from_parent_directory: None) -> None:
     registry = ModelInputCollection()
 
@@ -39,6 +53,7 @@ def test_validate_case(run_from_parent_directory: None) -> None:
     assert len(errors) == 0
 
 
+@requires_pybfoam
 def test_validation_error(run_from_parent_directory: None) -> None:
     registry = ModelInputCollection()
 
