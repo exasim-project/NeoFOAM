@@ -3,8 +3,8 @@ Test for an extensible plugin config system using pydantic discriminated unions 
 Refactored to use a generic registry and factory for multiple extensible models.
 """
 
-from pydantic import BaseModel, Field, ValidationError
-from typing import Literal
+from pydantic import BaseModel, ValidationError
+from typing import Any, Literal
 import pytest
 from foamadapter.core.plugin_system import PluginSystem
 
@@ -46,10 +46,10 @@ class PolygonConfig(BaseModel):
     length: float
 
 
-Shape = ShapeInterface.plugin_model
+Shape = ShapeInterface.plugin_model  # type: ignore[attr-defined]
 
 
-def test_valid_configs_n_models():
+def test_valid_configs_n_models() -> None:
     m1 = Shape(shape={"shape_type": "circle", "radius": 2.5}, color="red")
     assert m1.shape.radius == 2.5
     m2 = Shape(shape={"shape_type": "square", "side": 4.0}, color="blue")
@@ -61,16 +61,16 @@ def test_valid_configs_n_models():
     assert m3.shape.height == 6.0
 
 
-def test_invalid_config_n_models():
+def test_invalid_config_n_models() -> None:
     with pytest.raises(ValidationError):
         Shape(shape={"shape_type": "circle"}, color="bad")  # missing 'radius'
     with pytest.raises(ValidationError):
         Shape(shape={"shape_type": "square", "radius": 2.0}, color="bad")  # wrong field
 
 
-def test_extensibility_n_models():
+def test_extensibility_n_models() -> None:
     ShapeInterface.register(TriangleConfig)
-    m4 = ShapeInterface.create(
+    m4: Any = ShapeInterface.create(  # type: ignore[attr-defined]
         shape={"shape_type": "triangle", "base": 3.0, "height": 4.0}, color="yellow"
     )
     assert m4.shape.base == 3.0
@@ -78,7 +78,7 @@ def test_extensibility_n_models():
     assert m4.shape.shape_type == "triangle"
 
     ShapeInterface.register(PolygonConfig)
-    m5 = ShapeInterface.create(
+    m5: Any = ShapeInterface.create(  # type: ignore[attr-defined]
         shape={"shape_type": "polygon", "sides": 5, "length": 2.0}, color="purple"
     )
     assert m5.shape.sides == 5
@@ -89,8 +89,8 @@ def test_extensibility_n_models():
     assert PluginSystem.remove_plugin_model("ShapeInterface", PolygonConfig) is True
 
 
-def test_json_schema():
-    Shape = ShapeInterface.plugin_model
+def test_json_schema() -> None:
+    Shape = ShapeInterface.plugin_model  # type: ignore[attr-defined]
     schema = Shape.model_json_schema()
     discriminator = schema["properties"]["shape"]["discriminator"]
     assert discriminator["propertyName"] == "shape_type"
@@ -102,14 +102,14 @@ def test_json_schema():
     assert "polygon" not in mapping
 
     ShapeInterface.register(TriangleConfig)
-    Shape = ShapeInterface.plugin_model
+    Shape = ShapeInterface.plugin_model  # type: ignore[attr-defined]
     schema = Shape.model_json_schema()
     mapping = schema["properties"]["shape"]["discriminator"]["mapping"]
     assert "triangle" in mapping
     assert "polygon" not in mapping
 
     ShapeInterface.register(PolygonConfig)
-    Shape = ShapeInterface.plugin_model
+    Shape = ShapeInterface.plugin_model  # type: ignore[attr-defined]
     schema = Shape.model_json_schema()
     mapping = schema["properties"]["shape"]["discriminator"]["mapping"]
     assert "polygon" in mapping
@@ -118,7 +118,7 @@ def test_json_schema():
     assert PluginSystem.remove_plugin_model("ShapeInterface", PolygonConfig) is True
 
 
-def test_plugin_registry():
+def test_plugin_registry() -> None:
     ShapeInterface.register(TriangleConfig)
     ShapeInterface.register(PolygonConfig)
     registry = PluginSystem.get_registered("ShapeInterface")
@@ -138,6 +138,7 @@ def test_plugin_registry():
 class AnimalInterface(BaseModel):
     color: str
 
+
 @AnimalInterface.register
 class Dog(BaseModel):
     animal_type: Literal["dog"]
@@ -147,7 +148,8 @@ class Dog(BaseModel):
 class Cat(BaseModel):
     animal_type: Literal["cat"]
 
-def test_list_plugins():
+
+def test_list_plugins() -> None:
     ShapeInterface.register(TriangleConfig)
     ShapeInterface.register(PolygonConfig)
     plugins = PluginSystem.list_plugins()
