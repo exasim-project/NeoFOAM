@@ -11,6 +11,10 @@ from .decorator import operation
 
 
 def Model(cls: type) -> type:
+    """
+    A class decorator to mark a class as a Model in the framework.
+    Models contain a set of operations that are meant to extend a solver's functionality.
+    """
     return cls
 
 

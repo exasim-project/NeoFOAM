@@ -11,6 +11,11 @@ from .decorator import operation
 
 
 def Solver(cls: type) -> type:
+    """
+    A class decorator to mark a class as a Solver in the framework.
+    Solvers define the main simulation loop and the basic execution of operations.
+    Can be extended via Models.
+    """
     return cls
 
 
