@@ -25,8 +25,8 @@ class SomeClass:
 def test_context_adapter_step():
     """
     Tests the `context_adapter` decorator by verifying that it correctly
-    injects the function parameters from a `Context` object and returns
-    the a runnable function that updates the context fields.
+    injects the function parameters including dataclasses from a `Context`
+    object and returns the a runnable function that updates the context fields.
     """
     sc = SomeClass()
 

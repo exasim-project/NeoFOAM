@@ -32,15 +32,25 @@ class SomeClass:
 
 
 def test_context_adapter_step():
+    """
+    Tests the `context_adapter` decorator by verifying that it correctly
+    injects the function parameters including dataclasses from a `Context`
+    object and returns the a runnable function that updates the context fields.
+    """
+
     sc = SomeClass()
 
+    # create a new function that takes the context as input for a single parameter
     adapted_func = context_adapter(sc.member_function)
 
     ctx = Context(fields={"a": 0}, models={})
+    # run the adapted function
     adapted_func(ctx)
 
+    # verify that the context fields have been updated correctly
     assert ctx.fields["a"] == 1
 
+    # create a new function that takes the context as input for several parameters
     adapted_func = context_adapter(sc.another_member_function)
 
     ctx = Context(fields={"a": 0, "b": 0}, models={})
@@ -48,6 +58,7 @@ def test_context_adapter_step():
 
     assert ctx.fields["b"] == 2
 
+    # create a new function that takes the context as input for several parameters including kwargs
     adapted_func = context_adapter(sc.another_member_function_kwargs)
 
     ctx = Context(fields={"a": 0, "b": 0, "c": 0.0}, models={})
