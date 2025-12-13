@@ -19,6 +19,7 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(NEOFOAM_WITH_SCOREP "Build with Score-P support " OFF)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
@@ -30,6 +31,16 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 # Set the output directories for all binaries and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+if(NEOFOAM_WITH_SCOREP)
+    include(cmake/scorep.cmake)
+    scorep_check(SCOREP_FOUND)
+    if(NOT SCOREP_FOUND)
+        include(cmake/CxxThirdParty.cmake)
+        scorep_add_external_project()
+        return()   # required to stop the configure after scorep on first cmake call
+    endif()
+endif()
 
 include(cmake/OpenFOAM.cmake)
 
