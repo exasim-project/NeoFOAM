@@ -41,12 +41,11 @@ The decorator method flags the bounded method as an operation and collects metad
         # ... computation
         return FieldUpdates({"U": U_new})
 
-Additionally, decorated methods are self-contained and the dependencies are injected automatically by the framework by inspecting the method signature.
-The framework uses the method signature to determine which fields or models are required for the operation and retrieves them from the context object.
-Consequently, the user only needs to specify the required inputs as method arguments, and the framework takes care of providing the correct data when the operation is executed.
-Another advantage of this approach is that it makes the operations more modular and easier to test, as they can be executed independently with different inputs.
-It improves code readability and maintainability by clearly defining the dependencies of each operation.
-The dependencies between the operations can also be visualized which helps to understand the overall structure of the solver.
+Additionally, decorated methods do not manually fetch data from the context. Instead, the framework inspects the method signature to determine which fields or models are required for the operation and automatically injects them when the method is called.
+Consequently, the user only needs to declare the required inputs as method arguments, and the framework takes care of providing the correct data at runtime.
+This keeps each operation independent of global state and makes it easier to test in isolation, since it can be executed by simply passing in the required arguments.
+It also improves code readability and maintainability by making the dependencies of each operation explicit.
+The dependencies between the operations can be visualized, which helps to understand the overall structure of the solver.
 
 
 Operations
