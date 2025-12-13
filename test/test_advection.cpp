@@ -104,8 +104,8 @@ TEST_CASE("Advection Equation")
                 .name = "nfT"
             }
         );
-    auto nfPhi0 = NeoFOAM::constructSurfaceField(exec, nfMesh, phi0);
-    auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, phi);
+    auto nfPhi0 = NeoFOAM::constructFrom(exec, nfMesh, phi0);
+    auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, phi);
 
     NeoN::Dictionary controlDict = NeoFOAM::convert(runTime.controlDict());
     NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());

@@ -43,12 +43,29 @@ FieldType createRandomField(
         mesh
     );
 
-    for (auto celli = 0; celli < t.size(); celli++)
+    if constexpr (std::is_same_v<FieldType, Foam::surfaceScalarField> || std::is_same_v<FieldType, Foam::surfaceVectorField>)
     {
-        t[celli] = rand();
-    }
+        // Surface field — fill internal + boundary
+        auto& intF = t.primitiveFieldRef();
+        forAll(intF, facei)
+            intF[facei] = rand();
 
-    t.correctBoundaryConditions();
+        forAll(t.boundaryField(), patchi)
+        {
+            auto& p = t.boundaryFieldRef()[patchi];
+            forAll(p, i)
+                p[i] = rand();
+        }
+    }
+    else
+    {
+        for (auto celli = 0; celli < t.size(); celli++)
+        {
+            t[celli] = rand();
+        }
+
+        t.correctBoundaryConditions();
+    }
     return t;
 }
 
@@ -62,7 +79,7 @@ auto randomScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam
     return createRandomField<Foam::volScalarField>(runTime, mesh, name, [&]() { return dis(gen); });
 }
 
-auto randomVectorField(const Foam::Time& runTime, const NeoFOAM::MeshAdapter& mesh, Foam::word name)
+auto randomVectorField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
 {
     std::random_device rd;  // Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
@@ -74,6 +91,19 @@ auto randomVectorField(const Foam::Time& runTime, const NeoFOAM::MeshAdapter& me
         [&]() {
             return Foam::vector {dis(gen), dis(gen), dis(gen)};
         }
+    );
+}
+
+auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mesh, Foam::word name)
+{
+    std::random_device rd;  // Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(1.0, 2.0);
+    return createRandomField<Foam::surfaceScalarField>(
+        runTime,
+        mesh,
+        name,
+        [&]() { return dis(gen); }
     );
 }
 

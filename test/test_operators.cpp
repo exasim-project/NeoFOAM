@@ -45,7 +45,7 @@ TEST_CASE("Interpolation")
         Foam::tmp<Foam::surfaceInterpolationScheme<Foam::scalar>> foamInterPol =
             Foam::surfaceInterpolationScheme<Foam::scalar>::New(mesh, is);
         Foam::surfaceScalarField ofSurfT(foamInterPol->interpolate(ofT));
-        auto nfSurfT = NeoFOAM::constructSurfaceField(exec, nfMesh, ofSurfT);
+        auto nfSurfT = NeoFOAM::constructFrom(exec, nfMesh, ofSurfT);
         zero(nfSurfT, 0.0);
 
         interpolationScheme.insert(std::string("linear"));
@@ -95,7 +95,7 @@ TEST_CASE("Interpolation")
         mesh,
         Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
     );
-    auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, ofPhi);
+    auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
 
     SECTION("GaussGreenDiv[scalar] on " + execName)
     {
