@@ -33,6 +33,8 @@ def operation(
     operation_number: OperationNumber | int | None = None,
     depends_on: list[str] | None = None,
 ) -> F | Callable[[F], F]:
+    """decorator Factory to mark a decorator to mark a function as an operation in the workflow."""
+
     def _operation_decorator(_func: F) -> F:
         """Decorator to mark a function as an operation in the workflow."""
 
@@ -64,7 +66,10 @@ def condition(
     operation_number: OperationNumber | int | None = None,
     depends_on: list[str] | None = None,
 ) -> F | Callable[[F], F]:
+    """decorator Factory to mark a decorator to mark a function as a condition in the workflow."""
+
     def _condition_decorator(_func: F) -> F:
+        """Decorator to mark a function as a condition in the workflow."""
         # check if return value is a Condition instance
         return_annotation = inspect.signature(_func).return_annotation
         # Require return annotation to be present and be Condition
