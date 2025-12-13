@@ -64,7 +64,6 @@ class OpType(Enum):
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
 
-    # Core identity
     op_name: str
 
     # Optional metadata

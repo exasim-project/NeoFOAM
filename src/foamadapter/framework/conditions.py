@@ -24,6 +24,10 @@ class Condition:
         self._condition_func = condition_func
         self._name = name
 
+    @property
+    def name(self) -> str:
+        return self._name
+
     def __call__(self, *args: object, **kwargs: object) -> bool:
         return self._condition_func(*args, **kwargs)
 
