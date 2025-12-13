@@ -50,7 +50,8 @@ var menudata={children:[
 {text:"r",url:"namespacemembers_func.html#index_r"},
 {text:"s",url:"namespacemembers_func.html#index_s"},
 {text:"u",url:"namespacemembers_func.html#index_u"},
-{text:"w",url:"namespacemembers_func.html#index_w"}]}]}]},
+{text:"w",url:"namespacemembers_func.html#index_w"}]},
+{text:"Variables",url:"namespacemembers_vars.html"}]}]},
 {text:"Classes",url:"annotated.html",children:[
 {text:"Class List",url:"annotated.html"},
 {text:"Class Index",url:"classes.html"},
