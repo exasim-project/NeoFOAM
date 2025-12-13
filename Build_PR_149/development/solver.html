@@ -196,7 +196,7 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html">Goals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html#features">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
@@ -257,11 +257,11 @@ Additionally, the solver also defines the models that can be used to extend the 
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Solver</span>
 <span class="k">class</span> <span class="nc">IncompressibleFluidSolver</span><span class="p">:</span>
     <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IncompressibleFluidModel</span><span class="p">]</span>  <span class="c1"># Additional physics models</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 
@@ -271,17 +271,17 @@ Additionally, the solver also defines the models that can be used to extend the 
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">BoussinesqModel</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">temperature_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">PorosityModel</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">RotatingReferenceFrame</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 </pre></div>
 </div>

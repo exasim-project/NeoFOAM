@@ -196,7 +196,7 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html">Goals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html#features">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
@@ -270,28 +270,27 @@ The context object is simply a simple data container that holds references to al
 </pre></div>
 </div>
 <p>Each operation is a class that implements a specific functionality, such as updating a field based on a governing equation or applying boundary conditions.
-It can be created by using the <code class="docutils literal notranslate"><span class="pre">&#64;Solver.step</span></code> or <code class="docutils literal notranslate"><span class="pre">&#64;Model.step</span></code> decorator.
-The decorator method flags the bounded method as a step and collects metadata such as step name, step number, and dependencies.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span>
+It can be created by using the <code class="docutils literal notranslate"><span class="pre">&#64;Solver.operation</span></code> or <code class="docutils literal notranslate"><span class="pre">&#64;Model.operation</span></code> decorator.
+The decorator method flags the bounded method as an operation and collects metadata such as operation name, operation number, and dependencies.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span>
 <span class="k">def</span> <span class="nf">solve_momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
     <span class="c1"># ... computation</span>
     <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U_new</span><span class="p">})</span>
 </pre></div>
 </div>
-<p>Additionally, decorated methods are self-contained and the dependencies are injected automatically by the framework by inspecting the method signature.
-The framework uses the method signature to determine which fields or models are required for the operation and retrieves them from the context object.
-Consequently, the user only needs to specify the required inputs as method arguments, and the framework takes care of providing the correct data when the operation is executed.
-Another advantage of this approach is that it makes the operations more modular and easier to test, as they can be executed independently with different inputs.
-It improves code readability and maintainability by clearly defining the dependencies of each operation.
-The dependencies between the operations can also be visualized which helps to understand the overall structure of the solver.</p>
+<p>Additionally, decorated methods do not manually fetch data from the context. Instead, the framework inspects the method signature to determine which fields or models are required for the operation and automatically injects them when the method is called.
+Consequently, the user only needs to declare the required inputs as method arguments, and the framework takes care of providing the correct data at runtime.
+This keeps each operation independent of global state and makes it easier to test in isolation, since it can be executed by simply passing in the required arguments.
+It also improves code readability and maintainability by making the dependencies of each operation explicit.
+The dependencies between the operations can be visualized, which helps to understand the overall structure of the solver.</p>
 </section>
 <section id="operations">
 <h2>Operations<a class="headerlink" href="#operations" title="Link to this heading">¶</a></h2>
 <p>There are three main types of operations in the framework:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">SequentialOp</span></code> represents a regular step in the solver sequence and contains a single function to execute.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ConditionalOp</span></code> represents a step that is executed only if a certain condition is met, and has multiple sub-operations.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">IterativeOp</span></code> represents a step that is executed repeatedly while a certain condition is met, and has multiple sub-operations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SequentialOp</span></code> represents a regular operation in the solver sequence and contains a single function to execute.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConditionalOp</span></code> represents an operation that is executed only if a certain condition is met, and has multiple sub-operations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IterativeOp</span></code> represents an operation that is executed repeatedly while a certain condition is met, and has multiple sub-operations.</p></li>
 </ul>
 <p>These operations types can be visualized as follows and are the building blocks of a solver workflow:</p>
 <pre  class="mermaid">
@@ -325,17 +324,17 @@ The dependencies between the operations can also be visualized which helps to un
 <p>All operations stored as instances of the <code class="docutils literal notranslate"><span class="pre">Operation</span></code> class, which contains the following attributes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">Operation</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A concrete step class that wraps a function with metadata.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A concrete operation class that wraps a function with metadata.&quot;&quot;&quot;</span>
 
     <span class="n">func</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ConditionalOp</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">SequentialOp</span><span class="p">]</span>
-    <span class="n">step_number</span><span class="p">:</span> <span class="n">StepNumber</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">step_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">operation_number</span><span class="p">:</span> <span class="n">OperationNumber</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">operation_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">domain_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;box&quot;</span>
     <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lightblue&quot;</span>
     <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">sub_steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;Operation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">sub_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;Operation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The solver framework gathers all <code class="docutils literal notranslate"><span class="pre">Operation</span></code> instances defined in the solver and model classes and constructs a workflow that can be executed in sequence.
@@ -375,7 +374,7 @@ This enables the creation of complex conditions by combining simpler ones.</p>
 </div>
 <p>This also allows to modify the solver workflow and execution dynamically based on the current state of the context object.
 Models can define their own conditions that can be used to modify the <code class="docutils literal notranslate"><span class="pre">ConditionalOp</span></code> and <a href="#id1"><span class="problematic" id="id2">``</span></a>IterativeOp``s defined in the solver.
-A common example for this would be a steady state solver that converged sucessfully and the residuals are below a certain threshold.</p>
+A common example for this would be a steady state solver that converged successfully and the residuals are below a certain threshold.</p>
 </section>
 <section id="stepbuilder">
 <h2>StepBuilder<a class="headerlink" href="#stepbuilder" title="Link to this heading">¶</a></h2>
@@ -383,15 +382,15 @@ A common example for this would be a steady state solver that converged sucessfu
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Solver</span>
 <span class="k">class</span> <span class="nc">IncompressibleFluidSolver</span><span class="p">:</span>
     <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IncompressibleFluidModel</span><span class="p">]</span>  <span class="c1"># Additional physics models</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 </pre></div>
 </div>
-<p>However, this approach is difficult to comprehend and a the solver workflow is not easily readable, exspecially for complex solvers and nested operations.
+<p>However, this approach is difficult to comprehend and a the solver workflow is not easily readable, especially for complex solvers and nested operations.
 The classical approach in contrast is a lot easier to read and understand as the solver workflow is defined in a single method.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># pseudo code for a classical PIMPLE solver loop</span>
 <span class="k">while</span> <span class="n">runTime</span><span class="o">.</span><span class="n">loop</span><span class="p">():</span>

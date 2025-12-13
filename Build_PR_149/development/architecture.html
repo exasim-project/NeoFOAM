@@ -196,7 +196,7 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html">Goals</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../goals_features.html#features">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
@@ -284,21 +284,21 @@ Coupling between domains is automatically handled based on the selected physics 
 </section>
 <section id="extensible-solver-architecture">
 <h2>Extensible Solver Architecture<a class="headerlink" href="#extensible-solver-architecture" title="Link to this heading">¶</a></h2>
-<p>To promote code reuse and maintainability, solver execution steps (operations) can be configured at runtime based on the selected physics models.
+<p>To promote code reuse and maintainability, solver execution operations can be configured at runtime based on the selected physics models.
 This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.</p>
 <pre  class="mermaid">
         flowchart TD
 
      subgraph MAIN [&quot;Main Solver Loop&quot;]
-         STEP1[&quot;Solver &lt;/br&gt; Momentum Equation&quot;]
-         STEP2[&quot;Added by Model &lt;/br&gt; Temperature Equation&quot;]
-         STEP3[&quot;Solver &lt;/br&gt; Continuity Equation&quot;]
-         STEP4[&quot;Solver &lt;/br&gt; Update Turbulence&quot;]
+         OP1[&quot;Solver &lt;/br&gt; Momentum Equation&quot;]
+         OP2[&quot;Added by Model &lt;/br&gt; Temperature Equation&quot;]
+         OP3[&quot;Solver &lt;/br&gt; Continuity Equation&quot;]
+         OP4[&quot;Solver &lt;/br&gt; Update Turbulence&quot;]
      end
 
-     STEP1 --&gt; STEP2
-     STEP2 --&gt; STEP3
-     STEP3 --&gt; STEP4
+     OP1 --&gt; OP2
+     OP2 --&gt; OP3
+     OP3 --&gt; OP4
 
      %% Physics Extensions (simplified)
      subgraph AddPhysics [&quot;Additional Physics Modules&quot;]
@@ -307,17 +307,17 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
          ROTATION[&quot;Rotating Reference Frame&quot;]
          BUOYANCY[&quot;Boussinesq Approximation&quot;]
      end
-     POROSITY -.-&gt; STEP1
-     ROTATION -.-&gt; STEP1
-     BUOYANCY -.-&gt; STEP2
-     BUOYANCY -.-&gt; STEP3
+     POROSITY -.-&gt; OP1
+     ROTATION -.-&gt; OP1
+     BUOYANCY -.-&gt; OP2
+     BUOYANCY -.-&gt; OP3
 
      style MAIN fill:#E3F2FD
      style AddPhysics fill:#E3F2FD
-     style STEP1 fill:#2196F3,color:#fff
-     style STEP2 fill:#FF9800,color:#fff
-     style STEP3 fill:#9C27B0,color:#fff
-     style STEP4 fill:#607D8B,color:#fff
+     style OP1 fill:#2196F3,color:#fff
+     style OP2 fill:#FF9800,color:#fff
+     style OP3 fill:#9C27B0,color:#fff
+     style OP4 fill:#607D8B,color:#fff
     </pre><p>The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
 Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
 In this case, the porosity model and the Rotating Reference Frame add momentum source terms, while the Boussinesq model adds a temperature equation and modifies the continuity equation.</p>
@@ -328,26 +328,26 @@ The execution order is determined at runtime based on the metadata specified in 
 <span class="nd">@Solver</span>
 <span class="k">class</span> <span class="nc">IncompressibleFluidSolver</span><span class="p">:</span>
     <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IncompressibleFluidModel</span><span class="p">]</span>  <span class="c1"># Additional physics models</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">BoussinesqModel</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">temperature_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">PorosityModel</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">RotatingReferenceFrame</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 </pre></div>
 </div>
@@ -373,10 +373,10 @@ This order is managed by the <strong>Operations</strong> class, shown conceptual
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 </pre></div>
 </div>
-<p>An operation represents a single computational step in a solver or model, functioning as a callable task.
+<p>An operation represents a single computational operation in a solver or model, functioning as a callable task.
 Each solver or model can define multiple operations stored as <cite>Operation</cite> objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.</p>
-<p>After sorting (detailed in future documentation), the <cite>Operations</cite> class holds all steps required to run the newly-configured solver.</p>
+<p>After sorting (detailed in future documentation), the <cite>Operations</cite> class holds all operations required to run the newly-configured solver.</p>
 <p>This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
