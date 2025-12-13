@@ -13,7 +13,8 @@ dependencies = [
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
-    "matplotlib>=3.0.0"
+    "matplotlib>=3.0.0",
+    "pyvis>=0.3.2",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +38,7 @@ docs = [
     "sphinx-sitemap",
     "furo",
     "sphinxcontrib-mermaid",
+    "sphinx-togglebutton>=0.3.2",
     "breathe",
 ]
 all = [
@@ -74,15 +76,16 @@ testpaths = [
 ]
 
 [tool.mypy]
-files = ["src", "test"]          # your two roots
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
 no_site_packages = true          # don't check installed packages
+files = ["src"]                  # Only check src, exclude test
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)
 exclude = [
   "src/NeoN",
+  "test/",
 ]
 
 # If other code imports src/Neon and you want mypy to never follow into it:

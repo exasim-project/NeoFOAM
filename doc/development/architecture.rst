@@ -34,7 +34,7 @@ The following sections describe the main architectural features and implementati
 Extensible Solver Architecture
 ------------------------------
 
-To promote code reuse and maintainability, solver execution steps (operations) can be configured at runtime based on the selected physics models.
+To promote code reuse and maintainability, solver execution operations can be configured at runtime based on the selected physics models.
 This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.
 
 .. mermaid::
@@ -42,15 +42,15 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
    flowchart TD
 
         subgraph MAIN ["Main Solver Loop"]
-            STEP1["Solver </br> Momentum Equation"]
-            STEP2["Added by Model </br> Temperature Equation"]
-            STEP3["Solver </br> Continuity Equation"]
-            STEP4["Solver </br> Update Turbulence"]
+            OP1["Solver </br> Momentum Equation"]
+            OP2["Added by Model </br> Temperature Equation"]
+            OP3["Solver </br> Continuity Equation"]
+            OP4["Solver </br> Update Turbulence"]
         end
 
-        STEP1 --> STEP2
-        STEP2 --> STEP3
-        STEP3 --> STEP4
+        OP1 --> OP2
+        OP2 --> OP3
+        OP3 --> OP4
 
         %% Physics Extensions (simplified)
         subgraph AddPhysics ["Additional Physics Modules"]
@@ -59,17 +59,17 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
             ROTATION["Rotating Reference Frame"]
             BUOYANCY["Boussinesq Approximation"]
         end
-        POROSITY -.-> STEP1
-        ROTATION -.-> STEP1
-        BUOYANCY -.-> STEP2
-        BUOYANCY -.-> STEP3
+        POROSITY -.-> OP1
+        ROTATION -.-> OP1
+        BUOYANCY -.-> OP2
+        BUOYANCY -.-> OP3
 
         style MAIN fill:#E3F2FD
         style AddPhysics fill:#E3F2FD
-        style STEP1 fill:#2196F3,color:#fff
-        style STEP2 fill:#FF9800,color:#fff
-        style STEP3 fill:#9C27B0,color:#fff
-        style STEP4 fill:#607D8B,color:#fff
+        style OP1 fill:#2196F3,color:#fff
+        style OP2 fill:#FF9800,color:#fff
+        style OP3 fill:#9C27B0,color:#fff
+        style OP4 fill:#607D8B,color:#fff
 
 The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
 Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
@@ -86,26 +86,26 @@ The execution order is determined at runtime based on the metadata specified in 
     @Solver
     class IncompressibleFluidSolver:
         models: list[IncompressibleFluidModel]  # Additional physics models
-        @Solver.step(...)
+        @Solver.operation(...)
         def momentum(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def continuity(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def update_turbulence(self, ...): pass
 
     @IncompressibleFluidModel.register
     class BoussinesqModel:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def temperature_equation(self, ...): pass
 
     @IncompressibleFluidModel.register
     class PorosityModel:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def add_momentum_source(self, ...): pass
 
     @IncompressibleFluidModel.register
     class RotatingReferenceFrame:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def add_momentum_source(self, ...): pass
 
 
@@ -134,11 +134,11 @@ This order is managed by the **Operations** class, shown conceptually below:
 
         def run(self, ...): pass
 
-An operation represents a single computational step in a solver or model, functioning as a callable task.
+An operation represents a single computational operation in a solver or model, functioning as a callable task.
 Each solver or model can define multiple operations stored as `Operation` objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.
 
-After sorting (detailed in future documentation), the `Operations` class holds all steps required to run the newly-configured solver.
+After sorting (detailed in future documentation), the `Operations` class holds all operations required to run the newly-configured solver.
 
 This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.
 
