@@ -5,15 +5,10 @@
 Test file for the IncompressibleFluid solver based on the new framework architecture.
 """
 
-from typing import Literal
 
 import pytest
-from pydantic import BaseModel
 
-from foamadapter.framework.context import Context
-from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.operations import Operation, OperationCollection
-from foamadapter.framework.solver import Solver, SolverInterface
+from foamadapter.framework.solver import SolverInterface
 
 
 def test_incompressible_fluid_imports():
@@ -42,7 +37,6 @@ def test_incompressible_fluid_structure():
     assert hasattr(solver, "operations")
     assert hasattr(solver, "main_loop")
     assert hasattr(solver, "run")
-    assert hasattr(solver, "create_context")
 
     # Verify properties
     assert solver.name == "IncompressibleFluid"
@@ -52,8 +46,13 @@ def test_incompressible_fluid_structure():
 def test_incompressible_fluid_operations_registration():
     """Test that operations are properly registered."""
     from foamadapter.solver import IncompressibleFluid
+    from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
 
     solver = IncompressibleFluid(argv=["test"])
+
+    # Mock algorithm initialization to avoid full OpenFOAM setup
+    solver._pressure_velocity = PimpleAlgorithm()
+
     ops = solver.operations()
 
     # Should have solver operations + algorithm operations (momentum, continuity)
@@ -89,8 +88,13 @@ def test_incompressible_fluid_operations_registration():
 def test_incompressible_fluid_operation_dependencies():
     """Test that operation dependencies are correctly set."""
     from foamadapter.solver import IncompressibleFluid
+    from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
 
     solver = IncompressibleFluid(argv=["test"])
+
+    # Mock algorithm initialization to avoid full OpenFOAM setup
+    solver._pressure_velocity = PimpleAlgorithm()
+
     ops = solver.operations()
 
     # Check solver operation dependencies

@@ -10,13 +10,11 @@ can modify during CONFIGURE stage, with automatic dispatch to different
 implementations.
 """
 
-from typing import Any, Optional
 from pydantic import BaseModel, Field
 import pytest
 
 from foamadapter.framework import AdaptableField, ModelRegistry, SolverInitializer
 from foamadapter.framework.model import Model
-from foamadapter.framework.solver import Solver
 
 
 # ============================================================================

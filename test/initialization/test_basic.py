@@ -46,5 +46,7 @@ def test_full_initialization():
         assert model.configured
         assert model.setup_complete
 
-    # Return solver
-    assert result is solver
+    # Returns Context (new behavior)
+    from foamadapter.framework.context import Context
+
+    assert isinstance(result, Context)

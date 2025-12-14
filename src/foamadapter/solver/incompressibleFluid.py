@@ -1,23 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
+from abc import abstractmethod
 from typing import Any, Literal
 
 import pybFoam as pyf  # type: ignore[import-not-found]
 from pybFoam import (
     Info,
-    fvc,
-    fvm,
-    fvScalarMatrix,
-    fvVectorMatrix,
-    surfaceScalarField,
     volScalarField,
     volVectorField,
 )
 from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
 from pydantic import BaseModel
 
-from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
+from foamadapter.algorithms.pressure_velocity import (
+    PressureVelocityAlgorithmConfig,
+)
+from foamadapter.core.plugin_system import PluginSystem
 from foamadapter.framework.context import (
     Context,
     FieldUpdates,
@@ -70,17 +69,227 @@ class CFLCondition:
         return runTime.loop()
 
 
-@Solver
-class IncompressibleFluid(BaseModel):
+# ============================================================================
+# Core Component Base Classes (IncompressibleFluid-specific, extensible)
+# ============================================================================
+
+
+@PluginSystem.register(discriminator_variable="config", discriminator="transport_type")
+class TransportModel(BaseModel):
     """
-    Incompressible fluid solver supporting multiple pressure-velocity algorithms.
+    Base class for transport property models.
+
+    Provides extensibility for different transport models (single-phase,
+    two-phase, non-Newtonian, etc.) within the IncompressibleFluid solver.
     """
 
     model_config = {"arbitrary_types_allowed": True}
 
+    @property
+    def provides(self) -> list[str]:
+        """Fields this transport model adds to context."""
+        return ["laminarTransport"]
+
+    @property
+    def requires(self) -> list[str]:
+        """Fields this transport model needs."""
+        return ["U", "phi"]
+
+    @abstractmethod
+    def create(self, U: Any, phi: Any) -> Any:
+        """
+        Create the transport model instance.
+
+        Args:
+            U: Velocity field
+            phi: Face flux field
+
+        Returns:
+            Transport model object
+        """
+        ...
+
+    def setup(self, builder: Any) -> Any:
+        """
+        Create instance and register with builder.
+
+        Uses builder.get_field() to retrieve required fields,
+        then calls create() and adds result to builder.
+        """
+        U = builder.get_field("U")
+        phi = builder.get_field("phi")
+        instance = self.create(U, phi)
+        builder.add_field("laminarTransport", instance)
+        return instance
+
+
+@TransportModel.register
+class SinglePhaseTransport(BaseModel):
+    """Single-phase Newtonian transport properties (default)."""
+
+    transport_type: Literal["singlePhase"] = "singlePhase"
+    model_config = {"arbitrary_types_allowed": True}
+
+    def create(self, U: Any, phi: Any) -> Any:
+        """Create single-phase transport model using OpenFOAM."""
+        return singlePhaseTransportModel(U, phi)
+
+
+@PluginSystem.register(discriminator_variable="config", discriminator="turbulence_type")
+class TurbulenceModel(BaseModel):
+    """
+    Base class for turbulence models.
+
+    Provides extensibility for different turbulence models (OpenFOAM RTS,
+    laminar, custom implementations) within the IncompressibleFluid solver.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    def provides(self) -> list[str]:
+        """Fields this turbulence model adds to context."""
+        return ["turbulence"]
+
+    @property
+    def requires(self) -> list[str]:
+        """Fields this turbulence model needs."""
+        return ["U", "phi", "laminarTransport"]
+
+    @abstractmethod
+    def create(self, U: Any, phi: Any, transport: Any) -> Any:
+        """
+        Create the turbulence model instance.
+
+        Args:
+            U: Velocity field
+            phi: Face flux field
+            transport: Transport model
+
+        Returns:
+            Turbulence model object
+        """
+        ...
+
+    def setup(self, builder: Any) -> Any:
+        """
+        Create instance and register with builder.
+
+        Uses builder.get_field() to retrieve required fields,
+        then calls create() and adds result to builder.
+        """
+        U = builder.get_field("U")
+        phi = builder.get_field("phi")
+        transport = builder.get_field("laminarTransport")
+        instance = self.create(U, phi, transport)
+        builder.add_field("turbulence", instance)
+        return instance
+
+
+@TurbulenceModel.register
+class OpenFOAMTurbulence(BaseModel):
+    """Wrapper for OpenFOAM's turbulence models (default)."""
+
+    turbulence_type: Literal["openfoam"] = "openfoam"
+    model_config = {"arbitrary_types_allowed": True}
+
+    def create(self, U: Any, phi: Any, transport: Any) -> Any:
+        """Create turbulence model using OpenFOAM's runtime selection."""
+        return incompressibleTurbulenceModel.New(U, phi, transport)
+
+
+@TurbulenceModel.register
+class LaminarModel(BaseModel):
+    """Explicit laminar (no turbulence) - useful for testing."""
+
+    turbulence_type: Literal["laminar"] = "laminar"
+    model_config = {"arbitrary_types_allowed": True}
+
+    def create(self, U: Any, phi: Any, transport: Any) -> Any:
+        """
+        Create a mock laminar turbulence model for testing.
+
+        Note: This returns a minimal turbulence object. For production use,
+        use OpenFOAM's laminar model via openfoam type.
+        """
+        # For now, return OpenFOAM's turbulence model which will read
+        # the laminar model from constant/momentumTransport
+        return incompressibleTurbulenceModel.New(U, phi, transport)
+
+
+# ============================================================================
+# Optional Physics Model Base Class
+# ============================================================================
+
+
+@PluginSystem.register(discriminator_variable="model", discriminator="model_type")
+class IncompressibleFluidModel(BaseModel):
+    """
+    Base class for optional physics models that extend IncompressibleFluid.
+
+    Models implementing this class:
+    - Participate in 3-stage initialization (READ_FILES, CONFIGURE, SETUP)
+    - Contribute operations to the execution graph
+    - Are registered via PluginSystem for type-safe configuration
+
+    Core components (pressure_velocity, transport, turbulence) are NOT
+    IncompressibleFluidModels - they have their own base classes above.
+
+    Example models: Buoyancy, Radiation, Species Transport, etc.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Unique model identifier."""
+        ...
+
+    def operations(self) -> OperationCollection:
+        """
+        Return operations contributed by this model.
+
+        Default implementation discovers @Model.operation decorated methods.
+        """
+        funcs = decorated_member_functions(self)
+        ops = OperationCollection()
+        for func in funcs:
+            op = Operation.create_SeqOp(func)
+            ops.add(op)
+        return ops
+
+
+# ============================================================================
+# Solver Class
+# ============================================================================
+
+
+@Solver
+class IncompressibleFluid(BaseModel):
+    """
+    Incompressible fluid solver with modular physics.
+
+    Core components (always present, type-configurable):
+    - pressure_velocity: Algorithm for pressure-velocity coupling
+    - transport: Transport properties model
+    - turbulence: Turbulence model
+
+    Optional models (user-added via add_model()):
+    - Buoyancy, radiation, species transport, etc.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    # === Configuration ===
     name: Literal["IncompressibleFluid"] = "IncompressibleFluid"
     argv: list[str] = []
+
+    # Core component type selection
     algorithm: Literal["SIMPLE", "PISO", "PIMPLE"] = "PIMPLE"
+    transport_type: Literal["singlePhase"] = "singlePhase"
+    turbulence_type: Literal["openfoam", "laminar"] = "openfoam"
+
     pRefCell: int | None = None
     pRefValue: float | None = None
     maxDeltaT: float = 1e5
@@ -90,34 +299,54 @@ class IncompressibleFluid(BaseModel):
     configured: bool = False
     setup_complete: bool = False
 
-    # Model references (populated during initialization)
-    transport_model: Any | None = None
-    turbulence_model: Any | None = None
-    algorithm_model: Any | None = None
+    # === Core Components (private, populated during initialization) ===
+    _pressure_velocity: Any | None = None
+    _transport: Any | None = None
+    _turbulence: Any | None = None
+    _algorithm_config: dict[str, str] | None = (
+        None  # Algorithm configuration for SETUP stage
+    )
 
-    # Runtime objects (populated during SETUP)
-    mesh: Any | None = None
-    runTime: Any | None = None
-    p: Any | None = None
-    U: Any | None = None
-    phi: Any | None = None
+    # === Optional Physics Models ===
+    models: list[IncompressibleFluidModel] = []
 
-    def _create_algorithm(self) -> PimpleAlgorithm:
-        """Factory method to create algorithm instance."""
-        if self.algorithm == "PIMPLE":
-            return PimpleAlgorithm(pRefCell=self.pRefCell, pRefValue=self.pRefValue)
-        else:
-            raise ValueError(
-                f"Algorithm '{self.algorithm}' not yet implemented. Only PIMPLE is currently supported."
+    def add_model(self, model: IncompressibleFluidModel) -> "IncompressibleFluid":
+        """
+        Add an optional physics model to extend solver capabilities.
+
+        Models participate in the 3-stage initialization lifecycle
+        (READ_FILES, CONFIGURE, SETUP) and contribute operations to
+        the execution graph.
+
+        Args:
+            model: An IncompressibleFluidModel instance (buoyancy, radiation, etc.)
+
+        Returns:
+            self for fluent chaining
+
+        Example:
+            solver = (
+                IncompressibleFluid(argv=["cavity"])
+                .add_model(BuoyancyModel(beta=3e-3))
+                .add_model(RadiationModel(type="P1"))
             )
+        """
+        self.models.append(model)
+        return self
 
     def get_models(self) -> list[Any]:
-        """Return all models owned by this solver."""
+        """
+        Return all models owned by this solver.
+
+        Returns models that have lifecycle methods: algorithm and optional models.
+        """
         models = []
-        if self.algorithm_model is not None:
-            models.append(self.algorithm_model)
-        # Note: transport_model and turbulence_model are OpenFOAM objects,
-        # not Python models with lifecycle methods, so we don't include them
+        # Add algorithm (has lifecycle methods)
+        if self._pressure_velocity is not None:
+            models.append(self._pressure_velocity)
+
+        # Add optional physics models
+        models.extend(self.models)
         return models
 
     @Solver.read_files
@@ -138,77 +367,85 @@ class IncompressibleFluid(BaseModel):
     @Solver.configure
     def configure_solver(self, registry: ModelRegistry) -> None:
         """CONFIGURE: Validate solver configuration and connect models."""
-        # Create and register algorithm model
-        self.algorithm_model = self._create_algorithm()
-        registry.register("algorithm", self.algorithm_model)
-
-        # Validate algorithm choice
+        # Validate algorithm choice (configuration-time check)
         if self.algorithm not in ["SIMPLE", "PISO", "PIMPLE"]:
             raise ValueError(f"Unknown algorithm: {self.algorithm}")
+
+        # Initialize core components - always non-None after CONFIGURE
+        # Components will be fully set up in SETUP stage
+        self._transport = TransportModel.create(
+            config={"transport_type": self.transport_type}
+        )
+        self._turbulence = TurbulenceModel.create(
+            config={"turbulence_type": self.turbulence_type}
+        )
+
+        # Algorithm config will be used in SETUP to create instance with pRefCell/pRefValue
+        # Store config for later use
+        self._algorithm_config = {"algorithm_type": self.algorithm}
+
+        # Register with model registry
+        registry.register("transport", self._transport)
+        registry.register("turbulence", self._turbulence)
 
         self.configured = True
 
     @Solver.setup
-    def setup_runtime(self, mesh: Any) -> None:
+    def setup_runtime(self, mesh: Any, builder: Any) -> None:
         """SETUP: Initialize runtime structures and fields."""
         # Create runtime and mesh
         argList = pyf.argList(self.argv)
-        self.runTime = pyf.Time(argList)
-        self.mesh = pyf.fvMesh(self.runTime)
+        runTime = pyf.Time(argList)
+        mesh = pyf.fvMesh(runTime)
 
-        # Read fields
-        self.p = volScalarField.read_field(self.mesh, "p")
-        self.U = volVectorField.read_field(self.mesh, "U")
-        self.phi = pyf.createPhi(self.U)
+        # Read primary fields
+        p = volScalarField.read_field(mesh, "p")
+        U = volVectorField.read_field(mesh, "U")
+        phi = pyf.createPhi(U)
 
-        # Create transport and turbulence models
-        self.transport_model = singlePhaseTransportModel(self.U, self.phi)
-        self.turbulence_model = incompressibleTurbulenceModel.New(
-            self.U, self.phi, self.transport_model
-        )
+        # Add primary fields to builder first
+        builder.set_mesh(mesh)
+        builder.set_runtime(runTime)
+        builder.add_field("p", p)
+        builder.add_field("U", U)
+        builder.add_field("phi", phi)
 
-        # Read fvSolution and set reference cell
-        fvSolution = pyf.dictionary.read("system/fvSolution")
-        self.pRefCell, self.pRefValue = pyf.setRefCell(
-            self.p, fvSolution.subDict("PIMPLE")
-        )
-        self.mesh.setFluxRequired(pyf.Word("p"))
-
-        # Update algorithm with reference cell/value
-        if self.algorithm_model is not None:
-            self.algorithm_model.pRefCell = self.pRefCell
-            self.algorithm_model.pRefValue = self.pRefValue
-
-        self.setup_complete = True
-
-    def create_context(self) -> Context:
-        """Create the simulation context with mesh, runtime, and fields."""
-        # After 3-stage initialization, mesh and runTime are already created
-        if self.mesh is None or self.runTime is None:
+        # DAG-based component initialization
+        # Components must be initialized in CONFIGURE stage first
+        if self._transport is None or self._turbulence is None:
             raise RuntimeError(
-                "Solver not properly initialized. Call SolverInitializer.initialize() first."
+                "Components not initialized. Call configure_solver() first."
             )
 
-        # Reuse fields that were created during SETUP
-        # Create pimple control
-        pimple = pyf.pimpleControl(self.mesh)
+        # Extract the actual config instance from the wrapper and call its create() method directly
+        # then add to builder. This bypasses the setup() method approach for now.
 
-        # Create context
-        ctx = Context(
-            fields={
-                "p": self.p,
-                "U": self.U,
-                "phi": self.phi,
-                "laminarTransport": self.transport_model,
-                "turbulence": self.turbulence_model,
-                "pimple": pimple,
-            },
-            models={},
-            mesh=self.mesh,
-            runTime=self.runTime,
+        # 1. Transport model (provides: laminarTransport, requires: U, phi)
+        transport_config = self._transport.config
+        transport_model = transport_config.create(U, phi)
+        builder.add_field("laminarTransport", transport_model)
+
+        # 2. Turbulence model (provides: turbulence, requires: U, phi, laminarTransport)
+        turbulence_config = self._turbulence.config
+        turbulence_model = turbulence_config.create(U, phi, transport_model)
+        builder.add_field("turbulence", turbulence_model)
+
+        # 3. Create algorithm with reference cell configuration
+        fvSolution = pyf.dictionary.read("system/fvSolution")
+        pRefCell, pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
+        mesh.setFluxRequired(pyf.Word("p"))
+
+        # Create algorithm instance using config system
+        algorithm_wrapper = PressureVelocityAlgorithmConfig.create(
+            config=self._algorithm_config
         )
+        self._pressure_velocity = algorithm_wrapper.config.create(pRefCell, pRefValue)
 
-        return ctx
+        # Create pimple control
+        pimple = pyf.pimpleControl(mesh)
+        builder.add_field("pimple", pimple)
+
+        self.setup_complete = True
 
     @Solver.operation(operation_number=2)
     def setup_models(self, ctx: Context) -> None:
@@ -217,11 +454,11 @@ class IncompressibleFluid(BaseModel):
         ctx.fields.pop("pimple", None)
 
         # Create algorithm control using algorithm's factory method
-        if self.algorithm_model is None:
+        if self._pressure_velocity is None:
             raise RuntimeError(
                 "Algorithm model not initialized. Call initialize() first."
             )
-        control = self.algorithm_model.create_control(ctx.mesh)
+        control = self._pressure_velocity.create_control(ctx.mesh)
         ctx.models["pimple_control"] = control
 
     @Solver.operation(operation_number=3, depends_on=["setup_models"])
@@ -253,20 +490,41 @@ class IncompressibleFluid(BaseModel):
         runTime.printExecutionTime()
 
     def operations(self, domain_name: str | None = None) -> OperationCollection:
-        """Collect all decorated operations including algorithm operations."""
+        """
+        Collect all operations from solver and models.
+
+        Operations are collected from multiple sources and merged into a single
+        collection. The execution order is determined by operation numbers and
+        dependencies.
+
+        Returns:
+            OperationCollection with all operations from:
+            - Solver's own @Solver.operation decorated methods
+            - Pressure-velocity algorithm
+            - Optional physics models (buoyancy, radiation, etc.)
+        """
         _ = domain_name  # Part of SolverInterface, unused in this implementation
+
+        # Collect solver operations
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:
             op = Operation.create_SeqOp(func)
             ops.add(op)
 
-        # Add algorithm operations
-        if self.algorithm_model is None:
-            # Create algorithm lazily for tests/scenarios without full initialization
-            self.algorithm_model = self._create_algorithm()
-        algo_ops = self.algorithm_model.operations()
+        # Add algorithm operations - must be initialized first
+        if self._pressure_velocity is None:
+            raise RuntimeError(
+                "Algorithm not initialized. Call initialize() or run() first."
+            )
+        algo_ops = self._pressure_velocity.operations()
         ops.add(algo_ops)
+
+        # Add optional model operations
+        for model in self.models:
+            if hasattr(model, "operations"):
+                model_ops = model.operations()
+                ops.add(model_ops)
 
         return ops
 
@@ -277,10 +535,12 @@ class IncompressibleFluid(BaseModel):
         The algorithm provides momentum and continuity operations that encapsulate
         the specific pressure-velocity coupling strategy.
         """
+        if self._pressure_velocity is None:
+            raise RuntimeError(
+                "Algorithm not initialized. Call initialize() or run() first."
+            )
+
         ops = self.operations()
-        if self.algorithm_model is None:
-            # Create algorithm lazily for tests/scenarios without full initialization
-            self.algorithm_model = self._create_algorithm()
 
         # Build the main execution graph
         main_loop = StepBuilder()
@@ -296,7 +556,7 @@ class IncompressibleFluid(BaseModel):
             time_loop.step(ops["print_time"])
 
             # Algorithm provides momentum and continuity operations
-            algo_ops = algorithm.operations()
+            algo_ops = self._pressure_velocity.operations()
             time_loop.step(algo_ops["momentum"])
             time_loop.step(algo_ops["continuity"])
 
@@ -314,10 +574,7 @@ class IncompressibleFluid(BaseModel):
 
         # 3-stage initialization
         initializer = SolverInitializer(self)
-        initializer.initialize(mesh=None)
-
-        # Create context with initialized fields
-        ctx = self.create_context()
+        ctx = initializer.initialize(mesh=None)
 
         # Setup models (algorithm control)
         ops = self.operations()

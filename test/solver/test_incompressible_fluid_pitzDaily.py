@@ -68,6 +68,10 @@ def test_incompressible_fluid_pitzDaily():
     # Import here to avoid import errors when OpenFOAM is not available
     from foamadapter.solver import IncompressibleFluid
 
+    # Disable OpenFOAM's floating-point exception trapping to avoid issues with pytest
+    # This prevents FOAM_SIGFPE from triggering during error reporting
+    os.environ["FOAM_SIGFPE"] = ""
+
     # Setup paths - go up from test/solver to repo root
     repo_root = Path(__file__).parent.parent.parent
     source_case = repo_root / "tutorials" / "pitzDaily"

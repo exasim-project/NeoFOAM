@@ -12,7 +12,7 @@ try:
     from pybFoam.io.model_base import IOModelBase
 
     PYBFOAM_AVAILABLE = True
-except (ImportError, OSError) as e:
+except (ImportError, OSError):
     PYBFOAM_AVAILABLE = False
     # Create a dummy class for type checking
     IOModelBase = BaseModel  # type: ignore[misc,assignment]

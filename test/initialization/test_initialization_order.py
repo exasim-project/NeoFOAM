@@ -33,7 +33,7 @@ def test_initialization_order():
             self.configured = True
 
         @Model.setup
-        def set(self, mesh):
+        def set(self, mesh, builder):
             order.append("SETUP")
             self.setup_complete = True
 
@@ -58,7 +58,7 @@ def test_initialization_order():
             self.configured = True
 
         @Solver.setup
-        def set(self, mesh):
+        def set(self, mesh, builder):
             order.append("SOLVER_SETUP")
             self.setup_complete = True
 

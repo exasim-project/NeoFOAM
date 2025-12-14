@@ -17,6 +17,31 @@ def Solver(cls: type) -> type:
     Solvers define the main simulation loop and the basic execution of operations.
     Can be extended via Models.
     """
+
+    # Add convenience initialize method to the class
+    def initialize(self) -> Context:
+        """
+        Convenience method to run the 3-stage initialization and return a Context.
+
+        This method creates a SolverInitializer, runs all three stages
+        (READ_FILES, CONFIGURE, SETUP), and returns the resulting Context.
+
+        Returns:
+            Context: The simulation context with mesh, runtime, fields, and models
+
+        Example:
+            solver = IncompressibleFluid(argv=[...], algorithm="PIMPLE")
+            ctx = solver.initialize()
+            solver.main_loop(ctx)
+        """
+        from .initialization import SolverInitializer
+
+        initializer = SolverInitializer(self)
+        return initializer.initialize()
+
+    # Add initialize method to the decorated class
+    cls.initialize = initialize
+
     return cls
 
 

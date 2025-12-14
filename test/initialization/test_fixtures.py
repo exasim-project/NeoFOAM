@@ -108,7 +108,7 @@ class TestTurbulenceModel(BaseModel):
         return self.configured
 
     @Model.setup
-    def initialize_fields(self, mesh):
+    def initialize_fields(self, mesh, builder):
         """SETUP: Initialize turbulence fields on mesh."""
         # Create k and epsilon fields
         if self.transport_ref:
@@ -160,7 +160,7 @@ class TestTransportModel(BaseModel):
         return self.configured
 
     @Model.setup
-    def create_fields(self, mesh):
+    def create_fields(self, mesh, builder):
         """SETUP: Create transport coefficient fields."""
         # Create nu and rho fields on mesh
         # In real code, would create fields here
@@ -215,7 +215,7 @@ class TestAlgorithmModel(BaseModel):
         return self.configured
 
     @Model.setup
-    def setup_matrices(self, mesh):
+    def setup_matrices(self, mesh, builder):
         """SETUP: Set up matrix systems."""
         # In real code, would create matrix structures here
         self.setup_complete = True
@@ -275,7 +275,7 @@ class TestSolver(BaseModel):
         return self.configured
 
     @Solver.setup
-    def create_solver_context(self, mesh):
+    def create_solver_context(self, mesh, builder):
         """SETUP: Create solver execution context."""
         # In real code, would set up solver runtime structures
         self.setup_complete = True
@@ -350,7 +350,7 @@ class AdaptivePressureModel(BaseModel):
         self.configured = True
 
     @Model.setup
-    def initialize(self, mesh):
+    def initialize(self, mesh, builder):
         """SETUP: Initialize pressure solver."""
         self.setup_complete = True
 
@@ -397,6 +397,6 @@ class TestBuoyancyModel(BaseModel):
         self.configured = True
 
     @Model.setup
-    def initialize(self, mesh):
+    def initialize(self, mesh, builder):
         """SETUP: Initialize buoyancy fields."""
         self.setup_complete = True

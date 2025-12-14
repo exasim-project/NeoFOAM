@@ -3,7 +3,8 @@
 
 """Pressure-velocity coupling algorithms."""
 
-from typing import Any, Protocol, runtime_checkable
+from abc import abstractmethod
+from typing import Any, Literal, Protocol, runtime_checkable
 
 import pybFoam as pyf  # type: ignore[import-not-found]
 from pybFoam import (
@@ -15,20 +16,18 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
+from pydantic import BaseModel
 
+from foamadapter.core.plugin_system import PluginSystem
 from foamadapter.framework.context import (
-    Context,
     FieldUpdates,
     Model as ModelAnnotation,
 )
 from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.model import Model
 from foamadapter.framework.operations import (
-    IterativeOp,
     Operation,
     OperationCollection,
-    SequentialOp,
-    StepBuilder,
 )
 
 
@@ -66,6 +65,124 @@ class PressureVelocityAlgorithm(Protocol):
             Operations are typically named: "momentum", "continuity"
         """
         ...
+
+
+# ============================================================================
+# PluginSystem-based Algorithm Registry
+# ============================================================================
+
+
+@PluginSystem.register(discriminator_variable="config", discriminator="algorithm_type")
+class PressureVelocityAlgorithmConfig(BaseModel):
+    """
+    Base class for pressure-velocity coupling algorithm configurations.
+
+    Provides extensibility for different algorithms (SIMPLE, PISO, PIMPLE)
+    using the PluginSystem pattern.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    def provides(self) -> list[str]:
+        """Fields this algorithm provides."""
+        return []  # Override in subclasses if needed
+
+    @property
+    def requires(self) -> list[str]:
+        """Fields this algorithm requires."""
+        return []  # Override in subclasses if needed
+
+    @abstractmethod
+    def create(
+        self, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> Any:
+        """
+        Create the algorithm instance.
+
+        Args:
+            pRefCell: Reference cell for pressure
+            pRefValue: Reference value for pressure
+
+        Returns:
+            Algorithm instance
+        """
+        ...
+
+    def setup(
+        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> Any:
+        """
+        Setup algorithm and register fields with builder.
+
+        Default implementation just calls create().
+        """
+        return self.create(pRefCell, pRefValue)
+
+
+@PressureVelocityAlgorithmConfig.register
+class PimpleConfig(BaseModel):
+    """PIMPLE algorithm configuration."""
+
+    algorithm_type: Literal["PIMPLE"] = "PIMPLE"
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    def provides(self) -> list[str]:
+        return []  # Algorithm itself doesn't provide fields during setup
+
+    @property
+    def requires(self) -> list[str]:
+        return []  # No setup-time dependencies
+
+    def create(
+        self, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> "PimpleAlgorithm":
+        """Create PIMPLE algorithm instance."""
+        return PimpleAlgorithm(pRefCell=pRefCell, pRefValue=pRefValue)
+
+    def setup(
+        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> "PimpleAlgorithm":
+        return self.create(pRefCell, pRefValue)
+
+
+@PressureVelocityAlgorithmConfig.register
+class SimpleConfig(BaseModel):
+    """SIMPLE algorithm configuration (not yet implemented)."""
+
+    algorithm_type: Literal["SIMPLE"] = "SIMPLE"
+    model_config = {"arbitrary_types_allowed": True}
+
+    def create(
+        self, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> Any:
+        """Create SIMPLE algorithm instance."""
+        raise NotImplementedError("SIMPLE algorithm not yet implemented")
+
+    def setup(
+        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> Any:
+        raise NotImplementedError("SIMPLE algorithm not yet implemented")
+
+
+@PressureVelocityAlgorithmConfig.register
+class PisoConfig(BaseModel):
+    """PISO algorithm configuration (not yet implemented)."""
+
+    algorithm_type: Literal["PISO"] = "PISO"
+    model_config = {"arbitrary_types_allowed": True}
+
+    def create(
+        self, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> Any:
+        """Create PISO algorithm instance."""
+        raise NotImplementedError("PISO algorithm not yet implemented")
+
+    def setup(
+        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
+    ) -> Any:
+        raise NotImplementedError("PISO algorithm not yet implemented")
 
 
 @Model

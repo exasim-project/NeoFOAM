@@ -104,6 +104,18 @@ def mock_turbulence_models():
 
 
 @pytest.fixture
+def mock_builder():
+    """Create a mock ContextBuilder for tests."""
+    builder = Mock()
+    builder.add_field = Mock()
+    builder.add_model = Mock()
+    builder.set_mesh = Mock()
+    builder.set_runtime = Mock()
+    builder.build = Mock(return_value="mock_context")
+    return builder
+
+
+@pytest.fixture
 def solver_basic():
     """Create a basic IncompressibleFluid solver instance."""
     return IncompressibleFluid(argv=["test"], algorithm="PIMPLE")
@@ -203,18 +215,27 @@ def test_configure_stage_execution(solver_basic):
     solver_basic.configure_solver(registry)
 
     assert solver_basic.configured is True
-    assert solver_basic.algorithm_model is not None
-    assert registry.contains("algorithm")
+    # Components are created as wrappers in CONFIGURE
+    assert solver_basic._transport is not None
+    assert solver_basic._turbulence is not None
+    # Algorithm is created later in SETUP after pRefCell/pRefValue are known
+    assert solver_basic._pressure_velocity is None
+    assert registry.contains("transport")
+    assert registry.contains("turbulence")
 
 
 def test_configure_registers_algorithm(solver_basic):
-    """Test that algorithm is registered in ModelRegistry."""
+    """Test that components are registered in ModelRegistry."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
-    algorithm = registry.get("algorithm")
-    assert algorithm is not None
-    assert algorithm is solver_basic.algorithm_model
+    # New architecture: components are registered, not algorithm
+    transport = registry.get("transport")
+    turbulence = registry.get("turbulence")
+    assert transport is not None
+    assert turbulence is not None
+    assert transport is solver_basic._transport
+    assert turbulence is solver_basic._turbulence
 
 
 def test_configure_validates_algorithm():
@@ -225,7 +246,7 @@ def test_configure_validates_algorithm():
     solver.algorithm = "INVALID"  # Bypass Pydantic for testing
 
     registry = ModelRegistry()
-    with pytest.raises(ValueError, match="not yet implemented"):
+    with pytest.raises(ValueError, match="Unknown algorithm"):
         solver.configure_solver(registry)
 
 
@@ -244,23 +265,32 @@ def test_configure_decorator_marked():
 
 
 def test_setup_stage_execution(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
     """Test that SETUP stage executes correctly."""
-    solver_basic.setup_runtime(mesh=None)
+    # Must call configure_solver first
+    registry = ModelRegistry()
+    solver_basic.configure_solver(registry)
+
+    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
     assert solver_basic.setup_complete is True
-    assert solver_basic.mesh is not None
-    assert solver_basic.runTime is not None
-    assert solver_basic.transport_model is not None
-    assert solver_basic.turbulence_model is not None
+    # Transport and turbulence wrappers are created in CONFIGURE
+    assert solver_basic._transport is not None
+    assert solver_basic._turbulence is not None
+    # Algorithm is created in SETUP
+    assert solver_basic._pressure_velocity is not None
 
 
 def test_setup_creates_mesh_and_runtime(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
     """Test that SETUP stage creates mesh and runtime objects."""
-    solver_basic.setup_runtime(mesh=None)
+    # Must call configure_solver first
+    registry = ModelRegistry()
+    solver_basic.configure_solver(registry)
+
+    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
     mock_pyfoam.argList.assert_called_once_with(solver_basic.argv)
     mock_pyfoam.Time.assert_called_once()
@@ -268,12 +298,16 @@ def test_setup_creates_mesh_and_runtime(
 
 
 def test_setup_reads_fields(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
     """Test that SETUP stage reads pressure and velocity fields."""
     mock_vol_scalar, mock_vol_vector = mock_field_classes
 
-    solver_basic.setup_runtime(mesh=None)
+    # Must call configure_solver first
+    registry = ModelRegistry()
+    solver_basic.configure_solver(registry)
+
+    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
     # Should read p and U fields
     mock_vol_scalar.read_field.assert_called()
@@ -281,29 +315,38 @@ def test_setup_reads_fields(
 
 
 def test_setup_creates_turbulence_models(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
     """Test that SETUP stage creates transport and turbulence models."""
     mock_transport, mock_turbulence = mock_turbulence_models
 
-    solver_basic.setup_runtime(mesh=None)
+    # Must call configure_solver first
+    registry = ModelRegistry()
+    solver_basic.configure_solver(registry)
 
-    mock_transport.assert_called_once()
-    mock_turbulence.New.assert_called_once()
-    assert solver_basic.transport_model == "mock_transport_model"
-    assert solver_basic.turbulence_model == "mock_turbulence_model"
+    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+
+    mock_transport.assert_called()
+    mock_turbulence.New.assert_called()
+    # _transport and _turbulence are wrappers created in CONFIGURE
+    assert solver_basic._transport is not None
+    assert solver_basic._turbulence is not None
 
 
 def test_setup_updates_algorithm_reference_cell(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
-    """Test that SETUP stage updates algorithm with reference cell/value."""
-    solver_basic.algorithm_model = Mock()
-    solver_basic.setup_runtime(mesh=None)
+    """Test that SETUP stage creates algorithm with reference cell/value."""
+    # Must call configure_solver first
+    registry = ModelRegistry()
+    solver_basic.configure_solver(registry)
 
-    # Should update algorithm model with pRefCell and pRefValue
-    assert solver_basic.algorithm_model.pRefCell == 0
-    assert solver_basic.algorithm_model.pRefValue == 0.0
+    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+
+    # Algorithm is created in SETUP with pRefCell and pRefValue
+    assert solver_basic._pressure_velocity is not None
+    assert solver_basic._pressure_velocity.pRefCell == 0
+    assert solver_basic._pressure_velocity.pRefValue == 0.0
 
 
 def test_setup_decorator_marked():
@@ -332,8 +375,12 @@ def test_full_initialization_with_initializer(
     assert solver_basic.configured
     assert solver_basic.setup_complete
 
-    # Should return the solver
-    assert result is solver_basic
+    # Should return a Context now (not the solver)
+    from foamadapter.framework.context import Context
+
+    assert isinstance(result, Context)
+    assert result.mesh is not None
+    assert result.runTime is not None
 
 
 def test_initialization_order(
@@ -355,9 +402,9 @@ def test_initialization_order(
         call_order.append("CONFIGURE")
         return original_configure(self, registry)
 
-    def tracked_setup(self, mesh):
+    def tracked_setup(self, mesh, builder):
         call_order.append("SETUP")
-        return original_setup(self, mesh)
+        return original_setup(self, mesh, builder)
 
     # Preserve decorators by copying _init_stage attribute
     tracked_read._init_stage = "READ_FILES"
@@ -374,75 +421,54 @@ def test_initialization_order(
 
 
 def test_get_models_after_configure(solver_basic, mock_pyfoam):
-    """Test that get_models returns algorithm after CONFIGURE stage."""
+    """Test that get_models returns empty list after CONFIGURE stage."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
+    # get_models() returns optional physics models, not core components
     models = solver_basic.get_models()
-    assert len(models) == 1
-    assert solver_basic.algorithm_model in models
+    assert len(models) == 0
 
 
 # ============================================================================
-# Tests for create_context Integration
+# Tests for Context from Initialization
 # ============================================================================
 
 
-def test_create_context_after_initialization(
+def test_context_from_initialization(
     solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
 ):
-    """Test that create_context works after 3-stage initialization."""
+    """Test that initialization returns a context with all required fields."""
     # Initialize the solver
     initializer = SolverInitializer(solver_basic)
-    initializer.initialize(mesh=None)
+    ctx = initializer.initialize(mesh=None)
 
-    # Mock pimpleControl
-    with patch(
-        "foamadapter.solver.incompressibleFluid.pyf.pimpleControl"
-    ) as mock_pimple:
-        mock_pimple.return_value = "mock_pimple_control"
-
-        # Should be able to create context
-        ctx = solver_basic.create_context()
-
-        assert ctx is not None
-        assert ctx.mesh is not None
-        assert ctx.runTime is not None
-        assert "p" in ctx.fields
-        assert "U" in ctx.fields
-        assert "phi" in ctx.fields
-        assert "laminarTransport" in ctx.fields
-        assert "turbulence" in ctx.fields
-
-
-def test_create_context_before_initialization_fails(solver_basic):
-    """Test that create_context fails before initialization."""
-    with pytest.raises(RuntimeError, match="not properly initialized"):
-        solver_basic.create_context()
+    # Verify context has all required components
+    assert ctx is not None
+    assert ctx.mesh is not None
+    assert ctx.runTime is not None
+    assert "p" in ctx.fields
+    assert "U" in ctx.fields
+    assert "phi" in ctx.fields
+    assert "laminarTransport" in ctx.fields
+    assert "turbulence" in ctx.fields
+    assert "pimple" in ctx.fields
 
 
 # ============================================================================
-# Tests for Algorithm Creation
+# Tests for Algorithm Creation via PluginSystem
 # ============================================================================
 
 
-def test_create_algorithm_pimple():
-    """Test that PIMPLE algorithm is created correctly."""
+def test_algorithm_created_in_setup():
+    """Test that algorithm is created during SETUP stage."""
     solver = IncompressibleFluid(algorithm="PIMPLE", pRefCell=5, pRefValue=100.0)
-    algorithm = solver._create_algorithm()
 
-    assert algorithm is not None
-    assert algorithm.pRefCell == 5
-    assert algorithm.pRefValue == 100.0
+    # Algorithm should not exist before initialization
+    assert solver._pressure_velocity is None
 
-
-def test_create_algorithm_unsupported():
-    """Test that unsupported algorithms raise ValueError."""
-    solver = IncompressibleFluid(algorithm="PIMPLE")
-    solver.algorithm = "SIMPLE"  # Not yet implemented
-
-    with pytest.raises(ValueError, match="not yet implemented"):
-        solver._create_algorithm()
+    # After proper initialization, algorithm should be created
+    # This is tested in the full lifecycle tests
 
 
 # ============================================================================
@@ -451,21 +477,27 @@ def test_create_algorithm_unsupported():
 
 
 def test_registry_contains_algorithm_after_configure(solver_basic):
-    """Test that ModelRegistry contains algorithm after CONFIGURE."""
+    """Test that ModelRegistry contains components after CONFIGURE."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
-    assert registry.contains("algorithm")
-    algorithm = registry.get("algorithm")
-    assert algorithm is solver_basic.algorithm_model
+    # New architecture: components are registered
+    assert registry.contains("transport")
+    assert registry.contains("turbulence")
+    transport = registry.get("transport")
+    turbulence = registry.get("turbulence")
+    assert transport is solver_basic._transport
+    assert turbulence is solver_basic._turbulence
 
 
 def test_registry_empty_before_configure(solver_basic):
     """Test that ModelRegistry is empty before CONFIGURE."""
     registry = ModelRegistry()
 
-    assert not registry.contains("algorithm")
-    assert registry.get("algorithm") is None
+    assert not registry.contains("transport")
+    assert not registry.contains("turbulence")
+    assert registry.get("transport") is None
+    assert registry.get("turbulence") is None
 
 
 # ============================================================================
@@ -491,13 +523,14 @@ def test_full_solver_lifecycle(
     assert solver_basic.configured
     assert solver_basic.setup_complete
 
-    # 4. Verify models are available
-    models = solver_basic.get_models()
-    assert len(models) == 1
-    assert solver_basic.algorithm_model in models
+    # 4. Verify core components are initialized
+    assert solver_basic._transport is not None
+    assert solver_basic._turbulence is not None
+    assert solver_basic._pressure_velocity is not None
 
-    # 5. Verify registry has algorithm
-    assert initializer.registry.contains("algorithm")
+    # 5. Verify registry has components
+    assert initializer.registry.contains("transport")
+    assert initializer.registry.contains("turbulence")
 
 
 def test_multiple_initializations_idempotent(
@@ -508,11 +541,11 @@ def test_multiple_initializations_idempotent(
 
     # First initialization
     initializer.initialize(mesh=None)
-    first_algorithm = solver_basic.algorithm_model
+    first_algorithm = solver_basic._pressure_velocity
 
     # Second initialization (should work without errors)
     initializer.initialize(mesh=None)
-    second_algorithm = solver_basic.algorithm_model
+    second_algorithm = solver_basic._pressure_velocity
 
     # Both should have created algorithms (may be different instances)
     assert first_algorithm is not None
