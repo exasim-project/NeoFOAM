@@ -24,6 +24,7 @@ from foamadapter.framework.context import (
     Model as ModelAnnotation,
 )
 from foamadapter.framework.decorator import decorated_member_functions
+from foamadapter.framework.initialization import ModelRegistry
 from foamadapter.framework.operations import (
     IterativeOp,
     Operation,
@@ -75,12 +76,31 @@ class IncompressibleFluid(BaseModel):
     Incompressible fluid solver supporting multiple pressure-velocity algorithms.
     """
 
+    model_config = {"arbitrary_types_allowed": True}
+
     name: Literal["IncompressibleFluid"] = "IncompressibleFluid"
     argv: list[str] = []
     algorithm: Literal["SIMPLE", "PISO", "PIMPLE"] = "PIMPLE"
     pRefCell: int | None = None
     pRefValue: float | None = None
     maxDeltaT: float = 1e5
+
+    # Lifecycle state tracking
+    files_read: bool = False
+    configured: bool = False
+    setup_complete: bool = False
+
+    # Model references (populated during initialization)
+    transport_model: Any | None = None
+    turbulence_model: Any | None = None
+    algorithm_model: Any | None = None
+
+    # Runtime objects (populated during SETUP)
+    mesh: Any | None = None
+    runTime: Any | None = None
+    p: Any | None = None
+    U: Any | None = None
+    phi: Any | None = None
 
     def _create_algorithm(self) -> PimpleAlgorithm:
         """Factory method to create algorithm instance."""
@@ -91,64 +111,117 @@ class IncompressibleFluid(BaseModel):
                 f"Algorithm '{self.algorithm}' not yet implemented. Only PIMPLE is currently supported."
             )
 
-    def create_context(self) -> Context:
-        """Initialize the simulation context with mesh, runtime, and fields."""
-        argList = pyf.argList(self.argv)
-        runTime = pyf.Time(argList)
-        mesh = pyf.fvMesh(runTime)
+    def get_models(self) -> list[Any]:
+        """Return all models owned by this solver."""
+        models = []
+        if self.algorithm_model is not None:
+            models.append(self.algorithm_model)
+        # Note: transport_model and turbulence_model are OpenFOAM objects,
+        # not Python models with lifecycle methods, so we don't include them
+        return models
 
+    @Solver.read_files
+    def load_control_dict(self) -> None:
+        """READ_FILES: Load solver control settings from configuration files."""
         # Read controlDict
         controlDict = pyf.dictionary.read("system/controlDict")
         try:
             self.maxDeltaT = controlDict.get[float]("maxDeltaT")
         except KeyError:
-            pass
+            pass  # Use default value
 
-        # Create context
-        ctx = Context(fields={}, models={}, mesh=mesh, runTime=runTime)
+        # Read fvSolution for reference cell/value
+        # Note: This requires mesh, so actual reading is deferred to SETUP
+        # We just mark files as read here
+        self.files_read = True
 
-        return ctx
+    @Solver.configure
+    def configure_solver(self, registry: ModelRegistry) -> None:
+        """CONFIGURE: Validate solver configuration and connect models."""
+        # Create and register algorithm model
+        self.algorithm_model = self._create_algorithm()
+        registry.register("algorithm", self.algorithm_model)
 
-    @Solver.operation(operation_number=1)
-    def create_fields(self, ctx: Context) -> FieldUpdates:
-        """Create and read fields from disk."""
-        mesh = ctx.mesh
+        # Validate algorithm choice
+        if self.algorithm not in ["SIMPLE", "PISO", "PIMPLE"]:
+            raise ValueError(f"Unknown algorithm: {self.algorithm}")
 
-        p = volScalarField.read_field(mesh, "p")
-        U = volVectorField.read_field(mesh, "U")
-        phi = pyf.createPhi(U)
+        self.configured = True
 
-        laminarTransport = singlePhaseTransportModel(U, phi)
-        turbulence = incompressibleTurbulenceModel.New(U, phi, laminarTransport)
+    @Solver.setup
+    def setup_runtime(self, mesh: Any) -> None:
+        """SETUP: Initialize runtime structures and fields."""
+        # Create runtime and mesh
+        argList = pyf.argList(self.argv)
+        self.runTime = pyf.Time(argList)
+        self.mesh = pyf.fvMesh(self.runTime)
+
+        # Read fields
+        self.p = volScalarField.read_field(self.mesh, "p")
+        self.U = volVectorField.read_field(self.mesh, "U")
+        self.phi = pyf.createPhi(self.U)
+
+        # Create transport and turbulence models
+        self.transport_model = singlePhaseTransportModel(self.U, self.phi)
+        self.turbulence_model = incompressibleTurbulenceModel.New(
+            self.U, self.phi, self.transport_model
+        )
 
         # Read fvSolution and set reference cell
         fvSolution = pyf.dictionary.read("system/fvSolution")
-        self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
-        mesh.setFluxRequired(pyf.Word("p"))
+        self.pRefCell, self.pRefValue = pyf.setRefCell(
+            self.p, fvSolution.subDict("PIMPLE")
+        )
+        self.mesh.setFluxRequired(pyf.Word("p"))
 
+        # Update algorithm with reference cell/value
+        if self.algorithm_model is not None:
+            self.algorithm_model.pRefCell = self.pRefCell
+            self.algorithm_model.pRefValue = self.pRefValue
+
+        self.setup_complete = True
+
+    def create_context(self) -> Context:
+        """Create the simulation context with mesh, runtime, and fields."""
+        # After 3-stage initialization, mesh and runTime are already created
+        if self.mesh is None or self.runTime is None:
+            raise RuntimeError(
+                "Solver not properly initialized. Call SolverInitializer.initialize() first."
+            )
+
+        # Reuse fields that were created during SETUP
         # Create pimple control
-        pimple = pyf.pimpleControl(mesh)
+        pimple = pyf.pimpleControl(self.mesh)
 
-        return FieldUpdates(
-            {
-                "p": p,
-                "U": U,
-                "phi": phi,
-                "laminarTransport": laminarTransport,
-                "turbulence": turbulence,
+        # Create context
+        ctx = Context(
+            fields={
+                "p": self.p,
+                "U": self.U,
+                "phi": self.phi,
+                "laminarTransport": self.transport_model,
+                "turbulence": self.turbulence_model,
                 "pimple": pimple,
-            }
+            },
+            models={},
+            mesh=self.mesh,
+            runTime=self.runTime,
         )
 
-    @Solver.operation(operation_number=2, depends_on=["create_fields"])
+        return ctx
+
+    @Solver.operation(operation_number=2)
     def setup_models(self, ctx: Context) -> None:
         """Setup algorithm control object."""
         # Remove old pimple from fields if it exists
         ctx.fields.pop("pimple", None)
 
         # Create algorithm control using algorithm's factory method
-        algorithm = self._create_algorithm()
-        control = algorithm.create_control(ctx.mesh)
+        if self.algorithm_model is None:
+            raise RuntimeError(
+                "Algorithm model not initialized. Call initialize() first."
+            )
+        control = self.algorithm_model.create_control(ctx.mesh)
         ctx.models["pimple_control"] = control
 
     @Solver.operation(operation_number=3, depends_on=["setup_models"])
@@ -189,8 +262,10 @@ class IncompressibleFluid(BaseModel):
             ops.add(op)
 
         # Add algorithm operations
-        algorithm = self._create_algorithm()
-        algo_ops = algorithm.operations()
+        if self.algorithm_model is None:
+            # Create algorithm lazily for tests/scenarios without full initialization
+            self.algorithm_model = self._create_algorithm()
+        algo_ops = self.algorithm_model.operations()
         ops.add(algo_ops)
 
         return ops
@@ -203,7 +278,9 @@ class IncompressibleFluid(BaseModel):
         the specific pressure-velocity coupling strategy.
         """
         ops = self.operations()
-        algorithm = self._create_algorithm()
+        if self.algorithm_model is None:
+            # Create algorithm lazily for tests/scenarios without full initialization
+            self.algorithm_model = self._create_algorithm()
 
         # Build the main execution graph
         main_loop = StepBuilder()
@@ -232,13 +309,18 @@ class IncompressibleFluid(BaseModel):
         main_loop.operations.run(ctx)
 
     def run(self) -> None:
-        """Run the complete simulation."""
-        # Initialize context
+        """Run the complete simulation using 3-stage initialization."""
+        from foamadapter.framework.initialization import SolverInitializer
+
+        # 3-stage initialization
+        initializer = SolverInitializer(self)
+        initializer.initialize(mesh=None)
+
+        # Create context with initialized fields
         ctx = self.create_context()
 
-        # Initialize fields
+        # Setup models (algorithm control)
         ops = self.operations()
-        ops["create_fields"].run(ctx)
         ops["setup_models"].run(ctx)
 
         Info("Starting time loop")
