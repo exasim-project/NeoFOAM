@@ -17,7 +17,12 @@ from pybFoam import (
 from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
 from pydantic import BaseModel
 
-from foamadapter.framework.context import Context, FieldUpdates
+from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
+from foamadapter.framework.context import (
+    Context,
+    FieldUpdates,
+    Model as ModelAnnotation,
+)
 from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.operations import (
     IterativeOp,
@@ -64,60 +69,27 @@ class CFLCondition:
         return runTime.loop()
 
 
-class PimpleLoopCondition:
-    """Condition for PIMPLE iterations."""
-
-    def __init__(self) -> None:
-        self.pimple = None
-
-    def __call__(self, ctx: Context) -> bool:
-        if self.pimple is None:
-            self.pimple = ctx.models.get("pimple")
-            if self.pimple is None:
-                raise ValueError("pimple control not found in context")
-        return self.pimple.loop()
-
-
-class PimpleCorrectorCondition:
-    """Condition for PIMPLE pressure correctors."""
-
-    def __init__(self) -> None:
-        self.pimple = None
-
-    def __call__(self, ctx: Context) -> bool:
-        if self.pimple is None:
-            self.pimple = ctx.models.get("pimple")
-            if self.pimple is None:
-                raise ValueError("pimple control not found in context")
-        return self.pimple.correct()
-
-
-class NonOrthogonalCondition:
-    """Condition for non-orthogonal corrections."""
-
-    def __init__(self) -> None:
-        self.pimple = None
-
-    def __call__(self, ctx: Context) -> bool:
-        if self.pimple is None:
-            self.pimple = ctx.models.get("pimple")
-            if self.pimple is None:
-                raise ValueError("pimple control not found in context")
-        return self.pimple.correctNonOrthogonal()
-
-
 @Solver
 class IncompressibleFluid(BaseModel):
     """
-    Incompressible fluid solver using the PIMPLE algorithm.
-    This is a framework-based port of pimplefoam.py
+    Incompressible fluid solver supporting multiple pressure-velocity algorithms.
     """
 
     name: Literal["IncompressibleFluid"] = "IncompressibleFluid"
     argv: list[str] = []
+    algorithm: Literal["SIMPLE", "PISO", "PIMPLE"] = "PIMPLE"
     pRefCell: int | None = None
     pRefValue: float | None = None
     maxDeltaT: float = 1e5
+
+    def _create_algorithm(self) -> PimpleAlgorithm:
+        """Factory method to create algorithm instance."""
+        if self.algorithm == "PIMPLE":
+            return PimpleAlgorithm(pRefCell=self.pRefCell, pRefValue=self.pRefValue)
+        else:
+            raise ValueError(
+                f"Algorithm '{self.algorithm}' not yet implemented. Only PIMPLE is currently supported."
+            )
 
     def create_context(self) -> Context:
         """Initialize the simulation context with mesh, runtime, and fields."""
@@ -170,9 +142,14 @@ class IncompressibleFluid(BaseModel):
 
     @Solver.operation(operation_number=2, depends_on=["create_fields"])
     def setup_models(self, ctx: Context) -> None:
-        """Move pimple control to models for easy access."""
-        pimple = ctx.fields.pop("pimple")
-        ctx.models["pimple"] = pimple
+        """Setup algorithm control object."""
+        # Remove old pimple from fields if it exists
+        ctx.fields.pop("pimple", None)
+
+        # Create algorithm control using algorithm's factory method
+        algorithm = self._create_algorithm()
+        control = algorithm.create_control(ctx.mesh)
+        ctx.models["pimple_control"] = control
 
     @Solver.operation(operation_number=3, depends_on=["setup_models"])
     def print_time(self, ctx: Context) -> None:
@@ -180,114 +157,22 @@ class IncompressibleFluid(BaseModel):
         runTime = ctx.runTime
         Info(f"Time = {runTime.timeName()}")
 
-    @Solver.operation(operation_number=4, depends_on=["print_time"])
-    def momentum_predictor(
-        self, U: volVectorField, phi: surfaceScalarField, turbulence: Any
-    ) -> FieldUpdates:
-        """Solve the momentum equation."""
-        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
-        UEqn.relax()
-
-        return FieldUpdates({"UEqn": UEqn})
-
-    @Solver.operation(operation_number=5, depends_on=["momentum_predictor"])
-    def solve_momentum(
-        self, ctx: Context, p: volScalarField, UEqn: fvVectorMatrix
-    ) -> None:
-        """Solve momentum equation if momentum predictor is enabled."""
-        pimple = ctx.models["pimple"]
-        if pimple.momentumPredictor():
-            pyf.solve(UEqn + fvc.grad(p))
-
-    @Solver.operation(operation_number=6, depends_on=["solve_momentum"])
-    def compute_HbyA(
-        self, U: volVectorField, p: volScalarField, UEqn: fvVectorMatrix
-    ) -> FieldUpdates:
-        """Compute H/A for pressure equation."""
-        rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
-        HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
-
-        return FieldUpdates({"rAU": rAU, "HbyA": HbyA})
-
-    @Solver.operation(operation_number=7, depends_on=["compute_HbyA"])
-    def compute_phiHbyA(
-        self,
-        U: volVectorField,
-        phi: surfaceScalarField,
-        HbyA: volVectorField,
-        rAU: volScalarField,
-    ) -> FieldUpdates:
-        """Compute flux from H/A."""
-        phiHbyA = surfaceScalarField(
-            pyf.Word("phiHbyA"),
-            fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
-        )
-        return FieldUpdates({"phiHbyA": phiHbyA})
-
-    @Solver.operation(operation_number=8, depends_on=["compute_phiHbyA"])
-    def adjust_phi(
-        self,
-        U: volVectorField,
-        p: volScalarField,
-        phiHbyA: surfaceScalarField,
-        rAU: volScalarField,
-    ) -> None:
-        """Adjust flux for continuity."""
-        pyf.adjustPhi(phiHbyA, U, p)
-        pyf.constrainPressure(p, U, phiHbyA, rAU)
-
-    @Solver.operation(operation_number=9, depends_on=["adjust_phi"])
-    def solve_pressure(
-        self,
-        ctx: Context,
-        p: volScalarField,
-        rAU: volScalarField,
-        phiHbyA: surfaceScalarField,
-    ) -> None:
-        """Solve pressure equation."""
-        pimple = ctx.models["pimple"]
-        pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
-        pEqn.setReference(self.pRefCell, self.pRefValue, False)
-        pEqn.solve(p.select(pimple.finalInnerIter()))
-
-        ctx.fields["pEqn"] = pEqn
-
-    @Solver.operation(operation_number=10, depends_on=["solve_pressure"])
-    def update_flux(
-        self,
-        ctx: Context,
-        phi: surfaceScalarField,
-        phiHbyA: surfaceScalarField,
-        pEqn: fvScalarMatrix,
-    ) -> None:
-        """Update flux after pressure solution."""
-        pimple = ctx.models["pimple"]
-        if pimple.finalNonOrthogonalIter():
-            phi.assign(phiHbyA - pEqn.flux())
-
-    @Solver.operation(operation_number=11, depends_on=["update_flux"])
-    def correct_velocity(
-        self,
-        U: volVectorField,
-        p: volScalarField,
-        HbyA: volVectorField,
-        rAU: volScalarField,
-    ) -> None:
-        """Correct velocity field."""
-        U.assign(HbyA - rAU * fvc.grad(p))
-        U.correctBoundaryConditions()
-
-    @Solver.operation(operation_number=12, depends_on=["correct_velocity"])
+    @Solver.operation(operation_number=4, depends_on=["continuity"])
     def turbulence_correction(
-        self, ctx: Context, laminarTransport: Any, turbulence: Any
-    ) -> None:
-        """Correct turbulence model if needed."""
-        pimple = ctx.models["pimple"]
-        if pimple.turbCorr():
+        self, laminarTransport, turbulence, pimple_control: ModelAnnotation
+    ) -> FieldUpdates:
+        """
+        Correct turbulence model after pressure-velocity coupling.
+        """
+        if pimple_control.turbCorr():
             laminarTransport.correct()
             turbulence.correct()
 
-    @Solver.operation(operation_number=13, depends_on=["turbulence_correction"])
+        return FieldUpdates(
+            {"laminarTransport": laminarTransport, "turbulence": turbulence}
+        )
+
+    @Solver.operation(operation_number=5, depends_on=["turbulence_correction"])
     def write_output(self, ctx: Context) -> None:
         """Write fields to disk."""
         runTime = ctx.runTime
@@ -295,25 +180,30 @@ class IncompressibleFluid(BaseModel):
         runTime.printExecutionTime()
 
     def operations(self, domain_name: str | None = None) -> OperationCollection:
-        """Collect all decorated operations."""
+        """Collect all decorated operations including algorithm operations."""
         _ = domain_name  # Part of SolverInterface, unused in this implementation
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:
             op = Operation.create_SeqOp(func)
             ops.add(op)
+
+        # Add algorithm operations
+        algorithm = self._create_algorithm()
+        algo_ops = algorithm.operations()
+        ops.add(algo_ops)
+
         return ops
 
     def main_loop(self, ctx: Context) -> None:
         """
-        Main simulation loop with PIMPLE algorithm structure:
-        - Time loop
-          - PIMPLE loop
-            - Momentum predictor
-            - Pressure corrector loop
-              - Non-orthogonal corrector loop
+        Main simulation loop - algorithm agnostic!
+
+        The algorithm provides momentum and continuity operations that encapsulate
+        the specific pressure-velocity coupling strategy.
         """
         ops = self.operations()
+        algorithm = self._create_algorithm()
 
         # Build the main execution graph
         main_loop = StepBuilder()
@@ -328,48 +218,14 @@ class IncompressibleFluid(BaseModel):
         with main_loop.loop(time_loop_op) as time_loop:
             time_loop.step(ops["print_time"])
 
-            # PIMPLE outer loop
-            pimple_loop_op = Operation(
-                func=IterativeOp(PimpleLoopCondition()),
-                operation_name="pimple_loop",
-                operation_number=2,
-            )
+            # Algorithm provides momentum and continuity operations
+            algo_ops = algorithm.operations()
+            time_loop.step(algo_ops["momentum"])
+            time_loop.step(algo_ops["continuity"])
 
-            with time_loop.loop(pimple_loop_op) as pimple_loop:
-                # Momentum predictor
-                pimple_loop.step(ops["momentum_predictor"])
-                pimple_loop.step(ops["solve_momentum"])
+            # Solver handles turbulence correction
+            time_loop.step(ops["turbulence_correction"])
 
-                # Pressure corrector loop
-                corrector_loop_op = Operation(
-                    func=IterativeOp(PimpleCorrectorCondition()),
-                    operation_name="pimple_corrector_loop",
-                    operation_number=3,
-                )
-
-                with pimple_loop.loop(corrector_loop_op) as corrector_loop:
-                    corrector_loop.step(ops["compute_HbyA"])
-                    corrector_loop.step(ops["compute_phiHbyA"])
-                    corrector_loop.step(ops["adjust_phi"])
-
-                    # Non-orthogonal corrector loop
-                    non_orth_loop_op = Operation(
-                        func=IterativeOp(NonOrthogonalCondition()),
-                        operation_name="non_orthogonal_loop",
-                        operation_number=4,
-                    )
-
-                    with corrector_loop.loop(non_orth_loop_op) as non_orth_loop:
-                        non_orth_loop.step(ops["solve_pressure"])
-                        non_orth_loop.step(ops["update_flux"])
-
-                    # After pressure correction
-                    corrector_loop.step(ops["correct_velocity"])
-
-                # After PIMPLE loop
-                pimple_loop.step(ops["turbulence_correction"])
-
-            # After time step
             time_loop.step(ops["write_output"])
 
         # Execute the operations

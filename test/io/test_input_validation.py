@@ -10,6 +10,7 @@ from foamadapter.io.input_validation import ModelInputDefinition, ModelInputColl
 # Try to import pybFoam, skip tests if not available
 try:
     from pybFoam.io.model_base import IOModelBase
+
     PYBFOAM_AVAILABLE = True
 except (ImportError, OSError) as e:
     PYBFOAM_AVAILABLE = False
@@ -18,7 +19,7 @@ except (ImportError, OSError) as e:
 
 requires_pybfoam = pytest.mark.skipif(
     not PYBFOAM_AVAILABLE,
-    reason="pybFoam not available or OpenFOAM libraries not loaded"
+    reason="pybFoam not available or OpenFOAM libraries not loaded",
 )
 
 

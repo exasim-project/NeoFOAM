@@ -47,6 +47,7 @@ Table of Contents
    :caption: Development:
 
    development/architecture
+   development/initialization
    development/testing
    development/pluginsystem
 

@@ -52,6 +52,9 @@ def get_call_arguments(func_args: dict[str, type], context: Context) -> dict[str
             call_args[name] = annotation(**dc_args)
         elif annotation == Context:
             call_args[name] = context
+        elif get_origin(annotation) is Annotated:
+            # Handle Annotated types (e.g., Model[SomeType] to get from ctx.models)
+            call_args.update(_get_value(context, name, annotation))
         else:
             call_args[name] = context.fields[name]
     return call_args

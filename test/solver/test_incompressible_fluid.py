@@ -56,26 +56,33 @@ def test_incompressible_fluid_operations_registration():
     solver = IncompressibleFluid(argv=["test"])
     ops = solver.operations()
 
-    # Should have all the decorated operations
-    expected_operations = [
+    # Should have solver operations + algorithm operations (momentum, continuity)
+    expected_solver_operations = [
         "create_fields",
         "setup_models",
         "print_time",
-        "momentum_predictor",
-        "solve_momentum",
-        "compute_HbyA",
-        "compute_phiHbyA",
-        "adjust_phi",
-        "solve_pressure",
-        "update_flux",
-        "correct_velocity",
         "turbulence_correction",
         "write_output",
     ]
 
-    assert len(ops) == len(expected_operations)
+    expected_algorithm_operations = [
+        "momentum",
+        "continuity",
+    ]
 
-    for op_name in expected_operations:
+    # Total operations = solver + algorithm
+    expected_total = len(expected_solver_operations) + len(
+        expected_algorithm_operations
+    )
+    assert len(ops) == expected_total
+
+    # Check solver operations exist
+    for op_name in expected_solver_operations:
+        op = ops[op_name]
+        assert op.operation_name == op_name
+
+    # Check algorithm operations exist
+    for op_name in expected_algorithm_operations:
         op = ops[op_name]
         assert op.operation_name == op_name
 
@@ -87,19 +94,18 @@ def test_incompressible_fluid_operation_dependencies():
     solver = IncompressibleFluid(argv=["test"])
     ops = solver.operations()
 
-    # Check specific dependencies
+    # Check solver operation dependencies
     assert ops["create_fields"].depends_on == []
     assert ops["setup_models"].depends_on == ["create_fields"]
     assert ops["print_time"].depends_on == ["setup_models"]
-    assert ops["momentum_predictor"].depends_on == ["print_time"]
-    assert ops["solve_momentum"].depends_on == ["momentum_predictor"]
-    assert ops["compute_HbyA"].depends_on == ["solve_momentum"]
-    assert ops["compute_phiHbyA"].depends_on == ["compute_HbyA"]
-    assert ops["adjust_phi"].depends_on == ["compute_phiHbyA"]
-    assert ops["solve_pressure"].depends_on == ["adjust_phi"]
-    assert ops["update_flux"].depends_on == ["solve_pressure"]
-    assert ops["correct_velocity"].depends_on == ["update_flux"]
-    assert ops["turbulence_correction"].depends_on == ["correct_velocity"]
+
+    # Algorithm operations have no explicit dependencies in their decorator
+    # (dependencies are managed by solver's main_loop)
+    assert ops["momentum"].depends_on == []
+    assert ops["continuity"].depends_on == []
+
+    # Turbulence depends on continuity
+    assert ops["turbulence_correction"].depends_on == ["continuity"]
     assert ops["write_output"].depends_on == ["turbulence_correction"]
 
 
@@ -124,17 +130,17 @@ def test_cfl_condition_class():
     assert CFLCondition is not None
 
 
-def test_pimple_conditions():
-    """Test that PIMPLE condition classes exist."""
-    from foamadapter.solver.incompressibleFluid import (
-        NonOrthogonalCondition,
-        PimpleCorrectorCondition,
-        PimpleLoopCondition,
-    )
+def test_algorithm_operations():
+    """Test that algorithm provides momentum and continuity operations."""
+    from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
 
-    assert PimpleLoopCondition is not None
-    assert PimpleCorrectorCondition is not None
-    assert NonOrthogonalCondition is not None
+    algorithm = PimpleAlgorithm()
+    ops = algorithm.operations()
+
+    # Algorithm should have exactly 2 operations
+    assert len(ops) == 2
+    assert "momentum" in [op.operation_name for op in ops]
+    assert "continuity" in [op.operation_name for op in ops]
 
 
 if __name__ == "__main__":
