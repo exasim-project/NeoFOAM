@@ -202,6 +202,285 @@ Within each stage, **models are initialized before the solver**:
 This allows the solver's CONFIGURE method to verify all models are properly configured.
 
 
+Lazy BUILD Pattern
+------------------
+
+Starting with recent versions, the BUILD stage supports a lazy initialization pattern where methods can return ``LazyInit`` objects instead of performing immediate execution. This provides several benefits:
+
+1. **Explicit Dependencies**: Each initialization step declares its dependencies
+2. **Automatic Ordering**: Dependencies are resolved using topological sort
+3. **Cycle Detection**: Circular dependencies are caught early
+4. **Better Testability**: Individual initialization steps can be tested in isolation
+
+Basic Lazy Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``@Solver.build`` decorator can return a list of ``LazyInit`` objects:
+
+.. code-block:: python
+
+    from foamadapter.framework import LazyInit, Solver
+    from foamadapter.framework.initialization.helpers import field, operator, lazy, model
+
+    class MySolver(BaseModel):
+        model_config = {"arbitrary_types_allowed": True}
+        
+        @Solver.build
+        def setup_runtime(self, mesh):
+            """Return list of lazy initializers instead of executing immediately."""
+            return [
+                # Runtime and mesh (no dependencies)
+                lazy("runtime", self._create_runtime),
+                lazy("mesh", self._create_mesh, ["runtime"]),
+                
+                # Fields depend on mesh
+                field("p", self._read_pressure_field, ["mesh"]),
+                field("U", self._read_velocity_field, ["mesh"]),
+                
+                # Operators depend on fields
+                operator("div_phi", self._create_divergence, ["fields.U"]),
+                operator("laplacian_p", self._create_laplacian, ["fields.p"]),
+            ]
+        
+        def _create_runtime(self, context):
+            runtime = pyf.Time(...)
+            return runtime
+        
+        def _create_mesh(self, context):
+            runtime = context["runtime"]
+            mesh = pyf.fvMesh(runtime)
+            return mesh
+        
+        def _read_pressure_field(self, context):
+            mesh = context["mesh"]
+            return pyf.volScalarField.read_field("p", mesh)
+
+When ``SolverInitializer.initialize()`` executes the BUILD stage, it:
+
+1. Calls ``setup_runtime(mesh)`` to get the list of ``LazyInit`` objects
+2. Builds a dependency graph from the ``depends_on`` lists
+3. Performs topological sort to determine execution order
+4. Executes each initializer in order, passing the ``context`` dict
+5. Stores results back in ``context`` for downstream dependencies
+
+Helper Functions
+~~~~~~~~~~~~~~~~
+
+The framework provides helper functions to create ``LazyInit`` objects with automatic naming:
+
+.. code-block:: python
+
+    from foamadapter.framework.initialization.helpers import field, operator, lazy, model
+
+    # field(name, initializer, dependencies) -> LazyInit with name="fields.{name}"
+    field("p", lambda ctx: read_field("p", ctx["mesh"]), ["mesh"])
+    
+    # operator(name, initializer, dependencies) -> LazyInit with name="operators.{name}"
+    operator("div_phi", lambda ctx: create_div(ctx["fields.U"]), ["fields.U"])
+    
+    # model(name, initializer, dependencies) -> LazyInit with name="models.{name}"
+    model("turbulence", lambda ctx: create_turbulence(...), ["fields.U", "fields.p"])
+    
+    # lazy(name, initializer, dependencies) -> LazyInit with custom name
+    lazy("algorithm", lambda ctx: create_algorithm(...), ["models.turbulence"])
+
+All helpers default to an empty dependency list ``[]`` if not specified.
+
+Dependency Resolution
+~~~~~~~~~~~~~~~~~~~~~
+
+Dependencies are specified as strings matching the ``name`` of other ``LazyInit`` objects. The framework:
+
+- Uses ``networkx.lexicographical_topological_sort`` for deterministic ordering
+- Detects cycles and raises ``CyclicDependencyError`` before execution
+- Ensures each initializer executes exactly once
+
+Example dependency chain:
+
+.. code-block:: python
+
+    runtime (no deps)
+      ↓
+    mesh (depends on ["runtime"])
+      ↓
+    fields.p, fields.U (both depend on ["mesh"])
+      ↓
+    models.turbulence (depends on ["fields.U", "fields.p"])
+      ↓
+    algorithm (depends on ["models.turbulence"])
+
+Execution order: ``runtime → mesh → fields.p → fields.U → models.turbulence → algorithm``
+
+Context Passing
+~~~~~~~~~~~~~~~
+
+Each initializer receives a ``context`` dictionary containing all previously initialized objects:
+
+.. code-block:: python
+
+    def _create_algorithm(self, context):
+        # Access dependencies via their names
+        turbulence = context["models.turbulence"]
+        p_field = context["fields.p"]
+        U_field = context["fields.U"]
+        
+        # Create algorithm using dependencies
+        algorithm = PIMPLEAlgorithm(
+            turbulence=turbulence,
+            pressure=p_field,
+            velocity=U_field
+        )
+        return algorithm
+
+The context is automatically populated as each initializer completes.
+
+Complete Example
+~~~~~~~~~~~~~~~~
+
+Here's a full example showing lazy initialization for an incompressible solver:
+
+.. code-block:: python
+
+    from foamadapter.framework import Solver
+    from foamadapter.framework.initialization.helpers import field, operator, lazy, model
+    from pydantic import BaseModel
+
+    class IncompressibleSolver(BaseModel):
+        model_config = {"arbitrary_types_allowed": True}
+        
+        @Solver.build
+        def setup_runtime(self, mesh):
+            """Lazy initialization with explicit dependencies."""
+            return [
+                # Core runtime objects
+                lazy("runtime", self._create_runtime),
+                lazy("mesh", self._create_mesh, ["runtime"]),
+                
+                # Read fields from disk
+                field("p", self._read_pressure, ["mesh"]),
+                field("U", self._read_velocity, ["mesh"]),
+                field("phi", self._read_flux, ["mesh"]),
+                
+                # Create physics models
+                model("laminarTransport", self._create_transport, ["fields.U"]),
+                model("turbulence", self._create_turbulence, 
+                      ["fields.U", "fields.phi", "fields.laminarTransport"]),
+                
+                # Create algorithm (needs all fields and models)
+                lazy("algorithm", self._create_algorithm, 
+                     ["fields.p", "fields.U", "models.turbulence"]),
+            ]
+        
+        def _create_runtime(self, context):
+            return pyf.Time(self.argv)
+        
+        def _create_mesh(self, context):
+            return pyf.fvMesh(context["runtime"])
+        
+        def _read_pressure(self, context):
+            return pyf.volScalarField.read_field("p", context["mesh"])
+        
+        def _read_velocity(self, context):
+            return pyf.volVectorField.read_field("U", context["mesh"])
+        
+        def _read_flux(self, context):
+            return pyf.surfaceScalarField.read_field("phi", context["mesh"])
+        
+        def _create_transport(self, context):
+            return pyf.singlePhaseTransportModel(
+                context["fields.U"], 
+                context["fields.phi"]
+            )
+        
+        def _create_turbulence(self, context):
+            return pyf.incompressibleTurbulenceModel.New(
+                context["fields.U"],
+                context["fields.phi"],
+                context["fields.laminarTransport"]
+            )
+        
+        def _create_algorithm(self, context):
+            # Access all dependencies
+            mesh = context["mesh"]
+            p = context["fields.p"]
+            U = context["fields.U"]
+            turbulence = context["models.turbulence"]
+            
+            return PIMPLEAlgorithm(mesh, p, U, turbulence)
+
+Migration from Immediate Execution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have existing BUILD methods using the builder pattern:
+
+**Old pattern (immediate execution):**
+
+.. code-block:: python
+
+    @Solver.build
+    def setup_runtime(self, mesh, builder):
+        runtime = pyf.Time(self.argv)
+        builder.set_runtime(runtime)
+        
+        mesh = pyf.fvMesh(runtime)
+        builder.set_mesh(mesh)
+        
+        p = pyf.volScalarField.read_field("p", mesh)
+        builder.add_field("p", p)
+
+**New pattern (lazy initialization):**
+
+.. code-block:: python
+
+    @Solver.build
+    def setup_runtime(self, mesh):
+        return [
+            lazy("runtime", lambda ctx: pyf.Time(self.argv)),
+            lazy("mesh", lambda ctx: pyf.fvMesh(ctx["runtime"]), ["runtime"]),
+            field("p", lambda ctx: pyf.volScalarField.read_field("p", ctx["mesh"]), ["mesh"]),
+        ]
+
+Key differences:
+
+1. Remove ``builder`` parameter - method now takes only ``mesh``
+2. Return list of ``LazyInit`` objects instead of calling builder methods
+3. Declare dependencies explicitly via ``depends_on`` parameter
+4. Use lambda functions or bound methods for deferred execution
+5. Access dependencies via ``context`` dict in initializers
+
+Benefits of Lazy Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Explicit Dependencies**: Dependencies are visible in code, not implicit in execution order
+
+.. code-block:: python
+
+    # Clear that turbulence needs U and phi
+    model("turbulence", self._create_turbulence, ["fields.U", "fields.phi"])
+
+**Testability**: Test individual initialization steps in isolation
+
+.. code-block:: python
+
+    def test_turbulence_initialization():
+        solver = IncompressibleSolver()
+        
+        # Mock context with only required dependencies
+        context = {
+            "fields.U": mock_velocity_field,
+            "fields.phi": mock_flux_field,
+            "fields.laminarTransport": mock_transport,
+        }
+        
+        # Test individual initializer
+        turbulence = solver._create_turbulence(context)
+        assert turbulence is not None
+
+**Automatic Ordering**: No need to manually order initialization calls - the framework handles it
+
+**Early Error Detection**: Circular dependencies detected before any initialization runs
+
+
 Complete Example
 ----------------
 
@@ -579,14 +858,62 @@ The test suite is organized in ``test/initialization/``:
 - ``test_load_stage.py`` - LOAD stage tests
 - ``test_resolve_dependencies_stage.py`` - RESOLVE_DEPENDENCIES stage tests
 - ``test_build_stage.py`` - BUILD stage tests
+- ``test_lazy_init.py`` - LazyInit dataclass and helper function tests
+- ``test_lazy_build_integration.py`` - Lazy BUILD stage integration tests
 - ``test_initialization_order.py`` - Execution order tests
 - ``test_error_handling.py`` - Error condition tests
-- ``test_config.py`` - ConfigContext tests
+- ``test_config_context.py`` - ConfigContext tests
 - ``test_decorators.py`` - Decorator behavior tests
-- ``test_adaptable_field.py`` - Configurable behavior and dispatch tests
+- ``test_configurable_field.py`` - Configurable behavior and dispatch tests
+- ``test_incompressible_fluid.py`` - Full solver initialization tests
 
 Run all tests:
 
 .. code-block:: bash
 
     pytest test/initialization/ -v
+
+Testing Lazy Initialization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When testing lazy BUILD methods, verify the returned LazyInit objects:
+
+.. code-block:: python
+
+    def test_setup_runtime_returns_lazy_init():
+        solver = MySolver()
+        result = solver.setup_runtime(mesh=None)
+        
+        # Verify returns list of LazyInit
+        assert isinstance(result, list)
+        assert all(isinstance(item, LazyInit) for item in result)
+        
+        # Verify expected initializers
+        names = [li.name for li in result]
+        assert "runtime" in names
+        assert "mesh" in names
+        assert "fields.p" in names
+        
+        # Verify dependencies
+        for li in result:
+            if li.name == "fields.p":
+                assert "mesh" in li.depends_on
+
+For integration testing, use ``SolverInitializer`` to execute the full initialization:
+
+.. code-block:: python
+
+    def test_full_initialization_with_lazy_build():
+        solver = MySolver()
+        initializer = SolverInitializer(solver)
+        
+        # Execute full initialization
+        context = initializer.initialize(mesh=None)
+        
+        # Verify context contains all initialized objects
+        assert "runtime" in context
+        assert "mesh" in context
+        assert "fields.p" in context
+        
+        # Verify solver state updated
+        assert solver.setup_complete

@@ -109,18 +109,6 @@ def mock_turbulence_models():
 
 
 @pytest.fixture
-def mock_builder():
-    """Create a mock ContextBuilder for tests."""
-    builder = Mock()
-    builder.add_field = Mock()
-    builder.add_model = Mock()
-    builder.set_mesh = Mock()
-    builder.set_runtime = Mock()
-    builder.build = Mock(return_value="mock_context")
-    return builder
-
-
-@pytest.fixture
 def solver_basic():
     """Create a basic IncompressibleFluid solver instance."""
     return IncompressibleFluid(argv=["test"], algorithm="PIMPLE")
@@ -270,88 +258,95 @@ def test_resolve_dependencies_decorator_marked():
 
 
 def test_build_stage_execution(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
 ):
-    """Test that BUILD stage executes correctly."""
+    """Test that BUILD stage returns lazy initializers."""
     # Must call configure_solver first
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+    result = solver_basic.setup_runtime(mesh=None)
 
-    assert solver_basic.setup_complete is True
+    # Should return list of LazyInit objects
+    assert isinstance(result, list)
+    assert len(result) > 0
     # Transport and turbulence wrappers are created in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
-    # Algorithm is created in BUILD
-    assert solver_basic._pressure_velocity is not None
 
 
 def test_build_creates_mesh_and_runtime(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
 ):
-    """Test that BUILD stage creates mesh and runtime objects."""
+    """Test that BUILD stage returns lazy initializers for mesh and runtime."""
     # Must call configure_solver first
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+    result = solver_basic.setup_runtime(mesh=None)
 
-    mock_pyfoam.argList.assert_called_once_with(solver_basic.argv)
-    mock_pyfoam.Time.assert_called_once()
-    mock_pyfoam.fvMesh.assert_called_once()
+    # Should return list with lazy initializers including runtime and mesh
+    assert isinstance(result, list)
+    lazy_names = [li.name for li in result]
+    assert "runtime" in lazy_names
+    assert "mesh" in lazy_names
 
 
 def test_build_reads_fields(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
 ):
-    """Test that BUILD stage reads pressure and velocity fields."""
+    """Test that BUILD stage returns lazy initializers for fields."""
     mock_vol_scalar, mock_vol_vector = mock_field_classes
 
     # Must call configure_solver first
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+    result = solver_basic.setup_runtime(mesh=None)
 
-    # Should read p and U fields
-    mock_vol_scalar.read_field.assert_called()
-    mock_vol_vector.read_field.assert_called()
+    # Should return lazy initializers for p and U fields
+    assert isinstance(result, list)
+    lazy_names = [li.name for li in result]
+    assert "fields.p" in lazy_names
+    assert "fields.U" in lazy_names
 
 
 def test_build_creates_turbulence_models(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
 ):
-    """Test that BUILD stage creates transport and turbulence models."""
+    """Test that BUILD stage returns lazy initializers for turbulence models."""
     mock_transport, mock_turbulence = mock_turbulence_models
 
     # Must call configure_solver first
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+    result = solver_basic.setup_runtime(mesh=None)
 
-    mock_transport.assert_called()
-    mock_turbulence.New.assert_called()
+    # Should return lazy initializers for transport and turbulence
+    assert isinstance(result, list)
+    lazy_names = [li.name for li in result]
+    assert "fields.laminarTransport" in lazy_names
+    assert "fields.turbulence" in lazy_names
     # _transport and _turbulence are wrappers created in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
 
 
 def test_build_updates_algorithm_reference_cell(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
+    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
 ):
-    """Test that BUILD stage creates algorithm with reference cell/value."""
+    """Test that BUILD stage returns lazy initializer for algorithm."""
     # Must call configure_solver first
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    solver_basic.setup_runtime(mesh=None, builder=mock_builder)
+    result = solver_basic.setup_runtime(mesh=None)
 
-    # Algorithm is created in BUILD with pRefCell and pRefValue
-    assert solver_basic._pressure_velocity is not None
-    assert solver_basic._pressure_velocity.pRefCell == 0
-    assert solver_basic._pressure_velocity.pRefValue == 0.0
+    # Should return lazy initializer for algorithm
+    assert isinstance(result, list)
+    lazy_names = [li.name for li in result]
+    assert "algorithm" in lazy_names
 
 
 def test_build_decorator_marked():
@@ -407,9 +402,9 @@ def test_initialization_order(
         call_order.append("RESOLVE_DEPENDENCIES")
         return original_configure(self, config)
 
-    def tracked_setup(self, mesh, builder):
+    def tracked_setup(self, mesh):
         call_order.append("BUILD")
-        return original_setup(self, mesh, builder)
+        return original_setup(self, mesh)
 
     # Preserve decorators by copying _init_stage attribute
     tracked_read._init_stage = InitializationStage.LOAD

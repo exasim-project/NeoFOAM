@@ -9,6 +9,7 @@ from foamadapter.framework.operations import OperationCollection
 from .context import Context
 from .decorator import operation
 from .initialization import load, resolve_dependencies, build
+from .initialization.helpers import field, operator, lazy, model
 
 
 def Solver(cls: type) -> type:
@@ -48,6 +49,11 @@ def Solver(cls: type) -> type:
 Solver.operation = staticmethod(operation)  # type: ignore[attr-defined]
 Solver.load = staticmethod(load)  # type: ignore[attr-defined]
 Solver.resolve_dependencies = staticmethod(resolve_dependencies)  # type: ignore[attr-defined]
+Solver.build = staticmethod(build)  # type: ignore[attr-defined]
+Solver.field = staticmethod(field)  # type: ignore[attr-defined]
+Solver.operator = staticmethod(operator)  # type: ignore[attr-defined]
+Solver.lazy = staticmethod(lazy)  # type: ignore[attr-defined]
+Solver.model = staticmethod(model)  # type: ignore[attr-defined]
 Solver.build = staticmethod(build)  # type: ignore[attr-defined]
 
 

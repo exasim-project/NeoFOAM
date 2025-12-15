@@ -391,61 +391,107 @@ class IncompressibleFluid(BaseModel):
         self.configured = True
 
     @Solver.build
-    def setup_runtime(self, mesh: Any, builder: Any) -> None:
+    def setup_runtime(self, mesh: Any) -> list:
         """BUILD: Initialize runtime structures and fields."""
-        # Create runtime and mesh
-        argList = pyf.argList(self.argv)
-        runTime = pyf.Time(argList)
-        mesh = pyf.fvMesh(runTime)
+        from foamadapter.framework.initialization.helpers import field, lazy
 
-        # Read primary fields
-        p = volScalarField.read_field(mesh, "p")
-        U = volVectorField.read_field(mesh, "U")
-        phi = pyf.createPhi(U)
-
-        # Add primary fields to builder first
-        builder.set_mesh(mesh)
-        builder.set_runtime(runTime)
-        builder.add_field("p", p)
-        builder.add_field("U", U)
-        builder.add_field("phi", phi)
-
-        # DAG-based component initialization
-        # Components must be initialized in RESOLVE_DEPENDENCIES stage first
+        # Validation
         if self._transport is None or self._turbulence is None:
             raise RuntimeError(
                 "Components not initialized. Call configure_solver() first."
             )
 
-        # Extract the actual config instance from the wrapper and call its create() method directly
-        # then add to builder. This bypasses the setup() method approach for now.
+        # Create runtime (no dependencies)
+        def create_runtime():
+            argList = pyf.argList(self.argv)
+            return pyf.Time(argList)
 
-        # 1. Transport model (provides: laminarTransport, requires: U, phi)
-        transport_config = self._transport.config
-        transport_model = transport_config.create(U, phi)
-        builder.add_field("laminarTransport", transport_model)
+        # Create mesh (depends on runtime)
+        def create_mesh(context):
+            runTime = context["runtime"]
+            return pyf.fvMesh(runTime)
 
-        # 2. Turbulence model (provides: turbulence, requires: U, phi, laminarTransport)
-        turbulence_config = self._turbulence.config
-        turbulence_model = turbulence_config.create(U, phi, transport_model)
-        builder.add_field("turbulence", turbulence_model)
+        # Read fields (depend on mesh)
+        def create_pressure(context):
+            mesh = context["mesh"]
+            return volScalarField.read_field(mesh, "p")
 
-        # 3. Create algorithm with reference cell configuration
-        fvSolution = pyf.dictionary.read("system/fvSolution")
-        pRefCell, pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
-        mesh.setFluxRequired(pyf.Word("p"))
+        def create_velocity(context):
+            mesh = context["mesh"]
+            return volVectorField.read_field(mesh, "U")
 
-        # Create algorithm instance using config system
-        algorithm_wrapper = PressureVelocityAlgorithmConfig.create(
-            config=self._algorithm_config
-        )
-        self._pressure_velocity = algorithm_wrapper.config.create(pRefCell, pRefValue)
+        def create_phi(context):
+            U = context["fields.U"]
+            return pyf.createPhi(U)
 
-        # Create pimple control
-        pimple = pyf.pimpleControl(mesh)
-        builder.add_field("pimple", pimple)
+        # Transport model (depends on U, phi)
+        def create_transport(context):
+            U = context["fields.U"]
+            phi = context["fields.phi"]
+            transport_config = self._transport.config
+            return transport_config.create(U, phi)
 
-        self.setup_complete = True
+        # Turbulence model (depends on U, phi, laminarTransport)
+        def create_turbulence(context):
+            U = context["fields.U"]
+            phi = context["fields.phi"]
+            transport_model = context["fields.laminarTransport"]
+            turbulence_config = self._turbulence.config
+            return turbulence_config.create(U, phi, transport_model)
+
+        # Algorithm setup (depends on p, mesh)
+        def create_algorithm(context):
+            p = context["fields.p"]
+            mesh = context["mesh"]
+
+            # Read solver configuration
+            fvSolution = pyf.dictionary.read("system/fvSolution")
+            pRefCell, pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
+            mesh.setFluxRequired(pyf.Word("p"))
+
+            # Create algorithm instance using config system
+            algorithm_wrapper = PressureVelocityAlgorithmConfig.create(
+                config=self._algorithm_config
+            )
+            self._pressure_velocity = algorithm_wrapper.config.create(
+                pRefCell, pRefValue
+            )
+            return self._pressure_velocity
+
+        # Pimple control (depends on mesh)
+        def create_pimple(context):
+            mesh = context["mesh"]
+            return pyf.pimpleControl(mesh)
+
+        # Mark setup complete when all initializers have run
+        def mark_complete(context):
+            self.setup_complete = True
+            return None
+
+        return [
+            lazy("runtime", create=create_runtime),
+            lazy("mesh", depends_on=["runtime"], create=create_mesh),
+            field("p", depends_on=["mesh"], create=create_pressure),
+            field("U", depends_on=["mesh"], create=create_velocity),
+            field("phi", depends_on=["fields.U"], create=create_phi),
+            field(
+                "laminarTransport",
+                depends_on=["fields.U", "fields.phi"],
+                create=create_transport,
+            ),
+            field(
+                "turbulence",
+                depends_on=["fields.U", "fields.phi", "fields.laminarTransport"],
+                create=create_turbulence,
+            ),
+            lazy("algorithm", depends_on=["fields.p", "mesh"], create=create_algorithm),
+            field("pimple", depends_on=["mesh"], create=create_pimple),
+            lazy(
+                "_setup_complete",
+                depends_on=["algorithm", "fields.pimple"],
+                create=mark_complete,
+            ),
+        ]
 
     @Solver.operation(operation_number=2)
     def setup_models(self, ctx: Context) -> None:

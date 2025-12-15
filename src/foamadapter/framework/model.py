@@ -9,6 +9,7 @@ from foamadapter.framework.operations import OperationCollection
 
 from .decorator import operation
 from .initialization import load, resolve_dependencies, build
+from .initialization.helpers import field, operator, lazy, model
 
 
 def Model(cls: type) -> type:
@@ -23,6 +24,10 @@ Model.operation = staticmethod(operation)  # type: ignore[attr-defined]
 Model.load = staticmethod(load)  # type: ignore[attr-defined]
 Model.resolve_dependencies = staticmethod(resolve_dependencies)  # type: ignore[attr-defined]
 Model.build = staticmethod(build)  # type: ignore[attr-defined]
+Model.field = staticmethod(field)  # type: ignore[attr-defined]
+Model.operator = staticmethod(operator)  # type: ignore[attr-defined]
+Model.lazy = staticmethod(lazy)  # type: ignore[attr-defined]
+Model.model = staticmethod(model)  # type: ignore[attr-defined]
 
 
 @runtime_checkable

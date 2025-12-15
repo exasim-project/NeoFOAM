@@ -8,7 +8,7 @@
 This module implements a 3-stage initialization system for solvers and models:
 - LOAD: Load configuration and data from files
 - RESOLVE_DEPENDENCIES: Validate and connect models (inter-model dependencies)
-- BUILD: Initialize runtime structures (fields, matrices, etc.)
+- BUILD: Initialize runtime structures using lazy initialization with DAG resolution
 
 Usage:
     The initialization decorators are accessed via Model and Solver:
@@ -20,12 +20,15 @@ Usage:
             pass
 
         @Model.resolve_dependencies
-        def connect_dependencies(self, registry):
+        def connect_dependencies(self, config):
             pass
 
         @Model.build
-        def initialize_fields(self, mesh):
-            pass
+        def initialize_fields(self, mesh) -> list:
+            return [
+                field("U", create=lambda: create_vector_field(mesh)),
+                field("p", create=lambda: create_scalar_field(mesh)),
+            ]
 
     @dataclass
     class MySolver:
@@ -34,19 +37,23 @@ Usage:
             pass
 
         @Solver.resolve_dependencies
-        def validate(self, registry):
+        def validate(self, config):
             pass
 
         @Solver.build
-        def create_context(self, mesh):
-            pass
+        def create_runtime(self, mesh) -> list:
+            return [
+                lazy("runtime", create=lambda: create_runtime()),
+                lazy("mesh", depends_on=["runtime"], create=lambda: mesh),
+            ]
 """
 
 from .stages import InitializationStage
 from .decorators import load, resolve_dependencies, build
 from .configurable import Configurable
 from .config_context import ConfigContext
-from .context_builder import ContextBuilder
+from .lazy_init import LazyInit
+from .helpers import field, operator, lazy, model
 from .initializer import SolverInitializer
 
 __all__ = [
@@ -54,8 +61,12 @@ __all__ = [
     "load",
     "resolve_dependencies",
     "build",
-    "AdaptableField",
-    "ModelRegistry",
-    "ContextBuilder",
+    "Configurable",
+    "ConfigContext",
+    "LazyInit",
+    "field",
+    "operator",
+    "lazy",
+    "model",
     "SolverInitializer",
 ]

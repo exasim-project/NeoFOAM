@@ -33,9 +33,10 @@ def test_initialization_order():
             self.configured = True
 
         @Model.build
-        def set(self, mesh, builder):
+        def set(self, mesh):
             order.append("BUILD")
             self.setup_complete = True
+            return []  # Return empty list of lazy initializers
 
     @dataclass
     class TrackingSolver:
@@ -58,9 +59,10 @@ def test_initialization_order():
             self.configured = True
 
         @Solver.build
-        def set(self, mesh, builder):
+        def set(self, mesh):
             order.append("SOLVER_BUILD")
             self.setup_complete = True
+            return []  # Return empty list of lazy initializers
 
     solver = TrackingSolver()
     initializer = SolverInitializer(solver)

@@ -9,10 +9,11 @@ Orchestrates the 3-stage initialization process for solvers and their models.
 """
 
 from typing import Any
+import networkx as nx  # type: ignore[import-untyped]
 
 from .stages import InitializationStage
 from .config_context import ConfigContext
-from .context_builder import ContextBuilder
+from .lazy_init import LazyInit
 
 
 class SolverInitializer:
@@ -90,7 +91,12 @@ class SolverInitializer:
 
     def _run_build(self, mesh: Any) -> "Context":
         """
-        Execute BUILD stage with mesh and build Context.
+        Execute BUILD stage with lazy initialization and DAG resolution.
+
+        1. Collect lazy initializers from models and solver
+        2. Resolve dependencies using topological sort (DAG)
+        3. Execute initializers in dependency order
+        4. Build and return Context
 
         Args:
             mesh: The mesh object to pass to BUILD methods
@@ -98,20 +104,133 @@ class SolverInitializer:
         Returns:
             The built Context with all fields and models
         """
+        all_lazy_inits = []
 
-        builder = ContextBuilder()
-
-        # Models first - they contribute to context
+        # Collect lazy initializers from models
         for model in self._get_models():
-            self._execute_stage_methods(model, InitializationStage.BUILD, mesh, builder)
+            result = self._execute_stage_methods_with_return(
+                model, InitializationStage.BUILD, mesh
+            )
+            if result is not None:
+                if isinstance(result, list):
+                    all_lazy_inits.extend(result)
+                elif isinstance(result, LazyInit):
+                    all_lazy_inits.append(result)
 
-        # Then solver - finalizes context
-        self._execute_stage_methods(
-            self.solver, InitializationStage.BUILD, mesh, builder
+        # Collect lazy initializers from solver
+        result = self._execute_stage_methods_with_return(
+            self.solver, InitializationStage.BUILD, mesh
         )
+        if result is not None:
+            if isinstance(result, list):
+                all_lazy_inits.extend(result)
+            elif isinstance(result, LazyInit):
+                all_lazy_inits.append(result)
 
-        # Build and return the Context
-        return builder.build()
+        # Resolve dependencies using DAG (topological sort)
+        sorted_inits = self._topological_sort(all_lazy_inits)
+
+        # Execute in dependency order and collect results
+        initialized_objects = {}
+        for lazy_init in sorted_inits:
+            # Pass initialized_objects as context to lazy initializers
+            obj = lazy_init.execute(context=initialized_objects)
+            initialized_objects[lazy_init.name] = obj
+
+        # Build Context from initialized objects
+        return self._build_context_from_objects(initialized_objects)
+
+    def _topological_sort(self, lazy_inits: list[LazyInit]) -> list[LazyInit]:
+        """
+        Sort lazy initializers by dependencies using networkx topological sort.
+
+        Args:
+            lazy_inits: List of LazyInit objects to sort
+
+        Returns:
+            List of LazyInit objects in dependency order
+
+        Raises:
+            ValueError: If a dependency references a non-existent initializer
+            nx.NetworkXError: If circular dependencies are detected
+        """
+        # Create name -> LazyInit mapping
+        name_to_init = {li.name: li for li in lazy_inits}
+
+        # Validate all dependencies exist
+        for li in lazy_inits:
+            for dep in li.depends_on:
+                if dep not in name_to_init:
+                    raise ValueError(
+                        f"LazyInit '{li.name}' depends on '{dep}', "
+                        f"but '{dep}' was not found in lazy initializers"
+                    )
+
+        # Build DAG
+        G = nx.DiGraph()
+        for li in lazy_inits:
+            G.add_node(li.name, lazy_init=li)
+            for dep in li.depends_on:
+                G.add_edge(dep, li.name)
+
+        # Topological sort with cycle detection
+        try:
+            sorted_names = list(nx.lexicographical_topological_sort(G))
+        except nx.NetworkXError as e:
+            # Find cycle for better error message
+            try:
+                cycle = nx.find_cycle(G)
+                cycle_names = [edge[0] for edge in cycle]
+                raise ValueError(
+                    f"Circular dependency detected: {' -> '.join(cycle_names)}"
+                ) from e
+            except nx.NetworkXNoCycle:
+                raise ValueError(f"DAG error: {str(e)}") from e
+
+        # Return LazyInit objects in sorted order
+        return [name_to_init[name] for name in sorted_names]
+
+    def _build_context_from_objects(self, objects: dict[str, Any]) -> "Context":
+        """
+        Build Context from initialized objects.
+
+        Categorizes objects into fields, models, mesh, runtime based on
+        their names or categories.
+
+        Args:
+            objects: Dictionary mapping names to initialized objects
+
+        Returns:
+            Context with categorized objects
+        """
+        from ..context import Context
+
+        fields = {}
+        models = {}
+        mesh = None
+        runtime = None
+
+        for name, obj in objects.items():
+            if name.startswith("fields."):
+                field_name = name.replace("fields.", "")
+                fields[field_name] = obj
+            elif name.startswith("operators."):
+                # Operators stored as models
+                operator_name = name.replace("operators.", "")
+                models[operator_name] = obj
+            elif name.startswith("models."):
+                # Models stored with their base name
+                model_name = name.replace("models.", "")
+                models[model_name] = obj
+            elif name == "mesh":
+                mesh = obj
+            elif name == "runtime":
+                runtime = obj
+            else:
+                # Store other objects as models
+                models[name] = obj
+
+        return Context(fields=fields, models=models, mesh=mesh, runTime=runtime)
 
     def _get_models(self) -> list[Any]:
         """
@@ -163,3 +282,45 @@ class SolverInitializer:
             if callable(attr) and hasattr(attr, "_init_stage"):
                 if attr._init_stage == stage:
                     attr(*args)
+
+    def _execute_stage_methods_with_return(
+        self, obj: Any, stage: InitializationStage, *args
+    ) -> Any:
+        """
+        Execute stage methods and collect return values.
+
+        Similar to _execute_stage_methods but returns collected values
+        from stage methods (for BUILD stage).
+
+        Args:
+            obj: The object (solver or model) to execute methods on
+            stage: The InitializationStage to execute
+            *args: Arguments to pass to the stage methods
+
+        Returns:
+            Flattened list of returned values (LazyInit objects)
+        """
+        results = []
+        for attr_name in dir(obj):
+            if attr_name.startswith("_"):
+                continue
+            # Skip Pydantic internal attributes
+            if attr_name in ("model_fields", "model_computed_fields", "model_config"):
+                continue
+
+            attr = getattr(obj, attr_name, None)
+            if callable(attr) and hasattr(attr, "_init_stage"):
+                if attr._init_stage == stage:
+                    result = attr(*args)
+                    if result is not None:
+                        results.append(result)
+
+        # Flatten list of LazyInit objects
+        flat_results = []
+        for result in results:
+            if isinstance(result, list):
+                flat_results.extend(result)
+            else:
+                flat_results.append(result)
+
+        return flat_results if flat_results else None

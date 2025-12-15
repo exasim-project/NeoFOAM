@@ -108,15 +108,27 @@ class TestTurbulenceModel(BaseModel):
         return self.configured
 
     @Model.build
-    def initialize_fields(self, mesh, builder):
-        """BUILD: Initialize turbulence fields on mesh."""
-        # Create k and epsilon fields
-        if self.transport_ref:
-            nu = self.transport_ref.config.viscosity
-            # Use viscosity for initial turbulence estimates
-            # In real code, would create fields on mesh here
-            self.setup_complete = True
-        return self.setup_complete
+    def initialize_fields(self, mesh):
+        """BUILD: Return lazy initializers for turbulence fields."""
+        from foamadapter.framework.initialization import field
+
+        def create_turbulence_fields():
+            # Create k and epsilon fields
+            if self.transport_ref:
+                nu = self.transport_ref.config.viscosity
+                # Use viscosity for initial turbulence estimates
+                # In real code, would create fields on mesh here
+                self.setup_complete = True
+            return {"k": "k_field", "epsilon": "epsilon_field"}
+
+        return [
+            field("k", create=lambda: create_turbulence_fields()["k"]),
+            field(
+                "epsilon",
+                depends_on=["fields.k"],
+                create=lambda: create_turbulence_fields()["epsilon"],
+            ),
+        ]
 
 
 class TestTransportModel(BaseModel):
@@ -160,12 +172,18 @@ class TestTransportModel(BaseModel):
         return self.configured
 
     @Model.build
-    def create_fields(self, mesh, builder):
-        """BUILD: Create transport coefficient fields."""
-        # Create nu and rho fields on mesh
-        # In real code, would create fields here
-        self.setup_complete = True
-        return self.setup_complete
+    def create_fields(self, mesh):
+        """BUILD: Return lazy initializers for transport fields."""
+        from foamadapter.framework.initialization import field
+
+        def create_transport_fields():
+            self.setup_complete = True
+            return {"nu": self.config.viscosity, "rho": self.config.density}
+
+        return [
+            field("nu", create=lambda: create_transport_fields()["nu"]),
+            field("rho", create=lambda: create_transport_fields()["rho"]),
+        ]
 
 
 class TestAlgorithmModel(BaseModel):
@@ -215,11 +233,21 @@ class TestAlgorithmModel(BaseModel):
         return self.configured
 
     @Model.build
-    def setup_matrices(self, mesh, builder):
-        """BUILD: Set up matrix systems."""
-        # In real code, would create matrix structures here
-        self.setup_complete = True
-        return self.setup_complete
+    def setup_matrices(self, mesh):
+        """BUILD: Return lazy initializers for matrix systems."""
+        from foamadapter.framework.initialization import operator
+
+        def create_matrices():
+            self.setup_complete = True
+            return "matrix_system"
+
+        return [
+            operator(
+                "pressure_matrix",
+                depends_on=["fields.nu", "fields.rho"],
+                create=create_matrices,
+            )
+        ]
 
 
 # ============================================================================
@@ -275,11 +303,23 @@ class TestSolver(BaseModel):
         return self.configured
 
     @Solver.build
-    def create_solver_context(self, mesh, builder):
-        """BUILD: Create solver execution context."""
-        # In real code, would set up solver runtime structures
-        self.setup_complete = True
-        return self.setup_complete
+    def create_solver_context(self, mesh):
+        """BUILD: Return lazy initializers for solver context."""
+        from foamadapter.framework.initialization import lazy
+
+        def create_context():
+            # In real code, would set up solver runtime structures
+            self.setup_complete = True
+            return "solver_context"
+
+        return [
+            lazy("mesh", create=lambda: mesh),
+            lazy(
+                "solver_context",
+                depends_on=["mesh", "operators.pressure_matrix"],
+                create=create_context,
+            ),
+        ]
 
 
 # ============================================================================
@@ -349,9 +389,15 @@ class AdaptivePressureModel(BaseModel):
         self.configured = True
 
     @Model.build
-    def initialize(self, mesh, builder):
-        """BUILD: Initialize pressure solver."""
-        self.setup_complete = True
+    def initialize(self, mesh):
+        """BUILD: Return lazy initializers for pressure solver."""
+        from foamadapter.framework.initialization import lazy
+
+        def setup_pressure():
+            self.setup_complete = True
+            return "pressure_solver"
+
+        return [lazy("pressure_solver", create=setup_pressure)]
 
     def get_operations(self) -> list[str]:
         """Get operations from selected implementation."""
@@ -396,6 +442,12 @@ class TestBuoyancyModel(BaseModel):
         self.configured = True
 
     @Model.build
-    def initialize(self, mesh, builder):
-        """BUILD: Initialize buoyancy fields."""
-        self.setup_complete = True
+    def initialize(self, mesh):
+        """BUILD: Return lazy initializers for buoyancy fields."""
+        from foamadapter.framework.initialization import field
+
+        def setup_buoyancy():
+            self.setup_complete = True
+            return self.beta
+
+        return [field("buoyancy", create=setup_buoyancy)]
