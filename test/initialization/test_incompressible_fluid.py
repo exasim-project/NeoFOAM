@@ -11,7 +11,11 @@ implements the 3-stage initialization pattern (READ_FILES, CONFIGURE, SETUP).
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from foamadapter.framework.initialization import SolverInitializer, ModelRegistry
+from foamadapter.framework.initialization import (
+    SolverInitializer,
+    ModelRegistry,
+    InitializationStage,
+)
 from foamadapter.solver.incompressibleFluid import IncompressibleFluid
 
 
@@ -201,7 +205,7 @@ def test_read_files_decorator_marked():
     method = solver.load_control_dict
 
     assert hasattr(method, "_init_stage")
-    assert method._init_stage == "READ_FILES"
+    assert method._init_stage == InitializationStage.READ_FILES
 
 
 # ============================================================================
@@ -256,7 +260,7 @@ def test_configure_decorator_marked():
     method = solver.configure_solver
 
     assert hasattr(method, "_init_stage")
-    assert method._init_stage == "CONFIGURE"
+    assert method._init_stage == InitializationStage.CONFIGURE
 
 
 # ============================================================================
@@ -355,7 +359,7 @@ def test_setup_decorator_marked():
     method = solver.setup_runtime
 
     assert hasattr(method, "_init_stage")
-    assert method._init_stage == "SETUP"
+    assert method._init_stage == InitializationStage.SETUP
 
 
 # ============================================================================
@@ -407,9 +411,9 @@ def test_initialization_order(
         return original_setup(self, mesh, builder)
 
     # Preserve decorators by copying _init_stage attribute
-    tracked_read._init_stage = "READ_FILES"
-    tracked_configure._init_stage = "CONFIGURE"
-    tracked_setup._init_stage = "SETUP"
+    tracked_read._init_stage = InitializationStage.READ_FILES
+    tracked_configure._init_stage = InitializationStage.CONFIGURE
+    tracked_setup._init_stage = InitializationStage.SETUP
 
     with patch.object(IncompressibleFluid, "load_control_dict", tracked_read):
         with patch.object(IncompressibleFluid, "configure_solver", tracked_configure):

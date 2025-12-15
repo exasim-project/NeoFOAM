@@ -42,8 +42,28 @@ Usage:
             pass
 """
 
+from enum import Enum
 from typing import Any, Callable
 from functools import wraps
+
+
+# ============================================================================
+# Initialization Stage Enum
+# ============================================================================
+
+
+class InitializationStage(str, Enum):
+    """
+    Enumeration of the three initialization stages.
+
+    READ_FILES: Load configuration and data from files
+    CONFIGURE: Validate and connect models (inter-model dependencies)
+    SETUP: Initialize runtime structures (fields, matrices, etc.)
+    """
+
+    READ_FILES = "READ_FILES"
+    CONFIGURE = "CONFIGURE"
+    SETUP = "SETUP"
 
 
 # ============================================================================
@@ -70,7 +90,7 @@ def read_files(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
-    wrapper._init_stage = "READ_FILES"
+    wrapper._init_stage = InitializationStage.READ_FILES
     return wrapper
 
 
@@ -94,7 +114,7 @@ def configure(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
-    wrapper._init_stage = "CONFIGURE"
+    wrapper._init_stage = InitializationStage.CONFIGURE
     return wrapper
 
 
@@ -118,7 +138,7 @@ def setup(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
-    wrapper._init_stage = "SETUP"
+    wrapper._init_stage = InitializationStage.SETUP
     return wrapper
 
 
@@ -503,13 +523,13 @@ class SolverInitializer:
         """
         # Models first
         for model in self._get_models():
-            self._execute_stage_methods(model, "READ_FILES")
+            self._execute_stage_methods(model, InitializationStage.READ_FILES)
             # Register model for CONFIGURE stage
             model_name = getattr(model, "name", model.__class__.__name__.lower())
             self.registry.register(model_name, model)
 
         # Then solver
-        self._execute_stage_methods(self.solver, "READ_FILES")
+        self._execute_stage_methods(self.solver, InitializationStage.READ_FILES)
 
     def _run_configure(self) -> None:
         """
@@ -520,10 +540,14 @@ class SolverInitializer:
         """
         # Models first (they may depend on each other)
         for model in self._get_models():
-            self._execute_stage_methods(model, "CONFIGURE", self.registry)
+            self._execute_stage_methods(
+                model, InitializationStage.CONFIGURE, self.registry
+            )
 
         # Then solver (can validate all models are configured)
-        self._execute_stage_methods(self.solver, "CONFIGURE", self.registry)
+        self._execute_stage_methods(
+            self.solver, InitializationStage.CONFIGURE, self.registry
+        )
 
     def _run_setup(self, mesh: Any) -> "Context":
         """
@@ -540,10 +564,12 @@ class SolverInitializer:
 
         # Models first - they contribute to context
         for model in self._get_models():
-            self._execute_stage_methods(model, "SETUP", mesh, builder)
+            self._execute_stage_methods(model, InitializationStage.SETUP, mesh, builder)
 
         # Then solver - finalizes context
-        self._execute_stage_methods(self.solver, "SETUP", mesh, builder)
+        self._execute_stage_methods(
+            self.solver, InitializationStage.SETUP, mesh, builder
+        )
 
         # Build and return the Context
         return builder.build()
@@ -576,13 +602,15 @@ class SolverInitializer:
 
         return models
 
-    def _execute_stage_methods(self, obj: Any, stage: str, *args) -> None:
+    def _execute_stage_methods(
+        self, obj: Any, stage: InitializationStage, *args
+    ) -> None:
         """
         Execute all methods marked with given stage decorator.
 
         Args:
             obj: The object (solver or model) to execute methods on
-            stage: The stage name ("READ_FILES", "CONFIGURE", or "SETUP")
+            stage: The InitializationStage to execute
             *args: Arguments to pass to the stage methods
         """
         for attr_name in dir(obj):

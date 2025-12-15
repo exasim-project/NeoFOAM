@@ -4,7 +4,7 @@
 
 """Tests for CONFIGURE stage."""
 
-from foamadapter.framework.initialization import SolverInitializer
+from foamadapter.framework.initialization import SolverInitializer, InitializationStage
 from .test_fixtures import TestSolver, TestTurbulenceModel
 
 
@@ -13,7 +13,7 @@ def test_configure_stage_marks_methods():
     model = TestTurbulenceModel()
 
     assert hasattr(model.connect_transport, "_init_stage")
-    assert model.connect_transport._init_stage == "CONFIGURE"
+    assert model.connect_transport._init_stage == InitializationStage.CONFIGURE
 
 
 def test_configure_stage_registers_models():

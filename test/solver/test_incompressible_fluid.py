@@ -5,7 +5,6 @@
 Test file for the IncompressibleFluid solver based on the new framework architecture.
 """
 
-
 import pytest
 
 from foamadapter.framework.solver import SolverInterface

@@ -4,7 +4,7 @@
 
 """Tests for READ_FILES stage."""
 
-from foamadapter.framework.initialization import SolverInitializer
+from foamadapter.framework.initialization import SolverInitializer, InitializationStage
 from .test_fixtures import TestSolver, TestTurbulenceModel
 
 
@@ -13,7 +13,7 @@ def test_read_files_stage_marks_methods():
     model = TestTurbulenceModel()
 
     assert hasattr(model.load_coefficients, "_init_stage")
-    assert model.load_coefficients._init_stage == "READ_FILES"
+    assert model.load_coefficients._init_stage == InitializationStage.READ_FILES
 
 
 def test_read_files_stage_executes_all_models():
