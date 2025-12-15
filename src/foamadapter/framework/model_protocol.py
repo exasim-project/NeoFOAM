@@ -20,7 +20,7 @@ Example:
             ...
 
         @Model.configure
-        def connect_models(self, registry):
+        def connect_models(self, config):
             ...
 
         @Model.setup
@@ -57,7 +57,7 @@ class SolverModel(Protocol):
 
     Lifecycle Stages:
         1. READ_FILES: Load configuration from files (optional)
-        2. CONFIGURE: Validate and connect to other models via ModelRegistry (optional)
+        2. CONFIGURE: Validate and connect to other models via ConfigContext (optional)
         3. SETUP: Create runtime objects and add to ContextBuilder (required)
 
     Attributes:
@@ -92,20 +92,20 @@ class SolverModel(Protocol):
         """
         ...
 
-    def configure(self, registry: Any) -> None:
+    def configure(self, config: Any) -> None:
         """
         CONFIGURE stage: Validate and connect to other models.
 
         Optional lifecycle method. Mark implementation with @Model.configure decorator.
-        Use ModelRegistry to query and adapt other models' behavior.
+        Use ConfigContext to query and adapt other models' behavior.
 
         Args:
-            registry: ModelRegistry for inter-model communication
+            config: ConfigContext for inter-model communication
 
         Example:
             @Model.configure
-            def configure(self, registry):
-                pressure = registry.get("pressure_algorithm")
+            def configure(self, config):
+                pressure = config.get("pressure_algorithm")
                 if pressure:
                     pressure.use_buoyancy = True  # Enable buoyancy variant
         """

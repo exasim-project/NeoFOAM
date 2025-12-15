@@ -3,13 +3,13 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 from .initialization import (
-    ModelRegistry,
+    ConfigContext,
+    Configurable,
     SolverInitializer,
-    AdaptableField,
 )
 
 __all__ = [
-    "ModelRegistry",
+    "ConfigContext",
+    "Configurable",
     "SolverInitializer",
-    "AdaptableField",
 ]

@@ -11,7 +11,7 @@ Orchestrates the 3-stage initialization process for solvers and their models.
 from typing import Any
 
 from .stages import InitializationStage
-from .registry import ModelRegistry
+from .config_context import ConfigContext
 from .context_builder import ContextBuilder
 
 
@@ -21,21 +21,23 @@ class SolverInitializer:
 
     The initialization process follows three stages:
     1. LOAD: Load configuration and data from files
-    2. RESOLVE_DEPENDENCIES: Validate and connect models (with ModelRegistry)
+    2. RESOLVE_DEPENDENCIES: Validate and connect models (with ConfigContext)
     3. BUILD: Initialize runtime structures (with mesh)
 
     Within each stage, models are initialized before the solver.
     """
 
-    def __init__(self, solver: Any):
+    def __init__(self, solver: Any, region: str = "default"):
         """
         Initialize the solver initializer.
 
         Args:
             solver: The solver instance to initialize
+            region: Name of the region for this solver (default: "default")
         """
         self.solver = solver
-        self.registry = ModelRegistry()
+        self.region = region
+        self.config = ConfigContext(current_region=region)
 
     def initialize(self, mesh: Any = None) -> "Context":
         """
@@ -56,14 +58,14 @@ class SolverInitializer:
         Execute LOAD stage on solver and all models.
 
         Models are processed first, then the solver. Each model is
-        registered in the registry after its LOAD methods are executed.
+        registered in the config context after its LOAD methods are executed.
         """
         # Models first
         for model in self._get_models():
             self._execute_stage_methods(model, InitializationStage.LOAD)
             # Register model for RESOLVE_DEPENDENCIES stage
             model_name = getattr(model, "name", model.__class__.__name__.lower())
-            self.registry.register(model_name, model)
+            self.config.register(model_name, model)
 
         # Then solver
         self._execute_stage_methods(self.solver, InitializationStage.LOAD)
@@ -72,18 +74,18 @@ class SolverInitializer:
         """
         Execute RESOLVE_DEPENDENCIES stage - models can reference each other.
 
-        The ModelRegistry is passed to all RESOLVE_DEPENDENCIES methods, allowing
+        The ConfigContext is passed to all RESOLVE_DEPENDENCIES methods, allowing
         models to find and connect to other models.
         """
         # Models first (they may depend on each other)
         for model in self._get_models():
             self._execute_stage_methods(
-                model, InitializationStage.RESOLVE_DEPENDENCIES, self.registry
+                model, InitializationStage.RESOLVE_DEPENDENCIES, self.config
             )
 
         # Then solver (can validate all models are configured)
         self._execute_stage_methods(
-            self.solver, InitializationStage.RESOLVE_DEPENDENCIES, self.registry
+            self.solver, InitializationStage.RESOLVE_DEPENDENCIES, self.config
         )
 
     def _run_build(self, mesh: Any) -> "Context":

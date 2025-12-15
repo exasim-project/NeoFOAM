@@ -44,8 +44,8 @@ Usage:
 
 from .stages import InitializationStage
 from .decorators import load, resolve_dependencies, build
-from .adaptable_field import AdaptableField
-from .registry import ModelRegistry
+from .configurable import Configurable
+from .config_context import ConfigContext
 from .context_builder import ContextBuilder
 from .initializer import SolverInitializer
 

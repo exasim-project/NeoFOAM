@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from foamadapter.framework.model import Model
 from foamadapter.framework.solver import Solver
-from foamadapter.framework.initialization import ModelRegistry
+from foamadapter.framework.initialization import ConfigContext
 
 
 # ============================================================================
@@ -96,10 +96,10 @@ class TestTurbulenceModel(BaseModel):
         return self.config.coefficients
 
     @Model.resolve_dependencies
-    def connect_transport(self, registry: ModelRegistry):
+    def connect_transport(self, config: ConfigContext):
         """RESOLVE_DEPENDENCIES: Connect to transport model for viscosity."""
         # Get reference to transport model
-        transport = registry.get("transport")
+        transport = config.get("transport")
         if transport:
             self.transport_ref = transport
             self.configured = True
@@ -149,7 +149,7 @@ class TestTransportModel(BaseModel):
         return self.config
 
     @Model.resolve_dependencies
-    def validate_properties(self, registry: ModelRegistry):
+    def validate_properties(self, config: ConfigContext):
         """RESOLVE_DEPENDENCIES: Validate transport properties."""
         # Pydantic already validates gt=0, but we can add custom checks
         if self.config.viscosity <= 0:
@@ -201,10 +201,10 @@ class TestAlgorithmModel(BaseModel):
         return self.config
 
     @Model.resolve_dependencies
-    def connect_models(self, registry: ModelRegistry):
-        """RESOLVE_DEPENDENCIES: Connect to turbulence and transport models."""
-        self.turbulence_ref = registry.get("turbulence")
-        self.transport_ref = registry.get("transport")
+    def connect_models(self, config: ConfigContext):
+        """RESOLVE_DEPENDENCIES: Connect to turbulence and transport."""
+        self.turbulence_ref = config.get("turbulence")
+        self.transport_ref = config.get("transport")
 
         if not self.turbulence_ref:
             raise RuntimeError("Turbulence model not found")
@@ -265,7 +265,7 @@ class TestSolver(BaseModel):
         return self.config
 
     @Solver.resolve_dependencies
-    def validate_config(self, registry: ModelRegistry):
+    def validate_config(self, config: ConfigContext):
         """RESOLVE_DEPENDENCIES: Validate solver configuration."""
         # Check all models are configured
         for model in self.get_models():
@@ -283,10 +283,11 @@ class TestSolver(BaseModel):
 
 
 # ============================================================================
-# Example Models with AdaptableField
+# Example Models with Configurable
 # ============================================================================
 
-from foamadapter.framework import AdaptableField
+from typing import Annotated
+from foamadapter.framework.initialization import Configurable
 
 
 class PressureEquationStandard:
@@ -310,7 +311,7 @@ class PressureEquationBuoyant:
 
 class AdaptivePressureModel(BaseModel):
     """
-    Pressure model with AdaptableField for behavior switching.
+    Pressure model with Configurable field for behavior switching.
 
     Demonstrates how other models can change this model's behavior
     by modifying the use_buoyancy field during RESOLVE_DEPENDENCIES stage.
@@ -320,10 +321,8 @@ class AdaptivePressureModel(BaseModel):
 
     name: str = "adaptive_pressure"
 
-    # AdaptableField - other models can modify this
-    use_buoyancy: bool = AdaptableField(
-        default=False, description="Use buoyancy-modified pressure equation"
-    )
+    # Configurable - other models can modify this
+    use_buoyancy: Configurable[bool] = False
 
     # Regular fields
     tolerance: float = Field(default=1e-6, gt=0)
@@ -345,7 +344,7 @@ class AdaptivePressureModel(BaseModel):
         self.files_read = True
 
     @Model.resolve_dependencies
-    def validate(self, registry: ModelRegistry):
+    def validate(self, config: ConfigContext):
         """RESOLVE_DEPENDENCIES: Validate configuration."""
         self.configured = True
 
@@ -372,7 +371,7 @@ class TestBuoyancyModel(BaseModel):
 
     name: str = "test_buoyancy"
 
-    enabled: bool = AdaptableField(default=True)
+    enabled: Configurable[bool] = True
     beta: float = Field(default=1e-3, description="Thermal expansion coefficient")
 
     files_read: bool = False
@@ -386,12 +385,12 @@ class TestBuoyancyModel(BaseModel):
         self.files_read = True
 
     @Model.resolve_dependencies
-    def adapt_pressure(self, registry: ModelRegistry):
+    def adapt_pressure(self, config: ConfigContext):
         """RESOLVE_DEPENDENCIES: Tell pressure model to use buoyancy variant."""
-        pressure = registry.get("adaptive_pressure")
+        pressure = config.get("adaptive_pressure")
 
         if pressure and self.enabled:
-            # Modify adaptable field in pressure model
+            # Modify configurable field in pressure model
             pressure.use_buoyancy = True
 
         self.configured = True

@@ -46,12 +46,12 @@ def resolve_dependencies(func: Callable) -> Callable:
 
     Methods marked with this decorator will be called during the RESOLVE_DEPENDENCIES
     stage, where models can reference each other and perform validation.
-    These methods receive the ModelRegistry as an argument.
+    These methods receive the ConfigContext as an argument.
 
     Example:
         @Model.resolve_dependencies
-        def connect_transport(self, registry: ModelRegistry):
-            self.transport = registry.get("transport")
+        def connect_transport(self, config: ConfigContext):
+            self.transport = config.get("transport")
     """
 
     @wraps(func)

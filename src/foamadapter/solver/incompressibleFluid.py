@@ -23,7 +23,7 @@ from foamadapter.framework.context import (
     Model as ModelAnnotation,
 )
 from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.initialization import ModelRegistry
+from foamadapter.framework.initialization import ConfigContext
 from foamadapter.framework.operations import (
     IterativeOp,
     Operation,
@@ -365,7 +365,7 @@ class IncompressibleFluid(BaseModel):
         self.files_read = True
 
     @Solver.resolve_dependencies
-    def configure_solver(self, registry: ModelRegistry) -> None:
+    def configure_solver(self, config: ConfigContext) -> None:
         """RESOLVE_DEPENDENCIES: Validate solver configuration and connect models."""
         # Validate algorithm choice (configuration-time check)
         if self.algorithm not in ["SIMPLE", "PISO", "PIMPLE"]:
@@ -384,9 +384,9 @@ class IncompressibleFluid(BaseModel):
         # Store config for later use
         self._algorithm_config = {"algorithm_type": self.algorithm}
 
-        # Register with model registry
-        registry.register("transport", self._transport)
-        registry.register("turbulence", self._turbulence)
+        # Register with config context
+        config.register("transport", self._transport)
+        config.register("turbulence", self._turbulence)
 
         self.configured = True
 

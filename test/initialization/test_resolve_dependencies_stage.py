@@ -26,9 +26,9 @@ def test_resolve_dependencies_stage_registers_models():
     initializer._run_load()
 
     # After load, models should be registered
-    assert initializer.registry.get("turbulence") is solver.turbulence
-    assert initializer.registry.get("transport") is solver.transport
-    assert initializer.registry.get("algorithm") is solver.algorithm
+    assert initializer.config.get("turbulence") is solver.turbulence
+    assert initializer.config.get("transport") is solver.transport
+    assert initializer.config.get("algorithm") is solver.algorithm
 
 
 def test_resolve_dependencies_stage_connects_models():

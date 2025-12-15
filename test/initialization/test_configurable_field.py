@@ -3,17 +3,22 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 """
-Tests for AdaptableField feature.
+Tests for Configurable field feature.
 
 Tests the ability of models to expose behavior switches that other models
 can modify during RESOLVE_DEPENDENCIES stage, with automatic dispatch to different
 implementations.
 """
 
+from typing import Annotated
 from pydantic import BaseModel, Field
 import pytest
 
-from foamadapter.framework import AdaptableField, ModelRegistry, SolverInitializer
+from foamadapter.framework.initialization import (
+    Configurable,
+    ConfigContext,
+    SolverInitializer,
+)
 from foamadapter.framework.model import Model
 
 
@@ -63,23 +68,21 @@ class PIMPLEAlgorithm:
 
 
 # ============================================================================
-# Test Models with AdaptableField
+# Test Models with Configurable
 # ============================================================================
 
 
 class PressureAlgorithmSimple(BaseModel):
-    """Pressure algorithm with single adaptable field (boolean switch)."""
+    """Pressure algorithm with single configurable field (boolean switch)."""
 
     model_config = {"arbitrary_types_allowed": True}
 
     name: str = "pressure_algorithm"
 
-    # Adaptable field - can be modified by other models
-    use_buoyancy: bool = AdaptableField(
-        default=False, description="Use buoyancy-modified pressure equation"
-    )
+    # Configurable field - can be modified by other models
+    use_buoyancy: Configurable[bool] = False
 
-    # Regular fields - not adaptable
+    # Regular fields - not configurable
     tolerance: float = Field(default=1e-6, gt=0)
     max_iterations: int = Field(default=50, ge=1)
 
@@ -87,23 +90,21 @@ class PressureAlgorithmSimple(BaseModel):
     _implementations = {False: StandardPressureImpl, True: BuoyantPressureImpl}
 
     def get_operations(self) -> list[str]:
-        """Dispatch to implementation based on adaptable field."""
+        """Dispatch to implementation based on configurable field."""
         impl_class = self._implementations[self.use_buoyancy]
         return impl_class().get_operations()
 
 
 class PressureAlgorithmMulti(BaseModel):
-    """Pressure algorithm with multiple adaptable fields."""
+    """Pressure algorithm with multiple configurable fields."""
 
     model_config = {"arbitrary_types_allowed": True}
 
     name: str = "pressure_velocity"
 
-    # Adaptable fields
-    algorithm: str = AdaptableField(
-        default="SIMPLE", description="Algorithm type: SIMPLE, PISO, or PIMPLE"
-    )
-    use_buoyancy: bool = AdaptableField(default=False, description="Use buoyancy terms")
+    # Configurable fields
+    algorithm: Configurable[str] = "SIMPLE"
+    use_buoyancy: Configurable[bool] = False
 
     # Regular field
     n_correctors: int = Field(default=2, ge=1)
@@ -134,18 +135,18 @@ class BuoyancyModel(BaseModel):
 
     name: str = "buoyancy"
 
-    enabled: bool = AdaptableField(default=True)
+    enabled: Configurable[bool] = True
     beta: float = Field(default=1e-3, description="Thermal expansion")
 
     configured: bool = False
 
     @Model.resolve_dependencies
-    def resolve_dependencies(self, registry: ModelRegistry):
+    def resolve_dependencies(self, config: ConfigContext):
         """Tell pressure algorithm to use buoyancy variant."""
-        pressure = registry.get("pressure_algorithm")
+        pressure = config.get("pressure_algorithm")
 
         if pressure and self.enabled:
-            # Modify adaptable field in another model
+            # Modify configurable field in another model
             pressure.use_buoyancy = True
 
         self.configured = True
@@ -158,8 +159,8 @@ class HeatSource(BaseModel):
 
     name: str  # e.g., "heat_source_1", "heat_source_2"
 
-    # Adaptable field
-    enabled: bool = AdaptableField(default=True)
+    # Configurable field
+    enabled: Configurable[bool] = True
 
     # Regular fields
     power: float = Field(default=1000.0, gt=0)
@@ -177,23 +178,23 @@ class HeatSource(BaseModel):
 # ============================================================================
 
 
-def test_adaptable_field_metadata():
-    """Test that AdaptableField adds correct metadata."""
+def test_configurable_field_type_annotation():
+    """Test that Configurable creates proper type annotation."""
+    from foamadapter.framework.initialization.configurable import is_configurable_field
+
     model = PressureAlgorithmSimple()
 
-    # Check that adaptable field has metadata
+    # Check that configurable field is detected
     field_info = model.__class__.model_fields["use_buoyancy"]
-    assert field_info.json_schema_extra is not None
-    assert field_info.json_schema_extra.get("adaptable") is True
+    assert is_configurable_field(field_info)
 
-    # Check that regular fields don't have adaptable metadata
+    # Check that regular fields are not detected as configurable
     tolerance_info = model.__class__.model_fields["tolerance"]
-    if tolerance_info.json_schema_extra:
-        assert tolerance_info.json_schema_extra.get("adaptable") is not True
+    assert not is_configurable_field(tolerance_info)
 
 
-def test_single_adaptable_field_dispatch():
-    """Test dispatch with single boolean adaptable field."""
+def test_single_configurable_field_dispatch():
+    """Test dispatch with single boolean configurable field."""
     model = PressureAlgorithmSimple()
 
     # Default behavior (no buoyancy)
@@ -208,8 +209,8 @@ def test_single_adaptable_field_dispatch():
     assert "add_buoyancy_source" in ops
 
 
-def test_multiple_adaptable_fields_dispatch():
-    """Test dispatch with multiple adaptable fields (tuple key)."""
+def test_multiple_configurable_fields_dispatch():
+    """Test dispatch with multiple configurable fields (tuple key)."""
     model = PressureAlgorithmMulti()
 
     # SIMPLE without buoyancy
@@ -233,7 +234,7 @@ def test_multiple_adaptable_fields_dispatch():
 
 
 def test_cross_model_configuration():
-    """Test that one model can configure another via adaptable fields."""
+    """Test that one model can configure another via configurable fields."""
     pressure = PressureAlgorithmSimple()
     buoyancy = BuoyancyModel()
 
@@ -265,60 +266,60 @@ def test_cross_model_configuration():
     assert buoyancy.configured is True
 
 
-def test_registry_get_adaptable_fields():
-    """Test ModelRegistry.get_adaptable_fields() method."""
+def test_config_context_get_configurable_fields():
+    """Test ConfigContext.get_configurable_fields() method."""
     pressure = PressureAlgorithmSimple(use_buoyancy=False)
     buoyancy = BuoyancyModel(enabled=True)
 
-    registry = ModelRegistry()
-    registry.register("pressure_algorithm", pressure)
-    registry.register("buoyancy", buoyancy)
+    config = ConfigContext()
+    config.register("pressure_algorithm", pressure)
+    config.register("buoyancy", buoyancy)
 
-    # Get adaptable fields from pressure algorithm
-    adaptable = registry.get_adaptable_fields("pressure_algorithm")
-    assert "use_buoyancy" in adaptable
-    assert adaptable["use_buoyancy"] is False
-    assert "tolerance" not in adaptable  # Regular field, not adaptable
+    # Get configurable fields from pressure algorithm
+    configurable = config.get_configurable_fields("pressure_algorithm")
+    assert "use_buoyancy" in configurable
+    assert configurable["use_buoyancy"] is False
+    assert "tolerance" not in configurable  # Regular field, not configurable
 
-    # Get adaptable fields from buoyancy
-    adaptable_buoy = registry.get_adaptable_fields("buoyancy")
-    assert "enabled" in adaptable_buoy
-    assert adaptable_buoy["enabled"] is True
-    assert "beta" not in adaptable_buoy  # Regular field
+    # Get configurable fields from buoyancy
+    configurable_buoy = config.get_configurable_fields("buoyancy")
+    assert "enabled" in configurable_buoy
+    assert configurable_buoy["enabled"] is True
+    assert "beta" not in configurable_buoy  # Regular field
 
 
-def test_registry_get_by_type():
-    """Test ModelRegistry.get_by_type() for multiple instances."""
+def test_config_context_get_by_type():
+    """Test ConfigContext.get_by_type() for multiple instances."""
     source1 = HeatSource(name="heat_source_1", power=1000.0)
     source2 = HeatSource(name="heat_source_2", power=500.0)
     source3 = HeatSource(name="heat_source_3", power=2000.0)
 
-    registry = ModelRegistry()
-    registry.register("heat_source_1", source1)
-    registry.register("heat_source_2", source2)
-    registry.register("heat_source_3", source3)
+    config = ConfigContext()
+    config.register("heat_source_1", source1)
+    config.register("heat_source_2", source2)
+    config.register("heat_source_3", source3)
 
     # Get all heat sources by type
-    heat_sources = registry.get_by_type(HeatSource)
+    heat_sources = config.get_by_type(HeatSource)
     assert len(heat_sources) == 3
     assert source1 in heat_sources
     assert source2 in heat_sources
     assert source3 in heat_sources
 
 
-def test_registry_get_by_prefix():
-    """Test ModelRegistry.get_by_prefix() for multiple instances."""
+def test_config_context_get_by_prefix():
+    """Test ConfigContext.get_by_prefix() for multiple instances."""
     source1 = HeatSource(name="heat_source_1", power=1000.0)
     source2 = HeatSource(name="heat_source_2", power=500.0)
     other = PressureAlgorithmSimple(name="pressure")
 
-    registry = ModelRegistry()
-    registry.register("heat_source_1", source1)
-    registry.register("heat_source_2", source2)
-    registry.register("pressure", other)
+    config = ConfigContext()
+    config.register("heat_source_1", source1)
+    config.register("heat_source_2", source2)
+    config.register("pressure", other)
 
     # Get by prefix
-    sources = registry.get_by_prefix("heat_source_")
+    sources = config.get_by_prefix("heat_source_")
     assert len(sources) == 2
     assert "heat_source_1" in sources
     assert "heat_source_2" in sources
@@ -336,9 +337,9 @@ def test_multiple_instances_configuration():
         name: str = "control"
 
         @Model.resolve_dependencies
-        def resolve_dependencies(self, registry: ModelRegistry):
+        def resolve_dependencies(self, config: ConfigContext):
             # Disable heat sources outside certain region
-            sources = registry.get_by_type(HeatSource)
+            sources = config.get_by_type(HeatSource)
             for source in sources:
                 if source.location[0] > 7:
                     source.enabled = False
@@ -375,8 +376,8 @@ def test_multiple_instances_configuration():
     assert len(ops3) == 0  # Disabled
 
 
-def test_adaptable_field_validation():
-    """Test that Pydantic validation works with AdaptableField."""
+def test_configurable_field_validation():
+    """Test that Pydantic validation works with Configurable."""
     model = PressureAlgorithmMulti()
 
     # Valid values
@@ -389,8 +390,8 @@ def test_adaptable_field_validation():
         PressureAlgorithmMulti(n_correctors=0)  # Should fail (ge=1)
 
 
-def test_adaptable_field_with_complex_dispatch():
-    """Test complex dispatch logic with multiple adaptable fields."""
+def test_configurable_field_with_complex_dispatch():
+    """Test complex dispatch logic with multiple configurable fields."""
     model = PressureAlgorithmMulti()
 
     # Test all combinations
@@ -409,8 +410,8 @@ def test_adaptable_field_with_complex_dispatch():
         )
 
 
-def test_adaptable_field_independence():
-    """Test that models without adaptable fields still work."""
+def test_configurable_field_independence():
+    """Test that models without configurable fields still work."""
 
     class SimpleModel(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
@@ -418,9 +419,9 @@ def test_adaptable_field_independence():
         value: float = Field(default=1.0)
 
     model = SimpleModel()
-    registry = ModelRegistry()
-    registry.register("simple", model)
+    config = ConfigContext()
+    config.register("simple", model)
 
-    # Should return empty dict (no adaptable fields)
-    adaptable = registry.get_adaptable_fields("simple")
-    assert len(adaptable) == 0
+    # Should return empty dict (no configurable fields)
+    configurable = config.get_configurable_fields("simple")
+    assert len(configurable) == 0

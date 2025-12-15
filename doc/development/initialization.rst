@@ -28,7 +28,7 @@ A single-stage initialization can't handle these dependencies elegantly. The 3-s
     ┌──────────────────────────────────────────────────────────────────┐
     │ Stage 2: RESOLVE_DEPENDENCIES                                    │
     │ ──────────────────                                               │
-    │ • Models can reference each other via ModelRegistry              │
+    │ • Models can reference each other via ConfigContext              │
     │ • Validate configurations                                        │
     │ • Establish inter-model dependencies                             │
     │ • Still no mesh available                                        │
@@ -52,7 +52,7 @@ Here's a minimal example showing all three stages:
 .. code-block:: python
 
     from pydantic import BaseModel, Field
-    from foamadapter.framework import Model, Solver, ModelRegistry, SolverInitializer
+    from foamadapter.framework import Model, Solver, ConfigContext, SolverInitializer
 
     class MyModel(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
@@ -67,9 +67,9 @@ Here's a minimal example showing all three stages:
             self.data = {"viscosity": 1e-6}
         
         @Model.resolve_dependencies
-        def connect(self, registry: ModelRegistry):
+        def connect(self, config: ConfigContext):
             """Stage 2: Connect to other models."""
-            self.other_model_ref = registry.get("other")
+            self.other_model_ref = config.get("other")
         
         @Model.build
         def init_fields(self, mesh):
@@ -91,7 +91,7 @@ Here's a minimal example showing all three stages:
             pass
         
         @Solver.resolve_dependencies
-        def validate(self, registry: ModelRegistry):
+        def validate(self, config: ConfigContext):
             pass
         
         @Solver.build
@@ -124,7 +124,7 @@ Each stage has a decorator accessed via ``Model.`` or ``Solver.``:
      - None (just ``self``)
    * - ``@Model.resolve_dependencies``
      - After all LOAD complete
-     - ``registry: ModelRegistry``
+     - ``config: ConfigContext``
    * - ``@Model.build``
      - After all RESOLVE_DEPENDENCIES complete
      - ``mesh``
@@ -132,24 +132,24 @@ Each stage has a decorator accessed via ``Model.`` or ``Solver.``:
 The same decorators exist for solvers: ``@Solver.load``, ``@Solver.resolve_dependencies``, ``@Solver.build``.
 
 
-ModelRegistry
+ConfigContext
 ~~~~~~~~~~~~~
 
-The ``ModelRegistry`` enables inter-model communication during the RESOLVE_DEPENDENCIES stage:
+The ``ConfigContext`` enables inter-model communication during the RESOLVE_DEPENDENCIES stage:
 
 .. code-block:: python
 
     @Model.resolve_dependencies
-    def connect_dependencies(self, registry: ModelRegistry):
+    def connect_dependencies(self, config: ConfigContext):
         # Get a model by name
-        transport = registry.get("transport")
+        transport = config.get("transport")
         
         # Check if a model exists
-        if registry.contains("turbulence"):
-            self.turbulence = registry.get("turbulence")
+        if config.contains("turbulence"):
+            self.turbulence = config.get("turbulence")
         
         # Get all registered models
-        all_models = registry.all()  # Returns dict[str, Model]
+        all_models = config.all()  # Returns dict[str, Model]
 
 Models are automatically registered using their ``name`` attribute after their LOAD stage completes.
 
@@ -171,7 +171,7 @@ The ``SolverInitializer`` orchestrates the entire initialization:
     
     # Option 2: Access the registry after initialization
     initializer.initialize(mesh=my_mesh)
-    all_models = initializer.registry.all()
+    all_models = initializer.config.all()
 
 
 Execution Order
@@ -188,10 +188,10 @@ Within each stage, **models are initialized before the solver**:
         4. solver.load_method()  ← Solver last
 
     RESOLVE_DEPENDENCIES stage:
-        1. model1.resolve_dependencies_method(registry)
-        2. model2.resolve_dependencies_method(registry)
-        3. model3.resolve_dependencies_method(registry)
-        4. solver.resolve_dependencies_method(registry)  ← Solver can validate all models
+        1. model1.resolve_dependencies_method(config)
+        2. model2.resolve_dependencies_method(config)
+        3. model3.resolve_dependencies_method(config)
+        4. solver.resolve_dependencies_method(config)  ← Solver can validate all models
 
     BUILD stage:
         1. model1.build_method(mesh)
@@ -210,7 +210,7 @@ Here's a realistic example with multiple interdependent models:
 .. code-block:: python
 
     from pydantic import BaseModel, Field
-    from foamadapter.framework import Model, Solver, ModelRegistry, SolverInitializer
+    from foamadapter.framework import Model, Solver, ConfigContext, SolverInitializer
 
 
     class TransportModel(BaseModel):
@@ -228,7 +228,7 @@ Here's a realistic example with multiple interdependent models:
             self.density = 1000.0
         
         @Model.resolve_dependencies
-        def validate(self, registry: ModelRegistry):
+        def validate(self, config: ConfigContext):
             if self.viscosity <= 0:
                 raise ValueError("Invalid viscosity")
         
@@ -251,9 +251,9 @@ Here's a realistic example with multiple interdependent models:
             self.coefficients = {"C_mu": 0.09, "sigma_k": 1.0}
         
         @Model.resolve_dependencies
-        def connect_transport(self, registry: ModelRegistry):
+        def connect_transport(self, config: ConfigContext):
             # Get transport model for viscosity access
-            self.transport_ref = registry.get("transport")
+            self.transport_ref = config.get("transport")
             if not self.transport_ref:
                 raise RuntimeError("Transport model required")
         
@@ -285,7 +285,7 @@ Here's a realistic example with multiple interdependent models:
             self.max_iterations = 100
         
         @Solver.resolve_dependencies
-        def verify_models(self, registry: ModelRegistry):
+        def verify_models(self, config: ConfigContext):
             # Verify all models configured correctly
             for model in self.get_models():
                 if not hasattr(model, 'transport_ref') or model.name == "transport":
@@ -315,7 +315,7 @@ Key Design Decisions
 
 1. **Models before Solver**: Within each stage, models initialize first. This lets the solver's RESOLVE_DEPENDENCIES method validate that all models are properly set up.
 
-2. **Automatic Registration**: Models are registered in the ``ModelRegistry`` automatically after their LOAD stage, using their ``name`` attribute.
+2. **Automatic Registration**: Models are registered in the ``ConfigContext`` automatically after their LOAD stage, using their ``name`` attribute.
 
 3. **get_models() Method**: Solvers must implement ``get_models()`` to tell the initializer which models to process.
 
@@ -332,8 +332,8 @@ Raise exceptions in any stage to halt initialization:
 .. code-block:: python
 
     @Model.resolve_dependencies
-    def connect_required_model(self, registry: ModelRegistry):
-        required = registry.get("required_model")
+    def connect_required_model(self, config: ConfigContext):
+        required = config.get("required_model")
         if required is None:
             raise RuntimeError("Required model not found in registry")
         self.required_ref = required
@@ -341,19 +341,19 @@ Raise exceptions in any stage to halt initialization:
 The ``SolverInitializer`` does not catch exceptions, allowing them to propagate for proper error handling in your application.
 
 
-Adaptive Model Behavior with AdaptableField
+Adaptive Model Behavior with Configurable
 --------------------------------------------
 
-``AdaptableField`` enables models to expose behavior switches that other models can modify during the RESOLVE_DEPENDENCIES stage. This allows models to dynamically select different implementations or algorithm variants based on the presence of other models.
+``Configurable`` enables models to expose behavior switches that other models can modify during the RESOLVE_DEPENDENCIES stage. This allows models to dynamically select different implementations or algorithm variants based on the presence of other models.
 
 Basic Concept
 ~~~~~~~~~~~~~
 
-Think of ``AdaptableField`` as a parameter that changes **which operations** a model returns, not just a configuration value. When another model modifies an adaptable field, it switches the model's behavior.
+Think of ``Configurable`` as a parameter that changes **which operations** a model returns, not just a configuration value. When another model modifies an adaptable field, it switches the model's behavior.
 
 .. code-block:: python
 
-    from foamadapter.framework import AdaptableField
+    from foamadapter.framework import Configurable
 
     # Implementations for different behaviors
     class StandardPressure:
@@ -368,8 +368,8 @@ Think of ``AdaptableField`` as a parameter that changes **which operations** a m
     class PressureAlgorithm(BaseModel):
         name: str = "pressure"
         
-        # AdaptableField - other models can change this
-        use_buoyancy: bool = AdaptableField(default=False)
+        # Configurable - other models can change this
+        use_buoyancy: Configurable[bool] = False
         
         # Regular field - not adaptable
         tolerance: float = Field(default=1e-6, gt=0)
@@ -395,9 +395,9 @@ Other models modify adaptable fields during RESOLVE_DEPENDENCIES:
         name: str = "buoyancy"
         
         @Model.resolve_dependencies
-        def configure(self, registry: ModelRegistry):
+        def configure(self, config: ConfigContext):
             # Get pressure algorithm
-            pressure = registry.get("pressure")
+            pressure = config.get("pressure")
             
             # Switch it to buoyancy variant
             pressure.use_buoyancy = True  # ← Switches implementation!
@@ -415,8 +415,8 @@ Models can have multiple adaptable fields for complex dispatch:
         name: str = "pressure_velocity"
         
         # Multiple adaptable fields
-        algorithm: str = AdaptableField(default="SIMPLE")
-        use_buoyancy: bool = AdaptableField(default=False)
+        algorithm: str = Configurable(default="SIMPLE")
+        use_buoyancy: bool = Configurable(default=False)
         
         # Tuple-based dispatch
         _implementations = {
@@ -436,19 +436,19 @@ Models can have multiple adaptable fields for complex dispatch:
 Querying Adaptable Fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Use ``ModelRegistry.get_adaptable_fields()`` to discover what's adaptable:
+Use ``ConfigContext.get_adaptable_fields()`` to discover what's adaptable:
 
 .. code-block:: python
 
     @Model.resolve_dependencies
-    def configure(self, registry: ModelRegistry):
+    def configure(self, config: ConfigContext):
         # See what's adaptable
-        adaptable = registry.get_adaptable_fields("pressure")
+        adaptable = config.get_adaptable_fields("pressure")
         # Returns: {"use_buoyancy": False}
         
         # Check before modifying
         if "use_buoyancy" in adaptable:
-            pressure = registry.get("pressure")
+            pressure = config.get("pressure")
             pressure.use_buoyancy = True
 
 Multiple Model Instances
@@ -461,7 +461,7 @@ Models can have multiple instances (e.g., multiple heat sources):
     class HeatSource(BaseModel):
         name: str  # "heat_source_1", "heat_source_2", etc.
         
-        enabled: bool = AdaptableField(default=True)
+        enabled: bool = Configurable(default=True)
         power: float = Field(default=1000.0, gt=0)
         
         def get_operations(self):
@@ -483,26 +483,26 @@ Models can have multiple instances (e.g., multiple heat sources):
         def get_models(self):
             return self.heat_sources
 
-Query multiple instances with ``ModelRegistry`` helpers:
+Query multiple instances with ``ConfigContext`` helpers:
 
 .. code-block:: python
 
     @Model.resolve_dependencies
-    def configure(self, registry: ModelRegistry):
+    def configure(self, config: ConfigContext):
         # Get all heat sources by type
-        sources = registry.get_by_type(HeatSource)
+        sources = config.get_by_type(HeatSource)
         for source in sources:
             if source.power > 1500:
                 source.enabled = False
         
         # Or by name prefix
-        sources = registry.get_by_prefix("heat_source_")
+        sources = config.get_by_prefix("heat_source_")
         # Returns: {"heat_source_1": ..., "heat_source_2": ..., ...}
 
-Benefits of AdaptableField
+Benefits of Configurable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. **Type-Driven**: Just use ``AdaptableField()`` instead of ``Field()``
+1. **Type-Driven**: Just use ``Configurable()`` instead of ``Field()``
 2. **Auto-Discovery**: ``get_adaptable_fields()`` scans field metadata
 3. **Auto-Validation**: Pydantic validates all changes
 4. **Clean Separation**: Each behavior variant is a separate implementation class
@@ -529,7 +529,7 @@ Complete example showing how buoyancy model adapts pressure algorithm:
         model_config = {"arbitrary_types_allowed": True}
         name: str = "pressure"
         
-        use_buoyancy: bool = AdaptableField(default=False)
+        use_buoyancy: bool = Configurable(default=False)
         
         _implementations = {
             False: StandardPressure,
@@ -545,8 +545,8 @@ Complete example showing how buoyancy model adapts pressure algorithm:
         name: str = "buoyancy"
         
         @Model.resolve_dependencies
-        def configure(self, registry: ModelRegistry):
-            pressure = registry.get("pressure")
+        def configure(self, config: ConfigContext):
+            pressure = config.get("pressure")
             if pressure:
                 pressure.use_buoyancy = True
 
@@ -581,9 +581,9 @@ The test suite is organized in ``test/initialization/``:
 - ``test_build_stage.py`` - BUILD stage tests
 - ``test_initialization_order.py`` - Execution order tests
 - ``test_error_handling.py`` - Error condition tests
-- ``test_registry.py`` - ModelRegistry tests
+- ``test_config.py`` - ConfigContext tests
 - ``test_decorators.py`` - Decorator behavior tests
-- ``test_adaptable_field.py`` - AdaptableField behavior and dispatch tests
+- ``test_adaptable_field.py`` - Configurable behavior and dispatch tests
 
 Run all tests:
 

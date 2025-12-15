@@ -12,8 +12,9 @@ implements the 3-stage initialization pattern (LOAD, RESOLVE_DEPENDENCIES, BUILD
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from foamadapter.framework.initialization import (
+    ConfigContext,
     SolverInitializer,
-    ModelRegistry,
+    ConfigContext,
     InitializationStage,
 )
 from foamadapter.solver.incompressibleFluid import IncompressibleFluid
@@ -215,8 +216,8 @@ def test_load_decorator_marked():
 
 def test_resolve_dependencies_stage_execution(solver_basic):
     """Test that RESOLVE_DEPENDENCIES stage executes correctly."""
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     assert solver_basic.configured is True
     # Components are created as wrappers in RESOLVE_DEPENDENCIES
@@ -224,18 +225,18 @@ def test_resolve_dependencies_stage_execution(solver_basic):
     assert solver_basic._turbulence is not None
     # Algorithm is created later in BUILD after pRefCell/pRefValue are known
     assert solver_basic._pressure_velocity is None
-    assert registry.contains("transport")
-    assert registry.contains("turbulence")
+    assert config.contains("transport")
+    assert config.contains("turbulence")
 
 
 def test_resolve_dependencies_registers_algorithm(solver_basic):
-    """Test that components are registered in ModelRegistry."""
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    """Test that components are registered in ConfigContext."""
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     # New architecture: components are registered, not algorithm
-    transport = registry.get("transport")
-    turbulence = registry.get("turbulence")
+    transport = config.get("transport")
+    turbulence = config.get("turbulence")
     assert transport is not None
     assert turbulence is not None
     assert transport is solver_basic._transport
@@ -249,9 +250,9 @@ def test_resolve_dependencies_validates_algorithm():
     solver = IncompressibleFluid(algorithm="PIMPLE")
     solver.algorithm = "INVALID"  # Bypass Pydantic for testing
 
-    registry = ModelRegistry()
+    config = ConfigContext()
     with pytest.raises(ValueError, match="Unknown algorithm"):
-        solver.configure_solver(registry)
+        solver.configure_solver(config)
 
 
 def test_resolve_dependencies_decorator_marked():
@@ -273,8 +274,8 @@ def test_build_stage_execution(
 ):
     """Test that BUILD stage executes correctly."""
     # Must call configure_solver first
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
@@ -291,8 +292,8 @@ def test_build_creates_mesh_and_runtime(
 ):
     """Test that BUILD stage creates mesh and runtime objects."""
     # Must call configure_solver first
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
@@ -308,8 +309,8 @@ def test_build_reads_fields(
     mock_vol_scalar, mock_vol_vector = mock_field_classes
 
     # Must call configure_solver first
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
@@ -325,8 +326,8 @@ def test_build_creates_turbulence_models(
     mock_transport, mock_turbulence = mock_turbulence_models
 
     # Must call configure_solver first
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
@@ -342,8 +343,8 @@ def test_build_updates_algorithm_reference_cell(
 ):
     """Test that BUILD stage creates algorithm with reference cell/value."""
     # Must call configure_solver first
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
@@ -402,9 +403,9 @@ def test_initialization_order(
         call_order.append("LOAD")
         return original_read(self)
 
-    def tracked_configure(self, registry):
+    def tracked_configure(self, config):
         call_order.append("RESOLVE_DEPENDENCIES")
-        return original_configure(self, registry)
+        return original_configure(self, config)
 
     def tracked_setup(self, mesh, builder):
         call_order.append("BUILD")
@@ -426,8 +427,8 @@ def test_initialization_order(
 
 def test_get_models_after_resolve_dependencies(solver_basic, mock_pyfoam):
     """Test that get_models returns empty list after RESOLVE_DEPENDENCIES stage."""
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     # get_models() returns optional physics models, not core components
     models = solver_basic.get_models()
@@ -482,26 +483,26 @@ def test_algorithm_created_in_build():
 
 def test_registry_contains_algorithm_after_resolve_dependencies(solver_basic):
     """Test that ModelRegistry contains components after RESOLVE_DEPENDENCIES."""
-    registry = ModelRegistry()
-    solver_basic.configure_solver(registry)
+    config = ConfigContext()
+    solver_basic.configure_solver(config)
 
     # New architecture: components are registered
-    assert registry.contains("transport")
-    assert registry.contains("turbulence")
-    transport = registry.get("transport")
-    turbulence = registry.get("turbulence")
+    assert config.contains("transport")
+    assert config.contains("turbulence")
+    transport = config.get("transport")
+    turbulence = config.get("turbulence")
     assert transport is solver_basic._transport
     assert turbulence is solver_basic._turbulence
 
 
 def test_registry_empty_before_resolve_dependencies(solver_basic):
     """Test that ModelRegistry is empty before RESOLVE_DEPENDENCIES."""
-    registry = ModelRegistry()
+    config = ConfigContext()
 
-    assert not registry.contains("transport")
-    assert not registry.contains("turbulence")
-    assert registry.get("transport") is None
-    assert registry.get("turbulence") is None
+    assert not config.contains("transport")
+    assert not config.contains("turbulence")
+    assert config.get("transport") is None
+    assert config.get("turbulence") is None
 
 
 # ============================================================================
@@ -533,8 +534,8 @@ def test_full_solver_lifecycle(
     assert solver_basic._pressure_velocity is not None
 
     # 5. Verify registry has components
-    assert initializer.registry.contains("transport")
-    assert initializer.registry.contains("turbulence")
+    assert initializer.config.contains("transport")
+    assert initializer.config.contains("turbulence")
 
 
 def test_multiple_initializations_idempotent(
