@@ -12,7 +12,7 @@ from foamadapter.framework.initialization import SolverInitializer
 from .test_fixtures import TransportConfig
 
 
-def test_configure_fails_if_required_model_not_found():
+def test_resolve_dependencies_fails_if_required_model_not_found():
     """Test behavior when model dependency is missing."""
 
     @dataclass
@@ -22,7 +22,7 @@ def test_configure_fails_if_required_model_not_found():
         configured: bool = False
         setup_complete: bool = False
 
-        @Model.configure
+        @Model.resolve_dependencies
         def check_dependency(self, registry):
             missing = registry.get("nonexistent")
             if not missing:
@@ -43,11 +43,11 @@ def test_configure_fails_if_required_model_not_found():
     initializer = SolverInitializer(solver)
 
     with pytest.raises(RuntimeError, match="Required model 'nonexistent' not found"):
-        initializer._run_configure()
+        initializer._run_resolve_dependencies()
 
 
-def test_validation_error_in_configure():
-    """Test that validation errors are raised during CONFIGURE."""
+def test_validation_error_in_resolve_dependencies():
+    """Test that validation errors are raised during RESOLVE_DEPENDENCIES."""
 
     @dataclass
     class InvalidTransport:
@@ -59,7 +59,7 @@ def test_validation_error_in_configure():
             default_factory=lambda: TransportConfig(viscosity=-1.0)
         )
 
-        @Model.configure
+        @Model.resolve_dependencies
         def validate(self, registry):
             if self.config.viscosity <= 0:
                 raise ValueError("Viscosity must be positive")
@@ -79,4 +79,4 @@ def test_validation_error_in_configure():
     with pytest.raises(Exception):
         solver = InvalidSolver()
         initializer = SolverInitializer(solver)
-        initializer._run_configure()
+        initializer._run_resolve_dependencies()

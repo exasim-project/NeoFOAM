@@ -23,11 +23,11 @@ def test_multiple_methods_same_stage():
         data1: Any = None
         data2: Any = None
 
-        @Model.read_files
+        @Model.load
         def load_data1(self):
             self.data1 = "loaded1"
 
-        @Model.read_files
+        @Model.load
         def load_data2(self):
             self.data2 = "loaded2"
             self.files_read = True
@@ -44,7 +44,7 @@ def test_multiple_methods_same_stage():
 
     solver = MultiSolver()
     initializer = SolverInitializer(solver)
-    initializer._run_read_files()
+    initializer._run_load()
 
     assert solver.model.data1 == "loaded1"
     assert solver.model.data2 == "loaded2"
@@ -62,7 +62,7 @@ def test_method_without_decorator_not_called():
         decorated_called: bool = False
         undecorated_called: bool = False
 
-        @Model.read_files
+        @Model.load
         def decorated_method(self):
             self.decorated_called = True
 
@@ -81,7 +81,7 @@ def test_method_without_decorator_not_called():
 
     solver = SelectiveSolver()
     initializer = SolverInitializer(solver)
-    initializer._run_read_files()
+    initializer._run_load()
 
     assert solver.model.decorated_called
     assert not solver.model.undecorated_called

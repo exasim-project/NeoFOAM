@@ -6,7 +6,7 @@
 Tests for IncompressibleFluid solver 3-stage initialization.
 
 This test suite verifies that the IncompressibleFluid solver properly
-implements the 3-stage initialization pattern (READ_FILES, CONFIGURE, SETUP).
+implements the 3-stage initialization pattern (LOAD, RESOLVE_DEPENDENCIES, BUILD).
 """
 
 import pytest
@@ -164,12 +164,12 @@ def test_get_models_initially_empty():
 
 
 # ============================================================================
-# Tests for READ_FILES Stage
+# Tests for LOAD Stage
 # ============================================================================
 
 
-def test_read_files_stage_execution(solver_basic, mock_pyfoam):
-    """Test that READ_FILES stage executes correctly."""
+def test_load_stage_execution(solver_basic, mock_pyfoam):
+    """Test that LOAD stage executes correctly."""
     solver_basic.load_control_dict()
 
     assert solver_basic.files_read is True
@@ -177,7 +177,7 @@ def test_read_files_stage_execution(solver_basic, mock_pyfoam):
     assert solver_basic.maxDeltaT == 1.0
 
 
-def test_read_files_handles_missing_maxDeltaT(solver_basic):
+def test_load_handles_missing_maxDeltaT(solver_basic):
     """Test that missing maxDeltaT doesn't break initialization."""
     with patch("foamadapter.solver.incompressibleFluid.pyf") as mock_pyf:
         # Mock KeyError for maxDeltaT
@@ -199,36 +199,36 @@ def test_read_files_handles_missing_maxDeltaT(solver_basic):
         assert solver_basic.maxDeltaT == original_max_delta_t  # Should keep default
 
 
-def test_read_files_decorator_marked():
-    """Test that load_control_dict is marked with READ_FILES stage."""
+def test_load_decorator_marked():
+    """Test that load_control_dict is marked with LOAD stage."""
     solver = IncompressibleFluid()
     method = solver.load_control_dict
 
     assert hasattr(method, "_init_stage")
-    assert method._init_stage == InitializationStage.READ_FILES
+    assert method._init_stage == InitializationStage.LOAD
 
 
 # ============================================================================
-# Tests for CONFIGURE Stage
+# Tests for RESOLVE_DEPENDENCIES Stage
 # ============================================================================
 
 
-def test_configure_stage_execution(solver_basic):
-    """Test that CONFIGURE stage executes correctly."""
+def test_resolve_dependencies_stage_execution(solver_basic):
+    """Test that RESOLVE_DEPENDENCIES stage executes correctly."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
     assert solver_basic.configured is True
-    # Components are created as wrappers in CONFIGURE
+    # Components are created as wrappers in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
-    # Algorithm is created later in SETUP after pRefCell/pRefValue are known
+    # Algorithm is created later in BUILD after pRefCell/pRefValue are known
     assert solver_basic._pressure_velocity is None
     assert registry.contains("transport")
     assert registry.contains("turbulence")
 
 
-def test_configure_registers_algorithm(solver_basic):
+def test_resolve_dependencies_registers_algorithm(solver_basic):
     """Test that components are registered in ModelRegistry."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
@@ -242,7 +242,7 @@ def test_configure_registers_algorithm(solver_basic):
     assert turbulence is solver_basic._turbulence
 
 
-def test_configure_validates_algorithm():
+def test_resolve_dependencies_validates_algorithm():
     """Test that invalid algorithm raises ValueError."""
     # Note: Pydantic validation happens at construction time
     # We test the configure stage validation
@@ -254,24 +254,24 @@ def test_configure_validates_algorithm():
         solver.configure_solver(registry)
 
 
-def test_configure_decorator_marked():
-    """Test that configure_solver is marked with CONFIGURE stage."""
+def test_resolve_dependencies_decorator_marked():
+    """Test that configure_solver is marked with RESOLVE_DEPENDENCIES stage."""
     solver = IncompressibleFluid()
     method = solver.configure_solver
 
     assert hasattr(method, "_init_stage")
-    assert method._init_stage == InitializationStage.CONFIGURE
+    assert method._init_stage == InitializationStage.RESOLVE_DEPENDENCIES
 
 
 # ============================================================================
-# Tests for SETUP Stage
+# Tests for BUILD Stage
 # ============================================================================
 
 
-def test_setup_stage_execution(
+def test_build_stage_execution(
     solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
-    """Test that SETUP stage executes correctly."""
+    """Test that BUILD stage executes correctly."""
     # Must call configure_solver first
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
@@ -279,17 +279,17 @@ def test_setup_stage_execution(
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
     assert solver_basic.setup_complete is True
-    # Transport and turbulence wrappers are created in CONFIGURE
+    # Transport and turbulence wrappers are created in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
-    # Algorithm is created in SETUP
+    # Algorithm is created in BUILD
     assert solver_basic._pressure_velocity is not None
 
 
-def test_setup_creates_mesh_and_runtime(
+def test_build_creates_mesh_and_runtime(
     solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
-    """Test that SETUP stage creates mesh and runtime objects."""
+    """Test that BUILD stage creates mesh and runtime objects."""
     # Must call configure_solver first
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
@@ -301,10 +301,10 @@ def test_setup_creates_mesh_and_runtime(
     mock_pyfoam.fvMesh.assert_called_once()
 
 
-def test_setup_reads_fields(
+def test_build_reads_fields(
     solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
-    """Test that SETUP stage reads pressure and velocity fields."""
+    """Test that BUILD stage reads pressure and velocity fields."""
     mock_vol_scalar, mock_vol_vector = mock_field_classes
 
     # Must call configure_solver first
@@ -318,10 +318,10 @@ def test_setup_reads_fields(
     mock_vol_vector.read_field.assert_called()
 
 
-def test_setup_creates_turbulence_models(
+def test_build_creates_turbulence_models(
     solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
-    """Test that SETUP stage creates transport and turbulence models."""
+    """Test that BUILD stage creates transport and turbulence models."""
     mock_transport, mock_turbulence = mock_turbulence_models
 
     # Must call configure_solver first
@@ -332,34 +332,34 @@ def test_setup_creates_turbulence_models(
 
     mock_transport.assert_called()
     mock_turbulence.New.assert_called()
-    # _transport and _turbulence are wrappers created in CONFIGURE
+    # _transport and _turbulence are wrappers created in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
 
 
-def test_setup_updates_algorithm_reference_cell(
+def test_build_updates_algorithm_reference_cell(
     solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models, mock_builder
 ):
-    """Test that SETUP stage creates algorithm with reference cell/value."""
+    """Test that BUILD stage creates algorithm with reference cell/value."""
     # Must call configure_solver first
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
     solver_basic.setup_runtime(mesh=None, builder=mock_builder)
 
-    # Algorithm is created in SETUP with pRefCell and pRefValue
+    # Algorithm is created in BUILD with pRefCell and pRefValue
     assert solver_basic._pressure_velocity is not None
     assert solver_basic._pressure_velocity.pRefCell == 0
     assert solver_basic._pressure_velocity.pRefValue == 0.0
 
 
-def test_setup_decorator_marked():
-    """Test that setup_runtime is marked with SETUP stage."""
+def test_build_decorator_marked():
+    """Test that setup_runtime is marked with BUILD stage."""
     solver = IncompressibleFluid()
     method = solver.setup_runtime
 
     assert hasattr(method, "_init_stage")
-    assert method._init_stage == InitializationStage.SETUP
+    assert method._init_stage == InitializationStage.BUILD
 
 
 # ============================================================================
@@ -399,21 +399,21 @@ def test_initialization_order(
     original_setup = IncompressibleFluid.setup_runtime
 
     def tracked_read(self):
-        call_order.append("READ_FILES")
+        call_order.append("LOAD")
         return original_read(self)
 
     def tracked_configure(self, registry):
-        call_order.append("CONFIGURE")
+        call_order.append("RESOLVE_DEPENDENCIES")
         return original_configure(self, registry)
 
     def tracked_setup(self, mesh, builder):
-        call_order.append("SETUP")
+        call_order.append("BUILD")
         return original_setup(self, mesh, builder)
 
     # Preserve decorators by copying _init_stage attribute
-    tracked_read._init_stage = InitializationStage.READ_FILES
-    tracked_configure._init_stage = InitializationStage.CONFIGURE
-    tracked_setup._init_stage = InitializationStage.SETUP
+    tracked_read._init_stage = InitializationStage.LOAD
+    tracked_configure._init_stage = InitializationStage.RESOLVE_DEPENDENCIES
+    tracked_setup._init_stage = InitializationStage.BUILD
 
     with patch.object(IncompressibleFluid, "load_control_dict", tracked_read):
         with patch.object(IncompressibleFluid, "configure_solver", tracked_configure):
@@ -421,11 +421,11 @@ def test_initialization_order(
                 initializer = SolverInitializer(solver_basic)
                 initializer.initialize(mesh=None)
 
-    assert call_order == ["READ_FILES", "CONFIGURE", "SETUP"]
+    assert call_order == ["LOAD", "RESOLVE_DEPENDENCIES", "BUILD"]
 
 
-def test_get_models_after_configure(solver_basic, mock_pyfoam):
-    """Test that get_models returns empty list after CONFIGURE stage."""
+def test_get_models_after_resolve_dependencies(solver_basic, mock_pyfoam):
+    """Test that get_models returns empty list after RESOLVE_DEPENDENCIES stage."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
@@ -464,8 +464,8 @@ def test_context_from_initialization(
 # ============================================================================
 
 
-def test_algorithm_created_in_setup():
-    """Test that algorithm is created during SETUP stage."""
+def test_algorithm_created_in_build():
+    """Test that algorithm is created during BUILD stage."""
     solver = IncompressibleFluid(algorithm="PIMPLE", pRefCell=5, pRefValue=100.0)
 
     # Algorithm should not exist before initialization
@@ -480,8 +480,8 @@ def test_algorithm_created_in_setup():
 # ============================================================================
 
 
-def test_registry_contains_algorithm_after_configure(solver_basic):
-    """Test that ModelRegistry contains components after CONFIGURE."""
+def test_registry_contains_algorithm_after_resolve_dependencies(solver_basic):
+    """Test that ModelRegistry contains components after RESOLVE_DEPENDENCIES."""
     registry = ModelRegistry()
     solver_basic.configure_solver(registry)
 
@@ -494,8 +494,8 @@ def test_registry_contains_algorithm_after_configure(solver_basic):
     assert turbulence is solver_basic._turbulence
 
 
-def test_registry_empty_before_configure(solver_basic):
-    """Test that ModelRegistry is empty before CONFIGURE."""
+def test_registry_empty_before_resolve_dependencies(solver_basic):
+    """Test that ModelRegistry is empty before RESOLVE_DEPENDENCIES."""
     registry = ModelRegistry()
 
     assert not registry.contains("transport")

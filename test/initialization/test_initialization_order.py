@@ -22,19 +22,19 @@ def test_initialization_order():
         configured: bool = False
         setup_complete: bool = False
 
-        @Model.read_files
+        @Model.load
         def read(self):
-            order.append("READ_FILES")
+            order.append("LOAD")
             self.files_read = True
 
-        @Model.configure
+        @Model.resolve_dependencies
         def config(self, registry):
-            order.append("CONFIGURE")
+            order.append("RESOLVE_DEPENDENCIES")
             self.configured = True
 
-        @Model.setup
+        @Model.build
         def set(self, mesh, builder):
-            order.append("SETUP")
+            order.append("BUILD")
             self.setup_complete = True
 
     @dataclass
@@ -47,19 +47,19 @@ def test_initialization_order():
         def get_models(self):
             return [self.model]
 
-        @Solver.read_files
+        @Solver.load
         def read(self):
-            order.append("SOLVER_READ")
+            order.append("SOLVER_LOAD")
             self.files_read = True
 
-        @Solver.configure
+        @Solver.resolve_dependencies
         def config(self, registry):
-            order.append("SOLVER_CONFIGURE")
+            order.append("SOLVER_RESOLVE_DEPENDENCIES")
             self.configured = True
 
-        @Solver.setup
+        @Solver.build
         def set(self, mesh, builder):
-            order.append("SOLVER_SETUP")
+            order.append("SOLVER_BUILD")
             self.setup_complete = True
 
     solver = TrackingSolver()
@@ -68,11 +68,11 @@ def test_initialization_order():
 
     # Models before solver, stages in order
     expected = [
-        "READ_FILES",
-        "SOLVER_READ",
-        "CONFIGURE",
-        "SOLVER_CONFIGURE",
-        "SETUP",
-        "SOLVER_SETUP",
+        "LOAD",
+        "SOLVER_LOAD",
+        "RESOLVE_DEPENDENCIES",
+        "SOLVER_RESOLVE_DEPENDENCIES",
+        "BUILD",
+        "SOLVER_BUILD",
     ]
     assert order == expected

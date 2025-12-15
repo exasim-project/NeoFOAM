@@ -6,38 +6,38 @@
 3-Stage Initialization Framework
 
 This module implements a 3-stage initialization system for solvers and models:
-- READ_FILES: Load configuration and data from files
-- CONFIGURE: Validate and connect models (inter-model dependencies)
-- SETUP: Initialize runtime structures (fields, matrices, etc.)
+- LOAD: Load configuration and data from files
+- RESOLVE_DEPENDENCIES: Validate and connect models (inter-model dependencies)
+- BUILD: Initialize runtime structures (fields, matrices, etc.)
 
 Usage:
     The initialization decorators are accessed via Model and Solver:
 
     @dataclass
     class MyModel:
-        @Model.read_files
+        @Model.load
         def load_data(self):
             pass
 
-        @Model.configure
+        @Model.resolve_dependencies
         def connect_dependencies(self, registry):
             pass
 
-        @Model.setup
+        @Model.build
         def initialize_fields(self, mesh):
             pass
 
     @dataclass
     class MySolver:
-        @Solver.read_files
+        @Solver.load
         def load_config(self):
             pass
 
-        @Solver.configure
+        @Solver.resolve_dependencies
         def validate(self, registry):
             pass
 
-        @Solver.setup
+        @Solver.build
         def create_context(self, mesh):
             pass
 """
@@ -56,14 +56,14 @@ class InitializationStage(str, Enum):
     """
     Enumeration of the three initialization stages.
 
-    READ_FILES: Load configuration and data from files
-    CONFIGURE: Validate and connect models (inter-model dependencies)
-    SETUP: Initialize runtime structures (fields, matrices, etc.)
+    LOAD: Load configuration and data from files
+    RESOLVE_DEPENDENCIES: Validate and connect models (inter-model dependencies)
+    BUILD: Initialize runtime structures (fields, matrices, etc.)
     """
 
-    READ_FILES = "READ_FILES"
-    CONFIGURE = "CONFIGURE"
-    SETUP = "SETUP"
+    LOAD = "LOAD"
+    RESOLVE_DEPENDENCIES = "RESOLVE_DEPENDENCIES"
+    BUILD = "BUILD"
 
 
 # ============================================================================
@@ -71,17 +71,17 @@ class InitializationStage(str, Enum):
 # ============================================================================
 
 
-def read_files(func: Callable) -> Callable:
+def load(func: Callable) -> Callable:
     """
-    Mark a method as belonging to READ_FILES stage.
+    Mark a method as belonging to LOAD stage.
 
-    This decorator is typically accessed via Model.read_files or Solver.read_files.
+    This decorator is typically accessed via Model.load or Solver.load.
 
-    Methods marked with this decorator will be called during the READ_FILES
+    Methods marked with this decorator will be called during the LOAD
     stage of initialization, where configuration and data are loaded from files.
 
     Example:
-        @Model.read_files
+        @Model.load
         def load_properties(self):
             self.config = load_from_file("properties.yaml")
     """
@@ -90,22 +90,23 @@ def read_files(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
-    wrapper._init_stage = InitializationStage.READ_FILES
+    wrapper._init_stage = InitializationStage.LOAD
     return wrapper
 
 
-def configure(func: Callable) -> Callable:
+def resolve_dependencies(func: Callable) -> Callable:
     """
-    Mark a method as belonging to CONFIGURE stage.
+    Mark a method as belonging to RESOLVE_DEPENDENCIES stage.
 
-    This decorator is typically accessed via Model.configure or Solver.configure.
+    This decorator is typically accessed via Model.resolve_dependencies or
+    Solver.resolve_dependencies.
 
-    Methods marked with this decorator will be called during the CONFIGURE
+    Methods marked with this decorator will be called during the RESOLVE_DEPENDENCIES
     stage, where models can reference each other and perform validation.
     These methods receive the ModelRegistry as an argument.
 
     Example:
-        @Model.configure
+        @Model.resolve_dependencies
         def connect_transport(self, registry: ModelRegistry):
             self.transport = registry.get("transport")
     """
@@ -114,22 +115,22 @@ def configure(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
-    wrapper._init_stage = InitializationStage.CONFIGURE
+    wrapper._init_stage = InitializationStage.RESOLVE_DEPENDENCIES
     return wrapper
 
 
-def setup(func: Callable) -> Callable:
+def build(func: Callable) -> Callable:
     """
-    Mark a method as belonging to SETUP stage.
+    Mark a method as belonging to BUILD stage.
 
-    This decorator is typically accessed via Model.setup or Solver.setup.
+    This decorator is typically accessed via Model.build or Solver.build.
 
-    Methods marked with this decorator will be called during the SETUP
+    Methods marked with this decorator will be called during the BUILD
     stage, where runtime structures like fields and matrices are initialized.
     These methods receive the mesh as an argument.
 
     Example:
-        @Model.setup
+        @Model.build
         def initialize_fields(self, mesh):
             self.velocity_field = create_field(mesh)
     """
@@ -138,7 +139,7 @@ def setup(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
-    wrapper._init_stage = InitializationStage.SETUP
+    wrapper._init_stage = InitializationStage.BUILD
     return wrapper
 
 
@@ -149,10 +150,10 @@ def setup(func: Callable) -> Callable:
 
 def AdaptableField(**kwargs):
     """
-    Mark a field as adaptable by other models during CONFIGURE stage.
+    Mark a field as adaptable by other models during RESOLVE_DEPENDENCIES stage.
 
     Adaptable fields are parameters that change a model's behavior or operations.
-    Other models can modify these fields during the CONFIGURE stage to select
+    Other models can modify these fields during the RESOLVE_DEPENDENCIES stage to select
     different implementations or algorithm variants.
 
     This is a wrapper around Pydantic's Field that adds 'adaptable' metadata,
@@ -188,8 +189,8 @@ def AdaptableField(**kwargs):
                 return impl().get_operations()
 
         class BuoyancyModel(BaseModel):
-            @Model.configure
-            def configure(self, registry: ModelRegistry):
+            @Model.resolve_dependencies
+            def resolve(self, registry: ModelRegistry):
                 # Modify adaptable field in another model
                 pressure = registry.get("pressure_algorithm")
                 pressure.use_buoyancy = True  # Switches implementation
@@ -211,10 +212,10 @@ def AdaptableField(**kwargs):
 
 class ModelRegistry:
     """
-    Central registry for inter-model communication during CONFIGURE stage.
+    Central registry for inter-model communication during RESOLVE_DEPENDENCIES stage.
 
     Models are registered by name and can be retrieved by other models
-    during the CONFIGURE stage to establish dependencies.
+    during the RESOLVE_DEPENDENCIES stage to establish dependencies.
     """
 
     def __init__(self):
@@ -357,7 +358,7 @@ class ModelRegistry:
 
 class ContextBuilder:
     """
-    Collects contributions from models and solver during SETUP stage.
+    Collects contributions from models and solver during BUILD stage.
 
     The ContextBuilder accumulates fields, models, mesh, and runtime objects
     from various sources during initialization, then builds a complete Context.
@@ -461,7 +462,7 @@ class ContextBuilder:
 
         Note:
             For production code, both mesh and runTime should be set.
-            For unit tests without SETUP methods, they can be left as None.
+            For unit tests without BUILD methods, they can be left as None.
         """
         from foamadapter.framework.context import Context
 
@@ -483,9 +484,9 @@ class SolverInitializer:
     Orchestrates 3-stage initialization for solver and its models.
 
     The initialization process follows three stages:
-    1. READ_FILES: Load configuration and data from files
-    2. CONFIGURE: Validate and connect models (with ModelRegistry)
-    3. SETUP: Initialize runtime structures (with mesh)
+    1. LOAD: Load configuration and data from files
+    2. RESOLVE_DEPENDENCIES: Validate and connect models (with ModelRegistry)
+    3. BUILD: Initialize runtime structures (with mesh)
 
     Within each stage, models are initialized before the solver.
     """
@@ -505,56 +506,56 @@ class SolverInitializer:
         Run complete 3-stage initialization and return Context.
 
         Args:
-            mesh: Optional mesh object for SETUP stage
+            mesh: Optional mesh object for BUILD stage
 
         Returns:
             The initialized Context ready for simulation
         """
-        self._run_read_files()
-        self._run_configure()
-        return self._run_setup(mesh)
+        self._run_load()
+        self._run_resolve_dependencies()
+        return self._run_build(mesh)
 
-    def _run_read_files(self) -> None:
+    def _run_load(self) -> None:
         """
-        Execute READ_FILES stage on solver and all models.
+        Execute LOAD stage on solver and all models.
 
         Models are processed first, then the solver. Each model is
-        registered in the registry after its READ_FILES methods are executed.
+        registered in the registry after its LOAD methods are executed.
         """
         # Models first
         for model in self._get_models():
-            self._execute_stage_methods(model, InitializationStage.READ_FILES)
-            # Register model for CONFIGURE stage
+            self._execute_stage_methods(model, InitializationStage.LOAD)
+            # Register model for RESOLVE_DEPENDENCIES stage
             model_name = getattr(model, "name", model.__class__.__name__.lower())
             self.registry.register(model_name, model)
 
         # Then solver
-        self._execute_stage_methods(self.solver, InitializationStage.READ_FILES)
+        self._execute_stage_methods(self.solver, InitializationStage.LOAD)
 
-    def _run_configure(self) -> None:
+    def _run_resolve_dependencies(self) -> None:
         """
-        Execute CONFIGURE stage - models can reference each other.
+        Execute RESOLVE_DEPENDENCIES stage - models can reference each other.
 
-        The ModelRegistry is passed to all CONFIGURE methods, allowing
+        The ModelRegistry is passed to all RESOLVE_DEPENDENCIES methods, allowing
         models to find and connect to other models.
         """
         # Models first (they may depend on each other)
         for model in self._get_models():
             self._execute_stage_methods(
-                model, InitializationStage.CONFIGURE, self.registry
+                model, InitializationStage.RESOLVE_DEPENDENCIES, self.registry
             )
 
         # Then solver (can validate all models are configured)
         self._execute_stage_methods(
-            self.solver, InitializationStage.CONFIGURE, self.registry
+            self.solver, InitializationStage.RESOLVE_DEPENDENCIES, self.registry
         )
 
-    def _run_setup(self, mesh: Any) -> "Context":
+    def _run_build(self, mesh: Any) -> "Context":
         """
-        Execute SETUP stage with mesh and build Context.
+        Execute BUILD stage with mesh and build Context.
 
         Args:
-            mesh: The mesh object to pass to SETUP methods
+            mesh: The mesh object to pass to BUILD methods
 
         Returns:
             The built Context with all fields and models
@@ -564,11 +565,11 @@ class SolverInitializer:
 
         # Models first - they contribute to context
         for model in self._get_models():
-            self._execute_stage_methods(model, InitializationStage.SETUP, mesh, builder)
+            self._execute_stage_methods(model, InitializationStage.BUILD, mesh, builder)
 
         # Then solver - finalizes context
         self._execute_stage_methods(
-            self.solver, InitializationStage.SETUP, mesh, builder
+            self.solver, InitializationStage.BUILD, mesh, builder
         )
 
         # Build and return the Context

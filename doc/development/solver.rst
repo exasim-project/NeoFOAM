@@ -46,9 +46,9 @@ However, it also supports different strategies to solver the pressure equation i
 This means that the models can influence the configuration of the operations of each model or the solver itself.
 This is solved by a 3 stage initialization process of the solver and models:
 
-1. read: Read configuration and initialize models and solver
-2. configure: Configure models and solver based on the read configuration (also is used for interaction with other domains in a multiphysics simulation)
-3. setup: Setup models and solver, allocate fields and data structures
+1. load: Load configuration and initialize models and solver
+2. resolve_dependencies: Resolve and connect models based on the loaded configuration (also is used for interaction with other domains in a multiphysics simulation)
+3. build: Build models and solver, allocate fields and data structures
 
 .. code-block:: python
 
@@ -63,10 +63,10 @@ This is solved by a 3 stage initialization process of the solver and models:
 
             return cls(pU, turbulenceModel, models)
 
-        def configure(self):
+        def resolve_dependencies(self):
             # ... TBD
 
-        def setup(self):
+        def build(self):
             # ... TBD
 
         def operations(self):

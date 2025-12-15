@@ -18,27 +18,27 @@ Basic initialization functionality:
 - Model retrieval
 - Full initialization flow
 
-### `test_read_files_stage.py` (3 tests)
-READ_FILES stage tests:
+### `test_load_stage.py` (3 tests)
+LOAD stage tests:
 - Decorator marking
 - Stage execution
 - Data loading
 
-### `test_configure_stage.py` (4 tests)
-CONFIGURE stage tests:
+### `test_resolve_dependencies_stage.py` (4 tests)
+RESOLVE_DEPENDENCIES stage tests:
 - Decorator marking
 - Model registration in registry
 - Inter-model connections
 - Configuration validation
 
-### `test_setup_stage.py` (2 tests)
-SETUP stage tests:
+### `test_build_stage.py` (2 tests)
+BUILD stage tests:
 - Decorator marking
 - Initialization completion
 
 ### `test_initialization_order.py` (1 test)
 Tests that stages execute in correct order:
-- READ_FILES → CONFIGURE → SETUP
+- LOAD → RESOLVE_DEPENDENCIES → BUILD
 - Models before solver in each stage
 
 ### `test_error_handling.py` (2 tests)

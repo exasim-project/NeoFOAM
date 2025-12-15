@@ -13,7 +13,9 @@ def test_resolve_dependencies_stage_marks_methods():
     model = TestTurbulenceModel()
 
     assert hasattr(model.connect_transport, "_init_stage")
-    assert model.connect_transport._init_stage == InitializationStage.RESOLVE_DEPENDENCIES
+    assert (
+        model.connect_transport._init_stage == InitializationStage.RESOLVE_DEPENDENCIES
+    )
 
 
 def test_resolve_dependencies_stage_registers_models():

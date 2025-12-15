@@ -6,7 +6,7 @@
 Tests for AdaptableField feature.
 
 Tests the ability of models to expose behavior switches that other models
-can modify during CONFIGURE stage, with automatic dispatch to different
+can modify during RESOLVE_DEPENDENCIES stage, with automatic dispatch to different
 implementations.
 """
 
@@ -139,8 +139,8 @@ class BuoyancyModel(BaseModel):
 
     configured: bool = False
 
-    @Model.configure
-    def configure(self, registry: ModelRegistry):
+    @Model.resolve_dependencies
+    def resolve_dependencies(self, registry: ModelRegistry):
         """Tell pressure algorithm to use buoyancy variant."""
         pressure = registry.get("pressure_algorithm")
 
@@ -248,16 +248,16 @@ def test_cross_model_configuration():
     solver = TestSolver(pressure=pressure, buoyancy=buoyancy)
     initializer = SolverInitializer(solver)
 
-    # Before CONFIGURE: pressure uses standard implementation
+    # Before RESOLVE_DEPENDENCIES: pressure uses standard implementation
     assert pressure.use_buoyancy is False
     ops_before = pressure.get_operations()
     assert "solve_pressure" in ops_before
     assert "add_buoyancy_source" not in ops_before
 
-    # Run initialization (buoyancy.configure modifies pressure.use_buoyancy)
+    # Run initialization (buoyancy.resolve_dependencies modifies pressure.use_buoyancy)
     initializer.initialize()
 
-    # After CONFIGURE: pressure uses buoyancy implementation
+    # After RESOLVE_DEPENDENCIES: pressure uses buoyancy implementation
     assert pressure.use_buoyancy is True
     ops_after = pressure.get_operations()
     assert "solve_pressure_buoyant" in ops_after
@@ -335,8 +335,8 @@ def test_multiple_instances_configuration():
         model_config = {"arbitrary_types_allowed": True}
         name: str = "control"
 
-        @Model.configure
-        def configure(self, registry: ModelRegistry):
+        @Model.resolve_dependencies
+        def resolve_dependencies(self, registry: ModelRegistry):
             # Disable heat sources outside certain region
             sources = registry.get_by_type(HeatSource)
             for source in sources:
@@ -355,7 +355,7 @@ def test_multiple_instances_configuration():
     solver = TestSolver(control=control, sources=[source1, source2, source3])
     initializer = SolverInitializer(solver)
 
-    # Before CONFIGURE: all enabled
+    # Before RESOLVE_DEPENDENCIES: all enabled
     assert source1.enabled is True
     assert source2.enabled is True
     assert source3.enabled is True
@@ -363,7 +363,7 @@ def test_multiple_instances_configuration():
     # Run initialization
     initializer.initialize()
 
-    # After CONFIGURE: source3 disabled (location[0] > 7)
+    # After RESOLVE_DEPENDENCIES: source3 disabled (location[0] > 7)
     assert source1.enabled is True
     assert source2.enabled is True
     assert source3.enabled is False

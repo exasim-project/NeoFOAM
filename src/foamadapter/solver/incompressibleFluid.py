@@ -349,9 +349,9 @@ class IncompressibleFluid(BaseModel):
         models.extend(self.models)
         return models
 
-    @Solver.read_files
+    @Solver.load
     def load_control_dict(self) -> None:
-        """READ_FILES: Load solver control settings from configuration files."""
+        """LOAD: Load solver control settings from configuration files."""
         # Read controlDict
         controlDict = pyf.dictionary.read("system/controlDict")
         try:
@@ -360,19 +360,19 @@ class IncompressibleFluid(BaseModel):
             pass  # Use default value
 
         # Read fvSolution for reference cell/value
-        # Note: This requires mesh, so actual reading is deferred to SETUP
+        # Note: This requires mesh, so actual reading is deferred to BUILD
         # We just mark files as read here
         self.files_read = True
 
-    @Solver.configure
+    @Solver.resolve_dependencies
     def configure_solver(self, registry: ModelRegistry) -> None:
-        """CONFIGURE: Validate solver configuration and connect models."""
+        """RESOLVE_DEPENDENCIES: Validate solver configuration and connect models."""
         # Validate algorithm choice (configuration-time check)
         if self.algorithm not in ["SIMPLE", "PISO", "PIMPLE"]:
             raise ValueError(f"Unknown algorithm: {self.algorithm}")
 
-        # Initialize core components - always non-None after CONFIGURE
-        # Components will be fully set up in SETUP stage
+        # Initialize core components - always non-None after RESOLVE_DEPENDENCIES
+        # Components will be fully set up in BUILD stage
         self._transport = TransportModel.create(
             config={"transport_type": self.transport_type}
         )
@@ -380,7 +380,7 @@ class IncompressibleFluid(BaseModel):
             config={"turbulence_type": self.turbulence_type}
         )
 
-        # Algorithm config will be used in SETUP to create instance with pRefCell/pRefValue
+        # Algorithm config will be used in BUILD to create instance with pRefCell/pRefValue
         # Store config for later use
         self._algorithm_config = {"algorithm_type": self.algorithm}
 
@@ -390,9 +390,9 @@ class IncompressibleFluid(BaseModel):
 
         self.configured = True
 
-    @Solver.setup
+    @Solver.build
     def setup_runtime(self, mesh: Any, builder: Any) -> None:
-        """SETUP: Initialize runtime structures and fields."""
+        """BUILD: Initialize runtime structures and fields."""
         # Create runtime and mesh
         argList = pyf.argList(self.argv)
         runTime = pyf.Time(argList)
@@ -411,7 +411,7 @@ class IncompressibleFluid(BaseModel):
         builder.add_field("phi", phi)
 
         # DAG-based component initialization
-        # Components must be initialized in CONFIGURE stage first
+        # Components must be initialized in RESOLVE_DEPENDENCIES stage first
         if self._transport is None or self._turbulence is None:
             raise RuntimeError(
                 "Components not initialized. Call configure_solver() first."

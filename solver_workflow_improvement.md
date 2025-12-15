@@ -31,13 +31,13 @@ Step 2: Initialize (3-stage)
     initializer = SolverInitializer(solver)
     initializer.initialize(mesh=None)
 
-    ├── READ_FILES stage
+    ├── LOAD stage
     │   └── solver.load_control_dict()  → reads controlDict, sets maxDeltaT
     │
-    ├── CONFIGURE stage
+    ├── RESOLVE_DEPENDENCIES stage
     │   └── solver.configure_solver(registry)  → creates algorithm_model
     │
-    └── SETUP stage
+    └── BUILD stage
         └── solver.setup_runtime(mesh)  → creates mesh, runTime, p, U, phi
                                         → stores on self.mesh, self.p, etc.
 
@@ -208,16 +208,16 @@ Step 1: Create Solver (configuration only)
 Step 2: Initialize (returns Context!)
     ctx = solver.initialize(mesh)
 
-    ├── READ_FILES stage
+    ├── LOAD stage
     │   ├── solver.load_control_dict()
-    │   └── [each model].read_files()
+    │   └── [each model].load()
     │
-    ├── CONFIGURE stage
+    ├── RESOLVE_DEPENDENCIES stage
     │   ├── solver.configure_solver(registry)
-    │   └── [each model].configure(registry)
+    │   └── [each model].resolve_dependencies(registry)
     │
-    └── SETUP stage → RETURNS CONTEXT
-        ├── [each model].setup(mesh) → contributes to ContextBuilder
+    └── BUILD stage → RETURNS CONTEXT
+        ├── [each model].build(mesh) → contributes to ContextBuilder
         └── solver.setup_runtime(mesh) → finalizes and returns Context
 
 Step 3: Run (Context is ready!)
@@ -228,7 +228,7 @@ Step 3: Run (Context is ready!)
 
 ```python
 class ContextBuilder:
-    """Collects contributions from models during SETUP stage."""
+    """Collects contributions from models during BUILD stage."""
 
     def __init__(self):
         self._fields: dict[str, Any] = {}
@@ -279,24 +279,24 @@ class ContextBuilder:
 class SolverInitializer:
     def initialize(self, mesh: Any = None) -> Context:
         """Run 3-stage initialization and return Context."""
-        self._run_read_files()
-        self._run_configure()
-        return self._run_setup(mesh)
+        self._run_load()
+        self._run_resolve_dependencies()
+        return self._run_build(mesh)
 
-    def _run_setup(self, mesh: Any) -> Context:
-        """Execute SETUP stage and build Context."""
+    def _run_build(self, mesh: Any) -> Context:
+        """Execute BUILD stage and build Context."""
         builder = ContextBuilder()
 
         # Models contribute to context
         for model in self._get_models():
-            self._execute_setup_with_builder(model, mesh, builder)
+            self._execute_build_with_builder(model, mesh, builder)
 
         # Solver finalizes context
-        self._execute_setup_with_builder(self.solver, mesh, builder)
+        self._execute_build_with_builder(self.solver, mesh, builder)
 
         return builder.build()
 
-    def _execute_setup_with_builder(
+    def _execute_build_with_builder(
         self, obj: Any, mesh: Any, builder: ContextBuilder
     ) -> None:
         """Execute SETUP methods, passing builder for contributions."""
@@ -427,16 +427,16 @@ class SolverModel(Protocol):
         """Unique name for this model."""
         ...
 
-    def read_files(self) -> None:
-        """READ_FILES: Load configuration from files."""
+    def load(self) -> None:
+        """LOAD: Load configuration from files."""
         ...
 
-    def configure(self, registry: ModelRegistry) -> None:
-        """CONFIGURE: Validate and connect to other models."""
+    def resolve_dependencies(self, registry: ModelRegistry) -> None:
+        """RESOLVE_DEPENDENCIES: Validate and connect to other models."""
         ...
 
-    def setup(self, mesh: Any, builder: ContextBuilder) -> None:
-        """SETUP: Create runtime objects and add to context."""
+    def build(self, mesh: Any, builder: ContextBuilder) -> None:
+        """BUILD: Create runtime objects and add to context."""
         ...
 
     def operations(self) -> OperationCollection:
@@ -457,11 +457,11 @@ class BuoyancyModel(BaseModel):
     TRef: float = 300.0  # Reference temperature
     g: tuple[float, float, float] = (0, -9.81, 0)
 
-    # Runtime state (populated during SETUP)
+    # Runtime state (populated during BUILD)
     _T: Any = None
     _rhok: Any = None
 
-    @Model.read_files
+    @Model.load
     def load_buoyancy_properties(self) -> None:
         """Load buoyancy properties from file."""
         try:
@@ -471,14 +471,14 @@ class BuoyancyModel(BaseModel):
         except FileNotFoundError:
             pass  # Use defaults
 
-    @Model.configure
+    @Model.resolve_dependencies
     def configure_buoyancy(self, registry: ModelRegistry) -> None:
         """Connect to transport model."""
         transport = registry.get("transport")
         if transport is None:
             raise ValueError("BuoyancyModel requires transport model")
 
-    @Model.setup
+    @Model.build
     def setup_buoyancy(self, mesh: Any, builder: ContextBuilder) -> None:
         """Create temperature field and buoyancy term."""
         # Read temperature field

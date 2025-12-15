@@ -8,7 +8,7 @@ from foamadapter.framework.context import Context
 from foamadapter.framework.operations import OperationCollection
 
 from .decorator import operation
-from .initialization import read_files, configure, setup
+from .initialization import load, resolve_dependencies, build
 
 
 def Model(cls: type) -> type:
@@ -20,9 +20,9 @@ def Model(cls: type) -> type:
 
 
 Model.operation = staticmethod(operation)  # type: ignore[attr-defined]
-Model.read_files = staticmethod(read_files)  # type: ignore[attr-defined]
-Model.configure = staticmethod(configure)  # type: ignore[attr-defined]
-Model.setup = staticmethod(setup)  # type: ignore[attr-defined]
+Model.load = staticmethod(load)  # type: ignore[attr-defined]
+Model.resolve_dependencies = staticmethod(resolve_dependencies)  # type: ignore[attr-defined]
+Model.build = staticmethod(build)  # type: ignore[attr-defined]
 
 
 @runtime_checkable

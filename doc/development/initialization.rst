@@ -17,7 +17,7 @@ A single-stage initialization can't handle these dependencies elegantly. The 3-s
 .. code-block:: text
 
     ┌──────────────────────────────────────────────────────────────────┐
-    │ Stage 1: READ_FILES                                              │
+    │ Stage 1: LOAD                                                    │
     │ ─────────────────                                                │
     │ • Load configuration from files                                  │
     │ • No dependencies between models yet                             │
@@ -26,7 +26,7 @@ A single-stage initialization can't handle these dependencies elegantly. The 3-s
                                     │
                                     ▼
     ┌──────────────────────────────────────────────────────────────────┐
-    │ Stage 2: CONFIGURE                                               │
+    │ Stage 2: RESOLVE_DEPENDENCIES                                    │
     │ ──────────────────                                               │
     │ • Models can reference each other via ModelRegistry              │
     │ • Validate configurations                                        │
@@ -36,7 +36,7 @@ A single-stage initialization can't handle these dependencies elegantly. The 3-s
                                     │
                                     ▼
     ┌──────────────────────────────────────────────────────────────────┐
-    │ Stage 3: SETUP                                                   │
+    │ Stage 3: BUILD                                                   │
     │ ─────────────────                                                │
     │ • Mesh is now available                                          │
     │ • Create fields, matrices, runtime structures                    │
@@ -61,17 +61,17 @@ Here's a minimal example showing all three stages:
         data: dict = Field(default_factory=dict)
         other_model_ref = None
         
-        @Model.read_files
+        @Model.load
         def load_data(self):
             """Stage 1: Load from files."""
             self.data = {"viscosity": 1e-6}
         
-        @Model.configure
+        @Model.resolve_dependencies
         def connect(self, registry: ModelRegistry):
             """Stage 2: Connect to other models."""
             self.other_model_ref = registry.get("other")
         
-        @Model.setup
+        @Model.build
         def init_fields(self, mesh):
             """Stage 3: Create fields on mesh."""
             # self.field = create_field(mesh, self.data["viscosity"])
@@ -86,15 +86,15 @@ Here's a minimal example showing all three stages:
         def get_models(self):
             return [self.mymodel]
         
-        @Solver.read_files
+        @Solver.load
         def load_config(self):
             pass
         
-        @Solver.configure
+        @Solver.resolve_dependencies
         def validate(self, registry: ModelRegistry):
             pass
         
-        @Solver.setup
+        @Solver.build
         def create_context(self, mesh):
             pass
 
@@ -119,27 +119,27 @@ Each stage has a decorator accessed via ``Model.`` or ``Solver.``:
    * - Decorator
      - When Called
      - Arguments
-   * - ``@Model.read_files``
+   * - ``@Model.load``
      - First, before any other stage
      - None (just ``self``)
-   * - ``@Model.configure``
-     - After all READ_FILES complete
+   * - ``@Model.resolve_dependencies``
+     - After all LOAD complete
      - ``registry: ModelRegistry``
-   * - ``@Model.setup``
-     - After all CONFIGURE complete
+   * - ``@Model.build``
+     - After all RESOLVE_DEPENDENCIES complete
      - ``mesh``
 
-The same decorators exist for solvers: ``@Solver.read_files``, ``@Solver.configure``, ``@Solver.setup``.
+The same decorators exist for solvers: ``@Solver.load``, ``@Solver.resolve_dependencies``, ``@Solver.build``.
 
 
 ModelRegistry
 ~~~~~~~~~~~~~
 
-The ``ModelRegistry`` enables inter-model communication during the CONFIGURE stage:
+The ``ModelRegistry`` enables inter-model communication during the RESOLVE_DEPENDENCIES stage:
 
 .. code-block:: python
 
-    @Model.configure
+    @Model.resolve_dependencies
     def connect_dependencies(self, registry: ModelRegistry):
         # Get a model by name
         transport = registry.get("transport")
@@ -151,7 +151,7 @@ The ``ModelRegistry`` enables inter-model communication during the CONFIGURE sta
         # Get all registered models
         all_models = registry.all()  # Returns dict[str, Model]
 
-Models are automatically registered using their ``name`` attribute after their READ_FILES stage completes.
+Models are automatically registered using their ``name`` attribute after their LOAD stage completes.
 
 
 SolverInitializer
@@ -181,23 +181,23 @@ Within each stage, **models are initialized before the solver**:
 
 .. code-block:: text
 
-    READ_FILES stage:
-        1. model1.read_files_method()
-        2. model2.read_files_method()
-        3. model3.read_files_method()
-        4. solver.read_files_method()  ← Solver last
+    LOAD stage:
+        1. model1.load_method()
+        2. model2.load_method()
+        3. model3.load_method()
+        4. solver.load_method()  ← Solver last
 
-    CONFIGURE stage:
-        1. model1.configure_method(registry)
-        2. model2.configure_method(registry)
-        3. model3.configure_method(registry)
-        4. solver.configure_method(registry)  ← Solver can validate all models
+    RESOLVE_DEPENDENCIES stage:
+        1. model1.resolve_dependencies_method(registry)
+        2. model2.resolve_dependencies_method(registry)
+        3. model3.resolve_dependencies_method(registry)
+        4. solver.resolve_dependencies_method(registry)  ← Solver can validate all models
 
-    SETUP stage:
-        1. model1.setup_method(mesh)
-        2. model2.setup_method(mesh)
-        3. model3.setup_method(mesh)
-        4. solver.setup_method(mesh)
+    BUILD stage:
+        1. model1.build_method(mesh)
+        2. model2.build_method(mesh)
+        3. model3.build_method(mesh)
+        4. solver.build_method(mesh)
 
 This allows the solver's CONFIGURE method to verify all models are properly configured.
 
@@ -221,18 +221,18 @@ Here's a realistic example with multiple interdependent models:
         viscosity: float = 0.0
         density: float = 0.0
         
-        @Model.read_files
+        @Model.load
         def load_properties(self):
             # Load from transportProperties file
             self.viscosity = 1e-6
             self.density = 1000.0
         
-        @Model.configure
+        @Model.resolve_dependencies
         def validate(self, registry: ModelRegistry):
             if self.viscosity <= 0:
                 raise ValueError("Invalid viscosity")
         
-        @Model.setup
+        @Model.build
         def create_fields(self, mesh):
             # Create nu and rho fields
             pass
@@ -244,20 +244,20 @@ Here's a realistic example with multiple interdependent models:
         model_config = {"arbitrary_types_allowed": True}
         name: str = "turbulence"
         coefficients: dict = Field(default_factory=dict)
-        transport_ref = None  # Set during CONFIGURE
+        transport_ref = None  # Set during RESOLVE_DEPENDENCIES
         
-        @Model.read_files
+        @Model.load
         def load_coefficients(self):
             self.coefficients = {"C_mu": 0.09, "sigma_k": 1.0}
         
-        @Model.configure
+        @Model.resolve_dependencies
         def connect_transport(self, registry: ModelRegistry):
             # Get transport model for viscosity access
             self.transport_ref = registry.get("transport")
             if not self.transport_ref:
                 raise RuntimeError("Transport model required")
         
-        @Model.setup
+        @Model.build
         def create_fields(self, mesh):
             # Use transport viscosity for initial estimates
             nu = self.transport_ref.viscosity
@@ -280,11 +280,11 @@ Here's a realistic example with multiple interdependent models:
             """Required: Tell initializer which models we have."""
             return [self.transport, self.turbulence]
         
-        @Solver.read_files
+        @Solver.load
         def load_control(self):
             self.max_iterations = 100
         
-        @Solver.configure
+        @Solver.resolve_dependencies
         def verify_models(self, registry: ModelRegistry):
             # Verify all models configured correctly
             for model in self.get_models():
@@ -294,7 +294,7 @@ Here's a realistic example with multiple interdependent models:
                     raise RuntimeError(f"{model.name} missing transport reference")
             self.all_models_ready = True
         
-        @Solver.setup
+        @Solver.build
         def create_context(self, mesh):
             # Set up solver runtime context
             pass
@@ -313,9 +313,9 @@ Here's a realistic example with multiple interdependent models:
 Key Design Decisions
 --------------------
 
-1. **Models before Solver**: Within each stage, models initialize first. This lets the solver's CONFIGURE method validate that all models are properly set up.
+1. **Models before Solver**: Within each stage, models initialize first. This lets the solver's RESOLVE_DEPENDENCIES method validate that all models are properly set up.
 
-2. **Automatic Registration**: Models are registered in the ``ModelRegistry`` automatically after their READ_FILES stage, using their ``name`` attribute.
+2. **Automatic Registration**: Models are registered in the ``ModelRegistry`` automatically after their LOAD stage, using their ``name`` attribute.
 
 3. **get_models() Method**: Solvers must implement ``get_models()`` to tell the initializer which models to process.
 
@@ -331,7 +331,7 @@ Raise exceptions in any stage to halt initialization:
 
 .. code-block:: python
 
-    @Model.configure
+    @Model.resolve_dependencies
     def connect_required_model(self, registry: ModelRegistry):
         required = registry.get("required_model")
         if required is None:
@@ -344,7 +344,7 @@ The ``SolverInitializer`` does not catch exceptions, allowing them to propagate 
 Adaptive Model Behavior with AdaptableField
 --------------------------------------------
 
-``AdaptableField`` enables models to expose behavior switches that other models can modify during the CONFIGURE stage. This allows models to dynamically select different implementations or algorithm variants based on the presence of other models.
+``AdaptableField`` enables models to expose behavior switches that other models can modify during the RESOLVE_DEPENDENCIES stage. This allows models to dynamically select different implementations or algorithm variants based on the presence of other models.
 
 Basic Concept
 ~~~~~~~~~~~~~
@@ -387,14 +387,14 @@ Think of ``AdaptableField`` as a parameter that changes **which operations** a m
 Usage Pattern
 ~~~~~~~~~~~~~
 
-Other models modify adaptable fields during CONFIGURE:
+Other models modify adaptable fields during RESOLVE_DEPENDENCIES:
 
 .. code-block:: python
 
     class BuoyancyModel(BaseModel):
         name: str = "buoyancy"
         
-        @Model.configure
+        @Model.resolve_dependencies
         def configure(self, registry: ModelRegistry):
             # Get pressure algorithm
             pressure = registry.get("pressure")
@@ -440,7 +440,7 @@ Use ``ModelRegistry.get_adaptable_fields()`` to discover what's adaptable:
 
 .. code-block:: python
 
-    @Model.configure
+    @Model.resolve_dependencies
     def configure(self, registry: ModelRegistry):
         # See what's adaptable
         adaptable = registry.get_adaptable_fields("pressure")
@@ -487,7 +487,7 @@ Query multiple instances with ``ModelRegistry`` helpers:
 
 .. code-block:: python
 
-    @Model.configure
+    @Model.resolve_dependencies
     def configure(self, registry: ModelRegistry):
         # Get all heat sources by type
         sources = registry.get_by_type(HeatSource)
@@ -544,7 +544,7 @@ Complete example showing how buoyancy model adapts pressure algorithm:
         model_config = {"arbitrary_types_allowed": True}
         name: str = "buoyancy"
         
-        @Model.configure
+        @Model.resolve_dependencies
         def configure(self, registry: ModelRegistry):
             pressure = registry.get("pressure")
             if pressure:
@@ -576,9 +576,9 @@ The test suite is organized in ``test/initialization/``:
 
 - ``test_fixtures.py`` - Shared test models
 - ``test_basic.py`` - Basic initialization tests
-- ``test_read_files_stage.py`` - READ_FILES stage tests
-- ``test_configure_stage.py`` - CONFIGURE stage tests
-- ``test_setup_stage.py`` - SETUP stage tests
+- ``test_load_stage.py`` - LOAD stage tests
+- ``test_resolve_dependencies_stage.py`` - RESOLVE_DEPENDENCIES stage tests
+- ``test_build_stage.py`` - BUILD stage tests
 - ``test_initialization_order.py`` - Execution order tests
 - ``test_error_handling.py`` - Error condition tests
 - ``test_registry.py`` - ModelRegistry tests

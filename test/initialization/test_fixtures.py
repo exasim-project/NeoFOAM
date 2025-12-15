@@ -65,9 +65,9 @@ class TestTurbulenceModel(BaseModel):
     Test turbulence model with 3-stage initialization.
 
     Demonstrates:
-    - Loading coefficients from files (READ_FILES)
-    - Connecting to transport model (CONFIGURE)
-    - Initializing fields (SETUP)
+    - Loading coefficients from files (LOAD)
+    - Connecting to transport model (RESOLVE_DEPENDENCIES)
+    - Initializing fields (BUILD)
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -79,11 +79,11 @@ class TestTurbulenceModel(BaseModel):
     files_read: bool = False
     configured: bool = False
     setup_complete: bool = False
-    transport_ref: Optional[Any] = None  # Reference from CONFIGURE stage
+    transport_ref: Optional[Any] = None  # Reference from RESOLVE_DEPENDENCIES stage
 
-    @Model.read_files
+    @Model.load
     def load_coefficients(self):
-        """READ_FILES: Load turbulence coefficients from file."""
+        """LOAD: Load turbulence coefficients from file."""
         # Simulate reading from file
         self.config.coefficients = {
             "C_mu": 0.09,
@@ -95,9 +95,9 @@ class TestTurbulenceModel(BaseModel):
         self.files_read = True
         return self.config.coefficients
 
-    @Model.configure
+    @Model.resolve_dependencies
     def connect_transport(self, registry: ModelRegistry):
-        """CONFIGURE: Connect to transport model for viscosity."""
+        """RESOLVE_DEPENDENCIES: Connect to transport model for viscosity."""
         # Get reference to transport model
         transport = registry.get("transport")
         if transport:
@@ -107,9 +107,9 @@ class TestTurbulenceModel(BaseModel):
             raise RuntimeError("Transport model not found in registry")
         return self.configured
 
-    @Model.setup
+    @Model.build
     def initialize_fields(self, mesh, builder):
-        """SETUP: Initialize turbulence fields on mesh."""
+        """BUILD: Initialize turbulence fields on mesh."""
         # Create k and epsilon fields
         if self.transport_ref:
             nu = self.transport_ref.config.viscosity
@@ -124,9 +124,9 @@ class TestTransportModel(BaseModel):
     Test transport properties model.
 
     Demonstrates:
-    - Loading transport properties (READ_FILES)
-    - Validating properties (CONFIGURE)
-    - Creating coefficient fields (SETUP)
+    - Loading transport properties (LOAD)
+    - Validating properties (RESOLVE_DEPENDENCIES)
+    - Creating coefficient fields (BUILD)
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -139,18 +139,18 @@ class TestTransportModel(BaseModel):
     configured: bool = False
     setup_complete: bool = False
 
-    @Model.read_files
+    @Model.load
     def load_properties(self):
-        """READ_FILES: Load transport properties from file."""
+        """LOAD: Load transport properties from file."""
         # Simulate reading transportProperties
         self.config.viscosity = 1e-6
         self.config.density = 998.0
         self.files_read = True
         return self.config
 
-    @Model.configure
+    @Model.resolve_dependencies
     def validate_properties(self, registry: ModelRegistry):
-        """CONFIGURE: Validate transport properties."""
+        """RESOLVE_DEPENDENCIES: Validate transport properties."""
         # Pydantic already validates gt=0, but we can add custom checks
         if self.config.viscosity <= 0:
             raise ValueError("Viscosity must be positive")
@@ -159,9 +159,9 @@ class TestTransportModel(BaseModel):
         self.configured = True
         return self.configured
 
-    @Model.setup
+    @Model.build
     def create_fields(self, mesh, builder):
-        """SETUP: Create transport coefficient fields."""
+        """BUILD: Create transport coefficient fields."""
         # Create nu and rho fields on mesh
         # In real code, would create fields here
         self.setup_complete = True
@@ -173,9 +173,9 @@ class TestAlgorithmModel(BaseModel):
     Test pressure-velocity coupling algorithm.
 
     Demonstrates:
-    - Loading algorithm settings (READ_FILES)
-    - Connecting to multiple models (CONFIGURE)
-    - Setting up matrix systems (SETUP)
+    - Loading algorithm settings (LOAD)
+    - Connecting to multiple models (RESOLVE_DEPENDENCIES)
+    - Setting up matrix systems (BUILD)
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -190,9 +190,9 @@ class TestAlgorithmModel(BaseModel):
     turbulence_ref: Optional[Any] = None
     transport_ref: Optional[Any] = None
 
-    @Model.read_files
+    @Model.load
     def load_settings(self):
-        """READ_FILES: Load algorithm settings."""
+        """LOAD: Load algorithm settings."""
         # Simulate reading from fvSolution
         self.config.n_correctors = 2
         self.config.n_outer_correctors = 1
@@ -200,9 +200,9 @@ class TestAlgorithmModel(BaseModel):
         self.files_read = True
         return self.config
 
-    @Model.configure
+    @Model.resolve_dependencies
     def connect_models(self, registry: ModelRegistry):
-        """CONFIGURE: Connect to turbulence and transport models."""
+        """RESOLVE_DEPENDENCIES: Connect to turbulence and transport models."""
         self.turbulence_ref = registry.get("turbulence")
         self.transport_ref = registry.get("transport")
 
@@ -214,9 +214,9 @@ class TestAlgorithmModel(BaseModel):
         self.configured = True
         return self.configured
 
-    @Model.setup
+    @Model.build
     def setup_matrices(self, mesh, builder):
-        """SETUP: Set up matrix systems."""
+        """BUILD: Set up matrix systems."""
         # In real code, would create matrix structures here
         self.setup_complete = True
         return self.setup_complete
@@ -254,9 +254,9 @@ class TestSolver(BaseModel):
 
     # ---- Solver's own lifecycle methods ----
 
-    @Solver.read_files
+    @Solver.load
     def load_control_dict(self):
-        """READ_FILES: Load solver control settings."""
+        """LOAD: Load solver control settings."""
         # Simulate reading controlDict
         self.config.max_iterations = 100
         self.config.tolerance = 1e-6
@@ -264,9 +264,9 @@ class TestSolver(BaseModel):
         self.files_read = True
         return self.config
 
-    @Solver.configure
+    @Solver.resolve_dependencies
     def validate_config(self, registry: ModelRegistry):
-        """CONFIGURE: Validate solver configuration."""
+        """RESOLVE_DEPENDENCIES: Validate solver configuration."""
         # Check all models are configured
         for model in self.get_models():
             if not model.configured:
@@ -274,9 +274,9 @@ class TestSolver(BaseModel):
         self.configured = True
         return self.configured
 
-    @Solver.setup
+    @Solver.build
     def create_solver_context(self, mesh, builder):
-        """SETUP: Create solver execution context."""
+        """BUILD: Create solver execution context."""
         # In real code, would set up solver runtime structures
         self.setup_complete = True
         return self.setup_complete
@@ -313,7 +313,7 @@ class AdaptivePressureModel(BaseModel):
     Pressure model with AdaptableField for behavior switching.
 
     Demonstrates how other models can change this model's behavior
-    by modifying the use_buoyancy field during CONFIGURE stage.
+    by modifying the use_buoyancy field during RESOLVE_DEPENDENCIES stage.
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -337,21 +337,21 @@ class AdaptivePressureModel(BaseModel):
     # Implementation dispatch
     _implementations = {False: PressureEquationStandard, True: PressureEquationBuoyant}
 
-    @Model.read_files
+    @Model.load
     def load_settings(self):
-        """READ_FILES: Load pressure solver settings."""
+        """LOAD: Load pressure solver settings."""
         self.tolerance = 1e-6
         self.max_iterations = 50
         self.files_read = True
 
-    @Model.configure
+    @Model.resolve_dependencies
     def validate(self, registry: ModelRegistry):
-        """CONFIGURE: Validate configuration."""
+        """RESOLVE_DEPENDENCIES: Validate configuration."""
         self.configured = True
 
-    @Model.setup
+    @Model.build
     def initialize(self, mesh, builder):
-        """SETUP: Initialize pressure solver."""
+        """BUILD: Initialize pressure solver."""
         self.setup_complete = True
 
     def get_operations(self) -> list[str]:
@@ -365,7 +365,7 @@ class TestBuoyancyModel(BaseModel):
     Buoyancy model that adapts pressure model behavior.
 
     Demonstrates how a model can modify adaptable fields in other models
-    during the CONFIGURE stage.
+    during the RESOLVE_DEPENDENCIES stage.
     """
 
     model_config = {"arbitrary_types_allowed": True}
@@ -379,15 +379,15 @@ class TestBuoyancyModel(BaseModel):
     configured: bool = False
     setup_complete: bool = False
 
-    @Model.read_files
+    @Model.load
     def load_properties(self):
-        """READ_FILES: Load buoyancy properties."""
+        """LOAD: Load buoyancy properties."""
         self.beta = 1e-3
         self.files_read = True
 
-    @Model.configure
+    @Model.resolve_dependencies
     def adapt_pressure(self, registry: ModelRegistry):
-        """CONFIGURE: Tell pressure model to use buoyancy variant."""
+        """RESOLVE_DEPENDENCIES: Tell pressure model to use buoyancy variant."""
         pressure = registry.get("adaptive_pressure")
 
         if pressure and self.enabled:
@@ -396,7 +396,7 @@ class TestBuoyancyModel(BaseModel):
 
         self.configured = True
 
-    @Model.setup
+    @Model.build
     def initialize(self, mesh, builder):
-        """SETUP: Initialize buoyancy fields."""
+        """BUILD: Initialize buoyancy fields."""
         self.setup_complete = True
