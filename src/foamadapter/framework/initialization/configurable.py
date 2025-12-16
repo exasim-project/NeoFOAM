@@ -9,7 +9,7 @@ Type annotation for fields that can be modified by other models during
 the RESOLVE_DEPENDENCIES stage.
 """
 
-from typing import Annotated, TypeVar
+from typing import Annotated, TypeVar, Any
 
 T = TypeVar("T")
 
@@ -17,7 +17,7 @@ T = TypeVar("T")
 class _ConfigurableMeta(type):
     """Metaclass to make Configurable subscriptable."""
 
-    def __getitem__(cls, item):
+    def __getitem__(cls, item: type) -> type:
         """Allow Configurable[T] syntax."""
         return Annotated[item, "configurable"]
 
@@ -71,7 +71,7 @@ class Configurable(metaclass=_ConfigurableMeta):
     pass
 
 
-def is_configurable_field(field_info) -> bool:
+def is_configurable_field(field_info: Any) -> bool:
     """
     Check if a field is marked as Configurable.
 

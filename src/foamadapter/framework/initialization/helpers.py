@@ -13,7 +13,7 @@ from .lazy_init import LazyInit
 
 
 def field(
-    name: str, create: Callable[[], Any], depends_on: List[str] = None
+    name: str, create: Callable[[], Any], depends_on: List[str] | None = None
 ) -> LazyInit:
     """
     Helper for creating field lazy initializers.
@@ -44,7 +44,7 @@ def field(
 
 
 def operator(
-    name: str, create: Callable[[], Any], depends_on: List[str] = None
+    name: str, create: Callable[[], Any], depends_on: List[str] | None = None
 ) -> LazyInit:
     """
     Helper for creating operator lazy initializers.
@@ -76,7 +76,7 @@ def operator(
 
 
 def lazy(
-    name: str, create: Callable[[], Any], depends_on: List[str] = None
+    name: str, create: Callable[[], Any], depends_on: List[str] | None = None
 ) -> LazyInit:
     """
     General-purpose helper for creating lazy initializers.
@@ -105,7 +105,7 @@ def lazy(
 
 
 def model(
-    name: str, create: Callable[[], Any], depends_on: List[str] = None
+    name: str, create: Callable[[], Any], depends_on: List[str] | None = None
 ) -> LazyInit:
     """
     Helper for creating model instance lazy initializers.
