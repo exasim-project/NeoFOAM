@@ -3,7 +3,6 @@
 
 """Pressure-velocity coupling algorithms."""
 
-from abc import abstractmethod
 from typing import Any, Literal, Protocol, runtime_checkable
 
 import pybFoam as pyf
@@ -93,8 +92,16 @@ class PressureVelocityAlgorithmConfig(BaseModel):
         """Fields this algorithm requires."""
         return []  # Override in subclasses if needed
 
-    @abstractmethod
-    def create(
+    @classmethod
+    def create(cls, *, config: dict[str, Any]) -> Any:
+        """Factory classmethod to create algorithm config from config dict.
+
+        Implemented explicitly for type safety. Calls plugin_model generated
+        by @PluginSystem.register decorator.
+        """
+        return cls.plugin_model(config=config)  # type: ignore[attr-defined]
+
+    def create_algorithm(
         self, pRefCell: int | None = None, pRefValue: float | None = None
     ) -> Any:
         """
@@ -107,7 +114,9 @@ class PressureVelocityAlgorithmConfig(BaseModel):
         Returns:
             Algorithm instance
         """
-        ...
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement create_algorithm()"
+        )
 
     def setup(
         self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
@@ -115,9 +124,9 @@ class PressureVelocityAlgorithmConfig(BaseModel):
         """
         Setup algorithm and register fields with builder.
 
-        Default implementation just calls create().
+        Default implementation just calls create_algorithm().
         """
-        return self.create(pRefCell, pRefValue)
+        return self.create_algorithm(pRefCell, pRefValue)
 
 
 @PressureVelocityAlgorithmConfig.register
@@ -135,7 +144,7 @@ class PimpleConfig(BaseModel):
     def requires(self) -> list[str]:
         return []  # No setup-time dependencies
 
-    def create(
+    def create_algorithm(
         self, pRefCell: int | None = None, pRefValue: float | None = None
     ) -> "PimpleAlgorithm":
         """Create PIMPLE algorithm instance."""
@@ -144,7 +153,7 @@ class PimpleConfig(BaseModel):
     def setup(
         self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
     ) -> "PimpleAlgorithm":
-        return self.create(pRefCell, pRefValue)
+        return self.create_algorithm(pRefCell, pRefValue)
 
 
 @PressureVelocityAlgorithmConfig.register
@@ -220,7 +229,12 @@ class PimpleAlgorithm:
 
     @Model.operation(operation_number=1)
     def momentum(
-        self, U, phi, p, turbulence, pimple_control: ModelAnnotation
+        self,
+        U: Any,
+        phi: Any,
+        p: Any,
+        turbulence: Any,
+        pimple_control: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """
         PIMPLE momentum: Assemble and solve momentum equation.
@@ -239,7 +253,7 @@ class PimpleAlgorithm:
 
     @Model.operation(operation_number=2)
     def continuity(
-        self, U, p, phi, UEqn, pimple_control: ModelAnnotation
+        self, U: Any, p: Any, phi: Any, UEqn: Any, pimple_control: ModelAnnotation[Any]
     ) -> FieldUpdates:
         """
         PIMPLE continuity: Pressure-velocity coupling with nested loops.

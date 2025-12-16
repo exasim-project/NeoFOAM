@@ -92,7 +92,7 @@ class BuoyancyModel(BaseModel):
 
     @Model.build
     def setup_buoyancy_fields(self, builder: Any, mesh: Any = None) -> None:
-        """  
+        """
         BUILD: Create temperature field and density correction.
 
         Reads T from disk and computes rhok = 1 - beta*(T - TRef).

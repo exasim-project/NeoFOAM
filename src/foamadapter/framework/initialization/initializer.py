@@ -245,10 +245,10 @@ class SolverInitializer:
         """
         # Try get_models() method first
         if hasattr(self.solver, "get_models") and callable(self.solver.get_models):
-            return self.solver.get_models()
+            return self.solver.get_models()  # type: ignore[no-any-return]
 
         # Fallback: collect attributes with 'name' attribute
-        models = []
+        models: list[Any] = []
         for attr_name in dir(self.solver):
             if attr_name.startswith("_"):
                 continue
@@ -262,7 +262,7 @@ class SolverInitializer:
         return models
 
     def _execute_stage_methods(
-        self, obj: Any, stage: InitializationStage, *args
+        self, obj: Any, stage: InitializationStage, *args: Any
     ) -> None:
         """
         Execute all methods marked with given stage decorator.
@@ -285,7 +285,7 @@ class SolverInitializer:
                     attr(*args)
 
     def _execute_stage_methods_with_return(
-        self, obj: Any, stage: InitializationStage, *args
+        self, obj: Any, stage: InitializationStage, *args: Any
     ) -> Any:
         """
         Execute stage methods and collect return values.

@@ -95,11 +95,20 @@ class PluginSystem:
             registry_obj.plugin_model = model
             base_cls.plugin_model = model  # type: ignore[attr-defined]
 
-            # Add a classmethod 'create' for user-friendly instantiation
-            def create(cls: Type[Any], /, **kwargs: Any) -> Any:
-                return cls.plugin_model(**kwargs)
+            # Validate that base_cls implements create classmethod
+            if not hasattr(base_cls, "create"):
+                raise TypeError(
+                    f"{base_cls.__name__} must implement a @classmethod 'create' "
+                    f"with signature: @classmethod def create(cls, *, {discriminator_variable}: dict[str, Any]) -> Any"
+                )
 
-            base_cls.create = classmethod(create)  # type: ignore[attr-defined]
+            # Check if it's a classmethod by inspecting the attribute
+            create_attr = base_cls.__dict__.get("create")
+            if not isinstance(create_attr, classmethod):
+                raise TypeError(
+                    f"{base_cls.__name__}.create must be a @classmethod. "
+                    f"Expected signature: @classmethod def create(cls, *, {discriminator_variable}: dict[str, Any]) -> Any"
+                )
             return base_cls
 
         return base_decorator

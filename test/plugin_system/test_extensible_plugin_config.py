@@ -13,6 +13,11 @@ from foamadapter.core.plugin_system import PluginSystem
 class ShapeInterface(BaseModel):
     color: str
 
+    @classmethod
+    def create(cls, *, shape: dict[str, Any], **kwargs: Any) -> Any:
+        """Factory classmethod for creating shape instances."""
+        return cls.plugin_model(shape=shape, **kwargs)  # type: ignore[attr-defined]
+
 
 @ShapeInterface.register
 class CircleConfig(BaseModel):
@@ -137,6 +142,11 @@ def test_plugin_registry() -> None:
 @PluginSystem.register(discriminator_variable="animal", discriminator="animal_type")
 class AnimalInterface(BaseModel):
     color: str
+
+    @classmethod
+    def create(cls, *, animal: dict[str, Any]) -> Any:
+        """Factory classmethod for creating animal instances."""
+        return cls.plugin_model(animal=animal)  # type: ignore[attr-defined]
 
 
 @AnimalInterface.register

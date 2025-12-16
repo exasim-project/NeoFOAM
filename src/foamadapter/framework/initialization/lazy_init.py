@@ -8,8 +8,14 @@ Lazy Initialization
 Provides the LazyInit dataclass for deferred initialization with dependency tracking.
 """
 
+import inspect
 from dataclasses import dataclass, field
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Union, cast
+
+
+def _num_args(init: Callable[..., Any]) -> int:
+    sig = inspect.signature(init)
+    return len(sig.parameters)
 
 
 @dataclass
@@ -37,7 +43,7 @@ class LazyInit:
 
     name: str
     depends_on: List[str] = field(default_factory=list)
-    initializer: Callable[..., Any] | None = None
+    initializer: Union[Callable[[], Any], Callable[[dict[str, Any]], Any], None] = None
     category: str | None = None
 
     def execute(self, context: dict[str, Any] | None = None) -> Any:
@@ -49,15 +55,17 @@ class LazyInit:
         if self.initializer is None:
             raise ValueError(f"LazyInit '{self.name}' has no initializer function")
 
-        # Try calling with context parameter first
-        if context is not None:
-            try:
-                return self.initializer(context)
-            except TypeError:
-                # If initializer doesn't accept context, call without it
-                return self.initializer()
-        else:
-            return self.initializer()
+        n_arguments = _num_args(self.initializer)
+        if n_arguments == 1:
+            if context is None:
+                raise ValueError(
+                    f"LazyInit '{self.name}' requires context but None was provided"
+                )
+            context_callable = cast(Callable[[dict[str, Any]], Any], self.initializer)
+            return context_callable(context)
+
+        no_arg_callable = cast(Callable[[], Any], self.initializer)
+        return no_arg_callable()
 
     def __post_init__(self) -> None:
         """Validate LazyInit after creation."""

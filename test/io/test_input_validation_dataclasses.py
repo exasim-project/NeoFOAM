@@ -4,7 +4,7 @@ from foamadapter.io.input_validation import ModelInputDefinition, ValidationErro
 
 
 def test_file_spec_instance() -> None:
-    class DummyModel(BaseModel):  # type: ignore[misc]
+    class DummyModel(BaseModel):
         value: int
 
     fs = ModelInputDefinition(

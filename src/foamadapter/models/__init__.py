@@ -29,6 +29,8 @@ Example:
     available = list_models()  # ["buoyancy", "PIMPLE", "SIMPLE", ...]
 """
 
+from typing import Any, Callable
+
 from foamadapter.framework.model_protocol import SolverModel
 
 
@@ -36,7 +38,7 @@ from foamadapter.framework.model_protocol import SolverModel
 MODEL_REGISTRY: dict[str, type[SolverModel]] = {}
 
 
-def register_model(name: str):
+def register_model(name: str) -> Callable[[type[SolverModel]], type[SolverModel]]:
     """
     Decorator to register a model type in the global registry.
 
@@ -76,7 +78,7 @@ def register_model(name: str):
     return decorator
 
 
-def get_model(name: str, **kwargs) -> SolverModel:
+def get_model(name: str, **kwargs: Any) -> SolverModel:
     """
     Create a model instance by name.
 

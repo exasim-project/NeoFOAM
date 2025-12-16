@@ -8,12 +8,14 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating LazyInit objects with common patterns.
 """
 
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Union
 from .lazy_init import LazyInit
 
 
 def field(
-    name: str, create: Callable[..., Any], depends_on: List[str] | None = None
+    name: str,
+    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    depends_on: List[str] | None = None,
 ) -> LazyInit:
     """
     Helper for creating field lazy initializers.
@@ -44,7 +46,9 @@ def field(
 
 
 def operator(
-    name: str, create: Callable[..., Any], depends_on: List[str] | None = None
+    name: str,
+    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    depends_on: List[str] | None = None,
 ) -> LazyInit:
     """
     Helper for creating operator lazy initializers.
@@ -76,7 +80,9 @@ def operator(
 
 
 def lazy(
-    name: str, create: Callable[..., Any], depends_on: List[str] | None = None
+    name: str,
+    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    depends_on: List[str] | None = None,
 ) -> LazyInit:
     """
     General-purpose helper for creating lazy initializers.
@@ -105,7 +111,9 @@ def lazy(
 
 
 def model(
-    name: str, create: Callable[..., Any], depends_on: List[str] | None = None
+    name: str,
+    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    depends_on: List[str] | None = None,
 ) -> LazyInit:
     """
     Helper for creating model instance lazy initializers.

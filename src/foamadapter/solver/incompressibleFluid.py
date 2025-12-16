@@ -52,7 +52,7 @@ class CFLCondition:
 
         if not self.adjustable:
             runTime.increment()
-            return runTime.loop()
+            return bool(runTime.loop())
 
         deltaT = runTime.deltaTValue()
         maxCFLNumber, meanCFLNumber = pyf.computeCFLNumber(phi)
@@ -66,7 +66,7 @@ class CFLCondition:
             runTime.setDeltaT(finalDeltaT)
 
         runTime.increment()
-        return runTime.loop()
+        return bool(runTime.loop())
 
 
 # ============================================================================
@@ -95,8 +95,16 @@ class TransportModel(BaseModel):
         """Fields this transport model needs."""
         return ["U", "phi"]
 
-    @abstractmethod
-    def create(self, U: Any, phi: Any) -> Any:
+    @classmethod
+    def create(cls, *, config: dict[str, Any]) -> Any:
+        """Factory classmethod to create transport model from config.
+
+        Implemented explicitly for type safety. Calls plugin_model generated
+        by @PluginSystem.register decorator.
+        """
+        return cls.plugin_model(config=config)  # type: ignore[attr-defined]
+
+    def create_instance(self, U: Any, phi: Any) -> Any:
         """
         Create the transport model instance.
 
@@ -114,11 +122,11 @@ class TransportModel(BaseModel):
         Create instance and register with builder.
 
         Uses builder.get_field() to retrieve required fields,
-        then calls create() and adds result to builder.
+        then calls create_instance() and adds result to builder.
         """
         U = builder.get_field("U")
         phi = builder.get_field("phi")
-        instance = self.create(U, phi)
+        instance = self.create_instance(U, phi)
         builder.add_field("laminarTransport", instance)
         return instance
 
@@ -130,7 +138,7 @@ class SinglePhaseTransport(BaseModel):
     transport_type: Literal["singlePhase"] = "singlePhase"
     model_config = {"arbitrary_types_allowed": True}
 
-    def create(self, U: Any, phi: Any) -> Any:
+    def create_instance(self, U: Any, phi: Any) -> Any:
         """Create single-phase transport model using OpenFOAM."""
         return singlePhaseTransportModel(U, phi)
 
@@ -156,8 +164,16 @@ class TurbulenceModel(BaseModel):
         """Fields this turbulence model needs."""
         return ["U", "phi", "laminarTransport"]
 
-    @abstractmethod
-    def create(self, U: Any, phi: Any, transport: Any) -> Any:
+    @classmethod
+    def create(cls, *, config: dict[str, Any]) -> Any:
+        """Factory classmethod to create turbulence model from config.
+
+        Implemented explicitly for type safety. Calls plugin_model generated
+        by @PluginSystem.register decorator.
+        """
+        return cls.plugin_model(config=config)  # type: ignore[attr-defined]
+
+    def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
         """
         Create the turbulence model instance.
 
@@ -176,24 +192,24 @@ class TurbulenceModel(BaseModel):
         Create instance and register with builder.
 
         Uses builder.get_field() to retrieve required fields,
-        then calls create() and adds result to builder.
+        then calls create_instance() and adds result to builder.
         """
         U = builder.get_field("U")
         phi = builder.get_field("phi")
         transport = builder.get_field("laminarTransport")
-        instance = self.create(U, phi, transport)
-        builder.add_field("turbulence", instance)
-        return instance
+        turbulence = self.create_instance(U, phi, transport)
+        builder.add_field("turbulence", turbulence)
+        return turbulence
 
 
 @TurbulenceModel.register
 class OpenFOAMTurbulence(BaseModel):
     """Wrapper for OpenFOAM's turbulence models (default)."""
 
-    turbulence_type: Literal["openfoam"] = "openfoam"
+    turbulence_type: Literal["openfoam_rts"] = "openfoam_rts"
     model_config = {"arbitrary_types_allowed": True}
 
-    def create(self, U: Any, phi: Any, transport: Any) -> Any:
+    def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
         """Create turbulence model using OpenFOAM's runtime selection."""
         return incompressibleTurbulenceModel.New(U, phi, transport)
 
@@ -205,7 +221,7 @@ class LaminarModel(BaseModel):
     turbulence_type: Literal["laminar"] = "laminar"
     model_config = {"arbitrary_types_allowed": True}
 
-    def create(self, U: Any, phi: Any, transport: Any) -> Any:
+    def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
         """
         Create a mock laminar turbulence model for testing.
 
@@ -245,6 +261,15 @@ class IncompressibleFluidModel(BaseModel):
     def name(self) -> str:
         """Unique model identifier."""
         ...
+
+    @classmethod
+    def create(cls, *, model: dict[str, Any]) -> Any:
+        """Factory classmethod to create fluid model from config.
+
+        Implemented explicitly for type safety. Calls plugin_model generated
+        by @PluginSystem.register decorator.
+        """
+        return cls.plugin_model(model=model)  # type: ignore[attr-defined]
 
     def operations(self) -> OperationCollection:
         """
@@ -288,7 +313,7 @@ class IncompressibleFluid(BaseModel):
     # Core component type selection
     algorithm: Literal["SIMPLE", "PISO", "PIMPLE"] = "PIMPLE"
     transport_type: Literal["singlePhase"] = "singlePhase"
-    turbulence_type: Literal["openfoam", "laminar"] = "openfoam"
+    turbulence_type: Literal["openfoam_rts", "laminar"] = "openfoam_rts"
 
     pRefCell: int | None = None
     pRefValue: float | None = None
@@ -303,8 +328,11 @@ class IncompressibleFluid(BaseModel):
     _pressure_velocity: Any | None = None
     _transport: Any | None = None
     _turbulence: Any | None = None
-    _algorithm_config: dict[str, str] | None = (
+    _algorithm_config: dict[str, Any] | None = (
         None  # Algorithm configuration for BUILD stage
+    )
+    _fvSolution: Any | None = (
+        None  # Keep fvSolution alive to prevent C++ object destruction
     )
 
     # === Optional Physics Models ===
@@ -373,10 +401,10 @@ class IncompressibleFluid(BaseModel):
 
         # Initialize core components - always non-None after RESOLVE_DEPENDENCIES
         # Components will be fully set up in BUILD stage
-        self._transport = TransportModel.create(  # type: ignore[call-arg]
+        self._transport = TransportModel.create(
             config={"transport_type": self.transport_type}
         )
-        self._turbulence = TurbulenceModel.create(  # type: ignore[call-arg]
+        self._turbulence = TurbulenceModel.create(
             config={"turbulence_type": self.turbulence_type}
         )
 
@@ -391,7 +419,7 @@ class IncompressibleFluid(BaseModel):
         self.configured = True
 
     @Solver.build
-    def setup_runtime(self, mesh: Any) -> list:
+    def setup_runtime(self, mesh: Any) -> list[Any]:
         """BUILD: Initialize runtime structures and fields."""
         from foamadapter.framework.initialization.helpers import field, lazy
 
@@ -402,58 +430,70 @@ class IncompressibleFluid(BaseModel):
             )
 
         # Create runtime (no dependencies)
-        def create_runtime():
+        def create_runtime() -> Any:
             argList = pyf.argList(self.argv)
             return pyf.Time(argList)
 
         # Create mesh (depends on runtime)
-        def create_mesh(context):
+        def create_mesh(context: dict[str, Any]) -> Any:
             runTime = context["runtime"]
             return pyf.fvMesh(runTime)
 
         # Read fields (depend on mesh)
-        def create_pressure(context):
+        def create_pressure(context: dict[str, Any]) -> Any:
             mesh = context["mesh"]
             return volScalarField.read_field(mesh, "p")
 
-        def create_velocity(context):
+        def create_velocity(context: dict[str, Any]) -> Any:
             mesh = context["mesh"]
             return volVectorField.read_field(mesh, "U")
 
-        def create_phi(context):
+        def create_phi(context: dict[str, Any]) -> Any:
             U = context["fields.U"]
             return pyf.createPhi(U)
 
         # Transport model (depends on U, phi)
-        def create_transport(context):
+        def create_transport(context: dict[str, Any]) -> Any:
             U = context["fields.U"]
             phi = context["fields.phi"]
+            if self._transport is None:
+                raise RuntimeError("Transport model not configured")
             transport_config = self._transport.config
-            return transport_config.create(U, phi)
+            return transport_config.create_instance(U, phi)
 
         # Turbulence model (depends on U, phi, laminarTransport)
-        def create_turbulence(context):
+        def create_turbulence(context: dict[str, Any]) -> Any:
             U = context["fields.U"]
             phi = context["fields.phi"]
             transport_model = context["fields.laminarTransport"]
+            if self._turbulence is None:
+                raise RuntimeError("Turbulence model not configured")
             turbulence_config = self._turbulence.config
-            return turbulence_config.create(U, phi, transport_model)
+            return turbulence_config.create_instance(U, phi, transport_model)
 
         # Algorithm setup (depends on p, mesh)
-        def create_algorithm(context):
+        def create_algorithm(context: dict[str, Any]) -> Any:
             p = context["fields.p"]
             mesh = context["mesh"]
 
             # Read solver configuration
-            fvSolution = pyf.dictionary.read("system/fvSolution")
-            pRefCell, pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
+            # IMPORTANT: Keep fvSolution in scope to prevent C++ object destruction
+            # The subdictionary is a reference to memory owned by fvSolution
+            self._fvSolution = pyf.dictionary.read("system/fvSolution")
+            pimple_dict = self._fvSolution.subDict("PIMPLE")
+            pRefCell, pRefValue = pyf.setRefCell(p, pimple_dict)
             mesh.setFluxRequired(pyf.Word("p"))
 
             # Create algorithm instance using config system
+            if self._algorithm_config is None:
+                raise RuntimeError("Algorithm config not initialized")
             algorithm_wrapper = PressureVelocityAlgorithmConfig.create(
                 config=self._algorithm_config
             )
-            self._pressure_velocity = algorithm_wrapper.config.create(
+            # The PluginSystem wraps the actual config in a 'config' field
+            # Extract the real config object (e.g., PimpleConfig)
+            actual_config = algorithm_wrapper.config  # type: ignore[attr-defined]
+            self._pressure_velocity = actual_config.create_algorithm(
                 pRefCell, pRefValue
             )
             return self._pressure_velocity
@@ -469,27 +509,27 @@ class IncompressibleFluid(BaseModel):
             return None
 
         return [
-            lazy("runtime", create=create_runtime),  # type: ignore[arg-type]
-            lazy("mesh", depends_on=["runtime"], create=create_mesh),  # type: ignore[arg-type]
-            field("p", depends_on=["mesh"], create=create_pressure),  # type: ignore[arg-type]
-            field("U", depends_on=["mesh"], create=create_velocity),  # type: ignore[arg-type]
-            field("phi", depends_on=["fields.U"], create=create_phi),  # type: ignore[arg-type]
+            lazy("runtime", create=create_runtime),
+            lazy("mesh", depends_on=["runtime"], create=create_mesh),
+            field("p", depends_on=["mesh"], create=create_pressure),
+            field("U", depends_on=["mesh"], create=create_velocity),
+            field("phi", depends_on=["fields.U"], create=create_phi),
             field(
                 "laminarTransport",
                 depends_on=["fields.U", "fields.phi"],
-                create=create_transport,  # type: ignore[arg-type]
+                create=create_transport,
             ),
             field(
                 "turbulence",
                 depends_on=["fields.U", "fields.phi", "fields.laminarTransport"],
-                create=create_turbulence,  # type: ignore[arg-type]
+                create=create_turbulence,
             ),
-            lazy("algorithm", depends_on=["fields.p", "mesh"], create=create_algorithm),  # type: ignore[arg-type]
-            field("pimple", depends_on=["mesh"], create=create_pimple),  # type: ignore[arg-type]
+            lazy("algorithm", depends_on=["fields.p", "mesh"], create=create_algorithm),
+            field("pimple", depends_on=["mesh"], create=create_pimple),
             lazy(
                 "_setup_complete",
                 depends_on=["algorithm", "fields.pimple"],
-                create=mark_complete,  # type: ignore[arg-type]
+                create=mark_complete,
             ),
         ]
 
@@ -515,7 +555,10 @@ class IncompressibleFluid(BaseModel):
 
     @Solver.operation(operation_number=4, depends_on=["continuity"])
     def turbulence_correction(
-        self, laminarTransport, turbulence, pimple_control: ModelAnnotation
+        self,
+        laminarTransport: Any,
+        turbulence: Any,
+        pimple_control: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """
         Correct turbulence model after pressure-velocity coupling.
@@ -558,13 +601,11 @@ class IncompressibleFluid(BaseModel):
             op = Operation.create_SeqOp(func)
             ops.add(op)
 
-        # Add algorithm operations - must be initialized first
-        if self._pressure_velocity is None:
-            raise RuntimeError(
-                "Algorithm not initialized. Call initialize() or run() first."
-            )
-        algo_ops = self._pressure_velocity.operations()
-        ops.add(algo_ops)
+        # Add algorithm operations if initialized
+        # Note: algorithm may not be initialized yet during early operations() calls
+        if self._pressure_velocity is not None:
+            algo_ops = self._pressure_velocity.operations()
+            ops.add(algo_ops)
 
         # Add optional model operations
         for model in self.models:
@@ -595,7 +636,6 @@ class IncompressibleFluid(BaseModel):
         time_loop_op = Operation(
             func=IterativeOp(CFLCondition(self.maxDeltaT)),
             operation_name="time_loop",
-            operation_number=1,  # type: ignore[arg-type]
         )
 
         with main_loop.loop(time_loop_op) as time_loop:
