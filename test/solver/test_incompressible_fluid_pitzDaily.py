@@ -13,6 +13,10 @@ from pathlib import Path
 
 import pytest
 
+# Disable OpenFOAM floating point exception trapping BEFORE any imports
+# This prevents FPE errors when pytest tries to print object representations
+os.environ["FOAM_SIGFPE"] = ""
+
 
 # Fix LD_LIBRARY_PATH to use system libstdc++ before conda's
 # This is needed for pybFoam which is compiled against newer libstdc++
@@ -122,11 +126,13 @@ def test_incompressible_fluid_pitzDaily():
         os.chdir(test_case)
 
         try:
-            # Create solver instance
-            solver = IncompressibleFluid(argv=["incompressibleFluid"])
+            # Create solver instance and run it
+            # Use a separate function to avoid pytest trying to repr the solver on error
+            def run_solver():
+                solver = IncompressibleFluid(argv=["incompressibleFluid"])
+                solver.run()
 
-            # Run the solver
-            solver.run()
+            run_solver()
         finally:
             # Change back to original directory
             os.chdir(original_dir)

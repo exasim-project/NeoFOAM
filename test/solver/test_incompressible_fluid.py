@@ -56,7 +56,6 @@ def test_incompressible_fluid_operations_registration():
 
     # Should have solver operations + algorithm operations (momentum, continuity)
     expected_solver_operations = [
-        "setup_models",
         "print_time",
         "turbulence_correction",
         "write_output",
@@ -97,8 +96,7 @@ def test_incompressible_fluid_operation_dependencies():
     ops = solver.operations()
 
     # Check solver operation dependencies
-    assert ops["setup_models"].depends_on == []
-    assert ops["print_time"].depends_on == ["setup_models"]
+    assert ops["print_time"].depends_on == []
 
     # Algorithm operations have no explicit dependencies in their decorator
     # (dependencies are managed by solver's main_loop)

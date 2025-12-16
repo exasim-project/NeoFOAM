@@ -84,8 +84,8 @@ class PressureVelocityAlgorithmConfig(BaseModel):
 
     @property
     def provides(self) -> list[str]:
-        """Fields this algorithm provides."""
-        return []  # Override in subclasses if needed
+        """Fields this algorithm provides during setup."""
+        return ["p", "U", "phi"]  # Base fields all algorithms provide
 
     @property
     def requires(self) -> list[str]:
@@ -100,6 +100,29 @@ class PressureVelocityAlgorithmConfig(BaseModel):
         by @PluginSystem.register decorator.
         """
         return cls.plugin_model(config=config)  # type: ignore[attr-defined]
+
+    def setup(self) -> list[Any]:
+        """
+        Return LazyInit objects for fields this algorithm manages.
+
+        Default implementation registers p, U, phi fields.
+        Override to add algorithm-specific fields.
+
+        Returns:
+            List of LazyInit objects for field initialization
+        """
+        from foamadapter.foam.initialization import read_vol_field
+        from foamadapter.framework.initialization.helpers import field
+
+        def create_phi(context: dict[str, Any]) -> Any:
+            U = context["fields.U"]
+            return pyf.createPhi(U)
+
+        return [
+            read_vol_field(volScalarField, "p"),
+            read_vol_field(volVectorField, "U"),
+            field("phi", create_phi, depends_on=["fields.U"]),
+        ]
 
     def create_algorithm(
         self, pRefCell: int | None = None, pRefValue: float | None = None
@@ -118,16 +141,6 @@ class PressureVelocityAlgorithmConfig(BaseModel):
             f"{self.__class__.__name__} must implement create_algorithm()"
         )
 
-    def setup(
-        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """
-        Setup algorithm and register fields with builder.
-
-        Default implementation just calls create_algorithm().
-        """
-        return self.create_algorithm(pRefCell, pRefValue)
-
 
 @PressureVelocityAlgorithmConfig.register
 class PimpleConfig(BaseModel):
@@ -138,22 +151,41 @@ class PimpleConfig(BaseModel):
 
     @property
     def provides(self) -> list[str]:
-        return []  # Algorithm itself doesn't provide fields during setup
+        return [
+            "p",
+            "U",
+            "phi",
+            "pimple_control",
+        ]  # PIMPLE provides base fields + control model
 
     @property
     def requires(self) -> list[str]:
         return []  # No setup-time dependencies
+
+    def setup(self) -> list[Any]:
+        """Register p, U, phi fields and pimple_control model."""
+        from foamadapter.framework.initialization.helpers import model
+
+        # Get base fields (p, U, phi) from parent class
+        initializers = PressureVelocityAlgorithmConfig.setup(self)
+
+        # Add PIMPLE-specific control as a model (not field)
+        def create_pimple_control(context: dict[str, Any]) -> Any:
+            mesh = context["mesh"]
+            # Use module-level import to allow mocking
+            return pyf.pimpleControl(mesh)
+
+        initializers.append(
+            model("pimple_control", depends_on=["mesh"], create=create_pimple_control)
+        )
+
+        return initializers
 
     def create_algorithm(
         self, pRefCell: int | None = None, pRefValue: float | None = None
     ) -> "PimpleAlgorithm":
         """Create PIMPLE algorithm instance."""
         return PimpleAlgorithm(pRefCell=pRefCell, pRefValue=pRefValue)
-
-    def setup(
-        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> "PimpleAlgorithm":
-        return self.create_algorithm(pRefCell, pRefValue)
 
 
 @PressureVelocityAlgorithmConfig.register

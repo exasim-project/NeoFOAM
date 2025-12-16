@@ -27,7 +27,11 @@ from foamadapter.solver.incompressibleFluid import IncompressibleFluid
 @pytest.fixture
 def mock_pyfoam():
     """Mock pybFoam module to avoid OpenFOAM dependencies."""
-    with patch("foamadapter.solver.incompressibleFluid.pyf") as mock_pyf:
+    with (
+        patch("foamadapter.solver.incompressibleFluid.pyf") as mock_pyf,
+        patch("foamadapter.algorithms.pressure_velocity.pyf") as mock_algo_pyf,
+        patch("foamadapter.foam.initialization.pyf") as mock_foam_pyf,
+    ):
         # Mock dictionary reading - handle controlDict.get[type](key) pattern
         mock_control_dict = MagicMock()
 
@@ -70,18 +74,30 @@ def mock_pyfoam():
         mock_pyf.setRefCell = MagicMock(return_value=(0, 0.0))
         mock_pyf.Word = MagicMock(return_value="mock_word")
 
+        # Algorithm module needs the same mocks
+        mock_algo_pyf.createPhi = MagicMock(return_value="mock_phi")
+        mock_algo_pyf.pimpleControl = MagicMock(return_value="mock_pimple_control")
+
+        # foam.initialization module needs the same mocks
+        mock_foam_pyf.argList = MagicMock(return_value="mock_arglist")
+        mock_foam_pyf.Time = MagicMock(return_value="mock_runtime")
+        mock_foam_pyf.fvMesh = MagicMock(return_value=mock_mesh)
+        mock_foam_pyf.createPhi = MagicMock(return_value="mock_phi")
+
         yield mock_pyf
 
 
 @pytest.fixture
 def mock_field_classes():
-    """Mock field classes."""
+    """Mock field classes used in algorithm setup."""
+    # The field types are imported at module level in pressure_velocity.py
+    # We need to patch them where they're imported (in the algorithms module)
     with (
         patch(
-            "foamadapter.solver.incompressibleFluid.volScalarField"
+            "foamadapter.algorithms.pressure_velocity.volScalarField"
         ) as mock_vol_scalar,
         patch(
-            "foamadapter.solver.incompressibleFluid.volVectorField"
+            "foamadapter.algorithms.pressure_velocity.volVectorField"
         ) as mock_vol_vector,
     ):
         mock_vol_scalar.read_field = MagicMock(return_value="mock_p_field")
@@ -451,7 +467,7 @@ def test_context_from_initialization(
     assert "phi" in ctx.fields
     assert "laminarTransport" in ctx.fields
     assert "turbulence" in ctx.fields
-    assert "pimple" in ctx.fields
+    assert "pimple_control" in ctx.models  # Control is in models, not fields
 
 
 # ============================================================================

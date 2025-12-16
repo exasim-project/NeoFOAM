@@ -8,8 +8,36 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating LazyInit objects with common patterns.
 """
 
-from typing import Callable, Any, List, Union
+from typing import Callable, Any, List, Union, Type
 from .lazy_init import LazyInit
+
+
+def read_vol_field(field_type: Type[Any], name: str) -> LazyInit:
+    """
+    Create a LazyInit for reading a volumetric field from disk.
+
+    This is a convenience helper for the common pattern of reading OpenFOAM
+    volumetric fields (volScalarField, volVectorField, etc.) from disk files.
+
+    Args:
+        field_type: The field type class (e.g., volScalarField, volVectorField)
+        name: Field name (e.g., "p", "U", "T")
+
+    Returns:
+        LazyInit for reading the field from disk
+
+    Example:
+        read_vol_field(volScalarField, "p")
+        # Equivalent to:
+        # field("p", depends_on=["mesh"],
+        #       create=lambda ctx: volScalarField.read_field(ctx["mesh"], "p"))
+    """
+
+    def create(context: dict[str, Any]) -> Any:
+        mesh = context["mesh"]
+        return field_type.read_field(mesh, name)
+
+    return field(name, depends_on=["mesh"], create=create)
 
 
 def field(
