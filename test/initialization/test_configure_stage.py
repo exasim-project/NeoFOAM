@@ -5,12 +5,12 @@
 """Tests for RESOLVE_DEPENDENCIES stage."""
 
 from foamadapter.framework.initialization import SolverInitializer, InitializationStage
-from .test_fixtures import TestSolver, TestTurbulenceModel
+from .initialization_test_models import MockSolver, MockTurbulenceModel
 
 
 def test_resolve_dependencies_stage_marks_methods():
     """Test that @resolve_dependencies decorator marks methods correctly."""
-    model = TestTurbulenceModel()
+    model = MockTurbulenceModel()
 
     assert hasattr(model.connect_transport, "_init_stage")
     assert (
@@ -20,7 +20,7 @@ def test_resolve_dependencies_stage_marks_methods():
 
 def test_resolve_dependencies_stage_registers_models():
     """Test that models are registered in registry during RESOLVE_DEPENDENCIES."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     initializer._run_load()
@@ -33,7 +33,7 @@ def test_resolve_dependencies_stage_registers_models():
 
 def test_resolve_dependencies_stage_connects_models():
     """Test that models can reference each other during RESOLVE_DEPENDENCIES."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     initializer._run_load()
@@ -49,7 +49,7 @@ def test_resolve_dependencies_stage_connects_models():
 
 def test_resolve_dependencies_stage_marks_models_configured():
     """Test that RESOLVE_DEPENDENCIES marks all models as configured."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     initializer._run_load()

@@ -9,7 +9,7 @@ Type annotation for fields that can be modified by other models during
 the RESOLVE_DEPENDENCIES stage.
 """
 
-from typing import Annotated, TypeVar, get_args, get_origin, _GenericAlias
+from typing import Annotated, TypeVar
 
 T = TypeVar("T")
 

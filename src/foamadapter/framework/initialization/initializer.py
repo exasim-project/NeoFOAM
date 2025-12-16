@@ -14,6 +14,7 @@ import networkx as nx  # type: ignore[import-untyped]
 from .stages import InitializationStage
 from .config_context import ConfigContext
 from .lazy_init import LazyInit
+from ..context import Context
 
 
 class SolverInitializer:

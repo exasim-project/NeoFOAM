@@ -10,9 +10,8 @@ implements the 3-stage initialization pattern (LOAD, RESOLVE_DEPENDENCIES, BUILD
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from foamadapter.framework.initialization import (
-    ConfigContext,
     SolverInitializer,
     ConfigContext,
     InitializationStage,

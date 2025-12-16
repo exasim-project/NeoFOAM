@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from foamadapter.framework.model import Model
 from foamadapter.framework.solver import Solver
-from foamadapter.framework.initialization import ConfigContext
+from foamadapter.framework.initialization import ConfigContext, Configurable
 
 
 # ============================================================================
@@ -60,7 +60,7 @@ class SolverConfig(BaseModel):
 # ============================================================================
 
 
-class TestTurbulenceModel(BaseModel):
+class MockTurbulenceModel(BaseModel):
     """
     Test turbulence model with 3-stage initialization.
 
@@ -115,7 +115,6 @@ class TestTurbulenceModel(BaseModel):
         def create_turbulence_fields():
             # Create k and epsilon fields
             if self.transport_ref:
-                nu = self.transport_ref.config.viscosity
                 # Use viscosity for initial turbulence estimates
                 # In real code, would create fields on mesh here
                 self.setup_complete = True
@@ -131,7 +130,7 @@ class TestTurbulenceModel(BaseModel):
         ]
 
 
-class TestTransportModel(BaseModel):
+class MockTransportModel(BaseModel):
     """
     Test transport properties model.
 
@@ -186,7 +185,7 @@ class TestTransportModel(BaseModel):
         ]
 
 
-class TestAlgorithmModel(BaseModel):
+class MockAlgorithmModel(BaseModel):
     """
     Test pressure-velocity coupling algorithm.
 
@@ -251,11 +250,11 @@ class TestAlgorithmModel(BaseModel):
 
 
 # ============================================================================
-# TestSolver
+# MockSolver
 # ============================================================================
 
 
-class TestSolver(BaseModel):
+class MockSolver(BaseModel):
     """
     Test solver with 3-stage initialization and multiple models.
 
@@ -267,9 +266,9 @@ class TestSolver(BaseModel):
     config: SolverConfig = Field(default_factory=SolverConfig)
 
     # Models (1 solver with N models)
-    turbulence: TestTurbulenceModel = Field(default_factory=TestTurbulenceModel)
-    transport: TestTransportModel = Field(default_factory=TestTransportModel)
-    algorithm: TestAlgorithmModel = Field(default_factory=TestAlgorithmModel)
+    turbulence: MockTurbulenceModel = Field(default_factory=MockTurbulenceModel)
+    transport: MockTransportModel = Field(default_factory=MockTransportModel)
+    algorithm: MockAlgorithmModel = Field(default_factory=MockAlgorithmModel)
 
     # Solver state
     files_read: bool = False
@@ -325,9 +324,6 @@ class TestSolver(BaseModel):
 # ============================================================================
 # Example Models with Configurable
 # ============================================================================
-
-from typing import Annotated
-from foamadapter.framework.initialization import Configurable
 
 
 class PressureEquationStandard:
@@ -405,7 +401,7 @@ class AdaptivePressureModel(BaseModel):
         return impl_class().get_operations()
 
 
-class TestBuoyancyModel(BaseModel):
+class MockBuoyancyModel(BaseModel):
     """
     Buoyancy model that adapts pressure model behavior.
 

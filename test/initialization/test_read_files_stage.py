@@ -5,12 +5,12 @@
 """Tests for LOAD stage."""
 
 from foamadapter.framework.initialization import SolverInitializer, InitializationStage
-from .test_fixtures import TestSolver, TestTurbulenceModel
+from .initialization_test_models import MockSolver, MockTurbulenceModel
 
 
 def test_load_stage_marks_methods():
     """Test that @load decorator marks methods correctly."""
-    model = TestTurbulenceModel()
+    model = MockTurbulenceModel()
 
     assert hasattr(model.load_coefficients, "_init_stage")
     assert model.load_coefficients._init_stage == InitializationStage.LOAD
@@ -18,7 +18,7 @@ def test_load_stage_marks_methods():
 
 def test_load_stage_executes_all_models():
     """Test that LOAD executes on all models."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     initializer._run_load()
@@ -31,7 +31,7 @@ def test_load_stage_executes_all_models():
 
 def test_load_loads_correct_data():
     """Test that LOAD loads expected data."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     initializer._run_load()

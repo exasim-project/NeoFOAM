@@ -62,22 +62,22 @@ Configurable = Annotated
 ```python
 class ConfigContext:
     """Context for inter-model configuration exchange."""
-    
+
     def __init__(self, current_region: str = "default"):
         self.current_region = current_region
         self._regions: dict[str, dict[str, Any]] = {"default": {}}
-    
+
     def register(self, name: str, model: Any, region: str = None) -> None:
         """Register a model."""
         region = region or self.current_region
         if region not in self._regions:
             self._regions[region] = {}
         self._regions[region][name] = model
-    
+
     def get(self, path: str) -> Any:
         """
         Get model by path.
-        
+
         - "model_name" → model in current region
         - "region.model_name" → model in specified region
         """
@@ -86,9 +86,9 @@ class ConfigContext:
         else:
             region = self.current_region
             name = path
-        
+
         return self._regions.get(region, {}).get(name)
-    
+
     # Keep existing methods: all(), contains(), get_by_type(), get_by_prefix()
 ```
 
@@ -160,7 +160,7 @@ from foamadapter.framework import AdaptableField, ModelRegistry
 
 class MyModel(BaseModel):
     use_feature: bool = AdaptableField(default=False)
-    
+
     def resolve(self, registry: ModelRegistry):
         other = registry.get("other")
 
@@ -169,7 +169,7 @@ from foamadapter.framework import Configurable, ConfigContext
 
 class MyModel(BaseModel):
     use_feature: Configurable[bool] = False
-    
+
     def resolve(self, config: ConfigContext):
         other = config.get("other")
 ```
@@ -196,7 +196,7 @@ class VelocityModel(BaseModel):
     # Configurable field - type shows intent
     use_buoyancy: Configurable[bool] = False
     g: Configurable[tuple] = (0, 0, -9.81)
-    
+
     # Regular field - not configurable
     relax: float = 0.7
 
@@ -218,7 +218,7 @@ class CHTCouplingModel(BaseModel):
         # Cross-region access via dot notation
         fluid_temp = config.get("fluid.temperature")
         solid_temp = config.get("solid.temperature")
-        
+
         fluid_temp.coupled_to = "solid.temperature"
         solid_temp.coupled_to = "fluid.temperature"
 ```

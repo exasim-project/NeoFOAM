@@ -41,7 +41,7 @@ models       other's AdaptableFields   with depends_on       & execute      to f
 ```python
 class VelocityModel(BaseModel):
     use_buoyancy: bool = AdaptableField(default=False)  # Can be modified
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         deps = ["fields.p", "fields.nu"]
@@ -153,7 +153,7 @@ Models use explicit setter methods that track the source of changes.
 class VelocityModel(BaseModel):
     use_buoyancy: bool = AdaptableField(default=False)
     _change_log: list = []  # Track who changed what
-    
+
     def set_use_buoyancy(self, value: bool, source: str):
         """Set with source tracking."""
         self._change_log.append({
@@ -192,22 +192,22 @@ class ModelRegistry:
     def get(self, name: str) -> "ModelProxy":
         """Return a proxy that mediates all access."""
         return ModelProxy(self._models[name], name, self)
-    
+
     def set_field(self, model_name: str, field: str, value: Any, source: str):
         """Controlled field setting with validation."""
         model = self._models[model_name]
-        
+
         # Check if field is adaptable
         if not self._is_adaptable(model, field):
             raise PermissionError(f"Field '{field}' is not adaptable")
-        
+
         # Check for conflicts
         if (model_name, field) in self._pending_changes:
             prev_source = self._pending_changes[(model_name, field)]["source"]
             raise ConflictError(
                 f"Field '{field}' already modified by '{prev_source}'"
             )
-        
+
         # Record and apply
         self._pending_changes[(model_name, field)] = {
             "value": value, "source": source
@@ -242,16 +242,16 @@ Models declare what they need (getters) and what they provide (setters) explicit
 ```python
 class VelocityModel(BaseModel):
     """Velocity model with explicit dependency interface."""
-    
+
     # What this model provides to others
     class Provides:
         use_buoyancy: bool = AdaptableField(default=False)
         use_mrf: bool = AdaptableField(default=False)
-    
+
     # Internal config (not adaptable)
     relax: float = 0.7
     provides: Provides = Provides()
-    
+
     def accept(self, feature: str, config: dict, source: str):
         """Accept configuration from another model."""
         if feature == "buoyancy":
@@ -261,11 +261,11 @@ class VelocityModel(BaseModel):
 
 class BuoyancyModel(BaseModel):
     """Buoyancy model that requests velocity modifications."""
-    
+
     # What this model needs from others
     class Requests:
         velocity: str = "buoyancy"  # Request "buoyancy" feature from velocity
-    
+
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         velocity = registry.get("velocity")
@@ -299,7 +299,7 @@ class ConfigEvent:
 
 class VelocityModel(BaseModel):
     use_buoyancy: bool = AdaptableField(default=False)
-    
+
     def on_config_event(self, event: ConfigEvent):
         """Handle configuration events from other models."""
         for field, value in event.changes.items():
@@ -422,7 +422,7 @@ class VelocityModel(BaseModel):
     use_buoyancy: bool = AdaptableField(default=False)
     g: tuple = AdaptableField(default=(0, 0, -9.81))
     _configured_by: dict[str, str] = {}  # Track sources
-    
+
     def configure(self, field: str, value: Any, source: str):
         """Configure with source tracking."""
         self._configured_by[field] = source
@@ -534,25 +534,25 @@ T = TypeVar('T')
 
 class ModelRegistry:
     """Registry for inter-model communication during RESOLVE stage."""
-    
+
     def __init__(self):
         self._models: dict[str, Any] = {}
         self._type_index: dict[type, list[str]] = {}
-    
+
     def register(self, name: str, model: Any) -> None:
         """Register a model by name."""
         self._models[name] = model
-        
+
         # Index by type for type-safe retrieval
         model_type = type(model)
         if model_type not in self._type_index:
             self._type_index[model_type] = []
         self._type_index[model_type].append(name)
-    
+
     def get(self, name: str) -> Any:
         """Get model by name (untyped)."""
         return self._models.get(name)
-    
+
     def get_typed(self, name: str, expected_type: Type[T]) -> T:
         """Get model by name with type checking."""
         model = self._models.get(name)
@@ -564,12 +564,12 @@ class ModelRegistry:
                 f"expected {expected_type.__name__}"
             )
         return model
-    
+
     def get_all_of_type(self, model_type: Type[T]) -> list[T]:
         """Get all models of a specific type."""
         names = self._type_index.get(model_type, [])
         return [self._models[name] for name in names]
-    
+
     def require(self, name: str) -> Any:
         """Get model or raise if not found."""
         model = self._models.get(name)
@@ -586,7 +586,7 @@ from pydantic import Field
 def AdaptableField(**kwargs):
     """
     Mark a field as modifiable by other models during RESOLVE stage.
-    
+
     Other models can modify these fields to configure behavior.
     """
     json_schema_extra = kwargs.get("json_schema_extra", {}) or {}
@@ -598,12 +598,12 @@ def AdaptableField(**kwargs):
 class VelocityModel(BaseModel):
     """Velocity field - can be adapted by other models."""
     name: str = "velocity"
-    
+
     # These can be modified by other models
     use_buoyancy: bool = AdaptableField(default=False)
     use_mrf: bool = AdaptableField(default=False)
     body_forces: list[str] = AdaptableField(default_factory=list)
-    
+
     # These are read-only after LOAD
     relax: float = Field(default=0.7)
 
@@ -612,7 +612,7 @@ class BuoyancyModel(BaseModel):
     """Buoyancy model - modifies velocity model."""
     name: str = "buoyancy"
     enabled: bool = True
-    
+
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         if self.enabled:
@@ -625,7 +625,7 @@ class MRFModel(BaseModel):
     """Moving Reference Frame - modifies velocity model."""
     name: str = "mrf"
     zones: list[str] = []
-    
+
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         if self.zones:
@@ -645,7 +645,7 @@ class LazyInit:
     name: str
     depends_on: list[str]
     initializer: Callable[..., Any]
-    
+
     def execute(self, resolved: dict[str, Any]) -> Any:
         """Execute with resolved dependencies injected."""
         # Filter to only the dependencies we need
@@ -678,11 +678,11 @@ class VelocityModel(BaseModel):
     def build(self, mesh) -> list[LazyInit]:
         return [
             field("U", create=lambda mesh: volVectorField(mesh, "U")),
-            
-            field("phi", 
+
+            field("phi",
                   depends_on=["mesh", "fields.U"],
                   create=lambda mesh, U: createPhi(mesh, U)),
-            
+
             operator("momentum",
                      depends_on=["fields.U", "fields.p", "fields.nu"],
                      create=lambda U, p, nu: MomentumEquation(U, p, nu,
@@ -703,15 +703,15 @@ class DependencyError(Exception):
 
 class DAGResolver:
     """Resolves initialization order using topological sort."""
-    
+
     def __init__(self, lazy_inits: list[LazyInit]):
         self.lazy_inits = {li.name: li for li in lazy_inits}
         self._validate()
-    
+
     def _validate(self):
         """Check for missing and circular dependencies."""
         all_names = set(self.lazy_inits.keys())
-        
+
         # Check for missing dependencies
         for li in self.lazy_inits.values():
             missing = set(li.depends_on) - all_names
@@ -719,19 +719,19 @@ class DAGResolver:
                 raise DependencyError(
                     f"'{li.name}' depends on missing: {missing}"
                 )
-        
+
         # Check for cycles (DFS)
         self._detect_cycles()
-    
+
     def _detect_cycles(self):
         """Detect circular dependencies using DFS."""
         WHITE, GRAY, BLACK = 0, 1, 2
         color = {name: WHITE for name in self.lazy_inits}
-        
+
         def dfs(name: str, path: list[str]):
             color[name] = GRAY
             path.append(name)
-            
+
             for dep in self.lazy_inits[name].depends_on:
                 if color[dep] == GRAY:
                     # Found cycle
@@ -742,14 +742,14 @@ class DAGResolver:
                     )
                 if color[dep] == WHITE:
                     dfs(dep, path)
-            
+
             path.pop()
             color[name] = BLACK
-        
+
         for name in self.lazy_inits:
             if color[name] == WHITE:
                 dfs(name, [])
-    
+
     def resolve(self) -> list[LazyInit]:
         """Return LazyInits in dependency order (Kahn's algorithm)."""
         # Count incoming edges
@@ -758,39 +758,39 @@ class DAGResolver:
             for dep in li.depends_on:
                 # dep has an outgoing edge to li.name
                 pass  # We count reverse
-        
+
         # Build adjacency list (dependency → dependents)
         dependents = defaultdict(list)
         for li in self.lazy_inits.values():
             for dep in li.depends_on:
                 dependents[dep].append(li.name)
             in_degree[li.name] = len(li.depends_on)
-        
+
         # Start with nodes that have no dependencies
         queue = [name for name, deg in in_degree.items() if deg == 0]
         result = []
-        
+
         while queue:
             name = queue.pop(0)
             result.append(self.lazy_inits[name])
-            
+
             # Reduce in-degree for dependents
             for dependent in dependents[name]:
                 in_degree[dependent] -= 1
                 if in_degree[dependent] == 0:
                     queue.append(dependent)
-        
+
         return result
-    
+
     def execute_all(self) -> dict[str, Any]:
         """Execute all initializers in order, returning results."""
         order = self.resolve()
         resolved = {}
-        
+
         for li in order:
             result = li.execute(resolved)
             resolved[li.name] = result
-        
+
         return resolved
 ```
 
@@ -802,50 +802,50 @@ from typing import Any, Optional
 class Context:
     """
     Runtime container for simulation state.
-    
+
     Provides typed access to fields, operators, and infrastructure.
     """
-    
+
     def __init__(self, data: dict[str, Any]):
         self._data = data
-    
+
     def get(self, name: str) -> Any:
         """Get any named object."""
         if name not in self._data:
             raise KeyError(f"'{name}' not found in context")
         return self._data[name]
-    
+
     def field(self, name: str) -> Any:
         """Get a field by name."""
         return self.get(f"fields.{name}")
-    
+
     def operator(self, name: str) -> Any:
         """Get an operator by name."""
         return self.get(f"operators.{name}")
-    
+
     @property
     def mesh(self) -> Any:
         """Get the mesh."""
         return self.get("mesh")
-    
+
     @property
     def runtime(self) -> Any:
         """Get the time controller."""
         return self.get("runtime")
-    
+
     def all_fields(self) -> dict[str, Any]:
         """Get all fields."""
         return {
-            k.replace("fields.", ""): v 
-            for k, v in self._data.items() 
+            k.replace("fields.", ""): v
+            for k, v in self._data.items()
             if k.startswith("fields.")
         }
-    
+
     def all_operators(self) -> dict[str, Any]:
         """Get all operators."""
         return {
-            k.replace("operators.", ""): v 
-            for k, v in self._data.items() 
+            k.replace("operators.", ""): v
+            for k, v in self._data.items()
             if k.startswith("operators.")
         }
 ```
@@ -867,13 +867,13 @@ class TransportModel(BaseModel):
     name: str = "transport"
     nu: float = None
     beta: float = None  # Thermal expansion coefficient
-    
+
     @Model.load
     def load(self):
         props = read_dict("constant/transportProperties")
         self.nu = props["nu"]
         self.beta = props.get("beta", 0.0)
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         return [
@@ -891,51 +891,51 @@ class TransportModel(BaseModel):
 class VelocityModel(BaseModel):
     """Velocity field with configurable physics."""
     name: str = "velocity"
-    
+
     # Adaptable by other models
     use_buoyancy: bool = AdaptableField(default=False)
     g: tuple[float, float, float] = AdaptableField(default=(0, 0, -9.81))
     T_ref: float = AdaptableField(default=300.0)
-    
+
     # Fixed after load
     relax: float = Field(default=0.7)
-    
+
     @Model.load
     def load(self):
         self.relax = read_dict("system/fvSolution")["relaxationFactors"]["U"]
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         inits = [
             LazyInit("fields.U", ["mesh"],
                      lambda mesh: volVectorField(mesh, "U"))
         ]
-        
+
         # Conditionally add buoyancy source
         if self.use_buoyancy:
             inits.append(
-                LazyInit("sources.buoyancy", 
+                LazyInit("sources.buoyancy",
                          ["fields.T", "fields.beta", "mesh"],
                          lambda T, beta, mesh: BuoyancySource(
                              mesh, T, beta, self.g, self.T_ref
                          ))
             )
-        
+
         # Momentum equation depends on buoyancy if enabled
         mom_deps = ["fields.U", "fields.p", "fields.nu"]
         if self.use_buoyancy:
             mom_deps.append("sources.buoyancy")
-        
+
         inits.append(
             LazyInit("operators.momentum", mom_deps,
                      lambda **deps: MomentumEquation(
-                         deps["fields.U"], 
+                         deps["fields.U"],
                          deps["fields.p"],
                          deps["fields.nu"],
                          buoyancy=deps.get("sources.buoyancy")
                      ))
         )
-        
+
         return inits
 
 
@@ -946,11 +946,11 @@ class VelocityModel(BaseModel):
 class TemperatureModel(BaseModel):
     """Temperature field for thermal simulations."""
     name: str = "temperature"
-    
+
     @Model.load
     def load(self):
         pass  # Read from 0/T
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         return [
@@ -969,30 +969,30 @@ class BuoyancyModel(BaseModel):
     enabled: bool = True
     g: tuple[float, float, float] = (0, 0, -9.81)
     T_ref: float = 300.0
-    
+
     @Model.load
     def load(self):
         g_dict = read_dict("constant/g")
         self.g = tuple(g_dict["value"])
-    
+
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         """Configure velocity model for buoyancy."""
         if not self.enabled:
             return
-        
+
         # Require temperature model
         if not registry.contains("temperature"):
             raise DependencyError(
                 "BuoyancyModel requires TemperatureModel"
             )
-        
+
         # Configure velocity model
         velocity = registry.require("velocity")
         velocity.use_buoyancy = True
         velocity.g = self.g
         velocity.T_ref = self.T_ref
-        
+
         # Also need thermal expansion from transport
         transport = registry.require("transport")
         if transport.beta == 0.0:
@@ -1007,17 +1007,17 @@ class BuoyancyModel(BaseModel):
 
 class BoussinesqSolver(BaseModel):
     """Natural convection solver with Boussinesq approximation."""
-    
+
     transport: TransportModel = TransportModel()
     velocity: VelocityModel = VelocityModel()
     temperature: TemperatureModel = TemperatureModel()
     buoyancy: BuoyancyModel = BuoyancyModel()
-    
+
     @Solver.build
     def build(self, mesh) -> list[LazyInit]:
         return [
             LazyInit("mesh", [], lambda: mesh),
-            LazyInit("runtime", [], 
+            LazyInit("runtime", [],
                      lambda: Time(read_dict("system/controlDict"))),
             LazyInit("solver.loop",
                      ["operators.momentum", "operators.energy", "runtime"],
@@ -1035,7 +1035,7 @@ ctx = initializer.initialize(mesh)
 
 # Execution order (determined by DAG):
 # 1. mesh
-# 2. runtime  
+# 2. runtime
 # 3. fields.nu, fields.beta, fields.U, fields.T (parallel - no inter-deps)
 # 4. sources.buoyancy (needs T, beta)
 # 5. operators.momentum (needs U, p, nu, buoyancy)
@@ -1067,7 +1067,7 @@ One model provides parameters to another.
 ```python
 class WallFunctionModel(BaseModel):
     y_plus_target: float = 30.0
-    
+
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         turbulence = registry.get("turbulence")
@@ -1098,14 +1098,14 @@ class VelocityModel(BaseModel):
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         deps = ["fields.U", "fields.p"]
-        
+
         if self.use_buoyancy:
             deps.append("sources.buoyancy")
         if self.use_mrf:
             deps.append("mrf.zone")
-        
+
         return [
-            LazyInit("operators.momentum", deps, 
+            LazyInit("operators.momentum", deps,
                      create=self._create_momentum)
         ]
 ```
@@ -1119,7 +1119,7 @@ class SourceTermCollector:
     """Collects source terms from multiple models."""
     def __init__(self):
         self.sources = []
-    
+
     def add(self, name: str, source: Any):
         self.sources.append((name, source))
 
@@ -1134,7 +1134,7 @@ class BuoyancyModel(BaseModel):
 
 
 class PorousZoneModel(BaseModel):
-    @Model.build  
+    @Model.build
     def build(self, mesh) -> list[LazyInit]:
         return [
             LazyInit("sources.porous", ["fields.U"],
@@ -1150,7 +1150,7 @@ class MomentumModel(BaseModel):
             LazyInit("operators.momentum",
                      depends_on=["fields.U", "fields.p",
                                  "sources.buoyancy", "sources.porous"],
-                     create=lambda U, p, buoyancy, porous: 
+                     create=lambda U, p, buoyancy, porous:
                          MomentumEquation(U, p, sources=[buoyancy, porous]))
         ]
 ```

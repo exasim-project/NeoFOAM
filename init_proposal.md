@@ -54,7 +54,7 @@ class LazyInit:
     name: str                          # Unique identifier (e.g., "fields.U")
     depends_on: list[str]              # Dependencies (e.g., ["fields.p", "mesh"])
     initializer: Callable[[], Any]     # Lazy function to execute
-    
+
     def execute(self) -> Any:
         """Execute the deferred initialization."""
         return self.initializer()
@@ -74,15 +74,15 @@ class TransportModel(BaseModel):
     """Transport properties - loaded from transportProperties file."""
     name: str = "transport"
     nu: float = None  # Populated during LOAD
-    
+
     @Model.load
     def load(self):
         """LOAD: Initialize model from config files."""
         props = read_transport_properties()
         self.nu = props["nu"]
-    
+
     # No resolve_dependencies needed - no inter-model config
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         """BUILD: Return lazy initializers for runtime objects."""
@@ -99,11 +99,11 @@ class PressureModel(BaseModel):
     """Pressure equation - depends on velocity field."""
     name: str = "pressure"
     p_ref: float = None
-    
+
     @Model.load
     def load(self):
         self.p_ref = read_fv_solution()["pRefValue"]
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         return [
@@ -124,18 +124,18 @@ class VelocityModel(BaseModel):
     """Velocity field and momentum equation."""
     name: str = "velocity"
     use_buoyancy: bool = False  # Can be modified by other models
-    
+
     @Model.load
     def load(self):
         self.U0 = read_initial_conditions()["U"]
-    
+
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         """RESOLVE: Check if buoyancy model wants to modify us."""
         if registry.contains("buoyancy"):
             buoyancy = registry.get("buoyancy")
             self.use_buoyancy = buoyancy.enabled
-    
+
     @Model.build
     def build(self, mesh) -> list[LazyInit]:
         return [
@@ -148,7 +148,7 @@ class VelocityModel(BaseModel):
                 name="operators.momentum",
                 depends_on=["fields.U", "fields.p", "fields.nu"],
                 initializer=lambda: create_momentum_equation(
-                    mesh, 
+                    mesh,
                     include_buoyancy=self.use_buoyancy
                 )
             )
@@ -160,12 +160,12 @@ class IcoFoamSolver(BaseModel):
     transport: TransportModel = TransportModel()
     pressure: PressureModel = PressureModel()
     velocity: VelocityModel = VelocityModel()
-    
+
     @Solver.load
     def load(self):
         self.dt = read_control_dict()["deltaT"]
         self.end_time = read_control_dict()["endTime"]
-    
+
     @Solver.build
     def build(self, mesh) -> list[LazyInit]:
         return [
@@ -217,18 +217,18 @@ from foamadapter.framework import Model, lazy, depends_on
 class VelocityModel(BaseModel):
     name: str = "velocity"
     U0: Any = None
-    
+
     @Model.load
     def load(self):
         self.U0 = read_initial_conditions()["U"]
-    
+
     @Model.build
     @lazy("fields.U")
     @depends_on("mesh")
     def create_velocity_field(self, mesh):
         """This becomes a LazyInit automatically."""
         return create_vector_field(mesh, self.U0)
-    
+
     @Model.build
     @lazy("operators.momentum")
     @depends_on("fields.U", "fields.p", "fields.nu")
@@ -238,17 +238,17 @@ class VelocityModel(BaseModel):
 
 class PressureModel(BaseModel):
     name: str = "pressure"
-    
+
     @Model.load
     def load(self):
         self.p_ref = read_fv_solution()["pRefValue"]
-    
+
     @Model.build
     @lazy("fields.p")
     @depends_on("mesh")
     def create_pressure_field(self, mesh):
         return create_scalar_field(mesh, self.p_ref)
-    
+
     @Model.build
     @lazy("operators.pressure_poisson")
     @depends_on("fields.p", "fields.U")
@@ -282,22 +282,22 @@ from foamadapter.framework import Model, InitContext
 
 class VelocityModel(BaseModel):
     name: str = "velocity"
-    
+
     @Model.load
     def load(self):
         self.U0 = read_initial_conditions()["U"]
-    
+
     @Model.build
     def build(self, ctx: InitContext):
         """BUILD methods receive a context that tracks access."""
-        
+
         # Register a lazy initializer - dependencies tracked automatically
         @ctx.lazy("fields.U")
         def create_U():
             mesh = ctx.get("mesh")  # Tracked as dependency!
             return create_vector_field(mesh, self.U0)
-        
-        @ctx.lazy("operators.momentum") 
+
+        @ctx.lazy("operators.momentum")
         def create_momentum():
             U = ctx.get("fields.U")      # Dependency tracked
             p = ctx.get("fields.p")      # Dependency tracked
@@ -307,18 +307,18 @@ class VelocityModel(BaseModel):
 
 class PressureModel(BaseModel):
     name: str = "pressure"
-    
+
     @Model.load
     def load(self):
         self.p_ref = 0.0
-    
+
     @Model.build
     def build(self, ctx: InitContext):
         @ctx.lazy("fields.p")
         def create_p():
             mesh = ctx.get("mesh")
             return create_scalar_field(mesh, self.p_ref)
-        
+
         @ctx.lazy("operators.pressure_poisson")
         def create_pressure_eq():
             p = ctx.get("fields.p")
@@ -356,19 +356,19 @@ from foamadapter.framework import Model, field, operator, lazy
 
 class VelocityModel(BaseModel):
     name: str = "velocity"
-    
+
     @Model.load
     def load(self):
         self.U0 = read_initial_conditions()["U"]
-    
+
     @Model.build
     def build(self, mesh) -> list:
         return [
             # Helper for field creation
-            field("U", 
+            field("U",
                   depends_on=["mesh"],
                   create=lambda: create_vector_field(mesh, self.U0)),
-            
+
             # Helper for operator creation
             operator("momentum",
                      depends_on=["fields.U", "fields.p", "fields.nu"],
@@ -378,11 +378,11 @@ class VelocityModel(BaseModel):
 
 class TransportModel(BaseModel):
     name: str = "transport"
-    
-    @Model.load  
+
+    @Model.load
     def load(self):
         self.nu = read_transport_properties()["nu"]
-    
+
     @Model.build
     def build(self, mesh) -> list:
         return [
@@ -394,12 +394,12 @@ class IcoFoamSolver(BaseModel):
     transport: TransportModel = TransportModel()
     velocity: VelocityModel = VelocityModel()
     pressure: PressureModel = PressureModel()
-    
+
     @Solver.build
     def build(self, mesh) -> list:
         return [
             lazy("mesh", create=lambda: mesh),
-            lazy("solver.loop", 
+            lazy("solver.loop",
                  depends_on=["operators.momentum", "operators.pressure_poisson"],
                  create=lambda: TimeLoop(self.dt))
         ]
@@ -425,22 +425,22 @@ class SolverInitializer:
     def initialize(self, mesh) -> Context:
         # Stage 1: LOAD - populate Pydantic models
         self._run_load()
-        
+
         # Stage 2: RESOLVE - inter-model configuration
         self._run_resolve_dependencies()
-        
+
         # Stage 3: BUILD - collect lazy initializers
         lazy_inits: list[LazyInit] = self._collect_lazy_inits(mesh)
-        
+
         # Stage 4: DAG resolution
         execution_order = topological_sort(lazy_inits)
-        
+
         # Stage 5: Execute in order
         context = {}
         for lazy_init in execution_order:
             result = lazy_init.execute()
             context[lazy_init.name] = result
-        
+
         return Context(context)
 
 
@@ -448,25 +448,25 @@ def topological_sort(lazy_inits: list[LazyInit]) -> list[LazyInit]:
     """Sort lazy initializers by dependencies (Kahn's algorithm)."""
     # Build dependency graph
     graph = {li.name: li.depends_on for li in lazy_inits}
-    
+
     # Find nodes with no dependencies
     ready = [li for li in lazy_inits if not li.depends_on]
     result = []
-    
+
     while ready:
         current = ready.pop(0)
         result.append(current)
-        
+
         # Find nodes that depended on current
         for li in lazy_inits:
             if current.name in li.depends_on:
                 li.depends_on.remove(current.name)
                 if not li.depends_on:
                     ready.append(li)
-    
+
     if len(result) != len(lazy_inits):
         raise CyclicDependencyError("Circular dependency detected")
-    
+
     return result
 ```
 
@@ -486,13 +486,13 @@ class TransportModel(BaseModel):
     """Laminar transport properties."""
     name: str = "transport"
     nu: float = Field(default=None, description="Kinematic viscosity")
-    
+
     @Model.load
     def load(self):
         """LOAD: Read transportProperties dict."""
         props = read_dict("constant/transportProperties")
         self.nu = props["nu"]
-    
+
     @Model.build
     def build(self, mesh):
         """BUILD: Create nu field (no dependencies except mesh)."""
@@ -505,23 +505,23 @@ class VelocityModel(BaseModel):
     """Velocity field and momentum equation."""
     name: str = "velocity"
     relax: float = Field(default=0.7, description="Under-relaxation factor")
-    
+
     @Model.load
     def load(self):
         """LOAD: Read fvSolution for relaxation."""
         solution = read_dict("system/fvSolution")
         self.relax = solution.get("relaxationFactors", {}).get("U", 0.7)
-    
+
     @Model.build
     def build(self, mesh):
         return [
-            field("U", 
+            field("U",
                   create=lambda: volVectorField(mesh, "U")),
-            
+
             field("phi",
                   depends_on=["fields.U"],
                   create=lambda: createPhi(mesh)),
-            
+
             operator("momentum",
                      depends_on=["fields.U", "fields.phi", "fields.nu", "fields.p"],
                      create=lambda: MomentumEquation(mesh, self.relax))
@@ -533,19 +533,19 @@ class PressureModel(BaseModel):
     name: str = "pressure"
     n_correctors: int = Field(default=2, description="PISO corrector loops")
     n_non_ortho: int = Field(default=0, description="Non-orthogonal correctors")
-    
+
     @Model.load
     def load(self):
         piso = read_dict("system/fvSolution")["PISO"]
         self.n_correctors = piso.get("nCorrectors", 2)
         self.n_non_ortho = piso.get("nNonOrthogonalCorrectors", 0)
-    
+
     @Model.build
     def build(self, mesh):
         return [
             field("p",
                   create=lambda: volScalarField(mesh, "p")),
-            
+
             operator("pressure_poisson",
                      depends_on=["fields.p", "fields.U", "fields.phi"],
                      create=lambda: PressureEquation(
@@ -560,17 +560,17 @@ class PressureModel(BaseModel):
 
 class IcoFoamSolver(BaseModel):
     """Transient solver for incompressible, laminar flow."""
-    
+
     # Sub-models
     transport: TransportModel = TransportModel()
     velocity: VelocityModel = VelocityModel()
     pressure: PressureModel = PressureModel()
-    
+
     # Solver config (populated in LOAD)
     dt: float = Field(default=None)
     end_time: float = Field(default=None)
     write_interval: float = Field(default=None)
-    
+
     @Solver.load
     def load(self):
         """LOAD: Read controlDict."""
@@ -578,15 +578,15 @@ class IcoFoamSolver(BaseModel):
         self.dt = ctrl["deltaT"]
         self.end_time = ctrl["endTime"]
         self.write_interval = ctrl.get("writeInterval", self.dt)
-    
+
     @Solver.build
     def build(self, mesh):
         return [
             lazy("mesh", create=lambda: mesh),
-            
+
             lazy("runtime",
                  create=lambda: Time(self.dt, self.end_time)),
-            
+
             lazy("piso_loop",
                  depends_on=[
                      "operators.momentum",
@@ -595,12 +595,12 @@ class IcoFoamSolver(BaseModel):
                  ],
                  create=lambda: PISOLoop())
         ]
-    
+
     def run(self, ctx: Context):
         """Main solve loop using initialized context."""
         piso = ctx.get("piso_loop")
         runtime = ctx.get("runtime")
-        
+
         while runtime.loop():
             piso.solve()
             runtime.write()
@@ -613,11 +613,11 @@ class IcoFoamSolver(BaseModel):
 def main():
     # 1. Create mesh (OpenFOAM)
     mesh = create_mesh()
-    
+
     # 2. Create and initialize solver
     solver = IcoFoamSolver()
     ctx = SolverInitializer(solver).initialize(mesh)
-    
+
     # 3. What happened:
     #    LOAD:    All models read their config files
     #    RESOLVE: (none in this example)
@@ -628,7 +628,7 @@ def main():
     #             fields.nu → fields.U → fields.phi → fields.p
     #             operators.momentum → operators.pressure_poisson
     #             piso_loop
-    
+
     # 4. Run simulation
     solver.run(ctx)
 ```
@@ -640,7 +640,7 @@ def main():
 **Proposal 4 (Hybrid with Helpers)** offers the best balance:
 
 1. **LOAD** stays pure: just populate Pydantic model fields from files
-2. **RESOLVE** modifies fields based on inter-model dependencies  
+2. **RESOLVE** modifies fields based on inter-model dependencies
 3. **BUILD** returns lazy initializers with explicit dependencies
 4. Helper functions (`field()`, `operator()`, `lazy()`) reduce boilerplate
 5. DAG resolution ensures correct initialization order

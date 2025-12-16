@@ -43,14 +43,14 @@ Configurable = Annotated
 
 class VelocityModel(BaseModel):
     """Velocity model with configurable buoyancy support."""
-    
+
     # Configurable by other models (type shows intent)
     use_buoyancy: Configurable[bool, "configurable"] = False
     g: Configurable[tuple, "configurable"] = (0, 0, -9.81)
-    
+
     # Not configurable (regular field)
     relax: float = 0.7
-    
+
     @Model.resolve_dependencies
     def resolve(self, config: ConfigContext):
         # Access sibling models (same region)
@@ -62,7 +62,7 @@ class BuoyancyModel(BaseModel):
     """Buoyancy model - configures VelocityModel."""
     enabled: bool = True
     gravity: tuple = (0, 0, -9.81)
-    
+
     @Model.resolve_dependencies
     def resolve(self, config: ConfigContext):
         if self.enabled:
@@ -73,13 +73,13 @@ class BuoyancyModel(BaseModel):
 
 class CHTCouplingModel(BaseModel):
     """Cross-region coupling using dot notation."""
-    
+
     @Model.resolve_dependencies
     def resolve(self, config: ConfigContext):
         # Access models in different regions via naming convention
         fluid_T = config.get("fluid.temperature")
         solid_T = config.get("solid.temperature")
-        
+
         # Configure coupling between regions
         fluid_T.coupled_to = solid_T
         solid_T.coupled_to = fluid_T
@@ -90,15 +90,15 @@ class CHTCouplingModel(BaseModel):
 ```python
 class ConfigContext:
     """Context for inter-model configuration exchange."""
-    
+
     def __init__(self, current_region: str, solver: "Solver"):
         self.current_region = current_region
         self.solver = solver
-    
+
     def get(self, path: str) -> Any:
         """
         Get a model by path.
-        
+
         - "model_name" → model in current region
         - "region.model_name" → model in specified region
         """
@@ -107,15 +107,15 @@ class ConfigContext:
         else:
             region = self.current_region
             model = path
-        
+
         return self.solver.regions[region].models[model]
-    
+
     @property
     def mesh(self) -> Any:
         """Current region's mesh."""
         return self.solver.regions[self.current_region].mesh
-    
-    @property  
+
+    @property
     def region(self) -> str:
         """Current region name."""
         return self.current_region
@@ -237,15 +237,15 @@ class ConfigContext:
         self.region_name = region_name
         self.solver = solver
         self._models: dict[str, Any] = {}
-    
+
     def get(self, name: str) -> Any:
         """Get model in this region."""
         return self._models.get(name)
-    
+
     def get_region(self, region_name: str) -> "ConfigContext":
         """Get another region's context (for coupling)."""
         return self.solver.get_region(region_name)
-    
+
     @property
     def mesh(self):
         """This region's mesh."""
@@ -256,7 +256,7 @@ class MultiRegionSolver(BaseModel):
     """Solver managing multiple regions."""
     regions: dict[str, ConfigContext] = {}
     coupling: list[CouplingModel] = []
-    
+
     def get_region(self, name: str) -> ConfigContext:
         return self.regions[name]
 ```
@@ -266,34 +266,34 @@ class MultiRegionSolver(BaseModel):
 ```python
 class FluidTemperatureModel(BaseModel):
     """Temperature in fluid region - couples with solid."""
-    
+
     @Model.resolve_dependencies
     def resolve(self, context: ConfigContext):
         # Access sibling in same region
         transport = context.get("transport")
         self.Pr = transport.Pr
-        
+
         # Access model in another region (for coupling info)
         solid = context.get_region("solid")
         solid_temp = solid.get("temperature")
-        
+
         # Check if we need to couple
         self.coupled_regions = ["solid"] if solid_temp else []
 
 
 class CHTCouplingModel(BaseModel):
     """Couples temperature between fluid and solid regions."""
-    
+
     @Model.resolve_dependencies
     def resolve(self, solver: MultiRegionSolver):
         # Access both regions
         fluid = solver.get_region("fluid")
         solid = solver.get_region("solid")
-        
+
         # Configure coupling
         fluid_T = fluid.get("temperature")
         solid_T = solid.get("temperature")
-        
+
         fluid_T.add_boundary_coupling("interface", solid_T)
         solid_T.add_boundary_coupling("interface", fluid_T)
 ```
@@ -315,7 +315,7 @@ def resolve(self, context: ConfigContext):
     sibling = context.get("transport")
 
 # Coupling model: receives full solver
-@Coupling.resolve_dependencies  
+@Coupling.resolve_dependencies
 def resolve(self, solver: MultiRegionSolver):
     region_a = solver.get_region("fluid")
     region_b = solver.get_region("solid")
@@ -347,13 +347,13 @@ class ConfigContext:
     """Context for inter-model communication within a region."""
     region_name: str
     solver: "Solver"
-    
+
     def get(self, name: str) -> Any:
         """Get model in this region."""
-    
+
     def get_region(self, name: str) -> "ConfigContext":
         """Get another region (for coupling)."""
-    
+
     @property
     def mesh(self) -> Any:
         """This region's mesh."""
@@ -365,7 +365,7 @@ class ConfigContext:
 class BuoyancyModel(BaseModel):
     enabled: bool = True
     g: tuple = (0, 0, -9.81)
-    
+
     @Model.resolve_dependencies
     def resolve(self, context: ConfigContext):
         # Get sibling model and configure it
@@ -410,7 +410,7 @@ from foamadapter.framework import Configurable
 class VelocityModel(BaseModel):
     # Regular field - only this model can change it
     relax: float = 0.7
-    
+
     # Configurable field - other models can set this
     use_buoyancy: Configurable[bool] = False
     body_forces: Configurable[list[str]] = []
@@ -429,15 +429,15 @@ T = TypeVar('T')
 
 class Configurable(Generic[T]):
     """A field that can be configured by other models."""
-    
+
     def __init__(self, default: T):
         self.value = default
         self.configured_by: str | None = None
-    
+
     def set(self, value: T, source: str):
         self.value = value
         self.configured_by = source
-    
+
     def get(self) -> T:
         return self.value
 
@@ -446,7 +446,7 @@ class Configurable(Generic[T]):
 class VelocityModel(BaseModel):
     use_buoyancy: Configurable[bool] = Configurable(False)
     g: Configurable[tuple] = Configurable((0, 0, -9.81))
-    
+
     # Access the value
     def momentum_equation(self):
         if self.use_buoyancy.get():
@@ -482,7 +482,7 @@ class VelocityModel(BaseModel):
     # Type annotation shows it's configurable
     use_buoyancy: Configurable[bool] = False
     g: Configurable[tuple[float, float, float]] = (0, 0, -9.81)
-    
+
     # Regular field - not configurable
     relax: float = 0.7
 
@@ -492,10 +492,10 @@ class BuoyancyModel(BaseModel):
     @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         velocity = registry.get("velocity")
-        
+
         # Works - field is Configurable
         registry.configure(velocity, "use_buoyancy", True, source=self.name)
-        
+
         # Raises error - field is not Configurable
         registry.configure(velocity, "relax", 0.5, source=self.name)  # Error!
 ```
@@ -507,16 +507,16 @@ class BuoyancyModel(BaseModel):
 ```python
 class Configurable:
     """Descriptor for configurable fields."""
-    
+
     def __set_name__(self, owner, name):
         self.name = name
         self.private_name = f"_cfg_{name}"
-    
+
     def __get__(self, obj, type=None):
         if obj is None:
             return self
         return getattr(obj, self.private_name, self.default)
-    
+
     def __set__(self, obj, value):
         # Track who set it
         if isinstance(value, tuple) and len(value) == 2:
@@ -530,16 +530,16 @@ class Configurable:
 class VelocityModel(BaseModel):
     use_buoyancy = Configurable(default=False)
     g = Configurable(default=(0, 0, -9.81))
-    
+
     relax: float = 0.7  # Regular field
 
 
 # Clean usage
 class BuoyancyModel(BaseModel):
-    @Model.resolve_dependencies  
+    @Model.resolve_dependencies
     def resolve(self, registry: ModelRegistry):
         velocity = registry.get("velocity")
-        
+
         # Set with source tracking
         velocity.use_buoyancy = (True, self.name)
         velocity.g = (self.gravity, self.name)
@@ -556,7 +556,7 @@ class Configurable(Protocol[T]):
     """Protocol for configurable values."""
     value: T
     configured_by: str | None
-    
+
     def configure(self, value: T, source: str) -> None: ...
 
 
@@ -565,7 +565,7 @@ class ConfigurableValue(Generic[T]):
     def __init__(self, default: T):
         self.value = default
         self.configured_by = None
-    
+
     def configure(self, value: T, source: str):
         self.value = value
         self.configured_by = source
@@ -633,7 +633,7 @@ class IcoFoamSolver(BaseModel):
     transport: TransportModel
     velocity: VelocityModel
     buoyancy: BuoyancyModel
-    
+
     @Solver.resolve_dependencies
     def resolve(self):
         # Solver knows all models - does the wiring
@@ -659,11 +659,11 @@ class VelocityModel(BaseModel):
 class BuoyancyModel(BaseModel):
     # Explicit dependency - injected at construction
     velocity: VelocityModel
-    
+
     def __init__(self, velocity: VelocityModel, **kwargs):
         super().__init__(**kwargs)
         self.velocity = velocity
-    
+
     @Model.resolve_dependencies
     def resolve(self):
         # Direct access - no registry needed
@@ -717,11 +717,11 @@ Models publish configuration requests, others subscribe.
 class ConfigBus:
     """Central event bus for configuration."""
     _handlers: dict[str, list[Callable]] = {}
-    
+
     @classmethod
     def subscribe(cls, topic: str, handler: Callable):
         cls._handlers.setdefault(topic, []).append(handler)
-    
+
     @classmethod
     def publish(cls, topic: str, **kwargs):
         for handler in cls._handlers.get(topic, []):
@@ -730,12 +730,12 @@ class ConfigBus:
 
 class VelocityModel(BaseModel):
     use_buoyancy: Configurable[bool] = False
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # Subscribe to buoyancy configuration
         ConfigBus.subscribe("enable_buoyancy", self._on_buoyancy)
-    
+
     def _on_buoyancy(self, g, source):
         self.use_buoyancy.configure(True, source=source)
         self.g.configure(g, source=source)

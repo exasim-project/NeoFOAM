@@ -5,7 +5,7 @@
 """Tests for Pydantic configuration validation."""
 
 import pytest
-from .test_fixtures import (
+from .initialization_test_models import (
     TurbulenceConfig,
     TransportConfig,
     SolverConfig,

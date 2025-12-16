@@ -5,12 +5,12 @@
 """Tests for basic initialization functionality."""
 
 from foamadapter.framework.initialization import SolverInitializer
-from .test_fixtures import TestSolver
+from .initialization_test_models import MockSolver
 
 
 def test_solver_creation():
     """Test that solver can be created with default models."""
-    solver = TestSolver()
+    solver = MockSolver()
 
     assert solver.turbulence is not None
     assert solver.transport is not None
@@ -19,7 +19,7 @@ def test_solver_creation():
 
 def test_get_models_returns_all_models():
     """Test that get_models returns all embedded models."""
-    solver = TestSolver()
+    solver = MockSolver()
     models = solver.get_models()
 
     assert len(models) == 3
@@ -30,7 +30,7 @@ def test_get_models_returns_all_models():
 
 def test_full_initialization():
     """Test complete 3-stage initialization flow."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     result = initializer.initialize(mesh=None)

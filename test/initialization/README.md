@@ -9,8 +9,8 @@ The tests are split into focused modules:
 ### `test_fixtures.py`
 Shared test fixtures including:
 - Configuration schemas (TurbulenceConfig, TransportConfig, etc.)
-- Test models (TestTurbulenceModel, TestTransportModel, TestAlgorithmModel)
-- TestSolver implementation
+- Test models (MockTurbulenceModel, MockTransportModel, MockAlgorithmModel)
+- MockSolver implementation
 
 ### `test_basic.py` (3 tests)
 Basic initialization functionality:

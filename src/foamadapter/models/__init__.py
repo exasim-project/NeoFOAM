@@ -29,8 +29,6 @@ Example:
     available = list_models()  # ["buoyancy", "PIMPLE", "SIMPLE", ...]
 """
 
-from typing import Any
-
 from foamadapter.framework.model_protocol import SolverModel
 
 

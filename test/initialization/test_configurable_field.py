@@ -10,7 +10,6 @@ can modify during RESOLVE_DEPENDENCIES stage, with automatic dispatch to differe
 implementations.
 """
 
-from typing import Annotated
 from pydantic import BaseModel, Field
 import pytest
 

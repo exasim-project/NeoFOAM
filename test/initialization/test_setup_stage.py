@@ -5,12 +5,12 @@
 """Tests for BUILD stage."""
 
 from foamadapter.framework.initialization import SolverInitializer, InitializationStage
-from .test_fixtures import TestSolver, TestTurbulenceModel
+from .initialization_test_models import MockSolver, MockTurbulenceModel
 
 
 def test_build_stage_marks_methods():
     """Test that @build decorator marks methods correctly."""
-    model = TestTurbulenceModel()
+    model = MockTurbulenceModel()
 
     assert hasattr(model.initialize_fields, "_init_stage")
     assert model.initialize_fields._init_stage == InitializationStage.BUILD
@@ -18,7 +18,7 @@ def test_build_stage_marks_methods():
 
 def test_build_stage_completes_initialization():
     """Test that BUILD completes all model initialization."""
-    solver = TestSolver()
+    solver = MockSolver()
     initializer = SolverInitializer(solver)
 
     initializer._run_load()

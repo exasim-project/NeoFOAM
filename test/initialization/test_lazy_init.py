@@ -146,10 +146,10 @@ def test_helpers_return_lazy_init():
     """Test that all helpers return LazyInit instances."""
     f = field("U", create=lambda: None)
     o = operator("momentum", create=lambda: None)
-    l = lazy("mesh", create=lambda: None)
+    lazy_mesh = lazy("mesh", create=lambda: None)
     m = model("transport", create=lambda: None)
 
     assert isinstance(f, LazyInit)
     assert isinstance(o, LazyInit)
-    assert isinstance(l, LazyInit)
+    assert isinstance(lazy_mesh, LazyInit)
     assert isinstance(m, LazyInit)

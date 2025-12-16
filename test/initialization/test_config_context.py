@@ -5,13 +5,13 @@
 """Tests for ConfigContext."""
 
 from foamadapter.framework.initialization import ConfigContext
-from .test_fixtures import TestTurbulenceModel, TestTransportModel
+from .initialization_test_models import MockTurbulenceModel, MockTransportModel
 
 
 def test_config_context_register_and_get():
     """Test basic config context operations."""
     config = ConfigContext()
-    model = TestTurbulenceModel()
+    model = MockTurbulenceModel()
 
     config.register("turb", model)
 
@@ -22,8 +22,8 @@ def test_config_context_register_and_get():
 def test_config_context_all():
     """Test getting all models from config context."""
     config = ConfigContext()
-    turb = TestTurbulenceModel()
-    trans = TestTransportModel()
+    turb = MockTurbulenceModel()
+    trans = MockTransportModel()
 
     config.register("turbulence", turb)
     config.register("transport", trans)
@@ -38,7 +38,7 @@ def test_config_context_all():
 def test_config_context_contains():
     """Test checking if model is registered."""
     config = ConfigContext()
-    model = TestTurbulenceModel()
+    model = MockTurbulenceModel()
 
     config.register("turb", model)
 
@@ -51,11 +51,11 @@ def test_config_context_multi_region():
     config = ConfigContext(current_region="fluid")
 
     # Register in current region (fluid)
-    fluid_model = TestTurbulenceModel()
+    fluid_model = MockTurbulenceModel()
     config.register("temperature", fluid_model)
 
     # Register in another region (solid)
-    solid_model = TestTransportModel()
+    solid_model = MockTransportModel()
     config.register("temperature", solid_model, region="solid")
 
     # Same region access (no dot)
@@ -75,8 +75,8 @@ def test_config_context_multi_region():
 def test_config_context_regions():
     """Test regions property."""
     config = ConfigContext(current_region="fluid")
-    config.register("temp", TestTurbulenceModel())
-    config.register("temp", TestTransportModel(), region="solid")
+    config.register("temp", MockTurbulenceModel())
+    config.register("temp", MockTransportModel(), region="solid")
 
     regions = config.regions
     assert "fluid" in regions

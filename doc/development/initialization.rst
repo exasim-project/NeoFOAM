@@ -56,21 +56,21 @@ Here's a minimal example showing all three stages:
 
     class MyModel(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
-        
+
         name: str = "mymodel"
         data: dict = Field(default_factory=dict)
         other_model_ref = None
-        
+
         @Model.load
         def load_data(self):
             """Stage 1: Load from files."""
             self.data = {"viscosity": 1e-6}
-        
+
         @Model.resolve_dependencies
         def connect(self, config: ConfigContext):
             """Stage 2: Connect to other models."""
             self.other_model_ref = config.get("other")
-        
+
         @Model.build
         def init_fields(self, mesh):
             """Stage 3: Create fields on mesh."""
@@ -80,20 +80,20 @@ Here's a minimal example showing all three stages:
 
     class MySolver(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
-        
+
         mymodel: MyModel = Field(default_factory=MyModel)
-        
+
         def get_models(self):
             return [self.mymodel]
-        
+
         @Solver.load
         def load_config(self):
             pass
-        
+
         @Solver.resolve_dependencies
         def validate(self, config: ConfigContext):
             pass
-        
+
         @Solver.build
         def create_context(self, mesh):
             pass
@@ -143,11 +143,11 @@ The ``ConfigContext`` enables inter-model communication during the RESOLVE_DEPEN
     def connect_dependencies(self, config: ConfigContext):
         # Get a model by name
         transport = config.get("transport")
-        
+
         # Check if a model exists
         if config.contains("turbulence"):
             self.turbulence = config.get("turbulence")
-        
+
         # Get all registered models
         all_models = config.all()  # Returns dict[str, Model]
 
@@ -165,10 +165,10 @@ The ``SolverInitializer`` orchestrates the entire initialization:
 
     solver = MySolver()
     initializer = SolverInitializer(solver)
-    
+
     # Option 1: Full initialization in one call
     initialized_solver = initializer.initialize(mesh=my_mesh)
-    
+
     # Option 2: Access the registry after initialization
     initializer.initialize(mesh=my_mesh)
     all_models = initializer.config.all()
@@ -224,7 +224,7 @@ The ``@Solver.build`` decorator can return a list of ``LazyInit`` objects:
 
     class MySolver(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
-        
+
         @Solver.build
         def setup_runtime(self, mesh):
             """Return list of lazy initializers instead of executing immediately."""
@@ -232,25 +232,25 @@ The ``@Solver.build`` decorator can return a list of ``LazyInit`` objects:
                 # Runtime and mesh (no dependencies)
                 lazy("runtime", self._create_runtime),
                 lazy("mesh", self._create_mesh, ["runtime"]),
-                
+
                 # Fields depend on mesh
                 field("p", self._read_pressure_field, ["mesh"]),
                 field("U", self._read_velocity_field, ["mesh"]),
-                
+
                 # Operators depend on fields
                 operator("div_phi", self._create_divergence, ["fields.U"]),
                 operator("laplacian_p", self._create_laplacian, ["fields.p"]),
             ]
-        
+
         def _create_runtime(self, context):
             runtime = pyf.Time(...)
             return runtime
-        
+
         def _create_mesh(self, context):
             runtime = context["runtime"]
             mesh = pyf.fvMesh(runtime)
             return mesh
-        
+
         def _read_pressure_field(self, context):
             mesh = context["mesh"]
             return pyf.volScalarField.read_field("p", mesh)
@@ -274,13 +274,13 @@ The framework provides helper functions to create ``LazyInit`` objects with auto
 
     # field(name, initializer, dependencies) -> LazyInit with name="fields.{name}"
     field("p", lambda ctx: read_field("p", ctx["mesh"]), ["mesh"])
-    
+
     # operator(name, initializer, dependencies) -> LazyInit with name="operators.{name}"
     operator("div_phi", lambda ctx: create_div(ctx["fields.U"]), ["fields.U"])
-    
+
     # model(name, initializer, dependencies) -> LazyInit with name="models.{name}"
     model("turbulence", lambda ctx: create_turbulence(...), ["fields.U", "fields.p"])
-    
+
     # lazy(name, initializer, dependencies) -> LazyInit with custom name
     lazy("algorithm", lambda ctx: create_algorithm(...), ["models.turbulence"])
 
@@ -323,7 +323,7 @@ Each initializer receives a ``context`` dictionary containing all previously ini
         turbulence = context["models.turbulence"]
         p_field = context["fields.p"]
         U_field = context["fields.U"]
-        
+
         # Create algorithm using dependencies
         algorithm = PIMPLEAlgorithm(
             turbulence=turbulence,
@@ -347,7 +347,7 @@ Here's a full example showing lazy initialization for an incompressible solver:
 
     class IncompressibleSolver(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
-        
+
         @Solver.build
         def setup_runtime(self, mesh):
             """Lazy initialization with explicit dependencies."""
@@ -355,57 +355,57 @@ Here's a full example showing lazy initialization for an incompressible solver:
                 # Core runtime objects
                 lazy("runtime", self._create_runtime),
                 lazy("mesh", self._create_mesh, ["runtime"]),
-                
+
                 # Read fields from disk
                 field("p", self._read_pressure, ["mesh"]),
                 field("U", self._read_velocity, ["mesh"]),
                 field("phi", self._read_flux, ["mesh"]),
-                
+
                 # Create physics models
                 model("laminarTransport", self._create_transport, ["fields.U"]),
-                model("turbulence", self._create_turbulence, 
+                model("turbulence", self._create_turbulence,
                       ["fields.U", "fields.phi", "fields.laminarTransport"]),
-                
+
                 # Create algorithm (needs all fields and models)
-                lazy("algorithm", self._create_algorithm, 
+                lazy("algorithm", self._create_algorithm,
                      ["fields.p", "fields.U", "models.turbulence"]),
             ]
-        
+
         def _create_runtime(self, context):
             return pyf.Time(self.argv)
-        
+
         def _create_mesh(self, context):
             return pyf.fvMesh(context["runtime"])
-        
+
         def _read_pressure(self, context):
             return pyf.volScalarField.read_field("p", context["mesh"])
-        
+
         def _read_velocity(self, context):
             return pyf.volVectorField.read_field("U", context["mesh"])
-        
+
         def _read_flux(self, context):
             return pyf.surfaceScalarField.read_field("phi", context["mesh"])
-        
+
         def _create_transport(self, context):
             return pyf.singlePhaseTransportModel(
-                context["fields.U"], 
+                context["fields.U"],
                 context["fields.phi"]
             )
-        
+
         def _create_turbulence(self, context):
             return pyf.incompressibleTurbulenceModel.New(
                 context["fields.U"],
                 context["fields.phi"],
                 context["fields.laminarTransport"]
             )
-        
+
         def _create_algorithm(self, context):
             # Access all dependencies
             mesh = context["mesh"]
             p = context["fields.p"]
             U = context["fields.U"]
             turbulence = context["models.turbulence"]
-            
+
             return PIMPLEAlgorithm(mesh, p, U, turbulence)
 
 Migration from Immediate Execution
@@ -421,10 +421,10 @@ If you have existing BUILD methods using the builder pattern:
     def setup_runtime(self, mesh, builder):
         runtime = pyf.Time(self.argv)
         builder.set_runtime(runtime)
-        
+
         mesh = pyf.fvMesh(runtime)
         builder.set_mesh(mesh)
-        
+
         p = pyf.volScalarField.read_field("p", mesh)
         builder.add_field("p", p)
 
@@ -464,14 +464,14 @@ Benefits of Lazy Initialization
 
     def test_turbulence_initialization():
         solver = IncompressibleSolver()
-        
+
         # Mock context with only required dependencies
         context = {
             "fields.U": mock_velocity_field,
             "fields.phi": mock_flux_field,
             "fields.laminarTransport": mock_transport,
         }
-        
+
         # Test individual initializer
         turbulence = solver._create_turbulence(context)
         assert turbulence is not None
@@ -494,23 +494,23 @@ Here's a realistic example with multiple interdependent models:
 
     class TransportModel(BaseModel):
         """Transport properties - no dependencies on other models."""
-        
+
         model_config = {"arbitrary_types_allowed": True}
         name: str = "transport"
         viscosity: float = 0.0
         density: float = 0.0
-        
+
         @Model.load
         def load_properties(self):
             # Load from transportProperties file
             self.viscosity = 1e-6
             self.density = 1000.0
-        
+
         @Model.resolve_dependencies
         def validate(self, config: ConfigContext):
             if self.viscosity <= 0:
                 raise ValueError("Invalid viscosity")
-        
+
         @Model.build
         def create_fields(self, mesh):
             # Create nu and rho fields
@@ -519,23 +519,23 @@ Here's a realistic example with multiple interdependent models:
 
     class TurbulenceModel(BaseModel):
         """Turbulence model - depends on transport for viscosity."""
-        
+
         model_config = {"arbitrary_types_allowed": True}
         name: str = "turbulence"
         coefficients: dict = Field(default_factory=dict)
         transport_ref = None  # Set during RESOLVE_DEPENDENCIES
-        
+
         @Model.load
         def load_coefficients(self):
             self.coefficients = {"C_mu": 0.09, "sigma_k": 1.0}
-        
+
         @Model.resolve_dependencies
         def connect_transport(self, config: ConfigContext):
             # Get transport model for viscosity access
             self.transport_ref = config.get("transport")
             if not self.transport_ref:
                 raise RuntimeError("Transport model required")
-        
+
         @Model.build
         def create_fields(self, mesh):
             # Use transport viscosity for initial estimates
@@ -546,23 +546,23 @@ Here's a realistic example with multiple interdependent models:
 
     class PimpleSolver(BaseModel):
         """PIMPLE solver with multiple models."""
-        
+
         model_config = {"arbitrary_types_allowed": True}
-        
+
         transport: TransportModel = Field(default_factory=TransportModel)
         turbulence: TurbulenceModel = Field(default_factory=TurbulenceModel)
-        
+
         max_iterations: int = 100
         all_models_ready: bool = False
-        
+
         def get_models(self):
             """Required: Tell initializer which models we have."""
             return [self.transport, self.turbulence]
-        
+
         @Solver.load
         def load_control(self):
             self.max_iterations = 100
-        
+
         @Solver.resolve_dependencies
         def verify_models(self, config: ConfigContext):
             # Verify all models configured correctly
@@ -572,7 +572,7 @@ Here's a realistic example with multiple interdependent models:
                 if model.transport_ref is None:
                     raise RuntimeError(f"{model.name} missing transport reference")
             self.all_models_ready = True
-        
+
         @Solver.build
         def create_context(self, mesh):
             # Set up solver runtime context
@@ -584,7 +584,7 @@ Here's a realistic example with multiple interdependent models:
     solver = PimpleSolver()
     initializer = SolverInitializer(solver)
     initializer.initialize(mesh=mesh)
-    
+
     # Now solver and all models are fully initialized
     assert solver.turbulence.transport_ref is solver.transport
 
@@ -646,19 +646,19 @@ Think of ``Configurable`` as a parameter that changes **which operations** a mod
     # Model with adaptable behavior
     class PressureAlgorithm(BaseModel):
         name: str = "pressure"
-        
+
         # Configurable - other models can change this
         use_buoyancy: Configurable[bool] = False
-        
+
         # Regular field - not adaptable
         tolerance: float = Field(default=1e-6, gt=0)
-        
+
         # Dispatch to implementation
         _implementations = {
             False: StandardPressure,
             True: BuoyantPressure
         }
-        
+
         def get_operations(self):
             impl = self._implementations[self.use_buoyancy]()
             return impl.get_operations()
@@ -672,12 +672,12 @@ Other models modify adaptable fields during RESOLVE_DEPENDENCIES:
 
     class BuoyancyModel(BaseModel):
         name: str = "buoyancy"
-        
+
         @Model.resolve_dependencies
         def configure(self, config: ConfigContext):
             # Get pressure algorithm
             pressure = config.get("pressure")
-            
+
             # Switch it to buoyancy variant
             pressure.use_buoyancy = True  # ← Switches implementation!
 
@@ -692,11 +692,11 @@ Models can have multiple adaptable fields for complex dispatch:
 
     class PressureVelocityCoupling(BaseModel):
         name: str = "pressure_velocity"
-        
+
         # Multiple adaptable fields
         algorithm: str = Configurable(default="SIMPLE")
         use_buoyancy: bool = Configurable(default=False)
-        
+
         # Tuple-based dispatch
         _implementations = {
             ("SIMPLE", False): SIMPLEStandard,
@@ -706,7 +706,7 @@ Models can have multiple adaptable fields for complex dispatch:
             ("PIMPLE", False): PIMPLEStandard,
             ("PIMPLE", True): PIMPLEBuoyant,
         }
-        
+
         def get_operations(self):
             key = (self.algorithm, self.use_buoyancy)
             impl = self._implementations[key]()
@@ -724,7 +724,7 @@ Use ``ConfigContext.get_adaptable_fields()`` to discover what's adaptable:
         # See what's adaptable
         adaptable = config.get_adaptable_fields("pressure")
         # Returns: {"use_buoyancy": False}
-        
+
         # Check before modifying
         if "use_buoyancy" in adaptable:
             pressure = config.get("pressure")
@@ -739,10 +739,10 @@ Models can have multiple instances (e.g., multiple heat sources):
 
     class HeatSource(BaseModel):
         name: str  # "heat_source_1", "heat_source_2", etc.
-        
+
         enabled: bool = Configurable(default=True)
         power: float = Field(default=1000.0, gt=0)
-        
+
         def get_operations(self):
             if self.enabled:
                 return [f"add_heat_{self.name}"]
@@ -750,7 +750,7 @@ Models can have multiple instances (e.g., multiple heat sources):
 
     class Solver(BaseModel):
         heat_sources: list[HeatSource]
-        
+
         @Solver.read_files
         def load_sources(self):
             self.heat_sources = [
@@ -758,7 +758,7 @@ Models can have multiple instances (e.g., multiple heat sources):
                 HeatSource(name="heat_source_2", power=500.0),
                 HeatSource(name="heat_source_3", power=2000.0),
             ]
-        
+
         def get_models(self):
             return self.heat_sources
 
@@ -773,7 +773,7 @@ Query multiple instances with ``ConfigContext`` helpers:
         for source in sources:
             if source.power > 1500:
                 source.enabled = False
-        
+
         # Or by name prefix
         sources = config.get_by_prefix("heat_source_")
         # Returns: {"heat_source_1": ..., "heat_source_2": ..., ...}
@@ -807,14 +807,14 @@ Complete example showing how buoyancy model adapts pressure algorithm:
     class PressureModel(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
         name: str = "pressure"
-        
+
         use_buoyancy: bool = Configurable(default=False)
-        
+
         _implementations = {
             False: StandardPressure,
             True: BuoyantPressure
         }
-        
+
         def get_operations(self):
             return self._implementations[self.use_buoyancy]().get_operations()
 
@@ -822,7 +822,7 @@ Complete example showing how buoyancy model adapts pressure algorithm:
     class BuoyancyModel(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
         name: str = "buoyancy"
-        
+
         @Model.resolve_dependencies
         def configure(self, config: ConfigContext):
             pressure = config.get("pressure")
@@ -834,7 +834,7 @@ Complete example showing how buoyancy model adapts pressure algorithm:
         model_config = {"arbitrary_types_allowed": True}
         pressure: PressureModel = Field(default_factory=PressureModel)
         buoyancy: BuoyancyModel = Field(default_factory=BuoyancyModel)
-        
+
         def get_models(self):
             return [self.pressure, self.buoyancy]
 
@@ -842,7 +842,7 @@ Complete example showing how buoyancy model adapts pressure algorithm:
     solver = Solver()
     initializer = SolverInitializer(solver)
     initializer.initialize(mesh)
-    
+
     # Pressure automatically uses buoyancy variant
     ops = solver.pressure.get_operations()
     # Returns: ["momentum", "buoyancy_source", "pressure_buoyant", "correct"]
@@ -883,17 +883,17 @@ When testing lazy BUILD methods, verify the returned LazyInit objects:
     def test_setup_runtime_returns_lazy_init():
         solver = MySolver()
         result = solver.setup_runtime(mesh=None)
-        
+
         # Verify returns list of LazyInit
         assert isinstance(result, list)
         assert all(isinstance(item, LazyInit) for item in result)
-        
+
         # Verify expected initializers
         names = [li.name for li in result]
         assert "runtime" in names
         assert "mesh" in names
         assert "fields.p" in names
-        
+
         # Verify dependencies
         for li in result:
             if li.name == "fields.p":
@@ -906,14 +906,14 @@ For integration testing, use ``SolverInitializer`` to execute the full initializ
     def test_full_initialization_with_lazy_build():
         solver = MySolver()
         initializer = SolverInitializer(solver)
-        
+
         # Execute full initialization
         context = initializer.initialize(mesh=None)
-        
+
         # Verify context contains all initialized objects
         assert "runtime" in context
         assert "mesh" in context
         assert "fields.p" in context
-        
+
         # Verify solver state updated
         assert solver.setup_complete

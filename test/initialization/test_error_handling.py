@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from foamadapter.framework.model import Model
 from foamadapter.framework.initialization import SolverInitializer
-from .test_fixtures import TransportConfig
+from .initialization_test_models import TransportConfig
 
 
 def test_resolve_dependencies_fails_if_required_model_not_found():
