@@ -3,7 +3,7 @@
 
 import sys
 
-import typer  # type: ignore[import-not-found]
+import typer
 
 app = typer.Typer()
 

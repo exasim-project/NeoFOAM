@@ -4,13 +4,13 @@
 from abc import abstractmethod
 from typing import Any, Literal
 
-import pybFoam as pyf  # type: ignore[import-not-found]
+import pybFoam as pyf
 from pybFoam import (
     Info,
     volScalarField,
     volVectorField,
 )
-from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
+from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel
 from pydantic import BaseModel
 
 from foamadapter.algorithms.pressure_velocity import (
@@ -228,7 +228,7 @@ class IncompressibleFluidModel(BaseModel):
     Base class for optional physics models that extend IncompressibleFluid.
 
     Models implementing this class:
-    - Participate in 3-stage initialization (READ_FILES, CONFIGURE, SETUP)
+    - Participate in 3-stage initialization (LOAD, RESOLVE_DEPENDENCIES, BUILD)
     - Contribute operations to the execution graph
     - Are registered via PluginSystem for type-safe configuration
 
@@ -304,7 +304,7 @@ class IncompressibleFluid(BaseModel):
     _transport: Any | None = None
     _turbulence: Any | None = None
     _algorithm_config: dict[str, str] | None = (
-        None  # Algorithm configuration for SETUP stage
+        None  # Algorithm configuration for BUILD stage
     )
 
     # === Optional Physics Models ===
@@ -315,7 +315,7 @@ class IncompressibleFluid(BaseModel):
         Add an optional physics model to extend solver capabilities.
 
         Models participate in the 3-stage initialization lifecycle
-        (READ_FILES, CONFIGURE, SETUP) and contribute operations to
+        (LOAD, RESOLVE_DEPENDENCIES, BUILD) and contribute operations to
         the execution graph.
 
         Args:
@@ -373,10 +373,10 @@ class IncompressibleFluid(BaseModel):
 
         # Initialize core components - always non-None after RESOLVE_DEPENDENCIES
         # Components will be fully set up in BUILD stage
-        self._transport = TransportModel.create(
+        self._transport = TransportModel.create(  # type: ignore[call-arg]
             config={"transport_type": self.transport_type}
         )
-        self._turbulence = TurbulenceModel.create(
+        self._turbulence = TurbulenceModel.create(  # type: ignore[call-arg]
             config={"turbulence_type": self.turbulence_type}
         )
 
@@ -469,27 +469,27 @@ class IncompressibleFluid(BaseModel):
             return None
 
         return [
-            lazy("runtime", create=create_runtime),
-            lazy("mesh", depends_on=["runtime"], create=create_mesh),
-            field("p", depends_on=["mesh"], create=create_pressure),
-            field("U", depends_on=["mesh"], create=create_velocity),
-            field("phi", depends_on=["fields.U"], create=create_phi),
+            lazy("runtime", create=create_runtime),  # type: ignore[arg-type]
+            lazy("mesh", depends_on=["runtime"], create=create_mesh),  # type: ignore[arg-type]
+            field("p", depends_on=["mesh"], create=create_pressure),  # type: ignore[arg-type]
+            field("U", depends_on=["mesh"], create=create_velocity),  # type: ignore[arg-type]
+            field("phi", depends_on=["fields.U"], create=create_phi),  # type: ignore[arg-type]
             field(
                 "laminarTransport",
                 depends_on=["fields.U", "fields.phi"],
-                create=create_transport,
+                create=create_transport,  # type: ignore[arg-type]
             ),
             field(
                 "turbulence",
                 depends_on=["fields.U", "fields.phi", "fields.laminarTransport"],
-                create=create_turbulence,
+                create=create_turbulence,  # type: ignore[arg-type]
             ),
-            lazy("algorithm", depends_on=["fields.p", "mesh"], create=create_algorithm),
-            field("pimple", depends_on=["mesh"], create=create_pimple),
+            lazy("algorithm", depends_on=["fields.p", "mesh"], create=create_algorithm),  # type: ignore[arg-type]
+            field("pimple", depends_on=["mesh"], create=create_pimple),  # type: ignore[arg-type]
             lazy(
                 "_setup_complete",
                 depends_on=["algorithm", "fields.pimple"],
-                create=mark_complete,
+                create=mark_complete,  # type: ignore[arg-type]
             ),
         ]
 
@@ -595,7 +595,7 @@ class IncompressibleFluid(BaseModel):
         time_loop_op = Operation(
             func=IterativeOp(CFLCondition(self.maxDeltaT)),
             operation_name="time_loop",
-            operation_number=1,
+            operation_number=1,  # type: ignore[arg-type]
         )
 
         with main_loop.loop(time_loop_op) as time_loop:

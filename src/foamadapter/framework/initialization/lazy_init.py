@@ -37,7 +37,7 @@ class LazyInit:
 
     name: str
     depends_on: List[str] = field(default_factory=list)
-    initializer: Callable[[], Any] | None = None
+    initializer: Callable[..., Any] | None = None
     category: str | None = None
 
     def execute(self, context: dict[str, Any] | None = None) -> Any:
@@ -52,7 +52,7 @@ class LazyInit:
         # Try calling with context parameter first
         if context is not None:
             try:
-                return self.initializer(context)  # type: ignore[call-arg]
+                return self.initializer(context)
             except TypeError:
                 # If initializer doesn't accept context, call without it
                 return self.initializer()

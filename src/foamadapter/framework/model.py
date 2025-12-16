@@ -2,17 +2,47 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-from typing import Protocol, runtime_checkable
+from __future__ import annotations
+
+from typing import Any, Callable, Protocol, TypeVar, cast, runtime_checkable
 
 from foamadapter.framework.context import Context
 from foamadapter.framework.operations import OperationCollection
 
-from .decorator import operation
+from .decorator import operation as operation_func
 from .initialization import load, resolve_dependencies, build
-from .initialization.helpers import field, operator, lazy, model
+from .initialization.helpers import field as field_func
+from .initialization.helpers import lazy as lazy_func
+from .initialization.helpers import model as model_func
+from .initialization.helpers import operator as operator_func
+
+F = TypeVar("F", bound=Callable[..., Any])
+C = TypeVar("C", bound=type)
 
 
-def Model(cls: type) -> type:
+class ModelNamespace(Protocol):
+    """Protocol defining the Model decorator namespace with all helper attributes."""
+
+    def __call__(self, cls: C) -> C:
+        """Decorate a class as a Model."""
+        ...
+
+    # Stage decorators
+    load: Callable[[F], F]
+    resolve_dependencies: Callable[[F], F]
+    build: Callable[[F], F]
+
+    # Operation decorator
+    operation: Callable[..., Any]
+
+    # Helper functions
+    field: Callable[..., Any]
+    operator: Callable[..., Any]
+    lazy: Callable[..., Any]
+    model: Callable[..., Any]
+
+
+def _Model(cls: C) -> C:
     """
     A class decorator to mark a class as a Model in the framework.
     Models contain a set of operations that are meant to extend a solver's functionality.
@@ -20,14 +50,18 @@ def Model(cls: type) -> type:
     return cls
 
 
-Model.operation = staticmethod(operation)  # type: ignore[attr-defined]
-Model.load = staticmethod(load)  # type: ignore[attr-defined]
-Model.resolve_dependencies = staticmethod(resolve_dependencies)  # type: ignore[attr-defined]
-Model.build = staticmethod(build)  # type: ignore[attr-defined]
-Model.field = staticmethod(field)  # type: ignore[attr-defined]
-Model.operator = staticmethod(operator)  # type: ignore[attr-defined]
-Model.lazy = staticmethod(lazy)  # type: ignore[attr-defined]
-Model.model = staticmethod(model)  # type: ignore[attr-defined]
+# Tell mypy that Model is a namespace with attributes
+Model = cast(ModelNamespace, _Model)
+
+# Attach helper functions and decorators
+Model.operation = operation_func
+Model.load = load
+Model.resolve_dependencies = resolve_dependencies
+Model.build = build
+Model.field = field_func
+Model.operator = operator_func
+Model.lazy = lazy_func
+Model.model = model_func
 
 
 @runtime_checkable

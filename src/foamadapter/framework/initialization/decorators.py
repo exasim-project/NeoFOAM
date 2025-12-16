@@ -9,12 +9,14 @@ Decorators for marking methods as belonging to specific initialization stages.
 """
 
 from functools import wraps
-from typing import Callable
+from typing import Any, Callable, TypeVar, cast
 
 from .stages import InitializationStage
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def load(func: Callable) -> Callable:
+
+def load(func: F) -> F:
     """
     Mark a method as belonging to LOAD stage.
 
@@ -30,14 +32,14 @@ def load(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return func(*args, **kwargs)
 
-    wrapper._init_stage = InitializationStage.LOAD
-    return wrapper
+    setattr(wrapper, "_init_stage", InitializationStage.LOAD)
+    return cast(F, wrapper)
 
 
-def resolve_dependencies(func: Callable) -> Callable:
+def resolve_dependencies(func: F) -> F:
     """
     Mark a method as belonging to RESOLVE_DEPENDENCIES stage.
 
@@ -55,14 +57,14 @@ def resolve_dependencies(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return func(*args, **kwargs)
 
-    wrapper._init_stage = InitializationStage.RESOLVE_DEPENDENCIES
-    return wrapper
+    setattr(wrapper, "_init_stage", InitializationStage.RESOLVE_DEPENDENCIES)
+    return cast(F, wrapper)
 
 
-def build(func: Callable) -> Callable:
+def build(func: F) -> F:
     """
     Mark a method as belonging to BUILD stage.
 
@@ -79,8 +81,8 @@ def build(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         return func(*args, **kwargs)
 
-    wrapper._init_stage = InitializationStage.BUILD
-    return wrapper
+    setattr(wrapper, "_init_stage", InitializationStage.BUILD)
+    return cast(F, wrapper)

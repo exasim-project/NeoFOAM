@@ -3,7 +3,7 @@
 
 from typing import Any
 
-import pybFoam as pyf  # type: ignore[import-not-found]
+import pybFoam as pyf
 from pybFoam import (
     Info,
     fvc,
@@ -14,7 +14,7 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
+from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel
 
 
 class CFLNumber:

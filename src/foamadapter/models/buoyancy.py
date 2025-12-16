@@ -22,7 +22,7 @@ Example Usage:
 
 from typing import Any
 
-import pybFoam as pyf  # type: ignore[import-not-found]
+import pybFoam as pyf
 from pybFoam import volScalarField, dimensionedVector, dimensionedScalar
 from pydantic import BaseModel
 
@@ -60,10 +60,10 @@ class BuoyancyModel(BaseModel):
     # Lifecycle state
     configured: bool = False
 
-    @Model.read_files
+    @Model.load
     def load_buoyancy_properties(self) -> None:
         """
-        READ_FILES: Load buoyancy properties from constant/buoyancyProperties.
+        LOAD: Load buoyancy properties from constant/buoyancyProperties.
 
         Falls back to defaults if file doesn't exist.
         """
@@ -80,20 +80,20 @@ class BuoyancyModel(BaseModel):
             # Use constructor defaults
             pass
 
-    @Model.configure
+    @Model.resolve_dependencies
     def configure_buoyancy(self, registry: Any) -> None:
         """
-        CONFIGURE: Validate dependencies.
+        RESOLVE_DEPENDENCIES: Validate dependencies.
 
         Buoyancy model doesn't strictly require other models, but could
         check for compatibility with solver type.
         """
         self.configured = True
 
-    @Model.setup
-    def setup_buoyancy_fields(self, mesh: Any, builder: Any) -> None:
-        """
-        SETUP: Create temperature field and density correction.
+    @Model.build
+    def setup_buoyancy_fields(self, builder: Any, mesh: Any = None) -> None:
+        """  
+        BUILD: Create temperature field and density correction.
 
         Reads T from disk and computes rhok = 1 - beta*(T - TRef).
         """
@@ -114,7 +114,7 @@ class BuoyancyModel(BaseModel):
         builder.add_field("rhok", rhok)
         builder.add_model("buoyancy", self)
 
-    @Model.operation(operation_number=1.5, depends_on=["momentum"])
+    @Model.operation(operation_number="1.5", depends_on=["momentum"])
     def buoyancy_source(self, U: Any, rhok: Any, UEqn: Any, ctx: Any) -> FieldUpdates:
         """
         Add buoyancy source term to momentum equation.

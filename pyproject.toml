@@ -77,25 +77,31 @@ testpaths = [
 ]
 
 [tool.mypy]
-mypy_path = ["src"]              # so imports from src resolve
-strict = true                    # optional but recommended
-no_site_packages = true          # don't check installed packages
-files = ["src"]                  # Only check src, exclude test
+plugins = ["pydantic.mypy"]
+mypy_path = ["src"]
+files = ["src"]
+strict = true
+no_site_packages = true          # Don't check installed packages (avoids pybFoam stub issues)
+follow_imports = "skip"          # Don't follow third-party imports
+warn_unused_ignores = false      # Don't warn about unused type: ignore
+# Disable strict mode checks that cause issues with dynamic patterns
+disallow_subclassing_any = false
+disallow_untyped_defs = false
+disallow_untyped_decorators = false  # Decorators use Any type for flexibility
 
-follow_imports = "skip"
+exclude = ["src/NeoN", "test/", ".venv/"]
 
-# Exclude src/Neon and everything beneath it
-# (mypy applies this regex to the normalized file path)
-exclude = [
-  "src/NeoN",
-  "test/",
-]
-
-# If other code imports src/Neon and you want mypy to never follow into it:
+# Third-party libraries without stubs
 [[tool.mypy.overrides]]
-module = ["Neon", "Neon.*"]
+module = ["pydantic", "pydantic.*", "pyvis.*", "yaml", "networkx", "networkx.*", "typer", "typer.*", "pyvis", "pyvis.network"]
+ignore_missing_imports = true
+
+# pybFoam doesn't have proper type stubs
+[[tool.mypy.overrides]]
+module = ["pybFoam", "pybFoam.*"]
+ignore_missing_imports = true
 ignore_errors = true
-follow_imports = "skip"
+
 
 [tool.poe.tasks]
 test = "pytest"

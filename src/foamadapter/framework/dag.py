@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-import networkx as nx  # type: ignore[import-untyped]
+import networkx as nx
 
 from foamadapter.framework.operations import OperationCollection, Operations
 

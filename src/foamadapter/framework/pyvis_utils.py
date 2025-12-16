@@ -3,8 +3,8 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 import json
 
-import networkx as nx  # type: ignore[import-untyped]
-from pyvis.network import Network  # type: ignore[import-untyped]
+import networkx as nx
+from pyvis.network import Network
 
 
 def digraph_to_pyvis_html(G: nx.DiGraph, html_path: str = "dag.html") -> None:

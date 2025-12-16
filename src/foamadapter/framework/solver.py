@@ -2,17 +2,47 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-from typing import Protocol, runtime_checkable
+from __future__ import annotations
+
+from typing import Any, Callable, Protocol, TypeVar, cast, runtime_checkable
 
 from foamadapter.framework.operations import OperationCollection
 
 from .context import Context
-from .decorator import operation
+from .decorator import operation as operation_func
 from .initialization import load, resolve_dependencies, build
-from .initialization.helpers import field, operator, lazy, model
+from .initialization.helpers import field as field_func
+from .initialization.helpers import lazy as lazy_func
+from .initialization.helpers import model as model_func
+from .initialization.helpers import operator as operator_func
+
+F = TypeVar("F", bound=Callable[..., Any])
+C = TypeVar("C", bound=type)
 
 
-def Solver(cls: type) -> type:
+class SolverNamespace(Protocol):
+    """Protocol defining the Solver decorator namespace with all helper attributes."""
+
+    def __call__(self, cls: C) -> C:
+        """Decorate a class as a Solver."""
+        ...
+
+    # Stage decorators
+    load: Callable[[F], F]
+    resolve_dependencies: Callable[[F], F]
+    build: Callable[[F], F]
+
+    # Operation decorator
+    operation: Callable[..., Any]
+
+    # Helper functions
+    field: Callable[..., Any]
+    operator: Callable[..., Any]
+    lazy: Callable[..., Any]
+    model: Callable[..., Any]
+
+
+def _Solver(cls: C) -> C:
     """
     A class decorator to mark a class as a Solver in the framework.
     Solvers define the main simulation loop and the basic execution of operations.
@@ -20,7 +50,7 @@ def Solver(cls: type) -> type:
     """
 
     # Add convenience initialize method to the class
-    def initialize(self) -> Context:
+    def initialize(self: Any) -> Context:
         """
         Convenience method to run the 3-stage initialization and return a Context.
 
@@ -41,20 +71,23 @@ def Solver(cls: type) -> type:
         return initializer.initialize()
 
     # Add initialize method to the decorated class
-    cls.initialize = initialize
+    cls.initialize = initialize  # type: ignore[attr-defined]
 
     return cls
 
 
-Solver.operation = staticmethod(operation)  # type: ignore[attr-defined]
-Solver.load = staticmethod(load)  # type: ignore[attr-defined]
-Solver.resolve_dependencies = staticmethod(resolve_dependencies)  # type: ignore[attr-defined]
-Solver.build = staticmethod(build)  # type: ignore[attr-defined]
-Solver.field = staticmethod(field)  # type: ignore[attr-defined]
-Solver.operator = staticmethod(operator)  # type: ignore[attr-defined]
-Solver.lazy = staticmethod(lazy)  # type: ignore[attr-defined]
-Solver.model = staticmethod(model)  # type: ignore[attr-defined]
-Solver.build = staticmethod(build)  # type: ignore[attr-defined]
+# Tell mypy that Solver is a namespace with attributes
+Solver = cast(SolverNamespace, _Solver)
+
+# Attach helper functions and decorators
+Solver.operation = operation_func
+Solver.load = load
+Solver.resolve_dependencies = resolve_dependencies
+Solver.build = build
+Solver.field = field_func
+Solver.operator = operator_func
+Solver.lazy = lazy_func
+Solver.model = model_func
 
 
 @runtime_checkable

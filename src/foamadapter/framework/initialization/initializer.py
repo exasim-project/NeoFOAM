@@ -9,7 +9,7 @@ Orchestrates the 3-stage initialization process for solvers and their models.
 """
 
 from typing import Any
-import networkx as nx  # type: ignore[import-untyped]
+import networkx as nx
 
 from .stages import InitializationStage
 from .config_context import ConfigContext
@@ -132,7 +132,7 @@ class SolverInitializer:
         sorted_inits = self._topological_sort(all_lazy_inits)
 
         # Execute in dependency order and collect results
-        initialized_objects = {}
+        initialized_objects: dict[str, Any] = {}
         for lazy_init in sorted_inits:
             # Pass initialized_objects as context to lazy initializers
             obj = lazy_init.execute(context=initialized_objects)

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, overload
 
 from .types import OperationMetadata, OpType, OperationNumber
 
@@ -28,28 +28,46 @@ def decorated_member_functions(instance: Any) -> list[Callable[..., Any]]:
     return decorated_functions
 
 
+@overload
+def operation(_func: F) -> F:
+    """Decorator form: @operation (without parentheses)."""
+    ...
+
+
+@overload
+def operation(
+    _func: None = None,
+    *,
+    operation_number: OperationNumber | int | str | None = None,
+    depends_on: list[str] | None = None,
+) -> Callable[[F], F]:
+    """Decorator factory form: @operation(...) (with parentheses)."""
+    ...
+
+
 def operation(
     _func: F | None = None,
-    operation_number: OperationNumber | int | None = None,
+    *,
+    operation_number: OperationNumber | int | str | None = None,
     depends_on: list[str] | None = None,
 ) -> F | Callable[[F], F]:
     """decorator Factory to mark a decorator to mark a function as an operation in the workflow."""
 
-    def _operation_decorator(_func: F) -> F:
+    def _operation_decorator(func: F) -> F:
         """Decorator to mark a function as an operation in the workflow."""
 
-        @functools.wraps(_func)
+        @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> Any:
-            return _func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-        op_num = (
-            OperationNumber(operation_number)
-            if isinstance(operation_number, int)
-            else operation_number
-        )
+        op_num: OperationNumber | None = None
+        if isinstance(operation_number, (int, str)):
+            op_num = OperationNumber(operation_number)
+        elif operation_number is not None:
+            op_num = operation_number
         wrapper._metadata = OperationMetadata(  # type: ignore[attr-defined]
             op_type=OpType.OPERATION,
-            op_name=_func.__name__,
+            op_name=func.__name__,
             operation_number=op_num,
             depends_on=depends_on,
         )
@@ -61,40 +79,58 @@ def operation(
         return _operation_decorator(_func)
 
 
+@overload
+def condition(_func: F) -> F:
+    """Decorator form: @condition (without parentheses)."""
+    ...
+
+
+@overload
+def condition(
+    _func: None = None,
+    *,
+    operation_number: OperationNumber | int | str | None = None,
+    depends_on: list[str] | None = None,
+) -> Callable[[F], F]:
+    """Decorator factory form: @condition(...) (with parentheses)."""
+    ...
+
+
 def condition(
     _func: F | None = None,
-    operation_number: OperationNumber | int | None = None,
+    *,
+    operation_number: OperationNumber | int | str | None = None,
     depends_on: list[str] | None = None,
 ) -> F | Callable[[F], F]:
     """decorator Factory to mark a decorator to mark a function as a condition in the workflow."""
 
-    def _condition_decorator(_func: F) -> F:
+    def _condition_decorator(func: F) -> F:
         """Decorator to mark a function as a condition in the workflow."""
         # check if return value is a Condition instance
-        return_annotation = inspect.signature(_func).return_annotation
+        return_annotation = inspect.signature(func).return_annotation
         # Require return annotation to be present and be Condition
         if return_annotation is inspect.Signature.empty:
             raise TypeError(
-                f"Function {_func.__name__} must have a return type annotation of 'bool'"
+                f"Function {func.__name__} must have a return type annotation of 'bool'"
             )
 
         if return_annotation.__name__ != bool.__name__:
             raise TypeError(
-                f"Return type of {_func.__name__} must be bool not a {return_annotation}"
+                f"Return type of {func.__name__} must be bool not a {return_annotation}"
             )
 
-        @functools.wraps(_func)
+        @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> Any:
-            return _func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-        op_num = (
-            OperationNumber(operation_number)
-            if isinstance(operation_number, int)
-            else operation_number
-        )
+        op_num: OperationNumber | None = None
+        if isinstance(operation_number, (int, str)):
+            op_num = OperationNumber(operation_number)
+        elif operation_number is not None:
+            op_num = operation_number
         wrapper._metadata = OperationMetadata(  # type: ignore[attr-defined]
             op_type=OpType.CONDITION,
-            op_name=_func.__name__,
+            op_name=func.__name__,
             operation_number=op_num,
             depends_on=depends_on,
         )

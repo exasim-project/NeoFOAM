@@ -751,7 +751,7 @@ Models can have multiple instances (e.g., multiple heat sources):
     class Solver(BaseModel):
         heat_sources: list[HeatSource]
 
-        @Solver.read_files
+        @Solver.load
         def load_sources(self):
             self.heat_sources = [
                 HeatSource(name="heat_source_1", power=1000.0),

@@ -6,7 +6,7 @@
 from abc import abstractmethod
 from typing import Any, Literal, Protocol, runtime_checkable
 
-import pybFoam as pyf  # type: ignore[import-not-found]
+import pybFoam as pyf
 from pybFoam import (
     fvc,
     fvm,

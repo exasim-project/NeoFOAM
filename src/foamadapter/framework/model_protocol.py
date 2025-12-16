@@ -15,15 +15,15 @@ Example:
         name: str = "buoyancy"
         beta: float = 3e-3
 
-        @Model.read_files
+        @Model.load
         def load_properties(self):
             ...
 
-        @Model.configure
+        @Model.resolve_dependencies
         def connect_models(self, config):
             ...
 
-        @Model.setup
+        @Model.build
         def setup_fields(self, mesh, builder):
             builder.add_field("T", temperature_field)
             builder.add_model("buoyancy", self)
@@ -56,9 +56,9 @@ class SolverModel(Protocol):
     lifecycle and contribute operations to the solver's execution graph.
 
     Lifecycle Stages:
-        1. READ_FILES: Load configuration from files (optional)
-        2. CONFIGURE: Validate and connect to other models via ConfigContext (optional)
-        3. SETUP: Create runtime objects and add to ContextBuilder (required)
+        1. LOAD: Load configuration from files (optional)
+        2. RESOLVE_DEPENDENCIES: Validate and connect to other models via ConfigContext (optional)
+        3. BUILD: Create runtime objects and add to ContextBuilder (required)
 
     Attributes:
         name: Unique identifier for this model
@@ -77,33 +77,33 @@ class SolverModel(Protocol):
         """
         ...
 
-    def read_files(self) -> None:
+    def load(self) -> None:
         """
-        READ_FILES stage: Load configuration from files.
+        LOAD stage: Load configuration from files.
 
-        Optional lifecycle method. Mark implementation with @Model.read_files decorator.
+        Optional lifecycle method. Mark implementation with @Model.load decorator.
         Loads properties, parameters, or data from files before initialization.
 
         Example:
-            @Model.read_files
+            @Model.load
             def load_properties(self):
                 props = dictionary.read("constant/buoyancyProperties")
                 self.beta = props.get[float]("beta")
         """
         ...
 
-    def configure(self, config: Any) -> None:
+    def resolve_dependencies(self, config: Any) -> None:
         """
-        CONFIGURE stage: Validate and connect to other models.
+        RESOLVE_DEPENDENCIES stage: Validate and connect to other models.
 
-        Optional lifecycle method. Mark implementation with @Model.configure decorator.
+        Optional lifecycle method. Mark implementation with @Model.resolve_dependencies decorator.
         Use ConfigContext to query and adapt other models' behavior.
 
         Args:
             config: ConfigContext for inter-model communication
 
         Example:
-            @Model.configure
+            @Model.resolve_dependencies
             def configure(self, config):
                 pressure = config.get("pressure_algorithm")
                 if pressure:
@@ -111,11 +111,11 @@ class SolverModel(Protocol):
         """
         ...
 
-    def setup(self, mesh: Any, builder: Any) -> None:
+    def build(self, mesh: Any, builder: Any) -> None:
         """
-        SETUP stage: Create runtime objects and add to context.
+        BUILD stage: Create runtime objects and add to context.
 
-        Required lifecycle method. Mark implementation with @Model.setup decorator.
+        Required lifecycle method. Mark implementation with @Model.build decorator.
         Create fields, read initial conditions, and register contributions.
 
         Args:
@@ -123,7 +123,7 @@ class SolverModel(Protocol):
             builder: ContextBuilder to register fields and models
 
         Example:
-            @Model.setup
+            @Model.build
             def setup_fields(self, mesh, builder):
                 T = volScalarField.read_field(mesh, "T")
                 builder.add_field("T", T)

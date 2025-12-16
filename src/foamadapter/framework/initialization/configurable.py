@@ -17,9 +17,9 @@ T = TypeVar("T")
 class _ConfigurableMeta(type):
     """Metaclass to make Configurable subscriptable."""
 
-    def __getitem__(cls, item: type) -> type:
+    def __getitem__(cls, item: type) -> type:  # type: ignore[misc]
         """Allow Configurable[T] syntax."""
-        return Annotated[item, "configurable"]
+        return Annotated[item, "configurable"]  # type: ignore[return-value]
 
 
 class Configurable(metaclass=_ConfigurableMeta):
