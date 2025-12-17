@@ -6,7 +6,7 @@
 #include "common.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace dsl  = NeoN::dsl;
+namespace dsl = NeoN::dsl;
 
 extern Foam::Time* timePtr;    // A single time object
 extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
@@ -33,40 +33,33 @@ template<class VolumeField>
 void storeOldTimesNF(VolumeField& phi)
 {
     // Ensure buffers exist
-    auto& phiOld    = fvcc::oldTime(phi);
+    auto& phiOld = fvcc::oldTime(phi);
     auto& phiOldOld = fvcc::oldTime(phiOld);
 
     // --- Views ---
-    const auto curView    = phi.internalVector().view();
-    const auto oldView    = phiOld.internalVector().view();
+    const auto curView = phi.internalVector().view();
+    const auto oldView = phiOld.internalVector().view();
     const auto oldOldView = phiOldOld.internalVector().view();
 
     // oldOld = old
     NeoN::map(
         phiOldOld.internalVector(),
-        KOKKOS_LAMBDA(const std::size_t i)
-        {
-            return oldView[i];
-        }
+        KOKKOS_LAMBDA(const std::size_t i) { return oldView[i]; }
     );
 
     // old = current
     NeoN::map(
         phiOld.internalVector(),
-        KOKKOS_LAMBDA(const std::size_t i)
-        {
-            return curView[i];
-        }
+        KOKKOS_LAMBDA(const std::size_t i) { return curView[i]; }
     );
 
     // --- Boundary data (host-side, usually small) ---
     phiOldOld.boundaryData() = phiOld.boundaryData();
-    phiOld.boundaryData()    = phi.boundaryData();
+    phiOld.boundaryData() = phi.boundaryData();
 }
 
 template<class VolumeField>
-void dumpTimeState
-(
+void dumpTimeState(
     const char* label,
     const VolumeField& nfT,
     const Foam::volScalarField& ofT,
@@ -76,20 +69,14 @@ void dumpTimeState
     // ---- NeoFOAM ----
     auto cur = nfT.internalVector().copyToHost();
     auto old = fvcc::oldTime(nfT).internalVector().copyToHost();
-    auto oo  = fvcc::oldTime(fvcc::oldTime(nfT)).internalVector().copyToHost();
+    auto oo = fvcc::oldTime(fvcc::oldTime(nfT)).internalVector().copyToHost();
 
-    Foam::Info
-        << label << Foam::endl
-        << "  [NF] T="      << cur.view()[0]
-        << " Told="         << old.view()[0]
-        << " ToldOld="      << oo.view()[0]
-        << Foam::endl
-        << "  [OF] T="      << ofT[0]
-        << " Told="         << ofT.oldTime()[0]
-        << " ToldOld="      << ofT.oldTime().oldTime()[0]
-        << Foam::endl
-        << "  timeIndex="   << runTime.timeIndex()
-        << Foam::endl;
+    Foam::Info << label << Foam::endl
+               << "  [NF] T=" << cur.view()[0] << " Told=" << old.view()[0]
+               << " ToldOld=" << oo.view()[0] << Foam::endl
+               << "  [OF] T=" << ofT[0] << " Told=" << ofT.oldTime()[0]
+               << " ToldOld=" << ofT.oldTime().oldTime()[0] << Foam::endl
+               << "  timeIndex=" << runTime.timeIndex() << Foam::endl;
 }
 
 TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
@@ -111,151 +98,133 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
     SECTION("ddtScheme backward on " + execName)
     {
-    runTime.setTime(0.0, 0);	    
+        runTime.setTime(0.0, 0);
 
-    auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-    ofT.correctBoundaryConditions();
-    ofT.oldTime();
-    ofT.oldTime().oldTime();
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
+        ofT.correctBoundaryConditions();
+        ofT.oldTime();
+        ofT.oldTime().oldTime();
 
-    auto& nfT =
-        fieldCol.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::volScalarField>{
-                .exec      = exec,
-                .nfMesh    = nfMesh,
+        auto& nfT = fieldCol.registerVector<fvcc::VolumeField<NeoN::scalar>>(
+            NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
+                .exec = exec,
+                .nfMesh = nfMesh,
                 .foamField = ofT,
-                .name      = "nfT"
+                .name = "nfT"
             }
         );
-    fvcc::oldTime(nfT);
-    fvcc::oldTime(fvcc::oldTime(nfT));
-    fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
+        fvcc::oldTime(nfT);
+        fvcc::oldTime(fvcc::oldTime(nfT));
+        fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
-    NeoN::Dictionary fvSchemes;
-    NeoN::Dictionary ddtSchemes;
-    ddtSchemes.insert("default", std::string("backward"));
-    fvSchemes.insert("ddtSchemes", ddtSchemes);
+        NeoN::Dictionary fvSchemes;
+        NeoN::Dictionary ddtSchemes;
+        ddtSchemes.insert("default", std::string("backward"));
+        fvSchemes.insert("ddtSchemes", ddtSchemes);
 
-    ddtOp.read(NeoN::Input{fvSchemes});
+        ddtOp.read(NeoN::Input {fvSchemes});
 
-    //dumpTimeState("Before first timestep", nfT, ofT, runTime);
-    // =========================================================================
-    // Step 1: timeIndex == 1 → backward startup (implicit Euler)
-    // =========================================================================
-    runTime++;
-    ofT.storeOldTimes();
-    storeOldTimesNF(nfT);
-    bumpCurrentOF(ofT, 1.0);
-    bumpCurrentNF(nfT, 1.0);
-    //dumpTimeState("After first timestep", nfT, ofT, runTime);
-    
-    Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
-    Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
+        // dumpTimeState("Before first timestep", nfT, ofT, runTime);
+        //  =========================================================================
+        //  Step 1: timeIndex == 1 → backward startup (implicit Euler)
+        //  =========================================================================
+        runTime++;
+        ofT.storeOldTimes();
+        storeOldTimesNF(nfT);
+        bumpCurrentOF(ofT, 1.0);
+        bumpCurrentNF(nfT, 1.0);
+        // dumpTimeState("After first timestep", nfT, ofT, runTime);
 
-    auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
+        Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
+        Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
+
+        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
             nfMesh,
             sparsityPattern
         );
 
-    ddtOp.implicitOperation(ls1, runTime.value(), runTime.deltaTValue());
+        ddtOp.implicitOperation(ls1, runTime.value(), runTime.deltaTValue());
 
-    // --- rhs ---
-    {
-        auto rhs = ls1.rhs().copyToHost();
-        forAll(rhs.view(), celli)
+        // --- rhs ---
         {
-            REQUIRE(
-                rhs.view()[celli]
-                == Catch::Approx(matrix1.source()[celli]).margin(1e-16)
-            );
+            auto rhs = ls1.rhs().copyToHost();
+            forAll(rhs.view(), celli)
+            {
+                REQUIRE(rhs.view()[celli] == Catch::Approx(matrix1.source()[celli]).margin(1e-16));
+            }
         }
-    }
 
-    // --- diag ---
-    {
-        auto diag = NeoFOAM::diag(ls1, sparsityPattern).copyToHost();
-        forAll(diag.view(), celli)
+        // --- diag ---
         {
-            REQUIRE(
-                diag.view()[celli]
-                == Catch::Approx(matrix1.diag()[celli]).margin(1e-16)
-            );
+            auto diag = NeoFOAM::diag(ls1, sparsityPattern).copyToHost();
+            forAll(diag.view(), celli)
+            {
+                REQUIRE(diag.view()[celli] == Catch::Approx(matrix1.diag()[celli]).margin(1e-16));
+            }
         }
-    }
 
-    // --- operator application ---
-    {
-        auto result = NeoFOAM::applyOperator(ls1, nfT)
-                          .internalVector()
-                          .copyToHost();
-
-        forAll(result.view(), celli)
+        // --- operator application ---
         {
-            REQUIRE(
-                result.view()[celli]
-                == Catch::Approx(ddt1[celli] * mesh.V()[celli]).margin(1e-16)
-            );
+            auto result = NeoFOAM::applyOperator(ls1, nfT).internalVector().copyToHost();
+
+            forAll(result.view(), celli)
+            {
+                REQUIRE(
+                    result.view()[celli]
+                    == Catch::Approx(ddt1[celli] * mesh.V()[celli]).margin(1e-16)
+                );
+            }
         }
-    }
 
-    // =========================================================================
-    // Step 2: timeIndex == 2 → true backward (BDF2)
-    // =========================================================================
-    runTime++;
-    ofT.storeOldTimes();
-    storeOldTimesNF(nfT);
-    bumpCurrentOF(ofT, 1.0);
-    bumpCurrentNF(nfT, 1.0);
-    //dumpTimeState("After second timestep", nfT, ofT, runTime);
+        // =========================================================================
+        // Step 2: timeIndex == 2 → true backward (BDF2)
+        // =========================================================================
+        runTime++;
+        ofT.storeOldTimes();
+        storeOldTimesNF(nfT);
+        bumpCurrentOF(ofT, 1.0);
+        bumpCurrentNF(nfT, 1.0);
+        // dumpTimeState("After second timestep", nfT, ofT, runTime);
 
-    Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
-    Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
+        Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
+        Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
 
-    auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
+        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
             nfMesh,
             sparsityPattern
         );
 
-    ddtOp.implicitOperation(ls2, runTime.value(), runTime.deltaTValue());
+        ddtOp.implicitOperation(ls2, runTime.value(), runTime.deltaTValue());
 
-    // --- rhs ---
-    {
-        auto rhs = ls2.rhs().copyToHost();
-        forAll(rhs.view(), celli)
+        // --- rhs ---
         {
-            REQUIRE(
-                rhs.view()[celli]
-                == Catch::Approx(matrix2.source()[celli]).margin(1e-16)
-            );
+            auto rhs = ls2.rhs().copyToHost();
+            forAll(rhs.view(), celli)
+            {
+                REQUIRE(rhs.view()[celli] == Catch::Approx(matrix2.source()[celli]).margin(1e-16));
+            }
         }
-    }
 
-    // --- diag ---
-    {
-        auto diag = NeoFOAM::diag(ls2, sparsityPattern).copyToHost();
-        forAll(diag.view(), celli)
+        // --- diag ---
         {
-            REQUIRE(
-                diag.view()[celli]
-                == Catch::Approx(matrix2.diag()[celli]).margin(1e-16)
-            );
+            auto diag = NeoFOAM::diag(ls2, sparsityPattern).copyToHost();
+            forAll(diag.view(), celli)
+            {
+                REQUIRE(diag.view()[celli] == Catch::Approx(matrix2.diag()[celli]).margin(1e-16));
+            }
         }
-    }
 
-    // --- operator application ---
-    {
-        auto result = NeoFOAM::applyOperator(ls2, nfT)
-                          .internalVector()
-                          .copyToHost();
-
-        forAll(result.view(), celli)
+        // --- operator application ---
         {
-            REQUIRE(
-                result.view()[celli]
-                == Catch::Approx(ddt2[celli] * mesh.V()[celli]).margin(1e-16)
-            );
+            auto result = NeoFOAM::applyOperator(ls2, nfT).internalVector().copyToHost();
+
+            forAll(result.view(), celli)
+            {
+                REQUIRE(
+                    result.view()[celli]
+                    == Catch::Approx(ddt2[celli] * mesh.V()[celli]).margin(1e-16)
+                );
+            }
         }
-    }
     }
 }
-

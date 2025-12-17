@@ -66,11 +66,11 @@ TEST_CASE("matrix multiplication")
         // ddt.write();
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
-	NeoN::Dictionary fvSchemes;
+        NeoN::Dictionary fvSchemes;
         NeoN::Dictionary ddtSchemes;
         ddtSchemes.insert("default", std::string("Euler"));
         fvSchemes.insert("ddtSchemes", ddtSchemes);
-	NeoN::Input in = fvSchemes;
+        NeoN::Input in = fvSchemes;
 
         ddtOp.read(in);
 
