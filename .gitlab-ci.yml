@@ -19,6 +19,17 @@
     FOAM_INST_DIR: /workspace/openfoam
     WM_PROJECT_VERSION: v2412
 
+.use-intel-gpu-and-image:
+  tags: ["intel-gpus"]
+  image: dheerajraghunathan/oneapi-openfoam:2025.3-v2412-arch_pvc
+  before_script:
+    - source /opt/intel/oneapi/setvars.sh --force
+    - eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
+  variables:
+    PYTHONPATH: /opt/intel/oneapi/advisor/2025.3/pythonapi
+    FOAM_INST_DIR: /opt/openfoam
+    WM_PROJECT_VERSION: v2412
+
 # Common OpenFOAM environment variables
 .openfoam-env-setup:
   variables:
@@ -109,6 +120,13 @@ build-and-test-triggered-from-NF-amd:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
 
+build-and-test-triggered-from-NF-intel:
+  extends:
+    - .use-intel-gpu-and-image
+    - .trigger-from-neofoam-for-testing
+  script:
+    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH
+
 # --- Benchmark NeoFOAM with the develop branch of NeoN ---
 benchmark-triggered-from-NF-nvidia:
   extends:
@@ -126,6 +144,13 @@ benchmark-triggered-from-NF-amd:
   script:
     - ./ci/lrz-gitlab/benchmark.sh amd $NEON_BRANCH profiling
 
+benchmark-and-test-triggered-from-NF-intel:
+  extends:
+    - .use-intel-gpu-and-image
+    - .trigger-from-neofoam-for-benchmarking
+  script:
+    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH profiling
+
 # --- Build and test NeoFOAM with a feature branch of NeoN ---
 build-and-test-triggered-from-NeoN-nvidia:
   extends:
@@ -142,3 +167,10 @@ build-and-test-triggered-from-NeoN-amd:
     - .trigger-from-neon-for-testing
   script:
     - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
+
+build-and-test-triggered-from-NeoN-intel:
+  extends:
+    - .use-intel-gpu-and-image
+    - .trigger-from-neon-for-testing
+  script:
+    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH
