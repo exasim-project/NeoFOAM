@@ -19,17 +19,6 @@ inline void bumpCurrentOF(Foam::volScalarField& ofT, const Foam::scalar a)
 }
 
 template<class VolumeField>
-void bumpCurrentNF(VolumeField& nfT, const NeoN::scalar a)
-{
-    const auto cur = nfT.internalVector().view();
-    NeoN::map(
-        nfT.internalVector(),
-        KOKKOS_LAMBDA(const std::size_t i) { return cur[i] - a; }
-    );
-    nfT.correctBoundaryConditions();
-}
-
-template<class VolumeField>
 void storeOldTimesNF(VolumeField& phi)
 {
     // Ensure buffers exist
@@ -56,27 +45,6 @@ void storeOldTimesNF(VolumeField& phi)
     // --- Boundary data (host-side, usually small) ---
     phiOldOld.boundaryData() = phiOld.boundaryData();
     phiOld.boundaryData() = phi.boundaryData();
-}
-
-template<class VolumeField>
-void dumpTimeState(
-    const char* label,
-    const VolumeField& nfT,
-    const Foam::volScalarField& ofT,
-    const Foam::Time& runTime
-)
-{
-    // ---- NeoFOAM ----
-    auto cur = nfT.internalVector().copyToHost();
-    auto old = fvcc::oldTime(nfT).internalVector().copyToHost();
-    auto oo = fvcc::oldTime(fvcc::oldTime(nfT)).internalVector().copyToHost();
-
-    Foam::Info << label << Foam::endl
-               << "  [NF] T=" << cur.view()[0] << " Told=" << old.view()[0]
-               << " ToldOld=" << oo.view()[0] << Foam::endl
-               << "  [OF] T=" << ofT[0] << " Told=" << ofT.oldTime()[0]
-               << " ToldOld=" << ofT.oldTime().oldTime()[0] << Foam::endl
-               << "  timeIndex=" << runTime.timeIndex() << Foam::endl;
 }
 
 TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
@@ -132,7 +100,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         ofT.storeOldTimes();
         storeOldTimesNF(nfT);
         bumpCurrentOF(ofT, 1.0);
-        bumpCurrentNF(nfT, 1.0);
+        nfT -= scalar(1.0);
         // dumpTimeState("After first timestep", nfT, ofT, runTime);
 
         Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
@@ -182,8 +150,8 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         runTime++;
         ofT.storeOldTimes();
         storeOldTimesNF(nfT);
-        bumpCurrentOF(ofT, 1.0);
-        bumpCurrentNF(nfT, 1.0);
+        bumpCurrentOF(ofT, 2.0);
+        nfT -= scalar(2.0);
         // dumpTimeState("After second timestep", nfT, ofT, runTime);
 
         Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
