@@ -120,24 +120,6 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
 }
 
 template<typename FoamType>
-auto constructFrom(
-    const NeoN::Executor exec,
-    const NeoN::UnstructuredMesh& nfMesh,
-    const FoamType& in
-)
-{
-    using type_container_t = typename TypeMap<FoamType>::container_type;
-    using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
-
-    type_container_t out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
-
-    out.internalVector() = fromFoamField(exec, in.primitiveField());
-    out.correctBoundaryConditions();
-
-    return out;
-};
-
-template<typename FoamType>
 auto readSurfaceBoundaryConditions(
     const NeoN::UnstructuredMesh& uMesh,
     const FoamType& surfaceField
