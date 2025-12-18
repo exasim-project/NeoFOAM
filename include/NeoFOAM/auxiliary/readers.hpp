@@ -62,24 +62,32 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              dict.insert("type", std::string("fixedValue"));
              NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
              type_primitive_t fixedValue {};
-             if (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+             // test if things can be read as scalar first, if it doesn't work
+             // read as int and convert to scalar
+             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
              {
                  NeoN::Vec3 tmpFixedValue {};
-                 tmpFixedValue[0] = tokenList.get<int>(1);
-                 tmpFixedValue[1] = tokenList.get<int>(2);
-                 tmpFixedValue[2] = tokenList.get<int>(3);
+                 auto tokens = tokenList.tokens();
+                 NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
+                 if (ret)
+                 {
+                     tmpFixedValue[0] = tokenList.get<NeoN::scalar>(1);
+                     tmpFixedValue[1] = tokenList.get<NeoN::scalar>(2);
+                     tmpFixedValue[2] = tokenList.get<NeoN::scalar>(3);
+                 }
+                 else
+                 {
+                     tmpFixedValue[0] = NeoN::scalar(tokenList.get<int>(1));
+                     tmpFixedValue[1] = NeoN::scalar(tokenList.get<int>(2));
+                     tmpFixedValue[2] = NeoN::scalar(tokenList.get<int>(3));
+                 }
                  dict.insert("fixedValue", tmpFixedValue);
              }
              else
              {
-                 try
-                 {
-                     fixedValue = tokenList.get<type_primitive_t>(1);
-                 }
-                 catch (const std::bad_any_cast& e)
-                 {
-                     fixedValue = NeoN::one<type_primitive_t>() * (tokenList.get<int>(1));
-                 }
+                 auto& token = tokenList.tokens()[1];
+                 NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&token);
+                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<int>(token));
                  dict.insert("fixedValue", fixedValue);
              }
          }},
@@ -159,49 +167,62 @@ auto readSurfaceBoundaryConditions(
     return bcs;
 }
 
-template <class FoamFieldType>
-auto constructFrom(const NeoN::Executor exec,
-                   const NeoN::UnstructuredMesh& nfMesh,
-                   const FoamFieldType& in)
+template<class FoamFieldType>
+auto constructFrom(
+    const NeoN::Executor exec,
+    const NeoN::UnstructuredMesh& nfMesh,
+    const FoamFieldType& in
+)
 {
     using ContainerType = typename TypeMap<FoamFieldType>::container_type;
-    using MappedType    = typename TypeMap<FoamFieldType>::mapped_type;
+    using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
 
-    if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>) {
+    if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
+    {
         ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
         out.internalVector() = fromFoamField(exec, in.primitiveField());
         out.correctBoundaryConditions();
         return out;
-    } else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>) {
+    }
+    else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
+    {
         using FoamComponentType = typename FoamFieldType::cmptType;
 
         ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
 
-        const std::size_t nInt   = nfMesh.nInternalFaces();
-        const std::size_t nBnd   = nfMesh.boundaryMesh().offset().back();
-        const std::size_t nFaces = nInt+nBnd;
+        const std::size_t nInt = nfMesh.nInternalFaces();
+        const std::size_t nBnd = nfMesh.boundaryMesh().offset().back();
+        const std::size_t nFaces = nInt + nBnd;
 
-	NF_DINFO("Internal: "+std::to_string(nInt)+", Boundary: "+std::to_string(nBnd)+", nFaces: "+std::to_string(nFaces));
+        NF_DINFO(
+            "Internal: " + std::to_string(nInt) + ", Boundary: " + std::to_string(nBnd)
+            + ", nFaces: " + std::to_string(nFaces)
+        );
 
         Foam::Field<FoamComponentType> flat(nFaces);
         Foam::Field<FoamComponentType> bval(nBnd);
 
         // Internal faces first: [0, nInt)
-        forAll(in, facei) {
-            if (static_cast<std::size_t>(facei) < nInt) {
+        forAll(in, facei)
+        {
+            if (static_cast<std::size_t>(facei) < nInt)
+            {
                 flat[facei] = convert(in[facei]);
             }
         }
 
         // Boundary faces appended in patch order: [nInt, nFaces)
         Foam::label idx = static_cast<Foam::label>(nInt);
-        Foam::label bi  = 0;
-        forAll(in.boundaryField(), patchi) {
+        Foam::label bi = 0;
+        forAll(in.boundaryField(), patchi)
+        {
             const auto& pin = in.boundaryField()[patchi];
-            forAll(pin, facei) {
+            forAll(pin, facei)
+            {
                 flat[idx] = convert(pin[facei]);
-                bval[bi]  = convert(pin[facei]);
-                ++idx; ++bi;
+                bval[bi] = convert(pin[facei]);
+                ++idx;
+                ++bi;
             }
         }
 
@@ -209,14 +230,18 @@ auto constructFrom(const NeoN::Executor exec,
         NF_ASSERT_EQUAL(static_cast<std::size_t>(idx), nFaces);
         NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
 
-        out.internalVector()       = fromFoamField(exec, flat);
+        out.internalVector() = fromFoamField(exec, flat);
         out.boundaryData().value() = fromFoamField(exec, bval);
         out.correctBoundaryConditions();
         return out;
-    } else {
-        NF_ASSERT((!std::is_same_v<ContainerType,ContainerType>),
-	    "TypeMap<FoamFieldType>::container_type must be VolumeField<ValueType> or SurfaceField<ValueType>."
-	);
+    }
+    else
+    {
+        NF_ASSERT(
+            (!std::is_same_v<ContainerType, ContainerType>),
+            "TypeMap<FoamFieldType>::container_type must be VolumeField<ValueType> or "
+            "SurfaceField<ValueType>."
+        );
     }
 }
 
