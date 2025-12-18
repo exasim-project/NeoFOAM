@@ -209,227 +209,207 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> FoamType&gt;</div>
 <div class="foldopen" id="foldopen00123" data-start="{" data-end="}">
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a5dc4904dc0c956553a19e5dc2af70ff2">  123</a></span><span class="keyword">auto</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a5dc4904dc0c956553a19e5dc2af70ff2">constructFrom</a>(</div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keyword">const</span> NeoN::Executor exec,</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; nfMesh,</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keyword">const</span> FoamType&amp; in</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>)</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>{</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keyword">using </span>type_container_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamType&gt;::container_type</a>;</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    <span class="keyword">using </span>type_primitive_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamType&gt;::mapped_type</a>;</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    type_container_t out(exec, in.name(), nfMesh, <a class="code hl_function" href="namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206">readVolBoundaryConditions</a>(nfMesh, in));</div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    out.internalVector() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, in.primitiveField());</div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    out.correctBoundaryConditions();</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    <span class="keywordflow">return</span> out;</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>};</div>
-</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">  123</a></span><span class="keyword">auto</span> <a class="code hl_function" href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">readSurfaceBoundaryConditions</a>(</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; uMesh,</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keyword">const</span> FoamType&amp; surfaceField</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>)</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>{</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    <span class="keyword">using </span>type_container_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamType&gt;::container_type</a>;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    <span class="keyword">using </span>type_primitive_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamType&gt;::mapped_type</a>;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    std::vector&lt;fvcc::SurfaceBoundary&lt;type_primitive_t&gt;&gt; bcs;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    <span class="comment">// get boundary as dictionary</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    Foam::OStringStream os;</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    surfaceField.boundaryField().writeEntries(os);</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    Foam::IStringStream is(os.str());</div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    Foam::dictionary bDict(is);</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>    <span class="keywordtype">int</span> patchi = 0;</div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span> </div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> FoamType&gt;</div>
-<div class="foldopen" id="foldopen00141" data-start="{" data-end="}">
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">  141</a></span><span class="keyword">auto</span> <a class="code hl_function" href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">readSurfaceBoundaryConditions</a>(</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; uMesh,</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>    <span class="keyword">const</span> FoamType&amp; surfaceField</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>)</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>{</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>    <span class="keyword">using </span>type_container_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamType&gt;::container_type</a>;</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>    <span class="keyword">using </span>type_primitive_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamType&gt;::mapped_type</a>;</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span> </div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    std::vector&lt;fvcc::SurfaceBoundary&lt;type_primitive_t&gt;&gt; bcs;</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>    <span class="comment">// get boundary as dictionary</span></div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>    Foam::OStringStream os;</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    surfaceField.boundaryField().writeEntries(os);</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>    Foam::IStringStream is(os.str());</div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>    Foam::dictionary bDict(is);</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    <span class="keywordtype">int</span> patchi = 0;</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    std::map&lt;std::string, std::function&lt;void(NeoN::Dictionary&amp;)&gt;&gt; patchInserter {</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        {<span class="stringliteral">&quot;fixedGradient&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedGradient&quot;</span>)); }},</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        {<span class="stringliteral">&quot;zeroGradient&quot;</span>,</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>         [&amp;](<span class="keyword">auto</span>&amp; dict)</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>         {</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>             dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedGradient&quot;</span>));</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>             dict.insert(<span class="stringliteral">&quot;fixedGradient&quot;</span>, type_primitive_t {});</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>         }},</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        {<span class="stringliteral">&quot;fixedValue&quot;</span>,</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>         [](<span class="keyword">auto</span>&amp; dict)</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>         {</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>             dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedValue&quot;</span>));</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>             dict.insert(<span class="stringliteral">&quot;fixedValue&quot;</span>, type_primitive_t {});</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>         }},</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        {<span class="stringliteral">&quot;calculated&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;calculated&quot;</span>)); }},</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>        {<span class="stringliteral">&quot;empty&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;empty&quot;</span>)); }},</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        {<span class="stringliteral">&quot;symmetryPlane&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;symmetry&quot;</span>)); }},</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>        {<span class="stringliteral">&quot;symmetry&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;symmetry&quot;</span>)); }}</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    };</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span> </div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; bName : bDict.toc())</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    {</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>        Foam::dictionary patchDict = bDict.subDict(bName);</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>        NeoN::Dictionary neoPatchDict;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>        patchInserter[patchDict.get&lt;Foam::word&gt;(<span class="stringliteral">&quot;type&quot;</span>)](neoPatchDict);</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        bcs.push_back(fvcc::SurfaceBoundary&lt;type_primitive_t&gt;(uMesh, neoPatchDict, patchi));</div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        patchi++;</div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>    }</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <span class="keywordflow">return</span> bcs;</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>}</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>    std::map&lt;std::string, std::function&lt;void(NeoN::Dictionary&amp;)&gt;&gt; patchInserter {</div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        {<span class="stringliteral">&quot;fixedGradient&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedGradient&quot;</span>)); }},</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        {<span class="stringliteral">&quot;zeroGradient&quot;</span>,</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>         [&amp;](<span class="keyword">auto</span>&amp; dict)</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>         {</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>             dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedGradient&quot;</span>));</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>             dict.insert(<span class="stringliteral">&quot;fixedGradient&quot;</span>, type_primitive_t {});</div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>         }},</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>        {<span class="stringliteral">&quot;fixedValue&quot;</span>,</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>         [](<span class="keyword">auto</span>&amp; dict)</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>         {</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>             dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedValue&quot;</span>));</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>             dict.insert(<span class="stringliteral">&quot;fixedValue&quot;</span>, type_primitive_t {});</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>         }},</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        {<span class="stringliteral">&quot;calculated&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;calculated&quot;</span>)); }},</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        {<span class="stringliteral">&quot;empty&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;empty&quot;</span>)); }},</div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        {<span class="stringliteral">&quot;symmetryPlane&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;symmetry&quot;</span>)); }},</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>        {<span class="stringliteral">&quot;symmetry&quot;</span>, [](<span class="keyword">auto</span>&amp; dict) { dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;symmetry&quot;</span>)); }}</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    };</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>    <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; bName : bDict.toc())</div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>    {</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        Foam::dictionary patchDict = bDict.subDict(bName);</div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>        NeoN::Dictionary neoPatchDict;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>        patchInserter[patchDict.get&lt;Foam::word&gt;(<span class="stringliteral">&quot;type&quot;</span>)](neoPatchDict);</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        bcs.push_back(fvcc::SurfaceBoundary&lt;type_primitive_t&gt;(uMesh, neoPatchDict, patchi));</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        patchi++;</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>    }</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    <span class="keywordflow">return</span> bcs;</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>}</div>
 </div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><span class="keyword">template</span>&lt;<span class="keyword">class</span> FoamFieldType&gt;</div>
-<div class="foldopen" id="foldopen00190" data-start="{" data-end="}">
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">  190</a></span><span class="keyword">auto</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a5dc4904dc0c956553a19e5dc2af70ff2">constructFrom</a>(</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    <span class="keyword">const</span> NeoN::Executor exec,</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; nfMesh,</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="keyword">const</span> FoamFieldType&amp; in</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>)</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>{</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="keyword">using </span>ContainerType = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamFieldType&gt;::container_type</a>;</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <span class="keyword">using </span>MappedType = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamFieldType&gt;::mapped_type</a>;</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (NeoFOAM::detail::isVolumeField&lt;ContainerType&gt;)</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    {</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        ContainerType out(exec, in.name(), nfMesh, <a class="code hl_function" href="namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206">readVolBoundaryConditions</a>(nfMesh, in));</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        out.internalVector() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, in.primitiveField());</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        out.correctBoundaryConditions();</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>        <span class="keywordflow">return</span> out;</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    }</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (NeoFOAM::detail::isSurfaceField&lt;ContainerType&gt;)</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    {</div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        <span class="keyword">using </span>FoamComponentType = <span class="keyword">typename</span> FoamFieldType::cmptType;</div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span> </div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>        ContainerType out(exec, in.name(), nfMesh, <a class="code hl_function" href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">readSurfaceBoundaryConditions</a>(nfMesh, in));</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span> </div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        <span class="keyword">const</span> std::size_t nInt = nfMesh.nInternalFaces();</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>        <span class="keyword">const</span> std::size_t nBnd = nfMesh.boundaryMesh().offset().back();</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>        <span class="keyword">const</span> std::size_t nFaces = nInt + nBnd;</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span> </div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        NF_DINFO(</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>            <span class="stringliteral">&quot;Internal: &quot;</span> + std::to_string(nInt) + <span class="stringliteral">&quot;, Boundary: &quot;</span> + std::to_string(nBnd)</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>            + <span class="stringliteral">&quot;, nFaces: &quot;</span> + std::to_string(nFaces)</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>        );</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span> </div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        Foam::Field&lt;FoamComponentType&gt; flat(nFaces);</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>        Foam::Field&lt;FoamComponentType&gt; bval(nBnd);</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span> </div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        <span class="comment">// Internal faces first: [0, nInt)</span></div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>        forAll(in, facei)</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>        {</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>            <span class="keywordflow">if</span> (<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(facei) &lt; nInt)</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>            {</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                flat[facei] = <a class="code hl_function" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a>(in[facei]);</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>            }</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>        }</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span> </div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>        <span class="comment">// Boundary faces appended in patch order: [nInt, nFaces)</span></div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        Foam::label idx = <span class="keyword">static_cast&lt;</span>Foam::label<span class="keyword">&gt;</span>(nInt);</div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>        Foam::label bi = 0;</div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>        forAll(in.boundaryField(), patchi)</div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>        {</div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>            <span class="keyword">const</span> <span class="keyword">auto</span>&amp; pin = in.boundaryField()[patchi];</div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>            forAll(pin, facei)</div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>            {</div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>                flat[idx] = <a class="code hl_function" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a>(pin[facei]);</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>                bval[bi] = <a class="code hl_function" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a>(pin[facei]);</div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>                ++idx;</div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>                ++bi;</div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>            }</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>        }</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span> </div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        <span class="comment">// (Optional) asserts in debug:</span></div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>        NF_ASSERT_EQUAL(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(idx), nFaces);</div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>        NF_ASSERT_EQUAL(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(bi), nBnd);</div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>        out.internalVector() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, flat);</div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>        out.boundaryData().value() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, bval);</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>        out.correctBoundaryConditions();</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>        <span class="keywordflow">return</span> out;</div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>    }</div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    <span class="keywordflow">else</span></div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    {</div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>        NF_ASSERT(</div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>            (!std::is_same_v&lt;ContainerType, ContainerType&gt;),</div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>            <span class="stringliteral">&quot;TypeMap&lt;FoamFieldType&gt;::container_type must be VolumeField&lt;ValueType&gt; or &quot;</span></div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>            <span class="stringliteral">&quot;SurfaceField&lt;ValueType&gt;.&quot;</span></div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>        );</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    }</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>}</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span><span class="keyword">template</span>&lt;<span class="keyword">class</span> FoamFieldType&gt;</div>
+<div class="foldopen" id="foldopen00172" data-start="{" data-end="}">
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">  172</a></span><span class="keyword">auto</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">constructFrom</a>(</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>    <span class="keyword">const</span> NeoN::Executor exec,</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; nfMesh,</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    <span class="keyword">const</span> FoamFieldType&amp; in</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>)</div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>{</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    <span class="keyword">using </span>ContainerType = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamFieldType&gt;::container_type</a>;</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    <span class="keyword">using </span>MappedType = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FoamFieldType&gt;::mapped_type</a>;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (NeoFOAM::detail::isVolumeField&lt;ContainerType&gt;)</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    {</div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>        ContainerType out(exec, in.name(), nfMesh, <a class="code hl_function" href="namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206">readVolBoundaryConditions</a>(nfMesh, in));</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>        out.internalVector() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, in.primitiveField());</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        out.correctBoundaryConditions();</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>        <span class="keywordflow">return</span> out;</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    }</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (NeoFOAM::detail::isSurfaceField&lt;ContainerType&gt;)</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    {</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>        <span class="keyword">using </span>FoamComponentType = <span class="keyword">typename</span> FoamFieldType::cmptType;</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>        ContainerType out(exec, in.name(), nfMesh, <a class="code hl_function" href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">readSurfaceBoundaryConditions</a>(nfMesh, in));</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>        <span class="keyword">const</span> std::size_t nInt = nfMesh.nInternalFaces();</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        <span class="keyword">const</span> std::size_t nBnd = nfMesh.boundaryMesh().offset().back();</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        <span class="keyword">const</span> std::size_t nFaces = nInt + nBnd;</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        NF_DINFO(</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>            <span class="stringliteral">&quot;Internal: &quot;</span> + std::to_string(nInt) + <span class="stringliteral">&quot;, Boundary: &quot;</span> + std::to_string(nBnd)</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>            + <span class="stringliteral">&quot;, nFaces: &quot;</span> + std::to_string(nFaces)</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        );</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        Foam::Field&lt;FoamComponentType&gt; flat(nFaces);</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>        Foam::Field&lt;FoamComponentType&gt; bval(nBnd);</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        <span class="comment">// Internal faces first: [0, nInt)</span></div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        forAll(in, facei)</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>        {</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            <span class="keywordflow">if</span> (<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(facei) &lt; nInt)</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>            {</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                flat[facei] = <a class="code hl_function" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a>(in[facei]);</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            }</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>        }</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <span class="comment">// Boundary faces appended in patch order: [nInt, nFaces)</span></div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        Foam::label idx = <span class="keyword">static_cast&lt;</span>Foam::label<span class="keyword">&gt;</span>(nInt);</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        Foam::label bi = 0;</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        forAll(in.boundaryField(), patchi)</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>        {</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="keyword">const</span> <span class="keyword">auto</span>&amp; pin = in.boundaryField()[patchi];</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            forAll(pin, facei)</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>            {</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                flat[idx] = <a class="code hl_function" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a>(pin[facei]);</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                bval[bi] = <a class="code hl_function" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a>(pin[facei]);</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                ++idx;</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                ++bi;</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>            }</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>        }</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>        <span class="comment">// (Optional) asserts in debug:</span></div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>        NF_ASSERT_EQUAL(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(idx), nFaces);</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        NF_ASSERT_EQUAL(<span class="keyword">static_cast&lt;</span>std::size_t<span class="keyword">&gt;</span>(bi), nBnd);</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        out.internalVector() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, flat);</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>        out.boundaryData().value() = <a class="code hl_function" href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">fromFoamField</a>(exec, bval);</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>        out.correctBoundaryConditions();</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>        <span class="keywordflow">return</span> out;</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    }</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    {</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>        NF_ASSERT(</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>            (!std::is_same_v&lt;ContainerType, ContainerType&gt;),</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>            <span class="stringliteral">&quot;TypeMap&lt;FoamFieldType&gt;::container_type must be VolumeField&lt;ValueType&gt; or &quot;</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>            <span class="stringliteral">&quot;SurfaceField&lt;ValueType&gt;.&quot;</span></div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>        );</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    }</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>}</div>
 </div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span> </div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> FieldType&gt;</div>
+<div class="foldopen" id="foldopen00256" data-start="{" data-end="};">
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html">  256</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1CreateFromFoamField.html">CreateFromFoamField</a></div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>{</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">  260</a></span>    <span class="keyword">const</span> NeoN::Executor <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">exec</a>;</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">  261</a></span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">nfMesh</a>;</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">  262</a></span>    <span class="keyword">const</span> FieldType&amp; <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">foamField</a>;</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">  263</a></span>    std::string <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">name</a> = <span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">  264</a></span>    std::int64_t <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">iterationIndex</a> = 0;</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">  265</a></span>    std::int64_t <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">subCycleIndex</a> = -1;</div>
 <div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span> </div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> FieldType&gt;</div>
-<div class="foldopen" id="foldopen00274" data-start="{" data-end="};">
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html">  274</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1CreateFromFoamField.html">CreateFromFoamField</a></div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>{</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span> </div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">  278</a></span>    <span class="keyword">const</span> NeoN::Executor <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">exec</a>;</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">  279</a></span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">nfMesh</a>;</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">  280</a></span>    <span class="keyword">const</span> FieldType&amp; <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">foamField</a>;</div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">  281</a></span>    std::string <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">name</a> = <span class="stringliteral">&quot;&quot;</span>;</div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">  282</a></span>    std::int64_t <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">iterationIndex</a> = 0;</div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">  283</a></span>    std::int64_t <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">subCycleIndex</a> = -1;</div>
+<div class="foldopen" id="foldopen00267" data-start="{" data-end="}">
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f">  267</a></span>    fvcc::VectorDocument <a class="code hl_function" href="classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f">operator()</a>(NeoN::Database&amp; db)</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    {</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        <span class="keyword">using </span>type_container_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FieldType&gt;::container_type</a>;</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        type_container_t convertedField = <a class="code hl_function" href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">constructFrom</a>(<a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">exec</a>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">nfMesh</a>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">foamField</a>);</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">name</a> != <span class="stringliteral">&quot;&quot;</span>)</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>        {</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>            convertedField.name = <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">name</a>;</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>        }</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        <span class="keyword">const</span> Foam::fvMesh&amp; mesh = <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">foamField</a>.mesh();</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>        <span class="keyword">const</span> Foam::Time&amp; runTime = mesh.time();</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>        std::int64_t timeIndex = runTime.timeIndex();</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span> </div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>        NeoN::Field&lt;typename type_container_t::VectorValueType&gt; field(</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>            convertedField.exec(),</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>            convertedField.internalVector(),</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>            convertedField.boundaryData()</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>        );</div>
 <div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span> </div>
-<div class="foldopen" id="foldopen00285" data-start="{" data-end="}">
-<div class="line"><a id="l00285" name="l00285"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f">  285</a></span>    fvcc::VectorDocument <a class="code hl_function" href="classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f">operator()</a>(NeoN::Database&amp; db)</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>    {</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>        <span class="keyword">using </span>type_container_t = <span class="keyword">typename</span> <a class="code hl_struct" href="structNeoFOAM_1_1TypeMap.html">TypeMap&lt;FieldType&gt;::container_type</a>;</div>
-<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>        type_container_t convertedField = <a class="code hl_function" href="namespaceNeoFOAM.html#a5dc4904dc0c956553a19e5dc2af70ff2">constructFrom</a>(<a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">exec</a>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">nfMesh</a>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">foamField</a>);</div>
-<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">name</a> != <span class="stringliteral">&quot;&quot;</span>)</div>
-<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>        {</div>
-<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>            convertedField.name = <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">name</a>;</div>
-<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>        }</div>
-<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>        <span class="keyword">const</span> Foam::fvMesh&amp; mesh = <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">foamField</a>.mesh();</div>
-<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>        <span class="keyword">const</span> Foam::Time&amp; runTime = mesh.time();</div>
-<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span>        std::int64_t timeIndex = runTime.timeIndex();</div>
-<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span> </div>
-<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>        NeoN::Field&lt;typename type_container_t::VectorValueType&gt; field(</div>
-<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>            convertedField.exec(),</div>
-<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>            convertedField.internalVector(),</div>
-<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>            convertedField.boundaryData()</div>
-<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>        );</div>
-<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span> </div>
-<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>        type_container_t registeredField(</div>
-<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>            convertedField.exec(),</div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>            convertedField.name,</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span>            convertedField.mesh(),</div>
-<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>            field,</div>
-<div class="line"><a id="l00308" name="l00308"></a><span class="lineno">  308</span>            convertedField.boundaryConditions(),</div>
-<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span>            db,</div>
-<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span>            <span class="stringliteral">&quot;&quot;</span>,</div>
-<div class="line"><a id="l00311" name="l00311"></a><span class="lineno">  311</span>            <span class="stringliteral">&quot;&quot;</span></div>
-<div class="line"><a id="l00312" name="l00312"></a><span class="lineno">  312</span>        );</div>
-<div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span> </div>
-<div class="line"><a id="l00314" name="l00314"></a><span class="lineno">  314</span>        <span class="keywordflow">return</span> NeoN::Document(</div>
-<div class="line"><a id="l00315" name="l00315"></a><span class="lineno">  315</span>            {{<span class="stringliteral">&quot;name&quot;</span>, convertedField.name},</div>
-<div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span>             {<span class="stringliteral">&quot;timeIndex&quot;</span>, timeIndex},</div>
-<div class="line"><a id="l00317" name="l00317"></a><span class="lineno">  317</span>             {<span class="stringliteral">&quot;iterationIndex&quot;</span>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">iterationIndex</a>},</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>             {<span class="stringliteral">&quot;subCycleIndex&quot;</span>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">subCycleIndex</a>},</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span>             {<span class="stringliteral">&quot;field&quot;</span>, registeredField}},</div>
-<div class="line"><a id="l00320" name="l00320"></a><span class="lineno">  320</span>            fvcc::validateVectorDoc</div>
-<div class="line"><a id="l00321" name="l00321"></a><span class="lineno">  321</span>        );</div>
-<div class="line"><a id="l00322" name="l00322"></a><span class="lineno">  322</span>    }</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span>        type_container_t registeredField(</div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>            convertedField.exec(),</div>
+<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span>            convertedField.name,</div>
+<div class="line"><a id="l00288" name="l00288"></a><span class="lineno">  288</span>            convertedField.mesh(),</div>
+<div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span>            field,</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span>            convertedField.boundaryConditions(),</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span>            db,</div>
+<div class="line"><a id="l00292" name="l00292"></a><span class="lineno">  292</span>            <span class="stringliteral">&quot;&quot;</span>,</div>
+<div class="line"><a id="l00293" name="l00293"></a><span class="lineno">  293</span>            <span class="stringliteral">&quot;&quot;</span></div>
+<div class="line"><a id="l00294" name="l00294"></a><span class="lineno">  294</span>        );</div>
+<div class="line"><a id="l00295" name="l00295"></a><span class="lineno">  295</span> </div>
+<div class="line"><a id="l00296" name="l00296"></a><span class="lineno">  296</span>        <span class="keywordflow">return</span> NeoN::Document(</div>
+<div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>            {{<span class="stringliteral">&quot;name&quot;</span>, convertedField.name},</div>
+<div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>             {<span class="stringliteral">&quot;timeIndex&quot;</span>, timeIndex},</div>
+<div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>             {<span class="stringliteral">&quot;iterationIndex&quot;</span>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">iterationIndex</a>},</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span>             {<span class="stringliteral">&quot;subCycleIndex&quot;</span>, <a class="code hl_variable" href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">subCycleIndex</a>},</div>
+<div class="line"><a id="l00301" name="l00301"></a><span class="lineno">  301</span>             {<span class="stringliteral">&quot;field&quot;</span>, registeredField}},</div>
+<div class="line"><a id="l00302" name="l00302"></a><span class="lineno">  302</span>            fvcc::validateVectorDoc</div>
+<div class="line"><a id="l00303" name="l00303"></a><span class="lineno">  303</span>        );</div>
+<div class="line"><a id="l00304" name="l00304"></a><span class="lineno">  304</span>    }</div>
 </div>
-<div class="line"><a id="l00323" name="l00323"></a><span class="lineno">  323</span>};</div>
+<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span>};</div>
 </div>
-<div class="line"><a id="l00324" name="l00324"></a><span class="lineno">  324</span> </div>
-<div class="line"><a id="l00325" name="l00325"></a><span class="lineno">  325</span>}; <span class="comment">// namespace Foam</span></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html">NeoFOAM::CreateFromFoamField</a></div><div class="ttdoc">Creates a VectorDocument from an existing Foam Field.</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00274">readers.hpp:275</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a0b659c2eb72285147dd9d0622203c9c7"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">NeoFOAM::CreateFromFoamField::subCycleIndex</a></div><div class="ttdeci">std::int64_t subCycleIndex</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00283">readers.hpp:283</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a2ea39ed09f09772fece69da08f93c00f"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f">NeoFOAM::CreateFromFoamField::operator()</a></div><div class="ttdeci">fvcc::VectorDocument operator()(NeoN::Database &amp;db)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00285">readers.hpp:285</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a62ab45d4ea5e6815e38d82ecfda3f169"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">NeoFOAM::CreateFromFoamField::foamField</a></div><div class="ttdeci">const FieldType &amp; foamField</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00280">readers.hpp:280</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a67c825247791986116ce46a30ecd66a3"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">NeoFOAM::CreateFromFoamField::exec</a></div><div class="ttdeci">const NeoN::Executor exec</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00278">readers.hpp:278</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a6e3d71162913f61365a2373c2396feed"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">NeoFOAM::CreateFromFoamField::nfMesh</a></div><div class="ttdeci">const NeoN::UnstructuredMesh &amp; nfMesh</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00279">readers.hpp:279</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_ac5497af5c8e233a15d3ef9f3c622bb49"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">NeoFOAM::CreateFromFoamField::name</a></div><div class="ttdeci">std::string name</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00281">readers.hpp:281</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_ae2f5cd13138970d78a2462ae06a4b68f"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">NeoFOAM::CreateFromFoamField::iterationIndex</a></div><div class="ttdeci">std::int64_t iterationIndex</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00282">readers.hpp:282</a></div></div>
+<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
+<div class="line"><a id="l00307" name="l00307"></a><span class="lineno">  307</span>}; <span class="comment">// namespace Foam</span></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html">NeoFOAM::CreateFromFoamField</a></div><div class="ttdoc">Creates a VectorDocument from an existing Foam Field.</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00256">readers.hpp:257</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a0b659c2eb72285147dd9d0622203c9c7"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7">NeoFOAM::CreateFromFoamField::subCycleIndex</a></div><div class="ttdeci">std::int64_t subCycleIndex</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00265">readers.hpp:265</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a2ea39ed09f09772fece69da08f93c00f"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f">NeoFOAM::CreateFromFoamField::operator()</a></div><div class="ttdeci">fvcc::VectorDocument operator()(NeoN::Database &amp;db)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00267">readers.hpp:267</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a62ab45d4ea5e6815e38d82ecfda3f169"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a62ab45d4ea5e6815e38d82ecfda3f169">NeoFOAM::CreateFromFoamField::foamField</a></div><div class="ttdeci">const FieldType &amp; foamField</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00262">readers.hpp:262</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a67c825247791986116ce46a30ecd66a3"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a67c825247791986116ce46a30ecd66a3">NeoFOAM::CreateFromFoamField::exec</a></div><div class="ttdeci">const NeoN::Executor exec</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00260">readers.hpp:260</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_a6e3d71162913f61365a2373c2396feed"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed">NeoFOAM::CreateFromFoamField::nfMesh</a></div><div class="ttdeci">const NeoN::UnstructuredMesh &amp; nfMesh</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00261">readers.hpp:261</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_ac5497af5c8e233a15d3ef9f3c622bb49"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49">NeoFOAM::CreateFromFoamField::name</a></div><div class="ttdeci">std::string name</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00263">readers.hpp:263</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1CreateFromFoamField_html_ae2f5cd13138970d78a2462ae06a4b68f"><div class="ttname"><a href="classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f">NeoFOAM::CreateFromFoamField::iterationIndex</a></div><div class="ttdeci">std::int64_t iterationIndex</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00264">readers.hpp:264</a></div></div>
 <div class="ttc" id="aconvert_8hpp_html"><div class="ttname"><a href="convert_8hpp.html">convert.hpp</a></div></div>
 <div class="ttc" id="afieldTraits_8hpp_html"><div class="ttname"><a href="fieldTraits_8hpp.html">fieldTraits.hpp</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a1dfe753898e56c3e2e7b5c6f00bd2a4f"><div class="ttname"><a href="namespaceNeoFOAM.html#a1dfe753898e56c3e2e7b5c6f00bd2a4f">NeoFOAM::fromFoamField</a></div><div class="ttdeci">auto fromFoamField(const NeoN::Executor &amp;exec, const FoamType &amp;field)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00019">readers.hpp:19</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a5dc4904dc0c956553a19e5dc2af70ff2"><div class="ttname"><a href="namespaceNeoFOAM.html#a5dc4904dc0c956553a19e5dc2af70ff2">NeoFOAM::constructFrom</a></div><div class="ttdeci">auto constructFrom(const NeoN::Executor exec, const NeoN::UnstructuredMesh &amp;nfMesh, const FoamType &amp;in)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00123">readers.hpp:123</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a6cb4d89d1e44667e5a66f5119bad9206"><div class="ttname"><a href="namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206">NeoFOAM::readVolBoundaryConditions</a></div><div class="ttdeci">auto readVolBoundaryConditions(const NeoN::UnstructuredMesh &amp;nfMesh, const FoamType &amp;ofVolField)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00033">readers.hpp:33</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_adb365cf8e725db6dbfc0a758c392e2b1"><div class="ttname"><a href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">NeoFOAM::readSurfaceBoundaryConditions</a></div><div class="ttdeci">auto readSurfaceBoundaryConditions(const NeoN::UnstructuredMesh &amp;uMesh, const FoamType &amp;surfaceField)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00141">readers.hpp:141</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_ab7276ff683225b6140acfa56618926b5"><div class="ttname"><a href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">NeoFOAM::constructFrom</a></div><div class="ttdeci">auto constructFrom(const NeoN::Executor exec, const NeoN::UnstructuredMesh &amp;nfMesh, const FoamFieldType &amp;in)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00172">readers.hpp:172</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_adb365cf8e725db6dbfc0a758c392e2b1"><div class="ttname"><a href="namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1">NeoFOAM::readSurfaceBoundaryConditions</a></div><div class="ttdeci">auto readSurfaceBoundaryConditions(const NeoN::UnstructuredMesh &amp;uMesh, const FoamType &amp;surfaceField)</div><div class="ttdef"><b>Definition</b> <a href="readers_8hpp_source.html#l00123">readers.hpp:123</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_af69b228bd9e492814da093da0a51d1ac"><div class="ttname"><a href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">NeoFOAM::convert</a></div><div class="ttdeci">NeoN::Vec3 convert(const Foam::vector &amp;in)</div></div>
 <div class="ttc" id="astructNeoFOAM_1_1TypeMap_html"><div class="ttname"><a href="structNeoFOAM_1_1TypeMap.html">NeoFOAM::TypeMap</a></div><div class="ttdef"><b>Definition</b> <a href="typeConversion_8hpp_source.html#l00017">typeConversion.hpp:18</a></div></div>
 <div class="ttc" id="atypeConversion_8hpp_html"><div class="ttname"><a href="typeConversion_8hpp.html">typeConversion.hpp</a></div></div>
