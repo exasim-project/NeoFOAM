@@ -54,14 +54,16 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CUDA_ARCHITECTURES=90 \
-        -DNeoN_WITH_THREADS=OFF
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CXX_COMPILER=hipcc \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
-        -DNeoN_WITH_THREADS=OFF
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="
@@ -71,4 +73,4 @@ cmake --build --preset $PRESET
 # Step 3: Run Tests
 # -------------------------
 echo "=== Running NeoFOAM tests ==="
-ctest --preset $PRESET -R adapter --output-on-failure
+ctest --preset $PRESET -E bench --output-on-failure
