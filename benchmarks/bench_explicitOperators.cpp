@@ -90,7 +90,7 @@ TEST_CASE("DivOperator")
             ofPhi[facei] = facei;
         }
 
-        auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, ofPhi);
+        auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
 
         SECTION("with Allocation")
         {
@@ -188,7 +188,7 @@ TEST_CASE("LaplacianOperator")
             Foam::dimensionedScalar("Gamma", Foam::dimless, 1.0)
         );
 
-        auto nfGamma = NeoFOAM::constructSurfaceField(exec, nfMesh, ofGamma);
+        auto nfGamma = NeoFOAM::constructFrom(exec, nfMesh, ofGamma);
 
         SECTION("with Allocation")
         {
@@ -368,7 +368,7 @@ TEST_CASE("FaceInterpolation")
             ofPhi[facei] = facei;
         }
 
-        auto nfPhi = NeoFOAM::constructSurfaceField(exec, nfMesh, ofPhi);
+        auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
 
         SECTION("with Allocation")
         {
