@@ -96,8 +96,8 @@ TEST_CASE("advection-diffusion-equation_scalar")
         auto& nfOldT = fvcc::oldTime(nfT);
         nfOldT.internalVector() = nfT.internalVector();
 
-        auto nfPhi = nf::constructSurfaceField(rt.exec, rt.nfMesh, ofPhi);
-        auto nfGamma = nf::constructSurfaceField(rt.exec, rt.nfMesh, ofGamma);
+        auto nfPhi = nf::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+        auto nfGamma = nf::constructFrom(rt.exec, rt.nfMesh, ofGamma);
 
         SECTION(std::string("explicit-time-integration"))
         {
