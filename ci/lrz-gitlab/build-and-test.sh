@@ -73,4 +73,4 @@ cmake --build --preset $PRESET
 # Step 3: Run Tests
 # -------------------------
 echo "=== Running NeoFOAM tests ==="
-ctest --preset $PRESET -R adapter --output-on-failure
+ctest --preset $PRESET -E bench --output-on-failure
