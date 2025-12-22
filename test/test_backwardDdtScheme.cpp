@@ -87,7 +87,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         NeoN::Dictionary fvSchemes;
         NeoN::Dictionary ddtSchemes;
-        ddtSchemes.insert("default", std::string("backward"));
+        ddtSchemes.insert("ddt(nfT)", std::string("BDF2"));
         fvSchemes.insert("ddtSchemes", ddtSchemes);
 
         ddtOp.read(NeoN::Input {fvSchemes});

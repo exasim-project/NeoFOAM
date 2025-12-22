@@ -29,6 +29,8 @@ TEST_CASE("PressureVelocityCoupling")
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
+    auto& schemesDict = rt.fvSchemesDict;
+    schemesDict = nf::mapFvSchemes(schemesDict);
 
     auto ofU = randomVectorField(runTime, mesh, "ofU");
     auto ofp = randomScalarField(runTime, mesh, "ofp");
@@ -103,7 +105,7 @@ TEST_CASE("PressureVelocityCoupling")
     SECTION("discreteMomentumFields " + execName)
     {
         nf::PDESolver<NeoN::Vec3> nfUEqn(
-            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+            dsl::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
             nfU,
             rt
         );
@@ -233,7 +235,7 @@ TEST_CASE("PressureVelocityCoupling")
             Foam::solve(ofUEqn);
 
             nf::PDESolver<NeoN::Vec3> nfUEqn(
-                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+                dsl::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
                 nfU,
                 rt
             );
@@ -317,7 +319,7 @@ TEST_CASE("PressureVelocityCoupling")
             Foam::solve(ofUEqn == -Foam::fvc::grad(ofp));
 
             nf::PDESolver<NeoN::Vec3> nfUEqn(
-                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+                dsl::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
                 nfU,
                 rt
             );

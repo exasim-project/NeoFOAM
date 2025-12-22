@@ -17,6 +17,7 @@ target_sources(
           "auxiliary/comparison.cpp"
           # "datastructures/foamMesh.cpp"
           "datastructures/meshAdapter.cpp"
+          "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp")
 
 install(TARGETS NeoFOAM)

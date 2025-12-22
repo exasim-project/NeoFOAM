@@ -68,7 +68,7 @@ TEST_CASE("matrix multiplication")
 
         NeoN::Dictionary fvSchemes;
         NeoN::Dictionary ddtSchemes;
-        ddtSchemes.insert("default", std::string("Euler"));
+        ddtSchemes.insert("ddt(nfT)", std::string("BDF1"));
         fvSchemes.insert("ddtSchemes", ddtSchemes);
         NeoN::Input in = fvSchemes;
 
