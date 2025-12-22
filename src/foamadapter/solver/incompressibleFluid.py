@@ -219,19 +219,7 @@ class IncompressibleFluid(BaseModel):
     name: Literal["IncompressibleFluid"] = "IncompressibleFluid"
     argv: list[str] = []
 
-    # Core component type selection
-    algorithm: Literal["SIMPLE", "PISO", "PIMPLE"] = "PIMPLE"
-    transport_type: Literal["singlePhase"] = "singlePhase"
-    # turbulence is now read from constant/turbulenceProperties file
-
-    pRefCell: int | None = None
-    pRefValue: float | None = None
     maxDeltaT: float = 1e5
-
-    # Lifecycle state tracking
-    files_read: bool = False
-    configured: bool = False
-    setup_complete: bool = False
 
     # === Core Components (private, populated during initialization) ===
     _pressure_velocity: Any | None = None
@@ -249,7 +237,7 @@ class IncompressibleFluid(BaseModel):
 
     def __repr__(self) -> str:
         """Custom repr to avoid OpenFOAM SIGFPE issues in pytest."""
-        return f"IncompressibleFluid(algorithm={self.algorithm}, configured={self.configured})"
+        return "IncompressibleFluid()"
 
     def add_model(self, model: IncompressibleFluidModel) -> "IncompressibleFluid":
         """
@@ -324,20 +312,16 @@ class IncompressibleFluid(BaseModel):
 
         # Read fvSolution for reference cell/value
         # Note: This requires mesh, so actual reading is deferred to BUILD
-        # We just mark files as read here
-        self.files_read = True
 
     @Solver.resolve_dependencies
     def configure_solver(self, config: ConfigContext) -> None:
         """RESOLVE_DEPENDENCIES: Validate solver configuration and connect models."""
-        # Validate algorithm choice (configuration-time check)
-        if self.algorithm not in ["SIMPLE", "PISO", "PIMPLE"]:
-            raise ValueError(f"Unknown algorithm: {self.algorithm}")
-
         # Initialize core components - always non-None after RESOLVE_DEPENDENCIES
         # Components will be fully set up in BUILD stage
+
+        # Create transport model with default single-phase configuration
         self._transport = TransportModel.create(
-            config={"transport_type": self.transport_type}
+            config={"transport_type": "singlePhase"}
         )
 
         # Read turbulence configuration from file
@@ -350,8 +334,6 @@ class IncompressibleFluid(BaseModel):
         # Register with config context
         config.register("transport", self._transport)
         config.register("turbulence", self._turbulence)
-
-        self.configured = True
 
     @Solver.build
     def setup_runtime(self, mesh: Any) -> list[Any]:
@@ -396,11 +378,6 @@ class IncompressibleFluid(BaseModel):
                     "algorithm",
                     depends_on=["fields.p", "mesh"],
                     create=self._create_algorithm,
-                ),
-                lazy(
-                    "_setup_complete",
-                    depends_on=["algorithm"],
-                    create=lambda ctx: setattr(self, "setup_complete", True),
                 ),
             ]
         )

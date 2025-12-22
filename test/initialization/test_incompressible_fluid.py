@@ -181,23 +181,19 @@ def mock_turbulence_models():
             "foamadapter.solver.incompressibleFluid.singlePhaseTransportModel"
         ) as mock_transport,
         patch(
-            "foamadapter.solver.incompressibleFluid.incompressibleTurbulenceModel"
-        ) as mock_turbulence,
-        patch(
             "foamadapter.turbulence.models.incompressibleTurbulenceModel"
         ) as mock_turb_models,
     ):
         mock_transport.return_value = "mock_transport_model"
-        mock_turbulence.New = MagicMock(return_value="mock_turbulence_model")
         mock_turb_models.New = MagicMock(return_value="mock_turbulence_model")
 
-        yield mock_transport, mock_turbulence
+        yield mock_transport, mock_turb_models
 
 
 @pytest.fixture
 def solver_basic():
     """Create a basic IncompressibleFluid solver instance."""
-    return IncompressibleFluid(argv=["test"], algorithm="PIMPLE")
+    return IncompressibleFluid(argv=["test"])
 
 
 # ============================================================================
@@ -210,22 +206,17 @@ def test_solver_creation():
     solver = IncompressibleFluid()
 
     assert solver.name == "IncompressibleFluid"
-    assert solver.algorithm == "PIMPLE"
-    assert solver.files_read is False
-    assert solver.configured is False
-    assert solver.setup_complete is False
+    assert solver.maxDeltaT == 1e5
 
 
 def test_solver_creation_with_custom_params():
     """Test solver creation with custom parameters."""
     solver = IncompressibleFluid(
         argv=["test_app", "-case", "/path/to/case"],
-        algorithm="PIMPLE",
         maxDeltaT=0.1,
     )
 
     assert solver.argv == ["test_app", "-case", "/path/to/case"]
-    assert solver.algorithm == "PIMPLE"
     assert solver.maxDeltaT == 0.1
 
 
@@ -247,7 +238,6 @@ def test_load_stage_execution(solver_basic, mock_pyfoam):
     """Test that LOAD stage executes correctly."""
     solver_basic.load_control_dict()
 
-    assert solver_basic.files_read is True
     # maxDeltaT should be updated from mock
     assert solver_basic.maxDeltaT == 1.0
 
@@ -270,7 +260,6 @@ def test_load_handles_missing_maxDeltaT(solver_basic):
         original_max_delta_t = solver_basic.maxDeltaT
         solver_basic.load_control_dict()
 
-        assert solver_basic.files_read is True
         assert solver_basic.maxDeltaT == original_max_delta_t  # Should keep default
 
 
@@ -295,7 +284,6 @@ def test_resolve_dependencies_stage_execution(
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    assert solver_basic.configured is True
     # Components are created as wrappers in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
@@ -319,18 +307,6 @@ def test_resolve_dependencies_registers_algorithm(
     assert turbulence is not None
     assert transport is solver_basic._transport
     assert turbulence is solver_basic._turbulence
-
-
-def test_resolve_dependencies_validates_algorithm():
-    """Test that invalid algorithm raises ValueError."""
-    # Note: Pydantic validation happens at construction time
-    # We test the configure stage validation
-    solver = IncompressibleFluid(algorithm="PIMPLE")
-    solver.algorithm = "INVALID"  # Bypass Pydantic for testing
-
-    config = ConfigContext()
-    with pytest.raises(ValueError, match="Unknown algorithm"):
-        solver.configure_solver(config)
 
 
 def test_resolve_dependencies_decorator_marked():
@@ -484,17 +460,17 @@ def test_full_initialization_with_initializer(
     initializer = SolverInitializer(solver_basic)
     result = initializer.initialize(mesh=None)
 
-    # All stages should be complete
-    assert solver_basic.files_read
-    assert solver_basic.configured
-    assert solver_basic.setup_complete
-
     # Should return a Context now (not the solver)
     from foamadapter.framework.context import Context
 
     assert isinstance(result, Context)
     assert result.mesh is not None
     assert result.runTime is not None
+
+    # Verify core components are initialized
+    assert solver_basic._transport is not None
+    assert solver_basic._turbulence is not None
+    assert solver_basic._pressure_velocity is not None
 
 
 def test_initialization_order(
@@ -639,26 +615,21 @@ def test_full_solver_lifecycle(
     mock_turbulence_from_file,
 ):
     """Test complete solver lifecycle from creation to initialization."""
-    # 1. Solver creation
-    assert not solver_basic.files_read
-    assert not solver_basic.configured
-    assert not solver_basic.setup_complete
+    # 1. Solver creation - components not yet initialized
+    assert solver_basic._transport is None
+    assert solver_basic._turbulence is None
+    assert solver_basic._pressure_velocity is None
 
     # 2. Initialize with SolverInitializer
     initializer = SolverInitializer(solver_basic)
     initializer.initialize(mesh=None)
 
-    # 3. Verify all stages completed
-    assert solver_basic.files_read
-    assert solver_basic.configured
-    assert solver_basic.setup_complete
-
-    # 4. Verify core components are initialized
+    # 3. Verify core components are initialized
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
     assert solver_basic._pressure_velocity is not None
 
-    # 5. Verify registry has components
+    # 4. Verify registry has components
     assert initializer.config.contains("transport")
     assert initializer.config.contains("turbulence")
 
