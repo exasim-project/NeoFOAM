@@ -4,8 +4,8 @@
 """Algorithms for pressure-velocity coupling."""
 
 from foamadapter.algorithms.pressure_velocity import (
-    PimpleAlgorithm,
+    PimpleMethod,
     PressureVelocityAlgorithm,
 )
 
-__all__ = ["PressureVelocityAlgorithm", "PimpleAlgorithm"]
+__all__ = ["PressureVelocityAlgorithm", "PimpleMethod"]

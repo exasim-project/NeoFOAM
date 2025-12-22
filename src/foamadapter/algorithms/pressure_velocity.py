@@ -31,7 +31,7 @@ from foamadapter.framework.operations import (
 
 
 @runtime_checkable
-class PressureVelocityAlgorithm(Protocol):
+class PressureVelocityAlgorithmProtocol(Protocol):
     """
     Protocol defining the interface for pressure-velocity coupling algorithms.
 
@@ -72,15 +72,42 @@ class PressureVelocityAlgorithm(Protocol):
 
 
 @PluginSystem.register(discriminator_variable="config", discriminator="algorithm_type")
-class PressureVelocityAlgorithmConfig(BaseModel):
+@Model
+class PressureVelocityAlgorithm(BaseModel):
     """
-    Base class for pressure-velocity coupling algorithm configurations.
+    Base class for pressure-velocity coupling algorithms.
 
-    Provides extensibility for different algorithms (SIMPLE, PISO, PIMPLE)
-    using the PluginSystem pattern.
+    Loads fvSolution, detects algorithm type, and dispatches to registered method.
     """
 
     model_config = {"arbitrary_types_allowed": True}
+    algorithm_type: str | None = None
+
+    @Model.load
+    def load_fv_solution(self, path: str = "system/fvSolution") -> None:
+        """Read fvSolution and detect algorithm type."""
+        fv_solution = pyf.dictionary.read(path)
+
+        # Detect algorithm type from available subdictionaries
+        toc = fv_solution.toc()
+        if "PIMPLE" in toc:
+            self.algorithm_type = "PIMPLE"
+        elif "PISO" in toc:
+            self.algorithm_type = "PISO"
+        elif "SIMPLE" in toc:
+            self.algorithm_type = "SIMPLE"
+        else:
+            raise ValueError("No algorithm found in fvSolution")
+
+    @classmethod
+    def from_fv_solution(cls, path: str = "system/fvSolution") -> Any:
+        """Factory: create instance, trigger load, return discriminated subclass."""
+        # Create instance and trigger LOAD stage
+        instance = cls()
+        instance.load_fv_solution(path)
+
+        # Use PluginSystem to instantiate correct registered method
+        return cls.create(config={"algorithm_type": instance.algorithm_type})
 
     @property
     def provides(self) -> list[str]:
@@ -94,7 +121,7 @@ class PressureVelocityAlgorithmConfig(BaseModel):
 
     @classmethod
     def create(cls, *, config: dict[str, Any]) -> Any:
-        """Factory classmethod to create algorithm config from config dict.
+        """Factory classmethod to create algorithm from config dict.
 
         Implemented explicitly for type safety. Calls plugin_model generated
         by @PluginSystem.register decorator.
@@ -124,30 +151,49 @@ class PressureVelocityAlgorithmConfig(BaseModel):
             field("phi", create_phi, depends_on=["fields.U"]),
         ]
 
-    def create_algorithm(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """
-        Create the algorithm instance.
 
-        Args:
-            pRefCell: Reference cell for pressure
-            pRefValue: Reference value for pressure
-
-        Returns:
-            Algorithm instance
-        """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement create_algorithm()"
-        )
-
-
-@PressureVelocityAlgorithmConfig.register
-class PimpleConfig(BaseModel):
-    """PIMPLE algorithm configuration."""
+@PressureVelocityAlgorithm.register
+@Model
+class PimpleMethod(BaseModel):
+    """PIMPLE algorithm - unified config and implementation."""
 
     algorithm_type: Literal["PIMPLE"] = "PIMPLE"
     model_config = {"arbitrary_types_allowed": True}
+
+    # Settings from fvSolution
+    nCorrectors: int = 2
+    nNonOrthogonalCorrectors: int = 0
+    momentumPredictor: bool = True
+
+    # Reference cell/value
+    pRefCell: int | None = None
+    pRefValue: float | None = None
+
+    # Internal state
+    _ops: OperationCollection | None = None
+
+    @Model.load
+    def load_fv_solution(self) -> None:
+        """Read PIMPLE-specific settings from fvSolution."""
+        fv_solution = pyf.dictionary.read("system/fvSolution")
+        pimple_dict = fv_solution.subDict("PIMPLE")
+
+        try:
+            self.nCorrectors = pimple_dict.get[int]("nCorrectors")
+        except (KeyError, AttributeError):
+            pass  # Use defaults
+
+        try:
+            self.nNonOrthogonalCorrectors = pimple_dict.get[int](
+                "nNonOrthogonalCorrectors"
+            )
+        except (KeyError, AttributeError):
+            pass
+
+        try:
+            self.momentumPredictor = pimple_dict.get[bool]("momentumPredictor")
+        except (KeyError, AttributeError):
+            pass
 
     @property
     def provides(self) -> list[str]:
@@ -167,12 +213,11 @@ class PimpleConfig(BaseModel):
         from foamadapter.framework.initialization.helpers import model
 
         # Get base fields (p, U, phi) from parent class
-        initializers = PressureVelocityAlgorithmConfig.setup(self)
+        initializers = PressureVelocityAlgorithm.setup(self)
 
         # Add PIMPLE-specific control as a model (not field)
         def create_pimple_control(context: dict[str, Any]) -> Any:
             mesh = context["mesh"]
-            # Use module-level import to allow mocking
             return pyf.pimpleControl(mesh)
 
         initializers.append(
@@ -181,67 +226,6 @@ class PimpleConfig(BaseModel):
 
         return initializers
 
-    def create_algorithm(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> "PimpleAlgorithm":
-        """Create PIMPLE algorithm instance."""
-        return PimpleAlgorithm(pRefCell=pRefCell, pRefValue=pRefValue)
-
-
-@PressureVelocityAlgorithmConfig.register
-class SimpleConfig(BaseModel):
-    """SIMPLE algorithm configuration (not yet implemented)."""
-
-    algorithm_type: Literal["SIMPLE"] = "SIMPLE"
-    model_config = {"arbitrary_types_allowed": True}
-
-    def create(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """Create SIMPLE algorithm instance."""
-        raise NotImplementedError("SIMPLE algorithm not yet implemented")
-
-    def setup(
-        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        raise NotImplementedError("SIMPLE algorithm not yet implemented")
-
-
-@PressureVelocityAlgorithmConfig.register
-class PisoConfig(BaseModel):
-    """PISO algorithm configuration (not yet implemented)."""
-
-    algorithm_type: Literal["PISO"] = "PISO"
-    model_config = {"arbitrary_types_allowed": True}
-
-    def create(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """Create PISO algorithm instance."""
-        raise NotImplementedError("PISO algorithm not yet implemented")
-
-    def setup(
-        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        raise NotImplementedError("PISO algorithm not yet implemented")
-
-
-@Model
-class PimpleAlgorithm:
-    """PIMPLE algorithm - self-contained with its own operations."""
-
-    def __init__(self, pRefCell: int | None = None, pRefValue: float | None = None):
-        """
-        Initialize PIMPLE algorithm.
-
-        Args:
-            pRefCell: Reference cell for pressure
-            pRefValue: Reference value for pressure
-        """
-        self.pRefCell = pRefCell
-        self.pRefValue = pRefValue
-        self._ops: OperationCollection | None = None
-
     def name(self) -> str:
         return "PIMPLE"
 
@@ -249,14 +233,13 @@ class PimpleAlgorithm:
         return pyf.pimpleControl(mesh)
 
     def operations(self) -> OperationCollection:
-        """Return algorithm-specific operations - just momentum and continuity."""
+        """Return algorithm-specific operations."""
         if self._ops is None:
             funcs = decorated_member_functions(self)
             self._ops = OperationCollection()
             for func in funcs:
                 op = Operation.create_SeqOp(func)
                 self._ops.add(op)
-
         return self._ops
 
     @Model.operation(operation_number=1)
@@ -265,7 +248,7 @@ class PimpleAlgorithm:
         U: Any,
         phi: Any,
         p: Any,
-        turbulence: Any,
+        turbulence: ModelAnnotation[Any],
         pimple_control: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """

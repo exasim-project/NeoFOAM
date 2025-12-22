@@ -45,12 +45,12 @@ def test_incompressible_fluid_structure():
 def test_incompressible_fluid_operations_registration():
     """Test that operations are properly registered."""
     from foamadapter.solver import IncompressibleFluid
-    from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
+    from foamadapter.algorithms.pressure_velocity import PimpleMethod
 
     solver = IncompressibleFluid(argv=["test"])
 
     # Mock algorithm initialization to avoid full OpenFOAM setup
-    solver._pressure_velocity = PimpleAlgorithm()
+    solver._pressure_velocity = PimpleMethod()
 
     ops = solver.operations()
 
@@ -86,12 +86,12 @@ def test_incompressible_fluid_operations_registration():
 def test_incompressible_fluid_operation_dependencies():
     """Test that operation dependencies are correctly set."""
     from foamadapter.solver import IncompressibleFluid
-    from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
+    from foamadapter.algorithms.pressure_velocity import PimpleMethod
 
     solver = IncompressibleFluid(argv=["test"])
 
     # Mock algorithm initialization to avoid full OpenFOAM setup
-    solver._pressure_velocity = PimpleAlgorithm()
+    solver._pressure_velocity = PimpleMethod()
 
     ops = solver.operations()
 
@@ -131,9 +131,9 @@ def test_cfl_condition_class():
 
 def test_algorithm_operations():
     """Test that algorithm provides momentum and continuity operations."""
-    from foamadapter.algorithms.pressure_velocity import PimpleAlgorithm
+    from foamadapter.algorithms.pressure_velocity import PimpleMethod
 
-    algorithm = PimpleAlgorithm()
+    algorithm = PimpleMethod()
     ops = algorithm.operations()
 
     # Algorithm should have exactly 2 operations

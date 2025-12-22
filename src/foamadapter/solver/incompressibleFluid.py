@@ -8,11 +8,12 @@ import pybFoam as pyf
 from pybFoam import (
     Info,
 )
-from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel
+from pybFoam.turbulence import singlePhaseTransportModel
 from pydantic import BaseModel
 
+from foamadapter.turbulence import TurbulenceModel as NewTurbulenceModel
 from foamadapter.algorithms.pressure_velocity import (
-    PressureVelocityAlgorithmConfig,
+    PressureVelocityAlgorithm,
 )
 from foamadapter.core.plugin_system import PluginSystem
 from foamadapter.framework.context import (
@@ -141,96 +142,6 @@ class SinglePhaseTransport(BaseModel):
         return singlePhaseTransportModel(U, phi)
 
 
-@PluginSystem.register(discriminator_variable="config", discriminator="turbulence_type")
-class TurbulenceModel(BaseModel):
-    """
-    Base class for turbulence models.
-
-    Provides extensibility for different turbulence models (OpenFOAM RTS,
-    laminar, custom implementations) within the IncompressibleFluid solver.
-    """
-
-    model_config = {"arbitrary_types_allowed": True}
-
-    @property
-    def provides(self) -> list[str]:
-        """Fields this turbulence model adds to context."""
-        return ["turbulence"]
-
-    @property
-    def requires(self) -> list[str]:
-        """Fields this turbulence model needs."""
-        return ["U", "phi", "laminarTransport"]
-
-    @classmethod
-    def create(cls, *, config: dict[str, Any]) -> Any:
-        """Factory classmethod to create turbulence model from config.
-
-        Implemented explicitly for type safety. Calls plugin_model generated
-        by @PluginSystem.register decorator.
-        """
-        return cls.plugin_model(config=config)  # type: ignore[attr-defined]
-
-    def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
-        """
-        Create the turbulence model instance.
-
-        Args:
-            U: Velocity field
-            phi: Face flux field
-            transport: Transport model
-
-        Returns:
-            Turbulence model object
-        """
-        ...
-
-    def setup(self, builder: Any) -> Any:
-        """
-        Create instance and register with builder.
-
-        Uses builder.get_field() to retrieve required fields,
-        then calls create_instance() and adds result to builder.
-        """
-        U = builder.get_field("U")
-        phi = builder.get_field("phi")
-        transport = builder.get_field("laminarTransport")
-        turbulence = self.create_instance(U, phi, transport)
-        builder.add_field("turbulence", turbulence)
-        return turbulence
-
-
-@TurbulenceModel.register
-class OpenFOAMTurbulence(BaseModel):
-    """Wrapper for OpenFOAM's turbulence models (default)."""
-
-    turbulence_type: Literal["openfoam_rts"] = "openfoam_rts"
-    model_config = {"arbitrary_types_allowed": True}
-
-    def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
-        """Create turbulence model using OpenFOAM's runtime selection."""
-        return incompressibleTurbulenceModel.New(U, phi, transport)
-
-
-@TurbulenceModel.register
-class LaminarModel(BaseModel):
-    """Explicit laminar (no turbulence) - useful for testing."""
-
-    turbulence_type: Literal["laminar"] = "laminar"
-    model_config = {"arbitrary_types_allowed": True}
-
-    def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
-        """
-        Create a mock laminar turbulence model for testing.
-
-        Note: This returns a minimal turbulence object. For production use,
-        use OpenFOAM's laminar model via openfoam type.
-        """
-        # For now, return OpenFOAM's turbulence model which will read
-        # the laminar model from constant/momentumTransport
-        return incompressibleTurbulenceModel.New(U, phi, transport)
-
-
 # ============================================================================
 # Optional Physics Model Base Class
 # ============================================================================
@@ -311,7 +222,7 @@ class IncompressibleFluid(BaseModel):
     # Core component type selection
     algorithm: Literal["SIMPLE", "PISO", "PIMPLE"] = "PIMPLE"
     transport_type: Literal["singlePhase"] = "singlePhase"
-    turbulence_type: Literal["openfoam_rts", "laminar"] = "openfoam_rts"
+    # turbulence is now read from constant/turbulenceProperties file
 
     pRefCell: int | None = None
     pRefValue: float | None = None
@@ -326,8 +237,8 @@ class IncompressibleFluid(BaseModel):
     _pressure_velocity: Any | None = None
     _transport: Any | None = None
     _turbulence: Any | None = None
-    _algorithm_config: dict[str, Any] | None = (
-        None  # Algorithm configuration for BUILD stage
+    _algorithm_config: Any | None = (
+        None  # Algorithm instance (PimpleMethod/etc) for BUILD stage
     )
     _fvSolution: Any | None = (
         None  # Keep fvSolution alive to prevent C++ object destruction
@@ -391,14 +302,14 @@ class IncompressibleFluid(BaseModel):
         pRefCell, pRefValue = pyf.setRefCell(p, pimple_dict)
         mesh.setFluxRequired(pyf.Word("p"))
 
-        # Create algorithm instance using config system
+        # Create algorithm instance using stored config
         if self._algorithm_config is None:
             raise RuntimeError("Algorithm config not initialized")
-        algorithm_wrapper = PressureVelocityAlgorithmConfig.create(
-            config=self._algorithm_config
-        )
-        actual_config = algorithm_wrapper.config  # type: ignore[attr-defined]
-        self._pressure_velocity = actual_config.create_algorithm(pRefCell, pRefValue)
+
+        # Set reference cell/value on algorithm
+        self._algorithm_config.pRefCell = pRefCell
+        self._algorithm_config.pRefValue = pRefValue
+        self._pressure_velocity = self._algorithm_config
         return self._pressure_velocity
 
     @Solver.load
@@ -428,13 +339,13 @@ class IncompressibleFluid(BaseModel):
         self._transport = TransportModel.create(
             config={"transport_type": self.transport_type}
         )
-        self._turbulence = TurbulenceModel.create(
-            config={"turbulence_type": self.turbulence_type}
-        )
 
-        # Algorithm config will be used in BUILD to create instance with pRefCell/pRefValue
-        # Store config for later use
-        self._algorithm_config = {"algorithm_type": self.algorithm}
+        # Read turbulence configuration from file
+        self._turbulence = NewTurbulenceModel.from_file("constant/turbulenceProperties")
+
+        # Create algorithm from fvSolution (auto-detects type and loads settings)
+        algorithm_wrapper = PressureVelocityAlgorithm.from_fv_solution()
+        self._algorithm_config = algorithm_wrapper.config  # type: ignore[attr-defined]
 
         # Register with config context
         config.register("transport", self._transport)
@@ -459,33 +370,24 @@ class IncompressibleFluid(BaseModel):
 
         # Algorithm registers its fields (p, U, phi, and optionally control fields)
         assert self._algorithm_config is not None  # Already validated above
-        algorithm_wrapper = PressureVelocityAlgorithmConfig.create(
-            config=self._algorithm_config
-        )
-        actual_config = algorithm_wrapper.config  # type: ignore[attr-defined]
-        initializers.extend(actual_config.setup())
+        initializers.extend(self._algorithm_config.setup())
 
-        # Solver registers transport/turbulence (cross-cutting concerns)
+        # Solver registers transport (cross-cutting concern)
         initializers.extend(
             [
                 field(
                     "laminarTransport",
                     depends_on=["fields.U", "fields.phi"],
-                    create=lambda ctx: self._transport.config.create_instance(
+                    create=lambda ctx: self._transport.config.create_instance(  # type: ignore[attr-defined]
                         ctx["fields.U"], ctx["fields.phi"]
-                    ),
-                ),
-                field(
-                    "turbulence",
-                    depends_on=["fields.U", "fields.phi", "fields.laminarTransport"],
-                    create=lambda ctx: self._turbulence.config.create_instance(
-                        ctx["fields.U"],
-                        ctx["fields.phi"],
-                        ctx["fields.laminarTransport"],
                     ),
                 ),
             ]
         )
+
+        # Turbulence model registers its own fields via setup() method
+        turbulence_lazy_inits = self._turbulence.config.setup(mesh)  # type: ignore[attr-defined]
+        initializers.extend(turbulence_lazy_inits)
 
         # Algorithm instance created after its fields exist
         initializers.extend(
@@ -515,7 +417,7 @@ class IncompressibleFluid(BaseModel):
     def turbulence_correction(
         self,
         laminarTransport: Any,
-        turbulence: Any,
+        turbulence: ModelAnnotation[Any],
         pimple_control: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """
@@ -564,6 +466,13 @@ class IncompressibleFluid(BaseModel):
         if self._pressure_velocity is not None:
             algo_ops = self._pressure_velocity.operations()
             ops.add(algo_ops)
+
+        # Add turbulence model operations
+        if self._turbulence is not None and hasattr(
+            self._turbulence.config, "operations"
+        ):  # type: ignore[attr-defined]
+            turb_ops = self._turbulence.config.operations()  # type: ignore[attr-defined]
+            ops.add(turb_ops)
 
         # Add optional model operations
         for model in self.models:
