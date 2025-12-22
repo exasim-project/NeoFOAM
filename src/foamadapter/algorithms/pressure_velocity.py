@@ -164,6 +164,7 @@ class PimpleMethod(BaseModel):
     nCorrectors: int = 2
     nNonOrthogonalCorrectors: int = 0
     momentumPredictor: bool = True
+    turbCorr: bool = True
 
     # Reference cell/value
     pRefCell: int | None = None
@@ -210,6 +211,7 @@ class PimpleMethod(BaseModel):
 
     def setup(self) -> list[Any]:
         """Register p, U, phi fields and pimple_control model."""
+        from foamadapter.algorithms.control import PimpleControl
         from foamadapter.framework.initialization.helpers import model
 
         # Get base fields (p, U, phi) from parent class
@@ -217,8 +219,12 @@ class PimpleMethod(BaseModel):
 
         # Add PIMPLE-specific control as a model (not field)
         def create_pimple_control(context: dict[str, Any]) -> Any:
-            mesh = context["mesh"]
-            return pyf.pimpleControl(mesh)
+            return PimpleControl(
+                nCorrectors=self.nCorrectors,
+                nNonOrthogonalCorrectors=self.nNonOrthogonalCorrectors,
+                momentumPredictor=self.momentumPredictor,
+                turbCorr=self.turbCorr,
+            )
 
         initializers.append(
             model("pimple_control", depends_on=["mesh"], create=create_pimple_control)
@@ -230,7 +236,14 @@ class PimpleMethod(BaseModel):
         return "PIMPLE"
 
     def create_control(self, mesh: Any) -> Any:
-        return pyf.pimpleControl(mesh)
+        from foamadapter.algorithms.control import PimpleControl
+
+        return PimpleControl(
+            nCorrectors=self.nCorrectors,
+            nNonOrthogonalCorrectors=self.nNonOrthogonalCorrectors,
+            momentumPredictor=self.momentumPredictor,
+            turbCorr=self.turbCorr,
+        )
 
     def operations(self) -> OperationCollection:
         """Return algorithm-specific operations."""
@@ -311,8 +324,189 @@ class PimpleMethod(BaseModel):
                     if pimple_control.finalNonOrthogonalIter():
                         phi.assign(phiHbyA - pEqn.flux())
 
+                p.relax()
                 # Correct velocity
                 U.assign(HbyA - rAU * fvc.grad(p))
                 U.correctBoundaryConditions()
+
+        return FieldUpdates({"U": U, "p": p, "phi": phi})
+
+
+@PressureVelocityAlgorithm.register
+@Model
+class SimpleMethod(BaseModel):
+    """SIMPLE algorithm - unified config and implementation for steady-state."""
+
+    algorithm_type: Literal["SIMPLE"] = "SIMPLE"
+    model_config = {"arbitrary_types_allowed": True}
+
+    # Settings from fvSolution
+    nNonOrthogonalCorrectors: int = 0
+    consistent: bool = False  # SIMPLEC variant
+    residualControl: dict[str, float] = {}
+
+    # Reference cell/value
+    pRefCell: int | None = None
+    pRefValue: float | None = None
+
+    # Internal state
+    _ops: OperationCollection | None = None
+
+    @Model.load
+    def load_fv_solution(self) -> None:
+        """Read SIMPLE-specific settings from fvSolution."""
+        fv_solution = pyf.dictionary.read("system/fvSolution")
+        simple_dict = fv_solution.subDict("SIMPLE")
+
+        try:
+            self.nNonOrthogonalCorrectors = simple_dict.get[int](
+                "nNonOrthogonalCorrectors"
+            )
+        except (KeyError, AttributeError):
+            pass  # Use defaults
+
+        try:
+            self.consistent = simple_dict.get[bool]("consistent")
+        except (KeyError, AttributeError):
+            pass
+
+        # Read residual control if present
+        try:
+            residual_dict = simple_dict.subDict("residualControl")
+            residual_toc = residual_dict.toc()
+            self.residualControl = {}
+            for key in residual_toc:
+                try:
+                    self.residualControl[key] = residual_dict.get[float](key)
+                except (KeyError, AttributeError):
+                    pass
+        except (KeyError, AttributeError):
+            pass
+
+    @property
+    def provides(self) -> list[str]:
+        return [
+            "p",
+            "U",
+            "phi",
+            "simple_control",
+        ]  # SIMPLE provides base fields + control model
+
+    @property
+    def requires(self) -> list[str]:
+        return []  # No setup-time dependencies
+
+    def setup(self) -> list[Any]:
+        """Register p, U, phi fields and simple_control model."""
+        from foamadapter.algorithms.control import SimpleControl
+        from foamadapter.framework.initialization.helpers import model
+
+        # Get base fields (p, U, phi) from parent class
+        initializers = PressureVelocityAlgorithm.setup(self)
+
+        # Add SIMPLE-specific control as a model (not field)
+        def create_simple_control(context: dict[str, Any]) -> Any:
+            return SimpleControl(
+                nNonOrthogonalCorrectors=self.nNonOrthogonalCorrectors,
+                residualControl=self.residualControl,
+            )
+
+        initializers.append(
+            model("simple_control", depends_on=["mesh"], create=create_simple_control)
+        )
+
+        return initializers
+
+    def name(self) -> str:
+        return "SIMPLE"
+
+    def create_control(self, mesh: Any) -> Any:
+        from foamadapter.algorithms.control import SimpleControl
+
+        return SimpleControl(
+            nNonOrthogonalCorrectors=self.nNonOrthogonalCorrectors,
+            residualControl=self.residualControl,
+        )
+
+    def operations(self) -> OperationCollection:
+        """Return algorithm-specific operations."""
+        if self._ops is None:
+            funcs = decorated_member_functions(self)
+            self._ops = OperationCollection()
+            for func in funcs:
+                op = Operation.create_SeqOp(func)
+                self._ops.add(op)
+        return self._ops
+
+    @Model.operation(operation_number=1)
+    def momentum(
+        self,
+        U: Any,
+        phi: Any,
+        p: Any,
+        turbulence: ModelAnnotation[Any],
+        simple_control: ModelAnnotation[Any],
+    ) -> FieldUpdates:
+        """
+        SIMPLE momentum: Assemble and solve momentum equation with under-relaxation.
+
+        Returns a single operation that handles the momentum prediction phase.
+        For steady-state, ddt(U) term is zero (steadyState scheme).
+        """
+        # Assemble momentum equation (ddt is zero for steady-state)
+        UEqn = fvVectorMatrix(fvm.div(phi, U) + turbulence.divDevReff(U))
+
+        # Apply under-relaxation to equation
+        UEqn.relax(0.7)
+
+        # Solve momentum equation
+        pyf.solve(UEqn - fvc.grad(p))
+
+        return FieldUpdates({"UEqn": UEqn})
+
+    @Model.operation(operation_number=2)
+    def continuity(
+        self, U: Any, p: Any, phi: Any, UEqn: Any, simple_control: ModelAnnotation[Any]
+    ) -> FieldUpdates:
+        """
+        SIMPLE continuity: Pressure-velocity coupling with single correction.
+
+        Returns a single operation that defines the pressure-velocity coupling strategy.
+
+        Structure:
+        - Compute HbyA and flux
+        - Non-orthogonal loop (solve pressure once per loop, update flux)
+        - Correct velocity
+        - Apply under-relaxation to velocity
+        """
+        # Compute H/A
+        rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
+        HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
+
+        # Compute flux from H/A
+        phiHbyA = surfaceScalarField(
+            pyf.Word("phiHbyA"),
+            fvc.flux(HbyA),
+        )
+
+        # Adjust flux for continuity
+        pyf.adjustPhi(phiHbyA, U, p)
+        pyf.constrainPressure(p, U, phiHbyA, rAU)
+
+        # Non-orthogonal corrections loop
+        for nonOrth in range(self.nNonOrthogonalCorrectors + 1):
+            # Solve pressure equation
+            pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
+            pEqn.setReference(self.pRefCell, self.pRefValue, False)
+            pEqn.solve()
+
+            # Update flux on final non-orthogonal iteration
+            if nonOrth == self.nNonOrthogonalCorrectors:
+                phi.assign(phiHbyA - pEqn.flux())
+
+        p.relax()
+        # Correct velocity
+        U.assign(HbyA - rAU * fvc.grad(p))
+        U.correctBoundaryConditions()
 
         return FieldUpdates({"U": U, "p": p, "phi": phi})

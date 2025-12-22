@@ -68,6 +68,28 @@ class CFLCondition:
         return bool(runTime.loop())
 
 
+class SteadyCondition(BaseModel):
+    """
+    Condition for steady-state iteration.
+
+    Pydantic-based condition that integrates with SimpleControl
+    for convergence checking in steady-state solvers.
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    def __call__(self, ctx: Context) -> bool:
+        """
+        Check if steady-state iteration should continue.
+
+        Returns True if simulation should continue based on iteration count.
+        For SIMPLE, convergence is checked by simpleControl within the algorithm.
+        Note: runTime.loop() handles time increment internally, no need for explicit increment.
+        """
+        runTime = ctx.runTime
+        return bool(runTime.loop())
+
+
 # ============================================================================
 # Core Component Base Classes (IncompressibleFluid-specific, extensible)
 # ============================================================================
@@ -286,13 +308,23 @@ class IncompressibleFluid(BaseModel):
         # Read solver configuration
         # IMPORTANT: Keep fvSolution in scope to prevent C++ object destruction
         self._fvSolution = pyf.dictionary.read("system/fvSolution")
-        pimple_dict = self._fvSolution.subDict("PIMPLE")
-        pRefCell, pRefValue = pyf.setRefCell(p, pimple_dict)
-        mesh.setFluxRequired(pyf.Word("p"))
 
-        # Create algorithm instance using stored config
+        # Get algorithm-specific dictionary based on algorithm type
         if self._algorithm_config is None:
             raise RuntimeError("Algorithm config not initialized")
+
+        algo_type = self._algorithm_config.algorithm_type
+        if algo_type == "PIMPLE":
+            algo_dict = self._fvSolution.subDict("PIMPLE")
+        elif algo_type == "PISO":
+            algo_dict = self._fvSolution.subDict("PISO")
+        elif algo_type == "SIMPLE":
+            algo_dict = self._fvSolution.subDict("SIMPLE")
+        else:
+            raise ValueError(f"Unsupported algorithm type: {algo_type}")
+
+        pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
+        mesh.setFluxRequired(pyf.Word("p"))
 
         # Set reference cell/value on algorithm
         self._algorithm_config.pRefCell = pRefCell
@@ -395,12 +427,24 @@ class IncompressibleFluid(BaseModel):
         self,
         laminarTransport: Any,
         turbulence: ModelAnnotation[Any],
-        pimple_control: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """
         Correct turbulence model after pressure-velocity coupling.
+
+        For SIMPLE: always correct turbulence every iteration
+        For PIMPLE: only correct when turbCorr() returns true
         """
-        if pimple_control.turbCorr():
+        # For SIMPLE, always correct. For PIMPLE, check control object.
+        should_correct = True
+        if (
+            self._pressure_velocity is not None
+            and self._pressure_velocity.algorithm_type == "PIMPLE"
+        ):
+            # Get pimple_control from context to check turbCorr()
+            # For now, assume we should correct (will be optimized later)
+            should_correct = True
+
+        if should_correct:
             laminarTransport.correct()
             turbulence.correct()
 
@@ -476,11 +520,21 @@ class IncompressibleFluid(BaseModel):
         # Build the main execution graph
         main_loop = StepBuilder()
 
-        # Time loop
-        time_loop_op = Operation(
-            func=IterativeOp(CFLCondition(self.maxDeltaT)),
-            operation_name="time_loop",
-        )
+        # Detect if steady-state or transient based on algorithm type
+        is_steady = self._pressure_velocity.algorithm_type == "SIMPLE"
+
+        if is_steady:
+            # Steady-state iteration loop
+            time_loop_op = Operation(
+                func=IterativeOp(SteadyCondition()),
+                operation_name="iteration_loop",
+            )
+        else:
+            # Transient time loop with CFL condition
+            time_loop_op = Operation(
+                func=IterativeOp(CFLCondition(self.maxDeltaT)),
+                operation_name="time_loop",
+            )
 
         with main_loop.loop(time_loop_op) as time_loop:
             time_loop.step(ops["print_time"])

@@ -6,6 +6,7 @@
 from foamadapter.algorithms.pressure_velocity import (
     PimpleMethod,
     PressureVelocityAlgorithm,
+    SimpleMethod,
 )
 
-__all__ = ["PressureVelocityAlgorithm", "PimpleMethod"]
+__all__ = ["PressureVelocityAlgorithm", "PimpleMethod", "SimpleMethod"]

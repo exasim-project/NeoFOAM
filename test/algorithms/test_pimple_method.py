@@ -184,14 +184,20 @@ def test_pimple_method_name():
 
 
 def test_pimple_method_create_control(mock_pybfoam):
-    """Test PimpleMethod creates pimple control."""
+    """Test PimpleMethod creates PimpleControl."""
+    from foamadapter.algorithms.control import PimpleControl
+
     method = PimpleMethod()
     mock_mesh = MagicMock()
 
     control = method.create_control(mock_mesh)
 
-    mock_pybfoam.pimpleControl.assert_called_once_with(mock_mesh)
-    assert control == "mock_pimple_control"
+    # Should return Python PimpleControl, not call pyf.pimpleControl
+    assert isinstance(control, PimpleControl)
+    assert control.nCorrectors == method.nCorrectors
+    assert control.nNonOrthogonalCorrectors == method.nNonOrthogonalCorrectors
+    assert control.momentumPredictor_enabled == method.momentumPredictor
+    assert control.turbCorr_enabled == method.turbCorr
 
 
 def test_pimple_method_has_operations():
