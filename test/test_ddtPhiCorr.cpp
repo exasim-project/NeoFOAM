@@ -9,13 +9,13 @@
 
 using Catch::Approx;
 
-namespace fvc  = Foam::fvc;
+namespace fvc = Foam::fvc;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
-using Scalar     = NeoN::scalar;
-using Vec3       = NeoN::Vec3;
-using VolScalar  = fvcc::VolumeField<Scalar>;
-using VolVector  = fvcc::VolumeField<Vec3>;
+using Scalar = NeoN::scalar;
+using Vec3 = NeoN::Vec3;
+using VolScalar = fvcc::VolumeField<Scalar>;
+using VolVector = fvcc::VolumeField<Vec3>;
 using SurfScalar = fvcc::SurfaceField<Scalar>;
 
 extern Foam::Time* timePtr;
@@ -26,11 +26,10 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
 
     // --- NeoN database / collection
     NeoN::Database db;
-    auto& fieldCollection =
-        fvcc::VectorCollection::instance(db, "fieldCollection");
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
 
-    //const Foam::word execName = "GPU";
-    //auto exec = NeoN::GPUExecutor();
+    // const Foam::word execName = "GPU";
+    // auto exec = NeoN::GPUExecutor();
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     // --- FOAM time
@@ -39,24 +38,19 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     runTime.setTime(startTime, startTimeIndex);
 
     // --- Mesh
-    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr =
-        NeoFOAM::createMesh(exec, runTime);
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     // --- Time step
-    const NeoN::Dictionary controlDict =
-        NeoFOAM::convert(runTime.controlDict());
-    const Foam::scalar dt =
-        controlDict.get<Foam::scalar>("deltaT");
+    const NeoN::Dictionary controlDict = NeoFOAM::convert(runTime.controlDict());
+    const Foam::scalar dt = controlDict.get<Foam::scalar>("deltaT");
 
     runTime.setDeltaT(dt);
 
     // --- FOAM fields
-    Foam::volVectorField U
-    (
-        Foam::IOobject
-        (
+    Foam::volVectorField U(
+        Foam::IOobject(
             "U",
             runTime.timeName(),
             mesh,
@@ -66,10 +60,8 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         mesh
     );
 
-    Foam::surfaceScalarField phi
-    (
-        Foam::IOobject
-        (
+    Foam::surfaceScalarField phi(
+        Foam::IOobject(
             "phi",
             runTime.timeName(),
             mesh,
@@ -84,40 +76,35 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
 
     // === NeoN: mirror state ===
 
-    auto& nfU =
-        fieldCollection.registerVector<VolVector>(
-            NeoFOAM::CreateFromFoamField<Foam::volVectorField>{
-                .exec      = exec,
-                .nfMesh    = nfMesh,
-                .foamField = U,
-                .name      = "nfU"
-            }
-        );
+    auto& nfU = fieldCollection.registerVector<VolVector>(
+        NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
+            .exec = exec,
+            .nfMesh = nfMesh,
+            .foamField = U,
+            .name = "nfU"
+        }
+    );
 
-    auto& nfPhi =
-        fieldCollection.registerVector<SurfScalar>(
-            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField>{
-                .exec      = exec,
-                .nfMesh    = nfMesh,
-                .foamField = phi,
-                .name      = "nfPhi"
-            }
-        );
+    auto& nfPhi = fieldCollection.registerVector<SurfScalar>(
+        NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField> {
+            .exec = exec,
+            .nfMesh = nfMesh,
+            .foamField = phi,
+            .name = "nfPhi"
+        }
+    );
 
-    auto& nfU0   = fvcc::oldTime(nfU);
+    auto& nfU0 = fvcc::oldTime(nfU);
     auto& nfPhi0 = fvcc::oldTime(nfPhi);
 
     NeoN::Dictionary fvSchemes, ddtSchemes, timeIntegrationDict;
     timeIntegrationDict.insert("type", std::string("backwardEuler")); // Euler
-    ddtSchemes.insert("ddt(nfU)", std::string("BDF1")); // Euler
+    ddtSchemes.insert("ddt(nfU)", std::string("BDF1"));               // Euler
     fvSchemes.insert("timeIntegration", timeIntegrationDict);
     fvSchemes.insert("ddtSchemes", ddtSchemes);
 
     // --- DdtOperator for momentum
-    fvcc::DdtOperator<Vec3> ddtOp(
-        NeoN::dsl::Operator::Type::Implicit,
-        nfU
-    );
+    fvcc::DdtOperator<Vec3> ddtOp(NeoN::dsl::Operator::Type::Implicit, nfU);
     ddtOp.read(fvSchemes);
 
     const auto& scheme = ddtOp.scheme();
@@ -126,14 +113,10 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     SurfScalar nfCorr = scheme.ddtPhiCorr(nfU, nfPhi, dt);
 
     // --- Sanity: states match
-    NeoFOAM::compare(nfU,   U,            ApproxVector(1e-15));
-    NeoFOAM::compare(nfU0,  U.oldTime(),  ApproxVector(1e-15));
-    NeoFOAM::compare(nfPhi, phi,          ApproxScalar(1e-15));
+    NeoFOAM::compare(nfU, U, ApproxVector(1e-15));
+    NeoFOAM::compare(nfU0, U.oldTime(), ApproxVector(1e-15));
+    NeoFOAM::compare(nfPhi, phi, ApproxScalar(1e-15));
     NeoFOAM::compare(nfPhi0, phi.oldTime(), ApproxScalar(1e-15));
 
-    SECTION("ddtCorr " + execName)
-    {
-        NeoFOAM::compare(nfCorr, foamCorr, ApproxScalar(1e-15));
-    }
+    SECTION("ddtCorr " + execName) { NeoFOAM::compare(nfCorr, foamCorr, ApproxScalar(1e-15)); }
 }
-

@@ -29,7 +29,7 @@ void updateDdtSchemes(NeoN::Dictionary& schemeDict)
     NeoN::Dictionary& ddtSchemes = schemeDict.subDict("ddtSchemes");
 
     static const std::map<std::string, std::string> schemeMap = {
-        {"Euler",    "BDF1"},
+        {"Euler", "BDF1"},
         {"backward", "BDF2"},
     };
 
