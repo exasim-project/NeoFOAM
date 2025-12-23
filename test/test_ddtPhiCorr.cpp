@@ -72,7 +72,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     );
 
     // --- OpenFOAM reference
-    Foam::surfaceScalarField foamCorr = fvc::ddtCorr(U, phi);
+    Foam::surfaceScalarField foamCorr(fvc::ddtCorr(U, phi)());
 
     // === NeoN: mirror state ===
 
