@@ -98,9 +98,9 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     auto& nfPhi0 = fvcc::oldTime(nfPhi);
 
     NeoN::Dictionary fvSchemes, ddtSchemes, timeIntegrationDict;
-    timeIntegrationDict.insert("type", std::string("backwardEuler")); // Euler
-    ddtSchemes.insert("ddt(nfU)", std::string("BDF1"));               // Euler
-    fvSchemes.insert("timeIntegration", timeIntegrationDict);
+    // timeIntegrationDict.insert("type", std::string("backwardEuler")); // Euler
+    ddtSchemes.insert("ddt(nfU)", std::string("BDF1")); // Euler
+    // fvSchemes.insert("timeIntegration", timeIntegrationDict);
     fvSchemes.insert("ddtSchemes", ddtSchemes);
 
     // --- DdtOperator for momentum
@@ -110,7 +110,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     const auto& scheme = ddtOp.scheme();
 
     // --- Compute NeoN correction
-    SurfScalar nfCorr = scheme.ddtPhiCorr(nfU, nfPhi, dt);
+    SurfScalar nfCorr = scheme.ddtFluxCorr(nfU, nfPhi, dt);
 
     // --- Sanity: states match
     NeoFOAM::compare(nfU, U, ApproxVector(1e-15));

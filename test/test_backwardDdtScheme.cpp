@@ -92,7 +92,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         ddtOp.read(NeoN::Input {fvSchemes});
 
-        // dumpTimeState("Before first timestep", nfT, ofT, runTime);
         //  =========================================================================
         //  Step 1: timeIndex == 1 → backward startup (implicit Euler)
         //  =========================================================================
@@ -101,7 +100,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         storeOldTimesNF(nfT);
         bumpCurrentOF(ofT, 1.0);
         nfT -= scalar(1.0);
-        // dumpTimeState("After first timestep", nfT, ofT, runTime);
 
         Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
@@ -152,7 +150,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         storeOldTimesNF(nfT);
         bumpCurrentOF(ofT, 2.0);
         nfT -= scalar(2.0);
-        // dumpTimeState("After second timestep", nfT, ofT, runTime);
 
         Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
