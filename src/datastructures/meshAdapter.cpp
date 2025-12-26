@@ -3,6 +3,9 @@
 
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
 
+#include "processorFvPatch.H"
+#include "lduInterfaceField.H"
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 
@@ -40,6 +43,28 @@ std::vector<NeoN::localIdx> computeOffset(const Foam::fvMesh& mesh)
         NeoN::localIdx curOffset = result.back();
         const Foam::fvPatch& patch = bMesh[patchI];
         result.push_back(curOffset + patch.size());
+    }
+    return result;
+}
+
+std::vector<NeoN::localIdx> computeNeighbRank(const Foam::fvMesh& mesh)
+{
+    const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
+    auto result = std::vector<NeoN::localIdx>(bMesh.size(), -1);
+    const Foam::lduInterfacePtrsList interfaces = bMesh.interfaces();
+
+    for (auto i = 0; i < interfaces.size(); i++)
+    {
+        if (interfaces.get(i) == nullptr)
+        {
+            continue;
+        }
+        if (Foam::isA<Foam::processorFvPatch>(interfaces[i]))
+        {
+            const Foam::processorFvPatch& patch =
+                Foam::refCast<const Foam::processorFvPatch>(interfaces[i]);
+            result[i] = patch.neighbProcNo();
+        }
     }
     return result;
 }
@@ -100,6 +125,7 @@ NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::f
     );
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
+    std::vector<NeoN::localIdx> neighbRank = computeNeighbRank(mesh);
 
     NeoN::BoundaryMesh bMesh(
         exec,
@@ -112,7 +138,8 @@ NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::f
         fromFoamField(exec, delta),
         fromFoamField(exec, weights),
         fromFoamField(exec, deltaCoeffs),
-        offset
+        offset,
+        neighbRank
     );
 
     NeoN::UnstructuredMesh uMesh(
