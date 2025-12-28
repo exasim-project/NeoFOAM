@@ -101,7 +101,7 @@ TEST_CASE("DivOperator")
                 );
                 fvcc::GaussGreenDiv<NeoN::scalar>(exec, nfMesh, scheme)
                     .div(ls, nfPhi, nfT, NeoN::dsl::Coeff(1.0));
-                Kokkos::fence();
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -120,7 +120,7 @@ TEST_CASE("DivOperator")
                 NeoN::fill(ls.rhs(), 0.0);
                 fvcc::GaussGreenDiv<NeoN::scalar>(exec, nfMesh, scheme)
                     .div(ls, nfPhi, nfT, dsl::Coeff(1.0));
-                Kokkos::fence();
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -205,7 +205,7 @@ TEST_CASE("LaplacianOperator")
                 );
                 fvcc::GaussGreenLaplacian<NeoN::scalar>(exec, nfMesh, scheme)
                     .laplacian(ls, nfGamma, nfT, dsl::Coeff(1.0));
-                Kokkos::fence();
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -224,7 +224,7 @@ TEST_CASE("LaplacianOperator")
                 NeoN::fill(ls.rhs(), 0.0);
                 fvcc::GaussGreenLaplacian<NeoN::scalar>(exec, nfMesh, scheme)
                     .laplacian(ls, nfGamma, nfT, dsl::Coeff(1.0));
-                Kokkos::fence();
+                NeoN::fence(exec);
                 return;
             };
         }

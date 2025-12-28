@@ -116,10 +116,7 @@ TEST_CASE("DivOperator")
                 NeoN::fill(nfDivT.boundaryData().value(), 0.0);
                 fvcc::GaussGreenDiv<NeoN::scalar>(exec, nfMesh, scheme)
                     .div(nfDivT, nfPhi, nfT, dsl::Coeff(1.0));
-                if (execName == "GPUExecutor")
-                {
-                    Kokkos::fence();
-                }
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -214,10 +211,7 @@ TEST_CASE("LaplacianOperator")
                 NeoN::fill(nfLapT.boundaryData().value(), 0.0);
                 fvcc::GaussGreenLaplacian<NeoN::scalar>(exec, nfMesh, scheme)
                     .laplacian(nfLapT, nfGamma, nfT, dsl::Coeff(1.0));
-                if (execName == "GPUExecutor")
-                {
-                    Kokkos::fence();
-                }
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -284,10 +278,7 @@ TEST_CASE("GradOperator")
                 NeoN::fill(nfGradT.internalVector(), NeoN::Vec3(0, 0, 0));
                 NeoN::fill(nfGradT.boundaryData().value(), NeoN::Vec3(0, 0, 0));
                 fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, NeoN::dsl::Coeff(), nfGradT);
-                if (execName == "GPUExecutor")
-                {
-                    Kokkos::fence();
-                }
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -396,10 +387,7 @@ TEST_CASE("FaceInterpolation")
             {
                 fvcc::SurfaceInterpolation<NeoN::scalar>(exec, nfMesh, scheme)
                     .interpolate(nfPhi, nfT, nfTf);
-                if (execName == "GPUExecutor")
-                {
-                    Kokkos::fence();
-                }
+                NeoN::fence(exec);
                 return;
             };
         }
@@ -480,10 +468,7 @@ TEST_CASE("FaceNormalGradient")
             {
                 fvcc::FaceNormalGradient<NeoN::scalar>(exec, nfMesh, scheme)
                     .faceNormalGrad(nfT, faceGradT);
-                if (execName == "GPUExecutor")
-                {
-                    Kokkos::fence();
-                }
+                NeoN::fence(exec);
                 return;
             };
         }
