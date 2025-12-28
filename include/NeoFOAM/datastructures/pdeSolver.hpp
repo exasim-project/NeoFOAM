@@ -24,6 +24,7 @@ template<typename ValueType, typename IndexType = NeoN::localIdx>
 class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
+    using PostBase = NeoN::dsl::PostAssemblyBase<ValueType>;
 
 public:
 
@@ -75,8 +76,7 @@ public:
     const NeoN::Executor& exec() const { return ls_.exec(); }
 
 
-    template<typename FunctorValueType>
-    struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType>
+    struct SetReference final: public NeoN::dsl::PostAssemblyBase<NeoN::scalar>
     {
 
         NeoN::localIdx pRefCell_;
@@ -87,10 +87,10 @@ public:
             , pRefValue_(pRefValue)
         {}
 
-        virtual void operator()(
+        void operator()(
             const NeoN::la::SparsityPattern& sp,
-            NeoN::la::LinearSystem<FunctorValueType, NeoN::localIdx>& ls
-        )
+            NeoN::la::LinearSystem<NeoN::scalar, NeoN::localIdx>& ls
+        ) const override
         {
             const auto diagOffset = sp.diagOffset().view();
             const auto rowOffs = ls.matrix().rowOffs().view();
@@ -109,8 +109,24 @@ public:
                     values[diagIdx] += diagValue;
                 }
             );
+	    NeoN::Logging::info(
+                "SetReference applied at cell {}, value {}",
+                pRefCell_, pRefValue_
+            );
         }
     };
+
+    const NeoN::timeIntegration::DdtScheme* ddtScheme() const
+    {
+        for (const auto& op : expr_.temporalOperators())
+        {
+            if (const auto* scheme = op.ddtScheme())
+            {
+                 return scheme;
+            }
+        }
+        return nullptr;
+    }
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
@@ -119,11 +135,19 @@ public:
         pRefValue_ = pRefValue;
     }
 
-    void enableDdtPhiCorr(
+    void enableDdtFluxCorr(
         const NeoN::timeIntegration::DdtScheme& scheme,
-        const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>& U,
-        const NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>& phi
-    );
+        const fvcc::VolumeField<NeoN::Vec3>& U,
+        const fvcc::SurfaceField<NeoN::scalar>& flux
+//        const fvcc::SurfaceField<NeoN::scalar>& rAUf
+    )
+    {
+	ddtScheme_ = &scheme;
+        ddtU_    = &U;
+        ddtFlux_ = &flux;
+        //ddtRAUf_ = &rAUf;
+
+    }
 
     NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
 
@@ -142,26 +166,37 @@ private:
     solveImpl(dsl::Expression<ValueType>& expr, NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
-        auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
+        auto functs = std::vector<const NeoN::dsl::PostAssemblyBase<ValueType>*> {};
 
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
 	    if (ddtScheme_ != nullptr)
             {
-                functs.push_back(
-                    NeoN::dsl::DdtPhiCorr<ValueType>(
-                        *ddtScheme_,
-                        *ddtU_,
-                        *ddtPhi_,
-                        runTime_.dt
-                    )
+		auto& opt = ddtFluxCorrFunctor_;
+		opt.emplace(
+                    *ddtScheme_,
+                    *ddtU_,
+                    *ddtFlux_,
+                    runTime_.dt
                 );
+                functs.push_back(&*opt);
+                //functs.push_back(
+                //    NeoN::dsl::DdtFluxCorr<ValueType>(
+                //        *ddtScheme_,
+                //        *ddtU_,
+                //        *ddtFlux_,
+                //        runTime_.dt
+                //    )
+                //);
             }
 	    if (needReference_)
             {
-                functs.push_back(
-                    SetReference<ValueType>(pRefCell_, pRefValue_)
-                );
+		auto& opt = setReferenceFunctor_;
+		opt.emplace(pRefCell_, pRefValue_);
+                functs.push_back(&*opt);
+                //functs.push_back(
+                //    SetReference<ValueType>(pRefCell_, pRefValue_)
+                //);
             }
         }
 
@@ -177,7 +212,7 @@ private:
             runTime_.dt,
             runTime_.fvSchemesDict,
             fieldSolverDict,
-            functs
+            std::span<const NeoN::dsl::PostAssemblyBase<ValueType>* const>{functs.data(), functs.size()}
         );
 
         NeoN::Logging::info(
@@ -199,7 +234,20 @@ private:
 
     const NeoN::timeIntegration::DdtScheme* ddtScheme_{nullptr};
     const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>* ddtU_{nullptr};
-    const NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>* ddtPhi_{nullptr};
+    const NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>* ddtFlux_{nullptr};
+    using SetRefOpt = std::conditional_t<
+        std::is_same_v<ValueType, NeoN::scalar>,
+        std::optional<SetReference>,
+        std::monostate
+    >;
+
+    using DdtFluxOpt = std::conditional_t<
+        std::is_same_v<ValueType, NeoN::scalar>,
+        std::optional<NeoN::dsl::DdtFluxCorr<NeoN::scalar>>,
+        std::monostate
+    >;
+    SetRefOpt  setReferenceFunctor_;
+    DdtFluxOpt ddtFluxCorrFunctor_;
 };
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>

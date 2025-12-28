@@ -19,17 +19,21 @@ solvers
 	p
 	{
 		solver PCG;
-		preconditioner FDIC;
-		tolerance 0.0001;
-		relTol 0;
+		preconditioner diagonal;
+		tolerance 0.0;
+		relTol 0.00001;
 		maxIter 5000;
 		smoother none;
 	}
+	nfp
+        {
+                solver          Ginkgo;
+                configFile      config.bj.json;
+        }
 
 	pFinal
 	{
 		$p;
-		relTol 0;
 	}
 
 	U

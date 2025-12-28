@@ -72,7 +72,15 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         NeoN::Logging::info("Creating phi");
-        auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
+	auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField>{
+                .exec = rt.exec,
+                .nfMesh = rt.nfMesh,
+                .foamField = ofphi,
+                .name = "phi"
+            }
+        );
+        //auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -84,6 +92,8 @@ int main(int argc, char* argv[])
 
             auto& oldU = fvcc::oldTime(U);
             oldU.internalVector() = U.internalVector();
+	    auto& oldPhi = fvcc::oldTime(phi);
+            oldPhi.internalVector() = phi.internalVector();
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -91,10 +101,12 @@ int main(int argc, char* argv[])
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
+                dsl::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
                 U,
                 rt
             );
+
+	    const auto* ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())
             {
@@ -147,6 +159,8 @@ int main(int argc, char* argv[])
                         p,
                         rt
                     );
+
+		    pEqn.enableDdtFluxCorr(*ddtScheme, U, phi);
 
                     if (ofp.needReference() && pRefCell >= 0)
                     {

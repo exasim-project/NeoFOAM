@@ -18,6 +18,7 @@ FoamFile
 ddtSchemes
 {
     default         Euler;
+    ddt(nfU)        BDF1;
 }
 
 gradSchemes
@@ -30,11 +31,14 @@ divSchemes
 {
     default         none;
     div(phi,U)      Gauss linear;
+    div(nfPhi,nfU)  Gauss linear;
 }
 
 laplacianSchemes
 {
-    default         Gauss linear orthogonal;
+    default            Gauss linear uncorrected;
+    laplacian(nu,nfU)  Gauss linear uncorrected;
+    laplacian(rAUfNF,nfp) Gauss linear uncorrected;
 }
 
 interpolationSchemes
@@ -44,7 +48,7 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         orthogonal;
+    default         uncorrected;
 }
 
 
