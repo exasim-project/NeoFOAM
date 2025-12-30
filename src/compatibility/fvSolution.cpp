@@ -79,7 +79,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         solverDict.remove("smoother");
     }
 
-    if (!solverDict.isDict("preconditioner"))
+    // FIXME
+    if (solverDict.contains("preconditioner"))
+    {
+        solverDict.remove("preconditioner");
+    }
+    return;
+
+
+    if (solverDict.isDict("preconditioner"))
     {
         std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
 

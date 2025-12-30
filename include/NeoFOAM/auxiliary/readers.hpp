@@ -114,7 +114,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict = convert(patchDict);
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+        //patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+        patchInserter["empty"](neoPatchDict);
         bcs.emplace_back(nfMesh, neoPatchDict, patchi);
         patchi++;
     }
@@ -139,6 +140,7 @@ auto readSurfaceBoundaryConditions(
     Foam::dictionary bDict(is);
     int patchi = 0;
 
+    // TODO this approach fails for procBoundary0to1
     std::map<std::string, std::function<void(NeoN::Dictionary&)>> patchInserter {
         {"fixedGradient", [](auto& dict) { dict.insert("type", std::string("fixedGradient")); }},
         {"zeroGradient",
@@ -153,7 +155,14 @@ auto readSurfaceBoundaryConditions(
              dict.insert("type", std::string("fixedValue"));
              dict.insert("fixedValue", type_primitive_t {});
          }},
+        {"noSlip", // TODO specialize for vector
+         [](auto& dict)
+         {
+             dict.insert("type", std::string("fixedValue"));
+             dict.insert("fixedValue", type_primitive_t {});
+         }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+        {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
