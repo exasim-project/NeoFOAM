@@ -38,7 +38,7 @@ function(importOFLibrary NAME)
     INTERFACE OpenFOAM::${NAME} ${EXTRA_LINK_TARGET})
 endfunction()
 
-find_package(MPI REQUIRED)
+# find_package(MPI REQUIRED)
 
 add_library(OpenFOAM INTERFACE)
 target_include_directories(
