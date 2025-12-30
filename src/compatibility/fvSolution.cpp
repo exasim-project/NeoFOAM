@@ -74,6 +74,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         solverDict.remove("smoother");
     }
 
+    // FIXME
+    if (solverDict.contains("preconditioner"))
+    {
+        solverDict.remove("preconditioner");
+    }
+
+    return;
+
+
     if (solverDict.isDict("preconditioner"))
     {
         NeoN::Dictionary& preconditionerDict = solverDict.subDict("preconditioner");
