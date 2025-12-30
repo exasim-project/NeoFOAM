@@ -30,4 +30,20 @@ struct RunTime
     NeoN::Dictionary fvSolutionDict;
     NeoN::Dictionary fvSchemesDict;
 };
+
+
+template<typename RegisteredType, typename InitializerType>
+const std::shared_ptr<RegisteredType> readOrCreate(
+                            RunTime &runTime,
+                            std::string name,
+                            InitializerType init
+                            )
+{
+    if (!runTime.controlDict.contains(name))
+    {
+        runTime.controlDict.insert(std::string(name), init());
+    }
+    return runTime.controlDict.get<std::shared_ptr<RegisteredType>>(name);
+}
+
 } // End namespace NeoFOAM

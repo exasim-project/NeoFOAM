@@ -32,8 +32,8 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
     auto nfMesh = mesh.nfMesh();
-    const auto sparsityPattern = NeoN::la::createSparsity(nfMesh);
 
+    auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(nfMesh);
     runTime.setDeltaT(1);
     runTime.setTime(0.0, 0);
     auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -69,12 +69,14 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
 
-        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
-        );
+        auto ls1 = NeoN::la::
+            createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                nfMesh,
+                mi.sparsityPattern(),
+                mi.boundarySparsityPattern()
+            );
 
-        ddtOp.implicitOperation(ls1, runTime.value(), runTime.deltaTValue());
+        ddtOp.implicitOperation(ls1, mi, runTime.value(), runTime.deltaTValue());
 
         // --- rhs ---
         {
@@ -87,7 +89,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         // --- diag ---
         {
-            auto diag = NeoFOAM::diag(ls1, sparsityPattern).copyToHost();
+            auto diag = ls1.matrix().diag();
             forAll(diag.view(), celli)
             {
                 REQUIRE(diag.view()[celli] == Catch::Approx(matrix1.diag()[celli]).margin(1e-16));
@@ -120,12 +122,14 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
 
-        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
-        );
+        auto ls2 = NeoN::la::
+            createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                nfMesh,
+                mi.sparsityPattern(),
+                mi.boundarySparsityPattern()
+            );
 
-        ddtOp.implicitOperation(ls2, runTime.value(), runTime.deltaTValue());
+        ddtOp.implicitOperation(ls2, mi, runTime.value(), runTime.deltaTValue());
 
         // --- rhs ---
         {
@@ -138,7 +142,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         // --- diag ---
         {
-            auto diag = NeoFOAM::diag(ls2, sparsityPattern).copyToHost();
+            auto diag = ls2.matrix().diag();
             forAll(diag.view(), celli)
             {
                 REQUIRE(diag.view()[celli] == Catch::Approx(matrix2.diag()[celli]).margin(1e-16));

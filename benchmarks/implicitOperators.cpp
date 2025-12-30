@@ -54,17 +54,21 @@ TEST_CASE("DivOperator")
         const auto& nfMesh = mesh.nfMesh();
         auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, nfMesh, ofT, ofPhi);
         NeoN::TokenList scheme({std::string("linear")});
+        auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(nfMesh);
 
         SECTION("with Allocation")
         {
             BENCHMARK(std::string(execName))
             {
-                auto ls = la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
+                auto ls = la::createEmptyLinearSystem<
+                    NeoN::scalar,
+                    NeoN::la::SparsityPattern<NeoN::localIdx>>(
                     nfMesh,
-                    la::SparsityPattern::readOrCreate(nfMesh)
+                    mi.sparsityPattern(),
+                    mi.boundarySparsityPattern()
                 );
                 fvcc::GaussGreenDiv<NeoN::scalar>(exec, nfMesh, scheme)
-                    .div(ls, nfPhi, nfT, NeoN::dsl::Coeff(1.0));
+                    .div(ls, mi, nfPhi, nfT, NeoN::dsl::Coeff(1.0));
                 NeoN::fence(exec);
                 return;
             };
@@ -72,17 +76,20 @@ TEST_CASE("DivOperator")
 
         SECTION("No allocation")
         {
-            auto ls = la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-                nfMesh,
-                la::SparsityPattern::readOrCreate(nfMesh)
-            );
+            auto ls = la::
+                createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                    nfMesh,
+                    mi.sparsityPattern(),
+                    mi.boundarySparsityPattern()
+                );
+            NeoN::TokenList scheme({std::string("linear")});
 
             BENCHMARK(std::string(execName))
             {
                 NeoN::fill(ls.matrix().values(), 0.0);
                 NeoN::fill(ls.rhs(), 0.0);
                 fvcc::GaussGreenDiv<NeoN::scalar>(exec, nfMesh, scheme)
-                    .div(ls, nfPhi, nfT, dsl::Coeff(1.0));
+                    .div(ls, mi, nfPhi, nfT, dsl::Coeff(1.0));
                 NeoN::fence(exec);
                 return;
             };
@@ -125,6 +132,7 @@ TEST_CASE("LaplacianOperator")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
+        auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(nfMesh);
         auto [nfT, nfGamma] = NeoFOAM::constFromMany(exec, nfMesh, ofT, ofGamma);
         NeoN::TokenList scheme({std::string("linear"), std::string("uncorrected")});
 
@@ -132,12 +140,16 @@ TEST_CASE("LaplacianOperator")
         {
             BENCHMARK(std::string(execName))
             {
-                auto ls = la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
+                auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(nfMesh);
+                auto ls = NeoN::la::createEmptyLinearSystem<
+                    NeoN::scalar,
+                    NeoN::la::SparsityPattern<NeoN::localIdx>>(
                     nfMesh,
-                    la::SparsityPattern::readOrCreate(nfMesh)
+                    mi.sparsityPattern(),
+                    mi.boundarySparsityPattern()
                 );
                 fvcc::GaussGreenLaplacian<NeoN::scalar>(exec, nfMesh, scheme)
-                    .laplacian(ls, nfGamma, nfT, dsl::Coeff(1.0));
+                    .laplacian(ls, mi, nfGamma, nfT, dsl::Coeff(1.0));
                 NeoN::fence(exec);
                 return;
             };
@@ -145,17 +157,20 @@ TEST_CASE("LaplacianOperator")
 
         SECTION("No allocation")
         {
-            auto ls = la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-                nfMesh,
-                la::SparsityPattern::readOrCreate(nfMesh)
-            );
+            auto ls = NeoN::la::
+                createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                    nfMesh,
+                    mi.sparsityPattern(),
+                    mi.boundarySparsityPattern()
+                );
+            NeoN::TokenList scheme({std::string("linear"), std::string("uncorrected")});
 
             BENCHMARK(std::string(execName))
             {
                 NeoN::fill(ls.matrix().values(), 0.0);
                 NeoN::fill(ls.rhs(), 0.0);
                 fvcc::GaussGreenLaplacian<NeoN::scalar>(exec, nfMesh, scheme)
-                    .laplacian(ls, nfGamma, nfT, dsl::Coeff(1.0));
+                    .laplacian(ls, mi, nfGamma, nfT, dsl::Coeff(1.0));
                 NeoN::fence(exec);
                 return;
             };

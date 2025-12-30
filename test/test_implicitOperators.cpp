@@ -30,7 +30,7 @@ TEST_CASE("matrix multiplication")
 
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
-    const auto sparsityPattern = NeoN::la::createSparsity(rt.nfMesh);
+    auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(rt.nfMesh);
 
     runTime.setDeltaT(1);
 
@@ -53,6 +53,8 @@ TEST_CASE("matrix multiplication")
 
         Foam::fvScalarMatrix matrix(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt("ddt", matrix & ofT);
+
+        // we should get a uniform field with a value of 1
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
         NeoN::Dictionary ddtSchemes;
@@ -60,18 +62,21 @@ TEST_CASE("matrix multiplication")
         rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
         ddtOp.read(rt.fvSchemesDict);
 
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            rt.nfMesh,
-            sparsityPattern
-        );
-        ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
+        auto ls = NeoN::la::
+            createEmptyLinearSystem<NeoN::scalar>>(
+                nfMesh,
+                mi.sparsityPattern(),
+                mi.boundarySparsityPattern()
+            );
+        ddtOp.implicitOperation(ls, mi, runTime.value(), runTime.deltaTValue());
 
         // check rhs
         nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
 
         // check diag
-        auto diag = NeoFOAM::diag(ls, sparsityPattern);
+        auto diag = ls.matrix().diag();
         nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
+        auto diagHost = diag.copyToHost();
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto ddtV = ddt * mesh.V();
@@ -103,15 +108,17 @@ TEST_CASE("matrix multiplication")
         }
 
         // the sourceterm operator implicit
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            rt.nfMesh,
-            sparsityPattern
-        );
-        auto cellVolumes = rt.nfMesh.cellVolumes().copyToHost();
-        sourceTerm.implicitOperation(ls);
+        auto ls = NeoN::la::
+            createEmptyLinearSystem<NeoN::scalar>(
+                nfMesh,
+                mi.sparsityPattern(),
+                mi.boundarySparsityPattern()
+            );
+        auto cellVolumes = nfMesh.cellVolumes().copyToHost();
+        sourceTerm.implicitOperation(ls, mi);
 
         // check diag
-        auto diag = NeoFOAM::diag(ls, sparsityPattern);
+        auto diag = ls.matrix().diag();
         auto diagHost = diag.copyToHost();
 
         for (size_t celli = 0; celli < diagHost.size(); celli++)
@@ -144,7 +151,6 @@ TEST_CASE("matrix multiplication")
             nfT,
             rt
         );
-        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
