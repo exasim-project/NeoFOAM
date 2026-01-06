@@ -24,7 +24,7 @@ template<typename ValueType, typename IndexType = NeoN::localIdx>
 class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
- //   using PostBase = NeoN::dsl::PostAssemblyBase<ValueType>;
+    using PostBase = NeoN::dsl::PostAssemblyBase<ValueType>;
 
 public:
 
@@ -78,7 +78,6 @@ public:
 
     template<typename FunctorValueType>
     struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType>
-    //struct SetReference final: public NeoN::dsl::PostAssemblyBase<NeoN::scalar>
     {
 
         NeoN::localIdx pRefCell_;
@@ -92,7 +91,7 @@ public:
         virtual void operator()(
             const NeoN::la::SparsityPattern& sp,
             NeoN::la::LinearSystem<NeoN::scalar, NeoN::localIdx>& ls
-        ) //const override
+        ) 
         {
             const auto diagOffset = sp.diagOffset().view();
             const auto rowOffs = ls.matrix().rowOffs().view();
@@ -111,27 +110,12 @@ public:
                     values[diagIdx] += diagValue;
                 }
             );
-	    //NeoN::Logging::info(
-            //    "SetReference applied at cell {}, value {}",
-            //    pRefCell_, pRefValue_
-            //);
+	    NeoN::Logging::info(
+                "SetReference applied at cell {}, value {}",
+                pRefCell_, pRefValue_
+            );
         }
     };
-
-    template<typename Op>
-    const Op& temporalOperator() const
-    {
-        for (const auto& op : expr_.temporalOperators())
-        {
-            if (const auto* typed = dynamic_cast<const Op*>(&op))
-            {
-                return *typed;
-            }
-        }
-
-        NF_ERROR_EXIT("Requested temporal operator not found in expression");
-    }
-
     NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const
     {
         for (const auto& op : expr_.temporalOperators())
@@ -169,35 +153,12 @@ private:
     solveImpl(dsl::Expression<ValueType>& expr, NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
-        //auto functs = std::vector<const NeoN::dsl::PostAssemblyBase<ValueType>*> {};
 	auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
 
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
-	   /* if (ddtScheme_ != nullptr)
-            {
-		auto& opt = ddtFluxCorrFunctor_;
-		opt.emplace(
-                    *ddtScheme_,
-                    *ddtU_,
-                    *ddtFlux_,
-                    runTime_.dt
-                );
-                functs.push_back(&*opt);
-                //functs.push_back(
-                //    NeoN::dsl::DdtFluxCorr<ValueType>(
-                //        *ddtScheme_,
-                //        *ddtU_,
-                //        *ddtFlux_,
-                //        runTime_.dt
-                //    )
-                //);
-            }*/
 	    if (needReference_)
             {
-		//auto& opt = setReferenceFunctor_;
-		//opt.emplace(pRefCell_, pRefValue_);
-                //functs.push_back(&*opt);
                 functs.push_back(
                     SetReference<ValueType>(pRefCell_, pRefValue_)
                 );
@@ -217,7 +178,6 @@ private:
             runTime_.fvSchemesDict,
             fieldSolverDict,
 	    functs
-            //std::span<const NeoN::dsl::PostAssemblyBase<ValueType>* const>{functs.data(), functs.size()}
         );
 
         NeoN::Logging::info(
@@ -236,21 +196,6 @@ private:
     bool needReference_{false};
     NeoN::localIdx pRefCell_{NeoN::localIdx(-1)};
     NeoN::scalar pRefValue_{NeoN::scalar(0)};
-
-    /*using SetRefOpt = std::conditional_t<
-        std::is_same_v<ValueType, NeoN::scalar>,
-        std::optional<SetReference>,
-        std::monostate
-    >;
-
-    using DdtFluxOpt = std::conditional_t<
-        std::is_same_v<ValueType, NeoN::scalar>,
-        std::optional<NeoN::dsl::DdtFluxCorr<NeoN::scalar>>,
-        std::monostate
-    >;
-    SetRefOpt  setReferenceFunctor_{};
-    DdtFluxOpt ddtFluxCorrFunctor_{};
-    */
 };
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>

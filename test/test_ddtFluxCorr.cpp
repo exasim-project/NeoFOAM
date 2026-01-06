@@ -169,13 +169,6 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
        +fvc::interpolate(rAU)*fvc::ddtCorr(U, phi)
     );
 
-    Foam::fvScalarMatrix pEqnOF
-    (
-        fvm::laplacian(rAU, p) == fvc::div(phiHbyA)
-    );
-    pEqnOF.setReference(int(0), scalar(0));
-    pEqnOF.solve();
-
     auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
     SurfScalar nuNF(exec, "nu", nfMesh, nuBCs);
     NeoN::fill(nuNF.internalVector(), scalar(0.01));
@@ -185,7 +178,6 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         nfU,
         rt
     );
-    auto ddtScheme = UEqnNF.ddtScheme();
 
     UEqnNF.assemble();
     auto [crAU, hByANF] = NeoFOAM::computeRAUandHByA(UEqnNF);
@@ -200,20 +192,9 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         .interpolate(crAU);
     rAUNF.name = "rAUfNF";
 
-    auto phiHbyANF = NeoFOAM::flux(hByANF) + rAUNF * fvcc::ddtFluxCorr(nfU,nfPhi,rt.dt,ddtScheme);
-
-    NeoFOAM::PDESolver<NeoN::scalar> pEqnNF(
-        NeoN::dsl::imp::laplacian(rAUNF, nfp) - NeoN::dsl::exp::div(phiHbyANF),
-        nfp,
-        rt
-    );
-    pEqnNF.setReference(NeoN::localIdx(0), NeoN::scalar(0));
-
-    auto stats = pEqnNF.solve();
-    nfp.correctBoundaryConditions();
-
+    auto phiHbyANF = NeoFOAM::flux(hByANF) + nfCorr * rAUNF;
     SECTION("application to actual fields: " + execName)
     {
-        NeoFOAM::compare(nfp, p, ApproxScalar(1e-5));
+	NeoFOAM::compare(phiHbyANF, phiHbyA, ApproxScalar(1e-15));
     }
 }

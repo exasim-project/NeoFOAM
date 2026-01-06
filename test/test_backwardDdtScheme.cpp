@@ -97,7 +97,8 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         //  =========================================================================
         runTime++;
         ofT.storeOldTimes();
-        storeOldTimesNF(nfT);
+        //storeOldTimesNF(nfT);
+	fvcc::rotate(nfT);
         bumpCurrentOF(ofT, 1.0);
         nfT -= scalar(1.0);
 
@@ -147,7 +148,8 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         // =========================================================================
         runTime++;
         ofT.storeOldTimes();
-        storeOldTimesNF(nfT);
+        //storeOldTimesNF(nfT);
+	fvcc::rotate(nfT);
         bumpCurrentOF(ofT, 2.0);
         nfT -= scalar(2.0);
 
