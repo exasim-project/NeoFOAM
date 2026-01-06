@@ -133,10 +133,10 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     fvcc::DdtOperator<Vec3> ddtOp(NeoN::dsl::Operator::Type::Implicit, nfU);
     ddtOp.read(fvSchemes);
 
-    const auto& scheme = ddtOp.scheme();
+    auto scheme = ddtOp.scheme();
 
     // --- Compute NeoN correction
-    SurfScalar nfCorr = scheme.ddtFluxCorr(nfU, nfPhi, dt);
+    SurfScalar nfCorr = ddtFluxCorr(nfU, nfPhi, dt, scheme);
 
     // --- Sanity: states match
     NeoFOAM::compare(nfU, U, ApproxVector(1e-15));
@@ -185,6 +185,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         nfU,
         rt
     );
+    auto ddtScheme = UEqnNF.ddtScheme();
 
     UEqnNF.assemble();
     auto [crAU, hByANF] = NeoFOAM::computeRAUandHByA(UEqnNF);
@@ -199,7 +200,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         .interpolate(crAU);
     rAUNF.name = "rAUfNF";
 
-    auto phiHbyANF = NeoFOAM::flux(hByANF);
+    auto phiHbyANF = NeoFOAM::flux(hByANF) + rAUNF * fvcc::ddtFluxCorr(nfU,nfPhi,rt.dt,ddtScheme);
 
     NeoFOAM::PDESolver<NeoN::scalar> pEqnNF(
         NeoN::dsl::imp::laplacian(rAUNF, nfp) - NeoN::dsl::exp::div(phiHbyANF),
@@ -207,9 +208,6 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         rt
     );
     pEqnNF.setReference(NeoN::localIdx(0), NeoN::scalar(0));
-    const auto* ddtScheme = UEqnNF.ddtScheme();
-
-    pEqnNF.enableDdtFluxCorr(*ddtScheme, nfU, nfPhi);
 
     auto stats = pEqnNF.solve();
     nfp.correctBoundaryConditions();

@@ -90,10 +90,12 @@ int main(int argc, char* argv[])
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
-            auto& oldU = fvcc::oldTime(U);
-            oldU.internalVector() = U.internalVector();
-	    auto& oldPhi = fvcc::oldTime(phi);
-            oldPhi.internalVector() = phi.internalVector();
+            //auto& oldU = fvcc::oldTime(U);
+            //oldU.internalVector() = U.internalVector();
+	    //auto& oldPhi = fvcc::oldTime(phi);
+            //oldPhi.internalVector() = phi.internalVector();
+	    fvcc::rotate(U);
+            fvcc::rotate(phi);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -101,12 +103,12 @@ int main(int argc, char* argv[])
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
                 U,
                 rt
             );
 
-	    const auto* ddtScheme = UEqn.ddtScheme();
+            const auto ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())
             {
@@ -137,7 +139,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA);
+                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U,phi,rt.dt,ddtScheme);
                 // TODO: OpenFOAM typically also corrects phiHbyA with
                 // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
                 // for the first term we can use but fvc::ddtCorr is missing
@@ -160,10 +162,11 @@ int main(int argc, char* argv[])
                         rt
                     );
 
-		    pEqn.enableDdtFluxCorr(*ddtScheme, U, phi);
+		    //pEqn.enableDdtFluxCorr(*ddtScheme, U, phi);
 
                     if (ofp.needReference() && pRefCell >= 0)
                     {
+			NeoN::Logging::info("Setting reference");
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
