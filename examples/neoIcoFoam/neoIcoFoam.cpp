@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA) + fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme) * rAU;
+                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -151,11 +151,8 @@ int main(int argc, char* argv[])
                         rt
                     );
 
-                    // pEqn.enableDdtFluxCorr(*ddtScheme, U, phi);
-
                     if (ofp.needReference() && pRefCell >= 0)
                     {
-                        NeoN::Logging::info("Setting reference");
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 

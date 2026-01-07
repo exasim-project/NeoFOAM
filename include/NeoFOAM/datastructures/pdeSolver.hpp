@@ -150,7 +150,7 @@ private:
         // Only if ValueType is scalar
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
 
-	if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
             functs =
                 needReference_

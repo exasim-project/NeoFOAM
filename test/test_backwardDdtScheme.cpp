@@ -18,35 +18,6 @@ inline void bumpCurrentOF(Foam::volScalarField& ofT, const Foam::scalar a)
     ofT.correctBoundaryConditions();
 }
 
-template<class VolumeField>
-void storeOldTimesNF(VolumeField& phi)
-{
-    // Ensure buffers exist
-    auto& phiOld = fvcc::oldTime(phi);
-    auto& phiOldOld = fvcc::oldTime(phiOld);
-
-    // --- Views ---
-    const auto curView = phi.internalVector().view();
-    const auto oldView = phiOld.internalVector().view();
-    const auto oldOldView = phiOldOld.internalVector().view();
-
-    // oldOld = old
-    NeoN::map(
-        phiOldOld.internalVector(),
-        KOKKOS_LAMBDA(const std::size_t i) { return oldView[i]; }
-    );
-
-    // old = current
-    NeoN::map(
-        phiOld.internalVector(),
-        KOKKOS_LAMBDA(const std::size_t i) { return curView[i]; }
-    );
-
-    // --- Boundary data (host-side, usually small) ---
-    phiOldOld.boundaryData() = phiOld.boundaryData();
-    phiOld.boundaryData() = phi.boundaryData();
-}
-
 TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 {
     Foam::Time& runTime = *timePtr;
@@ -81,9 +52,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
                 .name = "nfT"
             }
         );
-        // fvcc::rotate(nfT);
-        // fvcc::oldTime(nfT);
-        // fvcc::oldTime(fvcc::oldTime(nfT));
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
         NeoN::Dictionary fvSchemes;
@@ -98,7 +66,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         //  =========================================================================
         runTime++;
         ofT.storeOldTimes();
-        // storeOldTimesNF(nfT);
         fvcc::rotate(nfT);
         bumpCurrentOF(ofT, 1.0);
         nfT -= scalar(1.0);
@@ -150,7 +117,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         // =========================================================================
         runTime++;
         ofT.storeOldTimes();
-        // storeOldTimesNF(nfT);
         fvcc::rotate(nfT);
         bumpCurrentOF(ofT, 2.0);
         nfT -= scalar(2.0);
