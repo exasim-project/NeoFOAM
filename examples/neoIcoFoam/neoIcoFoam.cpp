@@ -72,15 +72,15 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         NeoN::Logging::info("Creating phi");
-	auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField>{
+        auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField> {
                 .exec = rt.exec,
                 .nfMesh = rt.nfMesh,
                 .foamField = ofphi,
                 .name = "phi"
             }
         );
-        //auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
+        // auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -90,11 +90,11 @@ int main(int argc, char* argv[])
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
-            //auto& oldU = fvcc::oldTime(U);
-            //oldU.internalVector() = U.internalVector();
-	    //auto& oldPhi = fvcc::oldTime(phi);
-            //oldPhi.internalVector() = phi.internalVector();
-	    fvcc::rotate(U);
+            // auto& oldU = fvcc::oldTime(U);
+            // oldU.internalVector() = U.internalVector();
+            // auto& oldPhi = fvcc::oldTime(phi);
+            // oldPhi.internalVector() = phi.internalVector();
+            fvcc::rotate(U);
             fvcc::rotate(phi);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U,phi,rt.dt,ddtScheme);
+                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
                 // TODO: OpenFOAM typically also corrects phiHbyA with
                 // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
                 // for the first term we can use but fvc::ddtCorr is missing
@@ -162,11 +162,11 @@ int main(int argc, char* argv[])
                         rt
                     );
 
-		    //pEqn.enableDdtFluxCorr(*ddtScheme, U, phi);
+                    // pEqn.enableDdtFluxCorr(*ddtScheme, U, phi);
 
                     if (ofp.needReference() && pRefCell >= 0)
                     {
-			NeoN::Logging::info("Setting reference");
+                        NeoN::Logging::info("Setting reference");
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 

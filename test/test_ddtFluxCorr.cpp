@@ -39,10 +39,10 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     runTime.setTime(startTime, startTimeIndex);
 
     // --- Mesh
-    auto rt = NeoFOAM::createAdapterRunTime(runTime,exec);
+    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
-    //std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-    //NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    // std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+    // NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
     NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     // --- Time step
@@ -63,10 +63,8 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         mesh
     );
 
-    Foam::volScalarField p
-    (
-        Foam::IOobject
-        (
+    Foam::volScalarField p(
+        Foam::IOobject(
             "p",
             runTime.timeName(),
             mesh,
@@ -102,7 +100,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
         }
     );
 
-     auto& nfp = fieldCollection.registerVector<VolScalar>(
+    auto& nfp = fieldCollection.registerVector<VolScalar>(
         NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
             .exec = rt.exec,
             .nfMesh = rt.nfMesh,
@@ -146,27 +144,15 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
 
     SECTION("ddtCorr " + execName) { NeoFOAM::compare(nfCorr, foamCorr, ApproxScalar(1e-15)); }
 
-    Foam::dimensionedScalar nu
-    (
-        "nu",
-        Foam::dimViscosity,
-        0.01
-    );
+    Foam::dimensionedScalar nu("nu", Foam::dimViscosity, 0.01);
 
-    Foam::fvVectorMatrix UEqn
-    (
-        fvm::ddt(U)
-      + fvm::div(phi, U)
-      - fvm::laplacian(nu, U)
-    );
+    Foam::fvVectorMatrix UEqn(fvm::ddt(U) + fvm::div(phi, U) - fvm::laplacian(nu, U));
 
-    Foam::volScalarField rAU(1.0/UEqn.A());
-    Foam::volVectorField HbyA(Foam::constrainHbyA(rAU*UEqn.H(), U, p));
-    Foam::surfaceScalarField phiHbyA
-    (
+    Foam::volScalarField rAU(1.0 / UEqn.A());
+    Foam::volVectorField HbyA(Foam::constrainHbyA(rAU * UEqn.H(), U, p));
+    Foam::surfaceScalarField phiHbyA(
         "phiHbyA",
-        fvc::flux(HbyA)
-       +fvc::interpolate(rAU)*fvc::ddtCorr(U, phi)
+        fvc::flux(HbyA) + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi)
     );
 
     auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
@@ -174,27 +160,27 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     NeoN::fill(nuNF.internalVector(), scalar(0.01));
     NeoN::fill(nuNF.boundaryData().value(), scalar(0.01));
     NeoFOAM::PDESolver<NeoN::Vec3> UEqnNF(
-        NeoN::dsl::ddt(nfU) + NeoN::dsl::imp::div(nfPhi, nfU) - NeoN::dsl::imp::laplacian(nuNF, nfU),
+        NeoN::dsl::ddt(nfU) + NeoN::dsl::imp::div(nfPhi, nfU)
+            - NeoN::dsl::imp::laplacian(nuNF, nfU),
         nfU,
         rt
     );
 
     UEqnNF.assemble();
-    auto [crAU, hByANF] = NeoFOAM::computeRAUandHByA(UEqnNF);
-    NeoFOAM::constrainHbyA(nfU, nfp, hByANF);
+    auto [crAU, hByAND] = NeoFOAM::computeRAUandHByA(UEqnNF);
+    NeoFOAM::constrainHbyA(nfU, nfp, hByAND);
 
-    SurfScalar rAUNF =
-        fvcc::SurfaceInterpolation<NeoN::scalar>(
-            rt.exec,
-            rt.nfMesh,
-            NeoN::TokenList({std::string("linear")})
-        )
-        .interpolate(crAU);
+    SurfScalar rAUNF = fvcc::SurfaceInterpolation<NeoN::scalar>(
+                           rt.exec,
+                           rt.nfMesh,
+                           NeoN::TokenList({std::string("linear")})
+    )
+                           .interpolate(crAU);
     rAUNF.name = "rAUfNF";
 
-    auto phiHbyANF = NeoFOAM::flux(hByANF) + nfCorr * rAUNF;
+    auto phiHbyAND = NeoFOAM::flux(hByAND) + nfCorr * rAUNF;
     SECTION("application to actual fields: " + execName)
     {
-	NeoFOAM::compare(phiHbyANF, phiHbyA, ApproxScalar(1e-15));
+        NeoFOAM::compare(phiHbyAND, phiHbyA, ApproxScalar(1e-15));
     }
 }

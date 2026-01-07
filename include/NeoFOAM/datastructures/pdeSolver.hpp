@@ -91,7 +91,7 @@ public:
         virtual void operator()(
             const NeoN::la::SparsityPattern& sp,
             NeoN::la::LinearSystem<NeoN::scalar, NeoN::localIdx>& ls
-        ) 
+        )
         {
             const auto diagOffset = sp.diagOffset().view();
             const auto rowOffs = ls.matrix().rowOffs().view();
