@@ -3,7 +3,7 @@
 
 """Pressure-velocity coupling algorithms."""
 
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal
 
 import pybFoam as pyf
 from pybFoam import (
@@ -30,42 +30,6 @@ from foamadapter.framework.operations import (
 )
 
 
-@runtime_checkable
-class PressureVelocityAlgorithm(Protocol):
-    """
-    Protocol defining the interface for pressure-velocity coupling algorithms.
-
-    Algorithms expose their operations through the operations() method.
-    Operations are accessible by name (e.g., "momentum", "continuity", "turbulence_correction").
-    """
-
-    def name(self) -> str:
-        """Return algorithm name (SIMPLE, PISO, PIMPLE)."""
-        ...
-
-    def create_control(self, mesh: Any) -> Any:
-        """
-        Create algorithm control object (pimpleControl, pisoControl, simpleControl).
-
-        Args:
-            mesh: The finite volume mesh
-
-        Returns:
-            Control object for managing algorithm iterations
-        """
-        ...
-
-    def operations(self) -> OperationCollection:
-        """
-        Return the algorithm-specific operations.
-
-        Returns:
-            Collection of operations used by this algorithm.
-            Operations are typically named: "momentum", "continuity"
-        """
-        ...
-
-
 # ============================================================================
 # PluginSystem-based Algorithm Registry
 # ============================================================================
@@ -82,16 +46,6 @@ class PressureVelocityAlgorithmConfig(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
-    @property
-    def provides(self) -> list[str]:
-        """Fields this algorithm provides during setup."""
-        return ["p", "U", "phi"]  # Base fields all algorithms provide
-
-    @property
-    def requires(self) -> list[str]:
-        """Fields this algorithm requires."""
-        return []  # Override in subclasses if needed
-
     @classmethod
     def create(cls, *, config: dict[str, Any]) -> Any:
         """Factory classmethod to create algorithm config from config dict.
@@ -101,152 +55,103 @@ class PressureVelocityAlgorithmConfig(BaseModel):
         """
         return cls.plugin_model(config=config)  # type: ignore[attr-defined]
 
-    def setup(self) -> list[Any]:
+    @classmethod
+    def from_fvSolution(cls, fvSolution: Any) -> Any:
         """
-        Return LazyInit objects for fields this algorithm manages.
+        Detect algorithm type from fvSolution file and create algorithm instance.
 
-        Default implementation registers p, U, phi fields.
-        Override to add algorithm-specific fields.
+        Reads system/fvSolution to determine which algorithm (PIMPLE/PISO/SIMPLE)
+        is being used and returns a ready-to-use algorithm instance.
+
+        pRefCell and pRefValue should be set later via set_pressure_reference().
+
+        Args:
+            fvSolution: OpenFOAM dictionary object for system/fvSolution
 
         Returns:
-            List of LazyInit objects for field initialization
+            Algorithm instance (PimpleAlgorithm, PisoAlgorithm, or SimpleAlgorithm)
+            ready to use with setup() and operations() methods.
+
+        Raises:
+            ValueError: If no supported algorithm found in fvSolution
+
+        Example:
+            fvSolution = pyf.dictionary.read("system/fvSolution")
+            algorithm = PressureVelocityAlgorithmConfig.from_fvSolution(fvSolution)
+            initializers = algorithm.setup()
+            # Later, after pressure field exists:
+            algorithm.set_pressure_reference(p, mesh, fvSolution)
         """
+        if fvSolution.isDict("PIMPLE"):
+            algorithm_type = "PIMPLE"
+        elif fvSolution.isDict("PISO"):
+            algorithm_type = "PISO"
+        elif fvSolution.isDict("SIMPLE"):
+            algorithm_type = "SIMPLE"
+        else:
+            raise ValueError(
+                "No supported algorithm (PIMPLE/PISO/SIMPLE) found in system/fvSolution"
+            )
+
+        wrapper = cls.create(config={"algorithm_type": algorithm_type})
+        return wrapper.config  # type: ignore[attr-defined]
+
+
+@PressureVelocityAlgorithmConfig.register
+@Model
+class PimpleAlgorithm(BaseModel):
+    """PIMPLE algorithm - unified config and execution."""
+
+    algorithm_type: Literal["PIMPLE"] = "PIMPLE"
+    pRefCell: int | None = None
+    pRefValue: float | None = None
+    model_config = {"arbitrary_types_allowed": True}
+
+    _ops: OperationCollection | None = None
+
+    def setup(self) -> list[Any]:
+        """Register p, U, phi fields and pimple_control model."""
         from foamadapter.foam.initialization import read_vol_field
-        from foamadapter.framework.initialization.helpers import field
+        from foamadapter.framework.initialization.helpers import field, model
 
         def create_phi(context: dict[str, Any]) -> Any:
             U = context["fields.U"]
             return pyf.createPhi(U)
 
+        def create_pimple_control(context: dict[str, Any]) -> Any:
+            mesh = context["mesh"]
+            return pyf.pimpleControl(mesh)
+
         return [
             read_vol_field(volScalarField, "p"),
             read_vol_field(volVectorField, "U"),
             field("phi", create_phi, depends_on=["fields.U"]),
+            model("pimple_control", depends_on=["mesh"], create=create_pimple_control),
         ]
 
-    def create_algorithm(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """
-        Create the algorithm instance.
+    def set_pressure_reference(self, p: Any, mesh: Any, fvSolution: Any) -> None:
+        """Set pressure reference cell and value from fvSolution.
 
         Args:
-            pRefCell: Reference cell for pressure
-            pRefValue: Reference value for pressure
-
-        Returns:
-            Algorithm instance
+            p: Pressure field
+            mesh: Mesh object
+            fvSolution: OpenFOAM dictionary object for system/fvSolution
         """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} must implement create_algorithm()"
-        )
+        import pybFoam as pyf
 
+        # Get algorithm-specific subDict
+        algo_dict = fvSolution.subDict("PIMPLE")
 
-@PressureVelocityAlgorithmConfig.register
-class PimpleConfig(BaseModel):
-    """PIMPLE algorithm configuration."""
-
-    algorithm_type: Literal["PIMPLE"] = "PIMPLE"
-    model_config = {"arbitrary_types_allowed": True}
-
-    @property
-    def provides(self) -> list[str]:
-        return [
-            "p",
-            "U",
-            "phi",
-            "pimple_control",
-        ]  # PIMPLE provides base fields + control model
-
-    @property
-    def requires(self) -> list[str]:
-        return []  # No setup-time dependencies
-
-    def setup(self) -> list[Any]:
-        """Register p, U, phi fields and pimple_control model."""
-        from foamadapter.framework.initialization.helpers import model
-
-        # Get base fields (p, U, phi) from parent class
-        initializers = PressureVelocityAlgorithmConfig.setup(self)
-
-        # Add PIMPLE-specific control as a model (not field)
-        def create_pimple_control(context: dict[str, Any]) -> Any:
-            mesh = context["mesh"]
-            # Use module-level import to allow mocking
-            return pyf.pimpleControl(mesh)
-
-        initializers.append(
-            model("pimple_control", depends_on=["mesh"], create=create_pimple_control)
-        )
-
-        return initializers
-
-    def create_algorithm(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> "PimpleAlgorithm":
-        """Create PIMPLE algorithm instance."""
-        return PimpleAlgorithm(pRefCell=pRefCell, pRefValue=pRefValue)
-
-
-@PressureVelocityAlgorithmConfig.register
-class SimpleConfig(BaseModel):
-    """SIMPLE algorithm configuration (not yet implemented)."""
-
-    algorithm_type: Literal["SIMPLE"] = "SIMPLE"
-    model_config = {"arbitrary_types_allowed": True}
-
-    def create(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """Create SIMPLE algorithm instance."""
-        raise NotImplementedError("SIMPLE algorithm not yet implemented")
-
-    def setup(
-        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        raise NotImplementedError("SIMPLE algorithm not yet implemented")
-
-
-@PressureVelocityAlgorithmConfig.register
-class PisoConfig(BaseModel):
-    """PISO algorithm configuration (not yet implemented)."""
-
-    algorithm_type: Literal["PISO"] = "PISO"
-    model_config = {"arbitrary_types_allowed": True}
-
-    def create(
-        self, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        """Create PISO algorithm instance."""
-        raise NotImplementedError("PISO algorithm not yet implemented")
-
-    def setup(
-        self, builder: Any, pRefCell: int | None = None, pRefValue: float | None = None
-    ) -> Any:
-        raise NotImplementedError("PISO algorithm not yet implemented")
-
-
-@Model
-class PimpleAlgorithm:
-    """PIMPLE algorithm - self-contained with its own operations."""
-
-    def __init__(self, pRefCell: int | None = None, pRefValue: float | None = None):
-        """
-        Initialize PIMPLE algorithm.
-
-        Args:
-            pRefCell: Reference cell for pressure
-            pRefValue: Reference value for pressure
-        """
+        # Extract pRefCell and pRefValue
+        pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
         self.pRefCell = pRefCell
         self.pRefValue = pRefValue
-        self._ops: OperationCollection | None = None
+
+        # Set flux required for pressure
+        mesh.setFluxRequired(pyf.Word("p"))
 
     def name(self) -> str:
         return "PIMPLE"
-
-    def create_control(self, mesh: Any) -> Any:
-        return pyf.pimpleControl(mesh)
 
     def operations(self) -> OperationCollection:
         """Return algorithm-specific operations - just momentum and continuity."""
@@ -349,3 +254,29 @@ class PimpleAlgorithm:
             U.correctBoundaryConditions()
 
         return FieldUpdates({"U": U, "p": p, "phi": phi})
+
+
+@PressureVelocityAlgorithmConfig.register
+class SimpleAlgorithm(BaseModel):
+    """SIMPLE algorithm (not yet implemented)."""
+
+    algorithm_type: Literal["SIMPLE"] = "SIMPLE"
+    pRefCell: int | None = None
+    pRefValue: float | None = None
+    model_config = {"arbitrary_types_allowed": True}
+
+    def setup(self) -> list[Any]:
+        raise NotImplementedError("SIMPLE algorithm not yet implemented")
+
+
+@PressureVelocityAlgorithmConfig.register
+class PisoAlgorithm(BaseModel):
+    """PISO algorithm (not yet implemented)."""
+
+    algorithm_type: Literal["PISO"] = "PISO"
+    pRefCell: int | None = None
+    pRefValue: float | None = None
+    model_config = {"arbitrary_types_allowed": True}
+
+    def setup(self) -> list[Any]:
+        raise NotImplementedError("PISO algorithm not yet implemented")

@@ -30,10 +30,8 @@ from foamadapter.framework.context import FieldUpdates
 from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.model import Model
 from foamadapter.framework.operations import Operation, OperationCollection
-from foamadapter.models import register_model
 
 
-@register_model("buoyancy")
 @Model
 class BuoyancyModel(BaseModel):
     """

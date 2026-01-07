@@ -39,7 +39,6 @@ def test_incompressible_fluid_structure():
 
     # Verify properties
     assert solver.name == "IncompressibleFluid"
-    assert solver.maxDeltaT == 1e5
 
 
 def test_incompressible_fluid_operations_registration():
@@ -54,14 +53,16 @@ def test_incompressible_fluid_operations_registration():
 
     ops = solver.operations()
 
-    # Should have solver operations + algorithm operations (momentum, continuity)
+    # Should have solver operations + algorithm operations (momentum, continuity, inner_loop)
     expected_solver_operations = [
-        "print_time",
+        "set_time_step",
+        "increment_time",
         "turbulence_correction",
         "write_output",
     ]
 
     expected_algorithm_operations = [
+        "inner_loop",
         "momentum",
         "continuity",
     ]
@@ -96,7 +97,8 @@ def test_incompressible_fluid_operation_dependencies():
     ops = solver.operations()
 
     # Check solver operation dependencies
-    assert ops["print_time"].depends_on == []
+    assert ops["set_time_step"].depends_on == []
+    assert ops["increment_time"].depends_on == []
 
     # Algorithm operations have no explicit dependencies in their decorator
     # (dependencies are managed by solver's main_loop)
@@ -117,7 +119,6 @@ def test_incompressible_fluid_pydantic_schema():
     assert "properties" in schema
     assert "name" in schema["properties"]
     assert "argv" in schema["properties"]
-    assert "maxDeltaT" in schema["properties"]
 
 
 def test_cfl_condition_class():
@@ -136,8 +137,9 @@ def test_algorithm_operations():
     algorithm = PimpleAlgorithm()
     ops = algorithm.operations()
 
-    # Algorithm should have exactly 2 operations
-    assert len(ops) == 2
+    # Algorithm should have exactly 3 operations (inner_loop, momentum, continuity)
+    assert len(ops) == 3
+    assert "inner_loop" in [op.operation_name for op in ops]
     assert "momentum" in [op.operation_name for op in ops]
     assert "continuity" in [op.operation_name for op in ops]
 

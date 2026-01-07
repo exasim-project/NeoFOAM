@@ -7,7 +7,10 @@ Unified Condition class with logical operators.
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
 
 
 class Condition:
