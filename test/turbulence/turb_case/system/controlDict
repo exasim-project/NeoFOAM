@@ -10,50 +10,43 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      fvSolution;
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solvers
-{
-    p
-    {
-        solver          GAMG;
-        tolerance       1e-06;
-        relTol          0.1;
-        smoother        GaussSeidel;
-    }
+application     pimpleFoam;
 
-    "(U|k|epsilon|omega|f|v2)"
-    {
-        solver          smoothSolver;
-        smoother        symGaussSeidel;
-        tolerance       1e-05;
-        relTol          0.1;
-    }
-}
+startFrom       latestTime;
 
-SIMPLE
-{
-    nNonOrthogonalCorrectors 0;
-    consistent      no;
+startTime       0;
 
-    residualControl
-    {
-        p               1e-2;
-        U               1e-3;
-        "(k|epsilon|omega|f|v2)" 1e-3;
-    }
-}
+stopAt          endTime;
 
-relaxationFactors
-{
-    equations
-    {
-        U               0.9; // 0.9 is more stable but 0.95 more convergent
-        ".*"            0.3; // 0.9 is more stable but 0.95 more convergent
-    }
-}
+endTime         0.3;
+
+deltaT          0.0001;
+
+writeControl    adjustable;
+
+writeInterval   0.01;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable yes;
+
+adjustTimeStep  yes;
+
+maxCo           5;
 
 
 // ************************************************************************* //

@@ -30,25 +30,47 @@ from foamadapter.framework.operations import (
 )
 
 
-# ============================================================================
-# PluginSystem-based Algorithm Registry
-# ============================================================================
-
-
 @PluginSystem.register(discriminator_variable="config", discriminator="algorithm_type")
-class PressureVelocityAlgorithmConfig(BaseModel):
+@Model
+class PressureVelocityAlgorithm(BaseModel):
     """
-    Base class for pressure-velocity coupling algorithm configurations.
+    Base class for pressure-velocity coupling algorithms.
 
-    Provides extensibility for different algorithms (SIMPLE, PISO, PIMPLE)
-    using the PluginSystem pattern.
+    Loads fvSolution, detects algorithm type, and dispatches to registered method.
     """
 
     model_config = {"arbitrary_types_allowed": True}
+    algorithm_type: str | None = None
+
+    @Model.load
+    def load_fv_solution(self, path: str = "system/fvSolution") -> None:
+        """Read fvSolution and detect algorithm type."""
+        fv_solution = pyf.dictionary.read(path)
+
+        # Detect algorithm type from available subdictionaries
+        toc = fv_solution.toc()
+        if "PIMPLE" in toc:
+            self.algorithm_type = "PIMPLE"
+        elif "PISO" in toc:
+            self.algorithm_type = "PISO"
+        elif "SIMPLE" in toc:
+            self.algorithm_type = "SIMPLE"
+        else:
+            raise ValueError("No algorithm found in fvSolution")
+
+    @classmethod
+    def from_fv_solution(cls, path: str = "system/fvSolution") -> Any:
+        """Factory: create instance, trigger load, return discriminated subclass."""
+        # Create instance and trigger LOAD stage
+        instance = cls()
+        instance.load_fv_solution(path)
+
+        # Use PluginSystem to instantiate correct registered method
+        return cls.create(config={"algorithm_type": instance.algorithm_type})
 
     @classmethod
     def create(cls, *, config: dict[str, Any]) -> Any:
-        """Factory classmethod to create algorithm config from config dict.
+        """Factory classmethod to create algorithm from config dict.
 
         Implemented explicitly for type safety. Calls plugin_model generated
         by @PluginSystem.register decorator.
@@ -97,7 +119,7 @@ class PressureVelocityAlgorithmConfig(BaseModel):
         return wrapper.config  # type: ignore[attr-defined]
 
 
-@PressureVelocityAlgorithmConfig.register
+@PressureVelocityAlgorithm.register
 @Model
 class PimpleAlgorithm(BaseModel):
     """PIMPLE algorithm - unified config and execution."""
@@ -154,7 +176,7 @@ class PimpleAlgorithm(BaseModel):
         return "PIMPLE"
 
     def operations(self) -> OperationCollection:
-        """Return algorithm-specific operations - just momentum and continuity."""
+        """Return algorithm-specific operations."""
         if self._ops is None:
             funcs = decorated_member_functions(self)
             self._ops = OperationCollection()
@@ -256,7 +278,7 @@ class PimpleAlgorithm(BaseModel):
         return FieldUpdates({"U": U, "p": p, "phi": phi})
 
 
-@PressureVelocityAlgorithmConfig.register
+@PressureVelocityAlgorithm.register
 class SimpleAlgorithm(BaseModel):
     """SIMPLE algorithm (not yet implemented)."""
 
@@ -269,7 +291,7 @@ class SimpleAlgorithm(BaseModel):
         raise NotImplementedError("SIMPLE algorithm not yet implemented")
 
 
-@PressureVelocityAlgorithmConfig.register
+@PressureVelocityAlgorithm.register
 class PisoAlgorithm(BaseModel):
     """PISO algorithm (not yet implemented)."""
 

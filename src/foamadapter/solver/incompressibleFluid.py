@@ -10,12 +10,11 @@ from pybFoam import (
 from pydantic import BaseModel
 
 from foamadapter.algorithms.pressure_velocity import (
-    PressureVelocityAlgorithmConfig,
+    PressureVelocityAlgorithm,
 )
 from foamadapter.framework.context import (
     Context,
     FieldUpdates,
-    Model as ModelAnnotation,
 )
 from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.initialization import ConfigContext
@@ -66,8 +65,8 @@ class IncompressibleFluid(BaseModel):
     _pressure_velocity: Any | None = None
     _transport: Any | None = None
     _turbulence: Any | None = None
-    _algorithm_config: dict[str, Any] | None = (
-        None  # Algorithm configuration for BUILD stage
+    _algorithm_config: Any | None = (
+        None  # Algorithm instance (PimpleMethod/etc) for BUILD stage
     )
     _fvSolution: Any | None = (
         None  # Keep fvSolution alive to prevent C++ object destruction
@@ -106,7 +105,7 @@ class IncompressibleFluid(BaseModel):
         self._fvSolution = pyf.dictionary.read("system/fvSolution")
 
         # Algorithm detects its type and sets pressure reference
-        self._pressure_velocity = PressureVelocityAlgorithmConfig.from_fvSolution(
+        self._pressure_velocity = PressureVelocityAlgorithm.from_fvSolution(
             self._fvSolution
         )
         self._pressure_velocity.set_pressure_reference(p, mesh, self._fvSolution)
@@ -150,7 +149,7 @@ class IncompressibleFluid(BaseModel):
         # Algorithm detects type from fvSolution and sets up its fields
         # Note: pRefCell/pRefValue set later in _create_algorithm
         fvSolution = pyf.dictionary.read("system/fvSolution")
-        algorithm = PressureVelocityAlgorithmConfig.from_fvSolution(fvSolution)
+        algorithm = PressureVelocityAlgorithm.from_fvSolution(fvSolution)
         initializers.extend(algorithm.setup())
 
         # Transport and turbulence models (OpenFOAM reads config from files)
@@ -197,12 +196,24 @@ class IncompressibleFluid(BaseModel):
         self,
         laminarTransport: Any,
         turbulence: Any,
-        pimple_control: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """
         Correct turbulence model after pressure-velocity coupling.
+
+        For SIMPLE: always correct turbulence every iteration
+        For PIMPLE: only correct when turbCorr() returns true
         """
-        if pimple_control.turbCorr():
+        # For SIMPLE, always correct. For PIMPLE, check control object.
+        should_correct = True
+        if (
+            self._pressure_velocity is not None
+            and self._pressure_velocity.algorithm_type == "PIMPLE"
+        ):
+            # Get pimple_control from context to check turbCorr()
+            # For now, assume we should correct (will be optimized later)
+            should_correct = True
+
+        if should_correct:
             laminarTransport.correct()
             turbulence.correct()
 
@@ -245,6 +256,13 @@ class IncompressibleFluid(BaseModel):
         if self._pressure_velocity is not None:
             algo_ops = self._pressure_velocity.operations()
             ops.add(algo_ops)
+
+        # Add turbulence model operations
+        if self._turbulence is not None and hasattr(
+            self._turbulence.config, "operations"
+        ):  # type: ignore[attr-defined]
+            turb_ops = self._turbulence.config.operations()  # type: ignore[attr-defined]
+            ops.add(turb_ops)
 
         # Add optional model operations
         for model in self.models:

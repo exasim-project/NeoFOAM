@@ -51,15 +51,56 @@ def mock_pyfoam():
 
         mock_control_dict.get.__getitem__ = mock_get_subscript
 
-        mock_fv_solution = MagicMock()
-        mock_fv_solution.subDict = MagicMock(return_value={})
+        # Create mock PIMPLE subdictionary
+        mock_pimple_dict = MagicMock()
 
-        mock_pyf.dictionary.read = MagicMock(
-            side_effect=lambda path: {
+        def mock_pimple_get_subscript(self, t):
+            def get_value(key):
+                values = {
+                    "nCorrectors": 2,
+                    "nNonOrthogonalCorrectors": 0,
+                    "momentumPredictor": True,
+                }
+                if key in values:
+                    return values[key]
+                raise KeyError(key)
+
+            return get_value
+
+        mock_pimple_dict.get.__getitem__ = mock_pimple_get_subscript
+
+        mock_fv_solution = MagicMock()
+        mock_fv_solution.subDict = MagicMock(return_value=mock_pimple_dict)
+        # Add .toc() method to return PIMPLE algorithm
+        mock_fv_solution.toc = MagicMock(
+            return_value=["PIMPLE", "solvers", "relaxationFactors"]
+        )
+
+        # Create mock turbulenceProperties dictionary
+        mock_turb_dict = MagicMock()
+
+        def mock_turb_get_subscript(self, t):
+            def get_value(key):
+                values = {
+                    "simulationType": "RAS",
+                    "RASModel": "kEpsilon",
+                }
+                if key in values:
+                    return values[key]
+                raise KeyError(key)
+
+            return get_value
+
+        mock_turb_dict.get.__getitem__ = mock_turb_get_subscript
+
+        def mock_read_dict(path):
+            return {
                 "system/controlDict": mock_control_dict,
                 "system/fvSolution": mock_fv_solution,
+                "constant/turbulenceProperties": mock_turb_dict,
             }.get(path)
-        )
+
+        mock_pyf.dictionary.read = MagicMock(side_effect=mock_read_dict)
 
         # Mock argList, Time, fvMesh with proper mesh object
         mock_pyf.argList = MagicMock(return_value="mock_arglist")
@@ -74,7 +115,8 @@ def mock_pyfoam():
         mock_pyf.setRefCell = MagicMock(return_value=(0, 0.0))
         mock_pyf.Word = MagicMock(return_value="mock_word")
 
-        # Algorithm module needs the same mocks
+        # Algorithm module needs the same mocks (including dictionary.read!)
+        mock_algo_pyf.dictionary.read = MagicMock(side_effect=mock_read_dict)
         mock_algo_pyf.createPhi = MagicMock(return_value="mock_phi")
         mock_algo_pyf.pimpleControl = MagicMock(return_value="mock_pimple_control")
 
@@ -85,6 +127,31 @@ def mock_pyfoam():
         mock_foam_pyf.createPhi = MagicMock(return_value="mock_phi")
 
         yield mock_pyf
+
+
+@pytest.fixture
+def mock_turbulence_from_file():
+    """Mock TurbulenceModel.from_file() to avoid reading real files."""
+    from foamadapter.turbulence.models import kEpsilonModel
+
+    # Create a mock turbulence model - from_file returns plugin_model() result
+    # which is the extensible model wrapping the concrete model
+    mock_model = kEpsilonModel()
+
+    # Mock the from_file classmethod to return the model wrapped in plugin_model
+    with patch(
+        "foamadapter.turbulence.models.TurbulenceModel.from_file"
+    ) as mock_from_file:
+        # The plugin_model creates a wrapper - we'll mock it to return the model directly
+        # for simplicity in tests
+        def create_mock_plugin_model(path="constant/turbulenceProperties"):
+            # Create the wrapper that from_file would normally return
+            mock_wrapper = MagicMock()
+            mock_wrapper.config = mock_model
+            return mock_wrapper
+
+        mock_from_file.side_effect = create_mock_plugin_model
+        yield mock_from_file
 
 
 @pytest.fixture
@@ -114,19 +181,19 @@ def mock_turbulence_models():
             "foamadapter.solver.incompressibleFluid.singlePhaseTransportModel"
         ) as mock_transport,
         patch(
-            "foamadapter.solver.incompressibleFluid.incompressibleTurbulenceModel"
-        ) as mock_turbulence,
+            "foamadapter.turbulence.models.incompressibleTurbulenceModel"
+        ) as mock_turb_models,
     ):
         mock_transport.return_value = "mock_transport_model"
-        mock_turbulence.New = MagicMock(return_value="mock_turbulence_model")
+        mock_turb_models.New = MagicMock(return_value="mock_turbulence_model")
 
-        yield mock_transport, mock_turbulence
+        yield mock_transport, mock_turb_models
 
 
 @pytest.fixture
 def solver_basic():
     """Create a basic IncompressibleFluid solver instance."""
-    return IncompressibleFluid(argv=["test"], algorithm="PIMPLE")
+    return IncompressibleFluid(argv=["test"])
 
 
 # ============================================================================
@@ -139,22 +206,17 @@ def test_solver_creation():
     solver = IncompressibleFluid()
 
     assert solver.name == "IncompressibleFluid"
-    assert solver.algorithm == "PIMPLE"
-    assert solver.files_read is False
-    assert solver.configured is False
-    assert solver.setup_complete is False
+    assert solver.maxDeltaT == 1e5
 
 
 def test_solver_creation_with_custom_params():
     """Test solver creation with custom parameters."""
     solver = IncompressibleFluid(
         argv=["test_app", "-case", "/path/to/case"],
-        algorithm="PIMPLE",
         maxDeltaT=0.1,
     )
 
     assert solver.argv == ["test_app", "-case", "/path/to/case"]
-    assert solver.algorithm == "PIMPLE"
     assert solver.maxDeltaT == 0.1
 
 
@@ -176,7 +238,6 @@ def test_load_stage_execution(solver_basic, mock_pyfoam):
     """Test that LOAD stage executes correctly."""
     solver_basic.load_control_dict()
 
-    assert solver_basic.files_read is True
     # maxDeltaT should be updated from mock
     assert solver_basic.maxDeltaT == 1.0
 
@@ -199,7 +260,6 @@ def test_load_handles_missing_maxDeltaT(solver_basic):
         original_max_delta_t = solver_basic.maxDeltaT
         solver_basic.load_control_dict()
 
-        assert solver_basic.files_read is True
         assert solver_basic.maxDeltaT == original_max_delta_t  # Should keep default
 
 
@@ -217,12 +277,13 @@ def test_load_decorator_marked():
 # ============================================================================
 
 
-def test_resolve_dependencies_stage_execution(solver_basic):
+def test_resolve_dependencies_stage_execution(
+    solver_basic, mock_pyfoam, mock_turbulence_from_file
+):
     """Test that RESOLVE_DEPENDENCIES stage executes correctly."""
     config = ConfigContext()
     solver_basic.configure_solver(config)
 
-    assert solver_basic.configured is True
     # Components are created as wrappers in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
@@ -232,7 +293,9 @@ def test_resolve_dependencies_stage_execution(solver_basic):
     assert config.contains("turbulence")
 
 
-def test_resolve_dependencies_registers_algorithm(solver_basic):
+def test_resolve_dependencies_registers_algorithm(
+    solver_basic, mock_pyfoam, mock_turbulence_from_file
+):
     """Test that components are registered in ConfigContext."""
     config = ConfigContext()
     solver_basic.configure_solver(config)
@@ -244,18 +307,6 @@ def test_resolve_dependencies_registers_algorithm(solver_basic):
     assert turbulence is not None
     assert transport is solver_basic._transport
     assert turbulence is solver_basic._turbulence
-
-
-def test_resolve_dependencies_validates_algorithm():
-    """Test that invalid algorithm raises ValueError."""
-    # Note: Pydantic validation happens at construction time
-    # We test the configure stage validation
-    solver = IncompressibleFluid(algorithm="PIMPLE")
-    solver.algorithm = "INVALID"  # Bypass Pydantic for testing
-
-    config = ConfigContext()
-    with pytest.raises(ValueError, match="Unknown algorithm"):
-        solver.configure_solver(config)
 
 
 def test_resolve_dependencies_decorator_marked():
@@ -273,7 +324,11 @@ def test_resolve_dependencies_decorator_marked():
 
 
 def test_build_stage_execution(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that BUILD stage returns lazy initializers."""
     # Must call configure_solver first
@@ -291,7 +346,11 @@ def test_build_stage_execution(
 
 
 def test_build_creates_mesh_and_runtime(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that BUILD stage returns lazy initializers for mesh and runtime."""
     # Must call configure_solver first
@@ -308,7 +367,11 @@ def test_build_creates_mesh_and_runtime(
 
 
 def test_build_reads_fields(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that BUILD stage returns lazy initializers for fields."""
     mock_vol_scalar, mock_vol_vector = mock_field_classes
@@ -327,7 +390,11 @@ def test_build_reads_fields(
 
 
 def test_build_creates_turbulence_models(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that BUILD stage returns lazy initializers for turbulence models."""
     mock_transport, mock_turbulence = mock_turbulence_models
@@ -342,14 +409,18 @@ def test_build_creates_turbulence_models(
     assert isinstance(result, list)
     lazy_names = [li.name for li in result]
     assert "fields.laminarTransport" in lazy_names
-    assert "fields.turbulence" in lazy_names
+    assert "models.turbulence" in lazy_names  # Turbulence is a model, not a field
     # _transport and _turbulence are wrappers created in RESOLVE_DEPENDENCIES
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
 
 
 def test_build_updates_algorithm_reference_cell(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that BUILD stage returns lazy initializer for algorithm."""
     # Must call configure_solver first
@@ -379,16 +450,15 @@ def test_build_decorator_marked():
 
 
 def test_full_initialization_with_initializer(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test complete 3-stage initialization using SolverInitializer."""
     initializer = SolverInitializer(solver_basic)
     result = initializer.initialize(mesh=None)
-
-    # All stages should be complete
-    assert solver_basic.files_read
-    assert solver_basic.configured
-    assert solver_basic.setup_complete
 
     # Should return a Context now (not the solver)
     from foamadapter.framework.context import Context
@@ -397,9 +467,18 @@ def test_full_initialization_with_initializer(
     assert result.mesh is not None
     assert result.runTime is not None
 
+    # Verify core components are initialized
+    assert solver_basic._transport is not None
+    assert solver_basic._turbulence is not None
+    assert solver_basic._pressure_velocity is not None
+
 
 def test_initialization_order(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that initialization stages execute in correct order."""
     call_order = []
@@ -435,7 +514,9 @@ def test_initialization_order(
     assert call_order == ["LOAD", "RESOLVE_DEPENDENCIES", "BUILD"]
 
 
-def test_get_models_after_resolve_dependencies(solver_basic, mock_pyfoam):
+def test_get_models_after_resolve_dependencies(
+    solver_basic, mock_pyfoam, mock_turbulence_from_file
+):
     """Test that get_models returns empty list after RESOLVE_DEPENDENCIES stage."""
     config = ConfigContext()
     solver_basic.configure_solver(config)
@@ -451,7 +532,11 @@ def test_get_models_after_resolve_dependencies(solver_basic, mock_pyfoam):
 
 
 def test_context_from_initialization(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that initialization returns a context with all required fields."""
     # Initialize the solver
@@ -466,7 +551,7 @@ def test_context_from_initialization(
     assert "U" in ctx.fields
     assert "phi" in ctx.fields
     assert "laminarTransport" in ctx.fields
-    assert "turbulence" in ctx.fields
+    assert "turbulence" in ctx.models  # Turbulence is a model, not a field
     assert "pimple_control" in ctx.models  # Control is in models, not fields
 
 
@@ -491,7 +576,9 @@ def test_algorithm_created_in_build():
 # ============================================================================
 
 
-def test_registry_contains_algorithm_after_resolve_dependencies(solver_basic):
+def test_registry_contains_algorithm_after_resolve_dependencies(
+    solver_basic, mock_pyfoam, mock_turbulence_from_file
+):
     """Test that ModelRegistry contains components after RESOLVE_DEPENDENCIES."""
     config = ConfigContext()
     solver_basic.configure_solver(config)
@@ -521,35 +608,38 @@ def test_registry_empty_before_resolve_dependencies(solver_basic):
 
 
 def test_full_solver_lifecycle(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test complete solver lifecycle from creation to initialization."""
-    # 1. Solver creation
-    assert not solver_basic.files_read
-    assert not solver_basic.configured
-    assert not solver_basic.setup_complete
+    # 1. Solver creation - components not yet initialized
+    assert solver_basic._transport is None
+    assert solver_basic._turbulence is None
+    assert solver_basic._pressure_velocity is None
 
     # 2. Initialize with SolverInitializer
     initializer = SolverInitializer(solver_basic)
     initializer.initialize(mesh=None)
 
-    # 3. Verify all stages completed
-    assert solver_basic.files_read
-    assert solver_basic.configured
-    assert solver_basic.setup_complete
-
-    # 4. Verify core components are initialized
+    # 3. Verify core components are initialized
     assert solver_basic._transport is not None
     assert solver_basic._turbulence is not None
     assert solver_basic._pressure_velocity is not None
 
-    # 5. Verify registry has components
+    # 4. Verify registry has components
     assert initializer.config.contains("transport")
     assert initializer.config.contains("turbulence")
 
 
 def test_multiple_initializations_idempotent(
-    solver_basic, mock_pyfoam, mock_field_classes, mock_turbulence_models
+    solver_basic,
+    mock_pyfoam,
+    mock_field_classes,
+    mock_turbulence_models,
+    mock_turbulence_from_file,
 ):
     """Test that multiple initializations don't break the solver."""
     initializer = SolverInitializer(solver_basic)

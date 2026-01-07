@@ -11,7 +11,7 @@ from pydantic import BaseModel, ValidationError
 
 can_load_toml = True
 try:
-    import tomllib
+    import tomllib  # type: ignore[import-not-found]
 except ImportError:
     can_load_toml = False
 
