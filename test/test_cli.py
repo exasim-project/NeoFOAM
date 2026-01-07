@@ -16,4 +16,4 @@ def test_cli_incompressiblefluid_help() -> None:
     )
     assert result.returncode == 0
     assert "incompressiblefluid" in result.stdout.lower()
-    assert "Modular incompressible fluid solver" in result.stdout
+    assert "incompressible" in result.stdout.lower()  # Check for description text

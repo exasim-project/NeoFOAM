@@ -36,6 +36,9 @@ from foamadapter.core.plugin_system import PluginSystem
 
 def test_turbulence_plugin_registration():
     """Test that turbulence models are registered in PluginSystem."""
+    # Ensure models are imported (triggers @register decorators)
+    _ = (kOmegaSSTModel, kEpsilonModel, SmagorinskyModel, LaminarModel)
+
     registry = PluginSystem.get_registered("TurbulenceModel")
     assert registry is not None
 
