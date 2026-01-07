@@ -80,7 +80,6 @@ int main(int argc, char* argv[])
                 .name = "phi"
             }
         );
-        // auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -90,10 +89,6 @@ int main(int argc, char* argv[])
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
-            // auto& oldU = fvcc::oldTime(U);
-            // oldU.internalVector() = U.internalVector();
-            // auto& oldPhi = fvcc::oldTime(phi);
-            // oldPhi.internalVector() = phi.internalVector();
             fvcc::rotate(U);
             fvcc::rotate(phi);
 
@@ -139,13 +134,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
-                // TODO: OpenFOAM typically also corrects phiHbyA with
-                // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
-                // for the first term we can use but fvc::ddtCorr is missing
-                // NeoN::Input input = NeoN::TokenList({"linear"});
-                // fvcc::SurfaceInterpolation<NeoN::scalar> surfInterpolation(rt.exec, rt.nfMesh,
-                // input); auto surfRAU = surfInterpolation.interpolate(rAU);
+                auto phiHbyA = nf::flux(hByA) + fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme) * rAU;
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);

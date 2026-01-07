@@ -24,7 +24,6 @@ template<typename ValueType, typename IndexType = NeoN::localIdx>
 class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
-    using PostBase = NeoN::dsl::PostAssemblyBase<ValueType>;
 
 public:
 
@@ -90,7 +89,7 @@ public:
 
         virtual void operator()(
             const NeoN::la::SparsityPattern& sp,
-            NeoN::la::LinearSystem<NeoN::scalar, NeoN::localIdx>& ls
+            NeoN::la::LinearSystem<FunctorValueType, NeoN::localIdx>& ls
         )
         {
             const auto diagOffset = sp.diagOffset().view();
@@ -109,10 +108,6 @@ public:
                     rhs[refCelli] += diagValue * pRefValue;
                     values[diagIdx] += diagValue;
                 }
-            );
-	    NeoN::Logging::info(
-                "SetReference applied at cell {}, value {}",
-                pRefCell_, pRefValue_
             );
         }
     };
@@ -153,16 +148,17 @@ private:
     solveImpl(dsl::Expression<ValueType>& expr, NeoN::la::LinearSystem<ValueType, IndexType>& ls)
     {
         // Only if ValueType is scalar
-	auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
+        auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
 
-        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+	if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
-	    if (needReference_)
-            {
-                functs.push_back(
-                    SetReference<ValueType>(pRefCell_, pRefValue_)
-                );
-            }
+            functs =
+                needReference_
+                    ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {SetReference<ValueType>(
+                        pRefCell_,
+                        pRefValue_
+                    )}
+                    : std::vector<NeoN::dsl::PostAssemblyBase<ValueType>> {};
         }
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
@@ -177,7 +173,7 @@ private:
             runTime_.dt,
             runTime_.fvSchemesDict,
             fieldSolverDict,
-	    functs
+            functs
         );
 
         NeoN::Logging::info(
@@ -193,9 +189,9 @@ private:
     const NeoN::la::SparsityPattern& sparsityPattern_;
     NeoN::la::LinearSystem<ValueType, IndexType> ls_;
 
-    bool needReference_{false};
-    NeoN::localIdx pRefCell_{NeoN::localIdx(-1)};
-    NeoN::scalar pRefValue_{NeoN::scalar(0)};
+    bool needReference_;
+    NeoN::localIdx pRefCell_;
+    NeoN::scalar pRefValue_;
 };
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>

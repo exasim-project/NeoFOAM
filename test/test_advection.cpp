@@ -150,7 +150,9 @@ TEST_CASE("Advection Equation")
 
             // advance NeoFOAM fields in time
             {
-                NeoN::dsl::Expression eqnSys(NeoN::dsl::ddt(nfT) + NeoN::dsl::exp::div(nfPhi, nfT));
+                NeoN::dsl::Expression eqnSys(
+                    NeoN::dsl::exp::ddt(nfT) + NeoN::dsl::exp::div(nfPhi, nfT)
+                );
                 NeoN::dsl::solve(eqnSys, nfT, t, dt, fvSchemesDict, fvSolutionDict);
             }
 
@@ -206,7 +208,9 @@ TEST_CASE("Advection Equation")
 
             // advance NeoFOAM fields in time
             {
-                NeoN::dsl::Expression eqnSys(NeoN::dsl::ddt(nfT) + NeoN::dsl::imp::div(nfPhi, nfT));
+                NeoN::dsl::Expression eqnSys(
+                    NeoN::dsl::imp::ddt(nfT) + NeoN::dsl::imp::div(nfPhi, nfT)
+                );
                 NeoN::dsl::solve(eqnSys, nfT, t, dt, fvSchemesDict, fvSolutionDict);
             }
 

@@ -105,7 +105,7 @@ TEST_CASE("PressureVelocityCoupling")
     SECTION("discreteMomentumFields " + execName)
     {
         nf::PDESolver<NeoN::Vec3> nfUEqn(
-            dsl::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
             nfU,
             rt
         );
@@ -235,7 +235,7 @@ TEST_CASE("PressureVelocityCoupling")
             Foam::solve(ofUEqn);
 
             nf::PDESolver<NeoN::Vec3> nfUEqn(
-                dsl::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
                 nfU,
                 rt
             );
@@ -319,7 +319,7 @@ TEST_CASE("PressureVelocityCoupling")
             Foam::solve(ofUEqn == -Foam::fvc::grad(ofp));
 
             nf::PDESolver<NeoN::Vec3> nfUEqn(
-                dsl::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
                 nfU,
                 rt
             );
