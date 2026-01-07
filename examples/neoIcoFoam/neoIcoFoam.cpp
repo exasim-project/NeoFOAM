@@ -72,7 +72,14 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         NeoN::Logging::info("Creating phi");
-        auto phi = nf::constructFrom(rt.exec, rt.nfMesh, ofphi);
+        auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField> {
+                .exec = rt.exec,
+                .nfMesh = rt.nfMesh,
+                .foamField = ofphi,
+                .name = "phi"
+            }
+        );
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -82,8 +89,8 @@ int main(int argc, char* argv[])
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
-            auto& oldU = fvcc::oldTime(U);
-            oldU.internalVector() = U.internalVector();
+            fvcc::rotateOldTimes(U);
+            fvcc::rotateOldTimes(phi);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -95,6 +102,8 @@ int main(int argc, char* argv[])
                 U,
                 rt
             );
+
+            const auto ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())
             {
@@ -125,13 +134,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA);
-                // TODO: OpenFOAM typically also corrects phiHbyA with
-                // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
-                // for the first term we can use but fvc::ddtCorr is missing
-                // NeoN::Input input = NeoN::TokenList({"linear"});
-                // fvcc::SurfaceInterpolation<NeoN::scalar> surfInterpolation(rt.exec, rt.nfMesh,
-                // input); auto surfRAU = surfInterpolation.interpolate(rAU);
+                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);

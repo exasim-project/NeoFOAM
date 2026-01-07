@@ -10,57 +10,68 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      fvSchemes;
+    object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #include "simulationParameters"
+scale   1;
 
+vertices
+(
+    (0 0 0)
+    (1 0 0)
+    (1 1 0)
+    (0 1 0)
+    (0 0 1)
+    (1 0 1)
+    (1 1 1)
+    (0 1 1)
+);
 
-ddtSchemes
-{
-    default         none;
-    ddt(T)          Euler;
-    ddt(nfT)        Euler;
-    ddt(rho,U)      Euler;
-    ddt(rho,T)      Euler;
-    //type            forwardEuler;
-    type            Runge-Kutta;
-    Runge-Kutta-Method Forward-Euler;
-}
-timeIntegration
-{
-}
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($NX $NX $NX) simpleGrading (1 1 1)
+);
 
-gradSchemes
-{
-    //default         none;
-    grad(T)          Gauss linear; //  Gauss linear leastSquares pointCellsLeastSquares
-    grad(U)          Gauss linear;
-}
+edges
+(
+);
 
-divSchemes
-{
-    default         none;
-    div(phi,T)      Gauss upwind;
-    div(phi,nfT)    Gauss upwind;
-}
+boundary
+(
 
-laplacianSchemes
-{
-    default         none;
-}
+    fixedWalls
+    {
+        type wall;
+        faces
+        (
+            (3 7 6 2)
+            (1 5 4 0)
+            (0 3 2 1)
+            (4 5 6 7)
+        );
+    }
 
-interpolationSchemes
-{
-    default         none;
-    // default         linear;
-}
+    inlet
+    {
+        type patch;
+        faces
+        (
+            (2 6 5 1)
+        );
+    }
 
-snGradSchemes
-{
-    default         none;
-    // default         corrected;
-}
+    outlet
+    {
+        type patch;
+        faces
+        (
+
+            (0 4 7 3)
+        );
+    }
+);
 
 
 // ************************************************************************* //

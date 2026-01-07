@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2006                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -10,56 +10,45 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
+    location    "system";
     object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-#include "simulationParameters"
-
 
 ddtSchemes
 {
-    default         none;
-    ddt(T)          Euler;
-    ddt(nfT)        Euler;
-    ddt(rho,U)      Euler;
-    ddt(rho,T)      Euler;
-    //type            forwardEuler;
-    type            Runge-Kutta;
-    Runge-Kutta-Method Forward-Euler;
-}
-timeIntegration
-{
+    default         Euler;
+    ddt(nfU)        BDF1;
 }
 
 gradSchemes
 {
-    //default         none;
-    grad(T)          Gauss linear; //  Gauss linear leastSquares pointCellsLeastSquares
-    grad(U)          Gauss linear;
+    default         Gauss linear;
+    grad(p)         Gauss linear;
 }
 
 divSchemes
 {
     default         none;
-    div(phi,T)      Gauss upwind;
-    div(phi,nfT)    Gauss upwind;
+    div(phi,U)      Gauss linear;
+    div(nfPhi,nfU)  Gauss linear;
 }
 
 laplacianSchemes
 {
-    default         none;
+    default            Gauss linear uncorrected;
+    laplacian(nu,nfU)  Gauss linear uncorrected;
+    laplacian(rAUfNF,nfp) Gauss linear uncorrected;
 }
 
 interpolationSchemes
 {
-    default         none;
-    // default         linear;
+    default         linear;
 }
 
 snGradSchemes
 {
-    default         none;
-    // default         corrected;
+    default         uncorrected;
 }
 
 

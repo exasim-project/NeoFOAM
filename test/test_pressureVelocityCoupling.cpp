@@ -29,6 +29,8 @@ TEST_CASE("PressureVelocityCoupling")
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
+    auto& schemesDict = rt.fvSchemesDict;
+    schemesDict = nf::mapFvSchemes(schemesDict);
 
     auto ofU = randomVectorField(runTime, mesh, "ofU");
     auto ofp = randomScalarField(runTime, mesh, "ofp");

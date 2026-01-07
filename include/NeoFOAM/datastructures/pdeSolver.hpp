@@ -111,6 +111,18 @@ public:
             );
         }
     };
+    NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const
+    {
+        for (const auto& op : expr_.temporalOperators())
+        {
+	    const auto s = op.ddtScheme();
+            if (s != NeoN::finiteVolume::cellCentred::DdtScheme::None)
+            {
+                 return s;
+            }
+        }
+        return NeoN::finiteVolume::cellCentred::DdtScheme::None;
+    }
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
