@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
-/* This file implements comparison operator to compare OpenFOAM and corresponding NeoFOAM fields
- * TODO the comparison operator only make sense for testing purposes
- * so this should be part of the tests
- */
+// SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"

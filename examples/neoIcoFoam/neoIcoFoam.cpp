@@ -89,8 +89,8 @@ int main(int argc, char* argv[])
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
-            fvcc::rotate(U);
-            fvcc::rotate(phi);
+            fvcc::rotateOldTimes(U);
+            fvcc::rotateOldTimes(phi);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
