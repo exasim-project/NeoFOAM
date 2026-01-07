@@ -152,6 +152,23 @@ class Operation:
             kwargs["depends_on"] = metadata.depends_on
         return Operation(func=seq_op, **kwargs)
 
+    @staticmethod
+    def create_IterOp(callable_method: Callable[..., bool], **kwargs: Any) -> Operation:
+        if (
+            not hasattr(callable_method, "_metadata")
+            or not callable_method._metadata.is_condition
+        ):
+            raise ValueError("callable_method cannot be None")
+        iter_op = IterativeOp(context_adapter(callable_method))
+        metadata = callable_method._metadata
+        if "operation_name" not in kwargs and metadata.name is not None:
+            kwargs["operation_name"] = metadata.name
+        if "operation_number" not in kwargs and metadata.operation_number is not None:
+            kwargs["operation_number"] = metadata.operation_number
+        if "depends_on" not in kwargs and metadata.depends_on is not None:
+            kwargs["depends_on"] = metadata.depends_on
+        return Operation(func=iter_op, **kwargs)
+
     @property
     def operation_type(self) -> str:
         if isinstance(self.func, ConditionalOp):

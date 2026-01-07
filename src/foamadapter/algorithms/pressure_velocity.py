@@ -254,10 +254,23 @@ class PimpleAlgorithm:
             funcs = decorated_member_functions(self)
             self._ops = OperationCollection()
             for func in funcs:
-                op = Operation.create_SeqOp(func)
-                self._ops.add(op)
+                if not hasattr(func, "_metadata"):
+                    continue
+                if func._metadata.is_condition:
+                    op = Operation.create_IterOp(func)
+                    self._ops.add(op)
+                else:
+                    op = Operation.create_SeqOp(func)
+                    self._ops.add(op)
 
         return self._ops
+
+    @Model.condition
+    def inner_loop(
+        self,
+        pimple_control: ModelAnnotation[pyf.pimpleControl],
+    ) -> bool:
+        return bool(pimple_control.loop())
 
     @Model.operation(operation_number=1)
     def momentum(
@@ -266,7 +279,7 @@ class PimpleAlgorithm:
         phi: Any,
         p: Any,
         turbulence: Any,
-        pimple_control: ModelAnnotation[Any],
+        pimple_control: ModelAnnotation[pyf.pimpleControl],
     ) -> FieldUpdates:
         """
         PIMPLE momentum: Assemble and solve momentum equation.
@@ -281,11 +294,16 @@ class PimpleAlgorithm:
         if pimple_control.momentumPredictor():
             pyf.solve(UEqn + fvc.grad(p))
 
-        return FieldUpdates({"UEqn": UEqn})
+        return FieldUpdates({"UEqn": UEqn, "U": U})
 
     @Model.operation(operation_number=2)
     def continuity(
-        self, U: Any, p: Any, phi: Any, UEqn: Any, pimple_control: ModelAnnotation[Any]
+        self,
+        U: Any,
+        p: Any,
+        phi: Any,
+        UEqn: Any,
+        pimple_control: ModelAnnotation[pyf.pimpleControl],
     ) -> FieldUpdates:
         """
         PIMPLE continuity: Pressure-velocity coupling with nested loops.
@@ -300,36 +318,34 @@ class PimpleAlgorithm:
             - Correct velocity
         """
         # PIMPLE loop
-        while pimple_control.loop():
-            # Corrector loop
-            while pimple_control.correct():
-                # Compute H/A
-                rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
-                HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
+        while pimple_control.correct():
+            # Compute H/A
+            rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
+            HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
-                # Compute flux from H/A
-                phiHbyA = surfaceScalarField(
-                    pyf.Word("phiHbyA"),
-                    fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
-                )
+            # Compute flux from H/A
+            phiHbyA = surfaceScalarField(
+                pyf.Word("phiHbyA"),
+                fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
+            )
 
-                # Adjust flux for continuity
-                pyf.adjustPhi(phiHbyA, U, p)
-                pyf.constrainPressure(p, U, phiHbyA, rAU)
+            # Adjust flux for continuity
+            pyf.adjustPhi(phiHbyA, U, p)
+            pyf.constrainPressure(p, U, phiHbyA, rAU)
 
-                # Non-orthogonal loop
-                while pimple_control.correctNonOrthogonal():
-                    # Solve pressure equation
-                    pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
-                    pEqn.setReference(self.pRefCell, self.pRefValue, False)
-                    pEqn.solve(p.select(pimple_control.finalInnerIter()))
+            # Non-orthogonal loop
+            while pimple_control.correctNonOrthogonal():
+                # Solve pressure equation
+                pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
+                pEqn.setReference(self.pRefCell, self.pRefValue, False)
+                pEqn.solve(p.select(pimple_control.finalInnerIter()))
 
-                    # Update flux
-                    if pimple_control.finalNonOrthogonalIter():
-                        phi.assign(phiHbyA - pEqn.flux())
+                # Update flux
+                if pimple_control.finalNonOrthogonalIter():
+                    phi.assign(phiHbyA - pEqn.flux())
 
-                # Correct velocity
-                U.assign(HbyA - rAU * fvc.grad(p))
-                U.correctBoundaryConditions()
+            # Correct velocity
+            U.assign(HbyA - rAU * fvc.grad(p))
+            U.correctBoundaryConditions()
 
         return FieldUpdates({"U": U, "p": p, "phi": phi})

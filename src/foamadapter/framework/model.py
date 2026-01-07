@@ -10,6 +10,7 @@ from foamadapter.framework.context import Context
 from foamadapter.framework.operations import OperationCollection
 
 from .decorator import operation as operation_func
+from .decorator import condition as condition_func
 from .initialization import load, resolve_dependencies, build
 from .initialization.helpers import field as field_func
 from .initialization.helpers import lazy as lazy_func
@@ -34,6 +35,7 @@ class ModelNamespace(Protocol):
 
     # Operation decorator
     operation: Callable[..., Any]
+    condition: Callable[..., bool]
 
     # Helper functions
     field: Callable[..., Any]
@@ -55,6 +57,7 @@ Model = cast(ModelNamespace, _Model)
 
 # Attach helper functions and decorators
 Model.operation = operation_func
+Model.condition = condition_func
 Model.load = load
 Model.resolve_dependencies = resolve_dependencies
 Model.build = build
