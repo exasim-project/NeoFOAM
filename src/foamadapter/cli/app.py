@@ -42,5 +42,20 @@ def pimplefoam(ctx: typer.Context) -> None:
     pimpleFoam.run()
 
 
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)  # type: ignore[untyped-decorator]
+def incompressiblefluid(ctx: typer.Context) -> None:
+    """Solver for incompressible, turbulent flow of Newtonian fluids"""
+
+    from foamadapter.solver.incompressibleFluid import IncompressibleFluid
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    incompressibleFluid = IncompressibleFluid(argv=argv, models=[])
+    incompressibleFluid.run()
+
+
 if __name__ == "__main__":
     app()
