@@ -52,7 +52,7 @@ TEST_CASE("matrix multiplication")
         const auto nfTOldView = nfTOld.internalVector().view();
         NeoN::map(
             nfTOld.internalVector(),
-            KOKKOS_LAMBDA(const std::size_t celli) { return nfTOldView[celli] - 1.0; }
+            NEON_LAMBDA(const std::size_t celli) { return nfTOldView[celli] - 1.0; }
         );
 
         ofT.oldTime() -= Foam::dimensionedScalar("value", Foam::dimTemperature, 1);
@@ -116,7 +116,7 @@ TEST_CASE("matrix multiplication")
 
         NeoN::map(
             nfT.internalVector(),
-            KOKKOS_LAMBDA(const std::size_t celli) { return celli; }
+            NEON_LAMBDA(const std::size_t celli) { return celli; }
         );
         auto coefficients = nfT;
         NeoN::fill(coefficients.internalVector(), coeff);

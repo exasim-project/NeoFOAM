@@ -102,7 +102,7 @@ public:
             NeoN::parallelFor(
                 ls.exec(),
                 {pRefCell_, pRefCell_ + 1},
-                KOKKOS_LAMBDA(const std::size_t refCelli) {
+                NEON_LAMBDA(const std::size_t refCelli) {
                     auto diagIdx = rowOffs[refCelli] + diagOffset[refCelli];
                     auto diagValue = values[diagIdx];
                     rhs[refCelli] += diagValue * pRefValue;
@@ -208,7 +208,7 @@ NeoN::Vector<ValueType> diag(
     NeoN::parallelFor(
         ls.exec(),
         {0, diagOffset.size()},
-        KOKKOS_LAMBDA(const std::size_t celli) {
+        NEON_LAMBDA(const std::size_t celli) {
             auto diagOffsetCelli = diagOffset[celli];
             diagView[celli] = matrix.values[matrix.rowOffs[celli] + diagOffsetCelli];
         }
