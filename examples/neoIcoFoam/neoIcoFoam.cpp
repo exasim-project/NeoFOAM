@@ -66,6 +66,16 @@ int main(int argc, char* argv[])
                 }
             );
 
+	fvcc::VolumeField<NeoN::scalar>& nuTilda =
+            vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
+                nf::CreateFromFoamField<Foam::volScalarField> {
+                    .exec = rt.exec,
+                    .nfMesh = rt.nfMesh,
+                    .foamField = ofnuTilda,
+                    .name = "nuTilda"
+                }
+            );
+
         auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         fvcc::SurfaceField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, nuBCs);
         NeoN::fill(nu.internalVector(), viscosity.value());
@@ -80,6 +90,11 @@ int main(int argc, char* argv[])
                 .name = "phi"
             }
         );
+
+	NeoN::turbulenceModels::DES::SpalartAllmarasBase saBase(rt.exec, mesh);
+        NeoN::turbulenceModels::DES::maxDeltaxyz deltaModel(mesh);
+        NeoN::turbulenceModels::DES::SpalartAllmarasDDES ddes(rt.exec);
+        NeoN::turbulenceModels::ReynoldsStress reynolds(exec, mesh);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -96,9 +111,11 @@ int main(int argc, char* argv[])
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
+	    auto nut = saBase.nut(nuTilda, nu);
+
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu+nut, U),
                 U,
                 rt
             );
@@ -170,6 +187,11 @@ int main(int argc, char* argv[])
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
             }
+
+	    deltaModel.update();
+            auto wallDist = saBase.wallDistance();
+            auto strain = saBase.strainRate(gradUx, gradUy, gradUz); // from velocity gradients
+            auto dTilda = ddes.dTilda(wallDist, nuTilda, nu, strain, deltaModel.delta());
 
             runTime.write();
             if (runTime.outputTime())

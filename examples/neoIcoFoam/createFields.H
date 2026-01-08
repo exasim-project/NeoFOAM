@@ -38,6 +38,17 @@ Foam::volVectorField
         ),
         mesh);
 
+Info << "Reading field nuTilda\n" << endl;
+Foam::volScalarField
+    ofnuTilda(Foam::IOobject(
+            "nuTilda",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::NO_WRITE,
+            Foam::IOobject::NO_REGISTER
+        ),
+        mesh);
 
 Info << "Reading/calculating face flux field phi\n" << endl;
 
