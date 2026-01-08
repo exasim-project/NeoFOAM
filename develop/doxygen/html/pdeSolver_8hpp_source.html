@@ -201,7 +201,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            NeoN::parallelFor(</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                ls.exec(),</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                {pRefCell_, pRefCell_ + 1},</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                KOKKOS_LAMBDA(<span class="keyword">const</span> std::size_t refCelli) {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                NEON_LAMBDA(<span class="keyword">const</span> std::size_t refCelli) {</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                    <span class="keyword">auto</span> diagIdx = rowOffs[refCelli] + diagOffset[refCelli];</div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                    <span class="keyword">auto</span> diagValue = values[diagIdx];</div>
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                    rhs[refCelli] += diagValue * pRefValue;</div>
@@ -317,7 +317,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>    NeoN::parallelFor(</div>
 <div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>        ls.exec(),</div>
 <div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>        {0, diagOffset.size()},</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>        KOKKOS_LAMBDA(<span class="keyword">const</span> std::size_t celli) {</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>        NEON_LAMBDA(<span class="keyword">const</span> std::size_t celli) {</div>
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>            <span class="keyword">auto</span> diagOffsetCelli = diagOffset[celli];</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>            diagView[celli] = matrix.values[matrix.rowOffs[celli] + diagOffsetCelli];</div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>        }</div>
