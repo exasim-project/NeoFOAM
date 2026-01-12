@@ -37,7 +37,7 @@
     <member refid="classNeoFOAM_1_1PDESolver_1a301998589383096a9b937e54a9ddd767" kind="variable"><name>psi_</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a27e498250b456926293f27d584ad2ed6" kind="variable"><name>expr_</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a6bc7dc6dc37a0a82e1f448fdb6dc0f1f" kind="variable"><name>runTime_</name></member>
-    <member refid="classNeoFOAM_1_1PDESolver_1a6b3193d5ed4bb619a4052e6201424c65" kind="variable"><name>sparsityPattern_</name></member>
+    <member refid="classNeoFOAM_1_1PDESolver_1a508dc8e49568d168f2be87186f4835ad" kind="variable"><name>mi_</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1ae80bcca6eab6824aeaf206859ee37e13" kind="variable"><name>ls_</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1ae81f855f7aa763d25e777fe536f49a8c" kind="variable"><name>needReference_</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1aea64014d81910453b5f36736c20d7d00" kind="variable"><name>pRefCell_</name></member>
@@ -47,11 +47,11 @@
     <member refid="classNeoFOAM_1_1PDESolver_1a25556a10c54c223f4cafef62444b3538" kind="function"><name>~PDESolver</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a5a9cf36364742d71a1ccd8a4cdf4f9bb" kind="function"><name>getField</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1aab52918a151a51e3fc85dd84ff39b8e7" kind="function"><name>getField</name></member>
-    <member refid="classNeoFOAM_1_1PDESolver_1a9435ce3be8fb48ffe29b1c73ee4cd0f4" kind="function"><name>sparsityPattern</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a0b3c75a1830571b477f95604a603b6a9" kind="function"><name>linearSystem</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a2c0e3ff2aee001b75bd3dd060d8b14ab" kind="function"><name>linearSystem</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a700cffec996ac77c98b3be7f91f38219" kind="function"><name>assemble</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1aabc63169ccc777c668a09248650af9e4" kind="function"><name>exec</name></member>
+    <member refid="classNeoFOAM_1_1PDESolver_1a86cbd7e62f99eb30d6e6466ebc6b7be2" kind="function"><name>ddtScheme</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1aa632d298feb601ef802ba3b85b2dc8ed" kind="function"><name>setReference</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a0464b266cbae77cbfa7f4ffec79e6acb" kind="function"><name>solve</name></member>
     <member refid="classNeoFOAM_1_1PDESolver_1a7f4464b4305040de5ace88df987c05df" kind="function"><name>solve</name></member>
@@ -76,7 +76,7 @@
     <member refid="structNeoFOAM_1_1PDESolver_1_1SetReference_1a312bf19b6c97dcb123a125e2be3c9bc4" kind="variable"><name>pRefCell_</name></member>
     <member refid="structNeoFOAM_1_1PDESolver_1_1SetReference_1a3c95dcddaa8f9c91c6a660df2f75312b" kind="variable"><name>pRefValue_</name></member>
     <member refid="structNeoFOAM_1_1PDESolver_1_1SetReference_1a8871e71d55b49e4309d2acc9207825dd" kind="function"><name>SetReference</name></member>
-    <member refid="structNeoFOAM_1_1PDESolver_1_1SetReference_1a47ab1991c1a3be26016c83df5c0d2283" kind="function"><name>operator()</name></member>
+    <member refid="structNeoFOAM_1_1PDESolver_1_1SetReference_1ab2279dabda77e452f35070c3682d668f" kind="function"><name>operator()</name></member>
   </compound>
   <compound refid="structNeoFOAM_1_1TypeMap" kind="struct"><name>NeoFOAM::TypeMap</name>
   </compound>
@@ -147,6 +147,8 @@
     <member refid="namespaceNeoFOAM_1a74bbfc6d5d7a681b4737ae8b42916d5b" kind="function"><name>write</name></member>
     <member refid="namespaceNeoFOAM_1ab761525a35b5b6bb313c2c67c053211a" kind="function"><name>write</name></member>
     <member refid="namespaceNeoFOAM_1ac90ca3a810facf8e02d279ef402ecc68" kind="function"><name>write</name></member>
+    <member refid="namespaceNeoFOAM_1a16b8a3bc0ef9701db6c2df79db9994c2" kind="function"><name>updateDdtSchemes</name></member>
+    <member refid="namespaceNeoFOAM_1a152eff2c6ed8799eab60394fc259108d" kind="function"><name>mapFvSchemes</name></member>
     <member refid="namespaceNeoFOAM_1ab68574263e9c80758820191001d6d256" kind="function"><name>updateSolver</name></member>
     <member refid="namespaceNeoFOAM_1a8c1ca67d102991ab4a3c1bc3a2a8fb03" kind="function"><name>updatePreconditioner</name></member>
     <member refid="namespaceNeoFOAM_1a809d8c49b332a3c4eb473b770d901e5b" kind="function"><name>mapFvSolution</name></member>
@@ -156,7 +158,6 @@
     <member refid="namespaceNeoFOAM_1a7fa41e32ba62c41cffee5cb4c3793877" kind="function"><name>readOpenFOAMMesh</name></member>
     <member refid="namespaceNeoFOAM_1ac60b005cd9f9140205f676b9953615e4" kind="function"><name>createMesh</name></member>
     <member refid="namespaceNeoFOAM_1a70f3fbdfd753d2672cd8c017f759e7f8" kind="function"><name>createMesh</name></member>
-    <member refid="namespaceNeoFOAM_1aa275ecb871028c14e2d9dae4c78686e2" kind="function"><name>diag</name></member>
     <member refid="namespaceNeoFOAM_1a98b7e8d5816cba45d64261cbf66378a7" kind="function"><name>applyOperator</name></member>
     <member refid="namespaceNeoFOAM_1a9de226ba9098594fc8b6b867a35adccc" kind="function"><name>operator&amp;</name></member>
   </compound>
@@ -188,6 +189,8 @@
   <compound refid="typeConversion_8hpp" kind="file"><name>typeConversion.hpp</name>
   </compound>
   <compound refid="writers_8hpp" kind="file"><name>writers.hpp</name>
+  </compound>
+  <compound refid="fvSchemes_8hpp" kind="file"><name>fvSchemes.hpp</name>
   </compound>
   <compound refid="fvSolution_8hpp" kind="file"><name>fvSolution.hpp</name>
   </compound>
