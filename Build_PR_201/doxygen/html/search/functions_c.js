@@ -1,6 +1,7 @@
 var searchData=
 [
   ['readopenfoammesh_0',['readOpenFOAMMesh',['../namespaceNeoFOAM.html#a7fa41e32ba62c41cffee5cb4c3793877',1,'NeoFOAM']]],
-  ['readsurfaceboundaryconditions_1',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
-  ['readvolboundaryconditions_2',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]]
+  ['readorcreate_1',['readOrCreate',['../namespaceNeoFOAM.html#aa48db3c6b3f661a4b04a26a74e184935',1,'NeoFOAM']]],
+  ['readsurfaceboundaryconditions_2',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
+  ['readvolboundaryconditions_3',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]]
 ];
