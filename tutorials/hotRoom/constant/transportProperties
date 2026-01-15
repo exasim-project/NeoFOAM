@@ -10,43 +10,26 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      controlDict;
+    object      transportProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     pimpleFoam;
+transportModel Newtonian;
 
-startFrom       startTime;
+// Laminar viscosity
+nu              1e-05;
 
-startTime       0;
+// Thermal expansion coefficient
+beta            3e-03;
 
-stopAt          endTime;
+// Reference temperature
+TRef            300;
 
-endTime         0.3;
+// Laminar Prandtl number
+Pr              0.7;
 
-deltaT          0.0001;
-
-writeControl    adjustable;
-
-writeInterval   0.01;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-runTimeModifiable yes;
-
-adjustTimeStep  yes;
-
-maxCo           5;
+// Turbulent Prandtl number
+Prt             0.85;
 
 
 // ************************************************************************* //
