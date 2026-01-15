@@ -54,6 +54,14 @@ class OperationNumber:
         a, b = self._as_tuple(other)
         return a < b
 
+    def __str__(self) -> str:
+        """String representation for display (e.g., '0.3' or '0.0.1')."""
+        return ".".join(map(str, self.parts))
+
+    def __repr__(self) -> str:
+        """String representation for debugging."""
+        return f"OperationNumber('{str(self)}')"
+
 
 class OpType(Enum):
     CONDITION = "condition"

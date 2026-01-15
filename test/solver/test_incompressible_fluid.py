@@ -51,37 +51,33 @@ def test_incompressible_fluid_operations_registration():
     # Mock algorithm initialization to avoid full OpenFOAM setup
     solver._pressure_velocity = PimpleAlgorithm()
 
-    ops = solver.operations()
+    step_builder, model_ops = solver.operations()
 
-    # Should have solver operations + algorithm operations (momentum, continuity, inner_loop)
-    expected_solver_operations = [
+    # Verify StepBuilder structure
+    assert isinstance(step_builder, type(step_builder))
+    assert len(step_builder.operations) == 1  # One time_loop
+
+    # Verify time_loop structure
+    time_loop = step_builder.operations[0]
+    assert time_loop.operation_name == "time_loop"
+
+    # Get operation names from time_loop
+    time_loop_op_names = {op.operation_name for op in time_loop.sub_operations}
+    expected_time_loop_ops = {
         "set_time_step",
         "increment_time",
-        "turbulence_correction",
-        "write_output",
-    ]
-
-    expected_algorithm_operations = [
         "inner_loop",
-        "momentum",
-        "continuity",
-    ]
+        "write_output",
+    }
+    assert time_loop_op_names == expected_time_loop_ops
 
-    # Total operations = solver + algorithm
-    expected_total = len(expected_solver_operations) + len(
-        expected_algorithm_operations
+    # Find inner_loop and verify its structure
+    inner_loop = next(
+        op for op in time_loop.sub_operations if op.operation_name == "inner_loop"
     )
-    assert len(ops) == expected_total
-
-    # Check solver operations exist
-    for op_name in expected_solver_operations:
-        op = ops[op_name]
-        assert op.operation_name == op_name
-
-    # Check algorithm operations exist
-    for op_name in expected_algorithm_operations:
-        op = ops[op_name]
-        assert op.operation_name == op_name
+    inner_loop_op_names = {op.operation_name for op in inner_loop.sub_operations}
+    expected_inner_loop_ops = {"momentum", "continuity", "turbulence_correction"}
+    assert inner_loop_op_names == expected_inner_loop_ops
 
 
 def test_incompressible_fluid_operation_dependencies():
@@ -94,20 +90,34 @@ def test_incompressible_fluid_operation_dependencies():
     # Mock algorithm initialization to avoid full OpenFOAM setup
     solver._pressure_velocity = PimpleAlgorithm()
 
-    ops = solver.operations()
+    step_builder, model_ops = solver.operations()
 
-    # Check solver operation dependencies
-    assert ops["set_time_step"].depends_on == []
-    assert ops["increment_time"].depends_on == []
+    # Get time_loop operations
+    time_loop = step_builder.operations[0]
+    time_loop_ops = {op.operation_name: op for op in time_loop.sub_operations}
 
-    # Algorithm operations have no explicit dependencies in their decorator
-    # (dependencies are managed by solver's main_loop)
-    assert ops["momentum"].depends_on == []
-    assert ops["continuity"].depends_on == []
+    # Verify time loop operations exist
+    set_time_step = time_loop_ops["set_time_step"]
+    increment_time = time_loop_ops["increment_time"]
+    write_output = time_loop_ops["write_output"]
+    assert set_time_step.operation_name == "set_time_step"
+    assert increment_time.operation_name == "increment_time"
+    assert write_output.operation_name == "write_output"
 
-    # Turbulence depends on continuity
-    assert ops["turbulence_correction"].depends_on == ["continuity"]
-    assert ops["write_output"].depends_on == ["turbulence_correction"]
+    # Get inner_loop operations
+    inner_loop = time_loop_ops["inner_loop"]
+    inner_loop_ops = {op.operation_name: op for op in inner_loop.sub_operations}
+
+    # Verify inner loop operations exist
+    momentum = inner_loop_ops["momentum"]
+    continuity = inner_loop_ops["continuity"]
+    turbulence = inner_loop_ops["turbulence_correction"]
+    assert momentum.operation_name == "momentum"
+    assert continuity.operation_name == "continuity"
+    assert turbulence.operation_name == "turbulence_correction"
+
+    # Verify turbulence depends on continuity
+    assert turbulence.depends_on == ["continuity"]
 
 
 def test_incompressible_fluid_pydantic_schema():

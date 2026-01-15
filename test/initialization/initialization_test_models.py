@@ -157,7 +157,7 @@ class MockTransportModel(BaseModel):
         self.config.viscosity = 1e-6
         self.config.density = 998.0
         self.files_read = True
-        return self.config
+        return {"viscosity": self.config.viscosity, "density": self.config.density}
 
     @Model.resolve_dependencies
     def validate_properties(self, config: ConfigContext):
@@ -215,7 +215,11 @@ class MockAlgorithmModel(BaseModel):
         self.config.n_outer_correctors = 1
         self.config.momentum_predictor = True
         self.files_read = True
-        return self.config
+        return {
+            "n_correctors": self.config.n_correctors,
+            "n_outer_correctors": self.config.n_outer_correctors,
+            "momentum_predictor": self.config.momentum_predictor,
+        }
 
     @Model.resolve_dependencies
     def connect_models(self, config: ConfigContext):
@@ -289,7 +293,11 @@ class MockSolver(BaseModel):
         self.config.tolerance = 1e-6
         self.config.time_step = 0.001
         self.files_read = True
-        return self.config
+        return {
+            "max_iterations": self.config.max_iterations,
+            "tolerance": self.config.tolerance,
+            "time_step": self.config.time_step,
+        }
 
     @Solver.resolve_dependencies
     def validate_config(self, config: ConfigContext):

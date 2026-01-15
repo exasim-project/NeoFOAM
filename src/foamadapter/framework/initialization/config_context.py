@@ -201,6 +201,46 @@ class ConfigContext:
 
         return result
 
+    def __getattr__(self, name: str) -> Any:
+        """
+        Enable attribute-style access to registered models.
+
+        This allows models to be accessed as attributes:
+            config.algorithm  # equivalent to config.get("algorithm")
+
+        Args:
+            name: The model name
+
+        Returns:
+            The model instance, or raises AttributeError if not found
+        """
+        # Avoid infinite recursion for internal attributes
+        if name.startswith("_"):
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
+
+        model = self.get(name)
+        if model is None:
+            raise AttributeError(
+                f"No model registered with name '{name}' in region '{self.current_region}'"
+            )
+        return model
+
+    def __hasattr__(self, name: str) -> bool:
+        """
+        Check if a model is registered using hasattr().
+
+        Args:
+            name: The model name
+
+        Returns:
+            True if the model is registered, False otherwise
+        """
+        if name.startswith("_"):
+            return bool(super().__getattribute__(name))
+        return self.contains(name)
+
     @property
     def regions(self) -> list[str]:
         """

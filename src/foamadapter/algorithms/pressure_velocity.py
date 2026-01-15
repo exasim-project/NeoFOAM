@@ -3,7 +3,7 @@
 
 """Pressure-velocity coupling algorithms."""
 
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 import pybFoam as pyf
 from pybFoam import (
@@ -22,7 +22,6 @@ from foamadapter.framework.context import (
     FieldUpdates,
     Model as ModelAnnotation,
 )
-from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.model import Model
 from foamadapter.framework.operations import (
     Operation,
@@ -130,6 +129,12 @@ class PimpleAlgorithm(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     _ops: OperationCollection | None = None
+    _use_boussinesq: bool = False  # Set by Boussinesq model during resolve_dependencies
+
+    @Model.resolve_dependencies
+    def configure_algorithm(self, config: Any) -> None:
+        """RESOLVE_DEPENDENCIES: Allow Boussinesq model to configure this algorithm."""
+        pass  # Configuration happens via direct flag access from BoussinesqModel
 
     def setup(self) -> list[Any]:
         """Register p, U, phi fields and pimple_control model."""
@@ -144,33 +149,43 @@ class PimpleAlgorithm(BaseModel):
             mesh = context["mesh"]
             return pyf.pimpleControl(mesh)
 
+        def create_cumulative_cont_err(context: dict[str, Any]) -> Any:
+            # Use list to allow mutation (pass by reference for C++ binding)
+            return [0.0]
+
         return [
             read_vol_field(volScalarField, "p"),
             read_vol_field(volVectorField, "U"),
             field("phi", create_phi, depends_on=["fields.U"]),
             model("pimple_control", depends_on=["mesh"], create=create_pimple_control),
+            model("cumulativeContErr", create=create_cumulative_cont_err),
         ]
 
-    def set_pressure_reference(self, p: Any, mesh: Any, fvSolution: Any) -> None:
+    def set_pressure_reference(
+        self, p: Any, mesh: Any, fvSolution: Any, p_rgh: Any = None
+    ) -> None:
         """Set pressure reference cell and value from fvSolution.
 
         Args:
             p: Pressure field
             mesh: Mesh object
             fvSolution: OpenFOAM dictionary object for system/fvSolution
+            p_rgh: Optional p_rgh field for Boussinesq mode
         """
-        import pybFoam as pyf
 
         # Get algorithm-specific subDict
         algo_dict = fvSolution.subDict("PIMPLE")
 
-        # Extract pRefCell and pRefValue
-        pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
+        # Extract pRefCell and pRefValue - use p_rgh if available, otherwise p
+        pressure_field = p_rgh if p_rgh is not None else p
+        pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
         self.pRefCell = pRefCell
         self.pRefValue = pRefValue
 
-        # Set flux required for pressure
+        # Set flux required for pressure fields
         mesh.setFluxRequired(pyf.Word("p"))
+        if p_rgh is not None:
+            mesh.setFluxRequired(pyf.Word("p_rgh"))
 
     def name(self) -> str:
         return "PIMPLE"
@@ -178,17 +193,28 @@ class PimpleAlgorithm(BaseModel):
     def operations(self) -> OperationCollection:
         """Return algorithm-specific operations."""
         if self._ops is None:
-            funcs = decorated_member_functions(self)
             self._ops = OperationCollection()
-            for func in funcs:
-                if not hasattr(func, "_metadata"):
-                    continue
-                if func._metadata.is_condition:
-                    op = Operation.create_IterOp(func)
-                    self._ops.add(op)
-                else:
-                    op = Operation.create_SeqOp(func)
-                    self._ops.add(op)
+
+            # Add inner_loop condition
+            # Type: Callable[..., bool]
+            inner_loop_callable: Callable[..., bool] = self.inner_loop  # type: ignore[assignment]
+            inner_loop_op = Operation.create_IterOp(inner_loop_callable)
+            self._ops.add(inner_loop_op)
+
+            # Add momentum and continuity operations based on Boussinesq mode
+            if self._use_boussinesq:
+                momentum_op = Operation.create_SeqOp(
+                    self.momentum_boussinesq, operation_name="momentum"
+                )
+                continuity_op = Operation.create_SeqOp(
+                    self.continuity_boussinesq, operation_name="continuity"
+                )
+            else:
+                momentum_op = Operation.create_SeqOp(self.momentum)
+                continuity_op = Operation.create_SeqOp(self.continuity)
+
+            self._ops.add(momentum_op)
+            self._ops.add(continuity_op)
 
         return self._ops
 
@@ -231,6 +257,7 @@ class PimpleAlgorithm(BaseModel):
         phi: Any,
         UEqn: Any,
         pimple_control: ModelAnnotation[pyf.pimpleControl],
+        cumulativeContErr: ModelAnnotation[list[float]],
     ) -> FieldUpdates:
         """
         PIMPLE continuity: Pressure-velocity coupling with nested loops.
@@ -274,6 +301,116 @@ class PimpleAlgorithm(BaseModel):
             # Correct velocity
             U.assign(HbyA - rAU * fvc.grad(p))
             U.correctBoundaryConditions()
+
+            # Calculate and print continuity errors
+            sumLocal, globalErr = pyf.computeContinuityErrors(phi)
+            cumulativeContErr[0] += globalErr
+            pyf.Info(
+                f"time step continuity errors : sum local = {sumLocal}, "
+                f"global = {globalErr}, cumulative = {cumulativeContErr[0]}"
+            )
+
+        return FieldUpdates({"U": U, "p": p, "phi": phi})
+
+    @Model.operation(operation_number=1)
+    def momentum_boussinesq(
+        self,
+        U: Any,
+        phi: Any,
+        p_rgh: Any,
+        rhok: Any,
+        ghf: Any,
+        turbulence: Any,
+        pimple_control: ModelAnnotation[pyf.pimpleControl],
+    ) -> FieldUpdates:
+        """
+        PIMPLE momentum with Boussinesq buoyancy.
+
+        Uses p_rgh formulation and buoyancy gradient term.
+        """
+        # Assemble momentum equation
+        mesh = U.mesh()
+        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
+        UEqn.relax()
+
+        # Solve with p_rgh and buoyancy gradient
+        if pimple_control.momentumPredictor():
+            pyf.solve(
+                UEqn
+                + fvc.reconstruct(
+                    (-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf()
+                )
+            )
+
+        return FieldUpdates({"UEqn": UEqn, "U": U})
+
+    @Model.operation(operation_number=2)
+    def continuity_boussinesq(
+        self,
+        U: Any,
+        p: Any,
+        p_rgh: Any,
+        phi: Any,
+        UEqn: Any,
+        rhok: Any,
+        gh: Any,
+        ghf: Any,
+        pimple_control: ModelAnnotation[pyf.pimpleControl],
+        cumulativeContErr: ModelAnnotation[list[float]],
+    ) -> FieldUpdates:
+        """
+        PIMPLE continuity with Boussinesq p_rgh formulation.
+
+        Uses buoyancy flux and solves for p_rgh instead of p.
+        """
+        # Get mesh from U field
+        mesh = U.mesh()
+
+        # PIMPLE loop
+        while pimple_control.correct():
+            # Compute H/A
+            rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
+            rAUf = surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rAU))
+            HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p_rgh))
+
+            # Buoyancy flux
+            phig = surfaceScalarField(
+                pyf.Word("phig"), -rAUf * ghf * fvc.snGrad(rhok) * mesh.magSf()
+            )
+
+            # Compute flux from H/A with buoyancy
+            phiHbyA = surfaceScalarField(
+                pyf.Word("phiHbyA"),
+                fvc.flux(HbyA) + rAUf * fvc.ddtCorr(U, phi) + phig,
+            )
+
+            pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf)
+
+            # Non-orthogonal loop - solve for p_rgh
+            while pimple_control.correctNonOrthogonal():
+                # Solve pressure equation
+                pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
+                pEqn.setReference(self.pRefCell, self.pRefValue, False)
+                pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
+
+                # Update flux
+                if pimple_control.finalNonOrthogonalIter():
+                    phi.assign(phiHbyA - pEqn.flux())
+
+            # Correct velocity with buoyancy
+            U.assign(HbyA + rAU * fvc.reconstruct((phig - pEqn.flux()) / rAUf))
+            U.correctBoundaryConditions()
+
+            # Update full pressure: p = p_rgh + rhok*gh
+            p.assign(p_rgh + rhok * gh)
+
+            # Calculate and print continuity errors
+            sumLocal, globalErr = pyf.computeContinuityErrors(phi)
+            cumulativeContErr[0] += globalErr
+            pyf.Info(
+                f"time step continuity errors : sum local = {sumLocal}, "
+                f"global = {globalErr}, cumulative = {cumulativeContErr[0]}"
+            )
 
         return FieldUpdates({"U": U, "p": p, "phi": phi})
 

@@ -17,19 +17,18 @@ from foamadapter.framework.context import (
     FieldUpdates,
 )
 from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.initialization import ConfigContext
 from foamadapter.framework.operations import (
     IterativeOp,
     Operation,
     OperationCollection,
     StepBuilder,
+    DAGResolver,
 )
 from foamadapter.framework.solver import Solver
 
 from foamadapter.models.stability_criteria import CFLCondition
 from foamadapter.models.transport_model import TransportModel
 from foamadapter.models.turbulence import TurbulenceModel
-from foamadapter.models.incompressible_fluid_model import IncompressibleFluidModel
 
 
 class TimeLoop:
@@ -74,7 +73,8 @@ class IncompressibleFluid(BaseModel):
     _cfl_number: CFLCondition | None = None
 
     # === Optional Physics Models ===
-    models: list[IncompressibleFluidModel] = []
+    models: list[Any] = []
+    _has_boussinesq: bool = False  # Set during resolve_dependencies
 
     def __repr__(self) -> str:
         """Custom repr to avoid OpenFOAM SIGFPE issues in pytest."""
@@ -96,34 +96,32 @@ class IncompressibleFluid(BaseModel):
         return models
 
     def _create_algorithm(self, context: dict[str, Any]) -> Any:
-        """Create algorithm instance from context dict (reads fvSolution)."""
+        """Set pressure reference for algorithm (algorithm already created in LOAD)."""
         p = context["fields.p"]
         mesh = context["mesh"]
 
-        # Read solver configuration
-        # IMPORTANT: Keep fvSolution in scope to prevent C++ object destruction
-        self._fvSolution = pyf.dictionary.read("system/fvSolution")
-
-        # Algorithm detects its type and sets pressure reference
-        self._pressure_velocity = PressureVelocityAlgorithm.from_fvSolution(
-            self._fvSolution
-        )
-        self._pressure_velocity.set_pressure_reference(p, mesh, self._fvSolution)
+        # Algorithm already exists from LOAD stage, just set pressure reference
+        # Pass p_rgh if available (Boussinesq mode)
+        p_rgh = context.get("fields.p_rgh", None)
+        assert self._pressure_velocity is not None
+        self._pressure_velocity.set_pressure_reference(p, mesh, self._fvSolution, p_rgh)
 
         return self._pressure_velocity
 
     @Solver.load
-    def load_control_dict(self) -> None:
-        """LOAD: Initialize CFL condition (reads maxDeltaT from controlDict)."""
+    def load_control_dict(self) -> dict[str, Any]:
+        """LOAD: Initialize CFL condition and algorithm instance."""
         # CFLCondition reads its own config from controlDict
         self._cfl_number = CFLCondition()
 
-    @Solver.resolve_dependencies
-    def configure_solver(self, config: ConfigContext) -> None:
-        """RESOLVE_DEPENDENCIES: Minimal - components self-configure from files."""
-        # Components will read their own configuration from OpenFOAM files
-        # during BUILD stage. Nothing to configure here.
-        pass
+        # Create algorithm instance (fields will be set up in BUILD stage)
+        self._fvSolution = pyf.dictionary.read("system/fvSolution")
+        self._pressure_velocity = PressureVelocityAlgorithm.from_fvSolution(
+            self._fvSolution
+        )
+
+        # Return algorithm for automatic registration in ConfigContext
+        return {"algorithm": self._pressure_velocity}
 
     def _create_transport(self, ctx: dict[str, Any]) -> Any:
         """Create transport model instance (reads config from constant/transportProperties)."""
@@ -146,11 +144,10 @@ class IncompressibleFluid(BaseModel):
         # Build initialization list (runtime + mesh)
         initializers = create_time_mesh(self.argv)
 
-        # Algorithm detects type from fvSolution and sets up its fields
+        # Algorithm was created in LOAD stage, now set up its fields
         # Note: pRefCell/pRefValue set later in _create_algorithm
-        fvSolution = pyf.dictionary.read("system/fvSolution")
-        algorithm = PressureVelocityAlgorithm.from_fvSolution(fvSolution)
-        initializers.extend(algorithm.setup())
+        assert self._pressure_velocity is not None
+        initializers.extend(self._pressure_velocity.setup())
 
         # Transport and turbulence models (OpenFOAM reads config from files)
         initializers.extend(
@@ -205,13 +202,6 @@ class IncompressibleFluid(BaseModel):
         """
         # For SIMPLE, always correct. For PIMPLE, check control object.
         should_correct = True
-        if (
-            self._pressure_velocity is not None
-            and self._pressure_velocity.algorithm_type == "PIMPLE"
-        ):
-            # Get pimple_control from context to check turbCorr()
-            # For now, assume we should correct (will be optimized later)
-            should_correct = True
 
         if should_correct:
             laminarTransport.correct()
@@ -228,90 +218,84 @@ class IncompressibleFluid(BaseModel):
         runTime.write(True)
         runTime.printExecutionTime()
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(
+        self, domain_name: str | None = None
+    ) -> tuple[StepBuilder, OperationCollection]:
         """
-        Collect all operations from solver and models.
+        Build solver structure and collect model operations.
 
-        Operations are collected from multiple sources and merged into a single
-        collection. The execution order is determined by operation numbers and
-        dependencies.
+        Returns a tuple of:
+        1. StepBuilder with solver/algorithm structure (time loop, inner loop)
+        2. OperationCollection with model operations to be inserted
 
-        Returns:
-            OperationCollection with all operations from:
-            - Solver's own @Solver.operation decorated methods
-            - Pressure-velocity algorithm
-            - Optional physics models (buoyancy, radiation, etc.)
+        The DAG resolver will merge these, respecting dependencies.
         """
         _ = domain_name  # Part of SolverInterface, unused in this implementation
 
-        # Collect solver operations
+        # Build solver + algorithm structure
+
+        # Get solver's own operations
         funcs = decorated_member_functions(self)
-        ops = OperationCollection()
+        solver_ops = OperationCollection()
         for func in funcs:
             op = Operation.create_SeqOp(func)
-            ops.add(op)
+            solver_ops.add(op)
 
-        # Add algorithm operations if initialized
-        # Note: algorithm may not be initialized yet during early operations() calls
-        if self._pressure_velocity is not None:
-            algo_ops = self._pressure_velocity.operations()
-            ops.add(algo_ops)
-
-        # Add turbulence model operations
-        if self._turbulence is not None and hasattr(
-            self._turbulence.config, "operations"
-        ):  # type: ignore[attr-defined]
-            turb_ops = self._turbulence.config.operations()  # type: ignore[attr-defined]
-            ops.add(turb_ops)
-
-        # Add optional model operations
-        for model in self.models:
-            if hasattr(model, "operations"):
-                model_ops = model.operations()
-                ops.add(model_ops)
-
-        return ops
-
-    def main_loop(self, ctx: Context) -> None:
-        """
-        Main simulation loop - algorithm agnostic!
-
-        The algorithm provides momentum and continuity operations that encapsulate
-        the specific pressure-velocity coupling strategy.
-        """
-        if self._pressure_velocity is None:
-            raise RuntimeError(
-                "Algorithm not initialized. Call initialize() or run() first."
-            )
-
-        ops = self.operations()
+        assert self._pressure_velocity is not None
         algo_ops = self._pressure_velocity.operations()
 
-        # Build the main execution graph
+        # Build the structural StepBuilder
         main_loop = StepBuilder()
 
-        # Time loop
+        # Time loop structure
         time_loop_op = Operation(
             func=IterativeOp(TimeLoop()),
             operation_name="time_loop",
         )
 
         with main_loop.loop(time_loop_op) as time_loop:
-            time_loop.step(ops["set_time_step"])
-            time_loop.step(ops["increment_time"])
+            time_loop.step(solver_ops["set_time_step"])
+            time_loop.step(solver_ops["increment_time"])
 
-            # Algorithm provides momentum and continuity operations
             with time_loop.loop(algo_ops["inner_loop"]) as iloop:
                 iloop.step(algo_ops["momentum"])
                 iloop.step(algo_ops["continuity"])
+                iloop.step(solver_ops["turbulence_correction"])
 
-                # Solver handles turbulence correction
-                iloop.step(ops["turbulence_correction"])
+            time_loop.step(solver_ops["write_output"])
 
-            time_loop.step(ops["write_output"])
+        # Collect optional model operations (for extending the solver)
+        model_ops = OperationCollection()
 
-        # Execute the operations
-        main_loop.operations.run(ctx)
+        # Add optional model operations (buoyancy, etc.)
+        for model in self.models:
+            m_ops = model.operations()
+            for op in m_ops:
+                model_ops.add(op)
+
+        return main_loop, model_ops
+
+    def main_loop(self, ctx: Context) -> None:
+        """
+        Main simulation loop using DAG resolver.
+
+        The DAG resolver merges solver structure with model operations,
+        respecting all dependencies.
+        """
+        if self._pressure_velocity is None:
+            raise RuntimeError(
+                "Algorithm not initialized. Call initialize() or run() first."
+            )
+
+        # Get solver structure and model operations
+        step_builder, model_ops = self.operations()
+
+        # Resolve operation ordering with DAG resolver
+        resolver = DAGResolver()
+        resolved_builder = resolver.resolve(step_builder, model_ops)
+
+        # Execute the resolved operations
+        resolved_builder.operations.run(ctx)
 
     def run(self) -> None:
         """Run the complete simulation using 3-stage initialization."""

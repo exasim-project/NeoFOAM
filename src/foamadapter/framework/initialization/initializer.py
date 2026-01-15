@@ -61,16 +61,54 @@ class SolverInitializer:
 
         Models are processed first, then the solver. Each model is
         registered in the config context after its LOAD methods are executed.
+
+        LOAD methods MUST return dict[str, Any] with config items to register.
+        Empty dict {} is valid for models with no configurable objects.
         """
         # Models first
         for model in self._get_models():
-            self._execute_stage_methods(model, InitializationStage.LOAD)
-            # Register model for RESOLVE_DEPENDENCIES stage
+            # Execute LOAD methods and collect return values
+            config_items = self._execute_stage_methods_with_return(
+                model, InitializationStage.LOAD
+            )
+
+            # Register model itself for RESOLVE_DEPENDENCIES stage
             model_name = getattr(model, "name", model.__class__.__name__.lower())
             self.config.register(model_name, model)
 
+            # Register config items returned by LOAD methods
+            self._register_config_items(config_items, model_name)
+
         # Then solver
-        self._execute_stage_methods(self.solver, InitializationStage.LOAD)
+        config_items = self._execute_stage_methods_with_return(
+            self.solver, InitializationStage.LOAD
+        )
+        self._register_config_items(config_items, "solver")
+
+    def _register_config_items(self, config_items: list[Any], source: str) -> None:
+        """
+        Register config items returned from LOAD stage.
+
+        Expects list of dict[str, Any] where each dict contains config items.
+        Each key-value pair is registered in ConfigContext.
+
+        Args:
+            config_items: List of dicts returned by LOAD methods
+            source: Name of model/solver for error messages
+        """
+        if not config_items:
+            return
+
+        for item in config_items:
+            if not isinstance(item, dict):
+                raise TypeError(
+                    f"LOAD methods must return dict[str, Any]. "
+                    f"{source} returned {type(item).__name__}"
+                )
+
+            for key, value in item.items():
+                print(f"DEBUG: Registering config item '{key}' from {source}")
+                self.config.register(key, value)
 
     def _run_resolve_dependencies(self) -> None:
         """

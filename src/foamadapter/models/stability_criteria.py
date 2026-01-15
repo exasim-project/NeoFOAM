@@ -28,7 +28,6 @@ class CFLCondition:
 
     def __call__(self, ctx: Context) -> None:
         """Adjust time step based on CFL number and continue."""
-        Info(f"{self.adjustable=}, {self.maxCFL=}, {self.maxDeltaT=}")
         runTime = ctx.runTime
         phi = ctx.fields["phi"]
 
