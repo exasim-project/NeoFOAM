@@ -78,7 +78,6 @@ build_and_benchmark() {
     elif [[ "$GPU_VENDOR" == "amd" ]]; then
         # Set up environment
         export PATH=/opt/rocm/bin:$PATH
-        export HIPCC_CXX=/usr/bin/g++
 
         cmake --preset profiling \
         -DNEOFOAM_NEON_DIR=../NeoN \
