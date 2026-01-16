@@ -27,7 +27,6 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     # Set up environment
     export PATH=/opt/rocm/bin:$PATH
-    export HIPCC_CXX=/usr/bin/g++
 
     echo "=== AMD GPU info ==="
     rocminfo | grep "Marketing Name.*AMD"
