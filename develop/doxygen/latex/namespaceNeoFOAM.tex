@@ -117,8 +117,8 @@ int32\+\_\+t \mbox{\hyperlink{namespaceNeoFOAM_ace35b46c775da4f108a8badb0e6186da
 \item 
 {\footnotesize template$<$typename FieldT $>$ }\\FieldT \mbox{\hyperlink{namespaceNeoFOAM_a01c08e9d79fe780ebcdbc7f82a70b1e1}{flat\+BCField}} (const Foam\+::fv\+Mesh \&mesh, std\+::function$<$ FieldT(const Foam\+::fv\+Patch \&)$>$ f)
 \item 
-Neo\+N\+::\+Unstructured\+Mesh \mbox{\hyperlink{namespaceNeoFOAM_a7fa41e32ba62c41cffee5cb4c3793877}{read\+Open\+FOAMMesh}} (const Neo\+N\+::\+Executor exec, const Foam\+::fv\+Mesh \&mesh)
-\item 
+Neo\+N\+::\+Unstructured\+Mesh \mbox{\hyperlink{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae}{read\+Open\+FOAMMesh}} (const Neo\+N\+::\+Executor exec, const Foam\+::fv\+Mesh \&mesh, bool full\+Mesh\+On\+GPU=false)
+\begin{DoxyCompactList}\small\item\em read Open\+FOAM mesh and construct NeoN mesh \end{DoxyCompactList}\item 
 std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_ac60b005cd9f9140205f676b9953615e4}{create\+Mesh}} (const Neo\+N\+::\+Executor \&exec, const Foam\+::\+Time \&run\+Time)
 \item 
 std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8}{create\+Mesh}} (const Foam\+::\+Time \&run\+Time)
@@ -363,12 +363,25 @@ bool Neo\+FOAM\+::operator== (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+V
 {\footnotesize\ttfamily template$<$typename NT , typename OT $>$ \\
 bool Neo\+FOAM\+::operator== (\begin{DoxyParamCaption}\item[{fvcc\+::\+Volume\+Field$<$ NT $>$ \&}]{nf,  }\item[{const Foam\+::\+Geometric\+Field$<$ OT, Foam\+::fv\+Patch\+Field, Foam\+::vol\+Mesh $>$ \&}]{of }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a7fa41e32ba62c41cffee5cb4c3793877}\label{namespaceNeoFOAM_a7fa41e32ba62c41cffee5cb4c3793877} 
+\Hypertarget{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae}\label{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae} 
 \index{NeoFOAM@{NeoFOAM}!readOpenFOAMMesh@{readOpenFOAMMesh}}
 \index{readOpenFOAMMesh@{readOpenFOAMMesh}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{readOpenFOAMMesh()}{readOpenFOAMMesh()}}
-{\footnotesize\ttfamily Neo\+N\+::\+Unstructured\+Mesh Neo\+FOAM\+::read\+Open\+FOAMMesh (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor}]{exec,  }\item[{const Foam\+::fv\+Mesh \&}]{mesh }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily Neo\+N\+::\+Unstructured\+Mesh Neo\+FOAM\+::read\+Open\+FOAMMesh (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor}]{exec,  }\item[{const Foam\+::fv\+Mesh \&}]{mesh,  }\item[{bool}]{full\+Mesh\+On\+GPU = {\ttfamily false} }\end{DoxyParamCaption})}
 
+
+
+read Open\+FOAM mesh and construct NeoN mesh 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & the executor where to store mesh data \\
+\hline
+{\em mesh} & the Open\+FOAM mesh \\
+\hline
+{\em full\+Mesh\+On\+GPU} & -\/ if false only owner,neighbour,face\+Areas and cell\+Volumes are placed on GPU \\
+\hline
+\end{DoxyParams}
 \Hypertarget{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1}\label{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1} 
 \index{NeoFOAM@{NeoFOAM}!readSurfaceBoundaryConditions@{readSurfaceBoundaryConditions}}
 \index{readSurfaceBoundaryConditions@{readSurfaceBoundaryConditions}!NeoFOAM@{NeoFOAM}}

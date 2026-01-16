@@ -908,10 +908,10 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="24" column="8" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="24" declcolumn="8"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1a7fa41e32ba62c41cffee5cb4c3793877" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1afb828727f0f7b23418e94e1c464d9dae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>NeoN::UnstructuredMesh</type>
         <definition>NeoN::UnstructuredMesh NeoFOAM::readOpenFOAMMesh</definition>
-        <argsstring>(const NeoN::Executor exec, const Foam::fvMesh &amp;mesh)</argsstring>
+        <argsstring>(const NeoN::Executor exec, const Foam::fvMesh &amp;mesh, bool fullMeshOnGPU=false)</argsstring>
         <name>readOpenFOAMMesh</name>
         <qualifiedname>NeoFOAM::readOpenFOAMMesh</qualifiedname>
         <param>
@@ -922,13 +922,45 @@
           <type>const Foam::fvMesh &amp;</type>
           <declname>mesh</declname>
         </param>
+        <param>
+          <type>bool</type>
+          <declname>fullMeshOnGPU</declname>
+          <defval>false</defval>
+        </param>
         <briefdescription>
+<para>read OpenFOAM mesh and construct NeoN mesh </para>
         </briefdescription>
         <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>exec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the executor where to store mesh data </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>mesh</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the OpenFOAM mesh </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>fullMeshOnGPU</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>- if false only owner,neighbour,faceAreas and cellVolumes are placed on GPU </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="26" column="24" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="26" declcolumn="24"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="31" column="24" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="31" declcolumn="24"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ac60b005cd9f9140205f676b9953615e4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>std::unique_ptr&lt; <ref refid="classNeoFOAM_1_1MeshAdapter" kindref="compound">MeshAdapter</ref> &gt;</type>
@@ -950,7 +982,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="100" column="17" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="100" declcolumn="17"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="105" column="17" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="105" declcolumn="17"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a70f3fbdfd753d2672cd8c017f759e7f8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>std::unique_ptr&lt; Foam::fvMesh &gt;</type>
@@ -968,7 +1000,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="102" column="17" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="102" declcolumn="17"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="107" column="17" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="107" declcolumn="17"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1aa275ecb871028c14e2d9dae4c78686e2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
