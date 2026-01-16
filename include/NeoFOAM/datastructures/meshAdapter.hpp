@@ -23,7 +23,12 @@ int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh);
 template<typename FieldT>
 FieldT flatBCField(const Foam::fvMesh& mesh, std::function<FieldT(const Foam::fvPatch&)> f);
 
-NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh);
+/** @brief read OpenFOAM mesh and construct NeoN mesh
+    * @param exec the executor where to store mesh data
+    * @param mesh the OpenFOAM mesh
+    * @param fullMeshOnGPU - if false only owner,neighbour,faceAreas and cellVolumes are placed on GPU
+    */
+NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU=false);
 
 /** @class MeshAdapter
  */
