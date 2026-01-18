@@ -93,6 +93,7 @@ int main(int argc, char* argv[])
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
+               // dsl::imp::ddt(U) + dsl::imp::convDiff(phi, nu, U),
                 U,
                 rt
             );
@@ -153,6 +154,7 @@ int main(int argc, char* argv[])
                     {
                         pEqn.setReference(pRefCell, pRefValue);
                     }
+
 
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();

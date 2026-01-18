@@ -8,6 +8,7 @@
 
 #include "fv.H"
 #include "gaussConvectionScheme.H"
+#include "gaussLaplacianScheme.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
@@ -30,7 +31,10 @@ TEST_CASE("Interpolation")
     auto nfMesh = mesh.nfMesh();
 
     auto ofT = randomScalarField(runTime, mesh, "T");
+    auto ofU = randomVectorField(runTime, mesh, "U");
     auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
+    auto ofGamma = randomScalarField(runTime, mesh, "Gamma");
+    auto nfGamma = NeoFOAM::constructFrom(exec, nfMesh, ofGamma);
 
     auto zero = [](auto& field, auto value)
     {
@@ -41,8 +45,8 @@ TEST_CASE("Interpolation")
     // linear interpolation hardcoded for now
     Foam::IStringStream is("linear");
     SECTION("Linear SurfaceInterpolation[scalar] on " + execName)
-    {
-        Foam::tmp<Foam::surfaceInterpolationScheme<Foam::scalar>> foamInterPol =
+    {  
+	Foam::tmp<Foam::surfaceInterpolationScheme<Foam::scalar>> foamInterPol =
             Foam::surfaceInterpolationScheme<Foam::scalar>::New(mesh, is);
         Foam::surfaceScalarField ofSurfT(foamInterPol->interpolate(ofT));
         auto nfSurfT = NeoFOAM::constructSurfaceField(exec, nfMesh, ofSurfT);
@@ -129,5 +133,73 @@ TEST_CASE("Interpolation")
         nfDivT.correctBoundaryConditions();
 
         NeoFOAM::compare(nfDivT, ofDivT, ApproxScalar(1e-15), false);
+ //   }
+ //   SECTION("GaussGreenLap[scalar] on " + execName)
+ //   {
+        Foam::IStringStream is2("linear");
+	Foam::tmp<Foam::surfaceInterpolationScheme<Foam::scalar>> foamInterPol2 =
+            Foam::surfaceInterpolationScheme<Foam::scalar>::New(mesh, is2);
+        Foam::IStringStream lapData("linear uncorrected");
+        Foam::fv::gaussLaplacianScheme<Foam::scalar, Foam::scalar> foamLapScalar(mesh, lapData);
+        Foam::surfaceScalarField ofSurfGamma(foamInterPol2->interpolate(ofGamma));
+        Foam::volScalarField ofLapT("ofLapT", foamLapScalar.fvcLaplacian(ofSurfGamma, ofT));
+
+        auto nfLapT = NeoFOAM::constructFrom(exec, nfMesh, ofLapT);
+        zero(nfLapT, 0.0);
+        auto nfSurfGamma = NeoFOAM::constructSurfaceField(exec, nfMesh, ofSurfGamma);
+
+	NeoFOAM::compare(nfSurfGamma, ofSurfGamma, ApproxScalar(1e-15), false);
+
+	NeoN::TokenList lapScheme = NeoN::TokenList({std::string("linear"), std::string("uncorrected")});
+        fvcc::GaussGreenLaplacian<NeoN::scalar>(exec, nfMesh, lapScheme)
+            .laplacian(nfLapT, nfSurfGamma, nfT, dsl::Coeff());
+        nfLapT.correctBoundaryConditions();
+
+        NeoFOAM::compare(nfLapT, ofLapT, ApproxScalar(1e-15), false);   
+////////////////////////
+	Foam::volScalarField ofConvDiffT(
+            "ofConvDiffT",
+            ofDivT + ofLapT
+        );
+	auto nfConvDiffSplit =
+            NeoFOAM::constructFrom(exec, nfMesh, ofConvDiffT);
+	zero(nfConvDiffSplit, 0.0);
+	// element-wise: nfConvDiffSplit = nfDivT + nfLapT
+        {
+            auto execN = nfConvDiffSplit.exec();
+            auto [out, a, b] = views(
+            nfConvDiffSplit.internalVector(),
+            nfDivT.internalVector(),
+            nfLapT.internalVector()
+        );
+
+        NeoN::parallelFor(
+            execN,
+            {0, out.size()},
+            KOKKOS_LAMBDA(const size_t i) {
+                out[i] = a[i] + b[i];
+            }
+        );
+        }
+
+        // apply BCs
+        nfConvDiffSplit.correctBoundaryConditions();
+//	auto nfConvDiffSplit = nfDivT + nfLapT;
+        auto nfConvDiffFused = nfConvDiffSplit;
+	zero(nfConvDiffFused, 0.0);                   
+	//NeoN::TokenList lapSchemes = NeoN::TokenList({std::string("linear"), std::string("uncorrected")});
+	fvcc::GaussGreenConvDiff<NeoN::scalar> convDiffOp(exec, nfMesh, lapScheme);
+        convDiffOp.convDiff(nfConvDiffFused, nfPhi, nfSurfGamma, nfT, dsl::Coeff(1.0));
+        nfConvDiffFused.correctBoundaryConditions();
+	NeoFOAM::compare(nfConvDiffSplit, ofConvDiffT, ApproxScalar(1e-15), false);
+
+        // NeoN fused vs NeoN split
+        //NeoFOAM::compare(nfConvDiffFused, nfConvDiffSplit, ApproxScalar(1e-15), false);
+
+        // NeoN fused vs OpenFOAM split
+        //NeoFOAM::compare(nfConvDiffFused, ofConvDiffT, ApproxScalar(1e-15), false);
     }
+
+    //SECTION("GaussGreenConvDiff[scalar] == Div + Laplacian on " + execName)
+
 }

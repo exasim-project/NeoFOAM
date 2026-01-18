@@ -36,25 +36,26 @@ divSchemes
     default         none;
     div(phi,T)      $DIVSCHEME;
     div(phi,U)      $DIVSCHEME;
+    div(phi,Gamma)  $DIVSCHEME;
 }
 
 laplacianSchemes
 {
-    default         none;
+    default         Gauss linear uncorrected;
     laplacian(Gamma,T) $LAPSCHEME;
     laplacian(mu,U) $LAPSCHEME;
 }
 
 interpolationSchemes
 {
-    default         none;
-    // default         linear;
+    default         linear;
+    ofGamma         linear;
+    ofT             linear;
 }
 
 snGradSchemes
 {
-    default         none;
-    // default         corrected;
+    default         uncorrected;
 }
 
 

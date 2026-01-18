@@ -48,6 +48,8 @@ endif()
 
 include(cmake/CxxThirdParty.cmake)
 
+    message(STATUS "Kokkos_HOST_COMPILER  = ${Kokkos_ARCH_HOST_COMPILER}")
+    message(STATUS "Kokkos_HOST_COMPILER  = ${Kokkos_HOST_COMPILER}")
 add_subdirectory(include)
 add_subdirectory(src)
 
