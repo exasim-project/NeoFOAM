@@ -1,18 +1,46 @@
-import typer
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
+import sys
 
-def hello() -> None:
-    """Say hello from foamadapter CLI."""
-    typer.echo("Hello, FoamAdapter user!")
-
+import typer  # type: ignore[import-not-found]
 
 app = typer.Typer()
-app.command()(hello)
+
+# Solver command group
+solver_app = typer.Typer()
+
+app.add_typer(solver_app, name="solver", help="Run foam solvers.")
 
 
-def main() -> None:
-    app()
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)  # type: ignore[untyped-decorator]
+def icofoam(ctx: typer.Context) -> None:
+    """Transient solver for incompressible, laminar flow of Newtonian fluids."""
+    from foamadapter.solver.icofoam import IcoFoam
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    icoFoam = IcoFoam(argv)
+    icoFoam.run()
+
+
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)  # type: ignore[untyped-decorator]
+def pimplefoam(ctx: typer.Context) -> None:
+    """Transient solver for incompressible, turbulent flow of Newtonian fluids"""
+
+    from foamadapter.solver.pimplefoam import PimpleFoam
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    pimpleFoam = PimpleFoam(argv)
+    pimpleFoam.run()
 
 
 if __name__ == "__main__":
-    main()
+    app()

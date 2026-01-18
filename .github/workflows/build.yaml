@@ -148,12 +148,15 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: 3.9
+
       - name: Install test dependencies
         run: |
           uv run pip install -v .[all]
+
       - name: Test with pytest
         run: |
-            uv run pytest --cov=foamadapter --cov-report=xml --cov-report=term
+          source .venv/bin/activate
+          pytest --cov=foamadapter --cov-report=xml --cov-report=term
 
       # - name: Upload code coverage results to Codecov
       #   uses: codecov/codecov-action@v5
@@ -194,10 +197,6 @@ jobs:
       uses: astral-sh/setup-uv@v7
       with:
         python-version: 3.9
-    - name: Check types with ty
-      run: |
-        uv run pip install .[all]
-        poe type_check
     - name: Check types with ty
       run: |
         uv run pip install .[all]
