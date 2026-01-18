@@ -77,13 +77,13 @@ void fusedImplicitAssembly(
             const auto weight = weightsV[facei];
             const auto own = owner[facei];
             const auto nei = neighbour[facei];
-            
+
             const auto rowOwnStart = matrix.rowOffs[own];
             const auto rowNeiStart = matrix.rowOffs[nei];
 
             // DIV + LAPLACIAN contributions (combined)
             const auto lapFlux = deltaCoeffsV[facei] * gammaV[facei] * magFaceArea[facei];
-            
+
             // Combined contributions for neighbour column in owner row
             const auto combinedValueNei = (-weight * flux + lapFlux) * one<ValueType>();
             matrix.values[rowNeiStart + neiOffs[facei]] += combinedValueNei;
@@ -109,7 +109,10 @@ void fusedImplicitAssembly(
         mesh.boundaryMesh().deltaCoeffs()
     );
 
-    auto& bcCoeffs = ls.auxiliaryCoefficients().template get<la::BoundaryCoefficients<ValueType, localIdx>>("boundaryCoefficients");
+    auto& bcCoeffs =
+        ls.auxiliaryCoefficients().template get<la::BoundaryCoefficients<ValueType, localIdx>>(
+            "boundaryCoefficients"
+        );
     auto [boundValues, rhsBoundValues] = views(bcCoeffs.matrixValues, bcCoeffs.rhsValues);
 
     parallelFor(
@@ -119,7 +122,7 @@ void fusedImplicitAssembly(
             const auto bcfacei = facei - nInternalFaces;
             const auto own = surfFaceCells[bcfacei];
             const auto rowOwnStart = matrix.rowOffs[own];
-            
+
             const auto valFrac1 = valueFraction[bcfacei];
             const auto valFrac2 = 1.0 - valFrac1;
 
@@ -127,9 +130,14 @@ void fusedImplicitAssembly(
             const auto divFlux = weightsV[facei] * faceFluxV[facei];
             const auto lapFlux = gammaV[facei] * magFaceArea[facei];
 
-            const auto combinedValueMat = (divFlux * valFrac2 - lapFlux * valFrac1 * deltaCoeffsV[facei]) * one<ValueType>();
-            const auto combinedValueRhs = (divFlux * valFrac1 * refValue[bcfacei] + valFrac2 * refGradient[bcfacei] * (1.0 / bDeltaCoeffs[bcfacei]))
-                                         + lapFlux * (valFrac1 * deltaCoeffsV[facei] * refValue[bcfacei] + valFrac2 * refGradient[bcfacei]);
+            const auto combinedValueMat =
+                (divFlux * valFrac2 - lapFlux * valFrac1 * deltaCoeffsV[facei]) * one<ValueType>();
+            const auto combinedValueRhs =
+                (divFlux * valFrac1 * refValue[bcfacei]
+                 + valFrac2 * refGradient[bcfacei] * (1.0 / bDeltaCoeffs[bcfacei]))
+                + lapFlux
+                      * (valFrac1 * deltaCoeffsV[facei] * refValue[bcfacei]
+                         + valFrac2 * refGradient[bcfacei]);
 
             // Single atomic operations
             Kokkos::atomic_add(&matrix.values[rowOwnStart + diagOffs[own]], combinedValueMat);

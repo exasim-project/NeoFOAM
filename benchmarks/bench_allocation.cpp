@@ -71,15 +71,15 @@ extern Foam::fvMesh* meshPtr;
 //     {
 //         BENCHMARK("Kokkos::View HostSpace no-init size=" + std::to_string(size))
 //         {
-//             Kokkos::View<double*, Kokkos::HostSpace> data(Kokkos::view_alloc(Kokkos::WithoutInitializing, "data"), size);
-//             return data(0);
+//             Kokkos::View<double*, Kokkos::HostSpace>
+//             data(Kokkos::view_alloc(Kokkos::WithoutInitializing, "data"), size); return data(0);
 //         };
 //     }
 
 //     SECTION("NeoN SerialExecutor (with init)")
 //     {
 //         NeoN::SerialExecutor exec;
-        
+
 //         BENCHMARK("NeoN SerialExecutor init size=" + std::to_string(size))
 //         {
 //             NeoN::Vector<NeoN::scalar> data(exec, size, 0.0);
@@ -90,7 +90,7 @@ extern Foam::fvMesh* meshPtr;
 //     SECTION("NeoN SerialExecutor (no init)")
 //     {
 //         NeoN::SerialExecutor exec;
-        
+
 //         BENCHMARK("NeoN SerialExecutor no-init size=" + std::to_string(size))
 //         {
 //             NeoN::Vector<NeoN::scalar> data(exec, size);
@@ -101,7 +101,7 @@ extern Foam::fvMesh* meshPtr;
 //     SECTION("NeoN CPUExecutor (with init)")
 //     {
 //         NeoN::CPUExecutor exec;
-        
+
 //         BENCHMARK("NeoN CPUExecutor init size=" + std::to_string(size))
 //         {
 //             NeoN::Vector<NeoN::scalar> data(exec, size, 0.0);
@@ -112,7 +112,7 @@ extern Foam::fvMesh* meshPtr;
 //     SECTION("NeoN CPUExecutor (no init)")
 //     {
 //         NeoN::CPUExecutor exec;
-        
+
 //         BENCHMARK("NeoN CPUExecutor no-init size=" + std::to_string(size))
 //         {
 //             NeoN::Vector<NeoN::scalar> data(exec, size);
@@ -214,7 +214,7 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nCells = nfMesh.nCells();
 
         BENCHMARK("NeoN Just Internal Vector")
@@ -259,7 +259,7 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         NeoN::Dictionary patchDict({{"type", std::string("calculated")}});
 
         BENCHMARK("NeoN Single VolumeBoundary construction")
@@ -275,7 +275,7 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nCells = nfMesh.nCells();
         const auto nBoundaries = nfMesh.nBoundaries();
         const auto& offset = nfMesh.boundaryMesh().offset();
@@ -299,7 +299,7 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nBoundaryFaces = nfMesh.nBoundaryFaces();
         const auto nBoundaries = nfMesh.nBoundaries();
 
@@ -316,10 +316,10 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nBoundaryFaces = nfMesh.nBoundaryFaces();
         const auto nBoundaries = nfMesh.nBoundaries();
-        
+
         NeoN::BoundaryData<NeoN::scalar> original(exec, nBoundaryFaces, nBoundaries);
 
         BENCHMARK("NeoN BoundaryData copy (6 vector copies)")
@@ -335,11 +335,11 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nCells = nfMesh.nCells();
         const auto nBoundaryFaces = nfMesh.nBoundaryFaces();
         const auto nBoundaries = nfMesh.nBoundaries();
-        
+
         NeoN::Vector<NeoN::scalar> internalVec(exec, nCells, 0.0);
         NeoN::BoundaryData<NeoN::scalar> boundaryData(exec, nBoundaryFaces, nBoundaries);
 
@@ -356,10 +356,10 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nCells = nfMesh.nCells();
         const auto& offsets = nfMesh.boundaryMesh().offset();
-        
+
         BENCHMARK("NeoN Field(exec, nCells, offsets)")
         {
             NeoN::Field<NeoN::scalar> field(exec, nCells, offsets);
@@ -373,18 +373,14 @@ TEST_CASE("VolScalarFieldAllocation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        
+
         const auto nCells = nfMesh.nCells();
         const auto& offsets = nfMesh.boundaryMesh().offset();
-        
+
         BENCHMARK("NeoN DomainMixin construction (with move)")
         {
-            fvcc::DomainMixin<NeoN::scalar> domain(
-                exec,
-                "testField",
-                nfMesh,
-                NeoN::Field<NeoN::scalar>(exec, nCells, offsets)
-            );
+            fvcc::DomainMixin<NeoN::scalar>
+                domain(exec, "testField", nfMesh, NeoN::Field<NeoN::scalar>(exec, nCells, offsets));
             return domain.internalVector().size();
         };
     }

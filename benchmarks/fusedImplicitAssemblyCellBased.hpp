@@ -12,10 +12,11 @@ namespace la = NeoN::la;
 // Struct to hold cell-to-faces connectivity and pre-computed data
 struct CellBasedData
 {
-    NeoN::SegmentedVector<NeoN::localIdx, NeoN::localIdx> cellFaces;  // faces per cell
-    NeoN::Vector<NeoN::localIdx> faceNeighbour;                        // neighbour cell for each face (or -1 if boundary)
-    NeoN::Vector<NeoN::scalar> faceSign;                               // sign for face contribution (+1 if owner, -1 if neighbour)
-    NeoN::Vector<NeoN::localIdx> matrixColumnIdx;                      // pre-computed column index in matrix
+    NeoN::SegmentedVector<NeoN::localIdx, NeoN::localIdx> cellFaces; // faces per cell
+    NeoN::Vector<NeoN::localIdx> faceNeighbour; // neighbour cell for each face (or -1 if boundary)
+    NeoN::Vector<NeoN::scalar>
+        faceSign; // sign for face contribution (+1 if owner, -1 if neighbour)
+    NeoN::Vector<NeoN::localIdx> matrixColumnIdx; // pre-computed column index in matrix
 };
 
 // Function to pre-compute cell-based connectivity
@@ -29,13 +30,13 @@ CellBasedData computeCellBasedData(
 )
 {
     using namespace NeoN;
-    
+
     // Count faces per cell (owner and neighbour contributions)
     Vector<localIdx> facesPerCell(exec, nCells, localIdx(0));
     auto facesPerCellV = facesPerCell.view();
-    
+
     const auto [ownerV, neighbourV] = views(owner, neighbour);
-    
+
     parallelFor(
         exec,
         {0, nInternalFaces},
@@ -45,80 +46,77 @@ CellBasedData computeCellBasedData(
         },
         "countFacesPerCell"
     );
-    
+
     // Create segmented vector for cell-to-faces connectivity
     SegmentedVector<localIdx, localIdx> cellFaces(facesPerCell);
-    
+
     // Reset counters to use as insertion indices
     parallelFor(
         exec,
         {0, nCells},
-        NEON_LAMBDA(const localIdx celli) {
-            facesPerCellV[celli] = 0;
-        },
+        NEON_LAMBDA(const localIdx celli) { facesPerCellV[celli] = 0; },
         "resetCounters"
     );
-    
+
     // Populate cell-to-faces connectivity
     auto [cellFacesValues, cellFacesSegments] = cellFaces.views();
-    
+
     parallelFor(
         exec,
         {0, nInternalFaces},
         NEON_LAMBDA(const localIdx facei) {
             const auto own = ownerV[facei];
             const auto nei = neighbourV[facei];
-            
+
             // Add face to owner cell
-            const auto ownPos = cellFacesSegments[own] + Kokkos::atomic_fetch_inc(&facesPerCellV[own]);
+            const auto ownPos =
+                cellFacesSegments[own] + Kokkos::atomic_fetch_inc(&facesPerCellV[own]);
             cellFacesValues[ownPos] = facei;
-            
+
             // Add face to neighbour cell
-            const auto neiPos = cellFacesSegments[nei] + Kokkos::atomic_fetch_inc(&facesPerCellV[nei]);
+            const auto neiPos =
+                cellFacesSegments[nei] + Kokkos::atomic_fetch_inc(&facesPerCellV[nei]);
             cellFacesValues[neiPos] = facei;
         },
         "populateCellFaces"
     );
-    
+
     // Pre-compute face neighbour, sign, and matrix column indices
     const auto totalFaceConnections = cellFaces.size();
     Vector<localIdx> faceNeighbour(exec, totalFaceConnections);
     Vector<scalar> faceSign(exec, totalFaceConnections);
     Vector<localIdx> matrixColumnIdx(exec, totalFaceConnections);
-    
+
     const auto [diagOffs, ownOffs, neiOffs] = views(
         sparsityPattern.diagOffset(),
         sparsityPattern.ownerOffset(),
         sparsityPattern.neighbourOffset()
     );
-    
+
     const auto [matrixRowOffs] = views(sparsityPattern.rowOffs());
-    
-    auto [faceNeighbourV, faceSignV, matrixColumnIdxV] = views(
-        faceNeighbour,
-        faceSign,
-        matrixColumnIdx
-    );
-    
+
+    auto [faceNeighbourV, faceSignV, matrixColumnIdxV] =
+        views(faceNeighbour, faceSign, matrixColumnIdx);
+
     parallelFor(
         exec,
         {0, nCells},
         NEON_LAMBDA(const localIdx celli) {
             const auto faces = cellFacesSegments[celli + 1] - cellFacesSegments[celli];
             const auto startIdx = cellFacesSegments[celli];
-            
+
             for (localIdx i = 0; i < faces; ++i)
             {
                 const auto faceIdx = cellFacesValues[startIdx + i];
                 const auto own = ownerV[faceIdx];
                 const auto nei = neighbourV[faceIdx];
-                
+
                 const auto isOwner = (own == celli);
                 const auto neiCell = isOwner ? nei : own;
-                
+
                 faceNeighbourV[startIdx + i] = neiCell;
                 faceSignV[startIdx + i] = isOwner ? 1.0 : -1.0;
-                
+
                 // Compute matrix column index
                 const auto rowStart = matrixRowOffs[celli];
                 if (isOwner)
@@ -133,7 +131,7 @@ CellBasedData computeCellBasedData(
         },
         "computeFaceData"
     );
-    
+
     return CellBasedData {
         std::move(cellFaces),
         std::move(faceNeighbour),
@@ -175,20 +173,13 @@ void fusedImplicitAssemblyCellBased(
     const auto [diagOffs] = views(sparsityPattern.diagOffset());
 
     const auto [oldVector] = views(oldTimeField);
-    
-    const auto [faceFluxV, weightsV, gammaV, deltaCoeffsV] = views(
-        faceFlux.internalVector(),
-        weights,
-        gamma.internalVector(),
-        deltaCoeffs
-    );
-    
+
+    const auto [faceFluxV, weightsV, gammaV, deltaCoeffsV] =
+        views(faceFlux.internalVector(), weights, gamma.internalVector(), deltaCoeffs);
+
     const auto [cellFacesValues, cellFacesSegments] = cellData.cellFaces.views();
-    const auto [faceNeighbourV, faceSignV, matrixColumnIdxV] = views(
-        cellData.faceNeighbour,
-        cellData.faceSign,
-        cellData.matrixColumnIdx
-    );
+    const auto [faceNeighbourV, faceSignV, matrixColumnIdxV] =
+        views(cellData.faceNeighbour, cellData.faceSign, cellData.matrixColumnIdx);
 
     auto [matrix, rhs] = ls.view();
 
@@ -203,30 +194,30 @@ void fusedImplicitAssemblyCellBased(
             const auto coeff = a0 * vol[celli];
             auto diagValue = coeff * one<ValueType>();
             auto rhsValue = coeff * oldVector[celli];
-            
+
             // Loop over faces of this cell
             const auto numFaces = cellFacesSegments[celli + 1] - cellFacesSegments[celli];
             const auto startIdx = cellFacesSegments[celli];
-            
+
             for (localIdx i = 0; i < numFaces; ++i)
             {
                 const auto faceIdx = cellFacesValues[startIdx + i];
                 const auto neiCell = faceNeighbourV[startIdx + i];
                 const auto sign = faceSignV[startIdx + i];
-                
+
                 // Compute flux on-the-fly
                 const auto flux = faceFluxV[faceIdx];
                 const auto weight = weightsV[faceIdx];
                 const auto lapFlux = deltaCoeffsV[faceIdx] * gammaV[faceIdx] * magFaceArea[faceIdx];
                 const auto combinedFlux = (-weight * flux + lapFlux) * one<ValueType>();
-                
+
                 const auto offDiagValue = sign * combinedFlux;
                 matrix.values[matrixColumnIdxV[startIdx + i]] += offDiagValue;
-                
+
                 // Contribution to diagonal (subtract off-diagonal)
                 diagValue -= offDiagValue;
             }
-            
+
             // Write diagonal and RHS
             matrix.values[diagIdx] += diagValue;
             rhs[celli] += rhsValue;
@@ -243,7 +234,10 @@ void fusedImplicitAssemblyCellBased(
         mesh.boundaryMesh().deltaCoeffs()
     );
 
-    auto& bcCoeffs = ls.auxiliaryCoefficients().template get<la::BoundaryCoefficients<ValueType, localIdx>>("boundaryCoefficients");
+    auto& bcCoeffs =
+        ls.auxiliaryCoefficients().template get<la::BoundaryCoefficients<ValueType, localIdx>>(
+            "boundaryCoefficients"
+        );
     auto [boundValues, rhsBoundValues] = views(bcCoeffs.matrixValues, bcCoeffs.rhsValues);
 
     parallelFor(
@@ -253,7 +247,7 @@ void fusedImplicitAssemblyCellBased(
             const auto bcfacei = facei - nInternalFaces;
             const auto own = surfFaceCells[bcfacei];
             const auto rowOwnStart = matrix.rowOffs[own];
-            
+
             const auto valFrac1 = valueFraction[bcfacei];
             const auto valFrac2 = 1.0 - valFrac1;
 
@@ -261,9 +255,14 @@ void fusedImplicitAssemblyCellBased(
             const auto divFlux = weightsV[facei] * faceFluxV[facei];
             const auto lapFlux = gammaV[facei] * magFaceArea[facei];
 
-            const auto combinedValueMat = (divFlux * valFrac2 - lapFlux * valFrac1 * deltaCoeffsV[facei]) * one<ValueType>();
-            const auto combinedValueRhs = (divFlux * valFrac1 * refValue[bcfacei] + valFrac2 * refGradient[bcfacei] * (1.0 / bDeltaCoeffs[bcfacei]))
-                                         + lapFlux * (valFrac1 * deltaCoeffsV[facei] * refValue[bcfacei] + valFrac2 * refGradient[bcfacei]);
+            const auto combinedValueMat =
+                (divFlux * valFrac2 - lapFlux * valFrac1 * deltaCoeffsV[facei]) * one<ValueType>();
+            const auto combinedValueRhs =
+                (divFlux * valFrac1 * refValue[bcfacei]
+                 + valFrac2 * refGradient[bcfacei] * (1.0 / bDeltaCoeffs[bcfacei]))
+                + lapFlux
+                      * (valFrac1 * deltaCoeffsV[facei] * refValue[bcfacei]
+                         + valFrac2 * refGradient[bcfacei]);
 
             // Single atomic operations
             Kokkos::atomic_add(&matrix.values[rowOwnStart + diagOffs[own]], combinedValueMat);

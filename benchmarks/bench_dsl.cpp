@@ -92,13 +92,13 @@ void fusedImplicitAssembly(
             const auto weight = weightsV[facei];
             const auto own = owner[facei];
             const auto nei = neighbour[facei];
-            
+
             const auto rowOwnStart = matrix.rowOffs[own];
             const auto rowNeiStart = matrix.rowOffs[nei];
 
             // DIV + LAPLACIAN contributions (combined)
             const auto lapFlux = deltaCoeffsV[facei] * gammaV[facei] * magFaceArea[facei];
-            
+
             // Combined contributions for neighbour column in owner row
             const auto combinedValueNei = (-weight * flux + lapFlux) * one<ValueType>();
             matrix.values[rowNeiStart + neiOffs[facei]] += combinedValueNei;
@@ -124,7 +124,10 @@ void fusedImplicitAssembly(
         mesh.boundaryMesh().deltaCoeffs()
     );
 
-    auto& bcCoeffs = ls.auxiliaryCoefficients().template get<la::BoundaryCoefficients<ValueType, localIdx>>("boundaryCoefficients");
+    auto& bcCoeffs =
+        ls.auxiliaryCoefficients().template get<la::BoundaryCoefficients<ValueType, localIdx>>(
+            "boundaryCoefficients"
+        );
     auto [boundValues, rhsBoundValues] = views(bcCoeffs.matrixValues, bcCoeffs.rhsValues);
 
     parallelFor(
@@ -134,7 +137,7 @@ void fusedImplicitAssembly(
             const auto bcfacei = facei - nInternalFaces;
             const auto own = surfFaceCells[bcfacei];
             const auto rowOwnStart = matrix.rowOffs[own];
-            
+
             const auto valFrac1 = valueFraction[bcfacei];
             const auto valFrac2 = 1.0 - valFrac1;
 
@@ -142,9 +145,14 @@ void fusedImplicitAssembly(
             const auto divFlux = weightsV[facei] * faceFluxV[facei];
             const auto lapFlux = gammaV[facei] * magFaceArea[facei];
 
-            const auto combinedValueMat = (divFlux * valFrac2 - lapFlux * valFrac1 * deltaCoeffsV[facei]) * one<ValueType>();
-            const auto combinedValueRhs = (divFlux * valFrac1 * refValue[bcfacei] + valFrac2 * refGradient[bcfacei] * (1.0 / bDeltaCoeffs[bcfacei]))
-                                         + lapFlux * (valFrac1 * deltaCoeffsV[facei] * refValue[bcfacei] + valFrac2 * refGradient[bcfacei]);
+            const auto combinedValueMat =
+                (divFlux * valFrac2 - lapFlux * valFrac1 * deltaCoeffsV[facei]) * one<ValueType>();
+            const auto combinedValueRhs =
+                (divFlux * valFrac1 * refValue[bcfacei]
+                 + valFrac2 * refGradient[bcfacei] * (1.0 / bDeltaCoeffs[bcfacei]))
+                + lapFlux
+                      * (valFrac1 * deltaCoeffsV[facei] * refValue[bcfacei]
+                         + valFrac2 * refGradient[bcfacei]);
 
             // Single atomic operations
             Kokkos::atomic_add(&matrix.values[rowOwnStart + diagOffs[own]], combinedValueMat);
@@ -237,9 +245,7 @@ TEST_CASE("advection-diffusion-equation_scalar")
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("ddt(nfT)"), std::string("BDF1")}}
-                )
+                NeoN::Dictionary({{std::string("ddt(nfT)"), std::string("BDF1")}})
             );
             rt.fvSchemesDict.insert(
                 std::string("divSchemes"),
@@ -274,9 +280,7 @@ TEST_CASE("advection-diffusion-equation_scalar")
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("ddt(nfT)"), std::string("BDF1")}}
-                )
+                NeoN::Dictionary({{std::string("ddt(nfT)"), std::string("BDF1")}})
             );
             rt.fvSchemesDict.insert(
                 std::string("divSchemes"),
@@ -311,9 +315,7 @@ TEST_CASE("advection-diffusion-equation_scalar")
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("ddt(nfT)"), std::string("BDF1")}}
-                )
+                NeoN::Dictionary({{std::string("ddt(nfT)"), std::string("BDF1")}})
             );
             rt.fvSchemesDict.insert(
                 std::string("divSchemes"),
@@ -333,7 +335,8 @@ TEST_CASE("advection-diffusion-equation_scalar")
             );
 
             // Setup required operators and interpolation
-            auto divTokens = rt.fvSchemesDict.subDict("divSchemes").get<NeoN::TokenList>("div(phi,nfT)");
+            auto divTokens =
+                rt.fvSchemesDict.subDict("divSchemes").get<NeoN::TokenList>("div(phi,nfT)");
             std::string interpScheme = divTokens.get<std::string>(1); // "upwind"
             auto surfInterp = fvcc::SurfaceInterpolationFactory<NeoN::scalar>::create(
                 exec,
@@ -341,18 +344,22 @@ TEST_CASE("advection-diffusion-equation_scalar")
                 NeoN::TokenList({interpScheme})
             );
             fvcc::SurfaceField<NeoN::scalar> weights(
-                exec, "weights", rt.nfMesh, fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh)
+                exec,
+                "weights",
+                rt.nfMesh,
+                fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh)
             );
             surfInterp->weight(nfPhi, nfT, weights);
-            
-            auto lapTokens = rt.fvSchemesDict.subDict("laplacianSchemes").get<NeoN::TokenList>("laplacian(Gamma,nfT)");
+
+            auto lapTokens = rt.fvSchemesDict.subDict("laplacianSchemes")
+                                 .get<NeoN::TokenList>("laplacian(Gamma,nfT)");
             std::string correctionScheme = lapTokens.get<std::string>(2); // "uncorrected"
             auto faceNormalGrad = fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(
                 exec,
                 rt.nfMesh,
                 NeoN::TokenList({correctionScheme})
             );
-            
+
             const auto& sparsityPattern = la::SparsityPattern::readOrCreate(rt.nfMesh);
             const scalar dt = 1.0; // Fixed timestep for benchmark
 
