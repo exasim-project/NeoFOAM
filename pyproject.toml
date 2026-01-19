@@ -79,6 +79,7 @@ testpaths = [
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
 files = ["src"]                  # Only check src, exclude test
+no_site_packages = true          # don't check installed packages
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)
@@ -91,7 +92,7 @@ exclude = [
 [[tool.mypy.overrides]]
 module = ["Neon", "Neon.*"]
 ignore_errors = true
-
+follow_imports = "skip"
 
 [tool.poe.tasks]
 test = "pytest"
