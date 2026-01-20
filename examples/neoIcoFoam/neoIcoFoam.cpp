@@ -7,6 +7,10 @@
 
 #include "fvCFD.H"
 #include "pisoControl.H"
+#include "singlePhaseTransportModel.H"
+#include "turbulentTransportModel.H"
+#include "wallDist.H"
+#include "LESModel.H"
 
 #include <memory>
 
@@ -76,11 +80,12 @@ int main(int argc, char* argv[])
                 }
             );
 
-//        auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
+        auto surfCalcBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
-        fvcc::VolumeField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, volCalcBCs);
-        NeoN::fill(nu.internalVector(), viscosity.value());
-        NeoN::fill(nu.boundaryData().value(), viscosity.value());
+	auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Vec3>>(rt.nfMesh);
+//        fvcc::VolumeField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, volCalcBCs);
+//        NeoN::fill(nu.internalVector(), viscosity.value());
+//        NeoN::fill(nu.boundaryData().value(), viscosity.value());
         fvcc::VolumeField<NeoN::scalar> one(rt.exec, "one", rt.nfMesh, volCalcBCs);
         NeoN::fill(one.internalVector(), scalar(1));
         NeoN::fill(one.boundaryData().value(), scalar(1));
@@ -94,60 +99,52 @@ int main(int argc, char* argv[])
                 .name = "phi"
             }
         );
+	// Turbulence model logic
+	auto tnu = laminarTransport.nu();
+	auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
+	Foam::wallDist y(mesh);
+        //const Foam::volScalarField& ofWallDist = y.y();
+	auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
 
+        NeoN::Logging::info("walldist done");
+	const Foam::incompressible::LESModel& lesModel =
+            Foam::refCast<const Foam::incompressible::LESModel>(turbulence());
+        NeoN::Logging::info("lesmodel done");
+        //const Foam::volScalarField& delta = lesModel.delta();
+	auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
+        NeoN::Logging::info("delta");
 	NeoN::turbulenceModels::DES::SpalartAllmarasBase saBase(rt.exec, rt.nfMesh);
+
 	auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
-	auto gradUx = gradOp.grad(U.x());
-	auto gradUy = gradOp.grad(U.y());
-	auto gradUz = gradOp.grad(U.z());
-	NeoN::Logging::info("after grad(U)");
-	fvcc::VolumeField<NeoN::scalar> wallDist(rt.exec, "wallDist", rt.nfMesh, volCalcBCs);
+	fvcc::VolumeField<NeoN::scalar> omega(rt.exec, "omega", rt.nfMesh, volCalcBCs);
 	fvcc::VolumeField<NeoN::scalar> chi(rt.exec, "chi", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> fv1(rt.exec, "fv1", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> fv2(rt.exec, "fv2", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> ft2(rt.exec, "ft2", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> stilda(rt.exec, "stilda", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> fw(rt.exec, "fw", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> nut(rt.exec, "nut", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> dTilda(rt.exec, "dTilda", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> strainRate(rt.exec, "strainRate", rt.nfMesh, volCalcBCs);
-	fvcc::VolumeField<NeoN::scalar> dNuTildaEff(rt.exec, "dNuTildaEff", rt.nfMesh, volCalcBCs);
-	NeoN::turbulenceModels::DES::maxDeltaxyz deltaModel(rt.nfMesh);
-        NeoN::turbulenceModels::DES::SpalartAllmarasDDES ddes(rt.exec);
-	NeoN::Logging::info("wallDist");
-	saBase.wallDistance(wallDist);
-	NeoN::Logging::info("chi");
-	saBase.chi(chi, nuTilda, nu);
+        fvcc::VolumeField<NeoN::scalar> fv1(rt.exec, "fv1", rt.nfMesh, volCalcBCs);
+	fvcc::VolumeField<NeoN::Vec3> gradUx(rt.exec, "gradUx", rt.nfMesh, volCalcVecBCs);
+	fvcc::VolumeField<NeoN::Vec3> gradUy(rt.exec, "gradUy", rt.nfMesh, volCalcVecBCs);
+	fvcc::VolumeField<NeoN::Vec3> gradUz(rt.exec, "gradUz", rt.nfMesh, volCalcVecBCs);
+	fvcc::VolumeField<NeoN::scalar> magGradU(rt.exec, "magGradU", rt.nfMesh, volCalcBCs);
+	//fvcc::VolumeField<NeoN::Vec3> gradNuTilda(rt.exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
+        fvcc::VolumeField<NeoN::scalar> magSqrGradNuTilda(rt.exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
+        fvcc::VolumeField<NeoN::scalar> production(rt.exec, "production", rt.nfMesh, volCalcBCs);
+        fvcc::VolumeField<NeoN::scalar> spCoeff(rt.exec, "spCoeff", rt.nfMesh, volCalcBCs);
+        fvcc::SurfaceField<NeoN::scalar> nuTildaEff(rt.exec, "nuTildaEff", rt.nfMesh, surfCalcBCs);
+
+        saBase.chi(chi, nuTilda, nu);
         saBase.fv1(fv1, chi);
-        saBase.fv2(fv2, chi, fv1);
-        saBase.ft2(ft2, chi);
-	NeoN::Logging::info("strainRate");
-	saBase.strainRate(strainRate,gradUx, gradUy, gradUz); // from velocity gradients
-	auto delta = deltaModel.delta();
-        ddes.dTilda(dTilda, wallDist, nuTilda, nu, strainRate, delta);
-        saBase.stilda(stilda, strainRate, nuTilda, dTilda, fv2);
-        saBase.fw(fw, stilda, dTilda, nuTilda);
-        saBase.dNuTildaEff(dNuTildaEff, nuTilda, nu);
-	saBase.nut(nut, nuTilda, nu);
-	nnfvcc::SurfaceField<NeoN::scalar> nuEff =
-                    fvcc::SurfaceInterpolation<NeoN::scalar>(
+        auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofnut);
+	nut = nuTilda * fv1;
+        nut.correctBoundaryConditions();
+        auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
                         rt.exec,
                         rt.nfMesh,
                         NeoN::TokenList({std::string("linear")})
-                    )
-                        .interpolate(nu+nut);
-                nuEff.name = "nuEff";
-	const auto& coeffs = saBase.coeffs();
-        const auto Cb1 = coeffs.Cb1;
-        const auto Cb2 = coeffs.Cb2;
-        const auto kappa = coeffs.kappa;
-        const auto sigmaNut = coeffs.sigmaNut;
-	const auto Cw1 = saBase.cw1();
-        const auto Cw2 = coeffs.Cw2;
-        const auto Cw3 = coeffs.Cw3;
-        //NeoN::turbulenceModels::ReynoldsStress reynolds(rt.exec, rt.nfMesh);
-
-        // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+                    );
+        nnfvcc::SurfaceField<NeoN::scalar> surfNut = surfInterpol.interpolate(nut);
+        surfNut.name = "nuEff";	
+        nnfvcc::SurfaceField<NeoN::scalar> surfNu = surfInterpol.interpolate(nu);
+        auto nuEff = surfNut + surfNu;
+        nuEff.name = "nuEff";	
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
@@ -165,8 +162,9 @@ int main(int argc, char* argv[])
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nuEff, U),
-                U,
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nuEff, U)
+                + dsl::exp::laplacian(surfNut, U),
+		U,
                 rt
             );
 
@@ -192,13 +190,7 @@ int main(int argc, char* argv[])
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
-                nnfvcc::SurfaceField<NeoN::scalar> rAU =
-                    fvcc::SurfaceInterpolation<NeoN::scalar>(
-                        rt.exec,
-                        rt.nfMesh,
-                        NeoN::TokenList({std::string("linear")})
-                    )
-                        .interpolate(crAU);
+                nnfvcc::SurfaceField<NeoN::scalar> rAU = surfInterpol.interpolate(crAU);
                 rAU.name = "rAUf";
 
                 auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
@@ -237,15 +229,18 @@ int main(int argc, char* argv[])
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
             }
-
-	    deltaModel.update();
-	    auto delta = deltaModel.delta();
-            saBase.strainRate(strainRate,gradUx, gradUy, gradUz); // from velocity gradients
-            ddes.dTilda(dTilda, wallDist, nuTilda, nu, strainRate, delta);
-	    ddes.correct(dTilda, nut, saBase, wallDist, nuTilda, nu, strainRate, delta);
-	    auto production = Cb1 * stilda * nuTilda * (one - ft2);
-	    auto spCoeff = (Cw1 * fw - (Cb1 / (kappa * kappa)) * ft2) * nuTilda / (dTilda * dTilda);
-	    auto nuTildaEff = NeoN::scalar(1/sigmaNut)*nuEff;
+	    // Turbulence calculations
+	    gradUx = gradOp.grad(U.x());
+            gradUy = gradOp.grad(U.y());
+            gradUz = gradOp.grad(U.z());
+	    saBase.omega(omega, gradUx, gradUy, gradUz);
+	    saBase.magGradU(magGradU, gradUx, gradUy, gradUz);
+	    magSqrGradNuTilda = fvcc::magSqr(gradOp.grad(nuTilda));
+	    saBase.computeProdSpDDES(production, spCoeff, nuTilda, nu,
+                omega, wallDist, magGradU, delta, magSqrGradNuTilda);
+	    const auto sigmaNut = saBase.coeffs().sigmaNut;
+	    nuTildaEff = surfInterpol.interpolate(NeoN::scalar(1/sigmaNut)*(nuTilda+nu));
+            nuTildaEff.name = "nuTildaEff";
 	    nf::PDESolver<NeoN::scalar> nuTildaEqn(
                         dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda) - NeoN::dsl::imp::laplacian(nuTildaEff, nuTilda)
 			+ dsl::imp::source(spCoeff, nuTilda)
@@ -254,14 +249,25 @@ int main(int argc, char* argv[])
                         rt
                     );
 	    nuTildaEqn.solve();
-
-            runTime.write();
+	    nuTilda.correctBoundaryConditions();
+            saBase.chi(chi, nuTilda, nu);
+            saBase.fv1(fv1, chi);
+            saBase.nut(nut, nuTilda, fv1);
+            nut.correctBoundaryConditions();
+	    surfNut = surfInterpol.interpolate(nut);
+            surfNut.name = "nuEff";
+	    nuEff = surfNut+surfNu;
+            nuEff.name = "nuEff";
+            
+	    runTime.write();
             if (runTime.outputTime())
             {
                 NeoN::Logging::info("Writing p");
                 write(p, mesh);
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
+                NeoN::Logging::info("Writing nuTilda");
+                write(nuTilda, mesh);
             }
 
             runTime.printExecutionTime(Info);
