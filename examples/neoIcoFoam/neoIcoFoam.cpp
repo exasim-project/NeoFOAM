@@ -86,15 +86,19 @@ int main(int argc, char* argv[])
 
             if (piso.momentumPredictor())
             {
+                Kokkos::Profiling::pushRegion("Momentum predictor: solve UEqn");
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
+                Kokkos::Profiling::popRegion();
             }
             else
             {
                 // NOTE since computing rAU and HbyA requires an assembled system matrix we
                 // explicitly trigger assembly here.
+                Kokkos::Profiling::pushRegion("Assemble UEqn explicitly");
                 UEqn.assemble();
+                Kokkos::Profiling::popRegion();
             }
 
             // --- PISO loop
@@ -135,7 +139,9 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
+                    Kokkos::Profiling::pushRegion("Pressure corrector: solve pEqn");
                     auto stats = pEqn.solve();
+                    Kokkos::Profiling::popRegion();
                     p.correctBoundaryConditions();
 
                     if (piso.finalNonOrthogonalIter())
