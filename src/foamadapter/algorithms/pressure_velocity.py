@@ -184,9 +184,14 @@ class PimpleAlgorithm(BaseModel):
         field_name = "p_rgh" if p_rgh is not None else "p"
 
         # Check if specific keys exist for the provided field
-        if not (algo_dict.found(f"{field_name}RefCell") or algo_dict.found(f"{field_name}RefPoint")):
+        if not (
+            algo_dict.found(f"{field_name}RefCell")
+            or algo_dict.found(f"{field_name}RefPoint")
+        ):
             # Fallback to generic "p" keys if they exist and we are using p_rgh
-            if p_rgh is not None and (algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")):
+            if p_rgh is not None and (
+                algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")
+            ):
                 # Use "p" field for lookup but return results for our use
                 pRefCell, pRefValue = pyf.setRefCell(p, algo_dict, True)
             else:

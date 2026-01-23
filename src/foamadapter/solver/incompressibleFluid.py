@@ -61,9 +61,7 @@ class IncompressibleFluid(BaseModel):
         initializer = IncompressibleFluidInitializer(self.argv)
         return initializer.run()
 
-    def operations(
-        self, ctx: Context
-    ) -> tuple[StepBuilder, OperationCollection]:
+    def operations(self, ctx: Context) -> tuple[StepBuilder, OperationCollection]:
         """
         Build solver structure and collect model operations.
 
@@ -141,7 +139,7 @@ class IncompressibleFluid(BaseModel):
         turbulence: ModelAnnotation[Any],
     ) -> FieldUpdates:
         """
-            Correct turbulence model after pressure-velocity coupling.
+        Correct turbulence model after pressure-velocity coupling.
         """
 
         laminarTransport.correct()
@@ -189,4 +187,3 @@ class IncompressibleFluid(BaseModel):
     def __repr__(self) -> str:
         """Custom repr to avoid OpenFOAM SIGFPE issues in pytest."""
         return "IncompressibleFluid()"
-

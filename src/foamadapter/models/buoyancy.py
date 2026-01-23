@@ -110,7 +110,9 @@ class BoussinesqModel(BaseModel):
             "TRef", pyf.dimTemperature, self._props.get_scalar("TRef")
         )
         self.Pr = pyf.dimensionedScalar("Pr", pyf.dimless, self._props.get_scalar("Pr"))
-        self.Prt = pyf.dimensionedScalar("Prt", pyf.dimless, self._props.get_scalar("Prt"))
+        self.Prt = pyf.dimensionedScalar(
+            "Prt", pyf.dimless, self._props.get_scalar("Prt")
+        )
 
         # Read gravity
         try:

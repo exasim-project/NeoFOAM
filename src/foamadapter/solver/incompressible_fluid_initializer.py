@@ -89,18 +89,18 @@ class IncompressibleFluidInitializer(BaseInitializer):
         initializers.append(
             model(
                 "algorithm",
-                depends_on=["fields.p", "mesh", "models.laminarTransport", "models.turbulence"],
+                depends_on=[
+                    "fields.p",
+                    "mesh",
+                    "models.laminarTransport",
+                    "models.turbulence",
+                ],
                 create=self._finalize_algorithm,
             )
         )
 
         # 5. Keep dictionaries alive to prevent segfaults
-        initializers.append(
-            lazy(
-                "fvSolution_dict",
-                create=lambda _: self.fvSolution
-            )
-        )
+        initializers.append(lazy("fvSolution_dict", create=lambda _: self.fvSolution))
 
         return initializers
 
