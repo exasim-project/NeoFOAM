@@ -49,6 +49,26 @@ class IncompressibleFluidModel(BaseModel):
         """
         return cls.plugin_model(model=model)  # type: ignore[attr-defined]
 
+    @classmethod
+    def detect_models(cls) -> list["IncompressibleFluidModel"]:
+        """Auto-detect models from case files."""
+        # Ensure all models are imported so they register
+        import pkgutil
+        import importlib
+        import foamadapter.models as models_pkg
+
+        # Avoid redundant imports if already loaded, though importlib handles it
+        for _, name, _ in pkgutil.iter_modules(models_pkg.__path__):
+            importlib.import_module(f"foamadapter.models.{name}")
+
+        detected = []
+        registry = PluginSystem.get_registered(cls.__name__)
+        if registry:
+            for model_class in registry.plugin_registry:
+                if hasattr(model_class, "detect") and model_class.detect():
+                    detected.append(model_class())
+        return detected
+
     def operations(self) -> OperationCollection:
         """
         Return operations contributed by this model.

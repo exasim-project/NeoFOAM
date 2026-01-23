@@ -54,22 +54,8 @@ def incompressiblefluid(ctx: typer.Context) -> None:
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
-    # Auto-detect models from case files
-    models = []
-
-    # Check if Boussinesq model should be used (beta and TRef in transportProperties)
-    try:
-        props = pyf.dictionary.read("constant/transportProperties")
-        keys = list(props.toc())
-        if "beta" in keys and "TRef" in keys:
-            from foamadapter.models.buoyancy import BoussinesqModel
-
-            models.append(BoussinesqModel())
-    except Exception:
-        pass  # Not a Boussinesq case
-
-    incompressibleFluid = IncompressibleFluid(argv=argv, models=models)
-    incompressibleFluid.run()
+    solver = IncompressibleFluid(argv=argv)
+    solver.run()
 
 
 if __name__ == "__main__":

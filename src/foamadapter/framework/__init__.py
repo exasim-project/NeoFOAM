@@ -7,9 +7,12 @@ from .initialization import (
     Configurable,
     SolverInitializer,
 )
+from .initializer import Initializer, BaseInitializer
 
 __all__ = [
     "ConfigContext",
     "Configurable",
     "SolverInitializer",
+    "Initializer",
+    "BaseInitializer",
 ]

@@ -174,11 +174,26 @@ class PimpleAlgorithm(BaseModel):
         """
 
         # Get algorithm-specific subDict
-        algo_dict = fvSolution.subDict("PIMPLE")
+        algo_dict = fvSolution.subDict(self.algorithm_type)
 
-        # Extract pRefCell and pRefValue - use p_rgh if available, otherwise p
+        # Extract pRefCell and pRefValue
+        # OpenFOAM's setRefCell(field, dict) looks for {field.name()}RefCell/Point.
+        # In Boussinesq cases, the dictionary often uses generic "pRefCell/Point"
+        # while the field is named "p_rgh".
         pressure_field = p_rgh if p_rgh is not None else p
-        pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
+        field_name = "p_rgh" if p_rgh is not None else "p"
+
+        # Check if specific keys exist for the provided field
+        if not (algo_dict.found(f"{field_name}RefCell") or algo_dict.found(f"{field_name}RefPoint")):
+            # Fallback to generic "p" keys if they exist and we are using p_rgh
+            if p_rgh is not None and (algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")):
+                # Use "p" field for lookup but return results for our use
+                pRefCell, pRefValue = pyf.setRefCell(p, algo_dict, True)
+            else:
+                pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
+        else:
+            pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
+
         self.pRefCell = pRefCell
         self.pRefValue = pRefValue
 
@@ -231,7 +246,7 @@ class PimpleAlgorithm(BaseModel):
         U: Any,
         phi: Any,
         p: Any,
-        turbulence: Any,
+        turbulence: ModelAnnotation[Any],
         pimple_control: ModelAnnotation[pyf.pimpleControl],
     ) -> FieldUpdates:
         """
@@ -320,7 +335,7 @@ class PimpleAlgorithm(BaseModel):
         p_rgh: Any,
         rhok: Any,
         ghf: Any,
-        turbulence: Any,
+        turbulence: ModelAnnotation[Any],
         pimple_control: ModelAnnotation[pyf.pimpleControl],
     ) -> FieldUpdates:
         """

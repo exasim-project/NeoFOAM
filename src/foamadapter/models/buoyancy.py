@@ -33,7 +33,10 @@ from pybFoam import (
 )
 from pydantic import BaseModel
 
-from foamadapter.framework.context import FieldUpdates
+from foamadapter.framework.context import (
+    FieldUpdates,
+    Model as ModelAnnotation,
+)
 from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.initialization import ConfigContext
 from foamadapter.framework.model import Model
@@ -75,6 +78,18 @@ class BoussinesqModel(BaseModel):
 
     # Lifecycle state
     configured: bool = False
+    _props: Any | None = None
+    _g_dict: Any | None = None
+
+    @staticmethod
+    def detect() -> bool:
+        """Return True if beta and TRef are in transportProperties."""
+        try:
+            props = pyf.dictionary.read("constant/transportProperties")
+            toc = list(props.toc())
+            return "beta" in toc and "TRef" in toc
+        except Exception:
+            return False
 
     @Model.load
     def load_boussinesq_properties(self) -> dict[str, Any]:
@@ -86,21 +101,21 @@ class BoussinesqModel(BaseModel):
         - gravity vector from g file
         """
         # Read transport properties
-        props = pyf.dictionary.read("constant/transportProperties")
+        self._props = pyf.dictionary.read("constant/transportProperties")
 
         self.beta = pyf.dimensionedScalar(
-            "beta", pyf.dimless / pyf.dimTemperature, props.get_scalar("beta")
+            "beta", pyf.dimless / pyf.dimTemperature, self._props.get_scalar("beta")
         )
         self.TRef = pyf.dimensionedScalar(
-            "TRef", pyf.dimTemperature, props.get_scalar("TRef")
+            "TRef", pyf.dimTemperature, self._props.get_scalar("TRef")
         )
-        self.Pr = pyf.dimensionedScalar("Pr", pyf.dimless, props.get_scalar("Pr"))
-        self.Prt = pyf.dimensionedScalar("Prt", pyf.dimless, props.get_scalar("Prt"))
+        self.Pr = pyf.dimensionedScalar("Pr", pyf.dimless, self._props.get_scalar("Pr"))
+        self.Prt = pyf.dimensionedScalar("Prt", pyf.dimless, self._props.get_scalar("Prt"))
 
         # Read gravity
         try:
-            g_dict = pyf.dictionary.read("constant/g")
-            g_vec = g_dict.get("value")
+            self._g_dict = pyf.dictionary.read("constant/g")
+            g_vec = self._g_dict.get("value")
             if hasattr(g_vec, "x"):
                 self.g = (g_vec.x(), g_vec.y(), g_vec.z())
             else:
@@ -254,7 +269,7 @@ class BoussinesqModel(BaseModel):
         self,
         T: Any,
         phi: Any,
-        turbulence: Any,
+        turbulence: ModelAnnotation[Any],
         alphat: Any,
     ) -> FieldUpdates:
         """
