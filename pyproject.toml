@@ -13,7 +13,9 @@ dependencies = [
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
-    "matplotlib>=3.0.0"
+    "matplotlib>=3.0.0",
+    "pyvis>=0.3.2",
+    "neon_pde",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +23,7 @@ dev = [
     "pytest>=6.0",
     "pytest-cov",
     "pytest-xdist",
+    "pydantic-settings",
     "black",
     "flake8",
     "isort",
@@ -29,7 +32,7 @@ dev = [
     "poethepoet>=0.37.0",
     "ruff>=0.14.2",
     "mypy",
-    "pre-commit"
+    "pre-commit",
 ]
 docs = [
     "sphinx>=4.0",
@@ -47,8 +50,23 @@ all = [
 foamadapter = "foamadapter.cli.app:app"
 
 [build-system]
-requires = ["uv_build>=0.8.6,<0.9.0"]
-build-backend = "uv_build"
+requires = [
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.version = ">=3.22"
+cmake.args = ["--preset=python-bindings"]
+build.verbose = true
+build-dir = "_skbuild"
+editable.mode = "redirect"
+editable.verbose = true
+editable.rebuild = false
+
+[tool.scikit-build.cmake.define]
+NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 
 
 [tool.ruff]
@@ -85,9 +103,9 @@ exclude = [
   "src/NeoN",
 ]
 
-# If other code imports src/Neon and you want mypy to never follow into it:
+# If other code imports src/NeoN and you want mypy to never follow into it:
 [[tool.mypy.overrides]]
-module = ["Neon", "Neon.*"]
+module = ["NeoN", "NeoN.*","pybFoam", "pybFoam.*"]
 ignore_errors = true
 follow_imports = "skip"
 

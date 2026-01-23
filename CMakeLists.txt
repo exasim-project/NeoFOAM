@@ -19,6 +19,24 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(NEOFOAM_BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
+
+# Detect if building with scikit-build-core
+if(DEFINED SKBUILD)
+  message(STATUS "Building with scikit-build-core")
+  set(NEOFOAM_BUILD_PYTHON_BINDINGS
+      ON
+      CACHE BOOL "" FORCE)
+  set(BUILD_SHARED_LIBS
+      ON
+      CACHE BOOL "" FORCE)
+
+  # Configure RPATH for Python extension modules
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
@@ -33,17 +51,21 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 include(cmake/OpenFOAM.cmake)
 
-if(NOT DEFINED NEOFOAM_NEON_DIR)
-  if(EXISTS ${PROJECT_SOURCE_DIR}/src/NeoN/CMakeLists.txt AND NOT DEFINED NEOFOAM_NEON_VERSION)
-    message(STATUS "src/NeoN/CMakeLists.txt found, using NeoN")
-    add_subdirectory(src/NeoN)
-  else()
-    message(STATUS "src/NeoN/CMakeLists.txt not found, using CPM")
-    set(NEOFOAM_NEON_VIA_CPM ON)
-  endif()
+if(NEOFOAM_USE_SYSTEM_NEON)
+  find_package(NeoN CONFIG REQUIRED)
 else()
-  message(STATUS "using NEOFOAM_NEON_DIR ${NEOFOAM_NEON_DIR}")
-  add_subdirectory(${NEOFOAM_NEON_DIR} ${CMAKE_CURRENT_BINARY_DIR}/NeoN)
+  if(NOT DEFINED NEOFOAM_NEON_DIR)
+    if(EXISTS ${PROJECT_SOURCE_DIR}/src/NeoN/CMakeLists.txt AND NOT DEFINED NEOFOAM_NEON_VERSION)
+      message(STATUS "src/NeoN/CMakeLists.txt found, using NeoN")
+      add_subdirectory(src/NeoN)
+    else()
+      message(STATUS "src/NeoN/CMakeLists.txt not found, using CPM")
+      set(NEOFOAM_NEON_VIA_CPM ON)
+    endif()
+  else()
+    message(STATUS "using NEOFOAM_NEON_DIR ${NEOFOAM_NEON_DIR}")
+    add_subdirectory(${NEOFOAM_NEON_DIR} ${CMAKE_CURRENT_BINARY_DIR}/NeoN)
+  endif()
 endif()
 
 include(cmake/CxxThirdParty.cmake)
@@ -63,6 +85,10 @@ endif()
 if(NEOFOAM_BUILD_BENCHMARKS)
   enable_testing()
   add_subdirectory(benchmarks)
+endif()
+
+if(NEOFOAM_BUILD_PYTHON_BINDINGS)
+  add_subdirectory(src/bindings)
 endif()
 
 include(cmake/banner.cmake)

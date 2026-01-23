@@ -12,6 +12,41 @@ Requirements
 Installing the Package
 ---------------------
 
+NeoFOAM (foamadapter) can be installed in two ways: either by building everything from source (including NeoN) or by installing NeoN first as a library/wheel.
+
+Two-step Installation (Recommended)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This method first builds and installs NeoN as a wheel into your environment, then builds foamadapter against it. This is useful when NeoN is not yet available on PyPI.
+
+1. Build and install NeoN wheel:
+
+   .. code-block:: bash
+
+       cd path/to/NeoN
+       pip wheel . --wheel-dir=dist --no-deps
+       pip install dist/neon-*.whl
+
+2. Install FoamAdapter:
+
+   .. code-block:: bash
+
+       cd path/to/NeoFOAM
+       # Use --find-links to point to the directory containing the NeoN wheel
+       NEON_DIST_PATH=path/to/NeoN/dist
+       SITEPKG="$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")"
+       uv pip install -e .[all] -v  \
+        --no-build-isolation \
+        --config-settings=cmake.define.NEOFOAM_USE_SYSTEM_NEON=ON \
+        --config-settings=cmake.args="-DCMAKE_PREFIX_PATH=${SITEPKG}" \
+        --config-settings=cmake.args="-DCMAKE_CXX_FLAGS=-I${SITEPKG}/include"
+
+        # optionally this flag can be added so the wheel is found
+        --find-links=$NEON_DIST_PATH \
+
+Development Installation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 To install the package and all development and documentation dependencies, run:
 
 .. code-block:: bash
