@@ -2,13 +2,13 @@ Plugin System
 =============
 
 Modern scientific and engineering workflows require flexible simulation frameworks that can be easily extended and customized.
-FoamAdapter's plugin architecture is designed to enable users and developers to add new physics models, boundary conditions, and solver modules without modifying the core codebase.
+NeoFOAM's plugin architecture is designed to enable users and developers to add new physics models, boundary conditions, and solver modules without modifying the core codebase.
 This approach promotes maintainability, collaboration, and rapid prototyping of new features.
 
 Overview
 --------
 
-The PluginSystem provides a runtime-extensible configuration system using Pydantic discriminated unions and a registry pattern.
+The plugin system provides a runtime-extensible configuration system using Pydantic discriminated unions and a registry pattern.
 The system allows to register child classes on numerous base classes, each with its own registry.
 
 Core Components
