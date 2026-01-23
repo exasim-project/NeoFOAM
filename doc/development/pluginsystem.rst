@@ -8,31 +8,11 @@ This approach promotes maintainability, collaboration, and rapid prototyping of 
 Overview
 --------
 
-The PluginSystem provides a runtime-extensible configuration system using Pydantic discriminated unions and a registry pattern.
-The system allows to register child classes on numerous base classes, each with its own registry.
-
-Core Components
----------------
-
-PluginRegistry Dataclass
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``PluginRegistry`` dataclass stores metadata for each plugin base type:
-
-* ``base_cls``: The plugin base class (Pydantic BaseModel)
-* ``discriminator_variable``: Field name holding the union (e.g., 'shape', 'plugin')
-* ``discriminator``: Discriminator field name in plugin configs (e.g., 'shape_type', 'plugin_type')
-* ``plugin_registry``: List of registered plugin configuration classes
-* ``plugin_model``: Dynamically generated extensible Pydantic model
-
-PluginSystem Class
-~~~~~~~~~~~~~~~~~~
-
-The central registry stores all plugin families within the class dictionary variable ``_registry`` .
-Each key represents a plugin family name mapping to its corresponding PluginRegistry instance.
-
-Implementation Details
-----------------------
+The PluginSystem is a runtime-extensible configuration system built on Pydantic discriminated unions and a registry pattern.
+A discriminated union selects the right config class based on a type/tag field (e.g., "shape_type": "circle" vs "shape_type": "square"), and each base class has its own registry of registered child implementations.
+All plugins and all models are registered in a central registry to enable easy access and management for UI,validation purposes or generative AI.
+The user would be able to retrieve all available plugins: turbulence models, boundary conditions, etc. and their configuration options and validate them.
+The system also supports the generation of JSON schemas for documentation and validation purposes.
 
 Registration Process
 ~~~~~~~~~~~~~~~~~~~~
@@ -65,6 +45,8 @@ The following example demonstrates how to define a plugin base class and registe
 
     @PluginSystem.register(discriminator_variable="shape", discriminator="shape_type")
     class ShapeInterface(BaseModel):
+        # the decorator automatically adds shape as discriminator field
+        # shape: Union[CircleConfig, SquareConfig] = Field(discriminator='shape_type')
         color: str
         name: str = "default"
 
@@ -85,14 +67,13 @@ A usage example creating and using plugin configurations is shown below.
 
 .. code-block:: python
 
-    # Direct instantiation using the plugin model
-    Shape = ShapeInterface.plugin_model
-    circle = Shape(
-        shape={"shape_type": "circle", "radius": 5.0},
+    # return a circle instance
+    circle = ShapeInterface.create(
+        shape={"shape_type": "circle", "radius": 5.0}, # shows the ability to serialize via discriminator
         color="red"
     )
 
-    # Using the create class method
+    # return a square instance
     square = ShapeInterface.create(
         shape={"shape_type": "square", "side": 3.0},
         color="blue"
@@ -106,7 +87,8 @@ Runtime Extension
 ~~~~~~~~~~~~~~~~~
 
 The plugin system supports runtime registration of new plugin configurations.
-However, this requires rebuilding the Type union which is done by the create method.
+However, this requires rebuilding the Type union as the models number of registered types changes.
+Otherwise, the newly added types would not be part of the union and could not be registered and selected.
 
 .. code-block:: python
 
@@ -122,46 +104,25 @@ However, this requires rebuilding the Type union which is done by the create met
         minor_axis: float
 
     # Register at runtime
-    ShapeInterface.register(TriangleConfig)
-    ShapeInterface.register(EllipseConfig)
+    ShapeInterface.register(TriangleConfig) # register the new plugin
+    ShapeInterface.register(EllipseConfig) # register the new plugin
 
-    # Use new configurations immediately
+    # Use new configurations immediately and internally rebuild the union model
     triangle = ShapeInterface.create(
         shape={"shape_type": "triangle", "base": 4.0, "height": 3.0},
         color="green"
     )
 
-Register multiple classes
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-`AnimalInterface` will be stored in a central registry to show the availability of all registered plugins.
+Registering an additional base class can be simply done by decorating it with ``@PluginSystem.register()``.
+Internally, PluginSystem would store the registries in similar to a dictionary
 
 .. code-block:: python
 
-    @PluginSystem.register(discriminator_variable="animal", discriminator="animal_type")
-    class AnimalInterface(BaseModel):
-        name: str
-        age: int
-
-    @AnimalInterface.register
-    class DogConfig(BaseModel):
-        animal_type: Literal["dog"]
-        breed: str
-        is_trained: bool = False
-
-    @AnimalInterface.register
-    class CatConfig(BaseModel):
-        animal_type: Literal["cat"]
-        indoor_only: bool = True
-        declawed: bool = False
-
-    # Independent from ShapeInterface family
-    my_dog = AnimalInterface.create(
-        animal={"animal_type": "dog", "breed": "Golden Retriever", "is_trained": True},
-        name="Buddy",
-        age=3
-    )
-
+    # pseudo-code representation of internal registries
+    {
+        "ShapeInterface": <Registry for ShapeInterface>,
+        "OtherInterface": <Registry for OtherInterface>
+    }
 
 
 
@@ -190,16 +151,16 @@ The following example demonstrates how to list registered plugins, retrieve spec
 
 .. code-block:: python
 
-    # List all plugin families
+    # List all plugins
     all_plugins = PluginSystem.list_plugins()
-    print(all_plugins.keys())  # ["ShapeInterface", "DataProcessor"]
+    print(all_plugins.keys())  # ["turbulence models", "thermodynamic models", ...]
 
     # Get specific registry
-    shape_registry = PluginSystem.get_registered("ShapeInterface")
+    shape_registry = PluginSystem.get_registered("TurbulenceModel")
     plugin_classes = shape_registry.plugin_registry
 
     # Remove plugins
-    success = PluginSystem.remove_plugin_model("ShapeInterface", TriangleConfig)
+    success = PluginSystem.remove_plugin_model("TurbulenceModel", KOmegaSSTModel)
 
 Registration via Entrypoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
