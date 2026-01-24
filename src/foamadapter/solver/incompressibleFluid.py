@@ -23,6 +23,8 @@ from foamadapter.framework.operations import (
     DAGResolver,
 )
 from foamadapter.framework.solver import Solver
+from foamadapter.framework.initialization.execution import execute_initialization
+from foamadapter.framework.initialization.config_context import ConfigContext
 
 
 class TimeLoop:
@@ -54,14 +56,68 @@ class IncompressibleFluid(BaseModel):
     name: Literal["IncompressibleFluid"] = "IncompressibleFluid"
     argv: list[str] = []
 
+    # Model storage for execution_graph() access
+    _algorithm: Any = None
+    _cfl_condition: Any = None
+    _optional_models: list[Any] = []
+
+    @property
+    def core_models(self) -> list[Any]:
+        """Core models that define solver structure."""
+        return [m for m in [self._algorithm, self._cfl_condition] if m is not None]
+
     def initialize(self) -> Context:
-        """Run 3-stage initialization, return Context."""
+        """Run 3-stage initialization with explicit stage calls."""
         from .incompressible_fluid_initializer import IncompressibleFluidInitializer
 
         initializer = IncompressibleFluidInitializer(self.argv)
-        return initializer.run()
 
-    def operations(self, ctx: Context) -> tuple[StepBuilder, OperationCollection]:
+        # === STAGE 1: LOAD ===
+        config_items = initializer.load()
+
+        # Validate
+        errors = initializer.validate_load()
+        for e in errors:
+            if e.severity == "error":
+                raise RuntimeError(f"Initialization error: {e.field}: {e.message}")
+            else:
+                Info(f"Warning: {e.field}: {e.message}")
+
+        # === Build ConfigContext ===
+        config = ConfigContext()
+        for key, value in config_items.items():
+            config.register(key, value)
+        for model in initializer.data.optional_models:
+            config.register(model.name, model)
+
+        # === STAGE 2: RESOLVE ===
+        initializer.resolve(config)
+
+        # Validate
+        warnings = initializer.validate_resolve(config)
+        for w in warnings:
+            Info(f"Warning: {w.field}: {w.message}")
+
+        # === STAGE 3: BUILD ===
+        lazy_inits = initializer.build()
+
+        # === Execute ===
+        ctx = execute_initialization(lazy_inits)
+
+        # === Store model references for execution_graph() ===
+        self._algorithm = initializer.data.algorithm
+        self._cfl_condition = initializer.data.cfl_condition
+        self._optional_models = [
+            m
+            for m in initializer.data.optional_models
+            if hasattr(m, "execution_graph") or hasattr(m, "operations")
+        ]
+
+        return ctx
+
+    def execution_graph(
+        self, domain_name: str | None = None
+    ) -> tuple[StepBuilder, OperationCollection]:
         """
         Build solver structure and collect model operations.
 
@@ -72,6 +128,7 @@ class IncompressibleFluid(BaseModel):
         The DAG resolver will merge these, respecting dependencies.
         """
         # Build solver + algorithm structure
+        _ = domain_name
 
         # Get solver's own operations
         funcs = decorated_member_functions(self)
@@ -80,11 +137,10 @@ class IncompressibleFluid(BaseModel):
             op = Operation.create_SeqOp(func)
             solver_ops.add(op)
 
-        algorithm = ctx.models.get("algorithm")
-        if algorithm is None:
-            raise RuntimeError("Algorithm not found in context")
+        if self._algorithm is None:
+            raise RuntimeError("Algorithm not found")
 
-        algo_ops = algorithm.operations()
+        algo_ops = self._algorithm.execution_graph()
 
         # Build the structural StepBuilder
         main_loop = StepBuilder()
@@ -110,10 +166,11 @@ class IncompressibleFluid(BaseModel):
         model_ops = OperationCollection()
 
         # Add optional model operations (buoyancy, etc.)
-        for name, model in ctx.models.items():
-            if name in ["algorithm", "cfl_condition", "laminarTransport", "turbulence"]:
-                continue
-            if hasattr(model, "operations"):
+        for model in self._optional_models:
+            if hasattr(model, "execution_graph"):
+                m_ops = model.execution_graph()
+                model_ops.add(m_ops)
+            elif hasattr(model, "operations"):
                 for op in model.operations():
                     model_ops.add(op)
 
@@ -164,7 +221,7 @@ class IncompressibleFluid(BaseModel):
         respecting all dependencies.
         """
         # Get solver structure and model operations
-        solver_ops, model_ops = self.operations(ctx)
+        solver_ops, model_ops = self.execution_graph()
 
         # Resolve operation ordering with DAG resolver
         resolver = DAGResolver()

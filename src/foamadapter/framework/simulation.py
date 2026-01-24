@@ -44,7 +44,7 @@ class Simulation(BaseModel):
             )
 
         for domain in self.domains:
-            ops_collection = domain.operations()
+            ops_collection = domain.execution_graph()
             ctx = sim_ctx.domain_context[domain.name]
             ops = Operations(operations=list(ops_collection.ops))
             ops.run(ctx)

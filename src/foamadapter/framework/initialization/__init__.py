@@ -3,64 +3,73 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 """
-3-Stage Initialization Framework
+3-Stage Initialization Framework (Hybrid Explicit Approach)
 
-This module implements a 3-stage initialization system for solvers and models:
+This module provides utilities for explicit 3-stage initialization:
 - LOAD: Load configuration and data from files
-- RESOLVE_DEPENDENCIES: Validate and connect models (inter-model dependencies)
-- BUILD: Initialize runtime structures using lazy initialization with DAG resolution
+- RESOLVE: Validate and connect models (inter-model dependencies)
+- BUILD: Create lazy initializers for runtime structures
 
-Usage:
-    The initialization decorators are accessed via Model and Solver:
+The framework uses explicit method calls instead of decorators:
 
+Usage Example (Solver Initializer):
     @dataclass
-    class MyModel:
-        @Model.load
-        def load_data(self):
-            pass
+    class MySolverInitializer:
+        def load(self) -> dict[str, Any]:
+            \"\"\"Load configuration from files.\"\"\"
+            algorithm = Algorithm.from_file("system/fvSolution")
+            return {"algorithm": algorithm}
 
-        @Model.resolve_dependencies
-        def connect_dependencies(self, config):
-            pass
+        def resolve(self, config: ConfigContext) -> None:
+            \"\"\"Configure inter-model dependencies.\"\"\"
+            for model in self.optional_models:
+                if hasattr(model, "resolve"):
+                    model.resolve(config)
 
-        @Model.build
-        def initialize_fields(self, mesh) -> list:
+        def build(self) -> list[LazyInit]:
+            \"\"\"Create lazy initializers for runtime objects.\"\"\"
             return [
-                field("U", create=lambda: create_vector_field(mesh)),
-                field("p", create=lambda: create_scalar_field(mesh)),
+                field("U", create=lambda ctx: create_vector_field(ctx["mesh"])),
+                model("transport", depends_on=["fields.U"], create=...),
             ]
 
-    @dataclass
-    class MySolver:
-        @Solver.load
-        def load_config(self):
+Usage Example (Model):
+    class MyModel(BaseModel):
+        def load(self) -> dict[str, Any]:
+            \"\"\"Load model configuration.\"\"\"
+            return {}
+
+        def resolve(self, config: ConfigContext) -> None:
+            \"\"\"Configure dependencies with other models.\"\"\"
             pass
 
-        @Solver.resolve_dependencies
-        def validate(self, config):
-            pass
+        def build(self) -> list[LazyInit]:
+            \"\"\"Create field initializers.\"\"\"
+            return [field("T", create=...)]
 
-        @Solver.build
-        def create_runtime(self, mesh) -> list:
-            return [
-                lazy("runtime", create=lambda: create_runtime()),
-                lazy("mesh", depends_on=["runtime"], create=lambda: mesh),
-            ]
+Execution:
+    from foamadapter.framework.initialization.execution import execute_initialization
+
+    # In solver.initialize()
+    initializer = MySolverInitializer(argv)
+    config_items = initializer.load()
+
+    config = ConfigContext()
+    for key, value in config_items.items():
+        config.register(key, value)
+
+    initializer.resolve(config)
+    lazy_inits = initializer.build()
+    ctx = execute_initialization(lazy_inits)
 """
 
-from .stages import InitializationStage
-from .decorators import load, resolve_dependencies, build
 from .configurable import Configurable
 from .config_context import ConfigContext
 from .lazy_init import LazyInit
 from .helpers import field, operator, lazy, model
-from .initializer import SolverInitializer
+from .execution import execute_initialization, topological_sort
 
 __all__ = [
-    "InitializationStage",
-    "load",
-    "resolve_dependencies",
-    "build",
     "Configurable",
     "ConfigContext",
     "LazyInit",
@@ -68,5 +77,6 @@ __all__ = [
     "operator",
     "lazy",
     "model",
-    "SolverInitializer",
+    "execute_initialization",
+    "topological_sort",
 ]

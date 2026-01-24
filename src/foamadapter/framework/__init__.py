@@ -2,17 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-from .initialization import (
-    ConfigContext,
-    Configurable,
-    SolverInitializer,
-)
-from .initializer import Initializer, BaseInitializer
+from .initialization import ConfigContext
 
 __all__ = [
     "ConfigContext",
-    "Configurable",
-    "SolverInitializer",
-    "Initializer",
-    "BaseInitializer",
 ]

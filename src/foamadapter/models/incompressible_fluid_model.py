@@ -63,9 +63,13 @@ class IncompressibleFluidModel(BaseModel):
 
         detected = []
         registry = PluginSystem.get_registered(cls.__name__)
+        # from pybFoam import Info
+        # Info(f"DEBUG: Found {len(registry.plugin_registry) if registry else 0} registered models")
         if registry:
             for model_class in registry.plugin_registry:
-                if hasattr(model_class, "detect") and model_class.detect():
+                is_detected = hasattr(model_class, "detect") and model_class.detect()
+                # Info(f"DEBUG: Model {model_class.__name__} detected: {is_detected}")
+                if is_detected:
                     detected.append(model_class())
         return detected
 

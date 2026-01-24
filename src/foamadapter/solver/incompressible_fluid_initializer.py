@@ -1,18 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
+from dataclasses import dataclass, field
 from typing import Any
 
 import pybFoam as pyf
 
-from foamadapter.framework import (
-    Initializer,
-    BaseInitializer,
-    ConfigContext,
-)
-from foamadapter.algorithms.pressure_velocity import (
-    PressureVelocityAlgorithm,
-)
+from foamadapter.framework import ConfigContext
+from foamadapter.algorithms.pressure_velocity import PressureVelocityAlgorithm
 from foamadapter.models.stability_criteria import CFLCondition
 from foamadapter.models.transport_model import TransportModel
 from foamadapter.models.turbulence import TurbulenceModel
@@ -20,56 +15,117 @@ from foamadapter.models.incompressible_fluid_model import IncompressibleFluidMod
 from foamadapter.foam.initialization import create_time_mesh
 
 
-@Initializer
-class IncompressibleFluidInitializer(BaseInitializer):
+@dataclass
+class InitializationData:
+    """Explicit state container for initialization stages."""
+
+    # Core models - always present
+    algorithm: Any = None  # PressureVelocityAlgorithm
+    cfl_condition: Any = None  # CFLCondition
+
+    # Internal state
+    fvSolution: Any = None
+
+    # Optional models - physics extensions
+    optional_models: list = field(default_factory=list)
+
+    # Validation state
+    load_validated: bool = False
+    resolve_validated: bool = False
+
+    @property
+    def core_models(self) -> list[Any]:
+        """Core models that define solver structure."""
+        return [m for m in [self.algorithm, self.cfl_condition] if m is not None]
+
+
+@dataclass
+class ValidationError:
+    """Validation error with field and message."""
+
+    field: str
+    message: str
+    severity: str = "error"  # "error" or "warning"
+
+
+@dataclass
+class IncompressibleFluidInitializer:
     """3-stage initialization for IncompressibleFluid solver."""
 
     def __init__(self, argv: list[str]) -> None:
         self.argv = argv
-        self.algorithm: PressureVelocityAlgorithm | None = None
-        self.fvSolution: Any | None = None
-        self.cfl_condition: CFLCondition | None = None
+        self.data = InitializationData()
+        self.data.optional_models = IncompressibleFluidModel.detect_models()
 
-        # Detect optional models early so SolverInitializer can process them
-        self.optional_models: list[IncompressibleFluidModel] = (
-            IncompressibleFluidModel.detect_models()
+    def load(self) -> dict[str, Any]:
+        """LOAD stage: Load config from files. Explicit method."""
+        self.data.fvSolution = pyf.dictionary.read("system/fvSolution")
+        self.data.algorithm = PressureVelocityAlgorithm.from_fvSolution(
+            self.data.fvSolution
         )
-        # SolverInitializer expects models in self.models
-        self.models = self.optional_models
+        self.data.cfl_condition = CFLCondition()
 
-    def get_models(self) -> list[Any]:
-        """Return optional models to be processed by SolverInitializer."""
-        return self.models
+        load_results = {
+            "algorithm": self.data.algorithm,
+            "cfl_condition": self.data.cfl_condition,
+        }
 
-    @Initializer.load
-    def load_core_components(self) -> dict[str, Any]:
-        """LOAD: Initialize algorithm and CFL condition."""
-        self.cfl_condition = CFLCondition()
-        self.fvSolution = pyf.dictionary.read("system/fvSolution")
-        self.algorithm = PressureVelocityAlgorithm.from_fvSolution(self.fvSolution)
+        # Run LOAD on optional models
+        for model in self.data.optional_models:
+            if hasattr(model, "load"):
+                res = model.load()
+                if isinstance(res, dict):
+                    load_results.update(res)
 
-        # Return algorithm for registration in ConfigContext
-        return {"algorithm": self.algorithm, "cfl_condition": self.cfl_condition}
+        return load_results
 
-    @Initializer.resolve_dependencies
-    def configure_models(self, config: ConfigContext) -> None:
-        """RESOLVE_DEPENDENCIES: Additional orchestration if needed."""
-        pass
+    def validate_load(self) -> list[ValidationError]:
+        """Validate configuration after LOAD stage."""
+        errors = []
 
-    @Initializer.build
-    def build_runtime(self, mesh: Any = None) -> list[Any]:
-        """BUILD: Create runtime, mesh and algorithm fields."""
-        _ = mesh  # Unused, we create the mesh here
+        if self.data.algorithm is None:
+            errors.append(ValidationError("algorithm", "No algorithm configured"))
+
+        if self.data.fvSolution is None:
+            errors.append(ValidationError("fvSolution", "Failed to read fvSolution"))
+
+        self.data.load_validated = (
+            len([e for e in errors if e.severity == "error"]) == 0
+        )
+        return errors
+
+    def resolve(self, config: ConfigContext) -> None:
+        """RESOLVE stage: Connect models. Explicit method."""
+        for model in self.data.optional_models:
+            if hasattr(model, "resolve"):
+                model.resolve(config)
+
+    def validate_resolve(self, config: ConfigContext) -> list[ValidationError]:
+        """Validate model connections after RESOLVE stage."""
+        errors = []
+
+        # Check optional model connections
+        for model in self.data.optional_models:
+            if hasattr(model, "validate_stage"):
+                model_errors = model.validate_stage(config)
+                errors.extend(model_errors)
+
+        self.data.resolve_validated = (
+            len([e for e in errors if e.severity == "error"]) == 0
+        )
+        return errors
+
+    def build(self) -> list[Any]:
+        """BUILD stage: Create lazy initializers. Explicit method."""
         from foamadapter.framework.initialization.helpers import lazy, model
 
-        # 1. Create runtime and mesh
         initializers = create_time_mesh(self.argv)
 
-        # 2. Add algorithm fields (p, U, etc.)
-        assert self.algorithm is not None
-        initializers.extend(self.algorithm.setup())
+        # Algorithm fields
+        assert self.data.algorithm is not None
+        initializers.extend(self.data.algorithm.setup())
 
-        # 3. Add transport and turbulence models
+        # Transport model
         initializers.append(
             model(
                 "laminarTransport",
@@ -77,6 +133,8 @@ class IncompressibleFluidInitializer(BaseInitializer):
                 create=self._create_transport,
             )
         )
+
+        # Turbulence model
         initializers.append(
             model(
                 "turbulence",
@@ -85,7 +143,7 @@ class IncompressibleFluidInitializer(BaseInitializer):
             )
         )
 
-        # 4. Final algorithm build (sets pressure reference)
+        # Final algorithm build
         initializers.append(
             model(
                 "algorithm",
@@ -99,8 +157,15 @@ class IncompressibleFluidInitializer(BaseInitializer):
             )
         )
 
-        # 5. Keep dictionaries alive to prevent segfaults
-        initializers.append(lazy("fvSolution_dict", create=lambda _: self.fvSolution))
+        # Keep dictionaries alive
+        initializers.append(
+            lazy("fvSolution_dict", create=lambda _: self.data.fvSolution)
+        )
+
+        # Build optional models
+        for model in self.data.optional_models:
+            if hasattr(model, "build"):
+                initializers.extend(model.build())
 
         return initializers
 
@@ -119,6 +184,6 @@ class IncompressibleFluidInitializer(BaseInitializer):
         mesh = context["mesh"]
         # Pass p_rgh if available (e.g. from Boussinesq model)
         p_rgh = context.get("fields.p_rgh", None)
-        assert self.algorithm is not None
-        self.algorithm.set_pressure_reference(p, mesh, self.fvSolution, p_rgh)
-        return self.algorithm
+        assert self.data.algorithm is not None
+        self.data.algorithm.set_pressure_reference(p, mesh, self.data.fvSolution, p_rgh)
+        return self.data.algorithm

@@ -16,8 +16,13 @@ class Domain(BaseModel):
     solver: SolverInterface
 
     def dependencies(self) -> list[OperationMetadata]:
-        ops = self.solver.operations(domain_name=self.name)
+        _, ops = self.solver.execution_graph(domain_name=self.name)
         return [op.operation_metadata() for op in ops.ops]
 
+    def execution_graph(self) -> OperationCollection:
+        _, ops = self.solver.execution_graph(domain_name=self.name)
+        return ops
+
     def operations(self) -> OperationCollection:
-        return self.solver.operations(domain_name=self.name)
+        _, ops = self.solver.execution_graph(domain_name=self.name)
+        return ops

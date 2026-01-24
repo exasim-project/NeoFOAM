@@ -41,7 +41,6 @@ class PressureVelocityAlgorithm(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     algorithm_type: str | None = None
 
-    @Model.load
     def load_fv_solution(self, path: str = "system/fvSolution") -> None:
         """Read fvSolution and detect algorithm type."""
         fv_solution = pyf.dictionary.read(path)
@@ -131,9 +130,8 @@ class PimpleAlgorithm(BaseModel):
     _ops: OperationCollection | None = None
     _use_boussinesq: bool = False  # Set by Boussinesq model during resolve_dependencies
 
-    @Model.resolve_dependencies
     def configure_algorithm(self, config: Any) -> None:
-        """RESOLVE_DEPENDENCIES: Allow Boussinesq model to configure this algorithm."""
+        """Allow Boussinesq model to configure this algorithm during RESOLVE stage."""
         pass  # Configuration happens via direct flag access from BoussinesqModel
 
     def setup(self) -> list[Any]:
@@ -210,7 +208,7 @@ class PimpleAlgorithm(BaseModel):
     def name(self) -> str:
         return "PIMPLE"
 
-    def operations(self) -> OperationCollection:
+    def execution_graph(self) -> OperationCollection:
         """Return algorithm-specific operations."""
         if self._ops is None:
             self._ops = OperationCollection()

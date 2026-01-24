@@ -91,8 +91,7 @@ class BoussinesqModel(BaseModel):
         except Exception:
             return False
 
-    @Model.load
-    def load_boussinesq_properties(self) -> dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         """
         LOAD: Load Boussinesq properties from constant/transportProperties and g.
 
@@ -131,10 +130,9 @@ class BoussinesqModel(BaseModel):
         # No configurable objects to register
         return {}
 
-    @Model.resolve_dependencies
-    def configure_boussinesq(self, config: ConfigContext) -> None:
+    def resolve(self, config: ConfigContext) -> None:
         """
-        RESOLVE_DEPENDENCIES: Configure pressure-velocity algorithm for Boussinesq mode.
+        RESOLVE: Configure pressure-velocity algorithm for Boussinesq mode.
 
         Accesses the algorithm via ConfigContext and sets the _use_boussinesq flag.
         This ensures the algorithm uses p_rgh formulation before operations are built.
@@ -150,8 +148,7 @@ class BoussinesqModel(BaseModel):
         config.algorithm._use_boussinesq = True
         self.configured = True
 
-    @Model.build
-    def setup_boussinesq_fields(self, mesh: Any) -> list[Any]:
+    def build(self) -> list[Any]:
         """
         BUILD: Create Boussinesq fields (T, alphat, rhok, gh, ghf, p_rgh).
 
