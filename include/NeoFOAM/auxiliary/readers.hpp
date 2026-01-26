@@ -303,4 +303,20 @@ public:
     }
 };
 
+/**
+ * @brief Unpacks all views of the passed classes.
+ * @tparam Types Types of the classes with views
+ * @return Tuple containing the unpacked views (use structured bindings).
+ */
+template<typename... Types>
+auto constFromMany(
+const NeoN::Executor& exec,
+const NeoN::UnstructuredMesh& uMesh,
+                   Types&... args)
+{
+    return std::tuple(constructFrom(exec, uMesh, args)...);
+}
+
+
+
 }; // namespace Foam

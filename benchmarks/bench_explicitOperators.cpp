@@ -1,5 +1,6 @@
+// SPDX-FileCopyrightText: 2023 - 2026 NeoN authors
+//
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoN authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -26,27 +27,14 @@ TEST_CASE("DivOperator")
 {
     Foam::Time& runTime = *timePtr;
 
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
+    Foam::fvMesh& mesh = *meshPtr;
+
+    auto ofT = randomScalarField(mesh, "T");
+    auto ofPhi = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+
     SECTION("OpenFOAM")
     {
-        std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
-        Foam::fvMesh& mesh = *meshPtr;
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
-        Foam::surfaceScalarField ofPhi(
-            Foam::IOobject(
-                "phi",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
-        );
-        forAll(ofPhi, facei)
-        {
-            ofPhi[facei] = facei;
-        }
         SECTION("with Allocation")
         {
             BENCHMARK(std::string("OpenFOAM"))
@@ -63,39 +51,15 @@ TEST_CASE("DivOperator")
     SECTION("NeoN")
     {
         auto [execName, exec] = GENERATE(allAvailableExecutor());
-
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        // linear interpolation hardcoded for now
-
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
         auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        nfT.correctBoundaryConditions();
-
-        Foam::surfaceScalarField ofPhi(
-            Foam::IOobject(
-                "phi",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
-        );
-        forAll(ofPhi, facei)
-        {
-            ofPhi[facei] = facei;
-        }
-
         auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
+        NeoN::TokenList scheme({std::string("linear")});
 
         SECTION("with Allocation")
         {
-            NeoN::TokenList scheme({std::string("linear")});
-
             BENCHMARK(std::string(execName))
             {
                 fvcc::VolumeField<NeoN::scalar> divPhiT =
@@ -108,7 +72,6 @@ TEST_CASE("DivOperator")
         SECTION("No allocation")
         {
             auto nfDivT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-            NeoN::TokenList scheme({std::string("linear")});
 
             BENCHMARK(std::string(execName))
             {
@@ -129,24 +92,14 @@ TEST_CASE("DivOperator")
 TEST_CASE("LaplacianOperator")
 {
     Foam::Time& runTime = *timePtr;
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
+    Foam::fvMesh& mesh = *meshPtr;
+
+    auto ofT = randomScalarField(mesh, "T");
+    auto ofGamma = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {
-        std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
-        Foam::fvMesh& mesh = *meshPtr;
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
-        Foam::surfaceScalarField ofGamma(
-            Foam::IOobject(
-                "Gamma",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("Gamma", Foam::dimless, 1.0)
-        );
 
         SECTION("with Allocation")
         {
@@ -164,27 +117,11 @@ TEST_CASE("LaplacianOperator")
     SECTION("NeoN")
     {
         auto [execName, exec] = GENERATE(allAvailableExecutor());
-
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
+        auto ofT = randomScalarField(mesh, "T");
         auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        nfT.correctBoundaryConditions();
-
-        Foam::surfaceScalarField ofGamma(
-            Foam::IOobject(
-                "Gamma",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("Gamma", Foam::dimless, 1.0)
-        );
-
         auto nfGamma = NeoFOAM::constructFrom(exec, nfMesh, ofGamma);
 
         SECTION("with Allocation")
@@ -229,7 +166,7 @@ TEST_CASE("GradOperator")
         std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
         Foam::fvMesh& mesh = *meshPtr;
 
-        auto ofT = randomScalarField(runTime, mesh, "T");
+        auto ofT = randomScalarField(mesh, "T");
 
         SECTION("with Allocation")
         {
@@ -251,10 +188,7 @@ TEST_CASE("GradOperator")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        // linear interpolation hardcoded for now
-
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
+        auto ofT = randomScalarField(mesh, "T");
         auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
 
         SECTION("with Allocation")
@@ -291,29 +225,14 @@ TEST_CASE("GradOperator")
 TEST_CASE("FaceInterpolation")
 {
     Foam::Time& runTime = *timePtr;
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
+    Foam::fvMesh& mesh = *meshPtr;
+
+    auto ofT = randomScalarField(mesh, "T");
+    auto ofPhi = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
 
     SECTION("OpenFOAM")
     {
-        std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
-        Foam::fvMesh& mesh = *meshPtr;
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
-        Foam::surfaceScalarField ofPhi(
-            Foam::IOobject(
-                "phi",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
-        );
-        for (auto facei = 0; facei < ofPhi.size(); facei++)
-        {
-            ofPhi[facei] = facei;
-        }
-
         SECTION("with Allocation")
         {
             // warmup
@@ -337,34 +256,12 @@ TEST_CASE("FaceInterpolation")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        // linear interpolation hardcoded for now
+        auto ofT = randomScalarField(mesh, "T");
+        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, nfMesh, ofT, ofPhi);
 
-        auto ofT = randomScalarField(runTime, mesh, "T");
-        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        nfT.correctBoundaryConditions();
-
-        Foam::surfaceScalarField ofPhi(
-            Foam::IOobject(
-                "phi",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
-        );
-        for (auto facei = 0; facei < ofPhi.size(); facei++)
-        {
-            ofPhi[facei] = facei;
-        }
-
-        auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
-
+        NeoN::TokenList scheme({std::string("linear")});
         SECTION("with Allocation")
         {
-            NeoN::TokenList scheme({std::string("linear")});
-
             // warmup
             fvcc::SurfaceInterpolation<NeoN::scalar>(exec, nfMesh, scheme).interpolate(nfPhi, nfT);
 
@@ -376,10 +273,9 @@ TEST_CASE("FaceInterpolation")
                 return;
             };
         }
+
         SECTION("No allocation")
         {
-            NeoN::TokenList scheme({std::string("linear")});
-
             fvcc::SurfaceField<NeoN::scalar> nfTf(nfPhi);
             nfTf.name = "Tf";
 
@@ -400,14 +296,12 @@ TEST_CASE("FaceInterpolation")
 TEST_CASE("FaceNormalGradient")
 {
     Foam::Time& runTime = *timePtr;
+    std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
+    Foam::fvMesh& mesh = *meshPtr;
+    auto ofT = randomScalarField(mesh, "T");
 
     SECTION("OpenFOAM")
     {
-        std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
-        Foam::fvMesh& mesh = *meshPtr;
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
-
         SECTION("with Allocation")
         {
             // warmup
@@ -433,15 +327,12 @@ TEST_CASE("FaceNormalGradient")
         std::unique_ptr<NeoFOAM::MeshAdapter> meshPtr = NeoFOAM::createMesh(exec, runTime);
         NeoFOAM::MeshAdapter& mesh = *meshPtr;
         const auto& nfMesh = mesh.nfMesh();
-        // linear interpolation hardcoded for now
-
-        auto ofT = randomScalarField(runTime, mesh, "T");
+        auto ofT = randomScalarField(mesh, "T");
         auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        nfT.correctBoundaryConditions();
 
+        NeoN::TokenList scheme({std::string("uncorrected")});
         SECTION("with Allocation")
         {
-            NeoN::TokenList scheme({std::string("uncorrected")});
             // warmup
             fvcc::FaceNormalGradient<NeoN::scalar>(exec, nfMesh, scheme).faceNormalGrad(nfT);
 
@@ -454,15 +345,9 @@ TEST_CASE("FaceNormalGradient")
         }
         SECTION("No allocation")
         {
-            NeoN::TokenList scheme({std::string("uncorrected")});
-
             std::string nameFaceGrad = "faceGrad_" + nfT.name;
-            fvcc::SurfaceField<NeoN::scalar> faceGradT(
-                exec,
-                nameFaceGrad,
-                nfMesh,
-                fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(nfMesh)
-            );
+            auto bcs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(nfMesh);
+            fvcc::SurfaceField<NeoN::scalar> faceGradT(exec, nameFaceGrad, nfMesh, bcs);
 
             BENCHMARK(std::string(execName))
             {
