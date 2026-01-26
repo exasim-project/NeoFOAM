@@ -81,6 +81,8 @@ Foam\+::vector \mbox{\hyperlink{namespaceNeoFOAM_ae5529700fe31e6531dc129ac14ad39
 \item 
 {\footnotesize template$<$class Foam\+Field\+Type $>$ }\\auto \mbox{\hyperlink{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}{construct\+From}} (const Neo\+N\+::\+Executor exec, const Neo\+N\+::\+Unstructured\+Mesh \&nf\+Mesh, const Foam\+Field\+Type \&in)
 \item 
+{\footnotesize template$<$typename... Types$>$ }\\auto \mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{const\+From\+Many}} (const Neo\+N\+::\+Executor \&exec, const Neo\+N\+::\+Unstructured\+Mesh \&u\+Mesh, Types \&... args)
+\begin{DoxyCompactList}\small\item\em Unpacks all views of the passed classes. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{namespaceNeoFOAM_a39bc76acefb5a1dd3074b0feba5864eb}{set\+DeltaT}} (Foam\+::\+Time \&of\+Run\+Time, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&nf\+Run\+Time, Foam\+::scalar co\+Num)
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156}{sync\+Run\+Times}} (Foam\+::\+Time \&of\+Run\+Time, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&nf\+Run\+Time, Foam\+::scalar co\+Num)
@@ -177,6 +179,29 @@ Definition at line \mbox{\hyperlink{convert_8hpp_source_l00025}{25}} of file \mb
 \index{computeRAUandHByA@{computeRAUandHByA}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{computeRAUandHByA()}{computeRAUandHByA()}}
 {\footnotesize\ttfamily std\+::tuple$<$ nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ Neo\+FOAM\+::compute\+RAUand\+HByA (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{expr }\end{DoxyParamCaption})}
+
+\Hypertarget{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}\label{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006} 
+\index{NeoFOAM@{NeoFOAM}!constFromMany@{constFromMany}}
+\index{constFromMany@{constFromMany}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{constFromMany()}{constFromMany()}}
+{\footnotesize\ttfamily template$<$typename... Types$>$ \\
+auto Neo\+FOAM\+::const\+From\+Many (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor \&}]{exec,  }\item[{const Neo\+N\+::\+Unstructured\+Mesh \&}]{u\+Mesh,  }\item[{Types \&...}]{args }\end{DoxyParamCaption})}
+
+
+
+Unpacks all views of the passed classes. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em Types} & Types of the classes with views \\
+\hline
+\end{DoxyTemplParams}
+\begin{DoxyReturn}{Returns}
+Tuple containing the unpacked views (use structured bindings). 
+\end{DoxyReturn}
+
+
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00312}{312}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139}\label{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139} 
 \index{NeoFOAM@{NeoFOAM}!constrainHbyA@{constrainHbyA}}
