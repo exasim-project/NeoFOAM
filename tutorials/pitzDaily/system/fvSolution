@@ -10,48 +10,45 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      fvSchemes;
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
+solvers
 {
-    default         Euler;
+    p
+    {
+        solver           GAMG;
+        tolerance        1e-7;
+        relTol           0.01;
+        smoother         DICGaussSeidel;
+    }
+
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
+    "(U|k|epsilon)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+
+    "(U|k|epsilon)Final"
+    {
+        $U;
+        relTol          0;
+    }
 }
 
-gradSchemes
+PIMPLE
 {
-    default         Gauss linear;
-    grad(p)         Gauss linear;
-}
-
-divSchemes
-{
-    default         none;
-    div(phi,U)      Gauss linear;
-    div(phi,nfU)    Gauss upwind;
-}
-
-laplacianSchemes
-{
-    //default               Gauss linear uncorrected;
-    laplacian(nu,U)         Gauss linear uncorrected;
-    laplacian(rAUf,p)       Gauss linear uncorrected;
-    laplacian(rAU,p)       Gauss linear uncorrected;
-    laplacian(rAUf,nfp)     Gauss linear uncorrected;
-    laplacian(nfrAUf,nfp)   Gauss linear uncorrected;
-    laplacian(nfNu,nfU)     Gauss linear uncorrected;
-    laplacian((1|A(U)),p)   Gauss linear uncorrected;
-}
-
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         uncorrected;
+    nNonOrthogonalCorrectors 0;
+    nCorrectors         2;
 }
 
 

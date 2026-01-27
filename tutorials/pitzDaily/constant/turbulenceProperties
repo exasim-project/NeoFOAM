@@ -10,17 +10,19 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      decomposeParDict;
+    object      turbulenceProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains  4;
+simulationType      RAS;
 
-method  simple;
-
-coeffs
+RAS
 {
-    n   (2 2 1);
+    RASModel        kEpsilon;
+
+    turbulence      on;
+
+    printCoeffs     on;
 }
 
 
