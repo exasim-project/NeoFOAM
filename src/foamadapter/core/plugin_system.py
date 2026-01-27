@@ -11,7 +11,7 @@ class PluginRegistry:
     discriminator_variable: str
     discriminator: str
     plugin_registry: list[Type[BaseModel]] = field(default_factory=list)
-    plugin_model: Type[BaseModel] | None = None
+    plugin_model: Union[Type[BaseModel], None] = None
 
 
 class PluginSystem:
@@ -105,7 +105,7 @@ class PluginSystem:
         return base_decorator
 
     @classmethod
-    def get_registered(cls, base_cls_name: str) -> PluginRegistry | None:
+    def get_registered(cls, base_cls_name: str) -> Union[PluginRegistry, None]:
         return cls._registry.get(base_cls_name, None)
 
     @classmethod
