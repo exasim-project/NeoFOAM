@@ -46,7 +46,8 @@ def prepare_case(target, name):
         if not dst.exists():
             shutil.copytree(src, dst)
         log = open(root/study/"blockMesh.log",'a')  # so that data written to it will be appended
-        subprocess.Popen(['blockMesh', '>', 'blockMesh.log'], cwd = root/study, stdout=log, shell=True)
+        proc = subprocess.Popen(['blockMesh', '>', 'blockMesh.log'], cwd = root/study, stdout=log, shell=True)
+        proc.wait()
 
 def normalize_group(group):
     baseline = group.loc[group["benchmark_name"] == "OpenFOAM", "avg_runtime"]
@@ -65,6 +66,9 @@ def save_test_results(df, test_case: str, results):
             normalize_group, include_groups=False
         ).reset_index()
         test_case_df.to_csv(results / f"{test_case}.csv", index=False)
+    # try:
+    # except Exception as e:
+    #     print(f"Failed to postprocess {cases}, {e}")
 
 def execute_case(executable, target, name):
     """ Run the given executable over all target cases """
@@ -72,7 +76,8 @@ def execute_case(executable, target, name):
     root = Path(r)
     for study in dirs:
         log = open(root/study/"execute.log",'a')  # so that data written to it will be appended
-        subprocess.Popen([executable, "--reporter", "xml", "-o", "stats.xml"], cwd = root/study, stdout=log, shell=False)
+        proc = subprocess.Popen([executable, "--reporter", "xml", "-o", "stats.xml"], cwd = root/study, stdout=log, shell=False)
+        proc.wait()
 
 def gather_results(target, name):
     results = target / name / "results"
@@ -86,11 +91,11 @@ def gather_results(target, name):
     benchmark_results = load_tables(
         source=file, dir_name=cases, reader_fn=read_catch2_benchmark
     )
-    try:
+    if not benchmark_results is None:
         for test_case in benchmark_results["test_case"].unique():
-            save_test_results(benchmark_results, test_case, results)
-    except Exception as e:
-        print(f"Failed to postprocess {cases}, {e}")
+                save_test_results(benchmark_results, test_case, results)
+    else:
+        print(f"failed {target}, {name}, {benchmark_results}")
 
 def clean_case(target, name):
     """ remove all logs"""

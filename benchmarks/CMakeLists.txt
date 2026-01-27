@@ -59,6 +59,6 @@ function(NeoN_benchmark BENCH)
 
 endfunction()
 
-neon_benchmark(explicitOperators)
+#neon_benchmark(explicitOperators)
 neon_benchmark(implicitOperators)
 neon_benchmark(dsl)
