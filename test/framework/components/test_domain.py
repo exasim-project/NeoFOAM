@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -12,7 +12,7 @@ from foamadapter.framework.solver import Solver
 class MyCustomSolver(BaseModel):
     name: Literal["MyCustomSolver"] = "MyCustomSolver"
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection:
         return OperationCollection()
 
     def main_loop(self, ctx: Context) -> None:

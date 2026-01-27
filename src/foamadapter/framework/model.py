@@ -18,7 +18,7 @@ def Model(cls: type) -> type:
     return cls
 
 
-Model.operation = staticmethod(operation)  # type: ignore[attr-defined]
+Model.operation = operation  # type: ignore[attr-defined]
 
 
 @runtime_checkable

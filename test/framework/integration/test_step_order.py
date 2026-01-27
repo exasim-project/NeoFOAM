@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 import pytest
 from pydantic import BaseModel
@@ -32,7 +32,7 @@ class MySolver(BaseModel):
     def op_four(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param1 + 1.0)
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection:
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:
@@ -55,7 +55,7 @@ class MyModel(BaseModel):
     def process(self, a: float) -> FieldUpdates:
         return FieldUpdates(a=a + self.param + 1.0)
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection:
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:

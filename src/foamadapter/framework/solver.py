@@ -2,7 +2,7 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-from typing import Protocol, runtime_checkable
+from typing import Protocol, Optional, runtime_checkable
 
 from foamadapter.framework.operations import OperationCollection
 
@@ -19,11 +19,11 @@ def Solver(cls: type) -> type:
     return cls
 
 
-Solver.operation = staticmethod(operation)  # type: ignore[attr-defined]
+Solver.operation = operation  # type: ignore[attr-defined]
 
 
 @runtime_checkable
 class SolverInterface(Protocol):
-    def operations(self, domain_name: str | None = None) -> OperationCollection: ...
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection: ...
 
     def main_loop(self, ctx: Context) -> None: ...

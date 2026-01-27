@@ -2,7 +2,7 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -55,7 +55,7 @@ class MySolver(BaseModel):
         a += self.param1 + 1.0
         return FieldUpdates({"a": a})
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection:
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:
@@ -65,7 +65,7 @@ class MySolver(BaseModel):
             ops.add(model.operations(domain_name=domain_name))
         return ops
 
-    def define_operations(self, domain_name: str | None = None) -> Operations:
+    def define_operations(self, domain_name: Optional[str] = None) -> Operations:
         ops_col = self.operations(domain_name)
         op_build = StepBuilder()
 
@@ -97,7 +97,7 @@ class MyModel(BaseModel):
         a += self.param + 1.0
         return FieldUpdates({"a": a})
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection:
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:

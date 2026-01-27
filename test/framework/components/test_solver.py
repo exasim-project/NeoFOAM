@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ class MyCustomSolver(BaseModel):
     def step_four(self):
         pass
 
-    def operations(self, domain_name: str | None = None) -> OperationCollection:
+    def operations(self, domain_name: Optional[str] = None) -> OperationCollection:
         funcs = decorated_member_functions(self)
         ops = OperationCollection()
         for func in funcs:
