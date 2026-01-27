@@ -141,7 +141,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>         [&amp;](<span class="keyword">auto</span>&amp; dict)</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>         {</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>             dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;fixedGradient&quot;</span>));</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>             dict.insert(<span class="stringliteral">&quot;fixedGradient&quot;</span>, type_primitive_t {});</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>             dict.insert(<span class="stringliteral">&quot;fixedGradient&quot;</span>, NeoN::zero&lt;type_primitive_t&gt;());</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>         }},</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        {<span class="stringliteral">&quot;fixedValue&quot;</span>,</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>         [](<span class="keyword">auto</span>&amp; dict)</div>
@@ -164,9 +164,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                 }</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                 <span class="keywordflow">else</span></div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                 {</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                     tmpFixedValue[0] = NeoN::scalar(tokenList.get&lt;<span class="keywordtype">int</span>&gt;(1));</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                     tmpFixedValue[1] = NeoN::scalar(tokenList.get&lt;<span class="keywordtype">int</span>&gt;(2));</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                     tmpFixedValue[2] = NeoN::scalar(tokenList.get&lt;<span class="keywordtype">int</span>&gt;(3));</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>                     tmpFixedValue[0] = NeoN::scalar(tokenList.get&lt;Foam::label&gt;(1));</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>                     tmpFixedValue[1] = NeoN::scalar(tokenList.get&lt;Foam::label&gt;(2));</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>                     tmpFixedValue[2] = NeoN::scalar(tokenList.get&lt;Foam::label&gt;(3));</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                 }</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                 dict.insert(<span class="stringliteral">&quot;fixedValue&quot;</span>, tmpFixedValue);</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>             }</div>
@@ -174,7 +174,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>             {</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>                 <span class="keyword">auto</span>&amp; token = tokenList.tokens()[1];</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                 NeoN::scalar* ret = std::any_cast&lt;NeoN::scalar&gt;(&amp;token);</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast&lt;int&gt;(token));</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast&lt;Foam::label&gt;(token));</div>
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                 dict.insert(<span class="stringliteral">&quot;fixedValue&quot;</span>, fixedValue);</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>             }</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>         }},</div>
