@@ -86,7 +86,7 @@ elif [ "$GPU_TYPE" == "intel" ]; then
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat" \
         -DKokkos_ENABLE_SYCL=ON \
         -DNeoN_WITH_THREADS=OFF \
-        -DNeoN_BUILD_BENCHMARKS=ON \
+        -DNeoN_BUILD_BENCHMARKS=ON
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="

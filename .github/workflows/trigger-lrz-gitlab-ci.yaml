@@ -101,6 +101,7 @@ jobs:
             "${{ steps.branch.outputs.branch }}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=false" \
+            "variables[PR_NUMBER]=${{ github.event.number }}" \
             "variables[SKIP_NVIDIA]=${{ steps.skip-nvidia.outputs.skip-nvidia }}" \
             "variables[SKIP_AMD]=${{ steps.skip-amd.outputs.skip-amd }}" \
             "variables[SKIP_INTEL]=${{ steps.skip-intel.outputs.skip-intel }}"
@@ -125,7 +126,7 @@ jobs:
       SKIP_NVIDIA: ${{ needs.build-and-test.outputs.skip-nvidia }}
       SKIP_AMD: ${{ needs.build-and-test.outputs.skip-amd }}
       SKIP_INTEL: ${{ needs.build-and-test.outputs.skip-intel }}
-      PR_NUM: ${{ github.event.number }}
+      PR_NUMBER: ${{ github.event.number }}
       LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
       LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
       MAX_WAIT_MINUTES: 1440
@@ -146,7 +147,7 @@ jobs:
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
             "variables[SKIP_AMD]=${SKIP_AMD}" \
-            "variables[SKIP_INTEL]=${SKIP_INTEL}"
+            "variables[SKIP_INTEL]=${SKIP_INTEL}" \
             "variables[PR_NUMBER]=${{ github.event.number }}" \
             "variables[BENCHMARK]=true"
 

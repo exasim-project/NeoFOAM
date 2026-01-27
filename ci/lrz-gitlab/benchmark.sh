@@ -12,7 +12,7 @@ PRESET="profiling"
 # Argument parsing
 GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd|intel) must be specified}
 NEON_BRANCH=${2:?Error: NeoN branch must be specified}
-PR_NUMBER=${4:?Error: The PR number needs to be specified}
+PR_NUMBER=${3:?Error: The PR number needs to be specified}
 RESULTS_DIR=${RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
 REPO_NAME=$(basename "$TARGET_REPO" .git)
@@ -70,6 +70,7 @@ git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
 build_and_benchmark() {
     local branch=$1
     local output_dir=$2
+    export CTEST_OUTPUT_ON_FAILURE=1
 
     echo ">>> Checking out ${branch}"
     git fetch origin "${branch}"
@@ -77,7 +78,7 @@ build_and_benchmark() {
 
     echo ">>> Configuring build"
     if [[ "$GPU_VENDOR" == "nvidia" ]]; then
-        cmake --preset PRESET \
+        cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CUDA_ARCHITECTURES=90 \
         -DNeoN_WITH_THREADS=OFF
@@ -85,14 +86,14 @@ build_and_benchmark() {
         # Set up environment
         export PATH=/opt/rocm/bin:$PATH
 
-        cmake --preset PRESET \
+        cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CXX_COMPILER=hipcc \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF
     elif [[ "$GPU_VENDOR" == "intel" ]]; then
-        cmake --preset PRESET \
+        cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CXX_COMPILER=icpx \
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
@@ -100,11 +101,11 @@ build_and_benchmark() {
         -DNeoN_WITH_THREADS=OFF \
         -DCMAKE_BUILD_TYPE="release"
     else
-        cmake --preset PRESET -DNEOFOAM_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
+        cmake --preset $PRESET -DNEOFOAM_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
     fi
 
     echo ">>> Building"
-    cmake --build --preset PRESET
+    cmake --build --preset $PRESET
 
     echo ">>> Running benchmarks..."
     export PATH=$PATH:$PWD/build/$PRESET/bin/benchmarks
@@ -165,7 +166,7 @@ build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
 
 # Develop branch
 echo ">>> Benchmarking the develop branch"
-build_and_benchmark "develop" "${RESULTS_DIR}/develop"
+build_and_benchmark "develop" "${RESULTS_DIR}/develop" || true
 
 # Push results
 echo ">>> Copying results to NeoFOAM-BenchmarkData repository"
