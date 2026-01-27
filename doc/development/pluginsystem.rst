@@ -8,16 +8,16 @@ This approach promotes maintainability, collaboration, and rapid prototyping of 
 Overview
 --------
 
-The PluginSystem is a runtime-extensible configuration system built on Pydantic discriminated unions and a registry pattern.
+The plugin system is a runtime-extensible configuration system built on Pydantic discriminated unions and a registry pattern.
 A discriminated union selects the right config class based on a type/tag field (e.g., "shape_type": "circle" vs "shape_type": "square"), and each base class has its own registry of registered child implementations.
 All plugins and all models are registered in a central registry to enable easy access and management for UI,validation purposes or generative AI.
-The user would be able to retrieve all available plugins: turbulence models, boundary conditions, etc. and their configuration options and validate them.
-The system also supports the generation of JSON schemas for documentation and validation purposes.
+The user can retrieve all available plugins, like turbulence models, boundary conditions, etc.  their configuration options and is able to validate them.
+Additionally, the plugin system supports the generation of JSON schemas for documentation and validation purposes.
 
 Registration Process
 ~~~~~~~~~~~~~~~~~~~~
 
-The decorator-based registration follows a two-step process:
+The  registration process for the plugins follows a two-step process using decorators:
 
 1. **Base Class Registration**: ``@PluginSystem.register()`` creates a registry entry and adds helper methods
 2. **Plugin Registration**: ``@BaseClass.register`` adds plugin classes to the registry and regenerates the union model
