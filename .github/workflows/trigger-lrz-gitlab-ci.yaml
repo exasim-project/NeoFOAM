@@ -125,6 +125,7 @@ jobs:
       SKIP_NVIDIA: ${{ needs.build-and-test.outputs.skip-nvidia }}
       SKIP_AMD: ${{ needs.build-and-test.outputs.skip-amd }}
       SKIP_INTEL: ${{ needs.build-and-test.outputs.skip-intel }}
+      PR_NUM: ${{ github.event.number }}
       LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
       LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
       MAX_WAIT_MINUTES: 1440
@@ -143,10 +144,11 @@ jobs:
           ./ci/github/trigger_pipeline.sh \
             "${BRANCH}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
-            "variables[BENCHMARK]=true" \
             "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
             "variables[SKIP_AMD]=${SKIP_AMD}" \
             "variables[SKIP_INTEL]=${SKIP_INTEL}"
+            "variables[PR_NUMBER]=${{ github.event.number }}" \
+            "variables[BENCHMARK]=true"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
         run: |

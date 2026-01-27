@@ -79,8 +79,9 @@
 
 .variables-for-benchmarking:
   variables:
-    RESULTS_DIR: "NeoFOAM/${RUN_IDENTIFIER}/${CI_RUNNER_DESCRIPTION}"
+    RESULTS_DIR: "NeoFOAM/${PR_NUMBER}/${CI_RUNNER_DESCRIPTION}"
     RUN_IDENTIFIER: "${CI_PIPELINE_ID}"
+    PR_NUMBER: "$PR_NUMBER"
     REPO_NAME: "NeoFOAM-BenchmarkData"
     TARGET_REPO: "github.com/exasim-project/${REPO_NAME}.git"
     TARGET_BRANCH: "ci-benchmarks"
@@ -169,7 +170,7 @@ benchmark-triggered-from-NF-nvidia:
     - .openfoam-env-setup
     - .trigger-from-neofoam-for-benchmarking-nvidia
   script:
-    - ./ci/lrz-gitlab/benchmark.sh nvidia $NEON_BRANCH
+    - ./ci/lrz-gitlab/benchmark.sh nvidia $NEON_BRANCH $PR_NUMBER
 
 benchmark-triggered-from-NF-amd:
   extends:
@@ -177,14 +178,14 @@ benchmark-triggered-from-NF-amd:
     - .openfoam-env-setup
     - .trigger-from-neofoam-for-benchmarking-amd
   script:
-    - ./ci/lrz-gitlab/benchmark.sh amd $NEON_BRANCH
+    - ./ci/lrz-gitlab/benchmark.sh amd $NEON_BRANCH $PR_NUMBER
 
 benchmark-and-test-triggered-from-NF-intel:
   extends:
     - .use-intel-gpu-and-image
     - .trigger-from-neofoam-for-benchmarking-intel
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH
+    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH 
 
 # --- Build and test NeoFOAM with a feature branch of NeoN ---
 build-and-test-triggered-from-NeoN-nvidia:

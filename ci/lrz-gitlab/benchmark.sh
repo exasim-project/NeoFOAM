@@ -7,11 +7,12 @@
 
 set -euo pipefail
 
+PRESET="profiling"
+
 # Argument parsing
 GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd|intel) must be specified}
 NEON_BRANCH=${2:?Error: NeoN branch must be specified}
-PRESET="profiling"
-
+PR_NUMBER=${4:?Error: The PR number needs to be specified}
 RESULTS_DIR=${RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
 REPO_NAME=$(basename "$TARGET_REPO" .git)
@@ -106,12 +107,11 @@ build_and_benchmark() {
     cmake --build --preset PRESET
 
     echo ">>> Running benchmarks..."
-    export PATH=$PATH:$PWD/build/PRESET/bin/benchmarks
+    export PATH=$PATH:$PWD/build/$PRESET/bin/benchmarks
     if [[ "$GPU_VENDOR" == "intel" ]]; then
         export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
     fi
-    ./benchmarks/benchmarkSuite/cleanAll.sh
-    ./benchmarks/benchmarkSuite/runAll.sh
+    ctest --preset profiling
     echo ">>> Benchmarks completed"
 
     # Check for produced results
