@@ -101,6 +101,10 @@ void \mbox{\hyperlink{namespaceNeoFOAM_ab761525a35b5b6bb313c2c67c053211a}{write}
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_ac90ca3a810facf8e02d279ef402ecc68}{write}} (const fvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&vol\+Field, const Foam\+::fv\+Mesh \&mesh)
 \item 
+void \mbox{\hyperlink{namespaceNeoFOAM_a16b8a3bc0ef9701db6c2df79db9994c2}{update\+Ddt\+Schemes}} (Neo\+N\+::\+Dictionary \&solver\+Dict)
+\item 
+Neo\+N\+::\+Dictionary \mbox{\hyperlink{namespaceNeoFOAM_a152eff2c6ed8799eab60394fc259108d}{map\+Fv\+Schemes}} (const Neo\+N\+::\+Dictionary \&schemes\+Dict)
+\item 
 void \mbox{\hyperlink{namespaceNeoFOAM_ab68574263e9c80758820191001d6d256}{update\+Solver}} (Neo\+N\+::\+Dictionary \&solver\+Dict)
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03}{update\+Preconditioner}} (Neo\+N\+::\+Dictionary \&solver\+Dict)
@@ -113,8 +117,8 @@ int32\+\_\+t \mbox{\hyperlink{namespaceNeoFOAM_ace35b46c775da4f108a8badb0e6186da
 \item 
 {\footnotesize template$<$typename FieldT $>$ }\\FieldT \mbox{\hyperlink{namespaceNeoFOAM_a01c08e9d79fe780ebcdbc7f82a70b1e1}{flat\+BCField}} (const Foam\+::fv\+Mesh \&mesh, std\+::function$<$ FieldT(const Foam\+::fv\+Patch \&)$>$ f)
 \item 
-Neo\+N\+::\+Unstructured\+Mesh \mbox{\hyperlink{namespaceNeoFOAM_a7fa41e32ba62c41cffee5cb4c3793877}{read\+Open\+FOAMMesh}} (const Neo\+N\+::\+Executor exec, const Foam\+::fv\+Mesh \&mesh)
-\item 
+Neo\+N\+::\+Unstructured\+Mesh \mbox{\hyperlink{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae}{read\+Open\+FOAMMesh}} (const Neo\+N\+::\+Executor exec, const Foam\+::fv\+Mesh \&mesh, bool full\+Mesh\+On\+GPU=false)
+\begin{DoxyCompactList}\small\item\em read Open\+FOAM mesh and construct NeoN mesh \end{DoxyCompactList}\item 
 std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_ac60b005cd9f9140205f676b9953615e4}{create\+Mesh}} (const Neo\+N\+::\+Executor \&exec, const Foam\+::\+Time \&run\+Time)
 \item 
 std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8}{create\+Mesh}} (const Foam\+::\+Time \&run\+Time)
@@ -137,7 +141,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00209}{209}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00221}{221}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb}\label{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb} 
 \index{NeoFOAM@{NeoFOAM}!checkEntryType@{checkEntryType}}
@@ -189,7 +193,7 @@ auto Neo\+FOAM\+::construct\+From (\begin{DoxyParamCaption}\item[{const Neo\+N\+
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00163}{163}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00171}{171}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a6d9f64a98e1d898d4f2d49f9133a2979}\label{namespaceNeoFOAM_a6d9f64a98e1d898d4f2d49f9133a2979} 
 \index{NeoFOAM@{NeoFOAM}!convert@{convert}}
@@ -278,7 +282,7 @@ Neo\+N\+::\+Vector$<$ Value\+Type $>$ Neo\+FOAM\+::diag (\begin{DoxyParamCaption
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00186}{186}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00198}{198}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a01c08e9d79fe780ebcdbc7f82a70b1e1}\label{namespaceNeoFOAM_a01c08e9d79fe780ebcdbc7f82a70b1e1} 
 \index{NeoFOAM@{NeoFOAM}!flatBCField@{flatBCField}}
@@ -315,6 +319,12 @@ bool Neo\+FOAM\+::insert (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Dictionary 
 
 Definition at line \mbox{\hyperlink{convert_8hpp_source_l00051}{51}} of file \mbox{\hyperlink{convert_8hpp_source}{convert.\+hpp}}.
 
+\Hypertarget{namespaceNeoFOAM_a152eff2c6ed8799eab60394fc259108d}\label{namespaceNeoFOAM_a152eff2c6ed8799eab60394fc259108d} 
+\index{NeoFOAM@{NeoFOAM}!mapFvSchemes@{mapFvSchemes}}
+\index{mapFvSchemes@{mapFvSchemes}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{mapFvSchemes()}{mapFvSchemes()}}
+{\footnotesize\ttfamily Neo\+N\+::\+Dictionary Neo\+FOAM\+::map\+Fv\+Schemes (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Dictionary \&}]{schemes\+Dict }\end{DoxyParamCaption})}
+
 \Hypertarget{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b}\label{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b} 
 \index{NeoFOAM@{NeoFOAM}!mapFvSolution@{mapFvSolution}}
 \index{mapFvSolution@{mapFvSolution}!NeoFOAM@{NeoFOAM}}
@@ -330,7 +340,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00228}{228}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00240}{240}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805}\label{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805} 
 \index{NeoFOAM@{NeoFOAM}!operator==@{operator==}}
@@ -353,12 +363,25 @@ bool Neo\+FOAM\+::operator== (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+V
 {\footnotesize\ttfamily template$<$typename NT , typename OT $>$ \\
 bool Neo\+FOAM\+::operator== (\begin{DoxyParamCaption}\item[{fvcc\+::\+Volume\+Field$<$ NT $>$ \&}]{nf,  }\item[{const Foam\+::\+Geometric\+Field$<$ OT, Foam\+::fv\+Patch\+Field, Foam\+::vol\+Mesh $>$ \&}]{of }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a7fa41e32ba62c41cffee5cb4c3793877}\label{namespaceNeoFOAM_a7fa41e32ba62c41cffee5cb4c3793877} 
+\Hypertarget{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae}\label{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae} 
 \index{NeoFOAM@{NeoFOAM}!readOpenFOAMMesh@{readOpenFOAMMesh}}
 \index{readOpenFOAMMesh@{readOpenFOAMMesh}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{readOpenFOAMMesh()}{readOpenFOAMMesh()}}
-{\footnotesize\ttfamily Neo\+N\+::\+Unstructured\+Mesh Neo\+FOAM\+::read\+Open\+FOAMMesh (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor}]{exec,  }\item[{const Foam\+::fv\+Mesh \&}]{mesh }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily Neo\+N\+::\+Unstructured\+Mesh Neo\+FOAM\+::read\+Open\+FOAMMesh (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor}]{exec,  }\item[{const Foam\+::fv\+Mesh \&}]{mesh,  }\item[{bool}]{full\+Mesh\+On\+GPU = {\ttfamily false} }\end{DoxyParamCaption})}
 
+
+
+read Open\+FOAM mesh and construct NeoN mesh 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & the executor where to store mesh data \\
+\hline
+{\em mesh} & the Open\+FOAM mesh \\
+\hline
+{\em full\+Mesh\+On\+GPU} & -\/ if false only owner,neighbour,face\+Areas and cell\+Volumes are placed on GPU \\
+\hline
+\end{DoxyParams}
 \Hypertarget{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1}\label{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1} 
 \index{NeoFOAM@{NeoFOAM}!readSurfaceBoundaryConditions@{readSurfaceBoundaryConditions}}
 \index{readSurfaceBoundaryConditions@{readSurfaceBoundaryConditions}!NeoFOAM@{NeoFOAM}}
@@ -368,7 +391,7 @@ auto Neo\+FOAM\+::read\+Surface\+Boundary\+Conditions (\begin{DoxyParamCaption}\
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00114}{114}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00122}{122}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}\label{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206} 
 \index{NeoFOAM@{NeoFOAM}!readVolBoundaryConditions@{readVolBoundaryConditions}}
@@ -392,6 +415,12 @@ Definition at line \mbox{\hyperlink{readers_8hpp_source_l00033}{33}} of file \mb
 \index{syncRunTimes@{syncRunTimes}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{syncRunTimes()}{syncRunTimes()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::sync\+Run\+Times (\begin{DoxyParamCaption}\item[{Foam\+::\+Time \&}]{of\+Run\+Time,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{nf\+Run\+Time,  }\item[{Foam\+::scalar}]{co\+Num }\end{DoxyParamCaption})}
+
+\Hypertarget{namespaceNeoFOAM_a16b8a3bc0ef9701db6c2df79db9994c2}\label{namespaceNeoFOAM_a16b8a3bc0ef9701db6c2df79db9994c2} 
+\index{NeoFOAM@{NeoFOAM}!updateDdtSchemes@{updateDdtSchemes}}
+\index{updateDdtSchemes@{updateDdtSchemes}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{updateDdtSchemes()}{updateDdtSchemes()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::update\+Ddt\+Schemes (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Dictionary \&}]{solver\+Dict }\end{DoxyParamCaption})}
 
 \Hypertarget{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5}\label{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5} 
 \index{NeoFOAM@{NeoFOAM}!updateFaceVelocity@{updateFaceVelocity}}
