@@ -304,9 +304,9 @@ public:
 };
 
 /**
- * @brief Unpacks all views of the passed classes.
- * @tparam Types Types of the classes with views
- * @return Tuple containing the unpacked views (use structured bindings).
+ * @brief Constructs a set of NN fields from OF fields
+ * @tparam Types Types of the classes
+ * @return Tuple containing the fields
  */
 template<typename... Types>
 auto constFromMany(
@@ -316,7 +316,5 @@ const NeoN::UnstructuredMesh& uMesh,
 {
     return std::tuple(constructFrom(exec, uMesh, args)...);
 }
-
-
 
 }; // namespace Foam

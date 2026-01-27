@@ -79,14 +79,6 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DKokkos_ENABLE_SYCL=ON \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
-elif [ "$GPU_TYPE" == "intel" ]; then
-    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
-    cmake --preset develop \
-        -DCMAKE_CXX_COMPILER=icpx \
-        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat" \
-        -DKokkos_ENABLE_SYCL=ON \
-        -DNeoN_WITH_THREADS=OFF \
-        -DNeoN_BUILD_BENCHMARKS=ON
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="

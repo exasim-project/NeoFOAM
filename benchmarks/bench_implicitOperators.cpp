@@ -8,10 +8,11 @@
 #include "NeoN/NeoN.hpp"
 #include "benchmarks/catch_main.hpp"
 #include "test/catch2/executorGenerator.hpp"
-#include "common.hpp"
+#include "../test/common.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
+namespace nf = NeoFOAM;
 
 #include "fv.H"
 #include "fvc.H"
@@ -27,8 +28,8 @@ TEST_CASE("DivOperator")
     std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
 
-    auto ofT = randomScalarField(mesh, "T");
-    auto ofPhi = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+    auto ofT = nf::randomScalarField(mesh, "T");
+    auto ofPhi = nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
 
     SECTION("OpenFOAM")
     {
@@ -100,8 +101,9 @@ TEST_CASE("LaplacianOperator")
     std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
 
-    auto ofT = randomScalarField(mesh, "T");
-    auto ofGamma = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
+    auto ofT = nf::randomScalarField(mesh, "T");
+    auto ofGamma =
+        nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {

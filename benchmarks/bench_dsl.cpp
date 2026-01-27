@@ -10,7 +10,7 @@
 #include "NeoN/NeoN.hpp"
 #include "benchmarks/catch_main.hpp"
 #include "test/catch2/executorGenerator.hpp"
-#include "common.hpp"
+#include "../test/common.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
@@ -30,9 +30,10 @@ TEST_CASE("advection-diffusion-equation_scalar")
     std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
 
-    auto ofT = randomScalarField(mesh, "T");
-    auto ofPhi = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
-    auto ofGamma = randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
+    auto ofT = nf::randomScalarField(mesh, "T");
+    auto ofPhi = nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+    auto ofGamma =
+        nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {
@@ -100,24 +101,24 @@ TEST_CASE("advection-diffusion-equation_scalar")
             )
         );
 
-        // SECTION(std::string("explicit-time-integration"))
-        // {
-        //     rt.fvSchemesDict.insert(
-        //         std::string("ddtSchemes"),
-        //         NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF1")}}})
-        //     );
+        SECTION(std::string("explicit-time-integration"))
+        {
+            rt.fvSchemesDict.insert(
+                std::string("ddtSchemes"),
+                NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF1")}}})
+            );
 
-        //     BENCHMARK(std::string(execName))
-        //     {
-        //         auto eqn = nf::PDESolver(
-        //             dsl::imp::ddt(nfT) + dsl::exp::div(nfPhi, nfT)
-        //                 - dsl::exp::laplacian(nfGamma, nfT),
-        //             nfT,
-        //             rt
-        //         );
-        //         return eqn.assemble();
-        //     };
-        // }
+            BENCHMARK(std::string(execName))
+            {
+                auto eqn = nf::PDESolver(
+                    dsl::imp::ddt(nfT) + dsl::exp::div(nfPhi, nfT)
+                        - dsl::exp::laplacian(nfGamma, nfT),
+                    nfT,
+                    rt
+                );
+                return eqn.assemble();
+            };
+        }
 
         SECTION(std::string("implicit-time-integration"))
         {

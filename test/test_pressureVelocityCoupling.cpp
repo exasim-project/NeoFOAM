@@ -24,7 +24,6 @@ TEST_CASE("PressureVelocityCoupling")
 {
     Foam::Time& runTime = *timePtr;
 
-
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);

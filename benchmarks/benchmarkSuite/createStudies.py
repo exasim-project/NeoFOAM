@@ -5,6 +5,7 @@ import sys
 import os
 import shutil
 import subprocess
+import pandas as pd
 from pathlib import Path
 from foamlib.preprocessing.parameter_study import record_generator
 from foamlib.postprocessing.load_tables import datafile, load_tables
@@ -18,6 +19,9 @@ def create_cases(src, root, case, force=False):
     case_path = root/case
     if case_path.exists() and not force:
         return
+    if case_path.exists() and force:
+        shutil.rmtree(case_path)
+
 
     case_path.mkdir(parents=True, exist_ok=True)
     study_cube = record_generator(
@@ -66,9 +70,6 @@ def save_test_results(df, test_case: str, results):
             normalize_group, include_groups=False
         ).reset_index()
         test_case_df.to_csv(results / f"{test_case}.csv", index=False)
-    # try:
-    # except Exception as e:
-    #     print(f"Failed to postprocess {cases}, {e}")
 
 def execute_case(executable, target, name):
     """ Run the given executable over all target cases """
@@ -92,6 +93,7 @@ def gather_results(target, name):
         source=file, dir_name=cases, reader_fn=read_catch2_benchmark
     )
     if not benchmark_results is None:
+        print(benchmark_results.columns)
         for test_case in benchmark_results["test_case"].unique():
                 save_test_results(benchmark_results, test_case, results)
     else:
@@ -100,8 +102,16 @@ def gather_results(target, name):
 def clean_case(target, name):
     """ remove all logs"""
     r, dirs, fs = next(os.walk(target/name/"Cases"))
-    # for study in dirs:
 
+def display(target):
+    cases = target / "results"
+    r, dirs, fs = next(os.walk(cases))
+    pd.set_option('display.float_format', lambda x: f'{x:.0f}')
+    for f in fs:
+        if not f.endswith("csv"):
+            continue
+        df = pd.read_csv(Path(r)/f)
+        print(df.pivot(columns=["MeshType", "section1", "benchmark_name"], values="avg_runtime", index=["section2", "Resolution"]))
 
 def main():
     mode = sys.argv[1]
@@ -109,7 +119,7 @@ def main():
         src = sys.argv[2]
         target = sys.argv[3]
         case_name = sys.argv[4]
-        create_cases(Path(src), Path(target), case_name)
+        create_cases(Path(src), Path(target), case_name, True)
         prepare_case(Path(target), case_name)
     if mode == "execute":
         exe = sys.argv[2]
@@ -117,6 +127,9 @@ def main():
         case_name = sys.argv[4]
         execute_case(exe, Path(target), case_name)
         gather_results(Path(target), case_name)
+    if mode == "display":
+        target = sys.argv[2]
+        display(Path(target))
     if mode == "clean":
         pass
 
