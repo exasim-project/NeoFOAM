@@ -115,7 +115,7 @@ build_and_benchmark() {
     echo ">>> Benchmarks completed"
 
     # Check for produced results
-    mapfile -d '' csv_files < <(find benchmarks/benchmarkSuite/ -type f -name '*.csv' -print0)
+    mapfile -d '' csv_files < <(find build/profiling/benchmarkSuite/ -type f -name '*.csv' -print0)
 
     if [ "${#csv_files[@]}" -eq 0 ]; then
         echo "No CSV files found!" >&2

@@ -62,12 +62,10 @@ TEST_CASE("advection-diffusion-equation_scalar")
         }
     }
 
-
     SECTION("NeoN")
     {
         auto [execName, exec] = GENERATE(allAvailableExecutor());
-
-        auto rt = nf::createAdapterRunTime(runTime);
+        auto rt = nf::createAdapterRunTime(runTime, exec);
 
         auto& vectorCollection = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         fvcc::VolumeField<NeoN::scalar>& nfT =
@@ -102,24 +100,24 @@ TEST_CASE("advection-diffusion-equation_scalar")
             )
         );
 
-        SECTION(std::string("explicit-time-integration"))
-        {
-            rt.fvSchemesDict.insert(
-                std::string("ddtSchemes"),
-                NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF1")}}})
-            );
+        // SECTION(std::string("explicit-time-integration"))
+        // {
+        //     rt.fvSchemesDict.insert(
+        //         std::string("ddtSchemes"),
+        //         NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF1")}}})
+        //     );
 
-            BENCHMARK(std::string(execName))
-            {
-                auto eqn = nf::PDESolver(
-                    dsl::imp::ddt(nfT) + dsl::exp::div(nfPhi, nfT)
-                        - dsl::exp::laplacian(nfGamma, nfT),
-                    nfT,
-                    rt
-                );
-                return eqn.assemble();
-            };
-        }
+        //     BENCHMARK(std::string(execName))
+        //     {
+        //         auto eqn = nf::PDESolver(
+        //             dsl::imp::ddt(nfT) + dsl::exp::div(nfPhi, nfT)
+        //                 - dsl::exp::laplacian(nfGamma, nfT),
+        //             nfT,
+        //             rt
+        //         );
+        //         return eqn.assemble();
+        //     };
+        // }
 
         SECTION(std::string("implicit-time-integration"))
         {

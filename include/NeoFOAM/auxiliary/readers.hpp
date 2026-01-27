@@ -54,7 +54,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [&](auto& dict)
          {
              dict.insert("type", std::string("fixedGradient"));
-             dict.insert("fixedGradient", type_primitive_t {});
+             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
          }},
         {"fixedValue",
          [](auto& dict)
@@ -77,9 +77,9 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  }
                  else
                  {
-                     tmpFixedValue[0] = NeoN::scalar(tokenList.get<int>(1));
-                     tmpFixedValue[1] = NeoN::scalar(tokenList.get<int>(2));
-                     tmpFixedValue[2] = NeoN::scalar(tokenList.get<int>(3));
+                     tmpFixedValue[0] = NeoN::scalar(tokenList.get<Foam::label>(1));
+                     tmpFixedValue[1] = NeoN::scalar(tokenList.get<Foam::label>(2));
+                     tmpFixedValue[2] = NeoN::scalar(tokenList.get<Foam::label>(3));
                  }
                  dict.insert("fixedValue", tmpFixedValue);
              }
@@ -87,7 +87,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              {
                  auto& token = tokenList.tokens()[1];
                  NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&token);
-                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<int>(token));
+                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<Foam::label>(token));
                  dict.insert("fixedValue", fixedValue);
              }
          }},

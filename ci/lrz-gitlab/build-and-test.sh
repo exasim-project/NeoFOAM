@@ -34,11 +34,13 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
     hipcc --version
 
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
+
     if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
         echo "No Intel GPU found or Level Zero runtime not available"
     fi
     # Compiler info (non-fatal)
     icpx --version 2>/dev/null | head -1 || echo "icpx not found"
+
 else
     echo "Unsupported GPU vendor: $GPU_VENDOR"
     exit 1
@@ -76,7 +78,15 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
         -DKokkos_ENABLE_SYCL=ON \
         -DNeoN_WITH_THREADS=OFF \
-        -DCMAKE_BUILD_TYPE="release"
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
+elif [ "$GPU_TYPE" == "intel" ]; then
+    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+    cmake --preset develop \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat" \
+        -DKokkos_ENABLE_SYCL=ON \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNeoN_BUILD_BENCHMARKS=ON \
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="

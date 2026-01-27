@@ -57,7 +57,8 @@ def normalize_group(group):
     return group
 
 # save per test case
-def save_test_results(df, test_case: str):
+def save_test_results(df, test_case: str, results):
+    group_keys = ["MeshType", "Resolution"]
     test_case_df = df[df["test_case"] == test_case]
     if not test_case_df.empty:
         test_case_df = test_case_df.groupby(group_keys).apply(
@@ -71,7 +72,7 @@ def execute_case(executable, target, name):
     root = Path(r)
     for study in dirs:
         log = open(root/study/"execute.log",'a')  # so that data written to it will be appended
-        subprocess.Popen([executable, "--reporter", "xml", "-o", "stats.xml"], cwd = root/study, stdout=log, shell=True)
+        subprocess.Popen([executable, "--reporter", "xml", "-o", "stats.xml"], cwd = root/study, stdout=log, shell=False)
 
 def gather_results(target, name):
     results = target / name / "results"
@@ -81,15 +82,13 @@ def gather_results(target, name):
     if not cases.exists():
         print(f"could not find {cases}")
 
-    group_keys = ["MeshType", "Resolution"]
-
-    file = datafile(file_name="result.xml", folder=".")
+    file = datafile(file_name="stats.xml", folder=".")
     benchmark_results = load_tables(
         source=file, dir_name=cases, reader_fn=read_catch2_benchmark
     )
     try:
         for test_case in benchmark_results["test_case"].unique():
-            save_test_results(benchmark_results, test_case)
+            save_test_results(benchmark_results, test_case, results)
     except Exception as e:
         print(f"Failed to postprocess {cases}, {e}")
 
