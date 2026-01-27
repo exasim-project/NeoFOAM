@@ -58,5 +58,19 @@ def incompressiblefluid(ctx: typer.Context) -> None:
     solver.run()
 
 
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)  # type: ignore[untyped-decorator]
+def simplesolver(ctx: typer.Context) -> None:
+    """SimpleSolver - FastAPI-style syntax with execution graph support"""
+
+    from foamadapter.solver.simpleSolver import run
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    run(argv)
+
+
 if __name__ == "__main__":
     app()

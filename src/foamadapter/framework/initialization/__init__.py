@@ -68,6 +68,9 @@ from .config_context import ConfigContext
 from .lazy_init import LazyInit
 from .helpers import field, operator, lazy, model
 from .execution import execute_initialization, topological_sort
+from .depends import Depends
+from .init_base import Init, ModelInit
+from .staged_init import StagedInit, ValidationError, LoadResult
 
 __all__ = [
     "Configurable",
@@ -79,4 +82,10 @@ __all__ = [
     "model",
     "execute_initialization",
     "topological_sort",
+    "Depends",
+    "Init",
+    "ModelInit",
+    "StagedInit",
+    "ValidationError",
+    "LoadResult",
 ]
