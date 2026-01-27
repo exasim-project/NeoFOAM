@@ -4,7 +4,6 @@ Installation
 
 This guide explains how to install the FoamAdapter Python package and set up the development environment using standard Python tools and Poe.
 
->>>>>>> origin/feat/python_pre_commit
 Requirements
 ------------
 - Python 3.9 or newer
