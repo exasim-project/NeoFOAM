@@ -1,18 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-Info << "Reading transportProperties\n" << endl;
-
-Foam::IOdictionary transportProperties(Foam::IOobject(
-    "transportProperties",
-    runTime.constant(),
-    mesh,
-    Foam::IOobject::MUST_READ_IF_MODIFIED,
-    Foam::IOobject::NO_WRITE
-));
-
-Foam::dimensionedScalar viscosity("nu", Foam::dimViscosity, transportProperties);
-
 Info << "Reading field p\n" << endl;
 Foam::volScalarField
     ofp(Foam::IOobject(
@@ -38,6 +26,18 @@ Foam::volVectorField
         ),
         mesh);
 
+Info << "Reading field nuTilde\n" << endl;
+Foam::volScalarField ofnuTilde(
+    Foam::IOobject(
+        "nuTilde",
+        runTime.timeName(),
+        mesh,
+        Foam::IOobject::MUST_READ,
+        Foam::IOobject::NO_WRITE,
+        Foam::IOobject::NO_REGISTER
+    ),
+    mesh
+);
 
 Info << "Reading/calculating face flux field phi\n" << endl;
 
@@ -53,6 +53,22 @@ Foam::surfaceScalarField ofphi(
     fvc::flux(ofU)
 );
 
+Foam::volScalarField ofnut(
+    Foam::IOobject(
+        "nut",
+        runTime.timeName(),
+        mesh,
+        Foam::IOobject::MUST_READ,
+        Foam::IOobject::NO_WRITE,
+        Foam::IOobject::NO_REGISTER
+    ),
+    mesh
+);
+
+Foam::singlePhaseTransportModel laminarTransport(ofU, ofphi);
+
+Foam::autoPtr<Foam::incompressible::turbulenceModel>
+    turbulence(Foam::incompressible::turbulenceModel::New(ofU, ofphi, laminarTransport));
 
 Foam::label pRefCell = 0;
 Foam::scalar pRefValue = 0.0;
