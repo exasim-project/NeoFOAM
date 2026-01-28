@@ -36,12 +36,12 @@ function(importOFLibrary NAME)
   foreach(inc IN LISTS NF_INCLUDE_ROOT)
     list(APPEND OFINCDIRS "$ENV{FOAM_SRC}/${inc}")
   endforeach()
-  
+
   set(OFLIBDIR ${NF_LIBPATH}/lib${NF_LIBNAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
 
   add_library(OpenFOAM::${NAME} SHARED IMPORTED)
   set_target_properties(OpenFOAM::${NAME} PROPERTIES IMPORTED_LOCATION ${OFLIBDIR}
-	  INTERFACE_INCLUDE_DIRECTORIES "${OFINCDIRS}")
+                                                     INTERFACE_INCLUDE_DIRECTORIES "${OFINCDIRS}")
   target_link_libraries(
     OpenFOAM
     PUBLIC
@@ -61,7 +61,8 @@ target_compile_definitions(OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} 
 importoflibrary(OpenFOAM)
 importoflibrary(meshTools)
 importoflibrary(finiteVolume)
-importoflibrary(incompressibleTransportModels INCLUDE_ROOT transportModels INCLUDE_LN transportModels/incompressible)
+importoflibrary(incompressibleTransportModels INCLUDE_ROOT transportModels INCLUDE_LN
+                transportModels/incompressible)
 importoflibrary(turbulenceModels INCLUDE_LN TurbulenceModels/turbulenceModels)
 importoflibrary(incompressibleTurbulenceModels INCLUDE_LN TurbulenceModels/incompressible)
 importoflibrary(

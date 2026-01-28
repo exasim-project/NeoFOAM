@@ -179,10 +179,55 @@ auto constructFrom(
 
     if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
     {
-        ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
-        out.internalVector() = fromFoamField(exec, in.primitiveField());
-        out.correctBoundaryConditions();
-        return out;
+
+//        ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
+//        out.internalVector() = fromFoamField(exec, in.primitiveField());
+//        out.correctBoundaryConditions();
+//        return out;
+//        using FoamComponentType = typename FoamFieldType::mapped_type;
+using FoamValueType = typename FoamFieldType::value_type;
+    // volScalarField  -> Foam::scalar
+    // volVectorField  -> Foam::vector
+
+    ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
+
+    // ----------------------------
+    // Internal field (cells)
+    // ----------------------------
+    out.internalVector() = fromFoamField(exec, in.primitiveField());
+
+    // ----------------------------
+    // Boundary field (cells)
+    // ----------------------------
+    std::size_t nBnd = 0;
+    forAll(in.boundaryField(), patchi)
+    {
+        nBnd += in.boundaryField()[patchi].size();
+    }
+
+    Foam::Field<FoamValueType> bval(nBnd);
+
+    Foam::label bi = 0;
+    forAll(in.boundaryField(), patchi)
+    {
+        const auto& pin = in.boundaryField()[patchi];
+        forAll(pin, i)
+        {
+            // IMPORTANT:
+            // keep OpenFOAM type here (scalar or vector)
+            bval[bi++] = pin[i];
+        }
+    }
+
+    NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
+
+    // ----------------------------
+    // Copy into NeoN boundary buffer
+    // ----------------------------
+    out.boundaryData().value() = fromFoamField(exec, bval);
+
+    out.correctBoundaryConditions();
+    return out;
     }
     else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
     {
