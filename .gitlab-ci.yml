@@ -77,24 +77,7 @@
     - which simpleFoam || echo "simpleFoam not found!"
     - find $FOAM_LIBBIN -name "libPstream.so"
 
-# Job rules to determine if the pipeline was triggered from NeoFOAM or NeoN CI
-.trigger-from-neofoam-for-testing:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false"
-      when: always
-    - when: never
-
-.trigger-from-neon-for-testing:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" && $BENCHMARK == "false"
-      when: always
-    - when: never
-
-.trigger-from-neofoam-for-benchmarking:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true"
-      when: always
-    - when: never
+.variables-for-benchmarking:
   variables:
     RESULTS_DIR: "NeoFOAM/${RUN_IDENTIFIER}/${CI_RUNNER_DESCRIPTION}"
     RUN_IDENTIFIER: "${CI_PIPELINE_ID}"
@@ -103,12 +86,50 @@
     TARGET_BRANCH: "ci-benchmarks"
     TARGET_RESULTS_DIR: "NeoFOAM/${RUN_IDENTIFIER}/${CI_RUNNER_DESCRIPTION}"
 
+# --- Configurations of triggering pipelines from NeoFOAM ---
+# For testing
+.trigger-from-neofoam-for-testing-common:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false"
+      when: always
+    - when: never
+
+.trigger-from-neofoam-for-testing-nvidia:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false" && $SKIP_NVIDIA == "false"
+      when: always
+    - when: never
+
+# For benchmarking
+.trigger-from-neofoam-for-benchmarking-common:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true"
+      when: always
+    - when: never
+  extends:
+    - .variables-for-benchmarking
+
+.trigger-from-neofoam-for-benchmarking-nvidia:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true" && $SKIP_NVIDIA == "false"
+      when: always
+    - when: never
+  extends:
+    - .variables-for-benchmarking
+
+# --- Configurations of triggering pipelines from NeoN ---
+.trigger-from-neon-for-testing:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" && $BENCHMARK == "false"
+      when: always
+    - when: never
+
 # --- Build and test NeoFOAM with the develop branch of NeoN ---
 build-and-test-triggered-from-NF-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-neofoam-for-testing
+    - .trigger-from-neofoam-for-testing-nvidia
   script:
     - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
 
@@ -116,14 +137,14 @@ build-and-test-triggered-from-NF-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-neofoam-for-testing
+    - .trigger-from-neofoam-for-testing-common
   script:
     - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
 
 build-and-test-triggered-from-NF-intel:
   extends:
     - .use-intel-gpu-and-image
-    - .trigger-from-neofoam-for-testing
+    - .trigger-from-neofoam-for-testing-common
   script:
     - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH
 
@@ -132,7 +153,7 @@ benchmark-triggered-from-NF-nvidia:
   extends:
     - .use-nvidia-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-neofoam-for-benchmarking
+    - .trigger-from-neofoam-for-benchmarking-nvidia
   script:
     - ./ci/lrz-gitlab/benchmark.sh nvidia $NEON_BRANCH profiling
 
@@ -140,14 +161,14 @@ benchmark-triggered-from-NF-amd:
   extends:
     - .use-amd-gpu-and-image
     - .openfoam-env-setup
-    - .trigger-from-neofoam-for-benchmarking
+    - .trigger-from-neofoam-for-benchmarking-common
   script:
     - ./ci/lrz-gitlab/benchmark.sh amd $NEON_BRANCH profiling
 
 benchmark-and-test-triggered-from-NF-intel:
   extends:
     - .use-intel-gpu-and-image
-    - .trigger-from-neofoam-for-benchmarking
+    - .trigger-from-neofoam-for-benchmarking-common
   script:
     - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH profiling
 
