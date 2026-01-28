@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            Kokkos::Profiling::pushRegion("Entering time loop");
+            Kokkos::Profiling::pushRegion("Time loop");
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
-                Kokkos::Profiling::pushRegion("Entering PISO loop");
+                Kokkos::Profiling::pushRegion("PISO loop");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
-                    Kokkos::Profiling::pushRegion("Entering PISO non-orthogonal corrector loop");
+                    Kokkos::Profiling::pushRegion("PISO non-orthogonal corrector loop");
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
