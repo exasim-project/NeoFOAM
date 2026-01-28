@@ -32,6 +32,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
     rocminfo | grep "Marketing Name.*AMD"
     echo "=== AMD compiler driver info ==="
     hipcc --version
+
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
         echo "No Intel GPU found or Level Zero runtime not available"
