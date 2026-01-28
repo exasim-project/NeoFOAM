@@ -8,7 +8,7 @@
 set -euo pipefail
 
 # Argument parsing
-GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
+GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd|intel) must be specified}
 NEON_BRANCH=${2:?Error: NeoN branch must be specified}
 
 RESULTS_DIR=${RESULTS_DIR:-results}
@@ -34,6 +34,10 @@ collect_system_info() {
             nvidia-smi
         elif [[ "$1" == "amd" ]]; then
             rocm-smi --showproductname --showvbios
+        elif [[ "$GPU_VENDOR" == "intel" ]]; then
+            if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
+                echo "No Intel GPU found or Level Zero runtime not available"
+            fi
         else
             echo "No GPU selected"
         fi
@@ -85,6 +89,14 @@ build_and_benchmark() {
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF
+    elif [[ "$GPU_VENDOR" == "intel" ]]; then
+        cmake --preset profiling \
+        -DNEOFOAM_NEON_DIR=../NeoN \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
+        -DKokkos_ENABLE_SYCL=ON \
+        -DNeoN_WITH_THREADS=OFF \
+        -DCMAKE_BUILD_TYPE="release"
     else
         cmake --preset profiling -DNEOFOAM_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
     fi
@@ -94,6 +106,9 @@ build_and_benchmark() {
 
     echo ">>> Running benchmarks..."
     export PATH=$PATH:$PWD/build/profiling/bin/benchmarks
+    if [[ "$GPU_VENDOR" == "intel" ]]; then
+        export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+    fi
     ./benchmarks/benchmarkSuite/cleanAll.sh
     ./benchmarks/benchmarkSuite/runAll.sh
     echo ">>> Benchmarks completed"
