@@ -106,15 +106,27 @@ def clean_case(target, name):
 def display(target):
     cases = target / "results"
     r, dirs, fs = next(os.walk(cases))
-    pd.set_option('display.float_format', lambda x: f'{x:.0f}')
+    pd.set_option('display.float_format', lambda x: f'{x:.4f}')
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width',1000)
     for f in fs:
         if not f.endswith("csv"):
             continue
         df = pd.read_csv(Path(r)/f)
-        print(df.pivot(columns=["MeshType", "section1", "benchmark_name"], values="avg_runtime", index=["section2", "Resolution"]))
+        print(f"\n{f}")
+        df['benchmark_name'] = df['benchmark_name'].apply(lambda x: x.replace("Executor",""))
+        df['Resolution'] = df['Resolution'].apply(lambda x: int(x[1:]))
+        df["Cells"] = 0
+        df.loc[df["MeshType"] == '2DSquare', 'Cells'] = df['Resolution']**2
+        df.loc[df["MeshType"] == '3DCube', 'Cells'] = df['Resolution']**3
+        df["Time/Cell"] = df["avg_runtime"]/ df["Cells"]
+        print(df.pivot(columns=["MeshType", "section1", "benchmark_name"], values="Time/Cell", index=["section2", "Resolution"]))
 
 def main():
     mode = sys.argv[1]
+    modes= ["generate", "execute", "display", "clean"]
+    if not mode in  modes:
+        print(f"{mode} not a valid modes, {modes}")
     if mode == "generate":
         src = sys.argv[2]
         target = sys.argv[3]
