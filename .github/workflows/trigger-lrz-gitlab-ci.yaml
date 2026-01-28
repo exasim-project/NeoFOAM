@@ -22,6 +22,7 @@ jobs:
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
       skip-nvidia: ${{ steps.skip-nvidia.outputs.skip-nvidia }}
+      skip-intel: ${{ steps.skip-intel.outputs.skip-intel }}
 
     # Only run if the 'Skip-build' label is not present on a PR
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
@@ -59,6 +60,15 @@ jobs:
             echo "skip-nvidia=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Determine skip-intel label
+        id: skip-intel
+        run: |
+          if [[ "${{ contains(toJson(github.event.pull_request.labels.*.name), 'skip-intel') }}" == "true" ]]; then
+            echo "skip-intel=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip-intel=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Push commit to LRZ GitLab
         run: |
           git config user.name "github-actions[bot]"
@@ -81,7 +91,8 @@ jobs:
             "${{ steps.branch.outputs.branch }}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=false" \
-            "variables[SKIP_NVIDIA]=${{ steps.skip-nvidia.outputs.skip-nvidia }}"
+            "variables[SKIP_NVIDIA]=${{ steps.skip-nvidia.outputs.skip-nvidia }}" \
+            "variables[SKIP_INTEL]=${{ steps.skip-intel.outputs.skip-intel }}"
 
       - name: Wait for LRZ GitLab CI pipeline
         run: |
@@ -101,6 +112,7 @@ jobs:
       REPO_NAME: ${{ github.event.repository.name }}
       BRANCH: ${{ needs.build-and-test.outputs.branch }}
       SKIP_NVIDIA: ${{ needs.build-and-test.outputs.skip-nvidia }}
+      SKIP_INTEL: ${{ needs.build-and-test.outputs.skip-intel }}
       LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
       LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
       MAX_WAIT_MINUTES: 1440
@@ -120,7 +132,8 @@ jobs:
             "${BRANCH}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=true" \
-            "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}"
+            "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
+            "variables[SKIP_INTEL]=${SKIP_INTEL}"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
         run: |
