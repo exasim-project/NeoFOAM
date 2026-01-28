@@ -94,9 +94,9 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         fvc::flux(U) // used only if phi file absent; MUST_READ enforces it exists.
     );
 
-    Foam::volScalarField nuTilde(
+    Foam::volScalarField nuTilda(
         Foam::IOobject(
-            "nuTilde",
+            "nuTilda",
             runTime.timeName(),
             mesh,
             Foam::IOobject::MUST_READ,
@@ -104,7 +104,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         ),
         mesh
     );
-    nuTilde.correctBoundaryConditions();
+    nuTilda.correctBoundaryConditions();
     Foam::volScalarField nut(
         Foam::IOobject(
             "nut",
@@ -141,7 +141,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     const Foam::volScalarField& delta = lesModel.delta();
     Foam::wallDist y(mesh);
     const Foam::volScalarField& wallDist = y.y();
-    auto tofChi = nuTilde / nuFoam;
+    auto tofChi = nuTilda / nuFoam;
     Foam::volScalarField ofChi(
         Foam::IOobject(
             "ofChi",
@@ -211,7 +211,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
 
     scalar ofCw1 =
         scalar(0.1355) / Foam::sqr(scalar(0.41)) + (1.0 + scalar(0.622)) / scalar(0.66666);
-    nut = nuTilde * ofFv1;
+    nut = nuTilda * ofFv1;
     nut.correctBoundaryConditions();
     auto tfd = 1
              - Foam::tanh(Foam::pow(
@@ -281,7 +281,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     );
 
     auto tsTilde = Foam::max(
-        ofOmega + ofFv2 * nuTilde / Foam::sqr(scalar(0.41) * ofdTilde),
+        ofOmega + ofFv2 * nuTilda / Foam::sqr(scalar(0.41) * ofdTilde),
         scalar(0.3) * ofOmega
     );
     Foam::volScalarField ofsTilde(
@@ -295,7 +295,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         tsTilde()
     );
     auto tr = Foam::min(
-        nuTilde
+        nuTilda
             / (Foam::max(
                    ofsTilde,
                    Foam::dimensionedScalar("small", Foam::inv(Foam::dimTime), Foam::SMALL)
@@ -335,7 +335,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         ),
         tfw()
     );
-    auto tgradNuTilde = fvc::grad(nuTilde);
+    auto tgradNuTilde = fvc::grad(nuTilda);
     Foam::volVectorField ofgradNutilda(
         Foam::IOobject(
             "ofgradNutilda",
@@ -414,7 +414,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         tmagSqrGradNuTilde()
     );
     auto tproduction =
-        scalar(0.1355) * ofsTilde * nuTilde + scalar(0.622 / 0.66666) * ofmagSqrGradNutilda;
+        scalar(0.1355) * ofsTilde * nuTilda + scalar(0.622 / 0.66666) * ofmagSqrGradNutilda;
     Foam::volScalarField ofProduction(
         Foam::IOobject(
             "ofProduction",
@@ -425,7 +425,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         ),
         tproduction()
     );
-    auto tspCoeff = ofCw1 * ofFw * nuTilde / Foam::sqr(ofdTilde);
+    auto tspCoeff = ofCw1 * ofFw * nuTilda / Foam::sqr(ofdTilde);
     Foam::volScalarField ofspCoeff(
         Foam::IOobject(
             "ofspCoeff",
@@ -532,12 +532,12 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
             .name = "nfWallDist"
         });
 
-    auto& nfNuTilde =
+    auto& nfNuTilda =
         fieldCollection.registerVector<VolScalar>(nf::CreateFromFoamField<Foam::volScalarField> {
             .exec = rt.exec,
             .nfMesh = rt.nfMesh,
-            .foamField = nuTilde,
-            .name = "nfNuTilde"
+            .foamField = nuTilda,
+            .name = "nfNuTilda"
         });
 
     auto& nfNut =
@@ -577,9 +577,6 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
 
     auto gradOp = nnfvcc::GaussGreenGrad(exec, rt.nfMesh);
 
-    // VolVector gradUx = gradOp.grad(nfUx);
-    // VolVector gradUy = gradOp.grad(nfUy);
-    // VolVector gradUz = gradOp.grad(nfUz);
     auto G = gradOp.grad(nfU);
     nf::compare(G.gradUx, ofGradUx, ApproxVector(1e-12), true);
 
@@ -601,7 +598,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     NeoN::turbulenceModels::DES::SpalartAllmarasDDES ddes(rt.exec);
 
     // --- Component chain evaluation
-    saBase.chi(chi, nfNuTilde, nfNu);
+    saBase.chi(chi, nfNuTilda, nfNu);
     nf::compare(chi, ofChi, ApproxScalar(1e-12), false);
     saBase.fv1(fv1, chi);
     nf::compare(fv1, ofFv1, ApproxScalar(1e-12), false);
@@ -628,15 +625,15 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         false
     ); // OpenFOAM BC values are not zero
 
-    ddes.dTilde(dTilde, invSqrdTilde, nfWallDist, nfNuTilde, nfNu, magGradU, nfDelta, chi, fv1);
+    ddes.dTilde(dTilde, invSqrdTilde, nfWallDist, nfNuTilda, nfNu, magGradU, nfDelta, chi, fv1);
     nf::compare(dTilde, ofdTilde, ApproxScalar(1e-12), false);
 
-    saBase.stilda(stilda, omega, nfNuTilde, dTilde, fv2);
+    saBase.stilda(stilda, omega, nfNuTilda, dTilde, fv2);
     nf::compare(stilda, ofsTilde, ApproxScalar(1e-12), false);
 
-    saBase.fw(fw, stilda, dTilde, nfNuTilde);
+    saBase.fw(fw, stilda, dTilde, nfNuTilda);
     nf::compare(fw, ofFw, ApproxScalar(1e-12), false);
-    saBase.nut(nfNut, nfNuTilde, fv1);
+    saBase.nut(nfNut, nfNuTilda, fv1);
     nf::compare(nfNut, nut, ApproxScalar(1e-12), false);
 
 
@@ -646,11 +643,11 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         rt.nfMesh,
         NeoN::TokenList({std::string("linear")})
     );
-    auto nuTildeEff = surfInterpol.interpolate(NeoN::scalar(1 / sigmaNut) * (nfNuTilde + nfNu));
-    nuTildeEff.name = "nuTildeEff";
+    auto nuTildaEff = surfInterpol.interpolate(NeoN::scalar(1 / sigmaNut) * (nfNuTilda + nfNu));
+    nuTildaEff.name = "nuTildaEff";
 
-    fvcc::rotateOldTimes(nfNuTilde);
-    gradNuTilde = gradOp.grad(nfNuTilde);
+    fvcc::rotateOldTimes(nfNuTilda);
+    gradNuTilde = gradOp.grad(nfNuTilda);
     nf::compare(gradNuTilde, ofgradNutilda, ApproxVector(1e-12), false);
     auto magSqrGradNuTilde = fvcc::magSqr(gradNuTilde);
     nf::compare(magSqrGradNuTilde, ofmagSqrGradNutilda, ApproxScalar(1e-12), false);
@@ -658,7 +655,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     saBase.computeProdSpDDES(
         nfFusedProduction,
         nfFusedSpCoeff,
-        nfNuTilde,
+        nfNuTilda,
         nfNu,
         omega,
         nfWallDist,
@@ -675,93 +672,29 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     auto nfSurfNu = surfInterpol.interpolate(nfNu);
     auto nfSurfNut = surfInterpol.interpolate(nfNut);
     fvcc::GaussViscousStress opVisc(exec, rt.nfMesh, interpolationScheme);
-    auto nfViscousStress =
-        opVisc
-            .viscousStress(nfSurfNu, nfSurfNut, nfU, G.gradUx, G.gradUy, G.gradUz, dsl::Coeff(1.0));
-    // nfViscousStress.correctBoundaryConditions();
-    NeoN::Vector<Vec3> nfTerm(exec, mesh.nCells());
-    NeoN::fill(nfTerm, NeoN::zero<Vec3>());
-
-    fvcc::SurfaceInterpolation<Vec3> surfInterpVec(
-        exec,
-        rt.nfMesh,
-        NeoN::TokenList({std::string("linear")})
-    );
-
-    fvcc::computeDivNuDev2TGradUExp(
-        nfNu,
-        G.gradUx,
-        G.gradUy,
-        G.gradUz,
-        surfInterpVec,
-        nfTerm,
-        dsl::Coeff(1.0)
-    );
-
-    VolVector nfDivNuDev(exec, "nfDivNuDev2TGradU", rt.nfMesh, volCalcVecBCs);
-    {
-        auto src = nfTerm.view();
-        auto dst = nfDivNuDev.internalVector().view();
-
-        NeoN::parallelFor(
-            exec,
-            {0, rt.nfMesh.nCells()},
-            NEON_LAMBDA(const NeoN::localIdx c) { dst[c] = scalar(-1) * src[c]; },
-            "copy_nfTerm_to_VolumeField"
-        );
-        auto surfInterpolVec3 = fvcc::SurfaceInterpolation<Vec3>(
-            rt.exec,
-            rt.nfMesh,
-            NeoN::TokenList({std::string("linear")})
-        );
-    }
-
-    NeoN::Vector<Vec3> nfLapTerm(exec, mesh.nCells());
-    NeoN::fill(nfLapTerm, NeoN::zero<Vec3>());
-    NeoN::Input input = NeoN::TokenList({std::string("uncorrected")});
-    fvcc::FaceNormalGradient<Vec3> uncorrected(exec, rt.nfMesh, input);
-
-    fvcc::computeLaplacianScalarGammaVectorExp(
-        uncorrected,
-        nfSurfNut,
-        nfU,
-        nfLapTerm,
-        dsl::Coeff(1.0)
-    );
-    VolVector nfLapNutU(exec, "nfLapNutU", rt.nfMesh, volCalcVecBCs);
-    {
-        auto src2 = nfLapTerm.view();
-        auto dst2 = nfLapNutU.internalVector().view();
-
-        NeoN::parallelFor(
-            exec,
-            {0, rt.nfMesh.nCells()},
-            NEON_LAMBDA(const NeoN::localIdx c) { dst2[c] = src2[c]; },
-            "copy_nfTerm_to_VolumeField"
-        );
-    }
-    nf::compare(nfLapNutU, ofLapNutU, ApproxVector(1e-12), false);
-    nf::compare(nfDivNuDev, ofDivDev2, ApproxVector(1e-12), false);
+    auto nfViscousStress = opVisc.viscousStress(
+		    nfSurfNu, nfSurfNut, nfU, G.gradUx, G.gradUy, G.gradUz, dsl::Coeff(1.0));
     nf::compare(nfViscousStress, ofViscousStress, ApproxVector(1e-12), false);
-    //  nf::compare(blab, ofViscousStress, ApproxVector(1e-12),false);
-    //    auto production = Cb1 * stilda * nfNuTilde + NeoN::scalar(Cb2/sigmaNut) *
-    //    magSqrGradNuTilde; //ft2 is zero by default nf::compare(production, ofProduction,
-    //    ApproxScalar(1e-12),false); auto spCoeff = Cw1 * fw * nfNuTilde * invSqrdTilde; // (dTilde
-    //    * dTilde); // ft2 is zero by default nf::compare(spCoeff, ofspCoeff,
-    //    ApproxScalar(1e-12),false);
-    nf::PDESolver<NeoN::scalar> nuTildeEqn(
-        dsl::imp::ddt(nfNuTilde) + dsl::imp::div(nfPhi, nfNuTilde)
-            - dsl::imp::laplacian(nuTildeEff, nfNuTilde)
-            + dsl::imp::source(nfFusedSpCoeff, nfNuTilde)
-            - dsl::exp::source(nfFusedProduction, nfNuTilde),
-        nfNuTilde,
+    
+    //  auto production = Cb1 * stilda * nfNuTilda + NeoN::scalar(Cb2/sigmaNut) *
+    //    magSqrGradNuTilde; //ft2 is zero by default 
+    //    nf::compare(production, ofProduction,ApproxScalar(1e-12),false); 
+    //    auto spCoeff = Cw1 * fw * nfNuTilda * invSqrdTilde; // ft2 is zero by default 
+    //    nf::compare(spCoeff, ofspCoeff,ApproxScalar(1e-12),false);
+
+    nf::PDESolver<NeoN::scalar> nuTildaEqn(
+        dsl::imp::ddt(nfNuTilda) + dsl::imp::div(nfPhi, nfNuTilda)
+            - dsl::imp::laplacian(nuTildaEff, nfNuTilda)
+            + dsl::imp::source(nfFusedSpCoeff, nfNuTilda)
+            - dsl::exp::source(nfFusedProduction, nfNuTilda),
+        nfNuTilda,
         rt
     );
-    nuTildeEqn.solve();
-    nfNuTilde.correctBoundaryConditions();
-    saBase.chi(chi, nfNuTilde, nfNu);
+    nuTildaEqn.solve();
+    nfNuTilda.correctBoundaryConditions();
+    saBase.chi(chi, nfNuTilda, nfNu);
     saBase.fv1(fv1, chi);
-    saBase.nut(nfNut, nfNuTilde, fv1);
+    saBase.nut(nfNut, nfNuTilda, fv1);
     nfNut.correctBoundaryConditions(); // nut currently doesn't have the correct BCs
 
     // -----------------------------
