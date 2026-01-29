@@ -170,14 +170,11 @@
 #  Job templates
 # ============================================================
 .build-and-test:
-  extends:
-    - .openfoam-env-setup
   script:
     - ./ci/lrz-gitlab/build-and-test.sh $GPU_VENDOR $NEON_BRANCH
 
 .benchmark:
   extends:
-    - .openfoam-env-setup
     - .variables-for-benchmarking
   script:
     - ./ci/lrz-gitlab/benchmark.sh $GPU_VENDOR $NEON_BRANCH $PR_NUMBER
@@ -185,74 +182,71 @@
 # ============================================================
 #  NeoFOAM - testing jobs
 # ============================================================
-
 build-test-neofoam-nvidia:
   extends:
     - .gpu-nvidia
-    - .rules-skip-gpu
     - .rules-neofoam-testing
+    - .openfoam-env-setup-nvidia-amd
     - .build-and-test
 
 build-test-neofoam-amd:
   extends:
     - .gpu-amd
-    - .rules-skip-gpu
     - .rules-neofoam-testing
+    - .openfoam-env-setup-nvidia-amd
     - .build-and-test
 
 build-test-neofoam-intel:
   extends:
     - .gpu-intel
-    - .rules-skip-gpu
     - .rules-neofoam-testing
+    - .openfoam-env-setup-intel
     - .build-and-test
 
 # ============================================================
 #  NeoFOAM - benchmarking jobs
 # ============================================================
-
 benchmark-neofoam-nvidia:
   extends:
     - .gpu-nvidia
-    - .rules-skip-gpu
     - .rules-neofoam-benchmarking
+    - .openfoam-env-setup-nvidia-amd
     - .benchmark
 
 benchmark-neofoam-amd:
   extends:
     - .gpu-amd
-    - .rules-skip-gpu
     - .rules-neofoam-benchmarking
+    - .openfoam-env-setup-nvidia-amd
     - .benchmark
 
 benchmark-neofoam-intel:
   extends:
     - .gpu-intel
-    - .rules-skip-gpu
     - .rules-neofoam-benchmarking
+    - .openfoam-env-setup-intel
     - .benchmark
 
 # ============================================================
 #  NeoN - testing jobs
 # ============================================================
-
 build-test-from-neon-nvidia:
   extends:
     - .gpu-nvidia
-    - .rules-skip-gpu
     - .rules-neon-testing
+    - .openfoam-env-setup-nvidia-amd
     - .build-and-test
 
 build-test-from-neon-amd:
   extends:
     - .gpu-amd
-    - .rules-skip-gpu
     - .rules-neon-testing
+    - .openfoam-env-setup-nvidia-amd
     - .build-and-test
 
 build-test-from-neon-intel:
   extends:
     - .gpu-intel
-    - .rules-skip-gpu
     - .rules-neon-testing
+    - .openfoam-env-setup-intel
     - .build-and-test
