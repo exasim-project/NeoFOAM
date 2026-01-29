@@ -5,7 +5,6 @@
 # ============================================================
 #  GPU-specific images and runner configuration
 # ============================================================
-
 .gpu-base:
   variables:
     PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages:/opt/intel/oneapi/advisor/2025.3/pythonapi
@@ -38,8 +37,7 @@
 # ============================================================
 #  Common OpenFOAM environment setup
 # ============================================================
-
-.openfoam-env-setup:
+.openfoam-env-setup-nvidia-amd:
   variables:
     WM_PROJECT: OpenFOAM
     WM_OPTIONS: linux64GccDPInt32Opt
@@ -65,11 +63,6 @@
   before_script:
     - |
         case "$GPU_VENDOR" in
-          intel)
-            echo "Running Intel oneAPI + OpenFOAM environment setup"
-            source /opt/intel/oneapi/setvars.sh --force
-            eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
-            ;;
           nvidia|amd)
             echo "Running AMD/NVIDIA OpenFOAM environment setup"
             export PATH="$FOAM_APPBIN:$PATH"
@@ -79,21 +72,26 @@
             export CMAKE_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$CMAKE_LIBRARY_PATH"
             export MANPATH="$FOAM_ETC/man:$MANPATH"
             ;;
-          *)
-            echo "ERROR: Unknown GPU_VENDOR=$GPU_VENDOR"
-            exit 1
-            ;;
         esac
 
-    # ----------------------------------------------------------
-    # Common debugging (runs for all GPUs)
-    # ----------------------------------------------------------
+    # Debugging info
     - echo "GPU_VENDOR=$GPU_VENDOR"
     - echo "PATH=$PATH"
     - echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
     - echo "CMAKE_LIBRARY_PATH=$CMAKE_LIBRARY_PATH"
     - which simpleFoam || echo "simpleFoam not found!"
     - find $FOAM_LIBBIN -name "libPstream.so"
+
+.openfoam-env-setup-intel:
+  before_script:
+    - |
+        case "$GPU_VENDOR" in
+          intel)
+            echo "Running Intel oneAPI + OpenFOAM environment setup"
+            source /opt/intel/oneapi/setvars.sh --force
+            eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
+            ;;
+        esac
 
 # ============================================================
 #  Benchmarking variables
@@ -112,7 +110,6 @@
 # ============================================================
 #  Rule blocks
 # ============================================================
-
 # Skip jobs based on GPU vendor
 .rules-skip-gpu:
   rules:
