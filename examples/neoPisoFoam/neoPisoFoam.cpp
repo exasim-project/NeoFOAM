@@ -70,13 +70,13 @@ int main(int argc, char* argv[])
                 }
             );
 
-        fvcc::VolumeField<NeoN::scalar>& nuTilde =
+        fvcc::VolumeField<NeoN::scalar>& nuTilda =
             vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
                 nf::CreateFromFoamField<Foam::volScalarField> {
                     .exec = rt.exec,
                     .nfMesh = rt.nfMesh,
-                    .foamField = ofnuTilde,
-                    .name = "nuTilde"
+                    .foamField = ofnuTilda,
+                    .name = "nuTilda"
                 }
             );
 
@@ -107,40 +107,29 @@ int main(int argc, char* argv[])
         // const Foam::volScalarField& ofWallDist = y.y();
         auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
 
-        NeoN::Logging::info("walldist done");
         const Foam::incompressible::LESModel& lesModel =
             Foam::refCast<const Foam::incompressible::LESModel>(turbulence());
-        NeoN::Logging::info("lesmodel done");
         // const Foam::volScalarField& delta = lesModel.delta();
         auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        NeoN::Logging::info("delta");
         NeoN::turbulenceModels::DES::SpalartAllmarasBase saBase(rt.exec, rt.nfMesh);
 
         auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
-        NeoN::Logging::info("before grad");
         auto G = gradOp.grad(U);
-        NeoN::Logging::info("aftergrad");
         fvcc::VolumeField<NeoN::scalar> omega(rt.exec, "omega", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> chi(rt.exec, "chi", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> fv1(rt.exec, "fv1", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> magGradU(rt.exec, "magGradU", rt.nfMesh, volCalcBCs);
-        // fvcc::VolumeField<NeoN::Vec3> gradNuTilde(rt.exec, "gradNuTilde", rt.nfMesh,
-        // volCalcVecBCs);
         fvcc::VolumeField<NeoN::scalar>
-            magSqrGradNuTilde(rt.exec, "magSqrGradNuTilde", rt.nfMesh, volCalcBCs);
+            magSqrGradNuTilda(rt.exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> production(rt.exec, "production", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> spCoeff(rt.exec, "spCoeff", rt.nfMesh, volCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar> nuTildeEff(rt.exec, "nuTildeEff", rt.nfMesh, surfCalcBCs);
+        fvcc::SurfaceField<NeoN::scalar> nuTildaEff(rt.exec, "nuTildaEff", rt.nfMesh, surfCalcBCs);
 
-        saBase.chi(chi, nuTilde, nu);
+        saBase.chi(chi, nuTilda, nu);
         saBase.fv1(fv1, chi);
-        NeoN::Logging::info("after_fv1");
         auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofnut);
-        NeoN::Logging::info("after nfNut creation");
-        nut = nuTilde * fv1;
-        NeoN::Logging::info("after nfNut reconstruction");
+        nut = nuTilda * fv1;
         nut.correctBoundaryConditions();
-        NeoN::Logging::info("after nfNut BC corr");
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
@@ -161,7 +150,7 @@ int main(int argc, char* argv[])
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(phi);
-            fvcc::rotateOldTimes(nuTilde);
+            fvcc::rotateOldTimes(nuTilda);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -240,33 +229,33 @@ int main(int argc, char* argv[])
             G = gradOp.grad(U);
             saBase.omega(omega, G.gradUx, G.gradUy, G.gradUz);
             saBase.magGradU(magGradU, G.gradUx, G.gradUy, G.gradUz);
-            magSqrGradNuTilde = fvcc::magSqr(gradOp.grad(nuTilde));
+            magSqrGradNuTilda = fvcc::magSqr(gradOp.grad(nuTilda));
             saBase.computeProdSpDDES(
                 production,
                 spCoeff,
-                nuTilde,
+                nuTilda,
                 nu,
                 omega,
                 wallDist,
                 magGradU,
                 delta,
-                magSqrGradNuTilde
+                magSqrGradNuTilda
             );
             const auto sigmaNut = saBase.coeffs().sigmaNut;
-            nuTildeEff = surfInterpol.interpolate(NeoN::scalar(1 / sigmaNut) * (nuTilde + nu));
-            nuTildeEff.name = "nuTildeEff";
-            nf::PDESolver<NeoN::scalar> nuTildeEqn(
-                dsl::imp::ddt(nuTilde) + dsl::imp::div(phi, nuTilde)
-                    - NeoN::dsl::imp::laplacian(nuTildeEff, nuTilde)
-                    + dsl::imp::source(spCoeff, nuTilde) - dsl::exp::source(production, nuTilde),
-                nuTilde,
+            nuTildaEff = surfInterpol.interpolate(NeoN::scalar(1 / sigmaNut) * (nuTilda + nu));
+            nuTildaEff.name = "nuTildaEff";
+            nf::PDESolver<NeoN::scalar> nuTildaEqn(
+                dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
+                    - NeoN::dsl::imp::laplacian(nuTildaEff, nuTilda)
+                    + dsl::imp::source(spCoeff, nuTilda) - dsl::exp::source(production, nuTilda),
+                nuTilda,
                 rt
             );
-            nuTildeEqn.solve();
-            nuTilde.correctBoundaryConditions();
-            saBase.chi(chi, nuTilde, nu);
+            nuTildaEqn.solve();
+            nuTilda.correctBoundaryConditions();
+            saBase.chi(chi, nuTilda, nu);
             saBase.fv1(fv1, chi);
-            saBase.nut(nut, nuTilde, fv1);
+            saBase.nut(nut, nuTilda, fv1);
             nut.correctBoundaryConditions();
             surfNut = surfInterpol.interpolate(nut);
             surfNut.name = "nuEff";
@@ -280,8 +269,8 @@ int main(int argc, char* argv[])
                 write(p, mesh);
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
-                NeoN::Logging::info("Writing nuTilde");
-                write(nuTilde, mesh);
+                NeoN::Logging::info("Writing nuTilda");
+                write(nuTilda, mesh);
             }
 
             runTime.printExecutionTime(Info);

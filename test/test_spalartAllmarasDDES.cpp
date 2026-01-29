@@ -105,7 +105,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         mesh
     );
     nuTilda.correctBoundaryConditions();
-    Foam::volScalarField nut(
+    Foam::volScalarField ofNut(
         Foam::IOobject(
             "nut",
             runTime.timeName(),
@@ -211,13 +211,13 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
 
     scalar ofCw1 =
         scalar(0.1355) / Foam::sqr(scalar(0.41)) + (1.0 + scalar(0.622)) / scalar(0.66666);
-    nut = nuTilda * ofFv1;
-    nut.correctBoundaryConditions();
+    ofNut = nuTilda * ofFv1;
+    ofNut.correctBoundaryConditions();
     auto tfd = 1
              - Foam::tanh(Foam::pow(
                  scalar(8)
                      * Foam::min(
-                         (nuFoam + nut)
+                         (nuFoam + ofNut)
                              / (Foam::max(
                                     ofMagGradU,
                                     Foam::dimensionedScalar(
@@ -436,7 +436,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         ),
         tspCoeff()
     );
-    auto tLapNutU = fvc::laplacian(nut, U, "laplacian(nuEff,U)");
+    auto tLapNutU = fvc::laplacian(ofNut, U, "laplacian(nuEff,U)");
     Foam::volVectorField ofLapNutU(
         Foam::IOobject(
             "ofLapNutU",
@@ -458,7 +458,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         ),
         tDivDev2()
     );
-    auto tviscousStress = fvc::laplacian(nut, U, "laplacian(nuEff,U)")
+    auto tviscousStress = fvc::laplacian(ofNut, U, "laplacian(nuEff,U)")
                         - fvc::div(nuFoam * Foam::dev2(Foam::T(fvc::grad(U))));
     Foam::volVectorField ofViscousStress(
         Foam::IOobject(
@@ -540,12 +540,12 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
             .name = "nfNuTilda"
         });
 
-    auto& nfNut =
+    auto& nut =
         fieldCollection.registerVector<VolScalar>(nf::CreateFromFoamField<Foam::volScalarField> {
             .exec = rt.exec,
             .nfMesh = rt.nfMesh,
-            .foamField = nut,
-            .name = "nfNut"
+            .foamField = ofNut,
+            .name = "nut"
         });
 
     auto& nfDelta =
@@ -633,8 +633,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
 
     saBase.fw(fw, stilda, dTilde, nfNuTilda);
     nf::compare(fw, ofFw, ApproxScalar(1e-12), false);
-    saBase.nut(nfNut, nfNuTilda, fv1);
-    nf::compare(nfNut, nut, ApproxScalar(1e-12), false);
+    saBase.nut(nut, nfNuTilda, fv1);
+    nf::compare(nut, ofNut, ApproxScalar(1e-12), false);
 
 
     // --- nuEff on faces
@@ -670,7 +670,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     interpolationScheme.insert(std::string("linear"));
     interpolationScheme.insert(std::string("uncorrected"));
     auto nfSurfNu = surfInterpol.interpolate(nfNu);
-    auto nfSurfNut = surfInterpol.interpolate(nfNut);
+    auto nfSurfNut = surfInterpol.interpolate(nut);
     fvcc::GaussViscousStress opVisc(exec, rt.nfMesh, interpolationScheme);
     auto nfViscousStress = opVisc.viscousStress(
 		    nfSurfNu, nfSurfNut, nfU, G.gradUx, G.gradUy, G.gradUz, dsl::Coeff(1.0));
@@ -694,8 +694,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     nfNuTilda.correctBoundaryConditions();
     saBase.chi(chi, nfNuTilda, nfNu);
     saBase.fv1(fv1, chi);
-    saBase.nut(nfNut, nfNuTilda, fv1);
-    nfNut.correctBoundaryConditions(); // nut currently doesn't have the correct BCs
+    saBase.nut(nut, nfNuTilda, fv1);
+    nut.correctBoundaryConditions(); // nut currently doesn't have the correct BCs
 
     // -----------------------------
     // OpenFOAM nut cross-check
@@ -717,6 +717,6 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
             tNutFoam()
         );
 
-        nf::compare(nfNut, nutFoam, ApproxScalar(1e-7));
+        nf::compare(nut, nutFoam, ApproxScalar(1e-7));
     }
 }

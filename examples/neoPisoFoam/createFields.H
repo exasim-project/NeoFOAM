@@ -26,19 +26,6 @@ Foam::volVectorField
         ),
         mesh);
 
-Info << "Reading field nuTilde\n" << endl;
-Foam::volScalarField ofnuTilde(
-    Foam::IOobject(
-        "nuTilde",
-        runTime.timeName(),
-        mesh,
-        Foam::IOobject::MUST_READ,
-        Foam::IOobject::NO_WRITE,
-        Foam::IOobject::NO_REGISTER
-    ),
-    mesh
-);
-
 Info << "Reading/calculating face flux field phi\n" << endl;
 
 Foam::surfaceScalarField ofphi(
@@ -53,6 +40,24 @@ Foam::surfaceScalarField ofphi(
     fvc::flux(ofU)
 );
 
+Foam::singlePhaseTransportModel laminarTransport(ofU, ofphi);
+
+Foam::autoPtr<Foam::incompressible::turbulenceModel>
+    turbulence(Foam::incompressible::turbulenceModel::New(ofU, ofphi, laminarTransport));
+
+Info << "Reading turbulence fields\n" << endl;
+Foam::volScalarField ofnuTilda(
+    Foam::IOobject(
+        "nuTilda",
+        runTime.timeName(),
+        mesh,
+        Foam::IOobject::MUST_READ,
+        Foam::IOobject::NO_WRITE,
+        Foam::IOobject::NO_REGISTER
+    ),
+    mesh
+);
+
 Foam::volScalarField ofnut(
     Foam::IOobject(
         "nut",
@@ -64,11 +69,6 @@ Foam::volScalarField ofnut(
     ),
     mesh
 );
-
-Foam::singlePhaseTransportModel laminarTransport(ofU, ofphi);
-
-Foam::autoPtr<Foam::incompressible::turbulenceModel>
-    turbulence(Foam::incompressible::turbulenceModel::New(ofU, ofphi, laminarTransport));
 
 Foam::label pRefCell = 0;
 Foam::scalar pRefValue = 0.0;
