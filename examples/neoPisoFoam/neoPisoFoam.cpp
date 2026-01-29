@@ -83,13 +83,6 @@ int main(int argc, char* argv[])
         auto surfCalcBCs =
             fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
-        auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Vec3>>(rt.nfMesh);
-        //        fvcc::VolumeField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, volCalcBCs);
-        //        NeoN::fill(nu.internalVector(), viscosity.value());
-        //        NeoN::fill(nu.boundaryData().value(), viscosity.value());
-        fvcc::VolumeField<NeoN::scalar> one(rt.exec, "one", rt.nfMesh, volCalcBCs);
-        NeoN::fill(one.internalVector(), scalar(1));
-        NeoN::fill(one.boundaryData().value(), scalar(1));
 
         NeoN::Logging::info("Creating phi");
         auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
@@ -104,32 +97,23 @@ int main(int argc, char* argv[])
         auto tnu = laminarTransport.nu();
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
         Foam::wallDist y(mesh);
-        // const Foam::volScalarField& ofWallDist = y.y();
         auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
 
         const Foam::incompressible::LESModel& lesModel =
             Foam::refCast<const Foam::incompressible::LESModel>(turbulence());
-        // const Foam::volScalarField& delta = lesModel.delta();
         auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        NeoN::turbulenceModels::DES::SpalartAllmarasBase saBase(rt.exec, rt.nfMesh);
+        NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
         auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
         auto G = gradOp.grad(U);
-        fvcc::VolumeField<NeoN::scalar> omega(rt.exec, "omega", rt.nfMesh, volCalcBCs);
-        fvcc::VolumeField<NeoN::scalar> chi(rt.exec, "chi", rt.nfMesh, volCalcBCs);
-        fvcc::VolumeField<NeoN::scalar> fv1(rt.exec, "fv1", rt.nfMesh, volCalcBCs);
-        fvcc::VolumeField<NeoN::scalar> magGradU(rt.exec, "magGradU", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar>
             magSqrGradNuTilda(rt.exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> production(rt.exec, "production", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> spCoeff(rt.exec, "spCoeff", rt.nfMesh, volCalcBCs);
         fvcc::SurfaceField<NeoN::scalar> nuTildaEff(rt.exec, "nuTildaEff", rt.nfMesh, surfCalcBCs);
 
-        saBase.chi(chi, nuTilda, nu);
-        saBase.fv1(fv1, chi);
         auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofnut);
-        nut = nuTilda * fv1;
-        nut.correctBoundaryConditions();
+	saBase.correctNut(nut, nuTilda, nu);
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
@@ -227,17 +211,16 @@ int main(int argc, char* argv[])
             }
             // Turbulence calculations
             G = gradOp.grad(U);
-            saBase.omega(omega, G.gradUx, G.gradUy, G.gradUz);
-            saBase.magGradU(magGradU, G.gradUx, G.gradUy, G.gradUz);
             magSqrGradNuTilda = fvcc::magSqr(gradOp.grad(nuTilda));
             saBase.computeProdSpDDES(
                 production,
                 spCoeff,
                 nuTilda,
                 nu,
-                omega,
+		G.gradUx,
+		G.gradUy,
+		G.gradUz,
                 wallDist,
-                magGradU,
                 delta,
                 magSqrGradNuTilda
             );
@@ -253,10 +236,7 @@ int main(int argc, char* argv[])
             );
             nuTildaEqn.solve();
             nuTilda.correctBoundaryConditions();
-            saBase.chi(chi, nuTilda, nu);
-            saBase.fv1(fv1, chi);
-            saBase.nut(nut, nuTilda, fv1);
-            nut.correctBoundaryConditions();
+	    saBase.correctNut(nut, nuTilda, nu);
             surfNut = surfInterpol.interpolate(nut);
             surfNut.name = "nuEff";
             nuEff = surfNut + surfNu;
