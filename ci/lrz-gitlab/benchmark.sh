@@ -107,7 +107,6 @@ build_and_benchmark() {
 
     echo ">>> Building"
     cmake --build --preset $PRESET
-
     echo ">>> Running benchmarks..."
     export PATH=$PATH:$PWD/build/$PRESET/bin/benchmarks
     if [[ "$GPU_VENDOR" == "intel" ]]; then
