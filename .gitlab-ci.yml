@@ -116,12 +116,12 @@
 # Skip jobs based on GPU vendor
 .rules-skip-gpu:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA == "true"'
-      when: never
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD == "true"'
-      when: never
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL == "true"'
-      when: never
+    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA == "false"'
+      when: always
+    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD == "false"'
+      when: always
+    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL == "false"'
+      when: always
 
 # Triggered from NeoFOAM – testing
 .rules-neofoam-testing:
