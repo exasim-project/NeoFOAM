@@ -70,18 +70,9 @@ TEST_CASE("pressureVelocityCoupling")
         schemesDict = nf::mapFvSchemes(schemesDict);
         auto& nfMesh = rt.mesh;
         auto& fieldCollection = fvcc::VectorCollection::instance(rt.db, "fieldCollection");
-        auto& nfU = fieldCollection.registerVector<fvcc::VolumeField<NeoN::Vec3>>(
-            NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
-                .exec = rt.exec,
-                .nfMesh = rt.nfMesh,
-                .foamField = ofU,
-                .name = "U"
-            }
-        );
+        auto& nfU = constructFromVel(fieldCollection, rt, ofU);
         auto [nfP, nfPhi, nfGamma] =
             NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofP, ofPhi, ofGamma);
-        fvcc::rotateOldTimes(nfU);
-
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
             dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfGamma, nfU),

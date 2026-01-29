@@ -72,6 +72,12 @@ public:
         return ls_;
     }
 
+    NeoN::dsl::Expression<ValueType>& expression()
+    {
+        return expr_;
+    }
+
+
     const NeoN::Executor& exec() const { return ls_.exec(); }
 
 

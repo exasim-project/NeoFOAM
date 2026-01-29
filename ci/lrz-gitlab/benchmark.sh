@@ -99,6 +99,7 @@ build_and_benchmark() {
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
         -DKokkos_ENABLE_SYCL=ON \
         -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BENCHMARK_MODE="fast" \
         -DCMAKE_BUILD_TYPE="release"
     else
         cmake --preset $PRESET -DNEOFOAM_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
@@ -116,6 +117,7 @@ build_and_benchmark() {
     echo ">>> Benchmarks completed"
 
     # Check for produced results
+    find build  -name "results"  -exec python3 benchmarks/benchmarkSuite/createStudies.py display {} \;
     mapfile -d '' csv_files < <(find build/profiling/benchmarkSuite/ -type f -name '*.csv' -print0)
 
     if [ "${#csv_files[@]}" -eq 0 ]; then

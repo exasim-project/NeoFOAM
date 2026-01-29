@@ -14,7 +14,7 @@ find_package(Python COMPONENTS Interpreter)
 set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
 
 function(NeoN_benchmark BENCH)
-  add_executable(bench_${BENCH} "bench_${BENCH}.cpp")
+  add_executable(bench_${BENCH} "${BENCH}.cpp")
   target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 OpenFOAM NeoFOAM)
   target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
 
@@ -42,7 +42,7 @@ function(NeoN_benchmark BENCH)
     COMMAND
       "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/benchmarks/benchmarkSuite/createStudies.py
       "generate" ${CMAKE_SOURCE_DIR}/benchmarks/benchmarkSuite ${CMAKE_BINARY_DIR}/benchmarkSuite
-      ${BENCH})
+      ${BENCH} ${NEOFOAM_BENCHMARK_MODE})
 
   add_custom_target(
     benchmark_suite_${BENCH} ALL
@@ -61,5 +61,7 @@ endfunction()
 
 neon_benchmark(explicitOperators)
 neon_benchmark(implicitOperators)
-neon_benchmark(dsl)
+neon_benchmark(scalarAdvection)
 neon_benchmark(pressureVelocityCoupling)
+neon_benchmark(momentum)
+neon_benchmark(poisson)

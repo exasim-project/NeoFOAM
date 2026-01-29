@@ -14,7 +14,7 @@ from foamlib.postprocessing.table_reader import read_catch2_benchmark
 def build_records(name, resolution):
     return [ {"case_name": f"{name}_N{str(r)}", "Res":r, "MeshType": name, "Resolution": f"N{r}" } for r in resolution ]
 
-def create_cases(src, root, case, force=False):
+def create_cases(src, root, case, force=False, detailed=False):
     """ creates benchmark cases"""
     case_path = root/case
     if case_path.exists() and not force:
@@ -22,16 +22,17 @@ def create_cases(src, root, case, force=False):
     if case_path.exists() and force:
         shutil.rmtree(case_path)
 
-
     case_path.mkdir(parents=True, exist_ok=True)
+    cube_range = [8, 16, 32, 64, 128] if detailed else [16, 32, 64]
     study_cube = record_generator(
-        records=build_records("3DCube", [8, 16, 32, 64, 128]),
+        records=build_records("3DCube", cube_range ),
         template_case= src / "templates/3DCube",
         output_folder=case_path / "Cases",
     )
 
+    square_range = [8, 16, 32, 64, 128, 256, 512] if detailed else [16, 64, 256]
     study_square = record_generator(
-        records=build_records("2DSquare", [8, 16, 32, 64, 128, 256, 512]),
+        records=build_records("2DSquare", square_range),
         template_case= src / "templates/2DSquare",
         output_folder=case_path / "Cases"
     )
@@ -104,7 +105,7 @@ def clean_case(target, name):
     r, dirs, fs = next(os.walk(target/name/"Cases"))
 
 def display(target):
-    cases = target / "results"
+    cases = target
     r, dirs, fs = next(os.walk(cases))
     pd.set_option('display.float_format', lambda x: f'{x:.4f}')
     pd.set_option('display.max_columns', None)
@@ -120,7 +121,7 @@ def display(target):
         df.loc[df["MeshType"] == '2DSquare', 'Cells'] = df['Resolution']**2
         df.loc[df["MeshType"] == '3DCube', 'Cells'] = df['Resolution']**3
         df["Time/Cell"] = df["avg_runtime"]/ df["Cells"]
-        print(df.pivot(columns=["MeshType", "section1", "benchmark_name"], values="Time/Cell", index=["section2", "Resolution"]))
+        print(df.pivot(columns=["section1", "MeshType", "benchmark_name"], values="Time/Cell", index=["section2", "Resolution"]))
 
 def main():
     mode = sys.argv[1]
@@ -131,7 +132,8 @@ def main():
         src = sys.argv[2]
         target = sys.argv[3]
         case_name = sys.argv[4]
-        create_cases(Path(src), Path(target), case_name, True)
+        detailed = sys.argv[5] == "fast"
+        create_cases(Path(src), Path(target), case_name, True, detailed)
         prepare_case(Path(target), case_name)
     if mode == "execute":
         exe = sys.argv[2]

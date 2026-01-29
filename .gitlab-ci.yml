@@ -26,7 +26,7 @@
     - source /opt/intel/oneapi/setvars.sh --force
     - eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
   variables:
-    PYTHONPATH: /opt/intel/oneapi/advisor/2025.3/pythonapi
+    PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages:/opt/intel/oneapi/advisor/2025.3/pythonapi
     FOAM_INST_DIR: /opt/openfoam
     WM_PROJECT_VERSION: v2412
 
@@ -87,8 +87,6 @@
     TARGET_BRANCH: "ci-benchmarks"
     TARGET_RESULTS_DIR: "NeoFOAM/${PR_NUMBER}/${CI_RUNNER_DESCRIPTION}"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 # --- Configurations of triggering pipelines from NeoFOAM ---
 # For testing
 .trigger-from-neofoam-for-testing-nvidia:
@@ -187,7 +185,7 @@ benchmark-and-test-triggered-from-NF-intel:
     - .use-intel-gpu-and-image
     - .trigger-from-neofoam-for-benchmarking-intel
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH $PR_NUMBER
+    - ./ci/lrz-gitlab/benchmark.sh intel $NEON_BRANCH $PR_NUMBER
 
 # --- Build and test NeoFOAM with a feature branch of NeoN ---
 build-and-test-triggered-from-NeoN-nvidia:

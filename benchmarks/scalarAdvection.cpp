@@ -24,7 +24,7 @@ extern Foam::Time* timePtr;    // A single time object
 extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
 extern Foam::fvMesh* meshPtr;  // A single mesh object
 
-TEST_CASE("advection-diffusion-equation_scalar")
+TEST_CASE("scalarAdvection")
 {
     Foam::Time& runTime = *timePtr;
     std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
