@@ -157,7 +157,6 @@
 .build-and-test:
   extends:
     - .openfoam-env-setup
-    - .rules-skip-gpu
   script:
     - ./ci/lrz-gitlab/build-and-test.sh $GPU_VENDOR $NEON_BRANCH
 
@@ -165,7 +164,6 @@
   extends:
     - .openfoam-env-setup
     - .variables-for-benchmarking
-    - .rules-skip-gpu
   script:
     - ./ci/lrz-gitlab/benchmark.sh $GPU_VENDOR $NEON_BRANCH $PR_NUMBER
 
@@ -176,18 +174,21 @@
 build-test-neofoam-nvidia:
   extends:
     - .gpu-nvidia
+    - .rules-skip-gpu
     - .rules-neofoam-testing
     - .build-and-test
 
 build-test-neofoam-amd:
   extends:
     - .gpu-amd
+    - .rules-skip-gpu
     - .rules-neofoam-testing
     - .build-and-test
 
 build-test-neofoam-intel:
   extends:
     - .gpu-intel
+    - .rules-skip-gpu
     - .rules-neofoam-testing
     - .build-and-test
 
@@ -198,18 +199,21 @@ build-test-neofoam-intel:
 benchmark-neofoam-nvidia:
   extends:
     - .gpu-nvidia
+    - .rules-skip-gpu
     - .rules-neofoam-benchmarking
     - .benchmark
 
 benchmark-neofoam-amd:
   extends:
     - .gpu-amd
+    - .rules-skip-gpu
     - .rules-neofoam-benchmarking
     - .benchmark
 
 benchmark-neofoam-intel:
   extends:
     - .gpu-intel
+    - .rules-skip-gpu
     - .rules-neofoam-benchmarking
     - .benchmark
 
@@ -220,17 +224,20 @@ benchmark-neofoam-intel:
 build-test-from-neon-nvidia:
   extends:
     - .gpu-nvidia
+    - .rules-skip-gpu
     - .rules-neon-testing
     - .build-and-test
 
 build-test-from-neon-amd:
   extends:
     - .gpu-amd
+    - .rules-skip-gpu
     - .rules-neon-testing
     - .build-and-test
 
 build-test-from-neon-intel:
   extends:
     - .gpu-intel
+    - .rules-skip-gpu
     - .rules-neon-testing
     - .build-and-test
