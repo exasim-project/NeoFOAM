@@ -89,32 +89,9 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
 
     // === NeoN: mirror state ===
 
-    auto& nfU = fieldCollection.registerVector<VolVector>(
-        NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
-            .exec = rt.exec,
-            .nfMesh = rt.nfMesh,
-            .foamField = U,
-            .name = "nfU"
-        }
-    );
-
-    auto& nfp = fieldCollection.registerVector<VolScalar>(
-        NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-            .exec = rt.exec,
-            .nfMesh = rt.nfMesh,
-            .foamField = p,
-            .name = "nfp"
-        }
-    );
-
-    auto& nfPhi = fieldCollection.registerVector<SurfScalar>(
-        NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField> {
-            .exec = rt.exec,
-            .nfMesh = rt.nfMesh,
-            .foamField = phi,
-            .name = "nfPhi"
-        }
-    );
+    auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U);
+    auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
+    auto& nfPhi = NeoFOAM::constructAndRegister(fieldCollection, rt, phi);
 
     auto& nfU0 = fvcc::oldTime(nfU);
     auto& nfPhi0 = fvcc::oldTime(nfPhi);
@@ -166,7 +143,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
 
     UEqnNF.assemble();
     auto [crAU, hByAND] = NeoFOAM::computeRAUandHByA(UEqnNF);
-    NeoFOAM::constrainHbyA(nfU, nfp, hByAND);
+    NeoFOAM::constrainHbyA(nfU, nfP, hByAND);
 
     SurfScalar rAUNF = fvcc::SurfaceInterpolation<NeoN::scalar>(
                            rt.exec,

@@ -6,6 +6,7 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
@@ -178,7 +179,7 @@ auto constructFrom(
     using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
 
     if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
-    {
+      {
         ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
         out.internalVector() = fromFoamField(exec, in.primitiveField());
         out.correctBoundaryConditions();
@@ -316,5 +317,31 @@ const NeoN::UnstructuredMesh& uMesh,
 {
     return std::tuple(constructFrom(exec, uMesh, args)...);
 }
+
+/**@brief construct an NF field from a given OF field and register*/
+template<typename FoamFieldType>
+auto& constructAndRegister(
+        fvcc::VectorCollection& fieldCollection,
+        RunTime& rt,
+        FoamFieldType& of,
+        bool storeOldTime=true
+                           )
+{
+    using ContainerType = typename TypeMap<FoamFieldType>::container_type;
+    // using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
+    ContainerType& ret = fieldCollection.template registerVector<ContainerType>(
+        NeoFOAM::CreateFromFoamField<FoamFieldType> {
+            .exec = rt.exec,
+            .nfMesh = rt.nfMesh,
+            .foamField = of,
+            .name = of.name()
+        }
+    );
+    if (storeOldTime) {
+        fvcc::rotateOldTimes(ret);
+    }
+    return ret;
+}
+
 
 }; // namespace Foam

@@ -12,6 +12,7 @@
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
+namespace nf = NeoFOAM;
 
 extern Foam::Time* timePtr;    // A single time object
 extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
@@ -26,6 +27,7 @@ TEST_CASE("matrix multiplication")
     fvcc::VectorCollection& fieldCol = fvcc::VectorCollection::instance(db, "VectorCollection");
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto rt = nf::createAdapterRunTime(runTime, exec);
 
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
@@ -39,17 +41,10 @@ TEST_CASE("matrix multiplication")
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         ofT.correctBoundaryConditions();
 
-        fvcc::VolumeField<NeoN::scalar>& nfT =
-            fieldCol.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-                    .exec = exec,
-                    .nfMesh = nfMesh,
-                    .foamField = ofT,
-                    .name = "nfT"
-                }
-            );
+        auto& nfT = NeoFOAM::constructAndRegister(fieldCol, rt, ofT);
         auto& nfTOld = fvcc::oldTime(nfT);
         const auto nfTOldView = nfTOld.internalVector().view();
+
         NeoN::map(
             nfTOld.internalVector(),
             NEON_LAMBDA(const std::size_t celli) { return nfTOldView[celli] - 1.0; }

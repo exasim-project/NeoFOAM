@@ -9,6 +9,7 @@
 using Foam::Info;
 using Foam::endl;
 using Foam::nl;
+namespace nf = NeoFOAM;
 namespace fvc = Foam::fvc;
 namespace fvm = Foam::fvm;
 
@@ -55,6 +56,7 @@ TEST_CASE("Advection Equation")
         fvcc::VectorCollection::instance(db, "VectorCollection");
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto rt = nf::createAdapterRunTime(runTime, exec);
 
     Foam::scalar startTime = 0.0;
     Foam::label startTimeIndex = 0;
@@ -95,23 +97,13 @@ TEST_CASE("Advection Equation")
     Foam::surfaceScalarField phi0 = phi;
     Foam::volVectorField U0 = U;
 
-    fvcc::VolumeField<NeoN::scalar>& nfT =
-        vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-                .exec = exec,
-                .nfMesh = nfMesh,
-                .foamField = T,
-                .name = "nfT"
-            }
-        );
-    auto nfPhi0 = NeoFOAM::constructFrom(exec, nfMesh, phi0);
-    auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, phi);
+    auto& nfT = NeoFOAM::constructAndRegister(vectorCollection, rt, T);
+    auto [nfPhi0, nfPhi] = NeoFOAM::constFromMany(exec, nfMesh, phi0, phi);
 
     NeoN::Dictionary controlDict = NeoFOAM::convert(runTime.controlDict());
     NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());
     fvSchemesDict = NeoFOAM::mapFvSchemes(fvSchemesDict);
     Foam::scalar endTime = controlDict.get<Foam::scalar>("endTime");
-
 
     SECTION("Scalar advection with " + execName + " and " + "forwardEuler")
     {
@@ -162,9 +154,6 @@ TEST_CASE("Advection Equation")
                 write(nfT.internalVector(), mesh, "nfTExp_" + execName);
                 T.write(); // for some reason T was not written
             }
-
-            // runTime.write();
-            // runTime.printExecutionTime(Info);
         }
         NeoFOAM::compare(nfT, T, ApproxScalar(1e-10), false);
     }
@@ -220,9 +209,6 @@ TEST_CASE("Advection Equation")
                 write(nfT.internalVector(), mesh, "nfTImp_" + execName);
                 T.write(); // for some reason T was not written
             }
-
-            // runTime.write();
-            // runTime.printExecutionTime(Info);
         }
 
         NeoFOAM::compare(nfT, T, ApproxScalar(1e-8), false);

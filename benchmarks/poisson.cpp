@@ -69,15 +69,7 @@ TEST_CASE("Poisson")
         auto& nfMesh = rt.mesh;
         auto& fieldCollection = fvcc::VectorCollection::instance(rt.db, "fieldCollection");
         auto& nfU = constructFromVel(fieldCollection, rt, ofU);
-        auto& nfPhi = fieldCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField> {
-                .exec = rt.exec,
-                .nfMesh = rt.nfMesh,
-                .foamField = ofPhi,
-                .name = "phi"
-            }
-        );
-        fvcc::rotateOldTimes(nfPhi);
+        auto& nfPhi = nf::constructAndRegister(fieldCollection, rt, ofPhi);
 
         auto [nfP, nfGamma] = NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofP, ofGamma);
 

@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

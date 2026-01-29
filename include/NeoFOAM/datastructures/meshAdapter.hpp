@@ -11,8 +11,6 @@
 
 #include "fvMesh.H"
 
-#include "NeoFOAM/auxiliary/readers.hpp"
-
 namespace NeoFOAM
 {
 

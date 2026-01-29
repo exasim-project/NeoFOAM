@@ -9,7 +9,6 @@
 #include "fvMesh.H"
 
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
-#include "NeoFOAM/auxiliary/readers.hpp"
 
 namespace NeoFOAM
 {
