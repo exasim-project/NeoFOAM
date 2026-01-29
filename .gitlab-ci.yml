@@ -34,9 +34,6 @@
   variables:
     FOAM_INST_DIR: /opt/openfoam
     GPU_VENDOR: intel
-  before_script:
-    - source /opt/intel/oneapi/setvars.sh --force
-    - eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
 
 # ============================================================
 #  Common OpenFOAM environment setup
@@ -66,14 +63,32 @@
     WM_PROJECT_DIR: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION"
 
   before_script:
-    - export PATH="$FOAM_APPBIN:$PATH"
-    - export FOAM_MPI=$(basename $(dirname $(find $FOAM_LIBBIN -name libPstream.so | head -n1)))
-    - echo "Detected FOAM_MPI=$FOAM_MPI"
-    - export LD_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$LD_LIBRARY_PATH"
-    - export CMAKE_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$CMAKE_LIBRARY_PATH"
-    - export MANPATH="$FOAM_ETC/man:$MANPATH"
+    - |
+        case "$GPU_VENDOR" in
+          intel)
+            echo "Running Intel oneAPI + OpenFOAM environment setup"
+            source /opt/intel/oneapi/setvars.sh --force
+            eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
+            ;;
+          nvidia|amd)
+            echo "Running AMD/NVIDIA OpenFOAM environment setup"
+            export PATH="$FOAM_APPBIN:$PATH"
+            export FOAM_MPI=$(basename $(dirname $(find $FOAM_LIBBIN -name libPstream.so | head -n1)))
+            echo "Detected FOAM_MPI=$FOAM_MPI"
+            export LD_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$LD_LIBRARY_PATH"
+            export CMAKE_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$CMAKE_LIBRARY_PATH"
+            export MANPATH="$FOAM_ETC/man:$MANPATH"
+            ;;
+          *)
+            echo "ERROR: Unknown GPU_VENDOR=$GPU_VENDOR"
+            exit 1
+            ;;
+        esac
 
-    # Debugging
+    # ----------------------------------------------------------
+    # Common debugging (runs for all GPUs)
+    # ----------------------------------------------------------
+    - echo "GPU_VENDOR=$GPU_VENDOR"
     - echo "PATH=$PATH"
     - echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
     - echo "CMAKE_LIBRARY_PATH=$CMAKE_LIBRARY_PATH"
