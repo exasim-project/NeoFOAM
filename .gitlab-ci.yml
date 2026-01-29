@@ -2,35 +2,46 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-# Available GPUs and corresponding Docker images
-.use-nvidia-gpu-and-image:
+# ============================================================
+#  GPU-specific images and runner configuration
+# ============================================================
+
+.gpu-base:
+  variables:
+    PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages
+    WM_PROJECT_VERSION: v2412
+
+.gpu-nvidia:
+  extends: .gpu-base
   tags: ["nvidia-gpus"]
   image: chihtaw/cuda-openfoam-ginkgo:12.8.1-v2412-arch_89
   variables:
-    PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages
     FOAM_INST_DIR: /usr/local/app/openfoam
-    WM_PROJECT_VERSION: v2412
+    GPU_VENDOR: nvidia
 
-.use-amd-gpu-and-image:
+.gpu-amd:
+  extends: .gpu-base
   tags: ["amd-gpus"]
   image: chihtaw/rocm-openfoam-ginkgo:6.4.1-v2412-arch_gfx90a
   variables:
-    PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages
     FOAM_INST_DIR: /workspace/openfoam
-    WM_PROJECT_VERSION: v2412
+    GPU_VENDOR: amd
 
-.use-intel-gpu-and-image:
+.gpu-intel:
+  extends: .gpu-base
   tags: ["intel-gpus"]
   image: dheerajraghunathan/oneapi-openfoam-ginkgo:2025.3-v2412-arch_pvc
+  variables:
+    FOAM_INST_DIR: /opt/openfoam
+    GPU_VENDOR: intel
   before_script:
     - source /opt/intel/oneapi/setvars.sh --force
     - eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
-  variables:
-    PYTHONPATH: /root/.local/:/root/.local/lib/:/root/.local/lib/python3.12:/root/.local/lib/python3.12/site-packages:/opt/intel/oneapi/advisor/2025.3/pythonapi
-    FOAM_INST_DIR: /opt/openfoam
-    WM_PROJECT_VERSION: v2412
 
-# Common OpenFOAM environment variables
+# ============================================================
+#  Common OpenFOAM environment setup
+# ============================================================
+
 .openfoam-env-setup:
   variables:
     WM_PROJECT: OpenFOAM
@@ -48,7 +59,6 @@
     WM_MPLIB: SYSTEMOPENMPI
     MPI_BUFFER_SIZE: 20000000
 
-    # Derived OpenFOAM environment paths
     FOAM_ETC: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/etc"
     FOAM_SRC: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/src"
     FOAM_LIBBIN: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/platforms/$WM_OPTIONS/lib"
@@ -56,26 +66,23 @@
     WM_PROJECT_DIR: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION"
 
   before_script:
-    # Add OpenFOAM executables to PATH
     - export PATH="$FOAM_APPBIN:$PATH"
-
-    # Detect MPI subdirectory containing libPstream.so
     - export FOAM_MPI=$(basename $(dirname $(find $FOAM_LIBBIN -name libPstream.so | head -n1)))
     - echo "Detected FOAM_MPI=$FOAM_MPI"
-
-    # Add OpenFOAM libraries to build and runtime paths
     - export LD_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$LD_LIBRARY_PATH"
     - export CMAKE_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$CMAKE_LIBRARY_PATH"
-
-    # Set man path
     - export MANPATH="$FOAM_ETC/man:$MANPATH"
 
-    # Debugging info
+    # Debugging
     - echo "PATH=$PATH"
     - echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
     - echo "CMAKE_LIBRARY_PATH=$CMAKE_LIBRARY_PATH"
     - which simpleFoam || echo "simpleFoam not found!"
     - find $FOAM_LIBBIN -name "libPstream.so"
+
+# ============================================================
+#  Benchmarking variables
+# ============================================================
 
 .variables-for-benchmarking:
   variables:
@@ -87,126 +94,128 @@
     TARGET_BRANCH: "ci-benchmarks"
     TARGET_RESULTS_DIR: "NeoFOAM/${PR_NUMBER}/${CI_RUNNER_DESCRIPTION}"
 
-# --- Configurations of triggering pipelines from NeoFOAM ---
-# For testing
-.trigger-from-neofoam-for-testing-nvidia:
+# ============================================================
+#  Rule blocks
+# ============================================================
+
+# Skip jobs based on GPU vendor
+.rules-skip-gpu:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false" && $SKIP_NVIDIA == "false"
+    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA == "true"'
+      when: never
+    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD == "true"'
+      when: never
+    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL == "true"'
+      when: never
+
+# Triggered from NeoFOAM – testing
+.rules-neofoam-testing:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger" &&
+           $TRIGGER_SOURCE == "NeoFOAM" &&
+           $BENCHMARK == "false"'
       when: always
     - when: never
 
-.trigger-from-neofoam-for-testing-amd:
+# Triggered from NeoFOAM – benchmarking
+.rules-neofoam-benchmarking:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false" && $SKIP_AMD == "false"
+    - if: '$CI_PIPELINE_SOURCE == "trigger" &&
+           $TRIGGER_SOURCE == "NeoFOAM" &&
+           $BENCHMARK == "true"'
       when: always
     - when: never
 
-.trigger-from-neofoam-for-testing-intel:
+# Triggered from NeoN – testing
+.rules-neon-testing:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "false" && $SKIP_INTEL == "false"
+    - if: '$CI_PIPELINE_SOURCE == "trigger" &&
+           $TRIGGER_SOURCE == "NeoN" &&
+           $BENCHMARK == "false"'
       when: always
     - when: never
 
-# For benchmarking
-.trigger-from-neofoam-for-benchmarking-nvidia:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true" && $SKIP_NVIDIA == "false"
-      when: always
-    - when: never
+# ============================================================
+#  Job templates
+# ============================================================
+
+.build-and-test:
   extends:
+    - .openfoam-env-setup
+    - .rules-skip-gpu
+  script:
+    - ./ci/lrz-gitlab/build-and-test.sh $GPU_VENDOR $NEON_BRANCH
+
+.benchmark:
+  extends:
+    - .openfoam-env-setup
     - .variables-for-benchmarking
-
-.trigger-from-neofoam-for-benchmarking-amd:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true" && $SKIP_AMD == "false"
-      when: always
-    - when: never
-  extends:
-    - .variables-for-benchmarking
-
-.trigger-from-neofoam-for-benchmarking-intel:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" && $BENCHMARK == "true" && $SKIP_INTEL == "false"
-      when: always
-    - when: never
-  extends:
-    - .variables-for-benchmarking
-
-# --- Configurations of triggering pipelines from NeoN ---
-.trigger-from-neon-for-testing:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" && $BENCHMARK == "false"
-      when: always
-    - when: never
-
-# --- Build and test NeoFOAM ---
-build-and-test-triggered-from-NF-nvidia:
-  extends:
-    - .use-nvidia-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neofoam-for-testing-nvidia
+    - .rules-skip-gpu
   script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
+    - ./ci/lrz-gitlab/benchmark.sh $GPU_VENDOR $NEON_BRANCH $PR_NUMBER
 
-build-and-test-triggered-from-NF-amd:
-  extends:
-    - .use-amd-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neofoam-for-testing-amd
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
+# ============================================================
+#  NeoFOAM - testing jobs
+# ============================================================
 
-build-and-test-triggered-from-NF-intel:
+build-test-neofoam-nvidia:
   extends:
-    - .use-intel-gpu-and-image
-    - .trigger-from-neofoam-for-testing-intel
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH
+    - .gpu-nvidia
+    - .build-and-test
+    - .rules-neofoam-testing
 
-# --- Benchmark NeoFOAM ---
-benchmark-triggered-from-NF-nvidia:
+build-test-neofoam-amd:
   extends:
-    - .use-nvidia-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neofoam-for-benchmarking-nvidia
-  script:
-    - ./ci/lrz-gitlab/benchmark.sh nvidia $NEON_BRANCH $PR_NUMBER
+    - .gpu-amd
+    - .build-and-test
+    - .rules-neofoam-testing
 
-benchmark-triggered-from-NF-amd:
+build-test-neofoam-intel:
   extends:
-    - .use-amd-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neofoam-for-benchmarking-amd
-  script:
-    - ./ci/lrz-gitlab/benchmark.sh amd $NEON_BRANCH $PR_NUMBER
+    - .gpu-intel
+    - .build-and-test
+    - .rules-neofoam-testing
 
-benchmark-and-test-triggered-from-NF-intel:
-  extends:
-    - .use-intel-gpu-and-image
-    - .trigger-from-neofoam-for-benchmarking-intel
-  script:
-    - ./ci/lrz-gitlab/benchmark.sh intel $NEON_BRANCH $PR_NUMBER
+# ============================================================
+#  NeoFOAM - benchmarking jobs
+# ============================================================
 
-# --- Build and test NeoFOAM with a feature branch of NeoN ---
-build-and-test-triggered-from-NeoN-nvidia:
+benchmark-neofoam-nvidia:
   extends:
-    - .use-nvidia-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neon-for-testing
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh nvidia $NEON_BRANCH
+    - .gpu-nvidia
+    - .benchmark
+    - .rules-neofoam-benchmarking
 
-build-and-test-triggered-from-NeoN-amd:
+benchmark-neofoam-amd:
   extends:
-    - .use-amd-gpu-and-image
-    - .openfoam-env-setup
-    - .trigger-from-neon-for-testing
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh amd $NEON_BRANCH
+    - .gpu-amd
+    - .benchmark
+    - .rules-neofoam-benchmarking
 
-build-and-test-triggered-from-NeoN-intel:
+benchmark-neofoam-intel:
   extends:
-    - .use-intel-gpu-and-image
-    - .trigger-from-neon-for-testing
-  script:
-    - ./ci/lrz-gitlab/build-and-test.sh intel $NEON_BRANCH
+    - .gpu-intel
+    - .benchmark
+    - .rules-neofoam-benchmarking
+
+# ============================================================
+#  NeoN - testing jobs
+# ============================================================
+
+build-test-neon-nvidia:
+  extends:
+    - .gpu-nvidia
+    - .build-and-test
+    - .rules-neon-testing
+
+build-test-neon-amd:
+  extends:
+    - .gpu-amd
+    - .build-and-test
+    - .rules-neon-testing
+
+build-test-neon-intel:
+  extends:
+    - .gpu-intel
+    - .build-and-test
+    - .rules-neon-testing
