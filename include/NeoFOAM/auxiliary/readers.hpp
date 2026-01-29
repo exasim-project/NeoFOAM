@@ -102,7 +102,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
-        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
+        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+        {"nutUSpaldingWallFunction", [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }}
     };
 
     int patchi = 0;
