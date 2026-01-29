@@ -4,7 +4,6 @@
 import sys
 
 import typer
-import pybFoam as pyf
 
 app = typer.Typer()
 

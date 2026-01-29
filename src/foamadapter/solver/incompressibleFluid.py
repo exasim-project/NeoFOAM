@@ -3,7 +3,6 @@
 
 from typing import Any, Literal
 
-import pybFoam as pyf
 from pybFoam import (
     Info,
 )

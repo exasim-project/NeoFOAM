@@ -163,9 +163,9 @@ class IncompressibleFluidInitializer:
         )
 
         # Build optional models
-        for model in self.data.optional_models:
-            if hasattr(model, "build"):
-                initializers.extend(model.build())
+        for opt_model in self.data.optional_models:
+            if hasattr(opt_model, "build"):
+                initializers.extend(opt_model.build())
 
         return initializers
 

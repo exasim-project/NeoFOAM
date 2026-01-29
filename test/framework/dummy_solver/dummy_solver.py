@@ -7,9 +7,8 @@ DummySolver - Test solver with FastAPI-style syntax.
 Mimics SimpleSolver structure for testing new API.
 """
 
-from typing import Any, Annotated
+from typing import Annotated
 
-from pydantic import BaseModel
 
 from foamadapter.framework.context import Context, FieldUpdates
 from foamadapter.framework.initialization import Depends, StagedInit
@@ -21,6 +20,9 @@ from foamadapter.framework.operations import (
     DAGResolver,
 )
 from foamadapter.framework.solver_factory import Solver
+
+# Import create_init from dummy_init
+from .dummy_init import create_init
 
 
 class AlgorithmLoop:
@@ -43,30 +45,15 @@ class AlgorithmLoop:
         return True  # Continue for testing
 
 
-# Import create_init from dummy_init
-from .dummy_init import create_init
-
 # Create Solver instance for decorating operations
 dummy_solver = Solver("DummySolver")
-dummy_solver.argv = []
-dummy_solver._algorithm = None
-dummy_solver._optional_models = []
 
 
-@dummy_solver.initialize_step
-def initialize() -> Context:
-    """Initialize using create_init factory."""
-    init = create_init()
+@dummy_solver.initializer
+def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
+    """Initialize using create_init factory with dependency injection."""
     init.argv = dummy_solver.argv
-    ctx = init.run()
-
-    # Store optional models for execution_graph
-    optional_models = ctx.models.get("optional_models", [])
-    dummy_solver._optional_models = [
-        m for m in optional_models if hasattr(m, "operations") and m.enabled
-    ]
-
-    return ctx
+    return init.run()
 
 
 @dummy_solver.execution_graph_step
@@ -82,6 +69,8 @@ def execution_graph(
     _ = domain_name
 
     # Build solver structure
+
+    ops = dummy_solver.operations
     builder = StepBuilder()
 
     # Outer time loop - limit to 1 iteration for testing
@@ -106,14 +95,13 @@ def execution_graph(
         )
 
         with time_builder.loop(algo_loop) as inner_builder:
-            # Add solver operations automatically from @solver.operation decorators
-            # We use the operations collection directly from dummy_solver
-            for op in dummy_solver.operations:
-                inner_builder.step(op)
+            inner_builder.step(ops["solver_step1"])
+            inner_builder.step(ops["solver_step2"])
+            inner_builder.step(ops["solver_step3"])
 
     # Collect model operations
     model_ops = OperationCollection()
-    for model in dummy_solver._optional_models:
+    for model in dummy_solver.optional_models:
         model_ops.add(model.operations)
 
     return builder, model_ops

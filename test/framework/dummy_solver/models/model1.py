@@ -10,19 +10,18 @@ Demonstrates Model API with configuration loaded from YAML.
 from typing import Any, Annotated
 from pathlib import Path
 
-from pydantic import BaseModel
 
 from foamadapter.framework.context import Context, FieldUpdates
 from foamadapter.framework.initialization import Depends
 from foamadapter.framework.initialization.lazy_init import LazyInit
 
 from .dummy_model import Model
+from ..dummy_init import Model1Config
 
 
 model1 = Model("DummyModel1")
 
 
-from ..dummy_init import Model1Config
 
 
 # Model state (runtime counters)
@@ -127,8 +126,6 @@ def model1_step2(
     Second model step - uses injected config.
     """
     self._step2_count += 1
-
-    mf2 = ctx.fields["model_field2"]  # Returns float directly
 
     # Generic update using model config
     param1 = ctx.models["config"]["param1"]

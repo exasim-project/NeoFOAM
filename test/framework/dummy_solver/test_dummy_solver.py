@@ -10,12 +10,7 @@ that doesn't require mocks or external dependencies.
 
 import pytest
 
-from foamadapter.framework.operations import DAGResolver, StepBuilder
-
-
-# ============================================================================
-# Test: DummySolver Initialization
-# ============================================================================
+from foamadapter.framework.operations import DAGResolver
 
 
 def test_dummy_solver_init():
@@ -160,7 +155,6 @@ def test_dummy_solver_dag_resolution():
 def test_dummy_solver_step1_operation():
     """Test solver step 1 operation."""
     from framework.dummy_solver.dummy_solver import dummy_solver as solver
-    from foamadapter.framework.context import Context
 
     ctx = solver.initialize()
 

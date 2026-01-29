@@ -10,11 +10,22 @@ Provides instance-based Solver API matching Init pattern.
 import inspect
 from typing import Any, Callable
 from functools import wraps
+from dataclasses import dataclass, field
 
 from .types import OperationMetadata, OpType, OperationNumber
 from .operations import Operation, SequentialOp
 from .dependency_resolver import DependencyResolver
 from .context import Context
+from .operations import OperationCollection
+
+
+@dataclass
+class SolverState:
+    """Shared state container for core models, optional models, and configs."""
+
+    core_models: list[Any] = field(default_factory=list)
+    optional_models: list[Any] = field(default_factory=list)
+    configs: dict[str, Any] = field(default_factory=dict)
 
 
 class SolverInstance:
@@ -47,9 +58,44 @@ class SolverInstance:
             None
         )
         self._dependency_resolver = DependencyResolver()
+        self.argv = []
 
-    def initialize_step(self, func: Callable[[], Context]) -> Callable[[], Context]:
-        """Decorator to register solver initialization step."""
+        # Shared state container
+        self.state = SolverState()
+
+    @property
+    def core_models(self) -> list[Any]:
+        """Access core_models from state."""
+        return self.state.core_models
+
+    @core_models.setter
+    def core_models(self, value: list[Any]) -> None:
+        """Set core_models in state."""
+        self.state.core_models = value
+
+    @property
+    def optional_models(self) -> list[Any]:
+        """Access optional_models from state."""
+        return self.state.optional_models
+
+    @optional_models.setter
+    def optional_models(self, value: list[Any]) -> None:
+        """Set optional_models in state."""
+        self.state.optional_models = value
+
+    @property
+    def configs(self) -> dict[str, Any]:
+        """Access configs from state."""
+        return self.state.configs
+
+    @configs.setter
+    def configs(self, value: dict[str, Any]) -> None:
+        """Set configs in state."""
+        self.state.configs = value
+
+    def initializer(self, func: Callable[[], Context]) -> Callable[[], Context]:
+        """Decorator to register solver initializer with dependency injection support."""
+        # Store original function
         self._initialize_func = func
         return func
 
@@ -61,9 +107,28 @@ class SolverInstance:
         return func
 
     def initialize(self) -> Context:
-        """Execute registered initialization step."""
+        """Execute registered initialization step with dependency injection."""
         if self._initialize_func:
-            return self._initialize_func()
+            # Resolve dependencies without Context (for standalone functions)
+            kwargs = self._dependency_resolver.resolve_arguments(
+                self._initialize_func, None
+            )
+
+            # Check if first parameter is 'self'
+            sig = inspect.signature(self._initialize_func)
+            if "self" in sig.parameters and "self" not in kwargs:
+                kwargs["self"] = self
+
+            ctx = self._initialize_func(**kwargs)
+
+            # Automatically transfer state from first injected parameter
+            # This works when init (StagedInit) is injected as first parameter
+            if kwargs:
+                first_param = next(iter(kwargs.values()))
+                if hasattr(first_param, "state"):
+                    self.state = first_param.state
+
+            return ctx
         raise RuntimeError(f"No initialize function registered for solver {self.name}")
 
     def execution_graph(self, domain_name: str | None = None) -> tuple[Any, Any]:
@@ -204,14 +269,14 @@ class SolverInstance:
         return wrapper
 
     @property
-    def operations(self) -> list[Operation]:
+    def operations(self) -> OperationCollection:
         """
-        Get list of Operation objects from decorated methods.
+        Get OperationCollection from decorated methods.
 
         Returns:
-            List of Operation objects ready for DAG resolution
+            OperationCollection with all registered operations
         """
-        ops = []
+        ops = OperationCollection()
         for func, metadata in self._operations:
             # Create SequentialOp
             seq_op = SequentialOp(func)
@@ -226,7 +291,7 @@ class SolverInstance:
                 depends_on=metadata["depends_on"],
                 before=metadata["before"],
             )
-            ops.append(op)
+            ops.add(op)
 
         return ops
 

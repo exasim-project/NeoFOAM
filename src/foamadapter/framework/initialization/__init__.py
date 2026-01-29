@@ -66,7 +66,7 @@ Execution:
 from .configurable import Configurable
 from .config_context import ConfigContext
 from .lazy_init import LazyInit
-from .helpers import field, operator, lazy, model
+from .helpers import field, operator, lazy, model, InitializerBuilder
 from .execution import execute_initialization, topological_sort
 from .depends import Depends
 from .init_base import Init, ModelInit
@@ -80,6 +80,7 @@ __all__ = [
     "operator",
     "lazy",
     "model",
+    "InitializerBuilder",
     "execute_initialization",
     "topological_sort",
     "Depends",

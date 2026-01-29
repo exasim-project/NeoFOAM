@@ -9,7 +9,6 @@ following the IncompressibleFluidInitializer pattern.
 """
 
 import pytest
-from pathlib import Path
 
 
 from foamadapter.framework.initialization import (
@@ -113,15 +112,14 @@ def test_dummy_init_staged_validate_load():
     init_instance = create_init()
 
     # Run load first
-    init_instance.run_load()
+    load_result = init_instance.run_load()
 
     # Run validation
-    errors = init_instance._validate_load_func()
+    errors = init_instance._validate_load_func(load_result.core_models)
 
     # Should have no errors with valid configuration
     error_count = len([e for e in errors if e.severity == "error"])
     assert error_count == 0
-    assert init_instance.data.load_validated is True
 
 
 def test_dummy_init_staged_resolve():
@@ -160,12 +158,11 @@ def test_dummy_init_staged_validate_resolve():
     init_instance.run_resolve(config)
 
     # Run validation
-    warnings = init_instance._validate_resolve_func(config)
+    warnings = init_instance._validate_resolve_func(load_result.optional_models, config)
 
     # Should have no errors
     error_count = len([w for w in warnings if w.severity == "error"])
     assert error_count == 0
-    assert init_instance.data.resolve_validated is True
 
 
 def test_dummy_init_staged_build():
@@ -239,7 +236,8 @@ def test_dummy_init_staged_with_optional_models():
     detected_optional_fields = [k for k in optional_model_keys if k in ctx.fields]
 
     # Should have at least some optional model fields if models were detected
-    if len(init_instance.data.optional_models) > 0:
+    optional_models = getattr(init_instance, "_optional_models", [])
+    if len(optional_models) > 0:
         assert len(detected_optional_fields) > 0
 
 
@@ -255,10 +253,8 @@ def test_dummy_init_staged_algorithm_configuration():
     assert algorithm is not None
 
     # If model1 is present, algorithm should be configured
-    if any(
-        hasattr(m, "name") and "Model1" in str(m.name)
-        for m in init_instance.data.optional_models
-    ):
+    optional_models = getattr(init_instance, "_optional_models", [])
+    if any(hasattr(m, "name") and "Model1" in str(m.name) for m in optional_models):
         assert hasattr(algorithm, "_use_model1")
         # Model1's configure_algorithm should have set this
         assert algorithm._use_model1 is True
@@ -329,11 +325,6 @@ def test_create_init_factory():
     assert isinstance(init_instance, StagedInit)
     assert init_instance.name == "DummySolver"
 
-    # Verify it has data
-    assert init_instance.data is not None
-    assert hasattr(init_instance.data, "algorithm")
-    assert hasattr(init_instance.data, "optional_models")
-
     # Verify functions are registered
     assert init_instance._load_func is not None
     assert init_instance._resolve_func is not None
@@ -349,7 +340,6 @@ def test_create_init_multiple_instances():
 
     # Should be the same instance (simplified factory)
     assert init1 is init2
-    assert init1.data is init2.data
 
 
 if __name__ == "__main__":

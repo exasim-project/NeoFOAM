@@ -14,21 +14,17 @@ This follows the IncompressibleFluidInitializer pattern.
 
 import yaml
 import inspect
-from dataclasses import dataclass, field as dc_field
-from typing import Any, Type, TypeVar, Protocol, runtime_checkable, Iterable
+from typing import Any, Type, TypeVar
 from pathlib import Path
-from functools import wraps
 
 from pydantic import BaseModel, Field, PrivateAttr
 
-from foamadapter.framework.context import Context
 from foamadapter.framework.initialization import (
     StagedInit,
     LoadResult,
     ValidationError,
     ConfigContext,
-    field,
-    lazy,
+    InitializerBuilder,
 )
 from foamadapter.framework.initialization.lazy_init import LazyInit
 
@@ -38,19 +34,6 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 T = TypeVar("T", bound="BaseConfig")
-
-
-@runtime_checkable
-class OptionalModel(Protocol):
-    """Protocol for optional models supporting 3-stage initialization."""
-
-    def build(self) -> list[LazyInit]:
-        """Create lazy initializers for model fields."""
-        ...
-
-    def configure_algorithm(self, algorithm: Any) -> None:
-        """Configure solver algorithm for this model."""
-        ...
 
 
 class BaseConfig(BaseModel):
@@ -111,42 +94,8 @@ class DummyAlgorithm(BaseModel):
         return self._iteration_count < 3  # Stop after 3 iterations
 
 
-@dataclass
-class InitializationData:
-    """State container for initialization stages."""
-
-    # Core models - always present
-    algorithm: Any = None
-    core_model2: Any = None
-
-    # Configuration
-    solver_config: SolverConfig | None = None
-    mesh_config: MeshConfig | None = None
-
-    # Optional models - physics extensions
-    optional_models: list = dc_field(default_factory=list)
-
-    # Validation state
-    load_validated: bool = False
-    resolve_validated: bool = False
-
-    @property
-    def core_models(self) -> list[Any]:
-        """Core models that define solver structure."""
-        return [m for m in [self.algorithm, self.core_model2] if m is not None]
-
-
 # Create the StagedInit instance
 init = StagedInit("DummySolver")
-init.data = InitializationData()
-
-# Detect optional models for global init
-try:
-    from framework.dummy_solver.models import DummyModel
-
-    init.data.optional_models = DummyModel.detect_models()
-except ImportError:
-    init.data.optional_models = []
 
 
 def create_init() -> StagedInit:
@@ -165,25 +114,24 @@ def load_config() -> LoadResult:
 
     Returns LoadResult with core_models and optional_models.
     """
+    from framework.dummy_solver.models import DummyModel
+
     # Load configurations
     config_dir = Path(__file__).parent / "configs"
 
-    init.data.solver_config = SolverConfig.load(config_dir / "solver_config.yaml")
-    init.data.mesh_config = MeshConfig.load(config_dir / "mesh_config.yaml")
+    solver_config = SolverConfig.load(config_dir / "solver_config.yaml")
+    mesh_config = MeshConfig.load(config_dir / "mesh_config.yaml")
 
     # Create core models
-    algorithm = DummyAlgorithm(param1=init.data.solver_config.param1)
+    algorithm = DummyAlgorithm(param1=solver_config.param1)
     core_model2 = CoreModel2()
 
-    # Store in init.data for later access
-    init.data.algorithm = algorithm
-    init.data.core_model2 = core_model2
+    # Store configs in algorithm for later access
+    algorithm._solver_config = solver_config
+    algorithm._mesh_config = mesh_config
 
     # Detect optional models
-    from framework.dummy_solver.models import DummyModel
-
     optional_models = DummyModel.detect_models()
-    init.data.optional_models = optional_models
 
     # Run LOAD on optional models
     for model in optional_models:
@@ -196,40 +144,29 @@ def load_config() -> LoadResult:
 
 
 @init.validate_load
-def validate_load_stage() -> list[ValidationError]:
+def validate_load_stage(core_models: list) -> list[ValidationError]:
     """Validate configuration after LOAD stage."""
     errors = []
+    if not core_models or len(core_models) < 2:
+        errors.append(ValidationError("core_models", "Missing core models"))
+        return errors
 
-    if init.data.algorithm is None:
-        errors.append(ValidationError("algorithm", "No algorithm configured"))
-
-    if init.data.solver_config is None:
+    algorithm = core_models[0]
+    if not hasattr(algorithm, "_solver_config") or algorithm._solver_config is None:
         errors.append(
             ValidationError("solver_config", "Failed to read solver configuration")
         )
-
-    if init.data.mesh_config is None:
+    if not hasattr(algorithm, "_mesh_config") or algorithm._mesh_config is None:
         errors.append(
             ValidationError("mesh_config", "Failed to read mesh configuration")
         )
 
-    init.data.load_validated = len([e for e in errors if e.severity == "error"]) == 0
     return errors
 
 
 @init.resolve
-def resolve_models(
-    core_models: list, optional_models: list, config: ConfigContext
-) -> None:
-    """
-    RESOLVE stage: Connect models and validate dependencies.
-
-    Args:
-        core_models: List of core models from load stage
-        optional_models: List of optional models from load stage
-        config: ConfigContext with registered models
-    """
-    # Resolve optional models
+def resolve_models(_: list, optional_models: list, config: ConfigContext) -> None:
+    """RESOLVE stage: Connect models and validate dependencies."""
     for model in optional_models:
         if hasattr(model, "resolve"):
             model.resolve(config)
@@ -237,18 +174,13 @@ def resolve_models(
 
 @init.validate_resolve
 def validate_resolve_stage(
-    config: ConfigContext | None = None,
+    optional_models: list, config: ConfigContext | None = None
 ) -> list[ValidationError]:
     """Validate model connections after RESOLVE stage."""
     errors = []
-
-    # Check optional model connections
-    for model in init.data.optional_models:
+    for model in optional_models:
         if hasattr(model, "validate_stage"):
-            model_errors = model.validate_stage(config)
-            errors.extend(model_errors)
-
-    init.data.resolve_validated = len([e for e in errors if e.severity == "error"]) == 0
+            errors.extend(model.validate_stage(config))
     return errors
 
 
@@ -261,10 +193,10 @@ def _normalize_lazy_init(li: LazyInit) -> LazyInit:
     if orig_func is None:
         return li
 
+    # Check if function takes context parameter
     sig = inspect.signature(orig_func)
     takes_ctx = len(sig.parameters) > 0
 
-    @wraps(orig_func)
     def wrapper(ctx=None):
         res = orig_func(ctx) if takes_ctx and ctx else orig_func()
         return res.get("value", res) if isinstance(res, dict) else res
@@ -274,7 +206,7 @@ def _normalize_lazy_init(li: LazyInit) -> LazyInit:
 
 
 @init.build
-def build_lazy(core_models: list, optional_models: list) -> list[Any]:
+def build_lazy(core_models: list, optional_models: list) -> list[LazyInit]:
     """
     BUILD stage: Create lazy initializers for runtime objects.
 
@@ -285,54 +217,43 @@ def build_lazy(core_models: list, optional_models: list) -> list[Any]:
     Returns:
         List of LazyInit objects.
     """
-    from foamadapter.framework.initialization import model as model_lazy
-
     algorithm, core_model2 = core_models
-    initializers = []
+    solver_config = algorithm._solver_config
+    mesh_config = algorithm._mesh_config
 
-    # 1. Mesh and configuration
-    initializers.extend(
+    builder = InitializerBuilder()
+
+    # Resources and configuration
+    builder.add_resource("mesh", mesh_config.model_dump())
+    builder.add_resource("domain", mesh_config.model_dump())
+    builder.add_resource("config", solver_config)
+
+    # Core models - adds models and calls their build() methods if available
+    builder.add_core_models(
         [
-            lazy("mesh", create=lambda ctx: init.data.mesh_config.model_dump()),
-            lazy("domain", create=lambda ctx: init.data.mesh_config.model_dump()),
-            lazy("solver_config", create=lambda ctx: init.data.solver_config),
+            ("algorithm", algorithm),
+            ("core2", core_model2),
         ]
     )
+    builder.add_model("config", solver_config.model_dump())
 
-    # 2. Core models and their configuration
-    initializers.extend(
-        [
-            model_lazy("algorithm", create=lambda ctx: algorithm),
-            model_lazy("core2", create=lambda ctx: core_model2),
-            model_lazy(
-                "config", create=lambda ctx: init.data.solver_config.model_dump()
-            ),
-        ]
+    # Solver-specific fields
+    builder.add_field("field1", depends_on=["mesh"], value=1.0)
+    builder.add_field("field2", depends_on=["mesh"], value=101325.0)
+    builder.add_field(
+        "field3",
+        depends_on=["fields.field1"],
+        value=lambda ctx: ctx["fields.field1"] * 0.01,
     )
 
-    # 3. Basic Fields
-    initializers.extend(
-        [
-            field("field1", depends_on=["mesh"], create=lambda ctx: 1.0),
-            field("field2", depends_on=["mesh"], create=lambda ctx: 101325.0),
-            field(
-                "field3",
-                depends_on=["fields.field1"],
-                create=lambda ctx: ctx["fields.field1"] * 0.01,
-            ),
-        ]
-    )
-
-    # 4. Optional models (Physics extensions)
+    # Optional models - configure algorithm then add their build() LazyInits
     for model in optional_models:
-        if isinstance(model, OptionalModel):
-            initializers.extend(_normalize_lazy_init(li) for li in model.build())
-            if algorithm:
-                model.configure_algorithm(algorithm)
+        if hasattr(model, "configure_algorithm") and algorithm:
+            model.configure_algorithm(algorithm)
 
-    # 5. Metadata
-    initializers.append(
-        model_lazy("optional_models", create=lambda ctx: optional_models)
-    )
+    builder.add_optional_models(optional_models)
 
-    return initializers
+    # Metadata - store optional models reference
+    builder.add_model("optional_models", optional_models)
+
+    return builder.build()

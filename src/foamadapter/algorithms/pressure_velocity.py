@@ -22,6 +22,8 @@ from foamadapter.framework.context import (
     FieldUpdates,
     Model as ModelAnnotation,
 )
+from foamadapter.foam.initialization import read_vol_field
+from foamadapter.framework.initialization.helpers import field, model
 from foamadapter.framework.model import Model
 from foamadapter.framework.operations import (
     Operation,
@@ -136,8 +138,6 @@ class PimpleAlgorithm(BaseModel):
 
     def setup(self) -> list[Any]:
         """Register p, U, phi fields and pimple_control model."""
-        from foamadapter.foam.initialization import read_vol_field
-        from foamadapter.framework.initialization.helpers import field, model
 
         def create_phi(context: dict[str, Any]) -> Any:
             U = context["fields.U"]

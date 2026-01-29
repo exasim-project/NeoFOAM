@@ -32,10 +32,12 @@ Usage:
     ctx = init.run()
 """
 
-from dataclasses import dataclass, field
+import inspect
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from foamadapter.framework.context import Context
+from foamadapter.framework.solver_factory import SolverState
 from .config_context import ConfigContext
 from .execution import execute_initialization
 from .lazy_init import LazyInit
@@ -109,6 +111,39 @@ class StagedInit:
 
         # State storage
         self.data: Any = None  # For storing InitializationData or similar
+
+        # Shared state container
+        self.state = SolverState()
+
+    @property
+    def core_models(self) -> list:
+        """Access core_models from state."""
+        return self.state.core_models
+
+    @core_models.setter
+    def core_models(self, value: list) -> None:
+        """Set core_models in state."""
+        self.state.core_models = value
+
+    @property
+    def optional_models(self) -> list:
+        """Access optional_models from state."""
+        return self.state.optional_models
+
+    @optional_models.setter
+    def optional_models(self, value: list) -> None:
+        """Set optional_models in state."""
+        self.state.optional_models = value
+
+    @property
+    def configs(self) -> dict:
+        """Access configs from state."""
+        return self.state.configs
+
+    @configs.setter
+    def configs(self, value: dict) -> None:
+        """Set configs in state."""
+        self.state.configs = value
 
     def load(
         self, func: Callable[[], dict[str, Any] | LoadResult]
@@ -226,9 +261,25 @@ class StagedInit:
             core_models = []
             optional_models = []
 
+        # Store models for validation and later stages
+        self._core_models = core_models
+        self._optional_models = optional_models
+
+        # Also store in public attributes for easy access
+        self.core_models = core_models
+        self.optional_models = (
+            [m for m in optional_models if hasattr(m, "enabled") and m.enabled]
+            if optional_models
+            else optional_models
+        )
+
         # Validate load stage
         if self._validate_load_func is not None:
-            errors = self._validate_load_func()
+            sig = inspect.signature(self._validate_load_func)
+            if "core_models" in sig.parameters:
+                errors = self._validate_load_func(core_models)
+            else:
+                errors = self._validate_load_func()
             for e in errors:
                 if e.severity == "error":
                     raise RuntimeError(f"Load error: {e.field}: {e.message}")
@@ -243,8 +294,6 @@ class StagedInit:
         # === STAGE 2: RESOLVE ===
         if self._resolve_func is not None:
             # Check if resolve function expects models as parameters (free function)
-            import inspect
-
             sig = inspect.signature(self._resolve_func)
             if len(sig.parameters) == 3:
                 # Free function: resolve(core_models, optional_models, config)
@@ -255,7 +304,11 @@ class StagedInit:
 
         # Validate resolve stage
         if self._validate_resolve_func is not None:
-            warnings = self._validate_resolve_func(config)
+            sig = inspect.signature(self._validate_resolve_func)
+            if "optional_models" in sig.parameters:
+                warnings = self._validate_resolve_func(optional_models, config)
+            else:
+                warnings = self._validate_resolve_func(config)
             for w in warnings:
                 print(f"Warning: {w.field}: {w.message}")
 
@@ -264,8 +317,6 @@ class StagedInit:
             raise RuntimeError(f"No @{self.name}.build defined")
 
         # Check if build function expects models as parameters (free function)
-        import inspect
-
         sig = inspect.signature(self._build_func)
         if len(sig.parameters) == 2:
             # Free function: build(core_models, optional_models)
@@ -276,6 +327,13 @@ class StagedInit:
 
         # === Execute ===
         ctx = execute_initialization(lazy_inits)
+
+        # Extract and store configs
+        if hasattr(ctx, "models"):
+            if "config" in ctx.models:
+                self.configs["solver"] = ctx.models["config"]
+            if "solver_config" in ctx.models:
+                self.configs["solver_config"] = ctx.models["solver_config"]
 
         return ctx
 
@@ -297,8 +355,6 @@ class StagedInit:
         """Execute only RESOLVE stage."""
         if self._resolve_func is not None:
             # Check if resolve function expects models as parameters (free function)
-            import inspect
-
             sig = inspect.signature(self._resolve_func)
             if len(sig.parameters) == 3:
                 # Free function: resolve(core_models, optional_models, config)
@@ -315,8 +371,6 @@ class StagedInit:
             raise RuntimeError(f"No @{self.name}.build defined")
 
         # Check if build function expects models as parameters (free function)
-        import inspect
-
         sig = inspect.signature(self._build_func)
         if len(sig.parameters) == 2:
             # Free function: build(core_models, optional_models)

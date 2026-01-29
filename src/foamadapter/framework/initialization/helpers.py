@@ -174,3 +174,239 @@ def model(
         initializer=create,
         category="models",
     )
+
+
+class InitializerBuilder:
+    """
+    Fluent builder for constructing lazy initializers.
+
+    Provides a chainable API for building lists of LazyInit objects,
+    making initialization code more readable and maintainable.
+
+    Example:
+        builder = InitializerBuilder()
+        initializers = (
+            builder
+            .add_resource("mesh", mesh_config)
+            .add_model("algorithm", algorithm)
+            .add_field("U", depends_on=["mesh"], value=initial_velocity)
+            .add_field("p", depends_on=["mesh"], value=lambda ctx: compute_pressure(ctx))
+            .build()
+        )
+    """
+
+    def __init__(self):
+        self.initializers: List[LazyInit] = []
+
+    def _normalize_lazy_init(self, li: LazyInit) -> LazyInit:
+        """Normalize field name and wrap initializer for dict support."""
+        import inspect
+
+        if not li.name.startswith(("fields.", "models.", "operators.")):
+            li.name = f"fields.{li.name}"
+
+        orig_func = li.initializer
+        if orig_func is None:
+            return li
+
+        # Check if function takes context parameter
+        sig = inspect.signature(orig_func)
+        takes_ctx = len(sig.parameters) > 0
+
+        def wrapper(ctx=None):
+            res = orig_func(ctx) if takes_ctx and ctx else orig_func()
+            return res.get("value", res) if isinstance(res, dict) else res
+
+        li.initializer = wrapper
+        return li
+
+    def add_resource(self, name: str, value: Any) -> "InitializerBuilder":
+        """
+        Add a top-level resource (mesh, domain, config, etc.).
+
+        Args:
+            name: Resource name
+            value: The resource value (will be captured in lambda)
+
+        Returns:
+            Self for chaining
+        """
+        self.initializers.append(lazy(name, create=lambda: value))
+        return self
+
+    def add_model(self, name: str, value: Any) -> "InitializerBuilder":
+        """
+        Add a model with 'models.' prefix.
+
+        Args:
+            name: Model name (without 'models.' prefix)
+            value: The model instance or callable to create it
+
+        Returns:
+            Self for chaining
+        """
+        if callable(value):
+            self.initializers.append(model(name, create=value))
+        else:
+            self.initializers.append(model(name, create=lambda: value))
+        return self
+
+    def add_core_models(self, core_models: List[Any]) -> "InitializerBuilder":
+        """
+        Add core models with their build() LazyInit objects.
+
+        For each core model:
+        1. Adds the model instance to the models registry
+        2. Calls build() if available and adds normalized LazyInit objects
+
+        This provides a consistent interface across all solvers for adding
+        core models with their associated fields and operators.
+
+        Args:
+            core_models: List of core model instances with optional names
+
+        Returns:
+            Self for chaining
+
+        Example:
+            builder.add_core_models([("algorithm", algorithm), ("core2", core_model2)])
+            # Or with a list of tuples
+            builder.add_core_models(core_models)
+        """
+        for item in core_models:
+            if isinstance(item, tuple):
+                name, model_instance = item
+            else:
+                # Use class name as default
+                name = type(item).__name__.lower()
+                model_instance = item
+
+            # Add the model itself
+            self.add_model(name, model_instance)
+
+            # Add LazyInit objects from build() if available
+            if hasattr(model_instance, "build"):
+                lazy_inits = [
+                    self._normalize_lazy_init(li) for li in model_instance.build()
+                ]
+                self.extend(lazy_inits)
+
+        return self
+
+    def add_field(
+        self,
+        name: str,
+        depends_on: List[str],
+        value: Union[Any, Callable[[dict[str, Any]], Any]],
+    ) -> "InitializerBuilder":
+        """
+        Add a field with 'fields.' prefix.
+
+        Automatically detects if value is a callable (computed field) or constant.
+
+        Args:
+            name: Field name (without 'fields.' prefix)
+            depends_on: List of dependency names
+            value: Constant value or callable that computes the value
+
+        Returns:
+            Self for chaining
+
+        Example:
+            .add_field("U", depends_on=["mesh"], value=initial_U)
+            .add_field("p", depends_on=["mesh"], value=lambda ctx: compute_p(ctx))
+        """
+        if callable(value):
+            self.initializers.append(field(name, depends_on=depends_on, create=value))
+        else:
+            self.initializers.append(
+                field(name, depends_on=depends_on, create=lambda: value)
+            )
+        return self
+
+    def add_operator(
+        self,
+        name: str,
+        depends_on: List[str],
+        value: Union[Any, Callable[[dict[str, Any]], Any]],
+    ) -> "InitializerBuilder":
+        """
+        Add an operator with 'operators.' prefix.
+
+        Args:
+            name: Operator name (without 'operators.' prefix)
+            depends_on: List of dependency names
+            value: Operator instance or callable to create it
+
+        Returns:
+            Self for chaining
+        """
+        if callable(value):
+            self.initializers.append(
+                operator(name, depends_on=depends_on, create=value)
+            )
+        else:
+            self.initializers.append(
+                operator(name, depends_on=depends_on, create=lambda: value)
+            )
+        return self
+
+    def add(self, initializer: LazyInit) -> "InitializerBuilder":
+        """
+        Add a pre-constructed LazyInit object.
+
+        Useful for custom initializers or when migrating existing code.
+
+        Args:
+            initializer: LazyInit object to add
+
+        Returns:
+            Self for chaining
+        """
+        self.initializers.append(initializer)
+        return self
+
+    def extend(self, initializers: List[LazyInit]) -> "InitializerBuilder":
+        """
+        Add multiple LazyInit objects at once.
+
+        Args:
+            initializers: List of LazyInit objects
+
+        Returns:
+            Self for chaining
+        """
+        self.initializers.extend(initializers)
+        return self
+
+    def add_optional_models(self, optional_models: List[Any]) -> "InitializerBuilder":
+        """
+        Add optional models by calling their build() methods.
+
+        This provides a consistent interface across all solvers for adding
+        optional physics models, turbulence models, or other extensions.
+        LazyInit objects from models are automatically normalized.
+
+        Args:
+            optional_models: List of optional model instances
+
+        Returns:
+            Self for chaining
+
+        Example:
+            builder.add_optional_models(optional_models)
+        """
+        for model in optional_models:
+            if hasattr(model, "build"):
+                lazy_inits = [self._normalize_lazy_init(li) for li in model.build()]
+                self.extend(lazy_inits)
+        return self
+
+    def build(self) -> List[LazyInit]:
+        """
+        Return the constructed list of initializers.
+
+        Returns:
+            List of LazyInit objects
+        """
+        return self.initializers

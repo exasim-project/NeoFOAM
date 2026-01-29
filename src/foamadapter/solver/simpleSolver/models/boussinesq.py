@@ -299,7 +299,7 @@ class BoussinesqModel(SimpleSolverModel):
         from pybFoam import Info
 
         algorithm._use_boussinesq = True
-        Info(f"Configuring algorithm for Boussinesq formulation")
+        Info("Configuring algorithm for Boussinesq formulation")
         Info(f"_use_boussinesq flag is now: {algorithm._use_boussinesq}")
 
     @Model.operation(operation_number="2.5", depends_on=["momentum"])

@@ -2,101 +2,145 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 """
-SimpleSolverInit - FastAPI-style initialization syntax.
+SimpleSolverInit - 3-stage initialization for SimpleSolver.
 
-This demonstrates the FastAPI-style pattern:
-    init = Init("name")
+Implements explicit 3-stage initialization pattern:
+- LOAD: Load configuration from files
+- RESOLVE: Connect models and validate dependencies
+- BUILD: Create lazy initializers for runtime objects
 
-    @init.step
-    def runTime() -> pyf.Time: ...
-
-    @init.step
-    def mesh(runTime: Annotated[Time, Depends(runTime)]) -> Mesh: ...
+This follows the DummyInit pattern.
 """
 
-from typing import Any, Annotated
+from typing import Any
 import pybFoam as pyf
 
-from foamadapter.framework.context import Context
-from foamadapter.framework.initialization import Init, Depends, execute_initialization
+from foamadapter.framework.initialization import (
+    StagedInit,
+    LoadResult,
+    ValidationError,
+    ConfigContext,
+    InitializerBuilder,
+    model as init_model,
+)
+from foamadapter.framework.initialization.lazy_init import LazyInit
 from foamadapter.algorithms.pressure_velocity import PressureVelocityAlgorithm
 from foamadapter.models.stability_criteria import CFLCondition
 from foamadapter.models.transport_model import TransportModel
 from foamadapter.models.turbulence import TurbulenceModel
 from foamadapter.foam.initialization import create_time_mesh
-from foamadapter.framework.initialization.helpers import lazy, model as init_model
 from foamadapter.solver.simpleSolver.models import SimpleSolverModel
 
 
-init = Init("SimpleSolver")
+# Create the StagedInit instance
+init = StagedInit("SimpleSolver")
 
 
-@init.step
-def optional_models() -> list[Any]:
-    """Detect and instantiate optional models."""
-    return SimpleSolverModel.detect_models()
-
-
-@init.step
-def fvSolution() -> Any:
-    """Load fvSolution dictionary."""
-    return pyf.dictionary.read("system/fvSolution")
-
-
-@init.step
-def algorithm(
-    fvSolution_dict: Annotated[Any, Depends(fvSolution)],
-) -> PressureVelocityAlgorithm:
+def create_init() -> StagedInit:
     """
-    Create pressure-velocity algorithm.
+    Factory function for dependency injection.
 
-    Depends on fvSolution being loaded first (FastAPI-style).
+    Returns the global StagedInit instance.
     """
-    return PressureVelocityAlgorithm.from_fvSolution(fvSolution_dict)
+    return init
 
 
-@init.step
-def cfl_condition() -> CFLCondition:
-    """Create CFL condition (no dependencies)."""
-    return CFLCondition()
-
-
-# ============================================================================
-# BUILD CONTEXT (combines init steps into Context)
-# ============================================================================
-
-
-@init.build_context
-def build() -> Context:
+@init.load
+def load_config() -> LoadResult:
     """
-    Build context using current lazy initialization system.
+    LOAD stage: Load configuration from files.
 
-    This bridges between the FastAPI-style Init pattern and
-    the current initialization system.
+    Returns LoadResult with core_models and optional_models.
     """
-    # Get argv from init instance
-    argv = init.argv
+    # Load fvSolution dictionary
+    fv_solution = pyf.dictionary.read("system/fvSolution")
 
-    # Get algorithm and cfl_condition (cached via @init.step)
-    algo = algorithm()
-    cfl = cfl_condition()
-    fv_solution = fvSolution()
+    # Create pressure-velocity algorithm
+    algorithm = PressureVelocityAlgorithm.from_fvSolution(fv_solution)
 
-    # Detect optional models (NEW)
-    models = optional_models()
-    if models:
-        from pybFoam import Info
+    # Create CFL condition
+    cfl_condition = CFLCondition()
 
-        Info(f"Detected {len(models)} optional model(s): {[m.name for m in models]}")
+    # Store fvSolution for later use
+    algorithm._fv_solution = fv_solution
 
-    # Build lazy initializers (current system)
-    initializers = create_time_mesh(argv)
+    # Detect optional models
+    optional_models = SimpleSolverModel.detect_models()
+
+    # Run LOAD on optional models
+    for model in optional_models:
+        if hasattr(model, "load"):
+            model.load()
+
+    return LoadResult(
+        core_models=[algorithm, cfl_condition], optional_models=optional_models
+    )
+
+
+@init.validate_load
+def validate_load_stage(core_models: list) -> list[ValidationError]:
+    """Validate configuration after LOAD stage."""
+    errors = []
+    if not core_models or len(core_models) < 2:
+        errors.append(ValidationError("core_models", "Missing core models"))
+        return errors
+
+    algorithm = core_models[0]
+    if not hasattr(algorithm, "_fv_solution") or algorithm._fv_solution is None:
+        errors.append(
+            ValidationError("fvSolution", "Failed to read fvSolution dictionary")
+        )
+
+    return errors
+
+
+@init.resolve
+def resolve_models(_: list, optional_models: list, config: ConfigContext) -> None:
+    """RESOLVE stage: Connect models and validate dependencies."""
+    for model in optional_models:
+        if hasattr(model, "resolve"):
+            model.resolve(config)
+
+
+@init.validate_resolve
+def validate_resolve_stage(
+    optional_models: list, config: ConfigContext | None = None
+) -> list[ValidationError]:
+    """Validate model connections after RESOLVE stage."""
+    errors = []
+    for model in optional_models:
+        if hasattr(model, "validate_stage"):
+            errors.extend(model.validate_stage(config))
+    return errors
+
+
+@init.build
+def build_lazy(core_models: list, optional_models: list) -> list[LazyInit]:
+    """
+    BUILD stage: Create lazy initializers for runtime objects.
+
+    Args:
+        core_models: List of core models from load stage
+        optional_models: List of optional models from load stage
+
+    Returns:
+        List of LazyInit objects.
+    """
+    algorithm, cfl_condition = core_models
+    fv_solution = algorithm._fv_solution
+
+    builder = InitializerBuilder()
+
+    # Build lazy initializers using current system
+    time_mesh_inits = create_time_mesh(init.argv)
+    builder.extend(time_mesh_inits)
 
     # Algorithm fields
-    initializers.extend(algo.setup())
+    algo_inits = algorithm.setup()
+    builder.extend(algo_inits)
 
     # Transport model
-    initializers.append(
+    builder.add(
         init_model(
             "laminarTransport",
             depends_on=["fields.U", "fields.phi"],
@@ -107,7 +151,7 @@ def build() -> Context:
     )
 
     # Turbulence model
-    initializers.append(
+    builder.add(
         init_model(
             "turbulence",
             depends_on=["fields.U", "fields.phi", "models.laminarTransport"],
@@ -119,12 +163,14 @@ def build() -> Context:
         )
     )
 
-    # Optional models: Add their fields and models (NEW)
-    for model in models:
-        if hasattr(model, "build"):
-            initializers.extend(model.build())
+    # Optional models: configure algorithm and add their build() LazyInits
+    for model in optional_models:
+        if hasattr(model, "configure_algorithm") and algorithm:
+            model.configure_algorithm(algorithm)
 
-    # Final algorithm build
+    builder.add_optional_models(optional_models)
+
+    # Finalize algorithm
     def finalize_algorithm(context: dict[str, Any]) -> Any:
         p = context["fields.p"]
         mesh = context["mesh"]
@@ -137,15 +183,10 @@ def build() -> Context:
         elif hasattr(fields_dict, "p_rgh"):
             p_rgh = fields_dict.p_rgh
 
-        # Configure algorithm for optional models (e.g., Boussinesq)
-        for model in models:
-            if hasattr(model, "configure_algorithm"):
-                model.configure_algorithm(algo)
+        algorithm.set_pressure_reference(p, mesh, fv_solution, p_rgh)
+        return algorithm
 
-        algo.set_pressure_reference(p, mesh, fv_solution, p_rgh)
-        return algo
-
-    initializers.append(
+    builder.add(
         init_model(
             "algorithm",
             depends_on=[
@@ -158,16 +199,13 @@ def build() -> Context:
         )
     )
 
-    # CFL condition
-    initializers.append(lazy("cfl_condition", create=lambda _: cfl))
+    # CFL condition - wrap in lambda to avoid calling it during init
+    builder.add_model("cfl_condition", lambda: cfl_condition)
 
     # Keep dictionaries alive
-    initializers.append(lazy("fvSolution_dict", create=lambda _: fv_solution))
+    builder.add_model("fvSolution_dict", lambda: fv_solution)
 
-    # Store optional models for later access (NEW)
-    initializers.append(lazy("optional_models", create=lambda _: models))
+    # Store optional models for later access
+    builder.add_model("optional_models", lambda: optional_models)
 
-    # Execute initialization
-    ctx = execute_initialization(initializers)
-
-    return ctx
+    return builder.build()
