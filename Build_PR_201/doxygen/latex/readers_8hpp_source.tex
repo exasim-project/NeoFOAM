@@ -58,7 +58,7 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ [\&](\textcolor{keyword}{auto}\&\ dict)}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}type"{}},\ std::string(\textcolor{stringliteral}{"{}fixedGradient"{}}));}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}fixedGradient"{}},\ type\_primitive\_t\ \{\});}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}fixedGradient"{}},\ NeoN::zero<type\_primitive\_t>());}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \}\},}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}fixedValue"{}},}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ [](\textcolor{keyword}{auto}\&\ dict)}
@@ -81,9 +81,9 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpFixedValue[0]\ =\ NeoN::scalar(tokenList.get<\textcolor{keywordtype}{int}>(1));}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpFixedValue[1]\ =\ NeoN::scalar(tokenList.get<\textcolor{keywordtype}{int}>(2));}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpFixedValue[2]\ =\ NeoN::scalar(tokenList.get<\textcolor{keywordtype}{int}>(3));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpFixedValue[0]\ =\ NeoN::scalar(tokenList.get<Foam::label>(1));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpFixedValue[1]\ =\ NeoN::scalar(tokenList.get<Foam::label>(2));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tmpFixedValue[2]\ =\ NeoN::scalar(tokenList.get<Foam::label>(3));}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}fixedValue"{}},\ tmpFixedValue);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
@@ -91,7 +91,7 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ token\ =\ tokenList.tokens()[1];}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::scalar*\ ret\ =\ std::any\_cast<NeoN::scalar>(\&token);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fixedValue\ =\ ret\ ?\ NeoN::scalar(*ret)\ :\ NeoN::scalar(std::any\_cast<int>(token));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fixedValue\ =\ ret\ ?\ NeoN::scalar(*ret)\ :\ NeoN::scalar(std::any\_cast<Foam::label>(token));}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}fixedValue"{}},\ fixedValue);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \ \}\},}
@@ -301,6 +301,15 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00303}00303\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00304}00304\ \};}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00305}00305\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00306}00306\ \};\ \textcolor{comment}{//\ namespace\ Foam}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00311}00311\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Types>}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00312}\mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{00312}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{constFromMany}}(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00313}00313\ \textcolor{keyword}{const}\ NeoN::Executor\&\ exec,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00314}00314\ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ uMesh,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Types\&...\ args)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00316}00316\ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00317}00317\ \ \ \ \ \textcolor{keywordflow}{return}\ std::tuple(\mbox{\hyperlink{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}{constructFrom}}(exec,\ uMesh,\ args)...);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00318}00318\ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00319}00319\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00320}00320\ \};\ \textcolor{comment}{//\ namespace\ Foam}}
 
 \end{DoxyCode}
