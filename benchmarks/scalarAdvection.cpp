@@ -1,5 +1,6 @@
+// SPDX-FileCopyrightText: 2023 - 2026 NeoN authors
+//
 // SPDX-License-Identifier: MIT
-// SPDX-FileCopyrightText: 2023 NeoN authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
@@ -9,7 +10,7 @@
 #include "NeoN/NeoN.hpp"
 #include "benchmarks/catch_main.hpp"
 #include "test/catch2/executorGenerator.hpp"
-#include "common.hpp"
+#include "../test/common.hpp"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
@@ -23,28 +24,16 @@ extern Foam::Time* timePtr;    // A single time object
 extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
 extern Foam::fvMesh* meshPtr;  // A single mesh object
 
-TEST_CASE("advection-diffusion-equation_scalar")
+TEST_CASE("scalarAdvection")
 {
     Foam::Time& runTime = *timePtr;
     std::unique_ptr<Foam::fvMesh> meshPtr = NeoFOAM::createMesh(runTime);
     Foam::fvMesh& mesh = *meshPtr;
 
-    auto ofT = randomScalarField(runTime, mesh, "T");
-    Foam::surfaceScalarField ofPhi(
-        Foam::IOobject("phi", "0", mesh, Foam::IOobject::NO_READ, Foam::IOobject::AUTO_WRITE),
-        mesh,
-        Foam::dimensionedScalar("phi", Foam::dimensionSet(0, 3, -1, 0, 0), 0.0)
-    );
-    forAll(ofPhi, facei)
-    {
-        ofPhi[facei] = facei;
-    }
-
-    Foam::surfaceScalarField ofGamma(
-        Foam::IOobject("Gamma", "0", mesh, Foam::IOobject::NO_READ, Foam::IOobject::AUTO_WRITE),
-        mesh,
-        Foam::dimensionedScalar("phi", Foam::dimensionSet(0, 2, -1, 0, 0), 0.0)
-    );
+    auto ofT = nf::randomScalarField(mesh, "T");
+    auto ofPhi = nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+    auto ofGamma =
+        nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {
@@ -74,12 +63,10 @@ TEST_CASE("advection-diffusion-equation_scalar")
         }
     }
 
-
     SECTION("NeoN")
     {
         auto [execName, exec] = GENERATE(allAvailableExecutor());
-
-        auto rt = nf::createAdapterRunTime(runTime);
+        auto rt = nf::createAdapterRunTime(runTime, exec);
 
         auto& vectorCollection = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         fvcc::VolumeField<NeoN::scalar>& nfT =
@@ -92,36 +79,33 @@ TEST_CASE("advection-diffusion-equation_scalar")
                 }
             );
         nfT.correctBoundaryConditions();
+        fvcc::rotateOldTimes(nfT);
 
-        auto& nfOldT = fvcc::oldTime(nfT);
-        nfOldT.internalVector() = nfT.internalVector();
+        auto [nfPhi, nfGamma] = NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofPhi, ofGamma);
 
-        auto nfPhi = nf::constructFrom(rt.exec, rt.nfMesh, ofPhi);
-        auto nfGamma = nf::constructFrom(rt.exec, rt.nfMesh, ofGamma);
+        rt.fvSchemesDict.insert(
+            std::string("divSchemes"),
+            NeoN::Dictionary(
+                {{std::string("div(phi,nfT)"),
+                  NeoN::TokenList({std::string("Gauss"), std::string("upwind")})}}
+            )
+        );
+
+        rt.fvSchemesDict.insert(
+            std::string("laplacianSchemes"),
+            NeoN::Dictionary(
+                {{std::string("laplacian(Gamma,nfT)"),
+                  NeoN::TokenList(
+                      {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
+                  )}}
+            )
+        );
 
         SECTION(std::string("explicit-time-integration"))
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("type"), NeoN::TokenList({std::string("forwardEuler")})}}
-                )
-            );
-            rt.fvSchemesDict.insert(
-                std::string("divSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("div(phi,nfT)"),
-                      NeoN::TokenList({std::string("Gauss"), std::string("upwind")})}}
-                )
-            );
-            rt.fvSchemesDict.insert(
-                std::string("laplacianSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("laplacian(Gamma,nfT)"),
-                      NeoN::TokenList(
-                          {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
-                      )}}
-                )
+                NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF1")}}})
             );
 
             BENCHMARK(std::string(execName))
@@ -132,7 +116,8 @@ TEST_CASE("advection-diffusion-equation_scalar")
                     nfT,
                     rt
                 );
-                return eqn.assemble();
+                eqn.assemble();
+                NeoN::fence(exec);
             };
         }
 
@@ -140,25 +125,7 @@ TEST_CASE("advection-diffusion-equation_scalar")
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("type"), NeoN::TokenList({std::string("backwardEuler")})}}
-                )
-            );
-            rt.fvSchemesDict.insert(
-                std::string("divSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("div(phi,nfT)"),
-                      NeoN::TokenList({std::string("Gauss"), std::string("upwind")})}}
-                )
-            );
-            rt.fvSchemesDict.insert(
-                std::string("laplacianSchemes"),
-                NeoN::Dictionary(
-                    {{std::string("laplacian(Gamma,nfT)"),
-                      NeoN::TokenList(
-                          {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
-                      )}}
-                )
+                NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF2")}}})
             );
 
             BENCHMARK(std::string(execName))
@@ -169,7 +136,8 @@ TEST_CASE("advection-diffusion-equation_scalar")
                     nfT,
                     rt
                 );
-                return eqn.assemble();
+                eqn.assemble();
+                NeoN::fence(exec);
             };
         }
     }
