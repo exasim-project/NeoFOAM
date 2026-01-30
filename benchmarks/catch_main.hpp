@@ -77,5 +77,6 @@ int main(int argc, char* argv[])
         // Run benchmarks if there are any
         result = session.run();
     }
+    NeoN::finalize();
     return result;
 }
