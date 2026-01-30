@@ -23,14 +23,14 @@ def create_cases(src, root, case, force=False, detailed=False):
         shutil.rmtree(case_path)
 
     case_path.mkdir(parents=True, exist_ok=True)
-    cube_range = [8, 16, 32, 64, 128] if detailed else [16, 32, 64]
+    cube_range = [8, 16, 32, 64, 128] if detailed else [16, 64]
     study_cube = record_generator(
         records=build_records("3DCube", cube_range ),
         template_case= src / "templates/3DCube",
         output_folder=case_path / "Cases",
     )
 
-    square_range = [8, 16, 32, 64, 128, 256, 512] if detailed else [16, 64, 256]
+    square_range = [8, 16, 32, 64, 128, 256, 512] if detailed else [64, 512]
     study_square = record_generator(
         records=build_records("2DSquare", square_range),
         template_case= src / "templates/2DSquare",

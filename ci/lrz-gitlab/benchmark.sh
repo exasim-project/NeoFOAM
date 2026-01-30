@@ -117,12 +117,12 @@ build_and_benchmark() {
     echo ">>> Benchmarks completed"
 
     # Check for produced results
-    find build  -name "results"  -exec python3 benchmarks/benchmarkSuite/createStudies.py display {} \;
+    find build  -name "results"  -exec python3 benchmarks/benchmarkSuite/createStudies.py display {} \; > results.md
+    cat results.md
     mapfile -d '' csv_files < <(find build/profiling/benchmarkSuite/ -type f -name '*.csv' -print0)
 
     if [ "${#csv_files[@]}" -eq 0 ]; then
         echo "No CSV files found!" >&2
-        exit 1
     fi
 
     # Display the list of files generated
@@ -149,14 +149,14 @@ push_results() {
     git config user.email "gitlab-ci@users.noreply.github.com"
     git config user.name "GitLab CI"
 
-    git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
+    git checkout "NeoFOAM_PR_${PR_NUMBER}" || git checkout -b "NeoFOAM_PR_${PR_NUMBER}"
     mkdir -p "${RESULTS_DIR}"
     cp -r ../${RESULTS_DIR}/* "${RESULTS_DIR}"
 
     git add .
     git commit -m "Benchmarks from GitLab pipeline ${RUN_IDENTIFIER}" || echo "No changes to commit"
     git pull --rebase || true
-    git push origin "${TARGET_BRANCH}"
+    git push origin "NeoFOAM_PR_${PR_NUMBER}"
 }
 
 ### Main execution ###
@@ -165,10 +165,6 @@ collect_system_info "${GPU_VENDOR}"
 # Current branch
 echo ">>> Benchmarking the current branch"
 build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
-
-# Develop branch
-echo ">>> Benchmarking the develop branch"
-build_and_benchmark "develop" "${RESULTS_DIR}/develop" || true
 
 # Push results
 echo ">>> Copying results to NeoFOAM-BenchmarkData repository"

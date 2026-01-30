@@ -154,3 +154,12 @@ jobs:
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
         run: |
           ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
+
+      # - name: Comment PR
+      #   uses: thollander/actions-comment-pull-request@v2
+      #   if: steps.fc.outputs.comment-id == '' &&  contains(toJson(github.event.pull_request.labels), 'benchmark')
+      #   with:
+      #     message: |
+      #       Benchmark results:
+      #     comment_tag: bench_results
+      #     mode: createIfNotExists
