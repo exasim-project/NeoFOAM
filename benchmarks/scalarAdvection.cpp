@@ -116,7 +116,8 @@ TEST_CASE("scalarAdvection")
                     nfT,
                     rt
                 );
-                return eqn.assemble();
+                eqn.assemble();
+                NeoN::fence(exec);
             };
         }
 
@@ -135,7 +136,8 @@ TEST_CASE("scalarAdvection")
                     nfT,
                     rt
                 );
-                return eqn.assemble();
+                eqn.assemble();
+                NeoN::fence(exec);
             };
         }
     }

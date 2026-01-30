@@ -109,6 +109,7 @@ TEST_CASE("Poisson")
                 );
 
                 pEqn.setReference(0, 0);
+                NeoN::fence(exec);
                 return pEqn;
             };
         }

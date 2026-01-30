@@ -83,13 +83,22 @@ TEST_CASE("pressureVelocityCoupling")
 
         SECTION("Compute rAU")
         {
-            BENCHMARK(std::string(execName)) { auto nfrAU = nf::computeRAU(nfUEqn); };
+            BENCHMARK(std::string(execName))
+            {
+                auto nfrAU = nf::computeRAU(nfUEqn);
+                NeoN::fence(exec);
+            };
         }
 
         auto nfrAU = nf::computeRAU(nfUEqn);
         SECTION("Compute HbyA")
         {
-            BENCHMARK(std::string(execName)) { return nf::computeRAUandHByA(nfUEqn); };
+            BENCHMARK(std::string(execName))
+            {
+                nf::computeRAUandHByA(nfUEqn);
+                NeoN::fence(exec);
+                return;
+            };
         }
 
         SECTION("constrainHbyA")
@@ -98,6 +107,8 @@ TEST_CASE("pressureVelocityCoupling")
             BENCHMARK(std::string(execName))
             {
                 nf::constrainHbyA(nfU, nfP, nfHbyA);
+
+                NeoN::fence(exec);
                 return;
             };
         }

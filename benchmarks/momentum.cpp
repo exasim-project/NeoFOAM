@@ -83,7 +83,9 @@ TEST_CASE("momentum")
                     nfU,
                     rt
                 );
-                return eqn.assemble();
+                eqn.assemble();
+                NeoN::fence(exec);
+                return;
             };
         }
 
@@ -102,7 +104,9 @@ TEST_CASE("momentum")
                 auto ls = NeoN::la::LinearSystem<NeoN::Vec3, NeoN::localIdx>(eqn.linearSystem());
                 expr.addOperator(-1.0 * dsl::exp::grad(nfP));
                 eqn.assemble();
-                return expr.assemble(rt.t, rt.dt, eqn.sparsityPattern(), ls);
+                expr.assemble(rt.t, rt.dt, eqn.sparsityPattern(), ls);
+                NeoN::fence(exec);
+                return;
             };
         }
     }
