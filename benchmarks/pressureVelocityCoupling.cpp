@@ -69,7 +69,7 @@ TEST_CASE("pressureVelocityCoupling")
         schemesDict = nf::mapFvSchemes(schemesDict);
         auto& nfMesh = rt.mesh;
         auto& fieldCollection = fvcc::VectorCollection::instance(rt.db, "fieldCollection");
-        auto& nfU = constructFromVel(fieldCollection, rt, ofU);
+        auto& nfU = constructAndRegister(fieldCollection, rt, ofU);
         auto [nfP, nfPhi, nfGamma] =
             NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofP, ofPhi, ofGamma);
 
