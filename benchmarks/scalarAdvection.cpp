@@ -69,17 +69,7 @@ TEST_CASE("scalarAdvection")
         auto rt = nf::createAdapterRunTime(runTime, exec);
 
         auto& vectorCollection = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        fvcc::VolumeField<NeoN::scalar>& nfT =
-            vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                nf::CreateFromFoamField<Foam::volScalarField> {
-                    .exec = exec,
-                    .nfMesh = rt.nfMesh,
-                    .foamField = ofT,
-                    .name = "nfT"
-                }
-            );
-        nfT.correctBoundaryConditions();
-        fvcc::rotateOldTimes(nfT);
+        auto& nfT = NeoFOAM::constructAndRegister(vectorCollection, rt, ofT);
 
         auto [nfPhi, nfGamma] = NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofPhi, ofGamma);
 

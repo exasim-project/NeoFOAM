@@ -31,42 +31,17 @@ TEST_CASE("PressureVelocityCoupling")
     auto& schemesDict = rt.fvSchemesDict;
     schemesDict = nf::mapFvSchemes(schemesDict);
 
-    auto ofU = randomVectorField(runTime, mesh, "ofU");
-    auto ofp = randomScalarField(runTime, mesh, "ofp");
-    // forAll(ofp, celli)
-    // {
-    //     ofp[celli] = celli;
-    // }
+    auto ofU = randomVectorField(runTime, mesh, "U");
+    auto ofp = randomScalarField(runTime, mesh, "p");
     ofp.correctBoundaryConditions();
-    // a predictable field is simpler to debug
-    // forAll(ofU, celli)
-    // {
-    //     ofU[celli] = Foam::vector(celli, celli, celli);
-    // }
     ofU.correctBoundaryConditions();
     auto& oldOfU = ofU.oldTime();
     oldOfU.primitiveFieldRef() = Foam::vector(0.0, 0.0, 0.0);
     oldOfU.correctBoundaryConditions();
 
     auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
-    nnfvcc::VolumeField<NeoN::Vec3>& nfU =
-        vectorCollection.registerVector<nnfvcc::VolumeField<NeoN::Vec3>>(
-            NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
-                .exec = rt.exec,
-                .nfMesh = rt.nfMesh,
-                .foamField = ofU,
-                .name = "nfU"
-            }
-        );
-    auto nfP = vectorCollection.registerVector<nnfvcc::VolumeField<NeoN::scalar>>(
-        NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-            .exec = rt.exec,
-            .nfMesh = rt.nfMesh,
-            .foamField = ofp,
-            .name = "nfP"
-        }
-    );
-    nfP.correctBoundaryConditions();
+    auto& nfU = NeoFOAM::constructAndRegister(vectorCollection, rt, ofU);
+    auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp);
 
     auto& nfOldU = fvcc::oldTime(nfU);
     NeoN::fill(nfOldU.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
@@ -74,7 +49,7 @@ TEST_CASE("PressureVelocityCoupling")
 
     Foam::surfaceScalarField ofPhi(
         Foam::IOobject(
-            "ofPhi",
+            "phi",
             runTime.timeName(),
             mesh,
             Foam::IOobject::NO_READ,
@@ -82,24 +57,22 @@ TEST_CASE("PressureVelocityCoupling")
         ),
         fvc::flux(ofU)
     );
-    auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
-    nfPhi.name = "nfPhi";
 
     Foam::surfaceScalarField ofNu(
         Foam::IOobject(
-            "ofNu",
+            "nu",
             runTime.timeName(),
             mesh,
             Foam::IOobject::NO_READ,
             Foam::IOobject::NO_WRITE
         ),
         mesh,
-        Foam::dimensionedScalar("ofNu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
+        Foam::dimensionedScalar("nu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
     );
 
+    auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
     auto nfNu = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
-    nfNu.name = "nfNu";
-    NeoN::fill(nfNu.boundaryData().value(), 0.01);
+    // NeoN::fill(nfNu.boundaryData().value(), 0.01);
 
     SECTION("discreteMomentumFields " + execName)
     {
@@ -115,7 +88,7 @@ TEST_CASE("PressureVelocityCoupling")
 
         SECTION("rAU")
         {
-            Foam::volScalarField forAU("forAU", 1.0 / ofUEqn.A());
+            Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
             nfUEqn.assemble();
             auto nfrAU = nf::computeRAU(nfUEqn);
 
@@ -126,7 +99,7 @@ TEST_CASE("PressureVelocityCoupling")
         {
             ofU.primitiveFieldRef() *= 2.5;
             ofU.correctBoundaryConditions();
-            Foam::volScalarField forAU("forAU", 1.0 / ofUEqn.A());
+            Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
 
             nfU.internalVector() *= 2.5;
             nfU.correctBoundaryConditions();
@@ -138,7 +111,7 @@ TEST_CASE("PressureVelocityCoupling")
 
         SECTION("HbyA")
         {
-            Foam::volScalarField forAU("forAU", 1.0 / ofUEqn.A());
+            Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
             Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
 
             nfUEqn.assemble();
@@ -195,7 +168,7 @@ TEST_CASE("PressureVelocityCoupling")
         {
             ofU.primitiveFieldRef() *= 2.5;
             ofU.correctBoundaryConditions();
-            Foam::volScalarField forAU("forAU", 1.0 / ofUEqn.A());
+            Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
             Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
 
             nfU.internalVector() *= 2.5;
@@ -216,7 +189,7 @@ TEST_CASE("PressureVelocityCoupling")
         SECTION("Solve transient momentum without grad(p)")
         {
             auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-            solverDict.subDict("nfU") = nf::mapFvSolution(solverDict.subDict("nfU"));
+            solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
             // require fields to be initially the same
             auto hostnfU = nfU.internalVector().copyToHost();
@@ -255,7 +228,7 @@ TEST_CASE("PressureVelocityCoupling")
             SECTION("HbyA modified U")
             {
                 ofU.correctBoundaryConditions();
-                Foam::volScalarField forAU("forAU", 1.0 / ofUEqn.A());
+                Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
                 Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
                 Foam::surfaceScalarField phiHbyA("phiHbyA", Foam::fvc::flux(HbyA));
 
@@ -298,7 +271,7 @@ TEST_CASE("PressureVelocityCoupling")
         SECTION("Solve transient momentum with grad(p)")
         {
             auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-            solverDict.subDict("nfU") = nf::mapFvSolution(solverDict.subDict("nfU"));
+            solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
             // require fields to be initially the same
             auto hostnfU = nfU.internalVector().copyToHost();
@@ -344,7 +317,7 @@ TEST_CASE("PressureVelocityCoupling")
             SECTION("HbyA modified U")
             {
                 ofU.correctBoundaryConditions();
-                Foam::volScalarField forAU("forAU", 1.0 / ofUEqn.A());
+                Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
                 Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
 
                 nfU.correctBoundaryConditions();
@@ -389,21 +362,20 @@ TEST_CASE("PressureVelocityCoupling")
             // create rAUf
             Foam::surfaceScalarField forAUf(
                 Foam::IOobject(
-                    "forAUf",
+                    "rAUf",
                     runTime.timeName(),
                     mesh,
                     Foam::IOobject::NO_READ,
                     Foam::IOobject::NO_WRITE
                 ),
                 mesh,
-                Foam::dimensionedScalar("forAUf", Foam::dimensionSet(0, 0, 1, 0, 0), 0.1)
+                Foam::dimensionedScalar("rAUf", Foam::dimensionSet(0, 0, 1, 0, 0), 0.1)
             );
             auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
-            nfrAUf.name = "nfrAUf";
+            nfrAUf.name = "rAUf";
 
-            Foam::surfaceScalarField ofPhi0("ofPhi0", ofPhi * 0.0);
+            Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
             auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
-            nfPhi0.name = "nfPhi0";
 
             nf::PDESolver<NeoN::scalar> pEqn(
                 dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),

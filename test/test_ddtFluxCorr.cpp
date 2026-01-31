@@ -96,15 +96,13 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     auto& nfU0 = fvcc::oldTime(nfU);
     auto& nfPhi0 = fvcc::oldTime(nfPhi);
 
-    NeoN::Dictionary fvSchemes, ddtSchemes, timeIntegrationDict;
-    // timeIntegrationDict.insert("type", std::string("backwardEuler")); // Euler
-    ddtSchemes.insert("ddt(nfU)", std::string("BDF1")); // Euler
-    // fvSchemes.insert("timeIntegration", timeIntegrationDict);
-    fvSchemes.insert("ddtSchemes", ddtSchemes);
+    NeoN::Dictionary ddtSchemes;
+    ddtSchemes.insert("ddt(U)", std::string("BDF1")); // Euler
+    rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
 
     // --- DdtOperator for momentum
     fvcc::DdtOperator<Vec3> ddtOp(NeoN::dsl::Operator::Type::Implicit, nfU);
-    ddtOp.read(fvSchemes);
+    ddtOp.read(rt.fvSchemesDict);
 
     auto scheme = ddtOp.scheme();
 

@@ -58,12 +58,11 @@ TEST_CASE("matrix multiplication")
             "ddt",
             matrix & ofT
         ); // we should get a uniform field with a value of 1
-        // ddt.write();
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
         NeoN::Dictionary fvSchemes;
         NeoN::Dictionary ddtSchemes;
-        ddtSchemes.insert("ddt(nfT)", std::string("BDF1"));
+        ddtSchemes.insert("ddt(T)", std::string("BDF1"));
         fvSchemes.insert("ddtSchemes", ddtSchemes);
         NeoN::Input in = fvSchemes;
 

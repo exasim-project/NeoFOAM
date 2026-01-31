@@ -69,6 +69,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     {
         solverDict.insert("preconditioner", preconditionerMap["DIC"]);
     }
+
     if (solverDict.contains("smoother"))
     {
         solverDict.remove("smoother");
@@ -93,8 +94,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     }
     else
     {
-        // If no preconditioner is specified, we can insert a default one
         std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
+
+        // pop preconditioner if none and early return
+        if (preconditionerName == "none")
+        {
+            solverDict.remove("preconditioner");
+            return;
+        }
+
         auto mapEntry = preconditionerMap.find(preconditionerName);
         if (mapEntry != preconditionerMap.end())
         {

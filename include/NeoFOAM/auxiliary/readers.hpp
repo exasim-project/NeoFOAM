@@ -340,6 +340,7 @@ auto& constructAndRegister(
     if (storeOldTime) {
         fvcc::rotateOldTimes(ret);
     }
+    ret.correctBoundaryConditions();
     return ret;
 }
 
