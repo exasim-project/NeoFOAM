@@ -14,7 +14,7 @@ Field = Annotated[T, "fields"]
 
 class FieldUpdates(dict[str, Any]):
     """
-    A dictionary that holds updates to fields in the Context object.
+    A dictionary that collects the pending field updates for Context.fields.
     """
 
     pass
