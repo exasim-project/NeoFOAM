@@ -84,25 +84,14 @@ TEST_CASE("Interpolation")
         // NeoFOAM::compare(nfGradT, ofGradT, ApproxVector(1e-15), false);
     }
 
-    Foam::surfaceScalarField ofPhi(
-        Foam::IOobject(
-            "phi",
-            runTime.timeName(),
-            mesh,
-            Foam::IOobject::NO_READ,
-            Foam::IOobject::AUTO_WRITE
-        ),
-        mesh,
-        Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
-    );
+    auto ofPhi = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
     auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
 
     SECTION("GaussGreenDiv[scalar] on " + execName)
     {
         // NOTE: seems like copy construction results in hanging tests
-        Foam::fv::gaussConvectionScheme<Foam::scalar> foamDivScalar(mesh, ofPhi, is);
+        auto foamDivScalar = Foam::fv::gaussConvectionScheme<Foam::scalar>(mesh, ofPhi, is);
         Foam::volScalarField ofDivT("ofDivT", foamDivScalar.fvcDiv(ofPhi, ofT));
-
         auto nfDivT = NeoFOAM::constructFrom(exec, nfMesh, ofDivT);
         zero(nfDivT, 0.0);
 
@@ -116,7 +105,7 @@ TEST_CASE("Interpolation")
 
     SECTION("linear GaussGreen from expression on " + execName)
     {
-        Foam::fv::gaussConvectionScheme<Foam::scalar> foamDivScalar(mesh, ofPhi, is);
+        auto foamDivScalar = Foam::fv::gaussConvectionScheme<Foam::scalar>(mesh, ofPhi, is);
         Foam::volScalarField ofDivT("ofDivT", foamDivScalar.fvcDiv(ofPhi, ofT));
         NeoN::TokenList scheme = NeoN::TokenList({std::string("Gauss"), std::string("linear")});
 
