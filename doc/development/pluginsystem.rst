@@ -8,13 +8,15 @@ This approach promotes maintainability, collaboration, and rapid prototyping of 
 Overview
 --------
 
-The plugin system allows the configuration of the used models via configuration files and is a runtime-extensible configuration system built on Pydantic discriminated unions and a registry pattern.
+The plugin system enables flexible model configuration via configuration files.
+By utilizing Pydantic, the model configuration is decoupled from the specific file format, allowing support for multiple formats such as OpenFOAM dictionaries, YAML, TOML, or JSON.
+It is a runtime-extensible system built on Pydantic discriminated unions and a registry pattern.
 
 .. code-block:: cpp
 
-    // RASModel would be discriminator
-    // a tags / type field in the config file
-    // that selects the right turbulence model
+    // RASModel acts as the discriminator
+    // This tag/type field in the config file
+    // selects the correct turbulence model
     RASModel        kOmegaSST;
 
     turbulence      on;
@@ -22,15 +24,17 @@ The plugin system allows the configuration of the used models via configuration 
     printCoeffs     on;
 
 
-A discriminated union selects the right config class based on a type/tag field (e.g., "RASModel": "kOmegaSST" vs "RASModel": "kEpsilon"), and each base class has its own registry of registered child implementations.
-All plugins and all models are registered in a central registry to enable easy access and management for UI, validation purposes or generative AI.
-So, the user can retrieve all available plugins, like turbulence models, boundary conditions, etc.  their configuration options and is able to validate them.
-Additionally, the plugin system supports the generation of JSON schemas for documentation and validation purposes.
+A discriminated union selects the appropriate configuration class based on a type/tag field (e.g., "RASModel": "kOmegaSST" vs "RASModel": "kEpsilon").
+Each base class maintains its own registry of registered child implementations.
+All plugins and models are registered in a central registry, enabling easy access and management for UIs, validation, or generative AI integration.
+This allows users to retrieve all available plugins (such as turbulence models or boundary conditions), inspect their configuration options, and validate them.
+Additionally, the plugin system supports the generation of JSON schemas for documentation and validation.
 
 
-Discrimated Unions in Pydantic
-------------------------------
+Discriminated Unions in Pydantic
+--------------------------------
 
+The discriminated union functionality in Pydantic is illustrated
 The discriminated union work in pydantic similar are given in the following simple example.
 
 .. code-block:: python
@@ -59,23 +63,23 @@ The discriminated union work in pydantic similar are given in the following simp
     print(Model(pet={'pet_type': 'dog', 'barks': 3.14}, n=1))
     #> pet=Dog(pet_type='dog', barks=3.14) n=1
 
-They allow to instantiate the correct subclass based on the value of a discriminator field (here ``pet_type``).
-The ``discriminator_variable`` (here ``pet``) is the field that holds the union of possible types.
-So, all available models must be registered in the Union to be selectable via the discriminator.
-This is allows to easily validate the configuration files all required information is stored in the pydantic models.
+Discriminated unions allow instantiating the correct subclass based on the value of a discriminator field (here ``pet_type``).
+The ``discriminator_variable`` (here ``pet``) is the field that accepts the union of possible types.
+Therefore, all available models must be registered in the Union to be selectable via the discriminator.
+This facilitates easy validation of configuration files, as all required information is stored directly in the Pydantic models.
 
-Plugin System and Registration of subclasses
+Plugin System and Registration of Subclasses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The PluginSystem stores and register all Base classes similar to the ``Model`` shown above into a single class.
-This way all plugins are easily accessible and usable by other parts of the codebase or external tools.
+The ``PluginSystem`` stores and registers all base classes (similar to the ``Model`` shown above) in a centralized registry.
+This ensures all plugins are easily accessible and usable by other parts of the codebase or external tools.
 
-The main challenge is to dynamically create the Union type. This is required as the plugin is able to register new subclasses at runtime.
+The main challenge lies in dynamically creating the Union type.
+This is required because the plugin system enables the registration of new subclasses at runtime.
 
-The example below shows how to register a new base class with two subclasses using the PluginSystem.
-To be able to automatically create the discriminated union, the base class must be decorated with ``@PluginSystem.register()``.
-and the ``discriminator_variable`` and ``discriminator`` must be provided.
-This will automatically add the discriminated union field to the base class similar to the example above.
+The example below demonstrates how to register a new base class with two subclasses using the ``PluginSystem``.
+To automatically create the discriminated union, the base class must be decorated with ``@PluginSystem.register()``, providing the ``discriminator_variable`` and ``discriminator``.
+This automatically adds the discriminated union field to the base class, similar to the Pydantic example above.
 
 .. code-block:: python
 
@@ -103,11 +107,11 @@ This will automatically add the discriminated union field to the base class simi
         side: float
 
 
-The ``ShapeInterface`` class now has a dynamically created field ``shape`` that is a discriminated union of all registered subclasses.
+The ``ShapeInterface`` class now contains a dynamically created field ``shape``, which is a discriminated union of all registered subclasses.
 The subclasses ``CircleConfig`` and ``SquareConfig`` are registered using the ``@ShapeInterface.register`` decorator.
-This automatically updates the union type and recreates the model.
+This action automatically updates the union type and recreates the model to include the new subclasses.
 
-The model need to be create by the class method ``create()`` to ensure that the latest version of the union type is used.
+The model must be instantiated using the class method ``create()`` to ensure that the latest version of the union type is used, as Pydantic models cache their schema definitions.
 
 .. code-block:: python
 
@@ -131,10 +135,10 @@ The model need to be create by the class method ``create()`` to ensure that the 
 JSON Schema Generation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The dynamically generated plugin models support JSON schema generation for validation and documentation purposes.
-Json schemas show all possible configuration of all the available plugins of each base class and therefore enable the creation of user interfaces or config file validators.
+The dynamically generated plugin models support JSON schema generation for validation and documentation.
+JSON schemas expose all possible configurations for the available plugins of each base class, enabling the creation of user interfaces or configuration file validators.
 
-``ShapeInterface.plugin_model`` provides access to the dynamically update model and is required to generate up-to-date schemas.
+``ShapeInterface.plugin_model`` provides access to the dynamically updated model and is required to generate up-to-date schemas.
 
 .. code-block:: python
 
