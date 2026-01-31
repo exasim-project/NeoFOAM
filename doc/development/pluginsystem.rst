@@ -8,34 +8,74 @@ This approach promotes maintainability, collaboration, and rapid prototyping of 
 Overview
 --------
 
-The plugin system is a runtime-extensible configuration system built on Pydantic discriminated unions and a registry pattern.
-A discriminated union selects the right config class based on a type/tag field (e.g., "shape_type": "circle" vs "shape_type": "square"), and each base class has its own registry of registered child implementations.
-All plugins and all models are registered in a central registry to enable easy access and management for UI,validation purposes or generative AI.
-The user can retrieve all available plugins, like turbulence models, boundary conditions, etc.  their configuration options and is able to validate them.
+The plugin system allows the configuration of the used models via configuration files and is a runtime-extensible configuration system built on Pydantic discriminated unions and a registry pattern.
+
+.. code-block:: cpp
+
+    // RASModel would be discriminator
+    // a tags / type field in the config file
+    // that selects the right turbulence model
+    RASModel        kOmegaSST;
+
+    turbulence      on;
+
+    printCoeffs     on;
+
+
+A discriminated union selects the right config class based on a type/tag field (e.g., "RASModel": "kOmegaSST" vs "RASModel": "kEpsilon"), and each base class has its own registry of registered child implementations.
+All plugins and all models are registered in a central registry to enable easy access and management for UI, validation purposes or generative AI.
+So, the user can retrieve all available plugins, like turbulence models, boundary conditions, etc.  their configuration options and is able to validate them.
 Additionally, the plugin system supports the generation of JSON schemas for documentation and validation purposes.
 
-Registration Process
-~~~~~~~~~~~~~~~~~~~~
 
-The  registration process for the plugins follows a two-step process using decorators:
+Discrimated Unions in Pydantic
+------------------------------
 
-1. **Base Class Registration**: ``@PluginSystem.register()`` creates a registry entry and adds helper methods
-2. **Plugin Registration**: ``@BaseClass.register`` adds plugin classes to the registry and regenerates the union model
+The discriminated union work in pydantic similar are given in the following simple example.
 
-Dynamic Model Generation
-~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: python
 
-The system uses ``pydantic.create_model()`` to dynamically generate extensible models.
-Each registration updates the discriminated union type and recreates the model.
-The discriminator field enables automatic deserialization based on the type identifier.
+    from typing import Literal, Union
+    from pydantic import BaseModel, Field, ValidationError
 
-Usage Examples
---------------
+    class Cat(BaseModel):
+        # discriminator='pet_type'
+        pet_type: Literal['cat']
+        meows: int
 
-Basic Plugin Setup
-~~~~~~~~~~~~~~~~~~
+    class Dog(BaseModel):
+        pet_type: Literal['dog']
+        barks: float
 
-The following example demonstrates how to define a plugin base class and register multiple plugin configurations.
+    class Lizard(BaseModel):
+        pet_type: Literal['reptile', 'lizard']
+        scales: bool
+
+    class Model(BaseModel):
+        # pet is the discriminator_variable
+        pet: Union[Cat, Dog, Lizard] = Field(..., discriminator='pet_type')
+        n: int
+
+    print(Model(pet={'pet_type': 'dog', 'barks': 3.14}, n=1))
+    #> pet=Dog(pet_type='dog', barks=3.14) n=1
+
+They allow to instantiate the correct subclass based on the value of a discriminator field (here ``pet_type``).
+The ``discriminator_variable`` (here ``pet``) is the field that holds the union of possible types.
+So, all available models must be registered in the Union to be selectable via the discriminator.
+This is allows to easily validate the configuration files all required information is stored in the pydantic models.
+
+Plugin System and Registration of subclasses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The PluginSystem stores and register all Base classes similar to the ``Model`` shown above into a single class.
+This way all plugins are easily accessible and usable by other parts of the codebase or external tools.
+
+The main challenge is to dynamically create the Union type. This is required as the plugin is able to register new subclasses at runtime.
+
+The example below shows how to register a new base class with two subclasses using the PluginSystem.
+To be able to automatically create the discriminated union, the base class must be decorated with ``@PluginSystem.register()``.
+and the ``discriminator_variable`` and ``discriminator`` must be provided.
+This will automatically add the discriminated union field to the base class similar to the example above.
 
 .. code-block:: python
 
@@ -45,7 +85,9 @@ The following example demonstrates how to define a plugin base class and registe
 
     @PluginSystem.register(discriminator_variable="shape", discriminator="shape_type")
     class ShapeInterface(BaseModel):
-        # the decorator automatically adds shape as discriminator field
+        # the decorator automatically adds shape as discriminator variable
+        # and shape_type as discriminator
+        # the commented line below is automatically added:
         # shape: Union[CircleConfig, SquareConfig] = Field(discriminator='shape_type')
         color: str
         name: str = "default"
@@ -60,10 +102,12 @@ The following example demonstrates how to define a plugin base class and registe
         shape_type: Literal["square"]
         side: float
 
-Creating and Using Configurations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A usage example creating and using plugin configurations is shown below.
+The ``ShapeInterface`` class now has a dynamically created field ``shape`` that is a discriminated union of all registered subclasses.
+The subclasses ``CircleConfig`` and ``SquareConfig`` are registered using the ``@ShapeInterface.register`` decorator.
+This automatically updates the union type and recreates the model.
+
+The model need to be create by the class method ``create()`` to ensure that the latest version of the union type is used.
 
 .. code-block:: python
 
@@ -83,54 +127,14 @@ A usage example creating and using plugin configurations is shown below.
     assert circle.shape.radius == 5.0
     assert square.shape.side == 3.0
 
-Runtime Extension
-~~~~~~~~~~~~~~~~~
-
-The plugin system supports runtime registration of new plugin configurations.
-However, this requires rebuilding the Type union as the models number of registered types changes.
-Otherwise, the newly added types would not be part of the union and could not be registered and selected.
-
-.. code-block:: python
-
-    # Define new plugin configurations
-    class TriangleConfig(BaseModel):
-        shape_type: Literal["triangle"]
-        base: float
-        height: float
-
-    class EllipseConfig(BaseModel):
-        shape_type: Literal["ellipse"]
-        major_axis: float
-        minor_axis: float
-
-    # Register at runtime
-    ShapeInterface.register(TriangleConfig) # register the new plugin
-    ShapeInterface.register(EllipseConfig) # register the new plugin
-
-    # Use new configurations immediately and internally rebuild the union model
-    triangle = ShapeInterface.create(
-        shape={"shape_type": "triangle", "base": 4.0, "height": 3.0},
-        color="green"
-    )
-
-Registering an additional base class can be simply done by decorating it with ``@PluginSystem.register()``.
-Internally, PluginSystem would store the registries in similar to a dictionary
-
-.. code-block:: python
-
-    # pseudo-code representation of internal registries
-    {
-        "ShapeInterface": <Registry for ShapeInterface>,
-        "OtherInterface": <Registry for OtherInterface>
-    }
-
-
 
 JSON Schema Generation
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The dynamically generated plugin models support JSON schema generation for validation and documentation purposes.
 Json schemas show all possible configuration of all the available plugins of each base class and therefore enable the creation of user interfaces or config file validators.
+
+``ShapeInterface.plugin_model`` provides access to the dynamically update model and is required to generate up-to-date schemas.
 
 .. code-block:: python
 
@@ -164,7 +168,6 @@ The following example demonstrates how to list registered plugins, retrieve spec
 
 Registration via Entrypoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 .. warning::
 
