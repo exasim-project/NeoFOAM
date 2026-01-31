@@ -359,20 +359,8 @@ TEST_CASE("PressureVelocityCoupling")
 
         SECTION("matrix flux")
         {
-            // create rAUf
-            Foam::surfaceScalarField forAUf(
-                Foam::IOobject(
-                    "rAUf",
-                    runTime.timeName(),
-                    mesh,
-                    Foam::IOobject::NO_READ,
-                    Foam::IOobject::NO_WRITE
-                ),
-                mesh,
-                Foam::dimensionedScalar("rAUf", Foam::dimensionSet(0, 0, 1, 0, 0), 0.1)
-            );
+            auto forAUf = randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
             auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
-            nfrAUf.name = "rAUf";
 
             Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
             auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);

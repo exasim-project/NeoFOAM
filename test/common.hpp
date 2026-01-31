@@ -166,7 +166,7 @@ auto randomScalarField(const Foam::fvMesh& mesh, Foam::word name)
 
 /**@brief create a dimensionedScalarField with random entries*/
 template<typename FieldType>
-auto randDimScalarField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet, Foam::word name)
+auto randDimField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet, Foam::word name)
 {
     auto field = FieldType(
         Foam::IOobject(
@@ -182,23 +182,6 @@ auto randDimScalarField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSe
 
     randomizeField(field);
     return field;
-}
-
-// TODO consolidate with the other construct from functions
-auto& constructFromVel(auto& fieldCollection, auto& rt, auto& ofU)
-{
-    // using ContainerType = typename TypeMap<FoamFieldType>::container_type;
-    // using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
-    auto& ret = fieldCollection.template registerVector<fvcc::VolumeField<NeoN::Vec3>>(
-        NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
-            .exec = rt.exec,
-            .nfMesh = rt.nfMesh,
-            .foamField = ofU,
-            .name = ofU.name()
-        }
-    );
-    fvcc::rotateOldTimes(ret);
-    return ret;
 }
 
 
