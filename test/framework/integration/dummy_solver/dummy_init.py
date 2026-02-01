@@ -67,13 +67,7 @@ class MeshConfig(BaseConfig):
     nPoints: int
 
 
-class Model1Config(BaseConfig):
-    """Configuration for Model1 (generic physics model)."""
 
-    enabled: bool = True
-    prop1: float
-    prop2: float
-    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class CoreModel2(BaseModel):

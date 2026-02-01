@@ -9,14 +9,21 @@ Demonstrates Model API with 3-stage initialization pattern.
 
 from typing import Any
 from pathlib import Path
-
+from pydantic import Field
 
 from foamadapter.framework.context import Context, FieldUpdates
 from foamadapter.framework.initialization.lazy_init import LazyInit
 
 from .dummy_model import Model
-from ..dummy_init import Model1Config
+from ..dummy_init import BaseConfig
 
+class Model1Config(BaseConfig):
+    """Configuration for Model1 (generic physics model)."""
+
+    enabled: bool = True
+    prop1: float
+    prop2: float
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 model1 = Model("DummyModel1")
 
