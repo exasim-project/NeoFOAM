@@ -4,7 +4,7 @@
 """
 Generic model1 for DummySolver.
 
-Demonstrates Model API with 3-stage initialization pattern.
+Demonstrates Model API with 3-stage initialization pattern and new config features.
 """
 
 from typing import Any
@@ -17,6 +17,7 @@ from foamadapter.framework.initialization.lazy_init import LazyInit
 from .dummy_model import Model
 from ..dummy_init import BaseConfig
 
+
 class Model1Config(BaseConfig):
     """Configuration for Model1 (generic physics model)."""
 
@@ -25,7 +26,18 @@ class Model1Config(BaseConfig):
     prop2: float
     parameters: dict[str, Any] = Field(default_factory=dict)
 
-model1 = Model("DummyModel1")
+
+class Model1StepConfig(BaseConfig):
+    """Operation-specific configuration for Model1 steps."""
+
+    factor: float = 0.01
+    use_absolute: bool = True
+
+
+# Create model and register configs using chainable API
+model1 = Model("DummyModel1").with_config(Model1Config).with_config(
+    Model1StepConfig, name="step_config"
+)
 
 
 # Model state (runtime counters)
@@ -103,41 +115,47 @@ def build() -> list[LazyInit]:
     ]
 
 
-@model1.configure_algorithm_step
-def configure_algorithm(algorithm: Any) -> None:
-    """Configure algorithm to include model1 effects."""
-    if hasattr(algorithm, "_use_model1"):
-        algorithm._use_model1 = True
-
-
-@model1.operation(operation_number="2.5", depends_on=["solver_step1"])
-def model1_step1(self: Any, ctx: Context) -> FieldUpdates:
+@model1.operation(
+    operation_number="2.5",
+    depends_on=["solver_step1"],
+    configs=["step_config"],
+)
+def model1_step1(
+    self: Any, ctx: Context, step_config: Model1StepConfig
+) -> FieldUpdates:
     """
-    First model step.
+    First model step with operation-specific config.
 
     Inserted between solver step 1 and 2.
+    Uses step_config for operation-specific parameters.
     """
     self._step1_count += 1
 
     f1 = ctx.fields["field1"]  # Returns float directly
     mf1 = ctx.fields["model_field1"]  # Returns float directly
 
-    # Generic update
-    mf1_new = mf1 + abs(f1) * 0.01
+    # Generic update using operation-specific config
+    value = abs(f1) if step_config.use_absolute else f1
+    mf1_new = mf1 + value * step_config.factor
 
     return FieldUpdates({"model_field1": mf1_new})
 
 
-@model1.operation(operation_number="2.7", depends_on=["model1_step1"])
-def model1_step2(self: Any, ctx: Context) -> FieldUpdates:
+@model1.operation(
+    operation_number="2.7",
+    depends_on=["model1_step1"],
+    configs=["main"],
+)
+def model1_step2(self: Any, ctx: Context, main: Model1Config) -> FieldUpdates:
     """
-    Second model step - uses config from load stage.
+    Second model step - uses main config.
+
+    Demonstrates explicit config injection.
     """
     self._step2_count += 1
 
     # Generic update using model config
     param1 = ctx.models["config"]["param1"]
-    config = self._load_result
-    mf2_new = param1 / config.prop1  # Use config from load stage
+    mf2_new = param1 / main.prop1  # Use config from main
 
     return FieldUpdates({"model_field2": mf2_new})

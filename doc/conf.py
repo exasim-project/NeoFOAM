@@ -45,20 +45,6 @@ highlight_language = 'c++'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'furo'
-html_theme_options = {
-    'canonical_url': '',
-    'analytics_id': '',  #  Provided by Google in your dashboard
-    'display_version': True,
-    'prev_next_buttons_location': 'bottom',
-    'style_external_links': False,
-    'logo_only': False,
-    # Toc options
-    'collapse_navigation': True,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
-    'includehidden': True,
-    'titles_only': False
-}
 html_static_path = ['_static']
 html_css_files = [
     'custom.css',

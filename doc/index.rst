@@ -32,23 +32,10 @@ Table of Contents
    :caption: Development:
 
    development/architecture
+   development/fastapi_architecture
    development/components
    development/solver
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Usage:
-
-   usage/quickstart
-   usage/cli
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development:
-
-   development/architecture
    development/initialization
-   development/testing
    development/pluginsystem
 
 .. toctree::

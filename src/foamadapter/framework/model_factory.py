@@ -24,27 +24,18 @@ class ModelInstance:
     Provides decorator methods for registering model operations and configuration.
     Pattern matches Init and Solver APIs:
 
-        model = Model("BoussinesqModel")
+        model = Model("BoussinesqModel").with_config(BoussinesqConfig)
 
-        @model.config
-        @dataclass
-        class BoussinesqConfig:
-            beta: float = 3e-3
-            TRef: float = 300.0
-
-        @model.operation(operation_number="2.5")
-        def solve_energy(self, T: dict, config) -> FieldUpdates:
-            # config auto-injected from @model.config
+        @model.operation(operation_number="2.5", configs=["main"])
+        def solve_energy(self, T: dict, main: BoussinesqConfig) -> FieldUpdates:
+            # main config auto-injected
             pass
     """
 
     def __init__(self, name: str):
         self.name = name
         self._operations: list[tuple[Any, dict[str, Any]]] = []
-        self._config_class: type | None = None
-        self._config_instance: Any | None = None
         self._build_func: Callable[[], list[Any]] | None = None
-        self._configure_algorithm_func: Callable[[Any], None] | None = None
         self._dependency_resolver = DependencyResolver()
         self.enabled = True
 
@@ -55,6 +46,10 @@ class ModelInstance:
 
         # State storage for load results
         self._load_result: Any = None
+
+        # Multi-config support
+        self._config_classes: dict[str, type] = {}
+        self._config_instances: dict[str, Any] = {}
 
     def load(self, func: Callable[[], Any]) -> Callable[[], Any]:
         """
@@ -113,13 +108,6 @@ class ModelInstance:
                 return Path("constant/transportProperties").exists()
         """
         self._detect_func = func
-        return func
-
-    def configure_algorithm_step(
-        self, func: Callable[[Any], None]
-    ) -> Callable[[Any], None]:
-        """Decorator to register algorithm configuration step."""
-        self._configure_algorithm_func = func
         return func
 
     def run_load(self) -> Any:
@@ -200,46 +188,76 @@ class ModelInstance:
             return self._build_func(**kwargs)
         return []
 
-    def configure_algorithm(self, algorithm: Any) -> None:
-        """Execute registered algorithm configuration step."""
-        if self._configure_algorithm_func:
-            self._configure_algorithm_func(algorithm)
-
-    def config(self, cls: type) -> type:
+    def with_config(self, config_class: type, name: str | None = None) -> "ModelInstance":
         """
-        Decorator to register model configuration class.
+        Register a configuration class with the model (chainable).
 
         Args:
-            cls: Configuration class (typically a dataclass)
+            config_class: Pydantic BaseModel subclass for configuration
+            name: Optional name for the config (default: infer from class name or use "main")
 
         Returns:
-            Unmodified class
+            self (for method chaining)
 
         Usage:
-            @model.config
-            @dataclass
-            class BoussinesqConfig:
-                beta: float = 3e-3
-                TRef: float = 300.0
+            model.with_config(MainConfig).with_config(OpConfig, name="op_config")
         """
-        self._config_class = cls
-        return cls
+        from pydantic import BaseModel
 
-    def get_config(self) -> Any:
+        # Validate that it's a BaseModel
+        if not (isinstance(config_class, type) and issubclass(config_class, BaseModel)):
+            raise TypeError(
+                f"Config class must be a Pydantic BaseModel, got {type(config_class)}"
+            )
+
+        # Determine config name
+        if name is None:
+            # Default to "main" if no name provided
+            name = "main"
+
+        # Check for duplicates
+        if name in self._config_classes:
+            raise ValueError(
+                f"Config with name '{name}' already exists for model '{self.name}'"
+            )
+
+        # Register the config class
+        self._config_classes[name] = config_class
+
+        return self
+
+    def get_config(self, name: str = "main", **kwargs: Any) -> Any:
         """
-        Get model configuration instance (lazy initialization).
+        Get or create a config instance by name.
 
-        Used as a dependency provider:
-            config: Annotated[MyConfig, Depends(model.get_config)]
+        Args:
+            name: Name of the config to retrieve (default: "main")
+            **kwargs: Constructor arguments for first-time instantiation
 
         Returns:
-            Configuration instance
+            Config instance
+
+        Usage:
+            config = model.get_config("main", prop1=5.0, prop2=50.0)
+            # Later calls can omit kwargs to retrieve cached instance
+            config = model.get_config("main")
         """
-        if self._config_instance is None:
-            if self._config_class is None:
-                raise RuntimeError(f"No config class defined for model '{self.name}'")
-            self._config_instance = self._config_class()
-        return self._config_instance
+        # Check if config class exists
+        if name not in self._config_classes:
+            raise KeyError(
+                f"No config registered with name '{name}' for model '{self.name}'"
+            )
+
+        # Return cached instance if exists and no new kwargs provided
+        if name in self._config_instances and not kwargs:
+            return self._config_instances[name]
+
+        # Create new instance
+        config_class = self._config_classes[name]
+        instance = config_class(**kwargs)
+        self._config_instances[name] = instance
+
+        return instance
 
     def operation(
         self,
@@ -248,6 +266,7 @@ class ModelInstance:
         before: list[str] | None = None,
         name: str | None = None,
         inject_config: bool = True,
+        configs: list[str] | None = None,
     ) -> Callable:
         """
         Decorator to register a model operation.
@@ -258,6 +277,7 @@ class ModelInstance:
             before: List of operation names this should execute before
             name: Optional name override (default: function name)
             inject_config: Auto-inject config if 'config' parameter exists
+            configs: List of config names to inject into operation parameters
 
         Returns:
             Decorator function
@@ -267,12 +287,30 @@ class ModelInstance:
             def solve_energy(self, T: dict, phi: dict, config) -> FieldUpdates:
                 # config auto-injected if inject_config=True
                 pass
+
+            @model.operation(operation_number="2.7", configs=["main", "op_config"])
+            def solve_with_configs(self, main_config, op_config) -> FieldUpdates:
+                # Both configs injected
+                pass
         """
 
         def decorator(func: Callable) -> Callable:
-            # Auto-inject config if requested
-            if inject_config:
+            # Validate that all requested configs are registered
+            if configs:
+                for config_name in configs:
+                    if config_name not in self._config_classes:
+                        raise ValueError(
+                            f"Config '{config_name}' not registered with model '{self.name}'. "
+                            f"Use model.with_config() to register it first."
+                        )
+
+            # Auto-inject config if requested (legacy single-config mode)
+            if inject_config and not configs:
                 func = self._wrap_with_config_injection(func)
+
+            # Inject multiple configs if specified
+            if configs:
+                func = self._wrap_with_multi_config_injection(func, configs)
 
             # Wrap with dependency resolution so it can be called with just Context
             wrapped = self._wrap_with_dependency_resolution(func)
@@ -327,12 +365,104 @@ class ModelInstance:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Inject config if not already provided
             if "config" not in kwargs:
-                kwargs["config"] = self.get_config()
+                if "main" in self._config_instances:
+                    kwargs["config"] = self.get_config("main")
             return func(*args, **kwargs)
 
         # Preserve original signature for dependency resolution
         wrapper.__signature__ = sig
         return wrapper
+
+    def _wrap_with_multi_config_injection(
+        self, func: Callable, config_names: list[str]
+    ) -> Callable:
+        """
+        Wrap function to auto-inject multiple named configs.
+
+        Configs are injected based on parameter names in the function signature.
+        The parameter name should match the config name or be a type-annotated parameter.
+
+        Args:
+            func: Function to wrap
+            config_names: List of config names to inject
+
+        Returns:
+            Wrapped function that auto-injects configs
+        """
+        sig = inspect.signature(func)
+
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # Inject configs by matching parameter names
+            for config_name in config_names:
+                # Try to find matching parameter
+                param_name = None
+
+                # Direct match: parameter name == config name
+                if config_name in sig.parameters:
+                    param_name = config_name
+                else:
+                    # Try to match by config suffix (e.g., "main_config" -> "main")
+                    for param in sig.parameters:
+                        if param.endswith("_config") or param.endswith("Config"):
+                            # Extract base name
+                            base = param.replace("_config", "").replace("Config", "")
+                            if base == config_name or config_name.endswith(base):
+                                param_name = param
+                                break
+
+                if param_name and param_name not in kwargs:
+                    kwargs[param_name] = self.get_config(config_name)
+
+            return func(*args, **kwargs)
+
+        # Preserve original signature for dependency resolution
+        wrapper.__signature__ = sig
+        return wrapper
+
+    def validate_after_load(self) -> list["ValidationError"]:
+        """
+        Validate all instantiated configs after LOAD stage.
+
+        Returns:
+            List of ValidationError objects (empty if validation passes)
+        """
+        from pydantic import ValidationError as PydanticValidationError
+        from foamadapter.framework.initialization.staged_init import ValidationError
+
+        errors: list[ValidationError] = []
+
+        # Validate all instantiated configs
+        for config_name, config_instance in self._config_instances.items():
+            try:
+                # Re-validate the instance (Pydantic caches validation)
+                config_class = self._config_classes[config_name]
+                config_class.model_validate(config_instance.model_dump())
+            except PydanticValidationError as e:
+                # Convert Pydantic errors to ValidationError objects
+                for err in e.errors():
+                    field = ".".join(str(loc) for loc in err.get("loc", []))
+                    errors.append(
+                        ValidationError(
+                            field=f"{self.name}.{config_name}.{field}",
+                            message=err.get("msg", "Validation error"),
+                            severity="error",
+                        )
+                    )
+
+        return errors
+
+    def validate_after_resolve(self) -> list["ValidationError"]:
+        """
+        Validate all configs after RESOLVE stage.
+
+        Currently delegates to validate_after_load(). Can be extended for
+        cross-model validation logic.
+
+        Returns:
+            List of ValidationError objects (empty if validation passes)
+        """
+        return self.validate_after_load()
 
     @property
     def operations(self) -> list[Operation]:
@@ -410,15 +540,10 @@ def Model(name: str) -> ModelInstance:
         ModelInstance that can be used to decorate operations
 
     Example:
-        model = Model("BoussinesqModel")
+        model = Model("BoussinesqModel").with_config(BoussinesqConfig)
 
-        @model.config
-        @dataclass
-        class BoussinesqConfig:
-            beta: float = 3e-3
-
-        @model.operation(operation_number="2.5")
-        def solve_energy(self, T: dict, config) -> FieldUpdates:
+        @model.operation(operation_number="2.5", configs=["main"])
+        def solve_energy(self, T: dict, main: BoussinesqConfig) -> FieldUpdates:
             # config auto-injected
             pass
     """

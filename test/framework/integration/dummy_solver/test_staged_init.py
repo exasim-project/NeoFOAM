@@ -242,7 +242,7 @@ def test_dummy_init_staged_with_optional_models():
 
 
 def test_dummy_init_staged_algorithm_configuration():
-    """Test that optional models configure the algorithm."""
+    """Test that optional models are properly initialized with new config API."""
 
     init_instance = create_init()
     init_instance.argv = []
@@ -252,12 +252,18 @@ def test_dummy_init_staged_algorithm_configuration():
     algorithm = ctx.models.get("algorithm")
     assert algorithm is not None
 
-    # If model1 is present, algorithm should be configured
+    # If model1 is present, check that it has registered configs
     optional_models = getattr(init_instance, "_optional_models", [])
-    if any(hasattr(m, "name") and "Model1" in str(m.name) for m in optional_models):
-        assert hasattr(algorithm, "_use_model1")
-        # Model1's configure_algorithm should have set this
-        assert algorithm._use_model1 is True
+    model1 = next(
+        (m for m in optional_models if hasattr(m, "name") and "Model1" in str(m.name)),
+        None,
+    )
+
+    if model1:
+        # Model1 should have configs registered via with_config()
+        assert hasattr(model1, "_config_classes")
+        assert "main" in model1._config_classes
+        assert "step_config" in model1._config_classes
 
 
 # ============================================================================
