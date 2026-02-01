@@ -6,7 +6,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (SolverInitializer removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (SolverInitializer removed)"
+)
 
 # from dataclasses import dataclass, field
 #

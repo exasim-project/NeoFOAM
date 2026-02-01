@@ -48,9 +48,71 @@ class ModelInstance:
         self._dependency_resolver = DependencyResolver()
         self.enabled = True
 
-    def build_step(self, func: Callable[..., list[Any]]) -> Callable[..., list[Any]]:
-        """Decorator to register model build step (field creation) with Depends support."""
+        # 3-stage initialization functions
+        self._load_func: Callable[[], Any] | None = None
+        self._resolve_func: Callable[..., None] | None = None
+        self._detect_func: Callable[[], bool] | None = None
+
+        # State storage for load results
+        self._load_result: Any = None
+
+    def load(self, func: Callable[[], Any]) -> Callable[[], Any]:
+        """
+        Decorator for LOAD stage function.
+
+        The decorated function should load configuration from files or
+        return configuration data.
+
+        Usage:
+            @model.load
+            def load_config() -> ModelConfig:
+                return ModelConfig.load("config.yaml")
+        """
+        self._load_func = func
+        return func
+
+    def resolve(self, func: Callable[..., None]) -> Callable[..., None]:
+        """
+        Decorator for RESOLVE stage function.
+
+        The decorated function should validate and connect model dependencies.
+        It receives the ConfigContext as parameter.
+
+        Usage:
+            @model.resolve
+            def resolve_deps(config: ConfigContext) -> None:
+                # Validate dependencies
+                pass
+        """
+        self._resolve_func = func
+        return func
+
+    def build(self, func: Callable[[], list[Any]]) -> Callable[[], list[Any]]:
+        """
+        Decorator for BUILD stage function.
+
+        The decorated function should return list of LazyInit objects.
+
+        Usage:
+            @model.build
+            def build_fields() -> list[LazyInit]:
+                return [field("T", create=...)]
+        """
         self._build_func = func
+        return func
+
+    def detect(self, func: Callable[[], bool]) -> Callable[[], bool]:
+        """
+        Decorator for detection function.
+
+        The decorated function should return True if model should be enabled.
+
+        Usage:
+            @model.detect
+            def check_if_enabled() -> bool:
+                return Path("constant/transportProperties").exists()
+        """
+        self._detect_func = func
         return func
 
     def configure_algorithm_step(
@@ -60,8 +122,57 @@ class ModelInstance:
         self._configure_algorithm_func = func
         return func
 
-    def build(self) -> list[Any]:
-        """Execute registered build step with Depends resolution."""
+    def run_load(self) -> Any:
+        """
+        Execute LOAD stage and store result.
+
+        Returns:
+            The configuration data returned by the load function
+        """
+        if self._load_func is None:
+            return None
+
+        self._load_result = self._load_func()
+        return self._load_result
+
+    def run_resolve(self, config: Any) -> None:
+        """
+        Execute RESOLVE stage.
+
+        Args:
+            config: ConfigContext for dependency resolution
+        """
+        if self._resolve_func is not None:
+            # Check function signature to support both patterns:
+            # resolve(config) or resolve() for models with internal state
+            sig = inspect.signature(self._resolve_func)
+            if len(sig.parameters) > 0:
+                self._resolve_func(config)
+            else:
+                self._resolve_func()
+
+    def run_build(self) -> list[Any]:
+        """Execute BUILD stage and return list of LazyInit objects."""
+        if self._build_func is None:
+            return []
+
+        # Call build function
+        return self._build_func()
+
+    def run_detect(self) -> bool:
+        """
+        Execute detection function.
+
+        Returns:
+            True if model should be enabled, False otherwise
+        """
+        if self._detect_func is not None:
+            return self._detect_func()
+        # Default to enabled if no detect function
+        return True
+
+    def old_build(self) -> list[Any]:
+        """Legacy build method - Execute registered build step with Depends resolution."""
         if self._build_func:
             # Resolve Annotated[Type, Depends(...)] parameters
             import inspect

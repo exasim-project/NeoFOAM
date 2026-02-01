@@ -6,6 +6,6 @@ Models for DummySolver.
 """
 
 from .dummy_model import DummyModel
-from .model1 import ThermalModel
+from .model1 import model1
 
-__all__ = ["DummyModel", "ThermalModel"]
+__all__ = ["DummyModel", "model1"]

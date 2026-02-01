@@ -12,10 +12,13 @@ implementations.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (SolverInitializer removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (SolverInitializer removed)"
+)
 
 # Prevent code execution since test is skipped
 import sys
+
 if True:  # Always skip
     pytest.skip("Outdated - framework refactored", allow_module_level=True)
 

@@ -6,7 +6,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (@Model.load decorator removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (@Model.load decorator removed)"
+)
 
 # from foamadapter.framework.initialization import ConfigContext
 # from .initialization_test_models import MockTurbulenceModel, MockTransportModel

@@ -5,7 +5,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (@Model.build decorator removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (@Model.build decorator removed)"
+)
 
 from pathlib import Path
 import shutil

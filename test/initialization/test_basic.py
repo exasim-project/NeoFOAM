@@ -6,7 +6,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (SolverInitializer removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (SolverInitializer removed)"
+)
 
 # from foamadapter.framework.initialization import SolverInitializer
 # from .initialization_test_models import MockSolver

@@ -1,6 +1,8 @@
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - tests incomplete Protocol implementations")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - tests incomplete Protocol implementations"
+)
 
 from typing import Literal
 

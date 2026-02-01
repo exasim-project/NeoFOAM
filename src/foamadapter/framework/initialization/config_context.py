@@ -10,6 +10,7 @@ Central context for inter-model configuration exchange during initialization.
 
 from typing import Any
 
+
 def is_configurable_field(field_info: Any) -> bool:
     """
     Check if a field is marked as Configurable.

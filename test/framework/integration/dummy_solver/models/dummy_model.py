@@ -95,7 +95,11 @@ class DummyModel(BaseModel):
                     if isinstance(attr, ModelInstance):
                         # Avoid duplicates
                         if attr not in detected:
-                            detected.append(attr)
+                            # Run detection to determine if model should be enabled
+                            is_enabled = attr.run_detect()
+                            attr.enabled = is_enabled
+                            if is_enabled:
+                                detected.append(attr)
 
         return detected
 

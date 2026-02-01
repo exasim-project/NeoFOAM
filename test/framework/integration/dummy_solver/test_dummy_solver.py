@@ -346,10 +346,13 @@ def test_init_dependency_injection():
 
 def test_model1_build():
     """Test model1 build() creates LazyInit objects."""
-    from integration.dummy_solver.models.model1 import model1 as model
+    from .models.model1 import model1 as model
+
+    # Run load first to populate config
+    model.run_load()
 
     # Get LazyInit objects
-    lazy_inits = model.build()
+    lazy_inits = model.run_build()
 
     # Verify we have field initializers
     assert len(lazy_inits) == 2

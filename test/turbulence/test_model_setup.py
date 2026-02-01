@@ -5,7 +5,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (build() method signature changed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (build() method signature changed)"
+)
 
 from unittest.mock import MagicMock, patch
 

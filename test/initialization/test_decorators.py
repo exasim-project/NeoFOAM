@@ -6,7 +6,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (@Model decorators removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (@Model decorators removed)"
+)
 
 # from dataclasses import dataclass, field
 # from typing import Any

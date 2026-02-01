@@ -135,8 +135,11 @@ def load_config() -> LoadResult:
 
     # Run LOAD on optional models
     for model in optional_models:
-        if hasattr(model, "load"):
-            model.load()
+        model.run_load()
+
+    return LoadResult(
+        core_models=[algorithm, core_model2], optional_models=optional_models
+    )
 
     return LoadResult(
         core_models=[algorithm, core_model2], optional_models=optional_models

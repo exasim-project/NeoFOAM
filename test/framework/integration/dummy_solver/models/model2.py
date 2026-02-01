@@ -3,6 +3,8 @@
 
 """
 Generic model2 for DummySolver.
+
+Demonstrates simplified model with 3-stage initialization.
 """
 
 from typing import Any
@@ -17,9 +19,15 @@ model2 = Model("DummyModel2")
 model2._step1_count = 0
 
 
-@model2.build_step
+@model2.detect
+def detect_model() -> bool:
+    """Always enabled for testing purposes."""
+    return True
+
+
+@model2.build
 def build() -> list[LazyInit]:
-    """Build model fields."""
+    """BUILD stage: Create LazyInit objects for fields."""
 
     def create_mf3() -> dict[str, Any]:
         return {"name": "model_field3", "value": 500.0, "units": "mu3"}

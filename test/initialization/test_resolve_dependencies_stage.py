@@ -3,9 +3,12 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 """Tests for RESOLVE_DEPENDENCIES stage."""
+
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (SolverInitializer removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (SolverInitializer removed)"
+)
 # from foamadapter.framework.initialization import SolverInitializer, InitializationStage
 # from .initialization_test_models import MockSolver, MockTurbulenceModel
 

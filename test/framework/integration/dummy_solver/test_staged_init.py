@@ -16,7 +16,7 @@ from foamadapter.framework.initialization import (
     ValidationError,
     ConfigContext,
 )
-from integration.dummy_solver.dummy_init import create_init
+from .dummy_init import create_init
 
 # ============================================================================
 # Test: StagedInit class basics

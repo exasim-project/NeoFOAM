@@ -6,7 +6,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (@Model.load decorator removed)")
+pytestmark = pytest.mark.skip(
+    reason="Outdated - framework refactored (@Model.load decorator removed)"
+)
 
 # from .initialization_test_models import (
 #     TurbulenceConfig,

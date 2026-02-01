@@ -284,10 +284,10 @@ class InitializerBuilder:
             # Add the model itself
             self.add_model(name, model_instance)
 
-            # Add LazyInit objects from build() if available
-            if hasattr(model_instance, "build"):
+            # Add LazyInit objects from run_build() if available
+            if hasattr(model_instance, "run_build"):
                 lazy_inits = [
-                    self._normalize_lazy_init(li) for li in model_instance.build()
+                    self._normalize_lazy_init(li) for li in model_instance.run_build()
                 ]
                 self.extend(lazy_inits)
 
@@ -381,7 +381,7 @@ class InitializerBuilder:
 
     def add_optional_models(self, optional_models: List[Any]) -> "InitializerBuilder":
         """
-        Add optional models by calling their build() methods.
+        Add optional models by calling their run_build() methods.
 
         This provides a consistent interface across all solvers for adding
         optional physics models, turbulence models, or other extensions.
@@ -397,8 +397,8 @@ class InitializerBuilder:
             builder.add_optional_models(optional_models)
         """
         for model in optional_models:
-            if hasattr(model, "build"):
-                lazy_inits = [self._normalize_lazy_init(li) for li in model.build()]
+            if hasattr(model, "run_build"):
+                lazy_inits = [self._normalize_lazy_init(li) for li in model.run_build()]
                 self.extend(lazy_inits)
         return self
 
