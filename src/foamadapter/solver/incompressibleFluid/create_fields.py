@@ -29,7 +29,7 @@ from foamadapter.models.stability_criteria import CFLCondition
 from foamadapter.models.transport_model import TransportModel
 from foamadapter.models.turbulence import TurbulenceModel
 from foamadapter.foam.initialization import create_time_mesh
-from foamadapter.solver.simpleSolver.models import SimpleSolverModel
+from foamadapter.solver.incompressibleFluid.models import SimpleSolverModel
 
 
 # Create the StagedInit instance

@@ -36,17 +36,17 @@ class TimeLoop:
 
 
 # Create Solver instance for decorating operations
-simple_solver = Solver("SimpleSolver")
+incompressibleFluid = Solver("incompressibleFluid")
 
 
-@simple_solver.initializer
+@incompressibleFluid.initializer
 def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
-    init.argv = simple_solver.argv
+    init.argv = incompressibleFluid.argv
     return init.run()
 
 
-@simple_solver.execution_graph_step
+@incompressibleFluid.execution_graph_step
 def execution_graph(
     domain_name: str | None = None,
 ) -> tuple[StepBuilder, OperationCollection]:
@@ -59,7 +59,7 @@ def execution_graph(
     _ = domain_name
 
     # Build solver structure
-    ops = simple_solver.operations
+    ops = incompressibleFluid.operations
     builder = StepBuilder()
 
     # Time loop structure
@@ -74,7 +74,11 @@ def execution_graph(
         time_builder.step(ops["increment_time"])
 
         # Get algorithm operations for inner loop
-        algorithm = simple_solver.core_models[0] if simple_solver.core_models else None
+        algorithm = (
+            incompressibleFluid.core_models[0]
+            if incompressibleFluid.core_models
+            else None
+        )
         if algorithm and hasattr(algorithm, "execution_graph"):
             algo_ops = algorithm.execution_graph()
 
@@ -88,7 +92,7 @@ def execution_graph(
 
     # Collect optional model operations
     model_ops = OperationCollection()
-    for model in simple_solver.optional_models:
+    for model in incompressibleFluid.optional_models:
         if hasattr(model, "operations"):
             model_ops.add(model.operations())
 
@@ -106,15 +110,15 @@ def run(argv: list[str] | None = None) -> Context:
         Final context after solving
     """
     # Set argv
-    simple_solver.argv = argv or []
+    incompressibleFluid.argv = argv or []
 
     # Initialize
-    ctx = simple_solver.initialize()
+    ctx = incompressibleFluid.initialize()
 
     Info("Starting time loop")
 
     # Build and resolve execution graph
-    builder, model_ops = simple_solver.execution_graph()
+    builder, model_ops = incompressibleFluid.execution_graph()
     resolver = DAGResolver()
     resolved = resolver.resolve(builder, model_ops)
 
@@ -131,7 +135,7 @@ def run(argv: list[str] | None = None) -> Context:
 # ============================================================================
 
 
-@simple_solver.operation()
+@incompressibleFluid.operation()
 def set_time_step(self, ctx: Context) -> None:
     """Adjust time step based on CFL condition."""
     cfl_condition = ctx.models.get("cfl_condition")
@@ -139,14 +143,14 @@ def set_time_step(self, ctx: Context) -> None:
         cfl_condition(ctx)
 
 
-@simple_solver.operation()
+@incompressibleFluid.operation()
 def increment_time(self, ctx: Context) -> None:
     """Print current simulation time and increment."""
     Info(f"Time = {ctx.runTime.timeName()}")
     ctx.runTime.increment()
 
 
-@simple_solver.operation(depends_on=["continuity"])
+@incompressibleFluid.operation(depends_on=["continuity"])
 def turbulence_correction(self, ctx: Context) -> FieldUpdates:
     """Correct turbulence after pressure-velocity coupling."""
     laminarTransport = ctx.models.get("laminarTransport")
@@ -160,7 +164,7 @@ def turbulence_correction(self, ctx: Context) -> FieldUpdates:
     return FieldUpdates({})
 
 
-@simple_solver.operation(depends_on=["turbulence_correction"])
+@incompressibleFluid.operation(depends_on=["turbulence_correction"])
 def write_output(self, ctx: Context) -> None:
     """Write fields to disk."""
     ctx.runTime.write(True)

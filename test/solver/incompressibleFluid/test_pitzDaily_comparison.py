@@ -10,7 +10,7 @@ the actual volScalarField/volVectorField data from disk.
 import os
 import subprocess
 from pathlib import Path
-from foamadapter.solver.simpleSolver import run
+from foamadapter.solver.incompressibleFluid import run
 import pytest
 
 from .comparison_helpers import (

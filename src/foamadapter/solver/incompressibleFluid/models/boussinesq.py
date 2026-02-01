@@ -40,7 +40,7 @@ from foamadapter.framework.context import (
 from foamadapter.framework.decorator import decorated_member_functions
 from foamadapter.framework.model import Model
 from foamadapter.framework.operations import Operation, OperationCollection
-from foamadapter.solver.simpleSolver.models.base import SimpleSolverModel
+from foamadapter.solver.incompressibleFluid.models.base import SimpleSolverModel
 
 
 @SimpleSolverModel.register
