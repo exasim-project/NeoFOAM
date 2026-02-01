@@ -123,25 +123,34 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 
 /* comparison function for volumeFields */
 template<typename NFFIELD, typename OFFIELD, typename Compare>
-void compare(NFFIELD& a, OFFIELD& b, Compare comp, bool withBoundaries = true)
+void compare(NFFIELD& a, OFFIELD& b, Compare comp, const bool withBoundaries = true)
 {
-    auto aHost = a.internalVector().copyToHost();
-    auto bSpan = std::span(b.primitiveFieldRef().data(), b.size());
-    // nf a span might be shorter than bSpan for surface fields
-    REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
-
-    if (withBoundaries)
+    if constexpr (std::is_same_v<NFFIELD, NeoN::Vector<NeoN::scalar>>)
     {
-        size_t start = 0;
-        auto aBoundaryHost = a.boundaryData().value().copyToHost();
-        for (const auto& patch : b.boundaryField())
+        auto aHost = a.copyToHost();
+        auto bSpan = std::span(b.cdata(), b.size());
+        REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
+    }
+    else
+    {
+        auto aHost = a.internalVector().copyToHost();
+        auto bSpan = std::span(b.primitiveFieldRef().data(), b.size());
+        // nf a span might be shorter than bSpan for surface fields
+        REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
+
+        if (withBoundaries)
         {
-            auto bBoundarySpan = std::span(patch.cdata(), patch.size());
-            REQUIRE_THAT(
-                aBoundaryHost.view({start, start + patch.size()}),
-                Catch::Matchers::RangeEquals(bBoundarySpan, comp)
-            );
-            start += patch.size();
+            size_t start = 0;
+            auto aBoundaryHost = a.boundaryData().value().copyToHost();
+            for (const auto& patch : b.boundaryField())
+            {
+                auto bBoundarySpan = std::span(patch.cdata(), patch.size());
+                REQUIRE_THAT(
+                    aBoundaryHost.view({start, start + patch.size()}),
+                    Catch::Matchers::RangeEquals(bBoundarySpan, comp)
+                );
+                start += patch.size();
+            }
         }
     }
 }

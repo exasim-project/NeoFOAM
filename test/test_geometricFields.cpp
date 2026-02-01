@@ -30,7 +30,7 @@ TEST_CASE("VolumeField")
     SECTION("volumeVectorField " + execName)
     {
         auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
-        NeoFOAM::compare(nfU, ofU, ApproxVector(1e-15));
+        NeoFOAM::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
     }
     SECTION("surfaceScalarField " + execName)
     {
