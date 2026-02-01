@@ -11,7 +11,12 @@ These tests need to be rewritten for the current simplified implementation.
 See test/solver/test_incompressible_fluid_pitzDaily.py for integration tests.
 """
 
+# Skip tests that rely on removed features
 import pytest
+pytestmark = pytest.mark.skip(
+    reason="Tests need updating for simplified algorithm implementation"
+)
+
 from unittest.mock import MagicMock, patch
 
 from foamadapter.algorithms.pressure_velocity import (
@@ -20,10 +25,6 @@ from foamadapter.algorithms.pressure_velocity import (
 )
 from foamadapter.framework.context import FieldUpdates
 
-# Skip tests that rely on removed features
-pytestmark = pytest.mark.skip(
-    reason="Tests need updating for simplified algorithm implementation"
-)
 
 
 # ============================================================================

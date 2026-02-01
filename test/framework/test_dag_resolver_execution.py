@@ -12,7 +12,7 @@ from foamadapter.framework.operations import (
     DAGResolver,
 )
 from foamadapter.framework.context import Context
-from dag_test_helpers import (
+from .dag_test_helpers import (
     set_value,
     double_value,
     add_ten,

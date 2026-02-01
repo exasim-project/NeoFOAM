@@ -10,7 +10,31 @@ Central context for inter-model configuration exchange during initialization.
 
 from typing import Any
 
-from .configurable import is_configurable_field
+def is_configurable_field(field_info: Any) -> bool:
+    """
+    Check if a field is marked as Configurable.
+
+    Args:
+        field_info: The Pydantic FieldInfo object
+
+    Returns:
+        True if the field is marked as Configurable
+
+    Example:
+        from pydantic import BaseModel
+
+        class MyModel(BaseModel):
+            config_field: Configurable[bool] = False
+            regular_field: float = 1.0
+
+        for name, field_info in MyModel.model_fields.items():
+            if is_configurable_field(field_info):
+                print(f"{name} is configurable")
+    """
+    # Check if field has metadata with "configurable"
+    if hasattr(field_info, "metadata") and field_info.metadata:
+        return "configurable" in field_info.metadata
+    return False
 
 
 class ConfigContext:

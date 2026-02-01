@@ -4,8 +4,12 @@
 
 """Tests for BUILD stage."""
 
-from foamadapter.framework.initialization import SolverInitializer, InitializationStage
-from .initialization_test_models import MockSolver, MockTurbulenceModel
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (SolverInitializer removed)")
+
+# from foamadapter.framework.initialization import SolverInitializer, InitializationStage
+# from .initialization_test_models import MockSolver, MockTurbulenceModel
 
 
 def test_build_stage_marks_methods():

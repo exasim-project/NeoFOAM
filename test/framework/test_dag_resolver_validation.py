@@ -14,7 +14,7 @@ from foamadapter.framework.operations import (
     CyclicDependencyError,
     MissingDependencyError,
 )
-from dag_test_helpers import noop, time_loop_condition
+from .dag_test_helpers import noop, time_loop_condition
 
 
 @pytest.mark.parametrize(

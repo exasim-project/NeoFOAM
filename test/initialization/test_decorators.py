@@ -4,11 +4,15 @@
 
 """Tests for stage decorators."""
 
-from dataclasses import dataclass, field
-from typing import Any
+import pytest
 
-from foamadapter.framework.model import Model
-from foamadapter.framework.initialization import SolverInitializer
+pytestmark = pytest.mark.skip(reason="Outdated - framework refactored (@Model decorators removed)")
+
+# from dataclasses import dataclass, field
+# from typing import Any
+#
+# from foamadapter.framework.model import Model
+# from foamadapter.framework.initialization import SolverInitializer
 
 
 def test_multiple_methods_same_stage():

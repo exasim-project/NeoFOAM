@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from foamadapter.framework.operations import OperationCollection
 
-from .solver import SolverInterface
+from .bkp_solver import SolverInterface
 from .types import OperationMetadata
 
 

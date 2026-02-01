@@ -10,7 +10,7 @@ from foamadapter.framework.operations import (
     SequentialOp,
     DAGResolver,
 )
-from dag_test_helpers import increment_count, noop
+from .dag_test_helpers import increment_count, noop
 
 
 def test_resolver_empty_inputs():

@@ -11,7 +11,7 @@ from foamadapter.framework.operations import (
     IterativeOp,
     DAGResolver,
 )
-from dag_test_helpers import (
+from .dag_test_helpers import (
     noop,
     set_value,
     double_value,
