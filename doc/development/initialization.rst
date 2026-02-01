@@ -1,205 +1,184 @@
-3-Stage Initialization
-======================
+3-Stage Solver Initialization
+=============================
 
-The 3-stage initialization framework provides a structured approach for initializing solvers and their models. It solves the problem of complex dependencies between models while ensuring all required data is available at each step.
+NeoFOAM uses a **3-stage initialization process** to handle complex dependencies between solvers, models, and physics algorithms.
+This ensures that configuration is loaded, dependencies are resolved, and runtime objects (fields, meshes) are built in the correct order.
+To reduce the size of the solver code, the initialization logic is encapsulated in the ``StagedInit`` class and associated decorators that define each state in a separated file.
+
+The Process: Load → Resolve → Build
+-----------------------------------
+
+.. mermaid::
+
+    %%{init: {'sequence': {'actorMargin': 300}}}%%
+    sequenceDiagram
+        autonumber
+        participant Solver
+        participant Manager as StagedInit
+        participant UserCode as User Handlers (@init...)
+
+        Note right of Solver: Dependency Injection<br/>provides StagedInit instance
+        Solver->>Manager: init.run()
+
+        rect rgb(235, 245, 255)
+            Note over Manager, UserCode: 1. LOAD STAGE
+            Manager->>UserCode: Call @init.load()
+            UserCode-->>Manager: Return LoadResult [List of Models]
+            Note right of Manager: DATA: LoadResult passed to next stage
+        end
+
+        rect rgb(255, 245, 235)
+            Note over Manager, UserCode: 2. RESOLVE STAGE
+            Manager->>Manager: Create ConfigContext from LoadResult
+            Manager->>UserCode: Call @init.resolve(ConfigContext)
+            Note right of UserCode: Models wire dependencies<br/>using ConfigContext
+            UserCode-->>Manager: (Completion)
+            Note right of Manager: DATA: Verified Model Graph passed to next stage
+        end
+
+        rect rgb(235, 255, 240)
+            Note over Manager, UserCode: 3. BUILD STAGE
+            Manager->>UserCode: Call @init.build(mesh)
+            UserCode-->>Manager: Return List[LazyInit]
+            Note right of Manager: DATA: Dependency Graph created from List[LazyInit]
+            
+            loop For each LazyInit in Order
+                Manager->>Manager: Execute LazyInit
+                Note right of Manager: Object created & stored in Runtime Context
+            end
+        end
+
+        Manager-->>Solver: Return Runtime Context
+
+Detailed Data Flow
+^^^^^^^^^^^^^^^^^^
+
+The diagram illustrates how data transforms and moves through the system during initialization:
+
+1.  **LOAD Stage (Data In)**:
+    - **Input**: Configuration files (dictionaries).
+    - **Output**: A ``LoadResult`` object containing a list of **Model Instances**.
+    - These models are "empty shells" at this point—they have configuration data but no connections to other models and no fields.
+
+2.  **RESOLVE Stage (Wiring)**:
+    - **Input**: The ``LoadResult`` from stage 1.
+    - **Mechanism**: The ``ConfigContext`` acts as a registry. Models are registered by name.
+    - **Action**: Models query the ``ConfigContext`` to find their dependencies (e.g., ``context.get("transport")``).
+    - **Result**: A fully connected graph of model instances, verified and ready for deployment.
+
+3.  **BUILD Stage (Construction)**:
+    - **Input**: The connected models and the mesh.
+    - **Output**: A list of ``LazyInit`` objects (recipes).
+    - **Execution**: The ``Init Manager`` sorts these recipes topologically based on declared dependencies. It then executes them one by one.
+    - **Runtime Context**: As each recipe executes (e.g., creating a field), its result is stored in the ``Runtime Context``. Subsequent recipes can look up these results (e.g., ``context["fields.U"]``) to build dependent objects.
 
 Why 3 Stages?
 -------------
 
-In CFD simulations, models often depend on each other. For example:
+1.  **Stage 1: LOAD**
+    - Reads configuration files (dictionaries, YAML, etc.).
+    - Discovers available models (e.g., Turbulence, Transport).
+    - **No** interaction between models yet.
+    - **No** mesh or heavy memory allocation.
 
-- A turbulence model needs transport properties (viscosity)
-- An algorithm needs references to both turbulence and transport models
-- All models need the mesh, but the mesh might not exist when configuration is loaded
+2.  **Stage 2: RESOLVE**
+    - Establishes connections between models.
+    - Validates compatible configurations (e.g., "Is this turbulence model compatible with this solver?").
+    - Adapts algorithms based on active models (e.g., switching to buoyant pressure solver if Boussinesq model is present).
 
-A single-stage initialization can't handle these dependencies elegantly. The 3-stage approach separates concerns:
+3.  **Stage 3: BUILD**
+    - The mesh is available.
+    - Fields are created and memory is allocated.
+    - Uses **Lazy Initialization** to ensure fields are created in dependency order (Mesh → U → Turbulence).
+
+Implementing Staged Initialization
+----------------------------------
+
+The framework provides the ``StagedInit`` class. You define the logic for each stage using decorators.
+
+.. code-block:: python
+
+    from foamadapter.framework.initialization import StagedInit, LoadResult, ConfigContext
+    from foamadapter.framework.initialization.lazy_init import LazyInit
+
+    # Create the initialization manager
+    init = StagedInit("MySolverInit")
+
+    @init.load
+    def load_config() -> LoadResult:
+        """
+        Stage 1: Load configuration and models.
+        """
+        # Read OpenFOAM dictionaries or other config
+        fv_solution = read_dictionary("system/fvSolution")
+        
+        # Instantiate model classes (lightweight, no fields yet)
+        models = [TurbulenceModel(), TransportModel()]
+        
+        return LoadResult(core_models=[], optional_models=models)
+
+    @init.resolve
+    def resolve_dependencies(core_models: list, optional_models: list, config: ConfigContext):
+        """
+        Stage 2: Connect models.
+        """
+        # Example: Transport model might need to know about Turbulence
+        for model in optional_models:
+             model.connect(config)
+
+    @init.build
+    def build_runtime(mesh, core_models: list, optional_models: list) -> list[LazyInit]:
+        """
+        Stage 3: Create runtime objects (Lazy Execution).
+        """
+        initializers = []
+
+        # Define how to create fields
+        initializers.append(
+            LazyInit(
+                name="fields.U",
+                initializer=lambda ctx: create_vector_field(mesh, "U"),
+                depends_on=["mesh"]
+            )
+        )
+        
+        return initializers
+
+Integration with Solver
+-----------------------
+
+The initialized ``StagedInit`` object is then injected into the solver using the ``@solver.initializer`` decorator.
+
+.. code-block:: python
+
+    from foamadapter.framework import Solver, Context, Depends
+    from typing import Annotated
+
+    solver = Solver("MySolver")
+
+    @solver.initializer
+    def initialize(init_manager: Annotated[StagedInit, Depends(get_init_manager)]) -> Context:
+        # Executes the 3-stage process and returns the simulation context
+        return init_manager.run()
+
+Lazy Initialization Graph
+-------------------------
+
+In the **BUILD** stage, we don't create objects immediately. Instead, we return ``LazyInit`` descriptions. The framework builds a dependency graph and executes them in the correct topological order.
+
+**Example Dependency Chain:**
 
 .. code-block:: text
 
-    ┌──────────────────────────────────────────────────────────────────┐
-    │ Stage 1: LOAD                                                    │
-    │ ─────────────────                                                │
-    │ • Load configuration from files                                  │
-    │ • No dependencies between models yet                             │
-    │ • Each model loads its own data independently                    │
-    └──────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-    ┌──────────────────────────────────────────────────────────────────┐
-    │ Stage 2: RESOLVE_DEPENDENCIES                                    │
-    │ ──────────────────                                               │
-    │ • Models can reference each other via ConfigContext              │
-    │ • Validate configurations                                        │
-    │ • Establish inter-model dependencies                             │
-    │ • Still no mesh available                                        │
-    └──────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-    ┌──────────────────────────────────────────────────────────────────┐
-    │ Stage 3: BUILD                                                   │
-    │ ─────────────────                                                │
-    │ • Mesh is now available                                          │
-    │ • Create fields, matrices, runtime structures                    │
-    │ • All dependencies resolved from previous stage                  │
-    └──────────────────────────────────────────────────────────────────┘
+    Mesh (Root)
+      │
+      ├──> fields.U (Velocity)
+      │      │
+      │      └──> Turbulence Model
+      │
+      └──> fields.p (Pressure)
 
-
-Quick Start
------------
-
-Here's a minimal example showing all three stages:
-
-.. code-block:: python
-
-    from pydantic import BaseModel, Field
-    from foamadapter.framework import Model, Solver, ConfigContext, SolverInitializer
-
-    class MyModel(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
-
-        name: str = "mymodel"
-        data: dict = Field(default_factory=dict)
-        other_model_ref = None
-
-        @Model.load
-        def load_data(self):
-            """Stage 1: Load from files."""
-            self.data = {"viscosity": 1e-6}
-
-        @Model.resolve_dependencies
-        def connect(self, config: ConfigContext):
-            """Stage 2: Connect to other models."""
-            self.other_model_ref = config.get("other")
-
-        @Model.build
-        def init_fields(self, mesh):
-            """Stage 3: Create fields on mesh."""
-            # self.field = create_field(mesh, self.data["viscosity"])
-            pass
-
-
-    class MySolver(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
-
-        mymodel: MyModel = Field(default_factory=MyModel)
-
-        def get_models(self):
-            return [self.mymodel]
-
-        @Solver.load
-        def load_config(self):
-            pass
-
-        @Solver.resolve_dependencies
-        def validate(self, config: ConfigContext):
-            pass
-
-        @Solver.build
-        def create_context(self, mesh):
-            pass
-
-    # Run initialization
-    solver = MySolver()
-    initializer = SolverInitializer(solver)
-    initializer.initialize(mesh=some_mesh)
-
-
-Core Components
----------------
-
-Stage Decorators
-~~~~~~~~~~~~~~~~
-
-Each stage has a decorator accessed via ``Model.`` or ``Solver.``:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 40 40
-
-   * - Decorator
-     - When Called
-     - Arguments
-   * - ``@Model.load``
-     - First, before any other stage
-     - None (just ``self``)
-   * - ``@Model.resolve_dependencies``
-     - After all LOAD complete
-     - ``config: ConfigContext``
-   * - ``@Model.build``
-     - After all RESOLVE_DEPENDENCIES complete
-     - ``mesh``
-
-The same decorators exist for solvers: ``@Solver.load``, ``@Solver.resolve_dependencies``, ``@Solver.build``.
-
-
-ConfigContext
-~~~~~~~~~~~~~
-
-The ``ConfigContext`` enables inter-model communication during the RESOLVE_DEPENDENCIES stage:
-
-.. code-block:: python
-
-    @Model.resolve_dependencies
-    def connect_dependencies(self, config: ConfigContext):
-        # Get a model by name
-        transport = config.get("transport")
-
-        # Check if a model exists
-        if config.contains("turbulence"):
-            self.turbulence = config.get("turbulence")
-
-        # Get all registered models
-        all_models = config.all()  # Returns dict[str, Model]
-
-Models are automatically registered using their ``name`` attribute after their LOAD stage completes.
-
-
-SolverInitializer
-~~~~~~~~~~~~~~~~~
-
-The ``SolverInitializer`` orchestrates the entire initialization:
-
-.. code-block:: python
-
-    from foamadapter.framework import SolverInitializer
-
-    solver = MySolver()
-    initializer = SolverInitializer(solver)
-
-    # Option 1: Full initialization in one call
-    initialized_solver = initializer.initialize(mesh=my_mesh)
-
-    # Option 2: Access the registry after initialization
-    initializer.initialize(mesh=my_mesh)
-    all_models = initializer.config.all()
-
-
-Execution Order
----------------
-
-Within each stage, **models are initialized before the solver**:
-
-.. code-block:: text
-
-    LOAD stage:
-        1. model1.load_method()
-        2. model2.load_method()
-        3. model3.load_method()
-        4. solver.load_method()  ← Solver last
-
-    RESOLVE_DEPENDENCIES stage:
-        1. model1.resolve_dependencies_method(config)
-        2. model2.resolve_dependencies_method(config)
-        3. model3.resolve_dependencies_method(config)
-        4. solver.resolve_dependencies_method(config)  ← Solver can validate all models
-
-    BUILD stage:
-        1. model1.build_method(mesh)
-        2. model2.build_method(mesh)
-        3. model3.build_method(mesh)
-        4. solver.build_method(mesh)
-
-This allows the solver's CONFIGURE method to verify all models are properly configured.
+This ensures that `fields.U` exists before the Turbulence Model tries to access it, eliminating initialization order bugs.
 
 
 Lazy BUILD Pattern
@@ -408,45 +387,6 @@ Here's a full example showing lazy initialization for an incompressible solver:
 
             return PIMPLEAlgorithm(mesh, p, U, turbulence)
 
-Migration from Immediate Execution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you have existing BUILD methods using the builder pattern:
-
-**Old pattern (immediate execution):**
-
-.. code-block:: python
-
-    @Solver.build
-    def setup_runtime(self, mesh, builder):
-        runtime = pyf.Time(self.argv)
-        builder.set_runtime(runtime)
-
-        mesh = pyf.fvMesh(runtime)
-        builder.set_mesh(mesh)
-
-        p = pyf.volScalarField.read_field("p", mesh)
-        builder.add_field("p", p)
-
-**New pattern (lazy initialization):**
-
-.. code-block:: python
-
-    @Solver.build
-    def setup_runtime(self, mesh):
-        return [
-            lazy("runtime", lambda ctx: pyf.Time(self.argv)),
-            lazy("mesh", lambda ctx: pyf.fvMesh(ctx["runtime"]), ["runtime"]),
-            field("p", lambda ctx: pyf.volScalarField.read_field("p", ctx["mesh"]), ["mesh"]),
-        ]
-
-Key differences:
-
-1. Remove ``builder`` parameter - method now takes only ``mesh``
-2. Return list of ``LazyInit`` objects instead of calling builder methods
-3. Declare dependencies explicitly via ``depends_on`` parameter
-4. Use lambda functions or bound methods for deferred execution
-5. Access dependencies via ``context`` dict in initializers
 
 Benefits of Lazy Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
