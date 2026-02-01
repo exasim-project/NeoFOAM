@@ -15,7 +15,7 @@ from foamadapter.framework.operations import DAGResolver
 
 def test_dummy_solver_init():
     """Test DummySolver initialization with init module."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -46,7 +46,7 @@ def test_dummy_solver_init():
 
 def test_dummy_solver_init_with_models():
     """Test that model1 and model2 are auto-detected and initialized."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -75,7 +75,7 @@ def test_dummy_solver_init_with_models():
 
 def test_dummy_solver_execution_graph_structure():
     """Test that execution graph has correct structure."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     solver.initialize()
 
@@ -100,7 +100,7 @@ def test_dummy_solver_execution_graph_structure():
 
 def test_dummy_solver_dag_resolution():
     """Test that DAG resolver correctly orders operations."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     solver.initialize()
 
@@ -154,7 +154,7 @@ def test_dummy_solver_dag_resolution():
 
 def test_dummy_solver_step1_operation():
     """Test solver step 1 operation."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -173,7 +173,7 @@ def test_dummy_solver_step1_operation():
 
 def test_model1_step1_operation():
     """Test step 1 from model1."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -198,7 +198,7 @@ def test_model1_step1_operation():
 
 def test_model2_step1_operation():
     """Test step 1 from model2."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -228,7 +228,7 @@ def test_model2_step1_operation():
 
 def test_dummy_solver_complete_run():
     """Test complete solver run with all operations."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver, run
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver, run
 
     # Get initial context
     ctx_initial = solver.initialize()
@@ -260,7 +260,7 @@ def test_dummy_solver_complete_run():
 
 def test_dummy_solver_model_operations_executed():
     """Test that model operations are executed during run."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx_initial = solver.initialize()
 
@@ -294,7 +294,7 @@ def test_dummy_solver_model_operations_executed():
 
 def test_model1_operations_discovery():
     """Test that operations are auto-discovered from model1."""
-    from framework.dummy_solver.models.model1 import model1 as model
+    from integration.dummy_solver.models.model1 import model1 as model
 
     # Get operations
     ops = model.operations
@@ -319,7 +319,7 @@ def test_model1_operations_discovery():
 
 def test_init_dependency_injection():
     """Test that @init.step uses Depends() for dependency injection."""
-    from framework.dummy_solver.dummy_init import init
+    from integration.dummy_solver.dummy_init import init
 
     # Run init
     init.argv = []
@@ -346,7 +346,7 @@ def test_init_dependency_injection():
 
 def test_model1_build():
     """Test model1 build() creates LazyInit objects."""
-    from framework.dummy_solver.models.model1 import model1 as model
+    from integration.dummy_solver.models.model1 import model1 as model
 
     # Get LazyInit objects
     lazy_inits = model.build()
@@ -366,7 +366,7 @@ def test_model1_build():
 
 def test_model1_configure_algorithm():
     """Test model1 configures algorithm."""
-    from framework.dummy_solver.models.model1 import model1 as model
+    from integration.dummy_solver.models.model1 import model1 as model
 
     # Create dummy algorithm
     class Algorithm:
@@ -389,7 +389,7 @@ def test_model1_configure_algorithm():
 
 def test_automatic_dependency_injection_from_context():
     """Test that operations automatically get dependencies from Context."""
-    from framework.dummy_solver.dummy_solver import dummy_solver as solver
+    from integration.dummy_solver.dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -413,7 +413,7 @@ def test_automatic_dependency_injection_from_context():
 
 def test_model_operations_use_dependency_injection():
     """Test that model operations automatically resolve dependencies."""
-    from framework.dummy_solver.models.model1 import model1 as model
+    from integration.dummy_solver.models.model1 import model1 as model
 
     # Get operations
     ops = model.operations

@@ -16,7 +16,7 @@ from foamadapter.framework.initialization import (
     ValidationError,
     ConfigContext,
 )
-from framework.dummy_solver.dummy_init import create_init
+from integration.dummy_solver.dummy_init import create_init
 
 # ============================================================================
 # Test: StagedInit class basics
@@ -317,7 +317,7 @@ def test_staged_init_load_warning_handling():
 
 def test_create_init_factory():
     """Test the create_init factory function."""
-    from framework.dummy_solver.dummy_init import create_init
+    from integration.dummy_solver.dummy_init import create_init
 
     init_instance = create_init()
 
@@ -333,7 +333,7 @@ def test_create_init_factory():
 
 def test_create_init_multiple_instances():
     """Test that create_init returns the same global instance."""
-    from framework.dummy_solver.dummy_init import create_init
+    from integration.dummy_solver.dummy_init import create_init
 
     init1 = create_init()
     init2 = create_init()

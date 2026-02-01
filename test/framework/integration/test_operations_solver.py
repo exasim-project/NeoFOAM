@@ -1,3 +1,9 @@
+import pytest
+
+pytestmark = pytest.mark.skip(
+    reason="Outdated - uses old @Solver/@Model decorators from bkp_solver.py. New FastAPI-like syntax tested in dummy_solver tests."
+)
+
 from typing import Literal
 
 from pydantic import BaseModel
@@ -12,7 +18,7 @@ from foamadapter.framework.operations import (
     Operations,
     StepBuilder,
 )
-from foamadapter.framework.solver import Solver
+from foamadapter.framework.bkp_solver import Solver
 
 
 class MaxIterations:

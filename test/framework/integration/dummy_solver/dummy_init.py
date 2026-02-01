@@ -114,7 +114,7 @@ def load_config() -> LoadResult:
 
     Returns LoadResult with core_models and optional_models.
     """
-    from framework.dummy_solver.models import DummyModel
+    from .models import DummyModel
 
     # Load configurations
     config_dir = Path(__file__).parent / "configs"
