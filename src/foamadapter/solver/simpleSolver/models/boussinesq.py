@@ -349,9 +349,10 @@ class BoussinesqModel(SimpleSolverModel):
             "beta", pyf.dimless / pyf.dimTemperature, self.beta
         )
         TRef_dim = pyf.dimensionedScalar("TRef", pyf.dimTemperature, self.TRef)
+        one_dim = pyf.dimensionedScalar("one", pyf.dimless, 1.0)
 
         # Update rhok: rhok = 1 - beta*(T - TRef)
-        rhok.assign(1.0 - beta_dim * (T - TRef_dim))
+        rhok.assign(one_dim - beta_dim * (T - TRef_dim))
         return FieldUpdates({"rhok": rhok})
 
     def operations(self) -> OperationCollection:

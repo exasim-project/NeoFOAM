@@ -22,8 +22,6 @@ from ..dummy_init import Model1Config
 model1 = Model("DummyModel1")
 
 
-
-
 # Model state (runtime counters)
 model1._step1_count = 0
 model1._step2_count = 0
