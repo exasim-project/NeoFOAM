@@ -127,6 +127,7 @@ TEST_CASE("PressureVelocityCoupling")
 
     SECTION("compute flux")
     {
+        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-15));
         auto forAUf = randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
         auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
 
@@ -145,8 +146,6 @@ TEST_CASE("PressureVelocityCoupling")
         pEqn.assemble();
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
-
-        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-15));
         nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-15));
     }
 }
