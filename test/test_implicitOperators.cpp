@@ -81,7 +81,7 @@ TEST_CASE("matrix multiplication")
     {
         NeoN::scalar coeff = 2.0;
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        fvcc::VolumeField<NeoN::scalar> nfT = NeoFOAM::constructFrom(exec, rt.nfMesh, ofT);
+        auto nfT = NeoFOAM::constructFrom(exec, rt.nfMesh, ofT);
 
         NeoN::map(
             nfT.internalVector(),
@@ -180,6 +180,6 @@ TEST_CASE("matrix multiplication")
         // to the matrix therefore we only check the operator results
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto lapV = laplacian * mesh.V();
-        nf::compare(result.internalVector(), ddtV(), ApproxScalar(1e-15));
+        nf::compare(result.internalVector(), lapV(), ApproxScalar(1e-15));
     }
 }
