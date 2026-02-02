@@ -59,6 +59,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
         return vol[celli] / (values[rowPtrs[celli] + diagOffsetCelli][0]);
     });
 
+    rAU.correctBoundaryConditions();
     return rAU;
 }
 
@@ -106,6 +107,10 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
             auto lower = values[rowNeiStart + neiOffs[facei]];
             auto upper = values[rowOwnStart + ownOffs[facei]];
 
+            // NeoN::atomic_sub(&internalHbyA[nei], NeoN::Vec3{lower[0] * internalU[own][0],lower[1]
+            // * internalU[own][1],lower[2] * internalU[own][2] });
+            // NeoN::atomic_sub(&internalHbyA[own], NeoN::Vec3{upper[0] * internalU[nei][0],upper[1]
+            // * internalU[nei][1],upper[2] * internalU[nei][2] });
             NeoN::atomic_sub(&internalHbyA[nei], lower[0] * internalU[own]);
             NeoN::atomic_sub(&internalHbyA[own], upper[0] * internalU[nei]);
         }
@@ -122,7 +127,6 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     );
 
     hByA.correctBoundaryConditions();
-    rAU.correctBoundaryConditions();
 
     return {rAU, hByA};
 }
