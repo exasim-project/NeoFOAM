@@ -21,18 +21,9 @@ jobs:
 
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
-
-      skip-nvidia: ${{
-        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-nvidia') && 'true' || 'false'
-        }}
-
-      skip-amd: ${{
-        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-amd') && 'true' || 'false'
-        }}
-
-      skip-intel: ${{
-        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-intel') && 'true' || 'false'
-        }}
+      skip-nvidia: ${{ steps.skip-labels.outputs.skip-nvidia }}
+      skip-amd: ${{ steps.skip-labels.outputs.skip-amd }}
+      skip-intel: ${{ steps.skip-labels.outputs.skip-intel }}
 
     env:
       LRZ_GROUP: greole
@@ -58,11 +49,31 @@ jobs:
           fi
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
+      - name: Determine skip labels
+        id: skip-labels
+        run: |
+          # default values
+          echo "skip-nvidia=false" >> $GITHUB_OUTPUT
+          echo "skip-amd=false" >> $GITHUB_OUTPUT
+          echo "skip-intel=false" >> $GITHUB_OUTPUT
+
+          # Only check labels if this is a PR
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            labels=$(jq -r '.pull_request.labels[].name // empty' "$GITHUB_EVENT_PATH")
+            for label in $labels; do
+              case "$label" in
+                skip-nvidia) echo "skip-nvidia=true" >> $GITHUB_OUTPUT ;;
+                skip-amd)    echo "skip-amd=true" >> $GITHUB_OUTPUT ;;
+                skip-intel)  echo "skip-intel=true" >> $GITHUB_OUTPUT ;;
+              esac
+            done
+          fi
+
       - name: Debug skip outputs
         run: |
-          echo "skip-nvidia=${{ steps.skip-nvidia.outputs.skip-nvidia }}"
-          echo "skip-amd=${{ steps.skip-amd.outputs.skip-amd }}"
-          echo "skip-intel=${{ steps.skip-intel.outputs.skip-intel }}"
+          echo "skip-nvidia=${{ steps.skip-labels.outputs.skip-nvidia }}"
+          echo "skip-amd=${{ steps.skip-labels.outputs.skip-amd }}"
+          echo "skip-intel=${{ steps.skip-labels.outputs.skip-intel }}"
 
       - name: Trigger LRZ GitLab CI pipeline
         id: trigger
@@ -72,9 +83,9 @@ jobs:
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=false" \
             "variables[PR_NUMBER]=${{ github.event.pull_request.number || github.event.number || '' }}" \
-            "variables[SKIP_NVIDIA]=${{ steps.skip-nvidia.outputs.skip-nvidia }}" \
-            "variables[SKIP_AMD]=${{ steps.skip-amd.outputs.skip-amd }}" \
-            "variables[SKIP_INTEL]=${{ steps.skip-intel.outputs.skip-intel }}"
+            "variables[SKIP_NVIDIA]=${{ steps.skip-labels.outputs.skip-nvidia }}" \
+            "variables[SKIP_AMD]=${{ steps.skip-labels.outputs.skip-amd }}" \
+            "variables[SKIP_INTEL]=${{ steps.skip-labels.outputs.skip-intel }}"
 
       - name: Wait for LRZ GitLab CI pipeline
         run: |
