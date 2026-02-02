@@ -323,12 +323,11 @@ template<typename FoamFieldType>
 auto& constructAndRegister(
         fvcc::VectorCollection& fieldCollection,
         RunTime& rt,
-        FoamFieldType& of,
+        const FoamFieldType& of,
         bool storeOldTime=true
                            )
 {
     using ContainerType = typename TypeMap<FoamFieldType>::container_type;
-    // using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
     ContainerType& ret = fieldCollection.template registerVector<ContainerType>(
         NeoFOAM::CreateFromFoamField<FoamFieldType> {
             .exec = rt.exec,

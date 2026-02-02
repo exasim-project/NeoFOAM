@@ -123,21 +123,25 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 
 /* comparison function for volumeFields */
 template<typename NFFIELD, typename OFFIELD, typename Compare>
-void compare(NFFIELD& a, OFFIELD& b, Compare comp, const bool withBoundaries = true)
+void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBoundaries = true)
 {
     if constexpr (std::is_same_v<NFFIELD, NeoN::Vector<NeoN::scalar>> || std::is_same_v<NFFIELD, NeoN::Vector<NeoN::Vec3>>)
     {
         auto aHost = a.copyToHost();
         auto bSpan = std::span(b.cdata(), b.size());
+        REQUIRE(aHost.size() >= bSpan.size());
         REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
     }
     else
     {
         auto aHost = a.internalVector().copyToHost();
-        auto bSpan = std::span(b.primitiveFieldRef().data(), b.size());
+        const auto bSpan = std::span(b.primitiveField().cdata(), b.size());
         // nf a span might be shorter than bSpan for surface fields
+        REQUIRE(aHost.size() >= bSpan.size());
         REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
 
+        // Assumes boundaryData() is stored as a contiguous concatenation
+        // of boundary patches in the same order as b.boundaryField()
         if (withBoundaries)
         {
             size_t start = 0;
