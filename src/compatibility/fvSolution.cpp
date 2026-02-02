@@ -52,8 +52,9 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     static std::map<std::string, NeoN::Dictionary> preconditionerMap = {
         {"DIC",
          NeoN::Dictionary(
-             {{std::string("type"), std::string("preconditioner::Jacobi")},
-              {std::string("max_block_size"), 1}}
+             {{std::string("type"), std::string("preconditioner::Ic")},
+              {std::string("factorization"),
+               NeoN::Dictionary({{std::string("type"), std::string("factorization::ParIc")}})}}
          )},
         {"diagonal",
          NeoN::Dictionary(
@@ -63,7 +64,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         {"DILU",
          NeoN::Dictionary(
              {{std::string("type"), std::string("preconditioner::Ilu")},
-              //{std::string("reverse_apply"), false},
+              {std::string("reverse_apply"), false},
               {std::string("factorization"),
                NeoN::Dictionary({{std::string("type"), std::string("factorization::ParIlu")}})}}
          )},

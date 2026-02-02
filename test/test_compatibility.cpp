@@ -64,11 +64,18 @@ TEST_CASE("fvSolution")
     {
         SECTION("DIC")
         {
-            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("preconditioner", std::string("diagonal"));
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Jacobi");
             REQUIRE(preconditionerDict.get<int>("max_block_size") == 1);
+        }
+        SECTION("DIC")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ic");
         }
         SECTION("DILU")
         {
