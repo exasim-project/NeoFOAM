@@ -39,6 +39,7 @@ TEST_CASE("Momentum")
     auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
     auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp);
 
+
     Foam::surfaceScalarField ofPhi(
         Foam::IOobject(
             "phi",
@@ -65,47 +66,65 @@ TEST_CASE("Momentum")
     auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
     auto nfNu = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
 
-    Foam::fvVectorMatrix ofUEqn(fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU));
-
     auto& nfU = NeoFOAM::constructAndRegister(vectorCollection, rt, ofU);
     auto& nfOldU = fvcc::oldTime(nfU);
     NeoN::fill(nfOldU.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
     nfOldU.correctBoundaryConditions();
 
-    nf::PDESolver<NeoN::Vec3> nfUEqn(
-        dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
-        nfU,
-        rt
-    );
-
-    NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
-
     SECTION("Solve transient momentum without grad(p)")
     {
+
+        Foam::fvVectorMatrix ofUEqn(
+            fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
+        );
+
+        nf::PDESolver<NeoN::Vec3> nfUEqn(
+            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+            nfU,
+            rt
+        );
+
+        NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
+
         // require fields to be initially the same
         nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
+        nf::compare(nfP, ofp, ApproxScalar(1e-15));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
         Foam::solve(ofUEqn);
-
         nfUEqn.solve();
-        nf::compare(nfU, ofU, ApproxVector({1e-06, 1e-02, 1e-02}));
+
+        nfU.correctBoundaryConditions();
+        nf::compare(nfU, ofU, ApproxVector({1e-12, 1e-12, 1e-02}));
     }
 
     SECTION("Solve transient momentum with grad(p)")
     {
+        Foam::fvVectorMatrix ofUEqn(
+            fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
+        );
+
+        nf::PDESolver<NeoN::Vec3> nfUEqn(
+            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+            nfU,
+            rt
+        );
+
+        NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
+
         // require fields to be initially the same
         nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
-        nf::compare(nfP, ofP, ApproxScalar(1e-15));
+        nf::compare(nfP, ofp, ApproxScalar(1e-15));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
-        Foam::solve(ofUEqn);
+        Foam::solve(ofUEqn == -fvc::grad(ofp));
 
         nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
-        nf::compare(nfU, ofU, ApproxVector({1e-06, 1e-02, 1e-02}));
+        nfU.correctBoundaryConditions();
+        nf::compare(nfU, ofU, ApproxVector({1e-12, 1e-12, 1e-02}));
     }
 }
