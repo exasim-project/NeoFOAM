@@ -125,7 +125,7 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 template<typename NFFIELD, typename OFFIELD, typename Compare>
 void compare(NFFIELD& a, OFFIELD& b, Compare comp, const bool withBoundaries = true)
 {
-    if constexpr (std::is_same_v<NFFIELD, NeoN::Vector<NeoN::scalar>>)
+    if constexpr (std::is_same_v<NFFIELD, NeoN::Vector<NeoN::scalar>> || std::is_same_v<NFFIELD, NeoN::Vector<NeoN::Vec3>>)
     {
         auto aHost = a.copyToHost();
         auto bSpan = std::span(b.cdata(), b.size());
