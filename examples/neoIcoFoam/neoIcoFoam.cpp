@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
-        auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
+        auto& U = nf::constructAndRegister(vectorCollection, rt, ofU);
 
         auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         fvcc::SurfaceField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, nuBCs);
