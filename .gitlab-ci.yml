@@ -112,17 +112,17 @@
 # Triggered from NeoFOAM – testing
 .rules-neofoam-testing:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA == "false" &&
+    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
            $BENCHMARK == "false"'
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD == "false" &&
+    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
            $BENCHMARK == "false"'
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL == "false" &&
+    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
            $BENCHMARK == "false"'
       when: always
@@ -131,17 +131,17 @@
 # Triggered from NeoFOAM – benchmarking
 .rules-neofoam-benchmarking:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA == "false" &&
+    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
            $BENCHMARK == "true"'
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD == "false" &&
+    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
            $BENCHMARK == "true"'
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL == "false" &&
+    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
            $BENCHMARK == "true"'
       when: always
@@ -150,17 +150,17 @@
 # Triggered from NeoN – testing
 .rules-neon-testing:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA == "false" &&
+    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" &&
            $BENCHMARK == "false"'
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD == "false" &&
+    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" &&
            $BENCHMARK == "false"'
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL == "false" &&
+    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
            $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" &&
            $BENCHMARK == "false"'
       when: always

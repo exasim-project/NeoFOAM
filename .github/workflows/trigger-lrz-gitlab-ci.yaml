@@ -21,9 +21,21 @@ jobs:
 
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
-      skip-nvidia: ${{ steps.skip-nvidia.outputs.skip-nvidia }}
-      skip-amd: ${{ steps.skip-amd.outputs.skip-amd }}
-      skip-intel: ${{ steps.skip-intel.outputs.skip-intel }}
+
+      skip-nvidia: >-
+       ${{ github.event_name == 'pull_request' &&
+           contains(toJson(github.event.pull_request.labels.*.name), 'skip-nvidia')
+           && 'true' || 'false' }}
+
+      skip-amd: >-
+        ${{ github.event_name == 'pull_request' &&
+           contains(toJson(github.event.pull_request.labels.*.name), 'skip-amd')
+           && 'true' || 'false' }}
+
+      skip-intel: >-
+       ${{ github.event_name == 'pull_request' &&
+           contains(toJson(github.event.pull_request.labels.*.name), 'skip-intel')
+           && 'true' || 'false' }}
 
     # Only run if the 'Skip-build' label is not present on a PR
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
@@ -51,33 +63,6 @@ jobs:
             BRANCH=${GITHUB_REF_NAME#refs/heads/}
           fi
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-
-      - name: Determine skip-nvidia label
-        id: skip-nvidia
-        run: |
-          if [[ "${{ contains(toJson(github.event.pull_request.labels.*.name), 'skip-nvidia') }}" == "true" ]]; then
-            echo "skip-nvidia=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip-nvidia=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Determine skip-amd label
-        id: skip-amd
-        run: |
-          if [[ "${{ contains(toJson(github.event.pull_request.labels.*.name), 'skip-amd') }}" == "true" ]]; then
-            echo "skip-amd=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip-amd=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Determine skip-intel label
-        id: skip-intel
-        run: |
-          if [[ "${{ contains(toJson(github.event.pull_request.labels.*.name), 'skip-intel') }}" == "true" ]]; then
-            echo "skip-intel=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip-intel=false" >> $GITHUB_OUTPUT
-          fi
 
       - name: Push commit to LRZ GitLab
         run: |
