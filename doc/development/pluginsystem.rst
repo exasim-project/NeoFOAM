@@ -34,8 +34,7 @@ Additionally, the plugin system supports the generation of JSON schemas for docu
 Discriminated Unions in Pydantic
 --------------------------------
 
-The discriminated union functionality in Pydantic is illustrated
-The discriminated union work in pydantic similar are given in the following simple example.
+The discriminated union functionality in Pydantic is illustrated in the following simple example.
 
 .. code-block:: python
 
