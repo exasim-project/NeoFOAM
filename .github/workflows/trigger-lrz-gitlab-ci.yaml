@@ -145,7 +145,7 @@ jobs:
             "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
             "variables[SKIP_AMD]=${SKIP_AMD}" \
             "variables[SKIP_INTEL]=${SKIP_INTEL}" \
-            "variables[PR_NUMBER]=${{ github.event.pull_request.number }}" \
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
             "variables[BENCHMARK]=true"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
