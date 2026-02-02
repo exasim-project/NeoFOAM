@@ -5,7 +5,7 @@ import json
 import yaml
 
 from dataclasses import dataclass
-from typing import Any, Callable, Tuple, Type
+from typing import Any, Callable, Tuple, Type, Union
 from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
@@ -120,7 +120,9 @@ class ModelInputCollection:
     def add(self, input_validation_data: ModelInputDefinition) -> None:
         self._inputs.append(input_validation_data)
 
-    def find(self, index: int | Path | str | Type[BaseModel]) -> ModelInputDefinition:
+    def find(
+        self, index: Union[int, Path, str, Type[BaseModel]]
+    ) -> ModelInputDefinition:
         if isinstance(index, type) and issubclass(index, BaseModel):
             for input_def in self._inputs:
                 if input_def.baseModel == index:
@@ -140,7 +142,7 @@ class ModelInputCollection:
         self._inputs.pop(index)
 
     def validate_case(
-        self, case_dir: str | Path = "."
+        self, case_dir: Union[str, Path] = "."
     ) -> Tuple[bool, list[ValidationErrors]]:
         """
         Validate that all required files exist and are valid for the given case.
