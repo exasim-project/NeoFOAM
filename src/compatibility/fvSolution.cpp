@@ -55,10 +55,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
              {{std::string("type"), std::string("preconditioner::Jacobi")},
               {std::string("max_block_size"), 1}}
          )},
+        {"diagonal",
+         NeoN::Dictionary(
+             {{std::string("type"), std::string("preconditioner::Jacobi")},
+              {std::string("max_block_size"), 1}}
+         )},
         {"DILU",
          NeoN::Dictionary(
              {{std::string("type"), std::string("preconditioner::Ilu")},
-              {std::string("reverse_apply"), false},
+              //{std::string("reverse_apply"), false},
               {std::string("factorization"),
                NeoN::Dictionary({{std::string("type"), std::string("factorization::ParIlu")}})}}
          )},
