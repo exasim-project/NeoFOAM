@@ -36,6 +36,21 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Usage:
+
+   usage/quickstart
+   usage/cli
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development:
+
+   development/architecture
+   development/testing
+   development/pluginsystem
+
+.. toctree::
+   :maxdepth: 2
    :caption: Contents:
 
 Indices and tables

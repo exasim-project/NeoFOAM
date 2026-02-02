@@ -3,7 +3,7 @@
 
 from typing import Any
 
-import pybFoam as pyf  # type: ignore[import-not-found]
+import pybFoam as pyf
 from pybFoam import (
     Info,
     fvc,
@@ -14,7 +14,7 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
+from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[attr-defined]
 
 
 class CFLNumber:
@@ -83,12 +83,12 @@ class PimpleFoam:
         """
         Solve the momentum equations using the PIMPLE algorithm.
         """
-        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
+        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))  # type: ignore[attr-defined]
 
         UEqn.relax()
 
         if pimple.momentumPredictor():
-            pyf.solve(UEqn + fvc.grad(p))
+            pyf.solve(UEqn + fvc.grad(p))  # type: ignore[attr-defined]
 
         return UEqn
 
@@ -103,20 +103,20 @@ class PimpleFoam:
 
         phiHbyA = surfaceScalarField(
             pyf.Word("phiHbyA"),
-            fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
+            fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),  # type: ignore[attr-defined]
         )
 
         pyf.adjustPhi(phiHbyA, U, p)
         pyf.constrainPressure(p, U, phiHbyA, rAU)
         while pimple.correctNonOrthogonal():
-            pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
-            pEqn.setReference(self.pRefCell, self.pRefValue, False)
+            pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))  # type: ignore[attr-defined]
+            pEqn.setReference(self.pRefCell, self.pRefValue, False)  # type: ignore[arg-type]
             pEqn.solve(p.select(pimple.finalInnerIter()))
             if pimple.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
 
         # TODO include continuityErrs()
-        U.assign(HbyA - rAU * fvc.grad(p))
+        U.assign(HbyA - rAU * fvc.grad(p))  # type: ignore[attr-defined]
         U.correctBoundaryConditions()
 
     def run(self) -> None:
@@ -127,7 +127,7 @@ class PimpleFoam:
         p, U, phi, laminarTransport, turbulence = create_fields(mesh)
 
         fvSolution = pyf.dictionary.read("system/fvSolution")
-        self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
+        self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))  # type: ignore[assignment]
         mesh.setFluxRequired(pyf.Word("p"))
         controlDict = pyf.dictionary.read("system/controlDict")
         maxDeltaT = 1e5
