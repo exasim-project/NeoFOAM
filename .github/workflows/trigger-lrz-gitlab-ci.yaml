@@ -25,6 +25,9 @@ jobs:
       skip-amd: ${{ steps.skip-labels.outputs.skip-amd }}
       skip-intel: ${{ steps.skip-labels.outputs.skip-intel }}
 
+    # Only run if the 'Skip-build' label is not present on a PR
+    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+
     env:
       LRZ_GROUP: greole
       LRZ_HOST: gitlab-ce.lrz.de
@@ -74,6 +77,21 @@ jobs:
           echo "skip-nvidia=${{ steps.skip-labels.outputs.skip-nvidia }}"
           echo "skip-amd=${{ steps.skip-labels.outputs.skip-amd }}"
           echo "skip-intel=${{ steps.skip-labels.outputs.skip-intel }}"
+
+      - name: Push commit to LRZ GitLab
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add lrz https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_GROUP}/${REPO_NAME}.git
+          git fetch origin ${{ steps.branch.outputs.branch }}
+          git checkout -B ${{ steps.branch.outputs.branch }} origin/${{ steps.branch.outputs.branch }}
+          git reset --hard origin/${{ steps.branch.outputs.branch }}
+          git push --force lrz HEAD:refs/heads/${{ steps.branch.outputs.branch }}
+
+      - name: Cancel running/pending LRZ GitLab CI pipelines
+        if: ${{ github.event_name != 'push' }}
+        run: |
+          ./ci/github/cancel_triggered_pipelines.sh ${{ steps.branch.outputs.branch }}
 
       - name: Trigger LRZ GitLab CI pipeline
         id: trigger
