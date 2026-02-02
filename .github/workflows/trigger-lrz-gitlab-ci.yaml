@@ -13,7 +13,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-jobs:
+  jobs:
   build-and-test:
     name: Trigger and run CI on GPU (${{ github.event.repository.name }})
     runs-on: ubuntu-latest
@@ -22,26 +22,17 @@ jobs:
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
 
-      skip-nvidia: ${{ 
-        github.event_name == 'pull_request' && 
-        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-nvidia') 
-        && 'true' || 'false' 
-      }}
+      skip-nvidia: ${{
+        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-nvidia') && 'true' || 'false'
+        }}
 
-      skip-amd: ${{ 
-        github.event_name == 'pull_request' && 
-        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-amd') 
-        && 'true' || 'false' 
-      }}
+      skip-amd: ${{
+        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-amd') && 'true' || 'false'
+        }}
 
-      skip-intel: ${{ 
-        github.event_name == 'pull_request' && 
-        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-intel') 
-        && 'true' || 'false' 
-      }}
-
-    # Only run if the 'Skip-build' label is not present on a PR
-    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+      skip-intel: ${{
+        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-intel') && 'true' || 'false'
+        }}
 
     env:
       LRZ_GROUP: greole
@@ -67,20 +58,11 @@ jobs:
           fi
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
-      - name: Push commit to LRZ GitLab
+      - name: Debug skip outputs
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote add lrz https://oauth2:${LRZ_GITLAB_PROJECT_TOKEN}@${LRZ_HOST}/${LRZ_GROUP}/${REPO_NAME}.git
-          git fetch origin ${{ steps.branch.outputs.branch }}
-          git checkout -B ${{ steps.branch.outputs.branch }} origin/${{ steps.branch.outputs.branch }}
-          git reset --hard origin/${{ steps.branch.outputs.branch }}
-          git push --force lrz HEAD:refs/heads/${{ steps.branch.outputs.branch }}
-
-      - name: Cancel running/pending LRZ GitLab CI pipelines
-        if: ${{ github.event_name != 'push' }}
-        run: |
-          ./ci/github/cancel_triggered_pipelines.sh ${{ steps.branch.outputs.branch }}
+          echo "skip-nvidia=${{ steps.skip-nvidia.outputs.skip-nvidia }}"
+          echo "skip-amd=${{ steps.skip-amd.outputs.skip-amd }}"
+          echo "skip-intel=${{ steps.skip-intel.outputs.skip-intel }}"
 
       - name: Trigger LRZ GitLab CI pipeline
         id: trigger
@@ -89,7 +71,7 @@ jobs:
             "${{ steps.branch.outputs.branch }}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=false" \
-            "variables[PR_NUMBER]=${{ github.event.number }}" \
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || github.event.number || '' }}" \
             "variables[SKIP_NVIDIA]=${{ steps.skip-nvidia.outputs.skip-nvidia }}" \
             "variables[SKIP_AMD]=${{ steps.skip-amd.outputs.skip-amd }}" \
             "variables[SKIP_INTEL]=${{ steps.skip-intel.outputs.skip-intel }}"
