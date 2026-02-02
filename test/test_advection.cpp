@@ -6,9 +6,6 @@
 
 #include "common.hpp"
 
-using Foam::Info;
-using Foam::endl;
-using Foam::nl;
 namespace nf = NeoFOAM;
 namespace fvc = Foam::fvc;
 namespace fvm = Foam::fvm;

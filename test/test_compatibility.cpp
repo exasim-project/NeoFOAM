@@ -4,13 +4,10 @@
 #include <cstddef>
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <unordered_set>
-#include <set>
 
 #include "common.hpp"
 
 #include "gaussConvectionScheme.H"
-
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
@@ -33,7 +30,7 @@ TEST_CASE("fvSolution")
 
     NeoN::Dictionary fvSolutionDict = NeoFOAM::convert(mesh.solutionDict());
     NeoN::Dictionary& solverDict = fvSolutionDict.subDict("solvers");
-    NeoN::Dictionary& solver1 = solverDict.subDict("solver1");
+    NeoN::Dictionary& solver1 = solverDict.subDict("T");
 
     SECTION("updateSolver")
     {

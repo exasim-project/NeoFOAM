@@ -5,7 +5,6 @@
 
 #include "common.hpp"
 #include "NeoN/NeoN.hpp"
-#include "NeoN/finiteVolume/cellCentred/interpolation/surfaceInterpolation.hpp"
 #include "constrainHbyA.H"
 
 using Catch::Approx;

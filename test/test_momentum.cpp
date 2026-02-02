@@ -7,9 +7,6 @@
 #include "common.hpp"
 #include "constrainHbyA.H"
 
-using Foam::Info;
-using Foam::endl;
-using Foam::nl;
 namespace fvc = Foam::fvc;
 namespace fvm = Foam::fvm;
 
