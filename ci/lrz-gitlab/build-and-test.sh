@@ -5,9 +5,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Argument parsing
-GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd|intel) must be specified}
-NEON_BRANCH=${2:?Error: NeoN branch must be specified}
+# Check required environment variables
+GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
+NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
 PRESET="develop"
 
 echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="

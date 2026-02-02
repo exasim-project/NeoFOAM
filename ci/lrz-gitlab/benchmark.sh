@@ -10,9 +10,9 @@ set -euo pipefail
 PRESET="profiling"
 
 # Argument parsing
-GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd|intel) must be specified}
-NEON_BRANCH=${2:?Error: NeoN branch must be specified}
-PR_NUMBER=${3:?Error: The PR number needs to be specified}
+GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
+NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
+PR_NUMBER=${PR_NUMBER:?Error: Must set PR number}
 RESULTS_DIR=${RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
 REPO_NAME=$(basename "$TARGET_REPO" .git)
@@ -20,7 +20,6 @@ TARGET_BRANCH=${TARGET_BRANCH:?Must set TARGET_BRANCH}
 RUN_IDENTIFIER=${RUN_IDENTIFIER:?Must set RUN_IDENTIFIER}
 API_TOKEN_GITHUB=${API_TOKEN_GITHUB:?Must set API_TOKEN_GITHUB}
 
-GPU_VENDOR="$1"
 echo "Selected GPU vendor: ${GPU_VENDOR}"
 
 # Collect system info
@@ -32,9 +31,9 @@ collect_system_info() {
         echo ""
 
         echo "===== GPU INFO ====="
-        if [[ "$1" == "nvidia" ]]; then
+        if [[ "$GPU_VENDOR" == "nvidia" ]]; then
             nvidia-smi
-        elif [[ "$1" == "amd" ]]; then
+        elif [[ "$GPU_VENDOR" == "amd" ]]; then
             rocm-smi --showproductname --showvbios
         elif [[ "$GPU_VENDOR" == "intel" ]]; then
             if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
