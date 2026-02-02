@@ -2,12 +2,12 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 import json
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Callable, Tuple, Type
-
 import tomllib
 import yaml
+
+from dataclasses import dataclass
+from typing import Any, Callable, Tuple, Type
+from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
 can_load_toml = True

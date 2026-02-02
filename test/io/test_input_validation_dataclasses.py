@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-
 from foamadapter.io.input_validation import ModelInputDefinition, ValidationErrors
 
 

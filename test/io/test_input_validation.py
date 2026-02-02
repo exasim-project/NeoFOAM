@@ -1,12 +1,11 @@
 import os
-from collections.abc import Generator
-from pathlib import Path
-
 import pytest
+
+from collections.abc import Generator
+from foamadapter.io.input_validation import ModelInputDefinition, ModelInputCollection
+from pathlib import Path
 from pybFoam.io.model_base import IOModelBase
 from pydantic import BaseModel, Field
-
-from foamadapter.io.input_validation import ModelInputDefinition, ModelInputCollection
 
 
 @pytest.fixture  # type: ignore[untyped-decorator]
