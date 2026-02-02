@@ -124,4 +124,29 @@ TEST_CASE("PressureVelocityCoupling")
         nf::constrainHbyA(nfU, nfP, nfHbyA);
         nf::compare(nfHbyA, ofConstrainHbyA, ApproxVector({1e-08, 1e-08, 1e-02}));
     }
+
+    SECTION("compute flux")
+    {
+        auto forAUf = randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
+        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+
+        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
+        ofPhi0 = ofPhi - ofpEqn.flux();
+
+        nf::PDESolver<NeoN::scalar> pEqn(
+            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+            nfP,
+            rt
+        );
+
+        pEqn.assemble();
+
+        nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
+
+        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-15));
+        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-15));
+    }
 }

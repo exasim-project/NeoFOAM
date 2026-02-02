@@ -96,6 +96,7 @@ TEST_CASE("Momentum")
         nfUEqn.solve();
         nf::compare(nfU, ofU, ApproxVector({1e-06, 1e-02, 1e-02}));
     }
+
     // SECTION("Solve transient momentum with grad(p)")
     // {
     //     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
@@ -188,54 +189,5 @@ TEST_CASE("Momentum")
     //             );
     //         }
     //     }
-    // }
-
-    // SECTION("matrix flux")
-    // {
-    //     auto forAUf = randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
-    //     auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
-
-    //     Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
-    //     auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
-
-    //     nf::PDESolver<NeoN::scalar> pEqn(
-    //         dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
-    //         nfP,
-    //         rt
-    //     );
-
-    //     pEqn.assemble();
-
-    //     nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
-
-    //     Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
-
-    //     ofPhi0 = ofPhi - ofpEqn.flux();
-
-    //     auto hostPhi0 = nfPhi0.internalVector().copyToHost();
-    //     for (size_t facei = 0; facei < rt.nfMesh.nInternalFaces(); facei++)
-    //     {
-    //         REQUIRE(hostPhi0.view()[facei] == Catch::Approx(ofPhi0[facei]).margin(1e-14));
-    //     }
-
-    //     auto hostBCPhi0 = nfPhi0.boundaryData().value().copyToHost();
-    //     forAll(ofPhi0.boundaryField(), patchi)
-    //     {
-    //         REQUIRE(
-    //             ofPhi0.boundaryField()[patchi].size()
-    //             == nfPhi0.boundaryData().nBoundaryFaces(patchi)
-    //         );
-    //         const Foam::fvsPatchScalarField& ofPhi0Patch = ofPhi0.boundaryField()[patchi];
-    //         auto [start, end] = nfPhi0.boundaryData().range(patchi);
-
-    //         forAll(ofPhi0Patch, bfacei)
-    //         {
-    //             REQUIRE(
-    //                 hostBCPhi0.view()[start + bfacei]
-    //                 == Catch::Approx(ofPhi0Patch[bfacei]).margin(1e-14)
-    //             );
-    //         }
-    //     }
-    // }
     // }
 }
