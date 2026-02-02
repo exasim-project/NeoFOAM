@@ -11,7 +11,7 @@ from pybFoam.io.model_base import IOModelBase
 from pydantic import BaseModel, Field
 
 
-@pytest.fixture  # type: ignore[untyped-decorator]
+@pytest.fixture
 def run_from_parent_directory() -> Generator[None, None, None]:
     cwd = Path.cwd()
     parent_dir = Path(__file__).parent
@@ -24,7 +24,7 @@ def test_validate_case(run_from_parent_directory: None) -> None:
     registry = ModelInputCollection()
 
     # Define a simple Pydantic model for testing
-    class CorrectModel(IOModelBase):  # type: ignore[misc]
+    class CorrectModel(IOModelBase):
         value: int
         too_high_value: int = Field(..., le=100)
 
@@ -45,7 +45,7 @@ def test_validation_error(run_from_parent_directory: None) -> None:
     registry = ModelInputCollection()
 
     # Define a simple Pydantic model for testing
-    class IncorrectModel(IOModelBase):  # type: ignore[misc]
+    class IncorrectModel(IOModelBase):
         missing_value: int
         too_high_value: int = Field(..., le=10)
 
@@ -81,10 +81,10 @@ def test_validation_error(run_from_parent_directory: None) -> None:
 def test_registry_find_remove() -> None:
     registry = ModelInputCollection()
 
-    class DummyModelA(BaseModel):  # type: ignore[misc]
+    class DummyModelA(BaseModel):
         pass
 
-    class DummyModelB(BaseModel):  # type: ignore[misc]
+    class DummyModelB(BaseModel):
         pass
 
     input_def_a = ModelInputDefinition(

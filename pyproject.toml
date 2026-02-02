@@ -9,7 +9,7 @@ authors = [
 requires-python = ">=3.9"
 
 dependencies = [
-    "pybFoam>=0.1.4",
+    "pybFoam>=0.1.10",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -75,11 +75,10 @@ testpaths = [
 ]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 files = ["src", "test"]          # your two roots
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
-
-follow_imports = "skip"
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)
@@ -91,7 +90,7 @@ exclude = [
 [[tool.mypy.overrides]]
 module = ["Neon", "Neon.*"]
 ignore_errors = true
-
+follow_imports = "skip"
 
 [tool.poe.tasks]
 test = "pytest"

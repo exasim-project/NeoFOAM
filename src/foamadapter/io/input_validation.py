@@ -28,8 +28,9 @@ def default_validation_strategy(
         file_path: Path to the file to be read.
         encoding: Encoding of the file.
     """
-    if not hasattr(baseModel, "from_file"):
+    if hasattr(baseModel, "from_file"):
         baseModel.from_file(file_path)
+        return
     if file_path.suffix == ".toml":
         if not can_load_toml:
             raise ValueError("TOML support is not available")
@@ -47,6 +48,15 @@ def default_validation_strategy(
 
 
 @dataclass(frozen=True)
+class ValidationErrors:
+    field: Any
+    error_type: str
+    message: str
+    file_name: str
+    input_value: Any = None
+
+
+@dataclass(frozen=True)
 class ModelInputDefinition:
     baseModel: Type[BaseModel]
     relative_path: str
@@ -57,7 +67,7 @@ class ModelInputDefinition:
         default_validation_strategy
     )
 
-    def validate(self, case_dir: str = ".") -> list[ValidationError]:
+    def validate(self, case_dir: str = ".") -> list[ValidationErrors]:
         """
         Validate that the file exists and is valid according to the baseModel.
 
@@ -65,11 +75,11 @@ class ModelInputDefinition:
             case_dir: Path to the case directory
 
         Returns:
-            errors: List[ValidationError]
+            errors: List[ValidationErrors]
         """
 
         file_path = Path(case_dir) / self.relative_path
-        validation_errors: list[ValidationError] = []
+        validation_errors: list[ValidationErrors] = []
 
         if not file_path.exists() and self.required:
             validation_errors.append(
@@ -99,15 +109,6 @@ class ModelInputDefinition:
                 )
 
         return validation_errors
-
-
-@dataclass(frozen=True)
-class ValidationErrors:
-    field: Any
-    error_type: str
-    message: str
-    file_name: str
-    input_value: Any = None
 
 
 class ModelInputCollection:
