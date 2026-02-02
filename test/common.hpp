@@ -175,7 +175,7 @@ auto randomScalarField(const Foam::fvMesh& mesh, Foam::word name)
 
 /**@brief create a dimensionedScalarField with random entries*/
 template<typename FieldType>
-auto randDimField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet, Foam::word name)
+FieldType randDimField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet, Foam::word name)
 {
     auto field = FieldType(
         Foam::IOobject(
