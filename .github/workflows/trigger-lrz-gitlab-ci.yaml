@@ -22,20 +22,23 @@ jobs:
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
 
-      skip-nvidia: >-
-       ${{ github.event_name == 'pull_request' &&
-           contains(toJson(github.event.pull_request.labels.*.name), 'skip-nvidia')
-           && 'true' || 'false' }}
+      skip-nvidia: ${{ 
+        github.event_name == 'pull_request' && 
+        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-nvidia') 
+        && 'true' || 'false' 
+      }}
 
-      skip-amd: >-
-        ${{ github.event_name == 'pull_request' &&
-           contains(toJson(github.event.pull_request.labels.*.name), 'skip-amd')
-           && 'true' || 'false' }}
+      skip-amd: ${{ 
+        github.event_name == 'pull_request' && 
+        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-amd') 
+        && 'true' || 'false' 
+      }}
 
-      skip-intel: >-
-       ${{ github.event_name == 'pull_request' &&
-           contains(toJson(github.event.pull_request.labels.*.name), 'skip-intel')
-           && 'true' || 'false' }}
+      skip-intel: ${{ 
+        github.event_name == 'pull_request' && 
+        contains(fromJSON(toJSON(github.event.pull_request.labels || []))[*].name, 'skip-intel') 
+        && 'true' || 'false' 
+      }}
 
     # Only run if the 'Skip-build' label is not present on a PR
     if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
