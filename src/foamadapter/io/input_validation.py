@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 import json
-import tomllib
 import yaml
 
 from dataclasses import dataclass
@@ -10,6 +9,7 @@ from typing import Any, Callable, Tuple, Type
 from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
+# 3.9 and 3.10 don't have tomllib in the stdlib
 can_load_toml = True
 try:
     import tomllib
