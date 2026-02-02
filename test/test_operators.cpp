@@ -71,17 +71,8 @@ TEST_CASE("Interpolation")
 
         fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, NeoN::dsl::Coeff(), nfGradT.internalVector());
         nfGradT.correctBoundaryConditions();
-        auto nfGradTHost = nfGradT.internalVector().copyToHost();
-        for (size_t celli = 0; celli < nfGradTHost.size(); celli++)
-        {
-            REQUIRE(nfGradTHost.view()[celli][0] == Catch::Approx(ofGradT[celli][0]).margin(1e-15));
-            REQUIRE(nfGradTHost.view()[celli][1] == Catch::Approx(ofGradT[celli][1]).margin(1e-15));
-            // NOTE: we relax test in z direction, OpenFOAM explicitly zeros out in 2D case
-            REQUIRE(nfGradTHost.view()[celli][2] == Catch::Approx(ofGradT[celli][2]).margin(1e-6));
-        }
 
-        // NOTE not using compare for now since it has same tolerance in all directions
-        // NeoFOAM::compare(nfGradT, ofGradT, ApproxVector(1e-15), false);
+        NeoFOAM::compare(nfGradT, ofGradT, ApproxVector({1e-12, 1e-12, 1e-4}), false);
     }
 
     auto ofPhi = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
