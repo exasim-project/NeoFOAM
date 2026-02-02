@@ -34,6 +34,8 @@ struct ApproxVector
     {
         NeoN::Vec3 diff(rhs[0] - lhs[0], rhs[1] - lhs[1], rhs[2] - lhs[2]);
 
-        return Catch::Approx(0).margin(margin[0]) == mag(diff);
+        return Catch::Approx(0).margin(margin[0]) == diff[0]
+            && Catch::Approx(0).margin(margin[1]) == diff[1]
+            && Catch::Approx(0).margin(margin[2]) == diff[2];
     }
 };
