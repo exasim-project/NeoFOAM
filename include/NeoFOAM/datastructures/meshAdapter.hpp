@@ -11,8 +11,6 @@
 
 #include "fvMesh.H"
 
-#include "NeoFOAM/auxiliary/readers.hpp"
-
 namespace NeoFOAM
 {
 
@@ -24,11 +22,12 @@ template<typename FieldT>
 FieldT flatBCField(const Foam::fvMesh& mesh, std::function<FieldT(const Foam::fvPatch&)> f);
 
 /** @brief read OpenFOAM mesh and construct NeoN mesh
-    * @param exec the executor where to store mesh data
-    * @param mesh the OpenFOAM mesh
-    * @param fullMeshOnGPU - if false only owner,neighbour,faceAreas and cellVolumes are placed on GPU
-    */
-NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU=false);
+ * @param exec the executor where to store mesh data
+ * @param mesh the OpenFOAM mesh
+ * @param fullMeshOnGPU - if false only owner,neighbour,faceAreas and cellVolumes are placed on GPU
+ */
+NeoN::UnstructuredMesh
+readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU = false);
 
 /** @class MeshAdapter
  */

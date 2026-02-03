@@ -7,6 +7,7 @@
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
+namespace nf = NeoFOAM;
 
 extern Foam::Time* timePtr;    // A single time object
 extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
@@ -34,37 +35,31 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
     const auto sparsityPattern = NeoN::la::createSparsity(nfMesh);
 
     runTime.setDeltaT(1);
+    runTime.setTime(0.0, 0);
+    auto rt = nf::createAdapterRunTime(runTime, exec);
 
     SECTION("ddtScheme backward on " + execName)
     {
-        runTime.setTime(0.0, 0);
-
-        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
+        auto ofT = nf::randomScalarField(mesh, "T");
         ofT.correctBoundaryConditions();
         ofT.oldTime();
         ofT.oldTime().oldTime();
 
-        auto& nfT = fieldCol.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-                .exec = exec,
-                .nfMesh = nfMesh,
-                .foamField = ofT,
-                .name = "nfT"
-            }
-        );
+        auto& nfT = NeoFOAM::constructAndRegister(fieldCol, rt, ofT, false);
+
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
-        NeoN::Dictionary fvSchemes;
         NeoN::Dictionary ddtSchemes;
-        ddtSchemes.insert("ddt(nfT)", std::string("BDF2"));
-        fvSchemes.insert("ddtSchemes", ddtSchemes);
+        ddtSchemes.insert("ddt(T)", std::string("BDF2"));
+        rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
 
-        ddtOp.read(NeoN::Input {fvSchemes});
+        ddtOp.read(rt.fvSchemesDict);
 
         //  =========================================================================
         //  Step 1: timeIndex == 1 → backward startup (implicit Euler)
         //  =========================================================================
         runTime++;
+        rt.t = runTime.time().value();
         ofT.storeOldTimes();
         fvcc::rotateOldTimes(nfT);
         bumpCurrentOF(ofT, 1.0);

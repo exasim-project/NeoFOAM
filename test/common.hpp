@@ -123,25 +123,38 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 
 /* comparison function for volumeFields */
 template<typename NFFIELD, typename OFFIELD, typename Compare>
-void compare(NFFIELD& a, OFFIELD& b, Compare comp, bool withBoundaries = true)
+void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBoundaries = true)
 {
-    auto aHost = a.internalVector().copyToHost();
-    auto bSpan = std::span(b.primitiveFieldRef().data(), b.size());
-    // nf a span might be shorter than bSpan for surface fields
-    REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
-
-    if (withBoundaries)
+    if constexpr (std::is_same_v<NFFIELD, NeoN::Vector<NeoN::scalar>> || std::is_same_v<NFFIELD, NeoN::Vector<NeoN::Vec3>>)
     {
-        size_t start = 0;
-        auto aBoundaryHost = a.boundaryData().value().copyToHost();
-        for (const auto& patch : b.boundaryField())
+        auto aHost = a.copyToHost();
+        auto bSpan = std::span(b.cdata(), b.size());
+        REQUIRE(aHost.size() >= bSpan.size());
+        REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
+    }
+    else
+    {
+        auto aHost = a.internalVector().copyToHost();
+        const auto bSpan = std::span(b.primitiveField().cdata(), b.size());
+        // nf a span might be shorter than bSpan for surface fields
+        REQUIRE(aHost.size() >= bSpan.size());
+        REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
+
+        // Assumes boundaryData() is stored as a contiguous concatenation
+        // of boundary patches in the same order as b.boundaryField()
+        if (withBoundaries)
         {
-            auto bBoundarySpan = std::span(patch.cdata(), patch.size());
-            REQUIRE_THAT(
-                aBoundaryHost.view({start, start + patch.size()}),
-                Catch::Matchers::RangeEquals(bBoundarySpan, comp)
-            );
-            start += patch.size();
+            size_t start = 0;
+            auto aBoundaryHost = a.boundaryData().value().copyToHost();
+            for (const auto& patch : b.boundaryField())
+            {
+                auto bBoundarySpan = std::span(patch.cdata(), patch.size());
+                REQUIRE_THAT(
+                    aBoundaryHost.view({start, start + patch.size()}),
+                    Catch::Matchers::RangeEquals(bBoundarySpan, comp)
+                );
+                start += patch.size();
+            }
         }
     }
 }
@@ -166,7 +179,7 @@ auto randomScalarField(const Foam::fvMesh& mesh, Foam::word name)
 
 /**@brief create a dimensionedScalarField with random entries*/
 template<typename FieldType>
-auto randDimScalarField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet, Foam::word name)
+FieldType randDimField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet, Foam::word name)
 {
     auto field = FieldType(
         Foam::IOobject(
@@ -182,23 +195,6 @@ auto randDimScalarField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSe
 
     randomizeField(field);
     return field;
-}
-
-// TODO consolidate with the other construct from functions
-auto& constructFromVel(auto& fieldCollection, auto& rt, auto& ofU)
-{
-    // using ContainerType = typename TypeMap<FoamFieldType>::container_type;
-    // using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
-    auto& ret = fieldCollection.template registerVector<fvcc::VolumeField<NeoN::Vec3>>(
-        NeoFOAM::CreateFromFoamField<Foam::volVectorField> {
-            .exec = rt.exec,
-            .nfMesh = rt.nfMesh,
-            .foamField = ofU,
-            .name = ofU.name()
-        }
-    );
-    fvcc::rotateOldTimes(ret);
-    return ret;
 }
 
 

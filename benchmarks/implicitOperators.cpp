@@ -29,7 +29,7 @@ TEST_CASE("DivOperator")
     Foam::fvMesh& mesh = *meshPtr;
 
     auto ofT = nf::randomScalarField(mesh, "T");
-    auto ofPhi = nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+    auto ofPhi = nf::randDimField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
 
     SECTION("OpenFOAM")
     {
@@ -102,8 +102,7 @@ TEST_CASE("LaplacianOperator")
     Foam::fvMesh& mesh = *meshPtr;
 
     auto ofT = nf::randomScalarField(mesh, "T");
-    auto ofGamma =
-        nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
+    auto ofGamma = nf::randDimField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {

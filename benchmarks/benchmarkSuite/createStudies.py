@@ -21,8 +21,8 @@ def create_cases(src, root, case, force=False, detailed=False):
         return
     if case_path.exists() and force:
         shutil.rmtree(case_path)
-
     case_path.mkdir(parents=True, exist_ok=True)
+
     cube_range = [8, 16, 32, 64, 128] if detailed else [16, 32, 64]
     study_cube = record_generator(
         records=build_records("3DCube", cube_range ),

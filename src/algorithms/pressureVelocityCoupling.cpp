@@ -59,6 +59,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
         return vol[celli] / (values[rowPtrs[celli] + diagOffsetCelli][0]);
     });
 
+    rAU.correctBoundaryConditions();
     return rAU;
 }
 
@@ -122,7 +123,6 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     );
 
     hByA.correctBoundaryConditions();
-    rAU.correctBoundaryConditions();
 
     return {rAU, hByA};
 }

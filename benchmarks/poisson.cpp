@@ -32,9 +32,8 @@ TEST_CASE("Poisson")
 
     auto ofU = nf::randomVectorField(runTime, mesh, "U");
     auto ofP = nf::randomScalarField(runTime, mesh, "p");
-    auto ofPhi = nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
-    auto ofGamma =
-        nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
+    auto ofPhi = nf::randDimField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+    auto ofGamma = nf::randDimField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {
@@ -68,16 +67,8 @@ TEST_CASE("Poisson")
         schemesDict = nf::mapFvSchemes(schemesDict);
         auto& nfMesh = rt.mesh;
         auto& fieldCollection = fvcc::VectorCollection::instance(rt.db, "fieldCollection");
-        auto& nfU = constructFromVel(fieldCollection, rt, ofU);
-        auto& nfPhi = fieldCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::surfaceScalarField> {
-                .exec = rt.exec,
-                .nfMesh = rt.nfMesh,
-                .foamField = ofPhi,
-                .name = "phi"
-            }
-        );
-        fvcc::rotateOldTimes(nfPhi);
+        auto& nfU = constructAndRegister(fieldCollection, rt, ofU);
+        auto& nfPhi = nf::constructAndRegister(fieldCollection, rt, ofPhi);
 
         auto [nfP, nfGamma] = NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofP, ofGamma);
 

@@ -72,14 +72,9 @@ public:
         return ls_;
     }
 
-    NeoN::dsl::Expression<ValueType>& expression()
-    {
-        return expr_;
-    }
-
+    NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
-
 
     template<typename FunctorValueType>
     struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType>
@@ -121,10 +116,10 @@ public:
     {
         for (const auto& op : expr_.temporalOperators())
         {
-	    const auto s = op.ddtScheme();
+            const auto s = op.ddtScheme();
             if (s != NeoN::finiteVolume::cellCentred::DdtScheme::None)
             {
-                 return s;
+                return s;
             }
         }
         return NeoN::finiteVolume::cellCentred::DdtScheme::None;
@@ -170,21 +165,50 @@ private:
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
 
-        auto stats = NeoN::dsl::detail::iterativeSolveImpl(
-            expr,
-            sparsityPattern_,
-            ls,
-            psi_,
-            runTime_.t,
-            runTime_.dt,
-            runTime_.fvSchemesDict,
-            fieldSolverDict,
-            functs
-        );
+
+        auto stats = NeoN::la::SolverStats();
+        // TODO NOTE: This is a temporary solution to avoid negative values on the diagonal
+        // when IC is selected as preconditioner by scaling the system matrix with -1.0.
+        // NOTE: This will produce -p as a result.
+        if (psi_.name == "p" && fieldSolverDict.contains("preconditioner")
+            && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
+                   == "preconditioner::Ic")
+        {
+            auto exprIn = -1.0 * expr;
+            stats = NeoN::dsl::detail::iterativeSolveImpl(
+                exprIn,
+                sparsityPattern_,
+                ls,
+                psi_,
+                runTime_.t,
+                runTime_.dt,
+                runTime_.fvSchemesDict,
+                fieldSolverDict,
+                functs
+            );
+        }
+        else
+        {
+            stats = NeoN::dsl::detail::iterativeSolveImpl(
+                expr,
+                sparsityPattern_,
+                ls,
+                psi_,
+                runTime_.t,
+                runTime_.dt,
+                runTime_.fvSchemesDict,
+                fieldSolverDict,
+                functs
+            );
+        }
 
         NeoN::Logging::info(
             "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-                psi_.name, stats.initResNorm, stats.finalResNorm, stats.numIter);
+            psi_.name,
+            stats.initResNorm,
+            stats.finalResNorm,
+            stats.numIter
+        );
         return stats;
     }
 

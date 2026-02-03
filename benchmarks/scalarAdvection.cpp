@@ -31,9 +31,8 @@ TEST_CASE("scalarAdvection")
     Foam::fvMesh& mesh = *meshPtr;
 
     auto ofT = nf::randomScalarField(mesh, "T");
-    auto ofPhi = nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
-    auto ofGamma =
-        nf::randDimScalarField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
+    auto ofPhi = nf::randDimField<Foam::surfaceScalarField>(mesh, {0, 3, -1, 0, 0}, "phi");
+    auto ofGamma = nf::randDimField<Foam::surfaceScalarField>(mesh, {0, 2, -1, 0, 0}, "Gamma");
 
     SECTION("OpenFOAM")
     {
@@ -69,17 +68,7 @@ TEST_CASE("scalarAdvection")
         auto rt = nf::createAdapterRunTime(runTime, exec);
 
         auto& vectorCollection = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        fvcc::VolumeField<NeoN::scalar>& nfT =
-            vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                nf::CreateFromFoamField<Foam::volScalarField> {
-                    .exec = exec,
-                    .nfMesh = rt.nfMesh,
-                    .foamField = ofT,
-                    .name = "nfT"
-                }
-            );
-        nfT.correctBoundaryConditions();
-        fvcc::rotateOldTimes(nfT);
+        auto& nfT = NeoFOAM::constructAndRegister(vectorCollection, rt, ofT);
 
         auto [nfPhi, nfGamma] = NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofPhi, ofGamma);
 

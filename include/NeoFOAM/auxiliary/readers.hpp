@@ -6,6 +6,7 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
@@ -87,7 +88,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              {
                  auto& token = tokenList.tokens()[1];
                  NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&token);
-                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<Foam::label>(token));
+                 fixedValue =
+                     ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<Foam::label>(token));
                  dict.insert("fixedValue", fixedValue);
              }
          }},
@@ -309,12 +311,36 @@ public:
  * @return Tuple containing the fields
  */
 template<typename... Types>
-auto constFromMany(
-const NeoN::Executor& exec,
-const NeoN::UnstructuredMesh& uMesh,
-                   Types&... args)
+auto constFromMany(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& uMesh, Types&... args)
 {
     return std::tuple(constructFrom(exec, uMesh, args)...);
 }
+
+/**@brief construct an NF field from a given OF field and register*/
+template<typename FoamFieldType>
+auto& constructAndRegister(
+    fvcc::VectorCollection& fieldCollection,
+    RunTime& rt,
+    const FoamFieldType& of,
+    bool storeOldTime = true
+)
+{
+    using ContainerType = typename TypeMap<FoamFieldType>::container_type;
+    ContainerType& ret = fieldCollection.template registerVector<ContainerType>(
+        NeoFOAM::CreateFromFoamField<FoamFieldType> {
+            .exec = rt.exec,
+            .nfMesh = rt.nfMesh,
+            .foamField = of,
+            .name = of.name()
+        }
+    );
+    if (storeOldTime)
+    {
+        fvcc::rotateOldTimes(ret);
+    }
+    ret.correctBoundaryConditions();
+    return ret;
+}
+
 
 }; // namespace Foam
