@@ -28,8 +28,9 @@ jobs:
       skip-amd: ${{ steps.skip-labels.outputs.skip-amd }}
       skip-intel: ${{ steps.skip-labels.outputs.skip-intel }}
 
-    # Only run if the 'Skip-build' label is not present on a PR
-    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'skip-build')"
+    if: >
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-build')
 
     env:
       LRZ_GROUP: greole
