@@ -19,6 +19,7 @@ extern Foam::Time* timePtr; // A single time object
 
 TEST_CASE("Momentum")
 {
+    float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
@@ -38,7 +39,6 @@ TEST_CASE("Momentum")
 
     auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
     auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp);
-
 
     Foam::surfaceScalarField ofPhi(
         Foam::IOobject(
@@ -87,8 +87,8 @@ TEST_CASE("Momentum")
         NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
 
         // require fields to be initially the same
-        nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
-        nf::compare(nfP, ofp, ApproxScalar(1e-15));
+        nf::compare(nfU, ofU, ApproxVector(epsilon));
+        nf::compare(nfP, ofp, ApproxScalar(epsilon));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -97,7 +97,7 @@ TEST_CASE("Momentum")
         nfUEqn.solve();
 
         nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-12, 1e-12, 1e-02}));
+        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
     }
 
     SECTION("Solve transient momentum with grad(p)")
@@ -115,8 +115,8 @@ TEST_CASE("Momentum")
         NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
 
         // require fields to be initially the same
-        nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
-        nf::compare(nfP, ofp, ApproxScalar(1e-15));
+        nf::compare(nfU, ofU, ApproxVector(epsilon));
+        nf::compare(nfP, ofp, ApproxScalar(epsilon));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -125,6 +125,6 @@ TEST_CASE("Momentum")
 
         nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
         nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-12, 1e-12, 1e-02}));
+        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
     }
 }

@@ -18,6 +18,7 @@ extern Foam::Time* timePtr; // A single time object
 
 TEST_CASE("PressureVelocityCoupling")
 {
+    float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
@@ -81,7 +82,7 @@ TEST_CASE("PressureVelocityCoupling")
 
     SECTION("rAU" + execName)
     {
-        nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
+        nf::compare(nfU, ofU, ApproxVector(epsilon));
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         nfUEqn.assemble();
@@ -92,9 +93,9 @@ TEST_CASE("PressureVelocityCoupling")
 
     SECTION("HbyA" + execName)
     {
-        nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
-        nf::compare(nfPhi, ofPhi, ApproxScalar({1e-15}));
-        nf::compare(nfUEqn.linearSystem().rhs(), ofUEqn.source(), ApproxVector(1e-15), false);
+        nf::compare(nfU, ofU, ApproxVector(epsilon));
+        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon));
+        nf::compare(nfUEqn.linearSystem().rhs(), ofUEqn.source(), ApproxVector(epsilon), false);
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
@@ -107,7 +108,7 @@ TEST_CASE("PressureVelocityCoupling")
 
     SECTION("constrainHbyA")
     {
-        nf::compare(nfU, ofU, ApproxVector({1e-15, 1e-15, 1e-15}));
+        nf::compare(nfU, ofU, ApproxVector(epsilon));
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
         Foam::volVectorField ofConstrainHbyA(
@@ -123,7 +124,7 @@ TEST_CASE("PressureVelocityCoupling")
 
     SECTION("compute flux")
     {
-        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-15));
+        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon));
         auto forAUf = randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
         auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
 
@@ -140,6 +141,13 @@ TEST_CASE("PressureVelocityCoupling")
         );
 
         pEqn.assemble();
+
+        nf::compare(pEqn.linearSystem().matrix().diag(), ofpEqn.diag(), ApproxScalar(1e-15));
+        nf::compare(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            ofpEqn.upper(),
+            ApproxScalar(1e-15)
+        );
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
         nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-15));
