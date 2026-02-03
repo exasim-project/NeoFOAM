@@ -110,7 +110,7 @@ class PimpleFoam:
         pyf.constrainPressure(p, U, phiHbyA, rAU)
         while pimple.correctNonOrthogonal():
             pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))  # type: ignore[attr-defined]
-            pEqn.setReference(self.pRefCell, self.pRefValue, False)
+            pEqn.setReference(self.pRefCell, self.pRefValue, False)  # type: ignore[arg-type]
             pEqn.solve(p.select(pimple.finalInnerIter()))
             if pimple.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
@@ -127,7 +127,7 @@ class PimpleFoam:
         p, U, phi, laminarTransport, turbulence = create_fields(mesh)
 
         fvSolution = pyf.dictionary.read("system/fvSolution")
-        self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))
+        self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))  # type: ignore[assignment]
         mesh.setFluxRequired(pyf.Word("p"))
         controlDict = pyf.dictionary.read("system/controlDict")
         maxDeltaT = 1e5
