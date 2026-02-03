@@ -23,6 +23,7 @@ extern Foam::Time* timePtr;
 
 TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
 {
+    float epsilon = 1e-15;
     Foam::Time& runTime = *timePtr;
     // --- NeoN database / collection
     NeoN::Database db;
@@ -109,12 +110,12 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     SurfScalar nfCorr = ddtFluxCorr(nfU, nfPhi, dt, scheme);
 
     // --- Sanity: states match
-    NeoFOAM::compare(nfU, U, ApproxVector(1e-15));
-    NeoFOAM::compare(nfU0, U.oldTime(), ApproxVector(1e-15));
-    NeoFOAM::compare(nfPhi, phi, ApproxScalar(1e-15));
-    NeoFOAM::compare(nfPhi0, phi.oldTime(), ApproxScalar(1e-15));
+    NeoFOAM::compare(nfU, U, ApproxVector(epsilon));
+    NeoFOAM::compare(nfU0, U.oldTime(), ApproxVector(epsilon));
+    NeoFOAM::compare(nfPhi, phi, ApproxScalar(epsilon));
+    NeoFOAM::compare(nfPhi0, phi.oldTime(), ApproxScalar(epsilon));
 
-    SECTION("ddtCorr " + execName) { NeoFOAM::compare(nfCorr, foamCorr, ApproxScalar(1e-15)); }
+    SECTION("ddtCorr " + execName) { NeoFOAM::compare(nfCorr, foamCorr, ApproxScalar(epsilon)); }
 
     Foam::dimensionedScalar nu("nu", Foam::dimViscosity, 0.01);
 
@@ -153,6 +154,6 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     auto phiHbyAND = NeoFOAM::flux(hByAND) + nfCorr * rAUNF;
     SECTION("application to actual fields: " + execName)
     {
-        NeoFOAM::compare(phiHbyAND, phiHbyA, ApproxScalar(1e-15));
+        NeoFOAM::compare(phiHbyAND, phiHbyA, ApproxScalar(1e-15), false);
     }
 }

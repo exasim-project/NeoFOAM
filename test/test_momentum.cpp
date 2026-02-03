@@ -71,7 +71,7 @@ TEST_CASE("Momentum")
     NeoN::fill(nfOldU.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
     nfOldU.correctBoundaryConditions();
 
-    SECTION("Solve transient momentum without grad(p)")
+    SECTION("Solve transient momentum without grad(p) on " + execName)
     {
 
         Foam::fvVectorMatrix ofUEqn(
@@ -100,7 +100,7 @@ TEST_CASE("Momentum")
         nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
     }
 
-    SECTION("Solve transient momentum with grad(p)")
+    SECTION("Solve transient momentum with grad(p) on " + execName)
     {
         Foam::fvVectorMatrix ofUEqn(
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)

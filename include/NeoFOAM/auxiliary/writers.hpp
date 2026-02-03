@@ -42,15 +42,9 @@ void write(
 );
 
 /*@brief writes a NeoN field back to disk using OF field file format*/
-void write(
-    const fvcc::VolumeField<NeoN::scalar>& volField,
-    const Foam::fvMesh& mesh
-);
+void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& mesh);
 
 /*@brief writes a NeoN field back to disk using OF field file format*/
-void write(
-    const fvcc::VolumeField<NeoN::Vec3>& volField,
-    const Foam::fvMesh& mesh
-);
+void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& mesh);
 
 } // namespace Foam
