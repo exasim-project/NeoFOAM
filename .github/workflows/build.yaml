@@ -23,7 +23,9 @@ concurrency:
 
 jobs:
   build-neofoam:
-    name: Build and test ${{ github.event.repository.name }} on CPU
+    name: >
+      Build and test ${{ github.event.repository.name }}
+      on CPU (${{ matrix.compiler.CC }})
     runs-on: ubuntu-24.04
     if: >
       github.event_name != 'pull_request' ||
