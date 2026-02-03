@@ -17,7 +17,7 @@ FoamFile
 ddtSchemes
 {
     default         Euler;
-    //ddt(U)          BDF1;
+    ddt(nfU)          BDF1;
     ddt(nuTilda)    Euler;
     ddt(nfNuTilda)  BDF1;
 }
@@ -26,6 +26,7 @@ gradSchemes
 {
     default         Gauss linear;
     grad(p)         Gauss linear;
+    grad(nfp)         Gauss linear;
 }
 
 divSchemes
@@ -33,6 +34,7 @@ divSchemes
     default         none;
 
     div(phi,U)      Gauss linear;
+    div(nfPhi,nfU)      Gauss linear;
 
     div(phi,nuTilda)  Gauss linear;
     div(nfPhi,nfNuTilda)  Gauss linear;
@@ -45,9 +47,15 @@ laplacianSchemes
 {
     default               Gauss linear uncorrected;
     laplacian(nuEff,U)    Gauss linear uncorrected;
+    laplacian(nuEff,nfU)    Gauss linear uncorrected;
     laplacian(rAUf,p)     Gauss linear uncorrected;
     laplacian(nuEff,nuTilda)    Gauss linear uncorrected;
     laplacian(nuTildaEff,nfNuTilda)    Gauss linear uncorrected;
+}
+
+viscousStressSchemes
+{
+        viscousStress Gauss linear uncorrected;
 }
 
 interpolationSchemes

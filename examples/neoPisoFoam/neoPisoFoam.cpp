@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
         auto surfCalcBCs =
             fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
+        auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Vec3>>(rt.nfMesh);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = vectorCollection.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
@@ -105,26 +106,33 @@ int main(int argc, char* argv[])
         NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
         auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
-        auto G = gradOp.grad(U);
+	fvcc::GradVecField G{
+            fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUx", rt.nfMesh, volCalcVecBCs),
+            fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUy", rt.nfMesh, volCalcVecBCs),
+            fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUz", rt.nfMesh, volCalcVecBCs)
+        };
+        gradOp.grad(U,G);
         fvcc::VolumeField<NeoN::scalar>
             magSqrGradNuTilda(rt.exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
+        fvcc::VolumeField<NeoN::Vec3> gradNuTilda(rt.exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
         fvcc::VolumeField<NeoN::scalar> production(rt.exec, "production", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> spCoeff(rt.exec, "spCoeff", rt.nfMesh, volCalcBCs);
         fvcc::SurfaceField<NeoN::scalar> nuTildaEff(rt.exec, "nuTildaEff", rt.nfMesh, surfCalcBCs);
-
-        auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofnut);
-	saBase.correctNut(nut, nuTilda, nu);
-        auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
+	fvcc::SurfaceField<NeoN::scalar> nuEff(rt.exec, "nuEff", rt.nfMesh, surfCalcBCs);
+        fvcc::SurfaceField<NeoN::scalar> surfNu(rt.exec, "surfNu", rt.nfMesh, surfCalcBCs);
+        fvcc::SurfaceField<NeoN::scalar> surfNut(rt.exec, "surfNut", rt.nfMesh, surfCalcBCs);
+        fvcc::SurfaceField<NeoN::scalar> surfNuTilda(rt.exec, "surfNuTilda", rt.nfMesh, surfCalcBCs);
+	auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
             NeoN::TokenList({std::string("linear")})
         );
-        nnfvcc::SurfaceField<NeoN::scalar> surfNut = surfInterpol.interpolate(nut);
-        surfNut.name = "nuEff";
-        nnfvcc::SurfaceField<NeoN::scalar> surfNu = surfInterpol.interpolate(nu);
-        auto nuEff = surfNut + surfNu;
-        nuEff.name = "nuEff";
-        // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+	surfInterpol.interpolate(nu,surfNu);
+        auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofnut);
+	saBase.calcNuTildaDiffusionCoeff(nuTilda,surfNu,surfNuTilda, nuTildaEff);
+        saBase.correctNut(nut,surfNut,nuEff, nuTilda, nu,surfNu);
+        
+	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
@@ -143,7 +151,7 @@ int main(int argc, char* argv[])
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nuEff, U)
-                    + dsl::exp::viscousStress(surfNu, surfNut, U, G.gradUx, G.gradUy, G.gradUz),
+                    + dsl::exp::viscousStress(surfNu, surfNut, surfNuTilda, U, G.gradUx, G.gradUy, G.gradUz),
                 U,
                 rt
             );
@@ -210,8 +218,9 @@ int main(int argc, char* argv[])
                 U.correctBoundaryConditions();
             }
             // Turbulence calculations
-            G = gradOp.grad(U);
-            magSqrGradNuTilda = fvcc::magSqr(gradOp.grad(nuTilda));
+            gradOp.grad(U,G);
+	    gradOp.grad(nuTilda,gradNuTilda);
+            saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
             saBase.computeProdSpDDES(
                 production,
                 spCoeff,
@@ -224,10 +233,8 @@ int main(int argc, char* argv[])
                 delta,
                 magSqrGradNuTilda
             );
-            const auto sigmaNut = saBase.coeffs().sigmaNut;
-            nuTildaEff = surfInterpol.interpolate(NeoN::scalar(1 / sigmaNut) * (nuTilda + nu));
-            nuTildaEff.name = "nuTildaEff";
-            nf::PDESolver<NeoN::scalar> nuTildaEqn(
+            
+	    nf::PDESolver<NeoN::scalar> nuTildaEqn(
                 dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
                     - NeoN::dsl::imp::laplacian(nuTildaEff, nuTilda)
                     + dsl::imp::source(spCoeff, nuTilda) - dsl::exp::source(production, nuTilda),
@@ -235,12 +242,8 @@ int main(int argc, char* argv[])
                 rt
             );
             nuTildaEqn.solve();
-            nuTilda.correctBoundaryConditions();
-	    saBase.correctNut(nut, nuTilda, nu);
-            surfNut = surfInterpol.interpolate(nut);
-            surfNut.name = "nuEff";
-            nuEff = surfNut + surfNu;
-            nuEff.name = "nuEff";
+	    saBase.calcNuTildaDiffusionCoeff(nuTilda,surfNu,surfNuTilda, nuTildaEff);
+            saBase.correctNut(nut,surfNut,nuEff, nuTilda, nu,surfNu);
 
             runTime.write();
             if (runTime.outputTime())

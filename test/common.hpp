@@ -109,10 +109,10 @@ auto randomSurfaceScalarField(const Foam::Time& runTime, const Foam::fvMesh& mes
 
 /* comparison function for volumeFields */
 template<typename NFFIELD, typename OFFIELD, typename Compare>
-void compare(NFFIELD& a, OFFIELD& b, Compare comp, bool withBoundaries = true)
+void compare(NFFIELD& a, const OFFIELD& b, Compare comp, bool withBoundaries = true)
 {
     auto aHost = a.internalVector().copyToHost();
-    auto bSpan = std::span(b.primitiveFieldRef().data(), b.size());
+    auto bSpan = std::span(b.primitiveField().cdata(), b.size());
     // nf a span might be shorter than bSpan for surface fields
     REQUIRE_THAT(aHost.view({0, bSpan.size()}), Catch::Matchers::RangeEquals(bSpan, comp));
 

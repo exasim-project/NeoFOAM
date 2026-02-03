@@ -32,7 +32,14 @@ solvers
                 $p;
         }
 
-        U
+	U
+        {
+            solver PBiCGStab;
+            preconditioner diagonal;
+            tolerance 0;
+            relTol 1e-10;
+        }
+        nfU
         {
                 solver Ginkgo;
                 configFile config.bicgstab.json;
@@ -48,7 +55,7 @@ solvers
             solver PBiCGStab;
             preconditioner diagonal;
             tolerance 0;
-            relTol 1e-5;
+            relTol 1e-10;
         }
         nfNuTilda
         {
@@ -58,7 +65,7 @@ solvers
         nuTildaFinal
         {
                 $nuTilda;
-        } 
+        }  
 /*    p
     {
         solver          GAMG;
@@ -89,7 +96,7 @@ solvers
         tolerance 0;
         relTol 0.01;
         maxIter 5;
-    } */   
+    }   */ 
 }
 
 PISO
