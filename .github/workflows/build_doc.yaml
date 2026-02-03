@@ -72,7 +72,7 @@ jobs:
         target-folder: develop
 
     - name: Comment PR
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
       uses: thollander/actions-comment-pull-request@v2
       with:
         message: |
@@ -80,5 +80,5 @@ jobs:
         comment_tag: build_url
 
     - name: Echo Build PR URL
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
       run: echo "Deploy to https://exasim-project.com/NeoFOAM/Build_PR_${{ env.PR_NUMBER }}"
