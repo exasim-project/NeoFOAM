@@ -20,6 +20,7 @@ extern Foam::fvMesh* meshPtr;  // A single mesh object
 
 TEST_CASE("matrix multiplication")
 {
+    float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     Foam::argList& args = *argsPtr;
 
@@ -66,15 +67,15 @@ TEST_CASE("matrix multiplication")
         ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
 
         // check rhs
-        nf::compare(ls.rhs(), matrix.source(), ApproxScalar(1e-15));
+        nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
 
         // check diag
         auto diag = NeoFOAM::diag(ls, sparsityPattern);
-        nf::compare(diag, matrix.diag(), ApproxScalar(1e-15));
+        nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto ddtV = ddt * mesh.V();
-        nf::compare(result.internalVector(), ddtV(), ApproxScalar(1e-15));
+        nf::compare(result.internalVector(), ddtV(), ApproxScalar(epsilon));
     }
 
     SECTION("sourceterm_" + execName)
@@ -133,53 +134,56 @@ TEST_CASE("matrix multiplication")
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         auto ofPhi = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
-
-        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
-
         Foam::fvScalarMatrix matrix(Foam::fvm::div(ofPhi, ofT));
         Foam::volScalarField divT("divT", matrix & ofT);
+        auto divV = divT * mesh.V();
 
-        NeoN::TokenList input = {std::string("Gauss"), std::string("linear")};
-        fvcc::DivOperator<NeoN::scalar> divOp(dsl::Operator::Type::Implicit, nfPhi, nfT, input);
-
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            rt.nfMesh,
-            sparsityPattern
+        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
+        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::div(nfPhi, nfT)),
+            nfT,
+            rt
         );
-        divOp.implicitOperation(ls);
+        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
-        auto result = NeoFOAM::applyOperator(ls, nfT);
-        auto divV = divT * mesh.V();
-        nf::compare(result.internalVector(), divV(), ApproxScalar(1e-15));
+        auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
+        nf::compare(result.internalVector(), divV(), ApproxScalar(epsilon));
+
+        nf::compare(nfPDE.linearSystem().matrix().diag(), matrix.diag(), ApproxScalar(epsilon));
+        nf::compare(
+            NeoN::la::upper(nfPDE.linearSystem().matrix()),
+            matrix.upper(),
+            ApproxScalar(epsilon)
+        );
     }
 
     SECTION("laplacian_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        auto ofNuf = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "nu");
-
-        auto [nfT, nfNuf] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofNuf);
-
+        auto ofNuf = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "Gamma");
         Foam::fvScalarMatrix matrix(Foam::fvm::laplacian(ofNuf, ofT));
         Foam::volScalarField laplacian("laplacian", matrix & ofT);
+        auto lapV = laplacian * mesh.V();
 
-        NeoN::TokenList input =
-            {std::string("Gauss"), std::string("linear"), std::string("uncorrected")};
-        fvcc::LaplacianOperator<NeoN::scalar>
-            laplacianOp(dsl::Operator::Type::Implicit, nfNuf, nfT, input);
-
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            rt.nfMesh,
-            sparsityPattern
+        auto [nfT, nfNuf] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofNuf);
+        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfNuf, nfT)),
+            nfT,
+            rt
         );
-        laplacianOp.implicitOperation(ls);
+        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
-        auto result = NeoFOAM::applyOperator(ls, nfT);
-        auto lapV = laplacian * mesh.V();
-        nf::compare(result.internalVector(), lapV(), ApproxScalar(1e-15));
+        auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
+        nf::compare(result.internalVector(), lapV(), ApproxScalar(epsilon));
+        nf::compare(nfPDE.linearSystem().matrix().diag(), matrix.diag(), ApproxScalar(epsilon));
+        nf::compare(
+            NeoN::la::upper(nfPDE.linearSystem().matrix()),
+            matrix.upper(),
+            ApproxScalar(epsilon)
+        );
     }
 }
