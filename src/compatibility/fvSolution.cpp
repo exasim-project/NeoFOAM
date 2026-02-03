@@ -36,12 +36,11 @@ void updateSolver(NeoN::Dictionary& solverDict)
     {
         NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
         solverName = mapEntry->second.first;
-        // if (solverName == "GAMG")
-        // {
-        //     throw std::runtime_error(
-        //         "GAMG is not supported in NeoFOAM, please use a different solver."
-        //     );
-        // }
+        if (solverName == "GAMG")
+        {
+            throw std::runtime_error("\nGAMG Solver is not supported in NeoFOAM via dictionary "
+                                     "entry, use configFile instead\n");
+        }
         solverDict.insert("type", mapEntry->second.second);
     }
 }
@@ -64,10 +63,9 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         {"DILU",
          NeoN::Dictionary(
              {{std::string("type"), std::string("preconditioner::Ilu")},
-              {std::string("reverse_apply"), false},
               {std::string("factorization"),
                NeoN::Dictionary({{std::string("type"), std::string("factorization::ParIlu")}})}}
-         )},
+         )}
     };
 
     // if no preconditioner is set but smoother switch to BiCGStab with BJ
@@ -81,24 +79,7 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         solverDict.remove("smoother");
     }
 
-    if (solverDict.isDict("preconditioner"))
-    {
-        NeoN::Dictionary& preconditionerDict = solverDict.subDict("preconditioner");
-        if (preconditionerDict.isDict("type"))
-        {
-            throw std::runtime_error(
-                "GAMG is not supported in NeoFOAM, please use a different preconditioner."
-            );
-            // std::string& preconditionerType = preconditionerDict.get<std::string>("type");
-            // auto it = preconditionerMap.find(preconditionerType);
-            // if (it != preconditionerMap.end())
-            // {
-            //     std::cout << __FILE__ << " replacing preconditioner " << preconditionerType << "
-            //     by " << it->second << "\n"; preconditionerType = it->second;
-            // }
-        }
-    }
-    else
+    if (!solverDict.isDict("preconditioner"))
     {
         std::string& preconditionerName = solverDict.get<std::string>("preconditioner");
 
@@ -107,6 +88,12 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         {
             solverDict.remove("preconditioner");
             return;
+        }
+
+        if (preconditionerName == "GAMG")
+        {
+            throw std::runtime_error("\nGAMG Preconditioner is not supported in NeoFOAM via "
+                                     "dictionary entry, use a configFile instead\n");
         }
 
         auto mapEntry = preconditionerMap.find(preconditionerName);

@@ -170,7 +170,26 @@ private:
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
 
-        auto stats = NeoN::dsl::detail::iterativeSolveImpl(
+
+        auto stats = NeoN::la::SolverStats();
+        if (psi_.name == "p"
+            && fieldSolverDict.contains("preconditioner")
+            && fieldSolverDict.subDict("preconditioner").template get<std::string>("type") == "preconditioner::Ic") {
+        auto exprIn =  -1.0 * expr;
+        stats = NeoN::dsl::detail::iterativeSolveImpl(
+            exprIn,
+            sparsityPattern_,
+            ls,
+            psi_,
+            runTime_.t,
+            runTime_.dt,
+            runTime_.fvSchemesDict,
+            fieldSolverDict,
+            functs
+        );
+        } else
+          {
+        stats = NeoN::dsl::detail::iterativeSolveImpl(
             expr,
             sparsityPattern_,
             ls,
@@ -181,6 +200,8 @@ private:
             fieldSolverDict,
             functs
         );
+
+          }
 
         NeoN::Logging::info(
             "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
