@@ -37,7 +37,7 @@ jobs:
 
     # 1. PREVIEW BUILD (per PR)
     - name: Deploy PR Build
-      if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.merged }}
+      if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.merged && github.event.pull_request.user.login != 'dependabot[bot]' }}
       uses: JamesIves/github-pages-deploy-action@v4
       with:
         folder: docs_build
