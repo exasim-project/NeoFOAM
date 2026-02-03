@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: Trigger and run CI on GPU (${{ github.event.repository.name }})
+    name: Build and test ${{ github.event.repository.name }} on GPU
     runs-on: ubuntu-latest
     timeout-minutes: 1440 # 24 hours
 
@@ -113,7 +113,7 @@ jobs:
           ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
 
   benchmark:
-    name: Benchmark NeoFOAM on GPU
+    name: Benchmark ${{ github.event.repository.name }} on GPU
     runs-on: ubuntu-latest
     timeout-minutes: 1440 # 24 hours
 
