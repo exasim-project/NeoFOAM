@@ -118,7 +118,9 @@ jobs:
     timeout-minutes: 1440 # 24 hours
 
     needs: [build-and-test]
-    if: contains(toJson(github.event.pull_request.labels), 'benchmark')
+    if: >
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'benchmark')
 
     env:
       LRZ_GROUP: greole
