@@ -10,12 +10,15 @@ on:
   workflow_dispatch:      # Optional: allows manual trigger
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >
+    ${{ github.workflow }}-
+    ${{ github.event_name }}-
+    ${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   build-and-test:
-    name: Trigger and run CI on GPU (${{ github.event.repository.name }})
+    name: Build and test ${{ github.event.repository.name }} on GPU
     runs-on: ubuntu-latest
     timeout-minutes: 1440 # 24 hours
 
@@ -25,8 +28,9 @@ jobs:
       skip-amd: ${{ steps.skip-labels.outputs.skip-amd }}
       skip-intel: ${{ steps.skip-labels.outputs.skip-intel }}
 
-    # Only run if the 'Skip-build' label is not present on a PR
-    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+    if: >
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-build')
 
     env:
       LRZ_GROUP: greole
@@ -100,7 +104,6 @@ jobs:
             "${{ steps.branch.outputs.branch }}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
             "variables[BENCHMARK]=false" \
-            "variables[PR_NUMBER]=${{ github.event.pull_request.number || github.event.number || '' }}" \
             "variables[SKIP_NVIDIA]=${{ steps.skip-labels.outputs.skip-nvidia }}" \
             "variables[SKIP_AMD]=${{ steps.skip-labels.outputs.skip-amd }}" \
             "variables[SKIP_INTEL]=${{ steps.skip-labels.outputs.skip-intel }}"
@@ -110,12 +113,14 @@ jobs:
           ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
 
   benchmark:
-    name: Benchmark NeoFOAM on GPU
+    name: Benchmark ${{ github.event.repository.name }} on GPU
     runs-on: ubuntu-latest
     timeout-minutes: 1440 # 24 hours
 
     needs: [build-and-test]
-    if: contains(toJson(github.event.pull_request.labels), 'benchmark')
+    if: >
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'benchmark')
 
     env:
       LRZ_GROUP: greole
@@ -125,7 +130,6 @@ jobs:
       SKIP_NVIDIA: ${{ needs.build-and-test.outputs.skip-nvidia }}
       SKIP_AMD: ${{ needs.build-and-test.outputs.skip-amd }}
       SKIP_INTEL: ${{ needs.build-and-test.outputs.skip-intel }}
-      PR_NUMBER: ${{ github.event.number }}
       LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
       LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
       MAX_WAIT_MINUTES: 1440
@@ -147,7 +151,7 @@ jobs:
             "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
             "variables[SKIP_AMD]=${SKIP_AMD}" \
             "variables[SKIP_INTEL]=${SKIP_INTEL}" \
-            "variables[PR_NUMBER]=${{ github.event.number }}" \
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
             "variables[BENCHMARK]=true"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
