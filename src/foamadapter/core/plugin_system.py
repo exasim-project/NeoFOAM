@@ -83,7 +83,7 @@ class PluginSystem:
                 base_cls.plugin_model = model  # type: ignore[attr-defined]
                 return plugin_cls
 
-            base_cls.register = plugin_decorator  # type: ignore[method-assign, assignment]
+            base_cls.register = plugin_decorator  # type: ignore[method-assign,assignment]
             # Initial model with no plugins
             registry_obj = PluginSystem._registry[base_cls.__name__]
             union: Any = object
