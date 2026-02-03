@@ -168,6 +168,10 @@ Functions</h2></td></tr>
 <tr class="memitem:ab7276ff683225b6140acfa56618926b5" id="r_ab7276ff683225b6140acfa56618926b5"><td class="memTemplParams" colspan="2">template&lt;class FoamFieldType &gt; </td></tr>
 <tr class="memitem:ab7276ff683225b6140acfa56618926b5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">constructFrom</a> (const NeoN::Executor exec, const NeoN::UnstructuredMesh &amp;nfMesh, const FoamFieldType &amp;in)</td></tr>
 <tr class="separator:ab7276ff683225b6140acfa56618926b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a999cf2f9840de1da0b4265f93d4a6006" id="r_a999cf2f9840de1da0b4265f93d4a6006"><td class="memTemplParams" colspan="2">template&lt;typename... Types&gt; </td></tr>
+<tr class="memitem:a999cf2f9840de1da0b4265f93d4a6006"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a999cf2f9840de1da0b4265f93d4a6006">constFromMany</a> (const NeoN::Executor &amp;exec, const NeoN::UnstructuredMesh &amp;uMesh, Types &amp;... args)</td></tr>
+<tr class="memdesc:a999cf2f9840de1da0b4265f93d4a6006"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a set of NN fields from OF fields.  <br /></td></tr>
+<tr class="separator:a999cf2f9840de1da0b4265f93d4a6006"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39bc76acefb5a1dd3074b0feba5864eb" id="r_a39bc76acefb5a1dd3074b0feba5864eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a39bc76acefb5a1dd3074b0feba5864eb">setDeltaT</a> (Foam::Time &amp;ofRunTime, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;nfRunTime, Foam::scalar coNum)</td></tr>
 <tr class="separator:a39bc76acefb5a1dd3074b0feba5864eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff116721405a6ad86fee9675a3cc3156" id="r_aff116721405a6ad86fee9675a3cc3156"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156">syncRunTimes</a> (Foam::Time &amp;ofRunTime, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;nfRunTime, Foam::scalar coNum)</td></tr>
@@ -251,7 +255,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00221">221</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00227">227</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -346,6 +350,53 @@ template&lt;typename T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a999cf2f9840de1da0b4265f93d4a6006" name="a999cf2f9840de1da0b4265f93d4a6006"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a999cf2f9840de1da0b4265f93d4a6006">&#9670;&#160;</a></span>constFromMany()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Types&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto NeoFOAM::constFromMany </td>
+          <td>(</td>
+          <td class="paramtype">const NeoN::Executor &amp;&#160;</td>
+          <td class="paramname"><em>exec</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const NeoN::UnstructuredMesh &amp;&#160;</td>
+          <td class="paramname"><em>uMesh</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Types &amp;...&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Constructs a set of NN fields from OF fields. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Types</td><td>Types of the classes </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tuple containing the fields </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00312">312</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -703,7 +754,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00198">198</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00204">204</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -883,7 +934,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00240">240</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00246">246</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
