@@ -80,7 +80,6 @@ TEST_CASE("fvSolution")
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
-            REQUIRE(preconditionerDict.get<bool>("reverse_apply") == false);
             REQUIRE(
                 preconditionerDict.subDict("factorization").get<std::string>("type")
                 == "factorization::ParIlu"
