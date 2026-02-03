@@ -9,7 +9,7 @@ set -euo pipefail
 
 PRESET="profiling"
 
-# Argument parsing
+# Check required environment variables
 GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
 NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
 PR_NUMBER=${PR_NUMBER:?Error: Must set PR number}
