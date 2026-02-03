@@ -42,6 +42,8 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        auto& schemesDict = rt.fvSchemesDict;
+        schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
