@@ -344,7 +344,7 @@ def main() -> None:
     logger.info("Completed run + plot.")
 
     elapsed = time.perf_counter() - start_time
-        logger.info(f"Total runtime: {elapsed:.2f} seconds")
+    logger.info(f"Total runtime: {elapsed:.2f} seconds")
 
 if __name__ == "__main__":
     main()
