@@ -172,6 +172,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a999cf2f9840de1da0b4265f93d4a6006"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a999cf2f9840de1da0b4265f93d4a6006">constFromMany</a> (const NeoN::Executor &amp;exec, const NeoN::UnstructuredMesh &amp;uMesh, Types &amp;... args)</td></tr>
 <tr class="memdesc:a999cf2f9840de1da0b4265f93d4a6006"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a set of NN fields from OF fields.  <br /></td></tr>
 <tr class="separator:a999cf2f9840de1da0b4265f93d4a6006"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48fbbbb3755e34d928cf0d189532d93c" id="r_a48fbbbb3755e34d928cf0d189532d93c"><td class="memTemplParams" colspan="2">template&lt;typename FoamFieldType &gt; </td></tr>
+<tr class="memitem:a48fbbbb3755e34d928cf0d189532d93c"><td class="memTemplItemLeft" align="right" valign="top">auto &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a48fbbbb3755e34d928cf0d189532d93c">constructAndRegister</a> (fvcc::VectorCollection &amp;fieldCollection, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;rt, const FoamFieldType &amp;of, bool storeOldTime=true)</td></tr>
+<tr class="memdesc:a48fbbbb3755e34d928cf0d189532d93c"><td class="mdescLeft">&#160;</td><td class="mdescRight">construct an NF field from a given OF field and register  <br /></td></tr>
+<tr class="separator:a48fbbbb3755e34d928cf0d189532d93c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39bc76acefb5a1dd3074b0feba5864eb" id="r_a39bc76acefb5a1dd3074b0feba5864eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a39bc76acefb5a1dd3074b0feba5864eb">setDeltaT</a> (Foam::Time &amp;ofRunTime, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;nfRunTime, Foam::scalar coNum)</td></tr>
 <tr class="separator:a39bc76acefb5a1dd3074b0feba5864eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff116721405a6ad86fee9675a3cc3156" id="r_aff116721405a6ad86fee9675a3cc3156"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156">syncRunTimes</a> (Foam::Time &amp;ofRunTime, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;nfRunTime, Foam::scalar coNum)</td></tr>
@@ -255,7 +259,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00227">227</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00251">251</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -396,7 +400,7 @@ template&lt;typename... Types&gt; </div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Tuple containing the fields </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00312">312</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00314">314</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -434,6 +438,52 @@ template&lt;typename... Types&gt; </div>
 
 </div>
 </div>
+<a id="a48fbbbb3755e34d928cf0d189532d93c" name="a48fbbbb3755e34d928cf0d189532d93c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48fbbbb3755e34d928cf0d189532d93c">&#9670;&#160;</a></span>constructAndRegister()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename FoamFieldType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto &amp; NeoFOAM::constructAndRegister </td>
+          <td>(</td>
+          <td class="paramtype">fvcc::VectorCollection &amp;&#160;</td>
+          <td class="paramname"><em>fieldCollection</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;&#160;</td>
+          <td class="paramname"><em>rt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const FoamFieldType &amp;&#160;</td>
+          <td class="paramname"><em>of</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>storeOldTime</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>construct an NF field from a given OF field and register </p>
+
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00321">321</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+
+</div>
+</div>
 <a id="ab7276ff683225b6140acfa56618926b5" name="ab7276ff683225b6140acfa56618926b5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab7276ff683225b6140acfa56618926b5">&#9670;&#160;</a></span>constructFrom()</h2>
 
@@ -468,7 +518,7 @@ template&lt;class FoamFieldType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00171">171</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00173">173</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -754,7 +804,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00204">204</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00228">228</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -834,7 +884,7 @@ template&lt;typename FoamType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00019">19</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00020">20</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -934,7 +984,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00246">246</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00270">270</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -1100,7 +1150,7 @@ template&lt;typename FoamType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00122">122</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00124">124</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -1132,7 +1182,7 @@ template&lt;typename FoamType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00033">33</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00034">34</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
