@@ -62,12 +62,11 @@ TEST_CASE("matrix multiplication")
         rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
         ddtOp.read(rt.fvSchemesDict);
 
-        auto ls = NeoN::la::
-            createEmptyLinearSystem<NeoN::scalar>>(
-                nfMesh,
-                mi.sparsityPattern(),
-                mi.boundarySparsityPattern()
-            );
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
+            rt.nfMesh,
+            mi.sparsityPattern(),
+            mi.boundarySparsityPattern()
+        );
         ddtOp.implicitOperation(ls, mi, runTime.value(), runTime.deltaTValue());
 
         // check rhs

@@ -42,7 +42,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
     const auto& ls = expr.linearSystem();
     const auto& mesh = expr.getField().mesh();
 
-    auto rAUInternal = NeoN::la::get<0>(ls.matrix()).scaledInverseDiag(mesh.cellVolumes());
+    auto rAUInternal = NeoN::la::scaledInverseDiag(ls.matrix(), mesh.cellVolumes());
 
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
