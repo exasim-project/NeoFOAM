@@ -60,9 +60,7 @@ TEST_CASE("DivOperator")
         {
             BENCHMARK(std::string(execName))
             {
-                auto ls = la::createEmptyLinearSystem<
-                    NeoN::scalar,
-                    NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                auto ls = la::createEmptyLinearSystem<NeoN::scalar>(
                     nfMesh,
                     mi.sparsityPattern(),
                     mi.boundarySparsityPattern()
@@ -76,12 +74,11 @@ TEST_CASE("DivOperator")
 
         SECTION("No allocation")
         {
-            auto ls = la::
-                createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
-                    nfMesh,
-                    mi.sparsityPattern(),
-                    mi.boundarySparsityPattern()
-                );
+            auto ls = la::createEmptyLinearSystem<NeoN::scalar>(
+                nfMesh,
+                mi.sparsityPattern(),
+                mi.boundarySparsityPattern()
+            );
             NeoN::TokenList scheme({std::string("linear")});
 
             BENCHMARK(std::string(execName))
@@ -141,9 +138,7 @@ TEST_CASE("LaplacianOperator")
             BENCHMARK(std::string(execName))
             {
                 auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(nfMesh);
-                auto ls = NeoN::la::createEmptyLinearSystem<
-                    NeoN::scalar,
-                    NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
                     nfMesh,
                     mi.sparsityPattern(),
                     mi.boundarySparsityPattern()
@@ -157,12 +152,11 @@ TEST_CASE("LaplacianOperator")
 
         SECTION("No allocation")
         {
-            auto ls = NeoN::la::
-                createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
-                    nfMesh,
-                    mi.sparsityPattern(),
-                    mi.boundarySparsityPattern()
-                );
+            auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
+                nfMesh,
+                mi.sparsityPattern(),
+                mi.boundarySparsityPattern()
+            );
             NeoN::TokenList scheme({std::string("linear"), std::string("uncorrected")});
 
             BENCHMARK(std::string(execName))

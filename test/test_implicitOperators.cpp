@@ -62,12 +62,11 @@ TEST_CASE("matrix multiplication")
         rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
         ddtOp.read(rt.fvSchemesDict);
 
-        auto ls = NeoN::la::
-            createEmptyLinearSystem<NeoN::scalar>>(
-                nfMesh,
-                mi.sparsityPattern(),
-                mi.boundarySparsityPattern()
-            );
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
+            rt.nfMesh,
+            mi.sparsityPattern(),
+            mi.boundarySparsityPattern()
+        );
         ddtOp.implicitOperation(ls, mi, runTime.value(), runTime.deltaTValue());
 
         // check rhs
@@ -108,13 +107,12 @@ TEST_CASE("matrix multiplication")
         }
 
         // the sourceterm operator implicit
-        auto ls = NeoN::la::
-            createEmptyLinearSystem<NeoN::scalar>(
-                nfMesh,
-                mi.sparsityPattern(),
-                mi.boundarySparsityPattern()
-            );
-        auto cellVolumes = nfMesh.cellVolumes().copyToHost();
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
+            rt.nfMesh,
+            mi.sparsityPattern(),
+            mi.boundarySparsityPattern()
+        );
+        auto cellVolumes = rt.nfMesh.cellVolumes().copyToHost();
         sourceTerm.implicitOperation(ls, mi);
 
         // check diag
@@ -151,6 +149,7 @@ TEST_CASE("matrix multiplication")
             nfT,
             rt
         );
+        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results

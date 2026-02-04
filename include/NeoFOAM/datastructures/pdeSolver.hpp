@@ -25,7 +25,7 @@ class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
     using LinearSystem =
-        NeoN::la::LinearSystem<ValueType, NeoN::la::CSRMatrix<ValueType,NeoN::localIdx>>;
+        NeoN::la::LinearSystem<ValueType, NeoN::la::CSRMatrix<ValueType, NeoN::localIdx>>;
 
 public:
 
@@ -43,12 +43,11 @@ public:
                   );
               }
           ))
-        , ls_(NeoN::la::
-                  createEmptyLinearSystem<ValueType, NeoN::la::SparsityPattern<NeoN::localIdx>>(
-                      psi.mesh(),
-                      mi_->sparsityPattern(),
-                      mi_->boundarySparsityPattern()
-                  ))
+        , ls_(NeoN::la::createEmptyLinearSystem<ValueType>(
+              psi.mesh(),
+              mi_->sparsityPattern(),
+              mi_->boundarySparsityPattern()
+          ))
     {
         expr_.read(runTime_.fvSchemesDict);
     };
@@ -94,7 +93,10 @@ public:
 
         virtual void operator()(
             const NeoN::la::MatrixIterator<NeoN::localIdx>& mi,
-            NeoN::la::LinearSystem<FunctorValueType, NeoN::la::CSRMatrix<FunctorValueType,NeoN::la::SparsityPattern<NeoN::localIdx>>>& ls
+            NeoN::la::LinearSystem<
+                FunctorValueType,
+                NeoN::la::CSRMatrix<FunctorValueType, NeoN::la::SparsityPattern<NeoN::localIdx>>>&
+                ls
         )
         {
             const auto rowOffs = mi.sparsityPattern()->rowOffs().view();
@@ -164,7 +166,7 @@ private:
             functs =
                 needReference_
                     ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {SetReference<
-                          ValueType>(pRefCell_, pRefValue_)}
+                        ValueType>(pRefCell_, pRefValue_)}
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
         }
 
@@ -182,7 +184,7 @@ private:
             auto exprIn = -1.0 * expr;
             stats = NeoN::dsl::detail::iterativeSolveImpl(
                 exprIn,
-            *mi_.get(),
+                *mi_.get(),
                 ls,
                 psi_,
                 runTime_.t,
@@ -196,7 +198,7 @@ private:
         {
             stats = NeoN::dsl::detail::iterativeSolveImpl(
                 expr,
-            *mi_.get(),
+                *mi_.get(),
                 ls,
                 psi_,
                 runTime_.t,
@@ -206,14 +208,6 @@ private:
                 functs
             );
         }
-
-        NeoN::Logging::info(
-            "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-            psi_.name,
-            stats.initResNorm,
-            stats.finalResNorm,
-            stats.numIter
-        );
 
         for (auto stat : stats.entries)
         {

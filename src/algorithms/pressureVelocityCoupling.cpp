@@ -42,12 +42,15 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
     const auto& ls = expr.linearSystem();
     const auto& mesh = expr.getField().mesh();
 
-    auto rAUInternal = NeoN::la::get<0>(ls.matrix()).scaledInverseDiag(mesh.cellVolumes());
-
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
 
-    rAU.internalVector() = rAUInternal;
+    NeoN::la::scaledInverseDiag(
+        ls.matrix(),
+        expr.matrixIterator(),
+        mesh.cellVolumes(),
+        rAU.internalVector()
+    );
     rAU.correctBoundaryConditions();
     return rAU;
 }
@@ -59,28 +62,23 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     const auto& mesh = u.mesh();
     const auto& ls = expr.linearSystem();
 
-    auto rAU = computeRAU(expr);
-    auto offDiagonalSourceBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
-    auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
-    ls.matrix().negLUx(u.internalVector(), hByA.internalVector());
+    auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
 
-    // FIXME
-    const auto exec = u.exec();
-    const auto [rhsV, rAUV, volV] = views(ls.rhs(), rAU.internalVector(), mesh.cellVolumes());
-    auto hByAV = hByA.internalVector().view();
+    auto hByABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
+    auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, hByABCs);
 
-    // a = (a + r) * x/v
-    NeoN::parallelFor(
-        exec,
-        {0, ls.matrix().nRows()},
-        NEON_LAMBDA(const size_t celli) {
-            hByAV[celli] += rhsV[celli];
-            hByAV[celli] *= rAUV[celli] / volV[celli];
-        }
+    NeoN::la::scaledInvDiagnegLUx(
+        ls.matrix(),
+        u.internalVector(),
+        ls.rhs(),
+        mesh.cellVolumes(),
+        rAU.internalVector(),
+        hByA.internalVector()
     );
 
+    rAU.correctBoundaryConditions();
     hByA.correctBoundaryConditions();
-
     return {rAU, hByA};
 }
 

@@ -69,12 +69,11 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
 
-        auto ls1 = NeoN::la::
-            createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
-                nfMesh,
-                mi.sparsityPattern(),
-                mi.boundarySparsityPattern()
-            );
+        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
+            nfMesh,
+            mi.sparsityPattern(),
+            mi.boundarySparsityPattern()
+        );
 
         ddtOp.implicitOperation(ls1, mi, runTime.value(), runTime.deltaTValue());
 
@@ -122,12 +121,11 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
 
-        auto ls2 = NeoN::la::
-            createEmptyLinearSystem<NeoN::scalar, NeoN::la::SparsityPattern<NeoN::localIdx>>(
-                nfMesh,
-                mi.sparsityPattern(),
-                mi.boundarySparsityPattern()
-            );
+        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
+            nfMesh,
+            mi.sparsityPattern(),
+            mi.boundarySparsityPattern()
+        );
 
         ddtOp.implicitOperation(ls2, mi, runTime.value(), runTime.deltaTValue());
 
