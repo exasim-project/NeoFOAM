@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from foamlib import FoamCase
 from typing import Tuple
+import time
 
 # =========================================================
 #  Logging Setup
@@ -73,6 +74,11 @@ def clean_case(case_path: Path) -> None:
     # Remove postProcessing
     pp = case_path / "postProcessing"
     rm_path(pp)
+
+    # Remove old plot PDFs
+    for f in case_path.glob("centreline_*.pdf"):
+        rm_path(f)
+
     logger.info("Allclean complete.")
 
 # =========================================================
@@ -118,7 +124,7 @@ def run_case(case_path: Path) -> None:
     # -----------------------------------------
     # Run neoIcoFoam -> log.neoIcoFoam
     # -----------------------------------------
-    solver = case_path / "../../build/profiling/bin/neoIcoFoam"
+    solver = case_path / "../../build/develop/bin/neoIcoFoam"
     if not solver.exists():
         logger.error(f"Solver binary not found: {solver}")
         sys.exit(1)
@@ -237,6 +243,7 @@ def plot_u(y_cl: np.ndarray, u_cl: np.ndarray, GHIA_Y: np.ndarray, GHIA_U: np.nd
     plt.title(f"Vertical centreline U (Re={Re_rounded}, t={endTime})")
     outfile = case_path / f"centreline_U_Re{Re_rounded}_t{endTime}.pdf"
     plt.savefig(outfile)
+    plt.close()
     logger.info(f"Saved {outfile}")
 
 def plot_v(x_cl: np.ndarray, v_cl: np.ndarray, GHIA_X: np.ndarray, GHIA_V: np.ndarray,
@@ -253,12 +260,14 @@ def plot_v(x_cl: np.ndarray, v_cl: np.ndarray, GHIA_X: np.ndarray, GHIA_V: np.nd
     plt.title(f"Horizontal centreline V (Re={Re_rounded}, t={endTime})")
     outfile = case_path / f"centreline_V_Re{Re_rounded}_t{endTime}.pdf"
     plt.savefig(outfile)
+    plt.close()
     logger.info(f"Saved {outfile}")
 
 # =========================================================
 #  Main function
 # =========================================================
 def main() -> None:
+    start_time = time.perf_counter()
     parser = argparse.ArgumentParser(description="Run cavity test + plot results.")
     parser.add_argument("--clean", action="store_true", help="Clean case only")
     parser.add_argument("--run", action="store_true", help="Run solver only")
@@ -321,12 +330,21 @@ def main() -> None:
     # Extract cavity centreline data
     y_cl, u_cl = extract_centreline(x, y, U_int, 0.5, is_vertical=True)
     x_cl, v_cl = extract_centreline(x, y, U_int, 0.5, is_vertical=False)
+    # Add boundary endpoints explicitly (cell centres never include walls)
+    y_cl = np.concatenate(([0.0], y_cl, [1.0]))
+    u_cl = np.concatenate(([0.0], u_cl, [1.0]))   # bottom wall u=0, top lid u=1
+
+    x_cl = np.concatenate(([0.0], x_cl, [1.0]))
+    v_cl = np.concatenate(([0.0], v_cl, [0.0]))   # left & right walls v=0
 
     # Plot
     plot_u(y_cl, u_cl, GHIA_Y, GHIA_U, Re_rounded, endTime, case_path)
     plot_v(x_cl, v_cl, GHIA_X, GHIA_V, Re_rounded, endTime, case_path)
 
     logger.info("Completed run + plot.")
+
+    elapsed = time.perf_counter() - start_time
+        logger.info(f"Total runtime: {elapsed:.2f} seconds")
 
 if __name__ == "__main__":
     main()
