@@ -42,12 +42,15 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
     const auto& ls = expr.linearSystem();
     const auto& mesh = expr.getField().mesh();
 
-    auto rAUInternal = NeoN::la::scaledInverseDiag(ls.matrix(), mesh.cellVolumes());
-
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
 
-    rAU.internalVector() = rAUInternal;
+    NeoN::la::scaledInverseDiag(
+        ls.matrix(),
+        expr.matrixIterator(),
+        mesh.cellVolumes(),
+        rAU.internalVector()
+    );
     rAU.correctBoundaryConditions();
     return rAU;
 }
@@ -66,29 +69,12 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     NeoN::la::negLUx(
         ls.matrix(),
         u.internalVector(),
+        ls.rhs(),
         rAU.internalVector(),
         mesh.cellVolumes(),
         hByA.internalVector()
     );
-
-
-    // FIXME
-    // const auto exec = u.exec();
-    // const auto [rhsV, rAUV, volV] = views(ls.rhs(), rAU.internalVector(), mesh.cellVolumes());
-    // auto hByAV = hByA.internalVector().view();
-
-    // // a = (a + r) * x/v
-    // NeoN::parallelFor(
-    //     exec,
-    //     {0, ls.matrix().nRows()},
-    //     NEON_LAMBDA(const size_t celli) {
-    //         hByAV[celli] += rhsV[celli];
-    //         hByAV[celli] *= rAUV[celli] / volV[celli];
-    //     }
-    // );
-
     hByA.correctBoundaryConditions();
-
     return {rAU, hByA};
 }
 

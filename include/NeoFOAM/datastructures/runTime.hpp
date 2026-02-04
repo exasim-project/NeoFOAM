@@ -33,11 +33,8 @@ struct RunTime
 
 
 template<typename RegisteredType, typename InitializerType>
-const std::shared_ptr<RegisteredType> readOrCreate(
-                            RunTime &runTime,
-                            std::string name,
-                            InitializerType init
-                            )
+const std::shared_ptr<RegisteredType>
+readOrCreate(RunTime& runTime, std::string name, InitializerType init)
 {
     if (!runTime.controlDict.contains(name))
     {

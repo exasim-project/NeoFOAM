@@ -149,6 +149,7 @@ TEST_CASE("matrix multiplication")
             nfT,
             rt
         );
+        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
