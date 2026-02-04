@@ -138,9 +138,7 @@ TEST_CASE("LaplacianOperator")
             BENCHMARK(std::string(execName))
             {
                 auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(nfMesh);
-                auto ls = NeoN::la::createEmptyLinearSystem<
-                    NeoN::scalar,
-                    NeoN::la::SparsityPattern<NeoN::localIdx>>(
+                auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
                     nfMesh,
                     mi.sparsityPattern(),
                     mi.boundarySparsityPattern()

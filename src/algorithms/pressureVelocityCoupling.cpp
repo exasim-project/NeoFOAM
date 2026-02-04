@@ -62,22 +62,30 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     auto rAU = computeRAU(expr);
     auto offDiagonalSourceBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
     auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
-    ls.matrix().negLUx(u.internalVector(), hByA.internalVector());
+
+    NeoN::la::negLUx(
+        ls.matrix(),
+        u.internalVector(),
+        rAU.internalVector(),
+        mesh.cellVolumes(),
+        hByA.internalVector()
+    );
+
 
     // FIXME
-    const auto exec = u.exec();
-    const auto [rhsV, rAUV, volV] = views(ls.rhs(), rAU.internalVector(), mesh.cellVolumes());
-    auto hByAV = hByA.internalVector().view();
+    // const auto exec = u.exec();
+    // const auto [rhsV, rAUV, volV] = views(ls.rhs(), rAU.internalVector(), mesh.cellVolumes());
+    // auto hByAV = hByA.internalVector().view();
 
-    // a = (a + r) * x/v
-    NeoN::parallelFor(
-        exec,
-        {0, ls.matrix().nRows()},
-        NEON_LAMBDA(const size_t celli) {
-            hByAV[celli] += rhsV[celli];
-            hByAV[celli] *= rAUV[celli] / volV[celli];
-        }
-    );
+    // // a = (a + r) * x/v
+    // NeoN::parallelFor(
+    //     exec,
+    //     {0, ls.matrix().nRows()},
+    //     NEON_LAMBDA(const size_t celli) {
+    //         hByAV[celli] += rhsV[celli];
+    //         hByAV[celli] *= rAUV[celli] / volV[celli];
+    //     }
+    // );
 
     hByA.correctBoundaryConditions();
 
