@@ -65,7 +65,8 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            NeoFOAM::Profiling::Region TL("Time loop");
+            // NeoFOAM::Profiling::Region TL("Time loop");
+            Kokkos::Profiling::pushRegion("Time loop");
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
@@ -168,6 +169,7 @@ int main(int argc, char* argv[])
             }
 
             runTime.printExecutionTime(Info);
+            Kokkos::Profiling::popRegion(); // Time loop
         }
     }
     NeoN::finalize();
