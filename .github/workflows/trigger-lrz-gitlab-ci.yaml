@@ -112,6 +112,53 @@ jobs:
         run: |
           ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
 
+  profie:
+    name: Profile ${{ github.event.repository.name }} on GPU
+    runs-on: ubuntu-latest
+    timeout-minutes: 1440 # 24 hours
+
+    needs: [build-and-test]
+    if: >
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'profile')
+
+    env:
+      LRZ_GROUP: greole
+      LRZ_HOST: gitlab-ce.lrz.de
+      REPO_NAME: ${{ github.event.repository.name }}
+      BRANCH: ${{ needs.build-and-test.outputs.branch }}
+      SKIP_NVIDIA: ${{ needs.build-and-test.outputs.skip-nvidia }}
+      SKIP_AMD: ${{ needs.build-and-test.outputs.skip-amd }}
+      SKIP_INTEL: ${{ needs.build-and-test.outputs.skip-intel }}
+      LRZ_GITLAB_PROJECT_TOKEN: ${{ secrets.LRZ_GITLAB_PROJECT_TOKEN }}
+      LRZ_GITLAB_TRIGGER_TOKEN: ${{ secrets.LRZ_GITLAB_TRIGGER_TOKEN }}
+      MAX_WAIT_MINUTES: 1440
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cancel running/pending LRZ GitLab CI pipelines
+        run: |
+          ./ci/github/cancel_triggered_pipelines.sh "${BRANCH}"
+
+      - name: Trigger LRZ GitLab CI pipeline for profiling
+        id: trigger
+        run: |
+          ./ci/github/trigger_pipeline.sh \
+            "${BRANCH}" \
+            "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
+            "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
+            "variables[SKIP_AMD]=${SKIP_AMD}" \
+            "variables[SKIP_INTEL]=${SKIP_INTEL}" \
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
+            "variables[BENCHMARK]=false" \
+            "variables[PROFILE]=true"
+
+      - name: Wait for LRZ GitLab CI pipeline for profiling
+        run: |
+          ./ci/github/wait_pipeline.sh ${{ steps.trigger.outputs.pipeline_id }}
+
   benchmark:
     name: Benchmark ${{ github.event.repository.name }} on GPU
     runs-on: ubuntu-latest
