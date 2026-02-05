@@ -88,14 +88,14 @@ int main(int argc, char* argv[])
             {
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
-                NeoFOAM::Profiling::Region MP("Momentum predictor - UEqn.solve");
+                // NeoFOAM::Profiling::Region MP("Momentum predictor - UEqn.solve");
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
             }
             else
             {
                 // NOTE since computing rAU and HbyA requires an assembled system matrix we
                 // explicitly trigger assembly here.
-                NeoFOAM::Profiling::Region noMP("No momentum predictor - UEqn.assemble");
+                // NeoFOAM::Profiling::Region noMP("No momentum predictor - UEqn.assemble");
                 UEqn.assemble();
             }
 
@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
-                NeoFOAM::Profiling::Region piso("PISO loop");
+                // NeoFOAM::Profiling::Region piso("PISO loop");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
-                    NeoFOAM::Profiling::Region pisoNonOrth("PISO non-orthogonal corrector loop");
+                    // NeoFOAM::Profiling::Region pisoNonOrth("PISO non-orthogonal corrector loop");
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
                     }
 
                     {
-                        NeoFOAM::Profiling::Region pEqnSolve("pEqn.solve");
+                        // NeoFOAM::Profiling::Region pEqnSolve("pEqn.solve");
                         auto stats = pEqn.solve();
                     }
                     p.correctBoundaryConditions();
