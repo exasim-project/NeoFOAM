@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            Kokkos::Profiling::pushRegion("Time loop");
+            NeoFOAM::Profiling::Region TL("Time loop");
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
@@ -88,24 +88,22 @@ int main(int argc, char* argv[])
             {
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
-                Kokkos::Profiling::pushRegion("Momentum predictor: UEqn.solve");
+                NeoFOAM::Profiling::Region MP("Momentum predictor - UEqn.solve");
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
-                Kokkos::Profiling::popRegion();
             }
             else
             {
                 // NOTE since computing rAU and HbyA requires an assembled system matrix we
                 // explicitly trigger assembly here.
-                Kokkos::Profiling::pushRegion("No momentum predictor: UEqn.assemble");
+                NeoFOAM::Profiling::Region noMP("No momentum predictor - UEqn.assemble");
                 UEqn.assemble();
-                Kokkos::Profiling::popRegion();
             }
 
             // --- PISO loop
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
-                Kokkos::Profiling::pushRegion("PISO loop");
+                NeoFOAM::Profiling::Region piso("PISO loop");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -128,7 +126,7 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
-                    Kokkos::Profiling::pushRegion("PISO non-orthogonal corrector loop");
+                    NeoFOAM::Profiling::Region pisoNonOrth("PISO non-orthogonal corrector loop");
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
@@ -141,23 +139,22 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
-                    Kokkos::Profiling::pushRegion("pEqn.solve");
-                    auto stats = pEqn.solve();
-                    Kokkos::Profiling::popRegion();
+                    {
+                        NeoFOAM::Profiling::Region pEqnSolve("pEqn.solve");
+                        auto stats = pEqn.solve();
+                    }
                     p.correctBoundaryConditions();
 
                     if (piso.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
-                    Kokkos::Profiling::popRegion(); // Exiting PISO non-orthogonal corrector loop
                 }
                 // TODO: missing
                 // #include "continuityErrs.H"
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
-                Kokkos::Profiling::popRegion(); // Exiting PISO loop
             }
 
             runTime.write();
@@ -170,7 +167,6 @@ int main(int argc, char* argv[])
             }
 
             runTime.printExecutionTime(Info);
-            Kokkos::Profiling::popRegion(); // Exiting time loop
         }
     }
     NeoN::finalize();
