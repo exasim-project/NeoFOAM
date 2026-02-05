@@ -75,7 +75,7 @@ TEST_CASE("Interpolation")
         NeoFOAM::compare(nfGradT, ofGradT, ApproxVector({1e-12, 1e-12, 1e-4}), false);
     }
 
-    auto ofPhi = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
+    auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
     auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
 
     SECTION("GaussGreenDiv[scalar] on " + execName)
