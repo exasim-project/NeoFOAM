@@ -133,7 +133,7 @@ TEST_CASE("matrix multiplication")
     SECTION("div_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        auto ofPhi = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
+        auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
         Foam::fvScalarMatrix matrix(Foam::fvm::div(ofPhi, ofT));
         Foam::volScalarField divT("divT", matrix & ofT);
         auto divV = divT * mesh.V();
@@ -162,7 +162,7 @@ TEST_CASE("matrix multiplication")
     SECTION("laplacian_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        auto ofNuf = randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "Gamma");
+        auto ofNuf = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "Gamma");
         Foam::fvScalarMatrix matrix(Foam::fvm::laplacian(ofNuf, ofT));
         Foam::volScalarField laplacian("laplacian", matrix & ofT);
         auto lapV = laplacian * mesh.V();
