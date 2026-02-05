@@ -35,7 +35,7 @@ void constrainHbyA(
     }
 }
 
-nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
+nnfvcc::VolumeField<scalar> computeRAUAugmented(const PDESolver<Vec3>& expr)
 {
     // TODO this assumes an assembled matrix
     // force assembly if not assembled
@@ -55,8 +55,24 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
     return rAU;
 }
 
+
+nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
+{
+    // TODO this assumes an assembled matrix
+    // force assembly if not assembled
+    const auto& ls = expr.linearSystem();
+    const auto& mesh = expr.getField().mesh();
+
+    auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
+
+    NeoN::la::scaledInverseDiag(ls.matrix(), mesh.cellVolumes(), rAU.internalVector());
+    rAU.correctBoundaryConditions();
+    return rAU;
+}
+
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA(const PDESolver<Vec3>& expr)
+computeRAUandHByAFused(const PDESolver<Vec3>& expr)
 {
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
@@ -74,6 +90,33 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
         ls.rhs(),
         mesh.cellVolumes(),
         rAU.internalVector(),
+        hByA.internalVector()
+    );
+
+    hByA.correctBoundaryConditions();
+    rAU.correctBoundaryConditions();
+    return {rAU, hByA};
+}
+
+std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
+computeRAUandHByA(const PDESolver<Vec3>& expr)
+{
+    const auto& u = expr.getField();
+    const auto& mesh = u.mesh();
+    const auto& ls = expr.linearSystem();
+
+    auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
+
+    auto offDiagonalSourceBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
+    auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
+
+    NeoN::la::negLUx(
+        ls.matrix(),
+        u.internalVector(),
+        ls.rhs(),
+        rAU.internalVector(),
+        mesh.cellVolumes(),
         hByA.internalVector()
     );
 

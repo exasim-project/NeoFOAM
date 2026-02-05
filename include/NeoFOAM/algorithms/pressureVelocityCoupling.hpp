@@ -45,6 +45,7 @@ void constrainHbyA(
  */
 nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr);
 
+nnfvcc::VolumeField<scalar> computeRAUAugmented(const PDESolver<Vec3>& expr);
 /* @brief given access to a PDESolver this function computes rAU and HbyA
  * from the assembled system
  *

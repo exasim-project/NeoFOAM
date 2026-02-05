@@ -89,6 +89,15 @@ TEST_CASE("pressureVelocityCoupling")
             };
         }
 
+        SECTION("Compute rAU Augmented")
+        {
+            BENCHMARK(std::string(execName))
+            {
+                auto nfrAU = nf::computeRAU(nfUEqn);
+                NeoN::fence(exec);
+            };
+        }
+
         auto nfrAU = nf::computeRAU(nfUEqn);
         SECTION("Compute HbyA")
         {
@@ -99,6 +108,17 @@ TEST_CASE("pressureVelocityCoupling")
                 return;
             };
         }
+
+        SECTION("Compute HbyA Fused")
+        {
+            BENCHMARK(std::string(execName))
+            {
+                nf::computeRAUandHByAFused(nfUEqn);
+                NeoN::fence(exec);
+                return;
+            };
+        }
+
 
         SECTION("constrainHbyA")
         {
