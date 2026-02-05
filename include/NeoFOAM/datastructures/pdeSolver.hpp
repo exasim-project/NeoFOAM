@@ -64,11 +64,11 @@ public:
         return ls_;
     }
 
-    NeoN::la::LinearSystem<ValueType, IndexType> assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
+    NeoN::la::LinearSystem<ValueType> assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
-        assemble();
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
-        auto ls = NeoN::la::LinearSystem<ValueType, IndexType>(ls_);
+        rhsExpr.read(runTime_.fvSchemesDict);
+        auto ls = NeoN::la::LinearSystem<ValueType>(assemble());
 
         auto expTmp = rhsExpr.explicitOperation(psi_.mesh().nCells());
 
@@ -146,13 +146,13 @@ public:
 
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
-    //   auto expr = dsl::Expression<ValueType>(expr_);
-    //   auto ls = LinearSystem(ls_);
-    //   expr.addOperator(-1.0 * rhs);
-    //   assemble();
-    //   return solveImpl(expr, ls);
+        //   auto expr = dsl::Expression<ValueType>(expr_);
+        //   auto ls = LinearSystem(ls_);
+        //   expr.addOperator(-1.0 * rhs);
+        //   assemble();
+        //   return solveImpl(expr, ls);
         // assemble wo rhs first
-        auto ls = assemble(rhs);
+        auto ls = assemble(std::move(rhs));
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
