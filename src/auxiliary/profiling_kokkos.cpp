@@ -1,4 +1,5 @@
 #include "NeoFOAM/auxiliary/profiling.hpp"
+#include "NeoN/NeoN.hpp"
 // #include <Kokkos_Profiling.hpp>
 
 namespace NeoFOAM::Profiling {
