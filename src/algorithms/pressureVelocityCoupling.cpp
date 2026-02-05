@@ -62,19 +62,23 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     const auto& mesh = u.mesh();
     const auto& ls = expr.linearSystem();
 
-    auto rAU = computeRAU(expr);
+    auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
+
     auto offDiagonalSourceBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
     auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
 
-    NeoN::la::negLUx(
+    NeoN::la::scaledInvDiagnegLUx(
         ls.matrix(),
         u.internalVector(),
         ls.rhs(),
-        rAU.internalVector(),
         mesh.cellVolumes(),
+        rAU.internalVector(),
         hByA.internalVector()
     );
+
     hByA.correctBoundaryConditions();
+    rAU.correctBoundaryConditions();
     return {rAU, hByA};
 }
 
