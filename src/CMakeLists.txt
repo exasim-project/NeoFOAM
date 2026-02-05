@@ -19,5 +19,10 @@ target_sources(
           "datastructures/meshAdapter.cpp"
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp")
-
+if (NEOFOAM_ENABLE_PROFILING)
+  target_sources(NeoFOAM PRIVATE auxiliary/profiling_kokkos.cpp)
+  target_link_libraries(NeoFOAM PRIVATE Kokkos::kokkos)
+else()
+  target_sources(NeoFOAM PRIVATE auxiliary/profiling_none.cpp)
+endif()
 install(TARGETS NeoFOAM)
