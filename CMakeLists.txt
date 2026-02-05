@@ -19,6 +19,9 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(NEOFOAM_ENABLE_PROFILING
+       "Enable profiling hooks (Kokkos Tools integration)"
+       OFF)
 set(NEOFOAM_BENCHMARK_MODE
     "all"
     CACHE STRING "perform only a subset of the benchmarks")
