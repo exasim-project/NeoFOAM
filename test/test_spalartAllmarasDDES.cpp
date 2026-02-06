@@ -85,7 +85,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         ),
         fvc::flux(U) // used only if phi file absent; MUST_READ enforces it exists.
     );
-    
+
     // --- Viscosity from transport model (singlePhase)
     Foam::singlePhaseTransportModel transport(U, phi);
     Foam::tmp<Foam::volScalarField> tnu = transport.nu();
@@ -186,8 +186,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
 
     scalar ofCw1 =
         scalar(0.1355) / Foam::sqr(scalar(0.41)) + (1.0 + scalar(0.622)) / scalar(0.66666);
-    //ofNut = nuTilda * ofFv1;
-    //ofNut.correctBoundaryConditions();
+    // ofNut = nuTilda * ofFv1;
+    // ofNut.correctBoundaryConditions();
 
     auto tfd = 1
              - Foam::tanh(Foam::pow(
@@ -380,91 +380,91 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         }
     }
     Foam::volVectorField ofGradUy(
-    Foam::IOobject(
-        "ofgradUy",
-        runTime.timeName(),
+        Foam::IOobject(
+            "ofgradUy",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
         mesh,
-        Foam::IOobject::NO_READ,
-        Foam::IOobject::NO_WRITE
-    ),
-    mesh,
-    Foam::dimensionedVector("zero", ofGradU.dimensions(), Foam::vector::zero)
-);
-
-// internal field
-for (Foam::label celli = 0; celli < nCells; ++celli)
-{
-    const Foam::tensor& g = ofGradU.internalField()[celli];
-
-    ofGradUy.internalFieldRef()[celli] = Foam::vector(
-        g.xy(), // ∂Uy/∂x
-        g.yy(), // ∂Uy/∂y
-        g.zy()  // ∂Uy/∂z
+        Foam::dimensionedVector("zero", ofGradU.dimensions(), Foam::vector::zero)
     );
-}
 
-// boundary field
-for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
-{
-    const Foam::fvPatchTensorField& gPatch = ofGradU.boundaryField()[patchi];
-    Foam::fvPatchVectorField& uyPatch = ofGradUy.boundaryFieldRef()[patchi];
-
-    const Foam::label nFaces = uyPatch.size();
-
-    for (Foam::label facei = 0; facei < nFaces; ++facei)
+    // internal field
+    for (Foam::label celli = 0; celli < nCells; ++celli)
     {
-        const Foam::tensor& g = gPatch[facei];
+        const Foam::tensor& g = ofGradU.internalField()[celli];
 
-        uyPatch[facei] = Foam::vector(
-            g.xy(), // dUy/dx
-            g.yy(), // dUy/dy
-            g.zy()  // dUy/dz
+        ofGradUy.internalFieldRef()[celli] = Foam::vector(
+            g.xy(), // ∂Uy/∂x
+            g.yy(), // ∂Uy/∂y
+            g.zy()  // ∂Uy/∂z
         );
     }
-}
-Foam::volVectorField ofGradUz(
-    Foam::IOobject(
-        "ofgradUz",
-        runTime.timeName(),
-        mesh,
-        Foam::IOobject::NO_READ,
-        Foam::IOobject::NO_WRITE
-    ),
-    mesh,
-    Foam::dimensionedVector("zero", ofGradU.dimensions(), Foam::vector::zero)
-);
 
-// internal field
-for (Foam::label celli = 0; celli < nCells; ++celli)
-{
-    const Foam::tensor& g = ofGradU.internalField()[celli];
-
-    ofGradUz.internalFieldRef()[celli] = Foam::vector(
-        g.xz(), // ∂Uz/∂x
-        g.yz(), // ∂Uz/∂y
-        g.zz()  // ∂Uz/∂z
-    );
-}
-
-// boundary field
-for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
-{
-    const Foam::fvPatchTensorField& gPatch = ofGradU.boundaryField()[patchi];
-    Foam::fvPatchVectorField& uzPatch = ofGradUz.boundaryFieldRef()[patchi];
-
-    const Foam::label nFaces = uzPatch.size();
-
-    for (Foam::label facei = 0; facei < nFaces; ++facei)
+    // boundary field
+    for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     {
-        const Foam::tensor& g = gPatch[facei];
+        const Foam::fvPatchTensorField& gPatch = ofGradU.boundaryField()[patchi];
+        Foam::fvPatchVectorField& uyPatch = ofGradUy.boundaryFieldRef()[patchi];
 
-        uzPatch[facei] = Foam::vector(
-            g.xz(), // dUz/dx
-            g.yz(), // dUz/dy
-            g.zz()  // dUz/dz
+        const Foam::label nFaces = uyPatch.size();
+
+        for (Foam::label facei = 0; facei < nFaces; ++facei)
+        {
+            const Foam::tensor& g = gPatch[facei];
+
+            uyPatch[facei] = Foam::vector(
+                g.xy(), // dUy/dx
+                g.yy(), // dUy/dy
+                g.zy()  // dUy/dz
+            );
+        }
+    }
+    Foam::volVectorField ofGradUz(
+        Foam::IOobject(
+            "ofgradUz",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedVector("zero", ofGradU.dimensions(), Foam::vector::zero)
+    );
+
+    // internal field
+    for (Foam::label celli = 0; celli < nCells; ++celli)
+    {
+        const Foam::tensor& g = ofGradU.internalField()[celli];
+
+        ofGradUz.internalFieldRef()[celli] = Foam::vector(
+            g.xz(), // ∂Uz/∂x
+            g.yz(), // ∂Uz/∂y
+            g.zz()  // ∂Uz/∂z
         );
     }
-}
+
+    // boundary field
+    for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
+    {
+        const Foam::fvPatchTensorField& gPatch = ofGradU.boundaryField()[patchi];
+        Foam::fvPatchVectorField& uzPatch = ofGradUz.boundaryFieldRef()[patchi];
+
+        const Foam::label nFaces = uzPatch.size();
+
+        for (Foam::label facei = 0; facei < nFaces; ++facei)
+        {
+            const Foam::tensor& g = gPatch[facei];
+
+            uzPatch[facei] = Foam::vector(
+                g.xz(), // dUz/dx
+                g.yz(), // dUz/dy
+                g.zz()  // dUz/dz
+            );
+        }
+    }
 
     auto tmagSqrGradNuTilde = Foam::magSqr(ofgradNutilda);
     Foam::volScalarField ofmagSqrGradNutilda(
@@ -501,7 +501,7 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
         tspCoeff()
     );
 
-    auto tviscousStress = - fvc::div(foamTurb->nuEff()*Foam::dev2(Foam::T(fvc::grad(U))));
+    auto tviscousStress = -fvc::div(foamTurb->nuEff() * Foam::dev2(Foam::T(fvc::grad(U))));
     Foam::volVectorField ofViscousStress(
         Foam::IOobject(
             "ofViscousStress",
@@ -592,12 +592,12 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
     auto gradOp = nnfvcc::GaussGreenGrad(exec, rt.nfMesh);
-    fvcc::TensorVecField G{
+    fvcc::TensorVecField G {
         VolVector(exec, "gradUx", rt.nfMesh, volCalcVecBCs),
         VolVector(exec, "gradUy", rt.nfMesh, volCalcVecBCs),
         VolVector(exec, "gradUz", rt.nfMesh, volCalcVecBCs)
-    }; 
-    gradOp.grad(nfU,G);
+    };
+    gradOp.grad(nfU, G);
     nf::compare(G.Tx, ofGradUx, ApproxVector(1e-10), true);
     nf::compare(G.Ty, ofGradUy, ApproxVector(1e-10), true);
     nf::compare(G.Tz, ofGradUz, ApproxVector(1e-10), true);
@@ -623,17 +623,17 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
         rt.nfMesh,
         NeoN::TokenList({std::string("linear")})
     );
-    surfInterpol.interpolate(nfNu,nfSurfNu);
+    surfInterpol.interpolate(nfNu, nfSurfNu);
 
-    saBase.correctNut(nut,nfSurfNut,nfSurfNuEff, nfNuTilda, nfNu,nfSurfNu);
+    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu);
     nf::compare(nut, ofNut, ApproxScalar(1e-12), true);
     nf::compare(nfNuTilda, nuTilda, ApproxScalar(1e-12));
-    saBase.calcNuTildaDiffusionCoeff(nfNuTilda,nfSurfNu,nfSurfNuTilda, nuTildaEff);
+    saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
 
     fvcc::rotateOldTimes(nfU);
     fvcc::rotateOldTimes(nfPhi);
     fvcc::rotateOldTimes(nfNuTilda);
-    gradOp.grad(nfNuTilda,gradNuTilda);
+    gradOp.grad(nfNuTilda, gradNuTilda);
     nf::compare(gradNuTilda, ofgradNutilda, ApproxVector(1e-12), true);
     saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
     nf::compare(magSqrGradNuTilda, ofmagSqrGradNutilda, ApproxScalar(1e-12), false);
@@ -643,9 +643,9 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
         nfFusedSpCoeff,
         nfNuTilda,
         nfNu,
-	G.Tx,
-	G.Ty,
-	G.Tz,
+        G.Tx,
+        G.Ty,
+        G.Tz,
         nfWallDist,
         nfDelta,
         magSqrGradNuTilda
@@ -657,8 +657,7 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     interpolationScheme.insert(std::string("linear"));
     interpolationScheme.insert(std::string("uncorrected"));
     fvcc::GaussViscousStress opVisc(exec, rt.nfMesh, interpolationScheme);
-    auto nfViscousStress = opVisc.viscousStress(
-		    nfNu, nut, G, dsl::Coeff(1.0));
+    auto nfViscousStress = opVisc.viscousStress(nfNu, nut, G, dsl::Coeff(1.0));
     nf::compare(nfViscousStress, ofViscousStress, ApproxVector(1e-12), false);
     // nf::compare(nfU, U, ApproxVector(1e-12));
     nf::PDESolver<NeoN::Vec3> UEqn(
@@ -670,8 +669,8 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     UEqn.solve(-1.0 * dsl::exp::grad(nfp));
     nfU.correctBoundaryConditions();
 
-    gradOp.grad(nfU,G);
-    gradOp.grad(nfNuTilda,gradNuTilda);
+    gradOp.grad(nfU, G);
+    gradOp.grad(nfNuTilda, gradNuTilda);
     saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
     saBase.computeProdSpDDES(
         nfFusedProduction,
@@ -685,39 +684,37 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
         nfDelta,
         magSqrGradNuTilda
     );
-    
+
     nf::PDESolver<NeoN::scalar> nuTildaEqn(
         dsl::imp::ddt(nfNuTilda) + dsl::imp::div(nfPhi, nfNuTilda)
             - dsl::imp::laplacian(nuTildaEff, nfNuTilda)
-            + dsl::imp::source(nfFusedSpCoeff, nfNuTilda)
-            - dsl::exp::sourceU(nfFusedProduction),
+            + dsl::imp::source(nfFusedSpCoeff, nfNuTilda) - dsl::exp::sourceU(nfFusedProduction),
         nfNuTilda,
         rt
     );
     nuTildaEqn.solve();
-    //nut.correctBoundaryConditions(nfU,nfNu);
-    saBase.calcNuTildaDiffusionCoeff(nfNuTilda,nfSurfNu,nfSurfNuTilda, nuTildaEff);
-    saBase.correctNut(nut,nfSurfNut,nfSurfNuEff, nfNuTilda, nfNu,nfSurfNu);
+    // nut.correctBoundaryConditions(nfU,nfNu);
+    saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
+    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu);
     // -----------------------------
     // OpenFOAM nut cross-check
     // -----------------------------
     SECTION("OpenFOAM incompressible::turbulenceModel nut matches (" + execName + ")")
     {
-	
-	 Foam::fvVectorMatrix ofUEqn
-         (
-             Foam::fvm::ddt(U) + Foam::fvm::div(phi, U)
-             + foamTurb->divDevReff(U)
+
+        Foam::fvVectorMatrix ofUEqn(
+            Foam::fvm::ddt(U) + Foam::fvm::div(phi, U) + foamTurb->divDevReff(U)
         );
-	Foam::solve(ofUEqn == -fvc::grad(p));
-	U.correctBoundaryConditions();
+        Foam::solve(ofUEqn == -fvc::grad(p));
+        U.correctBoundaryConditions();
         nf::compare(nfU, U, ApproxVector(1e-10));
 
         foamTurb->correct();
 
-   	const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
-   	const Foam::volScalarField& nuTildaFoam = mesh.lookupObject<Foam::volScalarField>("nuTilda");
+        const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
+        const Foam::volScalarField& nuTildaFoam =
+            mesh.lookupObject<Foam::volScalarField>("nuTilda");
         nf::compare(nfNuTilda, nuTildaFoam, ApproxScalar(1e-12));
         nf::compare(nut, nutFoam, ApproxScalar(1e-12));
-    }  
+    }
 }

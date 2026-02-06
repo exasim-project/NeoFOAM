@@ -106,33 +106,34 @@ int main(int argc, char* argv[])
         NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
         auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
-	fvcc::TensorVecField G{
+        fvcc::TensorVecField G {
             fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUx", rt.nfMesh, volCalcVecBCs),
             fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUy", rt.nfMesh, volCalcVecBCs),
             fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUz", rt.nfMesh, volCalcVecBCs)
         };
-        gradOp.grad(U,G);
+        gradOp.grad(U, G);
         fvcc::VolumeField<NeoN::scalar>
             magSqrGradNuTilda(rt.exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::Vec3> gradNuTilda(rt.exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
         fvcc::VolumeField<NeoN::scalar> production(rt.exec, "production", rt.nfMesh, volCalcBCs);
         fvcc::VolumeField<NeoN::scalar> spCoeff(rt.exec, "spCoeff", rt.nfMesh, volCalcBCs);
         fvcc::SurfaceField<NeoN::scalar> nuTildaEff(rt.exec, "nuTildaEff", rt.nfMesh, surfCalcBCs);
-	fvcc::SurfaceField<NeoN::scalar> nuEff(rt.exec, "nuEff", rt.nfMesh, surfCalcBCs);
+        fvcc::SurfaceField<NeoN::scalar> nuEff(rt.exec, "nuEff", rt.nfMesh, surfCalcBCs);
         fvcc::SurfaceField<NeoN::scalar> surfNu(rt.exec, "surfNu", rt.nfMesh, surfCalcBCs);
         fvcc::SurfaceField<NeoN::scalar> surfNut(rt.exec, "surfNut", rt.nfMesh, surfCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar> surfNuTilda(rt.exec, "surfNuTilda", rt.nfMesh, surfCalcBCs);
-	auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
+        fvcc::SurfaceField<NeoN::scalar>
+            surfNuTilda(rt.exec, "surfNuTilda", rt.nfMesh, surfCalcBCs);
+        auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
             NeoN::TokenList({std::string("linear")})
         );
-	surfInterpol.interpolate(nu,surfNu);
+        surfInterpol.interpolate(nu, surfNu);
         auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofnut);
-	saBase.calcNuTildaDiffusionCoeff(nuTilda,surfNu,surfNuTilda, nuTildaEff);
-        saBase.correctNut(nut,surfNut,nuEff, nuTilda, nu,surfNu);
-        
-	// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+        saBase.calcNuTildaDiffusionCoeff(nuTilda, surfNu, surfNuTilda, nuTildaEff);
+        saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu);
+
+        // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
@@ -218,23 +219,23 @@ int main(int argc, char* argv[])
                 U.correctBoundaryConditions();
             }
             // Turbulence calculations
-            gradOp.grad(U,G);
-	    gradOp.grad(nuTilda,gradNuTilda);
+            gradOp.grad(U, G);
+            gradOp.grad(nuTilda, gradNuTilda);
             saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
             saBase.computeProdSpDDES(
                 production,
                 spCoeff,
                 nuTilda,
                 nu,
-		G.Tx,
-		G.Ty,
-		G.Tz,
+                G.Tx,
+                G.Ty,
+                G.Tz,
                 wallDist,
                 delta,
                 magSqrGradNuTilda
             );
-            
-	    nf::PDESolver<NeoN::scalar> nuTildaEqn(
+
+            nf::PDESolver<NeoN::scalar> nuTildaEqn(
                 dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
                     - NeoN::dsl::imp::laplacian(nuTildaEff, nuTilda)
                     + dsl::imp::source(spCoeff, nuTilda) - dsl::exp::sourceU(production, nuTilda),
@@ -242,8 +243,8 @@ int main(int argc, char* argv[])
                 rt
             );
             nuTildaEqn.solve();
-	    saBase.calcNuTildaDiffusionCoeff(nuTilda,surfNu,surfNuTilda, nuTildaEff);
-            saBase.correctNut(nut,surfNut,nuEff, nuTilda, nu,surfNu);
+            saBase.calcNuTildaDiffusionCoeff(nuTilda, surfNu, surfNuTilda, nuTildaEff);
+            saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu);
 
             runTime.write();
             if (runTime.outputTime())
