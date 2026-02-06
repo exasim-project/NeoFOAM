@@ -79,7 +79,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DCMAKE_CXX_COMPILER=icpx \
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
         -DKokkos_ENABLE_SYCL=ON \
-        -DNeoN_WITH_THREADS=OFF \
+        -DNeoN_WITH_THREADS=OFF
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="
