@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
         NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
         auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
-	fvcc::GradVecField G{
+	fvcc::TensorVecField G{
             fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUx", rt.nfMesh, volCalcVecBCs),
             fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUy", rt.nfMesh, volCalcVecBCs),
             fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUz", rt.nfMesh, volCalcVecBCs)
@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nuEff, U)
-                    + dsl::exp::viscousStress(surfNu, surfNut, surfNuTilda, U, G.gradUx, G.gradUy, G.gradUz),
+                    + dsl::exp::viscousStress(nu, nut, G),
                 U,
                 rt
             );
@@ -226,9 +226,9 @@ int main(int argc, char* argv[])
                 spCoeff,
                 nuTilda,
                 nu,
-		G.gradUx,
-		G.gradUy,
-		G.gradUz,
+		G.Tx,
+		G.Ty,
+		G.Tz,
                 wallDist,
                 delta,
                 magSqrGradNuTilda
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
 	    nf::PDESolver<NeoN::scalar> nuTildaEqn(
                 dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
                     - NeoN::dsl::imp::laplacian(nuTildaEff, nuTilda)
-                    + dsl::imp::source(spCoeff, nuTilda) - dsl::exp::source(production, nuTilda),
+                    + dsl::imp::source(spCoeff, nuTilda) - dsl::exp::sourceU(production, nuTilda),
                 nuTilda,
                 rt
             );

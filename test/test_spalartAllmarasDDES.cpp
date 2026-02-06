@@ -41,14 +41,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
 
     // Run on all executors (as in your ddtFluxCorr test)
-    //auto [execName, exec] = GENERATE(allAvailableExecutor());
-    std::string execName = "GPUExecutor";
-    NeoN::Executor exec = NeoN::GPUExecutor {};
-
-    // --- FOAM time
-    //const Foam::scalar startTime = 0.0;
-    //const Foam::label startTimeIndex = 0;
-    //runTime.setTime(startTime, startTimeIndex);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     // --- Mesh + adapter runtime
     auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -507,8 +500,8 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
         ),
         tspCoeff()
     );
-    auto tviscousStress = fvc::laplacian(ofNut, U, "laplacian(nuEff,U)")
-                        - fvc::div(nuFoam * Foam::dev2(Foam::T(fvc::grad(U))));
+
+    auto tviscousStress = - fvc::div(foamTurb->nuEff()*Foam::dev2(Foam::T(fvc::grad(U))));
     Foam::volVectorField ofViscousStress(
         Foam::IOobject(
             "ofViscousStress",
@@ -519,77 +512,6 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
         ),
         tviscousStress()
     );
-
-    auto tofTau = Foam::dev2(Foam::T(fvc::grad(U)));
-    Foam::volTensorField ofTau(
-        Foam::IOobject(
-            "ofTau",
-            runTime.timeName(),
-            mesh,
-            Foam::IOobject::NO_READ,
-            Foam::IOobject::NO_WRITE
-        ),
-        tofTau()
-    );
-    const Foam::tensor& t0 = ofTau.internalField()[0];
-
-    Foam::Info
-        << "ofTau[0] = " << t0 << Foam::endl
-        << "  xx=" << t0.xx()
-        << " xy=" << t0.xy()
-        << " xz=" << t0.xz() << Foam::endl
-        << "  yx=" << t0.yx()
-        << " yy=" << t0.yy()
-        << " yz=" << t0.yz() << Foam::endl
-        << "  zx=" << t0.zx()
-        << " zy=" << t0.zy()
-        << " zz=" << t0.zz()
-        << Foam::endl;
-    Foam::volVectorField ofTaux(
-        Foam::IOobject(
-            "ofTaux",
-            runTime.timeName(),
-            mesh,
-            Foam::IOobject::NO_READ,
-            Foam::IOobject::NO_WRITE
-        ),
-        mesh,
-        Foam::dimensionedVector("zero", ofGradU.dimensions(), Foam::vector::zero)
-    );
-
-    // fill internal field
-    //const Foam::label nCells = ofTaux.internalField().size();
-    for (Foam::label celli = 0; celli < nCells; ++celli)
-    {
-        const Foam::tensor& g = ofTau.internalField()[celli];
-
-        ofTaux.internalFieldRef()[celli] = Foam::vector(
-            g.xx(), // ∂Ux/∂x
-            g.yx(), // ∂Ux/∂y
-            g.zx()  // ∂Ux/∂z
-        );
-    }
-    //const Foam::label nPatches = ofTaux.boundaryField().size();
-
-    for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
-    {
-        const Foam::fvPatchTensorField& gPatch = ofTau.boundaryField()[patchi];
-
-        Foam::fvPatchVectorField& uxPatch = ofTaux.boundaryFieldRef()[patchi];
-
-        const Foam::label nFaces = uxPatch.size();
-
-        for (Foam::label facei = 0; facei < nFaces; ++facei)
-        {
-            const Foam::tensor& g = gPatch[facei];
-
-            uxPatch[facei] = Foam::vector(
-                g.xx(), // dUx/dx
-                g.yx(), // dUx/dy
-                g.zx()  // dUx/dz
-            );
-        }
-    }
 
     // === Mirror state into NeoN ===
     auto& nfU =
@@ -670,15 +592,15 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
     auto gradOp = nnfvcc::GaussGreenGrad(exec, rt.nfMesh);
-    fvcc::GradVecField G{
+    fvcc::TensorVecField G{
         VolVector(exec, "gradUx", rt.nfMesh, volCalcVecBCs),
         VolVector(exec, "gradUy", rt.nfMesh, volCalcVecBCs),
         VolVector(exec, "gradUz", rt.nfMesh, volCalcVecBCs)
     }; 
     gradOp.grad(nfU,G);
-  //  nf::compare(G.gradUx, ofGradUx, ApproxVector(1e-10), true);
-  //  nf::compare(G.gradUy, ofGradUy, ApproxVector(1e-10), true);
-  //  nf::compare(G.gradUz, ofGradUz, ApproxVector(1e-10), true);
+    nf::compare(G.Tx, ofGradUx, ApproxVector(1e-10), true);
+    nf::compare(G.Ty, ofGradUy, ApproxVector(1e-10), true);
+    nf::compare(G.Tz, ofGradUz, ApproxVector(1e-10), true);
 
     VolVector gradNuTilda(exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
     VolScalar magSqrGradNuTilda(exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
@@ -694,7 +616,7 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     const auto Cw1 = saBase.cw1();
     const auto sigmaNut = coeffs.sigmaNut;
 
-   // REQUIRE(Cw1 == ofCw1);
+    REQUIRE(Cw1 == ofCw1);
 
     auto surfInterpol = fvcc::SurfaceInterpolation<Scalar>(
         rt.exec,
@@ -704,60 +626,65 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
     surfInterpol.interpolate(nfNu,nfSurfNu);
 
     saBase.correctNut(nut,nfSurfNut,nfSurfNuEff, nfNuTilda, nfNu,nfSurfNu);
-//    nf::compare(nut, ofNut, ApproxScalar(1e-12), true);
-//    nf::compare(nfNuTilda, nuTilda, ApproxScalar(1e-12));
+    nf::compare(nut, ofNut, ApproxScalar(1e-12), true);
+    nf::compare(nfNuTilda, nuTilda, ApproxScalar(1e-12));
     saBase.calcNuTildaDiffusionCoeff(nfNuTilda,nfSurfNu,nfSurfNuTilda, nuTildaEff);
 
     fvcc::rotateOldTimes(nfU);
     fvcc::rotateOldTimes(nfPhi);
-    //fvcc::rotateOldTimes(nfp);
     fvcc::rotateOldTimes(nfNuTilda);
     gradOp.grad(nfNuTilda,gradNuTilda);
-  //  nf::compare(gradNuTilda, ofgradNutilda, ApproxVector(1e-12), true);
+    nf::compare(gradNuTilda, ofgradNutilda, ApproxVector(1e-12), true);
     saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
-  //  nf::compare(magSqrGradNuTilda, ofmagSqrGradNutilda, ApproxScalar(1e-12), false);
+    nf::compare(magSqrGradNuTilda, ofmagSqrGradNutilda, ApproxScalar(1e-12), false);
 
     saBase.computeProdSpDDES(
         nfFusedProduction,
         nfFusedSpCoeff,
         nfNuTilda,
         nfNu,
-	G.gradUx,
-	G.gradUy,
-	G.gradUz,
+	G.Tx,
+	G.Ty,
+	G.Tz,
         nfWallDist,
         nfDelta,
         magSqrGradNuTilda
     );
-  //  nf::compare(nfFusedProduction, ofProduction, ApproxScalar(1e-12), false);
- //   nf::compare(nfFusedSpCoeff, ofspCoeff, ApproxScalar(1e-12), false);
+    nf::compare(nfFusedProduction, ofProduction, ApproxScalar(1e-12), false);
+    nf::compare(nfFusedSpCoeff, ofspCoeff, ApproxScalar(1e-12), false);
 
     NeoN::TokenList interpolationScheme;
     interpolationScheme.insert(std::string("linear"));
     interpolationScheme.insert(std::string("uncorrected"));
     fvcc::GaussViscousStress opVisc(exec, rt.nfMesh, interpolationScheme);
     auto nfViscousStress = opVisc.viscousStress(
-		    nfSurfNu, nfSurfNut, nfSurfNuTilda, nfU, G.gradUx, G.gradUy, G.gradUz, dsl::Coeff(1.0));
- //   nf::compare(nfViscousStress, ofViscousStress, ApproxVector(1e-12), false);
-/*    auto hTau = nfViscousStress.internalVector().copyToHost();
-    auto hView = hTau.view({0, 1});
-    const NeoN::Vec3& taux0 = hView[0];
-
-    NeoN::Logging::info(
-        "nf tauX[0] = ({}, {}, {})",
-        taux0[0], taux0[1], taux0[2]
-    );  */
-//    nf::compare(nfViscousStress, ofTaux, ApproxVector(1e-10), false);
-
-    //nf::compare(nfU, U, ApproxVector(1e-12));
+		    nfNu, nut, G, dsl::Coeff(1.0));
+    nf::compare(nfViscousStress, ofViscousStress, ApproxVector(1e-12), false);
+    // nf::compare(nfU, U, ApproxVector(1e-12));
     nf::PDESolver<NeoN::Vec3> UEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfSurfNuEff, nfU)
-            + dsl::exp::viscousStress(nfSurfNu, nfSurfNut, nfSurfNuTilda, nfU, G.gradUx, G.gradUy, G.gradUz),
+            + dsl::exp::viscousStress(nfNu, nut, G),
         nfU,
         rt
     );
     UEqn.solve(-1.0 * dsl::exp::grad(nfp));
     nfU.correctBoundaryConditions();
+
+    gradOp.grad(nfU,G);
+    gradOp.grad(nfNuTilda,gradNuTilda);
+    saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
+    saBase.computeProdSpDDES(
+        nfFusedProduction,
+        nfFusedSpCoeff,
+        nfNuTilda,
+        nfNu,
+        G.Tx,
+        G.Ty,
+        G.Tz,
+        nfWallDist,
+        nfDelta,
+        magSqrGradNuTilda
+    );
     
     nf::PDESolver<NeoN::scalar> nuTildaEqn(
         dsl::imp::ddt(nfNuTilda) + dsl::imp::div(nfPhi, nfNuTilda)
@@ -780,38 +707,17 @@ for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
 	 Foam::fvVectorMatrix ofUEqn
          (
              Foam::fvm::ddt(U) + Foam::fvm::div(phi, U)
-         //    + foamTurb->divDevReff(U)
-	     - Foam::fvm::laplacian(ofNut+nuFoam, U)
-	     + fvc::laplacian(ofNut, U, "laplacian(nuEff,U)")
-             - fvc::div(nuFoam * Foam::dev2(Foam::T(fvc::grad(U))))
-	//     + ofViscousStress
-        //     ==
-        //     Foam::fvOptions(U)
+             + foamTurb->divDevReff(U)
         );
 	Foam::solve(ofUEqn == -fvc::grad(p));
 	U.correctBoundaryConditions();
-    //    nf::compare(nfU, U, ApproxVector(1e-9));
+        nf::compare(nfU, U, ApproxVector(1e-10));
 
-	Foam::Info << "turbulence model: " << foamTurb->type() << Foam::endl;
-	Foam::Info << "max|R_| = " << Foam::gMax(Foam::mag(foamTurb->R())().primitiveField())
-        << Foam::endl;
-        // Build OpenFOAM turbulence model from dictionaries.
         foamTurb->correct();
 
    	const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
    	const Foam::volScalarField& nuTildaFoam = mesh.lookupObject<Foam::volScalarField>("nuTilda");
-	Foam::surfaceScalarField nuEffFoam(
-            Foam::IOobject(
-                "nuEffFoam",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::NO_WRITE
-            ),
-            fvc::interpolate(nutFoam+nuFoam)
-        );
-   //     nf::compare(nfNuTilda, nuTildaFoam, ApproxScalar(1e-12));
-   //     nf::compare(nut, nutFoam, ApproxScalar(1e-12));
-   //     nf::compare(nfSurfNuEff, nuEffFoam, ApproxScalar(1e-12));
+        nf::compare(nfNuTilda, nuTildaFoam, ApproxScalar(1e-12));
+        nf::compare(nut, nutFoam, ApproxScalar(1e-12));
     }  
 }
