@@ -103,7 +103,6 @@ jobs:
           ./ci/github/trigger_pipeline.sh \
             "${{ steps.branch.outputs.branch }}" \
             "variables[TRIGGER_SOURCE]=${{ github.event.repository.name }}" \
-            "variables[BENCHMARK]=false" \
             "variables[SKIP_NVIDIA]=${{ steps.skip-labels.outputs.skip-nvidia }}" \
             "variables[SKIP_AMD]=${{ steps.skip-labels.outputs.skip-amd }}" \
             "variables[SKIP_INTEL]=${{ steps.skip-labels.outputs.skip-intel }}"
@@ -151,9 +150,7 @@ jobs:
             "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
             "variables[SKIP_AMD]=${SKIP_AMD}" \
             "variables[SKIP_INTEL]=${SKIP_INTEL}" \
-            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
-            "variables[BENCHMARK]=false" \
-            "variables[PROFILE]=true"
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}"
 
       - name: Wait for LRZ GitLab CI pipeline for profiling
         run: |
@@ -198,8 +195,7 @@ jobs:
             "variables[SKIP_NVIDIA]=${SKIP_NVIDIA}" \
             "variables[SKIP_AMD]=${SKIP_AMD}" \
             "variables[SKIP_INTEL]=${SKIP_INTEL}" \
-            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}" \
-            "variables[BENCHMARK]=true"
+            "variables[PR_NUMBER]=${{ github.event.pull_request.number || 'no-pr' }}"
 
       - name: Wait for LRZ GitLab CI pipeline for benchmarking
         run: |
