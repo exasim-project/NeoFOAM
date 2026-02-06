@@ -41,7 +41,7 @@ function(importOFLibrary NAME)
 
   add_library(OpenFOAM::${NAME} SHARED IMPORTED)
   set_target_properties(OpenFOAM::${NAME} PROPERTIES IMPORTED_LOCATION ${OFLIBDIR}
-    INTERFACE_INCLUDE_DIRECTORIES "${OFINCDIRS}")
+                                                     INTERFACE_INCLUDE_DIRECTORIES "${OFINCDIRS}")
   target_link_libraries(
     OpenFOAM
     PUBLIC
@@ -56,7 +56,7 @@ target_include_directories(
   PUBLIC
   INTERFACE $ENV{FOAM_SRC}/OSspecific/POSIX/lnInclude)
 target_compile_definitions(OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} NoRepository
-  WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
+                                              WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
 
 importoflibrary(OpenFOAM)
 importoflibrary(meshTools)

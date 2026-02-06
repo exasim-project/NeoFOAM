@@ -46,16 +46,16 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-	auto& schemesDict = rt.fvSchemesDict;
+        auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
-	auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
+        auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
-	auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
+        auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
 
         auto surfCalcBCs =
             fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
@@ -63,9 +63,9 @@ int main(int argc, char* argv[])
         auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Vec3>>(rt.nfMesh);
 
         NeoN::Logging::info("Creating phi");
-	auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
-        
-	// Turbulence model logic
+        auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
+
+        // Turbulence model logic
         auto tnu = laminarTransport.nu();
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
         Foam::wallDist y(mesh);
