@@ -1,0 +1,95 @@
+
+# SPDX-FileCopyrightText: 2023 - 2025 NeoN authors
+#
+# SPDX-License-Identifier: Unlicense
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check required environment variables
+GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
+NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
+PRESET="develop"
+
+echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
+# -------------------------
+# Step 0: GPU/Compiler/Tool Info
+# -------------------------
+echo "=== Tool versions ==="
+cmake --version
+g++ --version || clang++ --version
+
+if [[ "$GPU_VENDOR" == "nvidia" ]]; then
+    echo "=== NVIDIA GPU info ==="
+    nvidia-smi --query-gpu=gpu_name,memory.total,driver_version --format=csv
+    echo "=== NVIDIA compiler driver info ==="
+    nvcc --version
+
+elif [[ "$GPU_VENDOR" == "amd" ]]; then
+    # Set up environment
+    export PATH=/opt/rocm/bin:$PATH
+
+    echo "=== AMD GPU info ==="
+    rocminfo | grep "Marketing Name.*AMD"
+    echo "=== AMD compiler driver info ==="
+    hipcc --version
+
+elif [[ "$GPU_VENDOR" == "intel" ]]; then
+
+    if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
+        echo "No Intel GPU found or Level Zero runtime not available"
+    fi
+    # Compiler info (non-fatal)
+    icpx --version 2>/dev/null | head -1 || echo "icpx not found"
+
+else
+    echo "Unsupported GPU vendor: $GPU_VENDOR"
+    exit 1
+fi
+
+# -------------------------
+# Step 1: Prepare NeoN
+# -------------------------
+echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
+git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
+    https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
+
+# -------------------------
+# Step 2: Configure and build NeoFOAM
+# -------------------------
+echo "=== Configuring NeoFOAM against NeoN ==="
+
+if [[ "$GPU_VENDOR" == "nvidia" ]]; then
+    cmake --preset $PRESET \
+        -DNEOFOAM_NEON_DIR=../NeoN \
+        -DCMAKE_CUDA_ARCHITECTURES=89 \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
+elif [[ "$GPU_VENDOR" == "amd" ]]; then
+    cmake --preset $PRESET \
+        -DNEOFOAM_NEON_DIR=../NeoN \
+        -DCMAKE_CXX_COMPILER=hipcc \
+        -DCMAKE_HIP_ARCHITECTURES=gfx90a \
+        -DKokkos_ARCH_AMD_GFX90A=ON \
+        -DNeoN_WITH_THREADS=OFF
+elif [[ "$GPU_VENDOR" == "intel" ]]; then
+    cmake --preset $PRESET \
+        -DNEOFOAM_NEON_DIR=../NeoN \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
+        -DKokkos_ENABLE_SYCL=ON \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
+fi
+
+echo "=== Building NeoFOAM against NeoN ==="
+cmake --build --preset $PRESET
+
+# -------------------------
+# Step 3: Run Tests
+# -------------------------
+echo "=== Running NeoFOAM tests ==="
+if [[ "$GPU_VENDOR" == "intel" ]]; then
+    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+fi
+ctest --preset $PRESET -R neofoam --output-on-failure
