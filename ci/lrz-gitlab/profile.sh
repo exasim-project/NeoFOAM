@@ -9,7 +9,7 @@ set -euo pipefail
 # Check required environment variables
 GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
 NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
-PRESET="develop"
+PRESET="profiling"
 
 echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
@@ -64,14 +64,15 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF \
-        -DNEOFOAM_BUILD_BENCHMARKS=ON
+        -DKokkos_ENABLE_LIBDL=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CXX_COMPILER=hipcc \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
-        -DNeoN_WITH_THREADS=OFF
+        -DNeoN_WITH_THREADS=OFF \
+        -DKokkos_ENABLE_LIBDL=ON
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
@@ -79,7 +80,6 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
         -DKokkos_ENABLE_SYCL=ON \
         -DNeoN_WITH_THREADS=OFF \
-        -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="
@@ -88,7 +88,7 @@ cmake --build --preset $PRESET
 # -------------------------
 # Step 3: Run Tests
 # -------------------------
-echo "=== Running NeoFOAM tests ==="
+echo "=== Profiling NeoFOAM ==="
 if [[ "$GPU_VENDOR" == "intel" ]]; then
     export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
 fi
