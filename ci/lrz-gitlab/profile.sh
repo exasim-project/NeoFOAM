@@ -107,4 +107,3 @@ cd "${0%/*}" || exit                                # Run from this directory
 restore0Dir
 runApplication blockMesh
 runApplication ../../build/profiling/bin/neoIcoFoam
-
