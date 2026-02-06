@@ -111,33 +111,101 @@
 #  Rule blocks
 # ============================================================
 # Triggered from NeoFOAM
-.rules-neofoam:
+.rules-neofoam-testing:
   rules:
     - if: |
         $GPU_VENDOR == "nvidia" &&
         $SKIP_NVIDIA != "true" &&
         $CI_PIPELINE_SOURCE == "trigger" &&
-        $TRIGGER_SOURCE == "NeoFOAM"
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "false"
       when: always
 
     - if: |
         $GPU_VENDOR == "amd" &&
         $SKIP_AMD != "true" &&
         $CI_PIPELINE_SOURCE == "trigger" &&
-        $TRIGGER_SOURCE == "NeoFOAM"
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "false"
       when: always
 
     - if: |
         $GPU_VENDOR == "intel" &&
         $SKIP_INTEL != "true" &&
         $CI_PIPELINE_SOURCE == "trigger" &&
-        $TRIGGER_SOURCE == "NeoFOAM"
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - when: never
+
+.rules-neofoam-profiling:
+  rules:
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "true" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "true" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "true" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - when: never
+
+.rules-neofoam-benchmarking:
+  rules:
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "true"
+      when: always
+
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "true"
+      when: always
+
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "true"
       when: always
 
     - when: never
 
 # Triggered from NeoN
-.rules-neon:
+.rules-neon-testing:
   rules:
     - if: |
         $GPU_VENDOR == "nvidia" &&
@@ -184,23 +252,47 @@
 build-test-neofoam-nvidia:
   extends:
     - .gpu-nvidia
-    - .rules-neofoam
+    - .rules-neofoam-testing
     - .openfoam-env-setup-nvidia-amd
     - .build-and-test
 
 build-test-neofoam-amd:
   extends:
     - .gpu-amd
-    - .rules-neofoam
+    - .rules-neofoam-testing
     - .openfoam-env-setup-nvidia-amd
     - .build-and-test
 
 build-test-neofoam-intel:
   extends:
     - .gpu-intel
-    - .rules-neofoam
+    - .rules-neofoam-testing
     - .openfoam-env-setup-intel
     - .build-and-test
+
+# ============================================================
+#  NeoFOAM - profiling jobs
+# ============================================================
+build-test-neofoam-nvidia:
+  extends:
+    - .gpu-nvidia
+    - .rules-neofoam-profiling
+    - .openfoam-env-setup-nvidia-amd
+    - .profile
+
+build-test-neofoam-amd:
+  extends:
+    - .gpu-amd
+    - .rules-neofoam-profiling
+    - .openfoam-env-setup-nvidia-amd
+    - .profile
+
+build-test-neofoam-intel:
+  extends:
+    - .gpu-intel
+    - .rules-neofoam-profiling
+    - .openfoam-env-setup-intel
+    - .profile
 
 # ============================================================
 #  NeoFOAM - benchmarking jobs
@@ -208,21 +300,21 @@ build-test-neofoam-intel:
 benchmark-neofoam-nvidia:
   extends:
     - .gpu-nvidia
-    - .rules-neofoam
+    - .rules-neofoam-benchmarking
     - .openfoam-env-setup-nvidia-amd
     - .benchmark
 
 benchmark-neofoam-amd:
   extends:
     - .gpu-amd
-    - .rules-neofoam
+    - .rules-neofoam-benchmarking
     - .openfoam-env-setup-nvidia-amd
     - .benchmark
 
 benchmark-neofoam-intel:
   extends:
     - .gpu-intel
-    - .rules-neofoam
+    - .rules-neofoam-benchmarking
     - .openfoam-env-setup-intel
     - .benchmark
 
