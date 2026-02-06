@@ -86,10 +86,25 @@ echo "=== Building NeoFOAM against NeoN ==="
 cmake --build --preset $PRESET
 
 # -------------------------
-# Step 3: Run Tests
+# Step 3: Profile NeoFOAM
 # -------------------------
 echo "=== Profiling NeoFOAM ==="
 if [[ "$GPU_VENDOR" == "intel" ]]; then
     export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
 fi
-ctest --preset $PRESET -R neofoam --output-on-failure
+
+# Set up Kokkos Tools for profiling
+cd $KOKKOS_TOOLS_DIR/build/profiling/space-time-stack
+export KOKKOS_TOOLS_LIBS=$PWD/libkp_space_time_stack.so
+export PATH=$PATH:$PWD
+cd -
+
+# Prepare test case
+cd tutorials/cavity
+foamCleanTutorials
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+restore0Dir
+runApplication blockMesh
+runApplication ../../build/profiling/bin/neoIcoFoam
+
