@@ -113,32 +113,51 @@
 # Triggered from NeoFOAM
 .rules-neofoam:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM"
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM"
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM"
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM"
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM"
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM"
       when: always
+
     - when: never
 
 # Triggered from NeoN
 .rules-neon:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN"
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoN"
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN"
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoN"
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN"
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoN"
       when: always
     - when: never
 
