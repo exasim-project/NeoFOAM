@@ -18,8 +18,10 @@ solvers
 {
         p
         {
-                solver Ginkgo;
-                configFile config.bj.json;
+            solver PCG;
+            preconditioner diagonal;
+            tolerance 0;
+            relTol 1e-2;
         }
 
         pFinal
@@ -39,13 +41,8 @@ solvers
             tolerance 0;
             relTol 1e-10;
         }
-        nfU
-        {
-                solver Ginkgo;
-                configFile config.bicgstab.json;
-        }
-
-        UFinal
+        
+	UFinal
         {
                 $U;
         }
@@ -57,46 +54,11 @@ solvers
             tolerance 0;
             relTol 1e-10;
         }
-        nfNuTilda
-        {
-                solver Ginkgo;
-                configFile config.bicgstab.json;
-        }
-        nuTildaFinal
+        
+	nuTildaFinal
         {
                 $nuTilda;
         }
-/*    p
-    {
-        solver          GAMG;
-        tolerance       1e-06;
-        relTol          0.1;
-        smoother        GaussSeidel;
-    }
-
-    pFinal
-    {
-        $p;
-        smoother        DICGaussSeidel;
-        tolerance       1e-06;
-        relTol          0;
-    }
-
-    "(U|nuTilda|k|B|s)"
-    {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        tolerance       1e-05;
-        relTol          0;
-    }
-    U
-    {
-        solver PBiCGStab;
-        preconditioner DILU;
-        tolerance 0;
-        relTol 0.01;
-        maxIter 5;
-    }   */
 }
 
 PISO
