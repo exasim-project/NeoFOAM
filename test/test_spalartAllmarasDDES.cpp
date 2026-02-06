@@ -515,12 +515,13 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     );
 
     // === Mirror state into NeoN ===
-    auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U,false);
-    auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p,false);
-    auto& nfPhi = NeoFOAM::constructAndRegister(fieldCollection, rt, phi,false);
-    auto& nfNuTilda = NeoFOAM::constructAndRegister(fieldCollection, rt, nuTilda,false);
+    auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U, false);
+    auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
+    auto& nfPhi = NeoFOAM::constructAndRegister(fieldCollection, rt, phi, false);
+    auto& nfNuTilda = NeoFOAM::constructAndRegister(fieldCollection, rt, nuTilda, false);
 
-    auto [nfWallDist, nfDelta, nut] = NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut);
+    auto [nfWallDist, nfDelta, nut] =
+        NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut);
 
     auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Scalar>>(rt.nfMesh);
     auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Vec3>>(rt.nfMesh);
@@ -656,8 +657,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     foamTurb->correct();
 
     const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
-    const Foam::volScalarField& nuTildaFoam =
-        mesh.lookupObject<Foam::volScalarField>("nuTilda");
+    const Foam::volScalarField& nuTildaFoam = mesh.lookupObject<Foam::volScalarField>("nuTilda");
     nf::compare(nfNuTilda, nuTildaFoam, ApproxScalar(1e-12));
     nf::compare(nut, nutFoam, ApproxScalar(1e-12));
 }
