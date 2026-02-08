@@ -2,19 +2,23 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 import json
+import sys
 import yaml
 
 from dataclasses import dataclass
-from typing import Any, Callable, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Tuple, Type, Union
 from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
 # 3.9 and 3.10 don't have tomllib in the stdlib
-can_load_toml = True
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ImportError:
+
+    can_load_toml = True
+else:
     can_load_toml = False
+    if TYPE_CHECKING:
+        import tomllib  # type: ignore[import-not-found]
 
 
 def default_validation_strategy(
@@ -34,6 +38,7 @@ def default_validation_strategy(
     if file_path.suffix == ".toml":
         if not can_load_toml:
             raise ValueError("TOML support is not available")
+
         with open(file_path, "rb") as f:
             data = tomllib.load(f)
     else:

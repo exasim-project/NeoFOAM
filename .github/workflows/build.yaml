@@ -114,6 +114,7 @@ jobs:
     name: FoamAdapter Python with OpenFOAM ${{ matrix.openfoam-version }}
     steps:
       - uses: actions/checkout@v5
+
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -130,6 +131,7 @@ jobs:
       - name: Install test dependencies
         run: |
           uv run pip install -v .[all]
+
       - name: Test with pytest
         run: |
           uv run pytest
@@ -140,6 +142,7 @@ jobs:
     name: Test coverage with OpenFOAM 2506 and Python 3.9
     steps:
       - uses: actions/checkout@v5
+
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
@@ -177,6 +180,7 @@ jobs:
 
     - name: Lint with Ruff
       uses: astral-sh/ruff-action@v3
+
     - name: Format with Ruff
       uses: astral-sh/ruff-action@v3
       with:
@@ -197,6 +201,11 @@ jobs:
       uses: astral-sh/setup-uv@v7
       with:
         python-version: 3.9
+    - name: Check types with ty
+      run: |
+        uv run pip install .[all]
+        poe type_check
+
     - name: Check types with ty
       run: |
         uv run pip install .[all]

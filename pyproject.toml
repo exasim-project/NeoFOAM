@@ -9,11 +9,12 @@ authors = [
 requires-python = ">=3.9"
 
 dependencies = [
-    "pybFoam>=0.1.10",
+    "pybFoam>=0.1.11",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
-    "matplotlib>=3.0.0"
+    "matplotlib>=3.0.0",
+    "pyvis>=0.3.2",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +39,7 @@ docs = [
     "sphinx-sitemap",
     "furo",
     "sphinxcontrib-mermaid",
+    "sphinx-togglebutton>=0.3.2",
     "breathe",
 ]
 all = [
@@ -76,7 +78,7 @@ testpaths = [
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
-files = ["src", "test"]          # your two roots
+files = ["src"]          # your two roots
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
 
@@ -84,6 +86,7 @@ strict = true                    # optional but recommended
 # (mypy applies this regex to the normalized file path)
 exclude = [
   "src/NeoN",
+  "test/",
 ]
 
 # If other code imports src/Neon and you want mypy to never follow into it:
