@@ -11,7 +11,6 @@ Demonstrates:
 """
 
 import pytest
-from pathlib import Path
 
 from foamadapter.io import (
     BaseConfig,
@@ -24,6 +23,7 @@ from foamadapter.io import (
 # ============================================================================
 # Config Classes
 # ============================================================================
+
 
 @IOStrategy(YAML("nested.yaml", subdict="application"))
 class ApplicationYAMLConfig(BaseConfig):
@@ -69,13 +69,17 @@ class NonlinearSolverJSONConfig(BaseConfig):
 # Tests
 # ============================================================================
 
-@pytest.mark.parametrize("app_class,linear_class,nonlinear_class", [
-    (ApplicationYAMLConfig, LinearSolverYAMLConfig, NonlinearSolverYAMLConfig),
-    (ApplicationJSONConfig, LinearSolverJSONConfig, NonlinearSolverJSONConfig),
-])
+
+@pytest.mark.parametrize(
+    "app_class,linear_class,nonlinear_class",
+    [
+        (ApplicationYAMLConfig, LinearSolverYAMLConfig, NonlinearSolverYAMLConfig),
+        (ApplicationJSONConfig, LinearSolverJSONConfig, NonlinearSolverJSONConfig),
+    ],
+)
 def test_load_nested(io_fixtures, app_class, linear_class, nonlinear_class):
     """Test loading multiple nested subdicts from fixture (YAML and JSON).
-    
+
     Demonstrates:
     - Flat subdict: application (top-level key)
     - Nested subdict: solver.linear (2-level nesting)
@@ -86,17 +90,15 @@ def test_load_nested(io_fixtures, app_class, linear_class, nonlinear_class):
     app = app_class.load(io_fixtures)
     linear = linear_class.load(io_fixtures)
     nonlinear = nonlinear_class.load(io_fixtures)
-    
+
     # Verify isolation - each config only sees its subdict
     assert app.name == "solver"
     assert app.version == "1.0"
-    
+
     assert linear.method == "PCG"
     assert linear.tolerance == 1e-6
     assert linear.maxIterations == 1000
-    
+
     assert nonlinear.method == "Newton"
     assert nonlinear.tolerance == 1e-8
     assert nonlinear.maxIterations == 50
-
-

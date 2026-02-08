@@ -23,14 +23,16 @@ def io_fixtures(fixtures_root):
 @pytest.fixture
 def temp_fixture_copy(io_fixtures, tmp_path):
     """Copy a fixture to temp dir for modification tests.
-    
+
     Usage:
         test_file = temp_fixture_copy("fvSolution.yaml")
         # Modify test_file without affecting fixture
     """
+
     def _copy(fixture_name):
         src = io_fixtures / fixture_name
         dst = tmp_path / fixture_name
         shutil.copy(src, dst)
         return dst
+
     return _copy

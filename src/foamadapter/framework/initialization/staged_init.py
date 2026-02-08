@@ -38,9 +38,11 @@ from typing import Any, Callable
 
 from foamadapter.framework.context import Context
 from foamadapter.framework.solver_factory import SolverState
+from foamadapter.io.input_validation import validate_models
 from .config_context import ConfigContext
 from .execution import execute_initialization
 from .lazy_init import LazyInit
+from foamadapter.io.strategies import BaseConfig
 
 
 @dataclass
@@ -62,6 +64,24 @@ class LoadResult:
 
     core_models: list[Any]
     optional_models: list[Any]
+
+    @property
+    def all_models(self) -> list[Any]:
+        """Convenience property to get all models together."""
+        return self.core_models + self.optional_models
+
+    @property
+    def configs(self) -> list[BaseConfig]:
+        """Convenience property to get all config models together."""
+        configs: list[BaseConfig] = []
+        for model in self.all_models:
+            configs.extend(model.configs)
+        return configs
+
+    def validate(self) -> list[ValidationError]:
+        """Validate all models in the load result and return a list of errors."""
+
+        return validate_models(self.configs)
 
 
 class StagedInit:
@@ -99,15 +119,9 @@ class StagedInit:
         self.argv = argv or []
 
         # Stage functions
-        self._load_func: Callable[[], dict[str, Any]] | None = None
+        self._load_func: Callable[[], LoadResult] | None = None
         self._resolve_func: Callable[[ConfigContext], None] | None = None
         self._build_func: Callable[[], list[LazyInit]] | None = None
-
-        # Validation functions
-        self._validate_load_func: Callable[[], list[ValidationError]] | None = None
-        self._validate_resolve_func: (
-            Callable[[ConfigContext], list[ValidationError]] | None
-        ) = None
 
         # State storage
         self.data: Any = None  # For storing InitializationData or similar
@@ -145,9 +159,7 @@ class StagedInit:
         """Set configs in state."""
         self.state.configs = value
 
-    def load(
-        self, func: Callable[[], dict[str, Any] | LoadResult]
-    ) -> Callable[[], dict[str, Any] | LoadResult]:
+    def load(self, func: Callable[[], LoadResult]) -> Callable[[], LoadResult]:
         """
         Decorator for LOAD stage function.
 
@@ -199,39 +211,6 @@ class StagedInit:
         self._build_func = func
         return func
 
-    def validate_load(
-        self, func: Callable[[], list[ValidationError]]
-    ) -> Callable[[], list[ValidationError]]:
-        """
-        Optional decorator for LOAD stage validation.
-
-        Usage:
-            @init.validate_load
-            def check_load() -> list[ValidationError]:
-                errors = []
-                if algo is None:
-                    errors.append(ValidationError("algorithm", "Missing"))
-                return errors
-        """
-        self._validate_load_func = func
-        return func
-
-    def validate_resolve(
-        self, func: Callable[[ConfigContext], list[ValidationError]]
-    ) -> Callable[[ConfigContext], list[ValidationError]]:
-        """
-        Optional decorator for RESOLVE stage validation.
-
-        Usage:
-            @init.validate_resolve
-            def check_resolve(config: ConfigContext) -> list[ValidationError]:
-                errors = []
-                # Check model connections
-                return errors
-        """
-        self._validate_resolve_func = func
-        return func
-
     def run(self) -> Context:
         """
         Execute all 3 stages and return initialized Context.
@@ -244,110 +223,53 @@ class StagedInit:
         Returns:
             Initialized Context with all fields and models
         """
-        # === STAGE 1: LOAD ===
         if self._load_func is None:
             raise RuntimeError(f"No @{self.name}.load defined")
 
         load_result = self._load_func()
 
-        # Handle both LoadResult and dict return types
-        if isinstance(load_result, LoadResult):
-            core_models = load_result.core_models
-            optional_models = load_result.optional_models
-            config_items = {}
-        else:
-            # Legacy dict return
-            config_items = load_result
-            core_models = []
-            optional_models = []
+        self.core_models = load_result.core_models
+        self.optional_models = load_result.optional_models
+        config_items = {}
 
-        # Store models for validation and later stages
-        self._core_models = core_models
-        self._optional_models = optional_models
-
-        # Also store in public attributes for easy access
-        self.core_models = core_models
-        self.optional_models = (
-            [m for m in optional_models if hasattr(m, "enabled") and m.enabled]
-            if optional_models
-            else optional_models
-        )
-
-        # Validate load stage
-        if self._validate_load_func is not None:
-            sig = inspect.signature(self._validate_load_func)
-            if "core_models" in sig.parameters:
-                errors = self._validate_load_func(core_models)
-            else:
-                errors = self._validate_load_func()
-            for e in errors:
-                if e.severity == "error":
-                    raise RuntimeError(f"Load error: {e.field}: {e.message}")
-                else:
-                    print(f"Warning: {e.field}: {e.message}")
-
-        # === Build ConfigContext ===
         config = ConfigContext()
         for key, value in config_items.items():
             config.register(key, value)
 
-        # === STAGE 2: RESOLVE ===
         if self._resolve_func is not None:
-            # Check if resolve function expects models as parameters (free function)
-            sig = inspect.signature(self._resolve_func)
-            if len(sig.parameters) == 3:
-                # Free function: resolve(core_models, optional_models, config)
-                self._resolve_func(core_models, optional_models, config)
-            else:
-                # Legacy: resolve(config)
-                self._resolve_func(config)
+            self._resolve_func(self.core_models, self.optional_models, config)
 
-        # Validate resolve stage
-        if self._validate_resolve_func is not None:
-            sig = inspect.signature(self._validate_resolve_func)
-            if "optional_models" in sig.parameters:
-                warnings = self._validate_resolve_func(optional_models, config)
-            else:
-                warnings = self._validate_resolve_func(config)
-            for w in warnings:
-                print(f"Warning: {w.field}: {w.message}")
-
-        # === STAGE 3: BUILD ===
         if self._build_func is None:
             raise RuntimeError(f"No @{self.name}.build defined")
 
         # Check if build function expects models as parameters (free function)
         sig = inspect.signature(self._build_func)
-        if len(sig.parameters) == 2:
+        if len(sig.parameters) != 2:
+            raise RuntimeError(
+                "Build function must take exactly 2 parameters (core_models, optional_models) for free function support"
+            )
             # Free function: build(core_models, optional_models)
-            lazy_inits = self._build_func(core_models, optional_models)
-        else:
-            # Legacy: build()
-            lazy_inits = self._build_func()
+        lazy_inits = self._build_func(self.core_models, self.optional_models)
 
         # === Execute ===
         ctx = execute_initialization(lazy_inits)
 
-        # Extract and store configs
-        if hasattr(ctx, "models"):
-            if "config" in ctx.models:
-                self.configs["solver"] = ctx.models["config"]
-            if "solver_config" in ctx.models:
-                self.configs["solver_config"] = ctx.models["solver_config"]
+        if "config" in ctx.models:
+            self.configs["solver"] = ctx.models["config"]
+        if "solver_config" in ctx.models:
+            self.configs["solver_config"] = ctx.models["solver_config"]
 
         return ctx
 
-    def run_load(self) -> dict[str, Any] | LoadResult:
+    def run_load(self) -> LoadResult:
         """Execute only LOAD stage and return config items or LoadResult."""
         if self._load_func is None:
             raise RuntimeError(f"No @{self.name}.load defined")
 
         load_result = self._load_func()
 
-        # Store models for run_resolve() and run_build()
-        if isinstance(load_result, LoadResult):
-            self._core_models = load_result.core_models
-            self._optional_models = load_result.optional_models
+        self.core_models = load_result.core_models
+        self.optional_models = load_result.optional_models
 
         return load_result
 

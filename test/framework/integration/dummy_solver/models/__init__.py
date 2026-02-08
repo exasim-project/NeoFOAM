@@ -5,7 +5,8 @@
 Models for DummySolver.
 """
 
-from .dummy_model import DummyModel
+from .dummy_model import DummyModelInterface, Model
 from .model1 import model1
+from .model2 import model2
 
-__all__ = ["DummyModel", "model1"]
+__all__ = ["DummyModelInterface", "Model", "model1", "model2"]

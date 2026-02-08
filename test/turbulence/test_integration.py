@@ -6,13 +6,13 @@
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Outdated - framework refactored (@Model.build decorator removed)"
+    reason="Outdated - framework refactored (@Model.build decorator removed) - Old API imports removed"
 )
 
-from pathlib import Path
-import shutil
-
-from foamadapter.turbulence import TurbulenceModel
+# from pathlib import Path
+# import shutil
+#
+# from foamadapter.turbulence import TurbulenceModel
 
 
 @pytest.fixture

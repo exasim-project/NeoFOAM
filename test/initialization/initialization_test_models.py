@@ -13,8 +13,6 @@ and is no longer compatible with the current framework. All tests using this
 module are marked as skipped.
 """
 
-import sys
-
 # Prevent import - all tests using this module are skipped anyway
 raise ImportError(
     "initialization_test_models uses outdated framework API. "

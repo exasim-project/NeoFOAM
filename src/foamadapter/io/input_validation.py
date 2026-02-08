@@ -1,112 +1,48 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-import json
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Tuple, Type
+from typing import Tuple, Type
 
-import yaml
 from pydantic import BaseModel, ValidationError
 
-can_load_toml = True
-try:
-    import tomllib  # type: ignore[import-not-found]
-except ImportError:
-    can_load_toml = False
+from .strategies import BaseConfig
+from .validation_types import ModelInputDefinition, ValidationErrors
 
 
-def default_validation_strategy(
-    baseModel: Type[BaseModel], file_path: Path, encoding: str
-) -> None:
+def validate_models(models: list[BaseConfig]) -> list[ValidationErrors]:
     """
-    Default strategy to read and parse a file into a Pydantic model to validate it.
+    Validate BaseConfig models and return detailed validation errors.
+
+    Uses the file_name and subdict properties from BaseConfig to provide
+    context about where the validation error occurred.
 
     Args:
-        baseModel: The Pydantic model class to parse the data into.
-        file_path: Path to the file to be read.
-        encoding: Encoding of the file.
+        models: List of BaseConfig instances to validate
+
+    Returns:
+        List of ValidationErrors with file and subdict context
     """
-    if not hasattr(baseModel, "from_file"):
-        baseModel.from_file(file_path)
-    if file_path.suffix == ".toml":
-        if not can_load_toml:
-            raise ValueError("TOML support is not available")
-        with open(file_path, "rb") as f:
-            data = tomllib.load(f)
-    else:
-        with open(file_path, "r", encoding=encoding) as f:
-            if file_path.suffix in [".yaml", ".yml"]:
-                data = yaml.safe_load(f)
-            elif file_path.suffix == ".json":
-                data = json.load(f)
-            else:
-                raise ValueError(f"Unsupported file format: {file_path.suffix}")
-    baseModel.model_validate(data)
+    validation_errors: list[ValidationErrors] = []
 
-
-@dataclass(frozen=True)
-class ModelInputDefinition:
-    baseModel: Type[BaseModel]
-    relative_path: str
-    encoding: str = "utf-8"
-    required: bool = True
-    description: str = ""
-    reading_strategy: Callable[[Type[BaseModel], Path, str], None] = (
-        default_validation_strategy
-    )
-
-    def validate(self, case_dir: str = ".") -> list[ValidationError]:
-        """
-        Validate that the file exists and is valid according to the baseModel.
-
-        Args:
-            case_dir: Path to the case directory
-
-        Returns:
-            errors: List[ValidationError]
-        """
-
-        file_path = Path(case_dir) / self.relative_path
-        validation_errors: list[ValidationError] = []
-
-        if not file_path.exists() and self.required:
-            validation_errors.append(
-                ValidationErrors(
-                    field=None,
-                    message="File not found",
-                    file_name=str(file_path),
-                    error_type="FileNotFound",
-                )
-            )
-            return validation_errors
-
+    for model in models:
         try:
-            # Try to load and validate the file
-            self.reading_strategy(self.baseModel, file_path, self.encoding)
+            model_type = type(model)
+            model_type.model_validate(model.model_dump())
         except ValidationError as errors:
+            # Collect errors from this model
             for err in errors.errors(include_url=False):
-                # Collect validation errors
                 validation_errors.append(
                     ValidationErrors(
                         field=err.get("loc", [None]),
                         message=err.get("msg", "Validation error"),
-                        file_name=str(file_path),
+                        file_name=model.file_name,
                         input_value=err.get("input", None),
                         error_type=err.get("type", "UnknownError"),
+                        subdict=model.subdict,
                     )
                 )
-
-        return validation_errors
-
-
-@dataclass(frozen=True)
-class ValidationErrors:
-    field: Any
-    error_type: str
-    message: str
-    file_name: str
-    input_value: Any = None
+    return validation_errors
 
 
 class ModelInputCollection:

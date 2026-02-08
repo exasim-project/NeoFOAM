@@ -13,6 +13,10 @@ class PluginRegistry:
     plugin_registry: list[Type[BaseModel]] = field(default_factory=list)
     plugin_model: Type[BaseModel] | None = None
 
+    def get_plugin_names(self) -> list[str]:
+        """Return the names of all registered plugin classes."""
+        return [cls.__name__ for cls in self.plugin_registry]
+
 
 class PluginSystem:
     """

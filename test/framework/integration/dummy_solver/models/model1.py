@@ -8,25 +8,36 @@ Demonstrates Model API with 3-stage initialization pattern and new config featur
 """
 
 from typing import Any
-from pathlib import Path
 from pydantic import Field
 
-from foamadapter.framework.context import Context, FieldUpdates
+from foamadapter.framework.context import FieldUpdates
 from foamadapter.framework.initialization.lazy_init import LazyInit
+from foamadapter.framework.initialization import ConfigContext
 
-from .dummy_model import Model
+from .dummy_model import DummyModelInterface, Model
 from ..dummy_init import BaseConfig
+from foamadapter.io import IOStrategy, YAML
 
 
+@IOStrategy(
+    YAML("model1_config.yaml", required=False, description="Model1 configuration")
+)
 class Model1Config(BaseConfig):
     """Configuration for Model1 (generic physics model)."""
 
     enabled: bool = True
-    prop1: float
-    prop2: float
+    prop1: float = Field(ge=0, le=1, description="Property 1 must be between 0 and 1")
+    prop2: float = Field(gt=0, description="Property 2 must be positive")
     parameters: dict[str, Any] = Field(default_factory=dict)
 
 
+@IOStrategy(
+    YAML(
+        "model1_step_config.yaml",
+        required=False,
+        description="Model1 step configuration",
+    )
+)
 class Model1StepConfig(BaseConfig):
     """Operation-specific configuration for Model1 steps."""
 
@@ -34,27 +45,10 @@ class Model1StepConfig(BaseConfig):
     use_absolute: bool = True
 
 
-# Create model and register configs using chainable API
-model1 = Model("DummyModel1").with_config(Model1Config).with_config(
-    Model1StepConfig, name="step_config"
-)
+# NEW: Create model - NO with_config needed, configs auto-discovered from operations
+model1 = Model("DummyModel1").register_with(DummyModelInterface)
 
-
-# Model state (runtime counters)
-model1._step1_count = 0
-model1._step2_count = 0
-
-
-@model1.load
-def load_config() -> Model1Config:
-    """
-    LOAD stage: Load configuration from YAML file.
-
-    Returns:
-        Configuration object for this model
-    """
-    config_path = Path(__file__).parent.parent / "configs" / "model1_config.yaml"
-    return Model1Config.load(config_path)
+# NO @model1.load needed - auto-generated from discovered configs
 
 
 @model1.detect
@@ -68,20 +62,10 @@ def detect_model() -> bool:
     return True
 
 
-# Convenience property access
-@property
-def prop1(self) -> float:
-    return self._load_result.prop1 if self._load_result else 0.0
-
-
-@property
-def prop2(self) -> float:
-    return self._load_result.prop2 if self._load_result else 0.0
-
-
-# Bind properties to model instance
-type(model1).prop1 = prop1
-type(model1).prop2 = prop2
+@model1.resolve
+def resolve(config: ConfigContext) -> None:
+    """RESOLVE stage: Connect to other models if needed."""
+    pass
 
 
 @model1.build
@@ -98,8 +82,18 @@ def build() -> list[LazyInit]:
 
     def create_mf2() -> dict[str, Any]:
         """Create model field 2 - uses config from load stage."""
-        config = model1._load_result
-        return {"name": "model_field2", "value": config.prop2, "units": "mu2"}
+        # Access Model1Config from the loaded configs dict
+        main_config = (
+            model1.config()
+            if len(model1._configs) == 1
+            else model1._configs.get("main") or list(model1._configs.values())[0]
+        )
+        # Find Model1Config instance
+        for cfg in model1._configs.values():
+            if isinstance(cfg, Model1Config):
+                return {"name": "model_field2", "value": cfg.prop2, "units": "mu2"}
+        # Fallback: if no Model1Config found, use default value
+        return {"name": "model_field2", "value": 1000.0, "units": "mu2"}
 
     return [
         LazyInit(
@@ -118,25 +112,21 @@ def build() -> list[LazyInit]:
 @model1.operation(
     operation_number="2.5",
     depends_on=["solver_step1"],
-    configs=["step_config"],
 )
 def model1_step1(
-    self: Any, ctx: Context, step_config: Model1StepConfig
+    self: Any, field1: float, model_field1: float, step_config: Model1StepConfig
 ) -> FieldUpdates:
     """
     First model step with operation-specific config.
 
     Inserted between solver step 1 and 2.
-    Uses step_config for operation-specific parameters.
+    Uses step_config for operation-specific parameters (auto-discovered and injected).
     """
     self._step1_count += 1
 
-    f1 = ctx.fields["field1"]  # Returns float directly
-    mf1 = ctx.fields["model_field1"]  # Returns float directly
-
     # Generic update using operation-specific config
-    value = abs(f1) if step_config.use_absolute else f1
-    mf1_new = mf1 + value * step_config.factor
+    value = abs(field1) if step_config.use_absolute else field1
+    mf1_new = model_field1 + value * step_config.factor
 
     return FieldUpdates({"model_field1": mf1_new})
 
@@ -144,18 +134,16 @@ def model1_step1(
 @model1.operation(
     operation_number="2.7",
     depends_on=["model1_step1"],
-    configs=["main"],
 )
-def model1_step2(self: Any, ctx: Context, main: Model1Config) -> FieldUpdates:
+def model1_step2(self: Any, main: Model1Config) -> FieldUpdates:
     """
-    Second model step - uses main config.
+    Second model step - uses main config (auto-discovered and injected).
 
-    Demonstrates explicit config injection.
+    Demonstrates auto-injection from type annotations.
     """
     self._step2_count += 1
 
-    # Generic update using model config
-    param1 = ctx.models["config"]["param1"]
-    mf2_new = param1 / main.prop1  # Use config from main
+    # Generic update using model config - calculate from config values
+    mf2_new = main.prop2 / main.prop1  # Use config from main
 
     return FieldUpdates({"model_field2": mf2_new})

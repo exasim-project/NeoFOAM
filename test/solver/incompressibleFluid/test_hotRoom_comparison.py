@@ -7,101 +7,13 @@ Tests that both solvers produce matching results by loading and comparing
 the actual volScalarField/volVectorField data from disk.
 """
 
-import os
-import subprocess
-from pathlib import Path
-
 import pytest
 
-from .comparison_helpers import (
-    requires_openfoam,
-    setup_case,
-    compare_solver_fields,
+pytestmark = pytest.mark.skip(
+    reason="Outdated - solver incompressibleFluid not yet adapted to new framework - Old API imports removed"
 )
 
-from foamadapter.solver.incompressibleFluid import run
 
-# Disable OpenFOAM floating point exception trapping BEFORE any imports
-os.environ["FOAM_SIGFPE"] = ""
-
-# Fields to compare between solvers: (field_name, field_type)
-FIELDS_TO_COMPARE = [
-    ("U", "volVectorField"),
-    ("p", "volScalarField"),
-    ("T", "volScalarField"),
-    ("p_rgh", "volScalarField"),
-    ("k", "volScalarField"),
-    ("epsilon", "volScalarField"),
-    ("alphat", "volScalarField"),
-]
-
-
-@requires_openfoam
-@pytest.mark.skip(reason="incompressibleFluid solver not yet implemented")
-def test_hotRoom_solver_comparison():
-    """Compare SimpleSolver against native buoyantBoussinesqPimpleFoam on hotRoom case."""
-
-    # Setup paths
-    repo_root = Path(__file__).parent.parent.parent.parent
-    source_case = repo_root / "tutorials" / "hotRoom"
-
-    test_case_custom = repo_root / "test_cases" / "hotRoom_custom_solver"
-    test_case_native = repo_root / "test_cases" / "hotRoom_native_solver"
-
-    end_time = 1000.0
-    write_interval = 200.0
-
-    try:
-        # Setup both cases (with setFields for temperature initialization)
-        print("\n=== Setting up test cases ===")
-        setup_case(
-            source_case, test_case_custom, end_time, write_interval, run_setfields=True
-        )
-        setup_case(
-            source_case, test_case_native, end_time, write_interval, run_setfields=True
-        )
-
-        # Run custom solver
-        print("\n=== Running SimpleSolver ===")
-        original_dir = Path.cwd()
-        os.chdir(test_case_custom)
-        try:
-            run(["simpleSolver"])
-        finally:
-            os.chdir(original_dir)
-
-        # Run native buoyantBoussinesqPimpleFoam
-        print("\n=== Running native buoyantBoussinesqPimpleFoam ===")
-        result = subprocess.run(
-            ["buoyantBoussinesqPimpleFoam", "-case", str(test_case_native)],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        assert result.returncode == 0, (
-            f"buoyantBoussinesqPimpleFoam failed: {result.stderr}"
-        )
-
-        # Compare fields using helper
-        all_match, failed_fields = compare_solver_fields(
-            test_case_custom,
-            test_case_native,
-            FIELDS_TO_COMPARE,
-            rtol=1e-10,
-            atol=1e-15,
-        )
-
-        if not all_match:
-            failure_msg = f"Field values differ between solvers. Failed fields: {', '.join(failed_fields)}"
-            assert False, failure_msg
-
-        print("\n=== Test PASSED: Results match exactly ===")
-
-    finally:
-        # Clean up test cases
-        import shutil
-
-        for test_case in [test_case_custom, test_case_native]:
-            if test_case.exists():
-                shutil.rmtree(test_case)
-                print(f"Cleaned up: {test_case}")
+def test_placeholder():
+    """Placeholder test to prevent collection errors."""
+    pass

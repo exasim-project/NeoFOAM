@@ -6,17 +6,17 @@
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Outdated - framework refactored (@Model.build decorator removed)"
+    reason="Outdated - framework refactored (@Model.build decorator removed) - Old API imports removed"
 )
 
-from pydantic import ValidationError
-
-from foamadapter.turbulence import (
-    TurbulenceModel,
-    kOmegaSSTModel,
-    SmagorinskyModel,
-    LaminarModel,
-)
+# from pydantic import ValidationError
+#
+# from foamadapter.turbulence import (
+#     TurbulenceModel,
+#     kOmegaSSTModel,
+#     SmagorinskyModel,
+#     LaminarModel,
+# )
 
 
 def test_create_ras_model():

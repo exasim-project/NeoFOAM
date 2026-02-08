@@ -12,73 +12,63 @@ Implements explicit 3-stage initialization pattern:
 This follows the IncompressibleFluidInitializer pattern.
 """
 
-import yaml
-import inspect
-from typing import Any, Type, TypeVar
+from typing import Any, TypeVar
 from pathlib import Path
 
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import Field, PrivateAttr
 
 from foamadapter.framework.initialization import (
     StagedInit,
     LoadResult,
-    ValidationError,
     ConfigContext,
     InitializerBuilder,
 )
 from foamadapter.framework.initialization.lazy_init import LazyInit
+from foamadapter.io import (
+    BaseConfig,
+    YAML,
+    IOStrategy,
+)
+from .models.dummy_model import DummyModelInterface
 
-# Import relative to test directory
-import sys
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 T = TypeVar("T", bound="BaseConfig")
 
 
-class BaseConfig(BaseModel):
-    """Base class for configurations with a load method."""
-
-    @classmethod
-    def load(cls: Type[T], path: Path) -> T:
-        """Load configuration from a YAML file."""
-        if not path.exists():
-            return cls()
-        with open(path, "r") as f:
-            data = yaml.safe_load(f)
-        return cls(**data)
-
-
+@IOStrategy(YAML("solver_config.yaml", description="Main solver configuration"))
 class SolverConfig(BaseConfig):
     """Main solver configuration."""
 
     name: str = "DummySolver"
-    param1: float
+    param1: float = Field(gt=0, description="Parameter 1 must be positive")
     param2: float
     dt: float
-    endTime: float
+    endTime: float = Field(gt=0, description="End time must be positive")
     parameters: dict[str, Any]
 
 
+@IOStrategy(YAML("mesh_config.yaml", description="Mesh configuration"))
 class MeshConfig(BaseConfig):
     """Mesh configuration."""
 
     name: str = "domain"
-    nPoints: int
+    nPoints: int = Field(gt=0, description="Number of points must be positive")
 
 
-
-
-
-class CoreModel2(BaseModel):
+@IOStrategy(YAML("core_model2_config.yaml", description="Core model 2 configuration"))
+class CoreModel2(BaseConfig):
     """An additional core model."""
 
     name: str = "CoreModel2"
-    status: str = "active"
+    status: str = Field(
+        description="Status of the model, e.g. active/inactive",
+        pattern="^(active|inactive)$",
+    )
 
 
-class DummyAlgorithm(BaseModel):
-    param1: float
+@IOStrategy(YAML("algorithm_config.yaml", description="Algorithm configuration"))
+class DummyAlgorithm(BaseConfig):
+    param1: float = Field(gt=0, description="A parameter for the algorithm")
     _use_model1: bool = PrivateAttr(default=False)
     _iteration_count: int = PrivateAttr(default=0)
 
@@ -92,114 +82,57 @@ class DummyAlgorithm(BaseModel):
 init = StagedInit("DummySolver")
 
 
-def create_init() -> StagedInit:
+def create_init(case_dir: Path = None) -> StagedInit:
     """
     Factory function for dependency injection.
 
-    Returns the global StagedInit instance.
+    Args:
+        case_dir: Optional path to configuration directory. If None, uses default 'configs' subdirectory.
+
+    Returns the global StagedInit instance with case_dir stored for load stage.
     """
+    # Store case_dir for use in load_config
+    init._case_dir = case_dir
     return init
 
 
 @init.load
 def load_config() -> LoadResult:
     """
-    LOAD stage: Load configuration from files.
+    LOAD stage: Load configuration from files using ModelInputDefinition.
 
     Returns LoadResult with core_models and optional_models.
     """
-    from .models import DummyModel
+    # Use stored case_dir or default to configs subdirectory
+    if hasattr(init, "_case_dir") and init._case_dir is not None:
+        case_dir = init._case_dir
+    else:
+        case_dir = Path(__file__).parent / "configs"
 
-    # Load configurations
-    config_dir = Path(__file__).parent / "configs"
-
-    solver_config = SolverConfig.load(config_dir / "solver_config.yaml")
-    mesh_config = MeshConfig.load(config_dir / "mesh_config.yaml")
-
-    # Create core models
-    algorithm = DummyAlgorithm(param1=solver_config.param1)
-    core_model2 = CoreModel2()
-
-    # Store configs in algorithm for later access
-    algorithm._solver_config = solver_config
-    algorithm._mesh_config = mesh_config
+    # Load configurations using ModelInputDefinition paths
+    solver_config = SolverConfig.load(case_dir=case_dir)
+    mesh_config = MeshConfig.load(case_dir=case_dir)
+    algorithm = DummyAlgorithm.load(case_dir=case_dir)
+    core_model2 = CoreModel2.load(case_dir=case_dir)
 
     # Detect optional models
-    optional_models = DummyModel.detect_models()
+    optional_models = DummyModelInterface.detect_models()
 
     # Run LOAD on optional models
     for model in optional_models:
-        model.run_load()
+        model.run_load(case_dir=case_dir)
 
     return LoadResult(
-        core_models=[algorithm, core_model2], optional_models=optional_models
+        core_models=[algorithm, core_model2, solver_config, mesh_config],
+        optional_models=optional_models,
     )
-
-    return LoadResult(
-        core_models=[algorithm, core_model2], optional_models=optional_models
-    )
-
-
-@init.validate_load
-def validate_load_stage(core_models: list) -> list[ValidationError]:
-    """Validate configuration after LOAD stage."""
-    errors = []
-    if not core_models or len(core_models) < 2:
-        errors.append(ValidationError("core_models", "Missing core models"))
-        return errors
-
-    algorithm = core_models[0]
-    if not hasattr(algorithm, "_solver_config") or algorithm._solver_config is None:
-        errors.append(
-            ValidationError("solver_config", "Failed to read solver configuration")
-        )
-    if not hasattr(algorithm, "_mesh_config") or algorithm._mesh_config is None:
-        errors.append(
-            ValidationError("mesh_config", "Failed to read mesh configuration")
-        )
-
-    return errors
 
 
 @init.resolve
 def resolve_models(_: list, optional_models: list, config: ConfigContext) -> None:
     """RESOLVE stage: Connect models and validate dependencies."""
     for model in optional_models:
-        if hasattr(model, "resolve"):
-            model.resolve(config)
-
-
-@init.validate_resolve
-def validate_resolve_stage(
-    optional_models: list, config: ConfigContext | None = None
-) -> list[ValidationError]:
-    """Validate model connections after RESOLVE stage."""
-    errors = []
-    for model in optional_models:
-        if hasattr(model, "validate_stage"):
-            errors.extend(model.validate_stage(config))
-    return errors
-
-
-def _normalize_lazy_init(li: LazyInit) -> LazyInit:
-    """Normalize field name and wrap initializer for dict support."""
-    if not li.name.startswith(("fields.", "models.", "operators.")):
-        li.name = f"fields.{li.name}"
-
-    orig_func = li.initializer
-    if orig_func is None:
-        return li
-
-    # Check if function takes context parameter
-    sig = inspect.signature(orig_func)
-    takes_ctx = len(sig.parameters) > 0
-
-    def wrapper(ctx=None):
-        res = orig_func(ctx) if takes_ctx and ctx else orig_func()
-        return res.get("value", res) if isinstance(res, dict) else res
-
-    li.initializer = wrapper
-    return li
+        model.resolve(config)
 
 
 @init.build
@@ -214,9 +147,11 @@ def build_lazy(core_models: list, optional_models: list) -> list[LazyInit]:
     Returns:
         List of LazyInit objects.
     """
-    algorithm, core_model2 = core_models
-    solver_config = algorithm._solver_config
-    mesh_config = algorithm._mesh_config
+    # Extract models by type
+    algorithm = next((m for m in core_models if isinstance(m, DummyAlgorithm)), None)
+    core_model2 = next((m for m in core_models if isinstance(m, CoreModel2)), None)
+    solver_config = next((m for m in core_models if isinstance(m, SolverConfig)), None)
+    mesh_config = next((m for m in core_models if isinstance(m, MeshConfig)), None)
 
     builder = InitializerBuilder()
 

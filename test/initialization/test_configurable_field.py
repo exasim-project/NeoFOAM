@@ -17,7 +17,6 @@ pytestmark = pytest.mark.skip(
 )
 
 # Prevent code execution since test is skipped
-import sys
 
 if True:  # Always skip
     pytest.skip("Outdated - framework refactored", allow_module_level=True)

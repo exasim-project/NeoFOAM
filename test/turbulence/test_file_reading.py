@@ -6,12 +6,12 @@
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Outdated - framework refactored (@Model.build decorator removed)"
+    reason="Outdated - framework refactored (@Model.build decorator removed) - Old API imports removed"
 )
 
-from unittest.mock import MagicMock, patch
-
-from foamadapter.turbulence import TurbulenceModel, kOmegaSSTModel
+# from unittest.mock import MagicMock, patch
+#
+# from foamadapter.turbulence import TurbulenceModel, kOmegaSSTModel
 
 
 @pytest.fixture

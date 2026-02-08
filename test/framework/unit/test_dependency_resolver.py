@@ -7,17 +7,11 @@ Unit tests for DependencyResolver.
 Tests runtime dependency resolution with scope-based caching.
 """
 
-import pytest
 from typing import Annotated
 
 from foamadapter.framework.dependency_resolver import DependencyResolver
 from foamadapter.framework.context import Context
 from foamadapter.framework.initialization.depends import Depends
-
-
-# ============================================================================
-# Test: Basic Dependency Resolution
-# ============================================================================
 
 
 def test_resolver_creation():

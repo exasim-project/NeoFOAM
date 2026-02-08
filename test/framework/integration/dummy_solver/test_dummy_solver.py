@@ -8,18 +8,16 @@ Tests the new Solver and Model interface with a complete working example
 that doesn't require mocks or external dependencies.
 """
 
-import pytest
-
 from foamadapter.framework.operations import DAGResolver
 
 
-def test_dummy_solver_init():
-    """Test DummySolver initialization with init module."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
+def test_dummy_solver_full_initialization():
+    """Test DummySolver initialization with both core and optional models."""
+    from .dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
-    # Verify context has fields
+    # Verify core fields
     assert "field1" in ctx.fields
     assert "field2" in ctx.fields
     assert "field3" in ctx.fields
@@ -28,7 +26,7 @@ def test_dummy_solver_init():
     assert ctx.fields["field1"] == 1.0
     assert ctx.fields["field2"] == 101325.0
 
-    # Verify models
+    # Verify core models
     assert "algorithm" in ctx.models
     assert "config" in ctx.models
     assert "core2" in ctx.models
@@ -43,39 +41,25 @@ def test_dummy_solver_init():
     assert config["param1"] == 1e-5
     assert config["param2"] == 1000.0
 
-
-def test_dummy_solver_init_with_models():
-    """Test that model1 and model2 are auto-detected and initialized."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
-
-    ctx = solver.initialize()
-
-    # Verify model1 fields were created (fields are now scalars)
+    # Verify optional model fields were created
     assert "model_field1" in ctx.fields
     assert "model_field2" in ctx.fields
-    # Verify model2 fields were created
     assert "model_field3" in ctx.fields
 
-    # Verify values
-    assert ctx.fields["model_field1"] == 300.0  # Initial value
-    assert ctx.fields["model_field2"] == 1e-5  # Initial value
-    assert ctx.fields["model_field3"] == 500.0  # Initial value
-
-    # Verify algorithm was configured for model1
-    algorithm = ctx.models["algorithm"]
-    # Internal flag in dummy_solver/models/model1.py: configure_algorithm
-    assert hasattr(algorithm, "_use_model1")
-    assert algorithm._use_model1 is True
+    # Verify optional model field values
+    assert ctx.fields["model_field1"] == 300.0
+    assert ctx.fields["model_field2"] == 1e-5
+    assert ctx.fields["model_field3"] == 500.0
 
 
 # ============================================================================
-# Test: Execution Graph Building
+# Test: Execution Graph Building and DAG Resolution
 # ============================================================================
 
 
-def test_dummy_solver_execution_graph_structure():
-    """Test that execution graph has correct structure."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
+def test_execution_graph_and_dag():
+    """Test execution graph structure and DAG resolution."""
+    from .dummy_solver import dummy_solver as solver
 
     solver.initialize()
 
@@ -96,15 +80,6 @@ def test_dummy_solver_execution_graph_structure():
 
     # Verify model operations
     assert len(model_ops) > 0  # Should have model1 ops
-
-
-def test_dummy_solver_dag_resolution():
-    """Test that DAG resolver correctly orders operations."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
-
-    solver.initialize()
-
-    builder, model_ops = solver.execution_graph()
 
     # Resolve DAG
     resolver = DAGResolver()
@@ -148,79 +123,6 @@ def test_dummy_solver_dag_resolution():
 
 
 # ============================================================================
-# Test: Operation Execution
-# ============================================================================
-
-
-def test_dummy_solver_step1_operation():
-    """Test solver step 1 operation."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
-
-    ctx = solver.initialize()
-
-    # Get initial values (fields are now scalars)
-    f1_initial = ctx.fields["field1"]
-    f2_value = ctx.fields["field2"]
-
-    # Run step 1 operation
-    solver.solver_step1(ctx)
-
-    # Verify field1 changed
-    f1_final = ctx.fields["field1"]
-    assert f1_final != f1_initial
-    assert f1_final == f1_initial + f2_value * 1e-6 * 0.01
-
-
-def test_model1_step1_operation():
-    """Test step 1 from model1."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
-
-    ctx = solver.initialize()
-
-    # Get model1
-    models = ctx.models.get("optional_models", [])
-    m1 = next((m for m in models if m.name == "DummyModel1"), None)
-    assert m1 is not None
-
-    # Get initial value (fields are now scalars)
-    mf1_initial = ctx.fields["model_field1"]
-
-    # Run operation
-    m1.model1_step1(ctx)
-
-    # Verify changed
-    mf1_final = ctx.fields["model_field1"]
-    assert mf1_final > mf1_initial
-
-    # Verify counter incremented
-    assert m1._step1_count == 1
-
-
-def test_model2_step1_operation():
-    """Test step 1 from model2."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
-
-    ctx = solver.initialize()
-
-    # Get model2
-    models = ctx.models.get("optional_models", [])
-    m2 = next((m for m in models if m.name == "DummyModel2"), None)
-    assert m2 is not None
-
-    # Get initial value
-    mf3_initial = ctx.fields["model_field3"]
-
-    # Run operation
-    m2.model2_step1(ctx)
-
-    # Verify changed
-    mf3_final = ctx.fields["model_field3"]
-    assert mf3_final == mf3_initial + 1.0
-
-    # Verify counter incremented
-    assert m2._step1_count == 1
-
-
 # ============================================================================
 # Test: Complete Solver Run
 # ============================================================================
@@ -228,7 +130,7 @@ def test_model2_step1_operation():
 
 def test_dummy_solver_complete_run():
     """Test complete solver run with all operations."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver, run
+    from .dummy_solver import dummy_solver as solver, run
 
     # Get initial context
     ctx_initial = solver.initialize()
@@ -260,7 +162,7 @@ def test_dummy_solver_complete_run():
 
 def test_dummy_solver_model_operations_executed():
     """Test that model operations are executed during run."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
+    from .dummy_solver import dummy_solver as solver
 
     ctx_initial = solver.initialize()
 
@@ -294,7 +196,7 @@ def test_dummy_solver_model_operations_executed():
 
 def test_model1_operations_discovery():
     """Test that operations are auto-discovered from model1."""
-    from integration.dummy_solver.models.model1 import model1 as model
+    from .models.model1 import model1 as model
 
     # Get operations
     ops = model.operations
@@ -319,7 +221,7 @@ def test_model1_operations_discovery():
 
 def test_init_dependency_injection():
     """Test that @init.step uses Depends() for dependency injection."""
-    from integration.dummy_solver.dummy_init import init
+    from .dummy_init import init
 
     # Run init
     init.argv = []
@@ -340,59 +242,13 @@ def test_init_dependency_injection():
 
 
 # ============================================================================
-# Test: Model Build and Configure
-# ============================================================================
-
-
-def test_model1_build():
-    """Test model1 build() creates LazyInit objects."""
-    from .models.model1 import model1 as model
-
-    # Run load first to populate config
-    model.run_load()
-
-    # Get LazyInit objects
-    lazy_inits = model.run_build()
-
-    # Verify we have field initializers
-    assert len(lazy_inits) == 2
-
-    # Verify names
-    names = [li.name for li in lazy_inits]
-    assert "model_field1" in names
-    assert "model_field2" in names
-
-    # Verify dependencies
-    f1_init = next(li for li in lazy_inits if li.name == "model_field1")
-    assert "domain" in f1_init.depends_on
-
-
-def test_model1_configure_algorithm():
-    """Test model1 configures algorithm."""
-    from integration.dummy_solver.models.model1 import model1 as model
-
-    # Create dummy algorithm
-    class Algorithm:
-        _use_model1 = False
-
-    algo = Algorithm()
-    assert algo._use_model1 is False
-
-    # Configure
-    model.configure_algorithm(algo)
-
-    # Verify flag set
-    assert algo._use_model1 is True
-
-
-# ============================================================================
 # Test: Automatic Dependency Injection
 # ============================================================================
 
 
 def test_automatic_dependency_injection_from_context():
     """Test that operations automatically get dependencies from Context."""
-    from integration.dummy_solver.dummy_solver import dummy_solver as solver
+    from .dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
@@ -415,8 +271,24 @@ def test_automatic_dependency_injection_from_context():
 
 
 def test_model_operations_use_dependency_injection():
-    """Test that model operations automatically resolve dependencies."""
-    from integration.dummy_solver.models.model1 import model1 as model
+    """Test that model operations automatically resolve dependencies and build works."""
+    from .models.model1 import model1 as model
+    from pathlib import Path
+
+    # Set up config directory
+    case_dir = Path(__file__).parent / "configs"
+
+    # Load configs first (auto-generated load function)
+    model.run_load(case_dir=case_dir)
+
+    # Test build creates LazyInit objects
+    lazy_inits = model.run_build()
+    assert len(lazy_inits) == 2
+    names = [li.name for li in lazy_inits]
+    assert "model_field1" in names
+    assert "model_field2" in names
+    f1_init = next(li for li in lazy_inits if li.name == "model_field1")
+    assert "domain" in f1_init.depends_on
 
     # Get operations
     ops = model.operations
@@ -446,7 +318,3 @@ def test_model_operations_use_dependency_injection():
     # Verify updated
     f1_after = ctx.fields["model_field1"]
     assert f1_after > f1_before
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

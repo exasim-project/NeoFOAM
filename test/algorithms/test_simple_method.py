@@ -11,18 +11,19 @@ See test/solver/test_incompressible_fluid_pitzDaily.py for integration tests.
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
-
-from foamadapter.algorithms.pressure_velocity import (
-    PressureVelocityAlgorithm,
-    SimpleAlgorithm,
-)
-from foamadapter.framework.context import FieldUpdates
 
 # Skip all tests since SIMPLE is not yet implemented
 pytestmark = pytest.mark.skip(
-    reason="SIMPLE algorithm not yet implemented in simplified architecture"
+    reason="SIMPLE algorithm not yet implemented in simplified architecture - Old API imports removed"
 )
+
+# from unittest.mock import MagicMock, patch
+#
+# from foamadapter.algorithms.pressure_velocity import (
+#     PressureVelocityAlgorithm,
+#     SimpleAlgorithm,
+# )
+# from foamadapter.framework.context import FieldUpdates
 
 
 # ============================================================================

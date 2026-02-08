@@ -8,12 +8,12 @@ Demonstrates simplified model with 3-stage initialization.
 """
 
 from typing import Any
-from foamadapter.framework.context import Context, FieldUpdates
+from foamadapter.framework.context import FieldUpdates
 from foamadapter.framework.initialization.lazy_init import LazyInit
 
-from .dummy_model import Model
+from .dummy_model import DummyModelInterface, Model
 
-model2 = Model("DummyModel2")
+model2 = Model("DummyModel2").register_with(DummyModelInterface)
 
 # Model state
 model2._step1_count = 0
@@ -44,14 +44,8 @@ def build() -> list[LazyInit]:
 @model2.operation(operation_number="2.8", depends_on=["solver_step2"])
 def model2_step1(
     self: Any,
-    ctx: Context,
+    model_field3: float,
 ) -> FieldUpdates:
     """Model 2 step."""
     self._step1_count += 1
-    mf3 = ctx.fields["model_field3"]
-    return FieldUpdates({"model_field3": mf3 + 1.0})
-
-
-# Export
-auxiliary = model2
-AuxiliaryModel = model2
+    return FieldUpdates({"model_field3": model_field3 + 1.0})

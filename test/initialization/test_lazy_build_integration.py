@@ -7,16 +7,16 @@
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Outdated - framework refactored (SolverInitializer removed)"
+    reason="Outdated - framework refactored (SolverInitializer removed) - Old API imports removed"
 )
 
 # import networkx as nx
 # from pydantic import BaseModel, Field
 #
 # from foamadapter.framework.initialization import SolverInitializer
-from foamadapter.framework.initialization.helpers import field, lazy, operator
-from foamadapter.framework.model import Model
-from foamadapter.framework.bkp_solver import Solver
+# from foamadapter.framework.initialization.helpers import field, lazy, operator
+# from foamadapter.framework.model import Model
+# from foamadapter.framework.bkp_solver import Solver
 
 
 def test_lazy_build_with_field_dependencies():

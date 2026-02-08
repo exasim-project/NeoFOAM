@@ -8,7 +8,6 @@ Tests field vs model namespace separation and error handling.
 """
 
 import pytest
-from pydantic import ValidationError
 
 from foamadapter.framework.context import Context, FieldUpdates
 

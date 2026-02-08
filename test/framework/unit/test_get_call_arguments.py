@@ -13,7 +13,6 @@ from typing import Annotated, get_origin
 
 from foamadapter.framework.context import Context
 from foamadapter.framework.operations import get_call_arguments, get_function_parameters
-from foamadapter.framework.model_factory import Model
 
 
 # ============================================================================

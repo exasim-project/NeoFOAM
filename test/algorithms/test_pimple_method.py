@@ -15,16 +15,16 @@ See test/solver/test_incompressible_fluid_pitzDaily.py for integration tests.
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Tests need updating for simplified algorithm implementation"
+    reason="Tests need updating for simplified algorithm implementation - Old API imports removed"
 )
 
-from unittest.mock import MagicMock, patch
-
-from foamadapter.algorithms.pressure_velocity import (
-    PressureVelocityAlgorithm,
-    PimpleAlgorithm,
-)
-from foamadapter.framework.context import FieldUpdates
+# from unittest.mock import MagicMock, patch
+#
+# from foamadapter.algorithms.pressure_velocity import (
+#     PressureVelocityAlgorithm,
+#     PimpleAlgorithm,
+# )
+# from foamadapter.framework.context import FieldUpdates
 
 
 # ============================================================================

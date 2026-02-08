@@ -10,7 +10,6 @@ Demonstrates:
 """
 
 import pytest
-from pathlib import Path
 
 from foamadapter.io import (
     BaseConfig,
@@ -23,6 +22,7 @@ from foamadapter.io import (
 # ============================================================================
 # Config Classes
 # ============================================================================
+
 
 @IOStrategy(YAML("shared.yaml", subdict="settings.general"))
 class GeneralYAMLConfig(BaseConfig):
@@ -66,35 +66,41 @@ class CacheJSONConfig(BaseConfig):
 # Tests
 # ============================================================================
 
-@pytest.mark.parametrize("general_class,database_class,cache_class,filename", [
-    (GeneralYAMLConfig, DatabaseYAMLConfig, CacheYAMLConfig, "shared.yaml"),
-    (GeneralJSONConfig, DatabaseJSONConfig, CacheJSONConfig, "shared.json"),
-])
-def test_write_preserves_other_subdicts(temp_fixture_copy, general_class, database_class, cache_class, filename):
+
+@pytest.mark.parametrize(
+    "general_class,database_class,cache_class,filename",
+    [
+        (GeneralYAMLConfig, DatabaseYAMLConfig, CacheYAMLConfig, "shared.yaml"),
+        (GeneralJSONConfig, DatabaseJSONConfig, CacheJSONConfig, "shared.json"),
+    ],
+)
+def test_write_preserves_other_subdicts(
+    temp_fixture_copy, general_class, database_class, cache_class, filename
+):
     """Test that writing one subdict preserves other sections in same file.
-    
+
     Demonstrates partial file updates - critical for shared config files where
     multiple models manage different sections of the same file.
     """
     test_file = temp_fixture_copy(filename)
     test_dir = test_file.parent
-    
+
     # Load original values from directory
     original_db = database_class.load(test_dir)
     original_cache = cache_class.load(test_dir)
     assert original_db.host == "localhost"
     assert original_cache.enabled is True
-    
+
     # Update only general section
     general = general_class.load(test_dir)
     general.timeout = 60
     general.save(test_dir)
-    
+
     # Verify general changed but other sections unchanged
     updated_general = general_class.load(test_dir)
     updated_db = database_class.load(test_dir)
     updated_cache = cache_class.load(test_dir)
-    
+
     assert updated_general.timeout == 60  # Changed
     assert updated_general.retries == 3  # Unchanged
     assert updated_db.host == "localhost"  # Unchanged

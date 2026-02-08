@@ -6,10 +6,10 @@
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Outdated - framework refactored (@Model.build decorator removed)"
+    reason="Outdated - framework refactored (@Model.build decorator removed) - Old API imports removed"
 )
 
-from foamadapter.turbulence import TurbulenceModel
+# from foamadapter.turbulence import TurbulenceModel
 
 
 def test_ras_model_operations():

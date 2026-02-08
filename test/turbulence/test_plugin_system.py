@@ -6,17 +6,17 @@
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="Outdated - framework refactored (@Model.build decorator removed)"
+    reason="Outdated - framework refactored (@Model.build decorator removed) - Old API imports removed"
 )
 
-from foamadapter.turbulence import (
-    TurbulenceModel,
-    kOmegaSSTModel,
-    kEpsilonModel,
-    SmagorinskyModel,
-    LaminarModel,
-)
-from foamadapter.core.plugin_system import PluginSystem
+# from foamadapter.turbulence import (
+#     TurbulenceModel,
+#     kOmegaSSTModel,
+#     kEpsilonModel,
+#     SmagorinskyModel,
+#     LaminarModel,
+# )
+# from foamadapter.core.plugin_system import PluginSystem
 
 
 def test_turbulence_plugin_registration():
