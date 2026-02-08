@@ -6,12 +6,17 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >
+    ${{ github.workflow }}-
+    ${{ github.event_name }}-
+    ${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   build-compilation-db:
-    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+    if: >
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-build')
     name: Build with IWYU
     runs-on: ubuntu-24.04
     steps:

@@ -15,7 +15,7 @@ Foam::dimensionedScalar viscosity("nu", Foam::dimViscosity, transportProperties)
 
 Info << "Reading field p\n" << endl;
 Foam::volScalarField
-    ofp(Foam::IOobject(
+    ofP(Foam::IOobject(
             "p",
             runTime.timeName(),
             mesh,
@@ -41,7 +41,7 @@ Foam::volVectorField
 
 Info << "Reading/calculating face flux field phi\n" << endl;
 
-Foam::surfaceScalarField ofphi(
+Foam::surfaceScalarField ofPhi(
     Foam::IOobject(
         "phi",
         runTime.timeName(),
@@ -56,5 +56,5 @@ Foam::surfaceScalarField ofphi(
 
 Foam::label pRefCell = 0;
 Foam::scalar pRefValue = 0.0;
-setRefCell(ofp, mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
+setRefCell(ofP, mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
 // mesh.setFluxRequired(p.name());

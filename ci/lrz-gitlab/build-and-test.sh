@@ -5,10 +5,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Argument parsing
-GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
-NEON_BRANCH=${2:?Error: NeoN branch must be specified}
-PRESET=${3:-develop}   # Which CMakePreset to use, defaults to 'develop'
+# Check required environment variables
+GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
+NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
+PRESET="develop"
 
 echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
@@ -27,12 +27,20 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     # Set up environment
     export PATH=/opt/rocm/bin:$PATH
-    export HIPCC_CXX=/usr/bin/g++
 
     echo "=== AMD GPU info ==="
     rocminfo | grep "Marketing Name.*AMD"
     echo "=== AMD compiler driver info ==="
     hipcc --version
+
+elif [[ "$GPU_VENDOR" == "intel" ]]; then
+
+    if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
+        echo "No Intel GPU found or Level Zero runtime not available"
+    fi
+    # Compiler info (non-fatal)
+    icpx --version 2>/dev/null | head -1 || echo "icpx not found"
+
 else
     echo "Unsupported GPU vendor: $GPU_VENDOR"
     exit 1
@@ -53,8 +61,9 @@ echo "=== Configuring NeoFOAM against NeoN ==="
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CUDA_ARCHITECTURES=90 \
-        -DNeoN_WITH_THREADS=OFF
+        -DCMAKE_CUDA_ARCHITECTURES=89 \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
@@ -62,6 +71,14 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF
+elif [[ "$GPU_VENDOR" == "intel" ]]; then
+    cmake --preset $PRESET \
+        -DNEOFOAM_NEON_DIR=../NeoN \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
+        -DKokkos_ENABLE_SYCL=ON \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="
@@ -71,4 +88,7 @@ cmake --build --preset $PRESET
 # Step 3: Run Tests
 # -------------------------
 echo "=== Running NeoFOAM tests ==="
-ctest --preset $PRESET -R adapter --output-on-failure
+if [[ "$GPU_VENDOR" == "intel" ]]; then
+    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+fi
+ctest --preset $PRESET -R neofoam --output-on-failure

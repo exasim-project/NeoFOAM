@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -56,13 +58,17 @@ int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh)
     return nBoundaryFaces;
 }
 
-NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh)
+NeoN::UnstructuredMesh
+readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU)
 {
     const int32_t nCells = mesh.nCells();
     const int32_t nInternalFaces = mesh.nInternalFaces();
     const int32_t nBoundaryFaces = computeNBoundaryFaces(mesh);
     const int32_t nBoundaries = mesh.boundary().size();
     const int32_t nFaces = mesh.nFaces();
+
+    // Executor of "optional" fields
+    const NeoN::Executor optExec = fullMeshOnGPU ? exec : NeoN::SerialExecutor {};
 
     Foam::scalarField magFaceAreas(mag(mesh.faceAreas()));
 
@@ -116,7 +122,7 @@ NeoN::UnstructuredMesh readOpenFOAMMesh(const NeoN::Executor exec, const Foam::f
     );
 
     NeoN::UnstructuredMesh uMesh(
-        fromFoamField(exec, mesh.points()),
+        fromFoamField(optExec, mesh.points()),
         fromFoamField(exec, mesh.cellVolumes()),
         fromFoamField(exec, mesh.cellCentres()),
         fromFoamField(exec, mesh.faceAreas()),

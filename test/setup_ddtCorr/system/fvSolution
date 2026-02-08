@@ -1,0 +1,58 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2006                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+
+solvers
+{
+	p
+	{
+		solver PCG;
+		preconditioner diagonal;
+		tolerance 0.0;
+		relTol 0.00001;
+		maxIter 5000;
+		smoother none;
+	}
+	nfp
+        {
+                solver          Ginkgo;
+                configFile      config.bj.json;
+        }
+
+	pFinal
+	{
+		$p;
+	}
+
+	U
+	{
+		solver PBiCGStab;
+		preconditioner DILU;
+		tolerance 0;
+		relTol 0;
+		maxIter 5;
+	}
+
+}
+
+PISO
+{
+	nCorrectors 2;
+	nNonOrthogonalCorrectors 0;
+	pRefCell 0;
+	pRefValue 0;
+}
+
+//*************************************************************************//

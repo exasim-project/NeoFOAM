@@ -29,7 +29,7 @@ void constrainHbyA(
             parallelFor(
                 hByA.exec(),
                 hByA.boundaryData().range(patchi),
-                KOKKOS_LAMBDA(const size_t bfacei) { hByABcValue[bfacei] = uBcValue[bfacei]; }
+                NEON_LAMBDA(const size_t bfacei) { hByABcValue[bfacei] = uBcValue[bfacei]; }
             );
         }
     }
@@ -53,12 +53,13 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
 
-    rAU.internalVector().apply(KOKKOS_LAMBDA(const size_t celli) {
+    rAU.internalVector().apply(NEON_LAMBDA(const size_t celli) {
         auto diagOffsetCelli = diagOffset[celli];
         // all the diagonal coefficients are the same
         return vol[celli] / (values[rowPtrs[celli] + diagOffsetCelli][0]);
     });
 
+    rAU.correctBoundaryConditions();
     return rAU;
 }
 
@@ -96,7 +97,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        KOKKOS_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const size_t facei) {
             auto own = owner[facei];
             auto nei = neighbour[facei];
 
@@ -106,8 +107,8 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
             auto lower = values[rowNeiStart + neiOffs[facei]];
             auto upper = values[rowOwnStart + ownOffs[facei]];
 
-            Kokkos::atomic_sub(&internalHbyA[nei], lower[0] * internalU[own]);
-            Kokkos::atomic_sub(&internalHbyA[own], upper[0] * internalU[nei]);
+            NeoN::atomic_sub(&internalHbyA[nei], lower[0] * internalU[own]);
+            NeoN::atomic_sub(&internalHbyA[own], upper[0] * internalU[nei]);
         }
     );
 
@@ -115,14 +116,13 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     NeoN::parallelFor(
         exec,
         {0, internalHbyA.size()},
-        KOKKOS_LAMBDA(const size_t celli) {
+        NEON_LAMBDA(const size_t celli) {
             internalHbyA[celli] += rhs[celli];
             internalHbyA[celli] *= internalRAU[celli] / vol[celli];
         }
     );
 
     hByA.correctBoundaryConditions();
-    rAU.correctBoundaryConditions();
 
     return {rAU, hByA};
 }
@@ -157,7 +157,7 @@ void updateFaceVelocity(
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        KOKKOS_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const size_t facei) {
             auto own = static_cast<std::size_t>(owner[facei]);
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
@@ -187,7 +187,7 @@ void updateFaceVelocity(
     NeoN::parallelFor(
         exec,
         {nInternalFaces, iPhi.size()},
-        KOKKOS_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const size_t facei) {
             auto bfacei = facei - nInternalFaces;
             scalar bflux = (rhsValue[bfacei] - mValue[bfacei] * internalP[faceCells[bfacei]]);
             iPhi[facei] = iPredPhi[facei] - bflux;
@@ -207,7 +207,7 @@ void updateVelocity(
     auto [iHbyA, iRAU, iGradP] =
         views(hByA.internalVector(), rAU.internalVector(), gradP.internalVector());
 
-    u.internalVector().apply(KOKKOS_LAMBDA(const std::size_t celli) {
+    u.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - iRAU[celli] * iGradP[celli];
     });
 }
@@ -242,7 +242,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        KOKKOS_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const size_t facei) {
             auto own = static_cast<std::size_t>(owner[facei]);
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
@@ -255,7 +255,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {nInternalFaces, faceFluxIn.size()},
-        KOKKOS_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const size_t facei) {
             auto faceBCI = facei - nInternalFaces;
 
             faceFluxIn[facei] = bSf[faceBCI] & volFieldBc[faceBCI];

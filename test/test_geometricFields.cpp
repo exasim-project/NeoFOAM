@@ -19,6 +19,7 @@ TEST_CASE("VolumeField")
 
     auto ofT = randomScalarField(runTime, mesh, "T");
     auto ofU = randomVectorField(runTime, mesh, "U");
+    auto ofPhi = randomSurfaceScalarField(runTime, mesh, "phi");
 
     SECTION("volumeScalarField " + execName)
     {
@@ -30,5 +31,10 @@ TEST_CASE("VolumeField")
     {
         auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
         NeoFOAM::compare(nfU, ofU, ApproxVector(1e-15));
+    }
+    SECTION("surfaceScalarField " + execName)
+    {
+        auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
+        NeoFOAM::compare(nfPhi, ofPhi, ApproxScalar(1e-15));
     }
 }
