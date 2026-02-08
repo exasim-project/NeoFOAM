@@ -3,13 +3,13 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="prev" title="Command Line Interface" href="../usage/cli.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Main Components" href="components.html"><link rel="prev" title="Command Line Interface" href="../usage/cli.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/development/architecture.html">
 
-    <!-- Generated with Sphinx 7.2.6 and Furo 2025.09.25 -->
+    <!-- Generated with Sphinx 7.2.6 and Furo 2025.12.19 -->
         <title>Architecture - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=acfd86a5" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6a4ff913" />
@@ -208,7 +208,19 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Development:</span></p>
 <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Main Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="solver.html">Solver and Models</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/cli.html">Command Line Interface</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development:</span></p>
+<ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pluginsystem.html">Plugin System</a></li>
 </ul>
 
 </div>
@@ -282,21 +294,21 @@ Coupling between domains is automatically handled based on the selected physics 
 </section>
 <section id="extensible-solver-architecture">
 <h2>Extensible Solver Architecture<a class="headerlink" href="#extensible-solver-architecture" title="Link to this heading">¶</a></h2>
-<p>To promote code reuse and maintainability, solver execution steps (operations) can be configured at runtime based on the selected physics models.
+<p>To promote code reuse and maintainability, solver execution operations can be configured at runtime based on the selected physics models.
 This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.</p>
 <pre  class="mermaid">
         flowchart TD
 
      subgraph MAIN [&quot;Main Solver Loop&quot;]
-         STEP1[&quot;Solver &lt;/br&gt; Momentum Equation&quot;]
-         STEP2[&quot;Added by Model &lt;/br&gt; Temperature Equation&quot;]
-         STEP3[&quot;Solver &lt;/br&gt; Continuity Equation&quot;]
-         STEP4[&quot;Solver &lt;/br&gt; Update Turbulence&quot;]
+         OP1[&quot;Solver &lt;/br&gt; Momentum Equation&quot;]
+         OP2[&quot;Added by Model &lt;/br&gt; Temperature Equation&quot;]
+         OP3[&quot;Solver &lt;/br&gt; Continuity Equation&quot;]
+         OP4[&quot;Solver &lt;/br&gt; Update Turbulence&quot;]
      end
 
-     STEP1 --&gt; STEP2
-     STEP2 --&gt; STEP3
-     STEP3 --&gt; STEP4
+     OP1 --&gt; OP2
+     OP2 --&gt; OP3
+     OP3 --&gt; OP4
 
      %% Physics Extensions (simplified)
      subgraph AddPhysics [&quot;Additional Physics Modules&quot;]
@@ -305,17 +317,17 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
          ROTATION[&quot;Rotating Reference Frame&quot;]
          BUOYANCY[&quot;Boussinesq Approximation&quot;]
      end
-     POROSITY -.-&gt; STEP1
-     ROTATION -.-&gt; STEP1
-     BUOYANCY -.-&gt; STEP2
-     BUOYANCY -.-&gt; STEP3
+     POROSITY -.-&gt; OP1
+     ROTATION -.-&gt; OP1
+     BUOYANCY -.-&gt; OP2
+     BUOYANCY -.-&gt; OP3
 
      style MAIN fill:#E3F2FD
      style AddPhysics fill:#E3F2FD
-     style STEP1 fill:#2196F3,color:#fff
-     style STEP2 fill:#FF9800,color:#fff
-     style STEP3 fill:#9C27B0,color:#fff
-     style STEP4 fill:#607D8B,color:#fff
+     style OP1 fill:#2196F3,color:#fff
+     style OP2 fill:#FF9800,color:#fff
+     style OP3 fill:#9C27B0,color:#fff
+     style OP4 fill:#607D8B,color:#fff
     </pre><p>The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
 Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
 In this case, the porosity model and the Rotating Reference Frame add momentum source terms, while the Boussinesq model adds a temperature equation and modifies the continuity equation.</p>
@@ -326,26 +338,26 @@ The execution order is determined at runtime based on the metadata specified in 
 <span class="nd">@Solver</span>
 <span class="k">class</span> <span class="nc">IncompressibleFluidSolver</span><span class="p">:</span>
     <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IncompressibleFluidModel</span><span class="p">]</span>  <span class="c1"># Additional physics models</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
-    <span class="nd">@Solver</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">BoussinesqModel</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">temperature_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">PorosityModel</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 
 <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span> <span class="nc">RotatingReferenceFrame</span><span class="p">:</span>
-    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 </pre></div>
 </div>
@@ -371,10 +383,10 @@ This order is managed by the <strong>Operations</strong> class, shown conceptual
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
 </pre></div>
 </div>
-<p>An operation represents a single computational step in a solver or model, functioning as a callable task.
+<p>An operation represents a single computational operation in a solver or model, functioning as a callable task.
 Each solver or model can define multiple operations stored as <cite>Operation</cite> objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.</p>
-<p>After sorting (detailed in future documentation), the <cite>Operations</cite> class holds all steps required to run the newly-configured solver.</p>
+<p>After sorting (detailed in future documentation), the <cite>Operations</cite> class holds all operations required to run the newly-configured solver.</p>
 <p>This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -537,7 +549,15 @@ All solvers, models, and plugins must therefore use Pydantic for input configura
       <footer>
         
         <div class="related-pages">
-          
+          <a class="next-page" href="components.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Main Components</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
           <a class="prev-page" href="../usage/cli.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
@@ -607,14 +627,16 @@ All solvers, models, and plugins must therefore use Pydantic for input configura
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
-const defaultStyle = document.createElement('style');
-defaultStyle.textContent = `pre.mermaid {
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
     /* Same as .mermaid-container > pre */
     display: block;
     width: 100%;
@@ -625,12 +647,11 @@ pre.mermaid > svg {
     height: 500px;
     width: 100%;
     max-width: 100% !important;
-}
-`;
-document.head.appendChild(defaultStyle);
+}`;
+    document.head.appendChild(defaultStyle);
 
-const fullscreenStyle = document.createElement('style');
-fullscreenStyle.textContent = `.mermaid-container {
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -782,10 +803,32 @@ fullscreenStyle.textContent = `.mermaid-container {
 .mermaid-fullscreen-modal .mermaid-fullscreen-btn {
     display: none !important;
 }`;
-document.head.appendChild(fullscreenStyle);
+    document.head.appendChild(fullscreenStyle);
+}
 
 // Detect if page has dark background
 const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
     const bgColor = window.getComputedStyle(document.body).backgroundColor;
     const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
     if (match) {
@@ -793,15 +836,45 @@ const isDarkTheme = () => {
         const g = parseInt(match[2]);
         const b = parseInt(match[3]);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
         return brightness < 128;
     }
+    // console.log("No dark or light theme detected, defaulting to light theme");
     return false;
 };
 
-const load = async () => {
-    await mermaid.run();
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
 
-    const all_mermaids = document.querySelectorAll(".mermaid");
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
     const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
 
     if ("False" === "True") {
@@ -809,10 +882,10 @@ const load = async () => {
         if(mermaids_to_add_zoom > 0) {
             var svgs = d3.selectAll("");
             if(all_mermaids.length !== mermaids_processed.length) {
-                setTimeout(load, 200);
+                setTimeout(() => runMermaid(false), 200);
                 return;
             } else if(svgs.size() !== mermaids_to_add_zoom) {
-                setTimeout(load, 200);
+                setTimeout(() => runMermaid(false), 200);
                 return;
             } else {
                 svgs.each(function() {
@@ -828,16 +901,21 @@ const load = async () => {
         }
     } else if(all_mermaids.length !== mermaids_processed.length) {
         // Wait for mermaid to process all diagrams
-        setTimeout(load, 200);
+        setTimeout(() => runMermaid(false), 200);
         return;
     }
-
-    const darkTheme = isDarkTheme();
 
     // Stop here if not adding fullscreen capability
     if ("True" !== "True") return;
 
-    const modal = document.createElement('div');
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
     modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
@@ -848,10 +926,8 @@ const load = async () => {
     `;
     document.body.appendChild(modal);
 
-    const modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
     const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    let previousScrollOffset = [window.scrollX, window.scrollY];
 
     const closeModal = () => {
         modal.classList.remove('active');
@@ -870,11 +946,14 @@ const load = async () => {
         }
     });
 
-    const allButtons = [];
-
     document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
         if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
             mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
             return;
         }
 
@@ -932,45 +1011,56 @@ const load = async () => {
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         });
-
         container.appendChild(fullscreenBtn);
-        allButtons.push(fullscreenBtn);
-    });
-
-    // Update theme classes when theme changes
-    const updateTheme = () => {
-        const dark = isDarkTheme();
-        allButtons.forEach(btn => {
-            if (dark) {
-                btn.classList.add('dark-theme');
-            } else {
-                btn.classList.remove('dark-theme');
-            }
-        });
-        if (dark) {
-            modal.classList.add('dark-theme');
-            modalContent.classList.add('dark-theme');
-            closeBtn.classList.add('dark-theme');
-        } else {
-            modal.classList.remove('dark-theme');
-            modalContent.classList.remove('dark-theme');
-            closeBtn.classList.remove('dark-theme');
-        }
-    };
-
-    // Watch for theme changes
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style']
     });
 };
 
-window.addEventListener("load", load);
-</script>
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);</script>
     </body>
 </html>
