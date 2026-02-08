@@ -41,7 +41,7 @@ def get_function_parameters(func: Callable[..., Any]) -> dict[str, type]:
 
 
 def get_call_arguments(func_args: dict[str, type], context: Context) -> dict[str, Any]:
-    call_args = {}
+    call_args: dict[str, Any] = {}
     for name, annotation in func_args.items():
         if is_dataclass(annotation):
             dc_sig = inspect.signature(annotation)

@@ -48,10 +48,10 @@ class IcoFoam:
         while runTime.loop():
             Info(f"Time = {runTime.timeName()}")
 
-            UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) - fvm.laplacian(nu, U))  # type: ignore[attr-defined]
+            UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) - fvm.laplacian(nu, U))
 
             if piso.momentumPredictor():
-                pyf.solve(UEqn + fvc.grad(p))  # type: ignore[attr-defined]
+                pyf.solve(UEqn + fvc.grad(p))
 
             while piso.correct():
                 rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
@@ -60,7 +60,7 @@ class IcoFoam:
 
                 phiHbyA = surfaceScalarField(
                     pyf.Word("phiHbyA"),
-                    fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),  # type: ignore[attr-defined]
+                    fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
                 )
 
                 pyf.adjustPhi(phiHbyA, U, p)
@@ -68,7 +68,7 @@ class IcoFoam:
                 pyf.constrainPressure(p, U, phiHbyA, rAU)
 
                 while piso.correctNonOrthogonal():
-                    pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))  # type: ignore[attr-defined]
+                    pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
 
                     pEqn.setReference(pRefCell, pRefValue, False)
 
@@ -79,7 +79,7 @@ class IcoFoam:
 
                 # TODO include continuityErrs()
 
-                U.assign(HbyA - rAU * fvc.grad(p))  # type: ignore[attr-defined]
+                U.assign(HbyA - rAU * fvc.grad(p))
 
                 U.correctBoundaryConditions()
 
