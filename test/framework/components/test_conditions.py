@@ -2,7 +2,7 @@
 Tests for the unified condition system.
 """
 
-from foamadapter.framework.conditions import Condition
+from neofoam.framework.conditions import Condition
 
 
 def always_true():

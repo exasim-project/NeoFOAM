@@ -1,6 +1,6 @@
 import pytest
 
-from foamadapter.framework.types import OperationNumber
+from neofoam.framework.types import OperationNumber
 
 
 def test_step_number():

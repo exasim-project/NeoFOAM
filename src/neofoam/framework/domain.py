@@ -4,7 +4,7 @@
 
 from pydantic import BaseModel
 
-from foamadapter.framework.operations import OperationCollection
+from neofoam.framework.operations import OperationCollection
 
 from .solver import SolverInterface
 from .types import OperationMetadata

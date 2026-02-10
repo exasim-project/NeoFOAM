@@ -2,9 +2,9 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.model import Model, ModelInterface
-from foamadapter.framework.operations import Operation, OperationCollection
+from neofoam.framework.decorator import decorated_member_functions
+from neofoam.framework.model import Model, ModelInterface
+from neofoam.framework.operations import Operation, OperationCollection
 
 
 @Model

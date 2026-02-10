@@ -4,8 +4,8 @@
 
 from typing import Protocol, runtime_checkable
 
-from foamadapter.framework.context import Context
-from foamadapter.framework.operations import OperationCollection
+from neofoam.framework.context import Context
+from neofoam.framework.operations import OperationCollection
 
 from .decorator import operation
 

@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 from pydantic import BaseModel
-from foamadapter.io.input_validation import ModelInputDefinition, ValidationErrors
+from neofoam.io.input_validation import ModelInputDefinition, ValidationErrors
 
 
 def test_file_spec_instance() -> None:

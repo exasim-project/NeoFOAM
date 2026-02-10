@@ -2,10 +2,10 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from foamadapter.framework.context import Context
-from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.operations import Operation, OperationCollection
-from foamadapter.framework.solver import Solver, SolverInterface
+from neofoam.framework.context import Context
+from neofoam.framework.decorator import decorated_member_functions
+from neofoam.framework.operations import Operation, OperationCollection
+from neofoam.framework.solver import Solver, SolverInterface
 
 
 @Solver

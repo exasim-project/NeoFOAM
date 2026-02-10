@@ -5,7 +5,7 @@ import os
 import pytest
 
 from collections.abc import Generator
-from foamadapter.io.input_validation import ModelInputDefinition, ModelInputCollection
+from neofoam.io.input_validation import ModelInputDefinition, ModelInputCollection
 from pathlib import Path
 from pybFoam.io.model_base import IOModelBase
 from pydantic import BaseModel, Field

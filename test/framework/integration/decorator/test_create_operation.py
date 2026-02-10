@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-from foamadapter.framework.context import Context, FieldUpdates
-from foamadapter.framework.decorator import condition, operation
-from foamadapter.framework.operations import (
+from neofoam.framework.context import Context, FieldUpdates
+from neofoam.framework.decorator import condition, operation
+from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     SequentialOp,

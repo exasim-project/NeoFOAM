@@ -7,7 +7,7 @@ import inspect
 from dataclasses import dataclass, field, is_dataclass
 from typing import Annotated, Any, Callable, Iterator, Union, get_args, get_origin
 
-from foamadapter.framework.context import Context, FieldUpdates
+from neofoam.framework.context import Context, FieldUpdates
 
 from .types import OperationMetadata, OpType, OperationNumber
 
