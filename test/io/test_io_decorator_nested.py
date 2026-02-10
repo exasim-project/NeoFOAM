@@ -8,11 +8,13 @@ Demonstrates:
 - Loading from flat subdicts (top-level keys)
 - Loading from nested subdicts (dot notation)
 - Subdict isolation (each config only sees its own section)
+- Validation error reporting via load(validate=True/False)
+- FileNotFoundError / KeyError on missing file or subdict
 """
 
 import pytest
 
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
 from neofoam.io import (
     BaseConfig,
     YAML,
@@ -21,135 +23,153 @@ from neofoam.io import (
 )
 
 
-# ============================================================================
-# Config Classes
-# ============================================================================
-
-
-@IOStrategy(YAML("nested.yaml", subdict="application"))
-class ApplicationYAMLConfig(BaseConfig):
+@IOStrategy(YAML("nested.yaml", subdict="metadata"))
+class MetadataYAMLConfig(BaseConfig):
     name: str
     version: str
+    priority: int = Field(gt=0, description="Priority must be positive")
 
 
-@IOStrategy(YAML("nested.yaml", subdict="solver.linear"))
-class LinearSolverYAMLConfig(BaseConfig):
-    method: str
-    tolerance: float
-    maxIterations: int
+@IOStrategy(YAML("nested.yaml", subdict="processing.stage1"))
+class Stage1YAMLConfig(BaseConfig):
+    algorithm: str
+    threshold: float = Field(gt=0)
+    maxIterations: int = Field(gt=0, le=1000)
+    batchSize: int = Field(gt=0)
 
 
-@IOStrategy(YAML("nested.yaml", subdict="solver.nonlinear"))
-class NonlinearSolverYAMLConfig(BaseConfig):
-    method: str
-    tolerance: float
-    maxIterations: int
+@IOStrategy(YAML("nested.yaml", subdict="processing.stage2"))
+class Stage2YAMLConfig(BaseConfig):
+    algorithm: str
+    threshold: float = Field(gt=0)
+    maxIterations: int = Field(gt=0, le=1000)
+    batchSize: int = Field(gt=0)
 
 
-@IOStrategy(JSON("nested.json", subdict="application"))
-class ApplicationJSONConfig(BaseConfig):
+@IOStrategy(JSON("nested.json", subdict="metadata"))
+class MetadataJSONConfig(BaseConfig):
     name: str
     version: str
+    priority: int = Field(gt=0, description="Priority must be positive")
 
 
-@IOStrategy(JSON("nested.json", subdict="solver.linear"))
-class LinearSolverJSONConfig(BaseConfig):
-    method: str
-    tolerance: float
-    maxIterations: int
+@IOStrategy(JSON("nested.json", subdict="processing.stage1"))
+class Stage1JSONConfig(BaseConfig):
+    algorithm: str
+    threshold: float = Field(gt=0)
+    maxIterations: int = Field(gt=0, le=1000)
+    batchSize: int = Field(gt=0)
 
 
-@IOStrategy(JSON("nested.json", subdict="solver.nonlinear"))
-class NonlinearSolverJSONConfig(BaseConfig):
-    method: str
-    tolerance: float
-    maxIterations: int
-
-
-# ============================================================================
-# Tests
-# ============================================================================
+@IOStrategy(JSON("nested.json", subdict="processing.stage2"))
+class Stage2JSONConfig(BaseConfig):
+    algorithm: str
+    threshold: float = Field(gt=0)
+    maxIterations: int = Field(gt=0, le=1000)
+    batchSize: int = Field(gt=0)
 
 
 @pytest.mark.parametrize(
-    "app_class,linear_class,nonlinear_class",
+    "metadata_class,stage1_class,stage2_class",
     [
-        (ApplicationYAMLConfig, LinearSolverYAMLConfig, NonlinearSolverYAMLConfig),
-        (ApplicationJSONConfig, LinearSolverJSONConfig, NonlinearSolverJSONConfig),
+        (MetadataYAMLConfig, Stage1YAMLConfig, Stage2YAMLConfig),
+        (MetadataJSONConfig, Stage1JSONConfig, Stage2JSONConfig),
     ],
 )
-def test_load_nested(io_fixtures, app_class, linear_class, nonlinear_class):
+def test_load_nested(io_fixtures, metadata_class, stage1_class, stage2_class):
     """Test loading multiple nested subdicts from fixture (YAML and JSON).
 
     Demonstrates:
-    - Flat subdict: application (top-level key)
-    - Nested subdict: solver.linear (2-level nesting)
-    - Nested subdict: solver.nonlinear (2-level nesting, different key)
+    - Flat subdict: metadata (top-level key)
+    - Nested subdict: processing.stage1 (2-level nesting)
+    - Nested subdict: processing.stage2 (2-level nesting, different key)
     - Subdict isolation (each config only sees its own section)
+    - Field validators (gt=0, le=1000)
     """
     # Load each subdict independently
-    app = app_class.load(io_fixtures)
-    linear = linear_class.load(io_fixtures)
-    nonlinear = nonlinear_class.load(io_fixtures)
+    metadata = metadata_class.load(io_fixtures)
+    stage1 = stage1_class.load(io_fixtures)
+    stage2 = stage2_class.load(io_fixtures)
 
     # Verify isolation - each config only sees its subdict
-    assert app.name == "solver"
-    assert app.version == "1.0"
+    assert metadata.name == "TestApp"
+    assert metadata.version == "1.0"
+    assert metadata.priority == 5
 
-    assert linear.method == "PCG"
-    assert linear.tolerance == 1e-6
-    assert linear.maxIterations == 1000
+    assert stage1.algorithm == "fast"
+    assert stage1.threshold == 0.001
+    assert stage1.maxIterations == 100
+    assert stage1.batchSize == 32
 
-    assert nonlinear.method == "Newton"
-    assert nonlinear.tolerance == 1e-8
-    assert nonlinear.maxIterations == 50
-
-
-# ============================================================================
-# Error Validation Tests
-# ============================================================================
+    assert stage2.algorithm == "accurate"
+    assert stage2.threshold == 0.0001
+    assert stage2.maxIterations == 50
+    assert stage2.batchSize == 16
 
 
 @pytest.mark.parametrize(
-    "format,config_file",
+    "config_class,invalid_file",
     [
-        ("yaml", "invalid_nested.yaml"),
-        ("json", "invalid_nested.json"),
+        (MetadataYAMLConfig, "invalid_nested.yaml"),
+        (MetadataJSONConfig, "invalid_nested.json"),
     ],
 )
-def test_validation_error_missing_field(io_fixtures, format, config_file):
-    """Test that validation correctly identifies missing required fields.
+def test_validation_error_missing_field(io_fixtures, config_class, invalid_file):
+    """Test that validation correctly identifies missing required fields and validator violations.
 
-    The invalid configs are missing the 'version' field in the application subdict.
-    Uses model_construct to load without validation, then model_validate to check errors.
+    The invalid configs are missing the 'version' field and have priority=0 (violates gt=0).
+    load(validate=False) bypasses validation so all data is available for inspection.
+    load(validate=True) raises ValidationError with all errors.
     """
-    # Create config class dynamically for the invalid file
-    if format == "yaml":
+    # Load without validation - all data is available for inspection
+    loaded_data = config_class.load(io_fixtures, validate=False, file=invalid_file)
+    assert loaded_data.name == "TestApp"
+    assert loaded_data.priority == 0  # Invalid value loaded without validation
 
-        @IOStrategy(YAML(config_file, subdict="application"))
-        class InvalidAppConfig(BaseConfig):
-            name: str
-            version: str
-    else:
-
-        @IOStrategy(JSON(config_file, subdict="application"))
-        class InvalidAppConfig(BaseConfig):
-            name: str
-            version: str
-
-    # Load with model_construct (bypasses validation)
-    loaded_data = InvalidAppConfig.load(io_fixtures)
-
-    # Verify data was loaded (just the available fields)
-    assert loaded_data.name == "solver"
-
-    # Now validate - should raise ValidationError for missing 'version'
+    # Load with validation - raises ValidationError with all errors
     with pytest.raises(ValidationError) as exc_info:
-        InvalidAppConfig.model_validate(loaded_data.model_dump())
+        config_class.load(io_fixtures, validate=True, file=invalid_file)
 
     # Verify the error details
     errors = exc_info.value.errors()
-    assert len(errors) == 1
-    assert errors[0]["type"] == "missing"
-    assert errors[0]["loc"] == ("version",)
-    assert "Field required" in errors[0]["msg"]
+    assert len(errors) == 2
+
+    # Check for missing version field
+    missing_errors = [e for e in errors if e["type"] == "missing"]
+    assert len(missing_errors) == 1
+    assert missing_errors[0]["loc"] == ("version",)
+
+    # Check for priority constraint violation
+    gt_errors = [e for e in errors if e["type"] == "greater_than"]
+    assert len(gt_errors) == 1
+    assert gt_errors[0]["loc"] == ("priority",)
+    assert gt_errors[0]["ctx"]["gt"] == 0
+
+
+@pytest.mark.parametrize(
+    "config_class,missing_file",
+    [
+        (MetadataYAMLConfig, "nonexistent.yaml"),
+        (MetadataJSONConfig, "nonexistent.json"),
+    ],
+)
+def test_load_missing_file_raises(tmp_path, config_class, missing_file):
+    """Loading from a non-existent file raises FileNotFoundError."""
+    with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+        config_class.load(tmp_path, file=missing_file)
+
+
+@pytest.mark.parametrize(
+    "config_class,config_file",
+    [
+        (MetadataYAMLConfig, "simple.yaml"),
+        (MetadataJSONConfig, "simple.json"),
+    ],
+)
+def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
+    """Loading from an existing file but wrong subdict path raises KeyError.
+
+    Uses a file that exists but doesn't contain the 'metadata' subdict.
+    """
+    with pytest.raises(KeyError, match="not found"):
+        config_class.load(io_fixtures, file=config_file)

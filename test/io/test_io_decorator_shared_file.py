@@ -7,11 +7,13 @@ Tests for shared file preservation patterns.
 Demonstrates:
 - Multiple models reading from same file with subdict isolation
 - Writing one subdict preserves other sections (critical for shared config files)
+- Validation error reporting via load(validate=True/False)
+- FileNotFoundError / KeyError on missing file or subdict
 """
 
 import pytest
 
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
 from neofoam.io import (
     BaseConfig,
     YAML,
@@ -20,142 +22,153 @@ from neofoam.io import (
 )
 
 
-@IOStrategy(YAML("shared.yaml", subdict="settings.general"))
-class GeneralYAMLConfig(BaseConfig):
-    timeout: int
-    retries: int
+@IOStrategy(YAML("shared.yaml", subdict="config.service_a"))
+class ServiceAYAMLConfig(BaseConfig):
+    timeout: int = Field(gt=0)
+    maxConnections: int = Field(gt=0, le=100)
 
 
-@IOStrategy(YAML("shared.yaml", subdict="settings.database"))
-class DatabaseYAMLConfig(BaseConfig):
-    host: str
-    port: int
-    name: str
+@IOStrategy(YAML("shared.yaml", subdict="config.service_b"))
+class ServiceBYAMLConfig(BaseConfig):
+    endpoint: str
+    port: int = Field(gt=0, le=65535)
+    poolSize: int = Field(gt=0)
 
 
-@IOStrategy(YAML("shared.yaml", subdict="settings.cache"))
-class CacheYAMLConfig(BaseConfig):
+@IOStrategy(YAML("shared.yaml", subdict="config.service_c"))
+class ServiceCYAMLConfig(BaseConfig):
     enabled: bool
-    ttl: int
+    bufferSize: int = Field(gt=0)
 
 
-@IOStrategy(JSON("shared.json", subdict="settings.general"))
-class GeneralJSONConfig(BaseConfig):
-    timeout: int
-    retries: int
+@IOStrategy(JSON("shared.json", subdict="config.service_a"))
+class ServiceAJSONConfig(BaseConfig):
+    timeout: int = Field(gt=0)
+    maxConnections: int = Field(gt=0, le=100)
 
 
-@IOStrategy(JSON("shared.json", subdict="settings.database"))
-class DatabaseJSONConfig(BaseConfig):
-    host: str
-    port: int
-    name: str
+@IOStrategy(JSON("shared.json", subdict="config.service_b"))
+class ServiceBJSONConfig(BaseConfig):
+    endpoint: str
+    port: int = Field(gt=0, le=65535)
+    poolSize: int = Field(gt=0)
 
 
-@IOStrategy(JSON("shared.json", subdict="settings.cache"))
-class CacheJSONConfig(BaseConfig):
+@IOStrategy(JSON("shared.json", subdict="config.service_c"))
+class ServiceCJSONConfig(BaseConfig):
     enabled: bool
-    ttl: int
-
-
-# ============================================================================
-# Tests
-# ============================================================================
+    bufferSize: int = Field(gt=0)
 
 
 @pytest.mark.parametrize(
-    "general_class,database_class,cache_class,filename",
+    "service_a_class,service_b_class,service_c_class,filename",
     [
-        (GeneralYAMLConfig, DatabaseYAMLConfig, CacheYAMLConfig, "shared.yaml"),
-        (GeneralJSONConfig, DatabaseJSONConfig, CacheJSONConfig, "shared.json"),
+        (ServiceAYAMLConfig, ServiceBYAMLConfig, ServiceCYAMLConfig, "shared.yaml"),
+        (ServiceAJSONConfig, ServiceBJSONConfig, ServiceCJSONConfig, "shared.json"),
     ],
 )
 def test_write_preserves_other_subdicts(
-    temp_fixture_copy, general_class, database_class, cache_class, filename
+    temp_fixture_copy, service_a_class, service_b_class, service_c_class, filename
 ):
     """Test that writing one subdict preserves other sections in same file.
 
     Demonstrates partial file updates - critical for shared config files where
     multiple models manage different sections of the same file.
+    Also tests field validators (gt=0, le constraints).
     """
     test_file = temp_fixture_copy(filename)
     test_dir = test_file.parent
 
     # Load original values from directory
-    original_db = database_class.load(test_dir)
-    original_cache = cache_class.load(test_dir)
-    assert original_db.host == "localhost"
-    assert original_cache.enabled is True
+    original_b = service_b_class.load(test_dir)
+    original_c = service_c_class.load(test_dir)
+    assert original_b.endpoint == "example.com"
+    assert original_c.enabled is True
 
-    # Update only general section
-    general = general_class.load(test_dir)
-    general.timeout = 60
-    general.save(test_dir)
+    # Update only service_a section
+    service_a = service_a_class.load(test_dir)
+    service_a.timeout = 60
+    service_a.save(test_dir)
 
-    # Verify general changed but other sections unchanged
-    updated_general = general_class.load(test_dir)
-    updated_db = database_class.load(test_dir)
-    updated_cache = cache_class.load(test_dir)
+    # Verify service_a changed but other sections unchanged
+    updated_a = service_a_class.load(test_dir)
+    updated_b = service_b_class.load(test_dir)
+    updated_c = service_c_class.load(test_dir)
 
-    assert updated_general.timeout == 60  # Changed
-    assert updated_general.retries == 3  # Unchanged
-    assert updated_db.host == "localhost"  # Unchanged
-    assert updated_db.port == 5432  # Unchanged
-    assert updated_cache.enabled is True  # Unchanged
-    assert updated_cache.ttl == 600  # Unchanged
-
-
-# ============================================================================
-# Error Validation Tests
-# ============================================================================
+    assert updated_a.timeout == 60  # Changed
+    assert updated_a.maxConnections == 10  # Unchanged
+    assert updated_b.endpoint == "example.com"  # Unchanged
+    assert updated_b.port == 8080  # Unchanged
+    assert updated_c.enabled is True  # Unchanged
+    assert updated_c.bufferSize == 1024  # Unchanged
 
 
 @pytest.mark.parametrize(
-    "format,config_file",
+    "config_class,invalid_file",
     [
-        ("yaml", "invalid_shared.yaml"),
-        ("json", "invalid_shared.json"),
+        (ServiceBYAMLConfig, "invalid_shared.yaml"),
+        (ServiceBJSONConfig, "invalid_shared.json"),
     ],
 )
-def test_validation_error_missing_field_in_subdict(io_fixtures, format, config_file):
-    """Test that validation correctly identifies missing required fields in subdicts.
+def test_validation_error_missing_field_in_subdict(io_fixtures, config_class, invalid_file):
+    """Test that validation correctly identifies missing required fields and validator violations in subdicts.
 
-    The invalid configs are missing the 'port' field in the database subdict.
-    Uses model_construct to load without validation, then model_validate to check errors.
+    The invalid configs are missing the 'port' field and have poolSize=-5 (violates gt=0).
+    load(validate=False) bypasses validation so all data is available for inspection.
+    load(validate=True) raises ValidationError with all errors.
     """
-    # Create config class dynamically for the invalid file
-    if format == "yaml":
+    # Load without validation - all data is available for inspection
+    loaded_data = config_class.load(io_fixtures, validate=False, file=invalid_file)
+    assert loaded_data.endpoint == "example.com"
+    assert loaded_data.poolSize == -5  # Invalid value loaded
 
-        @IOStrategy(YAML(config_file, subdict="settings.database"))
-        class InvalidDatabaseConfig(BaseConfig):
-            host: str
-            port: int
-            name: str
-    else:
-
-        @IOStrategy(JSON(config_file, subdict="settings.database"))
-        class InvalidDatabaseConfig(BaseConfig):
-            host: str
-            port: int
-            name: str
-
-    # Load with model_construct (bypasses validation)
-    loaded_data = InvalidDatabaseConfig.load(io_fixtures)
-
-    # Verify data was loaded (just the available fields)
-    assert loaded_data.host == "localhost"
-    assert loaded_data.name == "mydb"
-
-    # Now validate - should raise ValidationError for missing 'port'
+    # Load with validation - raises ValidationError with all errors
     with pytest.raises(ValidationError) as exc_info:
-        InvalidDatabaseConfig.model_validate(loaded_data.model_dump())
+        config_class.load(io_fixtures, validate=True, file=invalid_file)
 
     # Verify the error details
     errors = exc_info.value.errors()
-    assert len(errors) == 1
-    assert errors[0]["type"] == "missing"
-    assert errors[0]["loc"] == ("port",)
-    assert "Field required" in errors[0]["msg"]
+    assert len(errors) == 2
+
+    # Check for missing port field
+    missing_errors = [e for e in errors if e["type"] == "missing"]
+    assert len(missing_errors) == 1
+    assert missing_errors[0]["loc"] == ("port",)
+
+    # Check for poolSize constraint violation
+    gt_errors = [e for e in errors if e["type"] == "greater_than"]
+    assert len(gt_errors) == 1
+    assert gt_errors[0]["loc"] == ("poolSize",)
+    assert gt_errors[0]["ctx"]["gt"] == 0
+
+
+@pytest.mark.parametrize(
+    "config_class,missing_file",
+    [
+        (ServiceBYAMLConfig, "nonexistent.yaml"),
+        (ServiceBJSONConfig, "nonexistent.json"),
+    ],
+)
+def test_load_missing_file_raises(tmp_path, config_class, missing_file):
+    """Loading from a non-existent file raises FileNotFoundError."""
+    with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+        config_class.load(tmp_path, file=missing_file)
+
+
+@pytest.mark.parametrize(
+    "config_class,config_file",
+    [
+        (ServiceBYAMLConfig, "simple.yaml"),
+        (ServiceBJSONConfig, "simple.json"),
+    ],
+)
+def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
+    """Loading from an existing file but wrong subdict path raises KeyError.
+
+    Uses a file that exists but doesn't contain the 'config.service_b' subdict.
+    """
+    with pytest.raises(KeyError, match="not found"):
+        config_class.load(io_fixtures, file=config_file)
 
 
 if __name__ == "__main__":
