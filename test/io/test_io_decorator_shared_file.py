@@ -110,7 +110,9 @@ def test_write_preserves_other_subdicts(
         (ServiceBJSONConfig, "invalid_shared.json"),
     ],
 )
-def test_validation_error_missing_field_in_subdict(io_fixtures, config_class, invalid_file):
+def test_validation_error_missing_field_in_subdict(
+    io_fixtures, config_class, invalid_file
+):
     """Test that validation correctly identifies missing required fields and validator violations in subdicts.
 
     The invalid configs are missing the 'port' field and have poolSize=-5 (violates gt=0).

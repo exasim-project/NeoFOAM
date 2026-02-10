@@ -103,8 +103,7 @@ class SubdictMixin:
             value = full_data[key]
             if not isinstance(value, dict):
                 raise KeyError(
-                    f"Subdict '{key}' resolved to "
-                    f"{type(value).__name__}, expected dict"
+                    f"Subdict '{key}' resolved to {type(value).__name__}, expected dict"
                 )
             return value
         else:

@@ -286,9 +286,7 @@ class BaseConfig(BaseModel):
             List of ``ValidationErrors`` (empty if valid)
         """
         input_def = cls.get_input_definition()
-        file_name = file or (
-            input_def.relative_path if input_def else cls.__name__
-        )
+        file_name = file or (input_def.relative_path if input_def else cls.__name__)
 
         try:
             cls.load(case_dir, encoding=encoding, validate=True, file=file)
