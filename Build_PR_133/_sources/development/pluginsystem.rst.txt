@@ -84,7 +84,7 @@ This automatically adds the discriminated union field to the base class, similar
 
     from pydantic import BaseModel
     from typing import Literal
-    from foamadapter.core.plugin_system import PluginSystem
+    from neofoam.core.plugin_system import PluginSystem
 
     @PluginSystem.register(discriminator_variable="shape", discriminator="shape_type")
     class ShapeInterface(BaseModel):

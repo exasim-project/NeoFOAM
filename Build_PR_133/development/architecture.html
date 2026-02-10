@@ -261,8 +261,8 @@
         <article role="main" id="furo-main-content">
           <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
-<p>FoamAdapter is a multi-language repository containing both C++ and Python code.
-This document describes the architecture of FoamAdapter, including its C++ core and Python interface components.</p>
+<p>NeoFOAM is a multi-language repository containing both C++ and Python code.
+This document describes the architecture of NeoFOAM, including its C++ core and Python interface components.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <dl class="simple">
@@ -453,12 +453,12 @@ The operation sequences of both solvers are then updated to include inter-solver
 <section id="motivation">
 <h3>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h3>
 <p>Modern scientific and engineering workflows require flexible, extensible frameworks.
-FoamAdapter’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
+NeoFOAM’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
 This promotes maintainability, collaboration, and rapid prototyping.</p>
 </section>
 <section id="concept">
 <h3>Concept<a class="headerlink" href="#concept" title="Link to this heading">¶</a></h3>
-<p>FoamAdapter implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
+<p>NeoFOAM implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
 The core idea is to allow new plugin types (e.g., models, fields, solvers) to be dynamically registered at runtime or via Python entry points (setuptools).
 Each plugin type (such as a physics model or boundary condition) is managed by a registry, which collects available classes and exposes a unified configuration model for validation and schema generation.</p>
 <p><strong>Background: Pydantic Discriminated Unions</strong></p>
@@ -485,7 +485,7 @@ For example, the following ensures a pet is either a Cat, Dog, or Lizard:</p>
 </pre></div>
 </div>
 <p>This works for static unions but cannot be extended dynamically — a limitation for plugin systems.</p>
-<p><strong>How FoamAdapter Solves This</strong></p>
+<p><strong>How NeoFOAM Solves This</strong></p>
 <p>Plugins are registered using a decorator-based API.
 Each registration automatically rebuilds the Pydantic model for that plugin type, updating the discriminated union to include new plugins.
 Thus, the configuration model always reflects available plugins and remains valid for schema generation and input validation.</p>
@@ -500,7 +500,7 @@ The updated model can always be retrieved via the <cite>plugin_model</cite> attr
 <section id="usage">
 <h3>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h3>
 <p>To add a new plugin, users define a Python class and register it with the corresponding base class:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">foamadapter.core.plugin_system</span> <span class="kn">import</span> <span class="n">PluginSystem</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neofoam.core.plugin_system</span> <span class="kn">import</span> <span class="n">PluginSystem</span>
 
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">ModelBase</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -515,13 +515,13 @@ The updated model can always be retrieved via the <cite>plugin_model</cite> attr
 <span class="n">config</span> <span class="o">=</span> <span class="n">ModelBase</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model_type&quot;</span><span class="p">:</span> <span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="s2">&quot;parameter&quot;</span><span class="p">:</span> <span class="mf">1.23</span><span class="p">},</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend FoamAdapter seamlessly.
+<p>Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend NeoFOAM seamlessly.
 The unified configuration and schema system simplifies UI generation, input validation, and documentation of available plugins.</p>
 </section>
 </section>
 <section id="model-introspection-and-schema-generation">
 <h2>Model Introspection and Schema Generation<a class="headerlink" href="#model-introspection-and-schema-generation" title="Link to this heading">¶</a></h2>
-<p>Model configuration and validation in FoamAdapter are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
+<p>Model configuration and validation in NeoFOAM are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
 This mechanism enables model discovery, UI integration, and automatic documentation.</p>
 <p>Pydantic’s schema generation supports:</p>
 <ul class="simple">
