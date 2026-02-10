@@ -221,11 +221,11 @@ class PimpleControl(BaseModel):
         default=True, description="Enable turbulence correction", alias="turbCorr"
     )
 
-    _loop: SingleIterationCondition | None = None
-    _corrector: IterationCountCondition | None = None
-    _non_ortho: IterationCountCondition | None = None
-    _momentum_predictor: BooleanFlagCondition | None = None
-    _turb_corr: BooleanFlagCondition | None = None
+    _loop: Optional[SingleIterationCondition] = None
+    _corrector: Optional[IterationCountCondition] = None
+    _non_ortho: Optional[IterationCountCondition] = None
+    _momentum_predictor: Optional[BooleanFlagCondition] = None
+    _turb_corr: Optional[BooleanFlagCondition] = None
 
     def model_post_init(self, __context: Any) -> None:
         """Initialize nested conditions after model validation."""
@@ -332,7 +332,7 @@ class SimpleControl(BaseModel):
         description="Field tolerance mapping for convergence checking",
     )
 
-    _residual_check: ResidualConvergenceCondition | None = None
+    _residual_check: Optional[ResidualConvergenceCondition] = None
     _iteration_count: int = 0
 
     def model_post_init(self, __context: Any) -> None:

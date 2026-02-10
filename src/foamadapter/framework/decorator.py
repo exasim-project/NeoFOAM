@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import Any, Callable, TypeVar, overload
+from typing import Any, Callable, TypeVar, overload, Optional, Union
 
 from .types import OperationMetadata, OpType, OperationNumber
 
@@ -38,19 +38,19 @@ def operation(_func: F) -> F:
 def operation(
     _func: None = None,
     *,
-    operation_number: OperationNumber | int | str | None = None,
-    depends_on: list[str] | None = None,
+    operation_number: Union[Union[OperationNumber, int], str, None] = None,
+    depends_on: Optional[list[str]] = None,
 ) -> Callable[[F], F]:
     """Decorator factory form: @operation(...) (with parentheses)."""
     ...
 
 
 def operation(
-    _func: F | None = None,
+    _func: Optional[F] = None,
     *,
-    operation_number: OperationNumber | int | str | None = None,
-    depends_on: list[str] | None = None,
-) -> F | Callable[[F], F]:
+    operation_number: Union[Union[OperationNumber, int], str, None] = None,
+    depends_on: Optional[list[str]] = None,
+) -> Union[F, Callable][[F], F]:
     """decorator Factory to mark a decorator to mark a function as an operation in the workflow."""
 
     def _operation_decorator(func: F) -> F:
@@ -60,7 +60,7 @@ def operation(
         def wrapper(*args: object, **kwargs: object) -> Any:
             return func(*args, **kwargs)
 
-        op_num: OperationNumber | None = None
+        op_num: Optional[OperationNumber] = None
         if isinstance(operation_number, (int, str)):
             op_num = OperationNumber(operation_number)
         elif operation_number is not None:
@@ -89,19 +89,19 @@ def condition(_func: F) -> F:
 def condition(
     _func: None = None,
     *,
-    operation_number: OperationNumber | int | str | None = None,
-    depends_on: list[str] | None = None,
+    operation_number: Union[Union[OperationNumber, int], str, None] = None,
+    depends_on: Optional[list[str]] = None,
 ) -> Callable[[F], F]:
     """Decorator factory form: @condition(...) (with parentheses)."""
     ...
 
 
 def condition(
-    _func: F | None = None,
+    _func: Optional[F] = None,
     *,
-    operation_number: OperationNumber | int | str | None = None,
-    depends_on: list[str] | None = None,
-) -> F | Callable[[F], F]:
+    operation_number: Union[Union[OperationNumber, int], str, None] = None,
+    depends_on: Optional[list[str]] = None,
+) -> Union[F, Callable][[F], F]:
     """decorator Factory to mark a decorator to mark a function as a condition in the workflow."""
 
     def _condition_decorator(func: F) -> F:
@@ -123,7 +123,7 @@ def condition(
         def wrapper(*args: object, **kwargs: object) -> Any:
             return func(*args, **kwargs)
 
-        op_num: OperationNumber | None = None
+        op_num: Optional[OperationNumber] = None
         if isinstance(operation_number, (int, str)):
             op_num = OperationNumber(operation_number)
         elif operation_number is not None:

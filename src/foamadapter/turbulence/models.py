@@ -3,7 +3,7 @@
 
 """Turbulence models for incompressible flow."""
 
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 from pydantic import BaseModel
 from pybFoam.turbulence import incompressibleTurbulenceModel
 
@@ -96,7 +96,7 @@ class kOmegaSSTModel(BaseModel):
     simulation_type: Literal["RAS"] = "RAS"
     turb_model_type: Literal["kOmegaSST"] = "kOmegaSST"
     model_config = {"arbitrary_types_allowed": True}
-    _instance: Any | None = None
+    _instance: Optional[Any] = None
 
     @property
     def name(self) -> str:
@@ -162,7 +162,7 @@ class kEpsilonModel(BaseModel):
     simulation_type: Literal["RAS"] = "RAS"
     turb_model_type: Literal["kEpsilon"] = "kEpsilon"
     model_config = {"arbitrary_types_allowed": True}
-    _instance: Any | None = None
+    _instance: Optional[Any] = None
 
     @property
     def name(self) -> str:
@@ -237,7 +237,7 @@ class SmagorinskyModel(BaseModel):
     simulation_type: Literal["LES"] = "LES"
     turb_model_type: Literal["Smagorinsky"] = "Smagorinsky"
     model_config = {"arbitrary_types_allowed": True}
-    _instance: Any | None = None
+    _instance: Optional[Any] = None
 
     @property
     def name(self) -> str:
@@ -311,7 +311,7 @@ class LaminarModel(BaseModel):
     simulation_type: Literal["laminar"] = "laminar"
     turb_model_type: None = None
     model_config = {"arbitrary_types_allowed": True}
-    _instance: Any | None = None
+    _instance: Optional[Any] = None
 
     @property
     def name(self) -> str:

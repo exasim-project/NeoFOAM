@@ -8,7 +8,7 @@ Handles dependency injection during solver execution with scope management.
 """
 
 import inspect
-from typing import Any, Callable, get_origin, get_args, Annotated
+from typing import Any, Callable, Optional, get_origin, get_args, Annotated
 
 from .context import Context
 from .initialization.depends import Depends
@@ -44,7 +44,7 @@ class DependencyResolver:
         }
 
     def resolve_arguments(
-        self, func: Callable, ctx: Context | None = None, **provided_kwargs: Any
+        self, func: Callable, ctx: Optional[Context] = None, **provided_kwargs: Any
     ) -> dict[str, Any]:
         """
         Resolve all Depends() markers and field parameters in function signature.
@@ -105,7 +105,7 @@ class DependencyResolver:
 
         return kwargs
 
-    def _extract_depends(self, annotation: Any) -> Depends | None:
+    def _extract_depends(self, annotation: Any) -> Optional[Depends]:
         """Extract Depends from Annotated[Type, Depends(...)]."""
         if get_origin(annotation) is Annotated:
             args = get_args(annotation)
@@ -114,7 +114,7 @@ class DependencyResolver:
                     return arg
         return None
 
-    def _resolve_dependency(self, depends: Depends, ctx: Context | None) -> Any:
+    def _resolve_dependency(self, depends: Depends, ctx: Optional[Context]) -> Any:
         """
         Resolve a single dependency with caching.
 
@@ -149,7 +149,7 @@ class DependencyResolver:
 
         return value
 
-    def _resolve_path(self, path: str, ctx: Context | None) -> Any:
+    def _resolve_path(self, path: str, ctx: Optional[Context]) -> Any:
         """
         Resolve string path like 'fields.U' or 'models.turbulence'.
 
@@ -173,7 +173,7 @@ class DependencyResolver:
             # Try direct attribute access
             return getattr(ctx, path, None)
 
-    def _resolve_callable(self, provider: Callable, ctx: Context | None) -> Any:
+    def _resolve_callable(self, provider: Callable, ctx: Optional[Context]) -> Any:
         """
         Resolve provider function (may have its own dependencies).
 

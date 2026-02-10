@@ -8,7 +8,7 @@ Configuration Context
 Central context for inter-model configuration exchange during initialization.
 """
 
-from typing import Any
+from typing import Any, Optional
 
 
 def is_configurable_field(field_info: Any) -> bool:
@@ -62,7 +62,7 @@ class ConfigContext:
         self.current_region = current_region
         self._regions: dict[str, dict[str, Any]] = {current_region: {}}
 
-    def register(self, name: str, model: Any, region: str | None = None) -> None:
+    def register(self, name: str, model: Any, region: Optional[str] = None) -> None:
         """
         Register a model by name in a region.
 
@@ -107,7 +107,7 @@ class ConfigContext:
 
         return self._regions.get(region, {}).get(name)
 
-    def all(self, region: str | None = None) -> dict[str, Any]:
+    def all(self, region: Optional[str] = None) -> dict[str, Any]:
         """
         Get all registered models in a region.
 
@@ -140,7 +140,7 @@ class ConfigContext:
 
         return region in self._regions and name in self._regions[region]
 
-    def get_by_type(self, model_type: type, region: str | None = None) -> list[Any]:
+    def get_by_type(self, model_type: type, region: Optional[str] = None) -> list[Any]:
         """
         Get all registered models of a specific type in a region.
 
@@ -163,7 +163,9 @@ class ConfigContext:
         models = self._regions.get(region, {})
         return [model for model in models.values() if isinstance(model, model_type)]
 
-    def get_by_prefix(self, prefix: str, region: str | None = None) -> dict[str, Any]:
+    def get_by_prefix(
+        self, prefix: str, region: Optional[str] = None
+    ) -> dict[str, Any]:
         """
         Get all models with names starting with a prefix in a region.
 

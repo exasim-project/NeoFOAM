@@ -15,7 +15,7 @@ Provides:
 
 import yaml
 import json
-from typing import Any, Type, TypeVar, Protocol
+from typing import Any, Optional, Type, TypeVar, Protocol, Union
 from pathlib import Path
 from pydantic import BaseModel
 from foamadapter.io.validation_types import ModelInputDefinition
@@ -53,7 +53,7 @@ class YAMLStrategy:
         YAMLStrategy("solvers.p")  # Nested subdict
     """
 
-    def __init__(self, subdict_path: str | None = None):
+    def __init__(self, subdict_path: Optional[str] = None):
         """Initialize YAML strategy.
 
         Args:
@@ -135,7 +135,7 @@ class JSONStrategy:
         JSONStrategy("services.database")  # Nested subdict
     """
 
-    def __init__(self, subdict_path: str | None = None):
+    def __init__(self, subdict_path: Optional[str] = None):
         """Initialize JSON strategy.
 
         Args:
@@ -209,8 +209,8 @@ class IOStrategyRegistry:
     def __init__(
         self,
         baseModel: Type[BaseModel],
-        reading_strategy: ReadingStrategy | None = None,
-        writing_strategy: WritingStrategy | None = None,
+        reading_strategy: Optional[ReadingStrategy] = None,
+        writing_strategy: Optional[WritingStrategy] = None,
     ):
         """Initialize registry and set strategies for the given model.
 
@@ -258,7 +258,10 @@ class IOStrategyRegistry:
 
 
 def YAML(
-    file: str, required: bool = True, description: str = "", subdict: str | None = None
+    file: str,
+    required: bool = True,
+    description: str = "",
+    subdict: Optional[str] = None,
 ) -> dict:
     """Helper to create YAML strategy configuration.
 
@@ -297,7 +300,10 @@ def YAML(
 
 
 def JSON(
-    file: str, required: bool = True, description: str = "", subdict: str | None = None
+    file: str,
+    required: bool = True,
+    description: str = "",
+    subdict: Optional[str] = None,
 ) -> dict:
     """Helper to create JSON strategy configuration.
 
@@ -334,7 +340,7 @@ def JSON(
 def Custom(
     file: str,
     reading_strategy: ReadingStrategy,
-    writing_strategy: WritingStrategy | None = None,
+    writing_strategy: Optional[WritingStrategy] = None,
     required: bool = True,
     description: str = "",
 ) -> dict:
@@ -434,12 +440,12 @@ class BaseConfig(BaseModel):
         cls.__input_definitions__[cls.__name__] = input_def
 
     @classmethod
-    def get_input_definition(cls) -> ModelInputDefinition | None:
+    def get_input_definition(cls) -> Optional[ModelInputDefinition]:
         """Get ModelInputDefinition for this config class."""
         return cls.__input_definitions__.get(cls.__name__)
 
     @classmethod
-    def get_default_path(cls, case_dir: Path | str = ".") -> Path:
+    def get_default_path(cls, case_dir: Union[Path, str] = ".") -> Path:
         """Get default file path from registered ModelInputDefinition."""
         input_def = cls.get_input_definition()
         if not input_def:
@@ -467,7 +473,9 @@ class BaseConfig(BaseModel):
         cls.__registries__[cls.__name__].set_writing_strategy(strategy)
 
     @classmethod
-    def load(cls: Type[T], case_dir: Path | str = ".", encoding: str = "utf-8") -> T:
+    def load(
+        cls: Type[T], case_dir: Union[Path, str] = ".", encoding: str = "utf-8"
+    ) -> T:
         """Load configuration from file using registered strategy.
 
         Args:
@@ -512,7 +520,7 @@ class BaseConfig(BaseModel):
         return input_def.relative_path if input_def else self.__class__.__name__
 
     @property
-    def subdict(self) -> str | None:
+    def subdict(self) -> Optional[str]:
         """
         Get the optional subdict path from the reading strategy.
 
@@ -537,7 +545,7 @@ class BaseConfig(BaseModel):
         return None
 
     @property
-    def metadata(self) -> tuple[str, str | None]:
+    def metadata(self) -> tuple[str, Optional[str]]:
         """
         Get both file name and subdict as a tuple.
 
@@ -551,7 +559,7 @@ class BaseConfig(BaseModel):
         """
         return self.file_name, self.subdict
 
-    def save(self, case_dir: Path | str = ".", encoding: str = "utf-8") -> None:
+    def save(self, case_dir: Union[Path, str] = ".", encoding: str = "utf-8") -> None:
         """Save configuration to file using registered strategy.
 
         Args:

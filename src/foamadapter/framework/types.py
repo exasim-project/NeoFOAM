@@ -6,6 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import total_ordering
+from typing import Optional, Union
 
 
 @total_ordering
@@ -20,7 +21,7 @@ class OperationNumber:
         Later another operation is added between 1 and 1.1, which is assigned the number 1.0.1.
     """
 
-    def __init__(self, version: str | int | list[int] | tuple[int, ...]) -> None:
+    def __init__(self, version: Union[str, int] | list[int] | tuple[int, ...]) -> None:
         if isinstance(version, str):
             self.parts = [int(p) for p in version.split(".")]
         elif isinstance(version, (list, tuple)):
@@ -33,7 +34,8 @@ class OperationNumber:
             )
 
     def _as_tuple(
-        self, other: OperationNumber | str | int | list[int] | tuple[int, ...]
+        self,
+        other: Union[Union[OperationNumber, str], int, list][int] | tuple[int, ...],
     ) -> tuple[tuple[int, ...], tuple[int, ...]]:
         if not isinstance(other, OperationNumber):
             other = OperationNumber(other)
@@ -75,15 +77,15 @@ class OperationMetadata:
     op_name: str
 
     # Optional metadata
-    op_type: OpType | None = None
+    op_type: Optional[OpType] = None
     description: str = ""
-    operation_number: OperationNumber | None = None
-    depends_on: list[str] | None = None
-    domain_name: str | None = None
+    operation_number: Optional[OperationNumber] = None
+    depends_on: Optional[list[str]] = None
+    domain_name: Optional[str] = None
 
     # DAG visualization properties
     shape: str = "box"
-    color: str | None = None
+    color: Optional[str] = None
     used_by: list[str] = field(default_factory=list)
 
     @property

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 from pydantic import BaseModel, Field, create_model
-from typing import Any, Annotated, Type, Union, Callable
+from typing import Any, Annotated, Optional, Type, Union, Callable
 from dataclasses import dataclass, field
 
 
@@ -11,7 +11,7 @@ class PluginRegistry:
     discriminator_variable: str
     discriminator: str
     plugin_registry: list[Type[BaseModel]] = field(default_factory=list)
-    plugin_model: Type[BaseModel] | None = None
+    plugin_model: Optional[Type[BaseModel]] = None
 
     def get_plugin_names(self) -> list[str]:
         """Return the names of all registered plugin classes."""
@@ -118,7 +118,7 @@ class PluginSystem:
         return base_decorator
 
     @classmethod
-    def get_registered(cls, base_cls_name: str) -> PluginRegistry | None:
+    def get_registered(cls, base_cls_name: str) -> Optional["PluginRegistry"]:
         return cls._registry.get(base_cls_name, None)
 
     @classmethod

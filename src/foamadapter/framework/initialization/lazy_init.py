@@ -10,7 +10,7 @@ Provides the LazyInit dataclass for deferred initialization with dependency trac
 
 import inspect
 from dataclasses import dataclass, field
-from typing import Callable, Any, List, Union, cast
+from typing import Callable, Any, List, Optional, Union, cast
 
 
 def _num_args(init: Callable[..., Any]) -> int:
@@ -44,9 +44,9 @@ class LazyInit:
     name: str
     depends_on: List[str] = field(default_factory=list)
     initializer: Union[Callable[[], Any], Callable[[dict[str, Any]], Any], None] = None
-    category: str | None = None
+    category: Optional[str] = None
 
-    def execute(self, context: dict[str, Any] | None = None) -> Any:
+    def execute(self, context: Optional[dict[str, Any]] = None) -> Any:
         """Execute the deferred initialization and return the result.
 
         Args:

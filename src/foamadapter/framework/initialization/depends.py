@@ -3,7 +3,7 @@
 
 """FastAPI-style dependency injection helpers for Architecture 5b."""
 
-from typing import Callable, Any
+from typing import Callable, Any, Union
 
 
 class Depends:
@@ -46,7 +46,7 @@ class Depends:
 
     def __init__(
         self,
-        dependency: str | Callable[..., Any],
+        dependency: Union[str, Callable[..., Any]],
         *,
         scope: str = "time_step",  # time_step, iteration, operation
         cache: bool = True,

@@ -8,7 +8,7 @@ Provides instance-based Model API matching Init pattern.
 """
 
 import inspect
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from functools import wraps
 from pydantic import BaseModel
 from foamadapter.io.strategies import BaseConfig
@@ -39,14 +39,14 @@ class ModelInstance:
     def __init__(self, name: str):
         self.name = name
         self._operations: list[tuple[Any, dict[str, Any]]] = []
-        self._build_func: Callable[[], list[Any]] | None = None
+        self._build_func: Optional[Callable[[], list[Any]]] = None
         self._dependency_resolver = DependencyResolver()
         self.enabled = True
 
         # 3-stage initialization functions
-        self._load_func: Callable[[], Any] | None = None
-        self._resolve_func: Callable[..., None] | None = None
-        self._detect_func: Callable[[], bool] | None = None
+        self._load_func: Optional[Callable[[], Any]] = None
+        self._resolve_func: Optional[Callable[..., None]] = None
+        self._detect_func: Optional[Callable[[], bool]] = None
 
         # State storage for load results
         self._load_result: Any = None
@@ -83,7 +83,7 @@ class ModelInstance:
         """
         return self._configs
 
-    def config(self, name: str | None = None) -> BaseConfig:
+    def config(self, name: Optional[str] = None) -> BaseConfig:
         """
         Get config by name, or single config if only one exists.
 
@@ -469,8 +469,8 @@ class ModelInstance:
     def with_config(
         self,
         config_class: type,
-        name: str | None = None,
-        loader: Callable[[Any], BaseConfig] | None = None,
+        name: Optional[str] = None,
+        loader: Optional[Callable[[Any], BaseConfig]] = None,
     ) -> "ModelInstance":
         """
         Register a configuration class with the model (chainable).
@@ -603,12 +603,12 @@ class ModelInstance:
 
     def operation(
         self,
-        operation_number: str | None = None,
-        depends_on: list[str] | None = None,
-        before: list[str] | None = None,
-        name: str | None = None,
+        operation_number: Optional[str] = None,
+        depends_on: Optional[list[str]] = None,
+        before: Optional[list[str]] = None,
+        name: Optional[str] = None,
         inject_config: bool = True,
-        configs: list[str] | None = None,
+        configs: Optional[list[str]] = None,
     ) -> Callable:
         """
         Decorator to register a model operation with auto-config discovery.

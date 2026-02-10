@@ -8,7 +8,7 @@ Provides instance-based Solver API matching Init pattern.
 """
 
 import inspect
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from functools import wraps
 from dataclasses import dataclass, field
 
@@ -51,12 +51,12 @@ class SolverInstance:
     def __init__(self, name: str):
         self.name = name
         self._operations: list[tuple[Any, dict[str, Any]]] = []
-        self._config_class: type | None = None
-        self._config_instance: Any | None = None
-        self._initialize_func: Callable[[], Context] | None = None
-        self._execution_graph_func: Callable[[str | None], tuple[Any, Any]] | None = (
-            None
-        )
+        self._config_class: Optional[type] = None
+        self._config_instance: Optional[Any] = None
+        self._initialize_func: Optional[Callable[[], Context]] = None
+        self._execution_graph_func: Optional[
+            Callable[[Optional[str]], tuple[Any, Any]]
+        ] = None
         self._dependency_resolver = DependencyResolver()
         self.argv = []
 
@@ -100,8 +100,8 @@ class SolverInstance:
         return func
 
     def execution_graph_step(
-        self, func: Callable[[str | None], tuple[Any, Any]]
-    ) -> Callable[[str | None], tuple[Any, Any]]:
+        self, func: Callable[[Optional[str]], tuple[Any, Any]]
+    ) -> Callable[[Optional[str]], tuple[Any, Any]]:
         """Decorator to register execution graph construction step."""
         self._execution_graph_func = func
         return func
@@ -131,7 +131,7 @@ class SolverInstance:
             return ctx
         raise RuntimeError(f"No initialize function registered for solver {self.name}")
 
-    def execution_graph(self, domain_name: str | None = None) -> tuple[Any, Any]:
+    def execution_graph(self, domain_name: Optional[str] = None) -> tuple[Any, Any]:
         """Execute registered execution graph step."""
         if self._execution_graph_func:
             return self._execution_graph_func(domain_name)
@@ -177,10 +177,10 @@ class SolverInstance:
 
     def operation(
         self,
-        operation_number: str | None = None,
-        depends_on: list[str] | None = None,
-        before: list[str] | None = None,
-        name: str | None = None,
+        operation_number: Optional[str] = None,
+        depends_on: Optional[list[str]] = None,
+        before: Optional[list[str]] = None,
+        name: Optional[str] = None,
         inject_config: bool = True,
     ) -> Callable:
         """

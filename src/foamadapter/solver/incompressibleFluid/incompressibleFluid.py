@@ -7,7 +7,7 @@ SimpleSolver - FastAPI-style syntax with execution graph support.
 The init module handles all initialization steps using FastAPI-style decorators.
 """
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 from pybFoam import Info
 
@@ -48,7 +48,7 @@ def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
 
 @incompressibleFluid.execution_graph_step
 def execution_graph(
-    domain_name: str | None = None,
+    domain_name: Optional[str] = None,
 ) -> tuple[StepBuilder, OperationCollection]:
     """
     Build solver structure and collect model operations.
@@ -99,7 +99,7 @@ def execution_graph(
     return builder, model_ops
 
 
-def run(argv: list[str] | None = None) -> Context:
+def run(argv: Optional[list[str]] = None) -> Context:
     """
     Run the complete simulation.
 

@@ -7,7 +7,7 @@ DummySolver - Test solver with FastAPI-style syntax.
 Mimics SimpleSolver structure for testing new API.
 """
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 
 from foamadapter.framework.context import Context, FieldUpdates
@@ -58,7 +58,7 @@ def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
 
 @dummy_solver.execution_graph_step
 def execution_graph(
-    domain_name: str | None = None,
+    domain_name: Optional[str] = None,
 ) -> tuple[StepBuilder, OperationCollection]:
     """
     Build solver structure and collect model operations.

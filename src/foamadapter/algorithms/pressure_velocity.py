@@ -3,7 +3,7 @@
 
 """Pressure-velocity coupling algorithms."""
 
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, Optional
 
 import pybFoam as pyf
 from pybFoam import (
@@ -41,7 +41,7 @@ class PressureVelocityAlgorithm(BaseModel):
     """
 
     model_config = {"arbitrary_types_allowed": True}
-    algorithm_type: str | None = None
+    algorithm_type: Optional[str] = None
 
     def load_fv_solution(self, path: str = "system/fvSolution") -> None:
         """Read fvSolution and detect algorithm type."""
@@ -125,11 +125,11 @@ class PimpleAlgorithm(BaseModel):
     """PIMPLE algorithm - unified config and execution."""
 
     algorithm_type: Literal["PIMPLE"] = "PIMPLE"
-    pRefCell: int | None = None
-    pRefValue: float | None = None
+    pRefCell: Optional[int] = None
+    pRefValue: Optional[float] = None
     model_config = {"arbitrary_types_allowed": True}
 
-    _ops: OperationCollection | None = None
+    _ops: Optional[OperationCollection] = None
     _use_boussinesq: bool = False  # Set by Boussinesq model during resolve_dependencies
 
     def configure_algorithm(self, config: Any) -> None:
@@ -438,8 +438,8 @@ class SimpleAlgorithm(BaseModel):
     """SIMPLE algorithm (not yet implemented)."""
 
     algorithm_type: Literal["SIMPLE"] = "SIMPLE"
-    pRefCell: int | None = None
-    pRefValue: float | None = None
+    pRefCell: Optional[int] = None
+    pRefValue: Optional[float] = None
     model_config = {"arbitrary_types_allowed": True}
 
     def setup(self) -> list[Any]:
@@ -451,8 +451,8 @@ class PisoAlgorithm(BaseModel):
     """PISO algorithm (not yet implemented)."""
 
     algorithm_type: Literal["PISO"] = "PISO"
-    pRefCell: int | None = None
-    pRefValue: float | None = None
+    pRefCell: Optional[int] = None
+    pRefValue: Optional[float] = None
     model_config = {"arbitrary_types_allowed": True}
 
     def setup(self) -> list[Any]:

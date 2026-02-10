@@ -12,7 +12,7 @@ Implements explicit 3-stage initialization pattern:
 This follows the DummyInit pattern.
 """
 
-from typing import Any
+from typing import Any, Optional
 import pybFoam as pyf
 
 from foamadapter.framework.initialization import (
@@ -104,7 +104,7 @@ def resolve_models(_: list, optional_models: list, config: ConfigContext) -> Non
 
 @init.validate_resolve
 def validate_resolve_stage(
-    optional_models: list, config: ConfigContext | None = None
+    optional_models: list, config: Optional[ConfigContext] = None
 ) -> list[ValidationError]:
     """Validate model connections after RESOLVE stage."""
     errors = []

@@ -34,7 +34,7 @@ Usage:
 
 import inspect
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Optional, Union
 
 from foamadapter.framework.context import Context
 from foamadapter.framework.solver_factory import SolverState
@@ -107,7 +107,7 @@ class StagedInit:
         ctx = init.run()
     """
 
-    def __init__(self, name: str, argv: list[str] | None = None):
+    def __init__(self, name: str, argv: Optional[list[str]] = None):
         """
         Initialize the staged builder.
 
@@ -119,9 +119,9 @@ class StagedInit:
         self.argv = argv or []
 
         # Stage functions
-        self._load_func: Callable[[], LoadResult] | None = None
-        self._resolve_func: Callable[[ConfigContext], None] | None = None
-        self._build_func: Callable[[], list[LazyInit]] | None = None
+        self._load_func: Optional[Callable[[], LoadResult]] = None
+        self._resolve_func: Optional[Callable[[ConfigContext], None]] = None
+        self._build_func: Optional[Callable[[], list[LazyInit]]] = None
 
         # State storage
         self.data: Any = None  # For storing InitializationData or similar
@@ -178,9 +178,12 @@ class StagedInit:
 
     def resolve(
         self,
-        func: Callable[[list, list, ConfigContext], None]
-        | Callable[[ConfigContext], None],
-    ) -> Callable[[list, list, ConfigContext], None] | Callable[[ConfigContext], None]:
+        func: Union[
+            Callable[[list, list, ConfigContext], None], Callable[[ConfigContext], None]
+        ],
+    ) -> Union[
+        Callable[[list, list, ConfigContext], None], Callable[[ConfigContext], None]
+    ]:
         """
         Decorator for RESOLVE stage function.
 
@@ -195,8 +198,10 @@ class StagedInit:
 
     def build(
         self,
-        func: Callable[[list, list], list[LazyInit]] | Callable[[], list[LazyInit]],
-    ) -> Callable[[list, list], list[LazyInit]] | Callable[[], list[LazyInit]]:
+        func: Union[
+            Callable[[list, list], list[LazyInit]], Callable[[], list[LazyInit]]
+        ],
+    ) -> Union[Callable[[list, list], list[LazyInit]], Callable[[], list[LazyInit]]]:
         """
         Decorator for BUILD stage function.
 

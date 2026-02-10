@@ -6,7 +6,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Type
+from typing import Any, Callable, Optional, Type
 
 import yaml
 from pydantic import BaseModel, ValidationError
@@ -54,7 +54,7 @@ class ValidationErrors:
     message: str
     file_name: str
     input_value: Any = None
-    subdict: str | None = None
+    subdict: Optional[str] = None
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
+from typing import Optional
 from pybFoam import Info, dictionary, computeCFLNumber
 from foamadapter.framework.context import Context
 
@@ -8,7 +9,7 @@ from foamadapter.framework.context import Context
 class CFLCondition:
     """Condition for CFL-based time stepping."""
 
-    def __init__(self, maxDeltaT: float | None = None) -> None:
+    def __init__(self, maxDeltaT: Optional[float] = None) -> None:
         self.GREAT = 1e30
         self.SMALL = 1e-15
         controlDict = dictionary.read("system/controlDict")

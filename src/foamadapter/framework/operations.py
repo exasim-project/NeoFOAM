@@ -6,7 +6,16 @@ from __future__ import annotations
 import inspect
 from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
-from typing import Annotated, Any, Callable, Iterator, Union, get_args, get_origin
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Iterator,
+    Union,
+    get_args,
+    get_origin,
+    Optional,
+)
 
 from foamadapter.framework.context import Context, FieldUpdates
 
@@ -135,11 +144,11 @@ class Operation:
     """A concrete operation class that wraps a function with metadata."""
 
     func: Union[ConditionalOp, IterativeOp, SequentialOp]
-    operation_number: OperationNumber | None = None
-    operation_name: str | None = None
-    domain_name: str | None = None
-    depends_on: list[str] | None = None
-    before: list[str] | None = None  # Operations this should come before
+    operation_number: Optional[OperationNumber] = None
+    operation_name: Optional[str] = None
+    domain_name: Optional[str] = None
+    depends_on: Optional[list[str]] = None
+    before: Optional[list[str]] = None  # Operations this should come before
     # TODO move visualization metadata to a separate class
     shape: str = "box"
     color: str = "lightblue"
@@ -208,7 +217,7 @@ class Operation:
         )
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> Optional[str]:
         return (
             f"{self.domain_name}.{self.operation_name}"
             if self.domain_name
@@ -238,7 +247,7 @@ class Operation:
 
 
 class OperationCollection:
-    def __init__(self, operations: list[Operation] | None = None) -> None:
+    def __init__(self, operations: Optional[list[Operation]] = None) -> None:
         self.ops: list[Operation] = operations if operations is not None else []
 
     @classmethod
@@ -277,7 +286,7 @@ class OperationCollection:
         return self
 
     def add_suboperation(
-        self, operation: Operation, index: int | str = -1
+        self, operation: Operation, index: Union[int, str] = -1
     ) -> OperationCollection:
         if isinstance(index, str):
             for i, op in enumerate(self.ops):
@@ -288,7 +297,7 @@ class OperationCollection:
         self.ops[index].sub_operations.append(operation)
         return self
 
-    def __getitem__(self, index: int | str) -> Operation:
+    def __getitem__(self, index: Union[int, str]) -> Operation:
         if isinstance(index, str):
             for op in self.ops:
                 if op.operation_name == index:
@@ -296,7 +305,7 @@ class OperationCollection:
             raise KeyError(f"Operation with operation_name '{index}' not found.")
         return self.ops[index]
 
-    def __contains__(self, key: int | str) -> bool:
+    def __contains__(self, key: Union[int, str]) -> bool:
         """Check if operation exists by name (str) or index (int)."""
         if isinstance(key, str):
             return any(op.operation_name == key for op in self.ops)
@@ -322,7 +331,7 @@ class OperationCollection:
 
 class Operations:
     def __init__(
-        self, operations: list[Operation] | OperationCollection | None = None
+        self, operations: Union[list[Operation], OperationCollection, None] = None
     ) -> None:
         if isinstance(operations, OperationCollection):
             self.ops = operations.ops
@@ -337,7 +346,7 @@ class Operations:
         self.ops[-1].sub_operations.append(operation)
         return self
 
-    def __getitem__(self, index: int | str) -> Operation:
+    def __getitem__(self, index: Union[int, str]) -> Operation:
         if isinstance(index, str):
             for op in self.ops:
                 if op.operation_name == index:
@@ -357,7 +366,7 @@ class Operations:
 
 
 class StepBuilder:
-    def __init__(self, operations: list[Operation] | None = None) -> None:
+    def __init__(self, operations: Optional[list[Operation]] = None) -> None:
         self.operations = (
             Operations(operations) if operations is not None else Operations()
         )
@@ -373,7 +382,7 @@ class StepBuilder:
         self.operations.add(operation)
         return self
 
-    def loop(self, operation: Operation, name: str | None = None) -> StepBuilder:
+    def loop(self, operation: Operation, name: Optional[str] = None) -> StepBuilder:
         """Create nested loop context.
 
         Args:
@@ -580,7 +589,7 @@ class DAGResolver:
         self,
         operations: list[Operation],
         scope_name: str,
-        all_ops: dict[str, str] | None = None,
+        all_ops: Optional[dict[str, str]] = None,
     ) -> list[Operation]:
         """
         Topologically sort operations based on dependencies.
