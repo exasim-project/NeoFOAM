@@ -123,7 +123,9 @@ class TestCollectErrors:
             (MetadataJSONValidation, "invalid_nested.json"),
         ],
     )
-    def test_invalid_subdict_returns_errors(self, io_fixtures, config_class, invalid_file):
+    def test_invalid_subdict_returns_errors(
+        self, io_fixtures, config_class, invalid_file
+    ):
         """collect_errors() returns errors for invalid data inside a subdict."""
         errors = config_class.collect_errors(io_fixtures, file=invalid_file)
 
@@ -210,11 +212,11 @@ class TestValidateInstance:
             (SimpleJSONValidation, "invalid_simple.json"),
         ],
     )
-    def test_invalid_instance_returns_errors(self, io_fixtures, config_class, invalid_file):
+    def test_invalid_instance_returns_errors(
+        self, io_fixtures, config_class, invalid_file
+    ):
         """validate() returns errors for an instance loaded with validate=False."""
-        instance = config_class.load(
-            io_fixtures, validate=False, file=invalid_file
-        )
+        instance = config_class.load(io_fixtures, validate=False, file=invalid_file)
         errors = instance.validate()
 
         assert len(errors) == 2
@@ -235,9 +237,7 @@ class TestValidateInstance:
         self, io_fixtures, config_class, invalid_file
     ):
         """validate() returns errors for a subdict instance with bad data."""
-        instance = config_class.load(
-            io_fixtures, validate=False, file=invalid_file
-        )
+        instance = config_class.load(io_fixtures, validate=False, file=invalid_file)
         errors = instance.validate()
 
         assert len(errors) == 2
