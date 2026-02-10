@@ -23,4 +23,4 @@ def validate_models(models: list[BaseConfig]) -> list[ValidationErrors]:
     Returns:
         List of ValidationErrors with file and subdict context
     """
-    return [err for model in models for err in model.validate()]
+    return [err for model in models for err in model.check_validation()]

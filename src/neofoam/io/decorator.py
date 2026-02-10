@@ -3,7 +3,7 @@
 
 """IOStrategy decorator and helper functions (YAML, JSON, Custom)."""
 
-from typing import Optional
+from typing import Any, Callable, Optional, TypeVar
 
 from neofoam.io.validation_types import IOMetadata, ReadingStrategy, WritingStrategy
 from neofoam.io.strategies import YAMLStrategy, JSONStrategy
@@ -12,7 +12,7 @@ from neofoam.io.strategies import YAMLStrategy, JSONStrategy
 def YAML(
     file: str,
     subdict: Optional[str] = None,
-) -> dict:
+) -> dict[str, Any]:
     """Helper to create YAML strategy configuration.
 
     Args:
@@ -48,7 +48,7 @@ def YAML(
 def JSON(
     file: str,
     subdict: Optional[str] = None,
-) -> dict:
+) -> dict[str, Any]:
     """Helper to create JSON strategy configuration.
 
     Args:
@@ -81,7 +81,7 @@ def Custom(
     file: str,
     reading_strategy: ReadingStrategy,
     writing_strategy: Optional[WritingStrategy] = None,
-) -> dict:
+) -> dict[str, Any]:
     """Helper to create custom strategy configuration.
 
     Args:
@@ -104,7 +104,10 @@ def Custom(
     }
 
 
-def IOStrategy(config: dict):
+T = TypeVar("T")
+
+
+def IOStrategy(config: dict[str, Any]) -> Callable[[type[T]], type[T]]:
     """Decorator to set IO strategy on a configuration class.
 
     Sets ``io_config`` on the decorated class to an :class:`IOMetadata` instance.
@@ -123,8 +126,8 @@ def IOStrategy(config: dict):
     """
     reader = config.get("reading_strategy", YAMLStrategy())
 
-    def decorator(cls):
-        cls.io_config = IOMetadata(
+    def decorator(cls: type[T]) -> type[T]:
+        cls.io_config = IOMetadata(  # type: ignore[attr-defined]
             file=config.get("input_file", f"{cls.__name__.lower()}.yaml"),
             reader=reader,
             writer=config.get("writing_strategy", reader),

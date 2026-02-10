@@ -3,7 +3,7 @@
 
 """BaseConfig — Pydantic model with automatic IO strategy registration."""
 
-from typing import ClassVar, Optional, Type, TypeVar, Union
+from typing import ClassVar, Optional, Type, TypeVar, Union, cast
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
@@ -113,7 +113,7 @@ class BaseConfig(BaseModel):
         if validate:
             return cls.model_validate(data)
 
-        return cls.model_construct(**data)
+        return cast(T, cls.model_construct(**data))
 
     @property
     def configs(self) -> list["BaseConfig"]:
@@ -285,7 +285,7 @@ class BaseConfig(BaseModel):
         except ValidationError as exc:
             return cls._wrap_errors(exc, file_override=file)
 
-    def validate(self) -> list[ValidationErrors]:
+    def check_validation(self) -> list[ValidationErrors]:
         """Validate this loaded instance and return errors.
 
         Re-validates the model's current data against its field types

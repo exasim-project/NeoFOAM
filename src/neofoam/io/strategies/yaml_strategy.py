@@ -70,7 +70,7 @@ class YAMLStrategy(SubdictMixin):
             with open(path, "w", encoding=encoding) as f:
                 yaml.dump(data, f, default_flow_style=False, sort_keys=False)
         else:
-            existing_data = {}
+            existing_data: dict[str, Any] = {}
             if path.exists():
                 with open(path, "r", encoding=encoding) as f:
                     existing_data = yaml.safe_load(f) or {}

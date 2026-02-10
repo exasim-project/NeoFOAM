@@ -30,7 +30,9 @@ class SubdictMixin:
         self.subdict_path = subdict_path
         self.path_parts = subdict_path.split(".") if subdict_path else None
 
-    def _get_nested(self, data: dict, path_parts: list[str]) -> dict:
+    def _get_nested(
+        self, data: dict[str, Any], path_parts: list[str]
+    ) -> dict[str, Any]:
         """Navigate to nested dict, raising KeyError if path doesn't exist.
 
         Args:
@@ -63,7 +65,9 @@ class SubdictMixin:
             )
         return current
 
-    def _set_nested(self, data: dict, path_parts: list[str], value: dict) -> None:
+    def _set_nested(
+        self, data: dict[str, Any], path_parts: list[str], value: dict[str, Any]
+    ) -> None:
         """Set value at nested path, creating intermediate dicts as needed.
 
         Args:
@@ -91,6 +95,9 @@ class SubdictMixin:
             KeyError: If the subdict path doesn't resolve
         """
         if not self.subdict_path:
+            return full_data
+
+        if not self.path_parts:
             return full_data
 
         if len(self.path_parts) == 1:
@@ -122,6 +129,9 @@ class SubdictMixin:
             Merged full file data
         """
         if not self.subdict_path:
+            return new_data
+
+        if not self.path_parts:
             return new_data
 
         if len(self.path_parts) == 1:
