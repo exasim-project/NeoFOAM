@@ -11,14 +11,16 @@ from typing import Any, Optional, Protocol, runtime_checkable
 class ReadingStrategy(Protocol):
     """Protocol for reading configuration files."""
 
-    def read(self, path: Any, encoding: str = "utf-8") -> dict: ...
+    def read(self, path: Any, encoding: str = "utf-8") -> dict[str, Any]: ...
 
 
 @runtime_checkable
 class WritingStrategy(Protocol):
     """Protocol for writing configuration files."""
 
-    def write(self, data: dict, path: Any, encoding: str = "utf-8") -> None: ...
+    def write(
+        self, data: dict[str, Any], path: Any, encoding: str = "utf-8"
+    ) -> None: ...
 
 
 @dataclass

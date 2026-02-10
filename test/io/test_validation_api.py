@@ -194,16 +194,16 @@ class TestCollectErrors:
 
 
 class TestValidateInstance:
-    """Tests for BaseConfig.validate() instance method."""
+    """Tests for BaseConfig.check_validation() instance method."""
 
     @pytest.mark.parametrize(
         "config_class",
         [SimpleYAMLValidation, SimpleJSONValidation],
     )
     def test_valid_instance_returns_empty(self, io_fixtures, config_class):
-        """validate() returns [] for a correctly loaded instance."""
+        """check_validation() returns [] for a correctly loaded instance."""
         instance = config_class.load(io_fixtures)
-        assert instance.validate() == []
+        assert instance.check_validation() == []
 
     @pytest.mark.parametrize(
         "config_class,invalid_file",
@@ -215,9 +215,9 @@ class TestValidateInstance:
     def test_invalid_instance_returns_errors(
         self, io_fixtures, config_class, invalid_file
     ):
-        """validate() returns errors for an instance loaded with validate=False."""
+        """check_validation() returns errors for an instance loaded with validate=False."""
         instance = config_class.load(io_fixtures, validate=False, file=invalid_file)
-        errors = instance.validate()
+        errors = instance.check_validation()
 
         assert len(errors) == 2
         assert all(isinstance(e, ValidationErrors) for e in errors)
@@ -236,9 +236,9 @@ class TestValidateInstance:
     def test_invalid_subdict_instance_returns_errors(
         self, io_fixtures, config_class, invalid_file
     ):
-        """validate() returns errors for a subdict instance with bad data."""
+        """check_validation() returns errors for a subdict instance with bad data."""
         instance = config_class.load(io_fixtures, validate=False, file=invalid_file)
-        errors = instance.validate()
+        errors = instance.check_validation()
 
         assert len(errors) == 2
 
@@ -246,13 +246,13 @@ class TestValidateInstance:
         assert all(e.subdict == "metadata" for e in errors)
 
     def test_mutated_instance_catches_new_errors(self, io_fixtures):
-        """validate() catches errors introduced by mutation after load."""
+        """check_validation() catches errors introduced by mutation after load."""
         instance = SimpleYAMLValidation.load(io_fixtures)
-        assert instance.validate() == []
+        assert instance.check_validation() == []
 
         # Mutate to invalid state
         instance.count = -1  # violates gt=0
-        errors = instance.validate()
+        errors = instance.check_validation()
         assert len(errors) == 1
         assert errors[0].field == ("count",)
         assert errors[0].error_type == "greater_than"
