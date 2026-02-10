@@ -4,9 +4,35 @@
 """Shared validation types to avoid circular imports."""
 
 from dataclasses import dataclass
-from typing import Any, Optional, Type
+from typing import Any, Optional, Protocol, runtime_checkable
 
-from pydantic import BaseModel
+
+@runtime_checkable
+class ReadingStrategy(Protocol):
+    """Protocol for reading configuration files."""
+
+    def read(self, path: Any, encoding: str = "utf-8") -> dict: ...
+
+
+@runtime_checkable
+class WritingStrategy(Protocol):
+    """Protocol for writing configuration files."""
+
+    def write(self, data: dict, path: Any, encoding: str = "utf-8") -> None: ...
+
+
+@dataclass
+class IOMetadata:
+    """Metadata set by the ``@IOStrategy`` decorator."""
+
+    file: str
+    reader: ReadingStrategy
+    writer: WritingStrategy
+
+    @property
+    def subdict(self) -> Optional[str]:
+        """Get the subdict path from the reader, if any."""
+        return getattr(self.reader, "subdict_path", None)
 
 
 @dataclass(frozen=True)
@@ -17,12 +43,3 @@ class ValidationErrors:
     file_name: str
     input_value: Any = None
     subdict: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class ModelInputDefinition:
-    baseModel: Type[BaseModel]
-    relative_path: str
-    encoding: str = "utf-8"
-    required: bool = True
-    description: str = ""
