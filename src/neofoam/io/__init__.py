@@ -3,29 +3,32 @@
 
 """IO utilities for configuration management."""
 
-from neofoam.io.strategies import (
-    # Protocols
+from neofoam.io.protocols import (
     ReadingStrategy,
     WritingStrategy,
-    # Concrete strategies
+)
+from neofoam.io.strategies import (
+    SubdictMixin,
     YAMLStrategy,
     JSONStrategy,
-    # Registry
-    IOStrategyRegistry,
-    # Helper functions
+)
+from neofoam.io.registry import IOStrategyRegistry
+from neofoam.io.decorator import (
     YAML,
     JSON,
     Custom,
-    # Decorator
     IOStrategy,
-    # Base class
-    BaseConfig,
 )
+from neofoam.io.base import BaseConfig
+from neofoam.io.validation_types import ValidationErrors
+from neofoam.io.input_validation import validate_models
 
 __all__ = [
     # Protocols
     "ReadingStrategy",
     "WritingStrategy",
+    # Subdict mixin
+    "SubdictMixin",
     # Concrete strategies
     "YAMLStrategy",
     "JSONStrategy",
@@ -39,4 +42,7 @@ __all__ = [
     "IOStrategy",
     # Base class
     "BaseConfig",
+    # Validation
+    "ValidationErrors",
+    "validate_models",
 ]

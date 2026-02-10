@@ -1,17 +1,20 @@
 {
-  "application": {
-    "name": "solver"
+  "metadata": {
+    "name": "TestApp",
+    "priority": 0
   },
-  "solver": {
-    "linear": {
-      "method": "PCG",
-      "tolerance": 1e-06,
-      "maxIterations": 1000
+  "processing": {
+    "stage1": {
+      "algorithm": "fast",
+      "threshold": 0.001,
+      "maxIterations": 100,
+      "batchSize": 32
     },
-    "nonlinear": {
-      "method": "Newton",
-      "tolerance": 1e-08,
-      "maxIterations": 50
+    "stage2": {
+      "algorithm": "accurate",
+      "threshold": 0.0001,
+      "maxIterations": 50,
+      "batchSize": 16
     }
   }
 }

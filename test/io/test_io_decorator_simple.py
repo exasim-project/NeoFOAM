@@ -7,11 +7,13 @@ Tests for simple IO decorator patterns (no subdicts).
 Demonstrates:
 - Loading simple configs from YAML and JSON
 - Writing simple configs to YAML and JSON
+- Validation error reporting via load(validate=True/False)
+- FileNotFoundError on missing file
 """
 
 import pytest
 
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
 from neofoam.io import (
     BaseConfig,
     YAML,
@@ -20,28 +22,20 @@ from neofoam.io import (
 )
 
 
-# ============================================================================
-# Config Classes
-# ============================================================================
-
-
 @IOStrategy(YAML("simple.yaml"))
 class SimpleYAMLConfig(BaseConfig):
-    name: str
-    value: int
-    enabled: bool
+    identifier: str
+    count: int = Field(gt=0)
+    active: bool
+    percentage: float = Field(ge=0, le=100)
 
 
 @IOStrategy(JSON("simple.json"))
 class SimpleJSONConfig(BaseConfig):
-    name: str
-    value: int
-    enabled: bool
-
-
-# ============================================================================
-# Tests
-# ============================================================================
+    identifier: str
+    count: int = Field(gt=0)
+    active: bool
+    percentage: float = Field(ge=0, le=100)
 
 
 @pytest.mark.parametrize(
@@ -55,9 +49,10 @@ def test_load_simple(io_fixtures, config_class):
     """Test loading simple config from fixture (YAML and JSON)."""
     loaded = config_class.load(io_fixtures)
 
-    assert loaded.name == "test"
-    assert loaded.value == 42
-    assert loaded.enabled is True
+    assert loaded.identifier == "test_config"
+    assert loaded.count == 42
+    assert loaded.active is True
+    assert loaded.percentage == 75.5
 
 
 @pytest.mark.parametrize(
@@ -69,7 +64,7 @@ def test_load_simple(io_fixtures, config_class):
 )
 def test_write_simple(tmp_path, config_class, filename):
     """Test writing simple config to file (YAML and JSON)."""
-    config = config_class(name="demo", value=100, enabled=False)
+    config = config_class(identifier="demo", count=100, active=False, percentage=50.0)
 
     # Write to file
     output_file = tmp_path / filename
@@ -79,60 +74,63 @@ def test_write_simple(tmp_path, config_class, filename):
 
     # Verify by loading back directly from the file
     loaded = config_class.load(output_file)
-    assert loaded.name == "demo"
-    assert loaded.value == 100
-    assert loaded.enabled is False
-
-
-# ============================================================================
-# Error Validation Tests
-# ============================================================================
+    assert loaded.identifier == "demo"
+    assert loaded.count == 100
+    assert loaded.active is False
+    assert loaded.percentage == 50.0
 
 
 @pytest.mark.parametrize(
-    "format,config_file",
+    "config_class,invalid_file",
     [
-        ("yaml", "invalid_simple.yaml"),
-        ("json", "invalid_simple.json"),
+        (SimpleYAMLConfig, "invalid_simple.yaml"),
+        (SimpleJSONConfig, "invalid_simple.json"),
     ],
 )
-def test_validation_error_wrong_type(io_fixtures, format, config_file):
-    """Test that validation correctly identifies wrong field types.
+def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
+    """Test that validation correctly identifies wrong field types and validator violations.
 
-    The invalid configs have 'value' as a string instead of int.
-    Uses model_construct to load without validation, then model_validate to check errors.
+    The invalid configs have 'count' as a string instead of int,
+    and percentage=150 (violates le=100 constraint).
+    load(validate=False) bypasses validation so all data is available for inspection.
+    load(validate=True) raises ValidationError with all errors.
     """
-    # Create config class dynamically for the invalid file
-    if format == "yaml":
+    # Load without validation - all data is available for inspection
+    loaded_data = config_class.load(io_fixtures, validate=False, file=invalid_file)
+    assert loaded_data.identifier == "test_config"
+    assert loaded_data.count == "not_an_integer"  # Wrong type loaded
+    assert loaded_data.active is True
+    assert loaded_data.percentage == 150  # Invalid value loaded
 
-        @IOStrategy(YAML(config_file))
-        class InvalidSimpleConfig(BaseConfig):
-            name: str
-            value: int
-            enabled: bool
-    else:
-
-        @IOStrategy(JSON(config_file))
-        class InvalidSimpleConfig(BaseConfig):
-            name: str
-            value: int
-            enabled: bool
-
-    # Load with model_construct (bypasses validation)
-    loaded_data = InvalidSimpleConfig.load(io_fixtures)
-
-    # Verify data was loaded (with wrong type)
-    assert loaded_data.name == "test"
-    assert loaded_data.value == "not_an_integer"  # Wrong type loaded
-    assert loaded_data.enabled is True
-
-    # Now validate - should raise ValidationError for wrong type
+    # Load with validation - raises ValidationError with all errors
     with pytest.raises(ValidationError) as exc_info:
-        InvalidSimpleConfig.model_validate(loaded_data.model_dump())
+        config_class.load(io_fixtures, validate=True, file=invalid_file)
 
     # Verify the error details
     errors = exc_info.value.errors()
-    assert len(errors) == 1
-    assert errors[0]["type"] == "int_parsing"
-    assert errors[0]["loc"] == ("value",)
-    assert "not_an_integer" in str(errors[0]["input"])
+    assert len(errors) == 2
+
+    # Check for count type error
+    int_errors = [e for e in errors if e["loc"] == ("count",)]
+    assert len(int_errors) == 1
+    assert int_errors[0]["type"] == "int_parsing"
+    assert "not_an_integer" in str(int_errors[0]["input"])
+
+    # Check for percentage constraint violation
+    le_errors = [e for e in errors if e["loc"] == ("percentage",)]
+    assert len(le_errors) == 1
+    assert le_errors[0]["type"] == "less_than_equal"
+    assert le_errors[0]["ctx"]["le"] == 100
+
+
+@pytest.mark.parametrize(
+    "config_class,missing_file",
+    [
+        (SimpleYAMLConfig, "nonexistent.yaml"),
+        (SimpleJSONConfig, "nonexistent.json"),
+    ],
+)
+def test_load_missing_file_raises(tmp_path, config_class, missing_file):
+    """Loading from a non-existent file raises FileNotFoundError."""
+    with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+        config_class.load(tmp_path, file=missing_file)
