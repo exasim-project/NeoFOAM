@@ -28,6 +28,9 @@ int main(int argc, char* argv[])
 {
     NeoN::initialize(argc, argv);
     {
+        // Measure the total execution time of the program
+        Kokkos::Profiling::pushRegion("Total execution");
+        Kokkos::Profiling::pushRegion("Preprocessing");
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
 #include "createTime.H"
@@ -62,10 +65,10 @@ int main(int argc, char* argv[])
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+        Kokkos::Profiling::popRegion(); // Preprocessing
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            // NeoFOAM::Profiling::Region TL("Time loop");
             Kokkos::Profiling::pushRegion("Time loop");
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
@@ -90,22 +93,24 @@ int main(int argc, char* argv[])
             {
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
-                // NeoFOAM::Profiling::Region MP("Momentum predictor - UEqn.solve");
+                Kokkos::Profiling::pushRegion("Momentum predictor - UEqn.solve");
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
+                Kokkos::Profiling::popRegion(); // Momentum predictor - UEqn.solve
             }
             else
             {
                 // NOTE since computing rAU and HbyA requires an assembled system matrix we
                 // explicitly trigger assembly here.
-                // NeoFOAM::Profiling::Region noMP("No momentum predictor - UEqn.assemble");
+                Kokkos::Profiling::pushRegion("No momentum predictor - UEqn.assemble");
                 UEqn.assemble();
+                Kokkos::Profiling::popRegion(); // No momentum predictor - UEqn.assemble
             }
 
             // --- PISO loop
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
-                // NeoFOAM::Profiling::Region piso("PISO loop");
+                Kokkos::Profiling::pushRegion("PISO loop");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -128,7 +133,7 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
-                    // NeoFOAM::Profiling::Region pisoNonOrth("PISO non-orthogonal corrector loop");
+                    Kokkos::Profiling::pushRegion("PISO non-orthogonal corrector loop");
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
@@ -142,8 +147,9 @@ int main(int argc, char* argv[])
                     }
 
                     {
-                        // NeoFOAM::Profiling::Region pEqnSolve("pEqn.solve");
+                        Kokkos::Profiling::pushRegion("pEqn.solve");
                         auto stats = pEqn.solve();
+                        Kokkos::Profiling::popRegion(); // pEqn.solve
                     }
                     p.correctBoundaryConditions();
 
@@ -151,14 +157,17 @@ int main(int argc, char* argv[])
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
+                    Kokkos::Profiling::popRegion(); // PISO non-orthogonal corrector loop
                 }
                 // TODO: missing
                 // #include "continuityErrs.H"
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
+                Kokkos::Profiling::popRegion(); // PISO loop
             }
 
+            Kokkos::Profiling::pushRegion("Write results");
             runTime.write();
             if (runTime.outputTime())
             {
@@ -169,8 +178,10 @@ int main(int argc, char* argv[])
             }
 
             runTime.printExecutionTime(Info);
+            Kokkos::Profiling::popRegion(); // Write results
             Kokkos::Profiling::popRegion(); // Time loop
         }
+        Kokkos::Profiling::popRegion(); // Total execution
     }
     NeoN::finalize();
 
