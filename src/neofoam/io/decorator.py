@@ -5,24 +5,18 @@
 
 from typing import Optional
 
-from neofoam.io.protocols import ReadingStrategy, WritingStrategy
+from neofoam.io.validation_types import IOMetadata, ReadingStrategy, WritingStrategy
 from neofoam.io.strategies import YAMLStrategy, JSONStrategy
-from neofoam.io.registry import IOStrategyRegistry
-from neofoam.io.validation_types import ModelInputDefinition
 
 
 def YAML(
     file: str,
-    required: bool = True,
-    description: str = "",
     subdict: Optional[str] = None,
 ) -> dict:
     """Helper to create YAML strategy configuration.
 
     Args:
         file: Relative path to YAML file
-        required: Whether the file is required
-        description: Description of this configuration
         subdict: Optional subdict path for partial file updates.
                  Examples: "PIMPLE" (flat) or "solvers.p" (nested with dots)
 
@@ -48,23 +42,17 @@ def YAML(
         "input_file": file,
         "reading_strategy": strategy,
         "writing_strategy": strategy,
-        "required": required,
-        "description": description,
     }
 
 
 def JSON(
     file: str,
-    required: bool = True,
-    description: str = "",
     subdict: Optional[str] = None,
 ) -> dict:
     """Helper to create JSON strategy configuration.
 
     Args:
         file: Relative path to JSON file
-        required: Whether the file is required
-        description: Description of this configuration
         subdict: Optional subdict path for partial file updates.
                  Examples: "database" (flat) or "services.database" (nested with dots)
 
@@ -86,8 +74,6 @@ def JSON(
         "input_file": file,
         "reading_strategy": strategy,
         "writing_strategy": strategy,
-        "required": required,
-        "description": description,
     }
 
 
@@ -95,8 +81,6 @@ def Custom(
     file: str,
     reading_strategy: ReadingStrategy,
     writing_strategy: Optional[WritingStrategy] = None,
-    required: bool = True,
-    description: str = "",
 ) -> dict:
     """Helper to create custom strategy configuration.
 
@@ -104,8 +88,6 @@ def Custom(
         file: Relative path to file
         reading_strategy: Custom reading strategy
         writing_strategy: Custom writing strategy (defaults to reading_strategy)
-        required: Whether the file is required
-        description: Description of this configuration
 
     Returns:
         Dictionary with strategy configuration
@@ -119,16 +101,13 @@ def Custom(
         "input_file": file,
         "reading_strategy": reading_strategy,
         "writing_strategy": writing_strategy or reading_strategy,
-        "required": required,
-        "description": description,
     }
 
 
 def IOStrategy(config: dict):
     """Decorator to set IO strategy on a configuration class.
 
-    Stores strategy configuration in the class's __io_strategy__ attribute,
-    which is then read by BaseConfig.__init_subclass__ for automatic registration.
+    Sets ``io_config`` on the decorated class to an :class:`IOMetadata` instance.
 
     Args:
         config: Strategy configuration dictionary (usually from YAML/JSON/Custom helper)
@@ -142,25 +121,14 @@ def IOStrategy(config: dict):
             param1: float
             param2: float
     """
+    reader = config.get("reading_strategy", YAMLStrategy())
 
     def decorator(cls):
-        # Store strategy configuration in private attribute
-        cls.__io_strategy__ = config
-
-        # Manually trigger registration since decorator runs after __init_subclass__
-        IOStrategyRegistry(
-            cls, config.get("reading_strategy"), config.get("writing_strategy")
+        cls.io_config = IOMetadata(
+            file=config.get("input_file", f"{cls.__name__.lower()}.yaml"),
+            reader=reader,
+            writer=config.get("writing_strategy", reader),
         )
-
-        # Create ModelInputDefinition from decorator config
-        input_definition = ModelInputDefinition(
-            baseModel=cls,
-            relative_path=config.get("input_file", f"{cls.__name__.lower()}.yaml"),
-            required=config.get("required", True),
-            description=config.get("description", ""),
-        )
-        cls.register_input_definition(input_definition)
-
         return cls
 
     return decorator

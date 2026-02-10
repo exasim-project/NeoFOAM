@@ -3,75 +3,61 @@
 
 """BaseConfig — Pydantic model with automatic IO strategy registration."""
 
-from typing import Any, Optional, Type, TypeVar, Union
+from typing import ClassVar, Optional, Type, TypeVar, Union
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
 
-from neofoam.io.protocols import ReadingStrategy, WritingStrategy
-from neofoam.io.validation_types import ModelInputDefinition, ValidationErrors
+from neofoam.io.validation_types import (
+    IOMetadata,
+    ReadingStrategy,
+    WritingStrategy,
+    ValidationErrors,
+)
 
 T = TypeVar("T", bound="BaseConfig")
 
 
 class BaseConfig(BaseModel):
-    """Base class for configurations with reading/writing strategies."""
+    """Base class for configurations with reading/writing strategies.
 
-    # Store strategies in a dict to avoid Pydantic field detection
-    # Key is class name, value is (reading_strategy, writing_strategy) tuple
-    __strategies__: dict[str, tuple] = {}
+    Subclasses decorated with ``@IOStrategy`` get an ``io_config``
+    class variable of type :class:`IOMetadata`.
+    """
 
-    # Store ModelInputDefinition for each config class
-    # Key is class name, value is ModelInputDefinition
-    __input_definitions__: dict[str, ModelInputDefinition] = {}
-
-    # Store IOStrategyRegistry instances for dynamic updates
-    __registries__: dict[str, Any] = {}
-
-    def __init_subclass__(cls, **kwargs):
-        """Automatically register strategies and input definition when subclass is defined."""
-        super().__init_subclass__(**kwargs)
-
-        # Note: Decorator pattern (@IOStrategy) runs AFTER __init_subclass__,
-        # so decorator handles its own registration.
+    io_config: ClassVar[Optional[IOMetadata]] = None
 
     @classmethod
-    def register_input_definition(cls, input_def: ModelInputDefinition) -> None:
-        """Register ModelInputDefinition for this config class."""
-        cls.__input_definitions__[cls.__name__] = input_def
-
-    @classmethod
-    def get_input_definition(cls) -> Optional[ModelInputDefinition]:
-        """Get ModelInputDefinition for this config class."""
-        return cls.__input_definitions__.get(cls.__name__)
+    def _get_io(cls) -> IOMetadata:
+        """Return ``io_config`` or raise if not registered."""
+        if cls.io_config is None:
+            raise ValueError(f"No IO strategy registered for {cls.__name__}")
+        return cls.io_config
 
     @classmethod
     def get_default_path(cls, case_dir: Union[Path, str] = ".") -> Path:
-        """Get default file path from registered ModelInputDefinition."""
-        input_def = cls.get_input_definition()
-        if not input_def:
-            raise ValueError(f"No ModelInputDefinition registered for {cls.__name__}")
-        return Path(case_dir) / input_def.relative_path
+        """Get default file path from ``io_config.file``."""
+        return Path(case_dir) / cls._get_io().file
 
     @classmethod
     def get_reading_strategy(cls) -> ReadingStrategy:
         """Get the reading strategy for this config class."""
-        return cls.__strategies__[cls.__name__][0]
+        return cls._get_io().reader
 
     @classmethod
     def get_writing_strategy(cls) -> WritingStrategy:
         """Get the writing strategy for this config class."""
-        return cls.__strategies__[cls.__name__][1]
+        return cls._get_io().writer
 
     @classmethod
     def set_reading_strategy(cls, strategy: ReadingStrategy) -> None:
         """Set custom reading strategy for this config class."""
-        cls.__registries__[cls.__name__].set_reading_strategy(strategy)
+        cls._get_io().reader = strategy
 
     @classmethod
     def set_writing_strategy(cls, strategy: WritingStrategy) -> None:
         """Set custom writing strategy for this config class."""
-        cls.__registries__[cls.__name__].set_writing_strategy(strategy)
+        cls._get_io().writer = strategy
 
     @classmethod
     def load(
@@ -136,7 +122,7 @@ class BaseConfig(BaseModel):
 
     @property
     def file_name(self) -> str:
-        """Get the file name for this configuration from ModelInputDefinition.
+        """Get the file name for this configuration.
 
         Returns:
             Relative path to the configuration file
@@ -146,8 +132,8 @@ class BaseConfig(BaseModel):
             >>> config.file_name
             'solver_config.yaml'
         """
-        input_def = self.__class__.get_input_definition()
-        return input_def.relative_path if input_def else self.__class__.__name__
+        io = type(self).io_config
+        return io.file if io else type(self).__name__
 
     @property
     def subdict(self) -> Optional[str]:
@@ -165,13 +151,8 @@ class BaseConfig(BaseModel):
             >>> config.subdict
             None
         """
-        try:
-            reading_strategy = self.__class__.get_reading_strategy()
-            if hasattr(reading_strategy, "subdict_path"):
-                return reading_strategy.subdict_path
-        except (KeyError, AttributeError):
-            pass
-        return None
+        io = type(self).io_config
+        return io.subdict if io else None
 
     @property
     def metadata(self) -> tuple[str, Optional[str]]:
@@ -235,19 +216,12 @@ class BaseConfig(BaseModel):
         Returns:
             List of ``ValidationErrors`` with file and subdict context.
         """
-        input_def = cls.get_input_definition()
         file_name = file_override or (
-            input_def.relative_path if input_def else cls.__name__
+            cls.io_config.file if cls.io_config else cls.__name__
         )
 
-        # Resolve subdict from reading strategy
-        subdict: Optional[str] = None
-        try:
-            reading_strategy = cls.get_reading_strategy()
-            if hasattr(reading_strategy, "subdict_path"):
-                subdict = reading_strategy.subdict_path
-        except (KeyError, AttributeError):
-            pass
+        # Resolve subdict from io_config
+        subdict = cls.io_config.subdict if cls.io_config else None
 
         return [
             ValidationErrors(
@@ -285,8 +259,7 @@ class BaseConfig(BaseModel):
         Returns:
             List of ``ValidationErrors`` (empty if valid)
         """
-        input_def = cls.get_input_definition()
-        file_name = file or (input_def.relative_path if input_def else cls.__name__)
+        file_name = file or (cls.io_config.file if cls.io_config else cls.__name__)
 
         try:
             cls.load(case_dir, encoding=encoding, validate=True, file=file)
