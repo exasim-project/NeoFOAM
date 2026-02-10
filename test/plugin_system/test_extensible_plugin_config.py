@@ -6,7 +6,7 @@ Refactored to use a generic registry and factory for multiple extensible models.
 from typing import Any, Literal
 import pytest
 from pydantic import BaseModel, ValidationError
-from foamadapter.core.plugin_system import PluginSystem
+from neofoam.core.plugin_system import PluginSystem
 
 
 @PluginSystem.register(discriminator_variable="shape", discriminator="shape_type")

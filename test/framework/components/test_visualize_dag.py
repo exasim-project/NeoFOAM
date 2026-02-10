@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from foamadapter.framework.dag import (
+from neofoam.framework.dag import (
     build_dag,
     build_global_dag,
     compute_nodes_order,
 )
-from foamadapter.framework.pyvis_utils import digraph_to_pyvis_html
-from foamadapter.framework.types import OperationMetadata, OperationNumber
+from neofoam.framework.pyvis_utils import digraph_to_pyvis_html
+from neofoam.framework.types import OperationMetadata, OperationNumber
 
 PLOT_DAG = True
 

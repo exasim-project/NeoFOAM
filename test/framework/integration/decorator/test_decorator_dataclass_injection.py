@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from foamadapter.framework.context import Context, FieldUpdates
-from foamadapter.framework.decorator import operation
-from foamadapter.framework.operations import (
+from neofoam.framework.context import Context, FieldUpdates
+from neofoam.framework.decorator import operation
+from neofoam.framework.operations import (
     context_adapter,
 )
 

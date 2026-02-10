@@ -3,13 +3,13 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from foamadapter.framework.context import Context, FieldUpdates
-from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.model import Model
-from foamadapter.framework.operations import Operation, OperationCollection, Operations
-from foamadapter.framework.pyvis_utils import digraph_to_pyvis_html
-from foamadapter.framework.simulation import Domain, Simulation
-from foamadapter.framework.solver import Solver
+from neofoam.framework.context import Context, FieldUpdates
+from neofoam.framework.decorator import decorated_member_functions
+from neofoam.framework.model import Model
+from neofoam.framework.operations import Operation, OperationCollection, Operations
+from neofoam.framework.pyvis_utils import digraph_to_pyvis_html
+from neofoam.framework.simulation import Domain, Simulation
+from neofoam.framework.solver import Solver
 
 
 @Model

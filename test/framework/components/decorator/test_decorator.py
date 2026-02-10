@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 import pytest
 
-from foamadapter.framework.decorator import (
+from neofoam.framework.decorator import (
     OpType,
     condition,
     decorated_member_functions,

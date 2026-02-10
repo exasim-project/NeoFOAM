@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 import networkx as nx  # type: ignore[import-untyped]
 
-from foamadapter.framework.operations import OperationCollection, Operations
+from neofoam.framework.operations import OperationCollection, Operations
 
 from .types import OperationMetadata
 

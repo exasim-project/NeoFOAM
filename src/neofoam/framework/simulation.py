@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from foamadapter.framework.operations import Operations
+from neofoam.framework.operations import Operations
 
 from .context import Context
 from .couplingInterface import CouplingInterface

@@ -2,17 +2,17 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from foamadapter.framework.context import Context, FieldUpdates
-from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.model import Model
-from foamadapter.framework.operations import (
+from neofoam.framework.context import Context, FieldUpdates
+from neofoam.framework.decorator import decorated_member_functions
+from neofoam.framework.model import Model
+from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     OperationCollection,
     Operations,
     StepBuilder,
 )
-from foamadapter.framework.solver import Solver
+from neofoam.framework.solver import Solver
 
 
 class MaxIterations:

@@ -18,7 +18,7 @@ app.add_typer(solver_app, name="solver", help="Run foam solvers.")
 )
 def icofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow of Newtonian fluids."""
-    from foamadapter.solver.icofoam import IcoFoam
+    from neofoam.solver.icofoam import IcoFoam
 
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
@@ -33,7 +33,7 @@ def icofoam(ctx: typer.Context) -> None:
 def pimplefoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, turbulent flow of Newtonian fluids"""
 
-    from foamadapter.solver.pimplefoam import PimpleFoam
+    from neofoam.solver.pimplefoam import PimpleFoam
 
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]

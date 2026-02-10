@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-from foamadapter.framework.types import OperationMetadata, OperationNumber
+from neofoam.framework.types import OperationMetadata, OperationNumber
 
 
 def test_node_data():
