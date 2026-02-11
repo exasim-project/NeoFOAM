@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
             {
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
-                Kokkos::Profiling::pushRegion("Momentum predictor - UEqn.solve");
+                Kokkos::Profiling::pushRegion("Momentum predictor (UEqn.solve)");
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
                 Kokkos::Profiling::popRegion(); // Momentum predictor - UEqn.solve
             }
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
             {
                 // NOTE since computing rAU and HbyA requires an assembled system matrix we
                 // explicitly trigger assembly here.
-                Kokkos::Profiling::pushRegion("No momentum predictor - UEqn.assemble");
+                Kokkos::Profiling::pushRegion("No momentum predictor (UEqn.assemble)");
                 UEqn.assemble();
                 Kokkos::Profiling::popRegion(); // No momentum predictor - UEqn.assemble
             }
