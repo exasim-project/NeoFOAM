@@ -11,7 +11,7 @@ from neofoam.io.strategies.subdict import SubdictMixin
 
 
 class JSONStrategy(SubdictMixin):
-    """JSON reading and writing strategy.
+    """reading and writing strategy from JSON files with optional subdict support.
 
     Supports three modes via SubdictMixin:
     1. Full file (subdict_path=None): Read/write entire JSON file

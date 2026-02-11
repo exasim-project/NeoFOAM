@@ -87,9 +87,9 @@ def test_load_nested(io_fixtures, metadata_class, stage1_class, stage2_class):
     - Field validators (gt=0, le=1000)
     """
     # Load each subdict independently
-    metadata = metadata_class.load(io_fixtures)
-    stage1 = stage1_class.load(io_fixtures)
-    stage2 = stage2_class.load(io_fixtures)
+    metadata = metadata_class.load(case_dir=io_fixtures)
+    stage1 = stage1_class.load(case_dir=io_fixtures)
+    stage2 = stage2_class.load(case_dir=io_fixtures)
 
     # Verify isolation - each config only sees its subdict
     assert metadata.name == "TestApp"
@@ -122,13 +122,15 @@ def test_validation_error_missing_field(io_fixtures, config_class, invalid_file)
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(io_fixtures, validate=False, file=invalid_file)
+    loaded_data = config_class.load(
+        case_dir=io_fixtures, validate=False, file=invalid_file
+    )
     assert loaded_data.name == "TestApp"
     assert loaded_data.priority == 0  # Invalid value loaded without validation
 
     # Load with validation - raises ValidationError with all errors
     with pytest.raises(ValidationError) as exc_info:
-        config_class.load(io_fixtures, validate=True, file=invalid_file)
+        config_class.load(case_dir=io_fixtures, validate=True, file=invalid_file)
 
     # Verify the error details
     errors = exc_info.value.errors()
@@ -156,7 +158,7 @@ def test_validation_error_missing_field(io_fixtures, config_class, invalid_file)
 def test_load_missing_file_raises(tmp_path, config_class, missing_file):
     """Loading from a non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Configuration file not found"):
-        config_class.load(tmp_path, file=missing_file)
+        config_class.load(case_dir=tmp_path, file=missing_file)
 
 
 @pytest.mark.parametrize(
@@ -172,4 +174,4 @@ def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
     Uses a file that exists but doesn't contain the 'metadata' subdict.
     """
     with pytest.raises(KeyError, match="not found"):
-        config_class.load(io_fixtures, file=config_file)
+        config_class.load(case_dir=io_fixtures, file=config_file)

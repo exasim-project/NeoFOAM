@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-"""IOStrategy decorator and helper functions (YAML, JSON, Custom)."""
+"""IOStrategy decorator and helper functions (YAML, JSON)."""
 
 from typing import Any, Callable, Optional, TypeVar
 
-from neofoam.io.validation_types import IOMetadata, ReadingStrategy, WritingStrategy
+from neofoam.io.validation_types import IOMetadata
 from neofoam.io.strategies import YAMLStrategy, JSONStrategy
 
 
@@ -77,33 +77,6 @@ def JSON(
     }
 
 
-def Custom(
-    file: str,
-    reading_strategy: ReadingStrategy,
-    writing_strategy: Optional[WritingStrategy] = None,
-) -> dict[str, Any]:
-    """Helper to create custom strategy configuration.
-
-    Args:
-        file: Relative path to file
-        reading_strategy: Custom reading strategy
-        writing_strategy: Custom writing strategy (defaults to reading_strategy)
-
-    Returns:
-        Dictionary with strategy configuration
-
-    Example:
-        @IOStrategy(Custom("data.txt", MyCustomStrategy()))
-        class CustomConfig(BaseConfig):
-            data: str
-    """
-    return {
-        "input_file": file,
-        "reading_strategy": reading_strategy,
-        "writing_strategy": writing_strategy or reading_strategy,
-    }
-
-
 T = TypeVar("T")
 
 
@@ -113,7 +86,7 @@ def IOStrategy(config: dict[str, Any]) -> Callable[[type[T]], type[T]]:
     Sets ``io_config`` on the decorated class to an :class:`IOMetadata` instance.
 
     Args:
-        config: Strategy configuration dictionary (usually from YAML/JSON/Custom helper)
+        config: Strategy configuration dictionary (usually from YAML/JSON helper)
 
     Returns:
         Decorator function

@@ -12,7 +12,7 @@ from neofoam.io.strategies.subdict import SubdictMixin
 
 
 class YAMLStrategy(SubdictMixin):
-    """YAML reading and writing strategy.
+    """reading and writing strategy from YAML files with optional subdict support.
 
     Supports three modes via SubdictMixin:
     1. Full file (subdict_path=None): Read/write entire YAML file
