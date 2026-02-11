@@ -1,6 +1,9 @@
 Configuration File IO
 =====================
 
+Why a Config IO Framework?
+--------------------------
+
 NeoFOAM simulations rely on structured data/dictionaries to define solver settings, boundary conditions, and physical models.
 Manually parsing, validating, and writing these files is repetitive and error-prone.
 
@@ -71,9 +74,6 @@ Saving
 
    # Save to a specific case directory
    cfg.save(case_dir="path/to/case")
-
-   # Override filename at save time
-   cfg.save(case_dir="path/to/case", file="alternate.yaml")
 
 When using **subdicts**, ``save()`` performs a **partial update** — it merges only the relevant section and preserves all other sections in the file.
 
