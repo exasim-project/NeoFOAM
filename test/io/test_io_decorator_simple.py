@@ -47,7 +47,7 @@ class SimpleJSONConfig(BaseConfig):
 )
 def test_load_simple(io_fixtures, config_class):
     """Test loading simple config from fixture (YAML and JSON)."""
-    loaded = config_class.load(io_fixtures)
+    loaded = config_class.load(case_dir=io_fixtures)
 
     assert loaded.identifier == "test_config"
     assert loaded.count == 42
@@ -68,12 +68,12 @@ def test_write_simple(tmp_path, config_class, filename):
 
     # Write to file
     output_file = tmp_path / filename
-    config.save(output_file)
+    config.save(case_dir=output_file)
 
     assert output_file.exists()
 
     # Verify by loading back directly from the file
-    loaded = config_class.load(output_file)
+    loaded = config_class.load(case_dir=output_file)
     assert loaded.identifier == "demo"
     assert loaded.count == 100
     assert loaded.active is False
@@ -96,7 +96,9 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(io_fixtures, validate=False, file=invalid_file)
+    loaded_data = config_class.load(
+        case_dir=io_fixtures, validate=False, file=invalid_file
+    )
     assert loaded_data.identifier == "test_config"
     assert loaded_data.count == "not_an_integer"  # Wrong type loaded
     assert loaded_data.active is True
@@ -104,7 +106,7 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
 
     # Load with validation - raises ValidationError with all errors
     with pytest.raises(ValidationError) as exc_info:
-        config_class.load(io_fixtures, validate=True, file=invalid_file)
+        config_class.load(case_dir=io_fixtures, validate=True, file=invalid_file)
 
     # Verify the error details
     errors = exc_info.value.errors()
@@ -133,4 +135,4 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
 def test_load_missing_file_raises(tmp_path, config_class, missing_file):
     """Loading from a non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Configuration file not found"):
-        config_class.load(tmp_path, file=missing_file)
+        config_class.load(case_dir=tmp_path, file=missing_file)

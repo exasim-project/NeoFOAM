@@ -80,7 +80,7 @@ class TestCollectErrors:
     )
     def test_valid_file_returns_empty(self, io_fixtures, config_class):
         """collect_errors() returns [] for a valid file."""
-        errors = config_class.collect_errors(io_fixtures)
+        errors = config_class.collect_errors(case_dir=io_fixtures)
         assert errors == []
 
     @pytest.mark.parametrize(
@@ -89,7 +89,7 @@ class TestCollectErrors:
     )
     def test_valid_subdict_returns_empty(self, io_fixtures, config_class):
         """collect_errors() returns [] for a valid file with subdict."""
-        errors = config_class.collect_errors(io_fixtures)
+        errors = config_class.collect_errors(case_dir=io_fixtures)
         assert errors == []
 
     @pytest.mark.parametrize(
@@ -101,7 +101,7 @@ class TestCollectErrors:
     )
     def test_invalid_file_returns_errors(self, io_fixtures, config_class, invalid_file):
         """collect_errors() returns structured errors for invalid data."""
-        errors = config_class.collect_errors(io_fixtures, file=invalid_file)
+        errors = config_class.collect_errors(case_dir=io_fixtures, file=invalid_file)
 
         assert len(errors) == 2
         assert all(isinstance(e, ValidationErrors) for e in errors)
@@ -127,7 +127,7 @@ class TestCollectErrors:
         self, io_fixtures, config_class, invalid_file
     ):
         """collect_errors() returns errors for invalid data inside a subdict."""
-        errors = config_class.collect_errors(io_fixtures, file=invalid_file)
+        errors = config_class.collect_errors(case_dir=io_fixtures, file=invalid_file)
 
         assert len(errors) == 2
 
@@ -150,7 +150,7 @@ class TestCollectErrors:
     )
     def test_missing_file_returns_error(self, tmp_path, config_class, missing_file):
         """collect_errors() returns FileNotFound error instead of raising."""
-        errors = config_class.collect_errors(tmp_path, file=missing_file)
+        errors = config_class.collect_errors(case_dir=tmp_path, file=missing_file)
 
         assert len(errors) == 1
         assert errors[0].error_type == "FileNotFound"
@@ -165,7 +165,7 @@ class TestCollectErrors:
     )
     def test_missing_subdict_returns_error(self, io_fixtures, config_class, wrong_file):
         """collect_errors() returns KeyError for wrong subdict path."""
-        errors = config_class.collect_errors(io_fixtures, file=wrong_file)
+        errors = config_class.collect_errors(case_dir=io_fixtures, file=wrong_file)
 
         assert len(errors) == 1
         assert errors[0].error_type == "KeyError"
@@ -173,13 +173,13 @@ class TestCollectErrors:
     def test_file_name_context_uses_override(self, io_fixtures):
         """When file= is passed, errors report that filename, not the default."""
         errors = SimpleYAMLValidation.collect_errors(
-            io_fixtures, file="invalid_simple.yaml"
+            case_dir=io_fixtures, file="invalid_simple.yaml"
         )
         assert all(e.file_name == "invalid_simple.yaml" for e in errors)
 
     def test_file_name_context_uses_default(self, io_fixtures):
         """When no file= is passed, errors report the registered filename."""
-        errors = MetadataYAMLValidation.collect_errors(io_fixtures)
+        errors = MetadataYAMLValidation.collect_errors(case_dir=io_fixtures)
         assert errors == []  # valid file → no errors to check filename on
         # Trigger with invalid to check filename
         # Use the default file but with a config that would fail on a different file
@@ -188,7 +188,7 @@ class TestCollectErrors:
     def test_subdict_context_included(self, io_fixtures):
         """Errors from a subdict config include the subdict path."""
         errors = MetadataYAMLValidation.collect_errors(
-            io_fixtures, file="invalid_nested.yaml"
+            case_dir=io_fixtures, file="invalid_nested.yaml"
         )
         assert all(e.subdict == "metadata" for e in errors)
 
@@ -202,7 +202,7 @@ class TestValidateInstance:
     )
     def test_valid_instance_returns_empty(self, io_fixtures, config_class):
         """check_validation() returns [] for a correctly loaded instance."""
-        instance = config_class.load(io_fixtures)
+        instance = config_class.load(case_dir=io_fixtures)
         assert instance.check_validation() == []
 
     @pytest.mark.parametrize(
@@ -216,7 +216,9 @@ class TestValidateInstance:
         self, io_fixtures, config_class, invalid_file
     ):
         """check_validation() returns errors for an instance loaded with validate=False."""
-        instance = config_class.load(io_fixtures, validate=False, file=invalid_file)
+        instance = config_class.load(
+            case_dir=io_fixtures, validate=False, file=invalid_file
+        )
         errors = instance.check_validation()
 
         assert len(errors) == 2
@@ -237,7 +239,9 @@ class TestValidateInstance:
         self, io_fixtures, config_class, invalid_file
     ):
         """check_validation() returns errors for a subdict instance with bad data."""
-        instance = config_class.load(io_fixtures, validate=False, file=invalid_file)
+        instance = config_class.load(
+            case_dir=io_fixtures, validate=False, file=invalid_file
+        )
         errors = instance.check_validation()
 
         assert len(errors) == 2
@@ -247,7 +251,7 @@ class TestValidateInstance:
 
     def test_mutated_instance_catches_new_errors(self, io_fixtures):
         """check_validation() catches errors introduced by mutation after load."""
-        instance = SimpleYAMLValidation.load(io_fixtures)
+        instance = SimpleYAMLValidation.load(case_dir=io_fixtures)
         assert instance.check_validation() == []
 
         # Mutate to invalid state
@@ -264,16 +268,16 @@ class TestValidateModels:
     def test_all_valid_returns_empty(self, io_fixtures):
         """validate_models() returns [] when all models are valid."""
         models = [
-            SimpleYAMLValidation.load(io_fixtures),
-            MetadataYAMLValidation.load(io_fixtures),
+            SimpleYAMLValidation.load(case_dir=io_fixtures),
+            MetadataYAMLValidation.load(case_dir=io_fixtures),
         ]
         assert validate_models(models) == []
 
     def test_mixed_valid_invalid(self, io_fixtures):
         """validate_models() aggregates errors from multiple models."""
-        valid = SimpleYAMLValidation.load(io_fixtures)
+        valid = SimpleYAMLValidation.load(case_dir=io_fixtures)
         invalid = SimpleJSONValidation.load(
-            io_fixtures, validate=False, file="invalid_simple.json"
+            case_dir=io_fixtures, validate=False, file="invalid_simple.json"
         )
 
         errors = validate_models([valid, invalid])
@@ -285,10 +289,10 @@ class TestValidateModels:
     def test_multiple_invalid(self, io_fixtures):
         """validate_models() collects errors from all invalid models."""
         invalid_simple = SimpleYAMLValidation.load(
-            io_fixtures, validate=False, file="invalid_simple.yaml"
+            case_dir=io_fixtures, validate=False, file="invalid_simple.yaml"
         )
         invalid_nested = MetadataYAMLValidation.load(
-            io_fixtures, validate=False, file="invalid_nested.yaml"
+            case_dir=io_fixtures, validate=False, file="invalid_nested.yaml"
         )
 
         errors = validate_models([invalid_simple, invalid_nested])

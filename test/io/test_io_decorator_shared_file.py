@@ -80,20 +80,20 @@ def test_write_preserves_other_subdicts(
     test_dir = test_file.parent
 
     # Load original values from directory
-    original_b = service_b_class.load(test_dir)
-    original_c = service_c_class.load(test_dir)
+    original_b = service_b_class.load(case_dir=test_dir)
+    original_c = service_c_class.load(case_dir=test_dir)
     assert original_b.endpoint == "example.com"
     assert original_c.enabled is True
 
     # Update only service_a section
-    service_a = service_a_class.load(test_dir)
+    service_a = service_a_class.load(case_dir=test_dir)
     service_a.timeout = 60
-    service_a.save(test_dir)
+    service_a.save(case_dir=test_dir)
 
     # Verify service_a changed but other sections unchanged
-    updated_a = service_a_class.load(test_dir)
-    updated_b = service_b_class.load(test_dir)
-    updated_c = service_c_class.load(test_dir)
+    updated_a = service_a_class.load(case_dir=test_dir)
+    updated_b = service_b_class.load(case_dir=test_dir)
+    updated_c = service_c_class.load(case_dir=test_dir)
 
     assert updated_a.timeout == 60  # Changed
     assert updated_a.maxConnections == 10  # Unchanged
@@ -120,13 +120,15 @@ def test_validation_error_missing_field_in_subdict(
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(io_fixtures, validate=False, file=invalid_file)
+    loaded_data = config_class.load(
+        case_dir=io_fixtures, validate=False, file=invalid_file
+    )
     assert loaded_data.endpoint == "example.com"
     assert loaded_data.poolSize == -5  # Invalid value loaded
 
     # Load with validation - raises ValidationError with all errors
     with pytest.raises(ValidationError) as exc_info:
-        config_class.load(io_fixtures, validate=True, file=invalid_file)
+        config_class.load(case_dir=io_fixtures, validate=True, file=invalid_file)
 
     # Verify the error details
     errors = exc_info.value.errors()
@@ -154,7 +156,7 @@ def test_validation_error_missing_field_in_subdict(
 def test_load_missing_file_raises(tmp_path, config_class, missing_file):
     """Loading from a non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Configuration file not found"):
-        config_class.load(tmp_path, file=missing_file)
+        config_class.load(case_dir=tmp_path, file=missing_file)
 
 
 @pytest.mark.parametrize(
@@ -170,7 +172,7 @@ def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
     Uses a file that exists but doesn't contain the 'config.service_b' subdict.
     """
     with pytest.raises(KeyError, match="not found"):
-        config_class.load(io_fixtures, file=config_file)
+        config_class.load(case_dir=io_fixtures, file=config_file)
 
 
 if __name__ == "__main__":

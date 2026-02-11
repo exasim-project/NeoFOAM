@@ -62,10 +62,11 @@ class BaseConfig(BaseModel):
     @classmethod
     def load(
         cls: Type[T],
+        *,
         case_dir: Union[Path, str] = ".",
-        encoding: str = "utf-8",
-        validate: bool = True,
         file: Optional[str] = None,
+        validate: bool = True,
+        encoding: str = "utf-8",
     ) -> T:
         """Load configuration from file using registered strategy.
 
@@ -170,6 +171,7 @@ class BaseConfig(BaseModel):
 
     def save(
         self,
+        *,
         case_dir: Union[Path, str] = ".",
         encoding: str = "utf-8",
         file: Optional[str] = None,
@@ -238,6 +240,7 @@ class BaseConfig(BaseModel):
     @classmethod
     def collect_errors(
         cls,
+        *,
         case_dir: Union[Path, str] = ".",
         encoding: str = "utf-8",
         file: Optional[str] = None,
@@ -262,7 +265,7 @@ class BaseConfig(BaseModel):
         file_name = file or (cls.io_config.file if cls.io_config else cls.__name__)
 
         try:
-            cls.load(case_dir, encoding=encoding, validate=True, file=file)
+            cls.load(case_dir=case_dir, encoding=encoding, validate=True, file=file)
             return []
         except FileNotFoundError as exc:
             return [
