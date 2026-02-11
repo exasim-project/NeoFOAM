@@ -108,6 +108,39 @@ def test_load_nested(io_fixtures, metadata_class, stage1_class, stage2_class):
 
 
 @pytest.mark.parametrize(
+    "metadata_class,stage1_class,filename",
+    [
+        (MetadataYAMLConfig, Stage1YAMLConfig, "written.yaml"),
+        (MetadataJSONConfig, Stage1JSONConfig, "written.json"),
+    ],
+)
+def test_write_and_reload_identical(tmp_path, metadata_class, stage1_class, filename):
+    """Test that configs constructed in code survive a write/reload round-trip.
+
+    Creates config instances directly, writes them to a fresh file in tmp_path,
+    reloads from the file, compares model_dump() outputs, then removes the file.
+    """
+    original_meta = metadata_class(name="MyApp", version="2.0", priority=10)
+    original_s1 = stage1_class(
+        algorithm="balanced", threshold=0.01, maxIterations=200, batchSize=64
+    )
+
+    # Write both subdicts to a new file
+    original_meta.save(case_dir=tmp_path, file=filename)
+    original_s1.save(case_dir=tmp_path, file=filename)
+
+    # Reload from the new file and compare
+    reloaded_meta = metadata_class.load(case_dir=tmp_path, file=filename)
+    reloaded_s1 = stage1_class.load(case_dir=tmp_path, file=filename)
+
+    assert reloaded_meta.model_dump() == original_meta.model_dump()
+    assert reloaded_s1.model_dump() == original_s1.model_dump()
+
+    # Clean up the written file
+    (tmp_path / filename).unlink()
+
+
+@pytest.mark.parametrize(
     "config_class,invalid_file",
     [
         (MetadataYAMLConfig, "invalid_nested.yaml"),
@@ -175,3 +208,26 @@ def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
     """
     with pytest.raises(KeyError, match="not found"):
         config_class.load(case_dir=io_fixtures, file=config_file)
+
+
+@pytest.mark.parametrize(
+    "metadata_class,stage1_class,filename",
+    [
+        (MetadataYAMLConfig, Stage1YAMLConfig, "nested.yaml"),
+        (MetadataJSONConfig, Stage1JSONConfig, "nested.json"),
+    ],
+)
+def test_write_nested(temp_fixture_copy, metadata_class, stage1_class, filename):
+    """Test that saving a loaded subdict produces identical data on reload."""
+    test_file = temp_fixture_copy(filename)
+    test_dir = test_file.parent
+
+    original = stage1_class.load(case_dir=test_dir)
+    original.save(case_dir=test_dir)
+    reloaded = stage1_class.load(case_dir=test_dir)
+
+    assert reloaded == original
+
+    # Verify other subdicts are preserved
+    meta = metadata_class.load(case_dir=test_dir)
+    assert meta.name == "TestApp"

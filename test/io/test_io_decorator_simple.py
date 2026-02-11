@@ -81,6 +81,26 @@ def test_write_simple(tmp_path, config_class, filename):
 
 
 @pytest.mark.parametrize(
+    "config_class,filename",
+    [
+        (SimpleYAMLConfig, "simple.yaml"),
+        (SimpleJSONConfig, "simple.json"),
+    ],
+)
+def test_write_and_reload_identical(io_fixtures, tmp_path, config_class, filename):
+    """Test that writing a loaded config to a new file produces identical data.
+
+    Loads from the fixture, writes to a new file, reloads from the new file,
+    and asserts both instances carry the same data.
+    """
+    original = config_class.load(case_dir=io_fixtures)
+    original.save(case_dir=tmp_path, file=filename)
+
+    reloaded = config_class.load(case_dir=tmp_path, file=filename)
+    assert reloaded.model_dump() == original.model_dump()
+
+
+@pytest.mark.parametrize(
     "config_class,invalid_file",
     [
         (SimpleYAMLConfig, "invalid_simple.yaml"),
