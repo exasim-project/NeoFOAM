@@ -1,47 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-"""FastAPI-style dependency injection helpers for Architecture 5b."""
+"""Dependency marker used with ``typing.Annotated`` for injection."""
 
 from typing import Callable, Any, Union
 
 
 class Depends:
     """
-    Declare a dependency for initialization steps and runtime operations (FastAPI-style).
+    Declare a dependency for DI-enabled callables.
 
-    Init-time usage (existing):
-        from typing import Annotated
+    Supported usage includes initializer injection, e.g.:
 
-        init = Init("solver")
-
-        @init.step
-        def runTime() -> pyf.Time:
-            return pyf.Time.read(argv)
-
-        @init.step
-        def mesh(runTime: Annotated[pyf.Time, Depends(runTime)]) -> pyf.fvMesh:
-            return pyf.fvMesh.read(runTime)
-
-    Runtime usage (new):
-        @solver.operation
-        def solve_momentum(
-            self,
-            U: Annotated[dict, Depends("fields.U")],
-            turbulence: Annotated[Any, Depends("models.turbulence")]
-        ) -> FieldUpdates:
-            ...
-
-    Provider usage (new):
-        def get_nu_eff(turbulence: Annotated[Any, Depends("models.turbulence")]):
-            return turbulence.nu() + turbulence.nut()
-
-        @solver.operation
-        def momentum(
-            self,
-            nu_eff: Annotated[float, Depends(get_nu_eff)]
-        ):
-            ...
+        @solver.initializer
+        def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
+            return init.run()
     """
 
     def __init__(
@@ -55,8 +28,8 @@ class Depends:
         """
         Args:
             dependency: The function to call or string path to resolve.
-                       Can be another @init.step function, a provider function,
-                       or a string like "fields.U" or "models.turbulence".
+                       Can be a provider function or a string path
+                       like "fields.U" or "models.turbulence".
             scope: Caching scope - "time_step", "iteration", or "operation"
             cache: Whether to cache the resolved value within the scope
             optional: If True, don't raise error when dependency is missing
