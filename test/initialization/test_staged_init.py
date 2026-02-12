@@ -180,10 +180,16 @@ def _make_full_init():
     init = StagedInit("Test")
     order = []
 
+    class CoreModel:
+        name = "core1"
+
+    class OptionalModel:
+        name = "opt1"
+
     @init.load
     def load_stage():
         order.append("load")
-        return LoadResult(core_models=["core1"], optional_models=["opt1"])
+        return LoadResult(core_models=[CoreModel()], optional_models=[OptionalModel()])
 
     @init.resolve
     def resolve_stage(core, opt, cfg):
@@ -223,8 +229,10 @@ def test_run_populates_state():
     """run() populates core_models and optional_models from LoadResult."""
     init, _ = _make_full_init()
     init.run()
-    assert init.core_models == ["core1"]
-    assert init.optional_models == ["opt1"]
+    assert len(init.core_models) == 1
+    assert len(init.optional_models) == 1
+    assert getattr(init.core_models[0], "name") == "core1"
+    assert getattr(init.optional_models[0], "name") == "opt1"
 
 
 def test_run_without_resolve():
@@ -269,7 +277,7 @@ def test_run_load_no_func_raises():
 
 
 def test_run_build_returns_lazy_inits():
-    """run_build() returns list[LazyInit] using current state."""
+    """run_build() returns list[InitStep] using current state."""
     init = StagedInit("X")
     init.core_models = ["core"]
     init.optional_models = ["opt"]
@@ -398,6 +406,52 @@ def test_run_wires_models_into_config():
 
     init.run()
     assert isinstance(captured_cfg["algo"], FakeAlgo)
+
+
+def test_run_wires_models_using_model_name():
+    """run() prefers model.name as registration key when available."""
+    init = StagedInit("X")
+    captured_cfg = {}
+
+    class NamedModel:
+        name = "transport"
+
+    @init.load
+    def load():
+        return LoadResult(core_models=[NamedModel()], optional_models=[])
+
+    @init.resolve
+    def resolve(core, opt, cfg):
+        captured_cfg["transport"] = cfg.get("transport")
+
+    @init.build
+    def build(core, opt):
+        return [lazy("mesh", create=lambda: "m")]
+
+    init.run()
+    assert isinstance(captured_cfg["transport"], NamedModel)
+
+
+def test_run_duplicate_model_registration_key_raises():
+    """run() raises when two models resolve to the same registration key."""
+    init = StagedInit("X")
+
+    class M1:
+        name = "dup"
+
+    class M2:
+        name = "dup"
+
+    @init.load
+    def load():
+        return LoadResult(core_models=[M1(), M2()], optional_models=[])
+
+    @init.build
+    def build(core, opt):
+        return [lazy("mesh", create=lambda: "m")]
+
+    with pytest.raises(ValueError, match="Duplicate model registration key"):
+        init.run()
 
 
 def test_run_with_0arg_build():

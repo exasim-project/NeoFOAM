@@ -23,7 +23,7 @@ Usage:
         pass
 
     @init.build
-    def build_lazy() -> list[LazyInit]:
+    def build_lazy() -> list[InitStep]:
         # Create lazy initializers
         return [field("U", create=...), model("transport", ...)]
 
@@ -42,7 +42,7 @@ from neofoam.framework.solver_factory import SolverState
 # from neofoam.io.input_validation import validate_models  # IO-coupled, not needed for tests
 from .config_context import ConfigContext
 from .execution import execute_initialization
-from .lazy_init import LazyInit
+from .init_step import InitStep
 # from neofoam.io.strategies import BaseConfig  # IO-coupled, not needed for tests
 
 
@@ -127,7 +127,7 @@ class StagedInit:
             pass
 
         @init.build
-        def build_lazy() -> list[LazyInit]:
+        def build_lazy() -> list[InitStep]:
             return [field("U", create=...)]
 
         ctx = init.run()
@@ -147,7 +147,7 @@ class StagedInit:
         # Stage functions
         self._load_func: Optional[Callable[[], LoadResult]] = None
         self._resolve_func: Optional[Callable[[ConfigContext], None]] = None
-        self._build_func: Optional[Callable[[], list[LazyInit]]] = None
+        self._build_func: Optional[Callable[[], list[InitStep]]] = None
 
         # State storage
         self.data: Any = None  # For storing InitializationData or similar
@@ -225,15 +225,15 @@ class StagedInit:
     def build(
         self,
         func: Union[
-            Callable[[list, list], list[LazyInit]], Callable[[], list[LazyInit]]
+            Callable[[list, list], list[InitStep]], Callable[[], list[InitStep]]
         ],
-    ) -> Union[Callable[[list, list], list[LazyInit]], Callable[[], list[LazyInit]]]:
+    ) -> Union[Callable[[list, list], list[InitStep]], Callable[[], list[InitStep]]]:
         """
         Decorator for BUILD stage function.
 
         Usage (free function):
             @init.build
-            def build_lazy(core_models: list, optional_models: list) -> list[LazyInit]:
+            def build_lazy(core_models: list, optional_models: list) -> list[InitStep]:
                 return [
                     field("U", create=lambda ctx: ...),
                     model("algorithm", create=lambda ctx: core_models[0]),
@@ -265,7 +265,9 @@ class StagedInit:
         # Wire LoadResult models into ConfigContext (P-6.2)
         config = ConfigContext()
         for m in load_result.all_models:
-            key = type(m).__name__.lower()
+            key = getattr(m, "name", None) or type(m).__name__.lower()
+            if config.contains(key):
+                raise ValueError(f"Duplicate model registration key: '{key}'")
             config.register(key, m)
 
         if self._resolve_func is not None:
@@ -312,7 +314,7 @@ class StagedInit:
                 {1: (config,), 3: (self.core_models, self.optional_models, config)},
             )
 
-    def run_build(self) -> list[LazyInit]:
+    def run_build(self) -> list[InitStep]:
         """Execute only BUILD stage and return lazy initializers."""
         if self._build_func is None:
             raise RuntimeError(f"No @{self.name}.build defined")

@@ -39,11 +39,11 @@ The Process: Load → Resolve → Build
         rect rgb(235, 255, 240)
             Note over Manager, UserCode: 3. BUILD STAGE
             Manager->>UserCode: Call @init.build(mesh)
-            UserCode-->>Manager: Return List[LazyInit]
-            Note right of Manager: DATA: Dependency Graph created from List[LazyInit]
+            UserCode-->>Manager: Return List[InitStep]
+            Note right of Manager: DATA: Dependency Graph created from List[InitStep]
 
-            loop For each LazyInit in Order
-                Manager->>Manager: Execute LazyInit
+            loop For each InitStep in Order
+                Manager->>Manager: Execute InitStep
                 Note right of Manager: Object created & stored in Runtime Context
             end
         end
@@ -68,7 +68,7 @@ The diagram illustrates how data transforms and moves through the system during 
 
 3.  **BUILD Stage (Construction)**:
     - **Input**: The connected models and the mesh.
-    - **Output**: A list of ``LazyInit`` objects (recipes).
+    - **Output**: A list of ``InitStep`` objects (recipes).
     - **Execution**: The ``Init Manager`` sorts these recipes topologically based on declared dependencies. It then executes them one by one.
     - **Runtime Context**: As each recipe executes (e.g., creating a field), its result is stored in the ``Runtime Context``. Subsequent recipes can look up these results (e.g., ``context["fields.U"]``) to build dependent objects.
 
@@ -99,7 +99,7 @@ The framework provides the ``StagedInit`` class. You define the logic for each s
 .. code-block:: python
 
     from foamadapter.framework.initialization import StagedInit, LoadResult, ConfigContext
-    from foamadapter.framework.initialization.lazy_init import LazyInit
+    from foamadapter.framework.initialization.lazy_init import InitStep
 
     # Create the initialization manager
     init = StagedInit("MySolverInit")
@@ -127,7 +127,7 @@ The framework provides the ``StagedInit`` class. You define the logic for each s
              model.connect(config)
 
     @init.build
-    def build_runtime(mesh, core_models: list, optional_models: list) -> list[LazyInit]:
+    def build_runtime(mesh, core_models: list, optional_models: list) -> list[InitStep]:
         """
         Stage 3: Create runtime objects (Lazy Execution).
         """
@@ -135,7 +135,7 @@ The framework provides the ``StagedInit`` class. You define the logic for each s
 
         # Define how to create fields
         initializers.append(
-            LazyInit(
+            InitStep(
                 name="fields.U",
                 initializer=lambda ctx: create_vector_field(mesh, "U"),
                 depends_on=["mesh"]
@@ -164,7 +164,7 @@ The initialized ``StagedInit`` object is then injected into the solver using the
 Lazy Initialization Graph
 -------------------------
 
-In the **BUILD** stage, we don't create objects immediately. Instead, we return ``LazyInit`` descriptions. The framework builds a dependency graph and executes them in the correct topological order.
+In the **BUILD** stage, we don't create objects immediately. Instead, we return ``InitStep`` descriptions. The framework builds a dependency graph and executes them in the correct topological order.
 
 **Example Dependency Chain:**
 
@@ -184,7 +184,7 @@ This ensures that `fields.U` exists before the Turbulence Model tries to access 
 Lazy BUILD Pattern
 ------------------
 
-Starting with recent versions, the BUILD stage supports a lazy initialization pattern where methods can return ``LazyInit`` objects instead of performing immediate execution. This provides several benefits:
+Starting with recent versions, the BUILD stage supports a lazy initialization pattern where methods can return ``InitStep`` objects instead of performing immediate execution. This provides several benefits:
 
 1. **Explicit Dependencies**: Each initialization step declares its dependencies
 2. **Automatic Ordering**: Dependencies are resolved using topological sort
@@ -194,11 +194,11 @@ Starting with recent versions, the BUILD stage supports a lazy initialization pa
 Basic Lazy Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``@Solver.build`` decorator can return a list of ``LazyInit`` objects:
+The ``@Solver.build`` decorator can return a list of ``InitStep`` objects:
 
 .. code-block:: python
 
-    from foamadapter.framework import LazyInit, Solver
+    from foamadapter.framework import InitStep, Solver
     from foamadapter.framework.initialization.helpers import field, operator, lazy, model
 
     class MySolver(BaseModel):
@@ -236,7 +236,7 @@ The ``@Solver.build`` decorator can return a list of ``LazyInit`` objects:
 
 When ``SolverInitializer.initialize()`` executes the BUILD stage, it:
 
-1. Calls ``setup_runtime(mesh)`` to get the list of ``LazyInit`` objects
+1. Calls ``setup_runtime(mesh)`` to get the list of ``InitStep`` objects
 2. Builds a dependency graph from the ``depends_on`` lists
 3. Performs topological sort to determine execution order
 4. Executes each initializer in order, passing the ``context`` dict
@@ -245,22 +245,22 @@ When ``SolverInitializer.initialize()`` executes the BUILD stage, it:
 Helper Functions
 ~~~~~~~~~~~~~~~~
 
-The framework provides helper functions to create ``LazyInit`` objects with automatic naming:
+The framework provides helper functions to create ``InitStep`` objects with automatic naming:
 
 .. code-block:: python
 
     from foamadapter.framework.initialization.helpers import field, operator, lazy, model
 
-    # field(name, initializer, dependencies) -> LazyInit with name="fields.{name}"
+    # field(name, initializer, dependencies) -> InitStep with name="fields.{name}"
     field("p", lambda ctx: read_field("p", ctx["mesh"]), ["mesh"])
 
-    # operator(name, initializer, dependencies) -> LazyInit with name="operators.{name}"
+    # operator(name, initializer, dependencies) -> InitStep with name="operators.{name}"
     operator("div_phi", lambda ctx: create_div(ctx["fields.U"]), ["fields.U"])
 
-    # model(name, initializer, dependencies) -> LazyInit with name="models.{name}"
+    # model(name, initializer, dependencies) -> InitStep with name="models.{name}"
     model("turbulence", lambda ctx: create_turbulence(...), ["fields.U", "fields.p"])
 
-    # lazy(name, initializer, dependencies) -> LazyInit with custom name
+    # lazy(name, initializer, dependencies) -> InitStep with custom name
     lazy("algorithm", lambda ctx: create_algorithm(...), ["models.turbulence"])
 
 All helpers default to an empty dependency list ``[]`` if not specified.
@@ -268,7 +268,7 @@ All helpers default to an empty dependency list ``[]`` if not specified.
 Dependency Resolution
 ~~~~~~~~~~~~~~~~~~~~~
 
-Dependencies are specified as strings matching the ``name`` of other ``LazyInit`` objects. The framework:
+Dependencies are specified as strings matching the ``name`` of other ``InitStep`` objects. The framework:
 
 - Uses ``networkx.lexicographical_topological_sort`` for deterministic ordering
 - Detects cycles and raises ``CyclicDependencyError`` before execution
@@ -798,7 +798,7 @@ The test suite is organized in ``test/initialization/``:
 - ``test_load_stage.py`` - LOAD stage tests
 - ``test_resolve_dependencies_stage.py`` - RESOLVE_DEPENDENCIES stage tests
 - ``test_build_stage.py`` - BUILD stage tests
-- ``test_lazy_init.py`` - LazyInit dataclass and helper function tests
+- ``test_lazy_init.py`` - InitStep dataclass and helper function tests
 - ``test_lazy_build_integration.py`` - Lazy BUILD stage integration tests
 - ``test_initialization_order.py`` - Execution order tests
 - ``test_error_handling.py`` - Error condition tests
@@ -816,7 +816,7 @@ Run all tests:
 Testing Lazy Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When testing lazy BUILD methods, verify the returned LazyInit objects:
+When testing lazy BUILD methods, verify the returned InitStep objects:
 
 .. code-block:: python
 
@@ -824,9 +824,9 @@ When testing lazy BUILD methods, verify the returned LazyInit objects:
         solver = MySolver()
         result = solver.setup_runtime(mesh=None)
 
-        # Verify returns list of LazyInit
+        # Verify returns list of InitStep
         assert isinstance(result, list)
-        assert all(isinstance(item, LazyInit) for item in result)
+        assert all(isinstance(item, InitStep) for item in result)
 
         # Verify expected initializers
         names = [li.name for li in result]

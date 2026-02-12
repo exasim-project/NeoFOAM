@@ -5,7 +5,7 @@
 """
 Lazy Initialization
 
-Provides the LazyInit dataclass for deferred initialization with dependency tracking.
+Provides the InitStep dataclass for deferred initialization with dependency tracking.
 """
 
 import inspect
@@ -14,11 +14,11 @@ from typing import Callable, Any, List, Optional, Union, cast
 
 
 @dataclass
-class LazyInit:
+class InitStep:
     """
-    A deferred initialization that declares its dependencies.
+    A deferred initialization step that declares its dependencies.
 
-    LazyInit objects are returned from BUILD stage methods and collected
+    InitStep objects are returned from BUILD stage methods and collected
     by the initializer. They are then topologically sorted by dependencies
     and executed in the correct order.
 
@@ -29,7 +29,7 @@ class LazyInit:
         category: Optional category for grouping (e.g., "fields", "operators")
 
     Example:
-        LazyInit(
+        InitStep(
             name="fields.U",
             depends_on=["mesh"],
             initializer=lambda: create_vector_field(mesh, U0)
@@ -49,12 +49,12 @@ class LazyInit:
             context: Dictionary of already-initialized objects for dependencies
         """
         if self.initializer is None:
-            raise ValueError(f"LazyInit '{self.name}' has no initializer function")
+            raise ValueError(f"InitStep '{self.name}' has no initializer function")
 
         if self._n_args == 1:
             if context is None:
                 raise ValueError(
-                    f"LazyInit '{self.name}' requires context but None was provided"
+                    f"InitStep '{self.name}' requires context but None was provided"
                 )
             context_callable = cast(Callable[[dict[str, Any]], Any], self.initializer)
             return context_callable(context)
@@ -63,11 +63,11 @@ class LazyInit:
         return no_arg_callable()
 
     def __post_init__(self) -> None:
-        """Validate LazyInit after creation and cache arity."""
+        """Validate InitStep after creation and cache arity."""
         if not self.name:
-            raise ValueError("LazyInit must have a non-empty name")
+            raise ValueError("InitStep must have a non-empty name")
         if self.initializer is None:
             raise ValueError(
-                f"LazyInit '{self.name}' must have an initializer function"
+                f"InitStep '{self.name}' must have an initializer function"
             )
         self._n_args = len(inspect.signature(self.initializer).parameters)

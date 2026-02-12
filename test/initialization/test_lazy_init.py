@@ -2,16 +2,16 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-"""Unit tests for LazyInit."""
+"""Unit tests for InitStep."""
 
 import pytest
 
-from neofoam.framework.initialization.lazy_init import LazyInit
+from neofoam.framework.initialization.init_step import InitStep
 
 
 def test_creation():
-    """Test basic LazyInit creation with all parameters."""
-    lazy = LazyInit(
+    """Test basic InitStep creation with all parameters."""
+    lazy = InitStep(
         name="test_obj",
         depends_on=["dep1", "dep2"],
         initializer=lambda: 42,
@@ -27,29 +27,29 @@ def test_creation():
 def test_empty_name_raises():
     """Test that empty name raises ValueError."""
     with pytest.raises(ValueError, match="non-empty name"):
-        LazyInit(name="", initializer=lambda: 42)
+        InitStep(name="", initializer=lambda: 42)
 
 
 def test_none_initializer_raises():
     """Test that None initializer raises ValueError."""
     with pytest.raises(ValueError, match="must have an initializer"):
-        LazyInit(name="test", initializer=None)
+        InitStep(name="test", initializer=None)
 
 
 def test_execute_no_args():
-    """Test executing LazyInit with no-argument initializer."""
-    lazy = LazyInit(name="answer", initializer=lambda: 42)
+    """Test executing InitStep with no-argument initializer."""
+    lazy = InitStep(name="answer", initializer=lambda: 42)
     result = lazy.execute()
     assert result == 42
 
 
 def test_execute_with_context():
-    """Test executing LazyInit with context-aware initializer."""
+    """Test executing InitStep with context-aware initializer."""
 
     def init_with_context(ctx):
         return ctx["x"] * 2
 
-    lazy = LazyInit(name="doubled", depends_on=["x"], initializer=init_with_context)
+    lazy = InitStep(name="doubled", depends_on=["x"], initializer=init_with_context)
 
     context = {"x": 21}
     result = lazy.execute(context)
@@ -58,7 +58,7 @@ def test_execute_with_context():
 
 def test_execute_with_context_no_context_provided():
     """Test that context-aware initializer raises when context is None."""
-    lazy = LazyInit(name="needs_context", initializer=lambda ctx: ctx["x"])
+    lazy = InitStep(name="needs_context", initializer=lambda ctx: ctx["x"])
 
     with pytest.raises(ValueError, match="requires context"):
         lazy.execute(context=None)
@@ -67,7 +67,7 @@ def test_execute_with_context_no_context_provided():
 def test_execute_none_initializer():
     """Test that executing with None initializer raises ValueError."""
     # Bypass __post_init__ validation
-    lazy = LazyInit.__new__(LazyInit)
+    lazy = InitStep.__new__(InitStep)
     lazy.name = "broken"
     lazy.depends_on = []
     lazy.initializer = None
@@ -79,11 +79,11 @@ def test_execute_none_initializer():
 
 def test_default_depends_on():
     """Test that depends_on defaults to empty list."""
-    lazy = LazyInit(name="simple", initializer=lambda: 1)
+    lazy = InitStep(name="simple", initializer=lambda: 1)
     assert lazy.depends_on == []
 
 
 def test_default_category():
     """Test that category defaults to None."""
-    lazy = LazyInit(name="uncategorized", initializer=lambda: 1)
+    lazy = InitStep(name="uncategorized", initializer=lambda: 1)
     assert lazy.category is None

@@ -7,14 +7,20 @@ import logging
 from typing import Any
 import networkx as nx
 
-from .lazy_init import LazyInit
+from .init_step import InitStep
 from ..context import Context
 
 logger = logging.getLogger(__name__)
 
 
-def topological_sort(lazy_inits: list[LazyInit]) -> list[LazyInit]:
+def topological_sort(lazy_inits: list[InitStep]) -> list[InitStep]:
     """Sort lazy initializers by dependencies using DAG."""
+    seen_names: set[str] = set()
+    for li in lazy_inits:
+        if li.name in seen_names:
+            raise ValueError(f"Duplicate InitStep name detected: '{li.name}'")
+        seen_names.add(li.name)
+
     name_to_init = {li.name: li for li in lazy_inits}
 
     # Validate dependencies exist
@@ -22,7 +28,7 @@ def topological_sort(lazy_inits: list[LazyInit]) -> list[LazyInit]:
         for dep in li.depends_on:
             if dep not in name_to_init:
                 raise ValueError(
-                    f"LazyInit '{li.name}' depends on '{dep}', "
+                    f"InitStep '{li.name}' depends on '{dep}', "
                     f"but '{dep}' was not found"
                 )
 
@@ -44,7 +50,7 @@ def topological_sort(lazy_inits: list[LazyInit]) -> list[LazyInit]:
     return [name_to_init[name] for name in sorted_names]
 
 
-def execute_lazy_inits(lazy_inits: list[LazyInit]) -> dict[str, Any]:
+def execute_lazy_inits(lazy_inits: list[InitStep]) -> dict[str, Any]:
     """Execute lazy initializers in dependency order."""
     sorted_inits = topological_sort(lazy_inits)
     objects: dict[str, Any] = {}
@@ -79,20 +85,20 @@ def build_context_from_objects(objects: dict[str, Any]) -> Context:
             runtime = obj
         else:
             logger.warning(
-                "LazyInit '%s' has no recognised prefix — routing to models", name
+                "InitStep '%s' has no recognised prefix — routing to models", name
             )
             models[name] = obj
 
     return Context(fields=fields, models=models, mesh=mesh, runTime=runtime)
 
 
-def execute_initialization(lazy_inits: list[LazyInit]) -> Context:
+def execute_initialization(lazy_inits: list[InitStep]) -> Context:
     """Execute lazy initializers and build Context."""
     objects = execute_lazy_inits(lazy_inits)
     return build_context_from_objects(objects)
 
 
-def validate_lazy_init_graph(lazy_inits: list[LazyInit]) -> list[tuple[str, str]]:
+def validate_lazy_init_graph(lazy_inits: list[InitStep]) -> list[tuple[str, str]]:
     """Validate lazy init graph for missing deps and cycles."""
     errors: list[tuple[str, str]] = []
     names = {li.name for li in lazy_inits}

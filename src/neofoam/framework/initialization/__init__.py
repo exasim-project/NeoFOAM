@@ -26,7 +26,7 @@ Usage Example (Solver Initializer):
                 if hasattr(model, "resolve"):
                     model.resolve(config)
 
-        def build(self) -> list[LazyInit]:
+        def build(self) -> list[InitStep]:
             \"\"\"Create lazy initializers for runtime objects.\"\"\"
             return [
                 field("U", create=lambda ctx: create_vector_field(ctx["mesh"])),
@@ -43,7 +43,7 @@ Usage Example (Model):
             \"\"\"Configure dependencies with other models.\"\"\"
             pass
 
-        def build(self) -> list[LazyInit]:
+        def build(self) -> list[InitStep]:
             \"\"\"Create field initializers.\"\"\"
             return [field("T", create=...)]
 
@@ -64,7 +64,7 @@ Execution:
 """
 
 from .config_context import ConfigContext
-from .lazy_init import LazyInit
+from .init_step import InitStep
 from .helpers import field, operator, lazy, model, InitializerBuilder
 from .execution import execute_initialization, topological_sort
 from .depends import Depends
@@ -72,7 +72,7 @@ from .staged_init import StagedInit, ValidationError, LoadResult
 
 __all__ = [
     "ConfigContext",
-    "LazyInit",
+    "InitStep",
     "field",
     "operator",
     "lazy",

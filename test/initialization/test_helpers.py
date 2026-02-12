@@ -12,7 +12,7 @@ from neofoam.framework.initialization.helpers import (
     lazy,
     model,
 )
-from neofoam.framework.initialization.lazy_init import LazyInit
+from neofoam.framework.initialization.init_step import InitStep
 
 
 # --- Helper function tests (parametrized) ---
@@ -28,9 +28,9 @@ from neofoam.framework.initialization.lazy_init import LazyInit
     ],
 )
 def test_helper_naming(helper, prefix, category):
-    """All helpers create LazyInit with correct name prefix and category."""
+    """All helpers create InitStep with correct name prefix and category."""
     result = helper("X", create=lambda: 1)
-    assert isinstance(result, LazyInit)
+    assert isinstance(result, InitStep)
     assert result.name == f"{prefix}X"
     assert result.category == category
     assert result.depends_on == []
@@ -44,7 +44,7 @@ def test_helper_with_deps(helper):
 
 
 def test_helper_execute():
-    """Helpers produce executable LazyInit objects."""
+    """Helpers produce executable InitStep objects."""
     assert field("U", create=lambda: "velocity").execute() == "velocity"
     assert lazy("mesh", create=lambda: "mesh_obj").execute() == "mesh_obj"
 
@@ -61,7 +61,7 @@ def test_helper_execute():
     ],
 )
 def test_builder_add_methods(builder, method, expected_prefix, kwargs):
-    """Builder add_field/add_model/add_operator create correctly prefixed LazyInit."""
+    """Builder add_field/add_model/add_operator create correctly prefixed InitStep."""
     getattr(builder, method)("X", **kwargs)
     inits = builder.build()
     assert len(inits) == 1
@@ -69,7 +69,7 @@ def test_builder_add_methods(builder, method, expected_prefix, kwargs):
 
 
 def test_builder_add_resource(builder):
-    """add_resource creates an unprefixed LazyInit."""
+    """add_resource creates an unprefixed InitStep."""
     builder.add_resource("mesh", "mock_mesh")
     inits = builder.build()
     assert len(inits) == 1
@@ -102,7 +102,7 @@ def test_builder_chaining(builder):
 
 
 def test_builder_add_core_models(builder, mock_core_model):
-    """add_core_models adds model + normalized LazyInits from run_build()."""
+    """add_core_models adds model + normalized InitSteps from run_build()."""
     builder.add_core_models([("algorithm", mock_core_model)])
     inits = builder.build()
 
@@ -124,16 +124,16 @@ def test_builder_add_core_models_without_name(builder):
 
 
 def test_builder_add_optional_models(builder, mock_optional_model):
-    """add_optional_models adds normalized LazyInits from run_build()."""
+    """add_optional_models adds normalized InitSteps from run_build()."""
     builder.add_optional_models([mock_optional_model])
     assert len(builder.build()) >= 1
 
 
 def test_builder_add_and_extend(builder):
-    """add() and extend() store LazyInit objects directly."""
-    a = LazyInit("a", initializer=lambda: 1)
-    b = LazyInit("b", initializer=lambda: 2)
-    c = LazyInit("c", initializer=lambda: 3)
+    """add() and extend() store InitStep objects directly."""
+    a = InitStep("a", initializer=lambda: 1)
+    b = InitStep("b", initializer=lambda: 2)
+    c = InitStep("c", initializer=lambda: 3)
 
     builder.add(a).extend([b, c])
     inits = builder.build()
@@ -144,14 +144,14 @@ def test_builder_add_and_extend(builder):
 
 def test_builder_normalize_lazy_init(builder):
     """_normalize_lazy_init adds fields. prefix when missing."""
-    li = LazyInit("U", initializer=lambda: "velocity")
+    li = InitStep("U", initializer=lambda: "velocity")
     normalized = builder._normalize_lazy_init(li)
     assert normalized.name == "fields.U"
 
 
 def test_builder_normalize_lazy_init_dict_unwrapping(builder):
     """Normalized initializers unwrap dict with 'value' key."""
-    li = LazyInit("p", initializer=lambda: {"value": 42, "meta": "extra"})
+    li = InitStep("p", initializer=lambda: {"value": 42, "meta": "extra"})
     normalized = builder._normalize_lazy_init(li)
     assert normalized.execute(context={}) == 42
 
@@ -162,7 +162,7 @@ def test_builder_normalize_does_not_mutate(builder):
     def orig_init():
         return "v"
 
-    li = LazyInit("U", initializer=orig_init)
+    li = InitStep("U", initializer=orig_init)
     normalized = builder._normalize_lazy_init(li)
     # Original must be untouched
     assert li.name == "U"

@@ -68,7 +68,7 @@ class ConfigContext:
         If *path* contains a dot **and** the part before the first dot is a
         known region name, interpret it as ``region.name``.  Otherwise treat
         the whole string as a literal name in the current region.  This avoids
-        ambiguity with LazyInit names like ``"models.transport"`` which also
+        ambiguity with InitStep names like ``"models.transport"`` which also
         use dots but are not region-qualified.
         """
         if "." in path:
