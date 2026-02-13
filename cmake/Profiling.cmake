@@ -19,7 +19,9 @@ set(Kokkos_ENABLE_LIBDL ON CACHE BOOL
     "Enable libdl support for Kokkos (required for tools)"
     FORCE)
 
+# -------------------------------
 # Fetch Kokkos Tools
+# -------------------------------
 include(FetchContent)
 
 FetchContent_Declare(
@@ -30,25 +32,18 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(kokkos_tools)
 
-# Check that the top-level CMakeLists.txt exists
-if(NOT EXISTS ${kokkos_tools_SOURCE_DIR}/CMakeLists.txt)
-  message(FATAL_ERROR
-    "Could not find the top-level CMakeLists.txt in kokkos-tools")
-endif()
-
 # -------------------------------
 # Add kokkos-tools top-level CMakeLists.txt
 # -------------------------------
+# Build all Kokkos Tools targets in a separate build directory
 add_subdirectory(
-  ${kokkos_tools_SOURCE_DIR}                # source dir
-  ${CMAKE_BINARY_DIR}/kokkos_tools_build    # build dir
+  ${kokkos_tools_SOURCE_DIR}                # cloned source
+  ${CMAKE_BINARY_DIR}/kokkos_tools_build    # NeoFOAM build dir
 )
 
 # -------------------------------
 # Set path to simpleKernelTimer library
 # -------------------------------
-# The target name is assumed to be 'kp_kernel_timer' in kokkos-tools
-# CMake will place it in CMAKE_LIBRARY_OUTPUT_DIRECTORY
 set(KOKKOS_TOOLS_LIB_PATH
     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libkp_kernel_timer.so
 )
