@@ -19,6 +19,10 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(NEOFOAM_ENABLE_PROFILING
+       "Enable profiling via Kokkos Tools"
+       OFF)
+
 set(NEOFOAM_BENCHMARK_MODE
     "all"
     CACHE STRING "perform only a subset of the benchmarks")
@@ -35,6 +39,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 include(cmake/OpenFOAM.cmake)
+include(cmake/Profiling.cmake)
 
 if(NOT DEFINED NEOFOAM_NEON_DIR)
   if(EXISTS ${PROJECT_SOURCE_DIR}/src/NeoN/CMakeLists.txt AND NOT DEFINED NEOFOAM_NEON_VERSION)

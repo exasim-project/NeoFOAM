@@ -16,6 +16,7 @@
   image: chihtaw/cuda-openfoam-ginkgo:12.8.1-v2412-arch_89
   variables:
     FOAM_INST_DIR: /usr/local/app/openfoam
+    KOKKOS_TOOLS_DIR: /usr/local/app/kokkos-tools
     GPU_VENDOR: nvidia
 
 .gpu-amd:
@@ -24,6 +25,7 @@
   image: chihtaw/rocm-openfoam-ginkgo:6.4.1-v2412-arch_gfx90a
   variables:
     FOAM_INST_DIR: /workspace/openfoam
+    KOKKOS_TOOLS_DIR: /workspace/kokkos-tools
     GPU_VENDOR: amd
 
 .gpu-intel:
@@ -108,60 +110,122 @@
 # ============================================================
 #  Rule blocks
 # ============================================================
-# Triggered from NeoFOAM – testing
+# Triggered from NeoFOAM
 .rules-neofoam-testing:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
-           $BENCHMARK != "true"'
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "false"
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
-           $BENCHMARK != "true"'
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "false"
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
-           $BENCHMARK != "true"'
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "false"
       when: always
+
     - when: never
 
-# Triggered from NeoFOAM – benchmarking
+.rules-neofoam-profiling:
+  rules:
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "true" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "true" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "true" &&
+        $BENCHMARK == "false"
+      when: always
+
+    - when: never
+
 .rules-neofoam-benchmarking:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
-           $BENCHMARK == "true"'
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "true"
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
-           $BENCHMARK == "true"'
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "true"
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoFOAM" &&
-           $BENCHMARK == "true"'
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoFOAM" &&
+        $PROFILE == "false" &&
+        $BENCHMARK == "true"
       when: always
+
     - when: never
 
-# Triggered from NeoN – testing
+# Triggered from NeoN
 .rules-neon-testing:
   rules:
-    - if: '$GPU_VENDOR == "nvidia" && $SKIP_NVIDIA != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" &&
-           $BENCHMARK != "true"'
+    - if: |
+        $GPU_VENDOR == "nvidia" &&
+        $SKIP_NVIDIA != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoN"
       when: always
 
-    - if: '$GPU_VENDOR == "amd" && $SKIP_AMD != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" &&
-           $BENCHMARK != "true"'
+    - if: |
+        $GPU_VENDOR == "amd" &&
+        $SKIP_AMD != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoN"
       when: always
 
-    - if: '$GPU_VENDOR == "intel" && $SKIP_INTEL != "true" &&
-           $CI_PIPELINE_SOURCE == "trigger" && $TRIGGER_SOURCE == "NeoN" &&
-           $BENCHMARK != "true"'
+    - if: |
+        $GPU_VENDOR == "intel" &&
+        $SKIP_INTEL != "true" &&
+        $CI_PIPELINE_SOURCE == "trigger" &&
+        $TRIGGER_SOURCE == "NeoN"
       when: always
     - when: never
 
@@ -171,6 +235,10 @@
 .build-and-test:
   script:
     - ./ci/lrz-gitlab/build-and-test.sh
+
+.profile:
+  script:
+    - ./ci/lrz-gitlab/profile.sh
 
 .benchmark:
   extends:
@@ -201,6 +269,23 @@ build-test-neofoam-intel:
     - .rules-neofoam-testing
     - .openfoam-env-setup-intel
     - .build-and-test
+
+# ============================================================
+#  NeoFOAM - profiling jobs
+# ============================================================
+profile-neofoam-nvidia:
+  extends:
+    - .gpu-nvidia
+    - .rules-neofoam-profiling
+    - .openfoam-env-setup-nvidia-amd
+    - .profile
+
+profile-neofoam-amd:
+  extends:
+    - .gpu-amd
+    - .rules-neofoam-profiling
+    - .openfoam-env-setup-nvidia-amd
+    - .profile
 
 # ============================================================
 #  NeoFOAM - benchmarking jobs

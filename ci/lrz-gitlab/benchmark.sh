@@ -79,7 +79,7 @@ build_and_benchmark() {
     if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CUDA_ARCHITECTURES=90 \
+        -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF
     elif [[ "$GPU_VENDOR" == "amd" ]]; then
         # Set up environment
