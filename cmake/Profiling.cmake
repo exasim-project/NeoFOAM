@@ -20,78 +20,58 @@ set(Kokkos_ENABLE_LIBDL ON CACHE BOOL
     FORCE)
 
 # -------------------------------
-# Fetch Kokkos Tools
+# User can specify kokkos-tools source (optional)
 # -------------------------------
-include(FetchContent)
+set(KOKKOS_TOOLS_SRC_DIR "" CACHE PATH
+    "Path to kokkos-tools source directory. If empty, will fetch from GitHub.")
 
-FetchContent_Declare(
-  kokkos_tools
-  GIT_REPOSITORY https://github.com/kokkos/kokkos-tools.git
-  GIT_TAG master
-)
-
-FetchContent_GetProperties(kokkos_tools)
-if(NOT kokkos_tools_POPULATED)
-  FetchContent_Populate(kokkos_tools)
+if(NOT KOKKOS_TOOLS_SRC_DIR)
+  include(FetchContent)
+  FetchContent_Declare(
+    kokkos_tools
+    GIT_REPOSITORY https://github.com/kokkos/kokkos-tools.git
+    GIT_TAG master
+  )
+  FetchContent_MakeAvailable(kokkos_tools)
+  set(KOKKOS_TOOLS_SRC_DIR ${kokkos_tools_SOURCE_DIR})
 endif()
 
-set(KOKKOS_TOOLS_BUILD_DIR "${kokkos_tools_SOURCE_DIR}/build")
+if(NOT EXISTS ${KOKKOS_TOOLS_SRC_DIR})
+  message(FATAL_ERROR "kokkos-tools source directory does not exist: ${KOKKOS_TOOLS_SRC_DIR}")
+endif()
+
+# -------------------------------
+# Build directory for Kokkos Tools
+# -------------------------------
+set(KOKKOS_TOOLS_BUILD_DIR "${CMAKE_BINARY_DIR}/kokkos_tools_build")
 file(MAKE_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR})
 
 # -------------------------------
-# Build kokkos-tools
+# Define the library path
 # -------------------------------
-message(STATUS "Configuring Kokkos Tools...")
-execute_process(
-  COMMAND ${CMAKE_COMMAND} ..
-  WORKING_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR}
-  RESULT_VARIABLE kokkos_cmake_result
-  OUTPUT_VARIABLE kokkos_cmake_out
-  ERROR_VARIABLE kokkos_cmake_err
-)
-if(NOT kokkos_cmake_result EQUAL 0)
-  message(FATAL_ERROR "Failed to configure Kokkos Tools:\n${kokkos_cmake_err}")
-endif()
-
-message(STATUS "Building Kokkos Tools...")
-execute_process(
-  COMMAND ${CMAKE_COMMAND} --build . -- -j$(nproc)
-  WORKING_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR}
-  RESULT_VARIABLE kokkos_build_result
-  OUTPUT_VARIABLE kokkos_build_out
-  ERROR_VARIABLE kokkos_build_err
-)
-if(NOT kokkos_build_result EQUAL 0)
-  message(FATAL_ERROR "Failed to build Kokkos Tools:\n${kokkos_build_err}")
-endif()
+set(KOKKOS_TOOLS_LIB_PATH "${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-timer/libkp_kernel_timer.so")
 
 # -------------------------------
-# Locate the simpleKernelTimer shared library
+# Custom command to configure and build kokkos-tools
 # -------------------------------
-set(KOKKOS_TOOLS_LIB_PATH
-    "${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-timer/libkp_kernel_timer.so"
+add_custom_command(
+  OUTPUT ${KOKKOS_TOOLS_LIB_PATH} ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
+  COMMAND ${CMAKE_COMMAND} -S ${KOKKOS_TOOLS_SRC_DIR} -B ${KOKKOS_TOOLS_BUILD_DIR}
+  COMMAND ${CMAKE_COMMAND} --build ${KOKKOS_TOOLS_BUILD_DIR} -- -j$<NUMBER_OF_PROCESSORS>
+  COMMAND ${CMAKE_COMMAND} -E echo "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}" > ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  COMMENT "Building Kokkos Tools and generating kokkos_profiling_env.sh"
+  VERBATIM
 )
 
-if(NOT EXISTS ${KOKKOS_TOOLS_LIB_PATH})
-  message(FATAL_ERROR
-    "Could not find Kokkos simpleKernelTimer shared library at "
-    "${KOKKOS_TOOLS_LIB_PATH}")
-endif()
-
-message(STATUS "Kokkos Tools library: ${KOKKOS_TOOLS_LIB_PATH}")
-
 # -------------------------------
-# Generate runtime environment helper script
+# Custom target that depends on the above command
 # -------------------------------
-file(WRITE
-  ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
-  "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}\n"
+add_custom_target(build_kokkos_tools ALL
+  DEPENDS ${KOKKOS_TOOLS_LIB_PATH} ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
+  COMMENT "Automatic build of Kokkos Tools for profiling"
 )
 
-message(STATUS
-  "Generated profiling env script: "
-  "${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh")
-
-message(STATUS
-  "To enable profiling at runtime:\n"
-  "  source ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh")
+message(STATUS "Profiling setup: Kokkos Tools will be built automatically after NeoFOAM.")
+message(STATUS "Library path: ${KOKKOS_TOOLS_LIB_PATH}")
+message(STATUS "Environment script: ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh")
