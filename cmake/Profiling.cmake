@@ -30,22 +30,46 @@ FetchContent_Declare(
   GIT_TAG master
 )
 
-FetchContent_MakeAvailable(kokkos_tools)
+FetchContent_GetProperties(kokkos_tools)
+if(NOT kokkos_tools_POPULATED)
+  FetchContent_Populate(kokkos_tools)
+endif()
+
+set(KOKKOS_TOOLS_BUILD_DIR "${kokkos_tools_SOURCE_DIR}/build")
+file(MAKE_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR})
 
 # -------------------------------
-# Add kokkos-tools top-level CMakeLists.txt
+# Build kokkos-tools
 # -------------------------------
-# Build all Kokkos Tools targets in a separate build directory
-add_subdirectory(
-  ${kokkos_tools_SOURCE_DIR}                # cloned source
-  ${CMAKE_BINARY_DIR}/kokkos_tools_build    # NeoFOAM build dir
+message(STATUS "Configuring Kokkos Tools...")
+execute_process(
+  COMMAND ${CMAKE_COMMAND} ..
+  WORKING_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR}
+  RESULT_VARIABLE kokkos_cmake_result
+  OUTPUT_VARIABLE kokkos_cmake_out
+  ERROR_VARIABLE kokkos_cmake_err
 )
+if(NOT kokkos_cmake_result EQUAL 0)
+  message(FATAL_ERROR "Failed to configure Kokkos Tools:\n${kokkos_cmake_err}")
+endif()
+
+message(STATUS "Building Kokkos Tools...")
+execute_process(
+  COMMAND ${CMAKE_COMMAND} --build . -- -j$(nproc)
+  WORKING_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR}
+  RESULT_VARIABLE kokkos_build_result
+  OUTPUT_VARIABLE kokkos_build_out
+  ERROR_VARIABLE kokkos_build_err
+)
+if(NOT kokkos_build_result EQUAL 0)
+  message(FATAL_ERROR "Failed to build Kokkos Tools:\n${kokkos_build_err}")
+endif()
 
 # -------------------------------
-# Set path to simpleKernelTimer library
+# Locate the simpleKernelTimer shared library
 # -------------------------------
 set(KOKKOS_TOOLS_LIB_PATH
-    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libkp_kernel_timer.so
+    "${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-timer/libkp_kernel_timer.so"
 )
 
 if(NOT EXISTS ${KOKKOS_TOOLS_LIB_PATH})
