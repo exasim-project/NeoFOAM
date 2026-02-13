@@ -36,31 +36,34 @@ if(NOT EXISTS ${kokkos_tools_SOURCE_DIR}/CMakeLists.txt)
     "Could not find the top-level CMakeLists.txt in kokkos-tools")
 endif()
 
-# --- Build kokkos-tools the same as manual steps ---
-
-# Build directory inside the kokkos-tools root
-set(KOKKOS_TOOLS_BUILD_DIR "${kokkos_tools_SOURCE_DIR}/build")
-file(MAKE_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR})
-
-# Add the top-level CMakeLists.txt in this build directory
+# -------------------------------
+# Add kokkos-tools top-level CMakeLists.txt
+# -------------------------------
 add_subdirectory(
-  ${kokkos_tools_SOURCE_DIR}   # source dir
-  ${KOKKOS_TOOLS_BUILD_DIR}    # build dir
+  ${kokkos_tools_SOURCE_DIR}                # source dir
+  ${CMAKE_BINARY_DIR}/kokkos_tools_build    # build dir
 )
 
-# --- Locate the resulting shared library ---
-# For simpleKernelTimer, the shared library is under build/profiling/simple-kernel-timer
+# -------------------------------
+# Set path to simpleKernelTimer library
+# -------------------------------
+# The target name is assumed to be 'kp_kernel_timer' in kokkos-tools
+# CMake will place it in CMAKE_LIBRARY_OUTPUT_DIRECTORY
 set(KOKKOS_TOOLS_LIB_PATH
-    ${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-timer/libkp_kernel_timer.so
-    CACHE INTERNAL "Path to Kokkos kernel timer library")
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libkp_kernel_timer.so
+)
 
 if(NOT EXISTS ${KOKKOS_TOOLS_LIB_PATH})
-  message(WARNING "Kokkos kernel timer library not found: ${KOKKOS_TOOLS_LIB_PATH}")
+  message(FATAL_ERROR
+    "Could not find Kokkos simpleKernelTimer shared library at "
+    "${KOKKOS_TOOLS_LIB_PATH}")
 endif()
 
 message(STATUS "Kokkos Tools library: ${KOKKOS_TOOLS_LIB_PATH}")
 
+# -------------------------------
 # Generate runtime environment helper script
+# -------------------------------
 file(WRITE
   ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
   "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}\n"
