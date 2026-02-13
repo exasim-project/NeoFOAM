@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
-# NeoFOAM Profiling Integration of Kokkos Tools
+#
+# NeoFOAM Profiling Integration via Kokkos Tools
+#
 
 include_guard(GLOBAL)
 
@@ -14,64 +16,113 @@ endif()
 
 message(STATUS "NeoFOAM profiling enabled")
 
-# Force Kokkos to enable libdl support
+# ---------------------------------------------------------------------------
+# Kokkos must support dynamic tool loading
+# ---------------------------------------------------------------------------
+
 set(Kokkos_ENABLE_LIBDL ON CACHE BOOL
     "Enable libdl support for Kokkos (required for tools)"
     FORCE)
 
-# -------------------------------
-# User can specify kokkos-tools source (optional)
-# -------------------------------
+# ---------------------------------------------------------------------------
+# Acquire kokkos-tools source
+# ---------------------------------------------------------------------------
+
 set(KOKKOS_TOOLS_SRC_DIR "" CACHE PATH
-    "Path to kokkos-tools source directory. If empty, will fetch from GitHub.")
+    "Path to existing kokkos-tools source directory (optional)")
 
 if(NOT KOKKOS_TOOLS_SRC_DIR)
+
   include(FetchContent)
+
+  # Pin a commit for CI reproducibility
+  set(KOKKOS_TOOLS_GIT_TAG  master CACHE STRING
+      "33693813b125096cc72a90d495fd02a7bb7574ea")
+
   FetchContent_Declare(
     kokkos_tools
     GIT_REPOSITORY https://github.com/kokkos/kokkos-tools.git
-    GIT_TAG master
+    GIT_TAG        ${KOKKOS_TOOLS_GIT_TAG}
   )
-  FetchContent_MakeAvailable(kokkos_tools)
+
+  FetchContent_GetProperties(kokkos_tools)
+
+  if(NOT kokkos_tools_POPULATED)
+    FetchContent_Populate(kokkos_tools)
+  endif()
+
   set(KOKKOS_TOOLS_SRC_DIR ${kokkos_tools_SOURCE_DIR})
+
 endif()
 
-if(NOT EXISTS ${KOKKOS_TOOLS_SRC_DIR})
-  message(FATAL_ERROR "kokkos-tools source directory does not exist: ${KOKKOS_TOOLS_SRC_DIR}")
+if(NOT EXISTS ${KOKKOS_TOOLS_SRC_DIR}/CMakeLists.txt)
+  message(FATAL_ERROR
+    "Invalid kokkos-tools source directory: ${KOKKOS_TOOLS_SRC_DIR}")
 endif()
 
-# -------------------------------
-# Build directory for Kokkos Tools
-# -------------------------------
-set(KOKKOS_TOOLS_BUILD_DIR "${CMAKE_BINARY_DIR}/kokkos_tools_build")
-file(MAKE_DIRECTORY ${KOKKOS_TOOLS_BUILD_DIR})
+# ---------------------------------------------------------------------------
+# Build kokkos-tools as external project
+# ---------------------------------------------------------------------------
 
-# -------------------------------
-# Define the library path
-# -------------------------------
-set(KOKKOS_TOOLS_LIB_PATH "${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-timer/libkp_kernel_timer.so")
+include(ExternalProject)
 
-# -------------------------------
-# Custom command to configure and build kokkos-tools
-# -------------------------------
-add_custom_command(
-  OUTPUT ${KOKKOS_TOOLS_LIB_PATH} ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
-  COMMAND ${CMAKE_COMMAND} -S ${KOKKOS_TOOLS_SRC_DIR} -B ${KOKKOS_TOOLS_BUILD_DIR}
-  COMMAND ${CMAKE_COMMAND} --build ${KOKKOS_TOOLS_BUILD_DIR} --parallel
-  COMMAND ${CMAKE_COMMAND} -E echo "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}" > ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  COMMENT "Building Kokkos Tools and generating kokkos_profiling_env.sh"
-  VERBATIM
+set(KOKKOS_TOOLS_BUILD_DIR
+    ${CMAKE_BINARY_DIR}/kokkos_tools_build)
+
+set(KOKKOS_TOOLS_INSTALL_DIR
+    ${CMAKE_BINARY_DIR}/kokkos_tools_install)
+
+ExternalProject_Add(kokkos_tools_ext
+
+  SOURCE_DIR ${KOKKOS_TOOLS_SRC_DIR}
+  BINARY_DIR ${KOKKOS_TOOLS_BUILD_DIR}
+
+  CMAKE_ARGS
+    -DCMAKE_INSTALL_PREFIX=${KOKKOS_TOOLS_INSTALL_DIR}
+    -DBUILD_SHARED_LIBS=ON
+    -DKokkosTools_ENABLE_MPI=OFF
+    -DKokkosTools_ENABLE_PAPI=OFF
+    -DKokkosTools_ENABLE_CALIPER=OFF
+    -DKokkosTools_ENABLE_APEX=OFF
+    -DKokkosTools_ENABLE_EXAMPLES=OFF
+    -DKokkosTools_ENABLE_TESTS=OFF
+
+  INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
+  USES_TERMINAL_BUILD TRUE
 )
 
-# -------------------------------
-# Custom target that depends on the above command
-# -------------------------------
+# ---------------------------------------------------------------------------
+# Define expected tool library
+# ---------------------------------------------------------------------------
+
+set(KOKKOS_TOOLS_LIB_PATH
+    ${KOKKOS_TOOLS_INSTALL_DIR}/lib/libkp_kernel_timer.so)
+
+# ---------------------------------------------------------------------------
+# Generate runtime environment script
+# ---------------------------------------------------------------------------
+
 add_custom_target(build_kokkos_tools ALL
-  DEPENDS ${KOKKOS_TOOLS_LIB_PATH} ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
-  COMMENT "Automatic build of Kokkos Tools for profiling"
+  DEPENDS kokkos_tools_ext
+  COMMENT "Building Kokkos Tools for NeoFOAM profiling"
 )
 
-message(STATUS "Profiling setup: Kokkos Tools will be built automatically after NeoFOAM.")
-message(STATUS "Library path: ${KOKKOS_TOOLS_LIB_PATH}")
-message(STATUS "Environment script: ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh")
+add_custom_command(
+  TARGET build_kokkos_tools
+  POST_BUILD
+
+  COMMAND ${CMAKE_COMMAND} -E echo
+          "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}"
+          > ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
+
+  COMMENT "Generating kokkos_profiling_env.sh"
+)
+
+# ---------------------------------------------------------------------------
+# Status output
+# ---------------------------------------------------------------------------
+
+message(STATUS "Kokkos Tools source:  ${KOKKOS_TOOLS_SRC_DIR}")
+message(STATUS "Kokkos Tools build:   ${KOKKOS_TOOLS_BUILD_DIR}")
+message(STATUS "Kokkos Tools install: ${KOKKOS_TOOLS_INSTALL_DIR}")
+message(STATUS "Profiling env script: ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh")
