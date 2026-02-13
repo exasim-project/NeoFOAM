@@ -57,7 +57,7 @@ set(KOKKOS_TOOLS_LIB_PATH "${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-tim
 add_custom_command(
   OUTPUT ${KOKKOS_TOOLS_LIB_PATH} ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
   COMMAND ${CMAKE_COMMAND} -S ${KOKKOS_TOOLS_SRC_DIR} -B ${KOKKOS_TOOLS_BUILD_DIR}
-  COMMAND ${CMAKE_COMMAND} --build ${KOKKOS_TOOLS_BUILD_DIR} -- -j$<NUMBER_OF_PROCESSORS>
+  COMMAND ${CMAKE_COMMAND} --build ${KOKKOS_TOOLS_BUILD_DIR} --parallel
   COMMAND ${CMAKE_COMMAND} -E echo "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}" > ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMENT "Building Kokkos Tools and generating kokkos_profiling_env.sh"
