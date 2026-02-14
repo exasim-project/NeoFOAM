@@ -4,6 +4,7 @@
 
 """Shared graph utilities for DAG validation and ordering."""
 
+from .dag_resolver import DAGResolver, CyclicDependencyError, MissingDependencyError
 from .builder import build_dependency_digraph
 from .models import GraphDiagnostic, GraphValidationReport
 from .operations_dag import (
@@ -21,6 +22,9 @@ __all__ = [
     "GraphValidationReport",
     "TopologicalSorter",
     "NetworkxTopologicalSorter",
+    "DAGResolver",
+    "CyclicDependencyError",
+    "MissingDependencyError",
     "build_dependency_digraph",
     "build_dag",
     "build_global_dag",

@@ -36,6 +36,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 from neofoam.framework.context import Context
+from neofoam.io import BaseConfig, validate_models
 
 # from neofoam.io.input_validation import validate_models  # IO-coupled, not needed for tests
 from .config_context import ConfigContext
@@ -74,17 +75,15 @@ class LoadResult:
         """Convenience property to get all config models together."""
         configs: list[Any] = []
         for model in self.all_models:
+            if isinstance(model, BaseConfig):
+                configs.append(model)
             if hasattr(model, "configs"):
                 configs.extend(model.configs)
         return configs
 
-    def validate(self) -> list[ValidationError]:
+    def validate(self) -> list[Any]:
         """Validate all models in the load result and return a list of errors."""
-        # Stub implementation - actual validation requires disk IO
-        # return validate_models(self.configs)
-        raise NotImplementedError(
-            "validate() requires IO layer - not implemented in tests"
-        )
+        return validate_models(self.configs)
 
 
 @dataclass

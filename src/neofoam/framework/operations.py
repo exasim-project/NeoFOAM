@@ -52,6 +52,8 @@ def get_call_arguments(func_args: dict[str, type], context: Context) -> dict[str
             call_args[name] = annotation(**dc_args)
         elif annotation == Context:
             call_args[name] = context
+        elif get_origin(annotation) is Annotated:
+            call_args.update(_get_value(context, name, annotation))
         else:
             call_args[name] = context.fields[name]
     return call_args
@@ -122,6 +124,7 @@ class Operation:
     operation_name: str | None = None
     domain_name: str | None = None
     depends_on: list[str] | None = None
+    before: list[str] | None = None
     # TODO move visualization metadata to a separate class
     shape: str = "box"
     color: str = "lightblue"
@@ -131,6 +134,8 @@ class Operation:
     def __post_init__(self) -> None:
         if self.depends_on is None:
             self.depends_on = []
+        if self.before is None:
+            self.before = []
 
     @staticmethod
     def create_SeqOp(callable_method: Callable[..., Any], **kwargs: Any) -> Operation:
