@@ -7,7 +7,7 @@ Manually parsing, validating, and writing these files is repetitive and error-pr
 The ``neofoam.io`` module builds on `Pydantic <https://docs.pydantic.dev/>`_ to solve this.
 Pydantic was chosen because it provides:
 
-* **Declarative field definitions** — types and constraints (e.g. ``gt=0``, ``le=100``) are specified inline, not in separate validation logic.
+* **Declarative field definitions** — types and constraints (e.g. ``gt=0``, ``le=100``) are specified inline, not in a separate validation logic.
 * **Automatic type coercion and error reporting** — invalid data produces clear, structured error messages with field names and expected types.
 * **Serialisation built in** — ``model_dump()`` / ``model_validate()`` handle conversion between Python objects and dictionaries with no boilerplate.
 * **Ecosystem compatibility** — Pydantic models integrate naturally with FastAPI, CLI tools, and other libraries.

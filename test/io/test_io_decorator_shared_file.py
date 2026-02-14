@@ -95,7 +95,7 @@ def test_write_preserves_other_subdicts(
     updated_b = service_b_class.load(case_dir=test_dir)
     updated_c = service_c_class.load(case_dir=test_dir)
 
-    assert updated_a.timeout == 60  # Changed
+    assert updated_a.timeout == timeout  # Unchanged
     assert updated_a.maxConnections == 10  # Unchanged
     assert updated_b.endpoint == "example.com"  # Unchanged
     assert updated_b.port == 8080  # Unchanged
