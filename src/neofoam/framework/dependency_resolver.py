@@ -120,3 +120,41 @@ class DependencyResolver:
     def clear_all(self) -> None:
         for scope in self._cache:
             self._cache[scope].clear()
+
+
+def wrap_with_dependency_resolution(
+    func: Callable,
+    instance: Any,
+    dependency_resolver: DependencyResolver,
+) -> Callable[[Context], Any]:
+    """Wrap *func* so it can be called with just a Context.
+
+    Dependencies are resolved via *dependency_resolver*.  If the function
+    signature includes a ``self`` parameter it is bound to *instance*.
+    If the return value is a ``FieldUpdates`` the context is updated
+    automatically.
+
+    This is the canonical implementation shared by ``SolverInstance`` and
+    ``ModelInstance`` — avoids duplicating the same wrapper in every factory.
+    """
+    from functools import wraps
+
+    @wraps(func)
+    def wrapper(ctx: Context) -> Any:
+        kwargs = dependency_resolver.resolve_arguments(func, ctx)
+
+        sig = inspect.signature(func)
+        if "self" in sig.parameters and "self" not in kwargs:
+            kwargs["self"] = instance
+
+        result = func(**kwargs)
+
+        from .context import FieldUpdates
+
+        if isinstance(result, FieldUpdates):
+            ctx.fields.update(result)
+            return None
+
+        return result
+
+    return wrapper

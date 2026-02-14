@@ -17,7 +17,7 @@ from pathlib import Path
 
 from .types import OperationMetadata, OpType, OperationNumber
 from .operations import Operation, SequentialOp
-from .dependency_resolver import DependencyResolver
+from .dependency_resolver import DependencyResolver, wrap_with_dependency_resolution
 from .context import Context
 
 
@@ -30,7 +30,7 @@ class ModelInstance:
 
         model = Model("BoussinesqModel").with_config(BoussinesqConfig)
 
-        @model.operation(operation_number="2.5", configs=["main"])
+        @model.operation(operation_number="2.5")
         def solve_energy(self, T: dict, main: BoussinesqConfig) -> FieldUpdates:
             # main config auto-injected
             pass
@@ -51,12 +51,8 @@ class ModelInstance:
         # State storage for load results
         self._load_result: Any = None
 
-        # Multi-config support
-        self._config_classes: dict[str, type] = {}
-        self._config_instances: dict[str, BaseConfig] = {}
-
-        # NEW: Config auto-discovery and injection
-        self._configs: dict[str, BaseConfig] = {}  # Loaded config instances
+        # Config auto-discovery and injection
+        self._configs: dict[str, BaseConfig] = {}
         self._discovered_configs: dict[type, str] = {}  # config_type -> param_name
         self._explicit_configs: dict[type, dict] = {}  # config_type -> {name, loader}
 
@@ -316,11 +312,6 @@ class ModelInstance:
 
         return auto_load
 
-    @property
-    def old_configs(self) -> list[BaseConfig]:
-        """Convenience property to get all config models together."""
-        return list(self._config_instances.values())
-
     def load(self, func: Callable[[], Any]) -> Callable[[], Any]:
         """
         Decorator for LOAD stage function.
@@ -408,28 +399,6 @@ class ModelInstance:
         else:
             self._load_result = self._load_func()
 
-        # Auto-register loaded BaseConfig instances in _config_instances (legacy support)
-        # This ensures they're available via the configs property for validation
-        from neofoam.io import BaseConfig
-
-        # Handle single config or tuple/list of configs
-        configs_to_register = []
-        if isinstance(self._load_result, (tuple, list)):
-            configs_to_register = list(self._load_result)
-        elif self._load_result is not None:
-            configs_to_register = [self._load_result]
-
-        # Register each BaseConfig instance
-        for idx, config in enumerate(configs_to_register):
-            if isinstance(config, BaseConfig):
-                # Use registered name if available, otherwise use index-based name
-                config_names = list(self._config_classes.keys())
-                if idx < len(config_names):
-                    name = config_names[idx]
-                else:
-                    name = f"config_{idx}"
-                self._config_instances[name] = config
-
         return self._load_result
 
     def run_resolve(self, config: Any) -> None:
@@ -475,10 +444,9 @@ class ModelInstance:
         loader: Optional[Callable[[Any], BaseConfig]] = None,
     ) -> "ModelInstance":
         """
-        Register a configuration class with the model (chainable).
+        Register a configuration class with the model.
 
-        NEW: Also stores explicit config metadata for auto-load generation.
-        Use this only for custom storage names or custom loading logic.
+        This stores explicit config metadata for auto-load generation.
 
         Args:
             config_class: Pydantic BaseModel subclass for configuration
@@ -498,68 +466,28 @@ class ModelInstance:
             # With custom loader
             model.with_config(DbConfig, loader=lambda case_dir: load_from_db())
         """
-        # Store explicit config metadata for auto-discovery
-        self._explicit_configs[config_class] = {
-            "name": name,
-            "loader": loader,
-        }
-
-        # Legacy support: Validate that it's a BaseModel
+        # Validate config type
         if not (isinstance(config_class, type) and issubclass(config_class, BaseModel)):
             raise TypeError(
                 f"Config class must be a Pydantic BaseModel, got {type(config_class)}"
             )
 
-        # Legacy support: Determine config name for _config_classes
+        # Keep deterministic default name when explicit naming is needed
         if name is None:
-            # Default to "main" if no name provided
             name = "main"
 
-        # Check for duplicates
-        if name in self._config_classes:
-            # Allow re-registration if it's the same class
-            if self._config_classes[name] is not config_class:
+        for cfg_type, cfg_meta in self._explicit_configs.items():
+            if cfg_meta["name"] == name and cfg_type is not config_class:
                 raise ValueError(
                     f"Config with name '{name}' already exists for model '{self.name}'"
                 )
-        else:
-            # Register the config class (legacy)
-            self._config_classes[name] = config_class
+
+        self._explicit_configs[config_class] = {
+            "name": name,
+            "loader": loader,
+        }
 
         return self
-
-    def get_config(self, name: str = "main", **kwargs: Any) -> Any:
-        """
-        Get or create a config instance by name.
-
-        Args:
-            name: Name of the config to retrieve (default: "main")
-            **kwargs: Constructor arguments for first-time instantiation
-
-        Returns:
-            Config instance
-
-        Usage:
-            config = model.get_config("main", prop1=5.0, prop2=50.0)
-            # Later calls can omit kwargs to retrieve cached instance
-            config = model.get_config("main")
-        """
-        # Check if config class exists
-        if name not in self._config_classes:
-            raise KeyError(
-                f"No config registered with name '{name}' for model '{self.name}'"
-            )
-
-        # Return cached instance if exists and no new kwargs provided
-        if name in self._config_instances and not kwargs:
-            return self._config_instances[name]
-
-        # Create new instance
-        config_class = self._config_classes[name]
-        instance = config_class(**kwargs)
-        self._config_instances[name] = instance
-
-        return instance
 
     def register_with(self, plugin_interface: type) -> "ModelInstance":
         """
@@ -609,8 +537,6 @@ class ModelInstance:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
-        inject_config: bool = True,
-        configs: Optional[list[str]] = None,
     ) -> Callable:
         """
         Decorator to register a model operation with auto-config discovery.
@@ -620,8 +546,6 @@ class ModelInstance:
             depends_on: List of operation names this depends on
             before: List of operation names this should execute before
             name: Optional name override (default: function name)
-            inject_config: Auto-inject config if 'config' parameter exists (legacy)
-            configs: List of config names to inject (legacy, deprecated)
 
         Returns:
             Decorator function
@@ -649,26 +573,8 @@ class ModelInstance:
                 # Config wrapper already handles everything, skip dependency resolution
                 wrapped = func_to_wrap
             else:
-                # Legacy: Validate that all requested configs are registered
-                if configs:
-                    for config_name in configs:
-                        if config_name not in self._config_classes:
-                            raise ValueError(
-                                f"Config '{config_name}' not registered with model '{self.name}'. "
-                                f"Use model.with_config() to register it first."
-                            )
-
-                # Auto-inject config if requested (legacy single-config mode)
-                if inject_config and not configs:
-                    func_to_wrap = self._wrap_with_config_injection(func)
-                elif configs:
-                    # Inject multiple configs if specified (legacy)
-                    func_to_wrap = self._wrap_with_multi_config_injection(func, configs)
-                else:
-                    func_to_wrap = func
-
                 # Wrap with dependency resolution so it can be called with just Context
-                wrapped = self._wrap_with_dependency_resolution(func_to_wrap)
+                wrapped = self._wrap_with_dependency_resolution(func)
 
             # Store operation registration
             self._operations.append(
@@ -700,81 +606,6 @@ class ModelInstance:
 
         return decorator
 
-    def _wrap_with_config_injection(self, func: Callable) -> Callable:
-        """
-        Wrap function to auto-inject config parameter if it exists in signature.
-
-        Args:
-            func: Function to wrap
-
-        Returns:
-            Wrapped function that auto-injects config
-        """
-        sig = inspect.signature(func)
-
-        # Check if 'config' parameter exists
-        if "config" not in sig.parameters:
-            return func
-
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            # Inject config if not already provided
-            if "config" not in kwargs:
-                if "main" in self._config_instances:
-                    kwargs["config"] = self.get_config("main")
-            return func(*args, **kwargs)
-
-        # Preserve original signature for dependency resolution
-        wrapper.__signature__ = sig
-        return wrapper
-
-    def _wrap_with_multi_config_injection(
-        self, func: Callable, config_names: list[str]
-    ) -> Callable:
-        """
-        Wrap function to auto-inject multiple named configs.
-
-        Configs are injected based on parameter names in the function signature.
-        The parameter name should match the config name or be a type-annotated parameter.
-
-        Args:
-            func: Function to wrap
-            config_names: List of config names to inject
-
-        Returns:
-            Wrapped function that auto-injects configs
-        """
-        sig = inspect.signature(func)
-
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            # Inject configs by matching parameter names
-            for config_name in config_names:
-                # Try to find matching parameter
-                param_name = None
-
-                # Direct match: parameter name == config name
-                if config_name in sig.parameters:
-                    param_name = config_name
-                else:
-                    # Try to match by config suffix (e.g., "main_config" -> "main")
-                    for param in sig.parameters:
-                        if param.endswith("_config") or param.endswith("Config"):
-                            # Extract base name
-                            base = param.replace("_config", "").replace("Config", "")
-                            if base == config_name or config_name.endswith(base):
-                                param_name = param
-                                break
-
-                if param_name and param_name not in kwargs:
-                    kwargs[param_name] = self.get_config(config_name)
-
-            return func(*args, **kwargs)
-
-        # Preserve original signature for dependency resolution
-        wrapper.__signature__ = sig
-        return wrapper
-
     @property
     def operations(self) -> list[Operation]:
         """
@@ -805,39 +636,8 @@ class ModelInstance:
     def _wrap_with_dependency_resolution(
         self, func: Callable
     ) -> Callable[[Context], Any]:
-        """
-        Wrap function to resolve dependencies from Context.
-
-        Args:
-            func: Function to wrap
-
-        Returns:
-            Function that takes Context and resolves all dependencies
-        """
-
-        @wraps(func)
-        def wrapper(ctx: Context) -> Any:
-            # Resolve all arguments from context
-            kwargs = self._dependency_resolver.resolve_arguments(func, ctx)
-
-            # Check if first parameter is 'self'
-            sig = inspect.signature(func)
-            if "self" in sig.parameters and "self" not in kwargs:
-                kwargs["self"] = self
-
-            # Call function with resolved arguments
-            result = func(**kwargs)
-
-            # If it's a FieldUpdates, update context
-            from .context import FieldUpdates
-
-            if isinstance(result, FieldUpdates):
-                ctx.fields.update(result)
-                return None
-
-            return result
-
-        return wrapper
+        """Wrap function to resolve dependencies from Context."""
+        return wrap_with_dependency_resolution(func, self, self._dependency_resolver)
 
 
 def Model(name: str) -> ModelInstance:
@@ -853,7 +653,7 @@ def Model(name: str) -> ModelInstance:
     Example:
         model = Model("BoussinesqModel").with_config(BoussinesqConfig)
 
-        @model.operation(operation_number="2.5", configs=["main"])
+        @model.operation(operation_number="2.5")
         def solve_energy(self, T: dict, main: BoussinesqConfig) -> FieldUpdates:
             # config auto-injected
             pass

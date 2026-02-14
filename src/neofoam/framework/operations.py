@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+"""Operation primitives, adapters, and the Operations container."""
+
 from __future__ import annotations
 
 import inspect
@@ -205,14 +208,23 @@ class Operation:
             raise ValueError("Unknown operation type")
 
 
-class OperationCollection:
+class Operations:
+    """Unified container for Operation objects.
+
+    Supports flexible add (single, list, or another Operations),
+    suboperation management, iteration, indexing, and batch execution.
+    """
+
     def __init__(self, operations: list[Operation] | None = None) -> None:
-        self.ops: list[Operation] = operations if operations is not None else []
+        if isinstance(operations, list):
+            self.ops: list[Operation] = operations
+        else:
+            self.ops = operations if operations is not None else []
 
     def add(
-        self, operation: Union[Operation, OperationCollection, list[Operation]]
-    ) -> OperationCollection:
-        if isinstance(operation, OperationCollection):
+        self, operation: Union[Operation, "Operations", list[Operation]]
+    ) -> "Operations":
+        if isinstance(operation, Operations):
             self.ops.extend(operation.ops)
         elif isinstance(operation, list):
             self.ops.extend(operation)
@@ -222,7 +234,7 @@ class OperationCollection:
 
     def add_suboperation(
         self, operation: Operation, index: int | str = -1
-    ) -> OperationCollection:
+    ) -> "Operations":
         if isinstance(index, str):
             for i, op in enumerate(self.ops):
                 if op.operation_name == index:
@@ -246,6 +258,10 @@ class OperationCollection:
     def __iter__(self) -> Iterator[Operation]:
         return iter(self.ops)
 
+    def run(self, ctx: Context) -> None:
+        for operation in self.ops:
+            operation.run(ctx)
+
     def total_operations(self) -> int:
         def count_ops(ops: list[Operation]) -> int:
             total = 0
@@ -258,40 +274,8 @@ class OperationCollection:
         return count_ops(self.ops)
 
 
-class Operations:
-    def __init__(
-        self, operations: list[Operation] | OperationCollection | None = None
-    ) -> None:
-        if isinstance(operations, OperationCollection):
-            self.ops = operations.ops
-        else:
-            self.ops = operations if operations is not None else []
-
-    def add(self, operation: Operation) -> Operations:
-        self.ops.append(operation)
-        return self
-
-    def add_suboperation(self, operation: Operation) -> Operations:
-        self.ops[-1].sub_operations.append(operation)
-        return self
-
-    def __getitem__(self, index: int | str) -> Operation:
-        if isinstance(index, str):
-            for op in self.ops:
-                if op.operation_name == index:
-                    return op
-            raise KeyError(f"Operation with operation_name '{index}' not found.")
-        return self.ops[index]
-
-    def __len__(self) -> int:
-        return len(self.ops)
-
-    def __iter__(self) -> Iterator[Operation]:
-        return iter(self.ops)
-
-    def run(self, ctx: Context) -> None:
-        for operation in self.ops:
-            operation.run(ctx)
+# Backward-compatible alias — use Operations directly in new code.
+OperationCollection = Operations
 
 
 class StepBuilder:

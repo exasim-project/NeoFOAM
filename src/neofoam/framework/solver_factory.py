@@ -11,7 +11,7 @@ from functools import wraps
 from typing import Any, Callable, Optional
 
 from .context import Context
-from .dependency_resolver import DependencyResolver
+from .dependency_resolver import DependencyResolver, wrap_with_dependency_resolution
 from .operations import Operation, OperationCollection, SequentialOp
 from .types import OpType, OperationMetadata, OperationNumber
 
@@ -185,7 +185,6 @@ class SolverInstance:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
-        inject_config: bool = True,
     ) -> Callable:
         """
         Decorator to register a solver operation.
@@ -195,7 +194,6 @@ class SolverInstance:
             depends_on: List of operation names this depends on
             before: List of operation names this should execute before
             name: Optional name override (default: function name)
-            inject_config: Auto-inject config if 'config' parameter exists
 
         Returns:
             Decorator function
@@ -203,14 +201,13 @@ class SolverInstance:
         Usage:
             @solver.operation(operation_number="1.0")
             def solve_momentum(self, U: dict, p: dict, config) -> FieldUpdates:
-                # config auto-injected if inject_config=True
+                # config auto-injected when parameter exists
                 pass
         """
 
         def decorator(func: Callable) -> Callable:
-            # Auto-inject config if requested
-            if inject_config:
-                func = self._wrap_with_config_injection(func)
+            # Auto-inject config when operation expects it
+            func = self._wrap_with_config_injection(func)
 
             # Wrap with dependency resolution so it can be called with just Context
             wrapped = self._wrap_with_dependency_resolution(func)
@@ -302,39 +299,8 @@ class SolverInstance:
     def _wrap_with_dependency_resolution(
         self, func: Callable
     ) -> Callable[[Context], Any]:
-        """
-        Wrap function to resolve dependencies from Context.
-
-        Args:
-            func: Function to wrap
-
-        Returns:
-            Function that takes Context and resolves all dependencies
-        """
-
-        @wraps(func)
-        def wrapper(ctx: Context) -> Any:
-            # Resolve all arguments from context
-            kwargs = self._dependency_resolver.resolve_arguments(func, ctx)
-
-            # Check if first parameter is 'self'
-            sig = inspect.signature(func)
-            if "self" in sig.parameters and "self" not in kwargs:
-                kwargs["self"] = self
-
-            # Call function with resolved arguments
-            result = func(**kwargs)
-
-            # If it's a FieldUpdates, update context
-            from .context import FieldUpdates
-
-            if isinstance(result, FieldUpdates):
-                ctx.fields.update(result)
-                return None
-
-            return result
-
-        return wrapper
+        """Wrap function to resolve dependencies from Context."""
+        return wrap_with_dependency_resolution(func, self, self._dependency_resolver)
 
 
 def Solver(name: str) -> SolverInstance:

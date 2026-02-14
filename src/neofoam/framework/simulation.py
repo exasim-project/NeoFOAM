@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+"""Top-level Simulation orchestrator: domains, coupling, and main loop."""
+
 from typing import Any
 
 from pydantic import BaseModel
 
-from neofoam.framework.operations import Operations
 from neofoam.framework.graph import build_global_dag
 
 from .context import Context
@@ -44,7 +46,6 @@ class Simulation(BaseModel):
             )
 
         for domain in self.domains:
-            ops_collection = domain.operations()
+            ops = domain.operations()
             ctx = sim_ctx.domain_context[domain.name]
-            ops = Operations(operations=list(ops_collection.ops))
             ops.run(ctx)

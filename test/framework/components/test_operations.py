@@ -8,6 +8,8 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 
+from conftest import MaxIterations
+
 
 def function1():
     return 1
@@ -107,18 +109,6 @@ def test_builder_nested_context():
 
     assert len(builder.operations) == 4
     assert len(builder.operations[-1].sub_operations) == 2
-
-
-class MaxIterations:
-    def __init__(self, max_iters=5):
-        self.max_iters = max_iters
-        self.current_iter = 0
-
-    def __call__(self, ctx):
-        self.current_iter += 1
-        if self.current_iter <= self.max_iters:
-            return True
-        return False
 
 
 def test_operation_run():

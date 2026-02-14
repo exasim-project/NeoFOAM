@@ -6,7 +6,7 @@
 
 import networkx as nx  # type: ignore[import-untyped]
 
-from neofoam.framework.operations import OperationCollection, Operations
+from neofoam.framework.operations import Operations
 from neofoam.framework.types import OperationMetadata
 
 from .sorter import NetworkxTopologicalSorter
@@ -50,7 +50,7 @@ def compute_nodes_order(nodes: list[OperationMetadata]) -> list[str]:
     return sorter.sort(graph)
 
 
-def compute_steps_order(op_col: OperationCollection) -> Operations:
+def compute_steps_order(op_col: Operations) -> Operations:
     """Compute a valid topological order of operations."""
     nodes = [op.operation_metadata() for op in op_col.ops]
     sorted_names = compute_nodes_order(nodes)

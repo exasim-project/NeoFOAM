@@ -78,59 +78,37 @@ def test_dummy_solver_invalid_config(temp_config_dir, monkeypatch):
     # Should have at least 4 validation errors from different files
     assert len(val_errors_sorted) >= 4
 
-    # Extract errors by file
-    algo_errors = [
-        e for e in val_errors_sorted if e.file_name == "algorithm_config.yaml"
+    # Expected per-file error specifications:
+    #   (file_name, min_errors, [(field_substr, input_value, error_type), ...])
+    expected = [
+        ("algorithm_config.yaml", 1, [("param1", -0.00001, "greater_than")]),
+        ("mesh_config.yaml", 1, [("nPoints", -1, "greater_than")]),
+        ("model1_config.yaml", 1, [("prop1", 1.5, "less_than_equal")]),
+        (
+            "solver_config.yaml",
+            2,
+            [("param1", -1.0, "greater_than"), ("endTime", -1.0, None)],
+        ),
     ]
-    mesh_errors = [e for e in val_errors_sorted if e.file_name == "mesh_config.yaml"]
-    model1_errors = [
-        e for e in val_errors_sorted if e.file_name == "model1_config.yaml"
-    ]
-    solver_errors = [
-        e for e in val_errors_sorted if e.file_name == "solver_config.yaml"
-    ]
 
-    # Check algorithm_config.yaml errors
-    assert len(algo_errors) >= 1, "Expected at least 1 error in algorithm_config.yaml"
-    algo_error = algo_errors[0]
-    assert algo_error.file_name == "algorithm_config.yaml"
-    assert "param1" in str(algo_error.field)
-    assert algo_error.input_value == -0.00001
-    assert algo_error.error_type == "greater_than"
+    for file_name, min_count, field_checks in expected:
+        file_errors = [e for e in val_errors_sorted if e.file_name == file_name]
+        assert len(file_errors) >= min_count, (
+            f"Expected at least {min_count} error(s) in {file_name}, got {len(file_errors)}"
+        )
 
-    # Check mesh_config.yaml errors
-    assert len(mesh_errors) >= 1, "Expected at least 1 error in mesh_config.yaml"
-    mesh_error = mesh_errors[0]
-    assert mesh_error.file_name == "mesh_config.yaml"
-    assert "nPoints" in str(mesh_error.field)
-    assert mesh_error.input_value == -1
-    assert mesh_error.error_type == "greater_than"
-
-    # Check model1_config.yaml errors
-    assert len(model1_errors) >= 1, "Expected at least 1 error in model1_config.yaml"
-    model1_error = model1_errors[0]
-    assert model1_error.file_name == "model1_config.yaml"
-    assert "prop1" in str(model1_error.field)
-    assert model1_error.input_value == 1.5
-    assert model1_error.error_type == "less_than_equal"
-
-    # Check solver_config.yaml errors (has multiple: param1, endTime)
-    assert len(solver_errors) >= 2, (
-        f"Expected at least 2 errors in solver_config.yaml, got {len(solver_errors)}"
-    )
-
-    # Find param1 and endTime errors
-    param1_error = next((e for e in solver_errors if "param1" in str(e.field)), None)
-    endtime_error = next((e for e in solver_errors if "endTime" in str(e.field)), None)
-
-    assert param1_error is not None, "Missing param1 error in solver_config.yaml"
-    assert param1_error.file_name == "solver_config.yaml"
-    assert param1_error.input_value == -1.0
-    assert param1_error.error_type == "greater_than"
-
-    assert endtime_error is not None, "Missing endTime error in solver_config.yaml"
-    assert endtime_error.file_name == "solver_config.yaml"
-    assert endtime_error.input_value == -1.0
+        for field_substr, input_value, error_type in field_checks:
+            match = next((e for e in file_errors if field_substr in str(e.field)), None)
+            assert match is not None, f"Missing '{field_substr}' error in {file_name}"
+            assert match.input_value == input_value, (
+                f"{file_name}: expected input_value={input_value} for '{field_substr}', "
+                f"got {match.input_value}"
+            )
+            if error_type is not None:
+                assert match.error_type == error_type, (
+                    f"{file_name}: expected error_type='{error_type}' for '{field_substr}', "
+                    f"got '{match.error_type}'"
+                )
 
     # Verify all errors have proper metadata
     for err in val_errors_sorted:
