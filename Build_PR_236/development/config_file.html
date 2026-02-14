@@ -253,14 +253,12 @@
         <article role="main" id="furo-main-content">
           <section id="configuration-file-io">
 <h1>Configuration File IO<a class="headerlink" href="#configuration-file-io" title="Link to this heading">¶</a></h1>
-<section id="why-a-config-io-framework">
-<h2>Why a Config IO Framework?<a class="headerlink" href="#why-a-config-io-framework" title="Link to this heading">¶</a></h2>
 <p>NeoFOAM simulations rely on structured data/dictionaries to define solver settings, boundary conditions, and physical models.
 Manually parsing, validating, and writing these files is repetitive and error-prone.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">neofoam.io</span></code> module builds on <a class="reference external" href="https://docs.pydantic.dev/">Pydantic</a> to solve this.
 Pydantic was chosen because it provides:</p>
 <ul class="simple">
-<li><p><strong>Declarative field definitions</strong> — types and constraints (e.g. <code class="docutils literal notranslate"><span class="pre">gt=0</span></code>, <code class="docutils literal notranslate"><span class="pre">le=100</span></code>) are specified inline, not in separate validation logic.</p></li>
+<li><p><strong>Declarative field definitions</strong> — types and constraints (e.g. <code class="docutils literal notranslate"><span class="pre">gt=0</span></code>, <code class="docutils literal notranslate"><span class="pre">le=100</span></code>) are specified inline, not in a separate validation logic.</p></li>
 <li><p><strong>Automatic type coercion and error reporting</strong> — invalid data produces clear, structured error messages with field names and expected types.</p></li>
 <li><p><strong>Serialisation built in</strong> — <code class="docutils literal notranslate"><span class="pre">model_dump()</span></code> / <code class="docutils literal notranslate"><span class="pre">model_validate()</span></code> handle conversion between Python objects and dictionaries with no boilerplate.</p></li>
 <li><p><strong>Ecosystem compatibility</strong> — Pydantic models integrate naturally with FastAPI, CLI tools, and other libraries.</p></li>
@@ -271,7 +269,6 @@ Pydantic was chosen because it provides:</p>
 <li><p><strong>Decorate</strong> it with <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy(...)</span></code> to bind a file format and an optional subdict path.</p></li>
 <li><p><strong>Use</strong> <code class="docutils literal notranslate"><span class="pre">load()</span></code> / <code class="docutils literal notranslate"><span class="pre">save()</span></code> — the framework handles reading, writing, subdict isolation, and validation.</p></li>
 </ol>
-</section>
 <section id="quick-start">
 <h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">Field</span>
@@ -315,6 +312,9 @@ Pydantic was chosen because it provides:</p>
 
 <span class="c1"># Save to a specific case directory</span>
 <span class="n">cfg</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="s2">&quot;path/to/case&quot;</span><span class="p">)</span>
+
+<span class="c1"># Override filename at save time</span>
+<span class="n">cfg</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="s2">&quot;path/to/case&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">&quot;alternate.yaml&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When using <strong>subdicts</strong>, <code class="docutils literal notranslate"><span class="pre">save()</span></code> performs a <strong>partial update</strong> — it merges only the relevant section and preserves all other sections in the file.</p>
@@ -508,7 +508,6 @@ Each strategy implements the <code class="docutils literal notranslate"><span cl
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Configuration File IO</a><ul>
-<li><a class="reference internal" href="#why-a-config-io-framework">Why a Config IO Framework?</a></li>
 <li><a class="reference internal" href="#quick-start">Quick Start</a></li>
 <li><a class="reference internal" href="#loading">Loading</a></li>
 <li><a class="reference internal" href="#saving">Saving</a></li>

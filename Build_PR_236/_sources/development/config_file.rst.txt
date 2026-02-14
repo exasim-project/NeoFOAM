@@ -1,16 +1,13 @@
 Configuration File IO
 =====================
 
-Why a Config IO Framework?
---------------------------
-
 NeoFOAM simulations rely on structured data/dictionaries to define solver settings, boundary conditions, and physical models.
 Manually parsing, validating, and writing these files is repetitive and error-prone.
 
 The ``neofoam.io`` module builds on `Pydantic <https://docs.pydantic.dev/>`_ to solve this.
 Pydantic was chosen because it provides:
 
-* **Declarative field definitions** — types and constraints (e.g. ``gt=0``, ``le=100``) are specified inline, not in separate validation logic.
+* **Declarative field definitions** — types and constraints (e.g. ``gt=0``, ``le=100``) are specified inline, not in a separate validation logic.
 * **Automatic type coercion and error reporting** — invalid data produces clear, structured error messages with field names and expected types.
 * **Serialisation built in** — ``model_dump()`` / ``model_validate()`` handle conversion between Python objects and dictionaries with no boilerplate.
 * **Ecosystem compatibility** — Pydantic models integrate naturally with FastAPI, CLI tools, and other libraries.
@@ -74,6 +71,9 @@ Saving
 
    # Save to a specific case directory
    cfg.save(case_dir="path/to/case")
+
+   # Override filename at save time
+   cfg.save(case_dir="path/to/case", file="alternate.yaml")
 
 When using **subdicts**, ``save()`` performs a **partial update** — it merges only the relevant section and preserves all other sections in the file.
 
