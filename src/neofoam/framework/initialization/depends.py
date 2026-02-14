@@ -45,9 +45,3 @@ class Depends:
         else:
             name = getattr(self.dependency, "__name__", str(self.dependency))
         return f"Depends({name}, scope={self.scope})"
-
-    def __call__(self) -> Any:
-        """Call the dependency function to get the value (for backward compatibility)."""
-        if callable(self.dependency):
-            return self.dependency()
-        raise TypeError(f"Cannot call string dependency: {self.dependency}")

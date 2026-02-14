@@ -15,9 +15,9 @@ from neofoam.framework.initialization.config_context import ConfigContext
 def linear_chain():
     """A -> B -> C linear dependency chain (shuffled input order)."""
     return [
-        InitStep("C", depends_on=["B"], initializer=lambda: "c"),
-        InitStep("A", depends_on=[], initializer=lambda: "a"),
-        InitStep("B", depends_on=["A"], initializer=lambda: "b"),
+        InitStep("C", depends_on=["B"], initializer=lambda _ctx: "c"),
+        InitStep("A", depends_on=[], initializer=lambda _ctx: "a"),
+        InitStep("B", depends_on=["A"], initializer=lambda _ctx: "b"),
     ]
 
 
@@ -25,10 +25,10 @@ def linear_chain():
 def diamond_graph():
     """A -> (B, C) -> D diamond dependency graph."""
     return [
-        InitStep("D", depends_on=["B", "C"], initializer=lambda: "d"),
-        InitStep("B", depends_on=["A"], initializer=lambda: "b"),
-        InitStep("C", depends_on=["A"], initializer=lambda: "c"),
-        InitStep("A", depends_on=[], initializer=lambda: "a"),
+        InitStep("D", depends_on=["B", "C"], initializer=lambda _ctx: "d"),
+        InitStep("B", depends_on=["A"], initializer=lambda _ctx: "b"),
+        InitStep("C", depends_on=["A"], initializer=lambda _ctx: "c"),
+        InitStep("A", depends_on=[], initializer=lambda _ctx: "a"),
     ]
 
 
@@ -49,8 +49,12 @@ class MockCoreModel:
 
     def run_build(self):
         return [
-            InitStep("test_field", initializer=lambda: "field_value"),
-            InitStep("test_op", initializer=lambda: "op_value"),
+            InitStep(
+                "test_field", initializer=lambda _ctx: "field_value", category="fields"
+            ),
+            InitStep(
+                "test_op", initializer=lambda _ctx: "op_value", category="operators"
+            ),
         ]
 
 
@@ -59,7 +63,11 @@ class MockOptionalModel:
 
     def run_build(self):
         return [
-            InitStep("optional_field", initializer=lambda: "opt_field"),
+            InitStep(
+                "optional_field",
+                initializer=lambda _ctx: "opt_field",
+                category="fields",
+            ),
         ]
 
 

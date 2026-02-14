@@ -64,15 +64,18 @@ Execution:
 """
 
 from .config_context import ConfigContext
-from .init_step import InitStep
+from .init_step import InitCategory, InitStep, InitStepExecutionError
 from .helpers import field, operator, lazy, model, InitializerBuilder
-from .execution import execute_initialization, topological_sort
+from .execution import execute_initialization, topological_sort, InitResult
 from .depends import Depends
 from .staged_init import StagedInit, ValidationError, LoadResult
 
 __all__ = [
     "ConfigContext",
     "InitStep",
+    "InitCategory",
+    "InitStepExecutionError",
+    "InitResult",
     "field",
     "operator",
     "lazy",

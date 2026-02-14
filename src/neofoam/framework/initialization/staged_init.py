@@ -13,9 +13,9 @@ Usage:
     init = StagedInit("DummySolver")
 
     @init.load
-    def load_config() -> dict[str, Any]:
+    def load_config() -> LoadResult:
         # Load configuration from files
-        return {"algorithm": algorithm, "config": config}
+        return LoadResult(core_models=[algorithm], optional_models=[])
 
     @init.resolve
     def resolve_deps(config: ConfigContext) -> None:
@@ -23,7 +23,7 @@ Usage:
         pass
 
     @init.build
-    def build_lazy() -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         # Create lazy initializers
         return [field("U", create=...), model("transport", ...)]
 
@@ -32,39 +32,16 @@ Usage:
     ctx = init.run()
 """
 
-import inspect
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Union, cast
+from typing import Any, Callable, Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.solver_factory import SolverState
 
 # from neofoam.io.input_validation import validate_models  # IO-coupled, not needed for tests
 from .config_context import ConfigContext
 from .execution import execute_initialization
 from .init_step import InitStep
 # from neofoam.io.strategies import BaseConfig  # IO-coupled, not needed for tests
-
-
-def _dispatch_by_arity(
-    func: Callable[..., Any], arg_sets: dict[int, tuple[Any, ...]]
-) -> Any:
-    """Call *func* with the arg-set matching its parameter count.
-
-    ``arg_sets`` maps arity → positional args.  If the function's arity
-    doesn't appear in the map a ``RuntimeError`` is raised.
-
-    Example:
-        _dispatch_by_arity(
-            my_build,
-            {0: (), 2: (core, opt)},
-        )
-    """
-    n = len(inspect.signature(func).parameters)
-    if n not in arg_sets:
-        expected = " or ".join(str(k) for k in sorted(arg_sets))
-        raise RuntimeError(f"Expected {expected} parameters, got {n}")
-    return func(*arg_sets[n])
 
 
 @dataclass
@@ -110,6 +87,15 @@ class LoadResult:
         )
 
 
+@dataclass
+class StageHooks:
+    """Registered stage callbacks owned by StagedInit decorators."""
+
+    load: Optional[Callable[[], LoadResult]] = None
+    resolve: Optional[Callable[[ConfigContext], None]] = None
+    build: Optional[Callable[[list[Any], list[Any]], list[InitStep]]] = None
+
+
 class StagedInit:
     """
     3-stage initialization builder using decorators.
@@ -118,8 +104,8 @@ class StagedInit:
         init = StagedInit("DummySolver")
 
         @init.load
-        def load_config() -> dict[str, Any]:
-            return {"algorithm": algo, "config": cfg}
+        def load_config() -> LoadResult:
+            return LoadResult(core_models=[algo], optional_models=[])
 
         @init.resolve
         def resolve_deps(config: ConfigContext) -> None:
@@ -127,7 +113,7 @@ class StagedInit:
             pass
 
         @init.build
-        def build_lazy() -> list[InitStep]:
+        def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
             return [field("U", create=...)]
 
         ctx = init.run()
@@ -144,46 +130,13 @@ class StagedInit:
         self.name = name
         self.argv = argv or []
 
-        # Stage functions
-        self._load_func: Optional[Callable[[], LoadResult]] = None
-        self._resolve_func: Optional[Callable[..., None]] = None
-        self._build_func: Optional[Callable[..., list[InitStep]]] = None
+        # Stage callbacks + runtime model state
+        self._hooks = StageHooks()
+        self.core_models: list[Any] = []
+        self.optional_models: list[Any] = []
 
         # State storage
         self.data: Any = None  # For storing InitializationData or similar
-
-        # Shared state container
-        self.state = SolverState()
-
-    @property
-    def core_models(self) -> list[Any]:
-        """Access core_models from state."""
-        return self.state.core_models
-
-    @core_models.setter
-    def core_models(self, value: list[Any]) -> None:
-        """Set core_models in state."""
-        self.state.core_models = value
-
-    @property
-    def optional_models(self) -> list[Any]:
-        """Access optional_models from state."""
-        return self.state.optional_models
-
-    @optional_models.setter
-    def optional_models(self, value: list[Any]) -> None:
-        """Set optional_models in state."""
-        self.state.optional_models = value
-
-    @property
-    def configs(self) -> dict[str, Any]:
-        """Access configs from state."""
-        return self.state.configs
-
-    @configs.setter
-    def configs(self, value: dict[str, Any]) -> None:
-        """Set configs in state."""
-        self.state.configs = value
 
     def load(self, func: Callable[[], LoadResult]) -> Callable[[], LoadResult]:
         """
@@ -199,41 +152,28 @@ class StagedInit:
                     optional_models=DummyModel.detect_models()
                 )
         """
-        self._load_func = func
+        self._hooks.load = func
         return func
 
     def resolve(
         self,
-        func: Union[
-            Callable[[list[Any], list[Any], ConfigContext], None],
-            Callable[[ConfigContext], None],
-        ],
-    ) -> Union[
-        Callable[[list[Any], list[Any], ConfigContext], None],
-        Callable[[ConfigContext], None],
-    ]:
+        func: Callable[[ConfigContext], None],
+    ) -> Callable[[ConfigContext], None]:
         """
         Decorator for RESOLVE stage function.
 
         Usage (free function):
             @init.resolve
-            def resolve_deps(core_models: list, optional_models: list, config: ConfigContext) -> None:
-                for model in optional_models:
-                    model.resolve(config)
+            def resolve_deps(config: ConfigContext) -> None:
+                ...
         """
-        self._resolve_func = func
+        self._hooks.resolve = func
         return func
 
     def build(
         self,
-        func: Union[
-            Callable[[list[Any], list[Any]], list[InitStep]],
-            Callable[[], list[InitStep]],
-        ],
-    ) -> Union[
-        Callable[[list[Any], list[Any]], list[InitStep]],
-        Callable[[], list[InitStep]],
-    ]:
+        func: Callable[[list[Any], list[Any]], list[InitStep]],
+    ) -> Callable[[list[Any], list[Any]], list[InitStep]]:
         """
         Decorator for BUILD stage function.
 
@@ -245,7 +185,7 @@ class StagedInit:
                     model("algorithm", create=lambda ctx: core_models[0]),
                 ]
         """
-        self._build_func = func
+        self._hooks.build = func
         return func
 
     def run(self) -> Context:
@@ -260,56 +200,37 @@ class StagedInit:
         Returns:
             Initialized Context with all fields and models
         """
-        if self._load_func is None:
+        if self._hooks.load is None:
             raise RuntimeError(f"No @{self.name}.load defined")
-
-        load_result = self._load_func()
-
+        load_result = self._hooks.load()
         self.core_models = load_result.core_models
         self.optional_models = load_result.optional_models
 
-        # Wire LoadResult models into ConfigContext (P-6.2)
+        # Wire LoadResult models into ConfigContext
         config = ConfigContext()
-        for m in load_result.all_models:
-            key = getattr(m, "name", None) or type(m).__name__.lower()
+        for loaded_model in load_result.all_models:
+            key = (
+                getattr(loaded_model, "name", None)
+                or type(loaded_model).__name__.lower()
+            )
             if config.contains(key):
                 raise ValueError(f"Duplicate model registration key: '{key}'")
-            config.register(key, m)
+            config.register(key, loaded_model)
 
-        if self._resolve_func is not None:
-            _dispatch_by_arity(
-                self._resolve_func,
-                {1: (config,), 3: (self.core_models, self.optional_models, config)},
-            )
+        if self._hooks.resolve is not None:
+            self._hooks.resolve(config)
 
-        if self._build_func is None:
+        if self._hooks.build is None:
             raise RuntimeError(f"No @{self.name}.build defined")
+        lazy_inits = self._hooks.build(self.core_models, self.optional_models)
 
-        lazy_inits = cast(
-            list[InitStep],
-            _dispatch_by_arity(
-                self._build_func,
-                {0: (), 2: (self.core_models, self.optional_models)},
-            ),
-        )
-
-        # === Execute ===
-        ctx = execute_initialization(lazy_inits)
-
-        if "config" in ctx.models:
-            self.configs["solver"] = ctx.models["config"]
-        if "solver_config" in ctx.models:
-            self.configs["solver_config"] = ctx.models["solver_config"]
-
-        return ctx
+        return execute_initialization(lazy_inits)
 
     def run_load(self) -> LoadResult:
         """Execute only LOAD stage and return config items or LoadResult."""
-        if self._load_func is None:
+        if self._hooks.load is None:
             raise RuntimeError(f"No @{self.name}.load defined")
-
-        load_result = self._load_func()
-
+        load_result = self._hooks.load()
         self.core_models = load_result.core_models
         self.optional_models = load_result.optional_models
 
@@ -317,21 +238,11 @@ class StagedInit:
 
     def run_resolve(self, config: ConfigContext) -> None:
         """Execute only RESOLVE stage."""
-        if self._resolve_func is not None:
-            _dispatch_by_arity(
-                self._resolve_func,
-                {1: (config,), 3: (self.core_models, self.optional_models, config)},
-            )
+        if self._hooks.resolve is not None:
+            self._hooks.resolve(config)
 
     def run_build(self) -> list[InitStep]:
         """Execute only BUILD stage and return lazy initializers."""
-        if self._build_func is None:
+        if self._hooks.build is None:
             raise RuntimeError(f"No @{self.name}.build defined")
-
-        return cast(
-            list[InitStep],
-            _dispatch_by_arity(
-                self._build_func,
-                {0: (), 2: (self.core_models, self.optional_models)},
-            ),
-        )
+        return self._hooks.build(self.core_models, self.optional_models)

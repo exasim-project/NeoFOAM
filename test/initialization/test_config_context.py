@@ -162,26 +162,27 @@ def test_hasattr_unregistered(config):
 # --- is_configurable_field ---
 
 
-def test_is_configurable_field_true():
-    """Detects fields with 'configurable' in metadata."""
-    fi = FieldInfo(annotation=str, required=False)
-    fi.metadata = ["configurable"]
-    assert is_configurable_field(fi) is True
+def _configurable_field_info() -> FieldInfo:
+    field_info = FieldInfo(annotation=str, required=False)
+    field_info.metadata = ["configurable"]
+    return field_info
 
 
-def test_is_configurable_field_false():
-    """Returns False for regular fields."""
-    fi = FieldInfo(metadata=[])
-    assert is_configurable_field(fi) is False
-
-
-def test_is_configurable_field_no_metadata():
-    """Returns False for objects without metadata attribute."""
-
-    class NoMeta:
-        pass
-
-    assert is_configurable_field(NoMeta()) is False
+@pytest.mark.parametrize(
+    "field_info,expected",
+    [
+        pytest.param(
+            _configurable_field_info(),
+            True,
+            id="with-configurable-metadata",
+        ),
+        pytest.param(FieldInfo(metadata=[]), False, id="regular-field"),
+        pytest.param(type("NoMeta", (), {})(), False, id="no-metadata"),
+    ],
+)
+def test_is_configurable_field(field_info, expected):
+    """is_configurable_field handles configurable, regular, and no-metadata cases."""
+    assert is_configurable_field(field_info) is expected
 
 
 # --- get_configurable_fields ---

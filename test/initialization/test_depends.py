@@ -47,53 +47,26 @@ def test_custom_kwargs():
 # --- repr ---
 
 
-def test_repr_callable():
+@pytest.mark.parametrize(
+    "dependency,expected",
+    [
+        pytest.param("models.turbulence", "models.turbulence", id="string"),
+        pytest.param(lambda: 1, "<lambda>", id="lambda"),
+    ],
+)
+def test_repr(dependency, expected):
+    """repr shows dependency name/path and scope."""
+    dep = Depends(dependency)
+    text = repr(dep)
+    assert expected in text
+    assert "time_step" in text
+
+
+def test_repr_callable_named_function():
     """repr shows function name for callable dependencies."""
 
     def my_provider():
         return 1
 
     dep = Depends(my_provider)
-    r = repr(dep)
-    assert "my_provider" in r
-    assert "time_step" in r
-
-
-def test_repr_string():
-    """repr shows string path for string dependencies."""
-    dep = Depends("models.turbulence")
-    r = repr(dep)
-    assert "models.turbulence" in r
-
-
-def test_repr_lambda():
-    """repr handles lambda (name is '<lambda>')."""
-    dep = Depends(lambda: 1)
-    r = repr(dep)
-    assert "<lambda>" in r
-
-
-# --- __call__ ---
-
-
-def test_call_callable():
-    """Calling Depends with callable invokes the function."""
-    dep = Depends(lambda: 42)
-    assert dep() == 42
-
-
-def test_call_string_raises():
-    """Calling Depends with string raises TypeError."""
-    dep = Depends("fields.U")
-    with pytest.raises(TypeError, match="Cannot call string dependency"):
-        dep()
-
-
-def test_call_with_args_function():
-    """Callable dependency that takes no args works with __call__."""
-
-    def provider():
-        return "result"
-
-    dep = Depends(provider)
-    assert dep() == "result"
+    assert "my_provider" in repr(dep)

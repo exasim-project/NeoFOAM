@@ -8,37 +8,8 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating InitStep objects with common patterns.
 """
 
-from typing import Callable, Any, List, Optional, Union, Type, cast
-from dataclasses import replace as _replace
-from .init_step import InitStep
-
-
-def read_vol_field(field_type: Type[Any], name: str) -> InitStep:
-    """
-    Create a InitStep for reading a volumetric field from disk.
-
-    This is a convenience helper for the common pattern of reading OpenFOAM
-    volumetric fields (volScalarField, volVectorField, etc.) from disk files.
-
-    Args:
-        field_type: The field type class (e.g., volScalarField, volVectorField)
-        name: Field name (e.g., "p", "U", "T")
-
-    Returns:
-        InitStep for reading the field from disk
-
-    Example:
-        read_vol_field(volScalarField, "p")
-        # Equivalent to:
-        # field("p", depends_on=["mesh"],
-        #       create=lambda ctx: volScalarField.read_field(ctx["mesh"], "p"))
-    """
-
-    def create(context: dict[str, Any]) -> Any:
-        mesh = context["mesh"]
-        return field_type.read_field(mesh, name)
-
-    return field(name, depends_on=["mesh"], create=create)
+from typing import Callable, Any, List, Optional, Union
+from .init_step import InitStep, InitCategory
 
 
 # ---------------------------------------------------------------------------
@@ -48,9 +19,9 @@ def read_vol_field(field_type: Type[Any], name: str) -> InitStep:
 
 def _make_lazy(
     prefix: Optional[str],
-    category: Optional[str],
+    category: InitCategory,
     name: str,
-    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
 ) -> InitStep:
     """Internal factory shared by field / operator / model / lazy."""
@@ -65,7 +36,7 @@ def _make_lazy(
 
 def field(
     name: str,
-    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
 ) -> InitStep:
     """
@@ -89,7 +60,7 @@ def field(
 
 def operator(
     name: str,
-    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
 ) -> InitStep:
     """
@@ -106,14 +77,14 @@ def operator(
         InitStep for the operator
 
     Example:
-        operator("momentum", depends_on=["fields.U", "fields.p"], create=lambda: ...)
+        operator("momentum", depends_on=["fields.U", "fields.p"], create=lambda ctx: ...)
     """
     return _make_lazy("operators", "operators", name, create, depends_on)
 
 
 def lazy(
     name: str,
-    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
 ) -> InitStep:
     """
@@ -131,14 +102,14 @@ def lazy(
         InitStep for the object
 
     Example:
-        lazy("mesh", create=lambda: mesh)
+        lazy("mesh", create=lambda ctx: mesh)
     """
-    return _make_lazy(None, None, name, create, depends_on)
+    return _make_lazy(None, "resource", name, create, depends_on)
 
 
 def model(
     name: str,
-    create: Union[Callable[[], Any], Callable[[dict[str, Any]], Any]],
+    create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
 ) -> InitStep:
     """
@@ -155,7 +126,7 @@ def model(
         InitStep for the model
 
     Example:
-        model("transport", depends_on=["fields.U"], create=lambda: ...)
+        model("transport", depends_on=["fields.U"], create=lambda ctx: ...)
     """
     return _make_lazy("models", "models", name, create, depends_on)
 
@@ -182,41 +153,6 @@ class InitializerBuilder:
     def __init__(self) -> None:
         self.initializers: List[InitStep] = []
 
-    @staticmethod
-    def _normalize_lazy_init(li: InitStep) -> InitStep:
-        """Return a *new* InitStep with a normalized name and wrapped initializer.
-
-        * Adds a ``fields.`` prefix when the name has no recognised prefix.
-        * Wraps the initializer so that dict results with a ``value`` key are
-          automatically unwrapped.
-
-        The original ``li`` is **never mutated**.
-        """
-        import inspect
-
-        new_name = li.name
-        if not new_name.startswith(("fields.", "models.", "operators.")):
-            new_name = f"fields.{new_name}"
-
-        orig_func = li.initializer
-        if orig_func is None:
-            return _replace(li, name=new_name)
-
-        # Check if function takes context parameter
-        sig = inspect.signature(orig_func)
-        takes_ctx = len(sig.parameters) > 0
-
-        def wrapper(ctx: Optional[dict[str, Any]] = None) -> Any:
-            if takes_ctx:
-                context_func = cast(Callable[[dict[str, Any]], Any], orig_func)
-                res = context_func(ctx or {})
-            else:
-                no_arg_func = cast(Callable[[], Any], orig_func)
-                res = no_arg_func()
-            return res.get("value", res) if isinstance(res, dict) else res
-
-        return _replace(li, name=new_name, initializer=wrapper)
-
     # ---- private helper: collapses add_field / add_model / add_operator ----
 
     def _add_typed(
@@ -232,7 +168,7 @@ class InitializerBuilder:
         else:
             # Capture by closure — each _add_typed call has its own scope
             self.initializers.append(
-                factory(name, create=lambda: value, depends_on=depends_on)
+                factory(name, create=lambda _ctx: value, depends_on=depends_on)
             )
         return self
 
@@ -250,7 +186,7 @@ class InitializerBuilder:
             Self for chaining
         """
         # Wrap in a zero-arg closure; default-arg capture avoids late-binding (P-2.5)
-        self.initializers.append(lazy(name, create=lambda: value))
+        self.initializers.append(lazy(name, create=lambda _ctx: value))
         return self
 
     def add_model(self, name: str, value: Any) -> "InitializerBuilder":
@@ -296,10 +232,7 @@ class InitializerBuilder:
 
             # Add InitStep objects from run_build() if available
             if hasattr(model_instance, "run_build"):
-                lazy_inits = [
-                    self._normalize_lazy_init(li) for li in model_instance.run_build()
-                ]
-                self.extend(lazy_inits)
+                self.extend(model_instance.run_build())
 
         return self
 
@@ -379,8 +312,7 @@ class InitializerBuilder:
         """
         for m in optional_models:
             if hasattr(m, "run_build"):
-                lazy_inits = [self._normalize_lazy_init(li) for li in m.run_build()]
-                self.extend(lazy_inits)
+                self.extend(m.run_build())
         return self
 
     def build(self) -> List[InitStep]:

@@ -24,12 +24,12 @@ from neofoam.framework.initialization.init_step import InitStep
         (field, "fields.", "fields"),
         (operator, "operators.", "operators"),
         (model, "models.", "models"),
-        (lazy, "", None),
+        (lazy, "", "resource"),
     ],
 )
 def test_helper_naming(helper, prefix, category):
     """All helpers create InitStep with correct name prefix and category."""
-    result = helper("X", create=lambda: 1)
+    result = helper("X", create=lambda _ctx: 1)
     assert isinstance(result, InitStep)
     assert result.name == f"{prefix}X"
     assert result.category == category
@@ -39,14 +39,14 @@ def test_helper_naming(helper, prefix, category):
 @pytest.mark.parametrize("helper", [field, operator, model, lazy])
 def test_helper_with_deps(helper):
     """All helpers pass through custom depends_on."""
-    result = helper("X", create=lambda: 1, depends_on=["a", "b"])
+    result = helper("X", create=lambda _ctx: 1, depends_on=["a", "b"])
     assert result.depends_on == ["a", "b"]
 
 
 def test_helper_execute():
     """Helpers produce executable InitStep objects."""
-    assert field("U", create=lambda: "velocity").execute() == "velocity"
-    assert lazy("mesh", create=lambda: "mesh_obj").execute() == "mesh_obj"
+    assert field("U", create=lambda _ctx: "velocity").execute({}) == "velocity"
+    assert lazy("mesh", create=lambda _ctx: "mesh_obj").execute({}) == "mesh_obj"
 
 
 # --- InitializerBuilder tests ---
@@ -74,19 +74,19 @@ def test_builder_add_resource(builder):
     inits = builder.build()
     assert len(inits) == 1
     assert inits[0].name == "mesh"
-    assert inits[0].execute() == "mock_mesh"
+    assert inits[0].execute({}) == "mock_mesh"
 
 
 def test_builder_add_field_callable(builder):
     """add_field with callable value passes the callable through."""
-    builder.add_field("p", depends_on=["mesh"], value=lambda: "computed")
-    assert builder.build()[0].execute() == "computed"
+    builder.add_field("p", depends_on=["mesh"], value=lambda _ctx: "computed")
+    assert builder.build()[0].execute({}) == "computed"
 
 
 def test_builder_add_model_callable(builder):
     """add_model with callable value passes the callable through."""
-    builder.add_model("turb", value=lambda: "turb_inst")
-    assert builder.build()[0].execute() == "turb_inst"
+    builder.add_model("turb", value=lambda _ctx: "turb_inst")
+    assert builder.build()[0].execute({}) == "turb_inst"
 
 
 def test_builder_chaining(builder):
@@ -102,13 +102,15 @@ def test_builder_chaining(builder):
 
 
 def test_builder_add_core_models(builder, mock_core_model):
-    """add_core_models adds model + normalized InitSteps from run_build()."""
+    """add_core_models adds model + InitSteps from run_build() unchanged."""
     builder.add_core_models([("algorithm", mock_core_model)])
     inits = builder.build()
 
     assert len(inits) >= 3
     model_inits = [li for li in inits if li.name == "models.algorithm"]
     assert len(model_inits) == 1
+    assert any(li.name == "test_field" and li.category == "fields" for li in inits)
+    assert any(li.name == "test_op" and li.category == "operators" for li in inits)
 
 
 def test_builder_add_core_models_without_name(builder):
@@ -124,16 +126,18 @@ def test_builder_add_core_models_without_name(builder):
 
 
 def test_builder_add_optional_models(builder, mock_optional_model):
-    """add_optional_models adds normalized InitSteps from run_build()."""
+    """add_optional_models adds run_build() InitSteps unchanged."""
     builder.add_optional_models([mock_optional_model])
-    assert len(builder.build()) >= 1
+    inits = builder.build()
+    assert len(inits) >= 1
+    assert any(li.name == "optional_field" and li.category == "fields" for li in inits)
 
 
 def test_builder_add_and_extend(builder):
     """add() and extend() store InitStep objects directly."""
-    a = InitStep("a", initializer=lambda: 1)
-    b = InitStep("b", initializer=lambda: 2)
-    c = InitStep("c", initializer=lambda: 3)
+    a = InitStep("a", initializer=lambda _ctx: 1)
+    b = InitStep("b", initializer=lambda _ctx: 2)
+    c = InitStep("c", initializer=lambda _ctx: 3)
 
     builder.add(a).extend([b, c])
     inits = builder.build()
@@ -142,31 +146,8 @@ def test_builder_add_and_extend(builder):
     assert inits[0] is a
 
 
-def test_builder_normalize_lazy_init(builder):
-    """_normalize_lazy_init adds fields. prefix when missing."""
-    li = InitStep("U", initializer=lambda: "velocity")
-    normalized = builder._normalize_lazy_init(li)
-    assert normalized.name == "fields.U"
-
-
-def test_builder_normalize_lazy_init_dict_unwrapping(builder):
-    """Normalized initializers unwrap dict with 'value' key."""
-    li = InitStep("p", initializer=lambda: {"value": 42, "meta": "extra"})
-    normalized = builder._normalize_lazy_init(li)
-    assert normalized.execute(context={}) == 42
-
-
-def test_builder_normalize_does_not_mutate(builder):
-    """_normalize_lazy_init returns a new object; original is unchanged."""
-
-    def orig_init():
-        return "v"
-
-    li = InitStep("U", initializer=orig_init)
-    normalized = builder._normalize_lazy_init(li)
-    # Original must be untouched
-    assert li.name == "U"
-    assert li.initializer is orig_init
-    # Normalized is a different object
-    assert normalized is not li
-    assert normalized.name == "fields.U"
+def test_builder_add_preserves_explicit_category(builder):
+    """Builder.add stores explicit category as provided by InitStep."""
+    li = InitStep("custom", initializer=lambda _ctx: 1, category="resource")
+    builder.add(li)
+    assert builder.build()[0].category == "resource"
