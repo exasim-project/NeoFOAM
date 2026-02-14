@@ -109,7 +109,7 @@ IO Strategies
 -------------
 
 The ``@IOStrategy`` decorator accepts a strategy configuration.
-Each strategy implements the ``ReadingStrategy`` and ``WritingStrategy`` protocols.
+Each strategy implements the ``ReadingStrategy`` and ``WritingStrategy`` interface.
 
 .. list-table::
    :header-rows: 1
@@ -131,7 +131,7 @@ Each strategy implements the ``ReadingStrategy`` and ``WritingStrategy`` protoco
      - JSON
      - ``JSON("config.json", subdict="services.db")``
 
-Both strategies support three subdict modes:
+Both ``@IOStrategy``: YAML and JSON support three subdict modes:
 
 1. **No subdict** — the entire file maps to the model.
 2. **Flat subdict** (``subdict="PIMPLE"``) — a top-level key.

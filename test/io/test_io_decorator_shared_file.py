@@ -78,6 +78,7 @@ def test_write_preserves_other_subdicts(
     """
     test_file = temp_fixture_copy(filename)
     test_dir = test_file.parent
+    timeout = 60
 
     # Load original values from directory
     original_b = service_b_class.load(case_dir=test_dir)
@@ -87,7 +88,7 @@ def test_write_preserves_other_subdicts(
 
     # Update only service_a section
     service_a = service_a_class.load(case_dir=test_dir)
-    service_a.timeout = 60
+    service_a.timeout = timeout
     service_a.save(case_dir=test_dir)
 
     # Verify service_a changed but other sections unchanged
