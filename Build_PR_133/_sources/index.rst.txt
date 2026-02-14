@@ -33,22 +33,9 @@ Table of Contents
 
    development/architecture
    development/components
-   development/solver
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Usage:
-
-   usage/quickstart
-   usage/cli
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development:
-
-   development/architecture
-   development/testing
+   development/config_file
    development/pluginsystem
+   development/solver
 
 .. toctree::
    :maxdepth: 2
