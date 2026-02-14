@@ -54,6 +54,9 @@ class OperationNumber:
         a, b = self._as_tuple(other)
         return a < b
 
+    def __str__(self) -> str:
+        return ".".join(str(p) for p in self.parts)
+
 
 class OpType(Enum):
     CONDITION = "condition"

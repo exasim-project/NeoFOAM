@@ -48,11 +48,10 @@ def test_load_result_all_models_empty():
     assert lr.all_models == []
 
 
-def test_load_result_validate_raises():
-    """validate() raises NotImplementedError (IO-coupled stub)."""
+def test_load_result_validate_empty():
+    """validate() returns empty list for empty load results."""
     lr = LoadResult(core_models=[], optional_models=[])
-    with pytest.raises(NotImplementedError):
-        lr.validate()
+    assert lr.validate() == []
 
 
 def test_load_result_configs_empty():

@@ -53,7 +53,10 @@ dummy_solver = Solver("DummySolver")
 def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
     init.argv = dummy_solver.argv
-    return init.run()
+    ctx = init.run()
+    dummy_solver.core_models = init.core_models
+    dummy_solver.optional_models = init.optional_models
+    return ctx
 
 
 @dummy_solver.execution_graph_step

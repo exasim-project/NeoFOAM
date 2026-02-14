@@ -29,14 +29,15 @@ def detect_model() -> bool:
 def build() -> list[InitStep]:
     """BUILD stage: Create LazyInit objects for fields."""
 
-    def create_mf3(_ctx: dict[str, Any]) -> dict[str, Any]:
-        return {"name": "model_field3", "value": 500.0, "units": "mu3"}
+    def create_mf3(_ctx: dict[str, Any]) -> float:
+        return 500.0
 
     return [
         InitStep(
             name="model_field3",
             initializer=create_mf3,
             depends_on=["domain"],
+            category="fields",
         ),
     ]
 

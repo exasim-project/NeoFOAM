@@ -304,7 +304,9 @@ class ModelInstance:
                     config_instance = loader(case_dir)
                 else:
                     # Default: use ConfigClass.load() from @IOStrategy
-                    config_instance = config_type.load(case_dir=case_dir)
+                    config_instance = config_type.load(
+                        case_dir=case_dir, validate=False
+                    )
 
                 loaded[param_name] = config_instance
 

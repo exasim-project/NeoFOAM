@@ -210,10 +210,12 @@ class OperationCollection:
         self.ops: list[Operation] = operations if operations is not None else []
 
     def add(
-        self, operation: Union[Operation, OperationCollection]
+        self, operation: Union[Operation, OperationCollection, list[Operation]]
     ) -> OperationCollection:
         if isinstance(operation, OperationCollection):
             self.ops.extend(operation.ops)
+        elif isinstance(operation, list):
+            self.ops.extend(operation)
         else:
             self.ops.append(operation)
         return self

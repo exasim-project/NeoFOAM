@@ -94,13 +94,17 @@ class DAGResolver:
                     target_scope = dep_scopes.pop()
                 else:
                     non_root_scopes = [s for s in dep_scopes if s != "root"]
-                    target_scope = sorted(non_root_scopes)[0] if non_root_scopes else "root"
+                    target_scope = (
+                        sorted(non_root_scopes)[0] if non_root_scopes else "root"
+                    )
 
         if target_scope is None:
             available_loops = [s for s in scopes.keys() if s != "root"]
             if available_loops:
                 target_scope = (
-                    "inner_loop" if "inner_loop" in available_loops else available_loops[0]
+                    "inner_loop"
+                    if "inner_loop" in available_loops
+                    else available_loops[0]
                 )
             else:
                 target_scope = "root"

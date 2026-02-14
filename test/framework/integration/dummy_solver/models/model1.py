@@ -11,7 +11,7 @@ from typing import Any
 from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
-from neofoam.framework.initialization import ConfigContext, InitStep, field
+from neofoam.framework.initialization import ConfigContext, InitStep
 from neofoam.io import BaseConfig, IOStrategy, YAML
 
 from .dummy_model import DummyModelInterface, Model
@@ -70,11 +70,11 @@ def build() -> list[InitStep]:
     Returns list of LazyInit objects for fields managed by this model.
     """
 
-    def create_mf1(_ctx: dict[str, Any]) -> dict[str, Any]:
+    def create_mf1(_ctx: dict[str, Any]) -> float:
         """Create model field 1."""
-        return {"name": "model_field1", "value": 300.0, "units": "mu1"}
+        return 300.0
 
-    def create_mf2(_ctx: dict[str, Any]) -> dict[str, Any]:
+    def create_mf2(_ctx: dict[str, Any]) -> float:
         """Create model field 2 - uses config from load stage."""
         # Access Model1Config from the loaded configs dict
         main_config = (
@@ -85,20 +85,22 @@ def build() -> list[InitStep]:
         # Find Model1Config instance
         for cfg in model1._configs.values():
             if isinstance(cfg, Model1Config):
-                return {"name": "model_field2", "value": cfg.prop2, "units": "mu2"}
+                return cfg.prop2
         # Fallback: if no Model1Config found, use default value
-        return {"name": "model_field2", "value": 1000.0, "units": "mu2"}
+        return 1000.0
 
     return [
-        field(
-            "model_field1",
-            create=create_mf1,
+        InitStep(
+            name="model_field1",
+            initializer=create_mf1,
             depends_on=["domain"],
+            category="fields",
         ),
-        field(
-            "model_field2",
-            create=create_mf2,
+        InitStep(
+            name="model_field2",
+            initializer=create_mf2,
             depends_on=["domain"],
+            category="fields",
         ),
     ]
 

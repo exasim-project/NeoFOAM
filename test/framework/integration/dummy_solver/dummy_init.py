@@ -110,10 +110,10 @@ def load_config() -> LoadResult:
         case_dir = Path(__file__).parent / "configs"
 
     # Load configurations using ModelInputDefinition paths
-    solver_config = SolverConfig.load(case_dir=case_dir)
-    mesh_config = MeshConfig.load(case_dir=case_dir)
-    algorithm = DummyAlgorithm.load(case_dir=case_dir)
-    core_model2 = CoreModel2.load(case_dir=case_dir)
+    solver_config = SolverConfig.load(case_dir=case_dir, validate=False)
+    mesh_config = MeshConfig.load(case_dir=case_dir, validate=False)
+    algorithm = DummyAlgorithm.load(case_dir=case_dir, validate=False)
+    core_model2 = CoreModel2.load(case_dir=case_dir, validate=False)
 
     # Detect optional models
     optional_models = DummyModelInterface.detect_models()

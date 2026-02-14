@@ -31,12 +31,6 @@ class DummyModelInterface(BaseModel):
     """
 
     @classmethod
-    def create(cls, *, config: dict[str, Any], **kwargs: Any) -> Any:
-        """Factory classmethod for creating model instances."""
-        wrapper = cls.plugin_model(model=config, **kwargs)  # type: ignore[attr-defined]
-        return wrapper.model.get_model_instance()
-
-    @classmethod
     def detect_models(cls) -> list[ModelInstance]:
         """
         Detect and return enabled model instances.
@@ -58,3 +52,12 @@ class DummyModelInterface(BaseModel):
                     enabled_models.append(model_instance)
 
         return enabled_models
+
+
+def _create_dummy_model_instance(cls, *, config: dict[str, Any], **kwargs: Any) -> Any:
+    """Factory classmethod for creating model instances from config dict."""
+    wrapper = cls.plugin_model(model=config, **kwargs)  # type: ignore[attr-defined]
+    return wrapper.model.get_model_instance()
+
+
+DummyModelInterface.create = classmethod(_create_dummy_model_instance)  # type: ignore[method-assign]

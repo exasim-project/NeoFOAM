@@ -2,7 +2,7 @@
 
 ## Summary
 
-The `dummy_solver` integration package is currently blocked by framework API drift (imports, staged-init internals, and removed `LazyInit` path). In addition, graph handling has been refactored into the `neofoam.framework.graph` package, so old `DAGResolver`-based assumptions must be migrated to the new graph utilities.
+The `dummy_solver` integration package has been migrated to the current framework APIs, including graph refactor alignment (`framework/graph`), staged-init updates, and `InitStep`-based model initialization.
 
 ## Current status (live)
 
@@ -12,11 +12,11 @@ The `dummy_solver` integration package is currently blocked by framework API dri
 | Remove duplicated graph functionality from `operations.py` | ✅ Done | Graph-specific resolver logic removed from `src/neofoam/framework/operations.py` |
 | BaseConfig import drift | ✅ Done | `src/neofoam/framework/model_factory.py` now imports `BaseConfig` from `neofoam.io` |
 | Restore missing dependency resolver module | ✅ Done | Added `src/neofoam/framework/dependency_resolver.py` |
-| Migrate `LazyInit` usage to `InitStep` | 🟡 In progress | Core files migrated; pending full runtime verification |
+| Migrate `LazyInit` usage to `InitStep` | ✅ Done | Dummy init/model build paths migrated and field routing fixed |
 | StagedInit hook API migration in tests | ✅ Done | `test_staged_init.py` now checks `init._hooks.*` |
 | Wire `LoadResult.validate()` | ✅ Done | `staged_init.LoadResult.validate()` now delegates to `validate_models` |
-| Align dummy YAML decorators with current IO API | 🟡 In progress | Removed unsupported YAML kwargs in `dummy_init.py` and `models/model1.py`; re-test pending |
-| Dummy solver integration tests | 🔴 Blocked (active) | Current blocker shifted from graph/import errors to remaining runtime/API mismatches; next test run will refine |
+| Align dummy YAML decorators with current IO API | ✅ Done | Removed unsupported `YAML(...)` kwargs and aligned load/validation flow |
+| Dummy solver integration tests | ✅ Done | `uv run pytest test/framework/integration/dummy_solver -q` → 17 passed |
 
 ## Required changes (top matrix)
 
@@ -64,12 +64,19 @@ Running:
 uv run pytest test/framework/integration/dummy_solver -q
 ```
 
-fails during test collection with 4 import/runtime-API breakages:
+passes:
 
-1. `ImportError: cannot import name 'DAGResolver' from neofoam.framework.operations`
-2. `ModuleNotFoundError: No module named neofoam.framework.initialization.lazy_init`
-3. `ImportError: cannot import name 'BaseConfig' from neofoam.io.strategies`
-4. `StagedInit` internals in tests expect old attributes (`_load_func`, `_resolve_func`, `_build_func`) but current API uses `init._hooks.{load,resolve,build}`
+- `17 passed`
+
+Additional regression check:
+
+```bash
+pytest test/initialization/test_staged_init.py test/initialization/test_execution.py test/initialization/test_helpers.py test/initialization/test_lazy_init.py
+```
+
+passes:
+
+- `88 passed`
 
 ---
 

@@ -98,8 +98,8 @@ The framework provides the ``StagedInit`` class. You define the logic for each s
 
 .. code-block:: python
 
-    from foamadapter.framework.initialization import StagedInit, LoadResult, ConfigContext
-    from foamadapter.framework.initialization.lazy_init import InitStep
+    from neofoam.framework.initialization import StagedInit, LoadResult, ConfigContext
+    from neofoam.framework.initialization.lazy_init import InitStep
 
     # Create the initialization manager
     init = StagedInit("MySolverInit")
@@ -151,7 +151,7 @@ The initialized ``StagedInit`` object is then injected into the solver using the
 
 .. code-block:: python
 
-    from foamadapter.framework import Solver, Context, Depends
+    from neofoam.framework import Solver, Context, Depends
     from typing import Annotated
 
     solver = Solver("MySolver")
@@ -198,8 +198,8 @@ The ``@Solver.build`` decorator can return a list of ``InitStep`` objects:
 
 .. code-block:: python
 
-    from foamadapter.framework import InitStep, Solver
-    from foamadapter.framework.initialization.helpers import field, operator, lazy, model
+    from neofoam.framework import InitStep, Solver
+    from neofoam.framework.initialization.helpers import field, operator, lazy, model
 
     class MySolver(BaseModel):
         model_config = {"arbitrary_types_allowed": True}
@@ -249,7 +249,7 @@ The framework provides helper functions to create ``InitStep`` objects with auto
 
 .. code-block:: python
 
-    from foamadapter.framework.initialization.helpers import field, operator, lazy, model
+    from neofoam.framework.initialization.helpers import field, operator, lazy, model
 
     # field(name, initializer, dependencies) -> InitStep with name="fields.{name}"
     field("p", lambda ctx: read_field("p", ctx["mesh"]), ["mesh"])
@@ -320,8 +320,8 @@ Here's a full example showing lazy initialization for an incompressible solver:
 
 .. code-block:: python
 
-    from foamadapter.framework import Solver
-    from foamadapter.framework.initialization.helpers import field, operator, lazy, model
+    from neofoam.framework import Solver
+    from neofoam.framework.initialization.helpers import field, operator, lazy, model
     from pydantic import BaseModel
 
     class IncompressibleSolver(BaseModel):
@@ -429,7 +429,7 @@ Here's a realistic example with multiple interdependent models:
 .. code-block:: python
 
     from pydantic import BaseModel, Field
-    from foamadapter.framework import Model, Solver, ConfigContext, SolverInitializer
+    from neofoam.framework import Model, Solver, ConfigContext, SolverInitializer
 
 
     class TransportModel(BaseModel):
@@ -572,7 +572,7 @@ Think of ``Configurable`` as a parameter that changes **which operations** a mod
 
 .. code-block:: python
 
-    from foamadapter.framework import Configurable
+    from neofoam.framework import Configurable
 
     # Implementations for different behaviors
     class StandardPressure:

@@ -61,7 +61,9 @@ class DependencyResolver:
                             kwargs[param_name] = ctx.fields.get(param_name)
                             continue
                         if ctx:
-                            kwargs[param_name] = getattr(ctx, marker, {}).get(param_name)
+                            kwargs[param_name] = getattr(ctx, marker, {}).get(
+                                param_name
+                            )
                             continue
 
             if ctx and param_name in ctx.fields:
