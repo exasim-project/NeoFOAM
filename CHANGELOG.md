@@ -4,6 +4,7 @@
 - Implement added icofoam.py and pimplefoam.py [#151](https://github.com/exasim-project/NeoFOAM/pull/151)
 - added input validation [#156](https://github.com/exasim-project/NeoFOAM/pull/156)
 - initial implementation of the framework [#149](https://github.com/exasim-project/NeoFOAM/pull/149)
+- load, write and validate config files [#236](https://github.com/exasim-project/NeoFOAM/pull/236)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
