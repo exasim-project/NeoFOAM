@@ -33,9 +33,10 @@ Table of Contents
 
    development/architecture
    development/components
-   development/solver
    development/initialization
+   development/config_file
    development/pluginsystem
+   development/solver
 
 .. toctree::
    :maxdepth: 2
