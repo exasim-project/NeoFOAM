@@ -7,6 +7,8 @@
 import pytest
 
 from neofoam.framework.initialization.execution import (
+    InitGraphValidator,
+    InitializationGraphError,
     topological_sort,
     execute_lazy_inits,
     build_context_from_objects,
@@ -204,6 +206,22 @@ def test_execute_initialization_complex():
     assert len(ctx.models) == 2
 
 
+def test_execute_initialization_raises_structured_graph_error():
+    """execute_initialization raises InitializationGraphError with report."""
+    inits = [InitStep("A", depends_on=["missing"], initializer=lambda: "a")]
+
+    with pytest.raises(InitializationGraphError) as exc_info:
+        execute_initialization(inits)
+
+    report = exc_info.value.report
+    assert not report.is_valid
+    assert len(report.diagnostics) == 1
+    diag = report.diagnostics[0]
+    assert diag.code == "missing_dependency"
+    assert diag.step_name == "A"
+    assert diag.dependency == "missing"
+
+
 # --- validate_lazy_init_graph ---
 
 
@@ -244,3 +262,19 @@ def test_validate_graph_duplicate_name():
 def test_validate_graph_clean(linear_chain):
     """Valid graph returns no errors."""
     assert validate_lazy_init_graph(linear_chain) == []
+
+
+def test_init_graph_validator_structured_cycle_report():
+    """InitGraphValidator returns structured cycle diagnostics."""
+    inits = [
+        InitStep("A", depends_on=["B"], initializer=lambda: "a"),
+        InitStep("B", depends_on=["A"], initializer=lambda: "b"),
+    ]
+
+    report = InitGraphValidator.validate(inits)
+    assert not report.is_valid
+    assert len(report.diagnostics) == 1
+    diag = report.diagnostics[0]
+    assert diag.code == "cycle"
+    assert len(diag.cycle) >= 2
+    assert "Circular dependency" in diag.message

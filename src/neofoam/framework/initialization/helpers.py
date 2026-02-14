@@ -8,7 +8,7 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating InitStep objects with common patterns.
 """
 
-from typing import Callable, Any, List, Optional, Union, Type
+from typing import Callable, Any, List, Optional, Union, Type, cast
 from dataclasses import replace as _replace
 from .init_step import InitStep
 
@@ -179,7 +179,7 @@ class InitializerBuilder:
         )
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.initializers: List[InitStep] = []
 
     @staticmethod
@@ -206,8 +206,13 @@ class InitializerBuilder:
         sig = inspect.signature(orig_func)
         takes_ctx = len(sig.parameters) > 0
 
-        def wrapper(ctx=None):
-            res = orig_func(ctx) if takes_ctx and ctx else orig_func()
+        def wrapper(ctx: Optional[dict[str, Any]] = None) -> Any:
+            if takes_ctx:
+                context_func = cast(Callable[[dict[str, Any]], Any], orig_func)
+                res = context_func(ctx or {})
+            else:
+                no_arg_func = cast(Callable[[], Any], orig_func)
+                res = no_arg_func()
             return res.get("value", res) if isinstance(res, dict) else res
 
         return _replace(li, name=new_name, initializer=wrapper)

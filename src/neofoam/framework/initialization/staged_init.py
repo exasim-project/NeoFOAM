@@ -34,7 +34,7 @@ Usage:
 
 import inspect
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, cast
 
 from neofoam.framework.context import Context
 from neofoam.framework.solver_factory import SolverState
@@ -146,8 +146,8 @@ class StagedInit:
 
         # Stage functions
         self._load_func: Optional[Callable[[], LoadResult]] = None
-        self._resolve_func: Optional[Callable[[ConfigContext], None]] = None
-        self._build_func: Optional[Callable[[], list[InitStep]]] = None
+        self._resolve_func: Optional[Callable[..., None]] = None
+        self._build_func: Optional[Callable[..., list[InitStep]]] = None
 
         # State storage
         self.data: Any = None  # For storing InitializationData or similar
@@ -156,32 +156,32 @@ class StagedInit:
         self.state = SolverState()
 
     @property
-    def core_models(self) -> list:
+    def core_models(self) -> list[Any]:
         """Access core_models from state."""
         return self.state.core_models
 
     @core_models.setter
-    def core_models(self, value: list) -> None:
+    def core_models(self, value: list[Any]) -> None:
         """Set core_models in state."""
         self.state.core_models = value
 
     @property
-    def optional_models(self) -> list:
+    def optional_models(self) -> list[Any]:
         """Access optional_models from state."""
         return self.state.optional_models
 
     @optional_models.setter
-    def optional_models(self, value: list) -> None:
+    def optional_models(self, value: list[Any]) -> None:
         """Set optional_models in state."""
         self.state.optional_models = value
 
     @property
-    def configs(self) -> dict:
+    def configs(self) -> dict[str, Any]:
         """Access configs from state."""
         return self.state.configs
 
     @configs.setter
-    def configs(self, value: dict) -> None:
+    def configs(self, value: dict[str, Any]) -> None:
         """Set configs in state."""
         self.state.configs = value
 
@@ -205,10 +205,12 @@ class StagedInit:
     def resolve(
         self,
         func: Union[
-            Callable[[list, list, ConfigContext], None], Callable[[ConfigContext], None]
+            Callable[[list[Any], list[Any], ConfigContext], None],
+            Callable[[ConfigContext], None],
         ],
     ) -> Union[
-        Callable[[list, list, ConfigContext], None], Callable[[ConfigContext], None]
+        Callable[[list[Any], list[Any], ConfigContext], None],
+        Callable[[ConfigContext], None],
     ]:
         """
         Decorator for RESOLVE stage function.
@@ -225,9 +227,13 @@ class StagedInit:
     def build(
         self,
         func: Union[
-            Callable[[list, list], list[InitStep]], Callable[[], list[InitStep]]
+            Callable[[list[Any], list[Any]], list[InitStep]],
+            Callable[[], list[InitStep]],
         ],
-    ) -> Union[Callable[[list, list], list[InitStep]], Callable[[], list[InitStep]]]:
+    ) -> Union[
+        Callable[[list[Any], list[Any]], list[InitStep]],
+        Callable[[], list[InitStep]],
+    ]:
         """
         Decorator for BUILD stage function.
 
@@ -279,9 +285,12 @@ class StagedInit:
         if self._build_func is None:
             raise RuntimeError(f"No @{self.name}.build defined")
 
-        lazy_inits = _dispatch_by_arity(
-            self._build_func,
-            {0: (), 2: (self.core_models, self.optional_models)},
+        lazy_inits = cast(
+            list[InitStep],
+            _dispatch_by_arity(
+                self._build_func,
+                {0: (), 2: (self.core_models, self.optional_models)},
+            ),
         )
 
         # === Execute ===
@@ -319,7 +328,10 @@ class StagedInit:
         if self._build_func is None:
             raise RuntimeError(f"No @{self.name}.build defined")
 
-        return _dispatch_by_arity(
-            self._build_func,
-            {0: (), 2: (self.core_models, self.optional_models)},
+        return cast(
+            list[InitStep],
+            _dispatch_by_arity(
+                self._build_func,
+                {0: (), 2: (self.core_models, self.optional_models)},
+            ),
         )
