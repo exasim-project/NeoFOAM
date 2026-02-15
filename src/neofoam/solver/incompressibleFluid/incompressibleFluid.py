@@ -126,12 +126,6 @@ def run(argv: Optional[list[str]] = None) -> Context:
 
     return ctx
 
-
-# ============================================================================
-# OPERATIONS
-# ============================================================================
-
-
 @incompressibleFluid.operation()
 def set_time_step(self, ctx: Context) -> None:
     """Adjust time step based on CFL condition."""

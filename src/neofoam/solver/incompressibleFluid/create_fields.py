@@ -98,7 +98,6 @@ def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitS
     )
 
     builder.add_optional_models(optional_models)
-    builder.add_model("cfl_condition", lambda _ctx: cfl_condition)
     builder.add_model("optional_models", optional_models)
 
     return builder.build()
