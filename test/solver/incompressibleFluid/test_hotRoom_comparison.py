@@ -11,7 +11,6 @@ import os
 import subprocess
 from pathlib import Path
 
-import pytest
 
 from .comparison_helpers import (
     requires_openfoam,

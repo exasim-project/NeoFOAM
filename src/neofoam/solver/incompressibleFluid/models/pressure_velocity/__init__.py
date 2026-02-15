@@ -3,7 +3,6 @@
 
 """Pressure-velocity model package entrypoint."""
 
-from .base import PressureVelocityAlgorithm
 from . import pimpleAlgorithm as _pimple  # noqa: F401
 from . import simpleAlgorithm as _simple  # noqa: F401
 from . import pisoAlgorithm as _piso  # noqa: F401
