@@ -25,6 +25,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from .control_factory import create_simple_control
 
 from ..incompressibleFluidModel import Model
 
@@ -65,9 +66,6 @@ def build() -> list[Any]:
     def create_phi(context: dict[str, Any]) -> Any:
         return pyf.createPhi(context["fields.U"])
 
-    def create_simple_control(context: dict[str, Any]) -> Any:
-        return pyf.simpleControl(context["mesh"])
-
     def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
 
@@ -81,7 +79,7 @@ def build() -> list[Any]:
 
 
 def inner_loop(ctx: Any) -> bool:
-    return bool(ctx.models["simple_control"].loop())
+    return bool(ctx.models["simple_control"].loop(ctx))
 
 
 def _alias_operation(
@@ -160,12 +158,7 @@ def continuity(
         pEqn.setReference(model_state.pRefCell, model_state.pRefValue, False)
         pEqn.solve()
 
-        is_final_non_orth = (
-            simple_control.finalNonOrthogonalIter()
-            if hasattr(simple_control, "finalNonOrthogonalIter")
-            else True
-        )
-        if is_final_non_orth:
+        if simple_control.finalNonOrthogonalIter():
             phi.assign(phiHbyA - pEqn.flux())
 
     sum_local, global_err = pyf.computeContinuityErrors(phi)

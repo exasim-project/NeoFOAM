@@ -195,7 +195,7 @@ class PimpleControl(BaseModel):
     PIMPLE algorithm control bundle.
 
     Manages nested loop structure:
-    - Outer loop: once per time step (SingleIterationCondition)
+    - Outer loop: nOuterCorrectors iterations (IterationCountCondition)
     - Corrector loop: nCorrectors iterations (IterationCountCondition)
     - Non-orthogonal loop: nNonOrthogonalCorrectors + 1 iterations
 
@@ -211,6 +211,9 @@ class PimpleControl(BaseModel):
     nCorrectors: int = Field(
         default=1, ge=1, description="Number of PIMPLE corrector iterations"
     )
+    nOuterCorrectors: int = Field(
+        default=1, ge=1, description="Number of PIMPLE outer corrector iterations"
+    )
     nNonOrthogonalCorrectors: int = Field(
         default=0, ge=0, description="Number of non-orthogonal corrections"
     )
@@ -221,7 +224,7 @@ class PimpleControl(BaseModel):
         default=True, description="Enable turbulence correction", alias="turbCorr"
     )
 
-    _loop: Optional[SingleIterationCondition] = None
+    _loop: Optional[IterationCountCondition] = None
     _corrector: Optional[IterationCountCondition] = None
     _non_ortho: Optional[IterationCountCondition] = None
     _momentum_predictor: Optional[BooleanFlagCondition] = None
@@ -229,8 +232,8 @@ class PimpleControl(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         """Initialize nested conditions after model validation."""
-        # Outer loop: once per time step
-        self._loop = SingleIterationCondition()
+        # Outer loop: nOuterCorrectors per time step
+        self._loop = IterationCountCondition(nIterations=self.nOuterCorrectors)
 
         # Corrector loop
         self._corrector = IterationCountCondition(nIterations=self.nCorrectors)
@@ -251,10 +254,10 @@ class PimpleControl(BaseModel):
 
     def loop(self, ctx: Any = None) -> bool:
         """
-        PIMPLE outer loop (once per time step).
+        PIMPLE outer loop.
 
         Returns:
-            True on first call per time step, False afterwards
+            True while outer iterations remain, False otherwise
         """
         assert self._loop is not None
         return self._loop(ctx)
@@ -313,8 +316,9 @@ class SimpleControl(BaseModel):
     """
     SIMPLE algorithm control bundle.
 
-    Manages loop structure with convergence checking:
-    - Main loop: continues until converged or runtime limit
+        Manages loop structure:
+        - Main loop: one pass per outer solver iteration by default
+            (optionally convergence-driven when useResidualConvergence=True)
     - Non-orthogonal loop: nNonOrthogonalCorrectors + 1 iterations
 
     Attributes:
@@ -327,35 +331,69 @@ class SimpleControl(BaseModel):
     nNonOrthogonalCorrectors: int = Field(
         default=0, ge=0, description="Number of non-orthogonal corrections"
     )
+    momentumPredictor_enabled: bool = Field(
+        default=True, description="Enable momentum predictor", alias="momentumPredictor"
+    )
+    consistent_enabled: bool = Field(
+        default=False, description="Enable SIMPLEC consistent mode", alias="consistent"
+    )
+    useResidualConvergence: bool = Field(
+        default=False,
+        description=(
+            "Enable convergence-driven SIMPLE loop behavior "
+            "(legacy mode with residualControl + optional runtime guard)"
+        ),
+    )
     residualControl: dict[str, float] = Field(
         default_factory=dict,
         description="Field tolerance mapping for convergence checking",
     )
 
     _residual_check: Optional[ResidualConvergenceCondition] = None
+    _inner_loop_open: bool = True
+    _non_ortho: Optional[IterationCountCondition] = None
+    _momentum_predictor: Optional[BooleanFlagCondition] = None
+    _consistent: Optional[BooleanFlagCondition] = None
     _iteration_count: int = 0
 
     def model_post_init(self, __context: Any) -> None:
-        """Initialize residual convergence checker after model validation."""
+        """Initialize SIMPLE control conditions after model validation."""
         self._residual_check = ResidualConvergenceCondition(
             residualControl=self.residualControl
         )
+        self._non_ortho = IterationCountCondition(
+            nIterations=self.nNonOrthogonalCorrectors + 1
+        )
+        self._momentum_predictor = BooleanFlagCondition(
+            enabled=self.momentumPredictor_enabled
+        )
+        self._consistent = BooleanFlagCondition(enabled=self.consistent_enabled)
 
     def loop(self, ctx: Any = None) -> bool:
         """
-        SIMPLE main loop with convergence checking.
+        SIMPLE loop gate.
 
-        Continues iteration until:
-        1. All residuals below tolerance (converged), OR
-        2. Runtime limit reached
+        Default behavior (useResidualConvergence=False):
+        - Returns True once per reset, then False.
+
+        Legacy behavior (useResidualConvergence=True):
+        - Continues iteration until converged or runtime loop stops.
 
         Returns:
-            False if converged or runtime limit reached, True to continue
+            True to continue SIMPLE pass, False to stop
         """
+        assert self._residual_check is not None
+
+        if not self.useResidualConvergence:
+            if self._inner_loop_open:
+                self._inner_loop_open = False
+                return True
+            self._inner_loop_open = True
+            return False
+
         self._iteration_count += 1
 
         # Check convergence
-        assert self._residual_check is not None
         if not self._residual_check(ctx):
             # Converged (residual check returns False when converged)
             return False
@@ -366,6 +404,31 @@ class SimpleControl(BaseModel):
                 return False
 
         return True
+
+    def correctNonOrthogonal(self, ctx: Any = None) -> bool:
+        """
+        Non-orthogonal correction loop.
+
+        Returns:
+            True while non-orthogonal corrections remain, False otherwise
+        """
+        assert self._non_ortho is not None
+        return self._non_ortho(ctx)
+
+    def finalNonOrthogonalIter(self) -> bool:
+        """Check if this is the final non-orthogonal iteration."""
+        assert self._non_ortho is not None
+        return self._non_ortho.is_final()
+
+    def momentumPredictor(self) -> bool:
+        """Check if momentum predictor is enabled."""
+        assert self._momentum_predictor is not None
+        return self._momentum_predictor(None)
+
+    def consistent(self) -> bool:
+        """Check if SIMPLEC consistent mode is enabled."""
+        assert self._consistent is not None
+        return self._consistent(None)
 
     def converged(self) -> bool:
         """Check if algorithm has converged."""
@@ -392,5 +455,8 @@ class SimpleControl(BaseModel):
     def reset(self) -> None:
         """Reset convergence tracking."""
         assert self._residual_check is not None
+        assert self._non_ortho is not None
         self._residual_check.reset()
+        self._inner_loop_open = True
+        self._non_ortho.reset()
         self._iteration_count = 0

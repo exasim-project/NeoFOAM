@@ -23,6 +23,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from .control_factory import create_pimple_control
 
 from ..incompressibleFluidModel import Model
 
@@ -82,9 +83,6 @@ def build() -> list[Any]:
     def create_phi(context: dict[str, Any]) -> Any:
         return pyf.createPhi(context["fields.U"])
 
-    def create_pimple_control(context: dict[str, Any]) -> Any:
-        return pyf.pimpleControl(context["mesh"])
-
     def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
 
@@ -98,7 +96,7 @@ def build() -> list[Any]:
 
 
 def inner_loop(ctx: Any) -> bool:
-    return bool(ctx.models["pimple_control"].loop())
+    return bool(ctx.models["pimple_control"].loop(ctx))
 
 
 def _alias_operation(
