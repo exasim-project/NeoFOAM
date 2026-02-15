@@ -39,18 +39,21 @@ def create_init(case_dir: Path = None) -> StagedInit:
 def load_config() -> LoadResult:
     # Directly detect and create pressure-velocity algorithm (not a plugin)
     pressure_model = PressureVelocityAlgorithm.detect_and_create()
-
-    cfl_condition = CFLCondition()
+    is_steady_state = getattr(pressure_model, "algorithm_type", "").upper() == "SIMPLE"
+    cfl_condition = None
+    if not is_steady_state:
+        cfl_condition = CFLCondition()
 
     # Detect optional models (e.g., boussinesq)
     optional_models = incompressibleFluidModel.detect_models()
     for optional_model in optional_models:
         optional_model.run_load()
 
-    return LoadResult(
-        core_models=[pressure_model, cfl_condition],
-        optional_models=optional_models,
-    )
+    core_models: list[Any] = [pressure_model]
+    if cfl_condition is not None:
+        core_models.append(cfl_condition)
+
+    return LoadResult(core_models=core_models, optional_models=optional_models)
 
 
 @init.resolve
@@ -66,12 +69,19 @@ def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitS
     # The first core model is the pressure-velocity algorithm (pimple/simple/piso)
     pressure_model = core_models[0]
     cfl_condition = next(
-        model for model in core_models if isinstance(model, CFLCondition)
+        (
+            current_model
+            for current_model in core_models
+            if isinstance(current_model, CFLCondition)
+        ),
+        None,
     )
 
     builder = InitializerBuilder()
     builder.extend(create_time_mesh(init.argv))
     builder.add_core_models([("pressure_velocity", pressure_model)])
+    if cfl_condition is not None:
+        builder.add(init_model("cfl_condition", create=lambda _ctx: cfl_condition))
 
     builder.add(
         init_model(

@@ -126,9 +126,17 @@ def run(argv: Optional[list[str]] = None) -> Context:
 
     return ctx
 
+
 @incompressibleFluid.operation()
 def set_time_step(self, ctx: Context) -> None:
     """Adjust time step based on CFL condition."""
+    pressure_velocity = ctx.models.get("pressure_velocity")
+    if (
+        pressure_velocity is not None
+        and getattr(pressure_velocity, "algorithm_type", "").upper() == "SIMPLE"
+    ):
+        return
+
     cfl_condition = ctx.models.get("cfl_condition")
     if cfl_condition:
         cfl_condition(ctx)

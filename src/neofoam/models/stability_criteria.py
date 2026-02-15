@@ -13,8 +13,15 @@ class CFLCondition:
         self.GREAT = 1e30
         self.SMALL = 1e-15
         controlDict = dictionary.read("system/controlDict")
-        self.adjustable = controlDict.get[bool]("adjustTimeStep")
-        self.maxCFL = controlDict.get[float]("maxCo")
+        try:
+            self.adjustable = controlDict.get[bool]("adjustTimeStep")
+        except KeyError:
+            self.adjustable = False
+
+        try:
+            self.maxCFL = controlDict.get[float]("maxCo")
+        except KeyError:
+            self.maxCFL = self.GREAT
 
         # Read maxDeltaT from controlDict if not provided
         if maxDeltaT is None:
