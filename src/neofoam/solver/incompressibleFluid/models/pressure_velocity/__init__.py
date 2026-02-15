@@ -3,9 +3,9 @@
 
 """Pressure-velocity model package entrypoint."""
 
-from .base import pressure_velocity
-from . import pimple as _pimple  # noqa: F401
-from . import simple as _simple  # noqa: F401
-from . import piso as _piso  # noqa: F401
+from .base import PressureVelocityAlgorithm
+from . import pimpleAlgorithm as _pimple  # noqa: F401
+from . import simpleAlgorithm as _simple  # noqa: F401
+from . import pisoAlgorithm as _piso  # noqa: F401
 
 __all__ = ["pressure_velocity"]

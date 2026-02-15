@@ -16,7 +16,7 @@ from typing import Literal
 from pathlib import Path
 
 from .types import OperationMetadata, OpType, OperationNumber
-from .operations import Operation, SequentialOp
+from .operations import Operation, Operations, SequentialOp
 from .dependency_resolver import DependencyResolver, wrap_with_dependency_resolution
 from .context import Context
 
@@ -50,6 +50,9 @@ class ModelInstance:
 
         # State storage for load results
         self._load_result: Any = None
+
+        # operations
+        self._operations_func: Optional[Callable[..., Operations]] = None
 
         # Config auto-discovery and injection
         self._configs: dict[str, BaseConfig] = {}
@@ -606,15 +609,36 @@ class ModelInstance:
 
         return decorator
 
+    def operation_collection(
+        self,
+        func: Callable[..., Operations],
+    ) -> Callable[..., Operations]:
+        """
+        Decorator to register a custom operation collection provider.
+
+        The registered function can use one of these signatures:
+            provider() -> Operations
+            provider(model_state) -> Operations
+            provider(self, model_state) -> Operations
+
+        Returns:
+            The original function
+        """
+        self._operations_func = func
+        return func
+
     @property
-    def operations(self) -> list[Operation]:
+    def operations(self) -> Operations:
         """
         Get list of Operation objects from decorated methods.
 
         Returns:
             List of Operation objects ready for DAG resolution
         """
-        ops = []
+        if self._operations_func is not None:
+            return self.operations_for(self)
+
+        ops = Operations()
         for func, metadata in self._operations:
             # Create SequentialOp
             seq_op = SequentialOp(func)
@@ -629,9 +653,41 @@ class ModelInstance:
                 depends_on=metadata["depends_on"],
                 before=metadata["before"],
             )
-            ops.append(op)
+            ops.add(operation=op)
 
         return ops
+
+    def operations_for(self, model_state: Any) -> Operations:
+        """
+        Get operations using an explicit model state for collection providers.
+
+        Supports these provider signatures:
+            provider() -> Operations
+            provider(model_state) -> Operations
+            provider(self, model_state) -> Operations
+
+        Args:
+            model_state: State object passed to operation collection providers
+
+        Returns:
+            Operations collection
+        """
+        if self._operations_func is None:
+            return self.operations
+
+        sig = inspect.signature(self._operations_func)
+        param_count = len(sig.parameters)
+
+        if param_count == 0:
+            return self._operations_func()
+        if param_count == 1:
+            return self._operations_func(model_state)
+        if param_count == 2:
+            return self._operations_func(self, model_state)
+
+        raise TypeError(
+            "operation_collection provider must accept 0, 1, or 2 parameters"
+        )
 
     def _wrap_with_dependency_resolution(
         self, func: Callable

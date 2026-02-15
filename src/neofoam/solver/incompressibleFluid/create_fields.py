@@ -22,6 +22,9 @@ from neofoam.solver.incompressibleFluid import models as _solver_models  # noqa:
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
     incompressibleFluidModel,
 )
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.base import (
+    PressureVelocityAlgorithm,
+)
 
 
 init = StagedInit("incompressibleFluid")
@@ -34,18 +37,13 @@ def create_init(case_dir: Path = None) -> StagedInit:
 
 @init.load
 def load_config() -> LoadResult:
-    pressure_model = incompressibleFluidModel.create(
-        config={"model_type": "pressureVelocity"}
-    )
-    pressure_model.run_load()
+    # Directly detect and create pressure-velocity algorithm (not a plugin)
+    pressure_model = PressureVelocityAlgorithm.detect_and_create()
 
     cfl_condition = CFLCondition()
 
-    optional_models = [
-        model
-        for model in incompressibleFluidModel.detect_models()
-        if model.name != pressure_model.name
-    ]
+    # Detect optional models (e.g., boussinesq)
+    optional_models = incompressibleFluidModel.detect_models()
     for optional_model in optional_models:
         optional_model.run_load()
 
@@ -57,17 +55,16 @@ def load_config() -> LoadResult:
 
 @init.resolve
 def resolve_models(config: ConfigContext) -> None:
+    # Resolve optional models (e.g., boussinesq)
+    # They can access the pressure model via init.core_models[0]
     for model in init.optional_models:
         model.run_resolve(config)
 
 
 @init.build
 def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-    pressure_model = next(
-        model
-        for model in core_models
-        if getattr(model, "name", None) == "pressureVelocity"
-    )
+    # The first core model is the pressure-velocity algorithm (pimple/simple/piso)
+    pressure_model = core_models[0]
     cfl_condition = next(
         model for model in core_models if isinstance(model, CFLCondition)
     )

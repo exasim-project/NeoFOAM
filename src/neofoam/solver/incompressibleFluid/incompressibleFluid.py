@@ -30,7 +30,9 @@ class TimeLoop:
     """Helper class for managing the main time loop operations."""
 
     def __call__(self, ctx: Context) -> bool:
-        return bool(ctx.runTime.run())
+        """Check if the time loop should continue running."""
+        runTime = ctx.runTime
+        return bool(runTime.run())
 
 
 # Create Solver instance for decorating operations
@@ -61,38 +63,33 @@ def execution_graph(
 
     ops = incompressibleFluid.operations
     builder = StepBuilder()
-    pressure_model = next(
-        (
-            model
-            for model in incompressibleFluid.core_models
-            if getattr(model, "name", None) == "pressureVelocity"
-        ),
-        None,
-    )
+
+    # Get the algorithm model directly from core_models (it's the first item)
+    # This is the detected algorithm model (pimple/simple/piso)
+    algorithm_model = incompressibleFluid.core_models[0]
+    algo_ops = algorithm_model.operations_for(algorithm_model)
 
     # Time loop structure
-    time_loop_op = Operation(func=IterativeOp(TimeLoop()), operation_name="time_loop")
+    time_loop_op = Operation(
+        func=IterativeOp(TimeLoop()),
+        operation_name="time_loop",
+        operation_number=None,
+    )
 
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(ops["set_time_step"])
         time_builder.step(ops["increment_time"])
 
-        if pressure_model is None:
-            raise RuntimeError("pressureVelocity core model was not initialized")
-
-        inner_loop_op = Operation(
-            func=IterativeOp(pressure_model.inner_loop),
-            operation_name="inner_loop",
-        )
-
-        with time_builder.loop(inner_loop_op) as inner_builder:
+        # Algorithm inner loop
+        with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
+            inner_builder.step(algo_ops["momentum"])
+            inner_builder.step(algo_ops["continuity"])
             inner_builder.step(ops["turbulence_correction"])
 
         time_builder.step(ops["write_output"])
 
+    # Collect optional model operations
     model_ops = OperationCollection()
-    if pressure_model is not None:
-        model_ops.add(pressure_model.operations)
     for model in incompressibleFluid.optional_models:
         model_ops.add(model.operations)
 
@@ -109,15 +106,20 @@ def run(argv: Optional[list[str]] = None) -> Context:
     Returns:
         Final context after solving
     """
+    # Set argv
     incompressibleFluid.argv = argv or []
+
+    # Initialize
     ctx = incompressibleFluid.initialize()
 
     Info("Starting time loop")
 
+    # Build and resolve execution graph
     builder, model_ops = incompressibleFluid.execution_graph()
     resolver = DAGResolver()
     resolved = resolver.resolve(builder, model_ops)
 
+    # Execute the resolved operations
     resolved.operations.run(ctx)
 
     Info("End")

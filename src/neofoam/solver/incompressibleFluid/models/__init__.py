@@ -4,11 +4,11 @@
 """incompressibleFluid solver-local model plugins."""
 
 from .incompressibleFluidModel import incompressibleFluidModel
-from .pressure_velocity import pressure_velocity
+from .pressure_velocity import PressureVelocityAlgorithm
 from .boussinesq import boussinesq
 
 __all__ = [
     "incompressibleFluidModel",
-    "pressure_velocity",
+    "PressureVelocityAlgorithm",
     "boussinesq",
 ]

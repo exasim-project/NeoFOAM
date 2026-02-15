@@ -8,22 +8,21 @@ from typing import Any
 from neofoam.framework.context import FieldUpdates
 
 from ..incompressibleFluidModel import Model
-from .base import pressureVelocityAlgorithm
 
-simple = Model("Simple").register_with(pressureVelocityAlgorithm)
+simple = Model("Simple")
 
 
 def build() -> list[Any]:
-	raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
+    raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
 
 
 def inner_loop(_ctx: Any) -> bool:
-	raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
+    raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
 
 
 def momentum(**_kwargs: Any) -> FieldUpdates:
-	raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
+    raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
 
 
 def continuity(**_kwargs: Any) -> FieldUpdates:
-	raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")
+    raise NotImplementedError("SIMPLE pressure-velocity model is not implemented")

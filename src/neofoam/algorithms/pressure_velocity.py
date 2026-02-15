@@ -3,7 +3,7 @@
 
 """Compatibility re-exports for pressure-velocity helper kernels."""
 
-from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimple import (
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import (
     continuity_boussinesq_helper,
     continuity_helper,
     momentum_boussinesq_helper,

@@ -59,8 +59,13 @@ def detect_model() -> bool:
 
 @boussinesq.resolve
 def resolve(config: Any) -> None:
-    pressure_model = config.get("pressureVelocity")
-    if pressure_model is not None:
+    """Set use_boussinesq flag on the pressure-velocity algorithm model."""
+    # Access the pressure model from the init's core_models
+    # The pressure model is always the first core model
+    from ..create_fields import init
+
+    if init.core_models and len(init.core_models) > 0:
+        pressure_model = init.core_models[0]
         pressure_model.use_boussinesq = True
 
 
