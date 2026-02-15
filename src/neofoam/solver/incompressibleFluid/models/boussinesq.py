@@ -10,35 +10,51 @@ from pybFoam import fvm, surfaceScalarField, volScalarField
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import field
+from neofoam.io import BaseConfig
 
 from .incompressibleFluidModel import Model, incompressibleFluidModel
 
 
-boussinesq = Model("boussinesq").register_with(incompressibleFluidModel)
-boussinesq.beta = 3e-3
-boussinesq.TRef = 300.0
-boussinesq.Pr = 0.7
-boussinesq.Prt = 0.85
-boussinesq.hRef = 0.0
+class BoussinesqConfig(BaseConfig):
+    beta: float = 3e-3
+    TRef: float = 300.0
+    Pr: float = 0.7
+    Prt: float = 0.85
+    hRef: float = 0.0
+
+
+def load_boussinesq_config(_case_dir: Any = None) -> BoussinesqConfig:
+    config = BoussinesqConfig()
+    props = pyf.dictionary.read("constant/transportProperties")
+    toc = set(props.toc())
+
+    if "beta" in toc:
+        config.beta = props.get_scalar("beta")
+    if "TRef" in toc:
+        config.TRef = props.get_scalar("TRef")
+    if "Pr" in toc:
+        config.Pr = props.get_scalar("Pr")
+    if "Prt" in toc:
+        config.Prt = props.get_scalar("Prt")
+
+    return config
+
+
+boussinesq = (
+    Model("boussinesq")
+    .with_config(BoussinesqConfig, name="configs", loader=load_boussinesq_config)
+    .register_with(incompressibleFluidModel)
+)
 
 
 @boussinesq.detect
 def detect_model() -> bool:
     try:
         props = pyf.dictionary.read("constant/transportProperties")
-        toc = list(props.toc())
+        toc = set(props.toc())
         return "beta" in toc and "TRef" in toc
     except Exception:
         return False
-
-
-@boussinesq.load
-def load_config() -> None:
-    props = pyf.dictionary.read("constant/transportProperties")
-    boussinesq.beta = props.get_scalar("beta")
-    boussinesq.TRef = props.get_scalar("TRef")
-    boussinesq.Pr = props.get_scalar("Pr")
-    boussinesq.Prt = props.get_scalar("Prt")
 
 
 @boussinesq.resolve
@@ -50,6 +66,8 @@ def resolve(config: Any) -> None:
 
 @boussinesq.build
 def build() -> list[Any]:
+    configs = boussinesq.config("configs")
+
     def create_T(context: dict[str, Any]) -> Any:
         return volScalarField.read_field(context["mesh"], "T")
 
@@ -64,9 +82,9 @@ def build() -> list[Any]:
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         g_value = g.value()
         g_mag = (g_value[0] ** 2 + g_value[1] ** 2 + g_value[2] ** 2) ** 0.5
-        ghRef = g_mag * boussinesq.hRef if g_mag > 1e-15 else 0.0
+        gh_ref = g_mag * configs.hRef if g_mag > 1e-15 else 0.0
         gh_ref_dim = pyf.dimensionedScalar(
-            "ghRef", g.dimensions() * pyf.dimLength, ghRef
+            "ghRef", g.dimensions() * pyf.dimLength, gh_ref
         )
         return volScalarField(pyf.Word("gh"), (g & mesh.C()) - gh_ref_dim)
 
@@ -75,9 +93,9 @@ def build() -> list[Any]:
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         g_value = g.value()
         g_mag = (g_value[0] ** 2 + g_value[1] ** 2 + g_value[2] ** 2) ** 0.5
-        ghRef = g_mag * boussinesq.hRef if g_mag > 1e-15 else 0.0
+        gh_ref = g_mag * configs.hRef if g_mag > 1e-15 else 0.0
         gh_ref_dim = pyf.dimensionedScalar(
-            "ghRef", g.dimensions() * pyf.dimLength, ghRef
+            "ghRef", g.dimensions() * pyf.dimLength, gh_ref
         )
         return surfaceScalarField(pyf.Word("ghf"), (g & mesh.Cf()) - gh_ref_dim)
 
@@ -107,8 +125,9 @@ def solve_energy(
     turbulence: Annotated[Any, "models"],
     alphat: Any,
 ) -> FieldUpdates:
-    pr = pyf.dimensionedScalar("Pr", pyf.dimless, boussinesq.Pr)
-    prt = pyf.dimensionedScalar("Prt", pyf.dimless, boussinesq.Prt)
+    configs = boussinesq.config("configs")
+    pr = pyf.dimensionedScalar("Pr", pyf.dimless, configs.Pr)
+    prt = pyf.dimensionedScalar("Prt", pyf.dimless, configs.Prt)
 
     alphat.assign(turbulence.nut() / prt)
     alphat.correctBoundaryConditions()
@@ -125,10 +144,9 @@ def solve_energy(
 
 @boussinesq.operation(operation_number="2.7", depends_on=["solve_energy"])
 def update_rhok(T: Any, rhok: Any) -> FieldUpdates:
-    beta = pyf.dimensionedScalar(
-        "beta", pyf.dimless / pyf.dimTemperature, boussinesq.beta
-    )
-    t_ref = pyf.dimensionedScalar("TRef", pyf.dimTemperature, boussinesq.TRef)
+    configs = boussinesq.config("configs")
+    beta = pyf.dimensionedScalar("beta", pyf.dimless / pyf.dimTemperature, configs.beta)
+    t_ref = pyf.dimensionedScalar("TRef", pyf.dimTemperature, configs.TRef)
     one = pyf.dimensionedScalar("one", pyf.dimless, 1.0)
 
     rhok.assign(one - beta * (T - t_ref))
