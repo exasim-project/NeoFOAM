@@ -33,20 +33,10 @@ public:
         : psi_(psi)
         , expr_(expr)
         , runTime_(runTime)
-        , mi_(readOrCreate<NeoN::la::MatrixIterator<NeoN::localIdx>>(
+        , ls_(readOrCreate<LinearSystem>(
               runTime,
-              "matrixIterator",
-              [&psi]()
-              {
-                  return std::make_shared<NeoN::la::MatrixIterator<NeoN::localIdx>>(
-                      NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(psi.mesh())
-                  );
-              }
-          ))
-        , ls_(NeoN::la::createEmptyLinearSystem<ValueType>(
-              psi.mesh(),
-              mi_->sparsityPattern(),
-              mi_->boundarySparsityPattern()
+              "linearSystem" + psi.name,
+              [&psi]() { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
           ))
     {
         expr_.read(runTime_.fvSchemesDict);
@@ -56,8 +46,7 @@ public:
         : psi_(expr.psi_)
         , expr_(expr.expr_)
         , runTime_(expr.runTime_)
-        , ls_(expr.ls_)
-        , mi_(expr.mi_) {};
+        , ls_(expr.ls_) {};
 
     ~PDESolver() = default;
 
@@ -71,7 +60,7 @@ public:
 
     LinearSystem& assemble()
     {
-        expr_.assemble(runTime_.t, runTime_.dt, *mi_.get(), ls_);
+        expr_.assemble(runTime_.t, runTime_.dt, ls_);
         return ls_;
     }
 
@@ -91,16 +80,12 @@ public:
             , pRefValue_(pRefValue)
         {}
 
-        virtual void operator()(
-            const NeoN::la::MatrixIterator<NeoN::localIdx>& mi,
-            NeoN::la::LinearSystem<
-                FunctorValueType,
-                NeoN::la::CSRMatrix<FunctorValueType, NeoN::la::SparsityPattern<NeoN::localIdx>>>&
-                ls
-        )
+        virtual void operator()(NeoN::la::LinearSystem<
+                                FunctorValueType,
+                                NeoN::la::CSRMatrix<FunctorValueType, NeoN::localIdx>>& ls)
         {
-            const auto rowOffs = mi.sparsityPattern()->rowOffs().view();
-            const auto diagOffset = mi.diagOffset().view();
+            const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
+            const auto diagOffset = ls.matrixIterator()->diagOffset().view();
             auto rhs = ls.rhs().view();
             auto values = ls.matrix().values().view();
             // make an explicit copy to avoid capture this warning in kokkos lambda
@@ -118,10 +103,6 @@ public:
             );
         }
     };
-
-    NeoN::la::MatrixIterator<NeoN::localIdx>& matrixIterator() { return *mi_.get(); }
-
-    const NeoN::la::MatrixIterator<NeoN::localIdx> matrixIterator() const { return *mi_.get(); }
 
     NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const
     {
@@ -184,7 +165,6 @@ private:
             auto exprIn = -1.0 * expr;
             stats = NeoN::dsl::detail::iterativeSolveImpl(
                 exprIn,
-                *mi_.get(),
                 ls,
                 psi_,
                 runTime_.t,
@@ -198,7 +178,6 @@ private:
         {
             stats = NeoN::dsl::detail::iterativeSolveImpl(
                 expr,
-                *mi_.get(),
                 ls,
                 psi_,
                 runTime_.t,
@@ -226,7 +205,6 @@ private:
     VolumeField& psi_;
     dsl::Expression<ValueType> expr_;
     const RunTime& runTime_;
-    std::shared_ptr<NeoN::la::MatrixIterator<NeoN::localIdx>> mi_;
     LinearSystem ls_;
     bool needReference_;
     NeoN::localIdx pRefCell_;

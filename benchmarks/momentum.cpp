@@ -106,7 +106,7 @@ TEST_CASE("momentum")
                     );
                 expr.addOperator(-1.0 * dsl::exp::grad(nfP));
                 eqn.assemble();
-                expr.assemble(rt.t, rt.dt, eqn.matrixIterator(), ls);
+                expr.assemble(rt.t, rt.dt, ls);
                 NeoN::fence(exec);
                 return;
             };

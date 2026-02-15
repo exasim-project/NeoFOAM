@@ -30,7 +30,6 @@ TEST_CASE("matrix multiplication")
 
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
-    auto mi = NeoN::la::createSparsityPatternMatrixIterator<NeoN::localIdx>(rt.nfMesh);
 
     runTime.setDeltaT(1);
 
@@ -62,12 +61,8 @@ TEST_CASE("matrix multiplication")
         rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
         ddtOp.read(rt.fvSchemesDict);
 
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
-            rt.nfMesh,
-            mi.sparsityPattern(),
-            mi.boundarySparsityPattern()
-        );
-        ddtOp.implicitOperation(ls, mi, runTime.value(), runTime.deltaTValue());
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
+        ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
 
         // check rhs
         nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
@@ -107,13 +102,9 @@ TEST_CASE("matrix multiplication")
         }
 
         // the sourceterm operator implicit
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(
-            rt.nfMesh,
-            mi.sparsityPattern(),
-            mi.boundarySparsityPattern()
-        );
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
         auto cellVolumes = rt.nfMesh.cellVolumes().copyToHost();
-        sourceTerm.implicitOperation(ls, mi);
+        sourceTerm.implicitOperation(ls);
 
         // check diag
         auto diag = ls.matrix().diag();

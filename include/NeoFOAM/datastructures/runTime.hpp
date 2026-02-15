@@ -34,14 +34,13 @@ struct RunTime
 
 /**@brief convenience function to avoid recreating objects by storing them in the runtime db*/
 template<typename RegisteredType, typename InitializerType>
-const std::shared_ptr<RegisteredType>
-readOrCreate(RunTime& runTime, std::string name, InitializerType init)
+RegisteredType& readOrCreate(RunTime& runTime, std::string name, InitializerType init)
 {
     if (!runTime.controlDict.contains(name))
     {
         runTime.controlDict.insert(std::string(name), init());
     }
-    return runTime.controlDict.get<std::shared_ptr<RegisteredType>>(name);
+    return runTime.controlDict.get<RegisteredType>(name);
 }
 
 } // End namespace NeoFOAM

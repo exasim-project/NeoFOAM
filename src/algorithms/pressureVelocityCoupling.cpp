@@ -47,7 +47,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 
     NeoN::la::scaledInverseDiag(
         ls.matrix(),
-        expr.matrixIterator(),
+        *ls.matrixIterator().get(),
         mesh.cellVolumes(),
         rAU.internalVector()
     );
@@ -68,7 +68,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     auto hByABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
     auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, hByABCs);
 
-    NeoN::la::scaledInvDiagnegLUx(
+    NeoN::la::scaledInvDiagNegLUx(
         ls.matrix(),
         u.internalVector(),
         ls.rhs(),
@@ -99,9 +99,8 @@ void updateFaceVelocity(
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
     const auto colIdxs = ls.matrix().sparsity()->colIdxs().view();
-    const auto& mi = expr.matrixIterator();
-    const auto neiOffs = mi.neighbourOffset().view();
-    const auto ownOffs = mi.ownerOffset().view();
+    const auto neiOffs = ls.matrixIterator()->neighbourOffset().view();
+    const auto ownOffs = ls.matrixIterator()->ownerOffset().view();
     auto values = ls.matrix().values().view();
     auto rhs = ls.rhs().view();
     auto [iPhi, iPredPhi] = views(phi.internalVector(), predictedPhi.internalVector());
