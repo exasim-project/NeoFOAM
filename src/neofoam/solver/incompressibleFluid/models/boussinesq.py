@@ -3,7 +3,7 @@
 
 """Boussinesq model plugin for incompressibleFluid solver."""
 
-from typing import Annotated, Any
+from typing import Annotated, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import fvm, surfaceScalarField, volScalarField
@@ -15,6 +15,12 @@ from neofoam.io import BaseConfig
 from .incompressibleFluidModel import Model, incompressibleFluidModel
 
 
+class ThermalTurbulenceModel(Protocol):
+    def nut(self) -> object: ...
+
+    def nu(self) -> object: ...
+
+
 class BoussinesqConfig(BaseConfig):
     beta: float = 3e-3
     TRef: float = 300.0
@@ -23,7 +29,7 @@ class BoussinesqConfig(BaseConfig):
     hRef: float = 0.0
 
 
-def load_boussinesq_config(_case_dir: Any = None) -> BoussinesqConfig:
+def load_boussinesq_config(_case_dir: Optional[object] = None) -> BoussinesqConfig:
     config = BoussinesqConfig()
     props = pyf.dictionary.read("constant/transportProperties")
     toc = set(props.toc())
@@ -58,7 +64,7 @@ def detect_model() -> bool:
 
 
 @boussinesq.resolve
-def resolve(config: Any) -> None:
+def resolve(config: BoussinesqConfig) -> None:
     """Set use_boussinesq flag on the pressure-velocity algorithm model."""
     # Access the pressure model from the init's core_models
     # The pressure model is always the first core model
@@ -70,19 +76,19 @@ def resolve(config: Any) -> None:
 
 
 @boussinesq.build
-def build() -> list[Any]:
+def build() -> list[object]:
     configs = boussinesq.config("configs")
 
-    def create_T(context: dict[str, Any]) -> Any:
+    def create_T(context: dict[str, object]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "T")
 
-    def create_alphat(context: dict[str, Any]) -> Any:
+    def create_alphat(context: dict[str, object]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "alphat")
 
-    def create_rhok(context: dict[str, Any]) -> Any:
+    def create_rhok(context: dict[str, object]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "rhok")
 
-    def create_gh(context: dict[str, Any]) -> Any:
+    def create_gh(context: dict[str, object]) -> volScalarField:
         mesh = context["mesh"]
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         g_value = g.value()
@@ -93,7 +99,7 @@ def build() -> list[Any]:
         )
         return volScalarField(pyf.Word("gh"), (g & mesh.C()) - gh_ref_dim)
 
-    def create_ghf(context: dict[str, Any]) -> Any:
+    def create_ghf(context: dict[str, object]) -> surfaceScalarField:
         mesh = context["mesh"]
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         g_value = g.value()
@@ -104,7 +110,7 @@ def build() -> list[Any]:
         )
         return surfaceScalarField(pyf.Word("ghf"), (g & mesh.Cf()) - gh_ref_dim)
 
-    def create_p_rgh(context: dict[str, Any]) -> Any:
+    def create_p_rgh(context: dict[str, object]) -> volScalarField:
         mesh = context["mesh"]
         mesh.setFluxRequired(pyf.Word("p_rgh"))
         return volScalarField.read_field(mesh, "p_rgh")
@@ -125,10 +131,10 @@ def build() -> list[Any]:
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
 def solve_energy(
-    T: Any,
-    phi: Any,
-    turbulence: Annotated[Any, "models"],
-    alphat: Any,
+    T: volScalarField,
+    phi: surfaceScalarField,
+    turbulence: Annotated[ThermalTurbulenceModel, "models"],
+    alphat: volScalarField,
 ) -> FieldUpdates:
     configs = boussinesq.config("configs")
     pr = pyf.dimensionedScalar("Pr", pyf.dimless, configs.Pr)
@@ -148,7 +154,7 @@ def solve_energy(
 
 
 @boussinesq.operation(operation_number="2.7", depends_on=["solve_energy"])
-def update_rhok(T: Any, rhok: Any) -> FieldUpdates:
+def update_rhok(T: volScalarField, rhok: volScalarField) -> FieldUpdates:
     configs = boussinesq.config("configs")
     beta = pyf.dimensionedScalar("beta", pyf.dimless / pyf.dimTemperature, configs.beta)
     t_ref = pyf.dimensionedScalar("TRef", pyf.dimTemperature, configs.TRef)

@@ -3,12 +3,13 @@
 
 """SIMPLE pressure-velocity algorithm model."""
 
-from typing import Annotated, Any
+from typing import Annotated, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
     fvc,
     fvm,
+    fvMesh,
     fvScalarMatrix,
     fvVectorMatrix,
     surfaceScalarField,
@@ -17,7 +18,8 @@ from pybFoam import (
 )
 
 from neofoam.foam.initialization import read_vol_field
-from neofoam.framework.context import FieldUpdates
+from neofoam.algorithms.control import SimpleControl
+from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     IterativeOp,
@@ -30,15 +32,28 @@ from .control_factory import create_simple_control
 from ..incompressibleFluidModel import Model
 
 simple = Model("Simple")
-_active_model_state: Any = None
 
 
-def _set_active_model_state(model_state: Any) -> None:
+class PressureReferenceState(Protocol):
+    pRefCell: Optional[object]
+    pRefValue: Optional[object]
+    fv_solution: Optional[object]
+    algorithm_type: str
+
+
+class TurbulenceModel(Protocol):
+    def divDevReff(self, velocity: volVectorField) -> object: ...
+
+
+_active_model_state: Optional[PressureReferenceState] = None
+
+
+def _set_active_model_state(model_state: PressureReferenceState) -> None:
     global _active_model_state
     _active_model_state = model_state
 
 
-def _get_active_model_state() -> Any:
+def _get_active_model_state() -> PressureReferenceState:
     if _active_model_state is None:
         raise RuntimeError(
             "SIMPLE model state not configured before operation dispatch"
@@ -46,7 +61,11 @@ def _get_active_model_state() -> Any:
     return _active_model_state
 
 
-def ensure_pressure_reference(model_state: Any, p: Any, mesh: Any) -> None:
+def ensure_pressure_reference(
+    model_state: PressureReferenceState,
+    p: volScalarField,
+    mesh: fvMesh,
+) -> None:
     if model_state.pRefCell is not None and model_state.pRefValue is not None:
         return
 
@@ -62,11 +81,11 @@ def ensure_pressure_reference(model_state: Any, p: Any, mesh: Any) -> None:
 
 
 @simple.build
-def build() -> list[Any]:
-    def create_phi(context: dict[str, Any]) -> Any:
+def build() -> list[object]:
+    def create_phi(context: dict[str, object]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
 
-    def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
+    def create_cumulative_cont_err(_context: dict[str, object]) -> list[float]:
         return [0.0]
 
     return [
@@ -78,12 +97,12 @@ def build() -> list[Any]:
     ]
 
 
-def inner_loop(ctx: Any) -> bool:
+def inner_loop(ctx: Context) -> bool:
     return bool(ctx.models["simple_control"].loop(ctx))
 
 
 def _alias_operation(
-    op_func: Any,
+    op_func: Callable[..., FieldUpdates],
     *,
     operation_name: str,
     depends_on: list[str],
@@ -104,11 +123,11 @@ def _alias_operation(
 
 @simple.operation(operation_number="2.1")
 def momentum(
-    U: Any,
-    phi: Any,
-    p: Any,
-    turbulence: Annotated[Any, "models"],
-    simple_control: Annotated[Any, "models"],
+    U: volVectorField,
+    phi: surfaceScalarField,
+    p: volScalarField,
+    turbulence: Annotated[TurbulenceModel, "models"],
+    simple_control: Annotated[SimpleControl, "models"],
 ) -> FieldUpdates:
     model_state = _get_active_model_state()
     ensure_pressure_reference(model_state, p, U.mesh())
@@ -124,11 +143,11 @@ def momentum(
 
 @simple.operation(operation_number="2.2", depends_on=["momentum"])
 def continuity(
-    U: Any,
-    p: Any,
-    phi: Any,
-    UEqn: Any,
-    simple_control: Annotated[Any, "models"],
+    U: volVectorField,
+    p: volScalarField,
+    phi: surfaceScalarField,
+    UEqn: fvVectorMatrix,
+    simple_control: Annotated[SimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
 ) -> FieldUpdates:
     model_state = _get_active_model_state()
@@ -176,7 +195,7 @@ def continuity(
 
 
 @simple.operation_collection
-def collected_operations(self, model_state: Any) -> Operations:
+def collected_operations(self, model_state: PressureReferenceState) -> Operations:
     _set_active_model_state(model_state)
     model_ops = Operations()
     model_ops.add(

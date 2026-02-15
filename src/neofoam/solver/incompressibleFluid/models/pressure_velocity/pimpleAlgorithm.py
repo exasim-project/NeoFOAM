@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-from typing import Annotated, Any
+from typing import Annotated, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -15,7 +15,8 @@ from pybFoam import (
 )
 
 from neofoam.foam.initialization import read_vol_field
-from neofoam.framework.context import FieldUpdates
+from neofoam.algorithms.control import PimpleControl
+from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     IterativeOp,
@@ -28,65 +29,56 @@ from .control_factory import create_pimple_control
 from ..incompressibleFluidModel import Model
 
 pimple = Model("Pimple")
-_active_model_state: Any = None
 
 
-def _set_active_model_state(model_state: Any) -> None:
-    global _active_model_state
-    _active_model_state = model_state
+class PressureReferenceState(Protocol):
+    algorithm_type: str
+    use_boussinesq: bool
 
 
-def _get_active_model_state() -> Any:
-    if _active_model_state is None:
-        raise RuntimeError(
-            "PIMPLE model state not configured before operation dispatch"
-        )
-    return _active_model_state
-
-
-def ensure_pressure_reference(
-    model_state: Any, p: Any, mesh: Any, p_rgh: Any = None
-) -> None:
-    if model_state.pRefCell is not None and model_state.pRefValue is not None:
-        return
-
-    if model_state.fv_solution is None:
-        model_state.fv_solution = pyf.dictionary.read("system/fvSolution")
-
-    algo_dict = model_state.fv_solution.subDict(model_state.algorithm_type)
-    pressure_field = p_rgh if p_rgh is not None else p
-    field_name = "p_rgh" if p_rgh is not None else "p"
-
-    if not (
-        algo_dict.found(f"{field_name}RefCell")
-        or algo_dict.found(f"{field_name}RefPoint")
-    ):
-        if p_rgh is not None and (
-            algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")
-        ):
-            pRefCell, pRefValue = pyf.setRefCell(p, algo_dict, True)
-        else:
-            pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
-    else:
-        pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
-
-    model_state.pRefCell = pRefCell
-    model_state.pRefValue = pRefValue
-
-    mesh.setFluxRequired(pyf.Word("p"))
-    if p_rgh is not None:
-        mesh.setFluxRequired(pyf.Word("p_rgh"))
+class TurbulenceModel(Protocol):
+    def divDevReff(self, velocity: volVectorField) -> object: ...
 
 
 @pimple.build
-def build() -> list[Any]:
-    def create_phi(context: dict[str, Any]) -> Any:
+def build() -> list[object]:
+    def create_phi(context: dict[str, object]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
 
-    def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
+    def create_cumulative_cont_err(_context: dict[str, object]) -> list[float]:
         return [0.0]
 
-    return [
+    def create_pressure_reference(context: dict[str, object]) -> dict[str, object]:
+        """Initialize pressure reference cell and value."""
+        p = context["fields.p"]
+        mesh = context["mesh"]
+        p_rgh = context.get("fields.p_rgh") if pimple.use_boussinesq else None
+
+        fv_solution = pyf.dictionary.read("system/fvSolution")
+        algo_dict = fv_solution.subDict(pimple.algorithm_type)
+        pressure_field = p_rgh if p_rgh is not None else p
+        field_name = "p_rgh" if p_rgh is not None else "p"
+
+        if not (
+            algo_dict.found(f"{field_name}RefCell")
+            or algo_dict.found(f"{field_name}RefPoint")
+        ):
+            if p_rgh is not None and (
+                algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")
+            ):
+                pRefCell, pRefValue = pyf.setRefCell(p, algo_dict, True)
+            else:
+                pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
+        else:
+            pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
+
+        mesh.setFluxRequired(pyf.Word("p"))
+        if p_rgh is not None:
+            mesh.setFluxRequired(pyf.Word("p_rgh"))
+
+        return {"pRefCell": pRefCell, "pRefValue": pRefValue}
+
+    init_steps = [
         read_vol_field(volScalarField, "p"),
         read_vol_field(volVectorField, "U"),
         field("phi", create_phi, depends_on=["fields.U"]),
@@ -94,13 +86,28 @@ def build() -> list[Any]:
         model("cumulativeContErr", create_cumulative_cont_err),
     ]
 
+    # Add pressure reference model - depends on p_rgh if boussinesq is enabled
+    # Note: p_rgh field is created by the boussinesq model, not here
+    pressure_ref_deps = ["fields.p", "mesh"]
+    if pimple.use_boussinesq:
+        pressure_ref_deps.append("fields.p_rgh")
+    init_steps.append(
+        model(
+            "pressure_reference",
+            create_pressure_reference,
+            depends_on=pressure_ref_deps,
+        )
+    )
 
-def inner_loop(ctx: Any) -> bool:
+    return init_steps
+
+
+def inner_loop(ctx: Context) -> bool:
     return bool(ctx.models["pimple_control"].loop(ctx))
 
 
 def _alias_operation(
-    op_func: Any,
+    op_func: Callable[..., FieldUpdates],
     *,
     operation_name: str,
     depends_on: list[str],
@@ -121,18 +128,12 @@ def _alias_operation(
 
 @pimple.operation(operation_number="2.1")
 def momentum(
-    U: Any,
-    phi: Any,
-    p: Any,
-    turbulence: Annotated[Any, "models"],
-    pimple_control: Annotated[Any, "models"],
-    p_rgh: Any = None,
-    rhok: Any = None,
-    ghf: Any = None,
+    U: volVectorField,
+    phi: surfaceScalarField,
+    p: volScalarField,
+    turbulence: Annotated[TurbulenceModel, "models"],
+    pimple_control: Annotated[PimpleControl, "models"],
 ) -> FieldUpdates:
-    model_state = _get_active_model_state()
-    ensure_pressure_reference(model_state, p, U.mesh())
-
     UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
     UEqn.relax()
 
@@ -144,19 +145,16 @@ def momentum(
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum"])
 def continuity(
-    U: Any,
-    p: Any,
-    phi: Any,
-    UEqn: Any,
-    pimple_control: Annotated[Any, "models"],
+    U: volVectorField,
+    p: volScalarField,
+    phi: surfaceScalarField,
+    UEqn: fvVectorMatrix,
+    pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    p_rgh: Any = None,
-    rhok: Any = None,
-    gh: Any = None,
-    ghf: Any = None,
+    pressure_reference: Annotated[dict[str, object], "models"],
 ) -> FieldUpdates:
-    model_state = _get_active_model_state()
-    ensure_pressure_reference(model_state, p, U.mesh())
+    pRefCell = pressure_reference["pRefCell"]
+    pRefValue = pressure_reference["pRefValue"]
 
     while pimple_control.correct():
         rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
@@ -172,7 +170,7 @@ def continuity(
 
         while pimple_control.correctNonOrthogonal():
             pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
-            pEqn.setReference(model_state.pRefCell, model_state.pRefValue, False)
+            pEqn.setReference(pRefCell, pRefValue, False)
             pEqn.solve(p.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
@@ -193,20 +191,15 @@ def continuity(
 
 @pimple.operation(operation_number="2.1")
 def momentum_boussinesq(
-    U: Any,
-    phi: Any,
-    p: Any,
-    turbulence: Annotated[Any, "models"],
-    pimple_control: Annotated[Any, "models"],
-    p_rgh: Any = None,
-    rhok: Any = None,
-    ghf: Any = None,
+    U: volVectorField,
+    phi: surfaceScalarField,
+    p: volScalarField,
+    turbulence: Annotated[TurbulenceModel, "models"],
+    pimple_control: Annotated[PimpleControl, "models"],
+    p_rgh: volScalarField,
+    rhok: volScalarField,
+    ghf: surfaceScalarField,
 ) -> FieldUpdates:
-    model_state = _get_active_model_state()
-    if p_rgh is None or rhok is None or ghf is None:
-        raise RuntimeError("Boussinesq mode requires p_rgh, rhok, and ghf fields")
-
-    ensure_pressure_reference(model_state, p, U.mesh(), p_rgh)
     mesh = U.mesh()
 
     UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
@@ -225,22 +218,20 @@ def momentum_boussinesq(
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum_boussinesq"])
 def continuity_boussinesq(
-    U: Any,
-    p: Any,
-    phi: Any,
-    UEqn: Any,
-    pimple_control: Annotated[Any, "models"],
+    U: volVectorField,
+    p: volScalarField,
+    phi: surfaceScalarField,
+    UEqn: fvVectorMatrix,
+    pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    p_rgh: Any = None,
-    rhok: Any = None,
-    gh: Any = None,
-    ghf: Any = None,
+    pressure_reference: Annotated[dict[str, object], "models"],
+    p_rgh: volScalarField,
+    rhok: volScalarField,
+    gh: volScalarField,
+    ghf: surfaceScalarField,
 ) -> FieldUpdates:
-    model_state = _get_active_model_state()
-    if p_rgh is None or rhok is None or gh is None or ghf is None:
-        raise RuntimeError("Boussinesq mode requires p_rgh, rhok, gh, and ghf fields")
-
-    ensure_pressure_reference(model_state, p, U.mesh(), p_rgh)
+    pRefCell = pressure_reference["pRefCell"]
+    pRefValue = pressure_reference["pRefValue"]
     mesh = U.mesh()
 
     while pimple_control.correct():
@@ -261,7 +252,7 @@ def continuity_boussinesq(
 
         while pimple_control.correctNonOrthogonal():
             pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
-            pEqn.setReference(model_state.pRefCell, model_state.pRefValue, False)
+            pEqn.setReference(pRefCell, pRefValue, False)
             pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
@@ -282,8 +273,7 @@ def continuity_boussinesq(
 
 
 @pimple.operation_collection
-def collected_operations(self, model_state: Any) -> Operations:
-    _set_active_model_state(model_state)
+def collected_operations(self, model_state: PressureReferenceState) -> Operations:
     model_ops = Operations()
     model_ops.add(
         Operation(

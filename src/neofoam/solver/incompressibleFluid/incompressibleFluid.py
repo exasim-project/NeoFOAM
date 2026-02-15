@@ -7,9 +7,9 @@ SimpleSolver - FastAPI-style syntax with execution graph support.
 The init module handles all initialization steps using FastAPI-style decorators.
 """
 
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Protocol
 
-from pybFoam import Info
+from pybFoam import Info, Time
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
@@ -26,12 +26,16 @@ from neofoam.framework.solver_factory import Solver
 from .create_fields import create_init
 
 
+class CorrectableModel(Protocol):
+    def correct(self) -> None: ...
+
+
 class TimeLoop:
     """Helper class for managing the main time loop operations."""
 
     def __call__(self, ctx: Context) -> bool:
         """Check if the time loop should continue running."""
-        runTime = ctx.runTime
+        runTime: Time = ctx.runTime
         return bool(runTime.run())
 
 
@@ -128,16 +132,19 @@ def run(argv: Optional[list[str]] = None) -> Context:
 
 
 @incompressibleFluid.operation()
-def set_time_step(self, ctx: Context) -> None:
+def set_time_step(
+    self,
+    ctx: Context,
+    pressure_velocity: Annotated[Optional[object], "models"],
+    cfl_condition: Annotated[Optional[object], "models"],
+) -> None:
     """Adjust time step based on CFL condition."""
-    pressure_velocity = ctx.models.get("pressure_velocity")
     if (
         pressure_velocity is not None
         and getattr(pressure_velocity, "algorithm_type", "").upper() == "SIMPLE"
     ):
         return
 
-    cfl_condition = ctx.models.get("cfl_condition")
     if cfl_condition:
         cfl_condition(ctx)
 
@@ -150,14 +157,15 @@ def increment_time(self, ctx: Context) -> None:
 
 
 @incompressibleFluid.operation(depends_on=["continuity"])
-def turbulence_correction(self, ctx: Context) -> FieldUpdates:
+def turbulence_correction(
+    self,
+    laminarTransport: Annotated[Optional[CorrectableModel], "models"],
+    turbulence: Annotated[Optional[CorrectableModel], "models"],
+) -> FieldUpdates:
     """Correct turbulence after pressure-velocity coupling."""
-    laminarTransport = ctx.models.get("laminarTransport")
-    turbulence = ctx.models.get("turbulence")
-
-    if laminarTransport and hasattr(laminarTransport, "correct"):
+    if laminarTransport:
         laminarTransport.correct()
-    if turbulence and hasattr(turbulence, "correct"):
+    if turbulence:
         turbulence.correct()
 
     return FieldUpdates({})
