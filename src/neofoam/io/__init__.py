@@ -13,10 +13,12 @@ from neofoam.io.strategies import (
     SubdictMixin,
     YAMLStrategy,
     JSONStrategy,
+    OpenFOAMStrategy,
 )
 from neofoam.io.decorator import (
     YAML,
     JSON,
+    OPENFOAM,
     IOStrategy,
 )
 from neofoam.io.base import BaseConfig
@@ -33,9 +35,11 @@ __all__ = [
     # Concrete strategies
     "YAMLStrategy",
     "JSONStrategy",
+    "OpenFOAMStrategy",
     # Helper functions
     "YAML",
     "JSON",
+    "OPENFOAM",
     # Decorator
     "IOStrategy",
     # Base class
