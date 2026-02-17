@@ -7,6 +7,8 @@ import json
 from typing import Any, Optional
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from neofoam.io.strategies.subdict import SubdictMixin
 
 
@@ -33,10 +35,13 @@ class JSONStrategy(SubdictMixin):
         """
         super().__init__(subdict_path)
 
-    def read(self, path: Path, encoding: str = "utf-8") -> dict[str, Any]:
+    def read(
+        self, model_cls: type[BaseModel], path: Path, encoding: str = "utf-8"
+    ) -> dict[str, Any]:
         """Read JSON configuration file.
 
         Args:
+            model_cls: The model class to read for (unused, JSON has native types)
             path: Path to the JSON file
             encoding: File encoding (default: utf-8)
 
@@ -55,14 +60,15 @@ class JSONStrategy(SubdictMixin):
 
         return self._extract_subdict(full_data)
 
-    def write(self, data: dict[str, Any], path: Path, encoding: str = "utf-8") -> None:
+    def write(self, instance: BaseModel, path: Path, encoding: str = "utf-8") -> None:
         """Write configuration to JSON file.
 
         Args:
-            data: Configuration data to write
+            instance: The model instance to write
             path: Path to the JSON file
             encoding: File encoding (default: utf-8)
         """
+        data = instance.model_dump(mode="python", exclude_none=False)
         path.parent.mkdir(parents=True, exist_ok=True)
 
         if not self.subdict_path:

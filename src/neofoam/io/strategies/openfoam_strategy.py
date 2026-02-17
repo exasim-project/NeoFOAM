@@ -6,64 +6,125 @@
 from __future__ import annotations
 
 from pathlib import Path
-import re
-from typing import Any, Optional
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Literal,
+    Optional,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import pybFoam as pyf
+from pydantic import BaseModel
 
 from neofoam.io.strategies.subdict import SubdictMixin
 
 
-_INT_PATTERN = re.compile(r"^[+-]?\d+$")
-_FLOAT_PATTERN = re.compile(r"^[+-]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?$")
+_BOOL_TRUE = frozenset({"yes", "true", "on"})
+_BOOL_FALSE = frozenset({"no", "false", "off"})
+
+
+def _read_bool(foam_dict: Any, key: str) -> bool:
+    """Read an OpenFOAM Switch value and return a Python bool."""
+    raw = str(foam_dict.get[str](key)).strip().lower()
+    if raw in _BOOL_TRUE:
+        return True
+    if raw in _BOOL_FALSE:
+        return False
+    raise ValueError(f"Cannot parse '{raw}' as bool")
+
+
+def _unwrap_type(tp: Any) -> Any:
+    """Peel ``Annotated``, ``Optional``, ``Union``, and ``Literal`` wrappers."""
+    if get_origin(tp) is Annotated:
+        tp = get_args(tp)[0]
+    if get_origin(tp) in (Optional, Union):
+        args = [a for a in get_args(tp) if a is not type(None)]
+        if args:
+            tp = args[0]
+    if get_origin(tp) is Literal:
+        return str
+    return tp
+
+
+READ_DISPATCH: dict[type, Callable[[Any, str], Any]] = {
+    str: lambda d, key: str(d.get[str](key)),
+    int: lambda d, key: int(d.get[str](key)),
+    float: lambda d, key: float(d.get[str](key)),
+    bool: _read_bool,
+}
+
+WRITE_DISPATCH: dict[type, Callable[[Any, str, Any], None]] = {
+    str: lambda d, key, v: d.set(key, v),
+    int: lambda d, key, v: d.set(key, v),
+    float: lambda d, key, v: d.set(key, v),
+    bool: lambda d, key, v: d.set(key, "yes" if v else "no"),
+}
 
 
 class OpenFOAMStrategy(SubdictMixin):
     """Read/write OpenFOAM dictionaries with optional subdict support.
 
-    Uses ``pybFoam.dictionary`` as backend and supports subdict extraction and
-    merge semantics via ``SubdictMixin``.
+    Uses ``pybFoam.dictionary`` as backend.  Field types from the Pydantic
+    model drive type-aware dispatch (see ``READ_DISPATCH`` / ``WRITE_DISPATCH``).
+    Nested ``BaseModel`` sub-classes are handled recursively.
     """
 
     def __init__(self, subdict_path: Optional[str] = None):
         super().__init__(subdict_path)
 
-    def read(self, path: Path, encoding: str = "utf-8") -> dict[str, Any]:
-        """Read OpenFOAM dictionary file.
+    def read(
+        self,
+        model_cls: type[BaseModel],
+        path: Path,
+        encoding: str = "utf-8",
+    ) -> dict[str, Any]:
+        """Read an OpenFOAM dictionary file using *model_cls* field types.
 
         Args:
-            path: Path to OpenFOAM dictionary file
-            encoding: Unused (kept for strategy protocol compatibility)
+            model_cls: Pydantic model whose fields guide typed extraction.
+            path: Path to the OpenFOAM dictionary file.
+            encoding: Unused (kept for strategy protocol compatibility).
 
         Returns:
-            Parsed configuration data (full file or subdict)
+            Mapping of field-name → parsed value (full file or subdict).
 
         Raises:
-            FileNotFoundError: If the file does not exist
-            KeyError: If the subdict path doesn't resolve
+            FileNotFoundError: If *path* does not exist.
+            KeyError: If the configured subdict path cannot be resolved.
         """
-
         if not path.exists():
             raise FileNotFoundError(f"Configuration file not found: {path}")
 
-        full_dict = pyf.dictionary.read(str(path))
-        full_data = self._dictionary_to_python(full_dict)
-        return self._extract_subdict(full_data)
+        root_dict = pyf.dictionary.read(str(path))
+        target_dict = (
+            self._resolve_subdict(root_dict) if self.subdict_path else root_dict
+        )
+        return self._read_fields(model_cls, target_dict)
 
-    def write(self, data: dict[str, Any], path: Path, encoding: str = "utf-8") -> None:
-        """Write configuration to OpenFOAM dictionary file.
+    def write(
+        self,
+        instance: BaseModel,
+        path: Path,
+        encoding: str = "utf-8",
+    ) -> None:
+        """Write a Pydantic model instance to an OpenFOAM dictionary file.
 
         Args:
-            data: Configuration data to write
-            path: Path to OpenFOAM dictionary file
-            encoding: Unused (kept for strategy protocol compatibility)
+            instance: The model instance to persist.
+            path: Path to the OpenFOAM dictionary file.
+            encoding: Unused (kept for strategy protocol compatibility).
 
         Raises:
-            FileNotFoundError: If subdict write is requested for missing file
-            KeyError: If requested subdict path does not exist in file
-            TypeError: If value type cannot be serialized
+            FileNotFoundError: If subdict write is requested for a missing file.
+            KeyError: If the configured subdict path does not exist in the file.
+            TypeError: If a value type has no entry in ``WRITE_DISPATCH``.
         """
         path.parent.mkdir(parents=True, exist_ok=True)
+        data = instance.model_dump(mode="python", exclude_none=False)
 
         if self.subdict_path:
             if not path.exists():
@@ -75,17 +136,19 @@ class OpenFOAMStrategy(SubdictMixin):
             root_dict = pyf.dictionary.read(str(path))
             target_dict = self._resolve_subdict(root_dict)
             target_dict.clear()
-            self._write_mapping(target_dict, data)
+            self._write_fields(target_dict, data, type(instance))
             root_dict.write(str(path))
             return
 
-        root_dict = pyf.dictionary.read(str(path)) if path.exists() else pyf.dictionary()
+        root_dict = (
+            pyf.dictionary.read(str(path)) if path.exists() else pyf.dictionary()
+        )
         root_dict.clear()
-        self._write_mapping(root_dict, data)
+        self._write_fields(root_dict, data, type(instance))
         root_dict.write(str(path))
 
     def _resolve_subdict(self, root_dict: Any) -> Any:
-        """Resolve configured subdict path against pybFoam dictionary object."""
+        """Resolve configured subdict path against a pybFoam dictionary."""
         if not self.path_parts:
             return root_dict
 
@@ -109,69 +172,92 @@ class OpenFOAMStrategy(SubdictMixin):
             current = current.subDict(part)
         return current
 
-    def _dictionary_to_python(self, foam_dict: Any) -> dict[str, Any]:
-        """Recursively convert pybFoam dictionary object to plain Python dict."""
+    def _read_fields(
+        self, model_cls: type[BaseModel], foam_dict: Any
+    ) -> dict[str, Any]:
+        """Recursively read pybFoam dictionary entries guided by model fields.
+
+        For each field in *model_cls*:
+        * If the key corresponds to a sub-dictionary **and** the field type is a
+          ``BaseModel`` subclass, recurse.
+        * Otherwise, use ``READ_DISPATCH`` for type-aware extraction; fall back
+          to a plain string when the typed getter raises (e.g. the file
+          contains ``count not_an_integer;`` but the model expects ``int``).
+        """
         result: dict[str, Any] = {}
-        for key_obj in foam_dict.toc():
-            key = str(key_obj)
-            if foam_dict.isDict(key):
-                result[key] = self._dictionary_to_python(foam_dict.subDict(key))
-            else:
-                raw_value = foam_dict.get[str](key)
-                result[key] = self._parse_scalar(str(raw_value))
+
+        for name, field_info in model_cls.model_fields.items():
+            key = str(field_info.validation_alias or field_info.alias or name)
+            typ = _unwrap_type(field_info.annotation)
+
+            # Nested BaseModel → recurse into sub-dictionary
+            if (
+                foam_dict.found(key)
+                and foam_dict.isDict(key)
+                and isinstance(typ, type)
+                and issubclass(typ, BaseModel)
+            ):
+                result[key] = self._read_fields(typ, foam_dict.subDict(key))
+                continue
+
+            # Key not present in dictionary → skip (Pydantic handles defaults / missing)
+            if not foam_dict.found(key):
+                continue
+
+            # Typed dispatch
+            reader = READ_DISPATCH.get(typ)
+            if reader is None:
+                raise TypeError(
+                    f"Unsupported field type for OpenFOAM dictionary read "
+                    f"at key '{key}': {typ.__name__ if isinstance(typ, type) else typ}"
+                )
+            result[key] = reader(foam_dict, key)
+
         return result
 
-    def _parse_scalar(self, value: str) -> Any:
-        """Parse OpenFOAM scalar token string into Python scalar type."""
-        text = value.strip()
-        lower = text.lower()
+    def _write_fields(
+        self,
+        foam_dict: Any,
+        data: dict[str, Any],
+        model_cls: type[BaseModel],
+    ) -> None:
+        """Recursively write Python values into a pybFoam dictionary.
 
-        if lower in {"yes", "true", "on"}:
-            return True
-        if lower in {"no", "false", "off"}:
-            return False
+        Uses ``WRITE_DISPATCH`` for scalars and recurses for nested
+        ``BaseModel`` sub-classes.
+        """
+        for name, field_info in model_cls.model_fields.items():
+            key = str(field_info.validation_alias or field_info.alias or name)
+            if key not in data:
+                continue
 
-        if _INT_PATTERN.match(text):
-            try:
-                return int(text)
-            except ValueError:
-                pass
+            value = data[key]
+            typ = _unwrap_type(field_info.annotation)
 
-        if _FLOAT_PATTERN.match(text):
-            try:
-                return float(text)
-            except ValueError:
-                pass
-
-        return text
-
-    def _write_mapping(self, foam_dict: Any, data: dict[str, Any]) -> None:
-        """Write Python mapping into pybFoam dictionary object recursively."""
-        for key, value in data.items():
-            if isinstance(value, dict):
+            # Nested BaseModel → recurse
+            if isinstance(typ, type) and issubclass(typ, BaseModel):
+                if not isinstance(value, dict):
+                    raise TypeError(
+                        f"Expected dict for nested model field '{key}', "
+                        f"got {type(value).__name__}"
+                    )
                 if not foam_dict.found(key) or not foam_dict.isDict(key):
                     raise KeyError(
-                        f"Cannot create nested dictionary '{key}' via pybFoam bindings. "
-                        "Pre-create subdictionaries in file before writing."
+                        f"Cannot create nested dictionary '{key}' via pybFoam "
+                        "bindings. Pre-create subdictionaries in file before "
+                        "writing."
                     )
                 sub = foam_dict.subDict(key)
                 sub.clear()
-                self._write_mapping(sub, value)
+                self._write_fields(sub, value, typ)
                 continue
 
-            self._write_scalar(foam_dict, key, value)
+            # Scalar dispatch
+            writer = WRITE_DISPATCH.get(type(value))
+            if writer is None:
+                raise TypeError(
+                    f"Unsupported value type for OpenFOAM dictionary write "
+                    f"at key '{key}': {type(value).__name__}"
+                )
 
-    def _write_scalar(self, foam_dict: Any, key: str, value: Any) -> None:
-        """Write scalar value into pybFoam dictionary object."""
-        if isinstance(value, bool):
-            foam_dict.set(key, "yes" if value else "no")
-            return
-
-        if isinstance(value, (int, float, str)):
-            foam_dict.set(key, value)
-            return
-
-        raise TypeError(
-            f"Unsupported value type for OpenFOAM dictionary write at key '{key}': "
-            f"{type(value).__name__}"
-        )
+            writer(foam_dict, key, value)
