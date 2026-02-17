@@ -85,7 +85,7 @@ public:
                                 NeoN::la::CSRMatrix<FunctorValueType, NeoN::localIdx>>& ls)
         {
             const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
-            const auto diagOffset = ls.matrixIterator()->diagOffset().view();
+            const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();
             auto rhs = ls.rhs().view();
             auto values = ls.matrix().values().view();
             // make an explicit copy to avoid capture this warning in kokkos lambda
