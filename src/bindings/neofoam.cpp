@@ -6,6 +6,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/variant.h>
 
 // NeoN headers
 #include "NeoN/NeoN.hpp"
@@ -14,6 +15,7 @@
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
 #include "NeoFOAM/datastructures/pdeSolver.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/compatibility/fvSchemes.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/auxiliary/setup.hpp"
@@ -37,7 +39,7 @@ class Runtime
 {
     std::vector<std::string> argStrings_;
     std::vector<char*> cArgs_;
-    char** argv_ = nullptr;  // lvalue needed by Foam::argList(int&, char**&)
+    char** argv_ = nullptr; // lvalue needed by Foam::argList(int&, char**&)
     int argc_ = 0;
 
     std::unique_ptr<Foam::argList> args_;
@@ -66,6 +68,9 @@ public:
         {
             solverDict.subDict(name) = nf::mapFvSolution(solverDict.subDict(name));
         }
+
+        // Map fvSchemes (mirrors C++ neoIcoFoam.cpp line: schemesDict = nf::mapFvSchemes(...))
+        rt_->fvSchemesDict = nf::mapFvSchemes(rt_->fvSchemesDict);
     }
 
     ~Runtime()
@@ -157,11 +162,7 @@ NB_MODULE(neofoam_bindings, m)
             [](Runtime& self) -> nf::RunTime& { return self.nfRuntime(); },
             nb::rv_policy::reference_internal
         )
-        .def(
-            "executor",
-            [](Runtime& self) -> const NeoN::Executor& { return self.executor(); },
-            nb::rv_policy::reference_internal
-        )
+        .def("executor", [](Runtime& self) -> NeoN::Executor { return self.executor(); })
         .def(
             "nf_mesh",
             [](Runtime& self) -> const NeoN::UnstructuredMesh& { return self.nfMesh(); },
@@ -261,7 +262,7 @@ NB_MODULE(neofoam_bindings, m)
 
     m.def(
         "create_phi",
-        [](Runtime& rt, const std::string& uFieldName)
+        [](Runtime& rt, const std::string& uFieldName) -> fvcc::SurfaceField<NeoN::scalar>&
         {
             auto& nfrt = rt.nfRuntime();
             Foam::volVectorField ofU(
@@ -286,11 +287,21 @@ NB_MODULE(neofoam_bindings, m)
                 ),
                 Foam::fvc::flux(ofU)
             );
-            return nf::constructSurfaceField(nfrt.exec, nfrt.nfMesh, ofPhi);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(nfrt.db, "VectorCollection");
+            return vc.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+                nf::CreateFromFoamField<Foam::surfaceScalarField> {
+                    .exec = nfrt.exec,
+                    .nfMesh = nfrt.nfMesh,
+                    .foamField = ofPhi,
+                    .name = std::string("phi")
+                }
+            );
         },
         "runtime"_a,
         "u_field_name"_a = std::string("U"),
-        "Create phi (face flux) SurfaceField from an OF velocity field"
+        nb::rv_policy::reference,
+        "Create phi (face flux) SurfaceField registered in VectorCollection"
     );
 
     m.def(
@@ -312,8 +323,8 @@ NB_MODULE(neofoam_bindings, m)
 
     m.def(
         "set_ref_cell",
-        [](Runtime& rt, const std::string& fieldName, const std::string& pisoDict)
-            -> std::tuple<int, double, bool>
+        [](Runtime& rt, const std::string& fieldName, const std::string& pisoDict
+        ) -> std::tuple<int, double, bool>
         {
             // Read OF field temporarily just to check needReference
             Foam::volScalarField ofField(
@@ -329,7 +340,12 @@ NB_MODULE(neofoam_bindings, m)
             );
             Foam::label refCell = 0;
             Foam::scalar refValue = 0.0;
-            Foam::setRefCell(ofField, rt.mesh().solutionDict().subDict(pisoDict), refCell, refValue);
+            Foam::setRefCell(
+                ofField,
+                rt.mesh().solutionDict().subDict(pisoDict),
+                refCell,
+                refValue
+            );
             bool needs = ofField.needReference() && refCell >= 0;
             return {static_cast<int>(refCell), refValue, needs};
         },
@@ -359,6 +375,14 @@ NB_MODULE(neofoam_bindings, m)
         "runtime"_a,
         "Write a NeoN vector VolumeField via OpenFOAM IO"
     );
+
+    // -------------------------------------------------------------------
+    // DdtScheme enum (NeoN)
+    // -------------------------------------------------------------------
+    nb::enum_<fvcc::DdtScheme>(m, "DdtScheme")
+        .value("None", fvcc::DdtScheme::None)
+        .value("BDF1", fvcc::DdtScheme::BDF1)
+        .value("BDF2", fvcc::DdtScheme::BDF2);
 
     // -------------------------------------------------------------------
     // PDESolver<scalar>
@@ -428,6 +452,11 @@ NB_MODULE(neofoam_bindings, m)
             "assemble",
             [](nf::PDESolver<NeoN::Vec3>& self) -> void { self.assemble(); },
             "Assemble the linear system"
+        )
+        .def(
+            "ddt_scheme",
+            &nf::PDESolver<NeoN::Vec3>::ddtScheme,
+            "Get the ddt scheme determined from fvSchemes"
         );
 
     // -------------------------------------------------------------------
@@ -435,8 +464,7 @@ NB_MODULE(neofoam_bindings, m)
     // -------------------------------------------------------------------
     m.def(
         "compute_rau_and_hbya",
-        [](const nf::PDESolver<NeoN::Vec3>& UEqn)
-        { return nf::computeRAUandHByA(UEqn); },
+        [](const nf::PDESolver<NeoN::Vec3>& UEqn) { return nf::computeRAUandHByA(UEqn); },
         "UEqn"_a,
         "Compute rAU and HbyA from the assembled momentum equation"
     );
@@ -445,8 +473,7 @@ NB_MODULE(neofoam_bindings, m)
         "constrain_hbya",
         [](const fvcc::VolumeField<NeoN::Vec3>& U,
            const fvcc::VolumeField<NeoN::scalar>& p,
-           fvcc::VolumeField<NeoN::Vec3>& hByA)
-        { nf::constrainHbyA(U, p, hByA); },
+           fvcc::VolumeField<NeoN::Vec3>& hByA) { nf::constrainHbyA(U, p, hByA); },
         "U"_a,
         "p"_a,
         "hByA"_a,
@@ -455,8 +482,7 @@ NB_MODULE(neofoam_bindings, m)
 
     m.def(
         "flux",
-        [](const fvcc::VolumeField<NeoN::Vec3>& volField)
-        { return nf::flux(volField); },
+        [](const fvcc::VolumeField<NeoN::Vec3>& volField) { return nf::flux(volField); },
         "vol_field"_a,
         "Compute face flux from a volume vector field"
     );
@@ -465,8 +491,7 @@ NB_MODULE(neofoam_bindings, m)
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const nf::PDESolver<NeoN::scalar>& pEqn,
-           fvcc::SurfaceField<NeoN::scalar>& phi)
-        { nf::updateFaceVelocity(phiHbyA, pEqn, phi); },
+           fvcc::SurfaceField<NeoN::scalar>& phi) { nf::updateFaceVelocity(phiHbyA, pEqn, phi); },
         "phi_hbya"_a,
         "pEqn"_a,
         "phi"_a,
@@ -478,13 +503,47 @@ NB_MODULE(neofoam_bindings, m)
         [](const fvcc::VolumeField<NeoN::Vec3>& hByA,
            const fvcc::VolumeField<NeoN::scalar>& rAU,
            const fvcc::VolumeField<NeoN::scalar>& p,
-           fvcc::VolumeField<NeoN::Vec3>& U)
-        { nf::updateVelocity(hByA, rAU, p, U); },
+           fvcc::VolumeField<NeoN::Vec3>& U) { nf::updateVelocity(hByA, rAU, p, U); },
         "hByA"_a,
         "rAU"_a,
         "p"_a,
         "U"_a,
         "Update cell velocity: U = HbyA - rAU * grad(p)"
+    );
+
+    m.def(
+        "ddt_flux_corr",
+        [](const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phi,
+           double dt,
+           fvcc::DdtScheme scheme)
+        { return fvcc::ddtFluxCorr(U, phi, static_cast<NeoN::scalar>(dt), scheme); },
+        "U"_a,
+        "phi"_a,
+        "dt"_a,
+        "scheme"_a,
+        "Compute ddt flux correction for PISO loop (BDF1/BDF2)"
+    );
+
+    // -------------------------------------------------------------------
+    // Utility: read a dimensioned scalar from OpenFOAM constant/ dict
+    // -------------------------------------------------------------------
+    m.def(
+        "read_transport_viscosity",
+        [](Runtime& rt) -> double
+        {
+            Foam::IOdictionary transportProperties(Foam::IOobject(
+                "transportProperties",
+                rt.foamTime().constant(),
+                rt.mesh(),
+                Foam::IOobject::MUST_READ_IF_MODIFIED,
+                Foam::IOobject::NO_WRITE
+            ));
+            Foam::dimensionedScalar nu("nu", Foam::dimViscosity, transportProperties);
+            return nu.value();
+        },
+        "runtime"_a,
+        "Read kinematic viscosity nu from constant/transportProperties"
     );
 
     // -------------------------------------------------------------------
@@ -495,5 +554,12 @@ NB_MODULE(neofoam_bindings, m)
         [](const NeoN::Dictionary& dict) { return nf::mapFvSolution(dict); },
         "dict"_a,
         "Map OpenFOAM solver names to Ginkgo equivalents"
+    );
+
+    m.def(
+        "map_fv_schemes",
+        [](const NeoN::Dictionary& dict) { return nf::mapFvSchemes(dict); },
+        "dict"_a,
+        "Map OpenFOAM scheme names to NeoN equivalents"
     );
 }
