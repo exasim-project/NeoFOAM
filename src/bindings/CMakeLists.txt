@@ -34,7 +34,15 @@ else()
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bindings/neofoam)
 endif()
 
-nanobind_add_module(neofoam_bindings neofoam.cpp)
+nanobind_add_module(
+  neofoam_bindings
+  neofoam.cpp
+  runtime.cpp
+  fieldFactories.cpp
+  fieldWriters.cpp
+  pdeSolver.cpp
+  pressureVelocityCoupling.cpp
+  utility.cpp)
 
 # Workaround for nvcc_wrapper failing on -Os which nanobind might add
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
