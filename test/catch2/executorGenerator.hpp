@@ -9,8 +9,6 @@
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include <Kokkos_Core.hpp>
-
 #include "NeoN/NeoN.hpp"
 
 #include <string>
@@ -31,16 +29,16 @@ public:
 
     ExecutorGenerator()
     {
-#if defined(KOKKOS_ENABLE_OPENMP)
+#if defined(NEON_ENABLE_OPENMP)
         execs.push_back({"CPUExecutor", NeoN::CPUExecutor {}});
-#elif defined(KOKKOS_ENABLE_THREADS)
+#elif defined(NEON_ENABLE_THREADS)
         execs.push_back({"CPUExecutor", NeoN::CPUExecutor {}});
 #endif
-#if defined(KOKKOS_ENABLE_CUDA)
+#if defined(NEON_ENABLE_CUDA)
         execs.push_back({"GPUExecutor", NeoN::GPUExecutor {}});
-#elif defined(KOKKOS_ENABLE_HIP)
+#elif defined(NEON_ENABLE_HIP)
         execs.push_back({"GPUExecutor", NeoN::GPUExecutor {}});
-#elif defined(KOKKOS_ENABLE_SYCL)
+#elif defined(NEON_ENABLE_SYCL)
         execs.push_back({"GPUExecutor", NeoN::GPUExecutor {}});
 #endif
     }

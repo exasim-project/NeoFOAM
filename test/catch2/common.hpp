@@ -21,11 +21,21 @@ struct ApproxScalar
 
 struct ApproxVector
 {
-    Foam::scalar margin;
+    NeoN::Vec3 margin;
+
+    ApproxVector(NeoN::Vec3 v)
+        : margin(v)
+    {}
+    ApproxVector(NeoN::scalar v)
+        : margin({v, v, v})
+    {}
+
     bool operator()(NeoN::Vec3 rhs, Foam::vector lhs) const
     {
         NeoN::Vec3 diff(rhs[0] - lhs[0], rhs[1] - lhs[1], rhs[2] - lhs[2]);
 
-        return Catch::Approx(0).margin(margin) == mag(diff);
+        return Catch::Approx(0).margin(margin[0]) == diff[0]
+            && Catch::Approx(0).margin(margin[1]) == diff[1]
+            && Catch::Approx(0).margin(margin[2]) == diff[2];
     }
 };

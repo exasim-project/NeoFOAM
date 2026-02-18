@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-
-#include "Kokkos_Core.hpp"
-
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
@@ -22,6 +19,7 @@ Foam::fvMesh* meshPtr;  // A single mesh object
 
 int main(int argc, char* argv[])
 {
+    int result;
     NeoN::initialize(argc, argv);
     {
         Catch::Session session;
@@ -72,11 +70,9 @@ int main(int argc, char* argv[])
         argsPtr = &args;
         timePtr = &runTime;
 
-        int result = session.run();
-
         // Run benchmarks if there are any
-        Kokkos::finalize();
-
-        return result;
+        result = session.run();
     }
+    NeoN::finalize();
+    return result;
 }

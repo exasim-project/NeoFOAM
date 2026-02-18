@@ -42,29 +42,14 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        auto& schemesDict = rt.fvSchemesDict;
+        schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
-        fvcc::VolumeField<NeoN::scalar>& p =
-            vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                nf::CreateFromFoamField<Foam::volScalarField> {
-                    .exec = rt.exec,
-                    .nfMesh = rt.nfMesh,
-                    .foamField = ofp,
-                    .name = "p"
-                }
-            );
-
-        fvcc::VolumeField<NeoN::Vec3>& U =
-            vectorCollection.registerVector<fvcc::VolumeField<NeoN::Vec3>>(
-                nf::CreateFromFoamField<Foam::volVectorField> {
-                    .exec = rt.exec,
-                    .nfMesh = rt.nfMesh,
-                    .foamField = ofU,
-                    .name = "U"
-                }
-            );
+        auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
+        auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
         auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         fvcc::SurfaceField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, nuBCs);
@@ -72,7 +57,7 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         NeoN::Logging::info("Creating phi");
-        auto phi = nf::constructSurfaceField(rt.exec, rt.nfMesh, ofphi);
+        auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -82,8 +67,8 @@ int main(int argc, char* argv[])
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
-            auto& oldU = fvcc::oldTime(U);
-            oldU.internalVector() = U.internalVector();
+            fvcc::rotateOldTimes(U);
+            fvcc::rotateOldTimes(phi);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -95,6 +80,8 @@ int main(int argc, char* argv[])
                 U,
                 rt
             );
+
+            const auto ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())
             {
@@ -125,13 +112,7 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
 
-                auto phiHbyA = nf::flux(hByA);
-                // TODO: OpenFOAM typically also corrects phiHbyA with
-                // + fvc::interpolate(rAU) * fvc::ddtCorr(U, phi);
-                // for the first term we can use but fvc::ddtCorr is missing
-                // NeoN::Input input = NeoN::TokenList({"linear"});
-                // fvcc::SurfaceInterpolation<NeoN::scalar> surfInterpolation(rt.exec, rt.nfMesh,
-                // input); auto surfRAU = surfInterpolation.interpolate(rAU);
+                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -148,7 +129,7 @@ int main(int argc, char* argv[])
                         rt
                     );
 
-                    if (ofp.needReference() && pRefCell >= 0)
+                    if (ofP.needReference() && pRefCell >= 0)
                     {
                         pEqn.setReference(pRefCell, pRefValue);
                     }

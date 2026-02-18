@@ -64,7 +64,7 @@ NeoFOAM’s GitHub repository uses labels to control the CI behavior.
 
 **Relevant Labels:**
 
-* ``Skip-build`` — Skip all build-and-test jobs on both GitHub and LRZ GitLab.
+* ``skip-build`` — Skip all build-and-test jobs on both GitHub and LRZ GitLab.
 * ``benchmark`` — Enable GPU benchmarking jobs after successful build-and-test jobs.
 
 These labels allow developers to customize the CI process according to their needs.

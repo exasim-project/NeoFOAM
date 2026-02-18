@@ -18,7 +18,7 @@ FoamFile
 ddtSchemes
 {
     default         none;
-    ddt(ofU)          Euler;
+    ddt(U)          Euler;
     ddt(rho,U)      Euler;
     ddt(rho,T)      Euler;
 }
@@ -26,8 +26,7 @@ ddtSchemes
 gradSchemes
 {
     default         none;
-    grad(ofp)       $GRADSCHEME;
-    grad(nfP)       $GRADSCHEME;
+    grad(p)         $GRADSCHEME;
     grad(T)         $GRADSCHEME;
     grad(U)         $GRADSCHEME;
     limited         cellLimited Gauss linear 1;
@@ -36,25 +35,22 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(ofPhi,ofU)      $DIVSCHEME;
-    div(nfPhi,nfU)      $DIVSCHEME;
+    div(phi,U)      $DIVSCHEME;
 }
 
 laplacianSchemes
 {
-    default         none;
-    laplacian(ofNu,ofU) $LAPSCHEME;
-    laplacian(nfNu,nfU) $LAPSCHEME;
-    laplacian(nfrAUf,nfP) $LAPSCHEME;
-    laplacian(forAUf,ofp) $LAPSCHEME;
+    default           none;
+    laplacian(nu,U)   $LAPSCHEME;
+    laplacian(rAUf,p) $LAPSCHEME;
 }
 
 interpolationSchemes
 {
     default         none;
-    flux(ofU)         linear;
-    flux(HbyA)         linear;
-    // default         linear;
+    flux(U)         linear;
+    flux(HbyA)      linear;
+    // default      linear;
 }
 
 snGradSchemes
@@ -65,7 +61,7 @@ snGradSchemes
 
 fluxRequired
 {
-    ofp;
+    p;
 }
 
 

@@ -72,8 +72,9 @@ public:
         return ls_;
     }
 
-    const NeoN::Executor& exec() const { return ls_.exec(); }
+    NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
+    const NeoN::Executor& exec() const { return ls_.exec(); }
 
     template<typename FunctorValueType>
     struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType>
@@ -102,7 +103,7 @@ public:
             NeoN::parallelFor(
                 ls.exec(),
                 {pRefCell_, pRefCell_ + 1},
-                KOKKOS_LAMBDA(const std::size_t refCelli) {
+                NEON_LAMBDA(const std::size_t refCelli) {
                     auto diagIdx = rowOffs[refCelli] + diagOffset[refCelli];
                     auto diagValue = values[diagIdx];
                     rhs[refCelli] += diagValue * pRefValue;
@@ -111,6 +112,18 @@ public:
             );
         }
     };
+    NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const
+    {
+        for (const auto& op : expr_.temporalOperators())
+        {
+            const auto s = op.ddtScheme();
+            if (s != NeoN::finiteVolume::cellCentred::DdtScheme::None)
+            {
+                return s;
+            }
+        }
+        return NeoN::finiteVolume::cellCentred::DdtScheme::None;
+    }
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
@@ -152,21 +165,50 @@ private:
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
 
-        auto stats = NeoN::dsl::detail::iterativeSolveImpl(
-            expr,
-            sparsityPattern_,
-            ls,
-            psi_,
-            runTime_.t,
-            runTime_.dt,
-            runTime_.fvSchemesDict,
-            fieldSolverDict,
-            functs
-        );
+
+        auto stats = NeoN::la::SolverStats();
+        // TODO NOTE: This is a temporary solution to avoid negative values on the diagonal
+        // when IC is selected as preconditioner by scaling the system matrix with -1.0.
+        // NOTE: This will produce -p as a result.
+        if (psi_.name == "p" && fieldSolverDict.contains("preconditioner")
+            && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
+                   == "preconditioner::Ic")
+        {
+            auto exprIn = -1.0 * expr;
+            stats = NeoN::dsl::detail::iterativeSolveImpl(
+                exprIn,
+                sparsityPattern_,
+                ls,
+                psi_,
+                runTime_.t,
+                runTime_.dt,
+                runTime_.fvSchemesDict,
+                fieldSolverDict,
+                functs
+            );
+        }
+        else
+        {
+            stats = NeoN::dsl::detail::iterativeSolveImpl(
+                expr,
+                sparsityPattern_,
+                ls,
+                psi_,
+                runTime_.t,
+                runTime_.dt,
+                runTime_.fvSchemesDict,
+                fieldSolverDict,
+                functs
+            );
+        }
 
         NeoN::Logging::info(
             "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-                psi_.name, stats.initResNorm, stats.finalResNorm, stats.numIter);
+            psi_.name,
+            stats.initResNorm,
+            stats.finalResNorm,
+            stats.numIter
+        );
         return stats;
     }
 
@@ -196,7 +238,7 @@ NeoN::Vector<ValueType> diag(
     NeoN::parallelFor(
         ls.exec(),
         {0, diagOffset.size()},
-        KOKKOS_LAMBDA(const std::size_t celli) {
+        NEON_LAMBDA(const std::size_t celli) {
             auto diagOffsetCelli = diagOffset[celli];
             diagView[celli] = matrix.values[matrix.rowOffs[celli] + diagOffsetCelli];
         }

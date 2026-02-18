@@ -1,6 +1,9 @@
-# Version 0.3.0 (planned)
-- Implement python framework [#133](https://github.com/exasim-project/NeoFOAM/pull/133)
-- Implement added icofoam.py and pimplefoam.py [#151](https://github.com/exasim-project/NeoFOAM/pull/151)
+# Version 0.3.0 ()
+- - Implement python framework [#133](https://github.com/exasim-project/NeoFOAM/pull/133)
+- Implement added icofoam.py and pimplefoam.py [#151](https://github.com/exasim-project/NeoFOAM/pull/151)Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
+
+## Fixes
+- Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)

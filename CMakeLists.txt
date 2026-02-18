@@ -38,6 +38,10 @@ if(DEFINED SKBUILD)
   set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 endif()
 
+set(NEOFOAM_BENCHMARK_MODE
+    "all"
+    CACHE STRING "perform only a subset of the benchmarks")
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 
