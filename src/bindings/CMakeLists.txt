@@ -31,7 +31,7 @@ cpmaddpackage(
 if(DEFINED SKBUILD)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 else()
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bindings/foamadapter)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bindings/neofoam)
 endif()
 
 nanobind_add_module(neofoam_bindings neofoam.cpp)
@@ -46,7 +46,7 @@ target_link_libraries(neofoam_bindings PRIVATE NeoFOAM)
 
 # Installation
 if(DEFINED SKBUILD)
-  install(TARGETS neofoam_bindings LIBRARY DESTINATION foamadapter COMPONENT python)
+  install(TARGETS neofoam_bindings LIBRARY DESTINATION neofoam COMPONENT python)
 else()
-  install(TARGETS neofoam_bindings LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/python/foamadapter)
+  install(TARGETS neofoam_bindings LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/python/neofoam)
 endif()
