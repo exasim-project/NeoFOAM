@@ -47,7 +47,7 @@ def compute_nodes_order(nodes: list[OperationMetadata]) -> list[str]:
             node_name,
         )
     )
-    return sorter.sort(graph)
+    return sorter.solve(graph)
 
 
 def compute_steps_order(op_col: OperationCollection) -> Operations:

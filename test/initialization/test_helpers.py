@@ -8,8 +8,7 @@ import pytest
 
 from neofoam.framework.initialization.helpers import (
     field,
-    operator,
-    lazy,
+    init,
     model,
 )
 from neofoam.framework.initialization.init_step import InitStep
@@ -22,9 +21,8 @@ from neofoam.framework.initialization.init_step import InitStep
     "helper,prefix,category",
     [
         (field, "fields.", "fields"),
-        (operator, "operators.", "operators"),
         (model, "models.", "models"),
-        (lazy, "", "resource"),
+        (init, "", "resource"),
     ],
 )
 def test_helper_naming(helper, prefix, category):
@@ -36,7 +34,7 @@ def test_helper_naming(helper, prefix, category):
     assert result.depends_on == []
 
 
-@pytest.mark.parametrize("helper", [field, operator, model, lazy])
+@pytest.mark.parametrize("helper", [field, model, init])
 def test_helper_with_deps(helper):
     """All helpers pass through custom depends_on."""
     result = helper("X", create=lambda _ctx: 1, depends_on=["a", "b"])
@@ -46,7 +44,7 @@ def test_helper_with_deps(helper):
 def test_helper_execute():
     """Helpers produce executable InitStep objects."""
     assert field("U", create=lambda _ctx: "velocity").execute({}) == "velocity"
-    assert lazy("mesh", create=lambda _ctx: "mesh_obj").execute({}) == "mesh_obj"
+    assert init("mesh", create=lambda _ctx: "mesh_obj").execute({}) == "mesh_obj"
 
 
 # --- InitializerBuilder tests ---
@@ -57,11 +55,10 @@ def test_helper_execute():
     [
         ("add_field", "fields.", {"depends_on": ["mesh"], "value": 42}),
         ("add_model", "models.", {"value": "instance"}),
-        ("add_operator", "operators.", {"depends_on": ["fields.U"], "value": "op"}),
     ],
 )
 def test_builder_add_methods(builder, method, expected_prefix, kwargs):
-    """Builder add_field/add_model/add_operator create correctly prefixed InitStep."""
+    """Builder add_field/add_model create correctly prefixed InitStep."""
     getattr(builder, method)("X", **kwargs)
     inits = builder.build()
     assert len(inits) == 1
@@ -70,7 +67,7 @@ def test_builder_add_methods(builder, method, expected_prefix, kwargs):
 
 def test_builder_add_resource(builder):
     """add_resource creates an unprefixed InitStep."""
-    builder.add_resource("mesh", "mock_mesh")
+    builder.add_initializer("mesh", "mock_mesh")
     inits = builder.build()
     assert len(inits) == 1
     assert inits[0].name == "mesh"
@@ -92,13 +89,12 @@ def test_builder_add_model_callable(builder):
 def test_builder_chaining(builder):
     """All builder methods return self for chaining."""
     result = (
-        builder.add_resource("mesh", "m")
+        builder.add_initializer("mesh", "m")
         .add_field("U", depends_on=["mesh"], value=1)
         .add_model("algo", value=2)
-        .add_operator("mom", depends_on=[], value=3)
     )
     assert result is builder
-    assert len(builder.build()) == 4
+    assert len(builder.build()) == 3
 
 
 def test_builder_add_core_models(builder, mock_core_model):

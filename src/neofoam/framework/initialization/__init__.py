@@ -65,7 +65,7 @@ Execution:
 
 from .config_context import ConfigContext
 from .init_step import InitCategory, InitStep, InitStepExecutionError
-from .helpers import field, operator, lazy, model, InitializerBuilder
+from .helpers import field, init, model, InitializerBuilder
 from .execution import execute_initialization, topological_sort, InitResult
 from .depends import Depends
 from .staged_init import StagedInit, ValidationError, LoadResult
@@ -77,8 +77,7 @@ __all__ = [
     "InitStepExecutionError",
     "InitResult",
     "field",
-    "operator",
-    "lazy",
+    "init",
     "model",
     "InitializerBuilder",
     "execute_initialization",

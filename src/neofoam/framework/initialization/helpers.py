@@ -12,12 +12,7 @@ from typing import Callable, Any, List, Optional, Union
 from .init_step import InitStep, InitCategory
 
 
-# ---------------------------------------------------------------------------
-# Core factory — all four helpers delegate to this
-# ---------------------------------------------------------------------------
-
-
-def _make_lazy(
+def _make_init(
     prefix: Optional[str],
     category: InitCategory,
     name: str,
@@ -55,34 +50,10 @@ def field(
     Example:
         field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0), depends_on=["mesh"])
     """
-    return _make_lazy("fields", "fields", name, create, depends_on)
+    return _make_init("fields", "fields", name, create, depends_on)
 
 
-def operator(
-    name: str,
-    create: Callable[[dict[str, Any]], Any],
-    depends_on: Optional[List[str]] = None,
-) -> InitStep:
-    """
-    Helper for creating operator lazy initializers.
-
-    Automatically prefixes name with "operators." and sets category.
-
-    Args:
-        name: Operator name (e.g., "momentum", "pressure_poisson")
-        create: Function that creates the operator
-        depends_on: List of dependencies
-
-    Returns:
-        InitStep for the operator
-
-    Example:
-        operator("momentum", depends_on=["fields.U", "fields.p"], create=lambda ctx: ...)
-    """
-    return _make_lazy("operators", "operators", name, create, depends_on)
-
-
-def lazy(
+def init(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
@@ -104,7 +75,7 @@ def lazy(
     Example:
         lazy("mesh", create=lambda ctx: mesh)
     """
-    return _make_lazy(None, "resource", name, create, depends_on)
+    return _make_init(None, "resource", name, create, depends_on)
 
 
 def model(
@@ -128,7 +99,7 @@ def model(
     Example:
         model("transport", depends_on=["fields.U"], create=lambda ctx: ...)
     """
-    return _make_lazy("models", "models", name, create, depends_on)
+    return _make_init("models", "models", name, create, depends_on)
 
 
 class InitializerBuilder:
@@ -172,21 +143,19 @@ class InitializerBuilder:
             )
         return self
 
-    # ---- public API ----
-
-    def add_resource(self, name: str, value: Any) -> "InitializerBuilder":
+    def add_initializer(self, name: str, value: Any) -> "InitializerBuilder":
         """
-        Add a top-level resource (mesh, domain, config, etc.).
+        Add a initializer for mesh, domain, config, etc.).
 
         Args:
-            name: Resource name
-            value: The resource value (will be captured in lambda)
+            name: Initializer name
+            value: The initializer value (will be captured in lambda)
 
         Returns:
             Self for chaining
         """
         # Wrap in a zero-arg closure; default-arg capture avoids late-binding (P-2.5)
-        self.initializers.append(lazy(name, create=lambda _ctx: value))
+        self.initializers.append(init(name, create=lambda _ctx: value))
         return self
 
     def add_model(self, name: str, value: Any) -> "InitializerBuilder":
@@ -254,25 +223,6 @@ class InitializerBuilder:
             Self for chaining
         """
         return self._add_typed(field, name, value, depends_on)
-
-    def add_operator(
-        self,
-        name: str,
-        depends_on: List[str],
-        value: Union[Any, Callable[[dict[str, Any]], Any]],
-    ) -> "InitializerBuilder":
-        """
-        Add an operator with 'operators.' prefix.
-
-        Args:
-            name: Operator name (without 'operators.' prefix)
-            depends_on: List of dependency names
-            value: Operator instance or callable to create it
-
-        Returns:
-            Self for chaining
-        """
-        return self._add_typed(operator, name, value, depends_on)
 
     def add(self, initializer: InitStep) -> "InitializerBuilder":
         """

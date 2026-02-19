@@ -34,18 +34,21 @@ def validate_dependency_graph(
     known_names = set(name_counts)
     for node_name, dependencies in dependencies_by_node.items():
         for dependency in dependencies:
-            if dependency not in known_names:
-                diagnostics.append(
-                    GraphDiagnostic(
-                        code="missing_dependency",
-                        node_name=node_name,
-                        dependency=dependency,
-                        message=(
-                            f"InitStep '{node_name}' depends on '{dependency}', "
-                            f"but '{dependency}' was not found"
-                        ),
-                    )
+            # skip self-dependencies and duplicates, which are handled by other checks
+            if dependency in known_names:
+                continue
+
+            diagnostics.append(
+                GraphDiagnostic(
+                    code="missing_dependency",
+                    node_name=node_name,
+                    dependency=dependency,
+                    message=(
+                        f"InitStep '{node_name}' depends on '{dependency}', "
+                        f"but '{dependency}' was not found"
+                    ),
                 )
+            )
 
     if diagnostics:
         return GraphValidationReport(diagnostics=tuple(diagnostics))
@@ -53,7 +56,7 @@ def validate_dependency_graph(
     graph = build_dependency_digraph(dependencies_by_node)
 
     try:
-        NetworkxTopologicalSorter().sort(graph)
+        NetworkxTopologicalSorter().solve(graph)
     except (nx.NetworkXError, nx.NetworkXUnfeasible):
         cycle_edges = nx.find_cycle(graph)
         cycle_names = tuple(edge[0] for edge in cycle_edges)

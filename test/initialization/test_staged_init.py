@@ -8,7 +8,7 @@ import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.initialization.config_context import ConfigContext
-from neofoam.framework.initialization.helpers import field, lazy, model
+from neofoam.framework.initialization.helpers import field, init, model
 from neofoam.framework.initialization.staged_init import (
     LoadResult,
     StagedInit,
@@ -159,7 +159,7 @@ def test_run_no_build_raises():
 
 def _make_full_init():
     """Helper: create a StagedInit with all 3 stages wired up."""
-    init = StagedInit("Test")
+    staged_init = StagedInit("Test")
     observed = {"order": [], "resolve_cfg": None}
 
     class CoreModel:
@@ -168,34 +168,34 @@ def _make_full_init():
     class OptionalModel:
         name = "opt1"
 
-    @init.load
+    @staged_init.load
     def load_stage():
         observed["order"].append("load")
         return LoadResult(core_models=[CoreModel()], optional_models=[OptionalModel()])
 
-    @init.resolve
+    @staged_init.resolve
     def resolve_stage(cfg):
         observed["order"].append("resolve")
         observed["resolve_cfg"] = cfg
 
-    @init.build
+    @staged_init.build
     def build_stage(core, opt):
         observed["order"].append("build")
         assert len(core) == 1
         assert len(opt) == 1
         return [
-            lazy("mesh", create=lambda _ctx: "mesh_obj"),
+            init("mesh", create=lambda _ctx: "mesh_obj"),
             field("U", depends_on=["mesh"], create=lambda _ctx: "velocity"),
             model("algo", create=lambda _ctx: "algorithm"),
         ]
 
-    return init, observed
+    return staged_init, observed
 
 
 def test_run_full_pipeline():
     """run() executes stages in order and populates context + runtime models."""
-    init, observed = _make_full_init()
-    ctx = init.run()
+    staged_init, observed = _make_full_init()
+    ctx = staged_init.run()
 
     assert isinstance(ctx, Context)
     assert ctx.mesh == "mesh_obj"
@@ -203,26 +203,26 @@ def test_run_full_pipeline():
     assert "algo" in ctx.models
     assert observed["order"] == ["load", "resolve", "build"]
     assert isinstance(observed["resolve_cfg"], ConfigContext)
-    assert len(init.core_models) == 1
-    assert len(init.optional_models) == 1
-    assert getattr(init.core_models[0], "name") == "core1"
-    assert getattr(init.optional_models[0], "name") == "opt1"
+    assert len(staged_init.core_models) == 1
+    assert len(staged_init.optional_models) == 1
+    assert getattr(staged_init.core_models[0], "name") == "core1"
+    assert getattr(staged_init.optional_models[0], "name") == "opt1"
 
 
 def test_run_without_resolve():
     """run() works without @init.resolve (resolve is optional)."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.load
+    @staged_init.load
     def load():
         return LoadResult(core_models=[], optional_models=[])
 
-    @init.build
+    @staged_init.build
     def build(core, opt):
         _ = (core, opt)
-        return [lazy("mesh", create=lambda _ctx: "m")]
+        return [init("mesh", create=lambda _ctx: "m")]
 
-    ctx = init.run()
+    ctx = staged_init.run()
     assert ctx.mesh == "m"
 
 
@@ -236,29 +236,29 @@ def test_run_without_resolve():
 )
 def test_run_wires_models_into_config(models, expected_key):
     """run() registers loaded models into ConfigContext with expected key."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
     captured_cfg = {}
 
-    @init.load
+    @staged_init.load
     def load():
         return LoadResult(core_models=models, optional_models=[])
 
-    @init.resolve
+    @staged_init.resolve
     def resolve(cfg):
         captured_cfg["registered"] = cfg.get(expected_key)
 
-    @init.build
+    @staged_init.build
     def build(core, opt):
         _ = (core, opt)
-        return [lazy("mesh", create=lambda _ctx: "m")]
+        return [init("mesh", create=lambda _ctx: "m")]
 
-    init.run()
+    staged_init.run()
     assert captured_cfg["registered"] is models[0]
 
 
 def test_run_duplicate_model_registration_key_raises():
     """run() raises when two models resolve to the same registration key."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
     class M1:
         name = "dup"
@@ -266,17 +266,17 @@ def test_run_duplicate_model_registration_key_raises():
     class M2:
         name = "dup"
 
-    @init.load
+    @staged_init.load
     def load():
         return LoadResult(core_models=[M1(), M2()], optional_models=[])
 
-    @init.build
+    @staged_init.build
     def build(core, opt):
         _ = (core, opt)
-        return [lazy("mesh", create=lambda _ctx: "m")]
+        return [init("mesh", create=lambda _ctx: "m")]
 
     with pytest.raises(ValueError, match="Duplicate model registration key"):
-        init.run()
+        staged_init.run()
 
 
 # --- run_load / run_resolve / run_build standalone ---
@@ -284,40 +284,40 @@ def test_run_duplicate_model_registration_key_raises():
 
 def test_run_load_returns_load_result():
     """run_load() returns LoadResult and populates state."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.load
+    @staged_init.load
     def load():
         return LoadResult(core_models=["c"], optional_models=["o"])
 
-    lr = init.run_load()
+    lr = staged_init.run_load()
     assert isinstance(lr, LoadResult)
     assert lr.core_models == ["c"]
-    assert init.core_models == ["c"]
-    assert init.optional_models == ["o"]
+    assert staged_init.core_models == ["c"]
+    assert staged_init.optional_models == ["o"]
 
 
 def test_run_load_no_func_raises():
-    """run_load() raises if no @init.load is defined."""
-    init = StagedInit("X")
+    """run_load() raises if no @staged_init.load is defined."""
+    staged_init = StagedInit("X")
     with pytest.raises(RuntimeError, match="No @X.load defined"):
-        init.run_load()
+        staged_init.run_load()
 
 
 def test_run_build_returns_lazy_inits_and_passes_models():
     """run_build() passes models and returns list[InitStep]."""
-    init = StagedInit("X")
-    init.core_models = ["c1", "c2"]
-    init.optional_models = ["o1"]
+    staged_init = StagedInit("X")
+    staged_init.core_models = ["c1", "c2"]
+    staged_init.optional_models = ["o1"]
     captured = {}
 
-    @init.build
+    @staged_init.build
     def build(core, opt):
         captured["core"] = core
         captured["opt"] = opt
-        return [lazy("mesh", create=lambda _ctx: f"mesh_from_{len(core)}_core")]
+        return [init("mesh", create=lambda _ctx: f"mesh_from_{len(core)}_core")]
 
-    result = init.run_build()
+    result = staged_init.run_build()
     assert len(result) == 1
     assert result[0].name == "mesh"
     assert captured["core"] == ["c1", "c2"]
@@ -325,24 +325,24 @@ def test_run_build_returns_lazy_inits_and_passes_models():
 
 
 def test_run_build_no_func_raises():
-    """run_build() raises if no @init.build is defined."""
-    init = StagedInit("X")
+    """run_build() raises if no @staged_init.build is defined."""
+    staged_init = StagedInit("X")
     with pytest.raises(RuntimeError, match="No @X.build defined"):
-        init.run_build()
+        staged_init.run_build()
 
 
 def test_run_resolve_passes_config_and_is_optional_noop():
     """run_resolve() passes ConfigContext and noops when unresolved."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
     config = ConfigContext()
     captured = {}
 
-    @init.resolve
+    @staged_init.resolve
     def resolve(cfg):
         captured["cfg"] = cfg
 
-    init.run_resolve(config)
+    staged_init.run_resolve(config)
     assert captured["cfg"] is config
 
-    init_no_resolve = StagedInit("Y")
-    init_no_resolve.run_resolve(ConfigContext())
+    staged_init_no_resolve = StagedInit("Y")
+    staged_init_no_resolve.run_resolve(ConfigContext())

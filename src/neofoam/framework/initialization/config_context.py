@@ -14,23 +14,6 @@ from typing import Any, Optional
 def is_configurable_field(field_info: Any) -> bool:
     """
     Check if a field is marked as Configurable.
-
-    Args:
-        field_info: The Pydantic FieldInfo object
-
-    Returns:
-        True if the field is marked as Configurable
-
-    Example:
-        from pydantic import BaseModel
-
-        class MyModel(BaseModel):
-            config_field: Configurable[bool] = False
-            regular_field: float = 1.0
-
-        for name, field_info in MyModel.model_fields.items():
-            if is_configurable_field(field_info):
-                print(f"{name} is configurable")
     """
     # Check if field has metadata with "configurable"
     if hasattr(field_info, "metadata") and field_info.metadata:
@@ -63,14 +46,7 @@ class ConfigContext:
         self._regions: dict[str, dict[str, Any]] = {current_region: {}}
 
     def _parse_path(self, path: str) -> tuple[str, str]:
-        """Parse a model path into (region, name).
-
-        If *path* contains a dot **and** the part before the first dot is a
-        known region name, interpret it as ``region.name``.  Otherwise treat
-        the whole string as a literal name in the current region.  This avoids
-        ambiguity with InitStep names like ``"models.transport"`` which also
-        use dots but are not region-qualified.
-        """
+        """Parse a model path into (region, name)."""
         if "." in path:
             maybe_region, rest = path.split(".", 1)
             if maybe_region in self._regions:
