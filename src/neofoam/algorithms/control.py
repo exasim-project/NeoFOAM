@@ -260,7 +260,12 @@ class PimpleControl(BaseModel):
             True while outer iterations remain, False otherwise
         """
         assert self._loop is not None
-        return self._loop(ctx)
+        result = self._loop(ctx)
+        if not result:
+            # Outer loop exhausted — auto-reset all conditions so the next
+            # time step starts with fresh counters.
+            self.reset()
+        return result
 
     def correct(self, ctx: Any = None) -> bool:
         """

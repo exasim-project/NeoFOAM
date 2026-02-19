@@ -27,31 +27,40 @@ def _coerce_int(value: Any, default: int) -> int:
         return default
 
 
+def _dict_read_required(dictionary: Any, key: str, py_type: type) -> Any:
+    """Read a required value from the dictionary; raise KeyError if missing."""
+    if dictionary is None or not hasattr(dictionary, "found"):
+        raise KeyError(f"'{key}' not found: dictionary is not available")
+    if not dictionary.found(key):
+        raise KeyError(f"Required key '{key}' not found in fvSolution dictionary")
+    return dictionary.get[py_type](key)
+
+
 def _dict_read_value(dictionary: Any, key: str, default: Any) -> Any:
-    """Read a dictionary value with fallbacks across pybFoam binding variants."""
+    """Read an optional value from the dictionary, returning default if missing."""
     if dictionary is None:
         return default
 
-    if hasattr(dictionary, "getOrDefault"):
-        try:
-            return dictionary.getOrDefault(key, default)
-        except Exception:
-            pass
+    if not (hasattr(dictionary, "getOrDefault") and hasattr(dictionary, "found")):
+        return default
 
-    if hasattr(dictionary, "lookupOrDefault"):
-        try:
-            return dictionary.lookupOrDefault(key, default)
-        except Exception:
-            pass
+    if not dictionary.found(key):
+        return default
 
     try:
-        if hasattr(dictionary, "found") and dictionary.found(key):
-            if hasattr(dictionary, "lookup"):
-                return dictionary.lookup(key)
+        proxy = dictionary.getOrDefault
+        if isinstance(default, bool):
+            return proxy[bool](key, default)
+        elif isinstance(default, int):
+            return proxy[int](key, default)
+        elif isinstance(default, float):
+            return proxy[float](key, default)
+        elif isinstance(default, str):
+            return proxy[str](key, default)
+        else:
+            return proxy[int](key, default)
     except Exception:
-        pass
-
-    return default
+        return default
 
 
 def _read_algorithm_dict(algorithm_name: str) -> Any:
@@ -66,12 +75,10 @@ def create_pimple_control(_context: dict[str, Any]) -> PimpleControl:
     pimple_dict = _read_algorithm_dict("PIMPLE")
 
     return PimpleControl(
-        nOuterCorrectors=_coerce_int(
-            _dict_read_value(pimple_dict, "nOuterCorrectors", 1), 1
-        ),
-        nCorrectors=_coerce_int(_dict_read_value(pimple_dict, "nCorrectors", 1), 1),
-        nNonOrthogonalCorrectors=_coerce_int(
-            _dict_read_value(pimple_dict, "nNonOrthogonalCorrectors", 0), 0
+        nOuterCorrectors=int(_dict_read_value(pimple_dict, "nOuterCorrectors", 1)),
+        nCorrectors=int(_dict_read_required(pimple_dict, "nCorrectors", int)),
+        nNonOrthogonalCorrectors=int(
+            _dict_read_required(pimple_dict, "nNonOrthogonalCorrectors", int)
         ),
         momentumPredictor=_coerce_bool(
             _dict_read_value(pimple_dict, "momentumPredictor", True), True

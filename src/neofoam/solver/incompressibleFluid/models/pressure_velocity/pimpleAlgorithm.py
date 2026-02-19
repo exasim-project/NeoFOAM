@@ -286,12 +286,16 @@ def collected_operations(self, model_state: PressureReferenceState) -> Operation
     if model_state.use_boussinesq:
         momentum_op = momentum_boussinesq
         continuity_op = continuity_boussinesq
+        momentum_deps = ["update_rhok"]
     else:
         momentum_op = momentum
         continuity_op = continuity
+        momentum_deps = []
 
     model_ops.add(
-        _alias_operation(momentum_op, operation_name="momentum", depends_on=[])
+        _alias_operation(
+            momentum_op, operation_name="momentum", depends_on=momentum_deps
+        )
     )
     model_ops.add(
         _alias_operation(

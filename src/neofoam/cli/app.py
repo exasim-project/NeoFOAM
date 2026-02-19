@@ -56,5 +56,19 @@ def incompressiblefluid(ctx: typer.Context) -> None:
     run(argv)
 
 
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)  # type: ignore[untyped-decorator]
+def incompressiblevof(ctx: typer.Context) -> None:
+    """incompressibleVoF - interFoam-style VoF solver with surface tension and gravity."""
+
+    from neofoam.solver.incompressibleVoF import run
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    run(argv)
+
+
 if __name__ == "__main__":
     app()

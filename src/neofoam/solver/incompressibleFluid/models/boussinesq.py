@@ -129,7 +129,7 @@ def build() -> list[object]:
     ]
 
 
-@boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
+@boussinesq.operation(operation_number="2.0", depends_on=[])
 def solve_energy(
     T: volScalarField,
     phi: surfaceScalarField,
