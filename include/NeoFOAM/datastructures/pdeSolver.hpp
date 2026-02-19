@@ -82,7 +82,7 @@ public:
 
         virtual void operator()(NeoN::la::LinearSystem<
                                 FunctorValueType,
-                                NeoN::la::CSRMatrix<FunctorValueType, NeoN::localIdx>>& ls)
+                                NeoN::la::CSRMatrix<FunctorValueType, IndexType>>& ls)
         {
             const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
             const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();

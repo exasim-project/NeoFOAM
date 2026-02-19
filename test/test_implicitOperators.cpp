@@ -70,7 +70,6 @@ TEST_CASE("matrix multiplication")
         // check diag
         auto diag = ls.matrix().diag();
         nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
-        auto diagHost = diag.copyToHost();
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto ddtV = ddt * mesh.V();

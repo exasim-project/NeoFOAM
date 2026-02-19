@@ -98,11 +98,9 @@ void updateFaceVelocity(
 
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
-    const auto colIdxs = ls.matrix().sparsity()->colIdxs().view();
     const auto neiOffs = ls.faceToMatrixAddress()->neighbourOffset().view();
     const auto ownOffs = ls.faceToMatrixAddress()->ownerOffset().view();
     auto values = ls.matrix().values().view();
-    auto rhs = ls.rhs().view();
     auto [iPhi, iPredPhi] = views(phi.internalVector(), predictedPhi.internalVector());
 
     // TODO add to NEON
