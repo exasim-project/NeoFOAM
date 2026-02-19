@@ -372,10 +372,18 @@ Each strategy implements the <code class="docutils literal notranslate"><span cl
 <td><p>JSON</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">JSON(&quot;config.json&quot;,</span> <span class="pre">subdict=&quot;services.db&quot;)</span></code></p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">OPENFOAM(file)</span></code></p></td>
+<td><p>OpenFOAM dictionary</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">OPENFOAM(&quot;system/fvSolution&quot;)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">OPENFOAM(file,</span> <span class="pre">subdict=...)</span></code></p></td>
+<td><p>OpenFOAM dictionary</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">OPENFOAM(&quot;system/fvSolution&quot;,</span> <span class="pre">subdict=&quot;PISO&quot;)</span></code></p></td>
+</tr>
 </tbody>
 </table>
 </div>
-<p>Both <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy</span></code>: YAML and JSON support three subdict modes:</p>
+<p>YAML, JSON, and OpenFOAM strategies support three subdict modes:</p>
 <ol class="arabic simple">
 <li><p><strong>No subdict</strong> — the entire file maps to the model.</p></li>
 <li><p><strong>Flat subdict</strong> (<code class="docutils literal notranslate"><span class="pre">subdict=&quot;PIMPLE&quot;</span></code>) — a top-level key.</p></li>
@@ -398,6 +406,11 @@ Each strategy implements the <code class="docutils literal notranslate"><span cl
 <span class="k">class</span> <span class="nc">PSolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span>
+
+  <span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OPENFOAM</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PISO&quot;</span><span class="p">))</span>
+  <span class="k">class</span> <span class="nc">PISOConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+    <span class="n">nCorrectors</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">nNonOrthogonalCorrectors</span><span class="p">:</span> <span class="nb">int</span>
 </pre></div>
 </div>
 </section>
