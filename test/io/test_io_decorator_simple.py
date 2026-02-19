@@ -18,7 +18,7 @@ from neofoam.io import (
     BaseConfig,
     YAML,
     JSON,
-    OPENFOAM,
+    OF,
     IOStrategy,
 )
 
@@ -39,7 +39,7 @@ class SimpleJSONConfig(BaseConfig):
     percentage: float = Field(ge=0, le=100)
 
 
-@IOStrategy(OPENFOAM("simple.of"))
+@IOStrategy(OF("simple.of"))
 class SimpleOpenFOAMConfig(BaseConfig):
     identifier: str
     count: int = Field(gt=0)

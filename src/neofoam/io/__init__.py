@@ -18,7 +18,7 @@ from neofoam.io.strategies import (
 from neofoam.io.decorator import (
     YAML,
     JSON,
-    OPENFOAM,
+    OF,
     IOStrategy,
 )
 from neofoam.io.base import BaseConfig
@@ -39,7 +39,7 @@ __all__ = [
     # Helper functions
     "YAML",
     "JSON",
-    "OPENFOAM",
+    "OF",
     # Decorator
     "IOStrategy",
     # Base class

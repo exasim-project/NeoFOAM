@@ -18,7 +18,7 @@ from neofoam.io import (
     BaseConfig,
     YAML,
     JSON,
-    OPENFOAM,
+    OF,
     IOStrategy,
 )
 
@@ -70,20 +70,20 @@ class ServiceCJSONConfig(BaseConfig):
 # -- OpenFOAM models -------------------------------------------------------
 
 
-@IOStrategy(OPENFOAM("shared.of", subdict="config.service_a"))
+@IOStrategy(OF("shared.of", subdict="config.service_a"))
 class ServiceAOpenFOAMConfig(BaseConfig):
     timeout: int = Field(gt=0)
     maxConnections: int = Field(gt=0, le=100)
 
 
-@IOStrategy(OPENFOAM("shared.of", subdict="config.service_b"))
+@IOStrategy(OF("shared.of", subdict="config.service_b"))
 class ServiceBOpenFOAMConfig(BaseConfig):
     endpoint: str
     port: int = Field(gt=0, le=65535)
     poolSize: int = Field(gt=0)
 
 
-@IOStrategy(OPENFOAM("shared.of", subdict="config.service_c"))
+@IOStrategy(OF("shared.of", subdict="config.service_c"))
 class ServiceCOpenFOAMConfig(BaseConfig):
     enabled: bool
     bufferSize: int = Field(gt=0)
@@ -136,8 +136,10 @@ def test_write_preserves_other_subdicts(
 
     assert updated_a.timeout == timeout
     assert updated_a.maxConnections == 10
+
     assert updated_b.endpoint == "example.com"
     assert updated_b.port == 8080
+
     assert updated_c.enabled is True
     assert updated_c.bufferSize == 1024
 

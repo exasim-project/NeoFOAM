@@ -19,7 +19,7 @@ from neofoam.io import (
     BaseConfig,
     YAML,
     JSON,
-    OPENFOAM,
+    OF,
     IOStrategy,
 )
 
@@ -79,14 +79,14 @@ class Stage2JSONConfig(BaseConfig):
 # -- OpenFOAM models -------------------------------------------------------
 
 
-@IOStrategy(OPENFOAM("nested.of", subdict="metadata"))
+@IOStrategy(OF("nested.of", subdict="metadata"))
 class MetadataOpenFOAMConfig(BaseConfig):
     name: str
     version: float
     priority: int = Field(gt=0)
 
 
-@IOStrategy(OPENFOAM("nested.of", subdict="processing.stage1"))
+@IOStrategy(OF("nested.of", subdict="processing.stage1"))
 class Stage1OpenFOAMConfig(BaseConfig):
     algorithm: str
     threshold: float = Field(gt=0)
@@ -94,7 +94,7 @@ class Stage1OpenFOAMConfig(BaseConfig):
     batchSize: int = Field(gt=0)
 
 
-@IOStrategy(OPENFOAM("nested.of", subdict="processing.stage2"))
+@IOStrategy(OF("nested.of", subdict="processing.stage2"))
 class Stage2OpenFOAMConfig(BaseConfig):
     algorithm: str
     threshold: float = Field(gt=0)

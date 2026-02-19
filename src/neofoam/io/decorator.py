@@ -77,7 +77,7 @@ def JSON(
     }
 
 
-def OPENFOAM(
+def OF(
     file: str,
     subdict: Optional[str] = None,
 ) -> dict[str, Any]:

@@ -41,7 +41,7 @@ class YAMLStrategy(SubdictMixin):
         """Read YAML configuration file.
 
         Args:
-            model_cls: The model class to read for (unused, YAML has native types)
+            model_cls: The model class
             path: Path to the YAML file
             encoding: File encoding (default: utf-8)
 

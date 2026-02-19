@@ -41,7 +41,7 @@ class JSONStrategy(SubdictMixin):
         """Read JSON configuration file.
 
         Args:
-            model_cls: The model class to read for (unused, JSON has native types)
+            model_cls: The model class
             path: Path to the JSON file
             encoding: File encoding (default: utf-8)
 
