@@ -70,13 +70,14 @@ class OpType(Enum):
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
 
-    op_name: str
+    op_name: str | None = None
 
     # Optional metadata
     op_type: OpType | None = None
     description: str = ""
     operation_number: OperationNumber | None = None
     depends_on: list[str] | None = None
+    before: list[str] | None = None
     domain_name: str | None = None
 
     # DAG visualization properties
@@ -97,7 +98,9 @@ class OperationMetadata:
         return self.op_type == OpType.CONDITION
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
+        if self.op_name is None:
+            return None
         if self.domain_name:
             return f"{self.domain_name}.{self.op_name}"
         return self.op_name

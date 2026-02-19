@@ -6,8 +6,11 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections import defaultdict
-from typing import Optional
+from typing import Any
+
+import networkx as nx  # type: ignore[import-untyped]
 
 from neofoam.framework.operations import (
     IterativeOp,
@@ -15,7 +18,8 @@ from neofoam.framework.operations import (
     OperationCollection,
     StepBuilder,
 )
-from neofoam.framework.types import OperationNumber
+
+from .sorter import NetworkxTopologicalSorter
 
 
 class CyclicDependencyError(Exception):
@@ -26,241 +30,236 @@ class MissingDependencyError(Exception):
     """Raised when an operation depends on a non-existent operation."""
 
 
+def collect_tagged_ops(
+    builder: StepBuilder,
+    model_ops: OperationCollection,
+) -> list[tuple[str, Operation]]:
+    """Flatten the builder tree and model ops into ``[(scope_name, Operation)]``.
+
+    Loop (``IterativeOp``) operations are tagged with their *parent* scope so
+    that the rebuild step can find them.  Sequential operations inside a loop
+    are tagged with the loop's own scope name.
+
+    Model operations are placed into the scope that best matches their
+    dependency targets via :func:`infer_target_scope`, using actual nesting
+    depth to pick the innermost scope.
+    """
+    tagged: list[tuple[str, Operation]] = []
+    scope_depth: dict[str, int] = {"root": 0}
+
+    def _walk(ops: list[Operation], parent_scope: str, depth: int) -> None:
+        for op in ops:
+            tagged.append((parent_scope, op))
+            if isinstance(op.func, IterativeOp):
+                loop_scope = op.operation_name or "loop"
+                scope_depth[loop_scope] = depth + 1
+                _walk(op.sub_operations, loop_scope, depth + 1)
+
+    _walk(builder.operations.ops, "root", 0)
+
+    # Build op-name → scope lookup for scope inference
+    op_to_scope: dict[str, str] = {}
+    for scope, op in tagged:
+        if op.operation_name:
+            op_to_scope[op.operation_name] = scope
+
+    # All scope names that exist (needed for fallback)
+    all_scopes: set[str] = {scope for scope, _ in tagged}
+
+    for op in model_ops:
+        target = infer_target_scope(op, op_to_scope, all_scopes, scope_depth)
+        tagged.append((target, op))
+        # Update lookup so chained model ops can find each other
+        if op.operation_name:
+            op_to_scope[op.operation_name] = target
+
+    return tagged
+
+
+def _deepest_scope(
+    scopes: list[str],
+    scope_depth: dict[str, int] | None,
+) -> str:
+    """Pick the deepest scope; break ties alphabetically."""
+    if scope_depth:
+        return max(scopes, key=lambda s: (scope_depth.get(s, 0), s))
+    return sorted(scopes)[0]
+
+
+def infer_target_scope(
+    op: Operation,
+    op_to_scope: dict[str, str],
+    all_scopes: set[str],
+    scope_depth: dict[str, int] | None = None,
+) -> str:
+    """Determine which scope a model operation belongs to.
+
+    Strategy:
+      1. Collect scopes of all ``depends_on`` / ``before`` targets.
+      2. Prefer the deepest (innermost) non-root scope among them.
+      3. If no deps, fall back to the deepest available loop scope.
+
+    When *scope_depth* is provided (as computed by
+    :func:`collect_tagged_ops`), nesting depth drives the selection.
+    Without it, alphabetical ordering is used as a fallback.
+    """
+    dep_scopes: set[str] = set()
+    for dep in op.depends_on or []:
+        if dep in op_to_scope:
+            dep_scopes.add(op_to_scope[dep])
+    for constraint in op.before or []:
+        if constraint in op_to_scope:
+            dep_scopes.add(op_to_scope[constraint])
+
+    if dep_scopes:
+        non_root = [s for s in dep_scopes if s != "root"]
+        return _deepest_scope(non_root, scope_depth) if non_root else "root"
+
+    # Default: deepest available loop scope
+    loop_scopes = [s for s in all_scopes if s != "root"]
+    return _deepest_scope(loop_scopes, scope_depth) if loop_scopes else "root"
+
+
+def build_global_graph(
+    tagged: list[tuple[str, Operation]],
+) -> tuple[nx.DiGraph, dict[str, tuple[str, Operation]]]:
+    """Build a single ``nx.DiGraph`` from all tagged operations.
+
+    Only non-loop (sequential/conditional) operations with names become graph
+    nodes.  Loop operations are structural containers handled by
+    :func:`rebuild_builder`.
+
+    Returns the graph and an ``op_map`` mapping node names to
+    ``(scope, Operation)`` pairs.
+    """
+    graph = nx.DiGraph()
+    op_map: dict[str, tuple[str, Operation]] = {}
+
+    for scope, op in tagged:
+        if op.operation_name and not isinstance(op.func, IterativeOp):
+            graph.add_node(op.operation_name, scope=scope)
+            op_map[op.operation_name] = (scope, op)
+
+    all_op_names = set(op_map.keys())
+
+    for name, (scope, op) in op_map.items():
+        for dep in op.depends_on or []:
+            if dep not in all_op_names:
+                raise MissingDependencyError(
+                    f"Operation '{name}' in scope '{scope}' "
+                    f"depends on '{dep}' which does not exist"
+                )
+            graph.add_edge(dep, name)
+
+        for before_target in op.before or []:
+            if before_target not in all_op_names:
+                raise MissingDependencyError(
+                    f"Operation '{name}' in scope '{scope}' "
+                    f"has before target '{before_target}' which does not exist"
+                )
+            graph.add_edge(name, before_target)
+
+    return graph, op_map
+
+
+def sort_global(
+    graph: nx.DiGraph,
+    op_map: dict[str, tuple[str, Operation]],
+    tagged: list[tuple[str, Operation]],
+) -> dict[str, list[Operation]]:
+    """Topologically sort the global graph, grouping results back by scope.
+
+    ``OperationNumber`` is used **only as a tie-breaker** when multiple
+    operations have no dependency relationship.
+
+    Loop (``IterativeOp``) operations are not graph nodes — they are
+    structural containers.  They are re-injected into their parent scope
+    (at the front) so that :func:`rebuild_builder` can reconstruct nesting.
+    """
+
+    def _sort_key(node_name: str) -> tuple[Any, ...]:
+        _, op = op_map[node_name]
+        return (
+            op.operation_number is None,  # numbered ops first
+            op.operation_number,  # then by number value
+            node_name,  # finally alphabetical
+        )
+
+    try:
+        sorter = NetworkxTopologicalSorter(key=_sort_key)
+        sorted_names = sorter.sort(graph)
+    except nx.NetworkXUnfeasible:
+        raise CyclicDependencyError("Cyclic dependency detected in operation graph")
+
+    by_scope: dict[str, list[Operation]] = defaultdict(list)
+
+    # First: collect loop ops per parent scope (they are structural, not sorted)
+    for scope, op in tagged:
+        if isinstance(op.func, IterativeOp):
+            by_scope[scope].append(op)
+
+    # Then: append sorted sequential ops per scope
+    for name in sorted_names:
+        scope, op = op_map[name]
+        by_scope[scope].append(op)
+
+    return dict(by_scope)
+
+
+def rebuild_builder(
+    original: StepBuilder,
+    sorted_scopes: dict[str, list[Operation]],
+) -> StepBuilder:
+    """Reconstruct a ``StepBuilder`` from sorted scope data.
+
+    Walks the original builder tree to preserve nesting structure but
+    replaces each scope's operations with the sorted versions.
+    """
+    new_builder = StepBuilder()
+
+    def _rebuild(
+        original_ops: list[Operation],
+        target_builder: StepBuilder,
+    ) -> None:
+        for op in original_ops:
+            if isinstance(op.func, IterativeOp):
+                loop_name = op.operation_name or "loop"
+                sorted_ops = sorted_scopes.get(loop_name, [])
+
+                new_op = dataclasses.replace(op, sub_operations=[])
+
+                with target_builder.loop(new_op) as loop_builder:
+                    for sub_op in sorted_ops:
+                        if isinstance(sub_op.func, IterativeOp):
+                            _rebuild([sub_op], loop_builder)
+                        else:
+                            loop_builder.step(sub_op)
+
+    has_loops = any(isinstance(op.func, IterativeOp) for op in original.operations.ops)
+
+    if has_loops:
+        _rebuild(original.operations.ops, new_builder)
+    elif "root" in sorted_scopes:
+        for op in sorted_scopes["root"]:
+            new_builder.step(op)
+
+    return new_builder
+
+
 class DAGResolver:
-    """Merge and order operations by dependency across loop scopes."""
+    """Merge and order operations by dependency across loop scopes.
+
+    Thin orchestrator that delegates to pure functions::
+
+        collect_tagged_ops → build_global_graph → sort_global → rebuild_builder
+    """
 
     def resolve(
         self,
         builder: StepBuilder,
         additional_ops: OperationCollection,
     ) -> StepBuilder:
-        scopes = self._extract_scopes(builder)
-
-        for op in additional_ops:
-            self._insert_operation(op, scopes)
-
-        all_ops: dict[str, str] = {}
-        for scope_name, ops in scopes.items():
-            for op in ops:
-                if op.operation_name:
-                    all_ops[op.operation_name] = scope_name
-
-        for scope_name in scopes:
-            scopes[scope_name] = self._topological_sort(
-                scopes[scope_name], scope_name, all_ops
-            )
-
-        return self._rebuild_builder(builder, scopes)
-
-    def _extract_scopes(self, builder: StepBuilder) -> dict[str, list[Operation]]:
-        scopes: dict[str, list[Operation]] = defaultdict(list)
-
-        def extract_recursive(ops: list[Operation], parent_scope: str) -> None:
-            for op in ops:
-                scopes[parent_scope].append(op)
-                if isinstance(op.func, IterativeOp):
-                    loop_name = op.operation_name or "loop"
-                    extract_recursive(op.sub_operations, loop_name)
-
-        extract_recursive(builder.operations.ops, "root")
-        return scopes
-
-    def _insert_operation(
-        self,
-        op: Operation,
-        scopes: dict[str, list[Operation]],
-    ) -> None:
-        target_scope = None
-
-        if op.depends_on or op.before:
-            op_to_scope: dict[str, str] = {}
-            for scope_name, scope_ops in scopes.items():
-                for scope_op in scope_ops:
-                    if scope_op.operation_name:
-                        op_to_scope[scope_op.operation_name] = scope_name
-
-            dep_scopes = set()
-            for dep in op.depends_on or []:
-                if dep in op_to_scope:
-                    dep_scopes.add(op_to_scope[dep])
-            for constraint in op.before or []:
-                if constraint in op_to_scope:
-                    dep_scopes.add(op_to_scope[constraint])
-
-            if dep_scopes:
-                if "inner_loop" in dep_scopes:
-                    target_scope = "inner_loop"
-                elif len(dep_scopes) == 1:
-                    target_scope = dep_scopes.pop()
-                else:
-                    non_root_scopes = [s for s in dep_scopes if s != "root"]
-                    target_scope = (
-                        sorted(non_root_scopes)[0] if non_root_scopes else "root"
-                    )
-
-        if target_scope is None:
-            available_loops = [s for s in scopes.keys() if s != "root"]
-            if available_loops:
-                target_scope = (
-                    "inner_loop"
-                    if "inner_loop" in available_loops
-                    else available_loops[0]
-                )
-            else:
-                target_scope = "root"
-
-        if target_scope not in scopes:
-            target_scope = "root"
-
-        scopes[target_scope].append(op)
-
-    def _topological_sort(
-        self,
-        operations: list[Operation],
-        scope_name: str,
-        all_ops: Optional[dict[str, str]] = None,
-    ) -> list[Operation]:
-        if not operations:
-            return []
-
-        loop_ops = [op for op in operations if isinstance(op.func, IterativeOp)]
-        regular_ops = [op for op in operations if not isinstance(op.func, IterativeOp)]
-
-        if not regular_ops:
-            return loop_ops
-
-        op_map = {op.operation_name: op for op in regular_ops if op.operation_name}
-
-        graph: dict[str, list[str]] = {}
-        in_degree: dict[str, int] = {}
-        for op in regular_ops:
-            if not op.operation_name:
-                continue
-            graph[op.operation_name] = []
-            in_degree[op.operation_name] = 0
-
-        for op in regular_ops:
-            if not op.operation_name:
-                continue
-
-            op_name = op.operation_name
-            deps = op.depends_on or []
-            before = op.before or []
-
-            for dep in deps:
-                if all_ops and dep not in all_ops:
-                    raise MissingDependencyError(
-                        f"Operation '{op_name}' in scope '{scope_name}' depends on '{dep}' which does not exist"
-                    )
-                if dep in op_map:
-                    graph[dep].append(op_name)
-                    in_degree[op_name] += 1
-
-            for before_op in before:
-                if all_ops and before_op not in all_ops:
-                    raise MissingDependencyError(
-                        f"Operation '{op_name}' in scope '{scope_name}' has before target '{before_op}' which does not exist"
-                    )
-                if before_op in op_map:
-                    graph[op_name].append(before_op)
-                    in_degree[before_op] += 1
-
-        import heapq
-
-        queue: list[tuple[tuple[int, OperationNumber], str]] = []
-        for name, degree in in_degree.items():
-            if degree == 0:
-                op = op_map[name]
-                if op.operation_number is not None:
-                    priority = (0, op.operation_number)
-                else:
-                    priority = (1, OperationNumber([0]))
-                heapq.heappush(queue, (priority, name))
-
-        sorted_names: list[str] = []
-        while queue:
-            _, current = heapq.heappop(queue)
-            sorted_names.append(current)
-
-            for neighbor in graph[current]:
-                in_degree[neighbor] -= 1
-                if in_degree[neighbor] == 0:
-                    op = op_map[neighbor]
-                    if op.operation_number is not None:
-                        priority = (0, op.operation_number)
-                    else:
-                        priority = (1, OperationNumber([0]))
-                    heapq.heappush(queue, (priority, neighbor))
-
-        if len(sorted_names) != len(op_map):
-            raise CyclicDependencyError(
-                f"Cyclic dependency detected in scope '{scope_name}'"
-            )
-
-        sorted_regular = [op_map[name] for name in sorted_names]
-        result: list[Operation] = []
-        regular_idx = 0
-
-        for orig_op in operations:
-            if isinstance(orig_op.func, IterativeOp):
-                result.append(orig_op)
-            elif regular_idx < len(sorted_regular):
-                result.append(sorted_regular[regular_idx])
-                regular_idx += 1
-
-        while regular_idx < len(sorted_regular):
-            result.append(sorted_regular[regular_idx])
-            regular_idx += 1
-
-        return result
-
-    def _rebuild_builder(
-        self,
-        original_builder: StepBuilder,
-        sorted_scopes: dict[str, list[Operation]],
-    ) -> StepBuilder:
-        new_builder = StepBuilder()
-
-        def rebuild_recursive(
-            original_ops: list[Operation],
-            target_builder: StepBuilder,
-            parent_scope: str,
-        ) -> None:
-            _ = parent_scope
-            for op in original_ops:
-                if isinstance(op.func, IterativeOp):
-                    loop_name = op.operation_name or "loop"
-                    sorted_ops = sorted_scopes.get(loop_name, [])
-
-                    new_op = Operation(
-                        func=op.func,
-                        operation_name=op.operation_name,
-                        operation_number=op.operation_number,
-                        domain_name=op.domain_name,
-                        depends_on=op.depends_on,
-                        before=op.before,
-                        shape=op.shape,
-                        color=op.color,
-                        level=op.level,
-                        sub_operations=[],
-                    )
-
-                    with target_builder.loop(new_op) as loop_builder:
-                        for sub_op in sorted_ops:
-                            if isinstance(sub_op.func, IterativeOp):
-                                rebuild_recursive([sub_op], loop_builder, loop_name)
-                            else:
-                                loop_builder.step(sub_op)
-
-        has_loops = any(
-            isinstance(op.func, IterativeOp) for op in original_builder.operations.ops
-        )
-
-        if has_loops:
-            rebuild_recursive(original_builder.operations.ops, new_builder, "root")
-        else:
-            if "root" in sorted_scopes:
-                for op in sorted_scopes["root"]:
-                    new_builder.step(op)
-
-        return new_builder
+        tagged = collect_tagged_ops(builder, additional_ops)
+        graph, op_map = build_global_graph(tagged)
+        sorted_scopes = sort_global(graph, op_map, tagged)
+        return rebuild_builder(builder, sorted_scopes)

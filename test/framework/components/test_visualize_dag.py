@@ -3,7 +3,6 @@ from pathlib import Path
 from neofoam.framework.graph import (
     build_dag,
     build_global_dag,
-    compute_nodes_order,
 )
 from neofoam.framework.graph.visualization import digraph_to_pyvis_html
 from neofoam.framework.types import OperationMetadata, OperationNumber
@@ -100,66 +99,4 @@ def test_build_global_dag():
 
     if PLOT_DAG:
         path = str(parent_dir / "test_global_dag.html")
-        digraph_to_pyvis_html(dag, html_path=path)
-
-
-def test_compute_steps_order():
-    node1 = OperationMetadata(
-        op_name="node1",
-        depends_on=[],
-        shape="circle",
-        color="red",
-        operation_number=OperationNumber("1.0.0"),
-    )
-    node2 = OperationMetadata(
-        op_name="node2",
-        depends_on=["node1"],
-        shape="square",
-        color="blue",
-        operation_number=OperationNumber("2.0.0"),
-    )
-    node3 = OperationMetadata(
-        op_name="node3",
-        depends_on=["node1", "node2"],
-        shape="triangle",
-        color="green",
-        operation_number=OperationNumber("3.2.0"),
-    )
-    node4 = OperationMetadata(
-        op_name="node4",
-        depends_on=["node2"],
-        shape="triangle",
-        color="green",
-        operation_number=OperationNumber("3.1.0"),
-    )
-    node5 = OperationMetadata(
-        op_name="node5",
-        depends_on=["node3"],
-        shape="circle",
-        color="red",
-        operation_number=OperationNumber("3.2.0"),
-    )
-    node6 = OperationMetadata(
-        op_name="node6",
-        depends_on=["node3"],
-        shape="circle",
-        color="red",
-        operation_number=OperationNumber("3.2.0"),
-    )
-    node7 = OperationMetadata(
-        op_name="node7",
-        depends_on=["node3"],
-        shape="circle",
-        color="red",
-        operation_number=OperationNumber("3.2.1"),
-    )
-
-    nodes = [node1, node2, node3, node4, node5, node6, node7]
-    order = compute_nodes_order(nodes)
-    assert order == ["node1", "node2", "node4", "node3", "node5", "node6", "node7"]
-
-    if PLOT_DAG:
-        dag = build_dag(nodes)
-        parent_dir = Path(__file__).parent
-        path = str(parent_dir / "test_dag_order.html")
         digraph_to_pyvis_html(dag, html_path=path)

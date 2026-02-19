@@ -20,6 +20,7 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 from neofoam.framework.solver_factory import Solver
+from neofoam.framework.types import OperationMetadata
 
 # Import create_init from dummy_init
 from .dummy_init import create_init
@@ -85,16 +86,14 @@ def execution_graph(
 
     time_loop = Operation(
         func=IterativeOp(time_condition),
-        operation_name="time_loop",
-        operation_number=None,
+        metadata=OperationMetadata(op_name="time_loop"),
     )
 
     with builder.loop(time_loop) as time_builder:
         # Algorithm inner loop
         algo_loop = Operation(
             func=IterativeOp(AlgorithmLoop()),
-            operation_name="inner_loop",
-            operation_number=None,
+            metadata=OperationMetadata(op_name="inner_loop"),
         )
 
         with time_builder.loop(algo_loop) as inner_builder:

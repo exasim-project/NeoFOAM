@@ -6,10 +6,7 @@
 
 import networkx as nx  # type: ignore[import-untyped]
 
-from neofoam.framework.operations import Operations
 from neofoam.framework.types import OperationMetadata
-
-from .sorter import NetworkxTopologicalSorter
 
 
 def build_dag(nodes: list[OperationMetadata]) -> nx.DiGraph:
@@ -35,28 +32,3 @@ def build_global_dag(domains: dict[str, list[OperationMetadata]]) -> nx.DiGraph:
         sub_graph = build_dag(nodes)
         graph = nx.compose(graph, sub_graph)
     return graph
-
-
-def compute_nodes_order(nodes: list[OperationMetadata]) -> list[str]:
-    """Compute a valid deterministic topological order of nodes."""
-    graph = build_dag(nodes)
-    sorter = NetworkxTopologicalSorter(
-        key=lambda node_name: (
-            graph.nodes[node_name].get("operation_number") is None,
-            graph.nodes[node_name].get("operation_number"),
-            node_name,
-        )
-    )
-    return sorter.sort(graph)
-
-
-def compute_steps_order(op_col: Operations) -> Operations:
-    """Compute a valid topological order of operations."""
-    nodes = [op.operation_metadata() for op in op_col.ops]
-    sorted_names = compute_nodes_order(nodes)
-
-    sorted_ops = Operations()
-    name_to_op = {op.name: op for op in op_col.ops}
-    for node_name in sorted_names:
-        sorted_ops.add(name_to_op[node_name])
-    return sorted_ops

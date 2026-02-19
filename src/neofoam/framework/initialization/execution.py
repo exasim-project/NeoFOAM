@@ -11,9 +11,9 @@ from .init_step import InitCategory, InitStep
 from ..graph import (
     GraphValidationReport,
     NetworkxTopologicalSorter,
-    build_dependency_digraph,
     validate_dependency_graph,
 )
+from ..graph.validator import build_dependency_digraph
 from ..context import Context
 
 logger = logging.getLogger(__name__)

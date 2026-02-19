@@ -76,12 +76,6 @@ def build() -> list[InitStep]:
 
     def create_mf2(_ctx: dict[str, Any]) -> float:
         """Create model field 2 - uses config from load stage."""
-        # Access Model1Config from the loaded configs dict
-        main_config = (
-            model1.config()
-            if len(model1._configs) == 1
-            else model1._configs.get("main") or list(model1._configs.values())[0]
-        )
         # Find Model1Config instance
         for cfg in model1._configs.values():
             if isinstance(cfg, Model1Config):

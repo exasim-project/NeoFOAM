@@ -8,7 +8,7 @@ Provides instance-based Model API matching Init pattern.
 """
 
 import inspect
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 from functools import wraps
 from pydantic import BaseModel
 from neofoam.io import BaseConfig
@@ -44,7 +44,7 @@ class ModelInstance:
         self.enabled = True
 
         # 3-stage initialization functions
-        self._load_func: Optional[Callable[[], Any]] = None
+        self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., None]] = None
         self._detect_func: Optional[Callable[[], bool]] = None
 
@@ -54,7 +54,9 @@ class ModelInstance:
         # Config auto-discovery and injection
         self._configs: dict[str, BaseConfig] = {}
         self._discovered_configs: dict[type, str] = {}  # config_type -> param_name
-        self._explicit_configs: dict[type, dict] = {}  # config_type -> {name, loader}
+        self._explicit_configs: dict[
+            type, dict[str, Any]
+        ] = {}  # config_type -> {name, loader}
 
         # Model instance state (for operation counters, etc.)
         self._step1_count: int = 0
@@ -117,7 +119,9 @@ class ModelInstance:
         s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
         return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
-    def _discover_configs_from_signature(self, func: Callable) -> list[dict]:
+    def _discover_configs_from_signature(
+        self, func: Callable[..., Any]
+    ) -> list[dict[str, Any]]:
         """
         Introspect function signature to discover BaseConfig parameters.
 
@@ -163,9 +167,9 @@ class ModelInstance:
 
     def _create_config_injecting_wrapper(
         self,
-        func: Callable,
-        discovered_configs: list[dict],
-    ) -> Callable:
+        func: Callable[..., Any],
+        discovered_configs: list[dict[str, Any]],
+    ) -> Callable[..., Any]:
         """
         Wrap operation function to inject configs from self._configs.
 
@@ -187,7 +191,7 @@ class ModelInstance:
         @wraps(func)
         def wrapper(ctx: Context) -> Any:
             # Build kwargs for function call
-            call_kwargs = {}
+            call_kwargs: dict[str, Any] = {}
 
             # Add ctx only if expected
             if expects_ctx:
@@ -248,10 +252,10 @@ class ModelInstance:
             return result
 
         # Set a flag so dependency resolution knows not to wrap this again
-        wrapper._already_wrapped = True
+        setattr(wrapper, "_already_wrapped", True)
         return wrapper
 
-    def _generate_auto_load(self) -> Callable[[Path], tuple]:
+    def _generate_auto_load(self) -> Callable[..., Any]:
         """
         Generate load function from discovered and explicit configs.
 
@@ -266,7 +270,7 @@ class ModelInstance:
             self._explicit_configs.keys()
         )
 
-        def auto_load(case_dir: Path = None) -> tuple:
+        def auto_load(case_dir: Optional[Path] = None) -> tuple[Any, ...]:
             # Determine case directory if not provided
             if case_dir is None:
                 config_dir_env = os.environ.get("DUMMY_SOLVER_CONFIG_DIR")
@@ -300,7 +304,7 @@ class ModelInstance:
                     config_instance = loader(case_dir)
                 else:
                     # Default: use ConfigClass.load() from @IOStrategy
-                    config_instance = config_type.load(
+                    config_instance = cast(Any, config_type).load(
                         case_dir=case_dir, validate=False
                     )
 
@@ -371,7 +375,7 @@ class ModelInstance:
         self._detect_func = func
         return func
 
-    def run_load(self, case_dir: Path = None) -> Any:
+    def run_load(self, case_dir: Optional[Path] = None) -> Any:
         """
         Execute LOAD stage and store result, auto-generating if not explicitly defined.
 
@@ -537,7 +541,7 @@ class ModelInstance:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
-    ) -> Callable:
+    ) -> Callable[..., Any]:
         """
         Decorator to register a model operation with auto-config discovery.
 
@@ -558,7 +562,7 @@ class ModelInstance:
                 pass
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             # Auto-discover configs from type annotations
             discovered = self._discover_configs_from_signature(func)
 
@@ -593,13 +597,17 @@ class ModelInstance:
             setattr(self, name or func.__name__, wrapped)
 
             # Attach metadata to function for compatibility with existing framework
-            wrapped._metadata = OperationMetadata(
-                op_name=name or func.__name__,
-                op_type=OpType.OPERATION,
-                operation_number=OperationNumber(operation_number)
-                if operation_number
-                else None,
-                depends_on=depends_on,
+            setattr(
+                wrapped,
+                "_metadata",
+                OperationMetadata(
+                    op_name=name or func.__name__,
+                    op_type=OpType.OPERATION,
+                    operation_number=OperationNumber(operation_number)
+                    if operation_number
+                    else None,
+                    depends_on=depends_on,
+                ),
             )
 
             return wrapped
@@ -622,19 +630,21 @@ class ModelInstance:
             # Create Operation with metadata
             op = Operation(
                 func=seq_op,
-                operation_name=metadata["name"],
-                operation_number=OperationNumber(metadata["operation_number"])
-                if metadata["operation_number"]
-                else None,
-                depends_on=metadata["depends_on"],
-                before=metadata["before"],
+                metadata=OperationMetadata(
+                    op_name=metadata["name"],
+                    operation_number=OperationNumber(metadata["operation_number"])
+                    if metadata["operation_number"]
+                    else None,
+                    depends_on=metadata["depends_on"] or [],
+                    before=metadata["before"] or [],
+                ),
             )
             ops.append(op)
 
         return ops
 
     def _wrap_with_dependency_resolution(
-        self, func: Callable
+        self, func: Callable[..., Any]
     ) -> Callable[[Context], Any]:
         """Wrap function to resolve dependencies from Context."""
         return wrap_with_dependency_resolution(func, self, self._dependency_resolver)

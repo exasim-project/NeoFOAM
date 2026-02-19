@@ -8,7 +8,7 @@ Solver Factory - State management for solver initialization.
 import inspect
 from dataclasses import dataclass, field
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 from .context import Context
 from .dependency_resolver import DependencyResolver, wrap_with_dependency_resolution
@@ -62,7 +62,7 @@ class SolverInstance:
             Callable[[Optional[str]], tuple[Any, Any]]
         ] = None
         self._dependency_resolver = DependencyResolver()
-        self.argv = []
+        self.argv: list[Any] = []
 
         # Shared state container
         self.state = SolverState()
@@ -185,7 +185,7 @@ class SolverInstance:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
-    ) -> Callable:
+    ) -> Callable[..., Any]:
         """
         Decorator to register a solver operation.
 
@@ -205,7 +205,7 @@ class SolverInstance:
                 pass
         """
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             # Auto-inject config when operation expects it
             func = self._wrap_with_config_injection(func)
 
@@ -229,20 +229,26 @@ class SolverInstance:
             setattr(self, name or func.__name__, wrapped)
 
             # Attach metadata to function for compatibility with existing framework
-            wrapped._metadata = OperationMetadata(
-                op_name=name or func.__name__,
-                op_type=OpType.OPERATION,
-                operation_number=OperationNumber(operation_number)
-                if operation_number
-                else None,
-                depends_on=depends_on,
+            setattr(
+                wrapped,
+                "_metadata",
+                OperationMetadata(
+                    op_name=name or func.__name__,
+                    op_type=OpType.OPERATION,
+                    operation_number=OperationNumber(operation_number)
+                    if operation_number
+                    else None,
+                    depends_on=depends_on,
+                ),
             )
 
             return wrapped
 
         return decorator
 
-    def _wrap_with_config_injection(self, func: Callable) -> Callable:
+    def _wrap_with_config_injection(
+        self, func: Callable[..., Any]
+    ) -> Callable[..., Any]:
         """
         Wrap function to auto-inject config parameter if it exists in signature.
 
@@ -266,7 +272,7 @@ class SolverInstance:
             return func(*args, **kwargs)
 
         # Preserve original signature for dependency resolution
-        wrapper.__signature__ = sig
+        cast(Any, wrapper).__signature__ = sig
         return wrapper
 
     @property
@@ -285,19 +291,21 @@ class SolverInstance:
             # Create Operation with metadata
             op = Operation(
                 func=seq_op,
-                operation_name=metadata["name"],
-                operation_number=OperationNumber(metadata["operation_number"])
-                if metadata["operation_number"]
-                else None,
-                depends_on=metadata["depends_on"],
-                before=metadata["before"],
+                metadata=OperationMetadata(
+                    op_name=metadata["name"],
+                    operation_number=OperationNumber(metadata["operation_number"])
+                    if metadata["operation_number"]
+                    else None,
+                    depends_on=metadata["depends_on"] or [],
+                    before=metadata["before"] or [],
+                ),
             )
             ops.add(op)
 
         return ops
 
     def _wrap_with_dependency_resolution(
-        self, func: Callable
+        self, func: Callable[..., Any]
     ) -> Callable[[Context], Any]:
         """Wrap function to resolve dependencies from Context."""
         return wrap_with_dependency_resolution(func, self, self._dependency_resolver)

@@ -7,6 +7,7 @@ from neofoam.framework.operations import (
     SequentialOp,
     StepBuilder,
 )
+from neofoam.framework.types import OperationMetadata
 
 from conftest import MaxIterations
 
@@ -15,26 +16,29 @@ def function1():
     return 1
 
 
+def _op(name, number, **kw):
+    """Shorthand for Operation with metadata."""
+    return Operation(
+        func=function1,
+        metadata=OperationMetadata(op_name=name, operation_number=number, **kw),
+    )
+
+
 def test_step_builder():
     builder = StepBuilder()
 
-    builder.step(Operation(func=function1, operation_name="step1", operation_number=1))
-    builder.step(Operation(func=function1, operation_name="step2", operation_number=2))
+    builder.step(_op("step1", 1))
+    builder.step(_op("step2", 2))
 
     assert len(builder.operations) == 2
 
     builder.loop(
         Operation(
             func=function1,
-            operation_name="loop1",
-            operation_number=3,
+            metadata=OperationMetadata(op_name="loop1", operation_number=3),
             sub_operations=[
-                Operation(
-                    func=function1, operation_name="loop1_step1", operation_number=4
-                ),
-                Operation(
-                    func=function1, operation_name="loop1_step2", operation_number=5
-                ),
+                _op("loop1_step1", 4),
+                _op("loop1_step2", 5),
             ],
         )
     )
@@ -46,24 +50,14 @@ def test_builder_context():
     builder = StepBuilder()
 
     with builder as steps:
-        steps.step(
-            Operation(func=function1, operation_name="step1", operation_number=1)
-        )
-        steps.step(
-            Operation(func=function1, operation_name="step2", operation_number=2)
-        )
+        steps.step(_op("step1", 1))
+        steps.step(_op("step2", 2))
 
     assert len(builder.operations) == 2
 
-    with builder.loop(
-        Operation(func=function1, operation_name="loop1", operation_number=3)
-    ) as loop:
-        loop.step(
-            Operation(func=function1, operation_name="loop1_step1", operation_number=4)
-        )
-        loop.step(
-            Operation(func=function1, operation_name="loop1_step2", operation_number=5)
-        )
+    with builder.loop(_op("loop1", 3)) as loop:
+        loop.step(_op("loop1_step1", 4))
+        loop.step(_op("loop1_step2", 5))
 
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
@@ -73,39 +67,23 @@ def test_builder_nested_context():
     builder = StepBuilder()
 
     with builder as steps:
-        steps.step(
-            Operation(func=function1, operation_name="step1", operation_number=1)
-        )
-        steps.step(
-            Operation(func=function1, operation_name="step2", operation_number=2)
-        )
+        steps.step(_op("step1", 1))
+        steps.step(_op("step2", 2))
 
         assert len(builder.operations) == 2
 
-        with builder.loop(
-            Operation(func=function1, operation_name="loop1", operation_number=3)
-        ) as loop:
-            loop.step(
-                Operation(
-                    func=function1, operation_name="loop1_step1", operation_number=4
-                )
-            )
-            loop.step(
-                Operation(
-                    func=function1, operation_name="loop1_step2", operation_number=5
-                )
-            )
+        with builder.loop(_op("loop1", 3)) as loop:
+            loop.step(_op("loop1_step1", 4))
+            loop.step(_op("loop1_step2", 5))
 
             assert len(loop.operations) == 2
 
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
 
-    builder.loop(
-        Operation(func=function1, operation_name="loop2", operation_number=6)
-    ).step(
-        Operation(func=function1, operation_name="loop2_step1", operation_number=7)
-    ).step(Operation(func=function1, operation_name="loop2_step2", operation_number=8))
+    builder.loop(_op("loop2", 6)).step(_op("loop2_step1", 7)).step(
+        _op("loop2_step2", 8)
+    )
 
     assert len(builder.operations) == 4
     assert len(builder.operations[-1].sub_operations) == 2
@@ -123,37 +101,38 @@ def test_operation_run():
         op.step(
             Operation(
                 func=SequentialOp(increment),
-                operation_name="increment1",
-                operation_number=1,
+                metadata=OperationMetadata(op_name="increment1", operation_number=1),
             )
         )
         op.step(
             Operation(
                 func=SequentialOp(increment),
-                operation_name="increment2",
-                operation_number=2,
+                metadata=OperationMetadata(op_name="increment2", operation_number=2),
             )
         )
 
         with op.loop(
             Operation(
                 func=IterativeOp(MaxIterations(max_iters=4)),
-                operation_name="loop_increment",
-                operation_number=3,
+                metadata=OperationMetadata(
+                    op_name="loop_increment", operation_number=3
+                ),
             )
         ) as loop:
             loop.step(
                 Operation(
                     func=SequentialOp(increment),
-                    operation_name="looped_increment_1",
-                    operation_number=4,
+                    metadata=OperationMetadata(
+                        op_name="looped_increment_1", operation_number=4
+                    ),
                 )
             )
             loop.step(
                 Operation(
                     func=SequentialOp(increment),
-                    operation_name="looped_increment_2",
-                    operation_number=5,
+                    metadata=OperationMetadata(
+                        op_name="looped_increment_2", operation_number=5
+                    ),
                 )
             )
 
