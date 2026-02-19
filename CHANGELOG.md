@@ -5,6 +5,7 @@
 - added input validation [#156](https://github.com/exasim-project/NeoFOAM/pull/156)
 - initial implementation of the framework [#149](https://github.com/exasim-project/NeoFOAM/pull/149)
 - load, write and validate config files [#236](https://github.com/exasim-project/NeoFOAM/pull/236)
+- add openfoam reader and writer [#242](https://github.com/exasim-project/NeoFOAM/pull/242)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)

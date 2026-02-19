@@ -109,7 +109,7 @@ class BaseConfig(BaseModel):
             path = cls.get_default_path(case_dir)
 
         reading_strategy = cls.get_reading_strategy()
-        data = reading_strategy.read(path, encoding=encoding)
+        data = reading_strategy.read(cls, path, encoding=encoding)
 
         if validate:
             return cls.model_validate(data)
@@ -193,8 +193,7 @@ class BaseConfig(BaseModel):
             path = self.__class__.get_default_path(case_dir)
 
         writing_strategy = self.__class__.get_writing_strategy()
-        data = self.model_dump(mode="python", exclude_none=False)
-        writing_strategy.write(data, path, encoding=encoding)
+        writing_strategy.write(self, path, encoding=encoding)
 
     # ------------------------------------------------------------------
     # Validation helpers
