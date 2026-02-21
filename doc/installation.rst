@@ -2,7 +2,7 @@
 Installation
 ============
 
-This guide explains how to install the FoamAdapter Python package and set up the development environment using standard Python tools and Poe.
+This guide explains how to install the NeoFOAM Python package and set up the development environment using standard Python tools and Poe.
 
 Requirements
 ------------

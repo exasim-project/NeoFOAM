@@ -32,7 +32,10 @@ Table of Contents
    :caption: Development:
 
    development/architecture
-   development/testing
+   development/components
+   development/config_file
+   development/pluginsystem
+   development/solver
 
 .. toctree::
    :maxdepth: 2

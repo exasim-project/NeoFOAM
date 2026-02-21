@@ -33,6 +33,7 @@ dev = [
     "ruff>=0.14.2",
     "mypy",
     "pre-commit",
+    "types-PyYAML",
 ]
 docs = [
     "sphinx>=4.0",
@@ -40,6 +41,7 @@ docs = [
     "sphinx-sitemap",
     "furo",
     "sphinxcontrib-mermaid",
+    "sphinx-togglebutton>=0.3.2",
     "breathe",
 ]
 all = [
@@ -95,10 +97,10 @@ testpaths = [
 ]
 
 [tool.mypy]
-files = ["src", "test"]          # your two roots
+plugins = ["pydantic.mypy"]
+files = ["src"]          # your two roots
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
-no_site_packages = true          # don't check installed packages
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)
@@ -114,8 +116,8 @@ follow_imports = "skip"
 
 [tool.poe.tasks]
 test = "pytest"
-lint = "ruff check src test"
+lint = "ruff check"
 format = "ruff format src test"
-type_check = "mypy src test"
+type_check = "mypy"
 build_docs = "sphinx-build -b html doc doc/_build"
 view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }

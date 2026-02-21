@@ -3,7 +3,7 @@
 
 import sys
 
-import typer  # type: ignore[import-not-found]
+import typer
 
 app = typer.Typer()
 
@@ -15,7 +15,7 @@ app.add_typer(solver_app, name="solver", help="Run foam solvers.")
 
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)  # type: ignore[untyped-decorator]
+)
 def icofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow of Newtonian fluids."""
     from neofoam.solver.icofoam import IcoFoam
@@ -29,7 +29,7 @@ def icofoam(ctx: typer.Context) -> None:
 
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)  # type: ignore[untyped-decorator]
+)
 def pimplefoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, turbulent flow of Newtonian fluids"""
 
@@ -44,7 +44,7 @@ def pimplefoam(ctx: typer.Context) -> None:
 
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)  # type: ignore[untyped-decorator]
+)
 def neoicofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow using NeoN bindings."""
     from neofoam.solver.neoIcoFoam import NeoIcoFoam

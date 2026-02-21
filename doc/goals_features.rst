@@ -15,12 +15,12 @@ Features
 .. |TODO| unicode:: U+2610  .. ☐
 .. |DONE| unicode:: U+2611  .. ☑
 
-The current features of FoamAdapter include:
+The current features of neofoam include:
 
 - |TODO| Multiphysics support
 - |TODO| Availability of solver metadata to facilitate UI development and integration with AI models
 - |TODO| Support for various coupling strategies
-- |TODO| External coupling interface (e.g via PRECISE)
+- |TODO| External coupling interface (e.g via preCISE)
 - |TODO| GPU acceleration via NeoN
 - |DONE| CLI to run tools and solvers
 - |DONE| Support for OpenFOAM standard case structure

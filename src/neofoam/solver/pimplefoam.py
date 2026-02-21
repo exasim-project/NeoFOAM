@@ -3,7 +3,7 @@
 
 from typing import Any
 
-import pybFoam as pyf  # type: ignore[import-not-found]
+import pybFoam as pyf
 from pybFoam import (
     Info,
     fvc,
@@ -14,7 +14,7 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel  # type: ignore[import-not-found]
+from pybFoam.turbulence import incompressibleTurbulenceModel, singlePhaseTransportModel
 
 
 class CFLNumber:
@@ -74,8 +74,8 @@ def create_fields(
 class PimpleFoam:
     def __init__(self, argv: list[str]) -> None:
         self._argv = argv
-        self.pRefCell = None
-        self.pRefValue = None
+        self.pRefCell: int = 0
+        self.pRefValue: float = 0.0
 
     def momentum_equation(
         self, pimple: Any, U: Any, p: Any, phi: Any, turbulence: Any

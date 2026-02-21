@@ -1,8 +1,8 @@
 Architecture
 ============
 
-FoamAdapter is a multi-language repository containing both C++ and Python code.
-This document describes the architecture of FoamAdapter, including its C++ core and Python interface components.
+NeoFOAM is a multi-language repository containing both C++ and Python code.
+This document describes the architecture of NeoFOAM, including its C++ core and Python interface components.
 
 .. note::
    This section of the documentation provides:
@@ -34,7 +34,7 @@ The following sections describe the main architectural features and implementati
 Extensible Solver Architecture
 ------------------------------
 
-To promote code reuse and maintainability, solver execution steps (operations) can be configured at runtime based on the selected physics models.
+To promote code reuse and maintainability, solver execution operations can be configured at runtime based on the selected physics models.
 This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.
 
 .. mermaid::
@@ -42,15 +42,15 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
    flowchart TD
 
         subgraph MAIN ["Main Solver Loop"]
-            STEP1["Solver </br> Momentum Equation"]
-            STEP2["Added by Model </br> Temperature Equation"]
-            STEP3["Solver </br> Continuity Equation"]
-            STEP4["Solver </br> Update Turbulence"]
+            OP1["Solver </br> Momentum Equation"]
+            OP2["Added by Model </br> Temperature Equation"]
+            OP3["Solver </br> Continuity Equation"]
+            OP4["Solver </br> Update Turbulence"]
         end
 
-        STEP1 --> STEP2
-        STEP2 --> STEP3
-        STEP3 --> STEP4
+        OP1 --> OP2
+        OP2 --> OP3
+        OP3 --> OP4
 
         %% Physics Extensions (simplified)
         subgraph AddPhysics ["Additional Physics Modules"]
@@ -59,17 +59,17 @@ This is illustrated in the diagram below, where a fluid solver is extended with 
             ROTATION["Rotating Reference Frame"]
             BUOYANCY["Boussinesq Approximation"]
         end
-        POROSITY -.-> STEP1
-        ROTATION -.-> STEP1
-        BUOYANCY -.-> STEP2
-        BUOYANCY -.-> STEP3
+        POROSITY -.-> OP1
+        ROTATION -.-> OP1
+        BUOYANCY -.-> OP2
+        BUOYANCY -.-> OP3
 
         style MAIN fill:#E3F2FD
         style AddPhysics fill:#E3F2FD
-        style STEP1 fill:#2196F3,color:#fff
-        style STEP2 fill:#FF9800,color:#fff
-        style STEP3 fill:#9C27B0,color:#fff
-        style STEP4 fill:#607D8B,color:#fff
+        style OP1 fill:#2196F3,color:#fff
+        style OP2 fill:#FF9800,color:#fff
+        style OP3 fill:#9C27B0,color:#fff
+        style OP4 fill:#607D8B,color:#fff
 
 The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
 Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
@@ -86,26 +86,26 @@ The execution order is determined at runtime based on the metadata specified in 
     @Solver
     class IncompressibleFluidSolver:
         models: list[IncompressibleFluidModel]  # Additional physics models
-        @Solver.step(...)
+        @Solver.operation(...)
         def momentum(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def continuity(self, ...): pass
-        @Solver.step(...)
+        @Solver.operation(...)
         def update_turbulence(self, ...): pass
 
     @IncompressibleFluidModel.register
     class BoussinesqModel:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def temperature_equation(self, ...): pass
 
     @IncompressibleFluidModel.register
     class PorosityModel:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def add_momentum_source(self, ...): pass
 
     @IncompressibleFluidModel.register
     class RotatingReferenceFrame:
-        @IncompressibleFluidModel.step(...)
+        @IncompressibleFluidModel.operation(...)
         def add_momentum_source(self, ...): pass
 
 
@@ -134,11 +134,11 @@ This order is managed by the **Operations** class, shown conceptually below:
 
         def run(self, ...): pass
 
-An operation represents a single computational step in a solver or model, functioning as a callable task.
+An operation represents a single computational operation in a solver or model, functioning as a callable task.
 Each solver or model can define multiple operations stored as `Operation` objects.
 These can hold sub-operations and metadata to assist in sorting and dependency management.
 
-After sorting (detailed in future documentation), the `Operations` class holds all steps required to run the newly-configured solver.
+After sorting (detailed in future documentation), the `Operations` class holds all operations required to run the newly-configured solver.
 
 This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.
 
@@ -212,13 +212,13 @@ Motivation
 ^^^^^^^^^^
 
 Modern scientific and engineering workflows require flexible, extensible frameworks.
-FoamAdapter’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
+NeoFOAM’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
 This promotes maintainability, collaboration, and rapid prototyping.
 
 Concept
 ^^^^^^^
 
-FoamAdapter implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
+NeoFOAM implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
 The core idea is to allow new plugin types (e.g., models, fields, solvers) to be dynamically registered at runtime or via Python entry points (setuptools).
 Each plugin type (such as a physics model or boundary condition) is managed by a registry, which collects available classes and exposes a unified configuration model for validation and schema generation.
 
@@ -250,7 +250,7 @@ For example, the following ensures a pet is either a Cat, Dog, or Lizard:
 
 This works for static unions but cannot be extended dynamically — a limitation for plugin systems.
 
-**How FoamAdapter Solves This**
+**How NeoFOAM Solves This**
 
 Plugins are registered using a decorator-based API.
 Each registration automatically rebuilds the Pydantic model for that plugin type, updating the discriminated union to include new plugins.
@@ -273,7 +273,7 @@ To add a new plugin, users define a Python class and register it with the corres
 
 .. code-block:: python
 
-    from foamadapter.core.plugin_system import PluginSystem
+    from neofoam.core.plugin_system import PluginSystem
 
     @PluginSystem.register(discriminator_variable="model", discriminator="model_type")
     class ModelBase(BaseModel):
@@ -287,13 +287,13 @@ To add a new plugin, users define a Python class and register it with the corres
     # Instantiate a model config
     config = ModelBase.create(model={"model_type": "custom", "parameter": 1.23}, name="example")
 
-Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend FoamAdapter seamlessly.
+Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend NeoFOAM seamlessly.
 The unified configuration and schema system simplifies UI generation, input validation, and documentation of available plugins.
 
 Model Introspection and Schema Generation
 -----------------------------------------
 
-Model configuration and validation in FoamAdapter are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
+Model configuration and validation in NeoFOAM are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
 This mechanism enables model discovery, UI integration, and automatic documentation.
 
 Pydantic’s schema generation supports:
