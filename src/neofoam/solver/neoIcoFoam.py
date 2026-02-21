@@ -5,8 +5,10 @@
 neoIcoFoam.py — Incompressible Navier-Stokes solver using NeoN + NeoFOAM bindings.
 """
 
+import pybFoam as pyf
 import neon._neon as nn  # NeoN Python bindings
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.solver.pisoControl import PisoControl
 
 
 class NeoIcoFoam:
@@ -18,8 +20,25 @@ class NeoIcoFoam:
     def run(self) -> None:
         nn.initialize(self._argv)
 
-        rt = nfb.Runtime(self._argv)
-        piso = nfb.PisoControl(rt)
+        argList = pyf.argList(self._argv)
+
+        runTime = pyf.Time(argList)
+
+        rt = nfb.create_adapter_run_time(runTime)
+
+        piso_dict = rt.fv_solution_dict.subDict("PISO")
+        piso = PisoControl(
+            n_correctors=piso_dict.get_int("nCorrectors"),
+            n_non_orthogonal_correctors=piso_dict.get_int("nNonOrthogonalCorrectors"),
+            momentum_predictor=piso_dict.get_string("momentumPredictor").lower()
+            in ("yes", "true", "on", "1"),
+        )
+
+        # Map OpenFOAM dictionaries to NeoN equivalents
+        solvers = rt.fv_solution_dict.subDict("solvers")
+        solvers.insert_dict("p", nfb.map_fv_solution(solvers.subDict("p")))
+        solvers.insert_dict("U", nfb.map_fv_solution(solvers.subDict("U")))
+        rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
 
         nu_value = nfb.read_transport_viscosity(rt)
         nu = nfb.create_uniform_surface_field(rt, "nu", nu_value)
@@ -30,23 +49,23 @@ class NeoIcoFoam:
 
         p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PISO")
 
-        while rt.loop():
-            print(f"Time = {rt.time_name()}")
+        while runTime.loop():
+            print(f"Time = {runTime.timeName()}")
 
             nn.rotate_old_times(U)
             nn.rotate_old_times(phi)
 
             max_co, mean_co = nn.compute_co_num(
-                rt.nf_mesh(), phi.internal_vector(), rt.delta_t()
+                rt.nf_mesh, phi.internal_vector(), rt.dt
             )
             print(f"Courant Number mean: {mean_co:.6f} max: {max_co:.6f}")
 
-            rt.sync(max_co)
+            nfb.sync_run_times(runTime, rt, max_co)
 
             UEqn = nfb.PDESolverVec3(
                 nn.imp.ddt(U) + nn.imp.div(phi, U) - nn.imp.laplacian(nu, U),
                 U,
-                rt.nf_runtime(),
+                rt,
             )
             ddt_scheme = UEqn.ddt_scheme()
 
@@ -61,20 +80,20 @@ class NeoIcoFoam:
 
                 # Interpolate rAU to faces
                 interp = nn.SurfaceInterpolationScalar(
-                    rt.executor(), rt.nf_mesh(), nn.TokenList(["linear"])
+                    rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
                 )
                 rAUf = interp.interpolate(rAU)
                 rAUf.name = "rAUf"
 
                 phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(
-                    U, phi, rt.delta_t(), ddt_scheme
+                    U, phi, rt.dt, ddt_scheme
                 )
 
                 while piso.correct_non_orthogonal():
                     pEqn = nfb.PDESolverScalar(
                         nn.imp.laplacian(rAUf, p) - nn.exp.div(phiHbyA),
                         p,
-                        rt.nf_runtime(),
+                        rt,
                     )
 
                     if needs_ref:
@@ -89,12 +108,12 @@ class NeoIcoFoam:
                 nfb.update_velocity(hByA, rAU, p, U)
                 U.correct_boundary_conditions()
 
-            rt.write()
-            if rt.output_time():
+            # runTime.write(True)
+            if runTime.outputTime():
                 nfb.write_scalar_field(p, rt)
                 nfb.write_vector_field(U, rt)
 
-            rt.print_execution_time()
+            runTime.printExecutionTime()
 
         print("End")
         nn.finalize()

@@ -8,9 +8,9 @@
 #include "NeoN/NeoN.hpp"
 
 // NeoFOAM headers
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 
-#include "runtime.hpp"
 #include "bindings.hpp"
 
 namespace nb = nanobind;
@@ -29,8 +29,8 @@ void registerFieldWriters(nb::module_& m)
     // -------------------------------------------------------------------
     m.def(
         "write_scalar_field",
-        [](const fvcc::VolumeField<NeoN::scalar>& field, Runtime& rt)
-        { nf::write(field, rt.mesh()); },
+        [](const fvcc::VolumeField<NeoN::scalar>& field, nf::RunTime& rt)
+        { nf::write(field, rt.mesh); },
         "field"_a,
         "runtime"_a,
         "Write a NeoN scalar VolumeField via OpenFOAM IO"
@@ -38,8 +38,8 @@ void registerFieldWriters(nb::module_& m)
 
     m.def(
         "write_vector_field",
-        [](const fvcc::VolumeField<NeoN::Vec3>& field, Runtime& rt)
-        { nf::write(field, rt.mesh()); },
+        [](const fvcc::VolumeField<NeoN::Vec3>& field, nf::RunTime& rt)
+        { nf::write(field, rt.mesh); },
         "field"_a,
         "runtime"_a,
         "Write a NeoN vector VolumeField via OpenFOAM IO"

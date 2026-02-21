@@ -9,7 +9,7 @@ authors = [
 requires-python = ">=3.9"
 
 dependencies = [
-    "pybFoam>=0.1.4",
+    "pybFoam>=0.3.1",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -68,6 +68,9 @@ editable.rebuild = false
 [tool.scikit-build.cmake.define]
 NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 
+[tool.uv.sources]
+neon_pde = { path = "src/NeoN", editable = true }
+
 
 [tool.ruff]
 line-length = 100
@@ -105,14 +108,14 @@ exclude = [
 
 # If other code imports src/NeoN and you want mypy to never follow into it:
 [[tool.mypy.overrides]]
-module = ["NeoN", "NeoN.*","pybFoam", "pybFoam.*"]
-ignore_errors = true
+module = ["NeoN", "NeoN.*", "pybFoam", "pybFoam.*", "neon", "neon.*"]
+ignore_missing_imports = true
 follow_imports = "skip"
 
 [tool.poe.tasks]
 test = "pytest"
-lint = "ruff check"
-format = "ruff format"
-type_check = "mypy"
+lint = "ruff check src test"
+format = "ruff format src test"
+type_check = "mypy src test"
 build_docs = "sphinx-build -b html doc doc/_build"
 view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }

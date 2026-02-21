@@ -9,12 +9,12 @@
 #include "NeoN/NeoN.hpp"
 
 // NeoFOAM headers
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 
 // OpenFOAM headers
 #include "fvCFD.H"
 
-#include "runtime.hpp"
 #include "bindings.hpp"
 
 namespace nb = nanobind;
@@ -33,26 +33,25 @@ void registerFieldFactories(nb::module_& m)
     // -------------------------------------------------------------------
     m.def(
         "read_scalar_volume_field",
-        [](Runtime& rt, const std::string& name) -> fvcc::VolumeField<NeoN::scalar>&
+        [](nf::RunTime& rt, const std::string& name) -> fvcc::VolumeField<NeoN::scalar>&
         {
-            auto& nfrt = rt.nfRuntime();
             Foam::volScalarField ofField(
                 Foam::IOobject(
                     name,
-                    rt.foamTime().timeName(),
-                    rt.mesh(),
+                    rt.mesh.time().timeName(),
+                    rt.mesh,
                     Foam::IOobject::MUST_READ,
                     Foam::IOobject::NO_WRITE,
                     Foam::IOobject::NO_REGISTER
                 ),
-                rt.mesh()
+                rt.mesh
             );
             fvcc::VectorCollection& vc =
-                fvcc::VectorCollection::instance(nfrt.db, "VectorCollection");
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
             return vc.registerVector<fvcc::VolumeField<NeoN::scalar>>(
                 nf::CreateFromFoamField<Foam::volScalarField> {
-                    .exec = nfrt.exec,
-                    .nfMesh = nfrt.nfMesh,
+                    .exec = rt.exec,
+                    .nfMesh = rt.nfMesh,
                     .foamField = ofField,
                     .name = name
                 }
@@ -66,26 +65,25 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "read_vector_volume_field",
-        [](Runtime& rt, const std::string& name) -> fvcc::VolumeField<NeoN::Vec3>&
+        [](nf::RunTime& rt, const std::string& name) -> fvcc::VolumeField<NeoN::Vec3>&
         {
-            auto& nfrt = rt.nfRuntime();
             Foam::volVectorField ofField(
                 Foam::IOobject(
                     name,
-                    rt.foamTime().timeName(),
-                    rt.mesh(),
+                    rt.mesh.time().timeName(),
+                    rt.mesh,
                     Foam::IOobject::MUST_READ,
                     Foam::IOobject::NO_WRITE,
                     Foam::IOobject::NO_REGISTER
                 ),
-                rt.mesh()
+                rt.mesh
             );
             fvcc::VectorCollection& vc =
-                fvcc::VectorCollection::instance(nfrt.db, "VectorCollection");
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
             return vc.registerVector<fvcc::VolumeField<NeoN::Vec3>>(
                 nf::CreateFromFoamField<Foam::volVectorField> {
-                    .exec = nfrt.exec,
-                    .nfMesh = nfrt.nfMesh,
+                    .exec = rt.exec,
+                    .nfMesh = rt.nfMesh,
                     .foamField = ofField,
                     .name = name
                 }
@@ -99,25 +97,24 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "create_phi",
-        [](Runtime& rt, const std::string& uFieldName) -> fvcc::SurfaceField<NeoN::scalar>&
+        [](nf::RunTime& rt, const std::string& uFieldName) -> fvcc::SurfaceField<NeoN::scalar>&
         {
-            auto& nfrt = rt.nfRuntime();
             Foam::volVectorField ofU(
                 Foam::IOobject(
                     uFieldName,
-                    rt.foamTime().timeName(),
-                    rt.mesh(),
+                    rt.mesh.time().timeName(),
+                    rt.mesh,
                     Foam::IOobject::MUST_READ,
                     Foam::IOobject::NO_WRITE,
                     Foam::IOobject::NO_REGISTER
                 ),
-                rt.mesh()
+                rt.mesh
             );
             Foam::surfaceScalarField ofPhi(
                 Foam::IOobject(
                     "phi",
-                    rt.foamTime().timeName(),
-                    rt.mesh(),
+                    rt.mesh.time().timeName(),
+                    rt.mesh,
                     Foam::IOobject::READ_IF_PRESENT,
                     Foam::IOobject::NO_WRITE,
                     Foam::IOobject::NO_REGISTER
@@ -125,11 +122,11 @@ void registerFieldFactories(nb::module_& m)
                 Foam::fvc::flux(ofU)
             );
             fvcc::VectorCollection& vc =
-                fvcc::VectorCollection::instance(nfrt.db, "VectorCollection");
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
             return vc.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
                 nf::CreateFromFoamField<Foam::surfaceScalarField> {
-                    .exec = nfrt.exec,
-                    .nfMesh = nfrt.nfMesh,
+                    .exec = rt.exec,
+                    .nfMesh = rt.nfMesh,
                     .foamField = ofPhi,
                     .name = std::string("phi")
                 }
@@ -143,11 +140,10 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "create_uniform_surface_field",
-        [](Runtime& rt, const std::string& name, double value)
+        [](nf::RunTime& rt, const std::string& name, double value)
         {
-            auto& nfrt = rt.nfRuntime();
-            auto bcs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(nfrt.nfMesh);
-            fvcc::SurfaceField<NeoN::scalar> field(nfrt.exec, name, nfrt.nfMesh, bcs);
+            auto bcs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
+            fvcc::SurfaceField<NeoN::scalar> field(rt.exec, name, rt.nfMesh, bcs);
             NeoN::fill(field.internalVector(), value);
             NeoN::fill(field.boundaryData().value(), value);
             return field;
@@ -160,29 +156,24 @@ void registerFieldFactories(nb::module_& m)
 
     m.def(
         "set_ref_cell",
-        [](Runtime& rt, const std::string& fieldName, const std::string& pisoDict
+        [](nf::RunTime& rt, const std::string& fieldName, const std::string& pisoDict
         ) -> std::tuple<int, double, bool>
         {
             // Read OF field temporarily just to check needReference
             Foam::volScalarField ofField(
                 Foam::IOobject(
                     fieldName,
-                    rt.foamTime().timeName(),
-                    rt.mesh(),
+                    rt.mesh.time().timeName(),
+                    rt.mesh,
                     Foam::IOobject::MUST_READ,
                     Foam::IOobject::NO_WRITE,
                     Foam::IOobject::NO_REGISTER
                 ),
-                rt.mesh()
+                rt.mesh
             );
             Foam::label refCell = 0;
             Foam::scalar refValue = 0.0;
-            Foam::setRefCell(
-                ofField,
-                rt.mesh().solutionDict().subDict(pisoDict),
-                refCell,
-                refValue
-            );
+            Foam::setRefCell(ofField, rt.mesh.solutionDict().subDict(pisoDict), refCell, refValue);
             bool needs = ofField.needReference() && refCell >= 0;
             return {static_cast<int>(refCell), refValue, needs};
         },

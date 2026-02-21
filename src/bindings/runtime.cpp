@@ -6,8 +6,9 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/variant.h>
 
+#include "NeoFOAM/datastructures/meshAdapter.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
-#include "runtime.hpp"
+#include "NeoFOAM/auxiliary/setup.hpp"
 #include "bindings.hpp"
 
 namespace nb = nanobind;
@@ -21,58 +22,49 @@ namespace NeoFOAM::bindings
 void registerRuntime(nb::module_& m)
 {
     // -------------------------------------------------------------------
-    // Runtime
+    // MeshAdapter — opaque wrapper so Python can hold a reference
     // -------------------------------------------------------------------
-    nb::class_<Runtime>(m, "Runtime")
-        .def(
-            nb::init<std::vector<std::string>>(),
-            "argv"_a,
-            "Create runtime from command-line arguments (creates OF Time + NeoN mesh)"
-        )
-        // Time loop
-        .def("loop", &Runtime::loop, "Advance time loop; False when finished")
-        .def("time", &Runtime::time)
-        .def("delta_t", &Runtime::deltaT)
-        .def("time_name", &Runtime::timeName)
-        .def("sync", &Runtime::sync, "co_num"_a, "Sync OF <-> NeoN time/deltaT")
-        // IO
-        .def("write", &Runtime::write)
-        .def("output_time", &Runtime::outputTime)
-        .def("print_execution_time", &Runtime::printExecutionTime)
-        // NeoFOAM RunTime
-        .def(
-            "nf_runtime",
-            [](Runtime& self) -> nf::RunTime& { return self.nfRuntime(); },
-            nb::rv_policy::reference_internal
-        )
-        .def("executor", [](Runtime& self) -> NeoN::Executor { return self.executor(); })
-        .def(
-            "nf_mesh",
-            [](Runtime& self) -> const NeoN::UnstructuredMesh& { return self.nfMesh(); },
-            nb::rv_policy::reference_internal
-        )
-        .def(
-            "db",
-            [](Runtime& self) -> NeoN::Database& { return self.db(); },
-            nb::rv_policy::reference_internal
-        );
+    nb::class_<nf::MeshAdapter>(m, "MeshAdapter");
 
     // -------------------------------------------------------------------
-    // PisoControl
-    // -------------------------------------------------------------------
-    nb::class_<PisoControl>(m, "PisoControl")
-        .def(nb::init<Runtime&>(), "runtime"_a, nb::keep_alive<1, 2>())
-        .def("momentum_predictor", &PisoControl::momentumPredictor)
-        .def("correct", &PisoControl::correct)
-        .def("correct_non_orthogonal", &PisoControl::correctNonOrthogonal)
-        .def("final_non_orthogonal_iter", &PisoControl::finalNonOrthogonalIter);
-
-    // -------------------------------------------------------------------
-    // RunTime (read-only NeoFOAM struct, needed by PDESolver)
+    // RunTime Struct (Adapter)
     // -------------------------------------------------------------------
     nb::class_<nf::RunTime>(m, "RunTime")
-        .def_ro("t", &nf::RunTime::t)
-        .def_ro("dt", &nf::RunTime::dt);
+        .def_prop_ro("db", [](nf::RunTime& self) -> NeoN::Database& { return self.db; })
+        .def_prop_ro(
+            "mesh",
+            [](nf::RunTime& self) -> nf::MeshAdapter& { return self.mesh; },
+            nb::rv_policy::reference_internal
+        )
+        .def_prop_ro(
+            "nf_mesh",
+            [](nf::RunTime& self) -> const NeoN::UnstructuredMesh& { return self.nfMesh; },
+            nb::rv_policy::reference_internal
+        )
+        .def_prop_ro("executor", [](nf::RunTime& self) -> NeoN::Executor { return self.exec; })
+        .def_rw("t", &nf::RunTime::t)
+        .def_rw("dt", &nf::RunTime::dt)
+        .def_rw("adjust_time_step", &nf::RunTime::adjustTimeStep)
+        .def_rw("max_co", &nf::RunTime::maxCo)
+        .def_rw("max_delta_t", &nf::RunTime::maxDeltaT)
+        .def_rw("fv_solution_dict", &nf::RunTime::fvSolutionDict)
+        .def_rw("fv_schemes_dict", &nf::RunTime::fvSchemesDict);
+
+    m.def(
+        "create_adapter_run_time",
+        [](const Foam::Time& rt) -> nf::RunTime { return nf::createAdapterRunTime(rt); },
+        "rt"_a,
+        "Create a NeoFOAM RunTime from an OpenFOAM Time object"
+    );
+
+    m.def(
+        "sync_run_times",
+        &nf::syncRunTimes,
+        "of_run_time"_a,
+        "nf_run_time"_a,
+        "co_num"_a,
+        "Sync between OpenFOAM and NeoFOAM runtimes"
+    );
 }
 
 } // namespace NeoFOAM::bindings

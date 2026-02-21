@@ -8,13 +8,13 @@
 #include "NeoN/NeoN.hpp"
 
 // NeoFOAM headers
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 #include "NeoFOAM/compatibility/fvSchemes.hpp"
 
 // OpenFOAM headers
 #include "fvCFD.H"
 
-#include "runtime.hpp"
 #include "bindings.hpp"
 
 namespace nb = nanobind;
@@ -32,12 +32,12 @@ void registerUtility(nb::module_& m)
     // -------------------------------------------------------------------
     m.def(
         "read_transport_viscosity",
-        [](Runtime& rt) -> double
+        [](nf::RunTime& rt) -> double
         {
             Foam::IOdictionary transportProperties(Foam::IOobject(
                 "transportProperties",
-                rt.foamTime().constant(),
-                rt.mesh(),
+                rt.mesh.time().constant(),
+                rt.mesh,
                 Foam::IOobject::MUST_READ_IF_MODIFIED,
                 Foam::IOobject::NO_WRITE
             ));
