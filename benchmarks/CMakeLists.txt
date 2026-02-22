@@ -11,7 +11,9 @@ FetchContent_MakeAvailable(Catch2)
 
 set(Python_FIND_VIRTUALENV "FIRST")
 find_package(Python COMPONENTS Interpreter)
-set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
+#set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
+#set(PYTHON_EXECUTABLE /storage/home/greole/.local/bin/python3.13)#  ${Python_EXECUTABLE})
+set(PYTHON_EXECUTABLE /storage/home/greole/code/NeoFOAM/.venv/bin/python3.13)
 
 function(NeoN_benchmark BENCH)
   add_executable(bench_${BENCH} "${BENCH}.cpp")
@@ -52,7 +54,7 @@ function(NeoN_benchmark BENCH)
   add_test(
     NAME bench_${BENCH}
     COMMAND
-      ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/benchmarks/benchmarkSuite/createStudies.py "execute"
+      ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/benchmarks/benchmarkSuite/createStudies.py "execute"
       ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/benchmarks/bench_${BENCH} ${CMAKE_BINARY_DIR}/benchmarkSuite
       ${BENCH}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarkSuite)
