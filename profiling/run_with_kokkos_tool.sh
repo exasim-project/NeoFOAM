@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# SPDX-License-Identifier: Unlicense
+
 #!/usr/bin/env bash
 set -e
 
@@ -55,4 +59,3 @@ echo "Running: $@"
 
 # Execute the provided command with the tool environment
 exec "$@"
-

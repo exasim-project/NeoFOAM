@@ -5,9 +5,7 @@
 #
 include_guard(GLOBAL)
 
-option(NEOFOAM_ENABLE_PROFILING
-       "Enable profiling via Kokkos Tools"
-       OFF)
+option(NEOFOAM_ENABLE_PROFILING "Enable profiling via Kokkos Tools" OFF)
 
 if(NOT NEOFOAM_ENABLE_PROFILING)
   return()
@@ -19,9 +17,9 @@ message(STATUS "NeoFOAM profiling enabled")
 # Ensure Kokkos supports runtime tool loading
 # ---------------------------------------------------------------------------
 
-set(Kokkos_ENABLE_LIBDL ON CACHE BOOL
-    "Enable libdl support for Kokkos (required for tools)"
-    FORCE)
+set(Kokkos_ENABLE_LIBDL
+    ON
+    CACHE BOOL "Enable libdl support for Kokkos (required for tools)" FORCE)
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -29,11 +27,9 @@ set(Kokkos_ENABLE_LIBDL ON CACHE BOOL
 
 set(KOKKOS_TOOLS_GIT_TAG
     33693813b125096cc72a90d495fd02a7bb7574ea
-    CACHE STRING
-    "Git tag or commit for kokkos-tools")
+    CACHE STRING "Git tag or commit for kokkos-tools")
 
-set(KOKKOS_TOOLS_BUILD_DIR
-    ${CMAKE_BINARY_DIR}/kokkos_tools_build)
+set(KOKKOS_TOOLS_BUILD_DIR ${CMAKE_BINARY_DIR}/kokkos_tools_build)
 
 include(ExternalProject)
 
@@ -43,34 +39,30 @@ include(ExternalProject)
 
 message(STATUS "Cloning kokkos-tools (tag: ${KOKKOS_TOOLS_GIT_TAG})")
 
-ExternalProject_Add(kokkos_tools_ext
+ExternalProject_Add(
+  kokkos_tools_ext
   GIT_REPOSITORY https://github.com/kokkos/kokkos-tools.git
-  GIT_TAG        ${KOKKOS_TOOLS_GIT_TAG}
-
+  GIT_TAG ${KOKKOS_TOOLS_GIT_TAG}
   SOURCE_DIR ${CMAKE_BINARY_DIR}/kokkos_tools_src
   BINARY_DIR ${KOKKOS_TOOLS_BUILD_DIR}
-
-  CMAKE_ARGS
-    -DBUILD_SHARED_LIBS=ON
-    -DKokkosTools_ENABLE_MPI=OFF
-    -DKokkosTools_ENABLE_PAPI=OFF
-    -DKokkosTools_ENABLE_CALIPER=OFF
-    -DKokkosTools_ENABLE_APEX=OFF
-    -DKokkosTools_ENABLE_EXAMPLES=OFF
-    -DKokkosTools_ENABLE_TESTS=OFF
-
+  CMAKE_ARGS -DBUILD_SHARED_LIBS=ON
+             -DKokkosTools_ENABLE_MPI=OFF
+             -DKokkosTools_ENABLE_PAPI=OFF
+             -DKokkosTools_ENABLE_CALIPER=OFF
+             -DKokkosTools_ENABLE_APEX=OFF
+             -DKokkosTools_ENABLE_EXAMPLES=OFF
+             -DKokkosTools_ENABLE_TESTS=OFF
   INSTALL_COMMAND ""
-  USES_TERMINAL_BUILD TRUE
-)
+  USES_TERMINAL_BUILD TRUE)
 
 # ---------------------------------------------------------------------------
 # Build target
 # ---------------------------------------------------------------------------
 
-add_custom_target(build_kokkos_tools ALL
+add_custom_target(
+  build_kokkos_tools ALL
   DEPENDS kokkos_tools_ext
-  COMMENT "Building Kokkos Tools for NeoFOAM profiling"
-)
+  COMMENT "Building Kokkos Tools for NeoFOAM profiling")
 
 # ---------------------------------------------------------------------------
 # Status
