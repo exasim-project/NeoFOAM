@@ -5,7 +5,6 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NEOFOAM_SRC_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 BUILD_DIR="${NEOFOAM_SRC_DIR}/build"
 
-# Ensure at least one argument
 if [ $# -lt 1 ]; then
     echo "Usage:"
     echo "  $0 <tool-name>"
@@ -14,6 +13,7 @@ if [ $# -lt 1 ]; then
     echo "  simple-kernel-timer"
     echo "  space-time-stack"
     echo "  memory-usage"
+    echo "  memory-high-water-mark"
     exit 1
 fi
 
@@ -25,13 +25,12 @@ TOOLS_DIR="${BUILD_DIR}/profiling/kokkos_tools_build/profiling"
 case "$TOOL_NAME" in
   simple-kernel-timer)
     export KOKKOS_TOOLS_LIBS=${TOOLS_DIR}/simple-kernel-timer/libkp_kernel_timer.so
-    export PATH=${TOOLS_DIR}/simple-kernel-timer:$PATH
     ;;
   space-time-stack)
     export KOKKOS_TOOLS_LIBS=${TOOLS_DIR}/space-time-stack/libkp_space_time_stack.so
     ;;
-  memory-usage)
-    export KOKKOS_TOOLS_LIBS=${TOOLS_DIR}/memory-usage/libkp_memory_usage.so
+  memory-high-water-mark)
+    export KOKKOS_TOOLS_LIBS=${TOOLS_DIR}/memory-hwm/libkp_hwm.so
     ;;
   *)
     echo "Unknown tool: $TOOL_NAME"
@@ -41,4 +40,20 @@ esac
 
 echo "Using tool: $TOOL_NAME"
 echo "KOKKOS_TOOLS_LIBS=$KOKKOS_TOOLS_LIBS"
+
+# If no command given, show usage and exit
+if [ $# -eq 0 ]; then
+  echo ""
+  echo "No application specified to run with the tool."
+  echo "Usage:"
+  echo "  $0 <tool-name> <application> [args...]"
+  echo "Example:"
+  echo "  $0 simple-kernel-timer path-to-neoIcoFoam"
+  exit 1
+fi
+
+echo "Running: $@"
+
+# Execute the provided command with the tool environment
+exec "$@"
 
