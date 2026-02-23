@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
-# NeoFOAM Profiling Integration via Kokkos Tools (No Install Version)
+# NeoFOAM Profiling Integration via Kokkos Tools
 #
-
 include_guard(GLOBAL)
 
 option(NEOFOAM_ENABLE_PROFILING
@@ -94,13 +93,6 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
-# Built library path (direct from build tree)
-# ---------------------------------------------------------------------------
-
-set(KOKKOS_TOOLS_LIB_PATH
-    ${KOKKOS_TOOLS_BUILD_DIR}/profiling/simple-kernel-timer/libkp_kernel_timer.so)
-
-# ---------------------------------------------------------------------------
 # Build target
 # ---------------------------------------------------------------------------
 
@@ -110,24 +102,9 @@ add_custom_target(build_kokkos_tools ALL
 )
 
 # ---------------------------------------------------------------------------
-# Generate environment script
-# ---------------------------------------------------------------------------
-
-add_custom_command(
-  TARGET build_kokkos_tools
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E echo
-          "export KOKKOS_TOOLS_LIBS=${KOKKOS_TOOLS_LIB_PATH}"
-          > ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh
-  COMMENT "Generating kokkos_profiling_env.sh"
-)
-
-# ---------------------------------------------------------------------------
 # Status
 # ---------------------------------------------------------------------------
 
 message(STATUS "--------------------------------------------------")
 message(STATUS "Kokkos Tools build dir : ${KOKKOS_TOOLS_BUILD_DIR}")
-message(STATUS "Profiling library path : ${KOKKOS_TOOLS_LIB_PATH}")
-message(STATUS "Env script             : ${CMAKE_BINARY_DIR}/kokkos_profiling_env.sh")
 message(STATUS "--------------------------------------------------")
