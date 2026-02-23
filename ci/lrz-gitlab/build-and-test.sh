@@ -70,8 +70,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
         -DCMAKE_CXX_COMPILER=hipcc \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
-        -DNeoN_WITH_THREADS=OFF \
-        -DNEOFOAM_BUILD_BENCHMARKS=ON
+        -DNeoN_WITH_THREADS=OFF
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
