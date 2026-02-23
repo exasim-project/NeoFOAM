@@ -12,7 +12,6 @@ if [ $# -lt 1 ]; then
     echo "Available tools:"
     echo "  simple-kernel-timer"
     echo "  space-time-stack"
-    echo "  memory-usage"
     echo "  memory-high-water-mark"
     exit 1
 fi
