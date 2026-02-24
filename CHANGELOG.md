@@ -1,5 +1,6 @@
 # Version 0.3.0 ()
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
+- Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
