@@ -111,6 +111,7 @@ int main(int argc, char* argv[])
             {
                 NeoN::Logging::info("PISO loop");
                 Kokkos::Profiling::pushRegion("PISO loop");
+                Kokkos::Profiling::pushRegion("Compute rAU, HbyA and phiHbyA");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -124,6 +125,7 @@ int main(int argc, char* argv[])
                 rAU.name = "rAUf";
 
                 auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
+                Kokkos::Profiling::popRegion(); // Compute rAU, HbyA and phiHbyA
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -146,11 +148,10 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
-                    {
-                        Kokkos::Profiling::pushRegion("pEqn.solve");
-                        auto stats = pEqn.solve();
-                        Kokkos::Profiling::popRegion(); // pEqn.solve
-                    }
+                    Kokkos::Profiling::pushRegion("pEqn.solve");
+                    auto stats = pEqn.solve();
+                    Kokkos::Profiling::popRegion(); // pEqn.solve
+
                     p.correctBoundaryConditions();
 
                     if (piso.finalNonOrthogonalIter())
