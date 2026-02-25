@@ -47,11 +47,15 @@ else
 fi
 
 # -------------------------
-# Step 1: Prepare NeoN
+# Step 1: Prepare NeoN config
 # -------------------------
-echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
-git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
-    https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
+
+if [[ "$NEON_BRANCH" !=  "default." ]]; then
+    export NEON_CONFIG="-DNEOFOAM_NEON_VERSION=$NEON_BRANCH";
+    echo "=== NeoN Config $NEON_CONFIG ==="
+else
+    ehoc "=== No additional NeoN Config ==="
+fi
 
 # -------------------------
 # Step 2: Configure and build NeoFOAM
@@ -60,20 +64,20 @@ echo "=== Configuring NeoFOAM against NeoN ==="
 
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     cmake --preset $PRESET \
-        -DNEOFOAM_NEON_DIR=../NeoN \
+        $NEON_CONFIG \
         -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
-        -DNEOFOAM_NEON_DIR=../NeoN \
+        $NEON_CONFIG \
         -DCMAKE_CXX_COMPILER=hipcc \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
-        -DNEOFOAM_NEON_DIR=../NeoN \
+        $NEON_CONFIG \
         -DCMAKE_CXX_COMPILER=icpx \
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
         -DKokkos_ENABLE_SYCL=ON \

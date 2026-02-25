@@ -47,8 +47,9 @@ if [ "$status_code" -eq 200 ]; then
   NEON_BRANCH="$BRANCH"
   echo "NeoN branch '${BRANCH}' exists on LRZ GitLab."
 else
-  NEON_BRANCH="develop"
-  echo "NeoN branch '${BRANCH}' does not exist on LRZ GitLab. Using '${NEON_BRANCH}'."
+  # branch can not end with `.`, so we use that to avoid name collision
+  NEON_BRANCH="default."
+  echo "NeoN branch '${BRANCH}' does not exist on LRZ GitLab. Using default setup."
 fi
 
 # -----------------------------------------------------------------------------
