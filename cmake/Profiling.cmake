@@ -5,8 +5,6 @@
 #
 include_guard(GLOBAL)
 
-option(NEOFOAM_ENABLE_PROFILING "Enable profiling via Kokkos Tools" OFF)
-
 if(NOT NEOFOAM_ENABLE_PROFILING)
   return()
 endif()
