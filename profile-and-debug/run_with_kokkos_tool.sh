@@ -14,7 +14,7 @@ if [ $# -lt 3 ]; then
     echo "  $0 <debug|profile> <tool-name> <application> [args...]"
     echo ""
     echo "Available debugging tools:"
-    echo "  kernel logger"
+    echo "  kernel-logger"
     echo ""
     echo "Available profiling tools:"
     echo "  simple-kernel-timer"
