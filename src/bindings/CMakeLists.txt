@@ -15,18 +15,6 @@ find_package(
 message(STATUS "Python_EXECUTABLE = ${Python_EXECUTABLE}")
 message(STATUS "Python_INCLUDE_DIRS = ${Python_INCLUDE_DIRS}")
 
-# Fetch nanobind via CPM
-include(${CMAKE_SOURCE_DIR}/cmake/CPM.cmake)
-cpmaddpackage(
-  NAME
-  nanobind
-  GITHUB_REPOSITORY
-  wjakob/nanobind
-  GIT_TAG
-  v2.10.2
-  SYSTEM
-  YES)
-
 # Set output directory
 if(DEFINED SKBUILD)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -7,6 +7,18 @@ if(NeoFOAM_BUILD_TESTS OR NeoFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(NAME Catch2 GITHUB_REPOSITORY catchorg/Catch2 VERSION 3.4.0)
 endif()
 
+if(NEOFOAM_BUILD_BINDINGS)
+  cpmaddpackage(
+    NAME
+    nanobind
+    GITHUB_REPOSITORY
+    wjakob/nanobind
+    GIT_TAG
+    v2.10.2
+    SYSTEM
+    YES)
+endif()
+
 if(NEOFOAM_NEON_VIA_CPM)
   if(NOT DEFINED NEOFOAM_NEON_VERSION)
     set(NEOFOAM_NEON_VERSION
