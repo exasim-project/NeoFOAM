@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
-        auto& U = nf::constructAndRegister(vectorCollection, rt, ofU);
+        auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
         auto nuBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
         fvcc::SurfaceField<NeoN::scalar> nu(rt.exec, "nu", rt.nfMesh, nuBCs);
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
         NeoN::fill(nu.boundaryData().value(), viscosity.value());
 
         NeoN::Logging::info("Creating phi");
-        auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi);
+        auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
