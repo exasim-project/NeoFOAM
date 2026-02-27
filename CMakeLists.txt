@@ -19,7 +19,7 @@ endif()
 option(NEOFOAM_BUILD_EXAMPLES "Build the NeoN examples" ON)
 option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(KOKKOS_TOOLS_ENABLE "Enable Kokkos Tools" OFF)
+option(NEOFOAM_KOKKOS_TOOLS_ENABLE "Enable Kokkos Tools" OFF)
 
 set(NEOFOAM_BENCHMARK_MODE
     "all"
