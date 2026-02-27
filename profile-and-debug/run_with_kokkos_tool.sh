@@ -9,23 +9,50 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 NEOFOAM_SRC_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 BUILD_DIR="${NEOFOAM_SRC_DIR}/build"
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 3 ]; then
     echo "Usage:"
-    echo "  $0 <tool-name>"
+    echo "  $0 <debug|profile> <tool-name> <application> [args...]"
     echo ""
-    echo "Available tools:"
+    echo "Available debugging tools:"
+    echo "  kernel logger"
+    echo ""
+    echo "Available profiling tools:"
     echo "  simple-kernel-timer"
     echo "  space-time-stack"
     echo "  memory-high-water-mark"
     exit 1
 fi
 
-TOOL_NAME=$1
-shift
+MODE=$1
+TOOL_NAME=$2
+shift 2
 
-TOOLS_DIR="${BUILD_DIR}/profiling/kokkos_tools_build/profiling"
+# ---------------------------------------------------------------------------
+# Select tools directory based on mode
+# ---------------------------------------------------------------------------
+
+case "$MODE" in
+  debug)
+    TOOLS_DIR="${BUILD_DIR}/develop/kokkos_tools_build/debug"
+    ;;
+  profile)
+    TOOLS_DIR="${BUILD_DIR}/profiling/kokkos_tools_build/profiling"
+    ;;
+  *)
+    echo "Unknown mode: $MODE"
+    echo "Must be 'debug' or 'profile'"
+    exit 1
+    ;;
+esac
+
+# ---------------------------------------------------------------------------
+# Select tool library
+# ---------------------------------------------------------------------------
 
 case "$TOOL_NAME" in
+  kernel-logger)
+    export KOKKOS_TOOLS_LIBS=${TOOLS_DIR}/kernel-logger/libkp_kernel_logger.so
+    ;;
   simple-kernel-timer)
     export KOKKOS_TOOLS_LIBS=${TOOLS_DIR}/simple-kernel-timer/libkp_kernel_timer.so
     ;;
@@ -41,21 +68,18 @@ case "$TOOL_NAME" in
     ;;
 esac
 
+# ---------------------------------------------------------------------------
+# Info
+# ---------------------------------------------------------------------------
+
+echo "Mode: $MODE"
 echo "Using tool: $TOOL_NAME"
 echo "KOKKOS_TOOLS_LIBS=$KOKKOS_TOOLS_LIBS"
-
-# If no command given, show usage and exit
-if [ $# -eq 0 ]; then
-  echo ""
-  echo "No application specified to run with the tool."
-  echo "Usage:"
-  echo "  $0 <tool-name> <application> [args...]"
-  echo "Example:"
-  echo "  $0 simple-kernel-timer path-to-neoIcoFoam"
-  exit 1
-fi
-
 echo "Running: $@"
+echo ""
 
-# Execute the provided command with the tool environment
+# ---------------------------------------------------------------------------
+# Execute
+# ---------------------------------------------------------------------------
+
 exec "$@"
