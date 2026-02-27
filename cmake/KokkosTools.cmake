@@ -5,11 +5,11 @@
 #
 include_guard(GLOBAL)
 
-if(NOT NEOFOAM_ENABLE_PROFILING)
+if(NOT KOKKOS_TOOLS_ENABLE)
   return()
 endif()
 
-message(STATUS "NeoFOAM profiling enabled")
+message(STATUS "Kokkos Tools enabled")
 
 # ---------------------------------------------------------------------------
 # Ensure Kokkos supports runtime tool loading
@@ -60,7 +60,7 @@ ExternalProject_Add(
 add_custom_target(
   build_kokkos_tools ALL
   DEPENDS kokkos_tools_ext
-  COMMENT "Building Kokkos Tools for NeoFOAM profiling")
+  COMMENT "Building Kokkos Tools")
 
 # ---------------------------------------------------------------------------
 # Status
