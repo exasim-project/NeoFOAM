@@ -33,7 +33,7 @@ shift 2
 
 case "$MODE" in
   debug)
-    TOOLS_DIR="${BUILD_DIR}/develop/kokkos_tools_build/debug"
+    TOOLS_DIR="${BUILD_DIR}/develop/kokkos_tools_build/debugging"
     ;;
   profile)
     TOOLS_DIR="${BUILD_DIR}/profiling/kokkos_tools_build/profiling"
