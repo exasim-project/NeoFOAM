@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2025 NeoFOAM authors
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 """
 neoIcoFoam.py — Incompressible Navier-Stokes solver using NeoN + NeoFOAM bindings.

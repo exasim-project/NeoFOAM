@@ -12,7 +12,7 @@ Requirements
 Installing the Package
 ---------------------
 
-NeoFOAM (foamadapter) can be installed in two ways: either by building everything from source (including NeoN) or by installing NeoN first as a library/wheel.
+NeoFOAM can be installed in two ways: either by building everything from source (including NeoN) or by installing NeoN first as a library/wheel.
 
 Two-step Installation (Recommended)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

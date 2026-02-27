@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2024-2026 NeoFOAM authors
-// SPDX-License-Identifier: Unlicense
+// SPDX-FileCopyrightText: 2026 NeoFOAM authors
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nanobind/nanobind.h>
 
