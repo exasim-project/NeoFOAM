@@ -139,8 +139,8 @@ def wrap_with_dependency_resolution(
     If the return value is a ``FieldUpdates`` the context is updated
     automatically.
 
-    This is the canonical implementation shared by ``SolverInstance`` and
-    ``ModelInstance`` — avoids duplicating the same wrapper in every factory.
+    This is the canonical implementation shared by ``SolverSpec`` and
+    ``ModelSpec`` — avoids duplicating the same wrapper in every factory.
     """
     from functools import wraps
 

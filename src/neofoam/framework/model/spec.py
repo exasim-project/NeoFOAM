@@ -159,7 +159,7 @@ class ModelSpec:
         Returns a fresh list per call so multiple runtimes never share
         wrapper state.
         """
-        from .config_injection import (
+        from neofoam.framework.config_injection import (
             _discover_configs_from_signature,
             _create_runtime_config_wrapper,
         )

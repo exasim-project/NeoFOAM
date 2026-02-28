@@ -138,7 +138,7 @@ def collected_operations(self: Any) -> Operations:
 
     ``self`` is the ModelRuntime; ``self.config.coupled`` was set during RESOLVE.
     """
-    from neofoam.framework.model.config_injection import (
+    from neofoam.framework.config_injection import (
         _discover_configs_from_signature,
         _create_runtime_config_wrapper,
     )

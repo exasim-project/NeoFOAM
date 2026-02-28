@@ -254,7 +254,7 @@ def test_run_build_results_are_independent_per_runtime() -> None:
 
 def test_find_config_by_type_raises_on_missing_type() -> None:
     """_find_config_by_type raises ValueError when no match exists."""
-    from neofoam.framework.model.config_injection import _find_config_by_type
+    from neofoam.framework.config_injection import _find_config_by_type
     from neofoam.io import BaseConfig
 
     class MyConfig(BaseConfig):
@@ -270,7 +270,7 @@ def test_find_config_by_type_raises_on_missing_type() -> None:
 
 def test_find_config_by_type_finds_direct_match() -> None:
     """_find_config_by_type returns the config when it directly matches."""
-    from neofoam.framework.model.config_injection import _find_config_by_type
+    from neofoam.framework.config_injection import _find_config_by_type
     from neofoam.io import BaseConfig
 
     class MyConfig(BaseConfig):
@@ -282,7 +282,7 @@ def test_find_config_by_type_finds_direct_match() -> None:
 
 def test_find_config_by_type_searches_namespace() -> None:
     """_find_config_by_type locates a config nested inside a SimpleNamespace."""
-    from neofoam.framework.model.config_injection import _find_config_by_type
+    from neofoam.framework.config_injection import _find_config_by_type
     from neofoam.io import BaseConfig
 
     class StepConfig(BaseConfig):
@@ -298,7 +298,7 @@ def test_find_config_by_type_searches_namespace() -> None:
 
 def test_find_config_by_type_raises_when_not_in_namespace() -> None:
     """_find_config_by_type raises when config type missing from namespace."""
-    from neofoam.framework.model.config_injection import _find_config_by_type
+    from neofoam.framework.config_injection import _find_config_by_type
     from neofoam.io import BaseConfig
 
     class Missing(BaseConfig):

@@ -2,10 +2,10 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 """
-Config injection helpers for ModelSpec operations.
+Config injection helpers shared by ModelSpec and SolverSpec operations.
 
-Extracted from ModelInstance so spec.py and runtime.py stay focused.
-Operates on plain functions and ModelRuntime — no reference to ModelSpec.
+Operates on plain functions and any runtime object that exposes a
+``config`` attribute — no reference to a specific Spec class.
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from typing import Any, Callable, TYPE_CHECKING
 from neofoam.io import BaseConfig
 
 if TYPE_CHECKING:
-    from .runtime import ModelRuntime
     from neofoam.framework.context import Context
 
 
@@ -68,15 +67,15 @@ def _find_config_by_type(runtime_config: Any, config_type: type) -> Any:
 def _create_runtime_config_wrapper(
     func: Callable[..., Any],
     discovered: list[dict[str, Any]],
-    runtime: "ModelRuntime",
+    runtime: Any,
 ) -> Callable[["Context"], Any]:
     """
     Wrap an operation function to inject config from ``runtime.config``.
 
     Binding:
-        self  → runtime
-        config params → resolved from runtime.config by type
-        field params  → ctx.fields[param_name]
+        self  -> runtime
+        config params -> resolved from runtime.config by type
+        field params  -> ctx.fields[param_name]
     """
     sig = inspect.signature(func)
     expects_self = "self" in sig.parameters
