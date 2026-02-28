@@ -207,7 +207,8 @@ class StagedInit:
 
         # Wire LoadResult models into ConfigContext
         config = ConfigContext()
-        for loaded_model in load_result.all_models:
+
+        for loaded_model in load_result.core_models:
             key = (
                 getattr(loaded_model, "name", None)
                 or type(loaded_model).__name__.lower()
@@ -215,6 +216,13 @@ class StagedInit:
             if config.contains(key):
                 raise ValueError(f"Duplicate model registration key: '{key}'")
             config.register(key, loaded_model)
+
+        for runtime in load_result.optional_models:
+            if config.contains(runtime.name):
+                raise ValueError(
+                    f"Duplicate runtime registration key: '{runtime.name}'"
+                )
+            config.register(runtime.name, runtime)
 
         if self._hooks.resolve is not None:
             self._hooks.resolve(config)

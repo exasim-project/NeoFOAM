@@ -11,6 +11,9 @@ Demonstrates:
 - FileNotFoundError / KeyError on missing file or subdict
 """
 
+from pathlib import Path
+from typing import Callable, cast, Any
+
 import pytest
 
 from pydantic import ValidationError, Field
@@ -68,8 +71,12 @@ class ServiceCJSONConfig(BaseConfig):
     ],
 )
 def test_write_preserves_other_subdicts(
-    temp_fixture_copy, service_a_class, service_b_class, service_c_class, filename
-):
+    temp_fixture_copy: Callable[[str], Path],
+    service_a_class: type,
+    service_b_class: type,
+    service_c_class: type,
+    filename: str,
+) -> None:
     """Test that writing one subdict preserves other sections in same file.
 
     Demonstrates partial file updates - critical for shared config files where
@@ -81,20 +88,20 @@ def test_write_preserves_other_subdicts(
     timeout = 60
 
     # Load original values from directory
-    original_b = service_b_class.load(case_dir=test_dir)
-    original_c = service_c_class.load(case_dir=test_dir)
+    original_b = service_b_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
+    original_c = service_c_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
     assert original_b.endpoint == "example.com"
     assert original_c.enabled is True
 
     # Update only service_a section
-    service_a = service_a_class.load(case_dir=test_dir)
+    service_a = service_a_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
     service_a.timeout = timeout
     service_a.save(case_dir=test_dir)
 
     # Verify service_a changed but other sections unchanged
-    updated_a = service_a_class.load(case_dir=test_dir)
-    updated_b = service_b_class.load(case_dir=test_dir)
-    updated_c = service_c_class.load(case_dir=test_dir)
+    updated_a = service_a_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
+    updated_b = service_b_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
+    updated_c = service_c_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
 
     assert updated_a.timeout == timeout  # Unchanged
     assert updated_a.maxConnections == 10  # Unchanged
@@ -112,8 +119,8 @@ def test_write_preserves_other_subdicts(
     ],
 )
 def test_validation_error_missing_field_in_subdict(
-    io_fixtures, config_class, invalid_file
-):
+    io_fixtures: Path, config_class: type[BaseConfig], invalid_file: str
+) -> None:
     """Test that validation correctly identifies missing required fields and validator violations in subdicts.
 
     The invalid configs are missing the 'port' field and have poolSize=-5 (violates gt=0).
@@ -121,8 +128,8 @@ def test_validation_error_missing_field_in_subdict(
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
+    loaded_data = cast(
+        Any, config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     )
     assert loaded_data.endpoint == "example.com"
     assert loaded_data.poolSize == -5  # Invalid value loaded
@@ -154,7 +161,9 @@ def test_validation_error_missing_field_in_subdict(
         (ServiceBJSONConfig, "nonexistent.json"),
     ],
 )
-def test_load_missing_file_raises(tmp_path, config_class, missing_file):
+def test_load_missing_file_raises(
+    tmp_path: Path, config_class: type[BaseConfig], missing_file: str
+) -> None:
     """Loading from a non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Configuration file not found"):
         config_class.load(case_dir=tmp_path, file=missing_file)
@@ -167,7 +176,9 @@ def test_load_missing_file_raises(tmp_path, config_class, missing_file):
         (ServiceBJSONConfig, "simple.json"),
     ],
 )
-def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
+def test_load_missing_subdict_raises(
+    io_fixtures: Path, config_class: type[BaseConfig], config_file: str
+) -> None:
     """Loading from an existing file but wrong subdict path raises KeyError.
 
     Uses a file that exists but doesn't contain the 'config.service_b' subdict.

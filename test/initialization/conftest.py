@@ -12,7 +12,7 @@ from neofoam.framework.initialization.config_context import ConfigContext
 
 
 @pytest.fixture
-def linear_chain():
+def linear_chain() -> list[InitStep]:
     """A -> B -> C linear dependency chain (shuffled input order)."""
     return [
         InitStep("C", depends_on=["B"], initializer=lambda _ctx: "c"),
@@ -22,7 +22,7 @@ def linear_chain():
 
 
 @pytest.fixture
-def diamond_graph():
+def diamond_graph() -> list[InitStep]:
     """A -> (B, C) -> D diamond dependency graph."""
     return [
         InitStep("D", depends_on=["B", "C"], initializer=lambda _ctx: "d"),
@@ -33,13 +33,13 @@ def diamond_graph():
 
 
 @pytest.fixture
-def builder():
+def builder() -> InitializerBuilder:
     """Fresh InitializerBuilder instance."""
     return InitializerBuilder()
 
 
 @pytest.fixture
-def config():
+def config() -> ConfigContext:
     """Fresh ConfigContext instance."""
     return ConfigContext()
 
@@ -47,7 +47,7 @@ def config():
 class MockCoreModel:
     """Mock model with run_build() returning InitStep objects."""
 
-    def run_build(self):
+    def run_build(self) -> list[InitStep]:
         return [
             InitStep(
                 "test_field", initializer=lambda _ctx: "field_value", category="fields"
@@ -61,7 +61,7 @@ class MockCoreModel:
 class MockOptionalModel:
     """Mock optional model with run_build()."""
 
-    def run_build(self):
+    def run_build(self) -> list[InitStep]:
         return [
             InitStep(
                 "optional_field",
@@ -72,10 +72,10 @@ class MockOptionalModel:
 
 
 @pytest.fixture
-def mock_core_model():
+def mock_core_model() -> MockCoreModel:
     return MockCoreModel()
 
 
 @pytest.fixture
-def mock_optional_model():
+def mock_optional_model() -> MockOptionalModel:
     return MockOptionalModel()

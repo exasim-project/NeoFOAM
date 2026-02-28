@@ -12,6 +12,9 @@ Demonstrates:
 - FileNotFoundError / KeyError on missing file or subdict
 """
 
+from pathlib import Path
+from typing import Callable, cast, Any
+
 import pytest
 
 from pydantic import ValidationError, Field
@@ -76,7 +79,9 @@ class Stage2JSONConfig(BaseConfig):
         (MetadataJSONConfig, Stage1JSONConfig, Stage2JSONConfig),
     ],
 )
-def test_load_nested(io_fixtures, metadata_class, stage1_class, stage2_class):
+def test_load_nested(
+    io_fixtures: Path, metadata_class: type, stage1_class: type, stage2_class: type
+) -> None:
     """Test loading multiple nested subdicts from fixture (YAML and JSON).
 
     Demonstrates:
@@ -87,9 +92,9 @@ def test_load_nested(io_fixtures, metadata_class, stage1_class, stage2_class):
     - Field validators (gt=0, le=1000)
     """
     # Load each subdict independently
-    metadata = metadata_class.load(case_dir=io_fixtures)
-    stage1 = stage1_class.load(case_dir=io_fixtures)
-    stage2 = stage2_class.load(case_dir=io_fixtures)
+    metadata = metadata_class.load(case_dir=io_fixtures)  # type: ignore[attr-defined]
+    stage1 = stage1_class.load(case_dir=io_fixtures)  # type: ignore[attr-defined]
+    stage2 = stage2_class.load(case_dir=io_fixtures)  # type: ignore[attr-defined]
 
     # Verify isolation - each config only sees its subdict
     assert metadata.name == "TestApp"
@@ -114,7 +119,9 @@ def test_load_nested(io_fixtures, metadata_class, stage1_class, stage2_class):
         (MetadataJSONConfig, Stage1JSONConfig, "written.json"),
     ],
 )
-def test_write_and_reload_identical(tmp_path, metadata_class, stage1_class, filename):
+def test_write_and_reload_identical(
+    tmp_path: Path, metadata_class: type, stage1_class: type, filename: str
+) -> None:
     """Test that configs constructed in code survive a write/reload round-trip.
 
     Creates config instances directly, writes them to a fresh file in tmp_path,
@@ -130,8 +137,8 @@ def test_write_and_reload_identical(tmp_path, metadata_class, stage1_class, file
     original_s1.save(case_dir=tmp_path, file=filename)
 
     # Reload from the new file and compare
-    reloaded_meta = metadata_class.load(case_dir=tmp_path, file=filename)
-    reloaded_s1 = stage1_class.load(case_dir=tmp_path, file=filename)
+    reloaded_meta = metadata_class.load(case_dir=tmp_path, file=filename)  # type: ignore[attr-defined]
+    reloaded_s1 = stage1_class.load(case_dir=tmp_path, file=filename)  # type: ignore[attr-defined]
 
     assert reloaded_meta.model_dump() == original_meta.model_dump()
     assert reloaded_s1.model_dump() == original_s1.model_dump()
@@ -147,7 +154,9 @@ def test_write_and_reload_identical(tmp_path, metadata_class, stage1_class, file
         (MetadataJSONConfig, "invalid_nested.json"),
     ],
 )
-def test_validation_error_missing_field(io_fixtures, config_class, invalid_file):
+def test_validation_error_missing_field(
+    io_fixtures: Path, config_class: type[BaseConfig], invalid_file: str
+) -> None:
     """Test that validation correctly identifies missing required fields and validator violations.
 
     The invalid configs are missing the 'version' field and have priority=0 (violates gt=0).
@@ -155,8 +164,8 @@ def test_validation_error_missing_field(io_fixtures, config_class, invalid_file)
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
+    loaded_data = cast(
+        Any, config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     )
     assert loaded_data.name == "TestApp"
     assert loaded_data.priority == 0  # Invalid value loaded without validation
@@ -188,7 +197,9 @@ def test_validation_error_missing_field(io_fixtures, config_class, invalid_file)
         (MetadataJSONConfig, "nonexistent.json"),
     ],
 )
-def test_load_missing_file_raises(tmp_path, config_class, missing_file):
+def test_load_missing_file_raises(
+    tmp_path: Path, config_class: type[BaseConfig], missing_file: str
+) -> None:
     """Loading from a non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Configuration file not found"):
         config_class.load(case_dir=tmp_path, file=missing_file)
@@ -201,7 +212,9 @@ def test_load_missing_file_raises(tmp_path, config_class, missing_file):
         (MetadataJSONConfig, "simple.json"),
     ],
 )
-def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
+def test_load_missing_subdict_raises(
+    io_fixtures: Path, config_class: type[BaseConfig], config_file: str
+) -> None:
     """Loading from an existing file but wrong subdict path raises KeyError.
 
     Uses a file that exists but doesn't contain the 'metadata' subdict.
@@ -217,17 +230,22 @@ def test_load_missing_subdict_raises(io_fixtures, config_class, config_file):
         (MetadataJSONConfig, Stage1JSONConfig, "nested.json"),
     ],
 )
-def test_write_nested(temp_fixture_copy, metadata_class, stage1_class, filename):
+def test_write_nested(
+    temp_fixture_copy: Callable[[str], Path],
+    metadata_class: type,
+    stage1_class: type,
+    filename: str,
+) -> None:
     """Test that saving a loaded subdict produces identical data on reload."""
     test_file = temp_fixture_copy(filename)
     test_dir = test_file.parent
 
-    original = stage1_class.load(case_dir=test_dir)
+    original = stage1_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
     original.save(case_dir=test_dir)
-    reloaded = stage1_class.load(case_dir=test_dir)
+    reloaded = stage1_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
 
     assert reloaded == original
 
     # Verify other subdicts are preserved
-    meta = metadata_class.load(case_dir=test_dir)
+    meta = metadata_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
     assert meta.name == "TestApp"

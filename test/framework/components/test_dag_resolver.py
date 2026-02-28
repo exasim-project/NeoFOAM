@@ -5,8 +5,11 @@
 """Unit tests for DAGResolver — tests each pure function in isolation,
 plus integration tests through the ``DAGResolver.resolve()`` orchestrator."""
 
+from typing import Any
+
 import pytest
 
+from neofoam.framework.context import Context
 from neofoam.framework.graph import (
     DAGResolver,
     CyclicDependencyError,
@@ -26,7 +29,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from conftest import MaxIterations
+from framework.conftest import MaxIterations
 
 
 # ---------------------------------------------------------------------------
@@ -34,12 +37,17 @@ from conftest import MaxIterations
 # ---------------------------------------------------------------------------
 
 
-def _noop(ctx):
+def _noop(ctx: Any) -> None:
     """No-op callable for structural tests."""
     pass
 
 
-def _seq(name, number=None, depends_on=None, before=None):
+def _seq(
+    name: str,
+    number: str | None = None,
+    depends_on: list[str] | None = None,
+    before: list[str] | None = None,
+) -> Operation:
     """Create a sequential Operation with the given metadata."""
     return Operation(
         func=SequentialOp(_noop),
@@ -52,7 +60,7 @@ def _seq(name, number=None, depends_on=None, before=None):
     )
 
 
-def _loop_op(name, number=None, max_iters=1):
+def _loop_op(name: str, number: str | None = None, max_iters: int = 1) -> Operation:
     """Create an iterative (loop) Operation."""
     return Operation(
         func=IterativeOp(MaxIterations(max_iters=max_iters)),
@@ -63,7 +71,7 @@ def _loop_op(name, number=None, max_iters=1):
     )
 
 
-def _names_in(builder, path=None):
+def _names_in(builder: StepBuilder, path: list[int] | None = None) -> list[str | None]:
     """Extract operation names from a resolved builder.
 
     path: list of indices to descend into sub_operations.
@@ -75,7 +83,7 @@ def _names_in(builder, path=None):
     return [op.operation_name for op in ops]
 
 
-def _build_single_loop():
+def _build_single_loop() -> StepBuilder:
     """Builder with root → time_loop → [step1, step2, step3]."""
     builder = StepBuilder()
     loop = _loop_op("time_loop", number="1")
@@ -86,7 +94,7 @@ def _build_single_loop():
     return builder
 
 
-def _build_nested():
+def _build_nested() -> StepBuilder:
     """Builder with root → time_loop → inner_loop → [step1, step2, step3]."""
     builder = StepBuilder()
     time_loop = _loop_op("time_loop", number="1")
@@ -104,7 +112,7 @@ def _build_nested():
 # ===========================================================================
 
 
-def test_collect_flat_builder():
+def test_collect_flat_builder() -> None:
     """Flat builder tags all ops with scope 'root'."""
     builder = StepBuilder()
     builder.step(_seq("A", number="1"))
@@ -115,7 +123,7 @@ def test_collect_flat_builder():
     assert scopes == {"A": "root", "B": "root"}
 
 
-def test_collect_single_loop_scopes():
+def test_collect_single_loop_scopes() -> None:
     """Loop op is tagged with parent scope; its children with the loop scope."""
     builder = _build_single_loop()
     tagged = collect_tagged_ops(builder, Operations())
@@ -127,7 +135,7 @@ def test_collect_single_loop_scopes():
     assert scopes["step3"] == "time_loop"
 
 
-def test_collect_nested_loop_scopes():
+def test_collect_nested_loop_scopes() -> None:
     """Nested loops assign scopes correctly at each level."""
     builder = _build_nested()
     tagged = collect_tagged_ops(builder, Operations())
@@ -140,7 +148,7 @@ def test_collect_nested_loop_scopes():
     assert scopes["step3"] == "inner_loop"
 
 
-def test_collect_model_ops_with_deps_placed_in_loop():
+def test_collect_model_ops_with_deps_placed_in_loop() -> None:
     """Model ops depending on loop-body ops are placed in that loop's scope."""
     builder = _build_single_loop()
     model_ops = Operations(
@@ -155,7 +163,7 @@ def test_collect_model_ops_with_deps_placed_in_loop():
     assert scopes["M1"] == "time_loop"
 
 
-def test_collect_model_ops_chained():
+def test_collect_model_ops_chained() -> None:
     """Chained model ops: second finds first's scope via updated lookup."""
     builder = _build_single_loop()
     model_ops = Operations(
@@ -172,7 +180,7 @@ def test_collect_model_ops_chained():
     assert scopes["M2"] == "time_loop"
 
 
-def test_collect_model_ops_no_deps_default_to_innermost():
+def test_collect_model_ops_no_deps_default_to_innermost() -> None:
     """Model ops without deps default to innermost loop scope."""
     builder = _build_nested()
     model_ops = Operations([_seq("M_free", number="0.5")])
@@ -183,7 +191,7 @@ def test_collect_model_ops_no_deps_default_to_innermost():
     assert scopes["M_free"] == "inner_loop"
 
 
-def test_collect_empty_builder_no_model_ops():
+def test_collect_empty_builder_no_model_ops() -> None:
     """Empty builder + empty model ops → empty list."""
     builder = StepBuilder()
     tagged = collect_tagged_ops(builder, Operations())
@@ -195,7 +203,7 @@ def test_collect_empty_builder_no_model_ops():
 # ===========================================================================
 
 
-def test_infer_scope_from_depends_on():
+def test_infer_scope_from_depends_on() -> None:
     """Scope inferred from depends_on target's scope."""
     op = _seq("M1", depends_on=["step1"])
     scope = infer_target_scope(
@@ -206,7 +214,7 @@ def test_infer_scope_from_depends_on():
     assert scope == "time_loop"
 
 
-def test_infer_scope_from_before():
+def test_infer_scope_from_before() -> None:
     """Scope inferred from before target's scope."""
     op = _seq("M1", before=["step2"])
     scope = infer_target_scope(
@@ -217,7 +225,7 @@ def test_infer_scope_from_before():
     assert scope == "inner_loop"
 
 
-def test_infer_scope_prefers_non_root():
+def test_infer_scope_prefers_non_root() -> None:
     """When deps span root and a loop scope, prefer the loop scope."""
     op = _seq("M1", depends_on=["root_op", "loop_op"])
     scope = infer_target_scope(
@@ -228,7 +236,7 @@ def test_infer_scope_prefers_non_root():
     assert scope == "time_loop"
 
 
-def test_infer_scope_all_root_returns_root():
+def test_infer_scope_all_root_returns_root() -> None:
     """When all deps are in root scope, return root."""
     op = _seq("M1", depends_on=["A"])
     scope = infer_target_scope(
@@ -239,7 +247,7 @@ def test_infer_scope_all_root_returns_root():
     assert scope == "root"
 
 
-def test_infer_scope_no_deps_falls_back_to_deepest():
+def test_infer_scope_no_deps_falls_back_to_deepest() -> None:
     """No deps/before → falls back to deepest scope using nesting depth."""
     op = _seq("M1")
     scope = infer_target_scope(
@@ -251,7 +259,7 @@ def test_infer_scope_no_deps_falls_back_to_deepest():
     assert scope == "inner_loop"
 
 
-def test_infer_scope_no_deps_falls_back_to_deepest_adversarial_names():
+def test_infer_scope_no_deps_falls_back_to_deepest_adversarial_names() -> None:
     """Nesting depth beats alphabetical order for adversarial scope names."""
     op = _seq("M1")
     # "a_outer" < "z_inner" alphabetically, but z_inner is deeper
@@ -264,7 +272,7 @@ def test_infer_scope_no_deps_falls_back_to_deepest_adversarial_names():
     assert scope == "z_inner"
 
 
-def test_infer_scope_no_deps_no_loops_returns_root():
+def test_infer_scope_no_deps_no_loops_returns_root() -> None:
     """No deps and no loop scopes → root."""
     op = _seq("M1")
     scope = infer_target_scope(
@@ -275,7 +283,7 @@ def test_infer_scope_no_deps_no_loops_returns_root():
     assert scope == "root"
 
 
-def test_infer_scope_unknown_dep_ignored():
+def test_infer_scope_unknown_dep_ignored() -> None:
     """Dependencies not in op_to_scope are silently ignored."""
     op = _seq("M1", depends_on=["unknown_op"])
     scope = infer_target_scope(
@@ -292,7 +300,7 @@ def test_infer_scope_unknown_dep_ignored():
 # ===========================================================================
 
 
-def test_graph_flat_ops_become_nodes():
+def test_graph_flat_ops_become_nodes() -> None:
     """Sequential ops become graph nodes; their names are used."""
     tagged = [
         ("root", _seq("A", number="1")),
@@ -305,7 +313,7 @@ def test_graph_flat_ops_become_nodes():
     assert "A" in op_map and "B" in op_map
 
 
-def test_graph_loop_ops_excluded_from_nodes():
+def test_graph_loop_ops_excluded_from_nodes() -> None:
     """Loop (IterativeOp) ops are not graph nodes."""
     tagged = [
         ("root", _loop_op("time_loop")),
@@ -317,7 +325,7 @@ def test_graph_loop_ops_excluded_from_nodes():
     assert "step1" in graph.nodes
 
 
-def test_graph_depends_on_creates_edge():
+def test_graph_depends_on_creates_edge() -> None:
     """depends_on creates a directed edge dep → dependent."""
     tagged = [
         ("root", _seq("A", number="1")),
@@ -329,7 +337,7 @@ def test_graph_depends_on_creates_edge():
     assert not graph.has_edge("B", "A")
 
 
-def test_graph_before_creates_edge():
+def test_graph_before_creates_edge() -> None:
     """before creates a directed edge op → before_target."""
     tagged = [
         ("root", _seq("X", number="1", before=["Y"])),
@@ -340,7 +348,7 @@ def test_graph_before_creates_edge():
     assert graph.has_edge("X", "Y")
 
 
-def test_graph_diamond_edges():
+def test_graph_diamond_edges() -> None:
     """Diamond: A→B, A→C, B→D, C→D creates correct edges."""
     tagged = [
         ("root", _seq("A", number="1")),
@@ -357,7 +365,7 @@ def test_graph_diamond_edges():
     assert len(graph.edges) == 4
 
 
-def test_graph_missing_dependency_raises():
+def test_graph_missing_dependency_raises() -> None:
     """Depending on non-existent op raises MissingDependencyError."""
     tagged = [("root", _seq("A", depends_on=["ghost"]))]
 
@@ -365,7 +373,7 @@ def test_graph_missing_dependency_raises():
         build_global_graph(tagged)
 
 
-def test_graph_missing_before_target_raises():
+def test_graph_missing_before_target_raises() -> None:
     """before targeting non-existent op raises MissingDependencyError."""
     tagged = [("root", _seq("A", before=["ghost"]))]
 
@@ -373,7 +381,7 @@ def test_graph_missing_before_target_raises():
         build_global_graph(tagged)
 
 
-def test_graph_cross_scope_edges():
+def test_graph_cross_scope_edges() -> None:
     """Ops in different scopes still create edges in the global graph."""
     tagged = [
         ("time_loop", _seq("step1", number="1")),
@@ -384,7 +392,7 @@ def test_graph_cross_scope_edges():
     assert graph.has_edge("step1", "step2")
 
 
-def test_graph_scope_stored_as_node_attribute():
+def test_graph_scope_stored_as_node_attribute() -> None:
     """Scope is stored as node attribute on the graph."""
     tagged = [
         ("time_loop", _seq("step1", number="1")),
@@ -401,7 +409,7 @@ def test_graph_scope_stored_as_node_attribute():
 # ===========================================================================
 
 
-def test_sort_independent_by_operation_number():
+def test_sort_independent_by_operation_number() -> None:
     """Independent ops sorted by OperationNumber as tie-breaker."""
     tagged = [
         ("root", _seq("C", number="3")),
@@ -415,7 +423,7 @@ def test_sort_independent_by_operation_number():
     assert names == ["A", "B", "C"]
 
 
-def test_sort_dependency_overrides_number():
+def test_sort_dependency_overrides_number() -> None:
     """Dependency edges override OperationNumber ordering."""
     tagged = [
         ("root", _seq("A", number="1", depends_on=["B"])),
@@ -428,7 +436,7 @@ def test_sort_dependency_overrides_number():
     assert names.index("B") < names.index("A")
 
 
-def test_sort_groups_by_scope():
+def test_sort_groups_by_scope() -> None:
     """Ops grouped by their scope in the output dict."""
     tagged = [
         ("root", _loop_op("time_loop")),
@@ -445,7 +453,7 @@ def test_sort_groups_by_scope():
     assert time_loop_names == ["s1", "s2"]
 
 
-def test_sort_loop_ops_injected_into_parent_scope():
+def test_sort_loop_ops_injected_into_parent_scope() -> None:
     """Loop (IterativeOp) ops are re-injected into their parent scope."""
     tagged = [
         ("root", _loop_op("time_loop")),
@@ -458,7 +466,7 @@ def test_sort_loop_ops_injected_into_parent_scope():
     assert "time_loop" in root_names
 
 
-def test_sort_cyclic_raises():
+def test_sort_cyclic_raises() -> None:
     """Cyclic dependency raises CyclicDependencyError."""
     tagged = [
         ("root", _seq("A", number="1", depends_on=["B"])),
@@ -470,7 +478,7 @@ def test_sort_cyclic_raises():
         sort_global(graph, op_map, tagged)
 
 
-def test_sort_unnumbered_after_numbered():
+def test_sort_unnumbered_after_numbered() -> None:
     """Ops without OperationNumber sort after numbered (tie-breaker)."""
     tagged = [
         ("root", _seq("numbered", number="1")),
@@ -483,7 +491,7 @@ def test_sort_unnumbered_after_numbered():
     assert names.index("numbered") < names.index("unnumbered")
 
 
-def test_sort_chain_dependency():
+def test_sort_chain_dependency() -> None:
     """A → B → C chain preserved in sorted output."""
     tagged = [
         ("root", _seq("C", number="3", depends_on=["B"])),
@@ -497,7 +505,7 @@ def test_sort_chain_dependency():
     assert names == ["A", "B", "C"]
 
 
-def test_sort_sub_version_numbers():
+def test_sort_sub_version_numbers() -> None:
     """OperationNumber sub-versions (1, 1.0.1, 1.1, 2) sort correctly."""
     tagged = [
         ("root", _seq("op_2", number="2")),
@@ -517,7 +525,7 @@ def test_sort_sub_version_numbers():
 # ===========================================================================
 
 
-def test_rebuild_flat_from_sorted_scopes():
+def test_rebuild_flat_from_sorted_scopes() -> None:
     """Flat builder reconstructed from sorted_scopes['root']."""
     original = StepBuilder()
     original.step(_seq("B", number="2"))
@@ -531,7 +539,7 @@ def test_rebuild_flat_from_sorted_scopes():
     assert _names_in(result) == ["A", "B"]
 
 
-def test_rebuild_single_loop():
+def test_rebuild_single_loop() -> None:
     """Single-loop builder reconstructed with sorted loop body."""
     original = _build_single_loop()
 
@@ -550,7 +558,7 @@ def test_rebuild_single_loop():
     assert inner == ["step1", "step2", "step3"]
 
 
-def test_rebuild_nested_loops():
+def test_rebuild_nested_loops() -> None:
     """Nested loops reconstructed correctly from sorted_scopes."""
     original = _build_nested()
 
@@ -572,14 +580,14 @@ def test_rebuild_nested_loops():
     assert inner == ["step1", "step2", "step3"]
 
 
-def test_rebuild_empty_builder():
+def test_rebuild_empty_builder() -> None:
     """Empty builder + empty sorted_scopes → empty result."""
     original = StepBuilder()
     result = rebuild_builder(original, {})
     assert len(result.operations) == 0
 
 
-def test_rebuild_preserves_loop_op_identity():
+def test_rebuild_preserves_loop_op_identity() -> None:
     """Rebuilt loop op has same name as original."""
     original = _build_single_loop()
 
@@ -594,7 +602,7 @@ def test_rebuild_preserves_loop_op_identity():
     assert isinstance(loop.func, IterativeOp)
 
 
-def test_rebuild_with_extra_model_ops():
+def test_rebuild_with_extra_model_ops() -> None:
     """Sorted scopes contain model ops not in the original builder."""
     original = _build_single_loop()
 
@@ -618,21 +626,21 @@ def test_rebuild_with_extra_model_ops():
 # ===========================================================================
 
 
-def test_resolve_flat_no_ops():
+def test_resolve_flat_no_ops() -> None:
     """Empty builder + empty model ops → empty result."""
     builder = StepBuilder()
     result = DAGResolver().resolve(builder, Operations())
     assert len(result.operations) == 0
 
 
-def test_resolve_flat_single_op():
+def test_resolve_flat_single_op() -> None:
     builder = StepBuilder()
     builder.step(_seq("A", number="1"))
     result = DAGResolver().resolve(builder, Operations())
     assert _names_in(result) == ["A"]
 
 
-def test_resolve_flat_sorted_by_number():
+def test_resolve_flat_sorted_by_number() -> None:
     """Independent ops ordered by OperationNumber."""
     builder = StepBuilder()
     builder.step(_seq("C", number="3"))
@@ -643,7 +651,7 @@ def test_resolve_flat_sorted_by_number():
     assert _names_in(result) == ["A", "B", "C"]
 
 
-def test_resolve_flat_deps_override_number():
+def test_resolve_flat_deps_override_number() -> None:
     """Dependencies override OperationNumber ordering."""
     builder = StepBuilder()
     builder.step(_seq("A", number="1", depends_on=["B"]))
@@ -654,7 +662,7 @@ def test_resolve_flat_deps_override_number():
     assert names.index("B") < names.index("A")
 
 
-def test_resolve_flat_before_constraint():
+def test_resolve_flat_before_constraint() -> None:
     builder = StepBuilder()
     builder.step(_seq("X", number="3", before=["Y"]))
     builder.step(_seq("Y", number="1"))
@@ -664,7 +672,7 @@ def test_resolve_flat_before_constraint():
     assert names.index("X") < names.index("Y")
 
 
-def test_resolve_flat_diamond():
+def test_resolve_flat_diamond() -> None:
     builder = StepBuilder()
     builder.step(_seq("D", number="4", depends_on=["B", "C"]))
     builder.step(_seq("B", number="2", depends_on=["A"]))
@@ -677,7 +685,7 @@ def test_resolve_flat_diamond():
     assert names[-1] == "D"
 
 
-def test_resolve_flat_model_ops_in_root():
+def test_resolve_flat_model_ops_in_root() -> None:
     builder = StepBuilder()
     builder.step(_seq("S1", number="1"))
     model_ops = Operations([_seq("M1", number="1.5", depends_on=["S1"])])
@@ -687,7 +695,7 @@ def test_resolve_flat_model_ops_in_root():
     assert names.index("S1") < names.index("M1")
 
 
-def test_resolve_single_loop_structure():
+def test_resolve_single_loop_structure() -> None:
     builder = _build_single_loop()
     result = DAGResolver().resolve(builder, Operations())
 
@@ -695,7 +703,7 @@ def test_resolve_single_loop_structure():
     assert _names_in(result, path=[0]) == ["step1", "step2", "step3"]
 
 
-def test_resolve_single_loop_model_ops():
+def test_resolve_single_loop_model_ops() -> None:
     builder = _build_single_loop()
     model_ops = Operations(
         [
@@ -708,7 +716,7 @@ def test_resolve_single_loop_model_ops():
     assert inner.index("step1") < inner.index("M1")
 
 
-def test_resolve_nested_structure():
+def test_resolve_nested_structure() -> None:
     builder = _build_nested()
     result = DAGResolver().resolve(builder, Operations())
 
@@ -717,7 +725,7 @@ def test_resolve_nested_structure():
     assert _names_in(result, path=[0, 0]) == ["step1", "step2", "step3"]
 
 
-def test_resolve_nested_model_ops_in_inner():
+def test_resolve_nested_model_ops_in_inner() -> None:
     builder = _build_nested()
     model_ops = Operations(
         [
@@ -731,7 +739,7 @@ def test_resolve_nested_model_ops_in_inner():
     assert inner.index("step2") < inner.index("M1")
 
 
-def test_resolve_nested_chained_model_ops():
+def test_resolve_nested_chained_model_ops() -> None:
     builder = _build_nested()
     model_ops = Operations(
         [
@@ -746,7 +754,7 @@ def test_resolve_nested_chained_model_ops():
     assert inner.index("M_first") < inner.index("M_second")
 
 
-def test_resolve_cyclic_raises():
+def test_resolve_cyclic_raises() -> None:
     builder = StepBuilder()
     builder.step(_seq("A", number="1", depends_on=["B"]))
     builder.step(_seq("B", number="2", depends_on=["A"]))
@@ -755,7 +763,7 @@ def test_resolve_cyclic_raises():
         DAGResolver().resolve(builder, Operations())
 
 
-def test_resolve_missing_dep_raises():
+def test_resolve_missing_dep_raises() -> None:
     builder = StepBuilder()
     builder.step(_seq("A", number="1", depends_on=["nonexistent"]))
 
@@ -763,7 +771,7 @@ def test_resolve_missing_dep_raises():
         DAGResolver().resolve(builder, Operations())
 
 
-def test_resolve_realistic_two_models():
+def test_resolve_realistic_two_models() -> None:
     """Full solver with two models through the complete pipeline."""
     builder = _build_nested()
     model_ops = Operations(
@@ -784,12 +792,12 @@ def test_resolve_realistic_two_models():
 # ===========================================================================
 
 
-def test_runnable_flat_execution_order():
+def test_runnable_flat_execution_order() -> None:
     """Run resolved flat operations and check execution order."""
-    log = []
+    log: list[str] = []
 
-    def make_logger(name):
-        def fn(ctx):
+    def make_logger(name: str) -> Any:
+        def fn(ctx: Context) -> None:
             log.append(name)
 
         return fn
@@ -813,17 +821,17 @@ def test_runnable_flat_execution_order():
     )
 
     result = DAGResolver().resolve(builder, Operations())
-    result.operations.run({})
+    result.operations.run(Context(fields={}, models={}, mesh={}))
 
     assert log == ["A", "B"]
 
 
-def test_runnable_loop_execution_order_with_model_ops():
+def test_runnable_loop_execution_order_with_model_ops() -> None:
     """Run nested loop with model ops and verify execution sequence."""
-    log = []
+    log: list[str] = []
 
-    def make_logger(name):
-        def fn(ctx):
+    def make_logger(name: str) -> Any:
+        def fn(ctx: Context) -> None:
             log.append(name)
 
         return fn
@@ -867,7 +875,7 @@ def test_runnable_loop_execution_order_with_model_ops():
     )
 
     result = DAGResolver().resolve(builder, model_ops)
-    result.operations.run({})
+    result.operations.run(Context(fields={}, models={}, mesh={}))
 
     # 2 iterations × (S1, M1, S2) = [S1, M1, S2, S1, M1, S2]
     assert log == ["S1", "M1", "S2", "S1", "M1", "S2"]

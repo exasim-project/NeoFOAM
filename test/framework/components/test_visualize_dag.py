@@ -10,7 +10,7 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 PLOT_DAG = True
 
 
-def test_build_dag():
+def test_build_dag() -> None:
     parent_dir = Path(__file__).parent
     node1 = OperationMetadata(
         op_name="node1",
@@ -54,7 +54,7 @@ def test_build_dag():
         digraph_to_pyvis_html(dag, html_path=path)
 
 
-def test_build_global_dag():
+def test_build_global_dag() -> None:
     parent_dir = Path(__file__).parent
     domain_a_nodes = [
         OperationMetadata(

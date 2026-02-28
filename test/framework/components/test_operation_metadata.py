@@ -4,7 +4,7 @@
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 
-def test_node_data():
+def test_node_data() -> None:
     node = OperationMetadata(
         op_name="test_node",
         depends_on=["dep1", "dep2"],

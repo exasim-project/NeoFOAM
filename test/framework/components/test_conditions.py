@@ -5,15 +5,15 @@ Tests for the unified condition system.
 from neofoam.framework.conditions import Condition
 
 
-def always_true():
+def always_true() -> Condition:
     return Condition(lambda: True, "AlwaysTrue")
 
 
-def always_false():
+def always_false() -> Condition:
     return Condition(lambda: False, "AlwaysFalse")
 
 
-def test_conditions():
+def test_conditions() -> None:
     c1 = always_true()
     c2 = always_false()
 
