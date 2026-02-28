@@ -5,34 +5,40 @@
 Test that models are properly registered with DummyModelInterface.
 """
 
-from .models import model1, model2
 from .models.dummy_model import DummyModelInterface
 from neofoam.core.plugin_system import PluginSystem
+from neofoam.framework.model import ModelSpec
 
 
-def test_models_registered_with_dummy_interface():
-    """Test that model1 and model2 are registered with DummyModelInterface."""
-    # Import models to trigger registration
+def test_detect_specs_returns_model_spec_objects() -> None:
+    """detect_specs() must return ModelSpec instances, one per registered model."""
+    specs = DummyModelInterface.detect_specs()
+    assert len(specs) == 4
+    assert all(isinstance(s, ModelSpec) for s in specs)
+    names = {s.name for s in specs}
+    assert names == {"DummyModel1", "DummyModel2", "CoupledModel", "MultiModel"}
 
-    # Get the registry
+
+def test_models_registered_with_dummy_interface() -> None:
+    """Test that model1, model2, model3, and model4 are registered with DummyModelInterface."""
     registry = PluginSystem.get_registered("DummyModelInterface")
     assert registry is not None
 
-    # Check that both models are in the registry
     plugin_names = registry.get_plugin_names()
     assert "DummyModel1" in plugin_names
     assert "DummyModel2" in plugin_names
-    assert len(plugin_names) == 2
+    assert "CoupledModel" in plugin_names
+    assert "MultiModel" in plugin_names
+    assert len(plugin_names) == 4
 
 
-def test_create_models_accessible_via_plugin_system():
-    """Test that models can be accessed through the plugin system."""
+def test_specs_accessible_by_name() -> None:
+    """Each registered ModelSpec is findable by name via detect_specs()."""
+    specs = DummyModelInterface.detect_specs()
+    by_name = {s.name: s for s in specs}
 
-    # Create instances through the create method - now returns ModelInstance directly
-    m1 = DummyModelInterface.create(config={"model_type": "DummyModel1"})
-    assert isinstance(m1, type(model1))  # Both are ModelInstance objects
-    assert m1.name == "DummyModel1"
+    assert "DummyModel1" in by_name
+    assert isinstance(by_name["DummyModel1"], ModelSpec)
 
-    m2 = DummyModelInterface.create(config={"model_type": "DummyModel2"})
-    assert isinstance(m2, type(model2))
-    assert m2.name == "DummyModel2"
+    assert "DummyModel2" in by_name
+    assert isinstance(by_name["DummyModel2"], ModelSpec)

@@ -7,7 +7,7 @@ DummySolver - Test solver with FastAPI-style syntax.
 Mimics SimpleSolver structure for testing new API.
 """
 
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 
 from neofoam.framework.context import Context, FieldUpdates
@@ -29,7 +29,7 @@ from .dummy_init import create_init
 class AlgorithmLoop:
     """Helper class for managing the algorithm inner loop."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._iteration = 0
         self._max_iterations = 3  # Limit for testing
 
@@ -42,7 +42,7 @@ class AlgorithmLoop:
 
         algorithm = ctx.models.get("algorithm")
         if algorithm and hasattr(algorithm, "solve"):
-            return algorithm.solve()
+            return bool(algorithm.solve())
         return True  # Continue for testing
 
 
@@ -50,7 +50,7 @@ class AlgorithmLoop:
 dummy_solver = Solver("DummySolver")
 
 
-@dummy_solver.initializer
+@dummy_solver.initializer  # type: ignore[arg-type]
 def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
     init.argv = dummy_solver.argv
@@ -131,7 +131,7 @@ def run() -> Context:
 
 
 @dummy_solver.operation(operation_number="1.0")
-def solver_step1(self, field1: float, field2: float) -> FieldUpdates:
+def solver_step1(self: Any, field1: float, field2: float) -> FieldUpdates:
     """
     Primary solver step.
 
@@ -149,7 +149,7 @@ def solver_step1(self, field1: float, field2: float) -> FieldUpdates:
 
 
 @dummy_solver.operation(operation_number="2.0")
-def solver_step2(self, field2: float, field3: float) -> FieldUpdates:
+def solver_step2(self: Any, field2: float, field3: float) -> FieldUpdates:
     """
     Secondary solver step.
 
@@ -167,7 +167,7 @@ def solver_step2(self, field2: float, field3: float) -> FieldUpdates:
 
 
 @dummy_solver.operation(operation_number="3.0")
-def solver_step3(self, field1: float) -> FieldUpdates:
+def solver_step3(self: Any, field1: float) -> FieldUpdates:
     """
     Correction solver step.
 

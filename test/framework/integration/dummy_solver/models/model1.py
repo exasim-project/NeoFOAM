@@ -2,12 +2,13 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 """
-Generic model1 for DummySolver.
+DummyModel1 for DummySolver.
 
-Demonstrates Model API with 3-stage initialization pattern and new config features.
+Demonstrates ModelSpec API with 3-stage initialization and auto config injection.
 """
 
-from typing import Any
+from typing import Any, Callable
+from pathlib import Path
 from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
@@ -27,11 +28,7 @@ class Model1Config(BaseConfig):
     parameters: dict[str, Any] = Field(default_factory=dict)
 
 
-@IOStrategy(
-    YAML(
-        "model1_step_config.yaml",
-    )
-)
+@IOStrategy(YAML("model1_step_config.yaml"))
 class Model1StepConfig(BaseConfig):
     """Operation-specific configuration for Model1 steps."""
 
@@ -39,60 +36,58 @@ class Model1StepConfig(BaseConfig):
     use_absolute: bool = True
 
 
-# NEW: Create model - NO with_config needed, configs auto-discovered from operations
+# ModelSpec — immutable definition, registered once at module import
 model1 = Model("DummyModel1").register_with(DummyModelInterface)
 
-# NO @model1.load needed - auto-generated from discovered configs
+
+@model1.load
+def load(case_dir: Path, instance_id: str) -> Any:
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        main=Model1Config.load(case_dir=case_dir, validate=False),
+        step_config=Model1StepConfig.load(case_dir=case_dir, validate=False),
+    )
 
 
 @model1.detect
 def detect_model() -> bool:
-    """
-    Detection: Check if model should be enabled.
-
-    For now, always return True. In production, could check for
-    specific configuration files or case setup.
-    """
     return True
 
 
 @model1.resolve
-def resolve(config: ConfigContext) -> None:
-    """RESOLVE stage: Connect to other models if needed."""
-    pass
+def resolve(config: Any, ctx: ConfigContext) -> Any:
+    """RESOLVE stage: no cross-model wiring needed for model1."""
+    return config
+
+
+def _make_field2_init(cfg: Model1Config) -> Callable[[dict[str, Any]], float]:
+    def _init(_ctx: dict[str, Any]) -> float:
+        return cfg.prop2
+
+    return _init
 
 
 @model1.build
-def build() -> list[InitStep]:
+def build(config: Any) -> list[InitStep]:
     """
-    BUILD stage: Create LazyInit objects for fields.
+    BUILD stage: create LazyInit objects for fields managed by this model.
 
-    Returns list of LazyInit objects for fields managed by this model.
+    ``config`` is a SimpleNamespace with .main (Model1Config) and
+    .step_config (Model1StepConfig) since two config types are discovered.
     """
-
-    def create_mf1(_ctx: dict[str, Any]) -> float:
-        """Create model field 1."""
-        return 300.0
-
-    def create_mf2(_ctx: dict[str, Any]) -> float:
-        """Create model field 2 - uses config from load stage."""
-        # Find Model1Config instance
-        for cfg in model1._configs.values():
-            if isinstance(cfg, Model1Config):
-                return cfg.prop2
-        # Fallback: if no Model1Config found, use default value
-        return 1000.0
+    main = config.main if hasattr(config, "main") else config
 
     return [
         InitStep(
             name="model_field1",
-            initializer=create_mf1,
+            initializer=lambda _ctx: 300.0,
             depends_on=["domain"],
             category="fields",
         ),
         InitStep(
             name="model_field2",
-            initializer=create_mf2,
+            initializer=_make_field2_init(main),
             depends_on=["domain"],
             category="fields",
         ),
@@ -104,21 +99,17 @@ def build() -> list[InitStep]:
     depends_on=["solver_step1"],
 )
 def model1_step1(
-    self: Any, field1: float, model_field1: float, step_config: Model1StepConfig
+    self: Any,
+    field1: float,
+    model_field1: float,
+    step_config: Model1StepConfig,
 ) -> FieldUpdates:
-    """
-    First model step with operation-specific config.
-
-    Inserted between solver step 1 and 2.
-    Uses step_config for operation-specific parameters (auto-discovered and injected).
-    """
+    """First model step — uses step_config (auto-injected)."""
+    if not hasattr(self, "_step1_count"):
+        self._step1_count = 0
     self._step1_count += 1
-
-    # Generic update using operation-specific config
     value = abs(field1) if step_config.use_absolute else field1
-    mf1_new = model_field1 + value * step_config.factor
-
-    return FieldUpdates({"model_field1": mf1_new})
+    return FieldUpdates({"model_field1": model_field1 + value * step_config.factor})
 
 
 @model1.operation(
@@ -126,14 +117,8 @@ def model1_step1(
     depends_on=["model1_step1"],
 )
 def model1_step2(self: Any, main: Model1Config) -> FieldUpdates:
-    """
-    Second model step - uses main config (auto-discovered and injected).
-
-    Demonstrates auto-injection from type annotations.
-    """
+    """Second model step — uses main config (auto-injected)."""
+    if not hasattr(self, "_step2_count"):
+        self._step2_count = 0
     self._step2_count += 1
-
-    # Generic update using model config - calculate from config values
-    mf2_new = main.prop2 / main.prop1  # Use config from main
-
-    return FieldUpdates({"model_field2": mf2_new})
+    return FieldUpdates({"model_field2": main.prop2 / main.prop1})

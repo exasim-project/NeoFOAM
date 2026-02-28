@@ -7,19 +7,15 @@ Base class for DummySolver models.
 Mimics SimpleSolverModel structure for testing.
 """
 
-from typing import Any
-
 from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.framework.model_factory import ModelInstance
+from neofoam.framework.model import ModelSpec
 
 
-def Model(name: str) -> ModelInstance:
-    """
-    Factory for dummy models using the ModelInstance API.
-    """
-    return ModelInstance(name)
+def Model(name: str) -> ModelSpec:
+    """Factory for dummy models using the ModelSpec API."""
+    return ModelSpec(name)
 
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")
@@ -31,33 +27,20 @@ class DummyModelInterface(BaseModel):
     """
 
     @classmethod
-    def detect_models(cls) -> list[ModelInstance]:
+    def detect_specs(cls) -> list[ModelSpec]:
         """
-        Detect and return enabled model instances.
+        Return all registered ModelSpec objects that pass their detect() check.
 
-        Returns:
-            List of ModelInstance objects that have been registered and enabled
+        Callers call ``spec.instantiate(case_dir, instance_id)`` per config entry.
         """
         registry = PluginSystem.get_registered("DummyModelInterface")
         if not registry:
             return []
 
-        enabled_models = []
-        for plugin_cls in registry.plugin_registry:
-            # Get the ModelInstance from the wrapper class
-            if hasattr(plugin_cls, "get_model_instance"):
-                model_instance = plugin_cls.get_model_instance(plugin_cls)
-                # Check if model should be detected/enabled
-                if model_instance.run_detect():
-                    enabled_models.append(model_instance)
-
-        return enabled_models
-
-
-def _create_dummy_model_instance(cls, *, config: dict[str, Any], **kwargs: Any) -> Any:
-    """Factory classmethod for creating model instances from config dict."""
-    wrapper = cls.plugin_model(model=config, **kwargs)  # type: ignore[attr-defined]
-    return wrapper.model.get_model_instance()
-
-
-DummyModelInterface.create = classmethod(_create_dummy_model_instance)  # type: ignore[method-assign]
+        return [
+            spec
+            for plugin_cls in registry.plugin_registry
+            if hasattr(plugin_cls, "get_model_instance")
+            for spec in [plugin_cls.get_model_instance(plugin_cls)]
+            if spec.run_detect()
+        ]
