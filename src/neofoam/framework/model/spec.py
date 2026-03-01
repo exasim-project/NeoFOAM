@@ -10,7 +10,6 @@ callables; all mutable state lives on ModelRuntime created per instantiate().
 
 from __future__ import annotations
 
-import inspect
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -22,6 +21,21 @@ from neofoam.framework.base_spec import BaseSpec
 from neofoam.framework.operations import Operation, Operations
 
 from .runtime import ModelRuntime
+
+
+def _validate_param_count(
+    func: Callable[..., Any],
+    expected: int,
+    decorator: str,
+) -> None:
+    import inspect
+
+    actual = len(inspect.signature(func).parameters)
+    if actual != expected:
+        raise TypeError(
+            f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
+            f"expected exactly {expected}."
+        )
 
 
 @dataclass
@@ -60,8 +74,8 @@ class ModelSpec(BaseSpec):
         Register the LOAD function (optional override for custom logic).
 
         Signature: ``def load(case_dir: Path, entry: dict) -> SomeConfig``
-        or: ``def load(case_dir: Path) -> SomeConfig``
         """
+        _validate_param_count(func, expected=2, decorator="@load")
         self._load_func = func
         return func
 
@@ -71,6 +85,7 @@ class ModelSpec(BaseSpec):
 
         Signature: ``def resolve(config: MyConfig, ctx: ConfigContext) -> MyConfig``
         """
+        _validate_param_count(func, expected=2, decorator="@resolve")
         self._resolve_func = func
         return func
 
@@ -78,8 +93,9 @@ class ModelSpec(BaseSpec):
         """
         Register the BUILD function.
 
-        Signature: ``def build(config: MyConfig) -> list[InitStep]``
+        Signature: ``def build(config: MyConfig, runtime: Any) -> list[InitStep]``
         """
+        _validate_param_count(func, expected=2, decorator="@build")
         self._build_func = func
         return func
 
@@ -87,19 +103,16 @@ class ModelSpec(BaseSpec):
         self, func: Callable[..., Union[bool, list[str]]]
     ) -> Callable[..., Union[bool, list[str]]]:
         """Register the DETECT predicate."""
+        _validate_param_count(func, expected=1, decorator="@detect")
         self._detect_func = func
         return func
 
-    def run_detect(self, case_dir: Optional[Path] = None) -> DetectResult:
+    def run_detect(self, case_dir: Path) -> DetectResult:
         """Run the detect predicate and return a DetectResult."""
         if self._detect_func is None:
             return DetectResult(detected=True)
 
-        sig = inspect.signature(self._detect_func)
-        if len(sig.parameters) > 0:
-            result = self._detect_func(case_dir)
-        else:
-            result = self._detect_func()
+        result = self._detect_func(case_dir)
 
         if isinstance(result, list):
             return DetectResult(detected=len(result) > 0, instance_ids=result)
@@ -142,12 +155,7 @@ class ModelSpec(BaseSpec):
         runtime_name = entry["name"] if entry and "name" in entry else self.name
 
         if self._load_func is not None:
-            sig = inspect.signature(self._load_func)
-            params = list(sig.parameters)
-            if len(params) >= 2:
-                config = self._load_func(case_dir, entry)
-            else:
-                config = self._load_func(case_dir)
+            config = self._load_func(case_dir, entry)
         elif self._config_class is not None and entry is not None:
             fields = {k: v for k, v in entry.items() if k not in ("type", "name")}
             config = self._config_class.model_construct(**fields)  # type: ignore[attr-defined]

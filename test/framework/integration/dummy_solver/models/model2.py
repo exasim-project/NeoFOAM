@@ -27,17 +27,17 @@ model2 = Model("DummyModel2").register_with(DummyModelInterface)
 
 
 @model2.load
-def load(case_dir: Path) -> Model2Config:
+def load(case_dir: Path, _entry: Any) -> Model2Config:
     return Model2Config.load(case_dir=case_dir, validate=False)
 
 
 @model2.detect
-def detect_model() -> bool:
+def detect_model(_case_dir: Path) -> bool:
     return True
 
 
 @model2.build
-def build() -> list[InitStep]:
+def build(_config: Any, _runtime: Any) -> list[InitStep]:
     """BUILD stage: create a single field."""
     return [
         InitStep(

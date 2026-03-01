@@ -15,7 +15,7 @@ from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .spec import ModelSpec
     from neofoam.framework.initialization import ConfigContext, InitStep
-    from neofoam.framework.operations import Operation
+    from neofoam.framework.operations import Operations
 
 
 @dataclass
@@ -40,26 +40,17 @@ class ModelRuntime:
                 self.config = result
 
     def run_build(self) -> list["InitStep"]:
-        """Call spec's build func with this instance's config (if it accepts args).
-
-        If the build function has 2+ parameters, the second receives the runtime.
-        """
-        import inspect
-
+        """Call spec's build func with config and this runtime."""
         if self.spec._build_func is None:
             return []
-        sig = inspect.signature(self.spec._build_func)
-        n_params = len(sig.parameters)
-        if n_params >= 2:
-            return self.spec._build_func(self.config, self)  # type: ignore[no-any-return]
-        if n_params == 1:
-            return self.spec._build_func(self.config)  # type: ignore[no-any-return]
-        return self.spec._build_func()  # type: ignore[no-any-return]
+        return self.spec._build_func(self.config, self)  # type: ignore[no-any-return]
 
     @property
-    def operations(self) -> list["Operation"]:
+    def operations(self) -> "Operations":
         """Build operations with this runtime as the self binding."""
-        return self.spec._build_operations_for(self)
+        from neofoam.framework.operations import Operations
+
+        return Operations(self.spec._build_operations_for(self))
 
     @property
     def configs(self) -> list[Any]:

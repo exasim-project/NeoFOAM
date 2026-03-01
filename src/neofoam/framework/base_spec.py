@@ -17,7 +17,7 @@ from neofoam.framework.operation_wrapper import (
     wrap_operation,
 )
 from neofoam.framework.operations import Operation, SequentialOp
-from neofoam.framework.types import OperationMetadata, OperationNumber
+from neofoam.framework.types import OperationDef, OperationMetadata, OperationNumber
 
 
 class BaseSpec:
@@ -32,7 +32,7 @@ class BaseSpec:
     def __init__(self, name: str) -> None:
         self.name = name
         self._config_class: Optional[type] = None
-        self._operations: list[tuple[Any, dict[str, Any]]] = []
+        self._operations: list[OperationDef] = []
         self._dependency_resolver = DependencyResolver()
 
     def config(self, cls: type) -> type:
@@ -51,14 +51,12 @@ class BaseSpec:
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             self._operations.append(
-                (
-                    func,
-                    {
-                        "operation_number": operation_number,
-                        "depends_on": depends_on,
-                        "before": before,
-                        "name": name or func.__name__,
-                    },
+                OperationDef(
+                    func=func,
+                    operation_number=operation_number,
+                    depends_on=depends_on,
+                    before=before,
+                    name=name or func.__name__,
                 )
             )
             return func
@@ -72,21 +70,21 @@ class BaseSpec:
         share wrapper state.
         """
         ops: list[Operation] = []
-        for func, metadata in self._operations:
-            wrapped = wrap_operation(func, runtime, self._dependency_resolver)
+        for op_def in self._operations:
+            wrapped = wrap_operation(op_def.func, runtime, self._dependency_resolver)
 
-            op_name = metadata["name"] + suffix
+            op_name = op_def.name + suffix
             op = Operation(
                 func=SequentialOp(wrapped),
                 metadata=OperationMetadata(
                     op_name=op_name,
                     operation_number=(
-                        OperationNumber(metadata["operation_number"])
-                        if metadata["operation_number"]
+                        OperationNumber(op_def.operation_number)
+                        if op_def.operation_number
                         else None
                     ),
-                    depends_on=metadata["depends_on"] or [],
-                    before=metadata["before"] or [],
+                    depends_on=op_def.depends_on or [],
+                    before=op_def.before or [],
                 ),
             )
             ops.append(op)

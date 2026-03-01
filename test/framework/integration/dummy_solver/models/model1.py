@@ -41,7 +41,7 @@ model1 = Model("DummyModel1").register_with(DummyModelInterface)
 
 
 @model1.load
-def load(case_dir: Path) -> Any:
+def load(case_dir: Path, _entry: Any) -> Any:
     from types import SimpleNamespace
 
     return SimpleNamespace(
@@ -51,7 +51,7 @@ def load(case_dir: Path) -> Any:
 
 
 @model1.detect
-def detect_model() -> bool:
+def detect_model(_case_dir: Path) -> bool:
     return True
 
 
@@ -69,7 +69,7 @@ def _make_field2_init(cfg: Model1Config) -> Callable[[dict[str, Any]], float]:
 
 
 @model1.build
-def build(config: Any) -> list[InitStep]:
+def build(config: Any, _runtime: Any) -> list[InitStep]:
     """
     BUILD stage: create LazyInit objects for fields managed by this model.
 

@@ -57,7 +57,7 @@ def load(case_dir: Path, entry: dict[str, Any]) -> Model4Config:
 
 
 @model4.build
-def build(cfg: Model4Config, runtime: Any) -> list[InitStep]:
+def build(config: Model4Config, runtime: Any) -> list[InitStep]:
     field_name = (
         f"model_field4_{runtime.name}"
         if runtime.name != runtime.spec.name

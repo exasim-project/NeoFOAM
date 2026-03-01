@@ -79,7 +79,7 @@ def test_run_build_returns_empty_list_when_no_build_func() -> None:
 def test_run_build_calls_spec_func_with_config_and_returns_result() -> None:
     captured = {}
 
-    def build(config: Any) -> list[Any]:
+    def build(config: Any, _runtime: Any) -> list[Any]:
         captured["config"] = config
         return ["step_a", "step_b"]
 
@@ -91,10 +91,14 @@ def test_run_build_calls_spec_func_with_config_and_returns_result() -> None:
 
 
 def test_operations_delegates_to_spec_build_operations_for() -> None:
+    from neofoam.framework.operations import Operations
+
     sentinel = object()
     spec = _stub_spec(_build_operations_for=lambda rt: [sentinel])
     rt = ModelRuntime(spec=spec, name="M_id", config={})  # type: ignore[arg-type]
-    assert rt.operations == [sentinel]
+    result = rt.operations
+    assert isinstance(result, Operations)
+    assert list(result) == [sentinel]
 
 
 # ===========================================================================
@@ -137,7 +141,7 @@ def test_spec_build_decorator_stores_function() -> None:
     spec = ModelSpec("M")
 
     @spec.build
-    def build(config: Any) -> list[Any]:
+    def build(config: Any, _runtime: Any) -> list[Any]:
         return []
 
     assert spec._build_func is build
@@ -145,7 +149,7 @@ def test_spec_build_decorator_stores_function() -> None:
 
 def test_spec_detect_defaults_to_true() -> None:
     spec = ModelSpec("M")
-    result = spec.run_detect()
+    result = spec.run_detect(Path("."))
     assert result.detected is True
     assert result.instance_ids == []
 
@@ -154,10 +158,10 @@ def test_spec_detect_decorator_stores_and_runs_function() -> None:
     spec = ModelSpec("M")
 
     @spec.detect
-    def detect() -> bool:
+    def detect(_case_dir: Path) -> bool:
         return False
 
-    result = spec.run_detect()
+    result = spec.run_detect(Path("."))
     assert result.detected is False
     assert result.instance_ids == []
 
@@ -242,7 +246,7 @@ def test_run_build_results_are_independent_per_runtime() -> None:
         return {"value": float(entry["name"])}
 
     @spec.build
-    def build(config: Any) -> list[Any]:
+    def build(config: Any, _runtime: Any) -> list[Any]:
         return [config["value"]]  # simplistic: return the value as the "step"
 
     rt_42 = spec.instantiate(Path("."), entry={"type": "M", "name": "42"})
@@ -443,3 +447,63 @@ def test_instantiate_with_load_override_uses_load() -> None:
     rt = spec.instantiate(case_dir=Path("."), entry=entry)
     assert rt.config == {"custom": True}
     assert rt.name == "custom_inst"
+
+
+# ===========================================================================
+# Cycle 8 — Decorator param-count validation
+# ===========================================================================
+
+
+def test_detect_requires_exactly_one_param() -> None:
+    spec = ModelSpec("M")
+    with pytest.raises(TypeError, match="@detect"):
+
+        @spec.detect
+        def bad_detect() -> bool:
+            return True
+
+
+def test_detect_rejects_extra_params() -> None:
+    spec = ModelSpec("M")
+    with pytest.raises(TypeError, match="@detect"):
+
+        @spec.detect
+        def bad_detect(a: Any, b: Any) -> bool:
+            return True
+
+
+def test_detect_accepts_one_param() -> None:
+    spec = ModelSpec("M")
+
+    @spec.detect
+    def ok(_case_dir: Path) -> bool:
+        return True
+
+    assert spec._detect_func is ok
+
+
+def test_load_requires_exactly_two_params() -> None:
+    spec = ModelSpec("M")
+    with pytest.raises(TypeError, match="@load"):
+
+        @spec.load
+        def bad_load(case_dir: Any) -> Any:
+            return {}
+
+
+def test_build_requires_exactly_two_params() -> None:
+    spec = ModelSpec("M")
+    with pytest.raises(TypeError, match="@build"):
+
+        @spec.build
+        def bad_build(config: Any) -> list[Any]:
+            return []
+
+
+def test_resolve_requires_exactly_two_params() -> None:
+    spec = ModelSpec("M")
+    with pytest.raises(TypeError, match="@resolve"):
+
+        @spec.resolve  # type: ignore[arg-type]
+        def bad_resolve(config: Any) -> Any:
+            return config

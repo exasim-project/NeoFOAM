@@ -9,6 +9,7 @@ from typing import Any
 from neofoam.io import BaseConfig
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.operations import Operation
+from neofoam.framework.types import OperationDef
 
 
 # ===========================================================================
@@ -47,12 +48,32 @@ def test_base_spec_has_dependency_resolver() -> None:
 
 
 # ===========================================================================
-# Cycle 2 — operation() decorator
+# Cycle 2 — operation() decorator (OperationDef)
 # ===========================================================================
 
 
+def test_operation_def_construction_and_access() -> None:
+    """OperationDef stores func and metadata fields as named attributes."""
+
+    def my_func() -> None:
+        pass
+
+    op_def = OperationDef(
+        func=my_func,
+        operation_number="1.0",
+        depends_on=["init"],
+        before=["finalize"],
+        name="my_step",
+    )
+    assert op_def.func is my_func
+    assert op_def.operation_number == "1.0"
+    assert op_def.depends_on == ["init"]
+    assert op_def.before == ["finalize"]
+    assert op_def.name == "my_step"
+
+
 def test_base_spec_operation_stores_func_and_metadata() -> None:
-    """@spec.operation registers (func, metadata) in spec._operations."""
+    """@spec.operation stores an OperationDef with .func, .operation_number, .name."""
     from neofoam.framework.base_spec import BaseSpec
 
     spec = BaseSpec("test")
@@ -62,10 +83,11 @@ def test_base_spec_operation_stores_func_and_metadata() -> None:
         pass
 
     assert len(spec._operations) == 1
-    func, meta = spec._operations[0]
-    assert func is my_step
-    assert meta["operation_number"] == "1.0"
-    assert meta["name"] == "my_step"
+    op_def = spec._operations[0]
+    assert isinstance(op_def, OperationDef)
+    assert op_def.func is my_step
+    assert op_def.operation_number == "1.0"
+    assert op_def.name == "my_step"
 
 
 def test_base_spec_operation_default_name_from_func() -> None:
@@ -78,8 +100,8 @@ def test_base_spec_operation_default_name_from_func() -> None:
     def compute(self: Any) -> None:
         pass
 
-    _, meta = spec._operations[0]
-    assert meta["name"] == "compute"
+    op_def = spec._operations[0]
+    assert op_def.name == "compute"
 
 
 def test_base_spec_operation_stores_depends_on_and_before() -> None:
@@ -96,9 +118,9 @@ def test_base_spec_operation_stores_depends_on_and_before() -> None:
     def step(self: Any) -> None:
         pass
 
-    _, meta = spec._operations[0]
-    assert meta["depends_on"] == ["init"]
-    assert meta["before"] == ["finalize"]
+    op_def = spec._operations[0]
+    assert op_def.depends_on == ["init"]
+    assert op_def.before == ["finalize"]
 
 
 # ===========================================================================
