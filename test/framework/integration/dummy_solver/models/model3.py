@@ -16,6 +16,7 @@ from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, InitStep
+from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 from neofoam.io import BaseConfig, IOStrategy, YAML
@@ -60,10 +61,10 @@ def detect_model(_case_dir: Path) -> bool:
 
 
 @model3.resolve
-def resolve(config: Model3Config, ctx: ConfigContext) -> Model3Config:
+def resolve(
+    self: ModelRuntime, ctx: ConfigContext, config: Model3Config
+) -> Model3Config:
     """Check if DummyModel1 is active and store as coupled flag in config."""
-    from neofoam.framework.model import ModelRuntime
-
     coupled = any(
         isinstance(v, ModelRuntime) and v.spec.name == "DummyModel1"
         for v in ctx.all().values()
@@ -72,7 +73,7 @@ def resolve(config: Model3Config, ctx: ConfigContext) -> Model3Config:
 
 
 @model3.build
-def build(config: Model3Config, _runtime: Any) -> list[InitStep]:
+def build(self: ModelRuntime, config: Model3Config) -> list[InitStep]:
     """Create fields and the nested accumulator sub-model."""
 
     def create_model3_field(_ctx: dict[str, Any]) -> float:

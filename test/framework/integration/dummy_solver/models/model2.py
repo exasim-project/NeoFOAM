@@ -13,6 +13,7 @@ from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
+from neofoam.framework.model import ModelRuntime
 from neofoam.io import BaseConfig, IOStrategy, YAML
 
 from .dummy_model import DummyModelInterface, Model
@@ -37,7 +38,7 @@ def detect_model(_case_dir: Path) -> bool:
 
 
 @model2.build
-def build(_config: Any, _runtime: Any) -> list[InitStep]:
+def build(_self: ModelRuntime) -> list[InitStep]:
     """BUILD stage: create a single field."""
     return [
         InitStep(
