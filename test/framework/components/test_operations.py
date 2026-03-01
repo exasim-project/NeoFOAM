@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-from typing import Any
-
 from neofoam.framework.context import Context
 from neofoam.framework.operations import (
     IterativeOp,
@@ -13,39 +11,26 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from framework.conftest import MaxIterations
-
-
-def function1(_ctx: Context) -> int:
-    return 1
-
-
-def _op(name: str, number: int, **kw: Any) -> Operation:
-    """Shorthand for Operation with metadata."""
-    return Operation(
-        func=SequentialOp(function1),
-        metadata=OperationMetadata(
-            op_name=name, operation_number=OperationNumber(number), **kw
-        ),
-    )
+from framework.components.conftest import noop, make_seq_op
 
 
 def test_step_builder() -> None:
     builder = StepBuilder()
 
-    builder.step(_op("step1", 1))
-    builder.step(_op("step2", 2))
+    builder.step(make_seq_op("step1", 1))
+    builder.step(make_seq_op("step2", 2))
 
     assert len(builder.operations) == 2
 
     builder.loop(
         Operation(
-            func=SequentialOp(function1),
+            func=SequentialOp(noop),
             metadata=OperationMetadata(
                 op_name="loop1", operation_number=OperationNumber(3)
             ),
             sub_operations=[
-                _op("loop1_step1", 4),
-                _op("loop1_step2", 5),
+                make_seq_op("loop1_step1", 4),
+                make_seq_op("loop1_step2", 5),
             ],
         )
     )
@@ -56,14 +41,14 @@ def test_step_builder() -> None:
 def test_builder_context() -> None:
     builder = StepBuilder()
 
-    builder.step(_op("step1", 1))
-    builder.step(_op("step2", 2))
+    builder.step(make_seq_op("step1", 1))
+    builder.step(make_seq_op("step2", 2))
 
     assert len(builder.operations) == 2
 
-    loop = builder.loop(_op("loop1", 3))
-    loop.step(_op("loop1_step1", 4))
-    loop.step(_op("loop1_step2", 5))
+    loop = builder.loop(make_seq_op("loop1", 3))
+    loop.step(make_seq_op("loop1_step1", 4))
+    loop.step(make_seq_op("loop1_step2", 5))
 
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
@@ -72,22 +57,22 @@ def test_builder_context() -> None:
 def test_builder_nested_context() -> None:
     builder = StepBuilder()
 
-    builder.step(_op("step1", 1))
-    builder.step(_op("step2", 2))
+    builder.step(make_seq_op("step1", 1))
+    builder.step(make_seq_op("step2", 2))
 
     assert len(builder.operations) == 2
 
-    loop = builder.loop(_op("loop1", 3))
-    loop.step(_op("loop1_step1", 4))
-    loop.step(_op("loop1_step2", 5))
+    loop = builder.loop(make_seq_op("loop1", 3))
+    loop.step(make_seq_op("loop1_step1", 4))
+    loop.step(make_seq_op("loop1_step2", 5))
 
     assert len(loop.operations) == 2
 
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
 
-    builder.loop(_op("loop2", 6)).step(_op("loop2_step1", 7)).step(
-        _op("loop2_step2", 8)
+    builder.loop(make_seq_op("loop2", 6)).step(make_seq_op("loop2_step1", 7)).step(
+        make_seq_op("loop2_step2", 8)
     )
 
     assert len(builder.operations) == 4
@@ -156,11 +141,11 @@ def test_step_builder_context_manager() -> None:
     """StepBuilder.loop() can be used as a context manager via with-statement."""
     builder = StepBuilder()
 
-    builder.step(_op("step1", 1))
+    builder.step(make_seq_op("step1", 1))
 
-    with builder.loop(_op("loop1", 2)) as inner:
-        inner.step(_op("loop1_step1", 3))
-        inner.step(_op("loop1_step2", 4))
+    with builder.loop(make_seq_op("loop1", 2)) as inner:
+        inner.step(make_seq_op("loop1_step1", 3))
+        inner.step(make_seq_op("loop1_step2", 4))
 
     assert len(builder.operations) == 2
     assert len(builder.operations[-1].sub_operations) == 2
@@ -170,12 +155,12 @@ def test_step_builder_nested_context_manager() -> None:
     """Context managers can be nested for multi-level loops."""
     builder = StepBuilder()
 
-    builder.step(_op("step1", 1))
+    builder.step(make_seq_op("step1", 1))
 
-    with builder.loop(_op("outer_loop", 2)) as outer:
-        outer.step(_op("outer_step", 3))
-        with outer.loop(_op("inner_loop", 4)) as inner:
-            inner.step(_op("inner_step", 5))
+    with builder.loop(make_seq_op("outer_loop", 2)) as outer:
+        outer.step(make_seq_op("outer_step", 3))
+        with outer.loop(make_seq_op("inner_loop", 4)) as inner:
+            inner.step(make_seq_op("inner_step", 5))
 
     assert len(builder.operations) == 2
     outer_loop = builder.operations[-1]
