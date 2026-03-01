@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-from typing import Annotated, Callable, Optional, Protocol
+from typing import Annotated, Any, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -24,6 +24,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from neofoam.framework.types import OperationMetadata
 from .control_factory import create_pimple_control
 
 from ..incompressibleFluidModel import Model
@@ -41,7 +42,7 @@ class TurbulenceModel(Protocol):
 
 
 @pimple.build
-def build() -> list[object]:
+def build(self: Any) -> list[object]:
     def create_phi(context: dict[str, object]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
 
@@ -112,17 +113,14 @@ def _alias_operation(
     operation_name: str,
     depends_on: list[str],
 ) -> Operation:
-    metadata = getattr(op_func, "_metadata", None)
     return Operation(
         func=SequentialOp(op_func),
-        operation_number=getattr(metadata, "operation_number", None),
-        operation_name=operation_name,
-        domain_name=None,
-        depends_on=depends_on,
-        before=[],
-        shape="box",
-        color="lightblue",
-        level=0,
+        metadata=OperationMetadata(
+            op_name=operation_name,
+            depends_on=depends_on,
+            shape="box",
+            color="lightblue",
+        ),
     )
 
 
@@ -273,17 +271,16 @@ def continuity_boussinesq(
 
 
 @pimple.operation_collection
-def collected_operations(self, model_state: PressureReferenceState) -> Operations:
+def collected_operations(self: Any) -> Operations:
     model_ops = Operations()
     model_ops.add(
         Operation(
             func=IterativeOp(inner_loop),
-            operation_name="inner_loop",
-            operation_number=None,
+            metadata=OperationMetadata(op_name="inner_loop"),
         )
     )
 
-    if model_state.use_boussinesq:
+    if getattr(self, "use_boussinesq", False):
         momentum_op = momentum_boussinesq
         continuity_op = continuity_boussinesq
     else:

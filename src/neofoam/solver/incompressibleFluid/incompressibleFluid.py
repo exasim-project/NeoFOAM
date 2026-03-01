@@ -7,9 +7,7 @@ SimpleSolver - FastAPI-style syntax with execution graph support.
 The init module handles all initialization steps using FastAPI-style decorators.
 """
 
-from typing import Annotated, Optional, Protocol
-
-from pybFoam import Info, Time
+from typing import Annotated, Any, Optional, Protocol
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
@@ -17,12 +15,12 @@ from neofoam.framework.initialization import Depends, StagedInit
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
-    OperationCollection,
+    Operations,
     StepBuilder,
 )
-from neofoam.framework.solver_factory import Solver
-
-# Import create_init from create_fields
+from neofoam.framework.solver import Solver
+from neofoam.framework.types import OperationMetadata
+from pybFoam import Info
 from .create_fields import create_init
 
 
@@ -35,8 +33,7 @@ class TimeLoop:
 
     def __call__(self, ctx: Context) -> bool:
         """Check if the time loop should continue running."""
-        runTime: Time = ctx.runTime
-        return bool(runTime.run())
+        return bool(ctx.runTime.run())
 
 
 # Create Solver instance for decorating operations
@@ -44,40 +41,37 @@ incompressibleFluid = Solver("incompressibleFluid")
 
 
 @incompressibleFluid.initializer
-def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
+def initialize(self: Any, init: Annotated[StagedInit, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
-    init.argv = incompressibleFluid.argv
     ctx = init.run()
-    incompressibleFluid.core_models = init.core_models
-    incompressibleFluid.optional_models = init.optional_models
     return ctx
 
 
 @incompressibleFluid.execution_graph_step
 def execution_graph(
+    self: Any,
     domain_name: Optional[str] = None,
-) -> tuple[StepBuilder, OperationCollection]:
+) -> tuple[StepBuilder, Operations]:
     """
     Build solver structure and collect model operations.
 
     Returns:
-        Tuple of (StepBuilder with solver structure, OperationCollection with model ops)
+        Tuple of (StepBuilder with solver structure, Operations with model ops)
     """
     _ = domain_name
 
-    ops = incompressibleFluid.operations
+    ops = self.operations
     builder = StepBuilder()
 
     # Get the algorithm model directly from core_models (it's the first item)
     # This is the detected algorithm model (pimple/simple/piso)
-    algorithm_model = incompressibleFluid.core_models[0]
-    algo_ops = algorithm_model.operations_for(algorithm_model)
+    algorithm_model = self.state.core_models[0]
+    algo_ops = Operations(algorithm_model._build_operations_for(algorithm_model))
 
     # Time loop structure
     time_loop_op = Operation(
         func=IterativeOp(TimeLoop()),
-        operation_name="time_loop",
-        operation_number=None,
+        metadata=OperationMetadata(op_name="time_loop"),
     )
 
     with builder.loop(time_loop_op) as time_builder:
@@ -93,8 +87,8 @@ def execution_graph(
         time_builder.step(ops["write_output"])
 
     # Collect optional model operations
-    model_ops = OperationCollection()
-    for model in incompressibleFluid.optional_models:
+    model_ops = Operations()
+    for model in self.state.optional_models:
         model_ops.add(model.operations)
 
     return builder, model_ops
@@ -110,16 +104,15 @@ def run(argv: Optional[list[str]] = None) -> Context:
     Returns:
         Final context after solving
     """
-    # Set argv
-    incompressibleFluid.argv = argv or []
 
     # Initialize
-    ctx = incompressibleFluid.initialize()
+    solver = incompressibleFluid.instantiate(argv=argv or [])
+    ctx = solver.initialize()
 
     Info("Starting time loop")
 
     # Build and resolve execution graph
-    builder, model_ops = incompressibleFluid.execution_graph()
+    builder, model_ops = solver.execution_graph()
     resolver = DAGResolver()
     resolved = resolver.resolve(builder, model_ops)
 
@@ -150,7 +143,7 @@ def set_time_step(
 
 
 @incompressibleFluid.operation()
-def increment_time(self, ctx: Context) -> None:
+def increment_time(self: Any, ctx: Context) -> None:
     """Print current simulation time and increment."""
     Info(f"Time = {ctx.runTime.timeName()}")
     ctx.runTime.increment()

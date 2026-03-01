@@ -11,14 +11,13 @@ import os
 import subprocess
 from pathlib import Path
 
+from neofoam.solver.incompressibleFluid import run
 
 from .comparison_helpers import (
     requires_openfoam,
     setup_case,
     compare_solver_fields,
 )
-
-from neofoam.solver.incompressibleFluid import run
 
 # Disable OpenFOAM floating point exception trapping BEFORE any imports
 os.environ["FOAM_SIGFPE"] = ""

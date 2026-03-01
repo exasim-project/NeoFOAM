@@ -46,8 +46,6 @@ def load_config() -> LoadResult:
 
     # Detect optional models (e.g., boussinesq)
     optional_models = incompressibleFluidModel.detect_models()
-    for optional_model in optional_models:
-        optional_model.run_load()
 
     core_models: list[Any] = [pressure_model]
     if cfl_condition is not None:

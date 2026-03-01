@@ -3,7 +3,7 @@
 
 """SIMPLE pressure-velocity algorithm model."""
 
-from typing import Annotated, Callable, Optional, Protocol
+from typing import Annotated, Any, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -27,6 +27,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from neofoam.framework.types import OperationMetadata
 from .control_factory import create_simple_control
 
 from ..incompressibleFluidModel import Model
@@ -81,7 +82,7 @@ def ensure_pressure_reference(
 
 
 @simple.build
-def build() -> list[object]:
+def build(self: Any) -> list[object]:
     def create_phi(context: dict[str, object]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
 
@@ -107,17 +108,14 @@ def _alias_operation(
     operation_name: str,
     depends_on: list[str],
 ) -> Operation:
-    metadata = getattr(op_func, "_metadata", None)
     return Operation(
         func=SequentialOp(op_func),
-        operation_number=getattr(metadata, "operation_number", None),
-        operation_name=operation_name,
-        domain_name=None,
-        depends_on=depends_on,
-        before=[],
-        shape="box",
-        color="lightblue",
-        level=0,
+        metadata=OperationMetadata(
+            op_name=operation_name,
+            depends_on=depends_on,
+            shape="box",
+            color="lightblue",
+        ),
     )
 
 
@@ -195,14 +193,13 @@ def continuity(
 
 
 @simple.operation_collection
-def collected_operations(self, model_state: PressureReferenceState) -> Operations:
-    _set_active_model_state(model_state)
+def collected_operations(self: Any) -> Operations:
+    _set_active_model_state(self)
     model_ops = Operations()
     model_ops.add(
         Operation(
             func=IterativeOp(inner_loop),
-            operation_name="inner_loop",
-            operation_number=None,
+            metadata=OperationMetadata(op_name="inner_loop"),
         )
     )
     model_ops.add(_alias_operation(momentum, operation_name="momentum", depends_on=[]))
