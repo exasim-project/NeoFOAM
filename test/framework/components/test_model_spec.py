@@ -36,6 +36,17 @@ def _stub_spec(**kwargs: Any) -> SimpleNamespace:
     return SimpleNamespace(**defaults)
 
 
+def _make_func(n_params: int) -> Any:
+    """Create a dummy function with *n_params* positional parameters."""
+    if n_params == 0:
+        return lambda: None
+    if n_params == 1:
+        return lambda a: None
+    if n_params == 2:
+        return lambda a, b: None
+    return lambda a, b, c: None
+
+
 # ===========================================================================
 # Cycle 1 — ModelRuntime: construction and basic properties
 # ===========================================================================
@@ -126,34 +137,22 @@ def test_model_factory_returns_model_spec() -> None:
     assert spec.name == "MyModel"
 
 
-def test_spec_load_decorator_stores_function() -> None:
+@pytest.mark.parametrize(
+    ("decorator_name", "stored_attr", "n_params"),
+    [
+        ("load", "_load_func", 2),
+        ("resolve", "_resolve_func", 2),
+        ("build", "_build_func", 1),
+    ],
+    ids=["load", "resolve", "build"],
+)
+def test_spec_decorator_stores_function(
+    decorator_name: str, stored_attr: str, n_params: int
+) -> None:
     spec = ModelSpec("M")
-
-    @spec.load
-    def load(case_dir: Any, entry: Any) -> Any:
-        return {"v": 1}
-
-    assert spec._load_func is load
-
-
-def test_spec_resolve_decorator_stores_function() -> None:
-    spec = ModelSpec("M")
-
-    @spec.resolve
-    def resolve(self: Any, ctx: Any) -> Any:
-        return self.config
-
-    assert spec._resolve_func is resolve
-
-
-def test_spec_build_decorator_stores_function() -> None:
-    spec = ModelSpec("M")
-
-    @spec.build
-    def build(self: Any) -> list[Any]:
-        return []
-
-    assert spec._build_func is build
+    func = _make_func(n_params)
+    getattr(spec, decorator_name)(func)
+    assert getattr(spec, stored_attr) is func
 
 
 def test_spec_detect_defaults_to_true() -> None:
@@ -266,11 +265,6 @@ def test_run_build_results_are_independent_per_runtime() -> None:
 
 
 # ===========================================================================
-# Cycle 5 — Config injection error cases
-# ===========================================================================
-
-
-# ===========================================================================
 # Cycle 6 — ModelRuntime.configs property
 # ===========================================================================
 
@@ -316,19 +310,6 @@ def test_runtime_configs_empty_for_non_config() -> None:
 # ===========================================================================
 # Cycle 7 — @config decorator
 # ===========================================================================
-
-
-def test_config_decorator_stores_config_class() -> None:
-    """@spec.config registers the config class on the spec."""
-    from neofoam.io import BaseConfig
-
-    spec = ModelSpec("M")
-
-    @spec.config
-    class MyCfg(BaseConfig):
-        x: int = 1
-
-    assert spec._config_class is MyCfg
 
 
 def test_instantiate_with_entry_uses_config_class() -> None:
@@ -406,143 +387,41 @@ def test_instantiate_with_load_override_uses_load() -> None:
 # ===========================================================================
 
 
-def test_detect_requires_exactly_one_param() -> None:
+@pytest.mark.parametrize(
+    ("decorator_name", "n_params", "match"),
+    [
+        ("detect", 0, "@detect"),
+        ("detect", 2, "@detect"),
+        ("load", 1, "@load"),
+        ("build", 0, "@build"),
+        ("resolve", 1, "@resolve"),
+    ],
+    ids=["detect-0", "detect-2", "load-1", "build-0", "resolve-1"],
+)
+def test_decorator_rejects_wrong_param_count(
+    decorator_name: str, n_params: int, match: str
+) -> None:
     spec = ModelSpec("M")
-    with pytest.raises(TypeError, match="@detect"):
-
-        @spec.detect
-        def bad_detect() -> bool:
-            return True
+    with pytest.raises(TypeError, match=match):
+        getattr(spec, decorator_name)(_make_func(n_params))
 
 
-def test_detect_rejects_extra_params() -> None:
+@pytest.mark.parametrize(
+    ("decorator_name", "n_params", "stored_attr"),
+    [
+        ("detect", 1, "_detect_func"),
+        ("build", 1, "_build_func"),
+        ("resolve", 3, "_resolve_func"),
+    ],
+    ids=["detect-1", "build-1", "resolve-3"],
+)
+def test_decorator_accepts_valid_param_count(
+    decorator_name: str, n_params: int, stored_attr: str
+) -> None:
     spec = ModelSpec("M")
-    with pytest.raises(TypeError, match="@detect"):
-
-        @spec.detect
-        def bad_detect(a: Any, b: Any) -> bool:
-            return True
-
-
-def test_detect_accepts_one_param() -> None:
-    spec = ModelSpec("M")
-
-    @spec.detect
-    def ok(_case_dir: Path) -> bool:
-        return True
-
-    assert spec._detect_func is ok
-
-
-def test_load_requires_exactly_two_params() -> None:
-    spec = ModelSpec("M")
-    with pytest.raises(TypeError, match="@load"):
-
-        @spec.load
-        def bad_load(case_dir: Any) -> Any:
-            return {}
-
-
-def test_build_accepts_self_only() -> None:
-    spec = ModelSpec("M")
-
-    @spec.build
-    def build(self: Any) -> list[Any]:
-        return []
-
-    assert spec._build_func is build
-
-
-def test_build_rejects_zero_params() -> None:
-    spec = ModelSpec("M")
-    with pytest.raises(TypeError, match="@build"):
-
-        @spec.build
-        def bad() -> list[Any]:
-            return []
-
-
-def test_resolve_accepts_three_params() -> None:
-    spec = ModelSpec("M")
-
-    @spec.resolve
-    def resolve(self: Any, ctx: Any, cfg: Any) -> Any:
-        return cfg
-
-    assert spec._resolve_func is resolve
-
-
-def test_resolve_rejects_one_param() -> None:
-    spec = ModelSpec("M")
-    with pytest.raises(TypeError, match="@resolve"):
-
-        @spec.resolve
-        def bad(self: Any) -> Any:
-            return None
-
-
-# ===========================================================================
-# Cycle 9 — inject_and_call helper
-# ===========================================================================
-
-
-def test_inject_and_call_binds_self_and_injects_config() -> None:
-    from neofoam.framework.operation_wrapper import inject_and_call
-    from neofoam.io import BaseConfig
-
-    class MyCfg(BaseConfig):
-        val: int = 42
-
-    captured: dict[str, Any] = {}
-
-    def func(self: Any, cfg: MyCfg) -> list[Any]:
-        captured["self"] = self
-        captured["cfg"] = cfg
-        return ["step"]
-
-    runtime = SimpleNamespace(config=MyCfg(val=99))
-    call_meta = {
-        "first_param_name": "self",
-        "has_ctx": False,
-        "config_params": [{"param_name": "cfg", "config_type": MyCfg}],
-    }
-    result = inject_and_call(func, runtime, call_meta)
-    assert captured["self"] is runtime
-    assert captured["cfg"].val == 99
-    assert result == ["step"]
-
-
-def test_inject_and_call_passes_ctx() -> None:
-    from neofoam.framework.operation_wrapper import inject_and_call
-
-    captured: dict[str, Any] = {}
-
-    def func(self: Any, ctx: Any) -> None:
-        captured["ctx"] = ctx
-
-    sentinel = object()
-    call_meta = {
-        "first_param_name": "self",
-        "has_ctx": True,
-        "config_params": [],
-    }
-    inject_and_call(func, SimpleNamespace(config={}), call_meta, ctx=sentinel)
-    assert captured["ctx"] is sentinel
-
-
-def test_inject_and_call_self_only() -> None:
-    from neofoam.framework.operation_wrapper import inject_and_call
-
-    def func(self: Any) -> list[str]:
-        return [self.name]
-
-    rt = SimpleNamespace(config={}, name="rt1")
-    call_meta = {
-        "first_param_name": "self",
-        "has_ctx": False,
-        "config_params": [],
-    }
-    assert inject_and_call(func, rt, call_meta) == ["rt1"]
+    func = _make_func(n_params)
+    getattr(spec, decorator_name)(func)
+    assert getattr(spec, stored_attr) is func
 
 
 # ===========================================================================
@@ -550,7 +429,27 @@ def test_inject_and_call_self_only() -> None:
 # ===========================================================================
 
 
-def test_build_discovers_config_params() -> None:
+@pytest.mark.parametrize(
+    ("decorator_name", "meta_attr", "func_factory", "expected_has_ctx"),
+    [
+        (
+            "build",
+            "_build_call_meta",
+            lambda MyCfg: lambda self, cfg=None: [] if cfg is None else [],
+            False,
+        ),
+        (
+            "resolve",
+            "_resolve_call_meta",
+            lambda MyCfg: lambda self, ctx, cfg=None: cfg,
+            True,
+        ),
+    ],
+    ids=["build", "resolve"],
+)
+def test_decorator_discovers_config_params(
+    decorator_name: str, meta_attr: str, func_factory: Any, expected_has_ctx: bool
+) -> None:
     from neofoam.io import BaseConfig
 
     spec = ModelSpec("M")
@@ -558,49 +457,49 @@ def test_build_discovers_config_params() -> None:
     class MyCfg(BaseConfig):
         x: int = 1
 
-    @spec.build
-    def build(self: Any, cfg: MyCfg) -> list[Any]:
-        return []
+    # Build the real function with proper signature for each decorator
+    if decorator_name == "build":
 
-    assert len(spec._build_call_meta["config_params"]) == 1
-    assert spec._build_call_meta["config_params"][0]["config_type"] is MyCfg
-    assert spec._build_call_meta["first_param_name"] == "self"
-    assert spec._build_call_meta["has_ctx"] is False
+        @spec.build
+        def build_fn(self: Any, cfg: MyCfg) -> list[Any]:
+            return []
+
+    else:
+
+        @spec.resolve
+        def resolve_fn(self: Any, ctx: Any, cfg: MyCfg) -> Any:
+            return cfg
+
+    meta = getattr(spec, meta_attr)
+    assert len(meta["config_params"]) == 1
+    assert meta["config_params"][0]["config_type"] is MyCfg
+    assert meta["first_param_name"] == "self"
+    assert meta["has_ctx"] is expected_has_ctx
 
 
-def test_resolve_discovers_config_params() -> None:
-    from neofoam.io import BaseConfig
-
+@pytest.mark.parametrize(
+    ("decorator_name", "meta_attr"),
+    [
+        ("build", "_build_call_meta"),
+        ("resolve", "_resolve_call_meta"),
+    ],
+    ids=["build", "resolve"],
+)
+def test_config_params_empty_when_no_config(
+    decorator_name: str, meta_attr: str
+) -> None:
     spec = ModelSpec("M")
 
-    class MyCfg(BaseConfig):
-        x: int = 1
+    if decorator_name == "build":
 
-    @spec.resolve
-    def resolve(self: Any, ctx: Any, cfg: MyCfg) -> Any:
-        return cfg
+        @spec.build
+        def build_fn(self: Any) -> list[Any]:
+            return []
 
-    assert len(spec._resolve_call_meta["config_params"]) == 1
-    assert spec._resolve_call_meta["config_params"][0]["config_type"] is MyCfg
-    assert spec._resolve_call_meta["first_param_name"] == "self"
-    assert spec._resolve_call_meta["has_ctx"] is True
+    else:
 
+        @spec.resolve
+        def resolve_fn(self: Any, ctx: Any) -> Any:
+            return None
 
-def test_build_config_params_empty_when_no_config() -> None:
-    spec = ModelSpec("M")
-
-    @spec.build
-    def build(self: Any) -> list[Any]:
-        return []
-
-    assert spec._build_call_meta["config_params"] == []
-
-
-def test_resolve_config_params_empty_when_no_config() -> None:
-    spec = ModelSpec("M")
-
-    @spec.resolve
-    def resolve(self: Any, ctx: Any) -> Any:
-        return None
-
-    assert spec._resolve_call_meta["config_params"] == []
+    assert getattr(spec, meta_attr)["config_params"] == []

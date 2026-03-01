@@ -11,6 +11,8 @@ from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.operations import Operation
 from neofoam.framework.types import OperationDef
 
+from framework.components.conftest import StubConfig
+
 
 # ===========================================================================
 # Cycle 1 — BaseSpec.__init__ + config() decorator
@@ -126,10 +128,6 @@ def test_base_spec_operation_stores_depends_on_and_before() -> None:
 # ===========================================================================
 # Cycle 3 — _build_operations_for(runtime)
 # ===========================================================================
-
-
-class StubConfig(BaseConfig):
-    factor: float = 2.0
 
 
 def test_base_spec_build_operations_returns_operation_list() -> None:

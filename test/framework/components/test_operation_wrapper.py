@@ -12,22 +12,12 @@ from neofoam.io import BaseConfig
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization.depends import Depends
 
+from framework.components.conftest import MyConfig, OtherConfig, StepConfig
+
 
 # ===========================================================================
 # Cycle 1 — discover_configs_from_signature + find_config_by_type
 # ===========================================================================
-
-
-class MyConfig(BaseConfig):
-    x: int = 1
-
-
-class OtherConfig(BaseConfig):
-    y: int = 2
-
-
-class StepConfig(BaseConfig):
-    factor: float = 0.01
 
 
 def test_discover_configs_finds_baseconfig_params() -> None:
@@ -237,3 +227,82 @@ def test_wrap_operation_handles_field_updates_via_dependency_path() -> None:
 
     assert result is None
     assert ctx.fields["result"] == 10.0
+
+
+# ===========================================================================
+# Cycle 5 — inject_and_call helper
+# ===========================================================================
+
+
+def test_inject_and_call_binds_self_and_injects_config() -> None:
+    from neofoam.framework.operation_wrapper import inject_and_call
+
+    class MyCfg(BaseConfig):
+        val: int = 42
+
+    captured: dict[str, Any] = {}
+
+    def func(self: Any, cfg: MyCfg) -> list[Any]:
+        captured["self"] = self
+        captured["cfg"] = cfg
+        return ["step"]
+
+    runtime = SimpleNamespace(config=MyCfg(val=99))
+    call_meta = {
+        "first_param_name": "self",
+        "has_ctx": False,
+        "config_params": [{"param_name": "cfg", "config_type": MyCfg}],
+    }
+    result = inject_and_call(func, runtime, call_meta)
+    assert captured["self"] is runtime
+    assert captured["cfg"].val == 99
+    assert result == ["step"]
+
+
+def test_inject_and_call_passes_ctx() -> None:
+    from neofoam.framework.operation_wrapper import inject_and_call
+
+    captured: dict[str, Any] = {}
+
+    def func(self: Any, ctx: Any) -> None:
+        captured["ctx"] = ctx
+
+    sentinel = object()
+    call_meta = {
+        "first_param_name": "self",
+        "has_ctx": True,
+        "config_params": [],
+    }
+    inject_and_call(func, SimpleNamespace(config={}), call_meta, ctx=sentinel)
+    assert captured["ctx"] is sentinel
+
+
+def test_inject_and_call_self_only() -> None:
+    from neofoam.framework.operation_wrapper import inject_and_call
+
+    def func(self: Any) -> list[str]:
+        return [self.name]
+
+    rt = SimpleNamespace(config={}, name="rt1")
+    call_meta = {
+        "first_param_name": "self",
+        "has_ctx": False,
+        "config_params": [],
+    }
+    assert inject_and_call(func, rt, call_meta) == ["rt1"]
+
+
+def test_discover_call_metadata_extracts_first_param_ctx_and_configs() -> None:
+    from neofoam.framework.operation_wrapper import discover_call_metadata
+
+    class MyCfg(BaseConfig):
+        x: int = 1
+
+    def func(self: Any, ctx: Any, cfg: MyCfg) -> None:
+        pass
+
+    meta = discover_call_metadata(func)
+    assert meta["first_param_name"] == "self"
+    assert meta["has_ctx"] is True
+    assert len(meta["config_params"]) == 1
+    assert meta["config_params"][0]["config_type"] is MyCfg
