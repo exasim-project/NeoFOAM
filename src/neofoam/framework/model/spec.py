@@ -38,6 +38,21 @@ def _validate_param_count(
         )
 
 
+def _validate_min_param_count(
+    func: Callable[..., Any],
+    minimum: int,
+    decorator: str,
+) -> None:
+    import inspect
+
+    actual = len(inspect.signature(func).parameters)
+    if actual < minimum:
+        raise TypeError(
+            f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
+            f"expected at least {minimum}."
+        )
+
+
 @dataclass
 class DetectResult:
     """Result of a model detection check."""
@@ -60,7 +75,9 @@ class ModelSpec(BaseSpec):
 
         self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., Any]] = None
+        self._resolve_config_params: list[dict[str, Any]] = []
         self._build_func: Optional[Callable[..., Any]] = None
+        self._build_config_params: list[dict[str, Any]] = []
         self._detect_func: Optional[Callable[..., Any]] = None
 
         self._operation_collection_func: Optional[Callable[..., Any]] = None
@@ -79,24 +96,30 @@ class ModelSpec(BaseSpec):
         self._load_func = func
         return func
 
-    def resolve(self, func: Callable[[Any, Any], Any]) -> Callable[..., Any]:
+    def resolve(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Register the RESOLVE function.
 
-        Signature: ``def resolve(config: MyConfig, ctx: ConfigContext) -> MyConfig``
+        Signature: ``def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig, ...) -> Config``
         """
-        _validate_param_count(func, expected=2, decorator="@resolve")
+        from neofoam.framework.operation_wrapper import discover_configs_from_signature
+
+        _validate_min_param_count(func, minimum=2, decorator="@resolve")
         self._resolve_func = func
+        self._resolve_config_params = discover_configs_from_signature(func)
         return func
 
     def build(self, func: Callable[..., list[Any]]) -> Callable[..., list[Any]]:
         """
         Register the BUILD function.
 
-        Signature: ``def build(config: MyConfig, runtime: Any) -> list[InitStep]``
+        Signature: ``def build(self: ModelRuntime, cfg: MyConfig, ...) -> list[InitStep]``
         """
-        _validate_param_count(func, expected=2, decorator="@build")
+        from neofoam.framework.operation_wrapper import discover_configs_from_signature
+
+        _validate_min_param_count(func, minimum=1, decorator="@build")
         self._build_func = func
+        self._build_config_params = discover_configs_from_signature(func)
         return func
 
     def detect(

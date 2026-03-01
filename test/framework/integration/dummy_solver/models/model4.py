@@ -17,6 +17,7 @@ from pydantic import Field
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import InitStep
+from neofoam.framework.model import ModelRuntime
 from neofoam.io import BaseConfig
 
 from .dummy_model import DummyModelInterface, Model
@@ -57,11 +58,9 @@ def load(case_dir: Path, entry: dict[str, Any]) -> Model4Config:
 
 
 @model4.build
-def build(config: Model4Config, runtime: Any) -> list[InitStep]:
+def build(self: ModelRuntime, config: Model4Config) -> list[InitStep]:
     field_name = (
-        f"model_field4_{runtime.name}"
-        if runtime.name != runtime.spec.name
-        else "model_field4"
+        f"model_field4_{self.name}" if self.name != self.spec.name else "model_field4"
     )
     return [
         InitStep(

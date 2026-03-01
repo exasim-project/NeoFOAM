@@ -25,7 +25,9 @@ def _stub_spec(**kwargs: Any) -> SimpleNamespace:
     """Return a minimal spec-like namespace for testing ModelRuntime in isolation."""
     defaults: dict[str, Any] = {
         "_resolve_func": None,
+        "_resolve_config_params": [],
         "_build_func": None,
+        "_build_config_params": [],
         "_build_operations_for": lambda rt: [],
         "_operation_collection_func": None,
         "_operations": [],
@@ -56,14 +58,14 @@ def test_run_resolve_with_no_resolve_func_leaves_config_unchanged() -> None:
 
 def test_run_resolve_calls_spec_func_and_stores_returned_config() -> None:
     new_cfg = {"v": 99}
-    spec = _stub_spec(_resolve_func=lambda config, ctx: new_cfg)
+    spec = _stub_spec(_resolve_func=lambda self, ctx: new_cfg)
     rt = ModelRuntime(spec=spec, name="M_id", config={"v": 1})  # type: ignore[arg-type]
     rt.run_resolve(ctx=SimpleNamespace())  # type: ignore[arg-type]
     assert rt.config is new_cfg
 
 
 def test_run_resolve_ignores_none_return_and_keeps_original() -> None:
-    spec = _stub_spec(_resolve_func=lambda config, ctx: None)
+    spec = _stub_spec(_resolve_func=lambda self, ctx: None)
     original = {"v": 1}
     rt = ModelRuntime(spec=spec, name="M_id", config=original)  # type: ignore[arg-type]
     rt.run_resolve(ctx=SimpleNamespace())  # type: ignore[arg-type]
@@ -77,10 +79,10 @@ def test_run_build_returns_empty_list_when_no_build_func() -> None:
 
 
 def test_run_build_calls_spec_func_with_config_and_returns_result() -> None:
-    captured = {}
+    captured: dict[str, Any] = {}
 
-    def build(config: Any, _runtime: Any) -> list[Any]:
-        captured["config"] = config
+    def build(self: Any) -> list[Any]:
+        captured["config"] = self.config
         return ["step_a", "step_b"]
 
     spec = _stub_spec(_build_func=build)
@@ -131,8 +133,8 @@ def test_spec_resolve_decorator_stores_function() -> None:
     spec = ModelSpec("M")
 
     @spec.resolve
-    def resolve(config: Any, ctx: Any) -> Any:
-        return config
+    def resolve(self: Any, ctx: Any) -> Any:
+        return self.config
 
     assert spec._resolve_func is resolve
 
@@ -141,7 +143,7 @@ def test_spec_build_decorator_stores_function() -> None:
     spec = ModelSpec("M")
 
     @spec.build
-    def build(config: Any, _runtime: Any) -> list[Any]:
+    def build(self: Any) -> list[Any]:
         return []
 
     assert spec._build_func is build
@@ -246,8 +248,8 @@ def test_run_build_results_are_independent_per_runtime() -> None:
         return {"value": float(entry["name"])}
 
     @spec.build
-    def build(config: Any, _runtime: Any) -> list[Any]:
-        return [config["value"]]  # simplistic: return the value as the "step"
+    def build(self: Any) -> list[Any]:
+        return [self.config["value"]]  # simplistic: return the value as the "step"
 
     rt_42 = spec.instantiate(Path("."), entry={"type": "M", "name": "42"})
     rt_99 = spec.instantiate(Path("."), entry={"type": "M", "name": "99"})
@@ -491,19 +493,146 @@ def test_load_requires_exactly_two_params() -> None:
             return {}
 
 
-def test_build_requires_exactly_two_params() -> None:
+def test_build_accepts_self_only() -> None:
+    spec = ModelSpec("M")
+
+    @spec.build
+    def build(self: Any) -> list[Any]:
+        return []
+
+    assert spec._build_func is build
+
+
+def test_build_rejects_zero_params() -> None:
     spec = ModelSpec("M")
     with pytest.raises(TypeError, match="@build"):
 
         @spec.build
-        def bad_build(config: Any) -> list[Any]:
+        def bad() -> list[Any]:
             return []
 
 
-def test_resolve_requires_exactly_two_params() -> None:
+def test_resolve_accepts_three_params() -> None:
+    spec = ModelSpec("M")
+
+    @spec.resolve
+    def resolve(self: Any, ctx: Any, cfg: Any) -> Any:
+        return cfg
+
+    assert spec._resolve_func is resolve
+
+
+def test_resolve_rejects_one_param() -> None:
     spec = ModelSpec("M")
     with pytest.raises(TypeError, match="@resolve"):
 
-        @spec.resolve  # type: ignore[arg-type]
-        def bad_resolve(config: Any) -> Any:
-            return config
+        @spec.resolve
+        def bad(self: Any) -> Any:
+            return None
+
+
+# ===========================================================================
+# Cycle 9 — inject_and_call helper
+# ===========================================================================
+
+
+def test_inject_and_call_binds_self_and_injects_config() -> None:
+    from neofoam.framework.operation_wrapper import inject_and_call
+    from neofoam.io import BaseConfig
+
+    class MyCfg(BaseConfig):
+        val: int = 42
+
+    captured: dict[str, Any] = {}
+
+    def func(self: Any, cfg: MyCfg) -> list[Any]:
+        captured["self"] = self
+        captured["cfg"] = cfg
+        return ["step"]
+
+    runtime = SimpleNamespace(config=MyCfg(val=99))
+    config_params = [{"param_name": "cfg", "config_type": MyCfg}]
+    result = inject_and_call(func, runtime, config_params)
+    assert captured["self"] is runtime
+    assert captured["cfg"].val == 99
+    assert result == ["step"]
+
+
+def test_inject_and_call_passes_ctx() -> None:
+    from neofoam.framework.operation_wrapper import inject_and_call
+
+    captured: dict[str, Any] = {}
+
+    def func(self: Any, ctx: Any) -> None:
+        captured["ctx"] = ctx
+
+    sentinel = object()
+    inject_and_call(func, SimpleNamespace(config={}), [], ctx=sentinel)
+    assert captured["ctx"] is sentinel
+
+
+def test_inject_and_call_self_only() -> None:
+    from neofoam.framework.operation_wrapper import inject_and_call
+
+    def func(self: Any) -> list[str]:
+        return [self.name]
+
+    rt = SimpleNamespace(config={}, name="rt1")
+    assert inject_and_call(func, rt, []) == ["rt1"]
+
+
+# ===========================================================================
+# Cycle 10 — Config metadata stored at registration
+# ===========================================================================
+
+
+def test_build_discovers_config_params() -> None:
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("M")
+
+    class MyCfg(BaseConfig):
+        x: int = 1
+
+    @spec.build
+    def build(self: Any, cfg: MyCfg) -> list[Any]:
+        return []
+
+    assert len(spec._build_config_params) == 1
+    assert spec._build_config_params[0]["config_type"] is MyCfg
+
+
+def test_resolve_discovers_config_params() -> None:
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("M")
+
+    class MyCfg(BaseConfig):
+        x: int = 1
+
+    @spec.resolve
+    def resolve(self: Any, ctx: Any, cfg: MyCfg) -> Any:
+        return cfg
+
+    assert len(spec._resolve_config_params) == 1
+    assert spec._resolve_config_params[0]["config_type"] is MyCfg
+
+
+def test_build_config_params_empty_when_no_config() -> None:
+    spec = ModelSpec("M")
+
+    @spec.build
+    def build(self: Any) -> list[Any]:
+        return []
+
+    assert spec._build_config_params == []
+
+
+def test_resolve_config_params_empty_when_no_config() -> None:
+    spec = ModelSpec("M")
+
+    @spec.resolve
+    def resolve(self: Any, ctx: Any) -> Any:
+        return None
+
+    assert spec._resolve_config_params == []

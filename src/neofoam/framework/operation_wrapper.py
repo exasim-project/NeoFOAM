@@ -48,6 +48,35 @@ def discover_configs_from_signature(func: Callable[..., Any]) -> list[dict[str, 
     return discovered
 
 
+def inject_and_call(
+    func: Callable[..., Any],
+    runtime: Any,
+    config_params: list[dict[str, Any]],
+    ctx: Any = None,
+) -> Any:
+    """Call *func* with self=runtime, optional ctx, and injected BaseConfig params.
+
+    *config_params* is a pre-computed list from ``discover_configs_from_signature``.
+    Reuses ``find_config_by_type`` for config lookup.
+
+    The first parameter is always bound to *runtime* regardless of its name
+    (commonly ``self`` or ``_self``).
+    """
+    sig = inspect.signature(func)
+    params = list(sig.parameters)
+    kwargs: dict[str, Any] = {params[0]: runtime}
+
+    if "ctx" in sig.parameters and ctx is not None:
+        kwargs["ctx"] = ctx
+
+    for cfg_meta in config_params:
+        kwargs[cfg_meta["param_name"]] = find_config_by_type(
+            runtime.config, cfg_meta["config_type"]
+        )
+
+    return func(**kwargs)
+
+
 def find_config_by_type(runtime_config: Any, config_type: type) -> Any:
     """
     Find a config instance of *config_type* in *runtime_config*.

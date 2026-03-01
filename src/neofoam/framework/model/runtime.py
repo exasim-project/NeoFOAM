@@ -35,15 +35,28 @@ class ModelRuntime:
     def run_resolve(self, ctx: "ConfigContext") -> None:
         """Call spec's resolve func; store the returned updated config."""
         if self.spec._resolve_func is not None:
-            result = self.spec._resolve_func(self.config, ctx)
+            from neofoam.framework.operation_wrapper import inject_and_call
+
+            result = inject_and_call(
+                self.spec._resolve_func,
+                self,
+                self.spec._resolve_config_params,
+                ctx=ctx,
+            )
             if result is not None:
                 self.config = result
 
     def run_build(self) -> list["InitStep"]:
-        """Call spec's build func with config and this runtime."""
+        """Call spec's build func with self=runtime and injected configs."""
         if self.spec._build_func is None:
             return []
-        return self.spec._build_func(self.config, self)  # type: ignore[no-any-return]
+        from neofoam.framework.operation_wrapper import inject_and_call
+
+        return inject_and_call(  # type: ignore[no-any-return]
+            self.spec._build_func,
+            self,
+            self.spec._build_config_params,
+        )
 
     @property
     def operations(self) -> "Operations":
