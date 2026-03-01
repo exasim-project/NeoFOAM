@@ -4,46 +4,68 @@
 """
 MultiModel (model4) for DummySolver.
 
-Demonstrates multiple instances of the same spec with no instance state:
-- no @init_runtime — purely functional
-- single operation using Model4Config
+Demonstrates multiple instances of the same spec discovered from a YAML config:
+- detect returns instance IDs from config keys
+- each instance gets its own config and uniquely-named field
 """
 
 from typing import Any
 from pathlib import Path
+
+import yaml
 from pydantic import Field
 
-from neofoam.framework.context import FieldUpdates
+from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import InitStep
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import BaseConfig
 
 from .dummy_model import DummyModelInterface, Model
 
 
-@IOStrategy(YAML("model4_config.yaml"))
+model4 = Model("MultiModel").register_with(DummyModelInterface)
+
+CONFIG_FILE = "model4_config.yaml"
+
+
+@model4.config
 class Model4Config(BaseConfig):
     scale: float = Field(gt=0, description="Multiplicative scale factor")
     offset: float = Field(description="Additive offset")
 
 
-model4 = Model("MultiModel").register_with(DummyModelInterface)
-
-
 @model4.detect
-def detect_model() -> bool:
-    return True
+def detect_model(case_dir: Path) -> list[str]:
+    config_path = case_dir / CONFIG_FILE
+    if not config_path.exists():
+        return []
+    with open(config_path) as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        return []
+    return list(data.keys())
 
 
 @model4.load
-def load(case_dir: Path, instance_id: str) -> Model4Config:
-    return Model4Config.load(case_dir=case_dir, validate=False)
+def load(case_dir: Path, entry: dict[str, Any]) -> Model4Config:
+    """Fallback load for detect path: reads config from YAML file."""
+    instance_id = entry["name"]
+    config_path = case_dir / CONFIG_FILE
+    with open(config_path) as f:
+        data = yaml.safe_load(f)
+    fields = data[instance_id]
+    return Model4Config.model_construct(**fields)
 
 
 @model4.build
-def build() -> list[InitStep]:
+def build(cfg: Model4Config, runtime: Any) -> list[InitStep]:
+    field_name = (
+        f"model_field4_{runtime.name}"
+        if runtime.name != runtime.spec.name
+        else "model_field4"
+    )
     return [
         InitStep(
-            name="model_field4",
+            name=field_name,
             initializer=lambda _ctx: 0.0,
             depends_on=["domain"],
             category="fields",
@@ -54,7 +76,11 @@ def build() -> list[InitStep]:
 @model4.operation(operation_number="2.95", depends_on=["solver_step2"])
 def model4_step1(
     self: Any,
-    model_field4: float,
+    ctx: Context,
     cfg: Model4Config,
 ) -> FieldUpdates:
-    return FieldUpdates({"model_field4": model_field4 * cfg.scale + cfg.offset})
+    field_name = (
+        f"model_field4_{self.name}" if self.name != self.spec.name else "model_field4"
+    )
+    val = ctx.fields[field_name]
+    return FieldUpdates({field_name: val * cfg.scale + cfg.offset})

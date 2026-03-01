@@ -56,15 +56,14 @@ def test_step_builder() -> None:
 def test_builder_context() -> None:
     builder = StepBuilder()
 
-    with builder as steps:
-        steps.step(_op("step1", 1))
-        steps.step(_op("step2", 2))
+    builder.step(_op("step1", 1))
+    builder.step(_op("step2", 2))
 
     assert len(builder.operations) == 2
 
-    with builder.loop(_op("loop1", 3)) as loop:
-        loop.step(_op("loop1_step1", 4))
-        loop.step(_op("loop1_step2", 5))
+    loop = builder.loop(_op("loop1", 3))
+    loop.step(_op("loop1_step1", 4))
+    loop.step(_op("loop1_step2", 5))
 
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
@@ -73,17 +72,16 @@ def test_builder_context() -> None:
 def test_builder_nested_context() -> None:
     builder = StepBuilder()
 
-    with builder as steps:
-        steps.step(_op("step1", 1))
-        steps.step(_op("step2", 2))
+    builder.step(_op("step1", 1))
+    builder.step(_op("step2", 2))
 
-        assert len(builder.operations) == 2
+    assert len(builder.operations) == 2
 
-        with builder.loop(_op("loop1", 3)) as loop:
-            loop.step(_op("loop1_step1", 4))
-            loop.step(_op("loop1_step2", 5))
+    loop = builder.loop(_op("loop1", 3))
+    loop.step(_op("loop1_step1", 4))
+    loop.step(_op("loop1_step2", 5))
 
-            assert len(loop.operations) == 2
+    assert len(loop.operations) == 2
 
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
@@ -104,52 +102,124 @@ def test_operation_run() -> None:
 
     opBuilder = StepBuilder()
 
-    with opBuilder as op:
-        op.step(
-            Operation(
-                func=SequentialOp(increment),
-                metadata=OperationMetadata(
-                    op_name="increment1", operation_number=OperationNumber(1)
-                ),
-            )
+    opBuilder.step(
+        Operation(
+            func=SequentialOp(increment),
+            metadata=OperationMetadata(
+                op_name="increment1", operation_number=OperationNumber(1)
+            ),
         )
-        op.step(
-            Operation(
-                func=SequentialOp(increment),
-                metadata=OperationMetadata(
-                    op_name="increment2", operation_number=OperationNumber(2)
-                ),
-            )
+    )
+    opBuilder.step(
+        Operation(
+            func=SequentialOp(increment),
+            metadata=OperationMetadata(
+                op_name="increment2", operation_number=OperationNumber(2)
+            ),
         )
+    )
 
-        with op.loop(
-            Operation(
-                func=IterativeOp(MaxIterations(max_iters=4)),
-                metadata=OperationMetadata(
-                    op_name="loop_increment", operation_number=OperationNumber(3)
-                ),
-            )
-        ) as loop:
-            loop.step(
-                Operation(
-                    func=SequentialOp(increment),
-                    metadata=OperationMetadata(
-                        op_name="looped_increment_1",
-                        operation_number=OperationNumber(4),
-                    ),
-                )
-            )
-            loop.step(
-                Operation(
-                    func=SequentialOp(increment),
-                    metadata=OperationMetadata(
-                        op_name="looped_increment_2",
-                        operation_number=OperationNumber(5),
-                    ),
-                )
-            )
+    loop = opBuilder.loop(
+        Operation(
+            func=IterativeOp(MaxIterations(max_iters=4)),
+            metadata=OperationMetadata(
+                op_name="loop_increment", operation_number=OperationNumber(3)
+            ),
+        )
+    )
+    loop.step(
+        Operation(
+            func=SequentialOp(increment),
+            metadata=OperationMetadata(
+                op_name="looped_increment_1",
+                operation_number=OperationNumber(4),
+            ),
+        )
+    )
+    loop.step(
+        Operation(
+            func=SequentialOp(increment),
+            metadata=OperationMetadata(
+                op_name="looped_increment_2",
+                operation_number=OperationNumber(5),
+            ),
+        )
+    )
 
     ops = opBuilder.operations
     ops.run(Context(fields={}, models={}, mesh={}))
 
     assert count[0] == 2 + 4 * 2  # 2 from sequential, 4 loops with 2 increments each
+
+
+def test_step_builder_context_manager() -> None:
+    """StepBuilder.loop() can be used as a context manager via with-statement."""
+    builder = StepBuilder()
+
+    builder.step(_op("step1", 1))
+
+    with builder.loop(_op("loop1", 2)) as inner:
+        inner.step(_op("loop1_step1", 3))
+        inner.step(_op("loop1_step2", 4))
+
+    assert len(builder.operations) == 2
+    assert len(builder.operations[-1].sub_operations) == 2
+
+
+def test_step_builder_nested_context_manager() -> None:
+    """Context managers can be nested for multi-level loops."""
+    builder = StepBuilder()
+
+    builder.step(_op("step1", 1))
+
+    with builder.loop(_op("outer_loop", 2)) as outer:
+        outer.step(_op("outer_step", 3))
+        with outer.loop(_op("inner_loop", 4)) as inner:
+            inner.step(_op("inner_step", 5))
+
+    assert len(builder.operations) == 2
+    outer_loop = builder.operations[-1]
+    assert len(outer_loop.sub_operations) == 2
+    assert outer_loop.sub_operations[0].metadata.op_name == "outer_step"
+    inner_loop = outer_loop.sub_operations[1]
+    assert len(inner_loop.sub_operations) == 1
+    assert inner_loop.sub_operations[0].metadata.op_name == "inner_step"
+
+
+def test_step_builder_context_manager_runs_correctly() -> None:
+    """Operations built with context manager execute correctly."""
+    count = [0]
+
+    def increment(ctx: Context) -> None:
+        count[0] += 1
+
+    builder = StepBuilder()
+
+    builder.step(
+        Operation(
+            func=SequentialOp(increment),
+            metadata=OperationMetadata(
+                op_name="pre", operation_number=OperationNumber(1)
+            ),
+        )
+    )
+
+    with builder.loop(
+        Operation(
+            func=IterativeOp(MaxIterations(max_iters=3)),
+            metadata=OperationMetadata(
+                op_name="loop", operation_number=OperationNumber(2)
+            ),
+        )
+    ) as inner:
+        inner.step(
+            Operation(
+                func=SequentialOp(increment),
+                metadata=OperationMetadata(
+                    op_name="looped", operation_number=OperationNumber(3)
+                ),
+            )
+        )
+
+    builder.operations.run(Context(fields={}, models={}, mesh={}))
+    assert count[0] == 1 + 3  # 1 pre + 3 loop iterations

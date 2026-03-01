@@ -16,7 +16,7 @@ from neofoam.framework.initialization import Depends, StagedInit
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
-    OperationCollection,
+    Operations,
     StepBuilder,
 )
 from neofoam.framework.solver import Solver
@@ -61,12 +61,12 @@ def initialize(self: Any, init: Annotated[StagedInit, Depends(create_init)]) -> 
 def execution_graph(
     self: Any,
     domain_name: Optional[str] = None,
-) -> tuple[StepBuilder, OperationCollection]:
+) -> tuple[StepBuilder, Operations]:
     """
     Build solver structure and collect model operations.
 
     Returns:
-        Tuple of (StepBuilder with solver structure, OperationCollection with model ops)
+        Tuple of (StepBuilder with solver structure, Operations with model ops)
     """
     _ = domain_name
 
@@ -87,21 +87,22 @@ def execution_graph(
         metadata=OperationMetadata(op_name="time_loop"),
     )
 
-    with builder.loop(time_loop) as time_builder:
-        # Algorithm inner loop
-        algo_loop = Operation(
-            func=IterativeOp(AlgorithmLoop()),
-            metadata=OperationMetadata(op_name="inner_loop"),
-        )
+    time_builder = builder.loop(time_loop)
 
-        with time_builder.loop(algo_loop) as inner_builder:
-            inner_builder.step(ops["solver_step1"])
-            inner_builder.step(ops["solver_step2"])
-            inner_builder.step(ops["solver_step3"])
+    # Algorithm inner loop
+    algo_loop = Operation(
+        func=IterativeOp(AlgorithmLoop()),
+        metadata=OperationMetadata(op_name="inner_loop"),
+    )
+
+    inner_builder = time_builder.loop(algo_loop)
+    inner_builder.step(ops["solver_step1"])
+    inner_builder.step(ops["solver_step2"])
+    inner_builder.step(ops["solver_step3"])
 
     # Collect model operations
-    model_ops = OperationCollection()
-    for model in self.optional_models:
+    model_ops = Operations()
+    for model in self.state.optional_models:
         model_ops.add(model.operations)
 
     return builder, model_ops

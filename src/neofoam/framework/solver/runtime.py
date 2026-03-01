@@ -16,7 +16,7 @@ from typing import Any, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .spec import SolverSpec
     from neofoam.framework.context import Context
-    from neofoam.framework.operations import OperationCollection, StepBuilder
+    from neofoam.framework.operations import Operations, StepBuilder
 
 
 @dataclass
@@ -45,37 +45,6 @@ class SolverRuntime:
     _config_instance: Any = field(default=None, repr=False)
 
     # ------------------------------------------------------------------
-    # State proxy properties
-    # ------------------------------------------------------------------
-
-    @property
-    def core_models(self) -> list[Any]:
-        """Access core_models from state."""
-        return self.state.core_models
-
-    @core_models.setter
-    def core_models(self, value: list[Any]) -> None:
-        self.state.core_models = value
-
-    @property
-    def optional_models(self) -> list[Any]:
-        """Access optional_models from state."""
-        return self.state.optional_models
-
-    @optional_models.setter
-    def optional_models(self, value: list[Any]) -> None:
-        self.state.optional_models = value
-
-    @property
-    def configs(self) -> dict[str, Any]:
-        """Access configs from state."""
-        return self.state.configs
-
-    @configs.setter
-    def configs(self, value: dict[str, Any]) -> None:
-        self.state.configs = value
-
-    # ------------------------------------------------------------------
     # Execution API
     # ------------------------------------------------------------------
 
@@ -85,14 +54,16 @@ class SolverRuntime:
 
     def execution_graph(
         self, domain_name: Optional[str] = None
-    ) -> tuple["StepBuilder", "OperationCollection"]:
+    ) -> tuple["StepBuilder", "Operations"]:
         """Execute the registered execution graph step."""
         return self.spec._run_execution_graph(self, domain_name)
 
     @property
-    def operations(self) -> "OperationCollection":
+    def operations(self) -> "Operations":
         """Build operations with this runtime as the self binding."""
-        return self.spec._build_operations_for(self)
+        from neofoam.framework.operations import Operations
+
+        return Operations(self.spec._build_operations_for(self))
 
     def get_config(self) -> Any:
         """

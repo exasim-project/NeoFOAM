@@ -29,7 +29,7 @@ class ModelRuntime:
     """
 
     spec: "ModelSpec"
-    name: str  # unique: "<spec.name>_<instance_id>"
+    name: str  # manifest "name" or spec.name for detect-only models
     config: Any  # loaded config — updated during RESOLVE
 
     def run_resolve(self, ctx: "ConfigContext") -> None:
@@ -40,13 +40,19 @@ class ModelRuntime:
                 self.config = result
 
     def run_build(self) -> list["InitStep"]:
-        """Call spec's build func with this instance's config (if it accepts args)."""
+        """Call spec's build func with this instance's config (if it accepts args).
+
+        If the build function has 2+ parameters, the second receives the runtime.
+        """
         import inspect
 
         if self.spec._build_func is None:
             return []
         sig = inspect.signature(self.spec._build_func)
-        if len(sig.parameters) > 0:
+        n_params = len(sig.parameters)
+        if n_params >= 2:
+            return self.spec._build_func(self.config, self)  # type: ignore[no-any-return]
+        if n_params == 1:
             return self.spec._build_func(self.config)  # type: ignore[no-any-return]
         return self.spec._build_func()  # type: ignore[no-any-return]
 

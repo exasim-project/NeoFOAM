@@ -87,10 +87,10 @@ def _build_single_loop() -> StepBuilder:
     """Builder with root → time_loop → [step1, step2, step3]."""
     builder = StepBuilder()
     loop = _loop_op("time_loop", number="1")
-    with builder.loop(loop) as lb:
-        lb.step(_seq("step1", number="1"))
-        lb.step(_seq("step2", number="2", depends_on=["step1"]))
-        lb.step(_seq("step3", number="3", depends_on=["step2"]))
+    lb = builder.loop(loop)
+    lb.step(_seq("step1", number="1"))
+    lb.step(_seq("step2", number="2", depends_on=["step1"]))
+    lb.step(_seq("step3", number="3", depends_on=["step2"]))
     return builder
 
 
@@ -98,12 +98,12 @@ def _build_nested() -> StepBuilder:
     """Builder with root → time_loop → inner_loop → [step1, step2, step3]."""
     builder = StepBuilder()
     time_loop = _loop_op("time_loop", number="1")
-    with builder.loop(time_loop) as tl:
-        inner_loop = _loop_op("inner_loop", number="1")
-        with tl.loop(inner_loop) as il:
-            il.step(_seq("step1", number="1"))
-            il.step(_seq("step2", number="2", depends_on=["step1"]))
-            il.step(_seq("step3", number="3", depends_on=["step2"]))
+    tl = builder.loop(time_loop)
+    inner_loop = _loop_op("inner_loop", number="1")
+    il = tl.loop(inner_loop)
+    il.step(_seq("step1", number="1"))
+    il.step(_seq("step2", number="2", depends_on=["step1"]))
+    il.step(_seq("step3", number="3", depends_on=["step2"]))
     return builder
 
 
@@ -841,25 +841,25 @@ def test_runnable_loop_execution_order_with_model_ops() -> None:
         func=IterativeOp(MaxIterations(max_iters=2)),
         metadata=OperationMetadata(op_name="loop"),
     )
-    with builder.loop(loop) as lb:
-        lb.step(
-            Operation(
-                func=SequentialOp(make_logger("S1")),
-                metadata=OperationMetadata(
-                    op_name="S1", operation_number=OperationNumber("1")
-                ),
-            )
+    lb = builder.loop(loop)
+    lb.step(
+        Operation(
+            func=SequentialOp(make_logger("S1")),
+            metadata=OperationMetadata(
+                op_name="S1", operation_number=OperationNumber("1")
+            ),
         )
-        lb.step(
-            Operation(
-                func=SequentialOp(make_logger("S2")),
-                metadata=OperationMetadata(
-                    op_name="S2",
-                    operation_number=OperationNumber("2"),
-                    depends_on=["S1"],
-                ),
-            )
+    )
+    lb.step(
+        Operation(
+            func=SequentialOp(make_logger("S2")),
+            metadata=OperationMetadata(
+                op_name="S2",
+                operation_number=OperationNumber("2"),
+                depends_on=["S1"],
+            ),
         )
+    )
 
     model_ops = Operations(
         [

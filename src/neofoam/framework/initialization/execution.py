@@ -135,7 +135,7 @@ def build_context_from_objects(init_results: list[InitResult]) -> Context:
             )
             models[name] = obj
 
-    return Context(fields=fields, models=models, mesh=mesh, runTime=runtime)
+    return Context(fields=fields, models=models, mesh=mesh, runtime=runtime)
 
 
 def execute_initialization(lazy_inits: list[InitStep]) -> Context:

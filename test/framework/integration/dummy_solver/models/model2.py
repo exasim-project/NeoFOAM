@@ -27,7 +27,7 @@ model2 = Model("DummyModel2").register_with(DummyModelInterface)
 
 
 @model2.load
-def load(case_dir: Path, instance_id: str) -> Model2Config:
+def load(case_dir: Path) -> Model2Config:
     return Model2Config.load(case_dir=case_dir, validate=False)
 
 

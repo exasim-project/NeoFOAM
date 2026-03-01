@@ -117,7 +117,7 @@ def test_spec_load_decorator_stores_function() -> None:
     spec = ModelSpec("M")
 
     @spec.load
-    def load(case_dir: Any, instance_id: Any) -> Any:
+    def load(case_dir: Any, entry: Any) -> Any:
         return {"v": 1}
 
     assert spec._load_func is load
@@ -145,7 +145,9 @@ def test_spec_build_decorator_stores_function() -> None:
 
 def test_spec_detect_defaults_to_true() -> None:
     spec = ModelSpec("M")
-    assert spec.run_detect() is True
+    result = spec.run_detect()
+    assert result.detected is True
+    assert result.instance_ids == []
 
 
 def test_spec_detect_decorator_stores_and_runs_function() -> None:
@@ -155,7 +157,9 @@ def test_spec_detect_decorator_stores_and_runs_function() -> None:
     def detect() -> bool:
         return False
 
-    assert spec.run_detect() is False
+    result = spec.run_detect()
+    assert result.detected is False
+    assert result.instance_ids == []
 
 
 # ===========================================================================
@@ -163,40 +167,41 @@ def test_spec_detect_decorator_stores_and_runs_function() -> None:
 # ===========================================================================
 
 
-def test_instantiate_without_load_raises() -> None:
-    """ModelSpec.instantiate() must raise ValueError if no @load is registered."""
+def test_instantiate_without_load_or_config_raises() -> None:
+    """ModelSpec.instantiate() must raise ValueError if no @load or @config is registered."""
     spec = ModelSpec("M")
-    with pytest.raises(ValueError, match="@load"):
-        spec.instantiate(Path("."), "instance")
+    with pytest.raises(ValueError):
+        spec.instantiate(Path("."))
 
 
 def test_instantiate_calls_load_and_returns_runtime() -> None:
     spec = ModelSpec("HeatSource")
 
     @spec.load
-    def load(case_dir: Any, instance_id: Any) -> Any:
-        return {"power": 42, "id": instance_id}
+    def load(case_dir: Any, entry: Any) -> Any:
+        return {"power": 42, "name": entry["name"]}
 
-    rt = spec.instantiate(case_dir=Path("."), instance_id="zoneA")
+    entry = {"type": "HeatSource", "name": "zoneA"}
+    rt = spec.instantiate(case_dir=Path("."), entry=entry)
 
     assert isinstance(rt, ModelRuntime)
-    assert rt.name == "HeatSource_zoneA"
-    assert rt.config == {"power": 42, "id": "zoneA"}
+    assert rt.name == "zoneA"
+    assert rt.config == {"power": 42, "name": "zoneA"}
     assert rt.spec is spec
 
 
-def test_instantiate_different_ids_produce_independent_runtimes() -> None:
+def test_instantiate_different_entries_produce_independent_runtimes() -> None:
     spec = ModelSpec("HeatSource")
 
     @spec.load
-    def load(case_dir: Any, instance_id: Any) -> Any:
-        return {"id": instance_id}
+    def load(case_dir: Any, entry: Any) -> Any:
+        return {"name": entry["name"]}
 
-    rt_a = spec.instantiate(Path("."), "zoneA")
-    rt_b = spec.instantiate(Path("."), "zoneB")
+    rt_a = spec.instantiate(Path("."), entry={"type": "HeatSource", "name": "zoneA"})
+    rt_b = spec.instantiate(Path("."), entry={"type": "HeatSource", "name": "zoneB"})
 
-    assert rt_a.name == "HeatSource_zoneA"
-    assert rt_b.name == "HeatSource_zoneB"
+    assert rt_a.name == "zoneA"
+    assert rt_b.name == "zoneB"
     assert rt_a.config is not rt_b.config
 
 
@@ -210,11 +215,11 @@ def test_multiple_runtimes_have_independent_configs() -> None:
     spec = ModelSpec("M")
 
     @spec.load
-    def load(case_dir: Any, instance_id: Any) -> Any:
+    def load(case_dir: Any, entry: Any) -> Any:
         return {"v": 0}
 
-    rt_a = spec.instantiate(Path("."), "a")
-    rt_b = spec.instantiate(Path("."), "b")
+    rt_a = spec.instantiate(Path("."), entry={"type": "M", "name": "a"})
+    rt_b = spec.instantiate(Path("."), entry={"type": "M", "name": "b"})
 
     # Mutate rt_a's config via resolve
     rt_a.run_resolve(
@@ -233,15 +238,15 @@ def test_run_build_results_are_independent_per_runtime() -> None:
     spec = ModelSpec("M")
 
     @spec.load
-    def load(case_dir: Any, instance_id: Any) -> Any:
-        return {"value": float(instance_id)}
+    def load(case_dir: Any, entry: Any) -> Any:
+        return {"value": float(entry["name"])}
 
     @spec.build
     def build(config: Any) -> list[Any]:
         return [config["value"]]  # simplistic: return the value as the "step"
 
-    rt_42 = spec.instantiate(Path("."), "42")
-    rt_99 = spec.instantiate(Path("."), "99")
+    rt_42 = spec.instantiate(Path("."), entry={"type": "M", "name": "42"})
+    rt_99 = spec.instantiate(Path("."), entry={"type": "M", "name": "99"})
 
     assert rt_42.run_build() == [42.0]  # type: ignore[comparison-overlap]
     assert rt_99.run_build() == [99.0]  # type: ignore[comparison-overlap]
@@ -252,9 +257,9 @@ def test_run_build_results_are_independent_per_runtime() -> None:
 # ===========================================================================
 
 
-def test_find_config_by_type_raises_on_missing_type() -> None:
-    """_find_config_by_type raises ValueError when no match exists."""
-    from neofoam.framework.config_injection import _find_config_by_type
+def testfind_config_by_type_raises_on_missing_type() -> None:
+    """find_config_by_type raises ValueError when no match exists."""
+    from neofoam.framework.operation_wrapper import find_config_by_type
     from neofoam.io import BaseConfig
 
     class MyConfig(BaseConfig):
@@ -265,24 +270,24 @@ def test_find_config_by_type_raises_on_missing_type() -> None:
 
     cfg = MyConfig()
     with pytest.raises(ValueError, match="OtherConfig"):
-        _find_config_by_type(cfg, OtherConfig)
+        find_config_by_type(cfg, OtherConfig)
 
 
-def test_find_config_by_type_finds_direct_match() -> None:
-    """_find_config_by_type returns the config when it directly matches."""
-    from neofoam.framework.config_injection import _find_config_by_type
+def testfind_config_by_type_finds_direct_match() -> None:
+    """find_config_by_type returns the config when it directly matches."""
+    from neofoam.framework.operation_wrapper import find_config_by_type
     from neofoam.io import BaseConfig
 
     class MyConfig(BaseConfig):
         x: int = 5
 
     cfg = MyConfig()
-    assert _find_config_by_type(cfg, MyConfig) is cfg
+    assert find_config_by_type(cfg, MyConfig) is cfg
 
 
-def test_find_config_by_type_searches_namespace() -> None:
-    """_find_config_by_type locates a config nested inside a SimpleNamespace."""
-    from neofoam.framework.config_injection import _find_config_by_type
+def testfind_config_by_type_searches_namespace() -> None:
+    """find_config_by_type locates a config nested inside a SimpleNamespace."""
+    from neofoam.framework.operation_wrapper import find_config_by_type
     from neofoam.io import BaseConfig
 
     class StepConfig(BaseConfig):
@@ -292,13 +297,13 @@ def test_find_config_by_type_searches_namespace() -> None:
         prop: float = 1.0
 
     ns = SimpleNamespace(step=StepConfig(), main=MainConfig())
-    assert isinstance(_find_config_by_type(ns, StepConfig), StepConfig)
-    assert isinstance(_find_config_by_type(ns, MainConfig), MainConfig)
+    assert isinstance(find_config_by_type(ns, StepConfig), StepConfig)
+    assert isinstance(find_config_by_type(ns, MainConfig), MainConfig)
 
 
-def test_find_config_by_type_raises_when_not_in_namespace() -> None:
-    """_find_config_by_type raises when config type missing from namespace."""
-    from neofoam.framework.config_injection import _find_config_by_type
+def testfind_config_by_type_raises_when_not_in_namespace() -> None:
+    """find_config_by_type raises when config type missing from namespace."""
+    from neofoam.framework.operation_wrapper import find_config_by_type
     from neofoam.io import BaseConfig
 
     class Missing(BaseConfig):
@@ -306,7 +311,7 @@ def test_find_config_by_type_raises_when_not_in_namespace() -> None:
 
     ns = SimpleNamespace()
     with pytest.raises(ValueError, match="Missing"):
-        _find_config_by_type(ns, Missing)
+        find_config_by_type(ns, Missing)
 
 
 # ===========================================================================
@@ -350,3 +355,91 @@ def test_runtime_configs_empty_for_non_config() -> None:
     spec = _stub_spec()
     rt = ModelRuntime(spec=spec, name="rt", config={"plain": "dict"})  # type: ignore[arg-type]
     assert rt.configs == []
+
+
+# ===========================================================================
+# Cycle 7 — @config decorator
+# ===========================================================================
+
+
+def test_config_decorator_stores_config_class() -> None:
+    """@spec.config registers the config class on the spec."""
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("M")
+
+    @spec.config
+    class MyCfg(BaseConfig):
+        x: int = 1
+
+    assert spec._config_class is MyCfg
+
+
+def test_instantiate_with_entry_uses_config_class() -> None:
+    """When @config is registered and entry is provided, config is auto-constructed."""
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("TestModel")
+
+    @spec.config
+    class Cfg(BaseConfig):
+        scale: float = 0.0
+        offset: float = 0.0
+
+    entry = {"type": "TestModel", "name": "inst_a", "scale": 1.5, "offset": 0.1}
+    rt = spec.instantiate(case_dir=Path("."), entry=entry)
+
+    assert isinstance(rt, ModelRuntime)
+    assert rt.name == "inst_a"
+    assert rt.config.scale == 1.5
+    assert rt.config.offset == 0.1
+
+
+def test_instantiate_with_entry_name_equals_spec_name() -> None:
+    """When entry name equals spec name, runtime name should be the spec name."""
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("Solo")
+
+    @spec.config
+    class Cfg(BaseConfig):
+        x: int = 0
+
+    entry = {"type": "Solo", "name": "Solo", "x": 42}
+    rt = spec.instantiate(case_dir=Path("."), entry=entry)
+    assert rt.name == "Solo"
+    assert rt.config.x == 42
+
+
+def test_instantiate_without_entry_or_load_raises() -> None:
+    """instantiate() with no @load and no entry raises ValueError."""
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("M")
+
+    @spec.config
+    class Cfg(BaseConfig):
+        x: int = 0
+
+    with pytest.raises(ValueError):
+        spec.instantiate(case_dir=Path("."))
+
+
+def test_instantiate_with_load_override_uses_load() -> None:
+    """When @load is registered, it takes priority over @config even with entry."""
+    from neofoam.io import BaseConfig
+
+    spec = ModelSpec("M")
+
+    @spec.config
+    class Cfg(BaseConfig):
+        x: int = 0
+
+    @spec.load
+    def load(case_dir: Any, entry: Any) -> dict[str, Any]:
+        return {"custom": True}
+
+    entry = {"type": "M", "name": "custom_inst", "x": 99}
+    rt = spec.instantiate(case_dir=Path("."), entry=entry)
+    assert rt.config == {"custom": True}
+    assert rt.name == "custom_inst"
