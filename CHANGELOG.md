@@ -9,6 +9,7 @@
 - load, write and validate config files [#236](https://github.com/exasim-project/NeoFOAM/pull/236)
 - add openfoam reader and writer [#242](https://github.com/exasim-project/NeoFOAM/pull/242)
 - added neoicofoam [243](https://github.com/exasim-project/NeoFOAM/pull/243)
+- Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)

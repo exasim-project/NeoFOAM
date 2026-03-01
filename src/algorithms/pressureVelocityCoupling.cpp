@@ -39,26 +39,18 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 {
     // TODO this assumes an assembled matrix
     // force assembly if not assembled
-    const auto& mesh = expr.getField().mesh();
-    const auto& sparsityPattern = expr.sparsityPattern();
     const auto& ls = expr.linearSystem();
-
-    const auto [vol, values, diagOffset, rowPtrs] = views(
-        mesh.cellVolumes(),
-        ls.matrix().values(),
-        sparsityPattern.diagOffset(),
-        ls.matrix().rowOffs()
-    );
+    const auto& mesh = expr.getField().mesh();
 
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
 
-    rAU.internalVector().apply(NEON_LAMBDA(const size_t celli) {
-        auto diagOffsetCelli = diagOffset[celli];
-        // all the diagonal coefficients are the same
-        return vol[celli] / (values[rowPtrs[celli] + diagOffsetCelli][0]);
-    });
-
+    NeoN::la::scaledInverseDiag(
+        ls.matrix(),
+        *ls.faceToMatrixAddress().get(),
+        mesh.cellVolumes(),
+        rAU.internalVector()
+    );
     rAU.correctBoundaryConditions();
     return rAU;
 }
@@ -68,62 +60,25 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
 {
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
-    const auto& sparsityPattern = expr.sparsityPattern();
     const auto& ls = expr.linearSystem();
 
-    const auto [vol, values, diagOffset, rowPtrs] = views(
+    auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
+
+    auto hByABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
+    auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, hByABCs);
+
+    NeoN::la::scaledInvDiagNegLUx(
+        ls.matrix(),
+        u.internalVector(),
+        ls.rhs(),
         mesh.cellVolumes(),
-        ls.matrix().values(),
-        sparsityPattern.diagOffset(),
-        ls.matrix().rowOffs()
+        rAU.internalVector(),
+        hByA.internalVector()
     );
 
-    auto rAU = computeRAU(expr);
-    auto offDiagonalSourceBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh);
-    auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, offDiagonalSourceBCs);
-    NeoN::fill(hByA.internalVector(), NeoN::zero<Vec3>());
-    const auto nInternalFaces = mesh.nInternalFaces();
-    const auto exec = u.exec();
-
-    const auto [owner, neighbour, ownOffs, neiOffs, internalU] = views(
-        mesh.faceOwner(),
-        mesh.faceNeighbour(),
-        sparsityPattern.ownerOffset(),
-        sparsityPattern.neighbourOffset(),
-        u.internalVector()
-    );
-
-    auto internalHbyA = hByA.internalVector().view();
-    NeoN::parallelFor(
-        exec,
-        {0, nInternalFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto own = owner[facei];
-            auto nei = neighbour[facei];
-
-            auto rowNeiStart = rowPtrs[nei];
-            auto rowOwnStart = rowPtrs[own];
-
-            auto lower = values[rowNeiStart + neiOffs[facei]];
-            auto upper = values[rowOwnStart + ownOffs[facei]];
-
-            NeoN::atomic_sub(&internalHbyA[nei], lower[0] * internalU[own]);
-            NeoN::atomic_sub(&internalHbyA[own], upper[0] * internalU[nei]);
-        }
-    );
-
-    const auto [rhs, internalRAU] = views(ls.rhs(), rAU.internalVector());
-    NeoN::parallelFor(
-        exec,
-        {0, internalHbyA.size()},
-        NEON_LAMBDA(const size_t celli) {
-            internalHbyA[celli] += rhs[celli];
-            internalHbyA[celli] *= internalRAU[celli] / vol[celli];
-        }
-    );
-
+    rAU.correctBoundaryConditions();
     hByA.correctBoundaryConditions();
-
     return {rAU, hByA};
 }
 
@@ -136,24 +91,19 @@ void updateFaceVelocity(
 {
     const auto& mesh = phi.mesh();
     const auto& p = expr.getField();
-    const auto sparsityPattern = expr.sparsityPattern();
     const auto nInternalFaces = mesh.nInternalFaces();
     const auto exec = phi.exec();
-    const auto [owner, neighbour, ownOffs, neiOffs, internalP] = views(
-        mesh.faceOwner(),
-        mesh.faceNeighbour(),
-        sparsityPattern.ownerOffset(),
-        sparsityPattern.neighbourOffset(),
-        p.internalVector()
-    );
+    const auto [owner, neighbour, internalP] =
+        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
-    const auto rowPtrs = ls.matrix().rowOffs().view();
-    const auto colIdxs = ls.matrix().colIdxs().view();
+    const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
+    const auto neiOffs = ls.faceToMatrixAddress()->neighbourOffset().view();
+    const auto ownOffs = ls.faceToMatrixAddress()->ownerOffset().view();
     auto values = ls.matrix().values().view();
-    auto rhs = ls.rhs().view();
     auto [iPhi, iPredPhi] = views(phi.internalVector(), predictedPhi.internalVector());
 
+    // TODO add to NEON
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
@@ -177,19 +127,15 @@ void updateFaceVelocity(
         mesh.boundaryMesh().faceCells()
     );
 
-    auto& bcCoeffs =
-        ls.auxiliaryCoefficients().get<la::BoundaryCoefficients<NeoN::scalar, NeoN::localIdx>>(
-            "boundaryCoefficients"
-        );
-
-    const auto [mValue, rhsValue] = views(bcCoeffs.matrixValues, bcCoeffs.rhsValues);
+    const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
 
     NeoN::parallelFor(
         exec,
         {nInternalFaces, iPhi.size()},
         NEON_LAMBDA(const size_t facei) {
             auto bfacei = facei - nInternalFaces;
-            scalar bflux = (rhsValue[bfacei] - mValue[bfacei] * internalP[faceCells[bfacei]]);
+            scalar bflux =
+                (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
             iPhi[facei] = iPredPhi[facei] - bflux;
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
         }
