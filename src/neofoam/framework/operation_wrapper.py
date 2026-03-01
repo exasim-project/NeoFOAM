@@ -48,28 +48,37 @@ def discover_configs_from_signature(func: Callable[..., Any]) -> list[dict[str, 
     return discovered
 
 
+def discover_call_metadata(func: Callable[..., Any]) -> dict[str, Any]:
+    """Pre-compute metadata for inject_and_call: first_param_name, has_ctx, config_params."""
+    sig = inspect.signature(func)
+    params = list(sig.parameters)
+    return {
+        "first_param_name": params[0],
+        "has_ctx": "ctx" in sig.parameters,
+        "config_params": discover_configs_from_signature(func),
+    }
+
+
 def inject_and_call(
     func: Callable[..., Any],
     runtime: Any,
-    config_params: list[dict[str, Any]],
+    call_meta: dict[str, Any],
     ctx: Any = None,
 ) -> Any:
     """Call *func* with self=runtime, optional ctx, and injected BaseConfig params.
 
-    *config_params* is a pre-computed list from ``discover_configs_from_signature``.
-    Reuses ``find_config_by_type`` for config lookup.
+    *call_meta* is a pre-computed dict from ``discover_call_metadata`` containing
+    first_param_name, has_ctx, and config_params.
 
     The first parameter is always bound to *runtime* regardless of its name
     (commonly ``self`` or ``_self``).
     """
-    sig = inspect.signature(func)
-    params = list(sig.parameters)
-    kwargs: dict[str, Any] = {params[0]: runtime}
+    kwargs: dict[str, Any] = {call_meta["first_param_name"]: runtime}
 
-    if "ctx" in sig.parameters and ctx is not None:
+    if call_meta["has_ctx"] and ctx is not None:
         kwargs["ctx"] = ctx
 
-    for cfg_meta in config_params:
+    for cfg_meta in call_meta["config_params"]:
         kwargs[cfg_meta["param_name"]] = find_config_by_type(
             runtime.config, cfg_meta["config_type"]
         )

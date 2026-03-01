@@ -59,14 +59,14 @@ Creating a ModelSpec
 
     # Stage 2: RESOLVE — wire inter-model dependencies
     @transport.resolve
-    def resolve(cfg: TransportConfig, ctx: ConfigContext) -> TransportConfig:
+    def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: TransportConfig) -> TransportConfig:
         if cfg.viscosity <= 0:
             raise ValueError("Invalid viscosity")
         return cfg
 
     # Stage 3: BUILD — return lazy initializers
     @transport.build
-    def build(cfg: TransportConfig, _runtime: Any) -> list[InitStep]:
+    def build(self: ModelRuntime, cfg: TransportConfig) -> list[InitStep]:
         return [
             field("nu", create=lambda ctx: cfg.viscosity, depends_on=["mesh"]),
         ]
@@ -91,10 +91,10 @@ Decorator Summary
      - ``(case_dir: Path) -> bool | list[str]``
      - Check if model should be active
    * - ``@spec.resolve``
-     - ``(config, ctx: ConfigContext) -> Config``
+     - ``(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig) -> Config``
      - Wire dependencies (RESOLVE stage)
    * - ``@spec.build``
-     - ``(config, runtime) -> list[InitStep]``
+     - ``(self: ModelRuntime, cfg: MyConfig) -> list[InitStep]``
      - Create lazy initializers (BUILD stage)
    * - ``@spec.operation``
      - ``(self, field1: float, cfg: Config) -> FieldUpdates``
@@ -472,14 +472,14 @@ For manifest loading to work, the model must be registered with a plugin interfa
 Multi-Instance Build
 ~~~~~~~~~~~~~~~~~~~~
 
-``@build`` always receives ``runtime`` as its second parameter. Use it to access the instance name for multi-instance models:
+``@build`` receives ``self: ModelRuntime`` as the first parameter. Use it to access the instance name for multi-instance models. Config parameters are auto-injected by type:
 
 .. code-block:: python
 
     @multi_model.build
-    def build(cfg: MultiModelConfig, runtime: Any) -> list[InitStep]:
-        # Use runtime.name for instance-specific field names
-        field_name = f"model_field_{runtime.name}"
+    def build(self: ModelRuntime, cfg: MultiModelConfig) -> list[InitStep]:
+        # Use self.name for instance-specific field names
+        field_name = f"model_field_{self.name}"
         return [
             field(field_name, create=lambda ctx: cfg.scale, depends_on=["mesh"]),
         ]
@@ -733,13 +733,13 @@ Transport Model
         return (case_dir / "transportProperties.yaml").exists()
 
     @transport.resolve
-    def resolve(cfg: TransportConfig, ctx: ConfigContext) -> TransportConfig:
+    def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: TransportConfig) -> TransportConfig:
         if cfg.viscosity <= 0:
             raise ValueError("Invalid viscosity")
         return cfg
 
     @transport.build
-    def build(cfg: TransportConfig, _runtime: Any) -> list[InitStep]:
+    def build(self: ModelRuntime, cfg: TransportConfig) -> list[InitStep]:
         return [
             field("nu", create=lambda ctx: cfg.viscosity, depends_on=["mesh"]),
         ]
@@ -835,7 +835,7 @@ Raise exceptions in any stage to halt initialization:
 .. code-block:: python
 
     @model_spec.resolve
-    def resolve(cfg: MyConfig, ctx: ConfigContext) -> MyConfig:
+    def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig) -> MyConfig:
         required = ctx.get("transport")
         if required is None:
             raise RuntimeError("Transport model required but not found")
@@ -956,7 +956,7 @@ Key Design Decisions
 
 1. **Spec/Runtime separation**: Specs are immutable definitions created at module import time. Runtimes are mutable per-instance state. This enables multiple independent instances from one definition and clean plugin registration.
 
-2. **Config as return value**: ``@load`` returns a config object; ``@resolve`` receives and returns config. No self-mutation — configs are explicit data flowing through stages.
+2. **Config as return value**: ``@load`` returns a config object; ``@resolve`` receives ``self: ModelRuntime`` and auto-injected config, and returns updated config. No self-mutation — configs are explicit data flowing through stages.
 
 3. **Manifest-based discovery**: Models are discovered via YAML manifests and ``@detect`` predicates, replacing the old ``get_models()`` pattern. This decouples model registration from solver code.
 

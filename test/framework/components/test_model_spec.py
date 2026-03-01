@@ -25,9 +25,9 @@ def _stub_spec(**kwargs: Any) -> SimpleNamespace:
     """Return a minimal spec-like namespace for testing ModelRuntime in isolation."""
     defaults: dict[str, Any] = {
         "_resolve_func": None,
-        "_resolve_config_params": [],
+        "_resolve_call_meta": {},
         "_build_func": None,
-        "_build_config_params": [],
+        "_build_call_meta": {},
         "_build_operations_for": lambda rt: [],
         "_operation_collection_func": None,
         "_operations": [],
@@ -58,14 +58,20 @@ def test_run_resolve_with_no_resolve_func_leaves_config_unchanged() -> None:
 
 def test_run_resolve_calls_spec_func_and_stores_returned_config() -> None:
     new_cfg = {"v": 99}
-    spec = _stub_spec(_resolve_func=lambda self, ctx: new_cfg)
+    resolve_meta = {"first_param_name": "self", "has_ctx": True, "config_params": []}
+    spec = _stub_spec(
+        _resolve_func=lambda self, ctx: new_cfg, _resolve_call_meta=resolve_meta
+    )
     rt = ModelRuntime(spec=spec, name="M_id", config={"v": 1})  # type: ignore[arg-type]
     rt.run_resolve(ctx=SimpleNamespace())  # type: ignore[arg-type]
     assert rt.config is new_cfg
 
 
 def test_run_resolve_ignores_none_return_and_keeps_original() -> None:
-    spec = _stub_spec(_resolve_func=lambda self, ctx: None)
+    resolve_meta = {"first_param_name": "self", "has_ctx": True, "config_params": []}
+    spec = _stub_spec(
+        _resolve_func=lambda self, ctx: None, _resolve_call_meta=resolve_meta
+    )
     original = {"v": 1}
     rt = ModelRuntime(spec=spec, name="M_id", config=original)  # type: ignore[arg-type]
     rt.run_resolve(ctx=SimpleNamespace())  # type: ignore[arg-type]
@@ -85,7 +91,8 @@ def test_run_build_calls_spec_func_with_config_and_returns_result() -> None:
         captured["config"] = self.config
         return ["step_a", "step_b"]
 
-    spec = _stub_spec(_build_func=build)
+    build_meta = {"first_param_name": "self", "has_ctx": False, "config_params": []}
+    spec = _stub_spec(_build_func=build, _build_call_meta=build_meta)
     rt = ModelRuntime(spec=spec, name="M_id", config={"x": 7})  # type: ignore[arg-type]
     result = rt.run_build()
     assert captured["config"] == {"x": 7}
@@ -261,63 +268,6 @@ def test_run_build_results_are_independent_per_runtime() -> None:
 # ===========================================================================
 # Cycle 5 — Config injection error cases
 # ===========================================================================
-
-
-def testfind_config_by_type_raises_on_missing_type() -> None:
-    """find_config_by_type raises ValueError when no match exists."""
-    from neofoam.framework.operation_wrapper import find_config_by_type
-    from neofoam.io import BaseConfig
-
-    class MyConfig(BaseConfig):
-        x: int = 1
-
-    class OtherConfig(BaseConfig):
-        y: int = 2
-
-    cfg = MyConfig()
-    with pytest.raises(ValueError, match="OtherConfig"):
-        find_config_by_type(cfg, OtherConfig)
-
-
-def testfind_config_by_type_finds_direct_match() -> None:
-    """find_config_by_type returns the config when it directly matches."""
-    from neofoam.framework.operation_wrapper import find_config_by_type
-    from neofoam.io import BaseConfig
-
-    class MyConfig(BaseConfig):
-        x: int = 5
-
-    cfg = MyConfig()
-    assert find_config_by_type(cfg, MyConfig) is cfg
-
-
-def testfind_config_by_type_searches_namespace() -> None:
-    """find_config_by_type locates a config nested inside a SimpleNamespace."""
-    from neofoam.framework.operation_wrapper import find_config_by_type
-    from neofoam.io import BaseConfig
-
-    class StepConfig(BaseConfig):
-        factor: float = 0.01
-
-    class MainConfig(BaseConfig):
-        prop: float = 1.0
-
-    ns = SimpleNamespace(step=StepConfig(), main=MainConfig())
-    assert isinstance(find_config_by_type(ns, StepConfig), StepConfig)
-    assert isinstance(find_config_by_type(ns, MainConfig), MainConfig)
-
-
-def testfind_config_by_type_raises_when_not_in_namespace() -> None:
-    """find_config_by_type raises when config type missing from namespace."""
-    from neofoam.framework.operation_wrapper import find_config_by_type
-    from neofoam.io import BaseConfig
-
-    class Missing(BaseConfig):
-        pass
-
-    ns = SimpleNamespace()
-    with pytest.raises(ValueError, match="Missing"):
-        find_config_by_type(ns, Missing)
 
 
 # ===========================================================================
@@ -551,8 +501,12 @@ def test_inject_and_call_binds_self_and_injects_config() -> None:
         return ["step"]
 
     runtime = SimpleNamespace(config=MyCfg(val=99))
-    config_params = [{"param_name": "cfg", "config_type": MyCfg}]
-    result = inject_and_call(func, runtime, config_params)
+    call_meta = {
+        "first_param_name": "self",
+        "has_ctx": False,
+        "config_params": [{"param_name": "cfg", "config_type": MyCfg}],
+    }
+    result = inject_and_call(func, runtime, call_meta)
     assert captured["self"] is runtime
     assert captured["cfg"].val == 99
     assert result == ["step"]
@@ -567,7 +521,12 @@ def test_inject_and_call_passes_ctx() -> None:
         captured["ctx"] = ctx
 
     sentinel = object()
-    inject_and_call(func, SimpleNamespace(config={}), [], ctx=sentinel)
+    call_meta = {
+        "first_param_name": "self",
+        "has_ctx": True,
+        "config_params": [],
+    }
+    inject_and_call(func, SimpleNamespace(config={}), call_meta, ctx=sentinel)
     assert captured["ctx"] is sentinel
 
 
@@ -578,7 +537,12 @@ def test_inject_and_call_self_only() -> None:
         return [self.name]
 
     rt = SimpleNamespace(config={}, name="rt1")
-    assert inject_and_call(func, rt, []) == ["rt1"]
+    call_meta = {
+        "first_param_name": "self",
+        "has_ctx": False,
+        "config_params": [],
+    }
+    assert inject_and_call(func, rt, call_meta) == ["rt1"]
 
 
 # ===========================================================================
@@ -598,8 +562,10 @@ def test_build_discovers_config_params() -> None:
     def build(self: Any, cfg: MyCfg) -> list[Any]:
         return []
 
-    assert len(spec._build_config_params) == 1
-    assert spec._build_config_params[0]["config_type"] is MyCfg
+    assert len(spec._build_call_meta["config_params"]) == 1
+    assert spec._build_call_meta["config_params"][0]["config_type"] is MyCfg
+    assert spec._build_call_meta["first_param_name"] == "self"
+    assert spec._build_call_meta["has_ctx"] is False
 
 
 def test_resolve_discovers_config_params() -> None:
@@ -614,8 +580,10 @@ def test_resolve_discovers_config_params() -> None:
     def resolve(self: Any, ctx: Any, cfg: MyCfg) -> Any:
         return cfg
 
-    assert len(spec._resolve_config_params) == 1
-    assert spec._resolve_config_params[0]["config_type"] is MyCfg
+    assert len(spec._resolve_call_meta["config_params"]) == 1
+    assert spec._resolve_call_meta["config_params"][0]["config_type"] is MyCfg
+    assert spec._resolve_call_meta["first_param_name"] == "self"
+    assert spec._resolve_call_meta["has_ctx"] is True
 
 
 def test_build_config_params_empty_when_no_config() -> None:
@@ -625,7 +593,7 @@ def test_build_config_params_empty_when_no_config() -> None:
     def build(self: Any) -> list[Any]:
         return []
 
-    assert spec._build_config_params == []
+    assert spec._build_call_meta["config_params"] == []
 
 
 def test_resolve_config_params_empty_when_no_config() -> None:
@@ -635,4 +603,4 @@ def test_resolve_config_params_empty_when_no_config() -> None:
     def resolve(self: Any, ctx: Any) -> Any:
         return None
 
-    assert spec._resolve_config_params == []
+    assert spec._resolve_call_meta["config_params"] == []

@@ -10,6 +10,7 @@ callables; all mutable state lives on ModelRuntime created per instantiate().
 
 from __future__ import annotations
 
+import inspect
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,30 +28,21 @@ def _validate_param_count(
     func: Callable[..., Any],
     expected: int,
     decorator: str,
+    mode: str = "exact",
 ) -> None:
-    import inspect
-
     actual = len(inspect.signature(func).parameters)
-    if actual != expected:
-        raise TypeError(
-            f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
-            f"expected exactly {expected}."
-        )
-
-
-def _validate_min_param_count(
-    func: Callable[..., Any],
-    minimum: int,
-    decorator: str,
-) -> None:
-    import inspect
-
-    actual = len(inspect.signature(func).parameters)
-    if actual < minimum:
-        raise TypeError(
-            f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
-            f"expected at least {minimum}."
-        )
+    if mode == "exact":
+        if actual != expected:
+            raise TypeError(
+                f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
+                f"expected exactly {expected}."
+            )
+    elif mode == "min":
+        if actual < expected:
+            raise TypeError(
+                f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
+                f"expected at least {expected}."
+            )
 
 
 @dataclass
@@ -75,9 +67,9 @@ class ModelSpec(BaseSpec):
 
         self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., Any]] = None
-        self._resolve_config_params: list[dict[str, Any]] = []
+        self._resolve_call_meta: dict[str, Any] = {}
         self._build_func: Optional[Callable[..., Any]] = None
-        self._build_config_params: list[dict[str, Any]] = []
+        self._build_call_meta: dict[str, Any] = {}
         self._detect_func: Optional[Callable[..., Any]] = None
 
         self._operation_collection_func: Optional[Callable[..., Any]] = None
@@ -102,11 +94,11 @@ class ModelSpec(BaseSpec):
 
         Signature: ``def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig, ...) -> Config``
         """
-        from neofoam.framework.operation_wrapper import discover_configs_from_signature
+        from neofoam.framework.operation_wrapper import discover_call_metadata
 
-        _validate_min_param_count(func, minimum=2, decorator="@resolve")
+        _validate_param_count(func, expected=2, decorator="@resolve", mode="min")
         self._resolve_func = func
-        self._resolve_config_params = discover_configs_from_signature(func)
+        self._resolve_call_meta = discover_call_metadata(func)
         return func
 
     def build(self, func: Callable[..., list[Any]]) -> Callable[..., list[Any]]:
@@ -115,11 +107,11 @@ class ModelSpec(BaseSpec):
 
         Signature: ``def build(self: ModelRuntime, cfg: MyConfig, ...) -> list[InitStep]``
         """
-        from neofoam.framework.operation_wrapper import discover_configs_from_signature
+        from neofoam.framework.operation_wrapper import discover_call_metadata
 
-        _validate_min_param_count(func, minimum=1, decorator="@build")
+        _validate_param_count(func, expected=1, decorator="@build", mode="min")
         self._build_func = func
-        self._build_config_params = discover_configs_from_signature(func)
+        self._build_call_meta = discover_call_metadata(func)
         return func
 
     def detect(
