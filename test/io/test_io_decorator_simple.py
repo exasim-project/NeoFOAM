@@ -11,6 +11,9 @@ Demonstrates:
 - FileNotFoundError on missing file
 """
 
+from pathlib import Path
+from typing import cast, Any
+
 import pytest
 
 from pydantic import ValidationError, Field
@@ -45,9 +48,9 @@ class SimpleJSONConfig(BaseConfig):
         SimpleJSONConfig,
     ],
 )
-def test_load_simple(io_fixtures, config_class):
+def test_load_simple(io_fixtures: Path, config_class: type[BaseConfig]) -> None:
     """Test loading simple config from fixture (YAML and JSON)."""
-    loaded = config_class.load(case_dir=io_fixtures)
+    loaded = cast(Any, config_class.load(case_dir=io_fixtures))
 
     assert loaded.identifier == "test_config"
     assert loaded.count == 42
@@ -62,7 +65,9 @@ def test_load_simple(io_fixtures, config_class):
         (SimpleJSONConfig, "output.json"),
     ],
 )
-def test_write_simple(tmp_path, config_class, filename):
+def test_write_simple(
+    tmp_path: Path, config_class: type[BaseConfig], filename: str
+) -> None:
     """Test writing simple config to file (YAML and JSON)."""
     config = config_class(identifier="demo", count=100, active=False, percentage=50.0)
 
@@ -73,7 +78,7 @@ def test_write_simple(tmp_path, config_class, filename):
     assert output_file.exists()
 
     # Verify by loading back directly from the file
-    loaded = config_class.load(case_dir=output_file)
+    loaded = cast(Any, config_class.load(case_dir=output_file))
     assert loaded.identifier == "demo"
     assert loaded.count == 100
     assert loaded.active is False
@@ -87,7 +92,9 @@ def test_write_simple(tmp_path, config_class, filename):
         (SimpleJSONConfig, "simple.json"),
     ],
 )
-def test_write_and_reload_identical(io_fixtures, tmp_path, config_class, filename):
+def test_write_and_reload_identical(
+    io_fixtures: Path, tmp_path: Path, config_class: type[BaseConfig], filename: str
+) -> None:
     """Test that writing a loaded config to a new file produces identical data.
 
     Loads from the fixture, writes to a new file, reloads from the new file,
@@ -107,7 +114,9 @@ def test_write_and_reload_identical(io_fixtures, tmp_path, config_class, filenam
         (SimpleJSONConfig, "invalid_simple.json"),
     ],
 )
-def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
+def test_validation_error_wrong_type(
+    io_fixtures: Path, config_class: type[BaseConfig], invalid_file: str
+) -> None:
     """Test that validation correctly identifies wrong field types and validator violations.
 
     The invalid configs have 'count' as a string instead of int,
@@ -116,8 +125,8 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
+    loaded_data = cast(
+        Any, config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     )
     assert loaded_data.identifier == "test_config"
     assert loaded_data.count == "not_an_integer"  # Wrong type loaded
@@ -152,7 +161,9 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
         (SimpleJSONConfig, "nonexistent.json"),
     ],
 )
-def test_load_missing_file_raises(tmp_path, config_class, missing_file):
+def test_load_missing_file_raises(
+    tmp_path: Path, config_class: type[BaseConfig], missing_file: str
+) -> None:
     """Loading from a non-existent file raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Configuration file not found"):
         config_class.load(case_dir=tmp_path, file=missing_file)

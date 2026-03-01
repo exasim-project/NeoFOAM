@@ -3,19 +3,21 @@
 
 """Shared fixtures for unit tests."""
 
+from typing import Callable
+
 import pytest
 from pathlib import Path
 import shutil
 
 
 @pytest.fixture
-def io_fixtures():
+def io_fixtures() -> Path:
     """IO decorator test configs directory."""
     return Path(__file__).parent / "configs"
 
 
 @pytest.fixture
-def temp_fixture_copy(io_fixtures, tmp_path):
+def temp_fixture_copy(io_fixtures: Path, tmp_path: Path) -> Callable[[str], Path]:
     """Copy a config file to temp dir for modification tests.
 
     Usage:
@@ -23,7 +25,7 @@ def temp_fixture_copy(io_fixtures, tmp_path):
         # Modify test_file without affecting original
     """
 
-    def _copy(fixture_name):
+    def _copy(fixture_name: str) -> Path:
         src = io_fixtures / fixture_name
         dst = tmp_path / fixture_name
         shutil.copy(src, dst)

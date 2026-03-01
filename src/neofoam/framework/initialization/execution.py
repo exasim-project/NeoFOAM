@@ -11,9 +11,9 @@ from .init_step import InitCategory, InitStep
 from ..graph import (
     GraphValidationReport,
     NetworkxTopologicalSorter,
-    build_dependency_digraph,
     validate_dependency_graph,
 )
+from ..graph.validator import build_dependency_digraph
 from ..context import Context
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ def build_context_from_objects(init_results: list[InitResult]) -> Context:
             )
             models[name] = obj
 
-    return Context(fields=fields, models=models, mesh=mesh, runTime=runtime)
+    return Context(fields=fields, models=models, mesh=mesh, runtime=runtime)
 
 
 def execute_initialization(lazy_inits: list[InitStep]) -> Context:

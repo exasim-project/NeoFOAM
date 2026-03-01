@@ -8,10 +8,13 @@ Tests the StagedInit class and dummy_init_staged.py implementation
 following the IncompressibleFluidInitializer pattern.
 """
 
+from typing import Any
+
 import pytest
 
-
 from neofoam.framework.initialization import (
+    InitStep,
+    LoadResult,
     StagedInit,
 )
 from .dummy_init import create_init
@@ -21,7 +24,7 @@ from .dummy_init import create_init
 # ============================================================================
 
 
-def test_staged_init_creation():
+def test_staged_init_creation() -> None:
     """Test creating a StagedInit instance."""
     init = StagedInit("TestSolver")
 
@@ -32,20 +35,22 @@ def test_staged_init_creation():
     assert init._hooks.build is None
 
 
-def test_staged_init_decorators():
+def test_staged_init_decorators() -> None:
     """Test that decorators register functions."""
     init = StagedInit("TestSolver")
 
     @init.load
-    def load_config():
-        return {"test": "value"}
+    def load_config() -> LoadResult:
+        return LoadResult(core_models=[], optional_models=[])
 
     @init.resolve
-    def resolve_deps(config):
+    def resolve_deps(config: Any) -> None:
         pass
 
     @init.build
-    def build_lazy():
+    def build_lazy(
+        core_models: list[Any], optional_models: list[Any]
+    ) -> list[InitStep]:
         return []
 
     assert init._hooks.load is load_config
@@ -53,7 +58,7 @@ def test_staged_init_decorators():
     assert init._hooks.build is build_lazy
 
 
-def test_staged_init_requires_load():
+def test_staged_init_requires_load() -> None:
     """Test that run() requires @init.load."""
     init = StagedInit("TestSolver")
 
@@ -66,7 +71,7 @@ def test_staged_init_requires_load():
 # ============================================================================
 
 
-def test_dummy_init_staged_full_run():
+def test_dummy_init_staged_full_run() -> None:
     """Test complete 3-stage initialization flow."""
 
     init_instance = create_init()
@@ -94,7 +99,7 @@ def test_dummy_init_staged_full_run():
     assert "mesh" in ctx.mesh or hasattr(ctx, "mesh")
 
 
-def test_optional_models_integration():
+def test_optional_models_integration() -> None:
     """Test that optional models are properly initialized and configured."""
 
     init_instance = create_init()
@@ -115,16 +120,19 @@ def test_optional_models_integration():
     algorithm = ctx.models.get("algorithm")
     assert algorithm is not None
 
-    # If model1 is present, check that it has registered configs
-    model1 = next(
-        (m for m in optional_models if hasattr(m, "name") and "Model1" in str(m.name)),
+    # If model1 runtime is present, check that it has a config loaded
+    from neofoam.framework.model import ModelRuntime
+
+    rt_m1 = next(
+        (
+            m
+            for m in optional_models
+            if isinstance(m, ModelRuntime) and "Model1" in m.spec.name
+        ),
         None,
     )
-
-    if model1:
-        # Model1 should have configs loaded via auto-discovery
-        assert hasattr(model1, "_configs")
-        assert len(model1._configs) > 0
+    if rt_m1:
+        assert rt_m1.config is not None
 
 
 if __name__ == "__main__":

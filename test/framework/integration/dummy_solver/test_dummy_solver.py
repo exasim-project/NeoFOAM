@@ -2,319 +2,246 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 """
-Tests for DummySolver - Complete solver with FastAPI-style API.
-
-Tests the new Solver and Model interface with a complete working example
-that doesn't require mocks or external dependencies.
+Tests for DummySolver — complete solver with ModelSpec / ModelRuntime API.
 """
 
+from pathlib import Path
+
 from neofoam.framework.graph import DAGResolver
+from neofoam.framework.model import ModelRuntime
 
 
-def test_dummy_solver_full_initialization():
-    """Test DummySolver initialization with both core and optional models."""
+def test_dummy_solver_full_initialization() -> None:
+    """DummySolver initialization with both core and optional models."""
     from .dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
 
-    # Verify core fields
+    # Core fields
     assert "field1" in ctx.fields
     assert "field2" in ctx.fields
     assert "field3" in ctx.fields
-
-    # Verify field values (fields are now scalars)
     assert ctx.fields["field1"] == 1.0
     assert ctx.fields["field2"] == 101325.0
 
-    # Verify core models
+    # Core models
     assert "algorithm" in ctx.models
     assert "config" in ctx.models
     assert "core2" in ctx.models
+    assert ctx.models["core2"].name == "CoreModel2"
+    assert ctx.models["core2"].status == "active"
+    assert ctx.models["config"]["param1"] == 1e-5
+    assert ctx.models["config"]["param2"] == 1000.0
 
-    # Verify core2
-    core2 = ctx.models["core2"]
-    assert core2.name == "CoreModel2"
-    assert core2.status == "active"
-
-    # Verify config
-    config = ctx.models["config"]
-    assert config["param1"] == 1e-5
-    assert config["param2"] == 1000.0
-
-    # Verify optional model fields were created
+    # Optional model fields
     assert "model_field1" in ctx.fields
     assert "model_field2" in ctx.fields
     assert "model_field3" in ctx.fields
-
-    # Verify optional model field values
+    assert "model3_field" in ctx.fields
+    assert "model_field4_instance_a" in ctx.fields
+    assert "model_field4_instance_b" in ctx.fields
     assert ctx.fields["model_field1"] == 300.0
     assert ctx.fields["model_field2"] == 1e-5
-    assert ctx.fields["model_field3"] == 500.0
+    assert ctx.fields["model3_field"] == 0.0
+    assert ctx.fields["model_field4_instance_a"] == 0.0
+    assert ctx.fields["model_field4_instance_b"] == 0.0
+
+    # optional_models list contains ModelRuntime objects
+    # 4 specs but MultiModel has 2 instances -> 5 runtimes
+    models = ctx.models.get("optional_models", [])
+    assert len(models) == 5
+    assert all(isinstance(m, ModelRuntime) for m in models)
+
+    # CoupledModel's nested accumulator
+    assert "accumulator" in ctx.models
 
 
-# ============================================================================
-# Test: Execution Graph Building and DAG Resolution
-# ============================================================================
-
-
-def test_execution_graph_and_dag():
-    """Test execution graph structure and DAG resolution."""
+def test_execution_graph_and_dag() -> None:
+    """Execution graph structure and DAG resolution."""
     from .dummy_solver import dummy_solver as solver
 
     solver.initialize()
-
     builder, model_ops = solver.execution_graph()
 
-    # Verify builder has operations
     assert len(builder.operations) > 0
 
-    # Should have time_loop with inner_loop
     time_loop = builder.operations[0]
     assert time_loop.operation_name == "time_loop"
-    assert len(time_loop.sub_operations) > 0
 
-    # Inner loop should have solver operations
     inner_loop = time_loop.sub_operations[0]
     assert inner_loop.operation_name == "inner_loop"
-    assert len(inner_loop.sub_operations) >= 3  # step1, step2, step3
+    assert len(inner_loop.sub_operations) >= 3
 
-    # Verify model operations
-    assert len(model_ops) > 0  # Should have model1 ops
+    assert len(model_ops) > 0
 
-    # Resolve DAG
     resolver = DAGResolver()
     resolved = resolver.resolve(builder, model_ops)
 
-    # Extract inner loop operations
-    time_loop = resolved.operations[0]
-    inner_loop = time_loop.sub_operations[0]
-    inner_ops = inner_loop.sub_operations
-
-    # Get operation names
+    inner_ops = resolved.operations[0].sub_operations[0].sub_operations
     op_names = [op.operation_name for op in inner_ops]
 
-    # Verify all operations present
     assert "solver_step1" in op_names
-    assert "model1_step1" in op_names  # From model1
+    assert "model1_step1" in op_names
     assert "solver_step2" in op_names
-    assert "model1_step2" in op_names  # From model1
-    assert "model2_step1" in op_names  # From model2
+    assert "model1_step2" in op_names
+    assert "model2_step1" in op_names
+    assert "model3_step" in op_names
+    assert "model4_step1_instance_a" in op_names
+    assert "model4_step1_instance_b" in op_names
     assert "solver_step3" in op_names
 
-    # Verify correct order
-    idx_step1 = op_names.index("solver_step1")
-    idx_m1_step1 = op_names.index("model1_step1")
-    idx_step2 = op_names.index("solver_step2")
-    idx_m1_step2 = op_names.index("model1_step2")
-    idx_m2_step1 = op_names.index("model2_step1")
-    idx_step3 = op_names.index("solver_step3")
-
-    # NOTE: Current DAGResolver sorts by operation_number
-    # solver_step1 [1.0] < solver_step2 [2.0] < model1_step1 [2.5] < model1_step2 [2.7] < model2_step1 [2.8] < solver_step3 [3.0]
+    idx = {name: i for i, name in enumerate(op_names)}
     assert (
-        idx_step1 < idx_step2 < idx_m1_step1 < idx_m1_step2 < idx_m2_step1 < idx_step3
+        idx["solver_step1"]
+        < idx["solver_step2"]
+        < idx["model1_step1"]
+        < idx["model1_step2"]
+        < idx["model2_step1"]
+        < idx["model3_step"]
     ), f"Operations not sorted by operation_number: {op_names}"
 
-    # Verify dependencies are still correct
-    assert idx_step1 < idx_m1_step1  # model1_step1 depends_on solver_step1
-    assert idx_m1_step1 < idx_m1_step2  # model1_step2 depends_on model1_step1
-    assert idx_step2 < idx_m2_step1  # model2_step1 depends_on solver_step2
-    assert idx_step2 < idx_step3  # solver_step3 depends_on solver_step2
+    # Both model4 instance ops should come before solver_step3
+    assert idx["model4_step1_instance_a"] < idx["solver_step3"], (
+        f"model4_step1_instance_a should be before solver_step3: {op_names}"
+    )
+    assert idx["model4_step1_instance_b"] < idx["solver_step3"], (
+        f"model4_step1_instance_b should be before solver_step3: {op_names}"
+    )
 
 
-# ============================================================================
-# ============================================================================
-# Test: Complete Solver Run
-# ============================================================================
-
-
-def test_dummy_solver_complete_run():
-    """Test complete solver run with all operations."""
+def test_dummy_solver_complete_run() -> None:
+    """Complete solver run with all operations."""
     from .dummy_solver import dummy_solver as solver, run
 
-    # Get initial context
     ctx_initial = solver.initialize()
-
-    # Get initial values (fields are now scalars)
     f1_initial = ctx_initial.fields["field1"]
     f2_initial = ctx_initial.fields["field2"]
     mf1_initial = ctx_initial.fields["model_field1"]
     mf3_initial = ctx_initial.fields["model_field3"]
+    mf4a_initial = ctx_initial.fields["model_field4_instance_a"]
+    mf4b_initial = ctx_initial.fields["model_field4_instance_b"]
 
-    # Run solver
     ctx_final = run()
 
-    # Verify fields changed
-    f1_final = ctx_final.fields["field1"]
-    f2_final = ctx_final.fields["field2"]
-    mf1_final = ctx_final.fields["model_field1"]
-    mf3_final = ctx_final.fields["model_field3"]
-
-    assert f1_final != f1_initial
-    assert f2_final != f2_initial
-    assert mf1_final != mf1_initial
-    assert mf3_final != mf3_initial
-
-    # Verify algorithm ran iterations
-    algorithm = ctx_final.models["algorithm"]
-    assert algorithm._iteration_count >= 1
+    assert ctx_final.fields["field1"] != f1_initial
+    assert ctx_final.fields["field2"] != f2_initial
+    assert ctx_final.fields["model_field1"] != mf1_initial
+    assert ctx_final.fields["model_field3"] != mf3_initial
+    assert ctx_final.fields["model_field4_instance_a"] != mf4a_initial
+    assert ctx_final.fields["model_field4_instance_b"] != mf4b_initial
+    assert ctx_final.models["algorithm"]._iteration_count >= 1
 
 
-def test_dummy_solver_model_operations_executed():
-    """Test that model operations are executed during run."""
+def test_dummy_solver_model_operations_executed() -> None:
+    """Model operations are discovered and executable via ModelRuntime."""
     from .dummy_solver import dummy_solver as solver
 
-    ctx_initial = solver.initialize()
+    ctx = solver.initialize()
+    models = ctx.models.get("optional_models", [])
 
-    # Get models
-    models = ctx_initial.models.get("optional_models", [])
-    m1 = next((m for m in models if m.name == "DummyModel1"), None)
-    m2 = next((m for m in models if m.name == "DummyModel2"), None)
+    # Find runtimes by spec name
+    rt_m1 = next((m for m in models if m.spec.name == "DummyModel1"), None)
+    rt_m2 = next((m for m in models if m.spec.name == "DummyModel2"), None)
 
-    # Check operations are discovered
-    assert len(m1.operations) > 0
-    assert len(m2.operations) > 0
+    assert rt_m1 is not None
+    assert rt_m2 is not None
 
-    # Reset counters
-    m1._step1_count = 0
-    m1._step2_count = 0
-    m2._step1_count = 0
+    # Operations are accessible via the runtime
+    assert len(rt_m1.operations) > 0
+    assert len(rt_m2.operations) > 0
 
-    # Test m1 step1 can be called
-    m1.model1_step1(ctx_initial)
-    assert m1._step1_count == 1
+    # Find and call an operation
+    m1_step1 = next(
+        op for op in rt_m1.operations if op.operation_name == "model1_step1"
+    )
+    m2_step1 = next(
+        op for op in rt_m2.operations if op.operation_name == "model2_step1"
+    )
 
-    # Test m2 step1 can be called
-    m2.model2_step1(ctx_initial)
-    assert m2._step1_count == 1
+    rt_m1._step1_count = 0
+    rt_m2._step1_count = 0
+
+    m1_step1.run(ctx)
+    assert rt_m1._step1_count == 1
+
+    m2_step1.run(ctx)
+    assert rt_m2._step1_count == 1
 
 
-# ============================================================================
-# Test: Model Operations Discovery
-# ============================================================================
+def test_model1_operations_discovery() -> None:
+    """Operations are auto-discovered from model1 via ModelRuntime."""
+    from .models.model1 import model1 as spec
 
+    case_dir = Path(__file__).parent / "configs"
+    rt = spec.instantiate(case_dir=case_dir)
 
-def test_model1_operations_discovery():
-    """Test that operations are auto-discovered from model1."""
-    from .models.model1 import model1 as model
-
-    # Get operations
-    ops = model.operations
-
-    # Verify operations found
+    ops = rt.operations
     assert len(ops) >= 2
 
-    # Verify operation names
     op_names = [op.operation_name for op in ops]
     assert "model1_step1" in op_names
     assert "model1_step2" in op_names
 
-    # Verify operation numbers
-    m1_s1_op = next(op for op in ops if op.operation_name == "model1_step1")
-    assert str(m1_s1_op.operation_number) == "2.5"
+    m1_s1 = next(op for op in ops if op.operation_name == "model1_step1")
+    assert str(m1_s1.operation_number) == "2.5"
 
 
-# ============================================================================
-# Test: Dependency Injection via Depends()
-# ============================================================================
-
-
-def test_init_dependency_injection():
-    """Test that @init.step uses Depends() for dependency injection."""
+def test_init_dependency_injection() -> None:
+    """@init stages use Depends() for dependency injection."""
     from .dummy_init import init
 
-    # Run init
     init.argv = []
     ctx = init.run()
 
-    # Verify dependencies were resolved
     assert "algorithm" in ctx.models
     assert ctx.models["algorithm"].param1 == 1e-5
-
-    # field1 depends on domain (fields are now scalars)
     assert "field1" in ctx.fields
-    assert ctx.fields["field1"] == 1.0  # scalar value
-
-    # field3 depends on field1 (stored as scalar)
+    assert ctx.fields["field1"] == 1.0
     assert "field3" in ctx.fields
-    expected_f3 = ctx.fields["field1"] * 0.01
-    assert ctx.fields["field3"] == expected_f3
+    assert ctx.fields["field3"] == ctx.fields["field1"] * 0.01
 
 
-# ============================================================================
-# Test: Automatic Dependency Injection
-# ============================================================================
-
-
-def test_automatic_dependency_injection_from_context():
-    """Test that operations automatically get dependencies from Context."""
+def test_automatic_dependency_injection_from_context() -> None:
+    """Solver operations automatically get dependencies from Context."""
     from .dummy_solver import dummy_solver as solver
 
     ctx = solver.initialize()
-
-    # Get operations
     ops = solver.operations
 
-    # Find step1 operation
     step1_op = next((op for op in ops if op.operation_name == "solver_step1"), None)
     assert step1_op is not None
 
-    # Run the operation directly with just Context (fields are now scalars)
     f1_before = ctx.fields["field1"]
-
-    # Execute the operation
     step1_op.run(ctx)
-
-    # Verify field1 was updated
-    f1_after = ctx.fields["field1"]
-    assert f1_after != f1_before
+    assert ctx.fields["field1"] != f1_before
 
 
-def test_model_operations_use_dependency_injection():
-    """Test that model operations automatically resolve dependencies and build works."""
-    from .models.model1 import model1 as model
-    from pathlib import Path
+def test_model_operations_use_dependency_injection() -> None:
+    """Model operations resolve dependencies and build works."""
+    from .models.model1 import model1 as spec
+    from neofoam.framework.context import Context
 
-    # Set up config directory
     case_dir = Path(__file__).parent / "configs"
+    rt = spec.instantiate(case_dir=case_dir)
 
-    # Load configs first (auto-generated load function)
-    model.run_load(case_dir=case_dir)
-
-    # Test build creates LazyInit objects
-    lazy_inits = model.run_build()
+    lazy_inits = rt.run_build()
     assert len(lazy_inits) == 2
     names = [li.name for li in lazy_inits]
     assert "model_field1" in names
     assert "model_field2" in names
-    f1_init = next(li for li in lazy_inits if li.name == "model_field1")
-    assert "domain" in f1_init.depends_on
+    assert (
+        "domain"
+        in next(li for li in lazy_inits if li.name == "model_field1").depends_on
+    )
 
-    # Get operations
-    ops = model.operations
-
-    # Find step1 operation
-    m1_s1_op = next(op for op in ops if op.operation_name == "model1_step1")
-    assert m1_s1_op is not None
-
-    # Create minimal context (fields are now scalars)
-    from neofoam.framework.context import Context
+    ops = rt.operations
+    m1_s1 = next(op for op in ops if op.operation_name == "model1_step1")
 
     ctx = Context(
-        fields={
-            "field1": 2.0,
-            "model_field1": 300.0,
-            "model_field2": 1e-5,
-        },
+        fields={"field1": 2.0, "model_field1": 300.0, "model_field2": 1e-5},
         models={},
         mesh={},
     )
-
     f1_before = ctx.fields["model_field1"]
-
-    # Run operation
-    m1_s1_op.run(ctx)
-
-    # Verify updated
-    f1_after = ctx.fields["model_field1"]
-    assert f1_after > f1_before
+    m1_s1.run(ctx)
+    assert ctx.fields["model_field1"] > f1_before

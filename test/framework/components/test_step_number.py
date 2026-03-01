@@ -3,7 +3,7 @@ import pytest
 from neofoam.framework.types import OperationNumber
 
 
-def test_step_number():
+def test_step_number() -> None:
     # Basic comparisons
     assert OperationNumber("1") < OperationNumber("1.10")
     assert OperationNumber("1") == OperationNumber(1)
@@ -31,6 +31,6 @@ def test_step_number():
 
     # Invalid inputs
     with pytest.raises(TypeError):
-        OperationNumber(1.23)
+        OperationNumber(1.23)  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         OperationNumber("1.a.3")

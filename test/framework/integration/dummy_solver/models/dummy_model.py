@@ -7,19 +7,18 @@ Base class for DummySolver models.
 Mimics SimpleSolverModel structure for testing.
 """
 
-from typing import Any
+from typing import Optional
+from pathlib import Path
 
 from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.framework.model_factory import ModelInstance
+from neofoam.framework.model import ModelSpec, ModelRuntime, DetectResult, load_manifest
 
 
-def Model(name: str) -> ModelInstance:
-    """
-    Factory for dummy models using the ModelInstance API.
-    """
-    return ModelInstance(name)
+def Model(name: str) -> ModelSpec:
+    """Factory for dummy models using the ModelSpec API."""
+    return ModelSpec(name)
 
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")
@@ -31,33 +30,63 @@ class DummyModelInterface(BaseModel):
     """
 
     @classmethod
-    def detect_models(cls) -> list[ModelInstance]:
+    def detect_specs(
+        cls, case_dir: Optional[Path] = None
+    ) -> list[tuple[ModelSpec, DetectResult]]:
         """
-        Detect and return enabled model instances.
+        Return (spec, DetectResult) pairs for all detected models.
 
-        Returns:
-            List of ModelInstance objects that have been registered and enabled
+        DetectResult.instance_ids may contain multiple IDs for multi-instance models.
         """
         registry = PluginSystem.get_registered("DummyModelInterface")
         if not registry:
             return []
 
-        enabled_models = []
+        results: list[tuple[ModelSpec, DetectResult]] = []
         for plugin_cls in registry.plugin_registry:
-            # Get the ModelInstance from the wrapper class
-            if hasattr(plugin_cls, "get_model_instance"):
-                model_instance = plugin_cls.get_model_instance(plugin_cls)
-                # Check if model should be detected/enabled
-                if model_instance.run_detect():
-                    enabled_models.append(model_instance)
+            if not hasattr(plugin_cls, "get_model_instance"):
+                continue
+            spec = plugin_cls.get_model_instance(plugin_cls)
+            detect_result = spec.run_detect(case_dir=case_dir)
+            if detect_result.detected:
+                results.append((spec, detect_result))
+        return results
 
-        return enabled_models
+    @classmethod
+    def detect_specs_with_manifest(
+        cls,
+        case_dir: Optional[Path] = None,
+        manifest_path: Optional[Path] = None,
+    ) -> list[ModelRuntime]:
+        """
+        Load models from manifest, then auto-detect any specs not already covered.
 
+        1. Load manifest entries → list[ModelRuntime]
+        2. Auto-detect specs not already covered by manifest type names
+        3. Return combined list
+        """
+        runtimes: list[ModelRuntime] = []
+        manifest_types: set[str] = set()
 
-def _create_dummy_model_instance(cls, *, config: dict[str, Any], **kwargs: Any) -> Any:
-    """Factory classmethod for creating model instances from config dict."""
-    wrapper = cls.plugin_model(model=config, **kwargs)  # type: ignore[attr-defined]
-    return wrapper.model.get_model_instance()
+        # 1. Load from manifest
+        if manifest_path is not None and manifest_path.exists():
+            manifest_rts = load_manifest(
+                manifest_path, case_dir or Path("."), "DummyModelInterface"
+            )
+            runtimes.extend(manifest_rts)
+            manifest_types = {rt.spec.name for rt in manifest_rts}
 
+        # 2. Auto-detect specs not covered by manifest
+        for spec, detect_result in cls.detect_specs(case_dir=case_dir):
+            if spec.name in manifest_types:
+                continue
+            if detect_result.instance_ids:
+                for iid in detect_result.instance_ids:
+                    entry = {"type": spec.name, "name": iid}
+                    runtimes.append(
+                        spec.instantiate(case_dir=case_dir or Path("."), entry=entry)
+                    )
+            else:
+                runtimes.append(spec.instantiate(case_dir=case_dir or Path(".")))
 
-DummyModelInterface.create = classmethod(_create_dummy_model_instance)  # type: ignore[method-assign]
+        return runtimes

@@ -1,546 +1,830 @@
-3-Stage Solver Initialization
-=============================
+Solver Framework
+================
 
-NeoFOAM uses a **3-stage initialization process** to handle complex dependencies between solvers, models, and physics algorithms.
-This ensures that configuration is loaded, dependencies are resolved, and runtime objects (fields, meshes) are built in the correct order.
-To reduce the size of the solver code, the initialization logic is encapsulated in the ``StagedInit`` class and associated decorators that define each state in a separated file.
+NeoFOAM's solver framework uses a **Spec/Runtime architecture** combined with a **3-stage initialization process** to handle complex dependencies between solvers, models, and physics algorithms.
 
-The Process: Load → Resolve → Build
------------------------------------
+Architecture Overview
+---------------------
+
+The framework separates **definition** from **execution** using two core concepts:
+
+- **Spec** (``ModelSpec``, ``SolverSpec``): Immutable definition created at module import time. Decorators register behavior (load, resolve, build, operations) without executing anything.
+- **Runtime** (``ModelRuntime``, ``SolverRuntime``): Mutable per-instance state created from a Spec. Holds loaded config, resolved dependencies, and runtime objects.
+
+.. code-block:: text
+
+    Module Import Time              Solver Startup
+    ─────────────────              ──────────────
+    ModelSpec (definition)  ──►  ModelRuntime (instance)
+    SolverSpec (definition) ──►  SolverRuntime (instance)
+
+This separation allows multiple independent runtime instances from a single spec, clean testability, and plugin-based model discovery.
+
+
+ModelSpec & ModelRuntime
+------------------------
+
+A ``ModelSpec`` defines a physics model (e.g., turbulence, transport). Create one using the ``Model()`` factory function and register behavior with decorators.
+
+Creating a ModelSpec
+~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from pathlib import Path
+    from neofoam.framework.model import Model
+    from neofoam.framework.initialization import ConfigContext, InitStep
+    from neofoam.framework.initialization.helpers import field
+    from neofoam.io import BaseConfig, IOStrategy, YAML
+
+    # Create the spec at module level
+    transport = Model("Transport")
+
+    # Register a config class
+    @transport.config
+    @IOStrategy(YAML("transportProperties"))
+    class TransportConfig(BaseConfig):
+        viscosity: float = 1e-6
+        density: float = 1000.0
+
+    # Stage 1: LOAD — return a config object (no side effects)
+    @transport.load
+    def load(case_dir: Path, _entry: Any) -> TransportConfig:
+        return TransportConfig.load(case_dir=case_dir)
+
+    # Stage 1b: DETECT — should this model be active?
+    @transport.detect
+    def detect(case_dir: Path) -> bool:
+        return (case_dir / "transportProperties.yaml").exists()
+
+    # Stage 2: RESOLVE — wire inter-model dependencies
+    @transport.resolve
+    def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: TransportConfig) -> TransportConfig:
+        if cfg.viscosity <= 0:
+            raise ValueError("Invalid viscosity")
+        return cfg
+
+    # Stage 3: BUILD — return lazy initializers
+    @transport.build
+    def build(self: ModelRuntime, cfg: TransportConfig) -> list[InitStep]:
+        return [
+            field("nu", create=lambda ctx: cfg.viscosity, depends_on=["mesh"]),
+        ]
+
+Decorator Summary
+~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 35 45
+
+   * - Decorator
+     - Signature
+     - Purpose
+   * - ``@spec.config``
+     - ``class MyConfig(BaseConfig)``
+     - Register config class for auto-construction
+   * - ``@spec.load``
+     - ``(case_dir: Path, entry: Any) -> Config``
+     - Load config from files (LOAD stage)
+   * - ``@spec.detect``
+     - ``(case_dir: Path) -> bool | list[str]``
+     - Check if model should be active
+   * - ``@spec.resolve``
+     - ``(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig) -> Config``
+     - Wire dependencies (RESOLVE stage)
+   * - ``@spec.build``
+     - ``(self: ModelRuntime, cfg: MyConfig) -> list[InitStep]``
+     - Create lazy initializers (BUILD stage)
+   * - ``@spec.operation``
+     - ``(self, field1: float, cfg: Config) -> FieldUpdates``
+     - Register a runtime operation
+   * - ``@spec.operation_collection``
+     - ``(self) -> Operations``
+     - Conditional operation dispatch
+
+ModelRuntime
+~~~~~~~~~~~~
+
+A ``ModelRuntime`` is created from a spec via ``instantiate()``:
+
+.. code-block:: python
+
+    # Create a runtime instance
+    runtime = transport.instantiate(case_dir=Path("./case"))
+
+    # Runtime holds the loaded config
+    print(runtime.config.viscosity)  # 1e-6
+
+    # Execute stages
+    config_ctx = ConfigContext()
+    runtime.run_resolve(config_ctx)      # Stage 2
+    init_steps = runtime.run_build()     # Stage 3
+
+    # Access operations
+    ops = runtime.operations  # list[Operation]
+
+
+SolverSpec & SolverRuntime
+--------------------------
+
+A ``SolverSpec`` defines a solver's initialization, execution graph, and operations.
+
+Creating a SolverSpec
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from typing import Any, Annotated
+    from neofoam.framework.solver import Solver
+    from neofoam.framework.context import Context, FieldUpdates
+    from neofoam.framework.initialization import StagedInit, Depends
+    from neofoam.framework.operations import (
+        Operation, Operations, StepBuilder,
+        SequentialOp, IterativeOp, OperationMetadata,
+    )
+
+    solver_spec = Solver("PimpleSolver")
+
+    # Initialization: orchestrates the 3-stage process
+    @solver_spec.initializer
+    def initialize(
+        self: Any,
+        init: Annotated[StagedInit, Depends(create_init_manager)],
+    ) -> Context:
+        return init.run()
+
+    # Execution graph: defines the solver's loop structure
+    @solver_spec.execution_graph_step
+    def execution_graph(self: Any) -> tuple[StepBuilder, Operations]:
+        builder = StepBuilder()
+        # Add solver steps and loops (see Operations section)
+        return builder, model_operations
+
+    # Solver operations
+    @solver_spec.operation(operation_number="1.0", name="solve_momentum")
+    def solve_momentum(self: Any, U: float) -> FieldUpdates:
+        return FieldUpdates({"U": U * 0.99})
+
+Using the SolverRuntime
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    # Create a runtime
+    solver = solver_spec.instantiate(argv=["--case", "./cavity"])
+
+    # Run initialization (executes LOAD → RESOLVE → BUILD)
+    ctx = solver.initialize()
+
+    # Build execution graph
+    builder, model_ops = solver.execution_graph()
+
+    # Access solver operations
+    ops = solver.operations  # Operations container
+
+
+3-Stage Initialization
+----------------------
+
+The initialization process ensures configuration is loaded, dependencies are resolved, and runtime objects are built in the correct order.
+
+The Process: Load |rarr| Resolve |rarr| Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. |rarr| unicode:: U+2192
 
 .. mermaid::
 
     %%{init: {'sequence': {'actorMargin': 300}}}%%
     sequenceDiagram
         autonumber
-        participant Solver
-        participant Manager as StagedInit
-        participant UserCode as User Handlers (@init...)
+        participant SR as SolverRuntime
+        participant SI as StagedInit
+        participant MS as ModelSpec (@spec decorators)
+        participant MR as ModelRuntime
 
-        Note right of Solver: Dependency Injection<br/>provides StagedInit instance
-        Solver->>Manager: init.run()
+        SR->>SI: init.run()
 
         rect rgb(235, 245, 255)
-            Note over Manager, UserCode: 1. LOAD STAGE
-            Manager->>UserCode: Call @init.load()
-            UserCode-->>Manager: Return LoadResult [List of Models]
-            Note right of Manager: DATA: LoadResult passed to next stage
+            Note over SI, MS: 1. LOAD STAGE
+            SI->>MS: Detect models + load configs
+            MS-->>MR: spec.instantiate() creates ModelRuntime
+            MR-->>SI: Return LoadResult [list of ModelRuntime]
         end
 
         rect rgb(255, 245, 235)
-            Note over Manager, UserCode: 2. RESOLVE STAGE
-            Manager->>Manager: Create ConfigContext from LoadResult
-            Manager->>UserCode: Call @init.resolve(ConfigContext)
-            Note right of UserCode: Models wire dependencies<br/>using ConfigContext
-            UserCode-->>Manager: (Completion)
-            Note right of Manager: DATA: Verified Model Graph passed to next stage
+            Note over SI, MR: 2. RESOLVE STAGE
+            SI->>SI: Create ConfigContext, register models
+            SI->>MR: runtime.run_resolve(ConfigContext)
+            Note right of MR: Models wire dependencies,<br/>update configs
+            MR-->>SI: (Completion)
         end
 
         rect rgb(235, 255, 240)
-            Note over Manager, UserCode: 3. BUILD STAGE
-            Manager->>UserCode: Call @init.build(mesh)
-            UserCode-->>Manager: Return List[InitStep]
-            Note right of Manager: DATA: Dependency Graph created from List[InitStep]
+            Note over SI, MR: 3. BUILD STAGE
+            SI->>MR: runtime.run_build()
+            MR-->>SI: Return list[InitStep]
+            Note right of SI: Topological sort of all InitSteps
 
-            loop For each InitStep in Order
-                Manager->>Manager: Execute InitStep
-                Note right of Manager: Object created & stored in Runtime Context
+            loop For each InitStep in order
+                SI->>SI: Execute InitStep
+                Note right of SI: Object stored in Context
             end
         end
 
-        Manager-->>Solver: Return Runtime Context
+        SI-->>SR: Return Context
 
-Detailed Data Flow
-^^^^^^^^^^^^^^^^^^
+Stage Details
+^^^^^^^^^^^^^
 
-The diagram illustrates how data transforms and moves through the system during initialization:
+1. **LOAD Stage**: Read configuration files, detect active models, create ``ModelRuntime`` instances. No interaction between models yet. No mesh or heavy memory allocation.
 
-1.  **LOAD Stage (Data In)**:
-    - **Input**: Configuration files (dictionaries).
-    - **Output**: A ``LoadResult`` object containing a list of **Model Instances**.
-    - These models are "empty shells" at this point—they have configuration data but no connections to other models and no fields.
+2. **RESOLVE Stage**: Models wire dependencies via ``ConfigContext``. Validate compatible configurations. Adapt algorithms based on active models.
 
-2.  **RESOLVE Stage (Wiring)**:
-    - **Input**: The ``LoadResult`` from stage 1.
-    - **Mechanism**: The ``ConfigContext`` acts as a registry. Models are registered by name.
-    - **Action**: Models query the ``ConfigContext`` to find their dependencies (e.g., ``context.get("transport")``).
-    - **Result**: A fully connected graph of model instances, verified and ready for deployment.
+3. **BUILD Stage**: Return ``InitStep`` objects describing how to create runtime objects. The framework sorts them topologically and executes them in dependency order, building a ``Context``.
 
-3.  **BUILD Stage (Construction)**:
-    - **Input**: The connected models and the mesh.
-    - **Output**: A list of ``InitStep`` objects (recipes).
-    - **Execution**: The ``Init Manager`` sorts these recipes topologically based on declared dependencies. It then executes them one by one.
-    - **Runtime Context**: As each recipe executes (e.g., creating a field), its result is stored in the ``Runtime Context``. Subsequent recipes can look up these results (e.g., ``context["fields.U"]``) to build dependent objects.
+StagedInit
+~~~~~~~~~~
 
-Why 3 Stages?
--------------
-
-1.  **Stage 1: LOAD**
-    - Reads configuration files (dictionaries, YAML, etc.).
-    - Discovers available models (e.g., Turbulence, Transport).
-    - **No** interaction between models yet.
-    - **No** mesh or heavy memory allocation.
-
-2.  **Stage 2: RESOLVE**
-    - Establishes connections between models.
-    - Validates compatible configurations (e.g., "Is this turbulence model compatible with this solver?").
-    - Adapts algorithms based on active models (e.g., switching to buoyant pressure solver if Boussinesq model is present).
-
-3.  **Stage 3: BUILD**
-    - The mesh is available.
-    - Fields are created and memory is allocated.
-    - Uses **Lazy Initialization** to ensure fields are created in dependency order (Mesh → U → Turbulence).
-
-Implementing Staged Initialization
-----------------------------------
-
-The framework provides the ``StagedInit`` class. You define the logic for each stage using decorators.
+The ``StagedInit`` class orchestrates the 3-stage process. It is typically injected into the solver's ``@initializer`` via ``Depends``.
 
 .. code-block:: python
 
-    from neofoam.framework.initialization import StagedInit, LoadResult, ConfigContext
-    from neofoam.framework.initialization.lazy_init import InitStep
+    from neofoam.framework.initialization import (
+        StagedInit, LoadResult, ConfigContext, InitializerBuilder,
+    )
 
-    # Create the initialization manager
-    init = StagedInit("MySolverInit")
+    init = StagedInit("MySolver")
 
     @init.load
     def load_config() -> LoadResult:
-        """
-        Stage 1: Load configuration and models.
-        """
-        # Read OpenFOAM dictionaries or other config
-        fv_solution = read_dictionary("system/fvSolution")
-
-        # Instantiate model classes (lightweight, no fields yet)
-        models = [TurbulenceModel(), TransportModel()]
-
-        return LoadResult(core_models=[], optional_models=models)
-
-    @init.resolve
-    def resolve_dependencies(core_models: list, optional_models: list, config: ConfigContext):
-        """
-        Stage 2: Connect models.
-        """
-        # Example: Transport model might need to know about Turbulence
-        for model in optional_models:
-             model.connect(config)
-
-    @init.build
-    def build_runtime(mesh, core_models: list, optional_models: list) -> list[InitStep]:
-        """
-        Stage 3: Create runtime objects (Lazy Execution).
-        """
-        initializers = []
-
-        # Define how to create fields
-        initializers.append(
-            InitStep(
-                name="fields.U",
-                initializer=lambda ctx: create_vector_field(mesh, "U"),
-                depends_on=["mesh"]
-            )
+        # Detect and instantiate models
+        optional_models = MyModelInterface.detect_specs_with_manifest(
+            case_dir=Path("./case"),
+            manifest_path=Path("./case/models.yaml"),
+        )
+        return LoadResult(
+            core_models=[algorithm_config],
+            optional_models=optional_models,
         )
 
-        return initializers
+    @init.resolve
+    def resolve_dependencies(config: ConfigContext) -> None:
+        for runtime in init.optional_models:
+            runtime.run_resolve(config)
 
-Integration with Solver
------------------------
+    @init.build
+    def build_runtime(
+        core_models: list, optional_models: list
+    ) -> list[InitStep]:
+        builder = InitializerBuilder()
+        builder.add_resource("mesh", mesh_data)
+        builder.add_core_models([("algorithm", algo_config)])
+        builder.add_field("p", depends_on=["mesh"], value=0.0)
+        builder.add_field("U", depends_on=["mesh"], value=0.0)
 
-The initialized ``StagedInit`` object is then injected into the solver using the ``@solver.initializer`` decorator.
+        # Each model contributes its own InitSteps
+        for runtime in optional_models:
+            builder.extend(runtime.run_build())
 
-.. code-block:: python
+        return builder.build()
 
-    from neofoam.framework import Solver, Context, Depends
-    from typing import Annotated
+    # Execute all stages at once
+    ctx = init.run()  # Returns Context
 
-    solver = Solver("MySolver")
-
-    @solver.initializer
-    def initialize(init_manager: Annotated[StagedInit, Depends(get_init_manager)]) -> Context:
-        # Executes the 3-stage process and returns the simulation context
-        return init_manager.run()
-
-Lazy Initialization Graph
--------------------------
-
-In the **BUILD** stage, we don't create objects immediately. Instead, we return ``InitStep`` descriptions. The framework builds a dependency graph and executes them in the correct topological order.
-
-**Example Dependency Chain:**
-
-.. code-block:: text
-
-    Mesh (Root)
-      │
-      ├──> fields.U (Velocity)
-      │      │
-      │      └──> Turbulence Model
-      │
-      └──> fields.p (Pressure)
-
-This ensures that `fields.U` exists before the Turbulence Model tries to access it, eliminating initialization order bugs.
+    # Or execute stages individually
+    load_result = init.run_load()
+    init.run_resolve(ConfigContext())
+    init_steps = init.run_build()
 
 
-Lazy BUILD Pattern
-------------------
+Lazy Initialization
+-------------------
 
-Starting with recent versions, the BUILD stage supports a lazy initialization pattern where methods can return ``InitStep`` objects instead of performing immediate execution. This provides several benefits:
+In the BUILD stage, objects are not created immediately. Instead, ``InitStep`` objects describe **what** to create and **what dependencies** are needed. The framework builds a dependency graph and executes them in topological order.
 
-1. **Explicit Dependencies**: Each initialization step declares its dependencies
-2. **Automatic Ordering**: Dependencies are resolved using topological sort
-3. **Cycle Detection**: Circular dependencies are caught early
-4. **Better Testability**: Individual initialization steps can be tested in isolation
-
-Basic Lazy Initialization
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``@Solver.build`` decorator can return a list of ``InitStep`` objects:
+InitStep
+~~~~~~~~
 
 .. code-block:: python
 
-    from neofoam.framework import InitStep, Solver
-    from neofoam.framework.initialization.helpers import field, operator, lazy, model
+    from neofoam.framework.initialization import InitStep
 
-    class MySolver(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
+    InitStep(
+        name="fields.U",                                    # Unique identifier
+        depends_on=["mesh"],                                 # Must exist before this runs
+        initializer=lambda results: create_field(results["mesh"]),  # Receives dict of prior results
+        category="fields",                                   # Route to ctx.fields
+    )
 
-        @Solver.build
-        def setup_runtime(self, mesh):
-            """Return list of lazy initializers instead of executing immediately."""
-            return [
-                # Runtime and mesh (no dependencies)
-                lazy("runtime", self._create_runtime),
-                lazy("mesh", self._create_mesh, ["runtime"]),
+Categories determine where results are stored in the ``Context``:
 
-                # Fields depend on mesh
-                field("p", self._read_pressure_field, ["mesh"]),
-                field("U", self._read_velocity_field, ["mesh"]),
-
-                # Operators depend on fields
-                operator("div_phi", self._create_divergence, ["fields.U"]),
-                operator("laplacian_p", self._create_laplacian, ["fields.p"]),
-            ]
-
-        def _create_runtime(self, context):
-            runtime = pyf.Time(...)
-            return runtime
-
-        def _create_mesh(self, context):
-            runtime = context["runtime"]
-            mesh = pyf.fvMesh(runtime)
-            return mesh
-
-        def _read_pressure_field(self, context):
-            mesh = context["mesh"]
-            return pyf.volScalarField.read_field("p", mesh)
-
-When ``SolverInitializer.initialize()`` executes the BUILD stage, it:
-
-1. Calls ``setup_runtime(mesh)`` to get the list of ``InitStep`` objects
-2. Builds a dependency graph from the ``depends_on`` lists
-3. Performs topological sort to determine execution order
-4. Executes each initializer in order, passing the ``context`` dict
-5. Stores results back in ``context`` for downstream dependencies
+- ``"fields"`` |rarr| ``ctx.fields["U"]`` (name prefix ``fields.`` stripped)
+- ``"models"`` |rarr| ``ctx.models["turbulence"]``
+- ``"operators"`` |rarr| ``ctx.models["div_phi"]``
+- ``"resource"`` |rarr| ``ctx.fields["mesh"]`` or ``ctx.runtime`` (top-level)
 
 Helper Functions
 ~~~~~~~~~~~~~~~~
 
-The framework provides helper functions to create ``InitStep`` objects with automatic naming:
+Helpers create ``InitStep`` objects with automatic naming and category:
 
 .. code-block:: python
 
-    from neofoam.framework.initialization.helpers import field, operator, lazy, model
+    from neofoam.framework.initialization import field, operator, lazy, model
 
-    # field(name, initializer, dependencies) -> InitStep with name="fields.{name}"
-    field("p", lambda ctx: read_field("p", ctx["mesh"]), ["mesh"])
+    # field("p", ...) -> InitStep(name="fields.p", category="fields")
+    field("p", create=lambda ctx: 0.0, depends_on=["mesh"])
 
-    # operator(name, initializer, dependencies) -> InitStep with name="operators.{name}"
-    operator("div_phi", lambda ctx: create_div(ctx["fields.U"]), ["fields.U"])
+    # operator("div_phi", ...) -> InitStep(name="operators.div_phi", category="operators")
+    operator("div_phi", create=lambda ctx: make_div(ctx["fields.U"]), depends_on=["fields.U"])
 
-    # model(name, initializer, dependencies) -> InitStep with name="models.{name}"
-    model("turbulence", lambda ctx: create_turbulence(...), ["fields.U", "fields.p"])
+    # model("turbulence", ...) -> InitStep(name="models.turbulence", category="models")
+    model("turbulence", create=lambda ctx: make_turb(), depends_on=["fields.U", "fields.p"])
 
-    # lazy(name, initializer, dependencies) -> InitStep with custom name
-    lazy("algorithm", lambda ctx: create_algorithm(...), ["models.turbulence"])
+    # lazy("mesh", ...) -> InitStep(name="mesh", category="resource")
+    lazy("mesh", create=lambda ctx: load_mesh())
 
 All helpers default to an empty dependency list ``[]`` if not specified.
+
+InitializerBuilder
+~~~~~~~~~~~~~~~~~~
+
+The fluent ``InitializerBuilder`` simplifies constructing lists of ``InitStep`` objects:
+
+.. code-block:: python
+
+    from neofoam.framework.initialization import InitializerBuilder
+
+    builder = InitializerBuilder()
+    builder.add_resource("mesh", mesh_data)
+    builder.add_field("p", depends_on=["mesh"], value=0.0)
+    builder.add_field("U", depends_on=["mesh"], value=0.0)
+    builder.add_operator("div_phi", depends_on=["fields.U"], value=make_div)
+    builder.add_core_models([("algorithm", algo)])
+
+    # Extend with model-contributed steps
+    builder.extend(model_runtime.run_build())
+
+    init_steps = builder.build()  # Returns list[InitStep]
 
 Dependency Resolution
 ~~~~~~~~~~~~~~~~~~~~~
 
-Dependencies are specified as strings matching the ``name`` of other ``InitStep`` objects. The framework:
+Dependencies are strings matching the ``name`` of other ``InitStep`` objects. The framework:
 
 - Uses ``networkx.lexicographical_topological_sort`` for deterministic ordering
-- Detects cycles and raises ``CyclicDependencyError`` before execution
+- Detects cycles and raises ``InitializationGraphError`` before execution
 - Ensures each initializer executes exactly once
 
 Example dependency chain:
 
+.. code-block:: text
+
+    mesh (no deps)
+      |
+      +---> fields.p (depends on ["mesh"])
+      |
+      +---> fields.U (depends on ["mesh"])
+                |
+                +---> models.turbulence (depends on ["fields.U", "fields.p"])
+                          |
+                          +---> algorithm (depends on ["models.turbulence"])
+
+
+Model Discovery & Manifests
+----------------------------
+
+Models can be discovered automatically via ``@detect`` or loaded explicitly from YAML manifests.
+
+Auto-Detection with @detect
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``@detect`` decorator determines whether a model should be active. It can return a simple ``bool`` or a ``list[str]`` of instance IDs for multi-instance models.
+
 .. code-block:: python
 
-    runtime (no deps)
-      ↓
-    mesh (depends on ["runtime"])
-      ↓
-    fields.p, fields.U (both depend on ["mesh"])
-      ↓
-    models.turbulence (depends on ["fields.U", "fields.p"])
-      ↓
-    algorithm (depends on ["models.turbulence"])
+    # Simple detection
+    @transport.detect
+    def detect(case_dir: Path) -> bool:
+        return (case_dir / "transportProperties.yaml").exists()
 
-Execution order: ``runtime → mesh → fields.p → fields.U → models.turbulence → algorithm``
+    # Multi-instance detection
+    @multi_model.detect
+    def detect(case_dir: Path) -> list[str]:
+        with open(case_dir / "sources.yaml") as f:
+            data = yaml.safe_load(f)
+        return list(data.keys())  # ["instance_a", "instance_b"]
 
-Context Passing
+Usage:
+
+.. code-block:: python
+
+    result = transport.run_detect(case_dir=Path("./case"))
+    # DetectResult(detected=True, instance_ids=[])
+
+    result = multi_model.run_detect(case_dir=Path("./case"))
+    # DetectResult(detected=True, instance_ids=["instance_a", "instance_b"])
+
+YAML Manifests
+~~~~~~~~~~~~~~
+
+Manifests provide explicit model instantiation with inline config. The manifest format:
+
+.. code-block:: yaml
+
+    # models.yaml
+    - type: MultiModel
+      name: instance_a
+      scale: 1.5
+      offset: 0.1
+
+    - type: MultiModel
+      name: instance_b
+      scale: 2.0
+      offset: 0.5
+
+Load manifests with ``load_manifest()``:
+
+.. code-block:: python
+
+    from neofoam.framework.model import load_manifest
+
+    runtimes = load_manifest(
+        manifest_path=Path("./case/models.yaml"),
+        case_dir=Path("./case"),
+        registry_name="MyModelInterface",
+    )
+    # Returns list[ModelRuntime], one per manifest entry
+
+For manifest loading to work, the model must be registered with a plugin interface:
+
+.. code-block:: python
+
+    model_spec = Model("MultiModel").register_with(MyModelInterface)
+
+    @model_spec.config
+    class MultiModelConfig(BaseConfig):
+        scale: float = 1.0
+        offset: float = 0.0
+
+Multi-Instance Build
+~~~~~~~~~~~~~~~~~~~~
+
+``@build`` receives ``self: ModelRuntime`` as the first parameter. Use it to access the instance name for multi-instance models. Config parameters are auto-injected by type:
+
+.. code-block:: python
+
+    @multi_model.build
+    def build(self: ModelRuntime, cfg: MultiModelConfig) -> list[InitStep]:
+        # Use self.name for instance-specific field names
+        field_name = f"model_field_{self.name}"
+        return [
+            field(field_name, create=lambda ctx: cfg.scale, depends_on=["mesh"]),
+        ]
+
+Combined Discovery
+~~~~~~~~~~~~~~~~~~
+
+A common pattern combines manifest loading with auto-detection for models not covered by the manifest:
+
+.. code-block:: python
+
+    class MyModelInterface:
+        @classmethod
+        def detect_specs_with_manifest(cls, case_dir, manifest_path):
+            # 1. Load models from manifest
+            manifest_runtimes = load_manifest(manifest_path, case_dir, "MyModelInterface")
+
+            # 2. Auto-detect remaining models
+            for spec, result in cls.detect_specs(case_dir=case_dir):
+                if result.detected:
+                    # Skip if already in manifest
+                    ...
+
+            return combined_runtimes
+
+
+Operations & Execution Graph
+-----------------------------
+
+Operations define the computational steps a solver or model performs at runtime. They are registered with decorators and composed into a nested execution graph.
+
+Defining Operations
+~~~~~~~~~~~~~~~~~~~
+
+Operations are decorated functions that receive field values from the ``Context`` and return ``FieldUpdates`` to modify them:
+
+.. code-block:: python
+
+    from neofoam.framework.context import FieldUpdates
+
+    @solver_spec.operation(operation_number="1.0", name="solve_momentum")
+    def solve_momentum(self: Any, U: float, p: float) -> FieldUpdates:
+        # Parameter names match ctx.fields keys (auto-injected)
+        new_U = U - 0.01 * p
+        return FieldUpdates({"U": new_U})
+
+    @model_spec.operation(
+        operation_number="2.5",
+        depends_on=["solve_momentum"],  # Execute after this operation
+        name="update_turbulence",
+    )
+    def update_turbulence(
+        self: Any,
+        U: float,                       # Auto-injected from ctx.fields["U"]
+        cfg: TurbulenceConfig,          # Auto-injected by type from runtime.config
+    ) -> FieldUpdates:
+        return FieldUpdates({"k": U * cfg.c_mu})
+
+    # Operations can also receive the full Context via a `ctx` parameter
+    @model_spec.operation(operation_number="3.0", name="coupled_step")
+    def coupled_step(
+        ctx: Any,                       # Full Context object
+        model_field: float,             # Also auto-injected from ctx.fields
+        cfg: TurbulenceConfig,
+    ) -> FieldUpdates:
+        mesh = ctx.mesh
+        return FieldUpdates({"model_field": model_field * 0.9})
+
+Key features of operation auto-injection:
+
+- **Field injection**: Parameter names matching ``ctx.fields`` keys are automatically populated
+- **Config injection**: Parameters whose **type annotation** is a ``BaseConfig`` subclass are discovered and injected from ``runtime.config`` (matched by type, not by parameter name)
+- **Context injection**: A parameter named ``ctx`` receives the full ``Context`` object
+- **Self binding**: ``self`` is bound to the ``ModelRuntime`` or ``SolverRuntime`` instance
+- **Lazy state**: Use ``if not hasattr(self, '_counter'): self._counter = 0`` for per-runtime state
+
+Conditional Operation Dispatch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``@operation_collection`` to select different operations based on runtime config:
+
+.. code-block:: python
+
+    @model_spec.operation_collection
+    def collected_operations(self: Any) -> Operations:
+        if self.config.coupled:
+            # Return coupled variant
+            op = Operation(
+                func=SequentialOp(coupled_step_fn),
+                metadata=OperationMetadata(
+                    op_name="coupled_step",
+                    operation_number=OperationNumber("2.9"),
+                ),
+            )
+        else:
+            # Return standalone variant
+            op = Operation(
+                func=SequentialOp(standalone_step_fn),
+                metadata=OperationMetadata(
+                    op_name="standalone_step",
+                    operation_number=OperationNumber("2.9"),
+                ),
+            )
+        return Operations([op])
+
+Operation Types
 ~~~~~~~~~~~~~~~
 
-Each initializer receives a ``context`` dictionary containing all previously initialized objects:
+Operations are wrapped in type markers that determine execution behavior:
+
+- ``SequentialOp(func)``: Executes once per call
+- ``IterativeOp(func)``: Loops while ``func`` returns ``True``
+- ``ConditionalOp(func)``: Conditional execution gate (returns ``bool``)
 
 .. code-block:: python
 
-    def _create_algorithm(self, context):
-        # Access dependencies via their names
-        turbulence = context["models.turbulence"]
-        p_field = context["fields.p"]
-        U_field = context["fields.U"]
+    from neofoam.framework.operations import (
+        Operation, SequentialOp, IterativeOp, ConditionalOp, OperationMetadata,
+    )
 
-        # Create algorithm using dependencies
-        algorithm = PIMPLEAlgorithm(
-            turbulence=turbulence,
-            pressure=p_field,
-            velocity=U_field
-        )
-        return algorithm
+    # A step that runs once
+    step = Operation(
+        func=SequentialOp(lambda ctx: solve(ctx)),
+        metadata=OperationMetadata(op_name="solve", operation_number=OperationNumber("1.0")),
+    )
 
-The context is automatically populated as each initializer completes.
+    # A loop that repeats until convergence
+    loop = Operation(
+        func=IterativeOp(lambda ctx: not converged(ctx)),
+        metadata=OperationMetadata(op_name="outer_loop"),
+    )
 
-Complete Example
-~~~~~~~~~~~~~~~~
+StepBuilder & Execution Graph
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here's a full example showing lazy initialization for an incompressible solver:
-
-.. code-block:: python
-
-    from neofoam.framework import Solver
-    from neofoam.framework.initialization.helpers import field, operator, lazy, model
-    from pydantic import BaseModel
-
-    class IncompressibleSolver(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
-
-        @Solver.build
-        def setup_runtime(self, mesh):
-            """Lazy initialization with explicit dependencies."""
-            return [
-                # Core runtime objects
-                lazy("runtime", self._create_runtime),
-                lazy("mesh", self._create_mesh, ["runtime"]),
-
-                # Read fields from disk
-                field("p", self._read_pressure, ["mesh"]),
-                field("U", self._read_velocity, ["mesh"]),
-                field("phi", self._read_flux, ["mesh"]),
-
-                # Create physics models
-                model("laminarTransport", self._create_transport, ["fields.U"]),
-                model("turbulence", self._create_turbulence,
-                      ["fields.U", "fields.phi", "fields.laminarTransport"]),
-
-                # Create algorithm (needs all fields and models)
-                lazy("algorithm", self._create_algorithm,
-                     ["fields.p", "fields.U", "models.turbulence"]),
-            ]
-
-        def _create_runtime(self, context):
-            return pyf.Time(self.argv)
-
-        def _create_mesh(self, context):
-            return pyf.fvMesh(context["runtime"])
-
-        def _read_pressure(self, context):
-            return pyf.volScalarField.read_field("p", context["mesh"])
-
-        def _read_velocity(self, context):
-            return pyf.volVectorField.read_field("U", context["mesh"])
-
-        def _read_flux(self, context):
-            return pyf.surfaceScalarField.read_field("phi", context["mesh"])
-
-        def _create_transport(self, context):
-            return pyf.singlePhaseTransportModel(
-                context["fields.U"],
-                context["fields.phi"]
-            )
-
-        def _create_turbulence(self, context):
-            return pyf.incompressibleTurbulenceModel.New(
-                context["fields.U"],
-                context["fields.phi"],
-                context["fields.laminarTransport"]
-            )
-
-        def _create_algorithm(self, context):
-            # Access all dependencies
-            mesh = context["mesh"]
-            p = context["fields.p"]
-            U = context["fields.U"]
-            turbulence = context["models.turbulence"]
-
-            return PIMPLEAlgorithm(mesh, p, U, turbulence)
-
-
-Benefits of Lazy Initialization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Explicit Dependencies**: Dependencies are visible in code, not implicit in execution order
+The ``StepBuilder`` creates nested loop structures for solver execution:
 
 .. code-block:: python
 
-    # Clear that turbulence needs U and phi
-    model("turbulence", self._create_turbulence, ["fields.U", "fields.phi"])
+    from neofoam.framework.operations import StepBuilder
 
-**Testability**: Test individual initialization steps in isolation
+    builder = StepBuilder()
+
+    # Add a sequential step at top level
+    builder.step(momentum_op)
+
+    # Create a loop scope — returns a new StepBuilder for the loop body
+    inner = builder.loop(convergence_check_op)  # -> StepBuilder
+    inner.step(pressure_op)
+    inner.step(correction_op)
+
+The ``DAGResolver`` merges the solver's structural graph with model operations:
 
 .. code-block:: python
 
-    def test_turbulence_initialization():
-        solver = IncompressibleSolver()
+    from neofoam.framework.graph.dag_resolver import DAGResolver
 
-        # Mock context with only required dependencies
-        context = {
-            "fields.U": mock_velocity_field,
-            "fields.phi": mock_flux_field,
-            "fields.laminarTransport": mock_transport,
-        }
+    builder, model_ops = solver.execution_graph()
+    resolver = DAGResolver()
+    resolved = resolver.resolve(builder, model_ops)  # -> StepBuilder
 
-        # Test individual initializer
-        turbulence = solver._create_turbulence(context)
-        assert turbulence is not None
+The resolver:
 
-**Automatic Ordering**: No need to manually order initialization calls - the framework handles it
+1. Collects all operations from the builder and model operations
+2. Infers which scope each model operation belongs to (based on ``depends_on`` / ``before``)
+3. Builds a global dependency graph
+4. Topologically sorts within each scope
+5. Rebuilds the ``StepBuilder`` with sorted operations
 
-**Early Error Detection**: Circular dependencies detected before any initialization runs
+
+Context & FieldUpdates
+-----------------------
+
+The ``Context`` is the central data structure passed through initialization and operations.
+
+.. code-block:: python
+
+    from neofoam.framework.context import Context, FieldUpdates
+
+    # Context after initialization
+    ctx = Context(
+        fields={"U": 0.0, "p": 0.0, "k": 0.0},
+        models={"turbulence": turb_model, "optional_models": [rt1, rt2]},
+        mesh=mesh_object,
+        runtime=time_object,
+    )
+
+    # Operations return FieldUpdates to modify ctx.fields
+    def my_operation(self, U: float) -> FieldUpdates:
+        return FieldUpdates({"U": U * 0.99})
+    # After execution: ctx.fields["U"] is updated automatically
+
+
+Dependency Injection
+--------------------
+
+The framework uses ``Depends`` markers for dependency injection, primarily in solver initialization:
+
+.. code-block:: python
+
+    from typing import Annotated
+    from neofoam.framework.initialization import Depends, StagedInit
+
+    @solver_spec.initializer
+    def initialize(
+        self: Any,
+        init: Annotated[StagedInit, Depends(create_init_manager)],
+    ) -> Context:
+        return init.run()
+
+``Depends`` supports:
+
+- **Callable providers**: ``Depends(factory_function)`` — calls the function to produce the value
+- **String paths**: ``Depends("fields.U")`` — looks up a value in the context
+- **Scoping**: ``Depends(fn, scope="time_step")`` — controls cache lifetime (``time_step``, ``iteration``, ``operation``)
+- **Caching**: ``Depends(fn, cache=True)`` — caches the result within scope (default)
 
 
 Complete Example
 ----------------
 
-Here's a realistic example with multiple interdependent models:
+Here is a complete example showing a transport model and solver working together.
+
+Transport Model
+~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-    from pydantic import BaseModel, Field
-    from neofoam.framework import Model, Solver, ConfigContext, SolverInitializer
+    # my_solver/models/transport.py
+    from pathlib import Path
+    from neofoam.framework.model import Model
+    from neofoam.framework.initialization import ConfigContext, InitStep
+    from neofoam.framework.initialization.helpers import field
+    from neofoam.framework.context import FieldUpdates
+    from neofoam.io import BaseConfig, IOStrategy, YAML
 
+    transport = Model("Transport").register_with(PhysicsModelInterface)
 
-    class TransportModel(BaseModel):
-        """Transport properties - no dependencies on other models."""
+    @transport.config
+    @IOStrategy(YAML("transportProperties"))
+    class TransportConfig(BaseConfig):
+        viscosity: float = 1e-6
+        density: float = 1000.0
 
-        model_config = {"arbitrary_types_allowed": True}
-        name: str = "transport"
-        viscosity: float = 0.0
-        density: float = 0.0
+    @transport.load
+    def load(case_dir: Path, _entry: Any) -> TransportConfig:
+        return TransportConfig.load(case_dir=case_dir)
 
-        @Model.load
-        def load_properties(self):
-            # Load from transportProperties file
-            self.viscosity = 1e-6
-            self.density = 1000.0
+    @transport.detect
+    def detect(case_dir: Path) -> bool:
+        return (case_dir / "transportProperties.yaml").exists()
 
-        @Model.resolve_dependencies
-        def validate(self, config: ConfigContext):
-            if self.viscosity <= 0:
-                raise ValueError("Invalid viscosity")
+    @transport.resolve
+    def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: TransportConfig) -> TransportConfig:
+        if cfg.viscosity <= 0:
+            raise ValueError("Invalid viscosity")
+        return cfg
 
-        @Model.build
-        def create_fields(self, mesh):
-            # Create nu and rho fields
-            pass
+    @transport.build
+    def build(self: ModelRuntime, cfg: TransportConfig) -> list[InitStep]:
+        return [
+            field("nu", create=lambda ctx: cfg.viscosity, depends_on=["mesh"]),
+        ]
 
+    @transport.operation(operation_number="2.5", depends_on=["solve_momentum"])
+    def update_viscosity(
+        self: Any, nu: float, cfg: TransportConfig
+    ) -> FieldUpdates:
+        return FieldUpdates({"nu": cfg.viscosity})
 
-    class TurbulenceModel(BaseModel):
-        """Turbulence model - depends on transport for viscosity."""
+Solver
+~~~~~~
 
-        model_config = {"arbitrary_types_allowed": True}
-        name: str = "turbulence"
-        coefficients: dict = Field(default_factory=dict)
-        transport_ref = None  # Set during RESOLVE_DEPENDENCIES
+.. code-block:: python
 
-        @Model.load
-        def load_coefficients(self):
-            self.coefficients = {"C_mu": 0.09, "sigma_k": 1.0}
+    # my_solver/solver.py
+    from typing import Any, Annotated
+    from neofoam.framework.solver import Solver
+    from neofoam.framework.context import Context, FieldUpdates
+    from neofoam.framework.initialization import StagedInit, Depends
+    from neofoam.framework.operations import (
+        Operation, Operations, StepBuilder,
+        SequentialOp, IterativeOp, OperationMetadata,
+    )
+    from neofoam.framework.types import OperationNumber
 
-        @Model.resolve_dependencies
-        def connect_transport(self, config: ConfigContext):
-            # Get transport model for viscosity access
-            self.transport_ref = config.get("transport")
-            if not self.transport_ref:
-                raise RuntimeError("Transport model required")
+    solver_spec = Solver("SimpleSolver")
 
-        @Model.build
-        def create_fields(self, mesh):
-            # Use transport viscosity for initial estimates
-            nu = self.transport_ref.viscosity
-            # Create k, epsilon fields...
-            pass
+    @solver_spec.initializer
+    def initialize(
+        self: Any,
+        init: Annotated[StagedInit, Depends(create_init)],
+    ) -> Context:
+        return init.run()
 
+    @solver_spec.execution_graph_step
+    def execution_graph(self: Any) -> tuple[StepBuilder, Operations]:
+        builder = StepBuilder()
 
-    class PimpleSolver(BaseModel):
-        """PIMPLE solver with multiple models."""
+        # Outer loop
+        outer = builder.loop(Operation(
+            func=IterativeOp(lambda ctx: ctx.fields["iteration"] < 100),
+            metadata=OperationMetadata(op_name="outer_loop"),
+        ))
 
-        model_config = {"arbitrary_types_allowed": True}
+        # Solver step inside the loop
+        outer.step(Operation(
+            func=SequentialOp(lambda ctx: None),
+            metadata=OperationMetadata(
+                op_name="solve_momentum",
+                operation_number=OperationNumber("1.0"),
+            ),
+        ))
 
-        transport: TransportModel = Field(default_factory=TransportModel)
-        turbulence: TurbulenceModel = Field(default_factory=TurbulenceModel)
+        # Collect model operations
+        model_ops = Operations()
+        for rt in self.state.optional_models:
+            model_ops.add(rt.operations)
 
-        max_iterations: int = 100
-        all_models_ready: bool = False
+        return builder, model_ops
 
-        def get_models(self):
-            """Required: Tell initializer which models we have."""
-            return [self.transport, self.turbulence]
+    @solver_spec.operation(operation_number="1.0", name="solve_momentum")
+    def solve_momentum(self: Any, U: float, p: float) -> FieldUpdates:
+        return FieldUpdates({"U": U - 0.01 * p})
 
-        @Solver.load
-        def load_control(self):
-            self.max_iterations = 100
+Running the Solver
+~~~~~~~~~~~~~~~~~~
 
-        @Solver.resolve_dependencies
-        def verify_models(self, config: ConfigContext):
-            # Verify all models configured correctly
-            for model in self.get_models():
-                if not hasattr(model, 'transport_ref') or model.name == "transport":
-                    continue
-                if model.transport_ref is None:
-                    raise RuntimeError(f"{model.name} missing transport reference")
-            self.all_models_ready = True
+.. code-block:: python
 
-        @Solver.build
-        def create_context(self, mesh):
-            # Set up solver runtime context
-            pass
+    from neofoam.framework.graph.dag_resolver import DAGResolver
 
+    # 1. Create runtime
+    solver = solver_spec.instantiate()
 
-    # Usage
-    mesh = load_mesh()  # Your mesh loading code
-    solver = PimpleSolver()
-    initializer = SolverInitializer(solver)
-    initializer.initialize(mesh=mesh)
+    # 2. Initialize (LOAD → RESOLVE → BUILD)
+    ctx = solver.initialize()
 
-    # Now solver and all models are fully initialized
-    assert solver.turbulence.transport_ref is solver.transport
+    # 3. Build execution graph and resolve dependencies
+    builder, model_ops = solver.execution_graph()
+    resolver = DAGResolver()
+    resolved = resolver.resolve(builder, model_ops)
 
-
-Key Design Decisions
---------------------
-
-1. **Models before Solver**: Within each stage, models initialize first. This lets the solver's RESOLVE_DEPENDENCIES method validate that all models are properly set up.
-
-2. **Automatic Registration**: Models are registered in the ``ConfigContext`` automatically after their LOAD stage, using their ``name`` attribute.
-
-3. **get_models() Method**: Solvers must implement ``get_models()`` to tell the initializer which models to process.
-
-4. **Pydantic BaseModel**: Use ``model_config = {"arbitrary_types_allowed": True}`` to allow storing references to other models and non-Pydantic types like mesh objects.
-
-5. **Stage Decorators on Classes**: Decorators are accessed via ``Model.read_files``, ``Model.configure``, ``Model.setup`` (and ``Solver.*``) to make the stage association clear in the code.
+    # 4. Run the solver loop
+    # (iterate over resolved operations, calling op.run(ctx))
 
 
 Error Handling
@@ -550,310 +834,134 @@ Raise exceptions in any stage to halt initialization:
 
 .. code-block:: python
 
-    @Model.resolve_dependencies
-    def connect_required_model(self, config: ConfigContext):
-        required = config.get("required_model")
+    @model_spec.resolve
+    def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig) -> MyConfig:
+        required = ctx.get("transport")
         if required is None:
-            raise RuntimeError("Required model not found in registry")
-        self.required_ref = required
+            raise RuntimeError("Transport model required but not found")
+        return cfg
 
-The ``SolverInitializer`` does not catch exceptions, allowing them to propagate for proper error handling in your application.
+Exceptions propagate without being caught, allowing proper error handling in your application.
 
+The initialization system also detects structural errors early:
 
-Adaptive Model Behavior with Configurable
---------------------------------------------
-
-``Configurable`` enables models to expose behavior switches that other models can modify during the RESOLVE_DEPENDENCIES stage. This allows models to dynamically select different implementations or algorithm variants based on the presence of other models.
-
-Basic Concept
-~~~~~~~~~~~~~
-
-Think of ``Configurable`` as a parameter that changes **which operations** a model returns, not just a configuration value. When another model modifies an adaptable field, it switches the model's behavior.
-
-.. code-block:: python
-
-    from neofoam.framework import Configurable
-
-    # Implementations for different behaviors
-    class StandardPressure:
-        def get_operations(self):
-            return ["momentum", "solve_pressure", "correct_velocity"]
-
-    class BuoyantPressure:
-        def get_operations(self):
-            return ["momentum", "add_buoyancy", "solve_pressure_buoyant", "correct_velocity"]
-
-    # Model with adaptable behavior
-    class PressureAlgorithm(BaseModel):
-        name: str = "pressure"
-
-        # Configurable - other models can change this
-        use_buoyancy: Configurable[bool] = False
-
-        # Regular field - not adaptable
-        tolerance: float = Field(default=1e-6, gt=0)
-
-        # Dispatch to implementation
-        _implementations = {
-            False: StandardPressure,
-            True: BuoyantPressure
-        }
-
-        def get_operations(self):
-            impl = self._implementations[self.use_buoyancy]()
-            return impl.get_operations()
-
-Usage Pattern
-~~~~~~~~~~~~~
-
-Other models modify adaptable fields during RESOLVE_DEPENDENCIES:
-
-.. code-block:: python
-
-    class BuoyancyModel(BaseModel):
-        name: str = "buoyancy"
-
-        @Model.resolve_dependencies
-        def configure(self, config: ConfigContext):
-            # Get pressure algorithm
-            pressure = config.get("pressure")
-
-            # Switch it to buoyancy variant
-            pressure.use_buoyancy = True  # ← Switches implementation!
-
-Result: ``pressure.get_operations()`` now returns buoyancy operations automatically.
-
-Multiple Adaptable Fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Models can have multiple adaptable fields for complex dispatch:
-
-.. code-block:: python
-
-    class PressureVelocityCoupling(BaseModel):
-        name: str = "pressure_velocity"
-
-        # Multiple adaptable fields
-        algorithm: str = Configurable(default="SIMPLE")
-        use_buoyancy: bool = Configurable(default=False)
-
-        # Tuple-based dispatch
-        _implementations = {
-            ("SIMPLE", False): SIMPLEStandard,
-            ("SIMPLE", True): SIMPLEBuoyant,
-            ("PISO", False): PISOStandard,
-            ("PISO", True): PISOBuoyant,
-            ("PIMPLE", False): PIMPLEStandard,
-            ("PIMPLE", True): PIMPLEBuoyant,
-        }
-
-        def get_operations(self):
-            key = (self.algorithm, self.use_buoyancy)
-            impl = self._implementations[key]()
-            return impl.get_operations()
-
-Querying Adaptable Fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Use ``ConfigContext.get_adaptable_fields()`` to discover what's adaptable:
-
-.. code-block:: python
-
-    @Model.resolve_dependencies
-    def configure(self, config: ConfigContext):
-        # See what's adaptable
-        adaptable = config.get_adaptable_fields("pressure")
-        # Returns: {"use_buoyancy": False}
-
-        # Check before modifying
-        if "use_buoyancy" in adaptable:
-            pressure = config.get("pressure")
-            pressure.use_buoyancy = True
-
-Multiple Model Instances
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Models can have multiple instances (e.g., multiple heat sources):
-
-.. code-block:: python
-
-    class HeatSource(BaseModel):
-        name: str  # "heat_source_1", "heat_source_2", etc.
-
-        enabled: bool = Configurable(default=True)
-        power: float = Field(default=1000.0, gt=0)
-
-        def get_operations(self):
-            if self.enabled:
-                return [f"add_heat_{self.name}"]
-            return []
-
-    class Solver(BaseModel):
-        heat_sources: list[HeatSource]
-
-        @Solver.load
-        def load_sources(self):
-            self.heat_sources = [
-                HeatSource(name="heat_source_1", power=1000.0),
-                HeatSource(name="heat_source_2", power=500.0),
-                HeatSource(name="heat_source_3", power=2000.0),
-            ]
-
-        def get_models(self):
-            return self.heat_sources
-
-Query multiple instances with ``ConfigContext`` helpers:
-
-.. code-block:: python
-
-    @Model.resolve_dependencies
-    def configure(self, config: ConfigContext):
-        # Get all heat sources by type
-        sources = config.get_by_type(HeatSource)
-        for source in sources:
-            if source.power > 1500:
-                source.enabled = False
-
-        # Or by name prefix
-        sources = config.get_by_prefix("heat_source_")
-        # Returns: {"heat_source_1": ..., "heat_source_2": ..., ...}
-
-Benefits of Configurable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. **Type-Driven**: Just use ``Configurable()`` instead of ``Field()``
-2. **Auto-Discovery**: ``get_adaptable_fields()`` scans field metadata
-3. **Auto-Validation**: Pydantic validates all changes
-4. **Clean Separation**: Each behavior variant is a separate implementation class
-5. **Dynamic Selection**: Implementations chosen at runtime based on available models
-
-Example: Pressure Algorithm Adaptation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Complete example showing how buoyancy model adapts pressure algorithm:
-
-.. code-block:: python
-
-    # Implementations
-    class StandardPressure:
-        def get_operations(self):
-            return ["momentum", "pressure", "correct"]
-
-    class BuoyantPressure:
-        def get_operations(self):
-            return ["momentum", "buoyancy_source", "pressure_buoyant", "correct"]
-
-    # Pressure model with adaptable behavior
-    class PressureModel(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
-        name: str = "pressure"
-
-        use_buoyancy: bool = Configurable(default=False)
-
-        _implementations = {
-            False: StandardPressure,
-            True: BuoyantPressure
-        }
-
-        def get_operations(self):
-            return self._implementations[self.use_buoyancy]().get_operations()
-
-    # Buoyancy model that adapts pressure
-    class BuoyancyModel(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
-        name: str = "buoyancy"
-
-        @Model.resolve_dependencies
-        def configure(self, config: ConfigContext):
-            pressure = config.get("pressure")
-            if pressure:
-                pressure.use_buoyancy = True
-
-    # Solver
-    class Solver(BaseModel):
-        model_config = {"arbitrary_types_allowed": True}
-        pressure: PressureModel = Field(default_factory=PressureModel)
-        buoyancy: BuoyancyModel = Field(default_factory=BuoyancyModel)
-
-        def get_models(self):
-            return [self.pressure, self.buoyancy]
-
-    # Usage
-    solver = Solver()
-    initializer = SolverInitializer(solver)
-    initializer.initialize(mesh)
-
-    # Pressure automatically uses buoyancy variant
-    ops = solver.pressure.get_operations()
-    # Returns: ["momentum", "buoyancy_source", "pressure_buoyant", "correct"]
+- **Cyclic dependencies**: ``InitializationGraphError`` raised before any ``InitStep`` executes
+- **Missing dependencies**: Detected during graph validation
+- **Duplicate names**: Caught when building the dependency graph
 
 
 Testing
 -------
 
-The test suite is organized in ``test/initialization/``:
+The test suite is organized across multiple directories:
 
-- ``test_fixtures.py`` - Shared test models
-- ``test_basic.py`` - Basic initialization tests
-- ``test_load_stage.py`` - LOAD stage tests
-- ``test_resolve_dependencies_stage.py`` - RESOLVE_DEPENDENCIES stage tests
-- ``test_build_stage.py`` - BUILD stage tests
-- ``test_lazy_init.py`` - InitStep dataclass and helper function tests
-- ``test_lazy_build_integration.py`` - Lazy BUILD stage integration tests
-- ``test_initialization_order.py`` - Execution order tests
-- ``test_error_handling.py`` - Error condition tests
-- ``test_config_context.py`` - ConfigContext tests
-- ``test_decorators.py`` - Decorator behavior tests
-- ``test_configurable_field.py`` - Configurable behavior and dispatch tests
-- ``test_incompressible_fluid.py`` - Full solver initialization tests
+**Framework component tests** (``test/framework/components/``):
 
-Run all tests:
+- ``test_model_spec.py`` — ModelSpec decorator and instantiation tests
+- ``test_operations.py`` — Operation, Operations, StepBuilder tests
+- ``test_dag_resolver.py`` — DAG resolution and topological sort tests
+- ``test_manifest.py`` — Manifest loading tests
+- ``test_conditions.py`` — ConditionalOp tests
+- ``test_graph_module.py`` — Graph validation and sorting
+- ``test_operation_metadata.py`` — OperationMetadata tests
+- ``test_step_number.py`` — OperationNumber tests
+- ``test_visualize_dag.py`` — DAG visualization tests
+- ``decorator/test_decorator.py`` — Decorator behavior tests
+
+**Integration tests** (``test/framework/integration/dummy_solver/``):
+
+- ``test_dummy_solver.py`` — Full solver lifecycle (init, graph, run)
+- ``test_model3.py`` — Conditional operation dispatch
+- ``test_model4.py`` — Multi-instance model detection and manifests
+- ``test_model_registration.py`` — Plugin registration and discovery
+- ``test_staged_init.py`` — StagedInit orchestration tests
+- ``test_validation.py`` — Config validation tests
+
+**Initialization tests** (``test/initialization/``):
+
+- ``test_execution.py`` — InitStep execution and topological sort
+- ``test_config_context.py`` — ConfigContext registry tests
+- ``test_depends.py`` — Depends marker and dependency resolution
+- ``test_helpers.py`` — InitStep helper functions and InitializerBuilder
+- ``test_lazy_init.py`` — InitStep dataclass tests
+- ``test_staged_init.py`` — StagedInit stage execution tests
+
+Run all framework tests:
 
 .. code-block:: bash
 
-    pytest test/initialization/ -v
+    pytest test/framework/ test/initialization/ -v
 
-Testing Lazy Initialization
+Testing ModelSpec
+~~~~~~~~~~~~~~~~~
+
+Test individual stages in isolation:
+
+.. code-block:: python
+
+    from neofoam.framework.model.runtime import ModelRuntime
+
+    def test_model_build():
+        rt = ModelRuntime(
+            spec=transport,
+            name="transport",
+            config=TransportConfig(viscosity=1e-6, density=1000.0),
+        )
+
+        # Test BUILD stage
+        steps = rt.run_build()
+        assert isinstance(steps, list)
+        names = [s.name for s in steps]
+        assert "fields.nu" in names
+
+    def test_model_operations():
+        rt = ModelRuntime(
+            spec=transport,
+            name="transport",
+            config=TransportConfig(viscosity=1e-6),
+        )
+
+        ops = rt.operations
+        assert len(ops) == 1
+        assert ops[0].operation_name == "update_viscosity"
+
+Testing Full Initialization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When testing lazy BUILD methods, verify the returned InitStep objects:
-
 .. code-block:: python
 
-    def test_setup_runtime_returns_lazy_init():
-        solver = MySolver()
-        result = solver.setup_runtime(mesh=None)
+    def test_full_initialization():
+        solver = solver_spec.instantiate()
+        ctx = solver.initialize()
 
-        # Verify returns list of InitStep
-        assert isinstance(result, list)
-        assert all(isinstance(item, InitStep) for item in result)
+        # Verify context
+        assert "U" in ctx.fields
+        assert "p" in ctx.fields
+        assert ctx.mesh is not None
 
-        # Verify expected initializers
-        names = [li.name for li in result]
-        assert "runtime" in names
-        assert "mesh" in names
-        assert "fields.p" in names
+    def test_execution_graph():
+        solver = solver_spec.instantiate()
+        ctx = solver.initialize()
 
-        # Verify dependencies
-        for li in result:
-            if li.name == "fields.p":
-                assert "mesh" in li.depends_on
+        builder, model_ops = solver.execution_graph()
+        resolver = DAGResolver()
+        resolved = resolver.resolve(builder, model_ops)
 
-For integration testing, use ``SolverInitializer`` to execute the full initialization:
+        # Verify operations are properly ordered
+        # ...
 
-.. code-block:: python
 
-    def test_full_initialization_with_lazy_build():
-        solver = MySolver()
-        initializer = SolverInitializer(solver)
+Key Design Decisions
+--------------------
 
-        # Execute full initialization
-        context = initializer.initialize(mesh=None)
+1. **Spec/Runtime separation**: Specs are immutable definitions created at module import time. Runtimes are mutable per-instance state. This enables multiple independent instances from one definition and clean plugin registration.
 
-        # Verify context contains all initialized objects
-        assert "runtime" in context
-        assert "mesh" in context
-        assert "fields.p" in context
+2. **Config as return value**: ``@load`` returns a config object; ``@resolve`` receives ``self: ModelRuntime`` and auto-injected config, and returns updated config. No self-mutation — configs are explicit data flowing through stages.
 
-        # Verify solver state updated
-        assert solver.setup_complete
+3. **Manifest-based discovery**: Models are discovered via YAML manifests and ``@detect`` predicates, replacing the old ``get_models()`` pattern. This decouples model registration from solver code.
+
+4. **Operation auto-injection**: Operation parameter names are matched against ``ctx.fields`` keys. Parameters whose **type** is a ``BaseConfig`` subclass are found in ``runtime.config`` by type. A parameter named ``ctx`` receives the full ``Context``. No manual context lookups needed.
+
+5. **DAGResolver for graph merging**: Model operations are placed into the solver's loop structure automatically based on their ``depends_on`` and ``before`` declarations, then topologically sorted within each scope.
+
+6. **Lazy initialization**: The BUILD stage produces ``InitStep`` descriptions, not live objects. This enables dependency validation, cycle detection, and deterministic ordering before any memory is allocated.
