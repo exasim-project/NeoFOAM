@@ -47,11 +47,11 @@ class PressureVelocityAlgorithm:
             algorithm_type = "PIMPLE"
 
         # Initialize state attributes needed by the algorithms
-        algorithm_model.use_boussinesq = False
-        algorithm_model.pRefCell = None
-        algorithm_model.pRefValue = None
-        algorithm_model.fv_solution = None
-        algorithm_model.algorithm_type = algorithm_type
+        algorithm_model.use_boussinesq = False  # type: ignore[attr-defined]
+        algorithm_model.pRefCell = None  # type: ignore[attr-defined]
+        algorithm_model.pRefValue = None  # type: ignore[attr-defined]
+        algorithm_model.fv_solution = None  # type: ignore[attr-defined]
+        algorithm_model.algorithm_type = algorithm_type  # type: ignore[attr-defined]
 
         # Load the algorithm model if it has a load method
         if hasattr(algorithm_model, "run_load"):

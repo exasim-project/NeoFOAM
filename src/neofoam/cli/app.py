@@ -44,7 +44,7 @@ def pimplefoam(ctx: typer.Context) -> None:
 
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)  # type: ignore[untyped-decorator]
+)
 def incompressiblefluid(ctx: typer.Context) -> None:
     """incompressibleFluid - General incompressible fluid solver with turbulence models."""
 

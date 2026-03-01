@@ -4,7 +4,7 @@
 """3-stage initialization for incompressibleFluid solver."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from neofoam.foam.initialization import create_time_mesh
 from neofoam.framework.initialization import (
@@ -30,8 +30,8 @@ from neofoam.solver.incompressibleFluid.models.pressure_velocity.base import (
 init = StagedInit("incompressibleFluid")
 
 
-def create_init(case_dir: Path = None) -> StagedInit:
-    init._case_dir = case_dir
+def create_init(case_dir: Optional[Path] = None) -> StagedInit:
+    init._case_dir = case_dir  # type: ignore[attr-defined]
     return init
 
 

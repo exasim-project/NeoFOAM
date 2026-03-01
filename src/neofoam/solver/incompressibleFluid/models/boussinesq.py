@@ -17,9 +17,9 @@ from .incompressibleFluidModel import Model, incompressibleFluidModel
 
 
 class ThermalTurbulenceModel(Protocol):
-    def nut(self) -> object: ...
+    def nut(self) -> Any: ...
 
-    def nu(self) -> object: ...
+    def nu(self) -> Any: ...
 
 
 class BoussinesqConfig(BaseConfig):
@@ -77,16 +77,16 @@ def resolve(self: Any, ctx: ConfigContext) -> None:
 
 @boussinesq.build
 def build(self: Any, configs: BoussinesqConfig) -> list[object]:
-    def create_T(context: dict[str, object]) -> volScalarField:
+    def create_T(context: dict[str, Any]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "T")
 
-    def create_alphat(context: dict[str, object]) -> volScalarField:
+    def create_alphat(context: dict[str, Any]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "alphat")
 
-    def create_rhok(context: dict[str, object]) -> volScalarField:
+    def create_rhok(context: dict[str, Any]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "rhok")
 
-    def create_gh(context: dict[str, object]) -> volScalarField:
+    def create_gh(context: dict[str, Any]) -> volScalarField:
         mesh = context["mesh"]
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         g_value = g.value()
@@ -97,7 +97,7 @@ def build(self: Any, configs: BoussinesqConfig) -> list[object]:
         )
         return volScalarField(pyf.Word("gh"), (g & mesh.C()) - gh_ref_dim)
 
-    def create_ghf(context: dict[str, object]) -> surfaceScalarField:
+    def create_ghf(context: dict[str, Any]) -> surfaceScalarField:
         mesh = context["mesh"]
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         g_value = g.value()
@@ -108,7 +108,7 @@ def build(self: Any, configs: BoussinesqConfig) -> list[object]:
         )
         return surfaceScalarField(pyf.Word("ghf"), (g & mesh.Cf()) - gh_ref_dim)
 
-    def create_p_rgh(context: dict[str, object]) -> volScalarField:
+    def create_p_rgh(context: dict[str, Any]) -> volScalarField:
         mesh = context["mesh"]
         mesh.setFluxRequired(pyf.Word("p_rgh"))
         return volScalarField.read_field(mesh, "p_rgh")

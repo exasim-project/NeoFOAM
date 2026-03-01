@@ -36,7 +36,7 @@ class CFLCondition:
 
     def __call__(self, ctx: Context) -> None:
         """Adjust time step based on CFL number and continue."""
-        runTime = ctx.runTime
+        runTime = ctx.runtime
         phi = ctx.fields["phi"]
 
         if not self.adjustable:

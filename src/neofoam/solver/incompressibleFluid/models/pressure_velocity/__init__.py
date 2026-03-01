@@ -8,4 +8,4 @@ from . import pimpleAlgorithm as _pimple  # noqa: F401
 from . import simpleAlgorithm as _simple  # noqa: F401
 from . import pisoAlgorithm as _piso  # noqa: F401
 
-__all__ = ["pressure_velocity"]
+__all__ = ["PressureVelocityAlgorithm"]

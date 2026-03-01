@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import Model, ModelRuntime, ModelSpec  # noqa: F401
 
+__all__ = ["incompressibleFluidModel", "Model", "ModelRuntime", "ModelSpec"]
+
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")
 class incompressibleFluidModel(BaseModel):
@@ -38,10 +40,12 @@ class incompressibleFluidModel(BaseModel):
         return runtimes
 
 
-def _create_model_instance(cls, *, config: dict[str, Any], **kwargs: Any) -> Any:
+def _create_model_instance(
+    cls: type[Any], /, *, config: dict[str, Any], **kwargs: Any
+) -> Any:
     """Create registered model instance from discriminator config."""
-    wrapper = cls.plugin_model(model=config, **kwargs)  # type: ignore[attr-defined]
+    wrapper = cls.plugin_model(model=config, **kwargs)
     return wrapper.model.get_model_instance()
 
 
-incompressibleFluidModel.create = classmethod(_create_model_instance)  # type: ignore[method-assign]
+incompressibleFluidModel.create = classmethod(_create_model_instance)  # type: ignore[attr-defined]

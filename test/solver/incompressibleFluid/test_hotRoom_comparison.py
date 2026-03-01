@@ -35,7 +35,7 @@ FIELDS_TO_COMPARE = [
 
 
 @requires_openfoam
-def test_hotRoom_solver_comparison():
+def test_hotRoom_solver_comparison() -> None:
     """Compare SimpleSolver against native buoyantBoussinesqPimpleFoam on hotRoom case."""
 
     # Setup paths

@@ -54,7 +54,7 @@ class TurbulenceModel(BaseModel):
             instance = config.create_instance(U, phi, transport)
         """
         wrapper = cls.create(config={"turbulence_type": turbulence_type})
-        return wrapper.config  # type: ignore[attr-defined]
+        return wrapper.config
 
     def create_instance(self, U: Any, phi: Any, transport: Any) -> Any:
         """

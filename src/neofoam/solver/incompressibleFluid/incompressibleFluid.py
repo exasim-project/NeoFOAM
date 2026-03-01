@@ -33,7 +33,7 @@ class TimeLoop:
 
     def __call__(self, ctx: Context) -> bool:
         """Check if the time loop should continue running."""
-        return bool(ctx.runTime.run())
+        return bool(ctx.runtime.run())
 
 
 # Create Solver instance for decorating operations
@@ -126,10 +126,10 @@ def run(argv: Optional[list[str]] = None) -> Context:
 
 @incompressibleFluid.operation()
 def set_time_step(
-    self,
+    self: Any,
     ctx: Context,
-    pressure_velocity: Annotated[Optional[object], "models"],
-    cfl_condition: Annotated[Optional[object], "models"],
+    pressure_velocity: Annotated[Optional[Any], "models"],
+    cfl_condition: Annotated[Optional[Any], "models"],
 ) -> None:
     """Adjust time step based on CFL condition."""
     if (
@@ -145,13 +145,13 @@ def set_time_step(
 @incompressibleFluid.operation()
 def increment_time(self: Any, ctx: Context) -> None:
     """Print current simulation time and increment."""
-    Info(f"Time = {ctx.runTime.timeName()}")
-    ctx.runTime.increment()
+    Info(f"Time = {ctx.runtime.timeName()}")
+    ctx.runtime.increment()
 
 
 @incompressibleFluid.operation(depends_on=["continuity"])
 def turbulence_correction(
-    self,
+    self: Any,
     laminarTransport: Annotated[Optional[CorrectableModel], "models"],
     turbulence: Annotated[Optional[CorrectableModel], "models"],
 ) -> FieldUpdates:
@@ -165,7 +165,7 @@ def turbulence_correction(
 
 
 @incompressibleFluid.operation(depends_on=["turbulence_correction"])
-def write_output(self, ctx: Context) -> None:
+def write_output(self: Any, ctx: Context) -> None:
     """Write fields to disk."""
-    ctx.runTime.write(True)
-    ctx.runTime.printExecutionTime()
+    ctx.runtime.write(True)
+    ctx.runtime.printExecutionTime()

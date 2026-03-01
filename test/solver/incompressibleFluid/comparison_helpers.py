@@ -12,14 +12,14 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Union
 
 import numpy as np
 import pytest
 from pybFoam import volScalarField, volVectorField
 
 
-def check_openfoam_available():
+def check_openfoam_available() -> bool:
     """Check if OpenFOAM is available and properly configured."""
     try:
         result = subprocess.run(
@@ -38,7 +38,9 @@ requires_openfoam = pytest.mark.skipif(
 )
 
 
-def load_field(case_dir: Path, time_dir: Path, field_name: str):
+def load_field(
+    case_dir: Path, time_dir: Path, field_name: str
+) -> Union[volScalarField, volVectorField]:
     """
     Load a volScalarField or volVectorField from disk.
 
@@ -84,7 +86,9 @@ def load_field(case_dir: Path, time_dir: Path, field_name: str):
         with open(field_path) as f:
             content = f.read()
             if "volScalarField" in content:
-                field = volScalarField.read_field(mesh, field_name)
+                field: Union[volScalarField, volVectorField] = (
+                    volScalarField.read_field(mesh, field_name)
+                )
             elif "volVectorField" in content:
                 field = volVectorField.read_field(mesh, field_name)
             else:
@@ -132,8 +136,8 @@ def compare_fields_numerically(
         except AttributeError:
             # Maybe it's a property or has different name
             try:
-                internal1 = np.array(field1.primitiveField())
-                internal2 = np.array(field2.primitiveField())
+                internal1 = np.array(field1.primitiveField())  # type: ignore[union-attr]
+                internal2 = np.array(field2.primitiveField())  # type: ignore[union-attr]
             except AttributeError:
                 # Last resort - try as attribute
                 internal1 = np.array(field1)
@@ -177,7 +181,7 @@ def setup_case(
     end_time: float = 0.01,
     write_interval: float = 0.01,
     run_setfields: bool = False,
-):
+) -> None:
     """
     Setup a test case from source.
 

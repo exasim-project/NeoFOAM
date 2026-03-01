@@ -36,14 +36,14 @@ simple = Model("Simple")
 
 
 class PressureReferenceState(Protocol):
-    pRefCell: Optional[object]
-    pRefValue: Optional[object]
-    fv_solution: Optional[object]
+    pRefCell: Optional[Any]
+    pRefValue: Optional[Any]
+    fv_solution: Optional[Any]
     algorithm_type: str
 
 
 class TurbulenceModel(Protocol):
-    def divDevReff(self, velocity: volVectorField) -> object: ...
+    def divDevReff(self, velocity: volVectorField) -> Any: ...
 
 
 _active_model_state: Optional[PressureReferenceState] = None
@@ -83,10 +83,10 @@ def ensure_pressure_reference(
 
 @simple.build
 def build(self: Any) -> list[object]:
-    def create_phi(context: dict[str, object]) -> surfaceScalarField:
+    def create_phi(context: dict[str, Any]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
 
-    def create_cumulative_cont_err(_context: dict[str, object]) -> list[float]:
+    def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
 
     return [
@@ -172,7 +172,7 @@ def continuity(
 
     while simple_control.correctNonOrthogonal():
         pEqn = fvScalarMatrix(fvm.laplacian(rAtU, p) - fvc.div(phiHbyA))
-        pEqn.setReference(model_state.pRefCell, model_state.pRefValue, False)
+        pEqn.setReference(model_state.pRefCell, model_state.pRefValue, False)  # type: ignore[arg-type]
         pEqn.solve()
 
         if simple_control.finalNonOrthogonalIter():

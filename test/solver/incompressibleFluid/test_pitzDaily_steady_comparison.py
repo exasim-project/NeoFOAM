@@ -32,7 +32,7 @@ FIELDS_TO_COMPARE = [
 
 
 @requires_openfoam
-def test_pitzDaily_steady_solver_comparison():
+def test_pitzDaily_steady_solver_comparison() -> None:
     """Compare NeoFOAM solver against native simpleFoam on pitzDaily_steady case."""
 
     repo_root = Path(__file__).parent.parent.parent.parent

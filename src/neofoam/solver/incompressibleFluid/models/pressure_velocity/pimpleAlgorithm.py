@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-from typing import Annotated, Any, Callable, Optional, Protocol
+from typing import Annotated, Any, Callable, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -38,25 +38,25 @@ class PressureReferenceState(Protocol):
 
 
 class TurbulenceModel(Protocol):
-    def divDevReff(self, velocity: volVectorField) -> object: ...
+    def divDevReff(self, velocity: volVectorField) -> Any: ...
 
 
 @pimple.build
-def build(self: Any) -> list[object]:
-    def create_phi(context: dict[str, object]) -> surfaceScalarField:
+def build(self: Any) -> list[Any]:
+    def create_phi(context: dict[str, Any]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
 
-    def create_cumulative_cont_err(_context: dict[str, object]) -> list[float]:
+    def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
 
-    def create_pressure_reference(context: dict[str, object]) -> dict[str, object]:
+    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
         """Initialize pressure reference cell and value."""
         p = context["fields.p"]
         mesh = context["mesh"]
-        p_rgh = context.get("fields.p_rgh") if pimple.use_boussinesq else None
+        p_rgh = context.get("fields.p_rgh") if pimple.use_boussinesq else None  # type: ignore[attr-defined]
 
         fv_solution = pyf.dictionary.read("system/fvSolution")
-        algo_dict = fv_solution.subDict(pimple.algorithm_type)
+        algo_dict = fv_solution.subDict(pimple.algorithm_type)  # type: ignore[attr-defined]
         pressure_field = p_rgh if p_rgh is not None else p
         field_name = "p_rgh" if p_rgh is not None else "p"
 
@@ -90,7 +90,7 @@ def build(self: Any) -> list[object]:
     # Add pressure reference model - depends on p_rgh if boussinesq is enabled
     # Note: p_rgh field is created by the boussinesq model, not here
     pressure_ref_deps = ["fields.p", "mesh"]
-    if pimple.use_boussinesq:
+    if pimple.use_boussinesq:  # type: ignore[attr-defined]
         pressure_ref_deps.append("fields.p_rgh")
     init_steps.append(
         model(
@@ -149,7 +149,7 @@ def continuity(
     UEqn: fvVectorMatrix,
     pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, object], "models"],
+    pressure_reference: Annotated[dict[str, Any], "models"],
 ) -> FieldUpdates:
     pRefCell = pressure_reference["pRefCell"]
     pRefValue = pressure_reference["pRefValue"]
@@ -222,7 +222,7 @@ def continuity_boussinesq(
     UEqn: fvVectorMatrix,
     pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, object], "models"],
+    pressure_reference: Annotated[dict[str, Any], "models"],
     p_rgh: volScalarField,
     rhok: volScalarField,
     gh: volScalarField,

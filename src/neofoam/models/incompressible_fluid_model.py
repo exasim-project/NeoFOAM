@@ -8,9 +8,9 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from foamadapter.core.plugin_system import PluginSystem
-from foamadapter.framework.decorator import decorated_member_functions
-from foamadapter.framework.operations import (
+from foamadapter.core.plugin_system import PluginSystem  # type: ignore[import-not-found]
+from foamadapter.framework.decorator import decorated_member_functions  # type: ignore[import-not-found]
+from foamadapter.framework.operations import (  # type: ignore[import-not-found]
     Operation,
     OperationCollection,
 )
@@ -55,7 +55,7 @@ class IncompressibleFluidModel(BaseModel):
         # Ensure all models are imported so they register
         import pkgutil
         import importlib
-        import foamadapter.models as models_pkg
+        import foamadapter.models as models_pkg  # type: ignore[import-not-found]
 
         # Avoid redundant imports if already loaded, though importlib handles it
         for _, name, _ in pkgutil.iter_modules(models_pkg.__path__):
