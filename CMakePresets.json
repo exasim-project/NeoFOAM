@@ -64,6 +64,17 @@
         "NEOFOAM_BUILD_EXAMPLES": "ON",
         "CMAKE_CXX_FLAGS": "-fno-omit-frame-pointer $env{CXXFLAGS}"
       }
+    },
+    {
+      "name": "python-bindings",
+      "displayName": "Python Bindings Build",
+      "description": "Build configuration for Python bindings with NeoN",
+      "inherits": "production",
+      "cacheVariables": {
+        "NEOFOAM_BUILD_PYTHON_BINDINGS": "ON",
+        "BUILD_SHARED_LIBS": "ON",
+        "NeoN_BUILD_PYTHON_BINDINGS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -87,6 +98,13 @@
       "description": "Build for profiling use",
       "configurePreset": "profiling",
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "python-bindings",
+      "displayName": "Python Bindings Build",
+      "description": "Build for Python bindings",
+      "configurePreset": "python-bindings",
+      "configuration": "Release"
     }
   ],
   "testPresets": [

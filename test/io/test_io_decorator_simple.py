@@ -5,8 +5,8 @@
 Tests for simple IO decorator patterns (no subdicts).
 
 Demonstrates:
-- Loading simple configs from YAML and JSON
-- Writing simple configs to YAML and JSON
+- Loading simple configs from YAML, JSON and OpenFOAM
+- Writing simple configs to YAML, JSON and OpenFOAM
 - Validation error reporting via load(validate=True/False)
 - FileNotFoundError on missing file
 """
@@ -21,6 +21,7 @@ from neofoam.io import (
     BaseConfig,
     YAML,
     JSON,
+    OF,
     IOStrategy,
 )
 
@@ -41,11 +42,20 @@ class SimpleJSONConfig(BaseConfig):
     percentage: float = Field(ge=0, le=100)
 
 
+@IOStrategy(OF("simple.of"))
+class SimpleOpenFOAMConfig(BaseConfig):
+    identifier: str
+    count: int = Field(gt=0)
+    active: bool
+    percentage: float = Field(ge=0, le=100)
+
+
 @pytest.mark.parametrize(
     "config_class",
     [
         SimpleYAMLConfig,
         SimpleJSONConfig,
+        SimpleOpenFOAMConfig,
     ],
 )
 def test_load_simple(io_fixtures: Path, config_class: type[BaseConfig]) -> None:
@@ -63,6 +73,7 @@ def test_load_simple(io_fixtures: Path, config_class: type[BaseConfig]) -> None:
     [
         (SimpleYAMLConfig, "output.yaml"),
         (SimpleJSONConfig, "output.json"),
+        (SimpleOpenFOAMConfig, "output.of"),
     ],
 )
 def test_write_simple(
@@ -90,6 +101,7 @@ def test_write_simple(
     [
         (SimpleYAMLConfig, "simple.yaml"),
         (SimpleJSONConfig, "simple.json"),
+        (SimpleOpenFOAMConfig, "simple.of"),
     ],
 )
 def test_write_and_reload_identical(
@@ -154,11 +166,30 @@ def test_validation_error_wrong_type(
     assert le_errors[0]["ctx"]["le"] == 100
 
 
+def test_openfoam_validation_error_wrong_type(io_fixtures):
+    """Test that OpenFOAM typed dispatch raises ValueError on type mismatch.
+
+    Unlike YAML/JSON where raw values pass through, the OpenFOAM strategy uses
+    typed dispatch and raises immediately when a value cannot be converted
+    (e.g. 'not_an_integer' as int).
+    """
+    with pytest.raises(ValueError, match="not_an_integer"):
+        SimpleOpenFOAMConfig.load(
+            case_dir=io_fixtures, validate=False, file="invalid_simple.of"
+        )
+
+    with pytest.raises(ValueError, match="not_an_integer"):
+        SimpleOpenFOAMConfig.load(
+            case_dir=io_fixtures, validate=True, file="invalid_simple.of"
+        )
+
+
 @pytest.mark.parametrize(
     "config_class,missing_file",
     [
         (SimpleYAMLConfig, "nonexistent.yaml"),
         (SimpleJSONConfig, "nonexistent.json"),
+        (SimpleOpenFOAMConfig, "nonexistent.of"),
     ],
 )
 def test_load_missing_file_raises(

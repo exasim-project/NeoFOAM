@@ -22,8 +22,12 @@ from neofoam.io import (
     BaseConfig,
     YAML,
     JSON,
+    OF,
     IOStrategy,
 )
+
+
+# -- YAML models -----------------------------------------------------------
 
 
 @IOStrategy(YAML("nested.yaml", subdict="metadata"))
@@ -49,6 +53,9 @@ class Stage2YAMLConfig(BaseConfig):
     batchSize: int = Field(gt=0)
 
 
+# -- JSON models -----------------------------------------------------------
+
+
 @IOStrategy(JSON("nested.json", subdict="metadata"))
 class MetadataJSONConfig(BaseConfig):
     name: str
@@ -72,11 +79,41 @@ class Stage2JSONConfig(BaseConfig):
     batchSize: int = Field(gt=0)
 
 
+# -- OpenFOAM models -------------------------------------------------------
+
+
+@IOStrategy(OF("nested.of", subdict="metadata"))
+class MetadataOpenFOAMConfig(BaseConfig):
+    name: str
+    version: float
+    priority: int = Field(gt=0)
+
+
+@IOStrategy(OF("nested.of", subdict="processing.stage1"))
+class Stage1OpenFOAMConfig(BaseConfig):
+    algorithm: str
+    threshold: float = Field(gt=0)
+    maxIterations: int = Field(gt=0, le=1000)
+    batchSize: int = Field(gt=0)
+
+
+@IOStrategy(OF("nested.of", subdict="processing.stage2"))
+class Stage2OpenFOAMConfig(BaseConfig):
+    algorithm: str
+    threshold: float = Field(gt=0)
+    maxIterations: int = Field(gt=0, le=1000)
+    batchSize: int = Field(gt=0)
+
+
+# -- Tests ------------------------------------------------------------------
+
+
 @pytest.mark.parametrize(
     "metadata_class,stage1_class,stage2_class",
     [
         (MetadataYAMLConfig, Stage1YAMLConfig, Stage2YAMLConfig),
         (MetadataJSONConfig, Stage1JSONConfig, Stage2JSONConfig),
+        (MetadataOpenFOAMConfig, Stage1OpenFOAMConfig, Stage2OpenFOAMConfig),
     ],
 )
 def test_load_nested(
@@ -98,7 +135,7 @@ def test_load_nested(
 
     # Verify isolation - each config only sees its subdict
     assert metadata.name == "TestApp"
-    assert metadata.version == "1.0"
+    assert float(metadata.version) == 1.0  # str for YAML/JSON, float for OF
     assert metadata.priority == 5
 
     assert stage1.algorithm == "fast"
@@ -152,6 +189,7 @@ def test_write_and_reload_identical(
     [
         (MetadataYAMLConfig, "invalid_nested.yaml"),
         (MetadataJSONConfig, "invalid_nested.json"),
+        (MetadataOpenFOAMConfig, "invalid_nested.of"),
     ],
 )
 def test_validation_error_missing_field(
@@ -195,6 +233,7 @@ def test_validation_error_missing_field(
     [
         (MetadataYAMLConfig, "nonexistent.yaml"),
         (MetadataJSONConfig, "nonexistent.json"),
+        (MetadataOpenFOAMConfig, "nonexistent.of"),
     ],
 )
 def test_load_missing_file_raises(
@@ -210,6 +249,7 @@ def test_load_missing_file_raises(
     [
         (MetadataYAMLConfig, "simple.yaml"),
         (MetadataJSONConfig, "simple.json"),
+        (MetadataOpenFOAMConfig, "simple.of"),
     ],
 )
 def test_load_missing_subdict_raises(
@@ -228,6 +268,7 @@ def test_load_missing_subdict_raises(
     [
         (MetadataYAMLConfig, Stage1YAMLConfig, "nested.yaml"),
         (MetadataJSONConfig, Stage1JSONConfig, "nested.json"),
+        (MetadataOpenFOAMConfig, Stage1OpenFOAMConfig, "nested.of"),
     ],
 )
 def test_write_nested(

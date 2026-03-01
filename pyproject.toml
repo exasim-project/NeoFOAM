@@ -9,12 +9,13 @@ authors = [
 requires-python = ">=3.9"
 
 dependencies = [
-    "pybFoam>=0.1.11",
+    "pybFoam>=0.3.1",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
     "matplotlib>=3.0.0",
     "pyvis>=0.3.2",
+    "neon_pde",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +23,7 @@ dev = [
     "pytest>=6.0",
     "pytest-cov",
     "pytest-xdist",
+    "pydantic-settings",
     "black",
     "flake8",
     "isort",
@@ -48,12 +50,28 @@ all = [
 
 [project.scripts]
 neofoam = "neofoam.cli.app:app"
+
 [build-system]
-requires = ["uv_build>=0.8.6,<0.9.0"]
-build-backend = "uv_build"
+requires = [
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.version = ">=3.22"
+cmake.args = ["--preset=python-bindings"]
+build.verbose = true
+build-dir = "_skbuild"
+editable.mode = "redirect"
+editable.verbose = true
+editable.rebuild = false
+
+[tool.scikit-build.cmake.define]
+NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 
 [tool.uv.sources]
-pybFoam = { path = "../pybFoam", editable = true }
+neon_pde = { path = "src/NeoN", editable = true }
 
 
 [tool.ruff]
@@ -88,15 +106,16 @@ exclude = [
   "src/NeoN",
 ]
 
+# If other code imports src/NeoN and you want mypy to never follow into it:
 [[tool.mypy.overrides]]
-module = ["Neon", "Neon.*"]
-ignore_errors = true
+module = ["NeoN", "NeoN.*", "pybFoam", "pybFoam.*", "neon", "neon.*"]
+ignore_missing_imports = true
 follow_imports = "skip"
 
 [tool.poe.tasks]
 test = "pytest"
 lint = "ruff check"
-format = "ruff format"
+format = "ruff format src test"
 type_check = "mypy"
 build_docs = "sphinx-build -b html doc doc/_build"
 view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }

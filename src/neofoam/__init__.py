@@ -3,3 +3,5 @@
 
 # neofoam package
 __version__ = "0.0.1"
+
+from . import neofoam_bindings as neofoam_bindings  # type: ignore[attr-defined]

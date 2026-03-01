@@ -75,7 +75,7 @@ TEST_CASE("scalarAdvection")
         rt.fvSchemesDict.insert(
             std::string("divSchemes"),
             NeoN::Dictionary(
-                {{std::string("div(phi,nfT)"),
+                {{std::string("div(phi,T)"),
                   NeoN::TokenList({std::string("Gauss"), std::string("upwind")})}}
             )
         );
@@ -83,7 +83,7 @@ TEST_CASE("scalarAdvection")
         rt.fvSchemesDict.insert(
             std::string("laplacianSchemes"),
             NeoN::Dictionary(
-                {{std::string("laplacian(Gamma,nfT)"),
+                {{std::string("laplacian(Gamma,T)"),
                   NeoN::TokenList(
                       {std::string("Gauss"), std::string("linear"), std::string("uncorrected")}
                   )}}
@@ -94,7 +94,7 @@ TEST_CASE("scalarAdvection")
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF1")}}})
+                NeoN::Dictionary({{std::string("ddt(T)"), {std::string("BDF1")}}})
             );
 
             BENCHMARK(std::string(execName))
@@ -114,7 +114,7 @@ TEST_CASE("scalarAdvection")
         {
             rt.fvSchemesDict.insert(
                 std::string("ddtSchemes"),
-                NeoN::Dictionary({{std::string("ddt(nfT)"), {std::string("BDF2")}}})
+                NeoN::Dictionary({{std::string("ddt(T)"), {std::string("BDF2")}}})
             );
 
             BENCHMARK(std::string(execName))

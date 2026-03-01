@@ -136,7 +136,7 @@ void updateCriteria(NeoN::Dictionary& solverDict)
     if (solverDict.contains("relTol"))
     {
         NeoN::Dictionary& criteriaDict = solverDict.subDict("criteria");
-        criteriaDict.insert("relative_residual_norm", extractScalar(solverDict, "relTol"));
+        criteriaDict.insert("initial_residual_norm", extractScalar(solverDict, "relTol"));
     }
     if (solverDict.contains("maxIter"))
     {

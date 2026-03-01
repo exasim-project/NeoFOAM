@@ -21,8 +21,12 @@ from neofoam.io import (
     BaseConfig,
     YAML,
     JSON,
+    OF,
     IOStrategy,
 )
+
+
+# -- YAML models -----------------------------------------------------------
 
 
 @IOStrategy(YAML("shared.yaml", subdict="config.service_a"))
@@ -44,6 +48,9 @@ class ServiceCYAMLConfig(BaseConfig):
     bufferSize: int = Field(gt=0)
 
 
+# -- JSON models -----------------------------------------------------------
+
+
 @IOStrategy(JSON("shared.json", subdict="config.service_a"))
 class ServiceAJSONConfig(BaseConfig):
     timeout: int = Field(gt=0)
@@ -63,11 +70,42 @@ class ServiceCJSONConfig(BaseConfig):
     bufferSize: int = Field(gt=0)
 
 
+# -- OpenFOAM models -------------------------------------------------------
+
+
+@IOStrategy(OF("shared.of", subdict="config.service_a"))
+class ServiceAOpenFOAMConfig(BaseConfig):
+    timeout: int = Field(gt=0)
+    maxConnections: int = Field(gt=0, le=100)
+
+
+@IOStrategy(OF("shared.of", subdict="config.service_b"))
+class ServiceBOpenFOAMConfig(BaseConfig):
+    endpoint: str
+    port: int = Field(gt=0, le=65535)
+    poolSize: int = Field(gt=0)
+
+
+@IOStrategy(OF("shared.of", subdict="config.service_c"))
+class ServiceCOpenFOAMConfig(BaseConfig):
+    enabled: bool
+    bufferSize: int = Field(gt=0)
+
+
+# -- Tests ------------------------------------------------------------------
+
+
 @pytest.mark.parametrize(
     "service_a_class,service_b_class,service_c_class,filename",
     [
         (ServiceAYAMLConfig, ServiceBYAMLConfig, ServiceCYAMLConfig, "shared.yaml"),
         (ServiceAJSONConfig, ServiceBJSONConfig, ServiceCJSONConfig, "shared.json"),
+        (
+            ServiceAOpenFOAMConfig,
+            ServiceBOpenFOAMConfig,
+            ServiceCOpenFOAMConfig,
+            "shared.of",
+        ),
     ],
 )
 def test_write_preserves_other_subdicts(
@@ -103,12 +141,14 @@ def test_write_preserves_other_subdicts(
     updated_b = service_b_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
     updated_c = service_c_class.load(case_dir=test_dir)  # type: ignore[attr-defined]
 
-    assert updated_a.timeout == timeout  # Unchanged
-    assert updated_a.maxConnections == 10  # Unchanged
-    assert updated_b.endpoint == "example.com"  # Unchanged
-    assert updated_b.port == 8080  # Unchanged
-    assert updated_c.enabled is True  # Unchanged
-    assert updated_c.bufferSize == 1024  # Unchanged
+    assert updated_a.timeout == timeout
+    assert updated_a.maxConnections == 10
+
+    assert updated_b.endpoint == "example.com"
+    assert updated_b.port == 8080
+
+    assert updated_c.enabled is True
+    assert updated_c.bufferSize == 1024
 
 
 @pytest.mark.parametrize(
@@ -116,6 +156,7 @@ def test_write_preserves_other_subdicts(
     [
         (ServiceBYAMLConfig, "invalid_shared.yaml"),
         (ServiceBJSONConfig, "invalid_shared.json"),
+        (ServiceBOpenFOAMConfig, "invalid_shared.of"),
     ],
 )
 def test_validation_error_missing_field_in_subdict(
@@ -159,6 +200,7 @@ def test_validation_error_missing_field_in_subdict(
     [
         (ServiceBYAMLConfig, "nonexistent.yaml"),
         (ServiceBJSONConfig, "nonexistent.json"),
+        (ServiceBOpenFOAMConfig, "nonexistent.of"),
     ],
 )
 def test_load_missing_file_raises(
@@ -174,6 +216,7 @@ def test_load_missing_file_raises(
     [
         (ServiceBYAMLConfig, "simple.yaml"),
         (ServiceBJSONConfig, "simple.json"),
+        (ServiceBOpenFOAMConfig, "simple.of"),
     ],
 )
 def test_load_missing_subdict_raises(
