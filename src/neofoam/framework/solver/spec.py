@@ -13,18 +13,14 @@ from __future__ import annotations
 import inspect
 from typing import Any, Callable, Optional
 
+from neofoam.framework.base_spec import BaseSpec
 from neofoam.framework.context import Context
-from neofoam.framework.dependency_resolver import (
-    DependencyResolver,
-    wrap_with_dependency_resolution,
-)
-from neofoam.framework.operations import Operation, OperationCollection, SequentialOp
-from neofoam.framework.types import OperationMetadata, OperationNumber
+from neofoam.framework.operations import Operation
 
 from .runtime import SolverRuntime
 
 
-class SolverSpec:
+class SolverSpec(BaseSpec):
     """
     Immutable solver definition. Read-only after module import.
 
@@ -33,15 +29,12 @@ class SolverSpec:
     """
 
     def __init__(self, name: str) -> None:
-        self.name = name
-        self._operations: list[tuple[Any, dict[str, Any]]] = []
-        self._config_class: Optional[type] = None
+        super().__init__(name)
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
-        self._dependency_resolver = DependencyResolver()
 
     # ------------------------------------------------------------------
-    # Decorator API (store only, no side-effects)
+    # Decorator API (config/operation inherited from BaseSpec)
     # ------------------------------------------------------------------
 
     def initializer(self, func: Callable[..., Context]) -> Callable[..., Context]:
@@ -55,48 +48,6 @@ class SolverSpec:
         """Decorator to register execution graph construction step."""
         self._execution_graph_func = func
         return func
-
-    def config(self, cls: type) -> type:
-        """
-        Decorator to register solver configuration class.
-
-        Usage:
-            @solver.config
-            @dataclass
-            class MySolverConfig:
-                tolerance: float = 1e-6
-        """
-        self._config_class = cls
-        return cls
-
-    def operation(
-        self,
-        operation_number: Optional[str] = None,
-        depends_on: Optional[list[str]] = None,
-        before: Optional[list[str]] = None,
-        name: Optional[str] = None,
-    ) -> Callable[..., Any]:
-        """
-        Decorator to register a solver operation.
-
-        Stores the raw function — wrapping is deferred to _build_operations_for.
-        """
-
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-            self._operations.append(
-                (
-                    func,  # store original; wrapping happens in _build_operations_for
-                    {
-                        "operation_number": operation_number,
-                        "depends_on": depends_on,
-                        "before": before,
-                        "name": name or func.__name__,
-                    },
-                )
-            )
-            return func
-
-        return decorator
 
     # ------------------------------------------------------------------
     # Instantiation
@@ -182,44 +133,9 @@ class SolverSpec:
     # Operation building (called by SolverRuntime.operations)
     # ------------------------------------------------------------------
 
-    def _build_operations_for(self, runtime: SolverRuntime) -> OperationCollection:
-        """
-        Build OperationCollection with *runtime* as the ``self`` binding.
-
-        Returns a fresh collection per call so multiple runtimes never
-        share wrapper state.
-        """
-        from neofoam.framework.config_injection import (
-            _discover_configs_from_signature,
-            _create_runtime_config_wrapper,
-        )
-
-        ops = OperationCollection()
-        for func, metadata in self._operations:
-            discovered = _discover_configs_from_signature(func)
-            if discovered:
-                wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
-            else:
-                wrapped = wrap_with_dependency_resolution(
-                    func, runtime, self._dependency_resolver
-                )
-
-            op = Operation(
-                func=SequentialOp(wrapped),
-                metadata=OperationMetadata(
-                    op_name=metadata["name"],
-                    operation_number=(
-                        OperationNumber(metadata["operation_number"])
-                        if metadata["operation_number"]
-                        else None
-                    ),
-                    depends_on=metadata["depends_on"] or [],
-                    before=metadata["before"] or [],
-                ),
-            )
-            ops.add(op)
-
-        return ops
+    def _build_operations_for(self, runtime: SolverRuntime) -> list[Operation]:  # type: ignore[override]
+        """Delegate to BaseSpec._build_operations_for."""
+        return super()._build_operations_for(runtime)
 
 
 def Solver(name: str) -> SolverSpec:

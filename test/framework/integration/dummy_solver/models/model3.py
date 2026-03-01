@@ -50,7 +50,7 @@ model3 = Model("CoupledModel").register_with(DummyModelInterface)
 
 
 @model3.load
-def load(case_dir: Path, instance_id: str) -> Model3Config:
+def load(case_dir: Path) -> Model3Config:
     return Model3Config.load(case_dir=case_dir, validate=False)
 
 
@@ -138,17 +138,13 @@ def collected_operations(self: Any) -> Operations:
 
     ``self`` is the ModelRuntime; ``self.config.coupled`` was set during RESOLVE.
     """
-    from neofoam.framework.config_injection import (
-        _discover_configs_from_signature,
-        _create_runtime_config_wrapper,
-    )
+    from neofoam.framework.operation_wrapper import wrap_operation
 
     raw_func, metadata = (
         self.spec._operations[0] if self.config.coupled else self.spec._operations[1]
     )
 
-    discovered = _discover_configs_from_signature(raw_func)
-    wrapped = _create_runtime_config_wrapper(raw_func, discovered, self)
+    wrapped = wrap_operation(raw_func, self, self.spec._dependency_resolver)
 
     op = Operation(
         func=SequentialOp(wrapped),

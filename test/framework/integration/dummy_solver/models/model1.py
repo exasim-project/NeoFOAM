@@ -41,7 +41,7 @@ model1 = Model("DummyModel1").register_with(DummyModelInterface)
 
 
 @model1.load
-def load(case_dir: Path, instance_id: str) -> Any:
+def load(case_dir: Path) -> Any:
     from types import SimpleNamespace
 
     return SimpleNamespace(

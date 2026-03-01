@@ -15,7 +15,7 @@ import networkx as nx  # type: ignore[import-untyped]
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
-    OperationCollection,
+    Operations,
     StepBuilder,
 )
 
@@ -32,7 +32,7 @@ class MissingDependencyError(Exception):
 
 def collect_tagged_ops(
     builder: StepBuilder,
-    model_ops: OperationCollection,
+    model_ops: Operations,
 ) -> list[tuple[str, Operation]]:
     """Flatten the builder tree and model ops into ``[(scope_name, Operation)]``.
 
@@ -228,12 +228,12 @@ def rebuild_builder(
 
                 new_op = dataclasses.replace(op, sub_operations=[])
 
-                with target_builder.loop(new_op) as loop_builder:
-                    for sub_op in sorted_ops:
-                        if isinstance(sub_op.func, IterativeOp):
-                            _rebuild([sub_op], loop_builder)
-                        else:
-                            loop_builder.step(sub_op)
+                loop_builder = target_builder.loop(new_op)
+                for sub_op in sorted_ops:
+                    if isinstance(sub_op.func, IterativeOp):
+                        _rebuild([sub_op], loop_builder)
+                    else:
+                        loop_builder.step(sub_op)
 
     has_loops = any(isinstance(op.func, IterativeOp) for op in original.operations.ops)
 
@@ -257,7 +257,7 @@ class DAGResolver:
     def resolve(
         self,
         builder: StepBuilder,
-        additional_ops: OperationCollection,
+        additional_ops: Operations,
     ) -> StepBuilder:
         tagged = collect_tagged_ops(builder, additional_ops)
         graph, op_map = build_global_graph(tagged)

@@ -22,7 +22,6 @@ from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
 )
-from neofoam.framework.model import ModelRuntime
 from neofoam.io import BaseConfig, YAML, IOStrategy
 
 from .models.dummy_model import DummyModelInterface
@@ -82,10 +81,10 @@ def load_config() -> LoadResult:
     solver_cfg = SolverConfig.load(case_dir=case_dir, validate=False)
     mesh_cfg = MeshConfig.load(case_dir=case_dir, validate=False)
 
-    optional_models: list[ModelRuntime] = [
-        spec.instantiate(case_dir=case_dir, instance_id=spec.name)
-        for spec in DummyModelInterface.detect_specs()
-    ]
+    optional_models = DummyModelInterface.detect_specs_with_manifest(
+        case_dir=case_dir,
+        manifest_path=case_dir / "models.yaml",
+    )
 
     return LoadResult(
         core_models=[algorithm, core_model2, solver_cfg, mesh_cfg],

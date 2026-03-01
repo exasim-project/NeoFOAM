@@ -38,15 +38,18 @@ def test_dummy_solver_full_initialization() -> None:
     assert "model_field2" in ctx.fields
     assert "model_field3" in ctx.fields
     assert "model3_field" in ctx.fields
-    assert "model_field4" in ctx.fields
+    assert "model_field4_instance_a" in ctx.fields
+    assert "model_field4_instance_b" in ctx.fields
     assert ctx.fields["model_field1"] == 300.0
     assert ctx.fields["model_field2"] == 1e-5
     assert ctx.fields["model3_field"] == 0.0
-    assert ctx.fields["model_field4"] == 0.0
+    assert ctx.fields["model_field4_instance_a"] == 0.0
+    assert ctx.fields["model_field4_instance_b"] == 0.0
 
     # optional_models list contains ModelRuntime objects
+    # 4 specs but MultiModel has 2 instances -> 5 runtimes
     models = ctx.models.get("optional_models", [])
-    assert len(models) > 0
+    assert len(models) == 5
     assert all(isinstance(m, ModelRuntime) for m in models)
 
     # CoupledModel's nested accumulator
@@ -83,10 +86,11 @@ def test_execution_graph_and_dag() -> None:
     assert "model1_step2" in op_names
     assert "model2_step1" in op_names
     assert "model3_step" in op_names
-    assert "model4_step1" in op_names
+    assert "model4_step1_instance_a" in op_names
+    assert "model4_step1_instance_b" in op_names
     assert "solver_step3" in op_names
 
-    idx = {name: op_names.index(name) for name in op_names}
+    idx = {name: i for i, name in enumerate(op_names)}
     assert (
         idx["solver_step1"]
         < idx["solver_step2"]
@@ -94,9 +98,15 @@ def test_execution_graph_and_dag() -> None:
         < idx["model1_step2"]
         < idx["model2_step1"]
         < idx["model3_step"]
-        < idx["model4_step1"]
-        < idx["solver_step3"]
     ), f"Operations not sorted by operation_number: {op_names}"
+
+    # Both model4 instance ops should come before solver_step3
+    assert idx["model4_step1_instance_a"] < idx["solver_step3"], (
+        f"model4_step1_instance_a should be before solver_step3: {op_names}"
+    )
+    assert idx["model4_step1_instance_b"] < idx["solver_step3"], (
+        f"model4_step1_instance_b should be before solver_step3: {op_names}"
+    )
 
 
 def test_dummy_solver_complete_run() -> None:
@@ -108,7 +118,8 @@ def test_dummy_solver_complete_run() -> None:
     f2_initial = ctx_initial.fields["field2"]
     mf1_initial = ctx_initial.fields["model_field1"]
     mf3_initial = ctx_initial.fields["model_field3"]
-    mf4_initial = ctx_initial.fields["model_field4"]
+    mf4a_initial = ctx_initial.fields["model_field4_instance_a"]
+    mf4b_initial = ctx_initial.fields["model_field4_instance_b"]
 
     ctx_final = run()
 
@@ -116,7 +127,8 @@ def test_dummy_solver_complete_run() -> None:
     assert ctx_final.fields["field2"] != f2_initial
     assert ctx_final.fields["model_field1"] != mf1_initial
     assert ctx_final.fields["model_field3"] != mf3_initial
-    assert ctx_final.fields["model_field4"] != mf4_initial
+    assert ctx_final.fields["model_field4_instance_a"] != mf4a_initial
+    assert ctx_final.fields["model_field4_instance_b"] != mf4b_initial
     assert ctx_final.models["algorithm"]._iteration_count >= 1
 
 
@@ -161,7 +173,7 @@ def test_model1_operations_discovery() -> None:
     from .models.model1 import model1 as spec
 
     case_dir = Path(__file__).parent / "configs"
-    rt = spec.instantiate(case_dir=case_dir, instance_id="DummyModel1")
+    rt = spec.instantiate(case_dir=case_dir)
 
     ops = rt.operations
     assert len(ops) >= 2
@@ -210,7 +222,7 @@ def test_model_operations_use_dependency_injection() -> None:
     from neofoam.framework.context import Context
 
     case_dir = Path(__file__).parent / "configs"
-    rt = spec.instantiate(case_dir=case_dir, instance_id="DummyModel1")
+    rt = spec.instantiate(case_dir=case_dir)
 
     lazy_inits = rt.run_build()
     assert len(lazy_inits) == 2
