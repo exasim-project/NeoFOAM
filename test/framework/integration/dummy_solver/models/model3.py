@@ -50,12 +50,12 @@ model3 = Model("CoupledModel").register_with(DummyModelInterface)
 
 
 @model3.load
-def load(case_dir: Path) -> Model3Config:
+def load(case_dir: Path, _entry: Any) -> Model3Config:
     return Model3Config.load(case_dir=case_dir, validate=False)
 
 
 @model3.detect
-def detect_model() -> bool:
+def detect_model(_case_dir: Path) -> bool:
     return True
 
 
@@ -72,7 +72,7 @@ def resolve(config: Model3Config, ctx: ConfigContext) -> Model3Config:
 
 
 @model3.build
-def build(config: Model3Config) -> list[InitStep]:
+def build(config: Model3Config, _runtime: Any) -> list[InitStep]:
     """Create fields and the nested accumulator sub-model."""
 
     def create_model3_field(_ctx: dict[str, Any]) -> float:
@@ -140,19 +140,21 @@ def collected_operations(self: Any) -> Operations:
     """
     from neofoam.framework.operation_wrapper import wrap_operation
 
-    raw_func, metadata = (
+    op_def = (
         self.spec._operations[0] if self.config.coupled else self.spec._operations[1]
     )
 
-    wrapped = wrap_operation(raw_func, self, self.spec._dependency_resolver)
+    wrapped = wrap_operation(op_def.func, self, self.spec._dependency_resolver)
 
     op = Operation(
         func=SequentialOp(wrapped),
         metadata=OperationMetadata(
             op_name="model3_step",
-            operation_number=OperationNumber(metadata["operation_number"]),
-            depends_on=metadata["depends_on"] or [],
-            before=metadata["before"] or [],
+            operation_number=OperationNumber(op_def.operation_number)
+            if op_def.operation_number
+            else None,
+            depends_on=op_def.depends_on or [],
+            before=op_def.before or [],
         ),
     )
     ops = Operations()
