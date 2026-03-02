@@ -1,0 +1,124 @@
+name: Build Python
+run-name: 'Build Python'
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  schedule:
+    - cron: '00 8 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: >
+    ${{ github.workflow }}-
+    ${{ github.event_name }}-
+    ${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-python:
+    runs-on: ubuntu-latest
+    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+    strategy:
+      matrix:
+        openfoam-version: [ 2506] # 2406, 2412,
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      fail-fast: false
+    name: neofoam Python with OpenFOAM ${{ matrix.openfoam-version }}
+    steps:
+      - name: Checkout with NeoN
+        uses: ./.github/actions/checkout-with-neon
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: ${{ matrix.openfoam-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          uv sync --all-extras -v
+
+      - name: Test with pytest
+        run: |
+          uv run pytest
+
+  python-coverage:
+    runs-on: ubuntu-24.04
+
+    name: Test coverage with OpenFOAM 2506 and Python 3.9
+    steps:
+      - name: Checkout with NeoN
+        uses: ./.github/actions/checkout-with-neon
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2506
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: 3.9
+
+      - name: Install test dependencies
+        run: |
+          uv sync --all-extras -v
+
+      - name: Test with pytest
+        run: |
+          source .venv/bin/activate
+          pytest --cov=neofoam --cov-report=xml --cov-report=term
+
+      # - name: Upload code coverage results to Codecov
+      #   uses: codecov/codecov-action@v5
+      #   with:
+      #     files: ./coverage.xml
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+    - name: Lint with Ruff
+      uses: astral-sh/ruff-action@v3
+
+    - name: Format with Ruff
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: 'format --check'
+
+  typing:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout with NeoN
+      uses: ./.github/actions/checkout-with-neon
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: 3.9
+    - name: Check types with ty
+      run: |
+        uv sync --all-extras -v
+        poe type_check
