@@ -3,6 +3,12 @@
 
 add_library(NeoFOAM_public_api INTERFACE) # dummy target
 
+if(NeoN_WITH_SUNDIALS)
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_SUNDIALS=1)
+else()
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_SUNDIALS=0)
+endif()
+
 set_property(
   TARGET NeoFOAM_public_api
   APPEND

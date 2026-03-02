@@ -73,6 +73,13 @@ NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 [tool.uv.sources]
 neon_pde = { path = "src/NeoN", editable = true }
 
+[tool.uv]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "**/*.cpp" },
+    { file = "**/*.hpp" },
+    { file = "CMakeLists.txt" }
+]
 
 [tool.ruff]
 line-length = 100

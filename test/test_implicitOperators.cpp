@@ -30,7 +30,6 @@ TEST_CASE("matrix multiplication")
 
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
-    const auto sparsityPattern = NeoN::la::createSparsity(rt.nfMesh);
 
     runTime.setDeltaT(1);
 
@@ -53,6 +52,8 @@ TEST_CASE("matrix multiplication")
 
         Foam::fvScalarMatrix matrix(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt("ddt", matrix & ofT);
+
+        // we should get a uniform field with a value of 1
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
         NeoN::Dictionary ddtSchemes;
@@ -60,17 +61,14 @@ TEST_CASE("matrix multiplication")
         rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
         ddtOp.read(rt.fvSchemesDict);
 
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            rt.nfMesh,
-            sparsityPattern
-        );
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
         ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
 
         // check rhs
         nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
 
         // check diag
-        auto diag = NeoFOAM::diag(ls, sparsityPattern);
+        auto diag = ls.matrix().diag();
         nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
@@ -103,15 +101,12 @@ TEST_CASE("matrix multiplication")
         }
 
         // the sourceterm operator implicit
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            rt.nfMesh,
-            sparsityPattern
-        );
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
         auto cellVolumes = rt.nfMesh.cellVolumes().copyToHost();
         sourceTerm.implicitOperation(ls);
 
         // check diag
-        auto diag = NeoFOAM::diag(ls, sparsityPattern);
+        auto diag = ls.matrix().diag();
         auto diagHost = diag.copyToHost();
 
         for (size_t celli = 0; celli < diagHost.size(); celli++)

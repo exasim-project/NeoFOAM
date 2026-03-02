@@ -26,27 +26,19 @@ repos:
     hooks:
       - id: typos
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+      - id: ruff-format
+      - id: ruff
+        args: [--fix]
+
   - repo: local
     hooks:
-      # 1) Format Python with Ruff (runs only on changed Python files)
-      - id: format
-        name: Ruff Format
-        entry: poe format
-        language: system
-        types_or: [python]
-        pass_filenames: false  # important: rely on pyproject files/exclude
-
-      # 2) Lint Python with Ruff
-      - id: lint
-        name: Ruff Lint
-        entry: poe lint
-        language: system
-        types_or: [python]
-        pass_filenames: false  # important: rely on pyproject files/exclude
-
-      # 3) Type-check with mypy (let mypy read files/exclude from pyproject)
+      # mypy needs project dependencies (pydantic plugin, etc.),
+      # so it must run in the project venv. --frozen skips uv sync/rebuild.
       - id: type-check
         name: Mypy Type Check
-        entry: poe type_check
+        entry: uv run --frozen mypy
         language: system
-        pass_filenames: false  # important: rely on pyproject files/exclude
+        pass_filenames: false

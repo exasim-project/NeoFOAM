@@ -53,7 +53,7 @@ TEST_CASE("pressureVelocityCoupling")
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
         SECTION("constrainHbyA")
         {
-            BENCHMARK("CPU")
+            BENCHMARK("OpenFOAM")
             {
                 Foam::constrainHbyA(forAU * ofUEqn.H(), ofU, ofP);
                 return;
