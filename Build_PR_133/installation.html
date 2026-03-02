@@ -262,6 +262,24 @@
 </section>
 <section id="installing-the-package">
 <h2>Installing the Package<a class="headerlink" href="#installing-the-package" title="Link to this heading">¶</a></h2>
+<p>NeoFOAM can be installed in two ways: either by building everything from source (including NeoN) or by installing NeoN first as a library/wheel.</p>
+<section id="two-step-installation-recommended">
+<h3>Two-step Installation (Recommended)<a class="headerlink" href="#two-step-installation-recommended" title="Link to this heading">¶</a></h3>
+<p>This method first builds and installs NeoN as a wheel into your environment, then builds NeoFOAM against it. This is useful when NeoN is not yet available on PyPI.</p>
+<ol class="arabic">
+<li><p>Build with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>path/to/NeoN<span class="w"> </span>-v
+<span class="c1"># with a submodule</span>
+pip<span class="w"> </span>install<span class="w"> </span>src/NeoN<span class="o">[</span>all<span class="o">]</span><span class="w"> </span>-v
+pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>-v
+</pre></div>
+</div>
+</li>
+<li><p>Install uv:</p></li>
+</ol>
+</section>
+<section id="development-installation">
+<h3>Development Installation<a class="headerlink" href="#development-installation" title="Link to this heading">¶</a></h3>
 <p>To install the package and all development and documentation dependencies, run:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>all<span class="o">]</span>
 </pre></div>
@@ -270,6 +288,7 @@
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">.[dev]</span></code> for development dependencies only.</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">.[docs]</span></code> for documentation dependencies only.</p></li>
 </ul>
+</section>
 </section>
 <section id="using-uv-optional">
 <h2>Using uv (Optional)<a class="headerlink" href="#using-uv-optional" title="Link to this heading">¶</a></h2>
@@ -400,7 +419,11 @@
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#installing-the-package">Installing the Package</a></li>
+<li><a class="reference internal" href="#installing-the-package">Installing the Package</a><ul>
+<li><a class="reference internal" href="#two-step-installation-recommended">Two-step Installation (Recommended)</a></li>
+<li><a class="reference internal" href="#development-installation">Development Installation</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#using-uv-optional">Using uv (Optional)</a></li>
 <li><a class="reference internal" href="#usage-with-poe-the-poet">Usage with Poe the Poet</a></li>
 <li><a class="reference internal" href="#available-poe-tasks">Available Poe Tasks</a></li>
