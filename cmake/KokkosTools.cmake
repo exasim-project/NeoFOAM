@@ -5,7 +5,7 @@
 #
 include_guard(GLOBAL)
 
-if(NOT NEOFOAM_KOKKOS_TOOLS)
+if(NOT NEOFOAM_ENABLE_KOKKOS_TOOLS)
   return()
 endif()
 
