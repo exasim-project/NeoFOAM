@@ -10,8 +10,8 @@ NEOFOAM_SRC_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 BUILD_DIR="${NEOFOAM_SRC_DIR}/build"
 
 if [ $# -lt 3 ]; then
-    echo "Usage:"
-    echo "  $0 <debug|profile> <tool-name> <application> [args...]"
+  echo "Usage:"
+  echo "  $0 <debug|profile> <tool-name> [--log <logfile>] <application> [args...]"
     echo ""
     echo "Available debugging tools:"
     echo "  kernel-logger"
@@ -26,6 +26,17 @@ fi
 MODE=$1
 TOOL_NAME=$2
 shift 2
+
+# Optional log filename: allow `--log <file>` before the application command
+LOGFILE=""
+if [ "$1" = "--log" ]; then
+  if [ -z "$2" ]; then
+    echo "Error: --log requires a filename"
+    exit 1
+  fi
+  LOGFILE="$2"
+  shift 2
+fi
 
 # ---------------------------------------------------------------------------
 # Select tools directory based on mode
@@ -88,7 +99,7 @@ echo ""
 # ---------------------------------------------------------------------------
 
 if [ "$TOOL_NAME" != "simple-kernel-timer" ]; then
-  LOGFILE="${TOOL_NAME}.log"
+  LOGFILE="${LOGFILE:-${TOOL_NAME}}.log"
   echo "Writing program output to $LOGFILE"
   "$@" >"$LOGFILE" 2>&1
 else
@@ -113,7 +124,12 @@ else
       echo "No .dat file produced; skipping kp_reader"
     else
       echo "Running kp_reader on $DATFILE"
-      "$KP_READER" "$DATFILE" > "$DATFILE.reader.log" 2>&1 || true
+      if [ -n "$LOGFILE" ]; then
+        READER_LOG="${LOGFILE}.log"
+      else
+        READER_LOG="${DATFILE}.log"
+      fi
+      "$KP_READER" "$DATFILE" > "$READER_LOG" 2>&1 || true
     fi
   else
     echo "kp_reader not found; skipping post-processing"
