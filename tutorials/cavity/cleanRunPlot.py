@@ -21,6 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 # =========================================================
 #  Utility: Run shell commands
 # =========================================================
@@ -32,6 +33,7 @@ def run(cmd: list[str], cwd: Path = None) -> None:
     except subprocess.CalledProcessError as e:
         logger.error(f"Command failed: {' '.join(cmd)}")
         sys.exit(e.returncode)
+
 
 # =========================================================
 #  Clean Functionality
@@ -49,6 +51,7 @@ def rm_path(p: Path) -> None:
     except Exception as e:
         logger.error(f"Failed to remove {p}: {e}")
 
+
 def clean_case(case_path: Path) -> None:
     """Remove OpenFOAM case output (like Allclean)."""
     logger.info("Cleaning case (Allclean equivalent)...")
@@ -56,7 +59,7 @@ def clean_case(case_path: Path) -> None:
     for d in case_path.iterdir():
         if d.is_dir():
             try:
-                float(d.name)   # test if folder is a time directory
+                float(d.name)  # test if folder is a time directory
                 rm_path(d)
             except ValueError:
                 pass
@@ -75,6 +78,7 @@ def clean_case(case_path: Path) -> None:
     rm_path(pp)
     logger.info("Allclean complete.")
 
+
 # =========================================================
 #  Allrun Functionality
 # =========================================================
@@ -88,6 +92,7 @@ def restore0_dir(case_path: Path) -> None:
         raise RuntimeError("0.orig missing")
     shutil.copytree(zero_orig, zero)
     logger.info("Restored 0/ from 0.orig/")
+
 
 def run_case(case_path: Path) -> None:
     """Run solver workflow (mesh, solve) with logs."""
@@ -104,10 +109,7 @@ def run_case(case_path: Path) -> None:
     logger.info("Running blockMesh (logging to log.blockMesh)")
     try:
         subprocess.check_call(
-            ["blockMesh"],
-            cwd=case_path,
-            stdout=blockmesh_log,
-            stderr=subprocess.STDOUT
+            ["blockMesh"], cwd=case_path, stdout=blockmesh_log, stderr=subprocess.STDOUT
         )
     except subprocess.CalledProcessError as e:
         logger.error("blockMesh failed.")
@@ -127,10 +129,7 @@ def run_case(case_path: Path) -> None:
     logger.info("Running neoIcoFoam (logging to log.neoIcoFoam)")
     try:
         subprocess.check_call(
-            [str(solver)],
-            cwd=case_path,
-            stdout=neo_log,
-            stderr=subprocess.STDOUT
+            [str(solver)], cwd=case_path, stdout=neo_log, stderr=subprocess.STDOUT
         )
     except subprocess.CalledProcessError as e:
         logger.error("neoIcoFoam failed.")
@@ -152,6 +151,7 @@ def computeRe(case: FoamCase) -> Tuple[float, float]:
     logger.info(f"nu = {nu:.6g}; Computed Re = {Re:.3f}")
     return nu, Re
 
+
 def detect_latest_time(case_path: Path) -> float:
     """Return the largest time folder as a float."""
     times = []
@@ -164,6 +164,7 @@ def detect_latest_time(case_path: Path) -> float:
     if not times:
         raise RuntimeError("No time directories found!")
     return max(times)
+
 
 # =========================================================
 #  Reference data extraction
@@ -180,6 +181,7 @@ def load_ghia_header(filename: Path) -> np.ndarray:
                     return np.array(nums)
     raise RuntimeError("Could not extract Re header from Ghia file.")
 
+
 def select_ghia_column(GHIA_RE_VALUES: np.ndarray, Re: float) -> Tuple[int, int]:
     """Choose the closest Re column in Ghia tables."""
     Re_rounded = GHIA_RE_VALUES[np.argmin(np.abs(GHIA_RE_VALUES - Re))]
@@ -187,11 +189,17 @@ def select_ghia_column(GHIA_RE_VALUES: np.ndarray, Re: float) -> Tuple[int, int]
     logger.info(f"-> Selecting Ghia Re={Re_rounded}, column={col_index}")
     return Re_rounded, col_index
 
+
 # =========================================================
 #  Centreline velocity extraction
 # =========================================================
-def extract_centreline(x: np.ndarray, y: np.ndarray, U_int: np.ndarray,
-                       line_value: float, is_vertical: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+def extract_centreline(
+    x: np.ndarray,
+    y: np.ndarray,
+    U_int: np.ndarray,
+    line_value: float,
+    is_vertical: bool = True,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Extract U/V values on a fixed x/y centreline."""
     if is_vertical:
         dist = np.abs(x - line_value)
@@ -220,16 +228,31 @@ def extract_centreline(x: np.ndarray, y: np.ndarray, U_int: np.ndarray,
         idx = np.argsort(vals)
         return np.array(vals)[idx], np.array(comp)[idx]
 
+
 # =========================================================
 #  Plotting
 # =========================================================
-def plot_u(y_cl: np.ndarray, u_cl: np.ndarray, GHIA_Y: np.ndarray, GHIA_U: np.ndarray,
-           Re_rounded: int, endTime: float, case_path: Path) -> None:
+def plot_u(
+    y_cl: np.ndarray,
+    u_cl: np.ndarray,
+    GHIA_Y: np.ndarray,
+    GHIA_U: np.ndarray,
+    Re_rounded: int,
+    endTime: float,
+    case_path: Path,
+) -> None:
     """Plot vertical centreline U, save PDF."""
     plt.figure(figsize=(5, 5))
     plt.plot(u_cl, y_cl, "-", label="neoIcoFoam")
-    plt.plot(GHIA_U, GHIA_Y, "o", markerfacecolor='none', markeredgecolor='red',
-             label=f"Ghia Re={Re_rounded}", markersize=4)
+    plt.plot(
+        GHIA_U,
+        GHIA_Y,
+        "o",
+        markerfacecolor="none",
+        markeredgecolor="red",
+        label=f"Ghia Re={Re_rounded}",
+        markersize=4,
+    )
     plt.xlabel("u")
     plt.ylabel("y")
     plt.grid(True)
@@ -239,13 +262,28 @@ def plot_u(y_cl: np.ndarray, u_cl: np.ndarray, GHIA_Y: np.ndarray, GHIA_U: np.nd
     plt.savefig(outfile)
     logger.info(f"Saved {outfile}")
 
-def plot_v(x_cl: np.ndarray, v_cl: np.ndarray, GHIA_X: np.ndarray, GHIA_V: np.ndarray,
-           Re_rounded: int, endTime: float, case_path: Path) -> None:
+
+def plot_v(
+    x_cl: np.ndarray,
+    v_cl: np.ndarray,
+    GHIA_X: np.ndarray,
+    GHIA_V: np.ndarray,
+    Re_rounded: int,
+    endTime: float,
+    case_path: Path,
+) -> None:
     """Plot horizontal centreline V, save PDF."""
     plt.figure(figsize=(5, 5))
     plt.plot(x_cl, v_cl, "-", label="neoIcoFoam")
-    plt.plot(GHIA_X, GHIA_V, "o", markerfacecolor='none', markeredgecolor='red',
-             label=f"Ghia Re={Re_rounded}", markersize=4)
+    plt.plot(
+        GHIA_X,
+        GHIA_V,
+        "o",
+        markerfacecolor="none",
+        markeredgecolor="red",
+        label=f"Ghia Re={Re_rounded}",
+        markersize=4,
+    )
     plt.xlabel("x")
     plt.ylabel("v")
     plt.grid(True)
@@ -255,6 +293,7 @@ def plot_v(x_cl: np.ndarray, v_cl: np.ndarray, GHIA_X: np.ndarray, GHIA_V: np.nd
     plt.savefig(outfile)
     logger.info(f"Saved {outfile}")
 
+
 # =========================================================
 #  Main function
 # =========================================================
@@ -263,7 +302,9 @@ def main() -> None:
     parser.add_argument("--clean", action="store_true", help="Clean case only")
     parser.add_argument("--run", action="store_true", help="Run solver only")
     parser.add_argument("--plot", action="store_true", help="Plot only")
-    parser.add_argument("--case", type=str, default=".", help="Directory of the case (default: current)")
+    parser.add_argument(
+        "--case", type=str, default=".", help="Directory of the case (default: current)"
+    )
     args = parser.parse_args()
 
     case_path = Path(args.case).resolve()
@@ -327,6 +368,7 @@ def main() -> None:
     plot_v(x_cl, v_cl, GHIA_X, GHIA_V, Re_rounded, endTime, case_path)
 
     logger.info("Completed run + plot.")
+
 
 if __name__ == "__main__":
     main()
