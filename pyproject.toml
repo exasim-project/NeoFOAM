@@ -34,6 +34,9 @@ dev = [
     "mypy",
     "pre-commit",
     "types-PyYAML",
+    # build deps needed in env when no-build-isolation is enabled
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
 ]
 docs = [
     "sphinx>=4.0",
@@ -74,12 +77,7 @@ NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 neon_pde = { path = "src/NeoN", editable = true }
 
 [tool.uv]
-cache-keys = [
-    { file = "pyproject.toml" },
-    { file = "**/*.cpp" },
-    { file = "**/*.hpp" },
-    { file = "CMakeLists.txt" }
-]
+no-build-isolation-package = ["neofoam"]
 
 [tool.ruff]
 line-length = 100
