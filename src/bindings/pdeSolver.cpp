@@ -40,7 +40,7 @@ void registerPDESolver(nb::module_& m)
             [](nf::PDESolver<NeoN::scalar>& self,
                dsl::Expression<NeoN::scalar> expr,
                fvcc::VolumeField<NeoN::scalar>& psi,
-               const nf::RunTime& rt)
+               nf::RunTime& rt)
             { new (&self) nf::PDESolver<NeoN::scalar>(std::move(expr), psi, rt); },
             "expr"_a,
             "psi"_a,
@@ -75,7 +75,7 @@ void registerPDESolver(nb::module_& m)
             [](nf::PDESolver<NeoN::Vec3>& self,
                dsl::Expression<NeoN::Vec3> expr,
                fvcc::VolumeField<NeoN::Vec3>& psi,
-               const nf::RunTime& rt)
+               nf::RunTime& rt)
             { new (&self) nf::PDESolver<NeoN::Vec3>(std::move(expr), psi, rt); },
             "expr"_a,
             "psi"_a,
