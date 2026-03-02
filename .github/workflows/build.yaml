@@ -124,7 +124,28 @@ jobs:
       fail-fast: false
     name: neofoam Python with OpenFOAM ${{ matrix.openfoam-version }}
     steps:
+      - name: Determine branch
+        run: |
+          NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
+          REPO_URL="https://github.com/exasim-project/NeoN"
+          echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
+          if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+            echo "NeoN branch exists: $NEOFOAM_BRANCH"
+            echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+          else
+            echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
+            echo "NEON_BRANCH=develop" >> $GITHUB_ENV
+          fi
+
       - uses: actions/checkout@v5
+
+      - name: Checkout NeoN
+        uses: actions/checkout@v5
+        with:
+          repository: exasim-project/NeoN
+          ref: ${{ env.NEON_BRANCH }}
+          path: src/NeoN
 
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
@@ -152,7 +173,28 @@ jobs:
 
     name: Test coverage with OpenFOAM 2506 and Python 3.9
     steps:
+      - name: Determine branch
+        run: |
+          NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
+          REPO_URL="https://github.com/exasim-project/NeoN"
+          echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
+          if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+            echo "NeoN branch exists: $NEOFOAM_BRANCH"
+            echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+          else
+            echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
+            echo "NEON_BRANCH=develop" >> $GITHUB_ENV
+          fi
+
       - uses: actions/checkout@v5
+
+      - name: Checkout NeoN
+        uses: actions/checkout@v5
+        with:
+          repository: exasim-project/NeoN
+          ref: ${{ env.NEON_BRANCH }}
+          path: src/NeoN
 
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
@@ -200,8 +242,29 @@ jobs:
   typing:
     runs-on: ubuntu-24.04
     steps:
+    - name: Determine branch
+      run: |
+        NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+        echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
+        REPO_URL="https://github.com/exasim-project/NeoN"
+        echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
+        if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+          echo "NeoN branch exists: $NEOFOAM_BRANCH"
+          echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+        else
+          echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
+          echo "NEON_BRANCH=develop" >> $GITHUB_ENV
+        fi
+
     - name: Checkout
       uses: actions/checkout@v5
+
+    - name: Checkout NeoN
+      uses: actions/checkout@v5
+      with:
+        repository: exasim-project/NeoN
+        ref: ${{ env.NEON_BRANCH }}
+        path: src/NeoN
 
     - name: Set up OpenFOAM
       uses: gerlero/setup-openfoam@v1
