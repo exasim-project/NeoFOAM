@@ -130,6 +130,7 @@ else
         READER_LOG="${DATFILE}.log"
       fi
       "$KP_READER" "$DATFILE" > "$READER_LOG" 2>&1 || true
+      echo "Writing timing result to $READER_LOG"
     fi
   else
     echo "kp_reader not found; skipping post-processing"
