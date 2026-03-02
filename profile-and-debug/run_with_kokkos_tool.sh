@@ -80,6 +80,44 @@ echo ""
 
 # ---------------------------------------------------------------------------
 # Execute
+# - If tool is not simple-kernel-timer: write stdout/stderr to a tool-specific
+#   log file
+# - If tool is simple-kernel-timer: ensure the .so directory is on PATH and
+#   after the executable finishes try to run `kp_reader` on the generated .dat
+#   file.
 # ---------------------------------------------------------------------------
 
-exec "$@"
+if [ "$TOOL_NAME" != "simple-kernel-timer" ]; then
+  LOGFILE="${TOOL_NAME}.log"
+  echo "Writing program output to $LOGFILE"
+  "$@" >"$LOGFILE" 2>&1
+else
+  # Ensure the directory containing the simple-kernel-timer .so is on PATH
+  # so helper executables can be found.
+  if [ -n "$KOKKOS_TOOLS_LIBS" ]; then
+    LIB_DIR="$(dirname "$KOKKOS_TOOLS_LIBS")"
+    export PATH="$PATH:$LIB_DIR"
+  fi
+
+  # Run the executable (preserve exit status)
+  "$@"
+  EX_CODE=$?
+
+  # Try to find kp_reader
+  KP_READER="$(command -v kp_reader || true)"
+
+  if [ -n "$KP_READER" ] && [ -x "$KP_READER" ]; then
+    # Find the most recent .dat file in the current directory
+    DATFILE="$(ls -t *.dat 2>/dev/null | head -n1 || true)"
+    if [ -z "$DATFILE" ]; then
+      echo "No .dat file produced; skipping kp_reader"
+    else
+      echo "Running kp_reader on $DATFILE"
+      "$KP_READER" "$DATFILE" > "$DATFILE.reader.log" 2>&1 || true
+    fi
+  else
+    echo "kp_reader not found; skipping post-processing"
+  fi
+
+  exit $EX_CODE
+fi

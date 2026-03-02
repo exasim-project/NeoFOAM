@@ -90,7 +90,7 @@ Y88888o.       8 8 8888         ,8 8888       `8b  8 8888         ,8 8888       
   string(APPEND log "\n NeoFOAM components:")
   dump_cmake_variables("^NEOFOAM_BUILD" log)
   add_separator(log)
-  string(APPEND log "\n NeoFOAM Kokkos Tools:")
+  string(APPEND log "\n External tools:")
   dump_cmake_variables("^NEOFOAM_ENABLE" log)
   add_separator(log)
   string(APPEND log "\n NeoN definitions:")
